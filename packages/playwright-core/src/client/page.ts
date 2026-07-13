@@ -45,7 +45,7 @@ import { Video } from './video';
 import { Screencast } from './screencast';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
-import { TimeoutSettings } from './timeoutSettings';
+import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 import { mkdirIfNeeded } from './fileUtils';
 import { ConsoleMessage } from './consoleMessage';
 import type { BrowserContext } from './browserContext';
@@ -306,16 +306,16 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async pickLocator(): Promise<Locator> {
-    const { selector } = await this._channel.pickLocator({}, { signal: undefined, timeout: 0 });
+    const { selector } = await this._channel.pickLocator({}, kNoTimeout);
     return this.locator(selector);
   }
 
   async cancelPickLocator(): Promise<void> {
-    await this._channel.cancelPickLocator({}, { signal: undefined, timeout: 0 });
+    await this._channel.cancelPickLocator({}, kNoTimeout);
   }
 
   async hideHighlight(): Promise<void> {
-    await this._channel.hideHighlight({}, { signal: undefined, timeout: 0 });
+    await this._channel.hideHighlight({}, kNoTimeout);
   }
 
   async $(selector: string, options?: { strict?: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
@@ -360,21 +360,21 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async exposeFunction(name: string, callback: Function) {
-    const result = await this._channel.exposeBinding({ name }, { signal: undefined, timeout: 0 });
+    const result = await this._channel.exposeBinding({ name }, kNoTimeout);
     const binding = (source: structs.BindingSource, ...args: any[]) => callback(...args);
     this._bindings.set(name, binding);
     return DisposableObject.from(result.disposable);
   }
 
   async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any) {
-    const result = await this._channel.exposeBinding({ name }, { signal: undefined, timeout: 0 });
+    const result = await this._channel.exposeBinding({ name }, kNoTimeout);
     this._bindings.set(name, callback);
     return DisposableObject.from(result.disposable);
   }
 
   async setExtraHTTPHeaders(headers: Headers) {
     validateHeaders(headers);
-    await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) }, { signal: undefined, timeout: 0 });
+    await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) }, kNoTimeout);
   }
 
   url(): string {
@@ -395,7 +395,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async reload(options: channels.PageReloadOptions & TimeoutOptions = {}): Promise<Response | null> {
     const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-    return Response.fromNullable((await this._channel.reload({ ...options, waitUntil }, this._mainFrame._navigationTimeout(options))).response);
+    return Response.fromNullable((await this._channel.reload({ ...options, waitUntil }, this._mainFrame._navigationTimeoutOptions(options))).response);
   }
 
   async addLocatorHandler(locator: Locator, handler: (locator: Locator) => any, options: { times?: number, noWaitAfter?: boolean } = {}): Promise<void> {
@@ -403,7 +403,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       throw new Error(`Locator must belong to the main frame of this page`);
     if (options.times === 0)
       return;
-    const { uid } = await this._channel.registerLocatorHandler({ selector: locator._selector, noWaitAfter: options.noWaitAfter }, { signal: undefined, timeout: 0 });
+    const { uid } = await this._channel.registerLocatorHandler({ selector: locator._selector, noWaitAfter: options.noWaitAfter }, kNoTimeout);
     this._locatorHandlers.set(uid, { locator, handler, times: options.times });
   }
 
@@ -420,7 +420,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     } finally {
       if (remove)
         this._locatorHandlers.delete(uid);
-      this._channel.resolveLocatorHandlerNoReply({ uid, remove }, { signal: undefined, timeout: 0 }).catch(() => {});
+      this._channel.resolveLocatorHandlerNoReply({ uid, remove }, kNoTimeout).catch(() => {});
     }
   }
 
@@ -428,7 +428,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     for (const [uid, data] of this._locatorHandlers) {
       if (data.locator._equals(locator)) {
         this._locatorHandlers.delete(uid);
-        await this._channel.unregisterLocatorHandler({ uid }, { signal: undefined, timeout: 0 }).catch(() => {});
+        await this._channel.unregisterLocatorHandler({ uid }, kNoTimeout).catch(() => {});
       }
     }
   }
@@ -477,7 +477,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, logLine?: string): Promise<any> {
     return await this._wrapApiCall(async () => {
-      const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+      const { timeout } = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
       const signal = typeof optionsOrPredicate === 'function' ? undefined : (optionsOrPredicate as TimeoutOptions).signal;
       const waiter = Waiter.createForEvent(this, event);
@@ -497,16 +497,16 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async goBack(options: channels.PageGoBackOptions & TimeoutOptions = {}): Promise<Response | null> {
     const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-    return Response.fromNullable((await this._channel.goBack({ ...options, waitUntil }, this._mainFrame._navigationTimeout(options))).response);
+    return Response.fromNullable((await this._channel.goBack({ ...options, waitUntil }, this._mainFrame._navigationTimeoutOptions(options))).response);
   }
 
   async goForward(options: channels.PageGoForwardOptions & TimeoutOptions = {}): Promise<Response | null> {
     const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-    return Response.fromNullable((await this._channel.goForward({ ...options, waitUntil }, this._mainFrame._navigationTimeout(options))).response);
+    return Response.fromNullable((await this._channel.goForward({ ...options, waitUntil }, this._mainFrame._navigationTimeoutOptions(options))).response);
   }
 
   async requestGC() {
-    await this._channel.requestGC({}, { signal: undefined, timeout: 0 });
+    await this._channel.requestGC({}, kNoTimeout);
   }
 
   async emulateMedia(options: { media?: 'screen' | 'print' | null, colorScheme?: 'dark' | 'light' | 'no-preference' | null, reducedMotion?: 'reduce' | 'no-preference' | null, forcedColors?: 'active' | 'none' | null, contrast?: 'no-preference' | 'more' | null } = {}) {
@@ -516,12 +516,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       reducedMotion: options.reducedMotion === null ? 'no-override' : options.reducedMotion,
       forcedColors: options.forcedColors === null ? 'no-override' : options.forcedColors,
       contrast: options.contrast === null ? 'no-override' : options.contrast,
-    }, { signal: undefined, timeout: 0 });
+    }, kNoTimeout);
   }
 
   async setViewportSize(viewportSize: Size) {
     this._viewportSize = viewportSize;
-    await this._channel.setViewportSize({ viewportSize }, { signal: undefined, timeout: 0 });
+    await this._channel.setViewportSize({ viewportSize }, kNoTimeout);
   }
 
   viewportSize(): Size | null {
@@ -535,7 +535,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
     const source = await evaluationScript(script, arg);
-    return DisposableObject.from((await this._channel.addInitScript({ source }, { signal: undefined, timeout: 0 })).disposable);
+    return DisposableObject.from((await this._channel.addInitScript({ source }, kNoTimeout)).disposable);
   }
 
   async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<DisposableStub> {
@@ -595,17 +595,17 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   private async _updateInterceptionPatterns(options: { internal: true } | { title: string }) {
     const patterns = RouteHandler.prepareInterceptionPatterns(this._routes);
-    await this._wrapApiCall(() => this._channel.setNetworkInterceptionPatterns({ patterns }, { signal: undefined, timeout: 0 }), options);
+    await this._wrapApiCall(() => this._channel.setNetworkInterceptionPatterns({ patterns }, kNoTimeout), options);
   }
 
   private async _updateWebSocketInterceptionPatterns(options: { internal: true } | { title: string }) {
     const patterns = WebSocketRouteHandler.prepareInterceptionPatterns(this._webSocketRoutes);
-    await this._wrapApiCall(() => this._channel.setWebSocketInterceptionPatterns({ patterns }, { signal: undefined, timeout: 0 }), options);
+    await this._wrapApiCall(() => this._channel.setWebSocketInterceptionPatterns({ patterns }, kNoTimeout), options);
   }
 
   async screenshot(options: Omit<channels.PageScreenshotOptions, 'mask'> & TimeoutOptions & { path?: string, mask?: api.Locator[] } = {}): Promise<Buffer> {
     const mask = options.mask as Locator[] | undefined;
-    const timeout = this._timeoutSettings.timeout(options);
+    const { timeout } = this._timeoutSettings.timeout(options);
     const copy: channels.PageScreenshotParams = { ...options, mask: undefined };
     if (!copy.type)
       copy.type = determineScreenshotType(options);
@@ -654,7 +654,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async bringToFront(): Promise<void> {
-    await this._channel.bringToFront({}, { signal: undefined, timeout: 0 });
+    await this._channel.bringToFront({}, kNoTimeout);
   }
 
   async [Symbol.asyncDispose]() {
@@ -669,9 +669,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       if (this._ownedContext)
         await this._ownedContext.close();
       else if (options.runBeforeUnload)
-        await this._channel.runBeforeUnload({}, { signal: undefined, timeout: 0 });
+        await this._channel.runBeforeUnload({}, kNoTimeout);
       else
-        await this._channel.close({ reason: options.reason }, { signal: undefined, timeout: 0 });
+        await this._channel.close({ reason: options.reason }, kNoTimeout);
     } catch (e) {
       if (isTargetClosedError(e) && !options.runBeforeUnload)
         return;
@@ -704,20 +704,20 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async clearConsoleMessages(): Promise<void> {
-    await this._channel.clearConsoleMessages({}, { signal: undefined, timeout: 0 });
+    await this._channel.clearConsoleMessages({}, kNoTimeout);
   }
 
   async consoleMessages(options?: { filter?: 'all' | 'since-navigation' }): Promise<ConsoleMessage[]> {
-    const { messages } = await this._channel.consoleMessages({ filter: options?.filter }, { signal: undefined, timeout: 0 });
+    const { messages } = await this._channel.consoleMessages({ filter: options?.filter }, kNoTimeout);
     return messages.map(message => new ConsoleMessage(message, this, null));
   }
 
   async clearPageErrors(): Promise<void> {
-    await this._channel.clearPageErrors({}, { signal: undefined, timeout: 0 });
+    await this._channel.clearPageErrors({}, kNoTimeout);
   }
 
   async pageErrors(options?: { filter?: 'all' | 'since-navigation' }): Promise<Error[]> {
-    const { errors } = await this._channel.pageErrors({ filter: options?.filter }, { signal: undefined, timeout: 0 });
+    const { errors } = await this._channel.pageErrors({ filter: options?.filter }, kNoTimeout);
     return errors.map(error => parseError(error));
   }
 
@@ -846,7 +846,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async requests() {
-    const { requests } = await this._channel.requests({}, { signal: undefined, timeout: 0 });
+    const { requests } = await this._channel.requests({}, kNoTimeout);
     return requests.map(request => Request.from(request));
   }
 
@@ -863,7 +863,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._browserContext.setDefaultNavigationTimeout(0);
     this._browserContext.setDefaultTimeout(0);
     this._instrumentation?.onWillPause({ keepTestTimeout: !!_options?.__testHookKeepTestTimeout });
-    await this._closedOrCrashedScope.safeRace(this.context()._channel.pause({}, { signal: undefined, timeout: 0 }));
+    await this._closedOrCrashedScope.safeRace(this.context()._channel.pause({}, kNoTimeout));
     this._browserContext.setDefaultNavigationTimeout(defaultNavigationTimeout);
     this._browserContext.setDefaultTimeout(defaultTimeout);
   }
@@ -881,7 +881,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       if (options.margin && typeof options.margin[index] === 'number')
         transportOptions.margin![index] = transportOptions.margin![index] + 'px';
     }
-    const result = await this._channel.pdf(transportOptions, { signal: undefined, timeout: 0 });
+    const result = await this._channel.pdf(transportOptions, kNoTimeout);
     if (options.path) {
       await fs.promises.mkdir(path.dirname(options.path), { recursive: true });
       await fs.promises.writeFile(options.path, result.pdf);
@@ -890,12 +890,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<string> {
-    const result = await this.mainFrame()._channel.ariaSnapshot({ mode: options.mode, depth: options.depth, boxes: options.boxes }, this._mainFrame._timeout(options));
+    const result = await this.mainFrame()._channel.ariaSnapshot({ mode: options.mode, depth: options.depth, boxes: options.boxes }, this._mainFrame._timeoutOptions(options));
     return result.snapshot;
   }
 
   async _setDockTile(image: Buffer) {
-    await this._channel.setDockTile({ image }, { signal: undefined, timeout: 0 });
+    await this._channel.setDockTile({ image }, kNoTimeout);
   }
 }
 
@@ -917,9 +917,9 @@ export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
         frame
       };
       const result = await func(source, ...this._initializer.args.map(parseResult));
-      this._channel.resolve({ result: serializeArgument(result) }, { signal: undefined, timeout: 0 }).catch(() => {});
+      this._channel.resolve({ result: serializeArgument(result) }, kNoTimeout).catch(() => {});
     } catch (e) {
-      this._channel.reject({ error: serializeError(e) }, { signal: undefined, timeout: 0 }).catch(() => {});
+      this._channel.reject({ error: serializeError(e) }, kNoTimeout).catch(() => {});
     }
   }
 }

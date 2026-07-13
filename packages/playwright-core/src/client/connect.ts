@@ -20,6 +20,7 @@ import { Browser } from './browser';
 import { ChannelOwner } from './channelOwner';
 import { Connection } from './connection';
 import { Events } from './events';
+import { kNoTimeout } from './timeoutSettings';
 
 import type { Playwright } from './playwright';
 import type { ConnectOptions, HeadersArray } from './types';
@@ -37,7 +38,7 @@ export async function connectToBrowser(playwright: Playwright, params: ConnectOp
   };
   if ((params as any).__testHookRedirectPortForwarding)
     connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
-  const connection = await connectToEndpoint(playwright._connection, connectParams, params.timeout || 0);
+  const connection = await connectToEndpoint(playwright._connection, connectParams, { signal: undefined, timeout: params.timeout || 0 });
   let browser: Browser;
   connection.on('close', () => {
     // Emulate all pages, contexts and the browser closing upon disconnect.
@@ -73,7 +74,7 @@ export async function connectToBrowser(playwright: Playwright, params: ConnectOp
   }
 }
 
-export async function connectToEndpoint(parentConnection: Connection, params: channels.LocalUtilsConnectParams, timeout: number): Promise<Connection> {
+export async function connectToEndpoint(parentConnection: Connection, params: channels.LocalUtilsConnectParams, timeout: channels.TimeoutOptions): Promise<Connection> {
   const localUtils = parentConnection.localUtils();
   const transport = localUtils ? new JsonPipeTransport(localUtils) : new WebSocketTransport();
   const connectHeaders = await transport.connect(params, timeout);
@@ -99,7 +100,7 @@ export async function connectToEndpoint(parentConnection: Connection, params: ch
 }
 
 interface Transport {
-  connect(params: channels.LocalUtilsConnectParams, timeout: number): Promise<HeadersArray>;
+  connect(params: channels.LocalUtilsConnectParams, timeout: channels.TimeoutOptions): Promise<HeadersArray>;
   send(message: any): Promise<void>;
   onMessage(callback: (message: object) => void): void;
   onClose(callback: (reason?: string) => void): void;
@@ -114,14 +115,14 @@ class JsonPipeTransport implements Transport {
     this._owner = owner;
   }
 
-  async connect(params: channels.LocalUtilsConnectParams, timeout: number) {
-    const { pipe, headers: connectHeaders } = await this._owner._channel.connect(params, { signal: undefined, timeout });
+  async connect(params: channels.LocalUtilsConnectParams, timeout: channels.TimeoutOptions) {
+    const { pipe, headers: connectHeaders } = await this._owner._channel.connect(params, timeout);
     this._pipe = pipe;
     return connectHeaders;
   }
 
   async send(message: object) {
-    await this._pipe!.send({ message }, { signal: undefined, timeout: 0 });
+    await this._pipe!.send({ message }, kNoTimeout);
   }
 
   onMessage(callback: (message: object) => void) {
@@ -133,14 +134,14 @@ class JsonPipeTransport implements Transport {
   }
 
   async close() {
-    await this._pipe!.close({}, { signal: undefined, timeout: 0 }).catch(() => {});
+    await this._pipe!.close({}, kNoTimeout).catch(() => {});
   }
 }
 
 class WebSocketTransport implements Transport {
   private _ws: WebSocket | undefined;
 
-  async connect(params: channels.LocalUtilsConnectParams, timeout: number) {
+  async connect(params: channels.LocalUtilsConnectParams, timeout: channels.TimeoutOptions) {
     this._ws = new window.WebSocket(params.endpoint);
     return [];
   }

@@ -24,6 +24,7 @@ import { monotonicTime } from '@isomorphic/time';
 import { ElementHandle } from './elementHandle';
 import { serializeArgument } from './jsHandle';
 import { DisposableStub } from './disposable';
+import { kNoTimeout } from './timeoutSettings';
 
 import type { ExpectResult, Frame } from './frame';
 import type { DropPayload, FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
@@ -78,7 +79,7 @@ export class Locator implements api.Locator {
   }
 
   private async _withElement<R>(task: (handle: ElementHandle<SVGElement | HTMLElement>, timeout?: number) => Promise<R>, options: { title: string, internal?: boolean, timeout?: number, signal?: AbortSignal }): Promise<R> {
-    const timeout = this._frame._timeout({ timeout: options.timeout }).timeout;
+    const timeout = this._frame._timeoutOptions({ timeout: options.timeout }).timeout;
     const deadline = timeout ? monotonicTime() + timeout : 0;
 
     return await this._frame._wrapApiCall<R>(async () => {
@@ -261,7 +262,7 @@ export class Locator implements api.Locator {
   }
 
   async blur(options?: TimeoutOptions): Promise<void> {
-    await this._frame._channel.blur({ selector: this._selector, strict: true, ...options }, this._frame._timeout(options));
+    await this._frame._channel.blur({ selector: this._selector, strict: true, ...options }, this._frame._timeoutOptions(options));
   }
 
   async count(): Promise<number> {
@@ -269,7 +270,7 @@ export class Locator implements api.Locator {
   }
 
   async normalize(): Promise<Locator> {
-    const { resolvedSelector } = await this._frame._channel.resolveSelector({ selector: this._selector }, { signal: undefined, timeout: 0 });
+    const { resolvedSelector } = await this._frame._channel.resolveSelector({ selector: this._selector }, kNoTimeout);
     return new Locator(this._frame, resolvedSelector);
   }
 
@@ -327,7 +328,7 @@ export class Locator implements api.Locator {
   }
 
   async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<string> {
-    const result = await this._frame._channel.ariaSnapshot({ mode: options.mode, selector: this._selector, depth: options.depth, boxes: options.boxes }, this._frame._timeout(options));
+    const result = await this._frame._channel.ariaSnapshot({ mode: options.mode, selector: this._selector, depth: options.depth, boxes: options.boxes }, this._frame._timeoutOptions(options));
     return result.snapshot;
   }
 
@@ -389,7 +390,7 @@ export class Locator implements api.Locator {
   waitFor(options: channels.FrameWaitForSelectorOptions & TimeoutOptions & { state: 'attached' | 'visible' }): Promise<void>;
   waitFor(options?: channels.FrameWaitForSelectorOptions & TimeoutOptions): Promise<void>;
   async waitFor(options?: channels.FrameWaitForSelectorOptions & TimeoutOptions): Promise<void> {
-    await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options }, this._frame._timeout(options));
+    await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options }, this._frame._timeoutOptions(options));
   }
 
   async waitForFunction<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<void> {
@@ -399,7 +400,7 @@ export class Locator implements api.Locator {
       expression: String(pageFunction),
       isFunction: typeof pageFunction === 'function',
       arg: serializeArgument(arg),
-    }, this._frame._timeout(options));
+    }, this._frame._timeoutOptions(options));
   }
 
 

@@ -17,6 +17,7 @@
 import { debugLogger } from '@utils/debugLogger';
 import { isRegExp, isString } from '@isomorphic/rtti';
 
+import { kNoTimeout } from './timeoutSettings';
 import type { BrowserContext } from './browserContext';
 import type { LocalUtils } from './localUtils';
 import type { Route } from './network';
@@ -127,7 +128,7 @@ export class HarRouter {
       urlRegexSource: isRegExp(urlMatch) ? urlMatch.source : undefined,
       urlRegexFlags: isRegExp(urlMatch) ? urlMatch.flags : undefined,
       notFound: this._notFoundAction,
-    }, { signal: undefined, timeout: 0 });
+    }, kNoTimeout);
     this._apiRequestRegistrations.push({ context, registrationId });
   }
 
@@ -137,7 +138,7 @@ export class HarRouter {
 
   dispose() {
     for (const { context, registrationId } of this._apiRequestRegistrations)
-      context._channel.unrouteAPIRequestsFromHar({ registrationId }, { signal: undefined, timeout: 0 }).catch(() => {});
+      context._channel.unrouteAPIRequestsFromHar({ registrationId }, kNoTimeout).catch(() => {});
     this._apiRequestRegistrations = [];
     this._localUtils.harClose({ harId: this._harId }).catch(() => {});
   }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { kNoTimeout } from './timeoutSettings';
 import type { BrowserContext } from './browserContext';
 import type * as api from '../../types/types';
 
@@ -25,31 +26,31 @@ export class Clock implements api.Clock {
   }
 
   async install(options: { time?: number | string | Date } = { }) {
-    await this._browserContext._channel.clockInstall({ ...(options.time !== undefined ? parseTime(options.time) : {}) }, { signal: undefined, timeout: 0 });
+    await this._browserContext._channel.clockInstall({ ...(options.time !== undefined ? parseTime(options.time) : {}) }, kNoTimeout);
   }
 
   async fastForward(ticks: number | string) {
-    await this._browserContext._channel.clockFastForward({ ...parseTicks(ticks) }, { signal: undefined, timeout: 0 });
+    await this._browserContext._channel.clockFastForward({ ...parseTicks(ticks) }, kNoTimeout);
   }
 
   async pauseAt(time: number | string | Date) {
-    await this._browserContext._channel.clockPauseAt({ ...parseTime(time) }, { signal: undefined, timeout: 0 });
+    await this._browserContext._channel.clockPauseAt({ ...parseTime(time) }, kNoTimeout);
   }
 
   async resume() {
-    await this._browserContext._channel.clockResume({}, { signal: undefined, timeout: 0 });
+    await this._browserContext._channel.clockResume({}, kNoTimeout);
   }
 
   async runFor(ticks: number | string) {
-    await this._browserContext._channel.clockRunFor({ ...parseTicks(ticks) }, { signal: undefined, timeout: 0 });
+    await this._browserContext._channel.clockRunFor({ ...parseTicks(ticks) }, kNoTimeout);
   }
 
   async setFixedTime(time: string | number | Date) {
-    await this._browserContext._channel.clockSetFixedTime({ ...parseTime(time) }, { signal: undefined, timeout: 0 });
+    await this._browserContext._channel.clockSetFixedTime({ ...parseTime(time) }, kNoTimeout);
   }
 
   async setSystemTime(time: string | number | Date) {
-    await this._browserContext._channel.clockSetSystemTime({ ...parseTime(time) }, { signal: undefined, timeout: 0 });
+    await this._browserContext._channel.clockSetSystemTime({ ...parseTime(time) }, kNoTimeout);
   }
 }
 

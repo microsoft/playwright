@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { kNoTimeout } from './timeoutSettings';
 import type { Page } from './page';
 import type * as api from '../../types/types';
 
@@ -27,24 +28,24 @@ export class WebStorage implements api.WebStorage {
   }
 
   async items(): Promise<Array<{ name: string, value: string }>> {
-    const { items } = await this._page._channel.webStorageItems({ kind: this._kind }, { signal: undefined, timeout: 0 });
+    const { items } = await this._page._channel.webStorageItems({ kind: this._kind }, kNoTimeout);
     return items;
   }
 
   async getItem(name: string): Promise<string | null> {
-    const { value } = await this._page._channel.webStorageGetItem({ kind: this._kind, name }, { signal: undefined, timeout: 0 });
+    const { value } = await this._page._channel.webStorageGetItem({ kind: this._kind, name }, kNoTimeout);
     return value ?? null;
   }
 
   async setItem(name: string, value: string): Promise<void> {
-    await this._page._channel.webStorageSetItem({ kind: this._kind, name, value }, { signal: undefined, timeout: 0 });
+    await this._page._channel.webStorageSetItem({ kind: this._kind, name, value }, kNoTimeout);
   }
 
   async removeItem(name: string): Promise<void> {
-    await this._page._channel.webStorageRemoveItem({ kind: this._kind, name }, { signal: undefined, timeout: 0 });
+    await this._page._channel.webStorageRemoveItem({ kind: this._kind, name }, kNoTimeout);
   }
 
   async clear(): Promise<void> {
-    await this._page._channel.webStorageClear({ kind: this._kind }, { signal: undefined, timeout: 0 });
+    await this._page._channel.webStorageClear({ kind: this._kind }, kNoTimeout);
   }
 }

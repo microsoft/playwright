@@ -22,7 +22,7 @@ import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import { Waiter } from './waiter';
-import { TimeoutSettings } from './timeoutSettings';
+import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 
 import type { Page } from './page';
 import type { BrowserContextOptions, Headers, TimeoutOptions, WaitForEventOptions } from './types';
@@ -63,7 +63,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
       tracesDir: options.tracesDir,
       artifactsDir: options.artifactsDir,
     };
-    const app = ElectronApplication.from((await this._channel.launch(params, { signal: undefined, timeout: new TimeoutSettings().launchTimeout(options) })).electronApplication);
+    const app = ElectronApplication.from((await this._channel.launch(params, new TimeoutSettings().launchTimeout(options))).electronApplication);
     this._playwright.selectors._contextsForSelectors.add(app._context);
     app.once(Events.ElectronApplication.Close, () => this._playwright.selectors._contextsForSelectors.delete(app._context));
     await app._context._initializeHarFromOptions(options.recordHar);
@@ -139,7 +139,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     return await this._wrapApiCall(async () => {
-      const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+      const { timeout } = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
       const signal = typeof optionsOrPredicate === 'function' ? undefined : (optionsOrPredicate as TimeoutOptions).signal;
       const waiter = Waiter.createForEvent(this, event);
@@ -154,17 +154,17 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   async browserWindow(page: Page): Promise<JSHandle<BrowserWindow>> {
-    const result = await this._channel.browserWindow({ page: page._channel }, { signal: undefined, timeout: 0 });
+    const result = await this._channel.browserWindow({ page: page._channel }, kNoTimeout);
     return JSHandle.from(result.handle);
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<ElectronAppType, Arg, R>, arg: Arg): Promise<R> {
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, { signal: undefined, timeout: 0 });
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, kNoTimeout);
     return parseResult(result.value);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<ElectronAppType, Arg, R>, arg: Arg): Promise<structs.SmartHandle<R>> {
-    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, { signal: undefined, timeout: 0 });
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, kNoTimeout);
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 }

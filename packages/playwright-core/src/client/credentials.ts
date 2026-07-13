@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { kNoTimeout } from './timeoutSettings';
 import type { BrowserContext } from './browserContext';
 import type * as api from '../../types/types';
 import type * as channels from './channels';
@@ -26,20 +27,20 @@ export class Credentials implements api.Credentials {
   }
 
   async install(): Promise<void> {
-    await this._browserContext._channel.credentialsInstall({}, { signal: undefined, timeout: 0 });
+    await this._browserContext._channel.credentialsInstall({}, kNoTimeout);
   }
 
   async create(rpId: string, options: Omit<channels.BrowserContextCredentialsCreateParams, 'rpId'> = {}): Promise<channels.VirtualCredential> {
-    const { credential } = await this._browserContext._channel.credentialsCreate({ ...options, rpId }, { signal: undefined, timeout: 0 });
+    const { credential } = await this._browserContext._channel.credentialsCreate({ ...options, rpId }, kNoTimeout);
     return credential;
   }
 
   async get(options: channels.BrowserContextCredentialsGetParams = {}): Promise<channels.VirtualCredential[]> {
-    const { credentials } = await this._browserContext._channel.credentialsGet(options, { signal: undefined, timeout: 0 });
+    const { credentials } = await this._browserContext._channel.credentialsGet(options, kNoTimeout);
     return credentials;
   }
 
   async delete(id: string): Promise<void> {
-    await this._browserContext._channel.credentialsDelete({ id }, { signal: undefined, timeout: 0 });
+    await this._browserContext._channel.credentialsDelete({ id }, kNoTimeout);
   }
 }

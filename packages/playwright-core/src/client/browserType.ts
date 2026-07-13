@@ -76,7 +76,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       env: options.env ? envObjectToArray(options.env) : undefined,
     };
     return await this._wrapApiCall(async () => {
-      const browser = Browser.from((await this._channel.launch(launchOptions, { signal: options.signal, timeout: new TimeoutSettings().launchTimeout(options) })).browser);
+      const browser = Browser.from((await this._channel.launch(launchOptions, new TimeoutSettings().launchTimeout(options))).browser);
       browser._connectToBrowserType(this, options, logger);
       return browser;
     });
@@ -108,7 +108,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       userDataDir: (path.isAbsolute(userDataDir) || !userDataDir) ? userDataDir : path.resolve(userDataDir),
     };
     const context = await this._wrapApiCall(async () => {
-      const result = await this._channel.launchPersistentContext(persistentParams, { signal: options.signal, timeout: new TimeoutSettings().launchTimeout(options) });
+      const result = await this._channel.launchPersistentContext(persistentParams, new TimeoutSettings().launchTimeout(options));
       const browser = Browser.from(result.browser);
       browser._connectToBrowserType(this, options, logger);
       const context = BrowserContext.from(result.context);
@@ -169,7 +169,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       isLocal: params.isLocal,
       noDefaults: params.noDefaults,
       artifactsDir: params.artifactsDir,
-    }, { signal: undefined, timeout: new TimeoutSettings().timeout(params) });
+    }, new TimeoutSettings().timeout(params));
     return await this._browserFromConnectResult(result);
   }
 
@@ -186,7 +186,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       throw new Error('Connecting to workers is only supported in Chromium.');
     const result = await this._channel.connectToWorker({
       endpoint,
-    }, { signal: undefined, timeout: new TimeoutSettings().timeout(options) });
+    }, new TimeoutSettings().timeout(options));
     return Worker.from(result.worker);
   }
 }

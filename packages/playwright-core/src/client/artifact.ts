@@ -19,6 +19,7 @@ import fs from 'fs';
 import { ChannelOwner } from './channelOwner';
 import { Stream } from './stream';
 import { mkdirIfNeeded } from './fileUtils';
+import { kNoTimeout } from './timeoutSettings';
 
 import type * as channels from './channels';
 import type { Readable } from 'stream';
@@ -31,16 +32,16 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
   async pathAfterFinished(): Promise<string> {
     if (this._connection.isRemote())
       throw new Error(`Path is not available when connecting remotely. Use saveAs() to save a local copy.`);
-    return (await this._channel.pathAfterFinished({}, { signal: undefined, timeout: 0 })).value;
+    return (await this._channel.pathAfterFinished({}, kNoTimeout)).value;
   }
 
   async saveAs(path: string): Promise<void> {
     if (!this._connection.isRemote()) {
-      await this._channel.saveAs({ path }, { signal: undefined, timeout: 0 });
+      await this._channel.saveAs({ path }, kNoTimeout);
       return;
     }
 
-    const result = await this._channel.saveAsStream({}, { signal: undefined, timeout: 0 });
+    const result = await this._channel.saveAsStream({}, kNoTimeout);
     const stream = Stream.from(result.stream);
     await mkdirIfNeeded(path);
     await new Promise((resolve, reject) => {
@@ -51,11 +52,11 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
   }
 
   async failure(): Promise<string | null> {
-    return (await this._channel.failure({}, { signal: undefined, timeout: 0 })).error || null;
+    return (await this._channel.failure({}, kNoTimeout)).error || null;
   }
 
   async createReadStream(): Promise<Readable> {
-    const result = await this._channel.stream({}, { signal: undefined, timeout: 0 });
+    const result = await this._channel.stream({}, kNoTimeout);
     const stream = Stream.from(result.stream);
     return stream.stream();
   }
@@ -75,10 +76,10 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
   }
 
   async cancel(): Promise<void> {
-    return await this._channel.cancel({}, { signal: undefined, timeout: 0 });
+    return await this._channel.cancel({}, kNoTimeout);
   }
 
   async delete(): Promise<void> {
-    return await this._channel.delete({}, { signal: undefined, timeout: 0 });
+    return await this._channel.delete({}, kNoTimeout);
   }
 }

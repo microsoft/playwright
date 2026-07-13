@@ -16,6 +16,7 @@
 
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
+import { kNoTimeout } from './timeoutSettings';
 
 import type * as api from '../../types/types';
 import type * as channels from './channels';
@@ -38,19 +39,19 @@ export class Debugger extends ChannelOwner<channels.DebuggerChannel> implements 
   }
 
   async requestPause(): Promise<void> {
-    await this._channel.requestPause({}, { signal: undefined, timeout: 0 });
+    await this._channel.requestPause({}, kNoTimeout);
   }
 
   async resume(): Promise<void> {
-    await this._channel.resume({}, { signal: undefined, timeout: 0 });
+    await this._channel.resume({}, kNoTimeout);
   }
 
   async next(): Promise<void> {
-    await this._channel.next({}, { signal: undefined, timeout: 0 });
+    await this._channel.next({}, kNoTimeout);
   }
 
   async runTo(location: { file: string, line?: number, column?: number }): Promise<void> {
-    await this._channel.runTo({ location }, { signal: undefined, timeout: 0 });
+    await this._channel.runTo({ location }, kNoTimeout);
   }
 
   pausedDetails(): PausedDetails | null {

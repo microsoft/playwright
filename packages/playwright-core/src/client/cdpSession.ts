@@ -15,6 +15,7 @@
  */
 
 import { ChannelOwner } from './channelOwner';
+import { kNoTimeout } from './timeoutSettings';
 
 import type * as api from '../../types/types';
 import type { Protocol } from '../server/chromium/protocol';
@@ -48,11 +49,11 @@ export class CDPSession extends ChannelOwner<channels.CDPSessionChannel> impleme
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
-    const result = await this._channel.send({ method, params }, { signal: undefined, timeout: 0 });
+    const result = await this._channel.send({ method, params }, kNoTimeout);
     return result.result as Protocol.CommandReturnValues[T];
   }
 
   async detach() {
-    return await this._channel.detach({}, { signal: undefined, timeout: 0 });
+    return await this._channel.detach({}, kNoTimeout);
   }
 }

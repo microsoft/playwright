@@ -18,7 +18,7 @@
 import type { Binary, Channel, AndroidWebView, AndroidSelector, AndroidElementInfo, APIResponse, Metadata, ClientSideCallMetadata, SDKLanguage, WaitInfo, SetNetworkCookie, NetworkCookie, ResourceTiming, SecurityDetails, RequestSizes, RemoteAddr, ExpectedTextValue, SelectorEngine, FormField, LifecycleEvent, ConsoleMessagesFilter, RecorderSource, IndexedDBDatabase, SetOriginStorage, OriginStorage, RecordHarOptions, SerializedValue, SerializedArgument, SerializedError, StackFrame, VirtualCredential, Point, Rect, URLPattern, NameValue } from '@protocol/structs';
 export type { Binary, Channel, AndroidWebView, AndroidSelector, AndroidElementInfo, APIResponse, Metadata, ClientSideCallMetadata, SDKLanguage, WaitInfo, SetNetworkCookie, NetworkCookie, ResourceTiming, SecurityDetails, RequestSizes, RemoteAddr, ExpectedTextValue, SelectorEngine, FormField, LifecycleEvent, ConsoleMessagesFilter, RecorderSource, IndexedDBDatabase, SetOriginStorage, OriginStorage, RecordHarOptions, SerializedValue, SerializedArgument, SerializedError, StackFrame, VirtualCredential, Point, Rect, URLPattern, NameValue } from '@protocol/structs';
 
-export type CommandOptions = { signal: AbortSignal | undefined, timeout: number };
+export type TimeoutOptions = { signal: AbortSignal | undefined, timeout: number };
 
 // ----------- Initializer Traits -----------
 export type InitializerTraits<T> =
@@ -140,7 +140,7 @@ export interface AndroidEventTarget {
 }
 export interface AndroidChannel extends AndroidEventTarget, Channel {
   _type_Android: boolean;
-  devices(params: AndroidDevicesParams, options: CommandOptions): Promise<AndroidDevicesResult>;
+  devices(params: AndroidDevicesParams, options: TimeoutOptions): Promise<AndroidDevicesResult>;
 }
 export type AndroidDevicesParams = {
   host?: string,
@@ -167,8 +167,8 @@ export interface AndroidSocketEventTarget {
 }
 export interface AndroidSocketChannel extends AndroidSocketEventTarget, Channel {
   _type_AndroidSocket: boolean;
-  write(params: AndroidSocketWriteParams, options: CommandOptions): Promise<AndroidSocketWriteResult>;
-  close(params: AndroidSocketCloseParams, options: CommandOptions): Promise<AndroidSocketCloseResult>;
+  write(params: AndroidSocketWriteParams, options: TimeoutOptions): Promise<AndroidSocketWriteResult>;
+  close(params: AndroidSocketCloseParams, options: TimeoutOptions): Promise<AndroidSocketCloseResult>;
 }
 export type AndroidSocketDataEvent = {
   data: Binary,
@@ -202,30 +202,30 @@ export interface AndroidDeviceEventTarget {
 }
 export interface AndroidDeviceChannel extends AndroidDeviceEventTarget, Channel {
   _type_AndroidDevice: boolean;
-  wait(params: AndroidDeviceWaitParams, options: CommandOptions): Promise<AndroidDeviceWaitResult>;
-  fill(params: AndroidDeviceFillParams, options: CommandOptions): Promise<AndroidDeviceFillResult>;
-  tap(params: AndroidDeviceTapParams, options: CommandOptions): Promise<AndroidDeviceTapResult>;
-  drag(params: AndroidDeviceDragParams, options: CommandOptions): Promise<AndroidDeviceDragResult>;
-  fling(params: AndroidDeviceFlingParams, options: CommandOptions): Promise<AndroidDeviceFlingResult>;
-  longTap(params: AndroidDeviceLongTapParams, options: CommandOptions): Promise<AndroidDeviceLongTapResult>;
-  pinchClose(params: AndroidDevicePinchCloseParams, options: CommandOptions): Promise<AndroidDevicePinchCloseResult>;
-  pinchOpen(params: AndroidDevicePinchOpenParams, options: CommandOptions): Promise<AndroidDevicePinchOpenResult>;
-  scroll(params: AndroidDeviceScrollParams, options: CommandOptions): Promise<AndroidDeviceScrollResult>;
-  swipe(params: AndroidDeviceSwipeParams, options: CommandOptions): Promise<AndroidDeviceSwipeResult>;
-  info(params: AndroidDeviceInfoParams, options: CommandOptions): Promise<AndroidDeviceInfoResult>;
-  screenshot(params: AndroidDeviceScreenshotParams, options: CommandOptions): Promise<AndroidDeviceScreenshotResult>;
-  inputType(params: AndroidDeviceInputTypeParams, options: CommandOptions): Promise<AndroidDeviceInputTypeResult>;
-  inputPress(params: AndroidDeviceInputPressParams, options: CommandOptions): Promise<AndroidDeviceInputPressResult>;
-  inputTap(params: AndroidDeviceInputTapParams, options: CommandOptions): Promise<AndroidDeviceInputTapResult>;
-  inputSwipe(params: AndroidDeviceInputSwipeParams, options: CommandOptions): Promise<AndroidDeviceInputSwipeResult>;
-  inputDrag(params: AndroidDeviceInputDragParams, options: CommandOptions): Promise<AndroidDeviceInputDragResult>;
-  launchBrowser(params: AndroidDeviceLaunchBrowserParams, options: CommandOptions): Promise<AndroidDeviceLaunchBrowserResult>;
-  open(params: AndroidDeviceOpenParams, options: CommandOptions): Promise<AndroidDeviceOpenResult>;
-  shell(params: AndroidDeviceShellParams, options: CommandOptions): Promise<AndroidDeviceShellResult>;
-  installApk(params: AndroidDeviceInstallApkParams, options: CommandOptions): Promise<AndroidDeviceInstallApkResult>;
-  push(params: AndroidDevicePushParams, options: CommandOptions): Promise<AndroidDevicePushResult>;
-  connectToWebView(params: AndroidDeviceConnectToWebViewParams, options: CommandOptions): Promise<AndroidDeviceConnectToWebViewResult>;
-  close(params: AndroidDeviceCloseParams, options: CommandOptions): Promise<AndroidDeviceCloseResult>;
+  wait(params: AndroidDeviceWaitParams, options: TimeoutOptions): Promise<AndroidDeviceWaitResult>;
+  fill(params: AndroidDeviceFillParams, options: TimeoutOptions): Promise<AndroidDeviceFillResult>;
+  tap(params: AndroidDeviceTapParams, options: TimeoutOptions): Promise<AndroidDeviceTapResult>;
+  drag(params: AndroidDeviceDragParams, options: TimeoutOptions): Promise<AndroidDeviceDragResult>;
+  fling(params: AndroidDeviceFlingParams, options: TimeoutOptions): Promise<AndroidDeviceFlingResult>;
+  longTap(params: AndroidDeviceLongTapParams, options: TimeoutOptions): Promise<AndroidDeviceLongTapResult>;
+  pinchClose(params: AndroidDevicePinchCloseParams, options: TimeoutOptions): Promise<AndroidDevicePinchCloseResult>;
+  pinchOpen(params: AndroidDevicePinchOpenParams, options: TimeoutOptions): Promise<AndroidDevicePinchOpenResult>;
+  scroll(params: AndroidDeviceScrollParams, options: TimeoutOptions): Promise<AndroidDeviceScrollResult>;
+  swipe(params: AndroidDeviceSwipeParams, options: TimeoutOptions): Promise<AndroidDeviceSwipeResult>;
+  info(params: AndroidDeviceInfoParams, options: TimeoutOptions): Promise<AndroidDeviceInfoResult>;
+  screenshot(params: AndroidDeviceScreenshotParams, options: TimeoutOptions): Promise<AndroidDeviceScreenshotResult>;
+  inputType(params: AndroidDeviceInputTypeParams, options: TimeoutOptions): Promise<AndroidDeviceInputTypeResult>;
+  inputPress(params: AndroidDeviceInputPressParams, options: TimeoutOptions): Promise<AndroidDeviceInputPressResult>;
+  inputTap(params: AndroidDeviceInputTapParams, options: TimeoutOptions): Promise<AndroidDeviceInputTapResult>;
+  inputSwipe(params: AndroidDeviceInputSwipeParams, options: TimeoutOptions): Promise<AndroidDeviceInputSwipeResult>;
+  inputDrag(params: AndroidDeviceInputDragParams, options: TimeoutOptions): Promise<AndroidDeviceInputDragResult>;
+  launchBrowser(params: AndroidDeviceLaunchBrowserParams, options: TimeoutOptions): Promise<AndroidDeviceLaunchBrowserResult>;
+  open(params: AndroidDeviceOpenParams, options: TimeoutOptions): Promise<AndroidDeviceOpenResult>;
+  shell(params: AndroidDeviceShellParams, options: TimeoutOptions): Promise<AndroidDeviceShellResult>;
+  installApk(params: AndroidDeviceInstallApkParams, options: TimeoutOptions): Promise<AndroidDeviceInstallApkResult>;
+  push(params: AndroidDevicePushParams, options: TimeoutOptions): Promise<AndroidDevicePushResult>;
+  connectToWebView(params: AndroidDeviceConnectToWebViewParams, options: TimeoutOptions): Promise<AndroidDeviceConnectToWebViewResult>;
+  close(params: AndroidDeviceCloseParams, options: TimeoutOptions): Promise<AndroidDeviceCloseResult>;
 }
 export type AndroidDeviceCloseEvent = {};
 export type AndroidDeviceWebViewAddedEvent = {
@@ -582,12 +582,12 @@ export interface APIRequestContextEventTarget {
 }
 export interface APIRequestContextChannel extends APIRequestContextEventTarget, Channel {
   _type_APIRequestContext: boolean;
-  fetch(params: APIRequestContextFetchParams, options: CommandOptions): Promise<APIRequestContextFetchResult>;
-  fetchResponseBody(params: APIRequestContextFetchResponseBodyParams, options: CommandOptions): Promise<APIRequestContextFetchResponseBodyResult>;
-  fetchLog(params: APIRequestContextFetchLogParams, options: CommandOptions): Promise<APIRequestContextFetchLogResult>;
-  storageState(params: APIRequestContextStorageStateParams, options: CommandOptions): Promise<APIRequestContextStorageStateResult>;
-  disposeAPIResponse(params: APIRequestContextDisposeAPIResponseParams, options: CommandOptions): Promise<APIRequestContextDisposeAPIResponseResult>;
-  dispose(params: APIRequestContextDisposeParams, options: CommandOptions): Promise<APIRequestContextDisposeResult>;
+  fetch(params: APIRequestContextFetchParams, options: TimeoutOptions): Promise<APIRequestContextFetchResult>;
+  fetchResponseBody(params: APIRequestContextFetchResponseBodyParams, options: TimeoutOptions): Promise<APIRequestContextFetchResponseBodyResult>;
+  fetchLog(params: APIRequestContextFetchLogParams, options: TimeoutOptions): Promise<APIRequestContextFetchLogResult>;
+  storageState(params: APIRequestContextStorageStateParams, options: TimeoutOptions): Promise<APIRequestContextStorageStateResult>;
+  disposeAPIResponse(params: APIRequestContextDisposeAPIResponseParams, options: TimeoutOptions): Promise<APIRequestContextDisposeAPIResponseResult>;
+  dispose(params: APIRequestContextDisposeParams, options: TimeoutOptions): Promise<APIRequestContextDisposeResult>;
 }
 export type APIRequestContextFetchParams = {
   url: string,
@@ -675,13 +675,13 @@ export interface ArtifactEventTarget {
 }
 export interface ArtifactChannel extends ArtifactEventTarget, Channel {
   _type_Artifact: boolean;
-  pathAfterFinished(params: ArtifactPathAfterFinishedParams, options: CommandOptions): Promise<ArtifactPathAfterFinishedResult>;
-  saveAs(params: ArtifactSaveAsParams, options: CommandOptions): Promise<ArtifactSaveAsResult>;
-  saveAsStream(params: ArtifactSaveAsStreamParams, options: CommandOptions): Promise<ArtifactSaveAsStreamResult>;
-  failure(params: ArtifactFailureParams, options: CommandOptions): Promise<ArtifactFailureResult>;
-  stream(params: ArtifactStreamParams, options: CommandOptions): Promise<ArtifactStreamResult>;
-  cancel(params: ArtifactCancelParams, options: CommandOptions): Promise<ArtifactCancelResult>;
-  delete(params: ArtifactDeleteParams, options: CommandOptions): Promise<ArtifactDeleteResult>;
+  pathAfterFinished(params: ArtifactPathAfterFinishedParams, options: TimeoutOptions): Promise<ArtifactPathAfterFinishedResult>;
+  saveAs(params: ArtifactSaveAsParams, options: TimeoutOptions): Promise<ArtifactSaveAsResult>;
+  saveAsStream(params: ArtifactSaveAsStreamParams, options: TimeoutOptions): Promise<ArtifactSaveAsStreamResult>;
+  failure(params: ArtifactFailureParams, options: TimeoutOptions): Promise<ArtifactFailureResult>;
+  stream(params: ArtifactStreamParams, options: TimeoutOptions): Promise<ArtifactStreamResult>;
+  cancel(params: ArtifactCancelParams, options: TimeoutOptions): Promise<ArtifactCancelResult>;
+  delete(params: ArtifactDeleteParams, options: TimeoutOptions): Promise<ArtifactDeleteResult>;
 }
 export type ArtifactPathAfterFinishedParams = {};
 export type ArtifactPathAfterFinishedOptions = {};
@@ -726,8 +726,8 @@ export interface StreamEventTarget {
 }
 export interface StreamChannel extends StreamEventTarget, Channel {
   _type_Stream: boolean;
-  read(params: StreamReadParams, options: CommandOptions): Promise<StreamReadResult>;
-  close(params: StreamCloseParams, options: CommandOptions): Promise<StreamCloseResult>;
+  read(params: StreamReadParams, options: TimeoutOptions): Promise<StreamReadResult>;
+  close(params: StreamCloseParams, options: TimeoutOptions): Promise<StreamCloseResult>;
 }
 export type StreamReadParams = {
   size?: number,
@@ -751,8 +751,8 @@ export interface WritableStreamEventTarget {
 }
 export interface WritableStreamChannel extends WritableStreamEventTarget, Channel {
   _type_WritableStream: boolean;
-  write(params: WritableStreamWriteParams, options: CommandOptions): Promise<WritableStreamWriteResult>;
-  close(params: WritableStreamCloseParams, options: CommandOptions): Promise<WritableStreamCloseResult>;
+  write(params: WritableStreamWriteParams, options: TimeoutOptions): Promise<WritableStreamWriteResult>;
+  close(params: WritableStreamCloseParams, options: TimeoutOptions): Promise<WritableStreamCloseResult>;
 }
 export type WritableStreamWriteParams = {
   binary: Binary,
@@ -780,17 +780,17 @@ export interface BrowserEventTarget {
 }
 export interface BrowserChannel extends BrowserEventTarget, Channel {
   _type_Browser: boolean;
-  startServer(params: BrowserStartServerParams, options: CommandOptions): Promise<BrowserStartServerResult>;
-  stopServer(params: BrowserStopServerParams, options: CommandOptions): Promise<BrowserStopServerResult>;
-  close(params: BrowserCloseParams, options: CommandOptions): Promise<BrowserCloseResult>;
-  killForTests(params: BrowserKillForTestsParams, options: CommandOptions): Promise<BrowserKillForTestsResult>;
-  defaultUserAgentForTest(params: BrowserDefaultUserAgentForTestParams, options: CommandOptions): Promise<BrowserDefaultUserAgentForTestResult>;
-  newContext(params: BrowserNewContextParams, options: CommandOptions): Promise<BrowserNewContextResult>;
-  newContextForReuse(params: BrowserNewContextForReuseParams, options: CommandOptions): Promise<BrowserNewContextForReuseResult>;
-  disconnectFromReusedContext(params: BrowserDisconnectFromReusedContextParams, options: CommandOptions): Promise<BrowserDisconnectFromReusedContextResult>;
-  newBrowserCDPSession(params: BrowserNewBrowserCDPSessionParams, options: CommandOptions): Promise<BrowserNewBrowserCDPSessionResult>;
-  startTracing(params: BrowserStartTracingParams, options: CommandOptions): Promise<BrowserStartTracingResult>;
-  stopTracing(params: BrowserStopTracingParams, options: CommandOptions): Promise<BrowserStopTracingResult>;
+  startServer(params: BrowserStartServerParams, options: TimeoutOptions): Promise<BrowserStartServerResult>;
+  stopServer(params: BrowserStopServerParams, options: TimeoutOptions): Promise<BrowserStopServerResult>;
+  close(params: BrowserCloseParams, options: TimeoutOptions): Promise<BrowserCloseResult>;
+  killForTests(params: BrowserKillForTestsParams, options: TimeoutOptions): Promise<BrowserKillForTestsResult>;
+  defaultUserAgentForTest(params: BrowserDefaultUserAgentForTestParams, options: TimeoutOptions): Promise<BrowserDefaultUserAgentForTestResult>;
+  newContext(params: BrowserNewContextParams, options: TimeoutOptions): Promise<BrowserNewContextResult>;
+  newContextForReuse(params: BrowserNewContextForReuseParams, options: TimeoutOptions): Promise<BrowserNewContextForReuseResult>;
+  disconnectFromReusedContext(params: BrowserDisconnectFromReusedContextParams, options: TimeoutOptions): Promise<BrowserDisconnectFromReusedContextResult>;
+  newBrowserCDPSession(params: BrowserNewBrowserCDPSessionParams, options: TimeoutOptions): Promise<BrowserNewBrowserCDPSessionResult>;
+  startTracing(params: BrowserStartTracingParams, options: TimeoutOptions): Promise<BrowserStartTracingResult>;
+  stopTracing(params: BrowserStopTracingParams, options: TimeoutOptions): Promise<BrowserStopTracingResult>;
 }
 export type BrowserContextEvent = {
   context: BrowserContextChannel,
@@ -1258,45 +1258,45 @@ export interface BrowserContextEventTarget {
 }
 export interface BrowserContextChannel extends BrowserContextEventTarget, Channel {
   _type_BrowserContext: boolean;
-  addCookies(params: BrowserContextAddCookiesParams, options: CommandOptions): Promise<BrowserContextAddCookiesResult>;
-  addInitScript(params: BrowserContextAddInitScriptParams, options: CommandOptions): Promise<BrowserContextAddInitScriptResult>;
-  clearCookies(params: BrowserContextClearCookiesParams, options: CommandOptions): Promise<BrowserContextClearCookiesResult>;
-  clearPermissions(params: BrowserContextClearPermissionsParams, options: CommandOptions): Promise<BrowserContextClearPermissionsResult>;
-  close(params: BrowserContextCloseParams, options: CommandOptions): Promise<BrowserContextCloseResult>;
-  cookies(params: BrowserContextCookiesParams, options: CommandOptions): Promise<BrowserContextCookiesResult>;
-  exposeBinding(params: BrowserContextExposeBindingParams, options: CommandOptions): Promise<BrowserContextExposeBindingResult>;
-  grantPermissions(params: BrowserContextGrantPermissionsParams, options: CommandOptions): Promise<BrowserContextGrantPermissionsResult>;
-  newPage(params: BrowserContextNewPageParams, options: CommandOptions): Promise<BrowserContextNewPageResult>;
-  registerSelectorEngine(params: BrowserContextRegisterSelectorEngineParams, options: CommandOptions): Promise<BrowserContextRegisterSelectorEngineResult>;
-  setTestIdAttributeName(params: BrowserContextSetTestIdAttributeNameParams, options: CommandOptions): Promise<BrowserContextSetTestIdAttributeNameResult>;
-  setExtraHTTPHeaders(params: BrowserContextSetExtraHTTPHeadersParams, options: CommandOptions): Promise<BrowserContextSetExtraHTTPHeadersResult>;
-  setGeolocation(params: BrowserContextSetGeolocationParams, options: CommandOptions): Promise<BrowserContextSetGeolocationResult>;
-  setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, options: CommandOptions): Promise<BrowserContextSetHTTPCredentialsResult>;
-  setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams, options: CommandOptions): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
-  routeAPIRequestsFromHar(params: BrowserContextRouteAPIRequestsFromHarParams, options: CommandOptions): Promise<BrowserContextRouteAPIRequestsFromHarResult>;
-  unrouteAPIRequestsFromHar(params: BrowserContextUnrouteAPIRequestsFromHarParams, options: CommandOptions): Promise<BrowserContextUnrouteAPIRequestsFromHarResult>;
-  setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams, options: CommandOptions): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
-  setOffline(params: BrowserContextSetOfflineParams, options: CommandOptions): Promise<BrowserContextSetOfflineResult>;
-  storageState(params: BrowserContextStorageStateParams, options: CommandOptions): Promise<BrowserContextStorageStateResult>;
-  setStorageState(params: BrowserContextSetStorageStateParams, options: CommandOptions): Promise<BrowserContextSetStorageStateResult>;
-  pause(params: BrowserContextPauseParams, options: CommandOptions): Promise<BrowserContextPauseResult>;
-  enableRecorder(params: BrowserContextEnableRecorderParams, options: CommandOptions): Promise<BrowserContextEnableRecorderResult>;
-  disableRecorder(params: BrowserContextDisableRecorderParams, options: CommandOptions): Promise<BrowserContextDisableRecorderResult>;
-  exposeConsoleApi(params: BrowserContextExposeConsoleApiParams, options: CommandOptions): Promise<BrowserContextExposeConsoleApiResult>;
-  newCDPSession(params: BrowserContextNewCDPSessionParams, options: CommandOptions): Promise<BrowserContextNewCDPSessionResult>;
-  createTempFiles(params: BrowserContextCreateTempFilesParams, options: CommandOptions): Promise<BrowserContextCreateTempFilesResult>;
-  updateSubscription(params: BrowserContextUpdateSubscriptionParams, options: CommandOptions): Promise<BrowserContextUpdateSubscriptionResult>;
-  clockFastForward(params: BrowserContextClockFastForwardParams, options: CommandOptions): Promise<BrowserContextClockFastForwardResult>;
-  clockInstall(params: BrowserContextClockInstallParams, options: CommandOptions): Promise<BrowserContextClockInstallResult>;
-  clockPauseAt(params: BrowserContextClockPauseAtParams, options: CommandOptions): Promise<BrowserContextClockPauseAtResult>;
-  clockResume(params: BrowserContextClockResumeParams, options: CommandOptions): Promise<BrowserContextClockResumeResult>;
-  clockRunFor(params: BrowserContextClockRunForParams, options: CommandOptions): Promise<BrowserContextClockRunForResult>;
-  clockSetFixedTime(params: BrowserContextClockSetFixedTimeParams, options: CommandOptions): Promise<BrowserContextClockSetFixedTimeResult>;
-  clockSetSystemTime(params: BrowserContextClockSetSystemTimeParams, options: CommandOptions): Promise<BrowserContextClockSetSystemTimeResult>;
-  credentialsInstall(params: BrowserContextCredentialsInstallParams, options: CommandOptions): Promise<BrowserContextCredentialsInstallResult>;
-  credentialsCreate(params: BrowserContextCredentialsCreateParams, options: CommandOptions): Promise<BrowserContextCredentialsCreateResult>;
-  credentialsGet(params: BrowserContextCredentialsGetParams, options: CommandOptions): Promise<BrowserContextCredentialsGetResult>;
-  credentialsDelete(params: BrowserContextCredentialsDeleteParams, options: CommandOptions): Promise<BrowserContextCredentialsDeleteResult>;
+  addCookies(params: BrowserContextAddCookiesParams, options: TimeoutOptions): Promise<BrowserContextAddCookiesResult>;
+  addInitScript(params: BrowserContextAddInitScriptParams, options: TimeoutOptions): Promise<BrowserContextAddInitScriptResult>;
+  clearCookies(params: BrowserContextClearCookiesParams, options: TimeoutOptions): Promise<BrowserContextClearCookiesResult>;
+  clearPermissions(params: BrowserContextClearPermissionsParams, options: TimeoutOptions): Promise<BrowserContextClearPermissionsResult>;
+  close(params: BrowserContextCloseParams, options: TimeoutOptions): Promise<BrowserContextCloseResult>;
+  cookies(params: BrowserContextCookiesParams, options: TimeoutOptions): Promise<BrowserContextCookiesResult>;
+  exposeBinding(params: BrowserContextExposeBindingParams, options: TimeoutOptions): Promise<BrowserContextExposeBindingResult>;
+  grantPermissions(params: BrowserContextGrantPermissionsParams, options: TimeoutOptions): Promise<BrowserContextGrantPermissionsResult>;
+  newPage(params: BrowserContextNewPageParams, options: TimeoutOptions): Promise<BrowserContextNewPageResult>;
+  registerSelectorEngine(params: BrowserContextRegisterSelectorEngineParams, options: TimeoutOptions): Promise<BrowserContextRegisterSelectorEngineResult>;
+  setTestIdAttributeName(params: BrowserContextSetTestIdAttributeNameParams, options: TimeoutOptions): Promise<BrowserContextSetTestIdAttributeNameResult>;
+  setExtraHTTPHeaders(params: BrowserContextSetExtraHTTPHeadersParams, options: TimeoutOptions): Promise<BrowserContextSetExtraHTTPHeadersResult>;
+  setGeolocation(params: BrowserContextSetGeolocationParams, options: TimeoutOptions): Promise<BrowserContextSetGeolocationResult>;
+  setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, options: TimeoutOptions): Promise<BrowserContextSetHTTPCredentialsResult>;
+  setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams, options: TimeoutOptions): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
+  routeAPIRequestsFromHar(params: BrowserContextRouteAPIRequestsFromHarParams, options: TimeoutOptions): Promise<BrowserContextRouteAPIRequestsFromHarResult>;
+  unrouteAPIRequestsFromHar(params: BrowserContextUnrouteAPIRequestsFromHarParams, options: TimeoutOptions): Promise<BrowserContextUnrouteAPIRequestsFromHarResult>;
+  setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams, options: TimeoutOptions): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
+  setOffline(params: BrowserContextSetOfflineParams, options: TimeoutOptions): Promise<BrowserContextSetOfflineResult>;
+  storageState(params: BrowserContextStorageStateParams, options: TimeoutOptions): Promise<BrowserContextStorageStateResult>;
+  setStorageState(params: BrowserContextSetStorageStateParams, options: TimeoutOptions): Promise<BrowserContextSetStorageStateResult>;
+  pause(params: BrowserContextPauseParams, options: TimeoutOptions): Promise<BrowserContextPauseResult>;
+  enableRecorder(params: BrowserContextEnableRecorderParams, options: TimeoutOptions): Promise<BrowserContextEnableRecorderResult>;
+  disableRecorder(params: BrowserContextDisableRecorderParams, options: TimeoutOptions): Promise<BrowserContextDisableRecorderResult>;
+  exposeConsoleApi(params: BrowserContextExposeConsoleApiParams, options: TimeoutOptions): Promise<BrowserContextExposeConsoleApiResult>;
+  newCDPSession(params: BrowserContextNewCDPSessionParams, options: TimeoutOptions): Promise<BrowserContextNewCDPSessionResult>;
+  createTempFiles(params: BrowserContextCreateTempFilesParams, options: TimeoutOptions): Promise<BrowserContextCreateTempFilesResult>;
+  updateSubscription(params: BrowserContextUpdateSubscriptionParams, options: TimeoutOptions): Promise<BrowserContextUpdateSubscriptionResult>;
+  clockFastForward(params: BrowserContextClockFastForwardParams, options: TimeoutOptions): Promise<BrowserContextClockFastForwardResult>;
+  clockInstall(params: BrowserContextClockInstallParams, options: TimeoutOptions): Promise<BrowserContextClockInstallResult>;
+  clockPauseAt(params: BrowserContextClockPauseAtParams, options: TimeoutOptions): Promise<BrowserContextClockPauseAtResult>;
+  clockResume(params: BrowserContextClockResumeParams, options: TimeoutOptions): Promise<BrowserContextClockResumeResult>;
+  clockRunFor(params: BrowserContextClockRunForParams, options: TimeoutOptions): Promise<BrowserContextClockRunForResult>;
+  clockSetFixedTime(params: BrowserContextClockSetFixedTimeParams, options: TimeoutOptions): Promise<BrowserContextClockSetFixedTimeResult>;
+  clockSetSystemTime(params: BrowserContextClockSetSystemTimeParams, options: TimeoutOptions): Promise<BrowserContextClockSetSystemTimeResult>;
+  credentialsInstall(params: BrowserContextCredentialsInstallParams, options: TimeoutOptions): Promise<BrowserContextCredentialsInstallResult>;
+  credentialsCreate(params: BrowserContextCredentialsCreateParams, options: TimeoutOptions): Promise<BrowserContextCredentialsCreateResult>;
+  credentialsGet(params: BrowserContextCredentialsGetParams, options: TimeoutOptions): Promise<BrowserContextCredentialsGetResult>;
+  credentialsDelete(params: BrowserContextCredentialsDeleteParams, options: TimeoutOptions): Promise<BrowserContextCredentialsDeleteResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1769,10 +1769,10 @@ export interface BrowserTypeEventTarget {
 }
 export interface BrowserTypeChannel extends BrowserTypeEventTarget, Channel {
   _type_BrowserType: boolean;
-  launch(params: BrowserTypeLaunchParams, options: CommandOptions): Promise<BrowserTypeLaunchResult>;
-  launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, options: CommandOptions): Promise<BrowserTypeLaunchPersistentContextResult>;
-  connectOverCDP(params: BrowserTypeConnectOverCDPParams, options: CommandOptions): Promise<BrowserTypeConnectOverCDPResult>;
-  connectToWorker(params: BrowserTypeConnectToWorkerParams, options: CommandOptions): Promise<BrowserTypeConnectToWorkerResult>;
+  launch(params: BrowserTypeLaunchParams, options: TimeoutOptions): Promise<BrowserTypeLaunchResult>;
+  launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, options: TimeoutOptions): Promise<BrowserTypeLaunchPersistentContextResult>;
+  connectOverCDP(params: BrowserTypeConnectOverCDPParams, options: TimeoutOptions): Promise<BrowserTypeConnectOverCDPResult>;
+  connectToWorker(params: BrowserTypeConnectToWorkerParams, options: TimeoutOptions): Promise<BrowserTypeConnectToWorkerResult>;
 }
 export type BrowserTypeLaunchParams = {
   channel?: string,
@@ -2047,7 +2047,7 @@ export interface DisposableEventTarget {
 }
 export interface DisposableChannel extends DisposableEventTarget, Channel {
   _type_Disposable: boolean;
-  dispose(params: DisposableDisposeParams, options: CommandOptions): Promise<DisposableDisposeResult>;
+  dispose(params: DisposableDisposeParams, options: TimeoutOptions): Promise<DisposableDisposeResult>;
 }
 export type DisposableDisposeParams = {};
 export type DisposableDisposeOptions = {};
@@ -2062,7 +2062,7 @@ export interface ElectronEventTarget {
 }
 export interface ElectronChannel extends ElectronEventTarget, Channel {
   _type_Electron: boolean;
-  launch(params: ElectronLaunchParams, options: CommandOptions): Promise<ElectronLaunchResult>;
+  launch(params: ElectronLaunchParams, options: TimeoutOptions): Promise<ElectronLaunchResult>;
 }
 export type ElectronLaunchParams = {
   executablePath?: string,
@@ -2167,10 +2167,10 @@ export interface ElectronApplicationEventTarget {
 }
 export interface ElectronApplicationChannel extends ElectronApplicationEventTarget, Channel {
   _type_ElectronApplication: boolean;
-  browserWindow(params: ElectronApplicationBrowserWindowParams, options: CommandOptions): Promise<ElectronApplicationBrowserWindowResult>;
-  evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, options: CommandOptions): Promise<ElectronApplicationEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams, options: CommandOptions): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
-  updateSubscription(params: ElectronApplicationUpdateSubscriptionParams, options: CommandOptions): Promise<ElectronApplicationUpdateSubscriptionResult>;
+  browserWindow(params: ElectronApplicationBrowserWindowParams, options: TimeoutOptions): Promise<ElectronApplicationBrowserWindowResult>;
+  evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, options: TimeoutOptions): Promise<ElectronApplicationEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams, options: TimeoutOptions): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
+  updateSubscription(params: ElectronApplicationUpdateSubscriptionParams, options: TimeoutOptions): Promise<ElectronApplicationUpdateSubscriptionResult>;
 }
 export type ElectronApplicationCloseEvent = {};
 export type ElectronApplicationConsoleEvent = {
@@ -2242,55 +2242,55 @@ export interface FrameEventTarget {
 }
 export interface FrameChannel extends FrameEventTarget, Channel {
   _type_Frame: boolean;
-  evalOnSelector(params: FrameEvalOnSelectorParams, options: CommandOptions): Promise<FrameEvalOnSelectorResult>;
-  evalOnSelectorAll(params: FrameEvalOnSelectorAllParams, options: CommandOptions): Promise<FrameEvalOnSelectorAllResult>;
-  addScriptTag(params: FrameAddScriptTagParams, options: CommandOptions): Promise<FrameAddScriptTagResult>;
-  addStyleTag(params: FrameAddStyleTagParams, options: CommandOptions): Promise<FrameAddStyleTagResult>;
-  ariaSnapshot(params: FrameAriaSnapshotParams, options: CommandOptions): Promise<FrameAriaSnapshotResult>;
-  blur(params: FrameBlurParams, options: CommandOptions): Promise<FrameBlurResult>;
-  check(params: FrameCheckParams, options: CommandOptions): Promise<FrameCheckResult>;
-  click(params: FrameClickParams, options: CommandOptions): Promise<FrameClickResult>;
-  content(params: FrameContentParams, options: CommandOptions): Promise<FrameContentResult>;
-  dragAndDrop(params: FrameDragAndDropParams, options: CommandOptions): Promise<FrameDragAndDropResult>;
-  drop(params: FrameDropParams, options: CommandOptions): Promise<FrameDropResult>;
-  dblclick(params: FrameDblclickParams, options: CommandOptions): Promise<FrameDblclickResult>;
-  dispatchEvent(params: FrameDispatchEventParams, options: CommandOptions): Promise<FrameDispatchEventResult>;
-  evaluateExpression(params: FrameEvaluateExpressionParams, options: CommandOptions): Promise<FrameEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: FrameEvaluateExpressionHandleParams, options: CommandOptions): Promise<FrameEvaluateExpressionHandleResult>;
-  fill(params: FrameFillParams, options: CommandOptions): Promise<FrameFillResult>;
-  focus(params: FrameFocusParams, options: CommandOptions): Promise<FrameFocusResult>;
-  frameElement(params: FrameFrameElementParams, options: CommandOptions): Promise<FrameFrameElementResult>;
-  resolveSelector(params: FrameResolveSelectorParams, options: CommandOptions): Promise<FrameResolveSelectorResult>;
-  highlight(params: FrameHighlightParams, options: CommandOptions): Promise<FrameHighlightResult>;
-  hideHighlight(params: FrameHideHighlightParams, options: CommandOptions): Promise<FrameHideHighlightResult>;
-  getAttribute(params: FrameGetAttributeParams, options: CommandOptions): Promise<FrameGetAttributeResult>;
-  goto(params: FrameGotoParams, options: CommandOptions): Promise<FrameGotoResult>;
-  hover(params: FrameHoverParams, options: CommandOptions): Promise<FrameHoverResult>;
-  innerHTML(params: FrameInnerHTMLParams, options: CommandOptions): Promise<FrameInnerHTMLResult>;
-  innerText(params: FrameInnerTextParams, options: CommandOptions): Promise<FrameInnerTextResult>;
-  inputValue(params: FrameInputValueParams, options: CommandOptions): Promise<FrameInputValueResult>;
-  isChecked(params: FrameIsCheckedParams, options: CommandOptions): Promise<FrameIsCheckedResult>;
-  isDisabled(params: FrameIsDisabledParams, options: CommandOptions): Promise<FrameIsDisabledResult>;
-  isEnabled(params: FrameIsEnabledParams, options: CommandOptions): Promise<FrameIsEnabledResult>;
-  isHidden(params: FrameIsHiddenParams, options: CommandOptions): Promise<FrameIsHiddenResult>;
-  isVisible(params: FrameIsVisibleParams, options: CommandOptions): Promise<FrameIsVisibleResult>;
-  isEditable(params: FrameIsEditableParams, options: CommandOptions): Promise<FrameIsEditableResult>;
-  press(params: FramePressParams, options: CommandOptions): Promise<FramePressResult>;
-  querySelector(params: FrameQuerySelectorParams, options: CommandOptions): Promise<FrameQuerySelectorResult>;
-  querySelectorAll(params: FrameQuerySelectorAllParams, options: CommandOptions): Promise<FrameQuerySelectorAllResult>;
-  queryCount(params: FrameQueryCountParams, options: CommandOptions): Promise<FrameQueryCountResult>;
-  selectOption(params: FrameSelectOptionParams, options: CommandOptions): Promise<FrameSelectOptionResult>;
-  setContent(params: FrameSetContentParams, options: CommandOptions): Promise<FrameSetContentResult>;
-  setInputFiles(params: FrameSetInputFilesParams, options: CommandOptions): Promise<FrameSetInputFilesResult>;
-  tap(params: FrameTapParams, options: CommandOptions): Promise<FrameTapResult>;
-  textContent(params: FrameTextContentParams, options: CommandOptions): Promise<FrameTextContentResult>;
-  title(params: FrameTitleParams, options: CommandOptions): Promise<FrameTitleResult>;
-  type(params: FrameTypeParams, options: CommandOptions): Promise<FrameTypeResult>;
-  uncheck(params: FrameUncheckParams, options: CommandOptions): Promise<FrameUncheckResult>;
-  waitForTimeout(params: FrameWaitForTimeoutParams, options: CommandOptions): Promise<FrameWaitForTimeoutResult>;
-  waitForFunction(params: FrameWaitForFunctionParams, options: CommandOptions): Promise<FrameWaitForFunctionResult>;
-  waitForSelector(params: FrameWaitForSelectorParams, options: CommandOptions): Promise<FrameWaitForSelectorResult>;
-  expect(params: FrameExpectParams, options: CommandOptions): Promise<FrameExpectResult>;
+  evalOnSelector(params: FrameEvalOnSelectorParams, options: TimeoutOptions): Promise<FrameEvalOnSelectorResult>;
+  evalOnSelectorAll(params: FrameEvalOnSelectorAllParams, options: TimeoutOptions): Promise<FrameEvalOnSelectorAllResult>;
+  addScriptTag(params: FrameAddScriptTagParams, options: TimeoutOptions): Promise<FrameAddScriptTagResult>;
+  addStyleTag(params: FrameAddStyleTagParams, options: TimeoutOptions): Promise<FrameAddStyleTagResult>;
+  ariaSnapshot(params: FrameAriaSnapshotParams, options: TimeoutOptions): Promise<FrameAriaSnapshotResult>;
+  blur(params: FrameBlurParams, options: TimeoutOptions): Promise<FrameBlurResult>;
+  check(params: FrameCheckParams, options: TimeoutOptions): Promise<FrameCheckResult>;
+  click(params: FrameClickParams, options: TimeoutOptions): Promise<FrameClickResult>;
+  content(params: FrameContentParams, options: TimeoutOptions): Promise<FrameContentResult>;
+  dragAndDrop(params: FrameDragAndDropParams, options: TimeoutOptions): Promise<FrameDragAndDropResult>;
+  drop(params: FrameDropParams, options: TimeoutOptions): Promise<FrameDropResult>;
+  dblclick(params: FrameDblclickParams, options: TimeoutOptions): Promise<FrameDblclickResult>;
+  dispatchEvent(params: FrameDispatchEventParams, options: TimeoutOptions): Promise<FrameDispatchEventResult>;
+  evaluateExpression(params: FrameEvaluateExpressionParams, options: TimeoutOptions): Promise<FrameEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: FrameEvaluateExpressionHandleParams, options: TimeoutOptions): Promise<FrameEvaluateExpressionHandleResult>;
+  fill(params: FrameFillParams, options: TimeoutOptions): Promise<FrameFillResult>;
+  focus(params: FrameFocusParams, options: TimeoutOptions): Promise<FrameFocusResult>;
+  frameElement(params: FrameFrameElementParams, options: TimeoutOptions): Promise<FrameFrameElementResult>;
+  resolveSelector(params: FrameResolveSelectorParams, options: TimeoutOptions): Promise<FrameResolveSelectorResult>;
+  highlight(params: FrameHighlightParams, options: TimeoutOptions): Promise<FrameHighlightResult>;
+  hideHighlight(params: FrameHideHighlightParams, options: TimeoutOptions): Promise<FrameHideHighlightResult>;
+  getAttribute(params: FrameGetAttributeParams, options: TimeoutOptions): Promise<FrameGetAttributeResult>;
+  goto(params: FrameGotoParams, options: TimeoutOptions): Promise<FrameGotoResult>;
+  hover(params: FrameHoverParams, options: TimeoutOptions): Promise<FrameHoverResult>;
+  innerHTML(params: FrameInnerHTMLParams, options: TimeoutOptions): Promise<FrameInnerHTMLResult>;
+  innerText(params: FrameInnerTextParams, options: TimeoutOptions): Promise<FrameInnerTextResult>;
+  inputValue(params: FrameInputValueParams, options: TimeoutOptions): Promise<FrameInputValueResult>;
+  isChecked(params: FrameIsCheckedParams, options: TimeoutOptions): Promise<FrameIsCheckedResult>;
+  isDisabled(params: FrameIsDisabledParams, options: TimeoutOptions): Promise<FrameIsDisabledResult>;
+  isEnabled(params: FrameIsEnabledParams, options: TimeoutOptions): Promise<FrameIsEnabledResult>;
+  isHidden(params: FrameIsHiddenParams, options: TimeoutOptions): Promise<FrameIsHiddenResult>;
+  isVisible(params: FrameIsVisibleParams, options: TimeoutOptions): Promise<FrameIsVisibleResult>;
+  isEditable(params: FrameIsEditableParams, options: TimeoutOptions): Promise<FrameIsEditableResult>;
+  press(params: FramePressParams, options: TimeoutOptions): Promise<FramePressResult>;
+  querySelector(params: FrameQuerySelectorParams, options: TimeoutOptions): Promise<FrameQuerySelectorResult>;
+  querySelectorAll(params: FrameQuerySelectorAllParams, options: TimeoutOptions): Promise<FrameQuerySelectorAllResult>;
+  queryCount(params: FrameQueryCountParams, options: TimeoutOptions): Promise<FrameQueryCountResult>;
+  selectOption(params: FrameSelectOptionParams, options: TimeoutOptions): Promise<FrameSelectOptionResult>;
+  setContent(params: FrameSetContentParams, options: TimeoutOptions): Promise<FrameSetContentResult>;
+  setInputFiles(params: FrameSetInputFilesParams, options: TimeoutOptions): Promise<FrameSetInputFilesResult>;
+  tap(params: FrameTapParams, options: TimeoutOptions): Promise<FrameTapResult>;
+  textContent(params: FrameTextContentParams, options: TimeoutOptions): Promise<FrameTextContentResult>;
+  title(params: FrameTitleParams, options: TimeoutOptions): Promise<FrameTitleResult>;
+  type(params: FrameTypeParams, options: TimeoutOptions): Promise<FrameTypeResult>;
+  uncheck(params: FrameUncheckParams, options: TimeoutOptions): Promise<FrameUncheckResult>;
+  waitForTimeout(params: FrameWaitForTimeoutParams, options: TimeoutOptions): Promise<FrameWaitForTimeoutResult>;
+  waitForFunction(params: FrameWaitForFunctionParams, options: TimeoutOptions): Promise<FrameWaitForFunctionResult>;
+  waitForSelector(params: FrameWaitForSelectorParams, options: TimeoutOptions): Promise<FrameWaitForSelectorResult>;
+  expect(params: FrameExpectParams, options: TimeoutOptions): Promise<FrameExpectResult>;
 }
 export type FrameLoadstateEvent = {
   add?: LifecycleEvent,
@@ -2957,12 +2957,12 @@ export interface JSHandleEventTarget {
 }
 export interface JSHandleChannel extends JSHandleEventTarget, Channel {
   _type_JSHandle: boolean;
-  dispose(params: JSHandleDisposeParams, options: CommandOptions): Promise<JSHandleDisposeResult>;
-  evaluateExpression(params: JSHandleEvaluateExpressionParams, options: CommandOptions): Promise<JSHandleEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: JSHandleEvaluateExpressionHandleParams, options: CommandOptions): Promise<JSHandleEvaluateExpressionHandleResult>;
-  getPropertyList(params: JSHandleGetPropertyListParams, options: CommandOptions): Promise<JSHandleGetPropertyListResult>;
-  getProperty(params: JSHandleGetPropertyParams, options: CommandOptions): Promise<JSHandleGetPropertyResult>;
-  jsonValue(params: JSHandleJsonValueParams, options: CommandOptions): Promise<JSHandleJsonValueResult>;
+  dispose(params: JSHandleDisposeParams, options: TimeoutOptions): Promise<JSHandleDisposeResult>;
+  evaluateExpression(params: JSHandleEvaluateExpressionParams, options: TimeoutOptions): Promise<JSHandleEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: JSHandleEvaluateExpressionHandleParams, options: TimeoutOptions): Promise<JSHandleEvaluateExpressionHandleResult>;
+  getPropertyList(params: JSHandleGetPropertyListParams, options: TimeoutOptions): Promise<JSHandleGetPropertyListResult>;
+  getProperty(params: JSHandleGetPropertyParams, options: TimeoutOptions): Promise<JSHandleGetPropertyResult>;
+  jsonValue(params: JSHandleJsonValueParams, options: TimeoutOptions): Promise<JSHandleJsonValueResult>;
 }
 export type JSHandlePreviewUpdatedEvent = {
   preview: string,
@@ -3025,42 +3025,42 @@ export interface ElementHandleEventTarget {
 }
 export interface ElementHandleChannel extends ElementHandleEventTarget, JSHandleChannel {
   _type_ElementHandle: boolean;
-  evalOnSelector(params: ElementHandleEvalOnSelectorParams, options: CommandOptions): Promise<ElementHandleEvalOnSelectorResult>;
-  evalOnSelectorAll(params: ElementHandleEvalOnSelectorAllParams, options: CommandOptions): Promise<ElementHandleEvalOnSelectorAllResult>;
-  boundingBox(params: ElementHandleBoundingBoxParams, options: CommandOptions): Promise<ElementHandleBoundingBoxResult>;
-  check(params: ElementHandleCheckParams, options: CommandOptions): Promise<ElementHandleCheckResult>;
-  click(params: ElementHandleClickParams, options: CommandOptions): Promise<ElementHandleClickResult>;
-  contentFrame(params: ElementHandleContentFrameParams, options: CommandOptions): Promise<ElementHandleContentFrameResult>;
-  dblclick(params: ElementHandleDblclickParams, options: CommandOptions): Promise<ElementHandleDblclickResult>;
-  dispatchEvent(params: ElementHandleDispatchEventParams, options: CommandOptions): Promise<ElementHandleDispatchEventResult>;
-  fill(params: ElementHandleFillParams, options: CommandOptions): Promise<ElementHandleFillResult>;
-  focus(params: ElementHandleFocusParams, options: CommandOptions): Promise<ElementHandleFocusResult>;
-  getAttribute(params: ElementHandleGetAttributeParams, options: CommandOptions): Promise<ElementHandleGetAttributeResult>;
-  hover(params: ElementHandleHoverParams, options: CommandOptions): Promise<ElementHandleHoverResult>;
-  innerHTML(params: ElementHandleInnerHTMLParams, options: CommandOptions): Promise<ElementHandleInnerHTMLResult>;
-  innerText(params: ElementHandleInnerTextParams, options: CommandOptions): Promise<ElementHandleInnerTextResult>;
-  inputValue(params: ElementHandleInputValueParams, options: CommandOptions): Promise<ElementHandleInputValueResult>;
-  isChecked(params: ElementHandleIsCheckedParams, options: CommandOptions): Promise<ElementHandleIsCheckedResult>;
-  isDisabled(params: ElementHandleIsDisabledParams, options: CommandOptions): Promise<ElementHandleIsDisabledResult>;
-  isEditable(params: ElementHandleIsEditableParams, options: CommandOptions): Promise<ElementHandleIsEditableResult>;
-  isEnabled(params: ElementHandleIsEnabledParams, options: CommandOptions): Promise<ElementHandleIsEnabledResult>;
-  isHidden(params: ElementHandleIsHiddenParams, options: CommandOptions): Promise<ElementHandleIsHiddenResult>;
-  isVisible(params: ElementHandleIsVisibleParams, options: CommandOptions): Promise<ElementHandleIsVisibleResult>;
-  ownerFrame(params: ElementHandleOwnerFrameParams, options: CommandOptions): Promise<ElementHandleOwnerFrameResult>;
-  press(params: ElementHandlePressParams, options: CommandOptions): Promise<ElementHandlePressResult>;
-  querySelector(params: ElementHandleQuerySelectorParams, options: CommandOptions): Promise<ElementHandleQuerySelectorResult>;
-  querySelectorAll(params: ElementHandleQuerySelectorAllParams, options: CommandOptions): Promise<ElementHandleQuerySelectorAllResult>;
-  screenshot(params: ElementHandleScreenshotParams, options: CommandOptions): Promise<ElementHandleScreenshotResult>;
-  scrollIntoViewIfNeeded(params: ElementHandleScrollIntoViewIfNeededParams, options: CommandOptions): Promise<ElementHandleScrollIntoViewIfNeededResult>;
-  selectOption(params: ElementHandleSelectOptionParams, options: CommandOptions): Promise<ElementHandleSelectOptionResult>;
-  selectText(params: ElementHandleSelectTextParams, options: CommandOptions): Promise<ElementHandleSelectTextResult>;
-  setInputFiles(params: ElementHandleSetInputFilesParams, options: CommandOptions): Promise<ElementHandleSetInputFilesResult>;
-  tap(params: ElementHandleTapParams, options: CommandOptions): Promise<ElementHandleTapResult>;
-  textContent(params: ElementHandleTextContentParams, options: CommandOptions): Promise<ElementHandleTextContentResult>;
-  type(params: ElementHandleTypeParams, options: CommandOptions): Promise<ElementHandleTypeResult>;
-  uncheck(params: ElementHandleUncheckParams, options: CommandOptions): Promise<ElementHandleUncheckResult>;
-  waitForElementState(params: ElementHandleWaitForElementStateParams, options: CommandOptions): Promise<ElementHandleWaitForElementStateResult>;
-  waitForSelector(params: ElementHandleWaitForSelectorParams, options: CommandOptions): Promise<ElementHandleWaitForSelectorResult>;
+  evalOnSelector(params: ElementHandleEvalOnSelectorParams, options: TimeoutOptions): Promise<ElementHandleEvalOnSelectorResult>;
+  evalOnSelectorAll(params: ElementHandleEvalOnSelectorAllParams, options: TimeoutOptions): Promise<ElementHandleEvalOnSelectorAllResult>;
+  boundingBox(params: ElementHandleBoundingBoxParams, options: TimeoutOptions): Promise<ElementHandleBoundingBoxResult>;
+  check(params: ElementHandleCheckParams, options: TimeoutOptions): Promise<ElementHandleCheckResult>;
+  click(params: ElementHandleClickParams, options: TimeoutOptions): Promise<ElementHandleClickResult>;
+  contentFrame(params: ElementHandleContentFrameParams, options: TimeoutOptions): Promise<ElementHandleContentFrameResult>;
+  dblclick(params: ElementHandleDblclickParams, options: TimeoutOptions): Promise<ElementHandleDblclickResult>;
+  dispatchEvent(params: ElementHandleDispatchEventParams, options: TimeoutOptions): Promise<ElementHandleDispatchEventResult>;
+  fill(params: ElementHandleFillParams, options: TimeoutOptions): Promise<ElementHandleFillResult>;
+  focus(params: ElementHandleFocusParams, options: TimeoutOptions): Promise<ElementHandleFocusResult>;
+  getAttribute(params: ElementHandleGetAttributeParams, options: TimeoutOptions): Promise<ElementHandleGetAttributeResult>;
+  hover(params: ElementHandleHoverParams, options: TimeoutOptions): Promise<ElementHandleHoverResult>;
+  innerHTML(params: ElementHandleInnerHTMLParams, options: TimeoutOptions): Promise<ElementHandleInnerHTMLResult>;
+  innerText(params: ElementHandleInnerTextParams, options: TimeoutOptions): Promise<ElementHandleInnerTextResult>;
+  inputValue(params: ElementHandleInputValueParams, options: TimeoutOptions): Promise<ElementHandleInputValueResult>;
+  isChecked(params: ElementHandleIsCheckedParams, options: TimeoutOptions): Promise<ElementHandleIsCheckedResult>;
+  isDisabled(params: ElementHandleIsDisabledParams, options: TimeoutOptions): Promise<ElementHandleIsDisabledResult>;
+  isEditable(params: ElementHandleIsEditableParams, options: TimeoutOptions): Promise<ElementHandleIsEditableResult>;
+  isEnabled(params: ElementHandleIsEnabledParams, options: TimeoutOptions): Promise<ElementHandleIsEnabledResult>;
+  isHidden(params: ElementHandleIsHiddenParams, options: TimeoutOptions): Promise<ElementHandleIsHiddenResult>;
+  isVisible(params: ElementHandleIsVisibleParams, options: TimeoutOptions): Promise<ElementHandleIsVisibleResult>;
+  ownerFrame(params: ElementHandleOwnerFrameParams, options: TimeoutOptions): Promise<ElementHandleOwnerFrameResult>;
+  press(params: ElementHandlePressParams, options: TimeoutOptions): Promise<ElementHandlePressResult>;
+  querySelector(params: ElementHandleQuerySelectorParams, options: TimeoutOptions): Promise<ElementHandleQuerySelectorResult>;
+  querySelectorAll(params: ElementHandleQuerySelectorAllParams, options: TimeoutOptions): Promise<ElementHandleQuerySelectorAllResult>;
+  screenshot(params: ElementHandleScreenshotParams, options: TimeoutOptions): Promise<ElementHandleScreenshotResult>;
+  scrollIntoViewIfNeeded(params: ElementHandleScrollIntoViewIfNeededParams, options: TimeoutOptions): Promise<ElementHandleScrollIntoViewIfNeededResult>;
+  selectOption(params: ElementHandleSelectOptionParams, options: TimeoutOptions): Promise<ElementHandleSelectOptionResult>;
+  selectText(params: ElementHandleSelectTextParams, options: TimeoutOptions): Promise<ElementHandleSelectTextResult>;
+  setInputFiles(params: ElementHandleSetInputFilesParams, options: TimeoutOptions): Promise<ElementHandleSetInputFilesResult>;
+  tap(params: ElementHandleTapParams, options: TimeoutOptions): Promise<ElementHandleTapResult>;
+  textContent(params: ElementHandleTextContentParams, options: TimeoutOptions): Promise<ElementHandleTextContentResult>;
+  type(params: ElementHandleTypeParams, options: TimeoutOptions): Promise<ElementHandleTypeResult>;
+  uncheck(params: ElementHandleUncheckParams, options: TimeoutOptions): Promise<ElementHandleUncheckResult>;
+  waitForElementState(params: ElementHandleWaitForElementStateParams, options: TimeoutOptions): Promise<ElementHandleWaitForElementStateResult>;
+  waitForSelector(params: ElementHandleWaitForSelectorParams, options: TimeoutOptions): Promise<ElementHandleWaitForSelectorResult>;
 }
 export type ElementHandleEvalOnSelectorParams = {
   selector: string,
@@ -3455,16 +3455,16 @@ export interface LocalUtilsEventTarget {
 }
 export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   _type_LocalUtils: boolean;
-  zip(params: LocalUtilsZipParams, options: CommandOptions): Promise<LocalUtilsZipResult>;
-  harOpen(params: LocalUtilsHarOpenParams, options: CommandOptions): Promise<LocalUtilsHarOpenResult>;
-  harLookup(params: LocalUtilsHarLookupParams, options: CommandOptions): Promise<LocalUtilsHarLookupResult>;
-  harClose(params: LocalUtilsHarCloseParams, options: CommandOptions): Promise<LocalUtilsHarCloseResult>;
-  harUnzip(params: LocalUtilsHarUnzipParams, options: CommandOptions): Promise<LocalUtilsHarUnzipResult>;
-  connect(params: LocalUtilsConnectParams, options: CommandOptions): Promise<LocalUtilsConnectResult>;
-  tracingStarted(params: LocalUtilsTracingStartedParams, options: CommandOptions): Promise<LocalUtilsTracingStartedResult>;
-  addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, options: CommandOptions): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
-  traceDiscarded(params: LocalUtilsTraceDiscardedParams, options: CommandOptions): Promise<LocalUtilsTraceDiscardedResult>;
-  globToRegex(params: LocalUtilsGlobToRegexParams, options: CommandOptions): Promise<LocalUtilsGlobToRegexResult>;
+  zip(params: LocalUtilsZipParams, options: TimeoutOptions): Promise<LocalUtilsZipResult>;
+  harOpen(params: LocalUtilsHarOpenParams, options: TimeoutOptions): Promise<LocalUtilsHarOpenResult>;
+  harLookup(params: LocalUtilsHarLookupParams, options: TimeoutOptions): Promise<LocalUtilsHarLookupResult>;
+  harClose(params: LocalUtilsHarCloseParams, options: TimeoutOptions): Promise<LocalUtilsHarCloseResult>;
+  harUnzip(params: LocalUtilsHarUnzipParams, options: TimeoutOptions): Promise<LocalUtilsHarUnzipResult>;
+  connect(params: LocalUtilsConnectParams, options: TimeoutOptions): Promise<LocalUtilsConnectResult>;
+  tracingStarted(params: LocalUtilsTracingStartedParams, options: TimeoutOptions): Promise<LocalUtilsTracingStartedResult>;
+  addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, options: TimeoutOptions): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
+  traceDiscarded(params: LocalUtilsTraceDiscardedParams, options: TimeoutOptions): Promise<LocalUtilsTraceDiscardedResult>;
+  globToRegex(params: LocalUtilsGlobToRegexParams, options: TimeoutOptions): Promise<LocalUtilsGlobToRegexResult>;
 }
 export type LocalUtilsZipParams = {
   zipFile: string,
@@ -3599,8 +3599,8 @@ export interface RequestEventTarget {
 }
 export interface RequestChannel extends RequestEventTarget, Channel {
   _type_Request: boolean;
-  response(params: RequestResponseParams, options: CommandOptions): Promise<RequestResponseResult>;
-  rawRequestHeaders(params: RequestRawRequestHeadersParams, options: CommandOptions): Promise<RequestRawRequestHeadersResult>;
+  response(params: RequestResponseParams, options: TimeoutOptions): Promise<RequestResponseResult>;
+  rawRequestHeaders(params: RequestRawRequestHeadersParams, options: TimeoutOptions): Promise<RequestRawRequestHeadersResult>;
 }
 export type RequestResponseParams = {};
 export type RequestResponseOptions = {};
@@ -3624,10 +3624,10 @@ export interface RouteEventTarget {
 }
 export interface RouteChannel extends RouteEventTarget, Channel {
   _type_Route: boolean;
-  redirectNavigationRequest(params: RouteRedirectNavigationRequestParams, options: CommandOptions): Promise<RouteRedirectNavigationRequestResult>;
-  abort(params: RouteAbortParams, options: CommandOptions): Promise<RouteAbortResult>;
-  continue(params: RouteContinueParams, options: CommandOptions): Promise<RouteContinueResult>;
-  fulfill(params: RouteFulfillParams, options: CommandOptions): Promise<RouteFulfillResult>;
+  redirectNavigationRequest(params: RouteRedirectNavigationRequestParams, options: TimeoutOptions): Promise<RouteRedirectNavigationRequestResult>;
+  abort(params: RouteAbortParams, options: TimeoutOptions): Promise<RouteAbortResult>;
+  continue(params: RouteContinueParams, options: TimeoutOptions): Promise<RouteContinueResult>;
+  fulfill(params: RouteFulfillParams, options: TimeoutOptions): Promise<RouteFulfillResult>;
 }
 export type RouteRedirectNavigationRequestParams = {
   url: string,
@@ -3689,12 +3689,12 @@ export interface WebSocketRouteEventTarget {
 }
 export interface WebSocketRouteChannel extends WebSocketRouteEventTarget, Channel {
   _type_WebSocketRoute: boolean;
-  connect(params: WebSocketRouteConnectParams, options: CommandOptions): Promise<WebSocketRouteConnectResult>;
-  ensureOpened(params: WebSocketRouteEnsureOpenedParams, options: CommandOptions): Promise<WebSocketRouteEnsureOpenedResult>;
-  sendToPage(params: WebSocketRouteSendToPageParams, options: CommandOptions): Promise<WebSocketRouteSendToPageResult>;
-  sendToServer(params: WebSocketRouteSendToServerParams, options: CommandOptions): Promise<WebSocketRouteSendToServerResult>;
-  closePage(params: WebSocketRouteClosePageParams, options: CommandOptions): Promise<WebSocketRouteClosePageResult>;
-  closeServer(params: WebSocketRouteCloseServerParams, options: CommandOptions): Promise<WebSocketRouteCloseServerResult>;
+  connect(params: WebSocketRouteConnectParams, options: TimeoutOptions): Promise<WebSocketRouteConnectResult>;
+  ensureOpened(params: WebSocketRouteEnsureOpenedParams, options: TimeoutOptions): Promise<WebSocketRouteEnsureOpenedResult>;
+  sendToPage(params: WebSocketRouteSendToPageParams, options: TimeoutOptions): Promise<WebSocketRouteSendToPageResult>;
+  sendToServer(params: WebSocketRouteSendToServerParams, options: TimeoutOptions): Promise<WebSocketRouteSendToServerResult>;
+  closePage(params: WebSocketRouteClosePageParams, options: TimeoutOptions): Promise<WebSocketRouteClosePageResult>;
+  closeServer(params: WebSocketRouteCloseServerParams, options: TimeoutOptions): Promise<WebSocketRouteCloseServerResult>;
 }
 export type WebSocketRouteMessageFromPageEvent = {
   message: string,
@@ -3778,12 +3778,12 @@ export interface ResponseEventTarget {
 }
 export interface ResponseChannel extends ResponseEventTarget, Channel {
   _type_Response: boolean;
-  body(params: ResponseBodyParams, options: CommandOptions): Promise<ResponseBodyResult>;
-  securityDetails(params: ResponseSecurityDetailsParams, options: CommandOptions): Promise<ResponseSecurityDetailsResult>;
-  serverAddr(params: ResponseServerAddrParams, options: CommandOptions): Promise<ResponseServerAddrResult>;
-  rawResponseHeaders(params: ResponseRawResponseHeadersParams, options: CommandOptions): Promise<ResponseRawResponseHeadersResult>;
-  httpVersion(params: ResponseHttpVersionParams, options: CommandOptions): Promise<ResponseHttpVersionResult>;
-  sizes(params: ResponseSizesParams, options: CommandOptions): Promise<ResponseSizesResult>;
+  body(params: ResponseBodyParams, options: TimeoutOptions): Promise<ResponseBodyResult>;
+  securityDetails(params: ResponseSecurityDetailsParams, options: TimeoutOptions): Promise<ResponseSecurityDetailsResult>;
+  serverAddr(params: ResponseServerAddrParams, options: TimeoutOptions): Promise<ResponseServerAddrResult>;
+  rawResponseHeaders(params: ResponseRawResponseHeadersParams, options: TimeoutOptions): Promise<ResponseRawResponseHeadersResult>;
+  httpVersion(params: ResponseHttpVersionParams, options: TimeoutOptions): Promise<ResponseHttpVersionResult>;
+  sizes(params: ResponseSizesParams, options: TimeoutOptions): Promise<ResponseSizesResult>;
 }
 export type ResponseBodyParams = {};
 export type ResponseBodyOptions = {};
@@ -3884,64 +3884,64 @@ export interface PageEventTarget {
 }
 export interface PageChannel extends PageEventTarget, Channel {
   _type_Page: boolean;
-  addInitScript(params: PageAddInitScriptParams, options: CommandOptions): Promise<PageAddInitScriptResult>;
-  close(params: PageCloseParams, options: CommandOptions): Promise<PageCloseResult>;
-  runBeforeUnload(params: PageRunBeforeUnloadParams, options: CommandOptions): Promise<PageRunBeforeUnloadResult>;
-  clearConsoleMessages(params: PageClearConsoleMessagesParams, options: CommandOptions): Promise<PageClearConsoleMessagesResult>;
-  consoleMessages(params: PageConsoleMessagesParams, options: CommandOptions): Promise<PageConsoleMessagesResult>;
-  emulateMedia(params: PageEmulateMediaParams, options: CommandOptions): Promise<PageEmulateMediaResult>;
-  exposeBinding(params: PageExposeBindingParams, options: CommandOptions): Promise<PageExposeBindingResult>;
-  goBack(params: PageGoBackParams, options: CommandOptions): Promise<PageGoBackResult>;
-  goForward(params: PageGoForwardParams, options: CommandOptions): Promise<PageGoForwardResult>;
-  requestGC(params: PageRequestGCParams, options: CommandOptions): Promise<PageRequestGCResult>;
-  registerLocatorHandler(params: PageRegisterLocatorHandlerParams, options: CommandOptions): Promise<PageRegisterLocatorHandlerResult>;
-  resolveLocatorHandlerNoReply(params: PageResolveLocatorHandlerNoReplyParams, options: CommandOptions): Promise<PageResolveLocatorHandlerNoReplyResult>;
-  unregisterLocatorHandler(params: PageUnregisterLocatorHandlerParams, options: CommandOptions): Promise<PageUnregisterLocatorHandlerResult>;
-  reload(params: PageReloadParams, options: CommandOptions): Promise<PageReloadResult>;
-  expectScreenshot(params: PageExpectScreenshotParams, options: CommandOptions): Promise<PageExpectScreenshotResult>;
-  screenshot(params: PageScreenshotParams, options: CommandOptions): Promise<PageScreenshotResult>;
-  setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, options: CommandOptions): Promise<PageSetExtraHTTPHeadersResult>;
-  setNetworkInterceptionPatterns(params: PageSetNetworkInterceptionPatternsParams, options: CommandOptions): Promise<PageSetNetworkInterceptionPatternsResult>;
-  setWebSocketInterceptionPatterns(params: PageSetWebSocketInterceptionPatternsParams, options: CommandOptions): Promise<PageSetWebSocketInterceptionPatternsResult>;
-  setViewportSize(params: PageSetViewportSizeParams, options: CommandOptions): Promise<PageSetViewportSizeResult>;
-  keyboardDown(params: PageKeyboardDownParams, options: CommandOptions): Promise<PageKeyboardDownResult>;
-  keyboardUp(params: PageKeyboardUpParams, options: CommandOptions): Promise<PageKeyboardUpResult>;
-  keyboardInsertText(params: PageKeyboardInsertTextParams, options: CommandOptions): Promise<PageKeyboardInsertTextResult>;
-  keyboardType(params: PageKeyboardTypeParams, options: CommandOptions): Promise<PageKeyboardTypeResult>;
-  keyboardPress(params: PageKeyboardPressParams, options: CommandOptions): Promise<PageKeyboardPressResult>;
-  mouseMove(params: PageMouseMoveParams, options: CommandOptions): Promise<PageMouseMoveResult>;
-  mouseDown(params: PageMouseDownParams, options: CommandOptions): Promise<PageMouseDownResult>;
-  mouseUp(params: PageMouseUpParams, options: CommandOptions): Promise<PageMouseUpResult>;
-  mouseClick(params: PageMouseClickParams, options: CommandOptions): Promise<PageMouseClickResult>;
-  mouseWheel(params: PageMouseWheelParams, options: CommandOptions): Promise<PageMouseWheelResult>;
-  touchscreenTap(params: PageTouchscreenTapParams, options: CommandOptions): Promise<PageTouchscreenTapResult>;
-  clearPageErrors(params: PageClearPageErrorsParams, options: CommandOptions): Promise<PageClearPageErrorsResult>;
-  pageErrors(params: PagePageErrorsParams, options: CommandOptions): Promise<PagePageErrorsResult>;
-  pdf(params: PagePdfParams, options: CommandOptions): Promise<PagePdfResult>;
-  requests(params: PageRequestsParams, options: CommandOptions): Promise<PageRequestsResult>;
-  startJSCoverage(params: PageStartJSCoverageParams, options: CommandOptions): Promise<PageStartJSCoverageResult>;
-  stopJSCoverage(params: PageStopJSCoverageParams, options: CommandOptions): Promise<PageStopJSCoverageResult>;
-  startCSSCoverage(params: PageStartCSSCoverageParams, options: CommandOptions): Promise<PageStartCSSCoverageResult>;
-  stopCSSCoverage(params: PageStopCSSCoverageParams, options: CommandOptions): Promise<PageStopCSSCoverageResult>;
-  bringToFront(params: PageBringToFrontParams, options: CommandOptions): Promise<PageBringToFrontResult>;
-  pickLocator(params: PagePickLocatorParams, options: CommandOptions): Promise<PagePickLocatorResult>;
-  cancelPickLocator(params: PageCancelPickLocatorParams, options: CommandOptions): Promise<PageCancelPickLocatorResult>;
-  hideHighlight(params: PageHideHighlightParams, options: CommandOptions): Promise<PageHideHighlightResult>;
-  screencastShowOverlay(params: PageScreencastShowOverlayParams, options: CommandOptions): Promise<PageScreencastShowOverlayResult>;
-  screencastRemoveOverlay(params: PageScreencastRemoveOverlayParams, options: CommandOptions): Promise<PageScreencastRemoveOverlayResult>;
-  screencastChapter(params: PageScreencastChapterParams, options: CommandOptions): Promise<PageScreencastChapterResult>;
-  screencastSetOverlayVisible(params: PageScreencastSetOverlayVisibleParams, options: CommandOptions): Promise<PageScreencastSetOverlayVisibleResult>;
-  screencastShowActions(params: PageScreencastShowActionsParams, options: CommandOptions): Promise<PageScreencastShowActionsResult>;
-  screencastHideActions(params: PageScreencastHideActionsParams, options: CommandOptions): Promise<PageScreencastHideActionsResult>;
-  screencastStart(params: PageScreencastStartParams, options: CommandOptions): Promise<PageScreencastStartResult>;
-  screencastStop(params: PageScreencastStopParams, options: CommandOptions): Promise<PageScreencastStopResult>;
-  updateSubscription(params: PageUpdateSubscriptionParams, options: CommandOptions): Promise<PageUpdateSubscriptionResult>;
-  setDockTile(params: PageSetDockTileParams, options: CommandOptions): Promise<PageSetDockTileResult>;
-  webStorageItems(params: PageWebStorageItemsParams, options: CommandOptions): Promise<PageWebStorageItemsResult>;
-  webStorageGetItem(params: PageWebStorageGetItemParams, options: CommandOptions): Promise<PageWebStorageGetItemResult>;
-  webStorageSetItem(params: PageWebStorageSetItemParams, options: CommandOptions): Promise<PageWebStorageSetItemResult>;
-  webStorageRemoveItem(params: PageWebStorageRemoveItemParams, options: CommandOptions): Promise<PageWebStorageRemoveItemResult>;
-  webStorageClear(params: PageWebStorageClearParams, options: CommandOptions): Promise<PageWebStorageClearResult>;
+  addInitScript(params: PageAddInitScriptParams, options: TimeoutOptions): Promise<PageAddInitScriptResult>;
+  close(params: PageCloseParams, options: TimeoutOptions): Promise<PageCloseResult>;
+  runBeforeUnload(params: PageRunBeforeUnloadParams, options: TimeoutOptions): Promise<PageRunBeforeUnloadResult>;
+  clearConsoleMessages(params: PageClearConsoleMessagesParams, options: TimeoutOptions): Promise<PageClearConsoleMessagesResult>;
+  consoleMessages(params: PageConsoleMessagesParams, options: TimeoutOptions): Promise<PageConsoleMessagesResult>;
+  emulateMedia(params: PageEmulateMediaParams, options: TimeoutOptions): Promise<PageEmulateMediaResult>;
+  exposeBinding(params: PageExposeBindingParams, options: TimeoutOptions): Promise<PageExposeBindingResult>;
+  goBack(params: PageGoBackParams, options: TimeoutOptions): Promise<PageGoBackResult>;
+  goForward(params: PageGoForwardParams, options: TimeoutOptions): Promise<PageGoForwardResult>;
+  requestGC(params: PageRequestGCParams, options: TimeoutOptions): Promise<PageRequestGCResult>;
+  registerLocatorHandler(params: PageRegisterLocatorHandlerParams, options: TimeoutOptions): Promise<PageRegisterLocatorHandlerResult>;
+  resolveLocatorHandlerNoReply(params: PageResolveLocatorHandlerNoReplyParams, options: TimeoutOptions): Promise<PageResolveLocatorHandlerNoReplyResult>;
+  unregisterLocatorHandler(params: PageUnregisterLocatorHandlerParams, options: TimeoutOptions): Promise<PageUnregisterLocatorHandlerResult>;
+  reload(params: PageReloadParams, options: TimeoutOptions): Promise<PageReloadResult>;
+  expectScreenshot(params: PageExpectScreenshotParams, options: TimeoutOptions): Promise<PageExpectScreenshotResult>;
+  screenshot(params: PageScreenshotParams, options: TimeoutOptions): Promise<PageScreenshotResult>;
+  setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, options: TimeoutOptions): Promise<PageSetExtraHTTPHeadersResult>;
+  setNetworkInterceptionPatterns(params: PageSetNetworkInterceptionPatternsParams, options: TimeoutOptions): Promise<PageSetNetworkInterceptionPatternsResult>;
+  setWebSocketInterceptionPatterns(params: PageSetWebSocketInterceptionPatternsParams, options: TimeoutOptions): Promise<PageSetWebSocketInterceptionPatternsResult>;
+  setViewportSize(params: PageSetViewportSizeParams, options: TimeoutOptions): Promise<PageSetViewportSizeResult>;
+  keyboardDown(params: PageKeyboardDownParams, options: TimeoutOptions): Promise<PageKeyboardDownResult>;
+  keyboardUp(params: PageKeyboardUpParams, options: TimeoutOptions): Promise<PageKeyboardUpResult>;
+  keyboardInsertText(params: PageKeyboardInsertTextParams, options: TimeoutOptions): Promise<PageKeyboardInsertTextResult>;
+  keyboardType(params: PageKeyboardTypeParams, options: TimeoutOptions): Promise<PageKeyboardTypeResult>;
+  keyboardPress(params: PageKeyboardPressParams, options: TimeoutOptions): Promise<PageKeyboardPressResult>;
+  mouseMove(params: PageMouseMoveParams, options: TimeoutOptions): Promise<PageMouseMoveResult>;
+  mouseDown(params: PageMouseDownParams, options: TimeoutOptions): Promise<PageMouseDownResult>;
+  mouseUp(params: PageMouseUpParams, options: TimeoutOptions): Promise<PageMouseUpResult>;
+  mouseClick(params: PageMouseClickParams, options: TimeoutOptions): Promise<PageMouseClickResult>;
+  mouseWheel(params: PageMouseWheelParams, options: TimeoutOptions): Promise<PageMouseWheelResult>;
+  touchscreenTap(params: PageTouchscreenTapParams, options: TimeoutOptions): Promise<PageTouchscreenTapResult>;
+  clearPageErrors(params: PageClearPageErrorsParams, options: TimeoutOptions): Promise<PageClearPageErrorsResult>;
+  pageErrors(params: PagePageErrorsParams, options: TimeoutOptions): Promise<PagePageErrorsResult>;
+  pdf(params: PagePdfParams, options: TimeoutOptions): Promise<PagePdfResult>;
+  requests(params: PageRequestsParams, options: TimeoutOptions): Promise<PageRequestsResult>;
+  startJSCoverage(params: PageStartJSCoverageParams, options: TimeoutOptions): Promise<PageStartJSCoverageResult>;
+  stopJSCoverage(params: PageStopJSCoverageParams, options: TimeoutOptions): Promise<PageStopJSCoverageResult>;
+  startCSSCoverage(params: PageStartCSSCoverageParams, options: TimeoutOptions): Promise<PageStartCSSCoverageResult>;
+  stopCSSCoverage(params: PageStopCSSCoverageParams, options: TimeoutOptions): Promise<PageStopCSSCoverageResult>;
+  bringToFront(params: PageBringToFrontParams, options: TimeoutOptions): Promise<PageBringToFrontResult>;
+  pickLocator(params: PagePickLocatorParams, options: TimeoutOptions): Promise<PagePickLocatorResult>;
+  cancelPickLocator(params: PageCancelPickLocatorParams, options: TimeoutOptions): Promise<PageCancelPickLocatorResult>;
+  hideHighlight(params: PageHideHighlightParams, options: TimeoutOptions): Promise<PageHideHighlightResult>;
+  screencastShowOverlay(params: PageScreencastShowOverlayParams, options: TimeoutOptions): Promise<PageScreencastShowOverlayResult>;
+  screencastRemoveOverlay(params: PageScreencastRemoveOverlayParams, options: TimeoutOptions): Promise<PageScreencastRemoveOverlayResult>;
+  screencastChapter(params: PageScreencastChapterParams, options: TimeoutOptions): Promise<PageScreencastChapterResult>;
+  screencastSetOverlayVisible(params: PageScreencastSetOverlayVisibleParams, options: TimeoutOptions): Promise<PageScreencastSetOverlayVisibleResult>;
+  screencastShowActions(params: PageScreencastShowActionsParams, options: TimeoutOptions): Promise<PageScreencastShowActionsResult>;
+  screencastHideActions(params: PageScreencastHideActionsParams, options: TimeoutOptions): Promise<PageScreencastHideActionsResult>;
+  screencastStart(params: PageScreencastStartParams, options: TimeoutOptions): Promise<PageScreencastStartResult>;
+  screencastStop(params: PageScreencastStopParams, options: TimeoutOptions): Promise<PageScreencastStopResult>;
+  updateSubscription(params: PageUpdateSubscriptionParams, options: TimeoutOptions): Promise<PageUpdateSubscriptionResult>;
+  setDockTile(params: PageSetDockTileParams, options: TimeoutOptions): Promise<PageSetDockTileResult>;
+  webStorageItems(params: PageWebStorageItemsParams, options: TimeoutOptions): Promise<PageWebStorageItemsResult>;
+  webStorageGetItem(params: PageWebStorageGetItemParams, options: TimeoutOptions): Promise<PageWebStorageGetItemResult>;
+  webStorageSetItem(params: PageWebStorageSetItemParams, options: TimeoutOptions): Promise<PageWebStorageSetItemResult>;
+  webStorageRemoveItem(params: PageWebStorageRemoveItemParams, options: TimeoutOptions): Promise<PageWebStorageRemoveItemResult>;
+  webStorageClear(params: PageWebStorageClearParams, options: TimeoutOptions): Promise<PageWebStorageClearResult>;
 }
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
@@ -4617,7 +4617,7 @@ export interface RootEventTarget {
 }
 export interface RootChannel extends RootEventTarget, Channel {
   _type_Root: boolean;
-  initialize(params: RootInitializeParams, options: CommandOptions): Promise<RootInitializeResult>;
+  initialize(params: RootInitializeParams, options: TimeoutOptions): Promise<RootInitializeResult>;
 }
 export type RootInitializeParams = {
   sdkLanguage: SDKLanguage,
@@ -4648,7 +4648,7 @@ export interface PlaywrightEventTarget {
 }
 export interface PlaywrightChannel extends PlaywrightEventTarget, Channel {
   _type_Playwright: boolean;
-  newRequest(params: PlaywrightNewRequestParams, options: CommandOptions): Promise<PlaywrightNewRequestResult>;
+  newRequest(params: PlaywrightNewRequestParams, options: TimeoutOptions): Promise<PlaywrightNewRequestResult>;
 }
 export type PlaywrightNewRequestParams = {
   baseURL?: string,
@@ -4732,13 +4732,13 @@ export interface DebugControllerEventTarget {
 }
 export interface DebugControllerChannel extends DebugControllerEventTarget, Channel {
   _type_DebugController: boolean;
-  initialize(params: DebugControllerInitializeParams, options: CommandOptions): Promise<DebugControllerInitializeResult>;
-  setReportStateChanged(params: DebugControllerSetReportStateChangedParams, options: CommandOptions): Promise<DebugControllerSetReportStateChangedResult>;
-  setRecorderMode(params: DebugControllerSetRecorderModeParams, options: CommandOptions): Promise<DebugControllerSetRecorderModeResult>;
-  highlight(params: DebugControllerHighlightParams, options: CommandOptions): Promise<DebugControllerHighlightResult>;
-  hideHighlight(params: DebugControllerHideHighlightParams, options: CommandOptions): Promise<DebugControllerHideHighlightResult>;
-  resume(params: DebugControllerResumeParams, options: CommandOptions): Promise<DebugControllerResumeResult>;
-  kill(params: DebugControllerKillParams, options: CommandOptions): Promise<DebugControllerKillResult>;
+  initialize(params: DebugControllerInitializeParams, options: TimeoutOptions): Promise<DebugControllerInitializeResult>;
+  setReportStateChanged(params: DebugControllerSetReportStateChangedParams, options: TimeoutOptions): Promise<DebugControllerSetReportStateChangedResult>;
+  setRecorderMode(params: DebugControllerSetRecorderModeParams, options: TimeoutOptions): Promise<DebugControllerSetRecorderModeResult>;
+  highlight(params: DebugControllerHighlightParams, options: TimeoutOptions): Promise<DebugControllerHighlightResult>;
+  hideHighlight(params: DebugControllerHideHighlightParams, options: TimeoutOptions): Promise<DebugControllerHideHighlightResult>;
+  resume(params: DebugControllerResumeParams, options: TimeoutOptions): Promise<DebugControllerResumeResult>;
+  kill(params: DebugControllerKillParams, options: TimeoutOptions): Promise<DebugControllerKillResult>;
 }
 export type DebugControllerInspectRequestedEvent = {
   selector: string,
@@ -4821,11 +4821,11 @@ export interface SocksSupportEventTarget {
 }
 export interface SocksSupportChannel extends SocksSupportEventTarget, Channel {
   _type_SocksSupport: boolean;
-  socksConnected(params: SocksSupportSocksConnectedParams, options: CommandOptions): Promise<SocksSupportSocksConnectedResult>;
-  socksFailed(params: SocksSupportSocksFailedParams, options: CommandOptions): Promise<SocksSupportSocksFailedResult>;
-  socksData(params: SocksSupportSocksDataParams, options: CommandOptions): Promise<SocksSupportSocksDataResult>;
-  socksError(params: SocksSupportSocksErrorParams, options: CommandOptions): Promise<SocksSupportSocksErrorResult>;
-  socksEnd(params: SocksSupportSocksEndParams, options: CommandOptions): Promise<SocksSupportSocksEndResult>;
+  socksConnected(params: SocksSupportSocksConnectedParams, options: TimeoutOptions): Promise<SocksSupportSocksConnectedResult>;
+  socksFailed(params: SocksSupportSocksFailedParams, options: TimeoutOptions): Promise<SocksSupportSocksFailedResult>;
+  socksData(params: SocksSupportSocksDataParams, options: TimeoutOptions): Promise<SocksSupportSocksDataResult>;
+  socksError(params: SocksSupportSocksErrorParams, options: TimeoutOptions): Promise<SocksSupportSocksErrorResult>;
+  socksEnd(params: SocksSupportSocksEndParams, options: TimeoutOptions): Promise<SocksSupportSocksEndResult>;
 }
 export type SocksSupportSocksRequestedEvent = {
   uid: string,
@@ -4894,8 +4894,8 @@ export interface JsonPipeEventTarget {
 }
 export interface JsonPipeChannel extends JsonPipeEventTarget, Channel {
   _type_JsonPipe: boolean;
-  send(params: JsonPipeSendParams, options: CommandOptions): Promise<JsonPipeSendResult>;
-  close(params: JsonPipeCloseParams, options: CommandOptions): Promise<JsonPipeCloseResult>;
+  send(params: JsonPipeSendParams, options: TimeoutOptions): Promise<JsonPipeSendResult>;
+  close(params: JsonPipeCloseParams, options: TimeoutOptions): Promise<JsonPipeCloseResult>;
 }
 export type JsonPipeMessageEvent = {
   message: any,
@@ -4927,8 +4927,8 @@ export interface CDPSessionEventTarget {
 }
 export interface CDPSessionChannel extends CDPSessionEventTarget, Channel {
   _type_CDPSession: boolean;
-  send(params: CDPSessionSendParams, options: CommandOptions): Promise<CDPSessionSendResult>;
-  detach(params: CDPSessionDetachParams, options: CommandOptions): Promise<CDPSessionDetachResult>;
+  send(params: CDPSessionSendParams, options: TimeoutOptions): Promise<CDPSessionSendResult>;
+  detach(params: CDPSessionDetachParams, options: TimeoutOptions): Promise<CDPSessionDetachResult>;
 }
 export type CDPSessionEventEvent = {
   method: string,
@@ -4964,8 +4964,8 @@ export interface BindingCallEventTarget {
 }
 export interface BindingCallChannel extends BindingCallEventTarget, Channel {
   _type_BindingCall: boolean;
-  reject(params: BindingCallRejectParams, options: CommandOptions): Promise<BindingCallRejectResult>;
-  resolve(params: BindingCallResolveParams, options: CommandOptions): Promise<BindingCallResolveResult>;
+  reject(params: BindingCallRejectParams, options: TimeoutOptions): Promise<BindingCallRejectResult>;
+  resolve(params: BindingCallResolveParams, options: TimeoutOptions): Promise<BindingCallResolveResult>;
 }
 export type BindingCallRejectParams = {
   error: SerializedError,
@@ -4992,10 +4992,10 @@ export interface DebuggerEventTarget {
 }
 export interface DebuggerChannel extends DebuggerEventTarget, Channel {
   _type_Debugger: boolean;
-  requestPause(params: DebuggerRequestPauseParams, options: CommandOptions): Promise<DebuggerRequestPauseResult>;
-  resume(params: DebuggerResumeParams, options: CommandOptions): Promise<DebuggerResumeResult>;
-  next(params: DebuggerNextParams, options: CommandOptions): Promise<DebuggerNextResult>;
-  runTo(params: DebuggerRunToParams, options: CommandOptions): Promise<DebuggerRunToResult>;
+  requestPause(params: DebuggerRequestPauseParams, options: TimeoutOptions): Promise<DebuggerRequestPauseResult>;
+  resume(params: DebuggerResumeParams, options: TimeoutOptions): Promise<DebuggerResumeResult>;
+  next(params: DebuggerNextParams, options: TimeoutOptions): Promise<DebuggerNextResult>;
+  runTo(params: DebuggerRunToParams, options: TimeoutOptions): Promise<DebuggerRunToResult>;
 }
 export type DebuggerPausedStateChangedEvent = {
   pausedDetails?: {
@@ -5044,8 +5044,8 @@ export interface DialogEventTarget {
 }
 export interface DialogChannel extends DialogEventTarget, Channel {
   _type_Dialog: boolean;
-  accept(params: DialogAcceptParams, options: CommandOptions): Promise<DialogAcceptResult>;
-  dismiss(params: DialogDismissParams, options: CommandOptions): Promise<DialogDismissResult>;
+  accept(params: DialogAcceptParams, options: TimeoutOptions): Promise<DialogAcceptResult>;
+  dismiss(params: DialogDismissParams, options: TimeoutOptions): Promise<DialogDismissResult>;
 }
 export type DialogAcceptParams = {
   promptText?: string,
@@ -5067,14 +5067,14 @@ export interface TracingEventTarget {
 }
 export interface TracingChannel extends TracingEventTarget, Channel {
   _type_Tracing: boolean;
-  tracingStart(params: TracingTracingStartParams, options: CommandOptions): Promise<TracingTracingStartResult>;
-  tracingStartChunk(params: TracingTracingStartChunkParams, options: CommandOptions): Promise<TracingTracingStartChunkResult>;
-  tracingGroup(params: TracingTracingGroupParams, options: CommandOptions): Promise<TracingTracingGroupResult>;
-  tracingGroupEnd(params: TracingTracingGroupEndParams, options: CommandOptions): Promise<TracingTracingGroupEndResult>;
-  tracingStopChunk(params: TracingTracingStopChunkParams, options: CommandOptions): Promise<TracingTracingStopChunkResult>;
-  tracingStop(params: TracingTracingStopParams, options: CommandOptions): Promise<TracingTracingStopResult>;
-  harStart(params: TracingHarStartParams, options: CommandOptions): Promise<TracingHarStartResult>;
-  harExport(params: TracingHarExportParams, options: CommandOptions): Promise<TracingHarExportResult>;
+  tracingStart(params: TracingTracingStartParams, options: TimeoutOptions): Promise<TracingTracingStartResult>;
+  tracingStartChunk(params: TracingTracingStartChunkParams, options: TimeoutOptions): Promise<TracingTracingStartChunkResult>;
+  tracingGroup(params: TracingTracingGroupParams, options: TimeoutOptions): Promise<TracingTracingGroupResult>;
+  tracingGroupEnd(params: TracingTracingGroupEndParams, options: TimeoutOptions): Promise<TracingTracingGroupEndResult>;
+  tracingStopChunk(params: TracingTracingStopChunkParams, options: TimeoutOptions): Promise<TracingTracingStopChunkResult>;
+  tracingStop(params: TracingTracingStopParams, options: TimeoutOptions): Promise<TracingTracingStopResult>;
+  harStart(params: TracingHarStartParams, options: TimeoutOptions): Promise<TracingHarStartResult>;
+  harExport(params: TracingHarExportParams, options: TimeoutOptions): Promise<TracingHarExportResult>;
 }
 export type TracingTracingStartParams = {
   name?: string,
@@ -5167,10 +5167,10 @@ export interface WorkerEventTarget {
 }
 export interface WorkerChannel extends WorkerEventTarget, Channel {
   _type_Worker: boolean;
-  disconnect(params: WorkerDisconnectParams, options: CommandOptions): Promise<WorkerDisconnectResult>;
-  evaluateExpression(params: WorkerEvaluateExpressionParams, options: CommandOptions): Promise<WorkerEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, options: CommandOptions): Promise<WorkerEvaluateExpressionHandleResult>;
-  updateSubscription(params: WorkerUpdateSubscriptionParams, options: CommandOptions): Promise<WorkerUpdateSubscriptionResult>;
+  disconnect(params: WorkerDisconnectParams, options: TimeoutOptions): Promise<WorkerDisconnectResult>;
+  evaluateExpression(params: WorkerEvaluateExpressionParams, options: TimeoutOptions): Promise<WorkerEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, options: TimeoutOptions): Promise<WorkerEvaluateExpressionHandleResult>;
+  updateSubscription(params: WorkerUpdateSubscriptionParams, options: TimeoutOptions): Promise<WorkerUpdateSubscriptionResult>;
 }
 export type WorkerConsoleEvent = {
   type: string,

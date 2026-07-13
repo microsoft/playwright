@@ -17,6 +17,7 @@
 import { parseSerializedValue, serializeValue } from '@protocol/serializers';
 import { ChannelOwner } from './channelOwner';
 import { isTargetClosedError } from './errors';
+import { kNoTimeout } from './timeoutSettings';
 
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
@@ -37,29 +38,29 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg): Promise<R> {
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, { signal: undefined, timeout: 0 });
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, kNoTimeout);
     return parseResult(result.value);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
-    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, { signal: undefined, timeout: 0 });
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, kNoTimeout);
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 
   async getProperty(propertyName: string): Promise<JSHandle> {
-    const result = await this._channel.getProperty({ name: propertyName }, { signal: undefined, timeout: 0 });
+    const result = await this._channel.getProperty({ name: propertyName }, kNoTimeout);
     return JSHandle.from(result.handle);
   }
 
   async getProperties(): Promise<Map<string, JSHandle>> {
     const map = new Map<string, JSHandle>();
-    for (const { name, value } of (await this._channel.getPropertyList({}, { signal: undefined, timeout: 0 })).properties)
+    for (const { name, value } of (await this._channel.getPropertyList({}, kNoTimeout)).properties)
       map.set(name, JSHandle.from(value));
     return map;
   }
 
   async jsonValue(): Promise<T> {
-    return parseResult((await this._channel.jsonValue({}, { signal: undefined, timeout: 0 })).value);
+    return parseResult((await this._channel.jsonValue({}, kNoTimeout)).value);
   }
 
   asElement(): T extends Node ? api.ElementHandle<T> : null {
@@ -72,7 +73,7 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
 
   async dispose() {
     try {
-      await this._channel.dispose({}, { signal: undefined, timeout: 0 });
+      await this._channel.dispose({}, kNoTimeout);
     } catch (e) {
       if (isTargetClosedError(e))
         return;

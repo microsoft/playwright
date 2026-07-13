@@ -47,6 +47,7 @@ import { Stream } from './stream';
 import { Tracing } from './tracing';
 import { Worker } from './worker';
 import { WritableStream } from './writableStream';
+import { kNoTimeout } from './timeoutSettings';
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { HeadersArray } from './types';
 import type { ValidatorContext } from '@protocol/validator';
@@ -60,7 +61,7 @@ class Root extends ChannelOwner<channels.RootChannel> {
   async initialize(): Promise<Playwright> {
     return Playwright.from((await this._channel.initialize({
       sdkLanguage: 'javascript',
-    }, { signal: undefined, timeout: 0 })).playwright);
+    }, kNoTimeout)).playwright);
   }
 }
 

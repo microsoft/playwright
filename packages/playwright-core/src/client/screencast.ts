@@ -16,6 +16,7 @@
 
 import { Artifact } from './artifact';
 import { DisposableStub } from './disposable';
+import { kNoTimeout } from './timeoutSettings';
 
 import type * as api from '../../types/types';
 import type { Page } from './page';
@@ -45,7 +46,7 @@ export class Screencast implements api.Screencast {
       quality: options.quality,
       sendFrames: !!options.onFrame,
       record: !!options.path,
-    }, { signal: undefined, timeout: 0 });
+    }, kNoTimeout);
     if (result.artifact) {
       this._artifact = Artifact.from(result.artifact);
       this._savePath = options.path;
@@ -57,7 +58,7 @@ export class Screencast implements api.Screencast {
     await this._page._wrapApiCall(async () => {
       this._started = false;
       this._onFrame = null;
-      await this._page._channel.screencastStop({}, { signal: undefined, timeout: 0 });
+      await this._page._channel.screencastStop({}, kNoTimeout);
       if (this._savePath)
         await this._artifact?.saveAs(this._savePath);
       this._artifact = undefined;
@@ -66,28 +67,28 @@ export class Screencast implements api.Screencast {
   }
 
   async showActions(options?: { duration?: number, position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right', fontSize?: number, cursor?: 'none' | 'pointer' }): Promise<DisposableStub> {
-    await this._page._channel.screencastShowActions({ duration: options?.duration, position: options?.position, fontSize: options?.fontSize, cursor: options?.cursor }, { signal: undefined, timeout: 0 });
-    return new DisposableStub(() => this._page._channel.screencastHideActions({}, { signal: undefined, timeout: 0 }));
+    await this._page._channel.screencastShowActions({ duration: options?.duration, position: options?.position, fontSize: options?.fontSize, cursor: options?.cursor }, kNoTimeout);
+    return new DisposableStub(() => this._page._channel.screencastHideActions({}, kNoTimeout));
   }
 
   async hideActions(): Promise<void> {
-    await this._page._channel.screencastHideActions({}, { signal: undefined, timeout: 0 });
+    await this._page._channel.screencastHideActions({}, kNoTimeout);
   }
 
   async showOverlay(html: string, options?: { duration?: number }): Promise<DisposableStub> {
-    const { id } = await this._page._channel.screencastShowOverlay({ html, duration: options?.duration }, { signal: undefined, timeout: 0 });
-    return new DisposableStub(() => this._page._channel.screencastRemoveOverlay({ id }, { signal: undefined, timeout: 0 }));
+    const { id } = await this._page._channel.screencastShowOverlay({ html, duration: options?.duration }, kNoTimeout);
+    return new DisposableStub(() => this._page._channel.screencastRemoveOverlay({ id }, kNoTimeout));
   }
 
   async showChapter(title: string, options?: { description?: string, duration?: number }): Promise<void> {
-    await this._page._channel.screencastChapter({ title, ...options }, { signal: undefined, timeout: 0 });
+    await this._page._channel.screencastChapter({ title, ...options }, kNoTimeout);
   }
 
   async showOverlays(): Promise<void> {
-    await this._page._channel.screencastSetOverlayVisible({ visible: true }, { signal: undefined, timeout: 0 });
+    await this._page._channel.screencastSetOverlayVisible({ visible: true }, kNoTimeout);
   }
 
   async hideOverlays(): Promise<void> {
-    await this._page._channel.screencastSetOverlayVisible({ visible: false }, { signal: undefined, timeout: 0 });
+    await this._page._channel.screencastSetOverlayVisible({ visible: false }, kNoTimeout);
   }
 }

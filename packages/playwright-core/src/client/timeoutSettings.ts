@@ -18,6 +18,13 @@
 import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT, DEFAULT_PLAYWRIGHT_TIMEOUT } from '@isomorphic/time';
 import { debugMode } from '@utils/debug';
 
+import type * as channels from './channels';
+
+type TimeoutOptions = { timeout?: number, signal?: AbortSignal };
+
+// Sentinel for internal calls that intentionally opt out of a deadline.
+export const kNoTimeout: channels.TimeoutOptions = { signal: undefined, timeout: 0 };
+
 export class TimeoutSettings {
   private _parent: TimeoutSettings | undefined;
   private _defaultTimeout: number | undefined;
@@ -43,7 +50,25 @@ export class TimeoutSettings {
     return this._defaultTimeout;
   }
 
-  navigationTimeout(options: { timeout?: number }): number {
+  signal(options: { signal?: AbortSignal }): AbortSignal | undefined {
+    // Passed through verbatim today, but this indirection leaves room for a
+    // settings/parent hierarchy in the future, mirroring the timeout resolution.
+    return options.signal;
+  }
+
+  navigationTimeout(options: TimeoutOptions): channels.TimeoutOptions {
+    return { signal: this.signal(options), timeout: this._navigationTimeout(options) };
+  }
+
+  timeout(options: TimeoutOptions): channels.TimeoutOptions {
+    return { signal: this.signal(options), timeout: this._timeout(options) };
+  }
+
+  launchTimeout(options: TimeoutOptions): channels.TimeoutOptions {
+    return { signal: this.signal(options), timeout: this._launchTimeout(options) };
+  }
+
+  private _navigationTimeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
     if (this._defaultNavigationTimeout !== undefined)
@@ -53,11 +78,11 @@ export class TimeoutSettings {
     if (this._defaultTimeout !== undefined)
       return this._defaultTimeout;
     if (this._parent)
-      return this._parent.navigationTimeout(options);
+      return this._parent._navigationTimeout(options);
     return DEFAULT_PLAYWRIGHT_TIMEOUT;
   }
 
-  timeout(options: { timeout?: number }): number {
+  private _timeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
     if (debugMode() === 'inspector')
@@ -65,17 +90,17 @@ export class TimeoutSettings {
     if (this._defaultTimeout !== undefined)
       return this._defaultTimeout;
     if (this._parent)
-      return this._parent.timeout(options);
+      return this._parent._timeout(options);
     return DEFAULT_PLAYWRIGHT_TIMEOUT;
   }
 
-  launchTimeout(options: { timeout?: number }): number {
+  private _launchTimeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
     if (debugMode() === 'inspector')
       return 0;
     if (this._parent)
-      return this._parent.launchTimeout(options);
+      return this._parent._launchTimeout(options);
     return DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT;
   }
 }

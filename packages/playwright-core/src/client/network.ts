@@ -32,6 +32,7 @@ import { APIResponse } from './fetch';
 import { Events } from './events';
 import { isTargetClosedError } from './errors';
 import { ChannelOwner } from './channelOwner';
+import { kNoTimeout } from './timeoutSettings';
 
 import type { BrowserContext } from './browserContext';
 import type { Page } from './page';
@@ -179,7 +180,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = this._wrapApiCall(async () => {
-        return new RawHeaders((await this._channel.rawRequestHeaders({}, { signal: undefined, timeout: 0 })).headers);
+        return new RawHeaders((await this._channel.rawRequestHeaders({}, kNoTimeout)).headers);
       }, { internal: true });
     }
     return await this._actualHeadersPromise;
@@ -198,11 +199,11 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   async response(): Promise<Response | null> {
-    return Response.fromNullable((await this._channel.response({}, { signal: undefined, timeout: 0 })).response);
+    return Response.fromNullable((await this._channel.response({}, kNoTimeout)).response);
   }
 
   async _internalResponse(): Promise<Response | null> {
-    return Response.fromNullable((await this._channel.response({}, { signal: undefined, timeout: 0 })).response);
+    return Response.fromNullable((await this._channel.response({}, kNoTimeout)).response);
   }
 
   existingResponse(): Response | null {
@@ -261,7 +262,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     const response = await this.response();
     if (!response)
       throw new Error('Unable to fetch sizes for failed request');
-    return (await response._channel.sizes({}, { signal: undefined, timeout: 0 })).sizes;
+    return (await response._channel.sizes({}, kNoTimeout)).sizes;
   }
 
   _setResponseEndTiming(responseEndTiming: number) {
@@ -336,13 +337,13 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async abort(errorCode?: string) {
     await this._handleRoute(async () => {
-      await this._raceWithTargetClose(this._channel.abort({ errorCode }, { signal: undefined, timeout: 0 }));
+      await this._raceWithTargetClose(this._channel.abort({ errorCode }, kNoTimeout));
     });
   }
 
   async _redirectNavigationRequest(url: string) {
     await this._handleRoute(async () => {
-      await this._raceWithTargetClose(this._channel.redirectNavigationRequest({ url }, { signal: undefined, timeout: 0 }));
+      await this._raceWithTargetClose(this._channel.redirectNavigationRequest({ url }, kNoTimeout));
     });
   }
 
@@ -423,7 +424,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       body,
       isBase64,
       fetchResponseUid
-    }, { signal: undefined, timeout: 0 }));
+    }, kNoTimeout));
   }
 
   async continue(options: FallbackOverrides = {}) {
@@ -452,7 +453,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       headers: options.headers ? headersObjectToArray(options.headers) : undefined,
       postData: options.postDataBuffer,
       isFallback,
-    }, { signal: undefined, timeout: 0 }));
+    }, kNoTimeout));
   }
 }
 
@@ -493,14 +494,14 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
       },
 
       close: async (options: { code?: number, reason?: string } = {}) => {
-        await this._channel.closeServer({ ...options, wasClean: true }, { signal: undefined, timeout: 0 }).catch(() => {});
+        await this._channel.closeServer({ ...options, wasClean: true }, kNoTimeout).catch(() => {});
       },
 
       send: (message: string | Buffer) => {
         if (isString(message))
-          this._channel.sendToServer({ message, isBase64: false }, { signal: undefined, timeout: 0 }).catch(() => {});
+          this._channel.sendToServer({ message, isBase64: false }, kNoTimeout).catch(() => {});
         else
-          this._channel.sendToServer({ message: message.toString('base64'), isBase64: true }, { signal: undefined, timeout: 0 }).catch(() => {});
+          this._channel.sendToServer({ message: message.toString('base64'), isBase64: true }, kNoTimeout).catch(() => {});
       },
 
       async [Symbol.asyncDispose]() {
@@ -512,28 +513,28 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
       if (this._onPageMessage)
         this._onPageMessage(isBase64 ? Buffer.from(message, 'base64') : message);
       else if (this._connected)
-        this._channel.sendToServer({ message, isBase64 }, { signal: undefined, timeout: 0 }).catch(() => {});
+        this._channel.sendToServer({ message, isBase64 }, kNoTimeout).catch(() => {});
     });
 
     this._channel.on('messageFromServer', ({ message, isBase64 }) => {
       if (this._onServerMessage)
         this._onServerMessage(isBase64 ? Buffer.from(message, 'base64') : message);
       else
-        this._channel.sendToPage({ message, isBase64 }, { signal: undefined, timeout: 0 }).catch(() => {});
+        this._channel.sendToPage({ message, isBase64 }, kNoTimeout).catch(() => {});
     });
 
     this._channel.on('closePage', ({ code, reason, wasClean }) => {
       if (this._onPageClose)
         this._onPageClose(code, reason);
       else
-        this._channel.closeServer({ code, reason, wasClean }, { signal: undefined, timeout: 0 }).catch(() => {});
+        this._channel.closeServer({ code, reason, wasClean }, kNoTimeout).catch(() => {});
     });
 
     this._channel.on('closeServer', ({ code, reason, wasClean }) => {
       if (this._onServerClose)
         this._onServerClose(code, reason);
       else
-        this._channel.closePage({ code, reason, wasClean }, { signal: undefined, timeout: 0 }).catch(() => {});
+        this._channel.closePage({ code, reason, wasClean }, kNoTimeout).catch(() => {});
     });
   }
 
@@ -546,22 +547,22 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
   }
 
   async close(options: { code?: number, reason?: string } = {}) {
-    await this._channel.closePage({ ...options, wasClean: true }, { signal: undefined, timeout: 0 }).catch(() => {});
+    await this._channel.closePage({ ...options, wasClean: true }, kNoTimeout).catch(() => {});
   }
 
   connectToServer() {
     if (this._connected)
       throw new Error('Already connected to the server');
     this._connected = true;
-    this._channel.connect({}, { signal: undefined, timeout: 0 }).catch(() => {});
+    this._channel.connect({}, kNoTimeout).catch(() => {});
     return this._server;
   }
 
   send(message: string | Buffer) {
     if (isString(message))
-      this._channel.sendToPage({ message, isBase64: false }, { signal: undefined, timeout: 0 }).catch(() => {});
+      this._channel.sendToPage({ message, isBase64: false }, kNoTimeout).catch(() => {});
     else
-      this._channel.sendToPage({ message: message.toString('base64'), isBase64: true }, { signal: undefined, timeout: 0 }).catch(() => {});
+      this._channel.sendToPage({ message: message.toString('base64'), isBase64: true }, kNoTimeout).catch(() => {});
   }
 
   onMessage(handler: (message: string | Buffer) => any) {
@@ -581,7 +582,7 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
       return;
     // Ensure that websocket is "open" and can send messages without an actual server connection.
     // If this happens after the page has been closed, ignore the error.
-    await this._channel.ensureOpened({}, { signal: undefined, timeout: 0 }).catch(() => {});
+    await this._channel.ensureOpened({}, kNoTimeout).catch(() => {});
   }
 }
 
@@ -701,7 +702,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   async _actualHeaders(): Promise<RawHeaders> {
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = (async () => {
-        return new RawHeaders((await this._channel.rawResponseHeaders({}, { signal: undefined, timeout: 0 })).headers);
+        return new RawHeaders((await this._channel.rawResponseHeaders({}, kNoTimeout)).headers);
       })();
     }
     return await this._actualHeadersPromise;
@@ -728,7 +729,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   }
 
   async body(): Promise<Buffer> {
-    return (await this._channel.body({}, { signal: undefined, timeout: 0 })).binary;
+    return (await this._channel.body({}, kNoTimeout)).binary;
   }
 
   async text(): Promise<string> {
@@ -750,15 +751,15 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   }
 
   async serverAddr(): Promise<RemoteAddr|null> {
-    return (await this._channel.serverAddr({}, { signal: undefined, timeout: 0 })).value || null;
+    return (await this._channel.serverAddr({}, kNoTimeout)).value || null;
   }
 
   async securityDetails(): Promise<SecurityDetails|null> {
-    return (await this._channel.securityDetails({}, { signal: undefined, timeout: 0 })).value || null;
+    return (await this._channel.securityDetails({}, kNoTimeout)).value || null;
   }
 
   async httpVersion(): Promise<string> {
-    return (await this._channel.httpVersion({}, { signal: undefined, timeout: 0 })).value;
+    return (await this._channel.httpVersion({}, kNoTimeout)).value;
   }
 }
 
@@ -803,7 +804,7 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implement
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     return await this._wrapApiCall(async () => {
-      const timeout = this._page._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+      const { timeout } = this._page._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
       const signal = typeof optionsOrPredicate === 'function' ? undefined : (optionsOrPredicate as TimeoutOptions).signal;
       const waiter = Waiter.createForEvent(this, event);

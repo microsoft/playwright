@@ -17,6 +17,7 @@
 import { ChannelOwner } from './channelOwner';
 import { Page } from './page';
 import { isTargetClosedError } from './errors';
+import { kNoTimeout } from './timeoutSettings';
 
 import type * as api from '../../types/types';
 import type * as channels from './channels';
@@ -53,12 +54,12 @@ export class Dialog extends ChannelOwner<channels.DialogChannel> implements api.
   }
 
   async accept(promptText: string | undefined) {
-    await this._channel.accept({ promptText }, { signal: undefined, timeout: 0 });
+    await this._channel.accept({ promptText }, kNoTimeout);
   }
 
   async dismiss() {
     try {
-      await this._channel.dismiss({}, { signal: undefined, timeout: 0 });
+      await this._channel.dismiss({}, kNoTimeout);
     } catch (e) {
       if (isTargetClosedError(e))
         return;

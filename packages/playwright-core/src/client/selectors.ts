@@ -16,6 +16,7 @@
 
 import { evaluationScript } from './clientHelper';
 import { setTestIdAttribute } from './locator';
+import { kNoTimeout } from './timeoutSettings';
 
 import type { SelectorEngine } from './types';
 import type * as api from '../../types/types';
@@ -34,7 +35,7 @@ export class Selectors implements api.Selectors {
     const source = await evaluationScript(script, undefined, false);
     const selectorEngine: channels.SelectorEngine = { ...options, name, source };
     for (const context of this._contextsForSelectors)
-      await context._channel.registerSelectorEngine({ selectorEngine }, { signal: undefined, timeout: 0 });
+      await context._channel.registerSelectorEngine({ selectorEngine }, kNoTimeout);
     this._selectorEngines.push(selectorEngine);
   }
 
@@ -43,7 +44,7 @@ export class Selectors implements api.Selectors {
     setTestIdAttribute(attributeName);
     for (const context of this._contextsForSelectors) {
       context._options.testIdAttributeName = attributeName;
-      context._channel.setTestIdAttributeName({ testIdAttributeName: attributeName }, { signal: undefined, timeout: 0 }).catch(() => {});
+      context._channel.setTestIdAttributeName({ testIdAttributeName: attributeName }, kNoTimeout).catch(() => {});
     }
   }
 
