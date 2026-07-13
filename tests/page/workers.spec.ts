@@ -383,8 +383,6 @@ it('should resolve worker script allHeaders in main frame', {
 it('should resolve worker script allHeaders in iframe', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39948' },
 }, async function({ page, server, browserName }) {
-  it.fixme(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/39948');
-
   const [request] = await Promise.all([
     page.waitForEvent('requestfinished', request => request.url() === server.PREFIX + '/worker/worker.js'),
     attachFrame(page, 'frame1', server.PREFIX + '/worker/worker.html'),
@@ -401,7 +399,6 @@ it('should resolve worker script allHeaders in nested worker inside iframe', {
 }, async function({ page, server, browserName }) {
   it.fixme(browserName === 'webkit', 'cannot evaluate in nested worker');
   it.fixme(browserName === 'firefox', 'nested worker script request is not reported at all');
-  it.fixme(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/39948');
 
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),
