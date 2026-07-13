@@ -292,7 +292,8 @@ export class Screenshotter {
     if ((options as any).__testHookBeforeScreenshot)
       await progress.race((options as any).__testHookBeforeScreenshot());
 
-    const shouldSetDefaultBackground = options.omitBackground && format === 'png';
+    // jpeg does not support transparency.
+    const shouldSetDefaultBackground = options.omitBackground && format !== 'jpeg';
     if (shouldSetDefaultBackground)
       await progress.race(this._page.delegate.setBackgroundColor({ r: 0, g: 0, b: 0, a: 0 }));
     const cleanupHighlight = await this._maskElements(progress, options);

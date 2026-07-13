@@ -460,6 +460,9 @@ function determineFileExtension(file: string | Buffer): string {
     return 'png';
   if (compareMagicBytes(file, [0xff, 0xd8, 0xff]))
     return 'jpg';
+  // A WebP bitstream is a RIFF container tagged 'WEBP': "RIFF????WEBP".
+  if (file.length >= 12 && file.toString('ascii', 0, 4) === 'RIFF' && file.toString('ascii', 8, 12) === 'WEBP')
+    return 'webp';
   return 'dat';
 }
 

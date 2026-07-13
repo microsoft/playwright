@@ -99,8 +99,9 @@ export function decodeWebp(buffer: Buffer): WebpImage {
 
 // Whether a WebP bitstream is lossless, determined by parsing the RIFF header.
 // The frame is 'VP8L' (lossless) or 'VP8 ' (lossy); the 'VP8X' extended format
-// wraps one of those, so scan its chunks. (The lossy quality factor is an
-// encoder input and is not stored in the bitstream, so it cannot be recovered.)
+// wraps one of those along with metadata chunks like 'ICCP' or 'EXIF', so skip
+// chunks until a frame is found. (The lossy quality factor is an encoder input
+// and is not stored in the bitstream, so it cannot be recovered.)
 export function isLosslessWebp(buffer: Buffer): boolean {
   if (buffer.length < 16 || buffer.toString('ascii', 0, 4) !== 'RIFF' || buffer.toString('ascii', 8, 12) !== 'WEBP')
     return false;
@@ -111,10 +112,7 @@ export function isLosslessWebp(buffer: Buffer): boolean {
       return true;
     if (fourcc === 'VP8 ')
       return false;
-    // Skip this chunk (8-byte header + payload, padded to an even size) and
-    // keep scanning — only 'VP8X' is expected to lead here.
-    if (fourcc !== 'VP8X')
-      return false;
+    // Skip this chunk (8-byte header + payload, padded to an even size).
     const size = buffer.readUInt32LE(offset + 4);
     offset += 8 + size + (size & 1);
   }

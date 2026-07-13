@@ -17,7 +17,7 @@
 import colors from 'colors/safe';
 import * as fs from 'fs';
 import * as path from 'path';
-import { test, expect, createWhiteImage, paintBlackPixels } from './playwright-test-fixtures';
+import { test, expect, createWebpImage, createWhiteImage, paintBlackPixels } from './playwright-test-fixtures';
 
 const files = {
   'helper.ts': `
@@ -698,6 +698,59 @@ test('should compare different PNG images', async ({ runInlineTest }, testInfo) 
   expect(fs.existsSync(expectedSnapshotArtifactPath)).toBe(true);
   expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(true);
   expect(fs.existsSync(diffSnapshotArtifactPath)).toBe(true);
+});
+
+test('should compare WEBP images', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot.webp': createWebpImage(1, 1, 255, 255, 255),
+    'a.spec.js': `
+      const { test, expect } = require('./helper');
+      test('is a test', async ({ page }) => {
+        expect(await page.screenshot({ type: 'webp', clip: { x: 0, y: 0, width: 1, height: 1 } })).toMatchSnapshot('snapshot.webp');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should compare different WEBP images', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot.webp': createWebpImage(1, 1, 255, 0, 0),
+    'a.spec.js': `
+      const { test, expect } = require('./helper');
+      test('is a test', ({}) => {
+        expect(Buffer.from([${createWebpImage(1, 1, 0, 0, 255).join(',')}])).toMatchSnapshot('snapshot.webp');
+      });
+    `
+  });
+
+  const outputText = result.output;
+  expect(result.exitCode).toBe(1);
+  expect(outputText).toContain('Error: expect(Buffer).toMatchSnapshot(expected)');
+  expect(outputText).toContain('1 pixels (ratio 1.00 of all image pixels) are different.');
+  const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.webp');
+  const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.webp');
+  const diffSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-diff.webp');
+  expect(fs.existsSync(expectedSnapshotArtifactPath)).toBe(true);
+  expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(true);
+  expect(fs.existsSync(diffSnapshotArtifactPath)).toBe(true);
+});
+
+test('should use webp extension for anonymous webp snapshots', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      const { test, expect } = require('./helper');
+      test('is a test', async ({ page }) => {
+        expect(await page.screenshot({ type: 'webp' })).toMatchSnapshot();
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.webp'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('a.spec.js-snapshots', 'is-a-test-1.webp'))).toBe(true);
 });
 
 test('should correctly handle different JPEG image signatures', async ({ runInlineTest }, testInfo) => {

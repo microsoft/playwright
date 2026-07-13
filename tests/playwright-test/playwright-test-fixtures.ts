@@ -20,6 +20,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { execSync } from 'node:child_process';
 import { PNG } from 'playwright-core/lib/utilsBundle';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import type { CommonFixtures, CommonWorkerFixtures, TestChildProcess } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
@@ -390,6 +391,11 @@ export function createImage(width: number, height: number, r: number = 0, g: num
 
 export function createWhiteImage(width: number, height: number) {
   return createImage(width, height, 255, 255, 255);
+}
+
+export function createWebpImage(width: number, height: number, r: number = 0, g: number = 0, b: number = 0): Buffer {
+  const png = PNG.sync.read(createImage(width, height, r, g, b));
+  return utils.encodeWebp({ width: png.width, height: png.height, data: png.data }, { lossless: true });
 }
 
 export function paintBlackPixels(image: Buffer, blackPixelsCount: number): Buffer {

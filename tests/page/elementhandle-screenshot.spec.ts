@@ -17,6 +17,8 @@
 
 import { test as it, expect, rafraf } from './pageTest';
 import { verifyViewport } from '../config/utils';
+import { PNG } from 'playwright-core/lib/utilsBundle';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import path from 'path';
 import fs from 'fs';
 
@@ -31,6 +33,20 @@ it.describe('element screenshot', () => {
     const elementHandle = await page.$('.box:nth-of-type(3)');
     const screenshot = await elementHandle.screenshot();
     expect(screenshot).toMatchSnapshot('screenshot-element-bounding-box.png');
+  });
+
+  it('should work with webp', async ({ page, server, isBidi }) => {
+    it.skip(isBidi, 'webp screenshots are not supported via WebDriver BiDi');
+
+    await page.setViewportSize({ width: 500, height: 500 });
+    await page.goto(server.PREFIX + '/grid.html');
+    const elementHandle = await page.$('.box:nth-of-type(3)');
+    const webpImage = utils.decodeWebp(await elementHandle.screenshot({ type: 'webp' }));
+    // The default webp screenshot is lossless, so it must decode to the exact same pixels as png.
+    const pngImage = PNG.sync.read(await elementHandle.screenshot({ type: 'png' }));
+    expect(webpImage.width).toBe(pngImage.width);
+    expect(webpImage.height).toBe(pngImage.height);
+    expect(webpImage.data.equals(pngImage.data)).toBe(true);
   });
 
   it('should work when main world busts JSON.stringify', async ({ page, server }) => {
