@@ -17,7 +17,7 @@
 import React from 'react';
 import './dashboard.css';
 import { ChevronLeftIcon, ChevronRightIcon, LockIcon, LockOpenIcon, ReloadIcon, ScreenshotRegionIcon } from './icons';
-import { clientToViewport, getImageLayout, viewportToImageOffset } from './imageLayout';
+import { clientToViewport, getImageLayout } from './imageLayout';
 import { Recording } from './recording';
 import { AnnotateSidebar, AnnotateOverlay } from './annotateView';
 import { DebuggerPanel } from './debuggerPanel';
@@ -237,25 +237,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
 
   const overlayOpen = !!selectedFrame;
 
-  // Marker for the currently-running action's point on the live screencast. Only the
-  // in-flight action is shown, so the point clears once its action completes (e.g. when
-  // stepping to the next action).
   let actionPointStyle: React.CSSProperties | undefined;
   if (debuggerPanelOpen && liveFrame?.viewportWidth && liveFrame?.viewportHeight) {
     const call = [...apiCalls].reverse().find(c => c.actionPoint && c.status === 'running');
-    const layout = call?.actionPoint ? getImageLayout(displayRef.current) : null;
-    if (layout && call?.actionPoint) {
-      const { left, top } = viewportToImageOffset(layout, liveFrame.viewportWidth, liveFrame.viewportHeight, call.actionPoint.x, call.actionPoint.y);
-      actionPointStyle = { left, top };
+    if (call?.actionPoint) {
+      actionPointStyle = {
+        left: `${(call.actionPoint.x / liveFrame.viewportWidth) * 100}%`,
+        top: `${(call.actionPoint.y / liveFrame.viewportHeight) * 100}%`,
+      };
     }
   }
 
   return (
     <main className={'dashboard-view' + (interactive ? ' interactive' : '') + (annotateActive ? ' has-annotate-sidebar' : '')} aria-label={modeLabel}>
       <SplitView
-        orientation='horizontal'
-        sidebarSize={340}
-        minSidebarSize={240}
+        orientation='vertical'
+        sidebarSize={260}
+        minSidebarSize={140}
         settingName='dashboardActionsPanel'
         sidebarHidden={!debuggerPanelOpen}
         sidebar={<DebuggerPanel model={model} />}
@@ -305,14 +303,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
             >
               {isRecording && <span className='mode-record-label'>Recording...</span>}
             </ToolbarButton>
-            <div style={{ flex: 'auto' }}></div>
             <ToolbarButton
-              className={'mode-toggle mode-debugger' + (!debuggerPanelOpen && debuggerPaused ? ' paused' : '')}
-              title={debuggerPanelOpen ? 'Hide actions panel' : (debuggerPaused ? 'Paused — show actions panel' : 'Show actions panel')}
-              icon='debug-alt'
+              className='mode-toggle mode-debugger'
+              title={debuggerPanelOpen ? 'Hide actions panel' : 'Show actions panel'}
+              icon='list-unordered'
               toggled={debuggerPanelOpen}
               onClick={() => model.toggleDebuggerPanel()}
             />
+            {debuggerPaused && <span className='debugger-paused-label'>Paused</span>}
+            <div style={{ flex: 'auto' }}></div>
           </div>
 
           {/* Viewport */}

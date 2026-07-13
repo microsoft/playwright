@@ -62,15 +62,15 @@ export const DebuggerPanel: React.FC<DebuggerPanelProps> = ({ model }) => {
     <div className='debugger-panel'>
       <Toolbar>
         <div className='debugger-panel-title'>Actions</div>
-        <div style={{ flex: 'auto' }}></div>
-        <ToolbarButton icon='debug-continue' title='Resume (F8)' ariaLabel='Resume' disabled={!debuggerPaused} onClick={() => model.debuggerResume()} />
+        <ToolbarButton className='debugger-run-control' icon='debug-continue' title='Resume (F8)' ariaLabel='Resume' disabled={!debuggerPaused} onClick={() => model.debuggerResume()} />
         <ToolbarButton icon='debug-pause' title='Pause (F8)' ariaLabel='Pause' disabled={debuggerPaused} onClick={() => model.debuggerPause()} />
-        <ToolbarButton icon='debug-step-over' title='Step over (F10)' ariaLabel='Step over' disabled={!debuggerPaused} onClick={() => model.debuggerStep()} />
+        <ToolbarButton className='debugger-run-control' icon='debug-step-over' title='Step over (F10)' ariaLabel='Step over' disabled={!debuggerPaused} onClick={() => model.debuggerStep()} />
+        <div style={{ flex: 'auto' }}></div>
       </Toolbar>
       <SplitView
-        orientation='vertical'
-        sidebarSize={200}
-        minSidebarSize={100}
+        orientation='horizontal'
+        sidebarSize={380}
+        minSidebarSize={220}
         settingName='dashboardDebuggerSource'
         main={<div className='debugger-call-log'>
           {apiCalls.length === 0 && <div className='debugger-empty'>No actions yet</div>}

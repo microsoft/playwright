@@ -63,24 +63,11 @@
   box-shadow: none;
 }
 
-/* Panel closed while the debugger is paused: draw attention in red. */
-.mode-toggle.mode-debugger.paused,
-.mode-toggle.mode-debugger.paused > .codicon {
-  color: var(--color-fg-on-emphasis);
-}
-
-.mode-toggle.mode-debugger.paused {
-  background: rgb(var(--recording-red));
-  animation: debugger-paused-pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes debugger-paused-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgb(var(--recording-red) / 0.5);
-  }
-  50% {
-    box-shadow: 0 0 0 4px rgb(var(--recording-red) / 0.15);
-  }
+.debugger-paused-label {
+  flex: none;
+  font-weight: 600;
+  color: var(--color-attention-fg);
+  white-space: nowrap;
 }
 
 .mode-toggle.flash {

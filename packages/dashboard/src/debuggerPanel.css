@@ -29,11 +29,17 @@
   padding: 0 4px;
 }
 
+.debugger-panel .debugger-run-control:not(:disabled),
+.debugger-panel .debugger-run-control:not(:disabled) .codicon {
+  color: var(--color-success-fg);
+}
+
 .debugger-call-log {
   display: flex;
   flex-direction: column;
   flex: auto;
   width: 100%;
+  min-width: 0;
   min-height: 0;
   line-height: 20px;
   white-space: pre;
@@ -45,6 +51,7 @@
   flex-direction: column;
   flex: auto;
   width: 100%;
+  min-width: 0;
   min-height: 0;
   overflow: hidden;
 }
@@ -140,15 +147,13 @@
   white-space: pre-wrap;
 }
 
-/* Action-point marker overlaid on the screencast. Matches the injected recorder's
-   action point (x-pw-action-point in packages/injected/src/highlight.css). */
 .debugger-action-point {
   position: absolute;
-  width: 20px;
-  height: 20px;
-  margin: -10px 0 0 -10px;
+  width: 2%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
   background: red;
-  border-radius: 10px;
+  border-radius: 50%;
   pointer-events: none;
   z-index: 11;
 }

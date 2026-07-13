@@ -43,9 +43,3 @@ export function clientToViewport(layout: ImageLayout, vw: number, vh: number, cl
   const fracY = (clientY - layout.rect.top - layout.offsetY) / layout.renderH;
   return { x: Math.round(fracX * vw), y: Math.round(fracY * vh) };
 }
-
-export function viewportToImageOffset(layout: ImageLayout, vw: number, vh: number, x: number, y: number): { left: number; top: number } {
-  const left = layout.offsetX + (x / vw) * layout.renderW;
-  const top = layout.offsetY + (y / vh) * layout.renderH;
-  return { left, top };
-}
