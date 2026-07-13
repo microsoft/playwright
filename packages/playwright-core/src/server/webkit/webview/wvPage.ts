@@ -387,7 +387,11 @@ export class WVPage implements PageDelegate {
       eventsHelper.addEventListener(session, 'Network.loadingFailed', e => this._onLoadingFailed(session, e)),
       eventsHelper.addEventListener(session, 'Network.webSocketCreated', e => this._page.frameManager.onWebSocketCreated(e.requestId, e.url)),
       eventsHelper.addEventListener(session, 'Network.webSocketWillSendHandshakeRequest', event => this._onWebSocketWillSendHandshakeRequest(event)),
-      eventsHelper.addEventListener(session, 'Network.webSocketHandshakeResponseReceived', e => this._page.frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText, headersObjectToArray(e.response.headers, ','))),
+      eventsHelper.addEventListener(session, 'Network.webSocketHandshakeResponseReceived', e => this._page.frameManager.onWebSocketResponse(e.requestId, {
+        status: e.response.status,
+        statusText: e.response.statusText,
+        headers: headersObjectToArray(e.response.headers, ','),
+      })),
       eventsHelper.addEventListener(session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page.frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData, this._timestampToWallTimeMsForWebSocket(e.requestId, e.timestamp))),
       eventsHelper.addEventListener(session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page.frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData, this._timestampToWallTimeMsForWebSocket(e.requestId, e.timestamp))),
       eventsHelper.addEventListener(session, 'Network.webSocketClosed', event => this._onWebSocketClosed(event)),
@@ -1173,7 +1177,10 @@ export class WVPage implements PageDelegate {
   _onWebSocketWillSendHandshakeRequest(event: Protocol.Network.webSocketWillSendHandshakeRequestPayload) {
     const wallTimeMs = event.walltime * 1000;
     this._timestampBaselineForWebSocket.set(event.requestId, wallTimeMs - event.timestamp * 1000);
-    this._page.frameManager.onWebSocketRequest(event.requestId, headersObjectToArray(event.request.headers), wallTimeMs);
+    this._page.frameManager.onWebSocketRequest(event.requestId, {
+      headers: headersObjectToArray(event.request.headers),
+      wallTimeMs,
+    });
   }
 
   _onWebSocketClosed(event: Protocol.Network.webSocketClosedPayload) {

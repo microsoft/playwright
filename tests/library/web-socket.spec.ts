@@ -197,6 +197,24 @@ it('should reject waitForEvent on page close', async ({ page, server }) => {
   expect((await error).message).toContain(kTargetClosedErrorMessage);
 });
 
+it('should not tear down the page when a WebSocket is opened inside a worker', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41742' },
+}, async ({ page, server }) => {
+  server.sendOnWebSocketConnection('incoming');
+  await page.goto(server.EMPTY_PAGE);
+  const received = await page.evaluate(host => {
+    const code = `
+      const ws = new WebSocket(${JSON.stringify('ws://' + host + '/ws')});
+      ws.addEventListener('message', event => self.postMessage(event.data));
+    `;
+    const worker = new Worker(URL.createObjectURL(new Blob([code], { type: 'text/javascript' })));
+    return new Promise(resolve => worker.addEventListener('message', event => resolve(event.data)));
+  }, server.HOST);
+  expect(received).toBe('incoming');
+  // Opening a `WebSocket` inside a worker must not tear down the page session.
+  expect(await page.evaluate(() => 1 + 1)).toBe(2);
+});
+
 it('should turn off when offline', async ({ page }) => {
   it.fixme();
 
