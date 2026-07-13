@@ -36,7 +36,6 @@ export type ActionName =
 
 export type ActionBase = {
   name: ActionName,
-  signals: Signal[],
   ariaSnapshot?: string,
 };
 
@@ -155,7 +154,7 @@ export type DialogSignal = BaseSignal & {
   dialogAlias: string,
 };
 
-// An element that appeared since the previous action, asserted before this action runs.
+// An element appeared as a result of an action.
 export type ExpectSignal = BaseSignal & {
   name: 'expect',
   selector: string,
@@ -166,6 +165,7 @@ export type Signal = NavigationSignal | PopupSignal | DownloadSignal | DialogSig
 export type ActionInContext = {
   pageGuid: string;
   action: Action;
+  signals: Signal[];
 };
 
 export type SignalInContext = {

@@ -34,11 +34,12 @@ export class JsonlLanguageGenerator implements LanguageGenerator {
     const entry = {
       ...actionInContext.action,
       pageGuid: actionInContext.pageGuid,
+      signals: actionInContext.signals,
       locator,
       ariaSnapshot: undefined,
     };
     const lines = [JSON.stringify(entry)];
-    const expect = toSignalMap(actionInContext.action).expect;
+    const expect = toSignalMap(actionInContext.signals).expect;
     if (options.generateExpectSignal && expect)
       lines.push(this.generateAction(expectSignalAction(actionInContext, expect), options));
     return lines.join('\n');

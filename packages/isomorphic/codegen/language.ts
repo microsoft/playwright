@@ -34,8 +34,8 @@ export function expectSignalAction(actionInContext: actions.ActionInContext, sig
     action: {
       name: 'assertVisible',
       selector: signal.selector,
-      signals: [],
     },
+    signals: [],
   };
 }
 
@@ -49,12 +49,12 @@ export function sanitizeDeviceOptions(device: any, options: BrowserContextOption
   return cleanedOptions;
 }
 
-export function toSignalMap(action: actions.Action) {
+export function toSignalMap(signals: actions.Signal[]) {
   let popup: actions.PopupSignal | undefined;
   let download: actions.DownloadSignal | undefined;
   let dialog: actions.DialogSignal | undefined;
   let expect: actions.ExpectSignal | undefined;
-  for (const signal of action.signals) {
+  for (const signal of signals) {
     if (signal.name === 'popup')
       popup = signal;
     else if (signal.name === 'download')

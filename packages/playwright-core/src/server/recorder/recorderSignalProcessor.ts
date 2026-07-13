@@ -60,8 +60,8 @@ export class RecorderSignalProcessor {
           action: {
             name: 'navigate',
             url: frame.url(),
-            signals: [],
           },
+          signals: [],
         });
       }
       return;

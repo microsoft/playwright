@@ -498,8 +498,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
         pageGuid: page.guid,
         action: {
           name: 'closePage',
-          signals: [],
         },
+        signals: [],
       });
       this._filePrimaryURLChanged();
     });
@@ -519,8 +519,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
         action: {
           name: 'openPage',
           url: page.mainFrame().url(),
-          signals: [],
         },
+        signals: [],
       });
     }
     this._filePrimaryURLChanged();
@@ -548,6 +548,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     const actionInContext: actions.ActionInContext = {
       pageGuid: frame._page.guid,
       action,
+      signals: [],
     };
     return actionInContext;
   }

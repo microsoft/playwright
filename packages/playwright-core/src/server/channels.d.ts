@@ -1372,7 +1372,7 @@ export type BrowserContextResponseEvent = {
   page?: PageChannel,
 };
 export type BrowserContextRecorderEventEvent = {
-  event: 'actionAdded' | 'actionUpdated' | 'signalAdded',
+  event: 'actionAdded' | 'signalAdded',
   data: any,
   page: PageChannel,
   code: string,

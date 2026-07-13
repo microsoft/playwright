@@ -26,7 +26,6 @@ import { syncLocalStorageWithSettings } from '../launchApp';
 import { launchApp } from '../launchApp';
 import { nullProgress, ProgressController } from '../progress';
 import { ThrottledFile } from './throttledFile';
-import { collapseActions, shouldMergeAction } from './recorderUtils';
 import { Recorder, RecorderEvent } from '../recorder';
 import { BrowserContext } from '../browserContext';
 
@@ -283,14 +282,21 @@ export class RecorderApp {
   }
 
   private _onActionAdded(action: actions.ActionInContext) {
-    this._actions.push(action);
+    const last = this._actions[this._actions.length - 1];
+    const shouldReplace = !!last && last.pageGuid === action.pageGuid && (
+      (action.action.name === 'navigate' && last.action.name === 'navigate') ||
+      (action.action.name === 'fill' && last.action.name === 'fill' && action.action.selector === last.action.selector));
+    if (shouldReplace)
+      this._actions[this._actions.length - 1] = action;
+    else
+      this._actions.push(action);
     this._updateActions('reveal');
   }
 
   private _onSignalAdded(signal: actions.SignalInContext) {
     const lastAction = this._actions.findLast(a => a.pageGuid === signal.pageGuid);
     if (lastAction)
-      lastAction.action.signals.push(signal.signal);
+      lastAction.signals.push(signal.signal);
     this._updateActions();
   }
 
@@ -315,11 +321,10 @@ export class RecorderApp {
 
   private _updateActions(reveal?: 'reveal') {
     const recorderSources = [];
-    const actions = collapseActions(this._actions);
 
     let revealSourceId: string | undefined;
     for (const languageGenerator of languageSet()) {
-      const { header, footer, actionTexts, text } = generateCode(actions, languageGenerator, this._languageGeneratorOptions);
+      const { header, footer, actionTexts, text } = generateCode(this._actions, languageGenerator, this._languageGeneratorOptions);
       const source: Source = {
         isRecorded: true,
         label: languageGenerator.name,
@@ -373,18 +378,19 @@ export class ProgrammaticRecorderApp {
       const page = findPageByGuid(inspectedContext, action.pageGuid);
       if (!page)
         return;
-      const code = languageGenerator.generateAction(action, languageGeneratorOptions);
-      if (!lastAction || !shouldMergeAction(action, lastAction))
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action, page, code });
-      else
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action, page, code });
       lastAction = action;
+      const code = languageGenerator.generateAction(action, languageGeneratorOptions);
+      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action.action, page, code });
     });
     recorder.on(RecorderEvent.SignalAdded, signal => {
       const page = findPageByGuid(inspectedContext, signal.pageGuid);
       if (!page)
         return;
-      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signal, page, code: '' });
+      if (lastAction)
+        lastAction.signals.push(signal.signal);
+      // Regenerate the last action's code, now including this signal.
+      const code = lastAction ? languageGenerator.generateAction(lastAction, languageGeneratorOptions) : '';
+      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signal.signal, page, code });
     });
   }
 }

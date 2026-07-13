@@ -19,15 +19,28 @@ import { test, expect } from './inspectorTest';
 import type { Page } from '@playwright/test';
 import type * as actions from '@isomorphic/codegen/actions';
 
-class RecorderLog {
-  actions: (actions.ActionInContext & { code: string })[] = [];
+type LoggedAction = { page: Page, action: actions.Action, signals: actions.Signal[], code: string };
 
-  actionAdded(page: Page, actionInContext: actions.ActionInContext, code: string): void {
-    this.actions.push({ ...actionInContext, code });
+class RecorderLog {
+  actions: LoggedAction[] = [];
+
+  actionAdded(page: Page, action: actions.Action, code: string): void {
+    const last = this.actions[this.actions.length - 1];
+    const shouldReplace = !!last && last.page === page && (
+      (action.name === 'navigate' && last.action.name === 'navigate') ||
+      (action.name === 'fill' && last.action.name === 'fill' && action.selector === last.action.selector));
+    if (shouldReplace)
+      this.actions[this.actions.length - 1] = { page, action, signals: [], code };
+    else
+      this.actions.push({ page, action, signals: [], code });
   }
 
-  actionUpdated(page: Page, actionInContext: actions.ActionInContext, code: string): void {
-    this.actions[this.actions.length - 1] = { ...actionInContext, code };
+  signalAdded(page: Page, signal: actions.Signal, code: string): void {
+    const last = this.actions[this.actions.length - 1];
+    if (last) {
+      last.signals.push(signal);
+      last.code = code;
+    }
   }
 }
 

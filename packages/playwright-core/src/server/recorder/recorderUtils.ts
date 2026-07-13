@@ -21,7 +21,6 @@ import { quoteCSSAttributeValue } from '@isomorphic/stringUtils';
 import { Frame } from '../frames';
 
 import type { CallMetadata } from '../instrumentation';
-import type * as actions from '@isomorphic/codegen/actions';
 import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
 import type { Progress } from '../progress';
 
@@ -52,38 +51,6 @@ export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus)
     duration,
   };
   return callLog;
-}
-
-function isSameAction(a: actions.ActionInContext, b: actions.ActionInContext): boolean {
-  return a.action.name === b.action.name && a.pageGuid === b.pageGuid;
-}
-
-function isSameSelector(action: actions.ActionInContext, lastAction: actions.ActionInContext): boolean {
-  return 'selector' in action.action && 'selector' in lastAction.action && action.action.selector === lastAction.action.selector;
-}
-
-export function shouldMergeAction(action: actions.ActionInContext, lastAction: actions.ActionInContext | undefined): boolean {
-  if (!lastAction)
-    return false;
-  switch (action.action.name) {
-    case 'fill':
-      return isSameAction(action, lastAction) && isSameSelector(action, lastAction);
-    case 'navigate':
-      return isSameAction(action, lastAction);
-  }
-  return false;
-}
-
-export function collapseActions(actions: actions.ActionInContext[]): actions.ActionInContext[] {
-  const result: actions.ActionInContext[] = [];
-  for (const action of actions) {
-    const lastAction = result[result.length - 1];
-    if (shouldMergeAction(action, lastAction))
-      result[result.length - 1] = action;
-    else
-      result.push(action);
-  }
-  return result;
 }
 
 export async function generateFrameSelector(progress: Progress, frame: Frame): Promise<string[]> {
