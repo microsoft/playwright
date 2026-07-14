@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { FilteredStats, HTMLReport, TestFileSummary } from './types';
+import type { FilteredStats, GroupBy, HTMLReport, TestFileSummary } from './types';
 import * as React from 'react';
 import { TestFileView } from './testFileView';
 import './testFileView.css';
@@ -25,7 +25,7 @@ import { CodeSnippet } from './testErrorView';
 import * as icons from './icons';
 import { isMetadataEmpty, MetadataView } from './metadataView';
 import { HeaderView } from './headerView';
-import { clsx } from '@web/uiUtils';
+import { clsx, useSetting } from '@web/uiUtils';
 
 export const TestFilesView: React.FC<{
   files: TestFileSummary[],
@@ -93,6 +93,7 @@ export const TestFilesHeader: React.FC<{
   </div>;
 
   const rightSuperHeader = <>
+    <GroupByControl report={report} />
     <div data-testid='overall-time' style={{ marginRight: '10px' }}>{report ? new Date(report.startTime).toLocaleString() : ''}</div>
     <div data-testid='overall-duration'>Total time: {msToString(report.duration ?? 0)}</div>
   </>;
@@ -105,4 +106,21 @@ export const TestFilesHeader: React.FC<{
       {report.errors.map((error, index) => <CodeSnippet key={'test-report-error-message-' + index} code={error}/>)}
     </Chip>}
   </>;
+};
+
+const groupByOptions: { value: GroupBy, label: string }[] = [
+  { value: 'file', label: 'File' },
+  { value: 'suite', label: 'Suite' },
+  { value: 'project', label: 'Project' },
+  { value: 'tag', label: 'Tag' },
+];
+
+const GroupByControl: React.FC<{ report: HTMLReport }> = ({ report }) => {
+  const [groupBy, setGroupBy] = useSetting<GroupBy>('groupBy', report.options.groupBy ?? 'file');
+  return <label className='group-by-control' title='Group tests by'>
+    Group by:
+    <select data-testid='group-by-select' value={groupBy} onChange={e => setGroupBy(e.target.value as GroupBy)}>
+      {groupByOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+    </select>
+  </label>;
 };

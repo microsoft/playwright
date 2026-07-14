@@ -86,6 +86,15 @@
   height: 0;
 }
 
+.group-by-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 10px;
+  color: var(--color-fg-muted);
+  white-space: nowrap;
+}
+
 .test-file-no-files {
   margin-top: 12px;
 

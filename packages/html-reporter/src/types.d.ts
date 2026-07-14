@@ -36,10 +36,13 @@ export type Location = {
   column: number;
 };
 
+export type GroupBy = 'file' | 'suite' | 'project' | 'tag';
+
 export type HTMLReportOptions = {
   title?: string;
   noCopyPrompt?: boolean;
   noSnippets?: boolean;
+  groupBy?: GroupBy;
 };
 
 export type HTMLReport = {

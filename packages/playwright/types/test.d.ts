@@ -32,6 +32,16 @@ export type HtmlReporterOptions = {
   noSnippets?: boolean;
   noCopyPrompt?: boolean;
   doNotInlineAssets?: boolean;
+
+  /**
+   * How the tests are grouped into collapsible sections in the report. Each viewer can still override this from the
+   * "Group by" control in the report UI.
+   * - `'file'` (default) - group by the spec file the test belongs to.
+   * - `'suite'` - group by the top-level `test.describe` title.
+   * - `'project'` - group by the project name.
+   * - `'tag'` - group by the test tag.
+   */
+  groupBy?: 'file' | 'suite' | 'project' | 'tag';
 };
 
 export type ReporterDescription = Readonly<
@@ -10706,4 +10716,3 @@ interface TestConfigWebServer {
    */
   url?: string;
 }
-

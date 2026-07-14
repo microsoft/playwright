@@ -3506,7 +3506,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
   });
 }
 
-test('should support merge files option', async ({ runInlineTest, showReport, page }) => {
+test('should group tests by suite via the Group by control', async ({ runInlineTest, showReport, page }) => {
   await runInlineTest({
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -3525,8 +3525,11 @@ test('should support merge files option', async ({ runInlineTest, showReport, pa
 
   await showReport();
 
-  await page.getByRole('button', { name: 'Settings' }).click();
-  await page.getByRole('checkbox', { name: 'Merge files' }).click();
+  // Default groups by file.
+  await expect(page.getByRole('button', { name: 'a.test.js' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'b.test.js' })).toBeVisible();
+
+  await page.getByTestId('group-by-select').selectOption('suite');
 
   await expect(page).toMatchAriaSnapshot(`
     - button "<anonymous>" [expanded]
@@ -3545,6 +3548,72 @@ test('should support merge files option', async ({ runInlineTest, showReport, pa
           - link "test 3"
           - link "b.test.js:4"
   `);
+});
+
+test('should group tests by suite via config option', async ({ runInlineTest, showReport, page }) => {
+  await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        reporter: [['dot'], ['html', { groupBy: 'suite' }]],
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.describe('describe', () => {
+        test('test 1', async ({}) => {});
+      });
+      test('test 2', async ({}) => {});
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.describe('describe', () => {
+        test('test 3', async ({}) => {});
+      });
+    `,
+  }, {}, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+  await showReport();
+
+  await expect(page).toMatchAriaSnapshot(`
+    - button "<anonymous>" [expanded]
+    - region:
+      - list:
+        - listitem:
+          - link "test 2"
+          - link "a.test.js:6"
+    - button "describe" [expanded]
+    - region:
+      - list:
+        - listitem:
+          - link "test 1"
+          - link "a.test.js:4"
+        - listitem:
+          - link "test 3"
+          - link "b.test.js:4"
+  `);
+});
+
+test('should group tests by file by default', async ({ runInlineTest, showReport, page }) => {
+  await runInlineTest({
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.describe('describe', () => {
+        test('test 1', async ({}) => {});
+      });
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.describe('describe', () => {
+        test('test 3', async ({}) => {});
+      });
+    `,
+  }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+  await showReport();
+
+  await expect(page.getByRole('button', { name: 'a.test.js' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'b.test.js' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'describe', exact: true })).toHaveCount(0);
 });
 
 test.describe('show-report .zip support', () => {

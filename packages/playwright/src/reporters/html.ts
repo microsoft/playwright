@@ -162,6 +162,7 @@ class HtmlReporter implements ReporterV2 {
       title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
       noSnippets,
       noCopyPrompt,
+      groupBy: (process.env.PLAYWRIGHT_HTML_GROUP_BY as HTMLReportOptions['groupBy']) || this._options.groupBy,
     });
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors, this._machines);
   }

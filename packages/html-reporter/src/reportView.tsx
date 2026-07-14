@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { FilteredStats, TestCase, TestCaseSummary, TestFile, TestFileSummary } from './types';
+import type { FilteredStats, GroupBy, TestCase, TestCaseSummary, TestFile, TestFileSummary } from './types';
 import * as React from 'react';
 import './colors.css';
 import './common.css';
@@ -54,7 +54,11 @@ export const ReportView: React.FC<{
   const [metadataVisible, setMetadataVisible] = React.useState(false);
   const [errorsVisible, setErrorsVisible] = React.useState(true);
   const speedboard = searchParams.has('speedboard');
-  const [mergeFiles] = useSetting('mergeFiles', false);
+  const configGroupBy = report?.json()?.options.groupBy ?? 'file';
+  const urlGroupBy = searchParams.get('groupBy') as GroupBy | null;
+  // Precedence: URL param > stored per-viewer setting > report config default.
+  const [storedGroupBy] = useSetting<GroupBy>('groupBy', configGroupBy);
+  const groupBy = urlGroupBy ?? storedGroupBy;
   const testId = searchParams.get('testId');
   const q = searchParams.get('q')?.toString() || '';
   const filterParam = q ? '&q=' + q : '';
@@ -74,10 +78,10 @@ export const ReportView: React.FC<{
   const testModel = React.useMemo(() => {
     if (speedboard)
       return createSpeedboardFilesModel(report, filter);
-    if (mergeFiles)
-      return createMergedFilesModel(report, filter);
+    if (groupBy !== 'file')
+      return createGroupedFilesModel(report, filter, groupBy);
     return createFilesModel(report, filter);
-  }, [report, filter, mergeFiles, speedboard]);
+  }, [report, filter, groupBy, speedboard]);
 
   const { prev, next } = React.useMemo(() => {
     const index = testModel.tests.findIndex(t => t.testId === testId);
@@ -242,26 +246,25 @@ function createFilesModel(report: LoadedReport | undefined, filter: Filter): Tes
   return result;
 }
 
-function createMergedFilesModel(report: LoadedReport | undefined, filter: Filter): TestModelSummary {
+function createGroupedFilesModel(report: LoadedReport | undefined, filter: Filter, groupBy: Exclude<GroupBy, 'file'>): TestModelSummary {
   const groups: TestFileSummary[] = [];
   const groupMap = new Map<string, TestFileSummary>();
 
   for (const file of report?.json().files || []) {
     const tests = file.tests.filter(t => filter.matches(t));
     for (const test of tests) {
-      const describe = test.path[0] ?? '<anonymous>';
-      let group = groupMap.get(describe);
+      const { key, test: testCopy } = groupTest(test, groupBy);
+      let group = groupMap.get(key);
       if (!group) {
         group = {
-          fileId: describe,
-          fileName: describe,
+          fileId: key,
+          fileName: key,
           tests: [],
           stats: { total: 0, expected: 0, unexpected: 0, flaky: 0, skipped: 0, ok: true }
         };
-        groupMap.set(describe, group);
+        groupMap.set(key, group);
         groups.push(group);
       }
-      const testCopy = { ...test, path: test.path.slice(1) };
       group.tests.push(testCopy);
     }
   }
@@ -272,6 +275,18 @@ function createMergedFilesModel(report: LoadedReport | undefined, filter: Filter
   for (const group of groups)
     result.tests.push(...group.tests);
   return result;
+}
+
+function groupTest(test: TestCaseSummary, groupBy: Exclude<GroupBy, 'file'>): { key: string, test: TestCaseSummary } {
+  switch (groupBy) {
+    case 'suite':
+      // The first path segment is the top-level describe title, which becomes the group header.
+      return { key: test.path[0] ?? '<anonymous>', test: { ...test, path: test.path.slice(1) } };
+    case 'project':
+      return { key: test.projectName || '<no project>', test };
+    case 'tag':
+      return { key: test.tags[0] ?? '<no tag>', test };
+  }
 }
 
 function createSpeedboardFilesModel(report: LoadedReport | undefined, filter: Filter): TestModelSummary {

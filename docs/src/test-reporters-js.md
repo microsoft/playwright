@@ -244,6 +244,20 @@ export default defineConfig({
 });
 ```
 
+By default, tests are grouped into collapsible sections by the spec file they belong to. Use the `groupBy` option to
+change the default grouping of a generated report — for example, group by the top-level `test.describe` title. This is
+handy in monorepos where many tests share a single spec file but are wrapped in a `test.describe('@scope/<package>')`
+block. Each viewer can still change the grouping from the "Group by" control in the report UI, which overrides this
+default.
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [['html', { groupBy: 'suite' }]],
+});
+```
+
 A quick way of opening the last test run report is:
 
 ```bash
@@ -275,6 +289,7 @@ HTML report supports the following configuration options and environment variabl
 | `PLAYWRIGHT_HTML_NO_COPY_PROMPT` | `noCopyPrompt` | If true, disable rendering of the Copy prompt for errors. Supports `true`, `1`, `false`, and `0`. | `false`
 | `PLAYWRIGHT_HTML_NO_SNIPPETS` | `noSnippets` | If true, disable rendering code snippets in the action log. If there is a top level error, that report section with code snippet will still render. Supports `true`, `1`, `false`, and `0`. | `false`
 | `PLAYWRIGHT_HTML_DO_NOT_INLINE_ASSETS` | `doNotInlineAssets` | If true, JavaScript, CSS and report data are written as separate files alongside `index.html` instead of being embedded inline. Use this when serving the report under a strict [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) that disallows inline scripts and styles. Supports `true`, `1`, `false`, and `0`. | `false`
+| `PLAYWRIGHT_HTML_GROUP_BY` | `groupBy` | How tests are grouped into collapsible sections by default. One of `'file'`, `'suite'` (top-level `test.describe` title), `'project'` or `'tag'`. Each viewer can override this from the "Group by" control in the report UI. | `'file'`
 
 ### Blob reporter
 
