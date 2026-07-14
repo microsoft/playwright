@@ -41,3 +41,4 @@ test-results
 playwright.env
 /firefox/
 .playwright/
+.npmrc

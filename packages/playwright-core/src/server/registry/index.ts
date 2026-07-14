@@ -547,13 +547,15 @@ type BrowsersJSON = {
     title?: string,
     installByDefault: boolean,
     revisionOverrides?: {[os: string]: string},
+    versionOverrides?: {[os: string]: string},
   }[]
 };
 
 type BrowsersJSONDescriptor = {
   name: string,
   revision: string,
-  hasRevisionOverride: boolean
+  hasRevisionOverride: boolean,
+  hasVersionOverride: boolean,
   browserVersion?: string,
   title?: string,
   installByDefault: boolean,
@@ -571,14 +573,15 @@ function readDescriptors(browsersJSON: BrowsersJSON): BrowsersJSONDescriptor[] {
   return (browsersJSON['browsers']).map(obj => {
     const name = obj.name;
     const revisionOverride = (obj.revisionOverrides || {})[hostPlatform];
+    const versionOverride = (obj.versionOverrides || {})[hostPlatform];
     const revision = revisionOverride || obj.revision;
     const browserDirectoryPrefix = revisionOverride ? `${name}_${hostPlatform}_special` : `${name}`;
     const descriptor: BrowsersJSONDescriptor = {
       name,
       revision,
       hasRevisionOverride: !!revisionOverride,
-      // We only put browser version for the supported operating systems.
-      browserVersion: revisionOverride ? undefined : obj.browserVersion,
+      hasVersionOverride: !!versionOverride,
+      browserVersion: versionOverride || obj.browserVersion,
       title: obj['title'],
       installByDefault: !!obj.installByDefault,
       // Method `isBrowserDirectory` determines directory to be browser iff
@@ -1270,7 +1273,7 @@ export class Registry {
       throw new Error(`ERROR: Playwright does not support ${descriptor.name} on ${hostPlatform}`);
     if (!isOfficiallySupportedPlatform)
       logPolitely(`BEWARE: your OS is not officially supported by Playwright; downloading fallback build for ${hostPlatform}.`);
-    if (descriptor.hasRevisionOverride) {
+    if (descriptor.hasRevisionOverride || descriptor.hasVersionOverride) {
       const message = `You are using a frozen ${descriptor.name} browser which does not receive updates anymore on ${hostPlatform}. Please update to the latest version of your operating system to test up-to-date browsers.`;
       if (process.env.GITHUB_ACTIONS)
         console.log(`::warning title=Playwright::${message}`);  // eslint-disable-line no-console

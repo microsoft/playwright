@@ -4,43 +4,91 @@
     {
       "name": "chromium",
       "revision": "1233",
+      "revisionOverrides": {
+        "debian11-x64": "1233",
+        "debian11-arm64": "1233"
+      },
       "installByDefault": true,
       "browserVersion": "151.0.7922.19",
+      "versionOverrides": {
+        "debian11-x64": "151.0.7922.19",
+        "debian11-arm64": "151.0.7922.19"
+      },
       "title": "Chrome for Testing"
     },
     {
       "name": "chromium-headless-shell",
       "revision": "1233",
       "installByDefault": true,
+      "revisionOverrides": {
+        "debian11-x64": "1233",
+        "debian11-arm64": "1233"
+      },
       "browserVersion": "151.0.7922.19",
+      "versionOverrides": {
+        "debian11-x64": "151.0.7922.19",
+        "debian11-arm64": "151.0.7922.19"
+      },
       "title": "Chrome Headless Shell"
     },
     {
       "name": "chromium-tip-of-tree",
       "revision": "1433",
       "installByDefault": false,
+      "revisionOverrides": {
+        "debian11-x64": "1433",
+        "debian11-arm64": "1433"
+      },
       "browserVersion": "151.0.7893.0",
+      "versionOverrides": {
+        "debian11-x64": "151.0.7893.0",
+        "debian11-arm64": "151.0.7893.0"
+      },
       "title": "Chrome Canary for Testing"
     },
     {
       "name": "chromium-tip-of-tree-headless-shell",
       "revision": "1433",
+      "revisionOverrides": {
+        "debian11-x64": "1433",
+        "debian11-arm64": "1433"
+      },
       "installByDefault": false,
       "browserVersion": "151.0.7893.0",
+      "versionOverrides": {
+        "debian11-x64": "151.0.7893.0",
+        "debian11-arm64": "151.0.7893.0"
+      },
       "title": "Chrome Canary Headless Shell"
     },
     {
       "name": "firefox",
       "revision": "1534",
       "installByDefault": true,
+      "revisionOverrides": {
+        "debian11-x64": "1534",
+        "debian11-arm64": "1534"
+      },
       "browserVersion": "152.0.4",
+      "versionOverrides": {
+        "debian11-x64": "152.0.4",
+        "debian11-arm64": "152.0.4"
+      },
       "title": "Firefox"
     },
     {
       "name": "firefox-beta",
       "revision": "1526",
       "installByDefault": false,
+      "revisionOverrides": {
+        "debian11-x64": "1526",
+        "debian11-arm64": "1526"
+      },
       "browserVersion": "152.0b1",
+      "versionOverrides": {
+        "debian11-x64": "152.0b1",
+        "debian11-arm64": "152.0b1"
+      },
       "title": "Firefox Beta"
     },
     {
@@ -56,6 +104,14 @@
         "ubuntu20.04-arm64": "2092"
       },
       "browserVersion": "26.5",
+      "versionOverrides": {
+        "mac14": "26.5",
+        "mac14-arm64": "26.5",
+        "debian11-x64": "26.5",
+        "debian11-arm64": "26.5",
+        "ubuntu20.04-x64": "26.5",
+        "ubuntu20.04-arm64": "26.5"
+      },
       "title": "WebKit"
     },
     {
