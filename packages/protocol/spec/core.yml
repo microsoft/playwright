@@ -25,7 +25,7 @@ Metadata:
     internal: boolean?
     # Test runner step id.
     stepId: string?
-    timeout: float
+    timeout: float?
 
 ClientSideCallMetadata:
   type: object

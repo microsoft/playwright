@@ -1116,7 +1116,7 @@ scheme.Metadata = tObject({
   title: tOptional(tString),
   internal: tOptional(tBoolean),
   stepId: tOptional(tString),
-  timeout: tFloat,
+  timeout: tOptional(tFloat),
 });
 scheme.ClientSideCallMetadata = tObject({
   id: tInt,

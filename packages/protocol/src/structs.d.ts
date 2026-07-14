@@ -90,7 +90,7 @@ export type Metadata = {
   title?: string,
   internal?: boolean,
   stepId?: string,
-  timeout: number,
+  timeout?: number,
 };
 
 export type ClientSideCallMetadata = {
