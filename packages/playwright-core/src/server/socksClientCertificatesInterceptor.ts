@@ -209,16 +209,17 @@ class SocksProxyConnection {
         serverDecrypted.destroy();
     });
     serverDecrypted.once('error', async (error: Error) => {
-      debugLogger.log('client-certificates', `error when connecting to server: ${error.message.replaceAll('\n', ' ')}`);
+      try {
+        debugLogger.log('client-certificates', `error when connecting to server: ${error.message.replaceAll('\n', ' ')}`);
 
-      // Once we receive an error, we manually close the server connection.
-      // In case of an 'error' event on the server connection, we still need to perform the http2 handshake on the browser side.
-      // This is an async operation, so we need to remove the listener to prevent the socket from being closed too early.
-      // This means we call this._serverCloseEventListener manually.
-      this._serverEncrypted.removeListener('close', this._serverCloseEventListener);
-      this._serverEncrypted.destroy();
+        // Once we receive an error, we manually close the server connection.
+        // In case of an 'error' event on the server connection, we still need to perform the http2 handshake on the browser side.
+        // This is an async operation, so we need to remove the listener to prevent the socket from being closed too early.
+        // This means we call this._serverCloseEventListener manually.
+        this._serverEncrypted.removeListener('close', this._serverCloseEventListener);
+        this._serverEncrypted.destroy();
 
-      const browserDecrypted = await this._upgradeToTLSIfNeeded(this._browserEncrypted, serverDecrypted.alpnProtocol);
+        const browserDecrypted = await this._upgradeToTLSIfNeeded(this._browserEncrypted, serverDecrypted.alpnProtocol);
       const responseBody = escapeHTML('Playwright client-certificate error: ' + error.message)
           .replaceAll('\n', ' <br>');
       if (browserDecrypted.alpnProtocol === 'h2') {
@@ -253,12 +254,22 @@ class SocksProxyConnection {
           responseBody,
         ].join('\r\n'));
       }
+      } catch (e) {
+        this._browserEncrypted.destroy(e as Error);
+      }
     });
   }
 
   private async _upgradeToTLSIfNeeded(socket: stream.Duplex, alpnProtocol: string | false | null): Promise<tls.TLSSocket> {
     // TLS errors can happen after secureConnect event from the server. In this case the socket is already upgraded to TLS.
-    this._brorwserDecrypted ??= new Promise<tls.TLSSocket>((resolve, reject) => {
+    if (this._brorwserDecrypted) {
+      try {
+        return await this._brorwserDecrypted;
+      } catch {
+        this._brorwserDecrypted = undefined;
+      }
+    }
+    this._brorwserDecrypted = new Promise<tls.TLSSocket>((resolve, reject) => {
       const dummyServer = tls.createServer({
         ...dummyServerTlsOptions,
         ALPNProtocols: [alpnProtocol || 'http/1.1'],
@@ -270,6 +281,7 @@ class SocksProxyConnection {
       });
       dummyServer.once('error', error => {
         dummyServer.close();
+        this._brorwserDecrypted = undefined;
         reject(error);
       });
     });
