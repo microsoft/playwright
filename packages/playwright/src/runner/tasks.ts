@@ -113,11 +113,6 @@ export class TestRun {
     return max > 0 && this.failedTestCount >= max;
   }
 
-  isStoppedByMaxFailures(testGroup: TestGroup) {
-    // Teardown project groups keep running so that cleanup is not skipped.
-    return this.hasReachedMaxFailures() && !testGroup.ignoreMaxFailures;
-  }
-
   result(): 'failed' | 'passed' {
     const hasFailedTests = this.rootSuite?.allTests().some(test => !test.ok());
     const hasFlakyTests = this.rootSuite?.allTests().some(test => test.outcome() === 'flaky');
@@ -420,20 +415,20 @@ function createPhasesTask(): Task<TestRun> {
           phaseProjects.push(project);
         }
 
-        // Create a new phase.
+        // Teardown projects run in a separate phase that ignores maxFailures,
+        // so that cleanup is not skipped.
         for (const project of phaseProjects)
           processed.add(project);
-        if (phaseProjects.length) {
+        for (const ignoreMaxFailures of [false, true]) {
+          const projects = phaseProjects.filter(project => teardownProjectIds.has(project.id) === ignoreMaxFailures);
+          if (!projects.length)
+            continue;
           let testGroupsInPhase = 0;
-          const phase: Phase = { dispatcher: new Dispatcher(testRun), projects: [] };
+          const phase: Phase = { dispatcher: new Dispatcher(testRun, { ignoreMaxFailures }), projects: [] };
           testRun.phases.push(phase);
-          for (const project of phaseProjects) {
+          for (const project of projects) {
             const projectSuite = projectToSuite.get(project)!;
             const testGroups = createTestGroups(projectSuite, testRun.config.config.workers);
-            if (teardownProjectIds.has(project.id)) {
-              for (const testGroup of testGroups)
-                testGroup.ignoreMaxFailures = true;
-            }
             phase.projects.push({ project, projectSuite, testGroups });
             testGroupsInPhase += Math.min(project.workers ?? Number.MAX_SAFE_INTEGER, testGroups.length);
           }

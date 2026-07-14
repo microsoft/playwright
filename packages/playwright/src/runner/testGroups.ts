@@ -21,9 +21,6 @@ export type TestGroup = {
   requireFile: string;
   repeatEachIndex: number;
   projectId: string;
-  // Tests in this group keep running even after maxFailures is reached, so that
-  // teardown projects are not skipped.
-  ignoreMaxFailures: boolean;
   tests: test.TestCase[];
 };
 
@@ -60,7 +57,6 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
       requireFile: test._requireFile,
       repeatEachIndex: test.repeatEachIndex,
       projectId: test._projectId,
-      ignoreMaxFailures: false,
       tests: [],
     };
   };

@@ -210,7 +210,6 @@ test('max-failures should still run teardown project', async ({ runInlineTest })
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('%%setup');
-  // Teardown should still run when the run is cut short by maxFailures.
   expect(result.output).toContain('%%teardown');
 });
 
@@ -225,7 +224,7 @@ test('max-failures should skip non-teardown projects sharing a teardown phase', 
           { name: 'setup', testMatch: '**/setup.ts', teardown: 'teardown' },
           { name: 'teardown', testMatch: '**/teardown.ts' },
           { name: 'a', dependencies: ['setup'], testMatch: '**/a.spec.ts' },
-          // Independent chain that shares the last phase with 'teardown'.
+          // Unrelated chain that becomes ready to run together with 'teardown'.
           { name: 'x', testMatch: '**/x.spec.ts' },
           { name: 'y', dependencies: ['x'], testMatch: '**/y.spec.ts' },
           { name: 'z', dependencies: ['y'], testMatch: '**/z.spec.ts' },
@@ -257,9 +256,8 @@ test('max-failures should skip non-teardown projects sharing a teardown phase', 
     `,
   }, { workers: 1 });
   expect(result.exitCode).toBe(1);
-  // Teardown still runs despite maxFailures.
   expect(result.output).toContain('%%teardown');
-  // Regular project 'z' sharing the last phase with teardown must be skipped.
+  // Regular project 'z' must not run after maxFailures.
   expect(result.output).not.toContain('%%z');
 });
 
