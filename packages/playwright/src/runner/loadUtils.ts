@@ -220,10 +220,13 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     const finalProjectClosure = buildProjectsClosure(rootSuite.suites.map(suite => suite._fullProject!));
     for (const [project, type] of finalProjectClosure) {
       if (type === 'dependency')
-        rootSuite._prependSuite(dependencySuites.get(project)!);
+        rootSuite._addSuite(dependencySuites.get(project)!);
       else
         topLevelProjects.push(project);
     }
+    // Keep project suites in the order they are declared in the config.
+    const suiteByProject = new Map(rootSuite.suites.map(suite => [suite._fullProject, suite]));
+    rootSuite._entries = config.projects.map(project => suiteByProject.get(project)).filter(suite => suite !== undefined);
   }
 
   testRun.rootSuite = rootSuite;

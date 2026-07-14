@@ -175,6 +175,32 @@ test('should filter by project', async ({ runUITest }) => {
   await expect(page.getByText('Projects: foo bar')).toBeVisible();
 });
 
+test('should list projects in config order', async ({ runUITest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41779' });
+  const { page } = await runUITest({
+    ...basicTestTree,
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        projects: [
+          { name: 'dev-setup', testMatch: /a.test.ts/ },
+          { name: 'dev', dependencies: ['dev-setup'] },
+          { name: 'staging-setup', testMatch: /a.test.ts/ },
+          { name: 'staging', dependencies: ['staging-setup'] },
+        ],
+      });
+    `
+  });
+
+  await page.getByText('Status:').click();
+  await expect(page.getByTestId('project-filters').locator('.filter-entry')).toHaveText([
+    'dev-setup',
+    'dev',
+    'staging-setup',
+    'staging',
+  ]);
+});
+
 test('should not hide filtered while running', async ({ runUITest, createLatch }) => {
   const latch = createLatch();
   const { page } = await runUITest({

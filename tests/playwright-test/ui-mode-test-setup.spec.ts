@@ -136,11 +136,11 @@ test('should run setup and teardown projects (1)', async ({ runUITest }) => {
   await expect(page.getByTestId('project-filters')).toMatchAriaSnapshot(`
     - list:
       - listitem:
-        - checkbox "teardown"
-      - listitem:
         - checkbox "setup"
       - listitem:
         - checkbox "test"
+      - listitem:
+        - checkbox "teardown"
   `);
 
   await page.getByTitle('Run all').click();
@@ -187,11 +187,11 @@ test('should run setup and teardown projects (2)', async ({ runUITest }) => {
   await expect(page.getByTestId('project-filters')).toMatchAriaSnapshot(`
     - list:
       - listitem:
-        - checkbox "teardown" [checked]
-      - listitem:
         - checkbox "setup"
       - listitem:
         - checkbox "test" [checked]
+      - listitem:
+        - checkbox "teardown" [checked]
   `);
 
   await page.getByTitle('Run all').click();
@@ -233,11 +233,11 @@ test('should run setup and teardown projects (3)', async ({ runUITest }) => {
   await expect(page.getByTestId('project-filters')).toMatchAriaSnapshot(`
     - list:
       - listitem:
-        - checkbox "teardown"
-      - listitem:
         - checkbox "setup"
       - listitem:
         - checkbox "test" [checked]
+      - listitem:
+        - checkbox "teardown"
   `);
 
   await page.getByTitle('Run all').click();
@@ -274,11 +274,11 @@ test('should run part of the setup only', async ({ runUITest }) => {
   await expect(page.getByTestId('project-filters')).toMatchAriaSnapshot(`
     - list:
       - listitem:
-        - checkbox "teardown" [checked]
-      - listitem:
         - checkbox "setup" [checked]
       - listitem:
         - checkbox "test" [checked]
+      - listitem:
+        - checkbox "teardown" [checked]
   `);
 
   await page.getByText('setup.ts').hover();
