@@ -242,6 +242,9 @@ yield the same result, and then compare the last screenshot with the expectation
 
 ```js
 await expect(page).toHaveScreenshot('image.png');
+
+// Store the snapshot in the WebP format to reduce the file size.
+await expect(page).toHaveScreenshot('image.webp');
 ```
 
 Note that screenshot assertions only work with Playwright test runner.
@@ -250,7 +253,7 @@ Note that screenshot assertions only work with Playwright test runner.
 * since: v1.23
 - `name` <[string]|[Array]<[string]>>
 
-Snapshot name.
+Snapshot name. Must have a `.png` or `.webp` extension, the screenshot is captured in the corresponding format. Both formats are lossless, but WebP files are usually smaller.
 
 ### option: PageAssertions.toHaveScreenshot#1.timeout = %%-js-assertions-timeout-%%
 * since: v1.23
@@ -297,6 +300,8 @@ Snapshot name.
 
 This function will wait until two consecutive page screenshots
 yield the same result, and then compare the last screenshot with the expectation.
+
+The snapshot is stored in the PNG format. To store it in the WebP format instead, pass a snapshot name with the `.webp` extension.
 
 **Usage**
 

@@ -9549,10 +9549,14 @@ interface LocatorAssertions {
    * ```js
    * const locator = page.getByRole('button');
    * await expect(locator).toHaveScreenshot('image.png');
+   *
+   * // Store the snapshot in the WebP format to reduce the file size.
+   * await expect(locator).toHaveScreenshot('image.webp');
    * ```
    *
    * Note that screenshot assertions only work with Playwright test runner.
-   * @param name Snapshot name.
+   * @param name Snapshot name. Must have a `.png` or `.webp` extension, the screenshot is captured in the corresponding format.
+   * Both formats are lossless, but WebP files are usually smaller.
    * @param options
    */
   toHaveScreenshot(name: string|ReadonlyArray<string>, options?: {
@@ -9637,6 +9641,9 @@ interface LocatorAssertions {
   /**
    * This function will wait until two consecutive locator screenshots yield the same result, and then compare the last
    * screenshot with the expectation.
+   *
+   * The snapshot is stored in the PNG format. To store it in the WebP format instead, pass a snapshot name with the
+   * `.webp` extension.
    *
    * **Usage**
    *
@@ -9976,10 +9983,14 @@ interface PageAssertions {
    *
    * ```js
    * await expect(page).toHaveScreenshot('image.png');
+   *
+   * // Store the snapshot in the WebP format to reduce the file size.
+   * await expect(page).toHaveScreenshot('image.webp');
    * ```
    *
    * Note that screenshot assertions only work with Playwright test runner.
-   * @param name Snapshot name.
+   * @param name Snapshot name. Must have a `.png` or `.webp` extension, the screenshot is captured in the corresponding format.
+   * Both formats are lossless, but WebP files are usually smaller.
    * @param options
    */
   toHaveScreenshot(name: string|ReadonlyArray<string>, options?: PageAssertionsToHaveScreenshotOptions): Promise<void>;
@@ -9987,6 +9998,9 @@ interface PageAssertions {
   /**
    * This function will wait until two consecutive page screenshots yield the same result, and then compare the last
    * screenshot with the expectation.
+   *
+   * The snapshot is stored in the PNG format. To store it in the WebP format instead, pass a snapshot name with the
+   * `.webp` extension.
    *
    * **Usage**
    *

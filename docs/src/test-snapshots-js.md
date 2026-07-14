@@ -50,6 +50,12 @@ The snapshot name `example-test-1-chromium-darwin.png` consists of a few parts:
 
 The snapshot name and path can be configured with [`property: TestConfig.snapshotPathTemplate`] in the playwright config.
 
+Snapshots are stored as PNG by default. Give the snapshot a name with the `.webp` extension to store it in the WebP format instead — it is also lossless, but produces smaller files:
+
+```js
+await expect(page).toHaveScreenshot('landing.webp');
+```
+
 > Note that `toHaveScreenshot()` also accepts an array of path segments to the snapshot file such as `expect().toHaveScreenshot(['relative', 'path', 'to', 'snapshot.png'])`.
 > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
 
