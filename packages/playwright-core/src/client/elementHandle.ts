@@ -190,7 +190,6 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
 
   async screenshot(options: Omit<channels.ElementHandleScreenshotOptions, 'mask'> & TimeoutOptions & { path?: string, mask?: api.Locator[] } = {}): Promise<Buffer> {
     const mask = options.mask as Locator[] | undefined;
-    const timeout = this._frame._timeout(options).timeout;
     const copy: channels.ElementHandleScreenshotParams = { ...options, mask: undefined };
     if (!copy.type)
       copy.type = determineScreenshotType(options);
@@ -200,7 +199,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
         selector: locator._selector,
       }));
     }
-    const result = await this._elementChannel.screenshot(copy, { signal: options.signal, timeout });
+    const result = await this._elementChannel.screenshot(copy, this._frame._timeout(options));
     if (options.path) {
       await mkdirIfNeeded(options.path);
       await fs.promises.writeFile(options.path, result.binary);

@@ -79,7 +79,7 @@ export class APIRequest implements api.APIRequest {
       storageState,
       tracesDir: this._playwright._defaultLaunchOptions?.tracesDir, // We do not expose tracesDir in the API, so do not allow options to accidentally override it.
       clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
-    }, { signal: options.signal, timeout: 0 })).request);
+    }, kNoTimeout)).request);
     this._contexts.add(context);
     context._request = this;
     context._timeoutSettings.setDefaultTimeout(options.timeout ?? this._playwright._defaultContextTimeout);

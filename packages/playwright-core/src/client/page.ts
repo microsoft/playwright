@@ -477,9 +477,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, logLine?: string): Promise<any> {
     return await this._wrapApiCall(async () => {
-      const { timeout } = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+      const { timeout, signal } = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const signal = typeof optionsOrPredicate === 'function' ? undefined : (optionsOrPredicate as TimeoutOptions).signal;
       const waiter = Waiter.createForEvent(this, event);
       if (logLine)
         waiter.log(logLine);
@@ -605,7 +604,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async screenshot(options: Omit<channels.PageScreenshotOptions, 'mask'> & TimeoutOptions & { path?: string, mask?: api.Locator[] } = {}): Promise<Buffer> {
     const mask = options.mask as Locator[] | undefined;
-    const { timeout } = this._timeoutSettings.timeout(options);
     const copy: channels.PageScreenshotParams = { ...options, mask: undefined };
     if (!copy.type)
       copy.type = determineScreenshotType(options);
@@ -615,7 +613,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
         selector: locator._selector,
       }));
     }
-    const result = await this._channel.screenshot(copy, { signal: options.signal, timeout });
+    const result = await this._channel.screenshot(copy, this._timeoutSettings.timeout(options));
     if (options.path) {
       await mkdirIfNeeded(options.path);
       await fs.promises.writeFile(options.path, result.binary);

@@ -432,11 +432,11 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async isHidden(selector: string, options: channels.FrameIsHiddenOptions & TimeoutOptions = {}): Promise<boolean> {
-    return (await this._channel.isHidden({ selector, ...options }, { signal: options.signal, timeout: 0 })).value;
+    return (await this._channel.isHidden({ selector, ...options }, kNoTimeout)).value;
   }
 
   async isVisible(selector: string, options: channels.FrameIsVisibleOptions & TimeoutOptions = {}): Promise<boolean> {
-    return (await this._channel.isVisible({ selector, ...options }, { signal: options.signal, timeout: 0 })).value;
+    return (await this._channel.isVisible({ selector, ...options }, kNoTimeout)).value;
   }
 
   async hover(selector: string, options: channels.FrameHoverOptions & TimeoutOptions = {}) {
