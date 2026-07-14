@@ -116,36 +116,36 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
   }
 
   async scrollIntoViewIfNeeded(options: channels.ElementHandleScrollIntoViewIfNeededOptions & TimeoutOptions = {}) {
-    await this._elementChannel.scrollIntoViewIfNeeded({ ...options }, this._frame._timeoutOptions(options));
+    await this._elementChannel.scrollIntoViewIfNeeded({ ...options }, this._frame._timeout(options));
   }
 
   async hover(options: channels.ElementHandleHoverOptions & TimeoutOptions = {}): Promise<void> {
-    await this._elementChannel.hover({ ...options }, this._frame._timeoutOptions(options));
+    await this._elementChannel.hover({ ...options }, this._frame._timeout(options));
   }
 
   async click(options: channels.ElementHandleClickOptions & TimeoutOptions = {}): Promise<void> {
-    return await this._elementChannel.click({ ...options }, this._frame._timeoutOptions(options));
+    return await this._elementChannel.click({ ...options }, this._frame._timeout(options));
   }
 
   async dblclick(options: channels.ElementHandleDblclickOptions & TimeoutOptions = {}): Promise<void> {
-    return await this._elementChannel.dblclick({ ...options }, this._frame._timeoutOptions(options));
+    return await this._elementChannel.dblclick({ ...options }, this._frame._timeout(options));
   }
 
   async tap(options: channels.ElementHandleTapOptions & TimeoutOptions = {}): Promise<void> {
-    return await this._elementChannel.tap({ ...options }, this._frame._timeoutOptions(options));
+    return await this._elementChannel.tap({ ...options }, this._frame._timeout(options));
   }
 
   async selectOption(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
-    const result = await this._elementChannel.selectOption({ ...convertSelectOptionValues(values), ...options }, this._frame._timeoutOptions(options));
+    const result = await this._elementChannel.selectOption({ ...convertSelectOptionValues(values), ...options }, this._frame._timeout(options));
     return result.values;
   }
 
   async fill(value: string, options: channels.ElementHandleFillOptions & TimeoutOptions = {}): Promise<void> {
-    return await this._elementChannel.fill({ value, ...options }, this._frame._timeoutOptions(options));
+    return await this._elementChannel.fill({ value, ...options }, this._frame._timeout(options));
   }
 
   async selectText(options: channels.ElementHandleSelectTextOptions & TimeoutOptions = {}): Promise<void> {
-    await this._elementChannel.selectText({ ...options }, this._frame._timeoutOptions(options));
+    await this._elementChannel.selectText({ ...options }, this._frame._timeout(options));
   }
 
   async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions & TimeoutOptions = {}) {
@@ -153,7 +153,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     if (!frame)
       throw new Error('Cannot set input files to detached element');
     const converted = await convertInputFiles(files, frame.page().context());
-    await this._elementChannel.setInputFiles({ ...converted, ...options }, this._frame._timeoutOptions(options));
+    await this._elementChannel.setInputFiles({ ...converted, ...options }, this._frame._timeout(options));
   }
 
   async focus(): Promise<void> {
@@ -161,19 +161,19 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
   }
 
   async type(text: string, options: channels.ElementHandleTypeOptions & TimeoutOptions = {}): Promise<void> {
-    await this._elementChannel.type({ text, ...options }, this._frame._timeoutOptions(options));
+    await this._elementChannel.type({ text, ...options }, this._frame._timeout(options));
   }
 
   async press(key: string, options: channels.ElementHandlePressOptions & TimeoutOptions = {}): Promise<void> {
-    await this._elementChannel.press({ key, ...options }, this._frame._timeoutOptions(options));
+    await this._elementChannel.press({ key, ...options }, this._frame._timeout(options));
   }
 
   async check(options: channels.ElementHandleCheckOptions & TimeoutOptions = {}) {
-    return await this._elementChannel.check({ ...options }, this._frame._timeoutOptions(options));
+    return await this._elementChannel.check({ ...options }, this._frame._timeout(options));
   }
 
   async uncheck(options: channels.ElementHandleUncheckOptions & TimeoutOptions = {}) {
-    return await this._elementChannel.uncheck({ ...options }, this._frame._timeoutOptions(options));
+    return await this._elementChannel.uncheck({ ...options }, this._frame._timeout(options));
   }
 
   async setChecked(checked: boolean, options?: channels.ElementHandleCheckOptions) {
@@ -190,7 +190,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
 
   async screenshot(options: Omit<channels.ElementHandleScreenshotOptions, 'mask'> & TimeoutOptions & { path?: string, mask?: api.Locator[] } = {}): Promise<Buffer> {
     const mask = options.mask as Locator[] | undefined;
-    const timeout = this._frame._timeoutOptions(options).timeout;
+    const timeout = this._frame._timeout(options).timeout;
     const copy: channels.ElementHandleScreenshotParams = { ...options, mask: undefined };
     if (!copy.type)
       copy.type = determineScreenshotType(options);
@@ -228,13 +228,13 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
   }
 
   async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled', options: TimeoutOptions = {}): Promise<void> {
-    return await this._elementChannel.waitForElementState({ state, ...options }, this._frame._timeoutOptions(options));
+    return await this._elementChannel.waitForElementState({ state, ...options }, this._frame._timeout(options));
   }
 
   waitForSelector(selector: string, options: channels.ElementHandleWaitForSelectorOptions & TimeoutOptions & { state: 'attached' | 'visible' }): Promise<ElementHandle<SVGElement | HTMLElement>>;
   waitForSelector(selector: string, options?: channels.ElementHandleWaitForSelectorOptions & TimeoutOptions): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
   async waitForSelector(selector: string, options: channels.ElementHandleWaitForSelectorOptions & TimeoutOptions = {}): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
-    const result = await this._elementChannel.waitForSelector({ selector, ...options }, this._frame._timeoutOptions(options));
+    const result = await this._elementChannel.waitForSelector({ selector, ...options }, this._frame._timeout(options));
     return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
   }
 }

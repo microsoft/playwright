@@ -395,7 +395,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async reload(options: channels.PageReloadOptions & TimeoutOptions = {}): Promise<Response | null> {
     const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-    return Response.fromNullable((await this._channel.reload({ ...options, waitUntil }, this._mainFrame._navigationTimeoutOptions(options))).response);
+    return Response.fromNullable((await this._channel.reload({ ...options, waitUntil }, this._mainFrame._navigationTimeout(options))).response);
   }
 
   async addLocatorHandler(locator: Locator, handler: (locator: Locator) => any, options: { times?: number, noWaitAfter?: boolean } = {}): Promise<void> {
@@ -497,12 +497,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async goBack(options: channels.PageGoBackOptions & TimeoutOptions = {}): Promise<Response | null> {
     const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-    return Response.fromNullable((await this._channel.goBack({ ...options, waitUntil }, this._mainFrame._navigationTimeoutOptions(options))).response);
+    return Response.fromNullable((await this._channel.goBack({ ...options, waitUntil }, this._mainFrame._navigationTimeout(options))).response);
   }
 
   async goForward(options: channels.PageGoForwardOptions & TimeoutOptions = {}): Promise<Response | null> {
     const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-    return Response.fromNullable((await this._channel.goForward({ ...options, waitUntil }, this._mainFrame._navigationTimeoutOptions(options))).response);
+    return Response.fromNullable((await this._channel.goForward({ ...options, waitUntil }, this._mainFrame._navigationTimeout(options))).response);
   }
 
   async requestGC() {
@@ -890,7 +890,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<string> {
-    const result = await this.mainFrame()._channel.ariaSnapshot({ mode: options.mode, depth: options.depth, boxes: options.boxes }, this._mainFrame._timeoutOptions(options));
+    const result = await this.mainFrame()._channel.ariaSnapshot({ mode: options.mode, depth: options.depth, boxes: options.boxes }, this._mainFrame._timeout(options));
     return result.snapshot;
   }
 

@@ -107,19 +107,19 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return this._page!;
   }
 
-  _timeoutOptions(options?: TimeoutOptions): channels.TimeoutOptions {
+  _timeout(options?: TimeoutOptions): channels.TimeoutOptions {
     const timeoutSettings = this._page?._timeoutSettings || new TimeoutSettings();
     return timeoutSettings.timeout(options || {});
   }
 
-  _navigationTimeoutOptions(options?: TimeoutOptions): channels.TimeoutOptions {
+  _navigationTimeout(options?: TimeoutOptions): channels.TimeoutOptions {
     const timeoutSettings = this._page?._timeoutSettings || new TimeoutSettings();
     return timeoutSettings.navigationTimeout(options || {});
   }
 
   async goto(url: string, options: channels.FrameGotoOptions & TimeoutOptions = {}): Promise<network.Response | null> {
     const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-    return network.Response.fromNullable((await this._channel.goto({ url, ...options, waitUntil }, this._navigationTimeoutOptions(options))).response);
+    return network.Response.fromNullable((await this._channel.goto({ url, ...options, waitUntil }, this._navigationTimeout(options))).response);
   }
 
   private _setupNavigationWaiter(options: TimeoutOptions): Waiter {
@@ -232,12 +232,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       throw new Error('options.visibility is not supported, did you mean options.state?');
     if ((options as any).waitFor && (options as any).waitFor !== 'visible')
       throw new Error('options.waitFor is not supported, did you mean options.state?');
-    const result = await this._channel.waitForSelector({ selector, ...options }, this._timeoutOptions(options));
+    const result = await this._channel.waitForSelector({ selector, ...options }, this._timeout(options));
     return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
   }
 
   async dispatchEvent(selector: string, type: string, eventInit?: any, options: channels.FrameDispatchEventOptions & TimeoutOptions = {}): Promise<void> {
-    await this._channel.dispatchEvent({ selector, type, eventInit: serializeArgument(eventInit), ...options }, this._timeoutOptions(options));
+    await this._channel.dispatchEvent({ selector, type, eventInit: serializeArgument(eventInit), ...options }, this._timeout(options));
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg): Promise<R> {
@@ -267,7 +267,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   async setContent(html: string, options: channels.FrameSetContentOptions & TimeoutOptions = {}): Promise<void> {
     const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-    await this._channel.setContent({ html, ...options, waitUntil }, this._navigationTimeoutOptions(options));
+    await this._channel.setContent({ html, ...options, waitUntil }, this._navigationTimeout(options));
   }
 
   name(): string {
@@ -309,15 +309,15 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async click(selector: string, options: channels.FrameClickOptions & TimeoutOptions = {}) {
-    return await this._channel.click({ selector, ...options }, this._timeoutOptions(options));
+    return await this._channel.click({ selector, ...options }, this._timeout(options));
   }
 
   async dblclick(selector: string, options: channels.FrameDblclickOptions & TimeoutOptions = {}) {
-    return await this._channel.dblclick({ selector, ...options }, this._timeoutOptions(options));
+    return await this._channel.dblclick({ selector, ...options }, this._timeout(options));
   }
 
   async dragAndDrop(source: string, target: string, options: channels.FrameDragAndDropOptions & TimeoutOptions = {}) {
-    return await this._channel.dragAndDrop({ source, target, ...options }, this._timeoutOptions(options));
+    return await this._channel.dragAndDrop({ source, target, ...options }, this._timeout(options));
   }
 
   async _drop(selector: string, payload: DropPayload, options: Omit<channels.FrameDropOptions, 'payloads' | 'localPaths' | 'streams' | 'data'> & TimeoutOptions = {}) {
@@ -334,15 +334,15 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       ...fileParams,
       data: dataArray,
       ...options,
-    }, this._timeoutOptions(options));
+    }, this._timeout(options));
   }
 
   async tap(selector: string, options: channels.FrameTapOptions & TimeoutOptions = {}) {
-    return await this._channel.tap({ selector, ...options }, this._timeoutOptions(options));
+    return await this._channel.tap({ selector, ...options }, this._timeout(options));
   }
 
   async fill(selector: string, value: string, options: channels.FrameFillOptions & TimeoutOptions = {}) {
-    return await this._channel.fill({ selector, value, ...options }, this._timeoutOptions(options));
+    return await this._channel.fill({ selector, value, ...options }, this._timeout(options));
   }
 
   async _highlight(selector: string, style?: string) {
@@ -390,45 +390,45 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async focus(selector: string, options: channels.FrameFocusOptions & TimeoutOptions = {}) {
-    await this._channel.focus({ selector, ...options }, this._timeoutOptions(options));
+    await this._channel.focus({ selector, ...options }, this._timeout(options));
   }
 
   async textContent(selector: string, options: channels.FrameTextContentOptions & TimeoutOptions = {}): Promise<null|string> {
-    const value = (await this._channel.textContent({ selector, ...options }, this._timeoutOptions(options))).value;
+    const value = (await this._channel.textContent({ selector, ...options }, this._timeout(options))).value;
     return value === undefined ? null : value;
   }
 
   async innerText(selector: string, options: channels.FrameInnerTextOptions & TimeoutOptions = {}): Promise<string> {
-    return (await this._channel.innerText({ selector, ...options }, this._timeoutOptions(options))).value;
+    return (await this._channel.innerText({ selector, ...options }, this._timeout(options))).value;
   }
 
   async innerHTML(selector: string, options: channels.FrameInnerHTMLOptions & TimeoutOptions = {}): Promise<string> {
-    return (await this._channel.innerHTML({ selector, ...options }, this._timeoutOptions(options))).value;
+    return (await this._channel.innerHTML({ selector, ...options }, this._timeout(options))).value;
   }
 
   async getAttribute(selector: string, name: string, options: channels.FrameGetAttributeOptions & TimeoutOptions = {}): Promise<string | null> {
-    const value = (await this._channel.getAttribute({ selector, name, ...options }, this._timeoutOptions(options))).value;
+    const value = (await this._channel.getAttribute({ selector, name, ...options }, this._timeout(options))).value;
     return value === undefined ? null : value;
   }
 
   async inputValue(selector: string, options: channels.FrameInputValueOptions & TimeoutOptions = {}): Promise<string> {
-    return (await this._channel.inputValue({ selector, ...options }, this._timeoutOptions(options))).value;
+    return (await this._channel.inputValue({ selector, ...options }, this._timeout(options))).value;
   }
 
   async isChecked(selector: string, options: channels.FrameIsCheckedOptions & TimeoutOptions = {}): Promise<boolean> {
-    return (await this._channel.isChecked({ selector, ...options }, this._timeoutOptions(options))).value;
+    return (await this._channel.isChecked({ selector, ...options }, this._timeout(options))).value;
   }
 
   async isDisabled(selector: string, options: channels.FrameIsDisabledOptions & TimeoutOptions = {}): Promise<boolean> {
-    return (await this._channel.isDisabled({ selector, ...options }, this._timeoutOptions(options))).value;
+    return (await this._channel.isDisabled({ selector, ...options }, this._timeout(options))).value;
   }
 
   async isEditable(selector: string, options: channels.FrameIsEditableOptions & TimeoutOptions = {}): Promise<boolean> {
-    return (await this._channel.isEditable({ selector, ...options }, this._timeoutOptions(options))).value;
+    return (await this._channel.isEditable({ selector, ...options }, this._timeout(options))).value;
   }
 
   async isEnabled(selector: string, options: channels.FrameIsEnabledOptions & TimeoutOptions = {}): Promise<boolean> {
-    return (await this._channel.isEnabled({ selector, ...options }, this._timeoutOptions(options))).value;
+    return (await this._channel.isEnabled({ selector, ...options }, this._timeout(options))).value;
   }
 
   async isHidden(selector: string, options: channels.FrameIsHiddenOptions & TimeoutOptions = {}): Promise<boolean> {
@@ -440,32 +440,32 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async hover(selector: string, options: channels.FrameHoverOptions & TimeoutOptions = {}) {
-    await this._channel.hover({ selector, ...options }, this._timeoutOptions(options));
+    await this._channel.hover({ selector, ...options }, this._timeout(options));
   }
 
   async selectOption(selector: string, values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions & StrictOptions = {}): Promise<string[]> {
-    return (await this._channel.selectOption({ selector, ...convertSelectOptionValues(values), ...options }, this._timeoutOptions(options))).values;
+    return (await this._channel.selectOption({ selector, ...convertSelectOptionValues(values), ...options }, this._timeout(options))).values;
   }
 
   async setInputFiles(selector: string, files: string | FilePayload | string[] | FilePayload[], options: channels.FrameSetInputFilesOptions & TimeoutOptions = {}): Promise<void> {
     const converted = await convertInputFiles(files, this.page().context());
-    await this._channel.setInputFiles({ selector, ...converted, ...options }, this._timeoutOptions(options));
+    await this._channel.setInputFiles({ selector, ...converted, ...options }, this._timeout(options));
   }
 
   async type(selector: string, text: string, options: channels.FrameTypeOptions & TimeoutOptions = {}) {
-    await this._channel.type({ selector, text, ...options }, this._timeoutOptions(options));
+    await this._channel.type({ selector, text, ...options }, this._timeout(options));
   }
 
   async press(selector: string, key: string, options: channels.FramePressOptions & TimeoutOptions = {}) {
-    await this._channel.press({ selector, key, ...options }, this._timeoutOptions(options));
+    await this._channel.press({ selector, key, ...options }, this._timeout(options));
   }
 
   async check(selector: string, options: channels.FrameCheckOptions & TimeoutOptions = {}) {
-    await this._channel.check({ selector, ...options }, this._timeoutOptions(options));
+    await this._channel.check({ selector, ...options }, this._timeout(options));
   }
 
   async uncheck(selector: string, options: channels.FrameUncheckOptions & TimeoutOptions = {}) {
-    await this._channel.uncheck({ selector, ...options }, this._timeoutOptions(options));
+    await this._channel.uncheck({ selector, ...options }, this._timeout(options));
   }
 
   async setChecked(selector: string, checked: boolean, options?: channels.FrameCheckOptions) {
@@ -488,7 +488,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       expression: String(pageFunction),
       isFunction: typeof pageFunction === 'function',
       arg: serializeArgument(arg),
-    }, this._timeoutOptions(options));
+    }, this._timeout(options));
     return JSHandle.from(result.handle!) as any as structs.SmartHandle<R>;
   }
 
