@@ -90,7 +90,7 @@ function element(id: Buffer, payload: Buffer): Buffer {
 
 // Emits the Matroska header: EBML head, an unknown-size (streaming) Segment, stream Info with a
 // 1ms timestamp scale, and a single MJPEG video track. Frames follow as Clusters via writeClusterHeader.
-export function writeHeader(width: number, height: number): Buffer {
+export function writeHeader(): Buffer {
   const ebml = element(kEBML, Buffer.concat([
     element(kEBMLVersion, uint(1)),
     element(kEBMLReadVersion, uint(1)),
@@ -112,11 +112,12 @@ export function writeHeader(width: number, height: number): Buffer {
     element(kTrackType, uint(1)), // 1 = video.
     element(kFlagLacing, uint(0)),
     element(kCodecID, Buffer.from('V_MJPEG')),
-    // PixelWidth/PixelHeight describe the input JPEG frames. The output video filters normalize
-    // them to the requested recording size.
+    // PixelWidth/PixelHeight are mandatory, but the actual JPEG dimensions are not known yet.
+    // A larger placeholder can make ffmpeg mistake a short progressive JPEG for an interlaced
+    // field, so use 1x1 and let the MJPEG decoder read the real dimensions from each frame.
     element(kVideo, Buffer.concat([
-      element(kPixelWidth, uint(width)),
-      element(kPixelHeight, uint(height)),
+      element(kPixelWidth, uint(1)),
+      element(kPixelHeight, uint(1)),
     ])),
   ]));
   const tracks = element(kTracks, track);

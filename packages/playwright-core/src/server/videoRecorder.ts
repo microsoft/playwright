@@ -107,7 +107,6 @@ class FfmpegVideoRecorder {
   private _ffmpegPath: string;
   private _launchPromise: Promise<Error | null>;
   private _outputFile: string;
-  private _headerWritten = false;
 
   constructor(ffmpegPath: string, size: types.Size, outputFile: string, page: PageDelegate) {
     if (!outputFile.endsWith('.webm'))
@@ -190,6 +189,7 @@ class FfmpegVideoRecorder {
     });
     this._process = launchedProcess;
     this._gracefullyClose = gracefullyClose;
+    launchedProcess.stdin!.write(writeHeader());
   }
 
   writeFrame(frame: Buffer, timestamp: number) {
@@ -218,13 +218,6 @@ class FfmpegVideoRecorder {
 
   private _emitFrame(frame: Buffer, frameNumber: number) {
     const timestampMs = Math.max(0, Math.round(frameNumber * 1000 / fps));
-    if (!this._headerWritten) {
-      // Matroska dimensions initialize ffmpeg's MJPEG decoder. Describing a substantially taller
-      // frame makes ffmpeg mistake the first progressive JPEG for one field of an interlaced frame.
-      const frameSize = jpegSize(frame) ?? this._size;
-      this._process!.stdin!.write(writeHeader(frameSize.width, frameSize.height));
-      this._headerWritten = true;
-    }
     this._process!.stdin!.write(writeClusterHeader(timestampMs, frame.length));
     this._process!.stdin!.write(frame);
   }
@@ -259,34 +252,4 @@ class FfmpegVideoRecorder {
 function createWhiteImage(width: number, height: number): Buffer {
   const data = Buffer.alloc(width * height * 4, 255);
   return jpegjs.encode({ data, width, height }, 80).data;
-}
-
-function jpegSize(frame: Buffer): types.Size | undefined {
-  if (frame.length < 4 || frame[0] !== 0xff || frame[1] !== 0xd8)
-    return;
-  let offset = 2;
-  while (offset + 4 <= frame.length) {
-    while (frame[offset] === 0xff)
-      ++offset;
-    const marker = frame[offset++];
-    if (marker === 0xd9 || marker === 0xda)
-      return;
-    if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7))
-      continue;
-    if (offset + 2 > frame.length)
-      return;
-    const segmentLength = frame.readUInt16BE(offset);
-    if (segmentLength < 2 || offset + segmentLength > frame.length)
-      return;
-    const isStartOfFrame = (marker >= 0xc0 && marker <= 0xc3) ||
-      (marker >= 0xc5 && marker <= 0xc7) ||
-      (marker >= 0xc9 && marker <= 0xcb) ||
-      (marker >= 0xcd && marker <= 0xcf);
-    if (isStartOfFrame && segmentLength >= 7) {
-      const width = frame.readUInt16BE(offset + 5);
-      const height = frame.readUInt16BE(offset + 3);
-      return width && height ? { width, height } : undefined;
-    }
-    offset += segmentLength;
-  }
 }
