@@ -112,8 +112,8 @@ export function writeHeader(width: number, height: number): Buffer {
     element(kTrackType, uint(1)), // 1 = video.
     element(kFlagLacing, uint(0)),
     element(kCodecID, Buffer.from('V_MJPEG')),
-    // PixelWidth/PixelHeight are advisory: ffmpeg's mjpeg decoder uses the dimensions encoded in
-    // each JPEG frame, and the output video filters normalize to the requested size.
+    // PixelWidth/PixelHeight describe the input JPEG frames. The output video filters normalize
+    // them to the requested recording size.
     element(kVideo, Buffer.concat([
       element(kPixelWidth, uint(width)),
       element(kPixelHeight, uint(height)),

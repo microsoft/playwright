@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import path from 'path';
 
 import jpegjs from 'jpeg-js';
@@ -108,9 +107,7 @@ class FfmpegVideoRecorder {
   private _ffmpegPath: string;
   private _launchPromise: Promise<Error | null>;
   private _outputFile: string;
-  private _frameDiagnostics: string[] = [];
-  private _receivedFrameCount = 0;
-  private _emittedFrameCount = 0;
+  private _headerWritten = false;
 
   constructor(ffmpegPath: string, size: types.Size, outputFile: string, page: PageDelegate) {
     if (!outputFile.endsWith('.webm'))
@@ -170,26 +167,19 @@ class FfmpegVideoRecorder {
     const videoFilterArgs = page.getFFmpegVideoFilterArgs?.({ width: w, height: h }) ?? `pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`;
     const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf ${videoFilterArgs}`.split(' ');
     args.push(this._outputFile);
-    const ffmpegLogs: string[] = [];
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
       command: this._ffmpegPath,
       args,
       stdio: 'stdin',
-      log: (message: string) => {
-        ffmpegLogs.push(message);
-        debugLogger.log('browser', message);
-      },
+      log: (message: string) => debugLogger.log('browser', message),
       tempDirectories: [],
       attemptToGracefullyClose: async () => {
         debugLogger.log('browser', 'Closing stdin...');
         launchedProcess.stdin!.end();
       },
       onExit: (exitCode, signal) => {
-        const message = `ffmpeg onkill exitCode=${exitCode} signal=${signal}`;
-        ffmpegLogs.push(message);
-        fs.writeFileSync(this._outputFile + '.ffmpeg.log', [...this._frameDiagnostics, '', ...ffmpegLogs].join('\n'));
-        debugLogger.log('browser', message);
+        debugLogger.log('browser', `ffmpeg onkill exitCode=${exitCode} signal=${signal}`);
       },
     });
     launchedProcess.stdin!.on('finish', () => {
@@ -200,7 +190,6 @@ class FfmpegVideoRecorder {
     });
     this._process = launchedProcess;
     this._gracefullyClose = gracefullyClose;
-    launchedProcess.stdin!.write(writeHeader(w, h));
   }
 
   writeFrame(frame: Buffer, timestamp: number) {
@@ -216,7 +205,6 @@ class FfmpegVideoRecorder {
     if (this._isStopped)
       return;
 
-    this._frameDiagnostics.push(`received[${this._receivedFrameCount++}] timestamp=${timestamp} ${describeFrame(frame)}`);
     if (!this._firstFrameTimestamp)
       this._firstFrameTimestamp = timestamp;
 
@@ -230,7 +218,13 @@ class FfmpegVideoRecorder {
 
   private _emitFrame(frame: Buffer, frameNumber: number) {
     const timestampMs = Math.max(0, Math.round(frameNumber * 1000 / fps));
-    this._frameDiagnostics.push(`emitted[${this._emittedFrameCount++}] frameNumber=${frameNumber} timestampMs=${timestampMs} ${describeFrame(frame)}`);
+    if (!this._headerWritten) {
+      // Matroska dimensions initialize ffmpeg's MJPEG decoder. Describing a substantially taller
+      // frame makes ffmpeg mistake the first progressive JPEG for one field of an interlaced frame.
+      const frameSize = jpegSize(frame) ?? this._size;
+      this._process!.stdin!.write(writeHeader(frameSize.width, frameSize.height));
+      this._headerWritten = true;
+    }
     this._process!.stdin!.write(writeClusterHeader(timestampMs, frame.length));
     this._process!.stdin!.write(frame);
   }
@@ -267,34 +261,32 @@ function createWhiteImage(width: number, height: number): Buffer {
   return jpegjs.encode({ data, width, height }, 80).data;
 }
 
-function describeFrame(frame: Buffer): string {
-  let dimensions = 'not-jpeg';
-  if (frame.length >= 4 && frame[0] === 0xff && frame[1] === 0xd8) {
-    dimensions = 'unknown';
-    let offset = 2;
-    while (offset + 4 <= frame.length) {
-      while (frame[offset] === 0xff)
-        ++offset;
-      const marker = frame[offset++];
-      if (marker === 0xd9 || marker === 0xda)
-        break;
-      if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7))
-        continue;
-      if (offset + 2 > frame.length)
-        break;
-      const segmentLength = frame.readUInt16BE(offset);
-      const isStartOfFrame = (marker >= 0xc0 && marker <= 0xc3) ||
-        (marker >= 0xc5 && marker <= 0xc7) ||
-        (marker >= 0xc9 && marker <= 0xcb) ||
-        (marker >= 0xcd && marker <= 0xcf);
-      if (isStartOfFrame && offset + 7 <= frame.length) {
-        dimensions = `${frame.readUInt16BE(offset + 5)}x${frame.readUInt16BE(offset + 3)}`;
-        break;
-      }
-      if (segmentLength < 2)
-        break;
-      offset += segmentLength;
+function jpegSize(frame: Buffer): types.Size | undefined {
+  if (frame.length < 4 || frame[0] !== 0xff || frame[1] !== 0xd8)
+    return;
+  let offset = 2;
+  while (offset + 4 <= frame.length) {
+    while (frame[offset] === 0xff)
+      ++offset;
+    const marker = frame[offset++];
+    if (marker === 0xd9 || marker === 0xda)
+      return;
+    if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7))
+      continue;
+    if (offset + 2 > frame.length)
+      return;
+    const segmentLength = frame.readUInt16BE(offset);
+    if (segmentLength < 2 || offset + segmentLength > frame.length)
+      return;
+    const isStartOfFrame = (marker >= 0xc0 && marker <= 0xc3) ||
+      (marker >= 0xc5 && marker <= 0xc7) ||
+      (marker >= 0xc9 && marker <= 0xcb) ||
+      (marker >= 0xcd && marker <= 0xcf);
+    if (isStartOfFrame && segmentLength >= 7) {
+      const width = frame.readUInt16BE(offset + 5);
+      const height = frame.readUInt16BE(offset + 3);
+      return width && height ? { width, height } : undefined;
     }
+    offset += segmentLength;
   }
-  return `bytes=${frame.length} dimensions=${dimensions} prefix=${frame.subarray(0, 8).toString('hex')} suffix=${frame.subarray(-8).toString('hex')}`;
 }
