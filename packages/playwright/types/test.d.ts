@@ -9550,13 +9550,13 @@ interface LocatorAssertions {
    * const locator = page.getByRole('button');
    * await expect(locator).toHaveScreenshot('image.png');
    *
-   * // Store the snapshot in the WebP format to reduce the file size.
+   * // Store the snapshot in the WebP format.
    * await expect(locator).toHaveScreenshot('image.webp');
    * ```
    *
    * Note that screenshot assertions only work with Playwright test runner.
    * @param name Snapshot name. Must have a `.png` or `.webp` extension, the screenshot is captured in the corresponding format.
-   * Both formats are lossless, but WebP files are usually smaller.
+   * Both formats are lossless.
    * @param options
    */
   toHaveScreenshot(name: string|ReadonlyArray<string>, options?: {
@@ -9984,13 +9984,13 @@ interface PageAssertions {
    * ```js
    * await expect(page).toHaveScreenshot('image.png');
    *
-   * // Store the snapshot in the WebP format to reduce the file size.
+   * // Store the snapshot in the WebP format.
    * await expect(page).toHaveScreenshot('image.webp');
    * ```
    *
    * Note that screenshot assertions only work with Playwright test runner.
    * @param name Snapshot name. Must have a `.png` or `.webp` extension, the screenshot is captured in the corresponding format.
-   * Both formats are lossless, but WebP files are usually smaller.
+   * Both formats are lossless.
    * @param options
    */
   toHaveScreenshot(name: string|ReadonlyArray<string>, options?: PageAssertionsToHaveScreenshotOptions): Promise<void>;
