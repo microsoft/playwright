@@ -461,8 +461,9 @@ export abstract class APIRequestContext extends SdkObject {
               return;
             }
 
-            if (headers['host'])
-              headers['host'] = locationURL.host;
+            const hostKey = Object.keys(headers).find(k => k.toLowerCase() === 'host');
+            if (hostKey)
+              headers[hostKey] = locationURL.host;
 
             // Drop credentials scoped to the original origin on cross-origin redirects.
             if (locationURL.origin !== url.origin)
