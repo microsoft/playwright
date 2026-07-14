@@ -109,10 +109,6 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     await this.dispose();
   }
 
-  _timeoutOptions(options?: TimeoutOptions): channels.TimeoutOptions {
-    return this._timeoutSettings.timeout(options || {});
-  }
-
   async dispose(options: { reason?: string } = {}): Promise<void> {
     this._closeReason = options.reason;
     await this._instrumentation.runBeforeCloseRequestContext(this);
@@ -264,7 +260,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
         maxRedirects: options.maxRedirects,
         maxRetries: options.maxRetries,
         ...fixtures
-      }, this._timeoutOptions(options));
+      }, this._timeoutSettings.timeout(options));
       return new APIResponse(this, result.response);
     });
   }
