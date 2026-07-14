@@ -25,6 +25,7 @@ import { Debugger } from './debugger';
 import { DialogManager } from './dialog';
 import { BrowserContextAPIRequestContext } from './fetch';
 import { helper } from './helper';
+import { eventsHelper, type RegisteredListener } from '@utils/eventsHelper';
 import { EventMap, SdkObject } from './instrumentation';
 import * as network from './network';
 import { InitScript } from './page';
@@ -123,6 +124,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   readonly dialogManager: DialogManager;
   private _consoleApiExposed = false;
   private _harForAPIRequests: HarForAPIRequestsRegistration[] = [];
+  private _extendInjectedScriptListeners: RegisteredListener[] = [];
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -268,6 +270,8 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       // at the same time.
       return;
     }
+    eventsHelper.removeEventListeners(this._extendInjectedScriptListeners);
+    this._extendInjectedScriptListeners = [];
     this._clientCertificatesProxy?.close().catch(() => {});
     this.tracing.abort();
     if (this._isPersistentContext)
@@ -730,10 +734,14 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   async extendInjectedScript(source: string, arg?: any) {
     const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(source, arg).catch(() => {});
     const installInPage = (page: Page) => {
-      page.on(Page.Events.InternalFrameNavigatedToNewDocument, installInFrame);
+      this._extendInjectedScriptListeners.push(
+        eventsHelper.addEventListener(page, Page.Events.InternalFrameNavigatedToNewDocument, installInFrame)
+      );
       return Promise.all(page.frames().map(installInFrame));
     };
-    this.on(BrowserContext.Events.Page, installInPage);
+    this._extendInjectedScriptListeners.push(
+      eventsHelper.addEventListener(this, BrowserContext.Events.Page, installInPage)
+    );
     return Promise.all(this.pages().map(installInPage));
   }
 
