@@ -539,6 +539,8 @@ export class InjectedScript {
       queryAll(root: SelectorRoot, body: any) {
         if (body === 'enter-frame')
           return [];
+        if (body === 'pierce-frames')
+          return [];
         if (body === 'return-empty')
           return [];
         if (body === 'component') {

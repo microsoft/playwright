@@ -91,19 +91,33 @@ export function parseSelector(selector: string): ParsedSelector {
   };
 }
 
-export function splitSelectorByFrame(selectorText: string): ParsedSelector[] {
+// Splits a selector into per-frame chunks separated by "enter-frame" boundaries. When the selector
+// starts with the "pierce-frames" token, `pierce` is set globally and no "enter-frame" boundaries
+// are allowed (piercing already searches every descendant frame), so `chunks` holds a single chunk.
+export function splitSelectorByFrame(selectorText: string): { pierce: boolean, chunks: ParsedSelector[] } {
   const selector = parseSelector(selectorText);
-  const result: ParsedSelector[] = [];
+  const chunks: ParsedSelector[] = [];
   let chunk: ParsedSelector = {
     parts: [],
   };
+  let pierce = false;
   let chunkStartIndex = 0;
   for (let i = 0; i < selector.parts.length; ++i) {
     const part = selector.parts[i];
+    if (part.name === 'internal:control' && part.body === 'pierce-frames') {
+      // Piercing is a whole-page operation, so it only makes sense as the very first token.
+      if (i !== 0)
+        throw new InvalidSelectorError(`"pierce-frames" is only allowed as the first selector token, while parsing selector ${selectorText}`);
+      pierce = true;
+      chunkStartIndex = i + 1;
+      continue;
+    }
     if (part.name === 'internal:control' && part.body === 'enter-frame') {
+      if (pierce)
+        throw new InvalidSelectorError(`Entering frames is not allowed while piercing frames, while parsing selector ${selectorText}`);
       if (!chunk.parts.length)
         throw new InvalidSelectorError('Selector cannot start with entering frame, select the iframe first');
-      result.push(chunk);
+      chunks.push(chunk);
       chunk = { parts: [] };
       chunkStartIndex = i + 1;
       continue;
@@ -114,10 +128,12 @@ export function splitSelectorByFrame(selectorText: string): ParsedSelector[] {
   }
   if (!chunk.parts.length)
     throw new InvalidSelectorError(`Selector cannot end with entering frame, while parsing selector ${selectorText}`);
-  result.push(chunk);
-  if (typeof selector.capture === 'number' && typeof result[result.length - 1].capture !== 'number')
+  chunks.push(chunk);
+  if (typeof selector.capture === 'number' && typeof chunks[chunks.length - 1].capture !== 'number')
     throw new InvalidSelectorError(`Can not capture the selector before diving into the frame. Only use * after the last frame has been selected`);
-  return result;
+  if (typeof selector.capture === 'number' && pierce)
+    throw new InvalidSelectorError(`Can not *-capture inside a frame-piercing selector, while parsing selector ${selectorText}`);
+  return { pierce, chunks };
 }
 
 function selectorPartsEqual(list1: ParsedSelectorPart[], list2: ParsedSelectorPart[]) {

@@ -40,7 +40,7 @@ async function routeIframe(page: Page) {
   });
   await page.route('**/iframe-2.html', route => {
     route.fulfill({
-      body: '<html><button>Hello nested iframe</button></html>',
+      body: '<html><button tag="iframe2">Hello nested iframe</button></html>',
       contentType: 'text/html'
     }).catch(() => {});
   });
@@ -309,4 +309,88 @@ it('should non work for non-frame', async ({ page, server }) => {
   const error = await button.waitFor().catch(e => e);
   expect(error.message).toContain('<div></div>');
   expect(error.message).toContain('<iframe> was expected');
+});
+
+it('should pierce frames into a single descendant frame', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  // The main frame has no <div>; only the iframe.html child frame does.
+  const div = page.locator('internal:control=pierce-frames >> div');
+  await div.waitFor();
+  await expect(div).toHaveCount(1);
+  expect(await div.innerHTML()).toContain('<button>Hello iframe</button>');
+});
+
+it('should pierce through multiple frames', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  // The main frame has no <div>; only the iframe.html child frame does.
+  const button = page.locator('internal:control=pierce-frames >> button[tag="iframe2"]');
+  await button.waitFor();
+  await expect(button).toHaveCount(1);
+  expect(await button.textContent()).toBe('Hello nested iframe');
+});
+
+it('should pierce multiple times', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  // Main and nested frames have no <div>; only the iframe.html child frame does.
+  const button = page.locator('internal:control=pierce-frames >> div >> button[tag="iframe2"]');
+  await button.waitFor();
+  await expect(button).toHaveCount(1);
+  expect(await button.textContent()).toBe('Hello nested iframe');
+});
+
+it('should match multiple elements', async ({ page, server }) => {
+  await page.route('**/empty.html', route => {
+    route.fulfill({ body: '<iframe src="a.html"></iframe><iframe src="b.html"></iframe>', contentType: 'text/html' }).catch(() => {});
+  });
+  await page.route('**/a.html', route => {
+    route.fulfill({ body: '<div>one</div>', contentType: 'text/html' }).catch(() => {});
+  });
+  await page.route('**/b.html', route => {
+    route.fulfill({ body: '<span>two</span><span>three</span>', contentType: 'text/html' }).catch(() => {});
+  });
+  await page.goto(server.EMPTY_PAGE);
+
+  const texts = await page.$$eval('internal:control=pierce-frames >> span', els => els.map(e => e.textContent));
+  expect(texts).toEqual(['two', 'three']);
+});
+
+it('should throw when piercing frames matches multiple frames', async ({ page, server }) => {
+  await page.route('**/empty.html', route => {
+    route.fulfill({ body: '<iframe src="a.html"></iframe><iframe src="b.html"></iframe>', contentType: 'text/html' }).catch(() => {});
+  });
+  await page.route('**/a.html', route => {
+    route.fulfill({ body: '<div>one</div>', contentType: 'text/html' }).catch(() => {});
+  });
+  await page.route('**/b.html', route => {
+    route.fulfill({ body: '<div>two</div>', contentType: 'text/html' }).catch(() => {});
+  });
+  await page.goto(server.EMPTY_PAGE);
+
+  // Make sure both child frames have their <div> before piercing, otherwise resolution
+  // may transiently collapse to a single frame.
+  await expect.poll(() => page.frames().length).toBe(3);
+  for (const frame of page.frames()) {
+    if (frame !== page.mainFrame())
+      await frame.waitForSelector('div');
+  }
+
+  const error = await page.locator('internal:control=pierce-frames >> div').innerHTML().catch(e => e);
+  expect(error.message).toContain('Pierce-frame mode matched elements from multiple frames');
+});
+
+it('should not allow pierce-frames in the middle of a selector', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const error = await page.locator('iframe >> internal:control=pierce-frames >> div').waitFor().catch(e => e);
+  expect(error.message).toContain('"pierce-frames" is only allowed as the first selector token');
+});
+
+it('should not allow entering frames while piercing', async ({ page, server }) => {
+  await routeIframe(page);
+  await page.goto(server.EMPTY_PAGE);
+  const error = await page.locator('internal:control=pierce-frames >> iframe >> internal:control=enter-frame >> div').waitFor().catch(e => e);
+  expect(error.message).toContain('Entering frames is not allowed while piercing frames');
 });

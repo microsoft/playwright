@@ -85,7 +85,7 @@ export type NavigationEvent = {
   isPublic?: boolean;
 };
 
-type ElementCallback<T, R> = (injected: InjectedScript, element: Element, data: T) => R;
+type ElementCallback<T, R> = (injected: InjectedScript, element: Element, data: js.Unboxed<T>) => R;
 
 export class NavigationAbortedError extends Error {
   readonly documentId?: string;
@@ -619,7 +619,7 @@ export class Frame extends SdkObject<FrameEventMap> {
 
   nonStallingRawEvaluateInExistingMainContext(expression: string): Promise<any> {
     return this.raceAgainstEvaluationStallingEvents(() => {
-      const context = this._existingMainContext();
+      const context = this.existingContext('main');
       if (!context)
         throw new Error('Frame does not yet have a main execution context');
       return context.rawEvaluateJSON(expression);
@@ -798,8 +798,10 @@ export class Frame extends SdkObject<FrameEventMap> {
     return this.context('main');
   }
 
-  private _existingMainContext(): dom.FrameExecutionContext | null {
-    return this._contextData.get('main')?.context || null;
+  existingContext(world: types.World): dom.FrameExecutionContext | null {
+    if (this._page.delegate.noUtilityWorld?.())
+      world = 'main';
+    return this._contextData.get(world)?.context || null;
   }
 
   utilityContext(): Promise<dom.FrameExecutionContext> {
@@ -1780,7 +1782,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       const resolved = await progress.race(this.selectors.callOnSelector(selector, { ...options, scope, markTargets: 'first' }, ({ injected, elements }, { callbackText, taskData }) => {
         const callback = injected.eval(callbackText) as ElementCallback<T, R>;
         const element = elements[0];
-        const value = callback(injected, element, taskData);
+        const value = callback(injected, element, taskData as js.Unboxed<T>);
         if (!value)
           return { success: false };
         const log = `  locator resolved to ${injected.previewNode(element)}`;
