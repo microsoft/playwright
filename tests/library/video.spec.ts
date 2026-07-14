@@ -470,6 +470,7 @@ it.describe('screencast', () => {
     const videoFile = await page.video().path();
     const videoBuffer = fs.readFileSync(videoFile);
     await testInfo.attach('recorded-video', { path: videoFile, contentType: 'video/webm' });
+    await testInfo.attach('producer-ffmpeg-log', { path: videoFile + '.ffmpeg.log', contentType: 'text/plain' });
     await testInfo.attach('recorded-video-metadata', {
       body: Buffer.from(JSON.stringify({
         size: videoBuffer.length,

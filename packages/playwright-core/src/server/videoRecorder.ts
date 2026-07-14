@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import path from 'path';
 
 import jpegjs from 'jpeg-js';
@@ -166,19 +167,26 @@ class FfmpegVideoRecorder {
     const videoFilterArgs = page.getFFmpegVideoFilterArgs?.({ width: w, height: h }) ?? `pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`;
     const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf ${videoFilterArgs}`.split(' ');
     args.push(this._outputFile);
+    const ffmpegLogs: string[] = [];
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
       command: this._ffmpegPath,
       args,
       stdio: 'stdin',
-      log: (message: string) => debugLogger.log('browser', message),
+      log: (message: string) => {
+        ffmpegLogs.push(message);
+        debugLogger.log('browser', message);
+      },
       tempDirectories: [],
       attemptToGracefullyClose: async () => {
         debugLogger.log('browser', 'Closing stdin...');
         launchedProcess.stdin!.end();
       },
       onExit: (exitCode, signal) => {
-        debugLogger.log('browser', `ffmpeg onkill exitCode=${exitCode} signal=${signal}`);
+        const message = `ffmpeg onkill exitCode=${exitCode} signal=${signal}`;
+        ffmpegLogs.push(message);
+        fs.writeFileSync(this._outputFile + '.ffmpeg.log', ffmpegLogs.join('\n'));
+        debugLogger.log('browser', message);
       },
     });
     launchedProcess.stdin!.on('finish', () => {
