@@ -45,7 +45,7 @@
     },
     {
       "name": "webkit",
-      "revision": "2330",
+      "revision": "2331",
       "installByDefault": true,
       "revisionOverrides": {
         "mac14": "2251",
