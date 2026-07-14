@@ -468,6 +468,15 @@ it.describe('screencast', () => {
     await context.close();
 
     const videoFile = await page.video().path();
+    const videoBuffer = fs.readFileSync(videoFile);
+    await testInfo.attach('recorded-video', { path: videoFile, contentType: 'video/webm' });
+    await testInfo.attach('recorded-video-metadata', {
+      body: Buffer.from(JSON.stringify({
+        size: videoBuffer.length,
+        prefix: videoBuffer.subarray(0, 64).toString('hex'),
+      })),
+      contentType: 'application/json',
+    });
     const videoPlayer = new VideoPlayer(videoFile);
     expect(videoPlayer.videoWidth).toBe(800);
     expect(videoPlayer.videoHeight).toBe(600);
