@@ -17,7 +17,7 @@
 
 import { test as it, expect, rafraf } from './pageTest';
 import { verifyViewport } from '../config/utils';
-import { PNG } from 'playwright-core/lib/utilsBundle';
+import { PNG } from '../../packages/playwright-core/lib/utilsBundle';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import path from 'path';
 import fs from 'fs';
