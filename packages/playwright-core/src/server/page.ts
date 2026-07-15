@@ -1076,7 +1076,16 @@ export class PageBinding extends DisposableObject {
   }
 
   static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
-    const { name, seq, serializedArgs } = JSON.parse(payload) as BindingPayload;
+    let name: string;
+    let seq: number;
+    let serializedArgs: any;
+    try {
+      ({ name, seq, serializedArgs } = JSON.parse(payload) as BindingPayload);
+    } catch (error) {
+      // Malformed payload from the page must not crash the binding pipeline.
+      debugLogger.log('error', error);
+      return;
+    }
     try {
       assert(context.world);
       const binding = page.getBinding(name);

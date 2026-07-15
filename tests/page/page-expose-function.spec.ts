@@ -254,3 +254,12 @@ it('exposeBinding should work in parallel', { annotation: { type: 'issue', descr
     (window as any).bar();
   });
 });
+
+it('should not crash when binding payload is invalid JSON', async ({ page, toImpl }) => {
+  await page.exposeBinding('echo', (source, v) => v);
+  const pageImpl = toImpl(page);
+  const context = await pageImpl.mainFrame().mainContext();
+  // Malformed payload must not escape as an uncaught SyntaxError.
+  await pageImpl.onBindingCalled('{not-valid-json', context);
+  expect(await page.evaluate(() => 7 * 6)).toBe(42);
+});
