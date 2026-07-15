@@ -2310,8 +2310,6 @@ Attribute name to get the value for.
 
 ### option: Page.getByRole.description = %%-locator-get-by-role-option-description-%%
 
-### option: Page.getByRole.busy = %%-locator-get-by-role-option-busy-%%
-
 ## method: Page.getByTestId
 * since: v1.27
 - returns: <[Locator]>

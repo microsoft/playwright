@@ -17,7 +17,6 @@
 import { escapeForAttributeSelector, escapeForTextSelector } from './stringUtils';
 
 export type ByRoleOptions = {
-  busy?: boolean;
   checked?: boolean;
   description?: string | RegExp;
   disabled?: boolean;
@@ -87,7 +86,5 @@ export function getByRoleSelector(role: string, options: ByRoleOptions = {}): st
     props.push(['description', escapeForAttributeSelector(options.description, !!options.exact)]);
   if (options.pressed !== undefined)
     props.push(['pressed', String(options.pressed)]);
-  if (options.busy !== undefined)
-    props.push(['busy', String(options.busy)]);
   return `internal:role=${role}${props.map(([n, v]) => `[${n}=${v}]`).join('')}`;
 }

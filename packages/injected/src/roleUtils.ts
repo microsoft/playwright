@@ -1179,12 +1179,6 @@ function hasExplicitAriaDisabled(element: Element | undefined, isAncestor = fals
   return false;
 }
 
-export function getAriaBusy(element: Element): boolean {
-  // https://www.w3.org/TR/wai-aria-1.2/#aria-busy
-  // aria-busy is a global state with a default value of "false".
-  return getAriaBoolean(element.getAttribute('aria-busy')) === true;
-}
-
 function getAccessibleNameFromAssociatedLabels(labels: Iterable<HTMLLabelElement>, options: AccessibleNameOptions): CompositeString {
   return joinCompositeString([...labels].map(label => getTextAlternativeInternal(label, {
     ...options,
