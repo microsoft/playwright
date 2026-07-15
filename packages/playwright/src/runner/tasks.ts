@@ -395,7 +395,9 @@ function createPhasesTask(): Task<TestRun> {
       const projectToSuite = new Map(testRun.rootSuite!.suites.map(suite => [suite._fullProject!, suite]));
       const allProjects = [...projectToSuite.keys()];
       const teardownToSetups = buildTeardownToSetupsMap(allProjects);
-      const teardownProjectIds = new Set([...teardownToSetups.keys()].map(project => project.id));
+      // Teardown projects keep running after maxFailures is reached, so that cleanup
+      // is not skipped. Nothing to ignore when maxFailures cannot stop the run.
+      const ignoreMaxFailuresProjectIds = new Set(testRun.config.config.maxFailures > 0 ? [...teardownToSetups.keys()].map(project => project.id) : []);
       const teardownToSetupsDependents = new Map<commonConfig.FullProjectInternal, commonConfig.FullProjectInternal[]>();
       for (const [teardown, setups] of teardownToSetups) {
         const closure = buildDependentProjects(setups, allProjects);
@@ -415,12 +417,11 @@ function createPhasesTask(): Task<TestRun> {
           phaseProjects.push(project);
         }
 
-        // Teardown projects run in a separate phase that ignores maxFailures,
-        // so that cleanup is not skipped.
         for (const project of phaseProjects)
           processed.add(project);
+        // Projects that ignore maxFailures run in their own phase.
         for (const ignoreMaxFailures of [false, true]) {
-          const projects = phaseProjects.filter(project => teardownProjectIds.has(project.id) === ignoreMaxFailures);
+          const projects = phaseProjects.filter(project => ignoreMaxFailuresProjectIds.has(project.id) === ignoreMaxFailures);
           if (!projects.length)
             continue;
           let testGroupsInPhase = 0;

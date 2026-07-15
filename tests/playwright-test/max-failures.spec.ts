@@ -188,10 +188,15 @@ test('max-failures should still run teardown project', async ({ runInlineTest })
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
+        maxFailures: 1,
         projects: [
           { name: 'setup', testMatch: '**/setup.ts', teardown: 'teardown' },
           { name: 'teardown', testMatch: '**/teardown.ts' },
-          { name: 'project', dependencies: ['setup'], testMatch: '**/a.spec.ts' },
+          { name: 'a', dependencies: ['setup'], testMatch: '**/a.spec.ts' },
+          // Unrelated chain that becomes ready to run together with 'teardown'.
+          { name: 'x', testMatch: '**/x.spec.ts' },
+          { name: 'y', dependencies: ['x'], testMatch: '**/y.spec.ts' },
+          { name: 'z', dependencies: ['y'], testMatch: '**/z.spec.ts' },
         ],
       };`,
     'setup.ts': `
@@ -206,49 +211,13 @@ test('max-failures should still run teardown project', async ({ runInlineTest })
       import { test, expect } from '@playwright/test';
       test('failing', async ({}) => { expect(1).toBe(2); });
     `,
-  }, { 'workers': 1, 'max-failures': 1 });
-  expect(result.exitCode).toBe(1);
-  expect(result.failed).toBe(1);
-  expect(result.output).toContain('%%setup');
-  expect(result.output).toContain('%%teardown');
-});
-
-test('max-failures should skip non-teardown projects sharing a teardown phase', async ({ runInlineTest }) => {
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41713' });
-
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = {
-        maxFailures: 1,
-        projects: [
-          { name: 'setup', testMatch: '**/setup.ts', teardown: 'teardown' },
-          { name: 'teardown', testMatch: '**/teardown.ts' },
-          { name: 'a', dependencies: ['setup'], testMatch: '**/a.spec.ts' },
-          // Unrelated chain that becomes ready to run together with 'teardown'.
-          { name: 'x', testMatch: '**/x.spec.ts' },
-          { name: 'y', dependencies: ['x'], testMatch: '**/y.spec.ts' },
-          { name: 'z', dependencies: ['y'], testMatch: '**/z.spec.ts' },
-        ],
-      };`,
-    'setup.ts': `
-      import { test } from '@playwright/test';
-      test('setup', async ({}) => {});
-    `,
-    'teardown.ts': `
-      import { test } from '@playwright/test';
-      test('teardown', async ({}) => { console.log('\\n%%teardown'); });
-    `,
-    'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('failing', async ({}) => { expect(1).toBe(2); });
-    `,
     'x.spec.ts': `
       import { test } from '@playwright/test';
-      test('x', async ({}) => { console.log('\\n%%x'); });
+      test('x', async ({}) => {});
     `,
     'y.spec.ts': `
       import { test } from '@playwright/test';
-      test('y', async ({}) => { console.log('\\n%%y'); });
+      test('y', async ({}) => {});
     `,
     'z.spec.ts': `
       import { test } from '@playwright/test';
@@ -256,6 +225,8 @@ test('max-failures should skip non-teardown projects sharing a teardown phase', 
     `,
   }, { workers: 1 });
   expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('%%setup');
   expect(result.output).toContain('%%teardown');
   // Regular project 'z' must not run after maxFailures.
   expect(result.output).not.toContain('%%z');

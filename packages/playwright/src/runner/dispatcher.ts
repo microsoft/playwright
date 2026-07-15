@@ -95,7 +95,7 @@ export class Dispatcher {
 
     // 3. Claim both the job and the worker slot.
     this._queue.splice(jobIndex, 1);
-    const jobDispatcher = new JobDispatcher(job, this._testRun, () => this.stop().catch(() => {}), this._ignoreMaxFailures);
+    const jobDispatcher = new JobDispatcher(job, this._testRun, this._ignoreMaxFailures ? undefined : () => this.stop().catch(() => {}));
     this._workerSlots[workerIndex].jobDispatcher = jobDispatcher;
 
     // 4. Run the job. This is the only async operation.
@@ -287,8 +287,8 @@ class JobDispatcher {
 
   readonly job: TestGroup;
   private _testRun: TestRun;
-  private _onMaxFailuresReached: () => void;
-  private _ignoreMaxFailures: boolean;
+  // Missing callback means that maxFailures should be ignored, e.g. in teardown phases.
+  private _onMaxFailuresReached?: () => void;
   private _listeners: RegisteredListener[] = [];
   private _failedTests = new Set<testNs.TestCase>();
   private _failedWithNonRetriableError = new Set<testNs.TestCase|testNs.Suite>();
@@ -298,16 +298,15 @@ class JobDispatcher {
   private _workerIndex = 0;
   private _currentlyRunning: { test: testNs.TestCase, result: TestResult } | undefined;
 
-  constructor(job: TestGroup, testRun: TestRun, onMaxFailuresReached: () => void, ignoreMaxFailures: boolean) {
+  constructor(job: TestGroup, testRun: TestRun, onMaxFailuresReached?: () => void) {
     this.job = job;
     this._testRun = testRun;
     this._onMaxFailuresReached = onMaxFailuresReached;
-    this._ignoreMaxFailures = ignoreMaxFailures;
     this._remainingByTestId = new Map(this.job.tests.map(e => [e.id, e]));
   }
 
   private _isStoppedByMaxFailures() {
-    return !this._ignoreMaxFailures && this._testRun.hasReachedMaxFailures();
+    return !!this._onMaxFailuresReached && this._testRun.hasReachedMaxFailures();
   }
 
   private _onTestBegin(params: ipc.TestBeginPayload) {
@@ -658,7 +657,7 @@ class JobDispatcher {
     if (test.outcome() === 'unexpected' && test.results.length > test.retries)
       ++this._testRun.failedTestCount;
     if (!hadMaxFailures && this._isStoppedByMaxFailures()) {
-      this._onMaxFailuresReached();
+      this._onMaxFailuresReached?.();
       this._testRun.reporter.onError?.({ message: colors.red(`Testing stopped early after ${this._testRun.config.config.maxFailures} maximum allowed failures.`) });
     }
   }
