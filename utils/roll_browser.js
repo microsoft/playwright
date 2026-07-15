@@ -20,7 +20,7 @@ const path = require('path');
 const { Registry } = require('../packages/playwright-core/lib/coreBundle').registry;
 const fs = require('fs');
 const protocolGenerator = require('./protocol-types-generator');
-const {execSync} = require('child_process');
+const {execSync, execFileSync} = require('child_process');
 const playwright = require('playwright-core');
 
 const SCRIPT_NAME = path.basename(__filename);
@@ -33,6 +33,10 @@ usage: ${SCRIPT_NAME} <browser> <revision> [version]
 Roll the <browser> to a specific <revision> and generate new protocol.
 Version is required for chromium-based browsers.
 Supported browsers: chromium, firefox, webkit, ffmpeg, firefox-beta.
+
+Rolling firefox or firefox-beta requires a playwright-browsers checkout
+next to the playwright checkout, to roll browser patches from upstream.
+Set PW_BROWSERS_CHECKOUT to point to a checkout in a custom location.
 
 Example:
   ${SCRIPT_NAME} chromium 123456 123.0.1234.56
@@ -83,7 +87,15 @@ Example:
     process.exit(1);
   }
 
-  // 2. Update browser revisions in browsers.json.
+  // 2. Rolling Firefox requires a playwright-browsers checkout to roll browser patches from.
+  const browsersCheckoutPath = process.env.PW_BROWSERS_CHECKOUT || path.resolve(__dirname, '..', '..', 'playwright-browsers');
+  if (browserTypeName === 'firefox' && !fs.existsSync(path.join(browsersCheckoutPath, 'browser_patches', 'build_flavors.sh'))) {
+    console.log(`Rolling ${browserName} requires a playwright-browsers checkout at "${browsersCheckoutPath}".`);
+    console.log(`Use PW_BROWSERS_CHECKOUT to point to a custom location.`);
+    process.exit(1);
+  }
+
+  // 3. Update browser revisions in browsers.json.
   console.log('\nUpdating revision in browsers.json...');
   for (const descriptor of descriptors) {
     descriptor.revision = String(revision);
@@ -92,14 +104,14 @@ Example:
   }
   fs.writeFileSync(path.join(CORE_PATH, 'browsers.json'), JSON.stringify(browsersJSON, null, 2) + '\n');
 
-  // 3. Download new browser.
+  // 4. Download new browser.
   console.log('\nDownloading new browser...');
   const registry = new Registry(browsersJSON);
   const executable = registry.findExecutable(browserName);
   await registry.installDeps([executable]);
   await registry.install([...registry.defaultExecutables(), executable]);
 
-  // 4. Update browser version if rolling WebKit / Firefox, validate if rolling Chromium.
+  // 5. Update browser version if rolling WebKit / Firefox, validate if rolling Chromium.
   const browserType = playwright[browserTypeName];
   if (browserType) {
     const browser = await browserType.launch({
@@ -122,13 +134,20 @@ Example:
     }
   }
 
+  // 6. Roll firefox browser patches from the playwright-browsers checkout.
+  if (browserTypeName === 'firefox') {
+    console.log('\nRolling firefox browser patches from the playwright-browsers checkout...');
+    const rollScript = path.join(__dirname, '..', 'browser_patches', 'roll_from_upstream.sh');
+    execFileSync(rollScript, [browsersCheckoutPath, 'firefox'], { stdio: 'inherit' });
+  }
+
   if (browserType && descriptors[0].installByDefault) {
-    // 5. Generate types.
+    // 7. Generate types.
     console.log('\nGenerating protocol types...');
     const executablePath = registry.findExecutable(browserName).executablePathOrDie();
     await protocolGenerator.generateProtocol(browserName, executablePath);
 
-    // 6. Update docs.
+    // 8. Update docs.
     console.log('\nUpdating documentation...');
     try {
       execSync('npm run doc', { stdio: 'inherit' });
