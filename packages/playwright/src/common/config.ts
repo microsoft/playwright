@@ -162,6 +162,7 @@ export class FullProjectInternal {
   readonly respectGitIgnore: boolean;
   readonly snapshotPathTemplate: string | undefined;
   readonly workers: number | undefined;
+  readonly _tags: string[];
   id = '';
   deps: FullProjectInternal[] = [];
   teardown: FullProjectInternal | undefined;
@@ -193,6 +194,13 @@ export class FullProjectInternal {
     };
     this.fullyParallel = takeFirst(configCLIOverrides.fullyParallel, projectConfig.fullyParallel, config.fullyParallel, undefined);
     this.expect = takeFirst(projectConfig.expect, config.expect, {});
+    const projectTag = (this.project.use as { tag?: string | string[] }).tag;
+    const projectTags = projectTag === undefined ? [] : Array.isArray(projectTag) ? projectTag : [projectTag];
+    for (const t of projectTags) {
+      if (t[0] !== '@')
+        throw new Error(`Tag must start with "@" symbol, got "${t}" instead.`);
+    }
+    this._tags = projectTags;
     if (this.expect.toHaveScreenshot?.stylePath) {
       const stylePaths = Array.isArray(this.expect.toHaveScreenshot.stylePath) ? this.expect.toHaveScreenshot.stylePath : [this.expect.toHaveScreenshot.stylePath];
       this.expect.toHaveScreenshot.stylePath = stylePaths.map(stylePath => path.resolve(configDir, stylePath));

@@ -46,7 +46,7 @@ export type ReporterDescription = Readonly<
   [string] | [string, any]
 >;
 
-type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
+type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs> & { tag?: string | string[] };
 
 interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   use?: UseOptions<TestArgs, WorkerArgs>;
@@ -188,7 +188,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
   beforeAll(title: string, inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   afterAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   afterAll(title: string, inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
-  use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
+  use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs> & { tag?: string | string[] }): void;
   step: {
     <T>(title: string, body: (step: TestStepInfo) => T | Promise<T>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<T>;
     skip(title: string, body: (step: TestStepInfo) => any | Promise<any>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<void>;

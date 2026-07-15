@@ -40,6 +40,7 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
   // Clone suite.
   const result = suite._deepClone();
   result._fileId = fileId;
+  result._tags.push(...project._tags);
 
   // Assign test properties with project-specific values.
   result.forEachTest((test, suite) => {

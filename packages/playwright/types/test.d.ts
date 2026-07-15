@@ -47,7 +47,7 @@ export type ReporterDescription = Readonly<
   [string] | [string, any]
 >;
 
-type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
+type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs> & { tag?: string | string[] };
 
 /**
  * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in
@@ -6273,7 +6273,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    *
    * @param options An object with local options.
    */
-  use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
+  use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs> & { tag?: string | string[] }): void;
   /**
    * Declares a test step that is shown in the report.
    *

@@ -269,6 +269,19 @@ export class TestTypeImpl {
     const suite = this._currentSuite(location, `test.use()`);
     if (!suite)
       return;
+    const fixturesWithTag = fixtures as Fixtures & { tag?: string | string[] };
+    if (fixturesWithTag.tag !== undefined) {
+      const tags = Array.isArray(fixturesWithTag.tag) ? fixturesWithTag.tag : [fixturesWithTag.tag];
+      for (const t of tags) {
+        if (t[0] !== '@')
+          throw new Error(`Tag must start with "@" symbol, got "${t}" instead.`);
+      }
+      suite._tags.push(...tags);
+      const { tag: _, ...rest } = fixturesWithTag;
+      fixtures = rest as Fixtures;
+      if (!Object.keys(rest).length)
+        return;
+    }
     suite._use.push({ fixtures, location });
   }
 

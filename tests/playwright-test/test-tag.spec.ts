@@ -184,6 +184,239 @@ test('should be included in testInfo if coming from describe or global tag', asy
   expect(result.exitCode).toBe(0);
 });
 
+test('test.use should apply tags to all tests in scope', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      export default class Reporter {
+        onBegin(config, suite) {
+          const visit = suite => {
+            for (const test of suite.tests || [])
+              console.log('\\n%%title=' + test.title + ', tags=' + test.tags.join(','));
+            for (const child of suite.suites || [])
+              visit(child);
+          };
+          visit(suite);
+        }
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = { reporter: './reporter' };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test.use({ tag: '@file-tag' });
+      test('test1', () => {});
+      test('test2', { tag: '@extra' }, () => {});
+      test.describe('suite', () => {
+        test('test3', () => {});
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    'title=test1, tags=@file-tag',
+    'title=test2, tags=@file-tag,@extra',
+    'title=test3, tags=@file-tag',
+  ]);
+});
+
+test('test.use inside describe should apply tags only within describe', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      export default class Reporter {
+        onBegin(config, suite) {
+          const visit = suite => {
+            for (const test of suite.tests || [])
+              console.log('\\n%%title=' + test.title + ', tags=' + test.tags.join(','));
+            for (const child of suite.suites || [])
+              visit(child);
+          };
+          visit(suite);
+        }
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = { reporter: './reporter' };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('outside', () => {});
+      test.describe('suite', () => {
+        test.use({ tag: ['@app1', '@smoke'] });
+        test('inside', () => {});
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    'title=outside, tags=',
+    'title=inside, tags=@app1,@smoke',
+  ]);
+});
+
+test('test.use tag should be available in testInfo.tags', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.use({ tag: '@use-tag' });
+      test('test1', ({}, testInfo) => {
+        expect(testInfo.tags).toContain('@use-tag');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('test.use tag should be filterable with --grep', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test.use({ tag: '@app1' });
+      test('test1', () => {});
+      test('test2', () => {});
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      test('test3', () => {});
+    `,
+  }, { grep: '@app1' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
+
+test('test.use tag should validate @ prefix', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test.use({ tag: 'missing-at' });
+      test('test1', () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Tag must start with "@" symbol`);
+});
+
+test('project use.tag should apply to all tests in project', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      export default class Reporter {
+        onBegin(config, suite) {
+          const visit = suite => {
+            for (const test of suite.tests || [])
+              console.log('\\n%%title=' + test.title + ', tags=' + test.tags.join(','));
+            for (const child of suite.suites || [])
+              visit(child);
+          };
+          visit(suite);
+        }
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+        projects: [
+          { name: 'p1', use: { tag: '@app1' } },
+          { name: 'p2', use: { tag: ['@app2', '@smoke'] } },
+        ],
+      };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('test1', () => {});
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    'title=test1, tags=@app1',
+    'title=test1, tags=@app2,@smoke',
+  ]);
+});
+
+test('project use.tag should be filterable with --grep', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'p1', use: { tag: '@app1' } },
+          { name: 'p2', use: { tag: '@app2' } },
+        ],
+      };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('test1', () => { console.log('\\n%% ' + test.info().project.name); });
+    `,
+  }, { grep: '@app1', workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.outputLines).toEqual(['p1']);
+});
+
+test('project use.tag should be included in testInfo.tags', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [{ name: 'p1', use: { tag: '@proj-tag' } }],
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test1', ({}, testInfo) => {
+        expect(testInfo.tags).toContain('@proj-tag');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('project use.tag should validate @ prefix', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [{ name: 'p1', use: { tag: 'nope' } }],
+      };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('test1', () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Tag must start with "@" symbol`);
+});
+
+test('test.use tag and global config tag and test tag should all accumulate', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      export default class Reporter {
+        onBegin(config, suite) {
+          const visit = suite => {
+            for (const test of suite.tests || [])
+              console.log('\\n%%' + test.tags.join(','));
+            for (const child of suite.suites || [])
+              visit(child);
+          };
+          visit(suite);
+        }
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+        tag: '@global',
+        projects: [{ name: 'p1', use: { tag: '@project' } }],
+      };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test.use({ tag: '@file' });
+      test('test1', { tag: '@test' }, () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual(['@global,@file,@project,@test']);
+});
+
 test('should not parse file names as tags', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
