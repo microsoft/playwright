@@ -140,41 +140,46 @@ export class BidiPage implements PageDelegate {
     }
     if (this._contextIdToContext.has(realmInfo.realm))
       return;
-    if (realmInfo.type !== 'window')
+    if (realmInfo.type !== 'window' || realmInfo.sandbox)
       return;
     const frame = this._page.frameManager.frame(realmInfo.context);
     if (!frame)
       return;
-    let worldName: types.World;
-    if (!realmInfo.sandbox) {
-      worldName = 'main';
-      // Force creating utility world every time the main world is created (e.g. due to navigation).
-      this._touchUtilityWorld(realmInfo.context);
-    } else if (realmInfo.sandbox === UTILITY_WORLD_NAME) {
-      worldName = 'utility';
-    } else {
-      return;
-    }
     const delegate = new BidiExecutionContext(this._session, realmInfo);
-    const context = new dom.FrameExecutionContext(delegate, frame, worldName);
-    frame.contextCreated(worldName, context);
+    const context = new dom.FrameExecutionContext(delegate, frame, 'main');
+    frame.contextCreated('main', context);
     this._contextIdToContext.set(realmInfo.realm, context);
+    this._createUtilityWorld(realmInfo, frame, context);
   }
 
-  private async _touchUtilityWorld(context: bidi.BrowsingContext.BrowsingContext) {
-    await this._session.sendMayFail('script.evaluate', {
-      expression: '1 + 1',
-      target: {
-        context,
-        sandbox: UTILITY_WORLD_NAME,
-      },
-      serializationOptions: {
-        maxObjectDepth: 10,
-        maxDomDepth: 10,
-      },
-      awaitPromise: true,
-      userActivation: true,
-    });
+  private async _createUtilityWorld(realmInfo: bidi.Script.WindowRealmInfo, frame: frames.Frame, mainContext: dom.FrameExecutionContext) {
+    try {
+      const result = await this._session.send('script.evaluate', {
+        expression: '1 + 1',
+        target: {
+          context: realmInfo.context,
+          sandbox: UTILITY_WORLD_NAME,
+        },
+        serializationOptions: {
+          maxObjectDepth: 10,
+          maxDomDepth: 10,
+        },
+        awaitPromise: true,
+        userActivation: true,
+      });
+      if (await frame.mainContext() !== mainContext)
+        return;
+      const delegate = new BidiExecutionContext(this._session, {
+        ...realmInfo,
+        realm: result.realm,
+        sandbox: UTILITY_WORLD_NAME
+      });
+      const utilityContext = new dom.FrameExecutionContext(delegate, frame, 'utility');
+      frame.contextCreated('utility', utilityContext);
+      this._contextIdToContext.set(result.realm, utilityContext);
+    } catch (error) {
+      debugLogger.log('error', error);
+    }
   }
 
   _onRealmDestroyed(params: bidi.Script.RealmDestroyedParameters): boolean {
