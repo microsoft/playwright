@@ -48,29 +48,28 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
   const platform = os.platform();
   if (platform === 'darwin') {
     const ver = os.release().split('.').map((a: string) => parseInt(a, 10));
-    let macVersion = '';
+    let macVersion = 0;
     if (ver[0] < 18) {
       // Everything before 10.14 is considered 10.13.
-      macVersion = 'mac10.13';
+      macVersion = 10.13;
     } else if (ver[0] === 18) {
-      macVersion = 'mac10.14';
+      macVersion = 10.14;
     } else if (ver[0] === 19) {
-      macVersion = 'mac10.15';
+      macVersion = 10.15;
     } else if (ver[0] < 25) {
-      // Darwin 20..24 → macOS 11..15 (BigSur..Sequoia).
-      macVersion = 'mac' + (ver[0] - 9);
-      // BigSur is the first version that might run on Apple Silicon.
-      if (os.cpus().some(cpu => cpu.model.includes('Apple')))
-        macVersion += '-arm64';
+      macVersion = 11 + (ver[0] - 20); // Darwin 20..24 → macOS 11..15 (BigSur..Sequoia)
     } else {
       // Apple jumped from macOS 15 (Sequoia) to macOS 26 (Tahoe), so Darwin 25 = macOS 26.
       // Best-effort support for MacOS beta versions.
       const LAST_STABLE_MACOS_MAJOR_VERSION = 26;
-      macVersion = 'mac' + Math.min(ver[0] + 1, LAST_STABLE_MACOS_MAJOR_VERSION);
-      if (os.cpus().some(cpu => cpu.model.includes('Apple')))
-        macVersion += '-arm64';
+      macVersion = Math.min(ver[0] + 1, LAST_STABLE_MACOS_MAJOR_VERSION);
     }
-    return { hostPlatform: macVersion as HostPlatform, isOfficiallySupportedPlatform: true };
+    let macPlatform = 'mac' + macVersion;
+    if (macVersion >= 11 && os.cpus().some(cpu => cpu.model.includes('Apple'))) {
+      // BigSur is the first version that might run on Apple Silicon.
+      macPlatform += '-arm64';
+    }
+    return { hostPlatform: macPlatform as HostPlatform, isOfficiallySupportedPlatform: macVersion >= 14 };
   }
   if (platform === 'linux') {
     if (!['x64', 'arm64'].includes(os.arch()))
@@ -108,9 +107,9 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
       return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
     }
     if (distroInfo?.id === 'debian' || distroInfo?.id === 'raspbian') {
-      const isOfficiallySupportedPlatform = distroInfo?.id === 'debian';
       if (distroInfo?.version === '11')
-        return { hostPlatform: ('debian11' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+        return { hostPlatform: ('debian11' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+      const isOfficiallySupportedPlatform = distroInfo?.id === 'debian';
       if (distroInfo?.version === '12')
         return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
       if (distroInfo?.version === '13')

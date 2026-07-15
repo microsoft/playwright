@@ -850,8 +850,7 @@ export class WKPage implements PageDelegate {
 
   private _toolbarHeight(): number {
     if (this._page.browserContext._browser?.options.headful) {
-      if (hostPlatform === 'mac10.15')
-        return 55;
+      // note: historically, value for mac10.15 was 55
       if (hostPlatform === 'mac26-arm64' || hostPlatform === 'mac26')
         return 69;
       return 59;
@@ -960,9 +959,9 @@ export class WKPage implements PageDelegate {
       frameSwapWallTime: event.timestamp
         // timestamp is in seconds, we need to convert to milliseconds.
         ? event.timestamp * 1000
-        // Fallback for Debian 11 and Ubuntu 20.04 where WebKit is frozen on an older
+        // Fallback for Ubuntu 20.04 where WebKit is frozen on an older
         // version that did not send timestamp.
-        // TODO: remove this fallback when Debian 11 and Ubuntu 20.04 are EOL.
+        // TODO: remove this fallback when Ubuntu 20.04 is EOL.
         : Date.now(),
       viewportWidth: event.deviceWidth,
       viewportHeight: event.deviceHeight,

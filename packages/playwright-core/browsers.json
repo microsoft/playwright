@@ -50,8 +50,6 @@
       "revisionOverrides": {
         "mac14": "2251",
         "mac14-arm64": "2251",
-        "debian11-x64": "2105",
-        "debian11-arm64": "2105",
         "ubuntu20.04-x64": "2092",
         "ubuntu20.04-arm64": "2092"
       },
@@ -61,11 +59,7 @@
     {
       "name": "ffmpeg",
       "revision": "1011",
-      "installByDefault": true,
-      "revisionOverrides": {
-        "mac12": "1010",
-        "mac12-arm64": "1010"
-      }
+      "installByDefault": true
     },
     {
       "name": "winldd",
