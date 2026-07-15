@@ -443,3 +443,18 @@ it('should create two pages in parallel in various contexts', {
   ]);
   await context3.close();
 });
+
+it('should not emit Close twice when browserClosed races with close', async ({ browser, toImpl }) => {
+  const context = await browser.newContext();
+  await context.newPage();
+  const contextImpl = toImpl(context);
+  let closeCount = 0;
+  // Listen on the server object; client 'close' is only driven by the wire protocol.
+  contextImpl.on('close', () => { closeCount++; });
+
+  // browserClosed path and concurrent close both call _didCloseInternal.
+  contextImpl.browserClosed();
+  contextImpl.browserClosed();
+  expect(closeCount).toBe(1);
+  expect(contextImpl.isClosingOrClosed()).toBe(true);
+});

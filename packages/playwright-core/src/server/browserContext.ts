@@ -268,6 +268,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       // at the same time.
       return;
     }
+    this._closedStatus = 'closed';
     this._clientCertificatesProxy?.close().catch(() => {});
     this.tracing.abort();
     if (this._isPersistentContext)
