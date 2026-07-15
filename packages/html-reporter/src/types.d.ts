@@ -40,6 +40,7 @@ export type HTMLReportOptions = {
   title?: string;
   noCopyPrompt?: boolean;
   noSnippets?: boolean;
+  mergeFiles?: boolean;
 };
 
 export type HTMLReport = {

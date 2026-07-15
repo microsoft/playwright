@@ -26,7 +26,6 @@ import './reportView.css';
 import { TestCaseView } from './testCaseView';
 import { TestFilesHeader, TestFilesView } from './testFilesView';
 import './theme.css';
-import { useSetting } from '@web/uiUtils';
 import { Speedboard } from './speedboard';
 
 declare global {
@@ -54,7 +53,7 @@ export const ReportView: React.FC<{
   const [metadataVisible, setMetadataVisible] = React.useState(false);
   const [errorsVisible, setErrorsVisible] = React.useState(true);
   const speedboard = searchParams.has('speedboard');
-  const [mergeFiles] = useSetting('mergeFiles', false);
+  const mergeFiles = !!report?.json()?.options.mergeFiles;
   const testId = searchParams.get('testId');
   const q = searchParams.get('q')?.toString() || '';
   const filterParam = q ? '&q=' + q : '';

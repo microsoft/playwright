@@ -3508,6 +3508,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
 test('should support merge files option', async ({ runInlineTest, showReport, page }) => {
   await runInlineTest({
+    'playwright.config.ts': `
+      export default { reporter: [['html', { mergeFiles: true }], ['line']] };
+    `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test.describe('describe', () => {
@@ -3521,12 +3524,9 @@ test('should support merge files option', async ({ runInlineTest, showReport, pa
         test('test 3', async ({}) => {});
       });
     `,
-  }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+  }, {}, { PLAYWRIGHT_HTML_OPEN: 'never' });
 
   await showReport();
-
-  await page.getByRole('button', { name: 'Settings' }).click();
-  await page.getByRole('checkbox', { name: 'Merge files' }).click();
 
   await expect(page).toMatchAriaSnapshot(`
     - button "<anonymous>" [expanded]
