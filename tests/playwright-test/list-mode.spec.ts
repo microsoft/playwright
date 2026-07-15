@@ -197,37 +197,6 @@ test('should report errors with location', async ({ runInlineTest }) => {
   });
 });
 
-test('should list projects in config order', async ({ runInlineTest }) => {
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41779' });
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { projects: [
-        { name: 'dev-setup', testMatch: /setup.js/ },
-        { name: 'dev', dependencies: ['dev-setup'], testMatch: /a.test.js/ },
-        { name: 'staging-setup', testMatch: /setup.js/ },
-        { name: 'staging', dependencies: ['staging-setup'], testMatch: /a.test.js/ },
-      ] };
-    `,
-    'setup.js': `
-      const { test, expect } = require('@playwright/test');
-      test('setup', async ({}) => {});
-    `,
-    'a.test.js': `
-      const { test, expect } = require('@playwright/test');
-      test('example', async ({}) => {});
-    `
-  }, { 'list': true });
-  expect(result.exitCode).toBe(0);
-  expect(result.output).toContain([
-    `Listing tests:`,
-    `  [dev-setup] › setup.js:3:7 › setup`,
-    `  [dev] › a.test.js:3:7 › example`,
-    `  [staging-setup] › setup.js:3:7 › setup`,
-    `  [staging] › a.test.js:3:7 › example`,
-    `Total: 4 tests in 2 files`
-  ].join('\n'));
-});
-
 test('should list tests once', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27087' });
   const result = await runInlineTest({

@@ -224,10 +224,10 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
       else
         topLevelProjects.push(project);
     }
-    // Keep project suites in the order they are declared in the config.
-    const suiteByProject = new Map(rootSuite.suites.map(suite => [suite._fullProject, suite]));
-    rootSuite._entries = config.projects.map(project => suiteByProject.get(project)).filter(suite => suite !== undefined);
   }
+
+  // Keep project suites in the order they are declared in the config.
+  rootSuite._entries.sort((a, b) => config.projects.indexOf((a as testNs.Suite)._fullProject!) - config.projects.indexOf((b as testNs.Suite)._fullProject!));
 
   testRun.rootSuite = rootSuite;
   testRun.topLevelProjects = topLevelProjects;
