@@ -1242,6 +1242,8 @@ export class WKPage implements PageDelegate {
       ['notifications', 'notifications'],
       ['clipboard-read', 'clipboard-read'],
       ['screen-wake-lock', 'screen-wake-lock'],
+      ['camera', 'camera'],
+      ['microphone', 'microphone'],
     ]);
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
