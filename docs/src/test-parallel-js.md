@@ -138,16 +138,70 @@ test.describe('runs in parallel with other describes', () => {
 
 ## Avoiding shared state in parallel tests
 
-Playwright Test isolates parallel tests by default:
+Playwright runs tests in separate worker processes, each with its own isolated [BrowserContext], so cookies, storage and in-memory globals are already isolated. Flakiness comes from state that lives *outside* a single test. Here are recipes for the common cases.
 
-- **Separate worker processes.** Workers are independent OS processes, so module-level variables, singletons and changes to `process.env` in one worker are invisible to others.
-- **Isolated browser contexts.** The built-in [`page`](./test-fixtures.md#built-in-fixtures) and [`context`](./test-fixtures.md#built-in-fixtures) fixtures give every test its own [BrowserContext] with fresh cookies, local storage and permissions.
+### Give each test its own backend data
 
-You do not need to reset browser state or serialize tests to get this. Shared state only bites when tests reach outside these boundaries:
+Two tests that create or edit the same record race with each other. Derive a unique identifier from [`property: TestInfo.testId`] so parallel tests never collide:
 
-- **External resources.** Parallel tests touching the same database rows, files or accounts race with each other. Give each worker its own data (see [Isolate test data between parallel workers](#isolate-test-data-between-parallel-workers)), or derive unique data per test from [`property: TestInfo.testId`].
-- **Files on disk.** Writing to a fixed path from multiple tests races. Use [`method: TestInfo.outputPath`] for a unique path scoped to the current test.
-- **State shared within a worker.** In [fully parallel](#parallelize-tests-in-a-single-file) mode, tests from one file run in the same worker one after another. Worker-scoped fixtures and module-level variables are shared between them, so keep anything a test mutates in the default test scope, not in worker-scoped state.
+```js
+import { test, expect } from '@playwright/test';
+
+test('creates an order', async ({ page }, testInfo) => {
+  const orderId = `order-${testInfo.testId}`;
+  await page.goto(`/orders/new?id=${orderId}`);
+  await expect(page.getByText(orderId)).toBeVisible();
+});
+```
+
+If many tests can share one dataset, create it once per worker instead — see [Isolate test data between parallel workers](#isolate-test-data-between-parallel-workers).
+
+### Write to a unique file path
+
+Multiple tests writing the same path clobber each other. [`method: TestInfo.outputPath`] returns a path scoped to the current test:
+
+```js
+import { test } from '@playwright/test';
+import fs from 'fs';
+
+test('exports a CSV', async ({ page }, testInfo) => {
+  const file = testInfo.outputPath('export.csv');
+  await fs.promises.writeFile(file, 'a,b,c', 'utf8');
+});
+```
+
+### Don't keep test state in module variables
+
+In [fully parallel](#parallelize-tests-in-a-single-file) mode, tests from one file share a worker and run one after another, so a module-level variable leaks from one test into the next:
+
+```js
+// ❌ Shared by every test in this worker.
+let orderId: string;
+
+test('creates an order', async ({ page }) => {
+  orderId = await createOrder(page);
+});
+
+test('cancels the order', async ({ page }) => {
+  await cancelOrder(page, orderId); // depends on the previous test
+});
+```
+
+Give each test its own value with a [fixture](./test-fixtures.md#creating-a-fixture) instead:
+
+```js
+import { test as base } from '@playwright/test';
+
+export const test = base.extend<{ orderId: string }>({
+  orderId: async ({ page }, use) => {
+    await use(await createOrder(page));
+  },
+});
+
+test('cancels an order', async ({ page, orderId }) => {
+  await cancelOrder(page, orderId); // isolated per test
+});
+```
 
 ## Shard tests between multiple machines
 
