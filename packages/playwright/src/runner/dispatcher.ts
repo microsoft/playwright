@@ -36,6 +36,7 @@ export class Dispatcher {
   // Worker slot is claimed when it has jobDispatcher assigned.
   private _workerSlots: { worker?: WorkerHost, jobDispatcher?: JobDispatcher }[] = [];
   private _queue: TestGroup[] = [];
+  private _isolatedJobs = new Set<TestGroup>();
   private _workerLimitPerProjectId = new Map<string, number>();
   private _queuedOrRunningHashCount = new Map<string, number>();
   private _finished = new ManualPromise<void>();
@@ -58,6 +59,9 @@ export class Dispatcher {
     // Always pick the first job that can be run while respecting the project worker limit.
     for (let index = 0; index < this._queue.length; index++) {
       const job = this._queue[index];
+      // Isolated retries only run one at a time, after all other jobs have finished.
+      if (this._isolatedJobs.has(job) && this._workerSlots.some(w => !!w.jobDispatcher))
+        continue;
       const projectIdWorkerLimit = this._workerLimitPerProjectId.get(job.projectId);
       if (!projectIdWorkerLimit)
         return index;
@@ -150,13 +154,17 @@ export class Dispatcher {
     else if (this._isWorkerRedundant(worker))
       void worker.stop();
 
-    // 5. Possibly queue a new job with leftover tests and/or retries.
-    if (!this._isStopped && result.newJob) {
-      if (this._testRun.config.retryStrategy === 'deferred')
-        this._queue.push(result.newJob);
-      else
-        this._queue.unshift(result.newJob);
-      this._updateCounterForWorkerHash(result.newJob.workerHash, +1);
+    // 5. Possibly queue new jobs with leftover tests and/or retries.
+    if (!this._isStopped) {
+      if (result.remainingJob) {
+        this._queue.unshift(result.remainingJob);
+        this._updateCounterForWorkerHash(result.remainingJob.workerHash, +1);
+      }
+      if (result.isolatedRetriesJob) {
+        this._isolatedJobs.add(result.isolatedRetriesJob);
+        this._queue.push(result.isolatedRetriesJob);
+        this._updateCounterForWorkerHash(result.isolatedRetriesJob.workerHash, +1);
+      }
     }
   }
 
@@ -280,7 +288,7 @@ export class Dispatcher {
 }
 
 class JobDispatcher {
-  jobResult = new ManualPromise<{ newJob?: TestGroup, didFail: boolean }>();
+  jobResult = new ManualPromise<{ remainingJob?: TestGroup, isolatedRetriesJob?: TestGroup, didFail: boolean }>();
 
   readonly job: TestGroup;
   private _testRun: TestRun;
@@ -537,14 +545,21 @@ class JobDispatcher {
     }
 
     const remaining = [...this._remainingByTestId.values()];
+    const isolatedRetries: testNs.TestCase[] = [];
     for (const test of retryCandidates) {
-      if (test.results.length < test.retries + 1)
-        remaining.push(test);
+      if (test.results.length < test.retries + 1) {
+        // Immediate retries run together with the remaining tests, in a single job.
+        if (this._testRun.config.retryStrategy === 'immediate')
+          remaining.push(test);
+        else
+          isolatedRetries.push(test);
+      }
     }
 
-    // This job is over, we will schedule another one.
-    const newJob = remaining.length ? { ...this.job, tests: remaining } : undefined;
-    this._finished({ didFail: true, newJob });
+    // This job is over, we will schedule new jobs for the remaining tests and isolated retries.
+    const remainingJob = remaining.length ? { ...this.job, tests: remaining } : undefined;
+    const isolatedRetriesJob = isolatedRetries.length ? { ...this.job, tests: isolatedRetries } : undefined;
+    this._finished({ didFail: true, remainingJob, isolatedRetriesJob });
   }
 
   onExit(data: ProcessExitData) {
@@ -554,7 +569,7 @@ class JobDispatcher {
     this._onDone({ skipTestsDueToSetupFailure: [], fatalErrors: [], unexpectedExitError });
   }
 
-  private _finished(result: { newJob?: TestGroup, didFail: boolean }) {
+  private _finished(result: { remainingJob?: TestGroup, isolatedRetriesJob?: TestGroup, didFail: boolean }) {
     eventsHelper.removeEventListeners(this._listeners);
     this.jobResult.resolve(result);
   }

@@ -263,10 +263,10 @@ test('failed and skipped on retry should be marked as flaky', async ({ runInline
   expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'Skipped on first retry', location: expect.anything() }]);
 });
 
-test('should defer retries to the end of the run', async ({ runInlineTest }) => {
+test('should run isolated retries at the end of the run', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
-      module.exports = { retries: 3, retryStrategy: 'deferred' };
+      module.exports = { retries: 3, retryStrategy: 'isolated' };
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -296,5 +296,74 @@ test('should defer retries to the end of the run', async ({ runInlineTest }) => 
     'a-2',
     'b-2',
     'a-3',
+  ]);
+});
+
+test('should run isolated retries one by one in a single worker', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { retries: 1, retryStrategy: 'isolated', workers: 2 };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('a', ({}, testInfo) => {
+        console.log('\\n%%a-' + testInfo.retry + '/' + testInfo.workerIndex);
+        expect(testInfo.retry).toBe(1);
+      });
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('b', ({}, testInfo) => {
+        console.log('\\n%%b-' + testInfo.retry + '/' + testInfo.workerIndex);
+        expect(testInfo.retry).toBe(1);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(2);
+  expect(result.results.length).toBe(4);
+  const lines = result.outputLines;
+  // First attempts run in parallel workers, before any retry.
+  expect(lines.slice(0, 2).map(line => line.split('/')[0]).sort()).toEqual(['a-0', 'b-0']);
+  expect(lines.slice(2).map(line => line.split('/')[0]).sort()).toEqual(['a-1', 'b-1']);
+  // Both retries run in the same worker, one by one.
+  const retryWorkers = lines.slice(2).map(line => line.split('/')[1]);
+  expect(retryWorkers[0]).toBe(retryWorkers[1]);
+});
+
+test('should not defer remaining tests with isolated retries', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { retries: 1, retryStrategy: 'isolated' };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('a1', ({}, testInfo) => {
+        console.log('\\n%%a1-' + testInfo.retry);
+        expect(testInfo.retry).toBe(1);
+      });
+      test('a2', ({}, testInfo) => {
+        console.log('\\n%%a2-' + testInfo.retry);
+      });
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('b1', ({}, testInfo) => {
+        console.log('\\n%%b1-' + testInfo.retry);
+        expect(testInfo.retry).toBe(1);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(2);
+  expect(result.passed).toBe(1);
+  // After "a1" fails, "a2" keeps its priority in the queue and runs
+  // before "b1", while the retry of "a1" is deferred to the end.
+  expect(result.outputLines).toEqual([
+    'a1-0',
+    'a2-0',
+    'b1-0',
+    'a1-1',
+    'b1-1',
   ]);
 });

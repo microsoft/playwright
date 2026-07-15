@@ -517,11 +517,11 @@ export default defineConfig({
 
 ## property: TestConfig.retryStrategy
 * since: v1.62
-- type: ?<[RetryStrategy]<"immediate"|"deferred">>
+- type: ?<[RetryStrategy]<"immediate"|"isolated">>
 
 Controls when failed tests are retried. Defaults to `'immediate'`.
 * `'immediate'` - A failed test is retried as soon as a worker is available, interleaved with the rest of the run. This is the default.
-* `'deferred'` - Retries are run only after all tests have had their first attempt, in parallel up to the configured number of [workers](#test-config-workers).
+* `'isolated'` - Retries are run at the end, after all other tests have finished, one by one in a single worker. This minimizes the interference between retried tests and the rest of the suite, at the expense of the total run time.
 
 Learn more about [test retries](../test-retries.md#retries).
 
@@ -532,7 +532,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   retries: 2,
-  retryStrategy: 'deferred',
+  retryStrategy: 'isolated',
 });
 ```
 
