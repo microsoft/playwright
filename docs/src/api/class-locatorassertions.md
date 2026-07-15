@@ -2147,7 +2147,7 @@ await Expect(locator).ToHaveTextAsync(new Regex("Welcome, .*"));
 If you pass an array as an expected value, the expectations are:
 1. Locator resolves to a list of elements.
 1. The number of elements equals the number of expected values in the array.
-1. Elements from the list have text matching expected array values, one by one, in order.
+1. Elements from the list have text matching expected array values, one by one, in order, unless `ignoreOrder` is set.
 
 For example, consider the following list:
 
@@ -2173,6 +2173,12 @@ await expect(page.locator('ul > li')).toHaveText(['Text 1', 'Text 2', 'Text']);
 
 // ✖ Locator points to the outer list element, not to the list items
 await expect(page.locator('ul')).toHaveText(['Text 1', 'Text 2', 'Text 3']);
+
+// ✓ Has the right items in any order
+await expect(page.locator('ul > li')).toHaveText(
+    ['Text 3', 'Text 2', 'Text 1'],
+    { ignoreOrder: true },
+);
 ```
 
 ```java
@@ -2258,6 +2264,12 @@ Expected string or RegExp or a list of those.
 
 ### option: LocatorAssertions.toHaveText.ignoreCase = %%-assertions-ignore-case-%%
 * since: v1.23
+
+### option: LocatorAssertions.toHaveText.ignoreOrder
+* since: v1.62
+- `ignoreOrder` <[boolean]>
+
+Whether to match expected values against the located elements in any order. Each expected value must match exactly one distinct element. Only applies when `expected` is an array.
 
 ### option: LocatorAssertions.toHaveText.useInnerText
 * since: v1.18

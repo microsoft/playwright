@@ -55,6 +55,7 @@ export type FrameExpectParams = {
   expectedNumber?: number,
   expectedValue?: any,
   useInnerText?: boolean,
+  ignoreOrder?: boolean,
   isNot: boolean,
 };
 
@@ -1676,8 +1677,32 @@ export class InjectedScript {
     if (!matchesLength)
       return { received, matches: false };
 
-    const matches = this._matchSequentially(options.expectedText, received, (matcher, r) => matcher.matches(r));
+    const matches = options.ignoreOrder
+      ? this._matchInAnyOrder(options.expectedText, received, (matcher, r) => matcher.matches(r))
+      : this._matchSequentially(options.expectedText, received, (matcher, r) => matcher.matches(r));
     return { received, matches };
+  }
+
+  private _matchInAnyOrder<T>(
+    expectedText: ExpectedTextValue[],
+    received: T[],
+    matchFn: (matcher: ExpectedTextMatcher, received: T) => boolean
+  ): boolean {
+    const matchers = expectedText.map(e => new ExpectedTextMatcher(e));
+    const matchedReceived = new Array(received.length).fill(-1);
+    const match = (matcherIndex: number, visited: boolean[]): boolean => {
+      for (let receivedIndex = 0; receivedIndex < received.length; ++receivedIndex) {
+        if (visited[receivedIndex] || !matchFn(matchers[matcherIndex], received[receivedIndex]))
+          continue;
+        visited[receivedIndex] = true;
+        if (matchedReceived[receivedIndex] === -1 || match(matchedReceived[receivedIndex], visited)) {
+          matchedReceived[receivedIndex] = matcherIndex;
+          return true;
+        }
+      }
+      return false;
+    };
+    return matchers.every((_, matcherIndex) => match(matcherIndex, new Array(received.length).fill(false)));
   }
 
   private _matchSequentially<T>(

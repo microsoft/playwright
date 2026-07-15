@@ -769,6 +769,7 @@ Frame:
         expectedNumber: float?
         expectedValue: SerializedArgument?
         useInnerText: boolean?
+        ignoreOrder: boolean?
         isNot: boolean
       errorDetails:
         received:

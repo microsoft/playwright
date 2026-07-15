@@ -2922,6 +2922,7 @@ export type FrameExpectParams = {
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
   useInnerText?: boolean,
+  ignoreOrder?: boolean,
   isNot: boolean,
 };
 export type FrameExpectOptions = {
@@ -2932,6 +2933,7 @@ export type FrameExpectOptions = {
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
   useInnerText?: boolean,
+  ignoreOrder?: boolean,
 };
 export type FrameExpectResult = void;
 export type FrameExpectErrorDetails = {

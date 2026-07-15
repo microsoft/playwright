@@ -393,12 +393,12 @@ export function toHaveText(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
-  options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean, signal?: AbortSignal } = {},
+  options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean, ignoreOrder?: boolean, signal?: AbortSignal } = {},
 ) {
   if (Array.isArray(expected)) {
     return toEqual.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout, signal) => {
       const expectedText = serializeExpectedTextValues(expected, { normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
-      return await locator._expect('to.have.text.array', { expectedText, isNot, useInnerText: options?.useInnerText, timeout, signal });
+      return await locator._expect('to.have.text.array', { expectedText, isNot, useInnerText: options.useInnerText, ignoreOrder: options.ignoreOrder, timeout, signal });
     }, expected, options);
   } else {
     return toMatchText.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout, signal) => {

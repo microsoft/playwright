@@ -224,6 +224,27 @@ test.describe('toHaveText with array', () => {
     await expect(locator).toHaveText(['tEXT 1', 'TExt 2A'], { ignoreCase: true });
   });
 
+  test('pass with ignoreOrder', async ({ page }) => {
+    await page.setContent('<div>Complete</div><div>Pending</div>');
+    const locator = page.locator('div');
+    await expect(locator).toHaveText(['Pending', 'Complete'], { ignoreOrder: true });
+    await expect(locator).toHaveText([/pending/i, /complete/i], { ignoreOrder: true });
+  });
+
+  test('match each element once with ignoreOrder', async ({ page }) => {
+    await page.setContent('<div>foobar</div><div>foo</div>');
+    const locator = page.locator('div');
+    await expect(locator).toHaveText([/foo/, 'foobar'], { ignoreOrder: true });
+    await expect(locator).toHaveText([/foo/, /foo/], { ignoreOrder: true });
+    await expect(locator).not.toHaveText(['foobar', 'foobar'], { ignoreOrder: true });
+  });
+
+  test('fail on different lengths with ignoreOrder', async ({ page }) => {
+    await page.setContent('<div>Text 1</div><div>Text 2</div>');
+    const locator = page.locator('div');
+    await expect(locator).not.toHaveText(['Text 1'], { ignoreOrder: true });
+  });
+
   test('pass lazy', async ({ page }) => {
     await page.setContent('<div id=div></div>');
     const locator = page.locator('p');
