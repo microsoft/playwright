@@ -155,7 +155,44 @@ npx playwright test --grep "(?=.*@fast)(?=.*@slow)"
 
 You can also filter tests in the configuration file via [`property: TestConfig.grep`] and [`property: TestProject.grep`].
 
+### Set default tags
 
+Use `test.use()` to apply tags to all tests in a file or describe block without repeating them on each test:
+
+```js title="auth.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test.use({ tag: '@auth' });
+
+test('login', async ({ page }) => {
+  // has @auth tag
+});
+
+test('logout', async ({ page }) => {
+  // has @auth tag
+});
+```
+
+You can also apply default tags at the project level in your config. Every test in that project will carry the tag:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'app1',
+      use: { tag: ['@app1', '@smoke'] },
+    },
+    {
+      name: 'app2',
+      use: { tag: '@app2' },
+    },
+  ],
+});
+```
+
+Tags from all sources accumulate: a test picks up tags from its project, its file, any enclosing describe block, and the test declaration itself.
 
 ## Annotate tests
 
