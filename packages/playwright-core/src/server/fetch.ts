@@ -352,6 +352,7 @@ export abstract class APIRequestContext extends SdkObject {
       const requestOptions = { ...options, agent };
 
       const startAt = monotonicTime();
+      const startAtWallTime = Date.now();
       let reusedSocketAt: number | undefined;
       let dnsLookupAt: number | undefined;
       let tcpConnectionAt: number | undefined;
@@ -381,6 +382,19 @@ export abstract class APIRequestContext extends SdkObject {
             blocked: reusedSocketAt ? reusedSocketAt - startAt : -1,
           };
 
+          // spec: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
+          const requestStartAt = connectEnd ?? reusedSocketAt;
+          const resourceTiming: channels.ResourceTiming = {
+            startTime: startAtWallTime,
+            domainLookupStart: dnsLookupAt ? 0 : -1,
+            domainLookupEnd: dnsLookupAt ? dnsLookupAt - startAt : -1,
+            connectStart: tcpConnectionAt ? (dnsLookupAt ?? startAt) - startAt : -1,
+            secureConnectionStart: tlsHandshakeAt && tcpConnectionAt ? tcpConnectionAt - startAt : -1,
+            connectEnd: connectEnd ? connectEnd - startAt : -1,
+            requestStart: requestStartAt ? requestStartAt - startAt : -1,
+            responseStart: responseAt - startAt,
+          };
+
           const requestFinishedEvent: APIRequestFinishedEvent = {
             requestEvent,
             httpVersion: response.httpVersion,
@@ -396,6 +410,7 @@ export abstract class APIRequestContext extends SdkObject {
             securityDetails,
           };
           this.emit(APIRequestContext.Events.RequestFinished, requestFinishedEvent);
+          return { resourceTiming, responseEndTiming: endAt - startAt };
         };
         fetchLog(`← ${response.statusCode} ${response.statusMessage}`);
         for (const [name, value] of Object.entries(response.headers))
@@ -493,7 +508,7 @@ export abstract class APIRequestContext extends SdkObject {
         const chunks: Buffer[] = [];
         const notifyBodyFinished = () => {
           const body = Buffer.concat(chunks);
-          notifyRequestFinished(body);
+          const { resourceTiming, responseEndTiming } = notifyRequestFinished(body);
           fulfill({
             body,
             log,
@@ -504,6 +519,8 @@ export abstract class APIRequestContext extends SdkObject {
               headers: toHeadersArray(response.rawHeaders),
               securityDetails,
               serverAddr: serverIPAddress !== undefined && serverPort !== undefined ? { ipAddress: serverIPAddress, port: serverPort } : undefined,
+              timing: resourceTiming,
+              responseEndTiming,
             },
           });
         };

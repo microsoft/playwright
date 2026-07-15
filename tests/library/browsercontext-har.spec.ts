@@ -636,6 +636,17 @@ it.describe('interceptAPIRequests', () => {
     const page2 = await context2.newPage();
     const replayed = await page2.request.get(server.PREFIX + '/api/data');
     expect(await replayed.json()).toEqual({ hello: 'live' });
+    expect(replayed.timing()).toEqual({
+      startTime: -1,
+      domainLookupStart: -1,
+      domainLookupEnd: -1,
+      connectStart: -1,
+      secureConnectionStart: -1,
+      connectEnd: -1,
+      requestStart: -1,
+      responseStart: -1,
+      responseEnd: -1,
+    });
     await context2.close();
   });
 

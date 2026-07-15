@@ -79,6 +79,8 @@ export type APIResponse = {
   headers: NameValue[],
   securityDetails?: SecurityDetails,
   serverAddr?: RemoteAddr,
+  timing?: ResourceTiming,
+  responseEndTiming?: number,
 };
 
 export type Metadata = {

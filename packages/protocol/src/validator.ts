@@ -350,6 +350,8 @@ scheme.APIResponse = tObject({
   headers: tArray(tType('NameValue')),
   securityDetails: tOptional(tType('SecurityDetails')),
   serverAddr: tOptional(tType('RemoteAddr')),
+  timing: tOptional(tType('ResourceTiming')),
+  responseEndTiming: tOptional(tFloat),
 });
 scheme.ArtifactInitializer = tObject({
   absolutePath: tString,

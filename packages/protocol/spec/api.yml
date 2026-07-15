@@ -99,3 +99,5 @@ APIResponse:
       items: NameValue
     securityDetails: SecurityDetails?
     serverAddr: RemoteAddr?
+    timing: ResourceTiming?
+    responseEndTiming: float?

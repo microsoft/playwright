@@ -2020,3 +2020,26 @@ In this config:
   * alias-java: ServerAddr
   - `ipAddress` <[string]> IPv4 or IPV6 address of the server.
   - `port` <[int]>
+
+## resource-timing
+- returns: <[Object]>
+  * alias-csharp: RequestTimingResult
+  * alias-java: Timing
+  - `startTime` <[float]> Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
+  - `domainLookupStart` <[float]> Time immediately before the client starts the domain name lookup for the
+    resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `domainLookupEnd` <[float]> Time immediately after the client ends the domain name lookup for the resource.
+    The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `connectStart` <[float]> Time immediately before the client starts establishing the connection to the server
+    to retrieve the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `secureConnectionStart` <[float]> Time immediately before the client starts the handshake process to secure the
+    current connection. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `connectEnd` <[float]> Time immediately after the client establishes the connection to the server
+    to retrieve the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `requestStart` <[float]> Time immediately before the client starts requesting the resource from the server,
+    cache, or local resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `responseStart` <[float]> Time immediately after the client receives the first byte of the response from the server,
+    cache, or local resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `responseEnd` <[float]> Time immediately after the client receives the last byte of the resource or immediately
+    before the transport connection is closed, whichever comes first. The value is given in milliseconds relative to
+    `startTime`, -1 if not available.

@@ -30,6 +30,7 @@ import { mkdirIfNeeded } from './fileUtils';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 
 import type { Playwright } from './playwright';
+import type { ResourceTiming } from './network';
 import type { ClientCertificate, FilePayload, Headers, RemoteAddr, SecurityDetails, SetStorageState, StorageState, TimeoutOptions } from './types';
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
@@ -348,6 +349,21 @@ export class APIResponse implements api.APIResponse {
 
   async serverAddr(): Promise<RemoteAddr | null> {
     return this._initializer.serverAddr ?? null;
+  }
+
+  timing(): ResourceTiming {
+    return {
+      startTime: -1,
+      domainLookupStart: -1,
+      domainLookupEnd: -1,
+      connectStart: -1,
+      secureConnectionStart: -1,
+      connectEnd: -1,
+      requestStart: -1,
+      responseStart: -1,
+      ...this._initializer.timing,
+      responseEnd: this._initializer.responseEndTiming ?? -1,
+    };
   }
 
   async body(): Promise<Buffer> {
