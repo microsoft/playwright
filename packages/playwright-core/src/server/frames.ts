@@ -1853,7 +1853,10 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async extendInjectedScript(source: string, arg?: any) {
+    const document = this._currentDocument;
     const context = await this.context('main');
+    if (this._currentDocument !== document)
+      return;
     const injectedScriptHandle = await context.injectedScript();
     await injectedScriptHandle.evaluate((injectedScript, { source, arg }) => {
       injectedScript.extend(source, arg);
