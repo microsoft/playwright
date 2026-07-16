@@ -1123,6 +1123,9 @@ Console.WriteLine(result); // prints "myId text 56"
 
 Optional argument to pass to [`param: expression`].
 
+### option: Locator.evaluate.exposeFunctions = %%-js-evaluate-expose-functions-%%
+* since: v1.62
+
 ### option: Locator.evaluate.timeout
 * since: v1.14
 * langs: python, java, csharp
@@ -1221,6 +1224,9 @@ See [`method: Page.evaluateHandle`] for more details.
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
+
+### option: Locator.evaluateHandle.exposeFunctions = %%-js-evaluate-expose-functions-%%
+* since: v1.62
 
 ### option: Locator.evaluateHandle.timeout
 * since: v1.14

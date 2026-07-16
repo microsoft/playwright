@@ -116,6 +116,16 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     child._parent = this;
   }
 
+  _parentOfType(type: string): ChannelOwner<any> | undefined {
+    let parent: ChannelOwner<any> | undefined = this._parent;
+    while (parent) {
+      if (parent._type === type)
+        return parent;
+      parent = parent._parent;
+    }
+    return undefined;
+  }
+
   _dispose(reason: 'gc' | undefined) {
     // Clean up from parent and connection.
     if (this._parent)

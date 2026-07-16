@@ -50,6 +50,7 @@ import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 import { mkdirIfNeeded } from './fileUtils';
 import { ConsoleMessage } from './consoleMessage';
 import type { BrowserContext } from './browserContext';
+import type { EvaluateOptions } from './jsHandle';
 import type { Clock } from './clock';
 import type { APIRequestContext } from './fetch';
 import type { WaitForNavigationOptions } from './frame';
@@ -117,6 +118,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private _harRouters: HarRouter[] = [];
 
   private _locatorHandlers = new Map<number, { locator: Locator, handler: (locator: Locator) => any, times: number | undefined }>();
+  private _evaluateCallbacks: { name: string, disposable: DisposableObject }[] = [];
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -334,9 +336,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._mainFrame.dispatchEvent(selector, type, eventInit, options);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
-    assertMaxArguments(arguments.length, 2);
-    return await this._mainFrame.evaluateHandle(pageFunction, arg);
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: EvaluateOptions): Promise<structs.SmartHandle<R>> {
+    assertMaxArguments(arguments.length, 3);
+    return await this._mainFrame.evaluateHandle(pageFunction, arg, options);
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg): Promise<R> {
@@ -372,6 +374,20 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     const result = await this._channel.exposeBinding({ name }, kNoTimeout);
     this._bindings.set(name, callback);
     return DisposableObject.from(result.disposable);
+  }
+
+  async _exposeEvaluateCallback(name: string, callback: Function) {
+    this._bindings.set(name, (source, ...args) => callback(...args));
+    const result = await this._channel.exposeBinding({ name, noGlobal: true }, kNoTimeout);
+    this._evaluateCallbacks.push({ name, disposable: DisposableObject.from(result.disposable) });
+  }
+
+  _eraseEvaluateCallbacks() {
+    for (const { name, disposable } of this._evaluateCallbacks) {
+      this._bindings.delete(name);
+      disposable.dispose().catch(() => {});
+    }
+    this._evaluateCallbacks = [];
   }
 
   async setExtraHTTPHeaders(headers: Headers) {
@@ -528,9 +544,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this._viewportSize || null;
   }
 
-  async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
-    assertMaxArguments(arguments.length, 2);
-    return await this._mainFrame.evaluate(pageFunction, arg);
+  async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: EvaluateOptions): Promise<R> {
+    assertMaxArguments(arguments.length, 3);
+    return await this._mainFrame.evaluate(pageFunction, arg, options);
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {

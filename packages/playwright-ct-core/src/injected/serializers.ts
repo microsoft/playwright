@@ -16,37 +16,15 @@
 
 import { isImportRef } from './importRegistry';
 
-type FunctionRef = {
-  __pw_type: 'function';
-  ordinal: number;
-};
-
-function isFunctionRef(value: any): value is FunctionRef {
-  return value && typeof value === 'object' && value.__pw_type === 'function';
-}
-
-export function wrapObject(value: any, callbacks: Function[]): any {
-  return transformObject(value, (v: any) => {
-    if (typeof v === 'function') {
-      const ordinal = callbacks.length;
-      callbacks.push(v as Function);
-      const result: FunctionRef = {
-        __pw_type: 'function',
-        ordinal,
-      };
-      return { result };
-    }
-  });
+// Validates that the component tree does not reference components defined in
+// the test file. Functions in the tree are passed to evaluate() as arguments
+// and materialize as callbacks in the page.
+export function validateComponent(value: any) {
+  transformObject(value, () => undefined);
 }
 
 export async function unwrapObject(value: any): Promise<any> {
   return transformObjectAsync(value, async (v: any) => {
-    if (isFunctionRef(v)) {
-      const result = (...args: any[]) => {
-        window.__ctDispatchFunction(v.ordinal, args);
-      };
-      return { result };
-    }
     if (isImportRef(v))
       return { result: await window.__pwRegistry.resolveImportRef(v) };
   });

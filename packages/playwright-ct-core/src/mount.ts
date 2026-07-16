@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { wrapObject } from './injected/serializers';
+import { validateComponent } from './injected/serializers';
 import { Router } from './router';
 
 import type { config, FullConfigInternal } from 'playwright/lib/common';
@@ -23,8 +23,6 @@ import type { ImportRef } from './injected/importRegistry';
 import type { Component, JsxComponent, MountOptions, ObjectComponentOptions } from '../types/component';
 import type { Fixtures, Locator, Page, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from 'playwright/test';
 import type { Page as PageImpl } from 'playwright-core/lib/client/page';
-
-let boundCallbacksForMount: Function[] = [];
 
 interface MountResult extends Locator {
   unmount: () => Promise<void>;
@@ -52,9 +50,6 @@ export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> 
     if (!process.env.PLAYWRIGHT_TEST_BASE_URL)
       throw new Error('Component testing could not determine the base URL of your component under test. Ensure you have supplied a template playwright/index.html or have set the PLAYWRIGHT_TEST_BASE_URL environment variable.');
     await (page as PageImpl)._wrapApiCall(async () => {
-      await page.exposeFunction('__ctDispatchFunction', (ordinal: number, args: any[]) => {
-        boundCallbacksForMount[ordinal](...args);
-      });
       await page.goto(process.env.PLAYWRIGHT_TEST_BASE_URL!);
     }, { internal: true });
     await use(page);
@@ -80,7 +75,6 @@ export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> 
         }
       });
     });
-    boundCallbacksForMount = [];
   },
 
   router: async ({ context, baseURL }, use) => {
@@ -95,17 +89,19 @@ function isJsxComponent(component: any): component is JsxComponent {
 }
 
 async function innerUpdate(page: Page, componentRef: JsxComponent | ImportRef, options: ObjectComponentOptions = {}): Promise<void> {
-  const component = wrapObject(createComponent(componentRef, options), boundCallbacksForMount);
+  const component = createComponent(componentRef, options);
+  validateComponent(component);
 
   await page.evaluate(async ({ component }) => {
     component = await window.__pwUnwrapObject(component);
     const rootElement = document.getElementById('root')!;
     return await window.playwrightUpdate(rootElement, component);
-  }, { component });
+  }, { component }, { exposeFunctions: true });
 }
 
 async function innerMount(page: Page, componentRef: JsxComponent | ImportRef, options: ObjectComponentOptions & MountOptions = {}): Promise<string> {
-  const component = wrapObject(createComponent(componentRef, options), boundCallbacksForMount);
+  const component = createComponent(componentRef, options);
+  validateComponent(component);
 
   // WebKit does not wait for deferred scripts.
   await page.waitForFunction(() => !!window.playwrightMount);
@@ -122,7 +118,7 @@ async function innerMount(page: Page, componentRef: JsxComponent | ImportRef, op
     await window.playwrightMount(component, rootElement, hooksConfig);
 
     return '#root >> internal:control=component';
-  }, { component, hooksConfig: options.hooksConfig });
+  }, { component, hooksConfig: options.hooksConfig }, { exposeFunctions: true });
   return selector;
 }
 

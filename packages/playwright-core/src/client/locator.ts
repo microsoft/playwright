@@ -27,6 +27,7 @@ import { DisposableStub } from './disposable';
 import { kNoTimeout } from './timeoutSettings';
 
 import type { ExpectResult, Frame } from './frame';
+import type { EvaluateOptions } from './jsHandle';
 import type { DropPayload, FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
@@ -134,16 +135,16 @@ export class Locator implements api.Locator {
     await this._frame._drop(this._selector, payload, { strict: true, ...options });
   }
 
-  async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<R> {
-    return await this._withElement(h => h.evaluate(pageFunction, arg), { title: 'Evaluate', timeout: options?.timeout, signal: options?.signal });
+  async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions & EvaluateOptions): Promise<R> {
+    return await this._withElement(h => h.evaluate(pageFunction, arg, options), { title: 'Evaluate', timeout: options?.timeout, signal: options?.signal });
   }
 
   async evaluateAll<R, Arg>(pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
     return await this._frame.$$eval(this._selector, pageFunction, arg);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<any, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<structs.SmartHandle<R>> {
-    return await this._withElement(h => h.evaluateHandle(pageFunction, arg), { title: 'Evaluate', timeout: options?.timeout, signal: options?.signal });
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<any, Arg, R>, arg?: Arg, options?: TimeoutOptions & EvaluateOptions): Promise<structs.SmartHandle<R>> {
+    return await this._withElement(h => h.evaluateHandle(pageFunction, arg, options), { title: 'Evaluate', timeout: options?.timeout, signal: options?.signal });
   }
 
   async fill(value: string, options: channels.ElementHandleFillOptions & TimeoutOptions = {}): Promise<void> {

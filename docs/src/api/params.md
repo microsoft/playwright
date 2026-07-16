@@ -584,6 +584,12 @@ to a function, the function is automatically invoked.
 
 Function to be evaluated in the page context.
 
+## js-evaluate-expose-functions
+* langs: js
+- `exposeFunctions` <[boolean]>
+
+When set to `true`, functions passed inside [`param: arg`] are exposed in the page and can be called from the page function. Calling one returns a [Promise] of its result. The page-side functions are scoped to the execution context they were passed to and disappear when the page navigates. Defaults to `false`, in which case functions are not serializable and passing one throws an error, as before.
+
 ## js-evalonselector-pagefunction
 * langs: js
 - `pageFunction` <[function]\([Element]\)|[string]>

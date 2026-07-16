@@ -87,14 +87,15 @@ export interface Page {
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-option-expression) invocation.
    *
    * If the function passed to the
-   * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) returns a [Promise],
-   * then [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) would wait for
-   * the promise to resolve and return its value.
+   * [page.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate) returns a
+   * [Promise], then
+   * [page.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate) would wait
+   * for the promise to resolve and return its value.
    *
    * If the function passed to the
-   * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) returns a
+   * [page.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate) returns a
    * non-[Serializable] value, then
-   * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) resolves to
+   * [page.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate) resolves to
    * `undefined`. Playwright also supports transferring some additional values that are not serializable by `JSON`:
    * `-0`, `NaN`, `Infinity`, `-Infinity`.
    *
@@ -118,7 +119,7 @@ export interface Page {
    * ```
    *
    * [ElementHandle](https://playwright.dev/docs/api/class-elementhandle) instances can be passed as an argument to the
-   * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate):
+   * [page.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate):
    *
    * ```js
    * const bodyHandle = await page.evaluateHandle('document.body');
@@ -131,21 +132,23 @@ export interface Page {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-option-expression).
+   * @param options
    */
-  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<R>;
+  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<R>;
   /**
    * Returns the value of the
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-option-expression) invocation.
    *
    * If the function passed to the
-   * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) returns a [Promise],
-   * then [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) would wait for
-   * the promise to resolve and return its value.
+   * [page.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate) returns a
+   * [Promise], then
+   * [page.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate) would wait
+   * for the promise to resolve and return its value.
    *
    * If the function passed to the
-   * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) returns a
+   * [page.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate) returns a
    * non-[Serializable] value, then
-   * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) resolves to
+   * [page.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate) resolves to
    * `undefined`. Playwright also supports transferring some additional values that are not serializable by `JSON`:
    * `-0`, `NaN`, `Infinity`, `-Infinity`.
    *
@@ -169,7 +172,7 @@ export interface Page {
    * ```
    *
    * [ElementHandle](https://playwright.dev/docs/api/class-elementhandle) instances can be passed as an argument to the
-   * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate):
+   * [page.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate):
    *
    * ```js
    * const bodyHandle = await page.evaluateHandle('document.body');
@@ -182,8 +185,9 @@ export interface Page {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-option-expression).
+   * @param options
    */
-  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<R>;
+  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<R>;
 
   /**
    * Returns the value of the
@@ -191,16 +195,17 @@ export interface Page {
    * [JSHandle](https://playwright.dev/docs/api/class-jshandle).
    *
    * The only difference between
-   * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) and
-   * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) is that
-   * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) returns
-   * [JSHandle](https://playwright.dev/docs/api/class-jshandle).
+   * [page.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate) and
+   * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
+   * is that
+   * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
+   * returns [JSHandle](https://playwright.dev/docs/api/class-jshandle).
    *
    * If the function passed to the
-   * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) returns
-   * a [Promise], then
-   * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) would
-   * wait for the promise to resolve and return its value.
+   * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
+   * returns a [Promise], then
+   * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
+   * would wait for the promise to resolve and return its value.
    *
    * **Usage**
    *
@@ -216,7 +221,7 @@ export interface Page {
    * ```
    *
    * [JSHandle](https://playwright.dev/docs/api/class-jshandle) instances can be passed as an argument to the
-   * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle):
+   * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle):
    *
    * ```js
    * const aHandle = await page.evaluateHandle(() => document.body);
@@ -228,24 +233,26 @@ export interface Page {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-handle-option-expression).
+   * @param options
    */
-  evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
+  evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
   /**
    * Returns the value of the
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-handle-option-expression) invocation as a
    * [JSHandle](https://playwright.dev/docs/api/class-jshandle).
    *
    * The only difference between
-   * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) and
-   * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) is that
-   * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) returns
-   * [JSHandle](https://playwright.dev/docs/api/class-jshandle).
+   * [page.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate) and
+   * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
+   * is that
+   * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
+   * returns [JSHandle](https://playwright.dev/docs/api/class-jshandle).
    *
    * If the function passed to the
-   * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) returns
-   * a [Promise], then
-   * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) would
-   * wait for the promise to resolve and return its value.
+   * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
+   * returns a [Promise], then
+   * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
+   * would wait for the promise to resolve and return its value.
    *
    * **Usage**
    *
@@ -261,7 +268,7 @@ export interface Page {
    * ```
    *
    * [JSHandle](https://playwright.dev/docs/api/class-jshandle) instances can be passed as an argument to the
-   * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle):
+   * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle):
    *
    * ```js
    * const aHandle = await page.evaluateHandle(() => document.body);
@@ -273,8 +280,9 @@ export interface Page {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-handle-option-expression).
+   * @param options
    */
-  evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<SmartHandle<R>>;
+  evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
 
   /**
    * Adds a script which would be evaluated in one of the following scenarios:
@@ -5786,14 +5794,15 @@ export interface Frame {
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-option-expression).
    *
    * If the function passed to the
-   * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate) returns a
-   * [Promise], then [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate)
-   * would wait for the promise to resolve and return its value.
+   * [frame.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate) returns
+   * a [Promise], then
+   * [frame.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate) would
+   * wait for the promise to resolve and return its value.
    *
    * If the function passed to the
-   * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate) returns a
-   * non-[Serializable] value, then
-   * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate) returns
+   * [frame.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate) returns
+   * a non-[Serializable] value, then
+   * [frame.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate) returns
    * `undefined`. Playwright also supports transferring some additional values that are not serializable by `JSON`:
    * `-0`, `NaN`, `Infinity`, `-Infinity`.
    *
@@ -5813,7 +5822,7 @@ export interface Frame {
    * ```
    *
    * [ElementHandle](https://playwright.dev/docs/api/class-elementhandle) instances can be passed as an argument to the
-   * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate):
+   * [frame.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate):
    *
    * ```js
    * const bodyHandle = await frame.evaluateHandle('document.body');
@@ -5826,21 +5835,23 @@ export interface Frame {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-option-expression).
+   * @param options
    */
-  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<R>;
+  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<R>;
   /**
    * Returns the return value of
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-option-expression).
    *
    * If the function passed to the
-   * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate) returns a
-   * [Promise], then [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate)
-   * would wait for the promise to resolve and return its value.
+   * [frame.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate) returns
+   * a [Promise], then
+   * [frame.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate) would
+   * wait for the promise to resolve and return its value.
    *
    * If the function passed to the
-   * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate) returns a
-   * non-[Serializable] value, then
-   * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate) returns
+   * [frame.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate) returns
+   * a non-[Serializable] value, then
+   * [frame.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate) returns
    * `undefined`. Playwright also supports transferring some additional values that are not serializable by `JSON`:
    * `-0`, `NaN`, `Infinity`, `-Infinity`.
    *
@@ -5860,7 +5871,7 @@ export interface Frame {
    * ```
    *
    * [ElementHandle](https://playwright.dev/docs/api/class-elementhandle) instances can be passed as an argument to the
-   * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate):
+   * [frame.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate):
    *
    * ```js
    * const bodyHandle = await frame.evaluateHandle('document.body');
@@ -5873,8 +5884,9 @@ export interface Frame {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-option-expression).
+   * @param options
    */
-  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<R>;
+  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<R>;
 
   /**
    * Returns the return value of
@@ -5882,15 +5894,16 @@ export interface Frame {
    * [JSHandle](https://playwright.dev/docs/api/class-jshandle).
    *
    * The only difference between
-   * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate) and
-   * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle) is
-   * that [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle)
+   * [frame.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate) and
+   * [frame.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle)
+   * is that
+   * [frame.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle)
    * returns [JSHandle](https://playwright.dev/docs/api/class-jshandle).
    *
    * If the function, passed to the
-   * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle),
+   * [frame.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle),
    * returns a [Promise], then
-   * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle)
+   * [frame.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -5907,7 +5920,7 @@ export interface Frame {
    * ```
    *
    * [JSHandle](https://playwright.dev/docs/api/class-jshandle) instances can be passed as an argument to the
-   * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle):
+   * [frame.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle):
    *
    * ```js
    * const aHandle = await frame.evaluateHandle(() => document.body);
@@ -5921,23 +5934,25 @@ export interface Frame {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle-option-expression).
+   * @param options
    */
-  evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
+  evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
   /**
    * Returns the return value of
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle-option-expression) as a
    * [JSHandle](https://playwright.dev/docs/api/class-jshandle).
    *
    * The only difference between
-   * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate) and
-   * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle) is
-   * that [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle)
+   * [frame.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate) and
+   * [frame.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle)
+   * is that
+   * [frame.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle)
    * returns [JSHandle](https://playwright.dev/docs/api/class-jshandle).
    *
    * If the function, passed to the
-   * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle),
+   * [frame.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle),
    * returns a [Promise], then
-   * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle)
+   * [frame.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -5954,7 +5969,7 @@ export interface Frame {
    * ```
    *
    * [JSHandle](https://playwright.dev/docs/api/class-jshandle) instances can be passed as an argument to the
-   * [frame.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle):
+   * [frame.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle):
    *
    * ```js
    * const aHandle = await frame.evaluateHandle(() => document.body);
@@ -5968,8 +5983,9 @@ export interface Frame {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle-option-expression).
+   * @param options
    */
-  evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<SmartHandle<R>>;
+  evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
 
   /**
    * **NOTE** Use locator-based [frame.locator(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-locator)
@@ -11726,7 +11742,8 @@ export interface Worker {
 
 /**
  * JSHandle represents an in-page JavaScript object. JSHandles can be created with the
- * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) method.
+ * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
+ * method.
  *
  * ```js
  * const windowHandle = await page.evaluateHandle(() => window);
@@ -11739,8 +11756,8 @@ export interface Worker {
  *
  * JSHandle instances can be used as an argument in
  * [page.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector),
- * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) and
- * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
+ * [page.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate) and
+ * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
  * methods.
  */
 export interface JSHandle<T = any> {
@@ -11764,8 +11781,9 @@ export interface JSHandle<T = any> {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-option-expression).
+   * @param options
    */
-  evaluate<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg): Promise<R>;
+  evaluate<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<R>;
   /**
    * Returns the return value of
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-option-expression).
@@ -11786,8 +11804,9 @@ export interface JSHandle<T = any> {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-option-expression).
+   * @param options
    */
-  evaluate<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any): Promise<R>;
+  evaluate<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<R>;
 
   /**
    * Returns the return value of
@@ -11803,13 +11822,15 @@ export interface JSHandle<T = any> {
    * If the function passed to the `jsHandle.evaluateHandle` returns a [Promise], then `jsHandle.evaluateHandle` would
    * wait for the promise to resolve and return its value.
    *
-   * See [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) for
-   * more details.
+   * See
+   * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
+   * for more details.
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-handle-option-expression).
+   * @param options
    */
-  evaluateHandle<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
+  evaluateHandle<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
   /**
    * Returns the return value of
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-handle-option-expression)
@@ -11824,13 +11845,15 @@ export interface JSHandle<T = any> {
    * If the function passed to the `jsHandle.evaluateHandle` returns a [Promise], then `jsHandle.evaluateHandle` would
    * wait for the promise to resolve and return its value.
    *
-   * See [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) for
-   * more details.
+   * See
+   * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
+   * for more details.
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-handle-option-expression).
+   * @param options
    */
-  evaluateHandle<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any): Promise<SmartHandle<R>>;
+  evaluateHandle<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
 
   /**
    * Returns a JSON representation of the object. If the object has a `toJSON` function, it **will not be called**.
@@ -11895,7 +11918,8 @@ export interface JSHandle<T = any> {
  *
  * ElementHandle instances can be used as an argument in
  * [page.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector)
- * and [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate) methods.
+ * and [page.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate)
+ * methods.
  *
  * The difference between the [Locator](https://playwright.dev/docs/api/class-locator) and ElementHandle is that the
  * ElementHandle points to a particular element, while [Locator](https://playwright.dev/docs/api/class-locator)
@@ -13837,7 +13861,7 @@ export interface Locator {
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression).
    * @param options
    */
-  evaluate<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal }): Promise<R>;
+  evaluate<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal, exposeFunctions?: boolean }): Promise<R>;
   /**
    * Execute JavaScript code in the page, taking the matching element as an argument, and return a
    * [JSHandle](https://playwright.dev/docs/api/class-jshandle) with the result.
@@ -13863,14 +13887,15 @@ export interface Locator {
    * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression) throws
    * or rejects, this method throws.
    *
-   * See [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) for
-   * more details.
+   * See
+   * [page.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-evaluate-handle)
+   * for more details.
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression).
    * @param options
    */
-  evaluateHandle<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal }): Promise<SmartHandle<R>>;
+  evaluateHandle<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal, exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
   /**
    * Execute JavaScript code in the page, taking all matching elements as an argument.
    *

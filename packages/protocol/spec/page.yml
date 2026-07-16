@@ -107,6 +107,7 @@ Page:
       group: configuration
       parameters:
         name: string
+        noGlobal: boolean?
       returns:
         disposable: Disposable
 

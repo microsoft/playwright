@@ -27,13 +27,14 @@ import { addSourceUrlToScript } from './clientHelper';
 import { ElementHandle, convertInputFiles, convertSelectOptionValues } from './elementHandle';
 import { AbortError, PlaywrightError } from './errors';
 import { Events } from './events';
-import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
+import { JSHandle, assertEvaluateOptions, assertMaxArguments, parseResult, serializeArgument, serializeArgumentWithCallbacks } from './jsHandle';
 import { FrameLocator, Locator, testIdAttributeName } from './locator';
 import * as network from './network';
 import { kLifecycleEvents } from './types';
 import { Waiter } from './waiter';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 
+import type { EvaluateOptions } from './jsHandle';
 import type { LocatorOptions } from './locator';
 import type { Page } from './page';
 import type { DropPayload, FilePayload, LifecycleEvent, SelectOption, SelectOptionOptions, StrictOptions, TimeoutOptions, WaitForFunctionOptions } from './types';
@@ -95,6 +96,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     this._channel.on('navigated', event => {
       this._url = event.url;
       this._name = event.name;
+      // Main frame navigation destroys all execution contexts in the page,
+      // erase the bindings backing the functions passed to evaluate().
+      if (!this._parentFrame && event.newDocument && this._page)
+        this._page._eraseEvaluateCallbacks();
       this._eventEmitter.emit('navigated', event);
       if (!event.error && this._page) {
         this._page.emit(Events.Page.FrameNavigated, this);
@@ -201,15 +206,19 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return ElementHandle.from((await this._channel.frameElement({}, kNoTimeout)).element);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
-    assertMaxArguments(arguments.length, 2);
-    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, kNoTimeout);
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: EvaluateOptions): Promise<structs.SmartHandle<R>> {
+    assertMaxArguments(arguments.length, 3);
+    assertEvaluateOptions(options);
+    const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._page, arg) : serializeArgument(arg);
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg }, kNoTimeout);
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 
-  async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
-    assertMaxArguments(arguments.length, 2);
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, kNoTimeout);
+  async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: EvaluateOptions): Promise<R> {
+    assertMaxArguments(arguments.length, 3);
+    assertEvaluateOptions(options);
+    const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._page, arg) : serializeArgument(arg);
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg }, kNoTimeout);
     return parseResult(result.value);
   }
 

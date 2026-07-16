@@ -4049,9 +4049,10 @@ export type PageEmulateMediaOptions = {
 export type PageEmulateMediaResult = void;
 export type PageExposeBindingParams = {
   name: string,
+  noGlobal?: boolean,
 };
 export type PageExposeBindingOptions = {
-
+  noGlobal?: boolean,
 };
 export type PageExposeBindingResult = {
   disposable: DisposableChannel,

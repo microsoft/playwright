@@ -143,7 +143,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       const binding = new BindingCallDispatcher(this, params.name, source, args);
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
-    });
+    }, params.noGlobal);
     this._disposables.push(binding);
     return { disposable: new DisposableDispatcher(this, binding) };
   }

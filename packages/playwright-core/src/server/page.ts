@@ -17,7 +17,7 @@
 
 import { isInvalidSelectorError } from '@isomorphic/selectorParser';
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { parseEvaluationResultValue } from '@isomorphic/utilityScriptSerializers';
+import { kBindingsControllerProperty, parseEvaluationResultValue } from '@isomorphic/utilityScriptSerializers';
 import { getComparator } from '@utils/comparators';
 import { debugLogger } from '@utils/debugLogger';
 import { LongStandingScope } from '@isomorphic/manualPromise';
@@ -349,13 +349,13 @@ export class Page extends SdkObject<PageEventMap> {
     return this.frameManager.frames();
   }
 
-  async exposeBinding(progress: Progress, name: string, playwrightBinding: frames.FunctionWithSource): Promise<PageBinding> {
+  async exposeBinding(progress: Progress, name: string, playwrightBinding: frames.FunctionWithSource, noGlobal?: boolean): Promise<PageBinding> {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
     if (this.browserContext._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered in the browser context`);
     await progress.race(this.browserContext.exposePlaywrightBindingIfNeeded());
-    const binding = new PageBinding(this, name, playwrightBinding);
+    const binding = new PageBinding(this, name, playwrightBinding, noGlobal);
     this._pageBindings.set(name, binding);
     try {
       await progress.race(this.delegate.addInitScript(binding.initScript));
@@ -1046,7 +1046,6 @@ export class Worker extends SdkObject<WorkerEventMap> {
 }
 
 export class PageBinding extends DisposableObject {
-  private static kController = '__playwright__binding__controller__';
   static kBindingName = '__playwright__binding__';
 
   static createInitScript(browserContext: BrowserContext): InitScript {
@@ -1054,7 +1053,7 @@ export class PageBinding extends DisposableObject {
       (() => {
         const module = {};
         ${rawBindingsControllerSource.source}
-        const property = '${PageBinding.kController}';
+        const property = '${kBindingsControllerProperty}';
         if (!globalThis[property])
           globalThis[property] = new (module.exports.BindingsController())(globalThis, '${PageBinding.kBindingName}');
       })();
@@ -1067,12 +1066,12 @@ export class PageBinding extends DisposableObject {
   readonly cleanupScript: string;
   forClient?: unknown;
 
-  constructor(parent: BrowserContext | Page, name: string, playwrightFunction: frames.FunctionWithSource) {
+  constructor(parent: BrowserContext | Page, name: string, playwrightFunction: frames.FunctionWithSource, noGlobal?: boolean) {
     super(parent);
     this.name = name;
     this.playwrightFunction = playwrightFunction;
-    this.initScript = new InitScript(parent, `globalThis['${PageBinding.kController}'].addBinding(${JSON.stringify(name)})`);
-    this.cleanupScript = `globalThis['${PageBinding.kController}'].removeBinding(${JSON.stringify(name)})`;
+    this.initScript = new InitScript(parent, `globalThis['${kBindingsControllerProperty}'].addBinding(${JSON.stringify(name)}, ${!!noGlobal})`);
+    this.cleanupScript = `globalThis['${kBindingsControllerProperty}'].removeBinding(${JSON.stringify(name)})`;
   }
 
   static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
@@ -1086,9 +1085,9 @@ export class PageBinding extends DisposableObject {
         throw new Error(`serializedArgs is not an array. This can happen when Array.prototype.toJSON is defined incorrectly`);
       const args = serializedArgs.map(a => parseEvaluationResultValue(a));
       const result = await binding.playwrightFunction({ frame: context.frame, page, context: page.browserContext }, ...args);
-      context.evaluateExpressionHandle(`arg => globalThis['${PageBinding.kController}'].deliverBindingResult(arg)`, { isFunction: true }, { name, seq, result }).catch(e => debugLogger.log('error', e));
+      context.evaluateExpressionHandle(`arg => globalThis['${kBindingsControllerProperty}'].deliverBindingResult(arg)`, { isFunction: true }, { name, seq, result }).catch(e => debugLogger.log('error', e));
     } catch (error) {
-      context.evaluateExpressionHandle(`arg => globalThis['${PageBinding.kController}'].deliverBindingResult(arg)`, { isFunction: true }, { name, seq, error }).catch(e => debugLogger.log('error', e));
+      context.evaluateExpressionHandle(`arg => globalThis['${kBindingsControllerProperty}'].deliverBindingResult(arg)`, { isFunction: true }, { name, seq, error }).catch(e => debugLogger.log('error', e));
     }
   }
 

@@ -38,11 +38,11 @@ type ZodSchema = ZodTypeAny | z3.ZodTypeAny;
 type InferZodSchema<T extends ZodSchema> = T extends z3.ZodTypeAny ? z3.infer<T> : T extends ZodTypeAny ? z.infer<T> : never;
 
 export interface Page {
-  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<R>;
-  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<R>;
+  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<R>;
+  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<R>;
 
-  evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<SmartHandle<R>>;
+  evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
+  evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
 
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<Disposable>;
 
@@ -85,11 +85,11 @@ export interface Page {
 }
 
 export interface Frame {
-  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<R>;
-  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<R>;
+  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<R>;
+  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<R>;
 
-  evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<SmartHandle<R>>;
+  evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
+  evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
 
   $<K extends keyof HTMLElementTagNameMap>(selector: K, options?: { strict: boolean }): Promise<ElementHandleForTag<K> | null>;
   $(selector: string, options?: { strict: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
@@ -156,11 +156,11 @@ export interface Worker {
 }
 
 export interface JSHandle<T = any> {
-  evaluate<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg): Promise<R>;
-  evaluate<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any): Promise<R>;
+  evaluate<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<R>;
+  evaluate<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<R>;
 
-  evaluateHandle<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  evaluateHandle<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any): Promise<SmartHandle<R>>;
+  evaluateHandle<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
+  evaluateHandle<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
 
   jsonValue(): Promise<T>;
   asElement(): T extends Node ? ElementHandle<T> : null;
@@ -190,8 +190,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 }
 
 export interface Locator {
-  evaluate<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal }): Promise<R>;
-  evaluateHandle<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal }): Promise<SmartHandle<R>>;
+  evaluate<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal, exposeFunctions?: boolean }): Promise<R>;
+  evaluateHandle<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal, exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
   evaluateAll<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E[], Arg, R>, arg?: Arg): Promise<R>;
   waitForFunction<Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, any>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal }): Promise<void>;
   elementHandle(options?: { timeout?: number }): Promise<ElementHandle<SVGElement | HTMLElement>>;

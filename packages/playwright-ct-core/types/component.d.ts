@@ -47,8 +47,6 @@ declare global {
     __pw_hooks_after_mount?: (<HooksConfig>(
       params: { hooksConfig?: HooksConfig; [key: string]: any }
     ) => Promise<void>)[];
-    // Can't start with __pw due to core reuse bindings logic for __pw*.
-    __ctDispatchFunction: (ordinal: number, args: any[]) => void;
     __pwUnwrapObject: (value: any) => Promise<any>;
     __pwTransformObject: (value: any, mapping: (v: any) => { result: any } | undefined) => any;
   }

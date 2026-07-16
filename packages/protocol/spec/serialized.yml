@@ -79,6 +79,9 @@ SerializedValue:
           v: SerializedValue
     # An index in the handles array from SerializedArgument.
     h: int?
+    # Name of a page-side callback that routes back to a client-side function.
+    # Used when passing a function as (part of) an evaluate argument.
+    fn: string?
     # Index of the object in value-type for circular reference resolution.
     id: int?
     # Ref to the object in value-type for circular reference resolution.
