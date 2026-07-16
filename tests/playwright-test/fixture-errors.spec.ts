@@ -370,6 +370,83 @@ test('should throw for unknown fixture parameter', async ({ runInlineTest }) => 
   expect(result.exitCode).toBe(1);
 });
 
+test('should allow config to set an option overridden by a fixture', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { baseURL: 'from-config' } };
+    `,
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        baseURL: [async ({}, use) => use('from-fixture'), { scope: 'test' }],
+      });
+
+      test('works', async ({ baseURL }) => {
+        expect(baseURL).toBe('from-fixture');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should allow config to set an option overridden by multiple fixtures', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { baseURL: 'from-config' } };
+    `,
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test1 = base.extend({
+        baseURL: [async ({}, use) => use('first'), { scope: 'test' }],
+      });
+      const test2 = test1.extend({
+        baseURL: [async ({ baseURL }, use) => use(baseURL + '-second'), { scope: 'test' }],
+      });
+
+      test2('works', async ({ baseURL }) => {
+        expect(baseURL).toBe('first-second');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should throw when config overrides a non-option fixture', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { foo: 'from-config' } };
+    `,
+    'a.spec.ts': `
+      import { test as base } from '@playwright/test';
+      const test = base.extend({
+        foo: async ({}, use) => use('from-fixture'),
+      });
+
+      test('does not run', async ({ foo }) => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Fixture "foo" cannot be overridden in the configuration "use" section. Only fixtures registered with { option: true } can be set in the config.');
+});
+
+test('should allow config to set an option and ignore unknown keys', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { headless: false, unknownThing: 'ignored' } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('works', async ({ headless }) => {
+        expect(headless).toBe(false);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should throw when calling runTest twice', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'f.spec.ts': `

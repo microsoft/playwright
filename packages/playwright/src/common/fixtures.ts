@@ -97,6 +97,18 @@ export class FixturePool {
         this._appendFixtureList({ fixtures: selectedOverrides, location: optionOverrides!.location }, !!disallowWorkerFixtures, true);
     }
 
+    if (optionOverrides) {
+      for (const key of overrideKeys) {
+        let registration = this._registrations.get(key);
+        if (!registration)
+          continue;
+        while (!registration.option && registration.super)
+          registration = registration.super;
+        if (!registration.option)
+          this._addLoadError(`Fixture "${key}" cannot be overridden in the configuration "use" section. Only fixtures registered with { option: true } can be set in the config.`, optionOverrides.location);
+      }
+    }
+
     this.digest = this.validate();
   }
 
