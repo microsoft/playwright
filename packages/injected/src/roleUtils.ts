@@ -970,7 +970,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
   }
 
   // step 2i.
-  if (!['presentation', 'none'].includes(role) || tagName === 'IFRAME') {
+  if (!['presentation', 'none'].includes(role) || tagName === 'IFRAME' || tagName === 'FRAME') {
     options.visitedElements.add(element);
     const title = element.getAttribute('title') || '';
     if (trimFlatString(title))

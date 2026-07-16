@@ -749,6 +749,26 @@ it('should snapshot a locator inside an iframe', async ({ page }) => {
   `);
 });
 
+it('should include frames on frameset pages', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41784' } }, async ({ page, server }) => {
+  server.setRoute('/frameset.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<frameset cols="50%,50%"><frame src="/frames/frame.html"><frame src="/frames/frame.html"></frameset>`);
+  });
+  await page.goto(server.PREFIX + '/frameset.html');
+  // Like iframes, frames are listed in the snapshot, but their content is not included.
+  expect(await page.ariaSnapshot({ timeout: 3000 })).toBe(unshift(`
+    - iframe
+    - iframe
+  `));
+});
+
+it('should snapshot a locator inside a frameset frame', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/frames/frameset.html');
+  await checkAndMatchSnapshot(page.frameLocator('frame').first().locator('body'), `
+    - text: Hi, I'm frame
+  `);
+});
+
 it('should snapshot with box from page', async ({ page }) => {
   await page.setContent(`
     <button style="position:absolute;left:100px;top:50px;width:80px;height:40px;margin:0;padding:0;border:0;">click</button>

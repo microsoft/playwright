@@ -250,7 +250,7 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
     candidates.push({ engine: 'css', selector: escapeNodeName(element), score: kCSSTagNameScore });
   }
 
-  if (element.nodeName === 'IFRAME') {
+  if (element.nodeName === 'IFRAME' || element.nodeName === 'FRAME') {
     for (const attribute of ['name', 'title']) {
       if (element.getAttribute(attribute))
         candidates.push({ engine: 'css', selector: `${escapeNodeName(element)}[${attribute}=${quoteCSSAttributeValue(element.getAttribute(attribute)!)}]`, score: kIframeByAttributeScore });

@@ -236,7 +236,7 @@ function computeAriaRef(ariaNode: aria.AriaNode, options: InternalOptions) {
 
 function toAriaNode(element: Element, options: InternalOptions, nameSourceElements: Map<aria.AriaNode, Set<Element> | undefined>): aria.AriaNode | null {
   const active = element.ownerDocument.activeElement === element && element.ownerDocument.hasFocus();
-  if (element.nodeName === 'IFRAME') {
+  if (element.nodeName === 'IFRAME' || element.nodeName === 'FRAME') {
     const ariaNode: aria.AriaNode = {
       role: 'iframe',
       name: '',

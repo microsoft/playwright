@@ -668,10 +668,92 @@ it('should support many properties on iframes', async ({ page }) => {
   `);
 });
 
-it('should not timeout on frameset pages', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41784' } }, async ({ page, server }) => {
-  await page.goto(server.PREFIX + '/frames/frameset.html');
+it('should snapshot frameset pages', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41784' } }, async ({ page, server }) => {
+  server.setRoute('/frameset.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<frameset rows="50%,50%"><frameset cols="50%,50%"><frame src="/frame-one.html"><frame src="/frame-two.html"></frameset><frame src="/frame-three.html"></frameset>`);
+  });
+  for (const name of ['one', 'two', 'three']) {
+    server.setRoute(`/frame-${name}.html`, (req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.end(`<button>Button ${name}</button>`);
+    });
+  }
+  await page.goto(server.PREFIX + '/frameset.html');
+
   const snapshot = await snapshotForAI(page, { timeout: 3000 });
-  expect(snapshot).toBe('');
+  expect(snapshot).toContainYaml(`
+    - generic [active] [ref=e1]:
+      - generic [ref=e2]:
+        - iframe [ref=e3]:
+          - button "Button one" [ref=f1e2]
+        - iframe [ref=e4]:
+          - button "Button two" [ref=f2e2]
+      - iframe [ref=e5]:
+        - button "Button three" [ref=f3e2]
+  `);
+  await expect(page.locator('aria-ref=f2e2')).toHaveText('Button two');
+});
+
+it('should snapshot a locator inside a frameset frame', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/frames/frameset.html');
+
+  const snapshot = await page.frames()[1].locator('body').ariaSnapshot({ mode: 'ai' });
+  expect(snapshot).toContainYaml(`
+    - generic [ref=f1e1]: Hi, I'm frame
+  `);
+
+  await expect(page.locator('aria-ref=f1e1')).toHaveText(`Hi, I'm frame`);
+  const resolved = await page.locator('aria-ref=f1e1').normalize();
+  expect(resolved.toString()).toBe(`locator('frame').first().contentFrame().locator('body')`);
+});
+
+it('should stitch iframes inside a frameset frame', async ({ page, server }) => {
+  server.setRoute('/frameset-with-iframe.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<frameset><frame src="/frame-with-iframe.html"></frameset>`);
+  });
+  server.setRoute('/frame-with-iframe.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<button>In frame</button><iframe srcdoc="<button>In iframe</button>"></iframe>`);
+  });
+  await page.goto(server.PREFIX + '/frameset-with-iframe.html');
+
+  expect(await snapshotForAI(page)).toContainYaml(`
+    - iframe [ref=e2]:
+      - generic [ref=f1e1]:
+        - button "In frame" [ref=f1e2]
+        - iframe [ref=f1e3]:
+          - button "In iframe" [ref=f2e2]
+  `);
+  await expect(page.locator('aria-ref=f1e2')).toHaveText('In frame');
+  await expect(page.locator('aria-ref=f2e2')).toHaveText('In iframe');
+
+  const resolved = await page.locator('aria-ref=f2e2').normalize();
+  expect(resolved.toString()).toBe(`locator('frame').contentFrame().locator('iframe').contentFrame().getByRole('button', { name: 'In iframe' })`);
+});
+
+it('should stitch nested frameset documents', async ({ page, server }) => {
+  server.setRoute('/outer-frameset.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<frameset><frame src="/inner-frameset.html"></frameset>`);
+  });
+  server.setRoute('/inner-frameset.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<frameset><frameset><frame src="/leaf.html"></frameset></frameset>`);
+  });
+  server.setRoute('/leaf.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<button>Leaf button</button>`);
+  });
+  await page.goto(server.PREFIX + '/outer-frameset.html');
+
+  expect(await snapshotForAI(page)).toContainYaml(`
+    - iframe [ref=e2]:
+      - iframe [ref=f1e3]:
+        - button "Leaf button" [ref=f2e2]
+  `);
+  await expect(page.locator('aria-ref=f2e2')).toHaveText('Leaf button');
 });
 
 it('should collapse inline generic nodes', async ({ page }) => {
