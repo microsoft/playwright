@@ -18,8 +18,10 @@ import { test, expect } from './pageTest';
 
 test('CacheStorage entry should survive page.reload()', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41618' }
-}, async ({ page, server, browserName }) => {
+}, async ({ page, server, browserName, isAndroid }) => {
   test.fail(browserName === 'webkit', 'Ephemeral CacheStorage is not persisted across reload in WebKit, consistent with Safari');
+  test.skip(isAndroid, 'not supported on Android');
+
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(async () => {
     const cache = await caches.open('repro-cache');

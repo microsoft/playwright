@@ -376,9 +376,9 @@ it('should emulate offline event', { annotation: { type: 'issue', description: '
     return events;
   });
   await context.setOffline(true);
-  expect(await events.jsonValue()).toEqual(['offline']);
+  await expect.poll(() => events.jsonValue()).toEqual(['offline']);
   await context.setOffline(false);
-  expect(await events.jsonValue()).toEqual(['offline', 'online']);
+  await expect.poll(() => events.jsonValue()).toEqual(['offline', 'online']);
   await context.close();
 });
 
