@@ -29,7 +29,7 @@ interface MountResult extends Locator {
   update: (options: ObjectComponentOptions | JsxComponent) => Promise<void>;
 }
 
-type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
+type TestFixtures = Omit<PlaywrightTestArgs, 'mount'> & PlaywrightTestOptions & {
   mount: (component: any, options: any) => Promise<MountResult>;
   router: RouterFixture;
 };

@@ -1056,6 +1056,12 @@ copyFiles.push({
 });
 
 copyFiles.push({
+  files: 'packages/skills/**/*',
+  from: 'packages/skills',
+  to: 'packages/playwright/lib/skills',
+});
+
+copyFiles.push({
   files: 'packages/playwright-core/src/tools/cli-client/skill/**/*.md',
   from: 'packages/playwright-core/src',
   to: 'packages/playwright-core/lib',

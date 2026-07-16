@@ -309,6 +309,9 @@ export interface PlaywrightTestArgs {
   context: BrowserContext;
   page: Page;
   request: APIRequestContext;
+  // Experimental, undocumented: mount a story from the component gallery and return a locator
+  // for the mounted component, augmented with update()/unmount(). See the playwright-component-testing skill.
+  mount: (storyId: string, props?: Record<string, any>) => Promise<Locator & { update(props?: Record<string, any>): Promise<void>, unmount(): Promise<void> }>;
 }
 
 type ExcludeProps<A, B> = {

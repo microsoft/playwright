@@ -43,5 +43,6 @@
   "exclude": [
     "packages/*/lib",
     "packages/extension",
+    "packages/skills",
   ]
 }
