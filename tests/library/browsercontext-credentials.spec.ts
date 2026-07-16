@@ -152,3 +152,76 @@ it('should fail with correct credentials and mismatching port', async ({ browser
     expect(responseOrError.status()).toBe(401);
   await context.close();
 });
+
+it('should work with multiple credentials for different origins', async ({ browser, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22013' });
+  it.skip(browserName === 'webkit', 'Multiple httpCredentials are not supported in WebKit');
+  // Firefox multi-credentials require a browser roll with updated juggler; keep single-object BC working.
+  it.skip(browserName === 'firefox', 'Requires Firefox with multi-credentials juggler support');
+
+  server.setAuth('/one.html', 'user1', 'pass1');
+  server.setAuth('/two.html', 'user2', 'pass2');
+  server.setRoute('/one.html', (req, res) => {
+    res.end('one');
+  });
+  server.setRoute('/two.html', (req, res) => {
+    res.end('two');
+  });
+
+  const context = await browser.newContext({
+    httpCredentials: [
+      { username: 'user1', password: 'pass1', origin: server.PREFIX },
+      { username: 'user2', password: 'pass2', origin: server.CROSS_PROCESS_PREFIX },
+    ]
+  });
+  const page = await context.newPage();
+  expect((await page.goto(server.PREFIX + '/one.html'))!.status()).toBe(200);
+  expect(await page.content()).toContain('one');
+  expect((await page.goto(server.CROSS_PROCESS_PREFIX + '/two.html'))!.status()).toBe(200);
+  expect(await page.content()).toContain('two');
+  // Wrong credentials for this origin.
+  expect((await page.goto(server.PREFIX + '/two.html'))!.status()).toBe(401);
+  expect((await page.goto(server.CROSS_PROCESS_PREFIX + '/one.html'))!.status()).toBe(401);
+  await context.close();
+});
+
+it('should work with a one-element credentials array', async ({ browser, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const context = await browser.newContext({
+    httpCredentials: [{ username: 'user', password: 'pass' }]
+  });
+  const page = await context.newPage();
+  expect((await page.goto(server.EMPTY_PAGE))!.status()).toBe(200);
+  await context.close();
+});
+
+it('should throw when multiple credentials are missing origin', async ({ browser }) => {
+  const error = await browser.newContext({
+    httpCredentials: [
+      { username: 'user1', password: 'pass1' },
+      { username: 'user2', password: 'pass2', origin: 'https://example.com' },
+    ]
+  }).catch(e => e);
+  expect(error.message).toContain('httpCredentials.origin is required when providing multiple credentials');
+});
+
+it('should throw when multiple credentials have duplicate origins', async ({ browser, server }) => {
+  const error = await browser.newContext({
+    httpCredentials: [
+      { username: 'user1', password: 'pass1', origin: server.PREFIX },
+      { username: 'user2', password: 'pass2', origin: server.PREFIX.toUpperCase() },
+    ]
+  }).catch(e => e);
+  expect(error.message).toContain('duplicate origin');
+});
+
+it('should throw for multiple credentials in WebKit', async ({ browser, browserName, server }) => {
+  it.skip(browserName !== 'webkit');
+  const error = await browser.newContext({
+    httpCredentials: [
+      { username: 'user1', password: 'pass1', origin: server.PREFIX },
+      { username: 'user2', password: 'pass2', origin: server.CROSS_PROCESS_PREFIX },
+    ]
+  }).catch(e => e);
+  expect(error.message).toContain('Multiple httpCredentials are not supported in WebKit');
+});

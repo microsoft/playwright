@@ -319,12 +319,12 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser.session.send('Browser.setOnlineOverride', { browserContextId: this._browserContextId, override: this._options.offline ? 'offline' : 'online' });
   }
 
-  async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+  async doSetHTTPCredentials(httpCredentials?: types.Credentials[]): Promise<void> {
     this._options.httpCredentials = httpCredentials;
     let credentials = null;
-    if (httpCredentials) {
-      const { username, password, origin } = httpCredentials;
-      credentials = { username, password, origin };
+    if (httpCredentials?.length) {
+      // Keep single-credential wire format for current Firefox; send array when multiple.
+      credentials = httpCredentials.length === 1 ? httpCredentials[0] : httpCredentials;
     }
     await this._browser.session.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId, credentials });
   }

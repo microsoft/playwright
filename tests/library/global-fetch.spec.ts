@@ -219,6 +219,53 @@ it('should support HTTPCredentials.send', async ({ playwright, server }) => {
   await request.dispose();
 });
 
+it('should support multiple httpCredentials for different origins', async ({ playwright, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22013' });
+  server.setAuth('/one.html', 'user1', 'pass1');
+  server.setAuth('/two.html', 'user2', 'pass2');
+  server.setRoute('/one.html', (req, res) => res.end('one'));
+  server.setRoute('/two.html', (req, res) => res.end('two'));
+
+  const request = await playwright.request.newContext({
+    httpCredentials: [
+      { username: 'user1', password: 'pass1', origin: server.PREFIX },
+      { username: 'user2', password: 'pass2', origin: server.CROSS_PROCESS_PREFIX },
+    ]
+  });
+  expect((await request.get(server.PREFIX + '/one.html')).status()).toBe(200);
+  expect((await request.get(server.CROSS_PROCESS_PREFIX + '/two.html')).status()).toBe(200);
+  expect((await request.get(server.PREFIX + '/two.html')).status()).toBe(401);
+  expect((await request.get(server.CROSS_PROCESS_PREFIX + '/one.html')).status()).toBe(401);
+  await request.dispose();
+});
+
+it('should support multiple httpCredentials with send always', async ({ playwright, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22013' });
+  const request = await playwright.request.newContext({
+    httpCredentials: [
+      { username: 'user1', password: 'pass1', origin: server.PREFIX, send: 'always' },
+      { username: 'user2', password: 'pass2', origin: server.CROSS_PROCESS_PREFIX, send: 'always' },
+    ]
+  });
+  {
+    const [serverRequest, response] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      request.get(server.EMPTY_PAGE)
+    ]);
+    expect(serverRequest.headers.authorization).toBe('Basic ' + Buffer.from('user1:pass1').toString('base64'));
+    expect(response.status()).toBe(200);
+  }
+  {
+    const [serverRequest, response] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      request.get(server.CROSS_PROCESS_PREFIX + '/empty.html')
+    ]);
+    expect(serverRequest.headers.authorization).toBe('Basic ' + Buffer.from('user2:pass2').toString('base64'));
+    expect(response.status()).toBe(200);
+  }
+  await request.dispose();
+});
+
 it('should support global ignoreHTTPSErrors option', async ({ playwright, httpsServer }) => {
   const request = await playwright.request.newContext({ ignoreHTTPSErrors: true });
   const response = await request.get(httpsServer.EMPTY_PAGE);

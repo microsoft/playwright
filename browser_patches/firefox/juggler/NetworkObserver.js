@@ -302,11 +302,14 @@ class NetworkRequest {
     }
     if (!credentials)
       return false;
-    const origin = aChannel.URI.scheme + '://' + aChannel.URI.hostPort;
-    if (credentials.origin && origin.toLowerCase() !== credentials.origin.toLowerCase())
+    const list = Array.isArray(credentials) ? credentials : [credentials];
+    const origin = (aChannel.URI.scheme + '://' + aChannel.URI.hostPort).toLowerCase();
+    const exact = list.find(c => c.origin && origin === c.origin.toLowerCase());
+    const chosen = exact || (list.length === 1 && !list[0].origin ? list[0] : null);
+    if (!chosen)
       return false;
-    authInfo.username = credentials.username;
-    authInfo.password = credentials.password;
+    authInfo.username = chosen.username;
+    authInfo.password = chosen.password;
     // This will produce a new request with respective auth header set.
     // It will have the same id as ours. We expect it to arrive as new request and
     // will treat it as our own redirect.

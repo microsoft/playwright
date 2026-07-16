@@ -509,7 +509,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
       await (sw as CRServiceWorker).updateOffline();
   }
 
-  async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+  async doSetHTTPCredentials(httpCredentials?: types.Credentials[]): Promise<void> {
     this._options.httpCredentials = httpCredentials;
     for (const page of this.pages())
       await (page.delegate as CRPage).updateHttpCredentials();

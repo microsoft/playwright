@@ -135,6 +135,9 @@ Maximum time in milliseconds to wait for the application to start. Defaults to `
 ### option: Electron.launch.httpcredentials = %%-context-option-httpcredentials-%%
 * since: v1.12
 
+### option: Electron.launch.httpcredentials = %%-context-option-httpcredentials-csharp-java-python-%%
+* since: v1.12
+
 ### option: Electron.launch.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 * since: v1.12
 

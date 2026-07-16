@@ -172,12 +172,12 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   permissions: tOptional(tArray(tString)),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
   offline: tOptional(tBoolean),
-  httpCredentials: tOptional(tObject({
+  httpCredentials: tOptional(tArray(tObject({
     username: tString,
     password: tString,
     origin: tOptional(tString),
     send: tOptional(tEnum(['always', 'unauthorized'])),
-  })),
+  }))),
   deviceScaleFactor: tOptional(tFloat),
   isMobile: tOptional(tBoolean),
   hasTouch: tOptional(tBoolean),
@@ -458,12 +458,12 @@ scheme.BrowserNewContextParams = tObject({
   permissions: tOptional(tArray(tString)),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
   offline: tOptional(tBoolean),
-  httpCredentials: tOptional(tObject({
+  httpCredentials: tOptional(tArray(tObject({
     username: tString,
     password: tString,
     origin: tOptional(tString),
     send: tOptional(tEnum(['always', 'unauthorized'])),
-  })),
+  }))),
   deviceScaleFactor: tOptional(tFloat),
   isMobile: tOptional(tBoolean),
   hasTouch: tOptional(tBoolean),
@@ -536,12 +536,12 @@ scheme.BrowserNewContextForReuseParams = tObject({
   permissions: tOptional(tArray(tString)),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
   offline: tOptional(tBoolean),
-  httpCredentials: tOptional(tObject({
+  httpCredentials: tOptional(tArray(tObject({
     username: tString,
     password: tString,
     origin: tOptional(tString),
     send: tOptional(tEnum(['always', 'unauthorized'])),
-  })),
+  }))),
   deviceScaleFactor: tOptional(tFloat),
   isMobile: tOptional(tBoolean),
   hasTouch: tOptional(tBoolean),
@@ -636,12 +636,12 @@ scheme.BrowserContextInitializer = tObject({
     permissions: tOptional(tArray(tString)),
     extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
     offline: tOptional(tBoolean),
-    httpCredentials: tOptional(tObject({
+    httpCredentials: tOptional(tArray(tObject({
       username: tString,
       password: tString,
       origin: tOptional(tString),
       send: tOptional(tEnum(['always', 'unauthorized'])),
-    })),
+    }))),
     deviceScaleFactor: tOptional(tFloat),
     isMobile: tOptional(tBoolean),
     hasTouch: tOptional(tBoolean),
@@ -807,11 +807,11 @@ scheme.BrowserContextSetGeolocationParams = tObject({
 });
 scheme.BrowserContextSetGeolocationResult = tOptional(tObject({}));
 scheme.BrowserContextSetHTTPCredentialsParams = tObject({
-  httpCredentials: tOptional(tObject({
+  httpCredentials: tOptional(tArray(tObject({
     username: tString,
     password: tString,
     origin: tOptional(tString),
-  })),
+  }))),
 });
 scheme.BrowserContextSetHTTPCredentialsResult = tOptional(tObject({}));
 scheme.BrowserContextSetNetworkInterceptionPatternsParams = tObject({
@@ -1051,12 +1051,12 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   permissions: tOptional(tArray(tString)),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
   offline: tOptional(tBoolean),
-  httpCredentials: tOptional(tObject({
+  httpCredentials: tOptional(tArray(tObject({
     username: tString,
     password: tString,
     origin: tOptional(tString),
     send: tOptional(tEnum(['always', 'unauthorized'])),
-  })),
+  }))),
   deviceScaleFactor: tOptional(tFloat),
   isMobile: tOptional(tBoolean),
   hasTouch: tOptional(tBoolean),
@@ -1151,11 +1151,11 @@ scheme.ElectronLaunchParams = tObject({
     latitude: tFloat,
     accuracy: tOptional(tFloat),
   })),
-  httpCredentials: tOptional(tObject({
+  httpCredentials: tOptional(tArray(tObject({
     username: tString,
     password: tString,
     origin: tOptional(tString),
-  })),
+  }))),
   ignoreHTTPSErrors: tOptional(tBoolean),
   locale: tOptional(tString),
   offline: tOptional(tBoolean),
@@ -2694,12 +2694,12 @@ scheme.PlaywrightNewRequestParams = tObject({
     pfx: tOptional(tBinary),
   }))),
   maxRedirects: tOptional(tInt),
-  httpCredentials: tOptional(tObject({
+  httpCredentials: tOptional(tArray(tObject({
     username: tString,
     password: tString,
     origin: tOptional(tString),
     send: tOptional(tEnum(['always', 'unauthorized'])),
-  })),
+  }))),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),

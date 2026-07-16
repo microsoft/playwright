@@ -21,7 +21,7 @@ import { inspect } from 'util';
 import { assert } from '@isomorphic/assert';
 import { headersObjectToArray } from '@isomorphic/headers';
 import { isString } from '@isomorphic/rtti';
-import { toClientCertificatesProtocol } from './browserContext';
+import { toClientCertificatesProtocol, toHttpCredentialsProtocol } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { TargetClosedError, isTargetClosedError } from './errors';
 import { RawHeaders } from './network';
@@ -31,7 +31,7 @@ import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 
 import type { Playwright } from './playwright';
 import type { ResourceTiming } from './network';
-import type { ClientCertificate, FilePayload, Headers, RemoteAddr, SecurityDetails, SetStorageState, StorageState, TimeoutOptions } from './types';
+import type { ClientCertificate, FilePayload, Headers, HTTPCredentials, RemoteAddr, SecurityDetails, SetStorageState, StorageState, TimeoutOptions } from './types';
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray, NameValue } from '@isomorphic/types';
@@ -52,10 +52,11 @@ export type FetchOptions = {
   maxRetries?: number,
 };
 
-export type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'tracesDir'> & {
+export type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'tracesDir' | 'httpCredentials'> & {
   extraHTTPHeaders?: Headers,
   storageState?: string | SetStorageState,
   clientCertificates?: ClientCertificate[];
+  httpCredentials?: HTTPCredentials | HTTPCredentials[];
 };
 
 type RequestWithBodyOptions = Omit<FetchOptions, 'method'>;
@@ -80,6 +81,7 @@ export class APIRequest implements api.APIRequest {
       storageState,
       tracesDir: this._playwright._defaultLaunchOptions?.tracesDir, // We do not expose tracesDir in the API, so do not allow options to accidentally override it.
       clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
+      httpCredentials: toHttpCredentialsProtocol(options.httpCredentials),
     }, kNoTimeout)).request);
     this._contexts.add(context);
     context._request = this;

@@ -324,7 +324,9 @@ export class WKBrowserContext extends BrowserContext {
       await (page.delegate as WKPage).updateOffline();
   }
 
-  async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+  async doSetHTTPCredentials(httpCredentials?: types.Credentials[]): Promise<void> {
+    if ((httpCredentials?.length ?? 0) > 1)
+      throw new Error('Multiple httpCredentials are not supported in WebKit');
     this._options.httpCredentials = httpCredentials;
     for (const page of this.pages())
       await (page.delegate as WKPage).updateHttpCredentials();

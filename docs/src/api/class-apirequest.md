@@ -31,6 +31,9 @@ for all status codes.
 ### option: APIRequest.newContext.httpCredentials = %%-context-option-httpcredentials-%%
 * since: v1.16
 
+### option: APIRequest.newContext.httpCredentials = %%-context-option-httpcredentials-csharp-java-python-%%
+* since: v1.16
+
 ### option: APIRequest.newContext.proxy = %%-browser-option-proxy-%%
 * since: v1.16
 

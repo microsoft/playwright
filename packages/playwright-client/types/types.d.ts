@@ -10396,7 +10396,23 @@ export interface BrowserContext {
     username: string;
 
     password: string;
-  }): Promise<void>;
+
+    /**
+     * Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one
+     * credentials entry.
+     */
+    origin?: string;
+  }|ReadonlyArray<{
+    username: string;
+
+    password: string;
+
+    /**
+     * Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one
+     * credentials entry.
+     */
+    origin?: string;
+  }>): Promise<void>;
 
   /**
    * @param offline Whether to emulate network being offline for the browser context.
@@ -11166,6 +11182,13 @@ export interface Browser {
     /**
      * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
      * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+     *
+     * Pass an array to supply different credentials for different origins. When the array has more than one entry, every
+     * entry must include a unique `origin`.
+     *
+     * **NOTE** WebKit does not support multiple `httpCredentials` entries. Pass a single credentials object (or a
+     * one-element array) when using WebKit.
+     *
      */
     httpCredentials?: {
       username: string;
@@ -11173,7 +11196,8 @@ export interface Browser {
       password: string;
 
       /**
-       * Restrain sending http credentials on specific origin (scheme://host:port).
+       * Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one
+       * credentials entry.
        */
       origin?: string;
 
@@ -11185,7 +11209,26 @@ export interface Browser {
        * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
       send?: "unauthorized"|"always";
-    };
+    }|Array<{
+      username: string;
+
+      password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one
+       * credentials entry.
+       */
+      origin?: string;
+
+      /**
+       * This option only applies to the requests sent from corresponding
+       * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+       * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+       * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+       * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+       */
+      send?: "unauthorized"|"always";
+    }>;
 
     /**
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
@@ -17192,6 +17235,13 @@ export interface BrowserType<Unused = {}> {
     /**
      * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
      * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+     *
+     * Pass an array to supply different credentials for different origins. When the array has more than one entry, every
+     * entry must include a unique `origin`.
+     *
+     * **NOTE** WebKit does not support multiple `httpCredentials` entries. Pass a single credentials object (or a
+     * one-element array) when using WebKit.
+     *
      */
     httpCredentials?: {
       username: string;
@@ -17199,7 +17249,8 @@ export interface BrowserType<Unused = {}> {
       password: string;
 
       /**
-       * Restrain sending http credentials on specific origin (scheme://host:port).
+       * Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one
+       * credentials entry.
        */
       origin?: string;
 
@@ -17211,7 +17262,26 @@ export interface BrowserType<Unused = {}> {
        * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
       send?: "unauthorized"|"always";
-    };
+    }|Array<{
+      username: string;
+
+      password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one
+       * credentials entry.
+       */
+      origin?: string;
+
+      /**
+       * This option only applies to the requests sent from corresponding
+       * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+       * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+       * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+       * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+       */
+      send?: "unauthorized"|"always";
+    }>;
 
     /**
      * If `true`, Playwright does not pass its own configurations args and only uses the ones from
@@ -18801,6 +18871,13 @@ export interface APIRequest {
     /**
      * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
      * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+     *
+     * Pass an array to supply different credentials for different origins. When the array has more than one entry, every
+     * entry must include a unique `origin`.
+     *
+     * **NOTE** WebKit does not support multiple `httpCredentials` entries. Pass a single credentials object (or a
+     * one-element array) when using WebKit.
+     *
      */
     httpCredentials?: {
       username: string;
@@ -18808,7 +18885,8 @@ export interface APIRequest {
       password: string;
 
       /**
-       * Restrain sending http credentials on specific origin (scheme://host:port).
+       * Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one
+       * credentials entry.
        */
       origin?: string;
 
@@ -18820,7 +18898,26 @@ export interface APIRequest {
        * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
       send?: "unauthorized"|"always";
-    };
+    }|Array<{
+      username: string;
+
+      password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one
+       * credentials entry.
+       */
+      origin?: string;
+
+      /**
+       * This option only applies to the requests sent from corresponding
+       * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+       * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+       * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+       * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+       */
+      send?: "unauthorized"|"always";
+    }>;
 
     /**
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
@@ -23503,6 +23600,13 @@ export interface Electron {
     /**
      * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
      * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+     *
+     * Pass an array to supply different credentials for different origins. When the array has more than one entry, every
+     * entry must include a unique `origin`.
+     *
+     * **NOTE** WebKit does not support multiple `httpCredentials` entries. Pass a single credentials object (or a
+     * one-element array) when using WebKit.
+     *
      */
     httpCredentials?: {
       username: string;
@@ -23510,7 +23614,8 @@ export interface Electron {
       password: string;
 
       /**
-       * Restrain sending http credentials on specific origin (scheme://host:port).
+       * Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one
+       * credentials entry.
        */
       origin?: string;
 
@@ -23522,7 +23627,26 @@ export interface Electron {
        * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
       send?: "unauthorized"|"always";
-    };
+    }|Array<{
+      username: string;
+
+      password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one
+       * credentials entry.
+       */
+      origin?: string;
+
+      /**
+       * This option only applies to the requests sent from corresponding
+       * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+       * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+       * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+       * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+       */
+      send?: "unauthorized"|"always";
+    }>;
 
     /**
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
@@ -24134,6 +24258,13 @@ export interface AndroidDevice {
     /**
      * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
      * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+     *
+     * Pass an array to supply different credentials for different origins. When the array has more than one entry, every
+     * entry must include a unique `origin`.
+     *
+     * **NOTE** WebKit does not support multiple `httpCredentials` entries. Pass a single credentials object (or a
+     * one-element array) when using WebKit.
+     *
      */
     httpCredentials?: {
       username: string;
@@ -24141,7 +24272,8 @@ export interface AndroidDevice {
       password: string;
 
       /**
-       * Restrain sending http credentials on specific origin (scheme://host:port).
+       * Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one
+       * credentials entry.
        */
       origin?: string;
 
@@ -24153,7 +24285,26 @@ export interface AndroidDevice {
        * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
       send?: "unauthorized"|"always";
-    };
+    }|Array<{
+      username: string;
+
+      password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one
+       * credentials entry.
+       */
+      origin?: string;
+
+      /**
+       * This option only applies to the requests sent from corresponding
+       * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+       * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+       * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+       * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+       */
+      send?: "unauthorized"|"always";
+    }>;
 
     /**
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
@@ -25360,8 +25511,15 @@ export interface BrowserContextOptions {
   /**
    * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
    * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+   *
+   * Pass an array to supply different credentials for different origins. When the array has more than one entry, every
+   * entry must include a unique `origin`.
+   *
+   * **NOTE** WebKit does not support multiple `httpCredentials` entries. Pass a single credentials object (or a
+   * one-element array) when using WebKit.
+   *
    */
-  httpCredentials?: HTTPCredentials;
+  httpCredentials?: HTTPCredentials|Array<HTTPCredentials>;
 
   /**
    * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
@@ -25662,7 +25820,8 @@ export interface HTTPCredentials {
   password: string;
 
   /**
-   * Restrain sending http credentials on specific origin (scheme://host:port).
+   * Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one
+   * credentials entry.
    */
   origin?: string;
 

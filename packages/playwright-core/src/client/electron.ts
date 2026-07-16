@@ -25,7 +25,7 @@ import { Waiter } from './waiter';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 
 import type { Page } from './page';
-import type { BrowserContextOptions, Headers, TimeoutOptions, WaitForEventOptions } from './types';
+import type { BrowserContextOptions, Headers, HTTPCredentials, TimeoutOptions, WaitForEventOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type * as channels from './channels';
@@ -33,14 +33,14 @@ import type * as childProcess from 'child_process';
 import type { BrowserWindow } from 'electron';
 import type { Playwright } from './playwright';
 
-type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'|'acceptDownloads'> & {
+type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'|'acceptDownloads'|'httpCredentials'> & {
   env?: NodeJS.ProcessEnv,
   extraHTTPHeaders?: Headers,
   recordHar?: BrowserContextOptions['recordHar'],
   colorScheme?: 'dark' | 'light' | 'no-preference' | null,
   acceptDownloads?: boolean,
-  timeout?: number,
-};
+  httpCredentials?: HTTPCredentials | HTTPCredentials[],
+} & TimeoutOptions;
 
 type ElectronAppType = typeof import('electron');
 

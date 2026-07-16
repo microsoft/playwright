@@ -706,6 +706,25 @@ An object containing additional HTTP headers to be sent with every request. Defa
 Whether to emulate network being offline. Defaults to `false`. Learn more about [network emulation](../emulation.md#offline).
 
 ## context-option-httpcredentials
+* langs: js
+- `httpCredentials` <[Object]|[Array]<[Object]>>
+  * alias: HttpCredentials
+  - `username` <[string]>
+  - `password` <[string]>
+  - `origin` ?<[string]> Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one credentials entry.
+  - `send` ?<[HttpCredentialsSend]<"unauthorized"|"always">> This option only applies to the requests sent from corresponding [APIRequestContext] and does not affect requests sent from the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+
+Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+If no origin is specified, the username and password are sent to any servers upon unauthorized responses.
+
+Pass an array to supply different credentials for different origins. When the array has more than one entry, every entry must include a unique `origin`.
+
+:::note
+WebKit does not support multiple `httpCredentials` entries. Pass a single credentials object (or a one-element array) when using WebKit.
+:::
+
+## context-option-httpcredentials-csharp-java-python
+* langs: csharp, java, python
 - `httpCredentials` <[Object]>
   * alias: HttpCredentials
   - `username` <[string]>
@@ -1091,6 +1110,7 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 - %%-context-option-extrahttpheaders-%%
 - %%-context-option-offline-%%
 - %%-context-option-httpcredentials-%%
+- %%-context-option-httpcredentials-csharp-java-python-%%
 - %%-context-option-colorscheme-%%
 - %%-context-option-colorscheme-csharp-python-%%
 - %%-context-option-reducedMotion-%%

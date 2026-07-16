@@ -409,7 +409,7 @@ export class BidiBrowserContext extends BrowserContext {
     });
   }
 
-  async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+  async doSetHTTPCredentials(httpCredentials?: types.Credentials[]): Promise<void> {
     this._options.httpCredentials = httpCredentials;
     for (const page of this.pages())
       await (page.delegate as BidiPage).updateHttpCredentials();

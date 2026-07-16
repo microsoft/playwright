@@ -64,16 +64,18 @@ Playwright:
               pfx: binary?
         maxRedirects: int?
         httpCredentials:
-          type: object?
-          properties:
-            username: string
-            password: string
-            origin: string?
-            send:
-              type: enum?
-              literals:
-              - always
-              - unauthorized
+          type: array?
+          items:
+            type: object
+            properties:
+              username: string
+              password: string
+              origin: string?
+              send:
+                type: enum?
+                literals:
+                - always
+                - unauthorized
         proxy:
           type: object?
           properties:

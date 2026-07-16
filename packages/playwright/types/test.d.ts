@@ -7262,6 +7262,12 @@ export interface PlaywrightTestOptions {
    * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
    * origin is specified, the username and password are sent to any servers upon unauthorized responses.
    *
+   * Pass an array to supply different credentials for different origins. When the array has more than one entry, every
+   * entry must include a unique `origin`.
+   *
+   * **NOTE** WebKit does not support multiple `httpCredentials` entries. Pass a single credentials object (or a
+   * one-element array) when using WebKit.
+   *
    * **Usage**
    *
    * ```js
@@ -7279,7 +7285,7 @@ export interface PlaywrightTestOptions {
    * ```
    *
    */
-  httpCredentials: HTTPCredentials | undefined;
+  httpCredentials: HTTPCredentials | HTTPCredentials[] | undefined;
   /**
    * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
    *

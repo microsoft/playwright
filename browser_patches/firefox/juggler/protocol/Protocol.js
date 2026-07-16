@@ -157,6 +157,8 @@ networkTypes.HTTPCredentials = {
   origin: t.Optional(t.String),
 };
 
+networkTypes.HTTPCredentialsList = t.Array(networkTypes.HTTPCredentials);
+
 networkTypes.SecurityDetails = {
   protocol: t.String,
   subjectName: t.String,
@@ -271,7 +273,8 @@ const Browser = {
     'setHTTPCredentials': {
       params: {
         browserContextId: t.Optional(t.String),
-        credentials: t.Nullable(networkTypes.HTTPCredentials),
+        // Accept a single credentials object (legacy) or an array for multiple origins.
+        credentials: t.Nullable(t.Either(networkTypes.HTTPCredentials, networkTypes.HTTPCredentialsList)),
       },
     },
     'setRequestInterception': {

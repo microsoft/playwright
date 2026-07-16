@@ -62,7 +62,7 @@ export type Credentials = {
   username: string;
   password: string;
   origin?: string;
-  sendImmediately?: boolean;
+  send?: 'always' | 'unauthorized';
 };
 
 export type Geolocation = {

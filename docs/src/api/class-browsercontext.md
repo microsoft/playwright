@@ -1523,9 +1523,11 @@ its geolocation.
 
 ### param: BrowserContext.setHTTPCredentials.httpCredentials
 * since: v1.8
-- `httpCredentials` <[null]|[Object]>
+* langs: js
+- `httpCredentials` <[null]|[Object]|[Array]<[Object]>>
   - `username` <[string]>
   - `password` <[string]>
+  - `origin` ?<[string]> Restrain sending http credentials on specific origin (scheme://host:port). Required when providing more than one credentials entry.
 
 ## async method: BrowserContext.setOffline
 * since: v1.8

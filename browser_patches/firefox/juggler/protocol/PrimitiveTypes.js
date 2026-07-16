@@ -83,6 +83,18 @@ t.Array = function(scheme) {
   }
 }
 
+t.Either = function(...schemes) {
+  return function(x, details = {}, path = ['<root>']) {
+    for (const scheme of schemes) {
+      const nestedDetails = {};
+      if (checkScheme(scheme, x, nestedDetails, path.slice()))
+        return true;
+    }
+    details.error = `Expected "${path.join('.')}" to match one of the alternative schemes; found \`${JSON.stringify(x)}\` (${typeof x}) instead.`;
+    return false;
+  }
+}
+
 t.Recursive = function(types, schemeName) {
   return function(x, details = {}, path = ['<root>']) {
     const scheme = types[schemeName];

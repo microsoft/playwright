@@ -587,6 +587,24 @@ it('should support HTTPCredentials.send for newContext', async ({ contextFactory
   }
 });
 
+it('should support multiple httpCredentials for context.request', async ({ contextFactory, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22013' });
+  server.setAuth('/one.html', 'user1', 'pass1');
+  server.setAuth('/two.html', 'user2', 'pass2');
+  server.setRoute('/one.html', (req, res) => res.end('one'));
+  server.setRoute('/two.html', (req, res) => res.end('two'));
+  const context = await contextFactory({
+    httpCredentials: [
+      { username: 'user1', password: 'pass1', origin: server.PREFIX },
+      { username: 'user2', password: 'pass2', origin: server.CROSS_PROCESS_PREFIX },
+    ]
+  });
+  expect((await context.request.get(server.PREFIX + '/one.html')).status()).toBe(200);
+  expect((await context.request.get(server.CROSS_PROCESS_PREFIX + '/two.html')).status()).toBe(200);
+  expect((await context.request.get(server.PREFIX + '/two.html')).status()).toBe(401);
+  expect((await context.request.get(server.CROSS_PROCESS_PREFIX + '/one.html')).status()).toBe(401);
+});
+
 it('should support HTTPCredentials.send for browser.newPage', async ({ contextFactory, server, browser }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30534' });
   const page = await browser.newPage({

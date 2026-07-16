@@ -24,6 +24,7 @@ import { Credentials } from './credentials';
 import { Debugger } from './debugger';
 import { DialogManager } from './dialog';
 import { BrowserContextAPIRequestContext } from './fetch';
+import { verifyHttpCredentials } from './httpCredentials';
 import { helper } from './helper';
 import { EventMap, SdkObject } from './instrumentation';
 import * as network from './network';
@@ -292,7 +293,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   protected abstract doClearCookies(): Promise<void>;
   protected abstract doGrantPermissions(origin: string, permissions: string[]): Promise<void>;
   protected abstract doClearPermissions(): Promise<void>;
-  protected abstract doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
+  protected abstract doSetHTTPCredentials(httpCredentials?: types.Credentials[]): Promise<void>;
   protected abstract doAddInitScript(initScript: InitScript): Promise<void>;
   protected abstract doRemoveInitScripts(initScripts: InitScript[]): Promise<void>;
   protected abstract doUpdateExtraHTTPHeaders(): Promise<void>;
@@ -348,11 +349,12 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     })));
   }
 
-  setHTTPCredentials(progress: Progress, httpCredentials?: types.Credentials): Promise<void> {
+  setHTTPCredentials(progress: Progress, httpCredentials?: types.Credentials[]): Promise<void> {
     return progress.race(this.innerSetHTTPCredentials(httpCredentials));
   }
 
-  innerSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+  innerSetHTTPCredentials(httpCredentials?: types.Credentials[]): Promise<void> {
+    verifyHttpCredentials(httpCredentials);
     return this.doSetHTTPCredentials(httpCredentials);
   }
 
@@ -484,7 +486,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     const proxy = this._options.proxy || this._browser.options.proxy || { username: undefined, password: undefined };
     const { username, password } = proxy;
     if (username) {
-      this._options.httpCredentials = { username, password: password! };
+      this._options.httpCredentials = [{ username, password: password! }];
       const token = Buffer.from(`${username}:${password}`).toString('base64');
       this._options.extraHTTPHeaders = network.mergeHeaders([
         this._options.extraHTTPHeaders,
@@ -499,7 +501,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       return;
     const { username, password } = proxy;
     if (username)
-      this._options.httpCredentials = { username, password: password || '' };
+      this._options.httpCredentials = [{ username, password: password || '' }];
   }
 
   async addInitScript(progress: Progress, source: string): Promise<InitScript> {
@@ -800,6 +802,9 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   if (options.proxy)
     options.proxy = normalizeProxySettings(options.proxy);
   verifyGeolocation(options.geolocation);
+  verifyHttpCredentials(options.httpCredentials);
+  if (browserOptions.name === 'webkit' && (options.httpCredentials?.length ?? 0) > 1)
+    throw new Error('Multiple httpCredentials are not supported in WebKit');
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation): asserts geolocation is types.Geolocation {

@@ -63,7 +63,14 @@ export type ClientCertificate = {
   passphrase?: string;
 };
 
-export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'recordHar' | 'colorScheme' | 'reducedMotion' | 'forcedColors' | 'acceptDownloads' | 'contrast' | 'agent'> & {
+export type HTTPCredentials = {
+  username: string;
+  password: string;
+  origin?: string;
+  send?: 'unauthorized' | 'always';
+};
+
+export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'recordHar' | 'colorScheme' | 'reducedMotion' | 'forcedColors' | 'acceptDownloads' | 'contrast' | 'agent' | 'httpCredentials'> & {
   viewport?: Size | null;
   extraHTTPHeaders?: Headers;
   logger?: Logger;
@@ -86,6 +93,7 @@ export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'vie
   contrast?: 'more' | 'no-preference' | null;
   acceptDownloads?: boolean;
   clientCertificates?: ClientCertificate[];
+  httpCredentials?: HTTPCredentials | HTTPCredentials[];
 };
 
 type LaunchOverrides = {

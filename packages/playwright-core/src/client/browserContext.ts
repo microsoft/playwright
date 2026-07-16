@@ -46,7 +46,7 @@ import { Worker } from './worker';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 import { mkdirIfNeeded } from './fileUtils';
 
-import type { BrowserContextOptions, Headers, SetStorageState, StorageState, WaitForEventOptions } from './types';
+import type { BrowserContextOptions, Headers, HTTPCredentials, SetStorageState, StorageState, WaitForEventOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { URLMatch } from '@isomorphic/urlMatch';
@@ -354,8 +354,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.setOffline({ offline }, kNoTimeout);
   }
 
-  async setHTTPCredentials(httpCredentials: { username: string, password: string } | null): Promise<void> {
-    await this._channel.setHTTPCredentials({ httpCredentials: httpCredentials || undefined }, kNoTimeout);
+  async setHTTPCredentials(httpCredentials: HTTPCredentials | HTTPCredentials[] | null): Promise<void> {
+    await this._channel.setHTTPCredentials({ httpCredentials: toHttpCredentialsProtocol(httpCredentials) }, kNoTimeout);
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
@@ -561,10 +561,20 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     contrast: options.contrast === null ? 'no-override' : options.contrast,
     acceptDownloads: toAcceptDownloadsProtocol(options.acceptDownloads),
     clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
+    httpCredentials: toHttpCredentialsProtocol(options.httpCredentials),
   };
   if (contextParams.recordVideo && contextParams.recordVideo.dir)
     contextParams.recordVideo.dir = path.resolve(contextParams.recordVideo.dir);
   return contextParams;
+}
+
+export function toHttpCredentialsProtocol(httpCredentials?: HTTPCredentials | HTTPCredentials[] | null): channels.BrowserNewContextParams['httpCredentials'] {
+  if (httpCredentials === null || httpCredentials === undefined)
+    return undefined;
+  const list = Array.isArray(httpCredentials) ? httpCredentials : [httpCredentials];
+  if (!list.length)
+    return undefined;
+  return list;
 }
 
 function toAcceptDownloadsProtocol(acceptDownloads?: boolean) {

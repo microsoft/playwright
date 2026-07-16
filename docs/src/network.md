@@ -73,6 +73,14 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 await page.goto('https://example.com');
+
+// Different credentials for different origins:
+const context2 = await browser.newContext({
+  httpCredentials: [
+    { username: 'user1', password: 'pass1', origin: 'https://server1.com' },
+    { username: 'user2', password: 'pass2', origin: 'https://server2.com' },
+  ],
+});
 ```
 
 ```java

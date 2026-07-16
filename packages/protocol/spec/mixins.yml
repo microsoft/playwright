@@ -138,16 +138,18 @@ ContextOptions:
       items: NameValue
     offline: boolean?
     httpCredentials:
-      type: object?
-      properties:
-        username: string
-        password: string
-        origin: string?
-        send:
-          type: enum?
-          literals:
-          - always
-          - unauthorized
+      type: array?
+      items:
+        type: object
+        properties:
+          username: string
+          password: string
+          origin: string?
+          send:
+            type: enum?
+            literals:
+            - always
+            - unauthorized
     deviceScaleFactor: float?
     isMobile: boolean?
     hasTouch: boolean?
