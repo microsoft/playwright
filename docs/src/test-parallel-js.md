@@ -170,38 +170,9 @@ test('exports a CSV', async ({ page }, testInfo) => {
 });
 ```
 
-### Don't keep test state in module variables
+### Keep tests independent
 
-In [fully parallel](#parallelize-tests-in-a-single-file) mode, tests from one file share a worker and run one after another, so a module-level variable leaks from one test into the next:
-
-```js
-// ❌ Shared by every test in this worker.
-let orderId: string;
-
-test('creates an order', async ({ page }) => {
-  orderId = await createOrder(page);
-});
-
-test('cancels the order', async ({ page }) => {
-  await cancelOrder(page, orderId); // depends on the previous test
-});
-```
-
-Give each test its own value with a [fixture](./test-fixtures.md#creating-a-fixture) instead:
-
-```js
-import { test as base } from '@playwright/test';
-
-export const test = base.extend<{ orderId: string }>({
-  orderId: async ({ page }, use) => {
-    await use(await createOrder(page));
-  },
-});
-
-test('cancels an order', async ({ page, orderId }) => {
-  await cancelOrder(page, orderId); // isolated per test
-});
-```
+Above all, [keep your tests isolated](./writing-tests.md#test-isolation) from one another. A test that leaks state through a module-level variable or depends on another test's side effects works when tests run in order, but breaks the moment they run in parallel or in a different order. Set up everything a test needs in that test or in a [fixture](./test-fixtures.md#creating-a-fixture), and never rely on another test having run first.
 
 ## Shard tests between multiple machines
 
