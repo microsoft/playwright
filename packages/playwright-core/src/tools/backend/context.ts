@@ -46,7 +46,6 @@ export type ContextConfig = {
   };
   outputDir?: string;
   outputMaxSize?: number;
-  outputMode?: 'file' | 'stdout';
   saveSession?: boolean;
   secrets?: Record<string, string>;
   snapshot?: {

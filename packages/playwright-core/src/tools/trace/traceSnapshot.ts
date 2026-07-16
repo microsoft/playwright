@@ -190,7 +190,6 @@ async function runCommandOnSnapshot(server: { url: string, stop: () => Promise<v
 
   const backend = new BrowserBackend({
     snapshot: { mode: 'full' },
-    outputMode: 'file',
     skillMode: true,
   }, context, browserTools);
   await backend.initialize({ cwd: process.cwd(), clientName: 'playwright-cli' });
