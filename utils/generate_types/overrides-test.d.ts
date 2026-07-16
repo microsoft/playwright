@@ -88,8 +88,8 @@ export type HttpCacheDecision = {
   /**
    * A stable principal id, such as a session token, that partitions the cache. Entries recorded under one identity
    * are never served to a request with a different one, so per-user content can be cached without leaking across
-   * contexts. The value is hashed into the cache key and never written to disk. `null` is treated as anonymous, so
-   * `request.headers.get()` results can be passed directly.
+   * contexts. The value is hashed into the cache key and never written to disk. `null` and `undefined` both mean "no
+   * identity" (the default, shared partition), so the result of `request.headers.get()` can be passed directly.
    */
   identity?: string | null;
 };

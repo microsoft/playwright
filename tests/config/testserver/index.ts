@@ -40,6 +40,10 @@ type UpgradeActions = {
 
 type IncomingMessageWithBody = http.IncomingMessage & { postBody: Promise<Buffer> };
 
+// A hostname that resolves to 127.0.0.1 but is not treated as loopback, so
+// traffic to a local test server is routed through a configured proxy.
+export const kResolvableLoopbackHost = 'fake-localhost-127-0-0-1.nip.io';
+
 export class TestServer {
   private _server: http.Server;
   private _wsServer: WebSocketServer;

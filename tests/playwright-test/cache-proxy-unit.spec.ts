@@ -14,72 +14,45 @@
  * limitations under the License.
  */
 
-import { test as base, expect } from '@playwright/test';
+import { test as base, expect } from './playwright-test-fixtures';
 import http from 'http';
 import https from 'https';
 import net from 'net';
 import fs from 'fs';
 import path from 'path';
-import { WebSocket, WebSocketServer } from 'ws';
+import { WebSocket } from 'ws';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import { generateSelfSignedCertificate } from '@utils/crypto';
-import { CacheProxy } from '../../../packages/playwright/src/plugins/cacheProxy/server';
-import { ResponseCache } from '../../../packages/playwright/src/plugins/cacheProxy/cache';
-import type { CacheEntry } from '../../../packages/playwright/src/plugins/cacheProxy/server';
-import type { ProxySettings } from '@utils/network';
-
-// A non-loopback name that resolves to 127.0.0.1, so the proxy's loopback
-// bypass does not skip our local origin.
-const HOST = 'fake-localhost-127-0-0-1.nip.io';
+import { CacheProxy } from '../../packages/playwright/src/plugins/cacheProxy/server';
+import { ResponseCache } from '../../packages/playwright/src/plugins/cacheProxy/cache';
+import { kResolvableLoopbackHost } from '../config/testserver';
+import type { CacheEntry, CacheProxyOptions } from '../../packages/playwright/src/plugins/cacheProxy/server';
+import type { TestServer } from '../config/testserver';
 
 type RouteHandler = (req: http.IncomingMessage, res: http.ServerResponse) => void;
 type Origin = {
-  port: number;
   url: (p: string) => string;
   loopbackUrl: (p: string) => string;
   wsUrl: (p: string) => string;
   setRoute: (p: string, h: RouteHandler) => void;
   hits: (p: string) => number;
   onWebSocket: (h: (ws: WebSocket) => void) => void;
-  close: () => Promise<void>;
 };
 
-async function startOrigin(tls?: https.ServerOptions): Promise<Origin> {
+// Adapts a shared TestServer into a hit-counting origin addressed through a
+// resolvable non-loopback host, so its traffic is not bypassed by the proxy.
+function wrapOrigin(server: TestServer, tls: boolean): Origin {
   const hits = new Map<string, number>();
-  const routes = new Map<string, RouteHandler>();
-  const handler: RouteHandler = (req, res) => {
-    const p = new URL(req.url || '/', 'http://x').pathname;
-    hits.set(p, (hits.get(p) || 0) + 1);
-    const route = routes.get(p);
-    if (route) {
-      route(req, res);
-    } else {
-      res.writeHead(404);
-      res.end('not found');
-    }
-  };
-  const server = tls ? https.createServer(tls, handler) : http.createServer(handler);
-  const wss = new WebSocketServer({ server });
-  let wsHandler: ((ws: WebSocket) => void) | undefined;
-  wss.on('connection', ws => wsHandler?.(ws));
-  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
-  const port = (server.address() as net.AddressInfo).port;
   const scheme = tls ? 'https' : 'http';
   return {
-    port,
-    url: p => `${scheme}://${HOST}:${port}${p}`,
-    loopbackUrl: p => `${scheme}://127.0.0.1:${port}${p}`,
-    wsUrl: p => `${tls ? 'wss' : 'ws'}://${HOST}:${port}${p}`,
-    setRoute: (p, h) => routes.set(p, h),
-    hits: p => hits.get(p) || 0,
-    onWebSocket: h => { wsHandler = h; },
-    close: () => new Promise<void>(resolve => {
-      for (const client of wss.clients)
-        client.terminate();
-      wss.close();
-      server.closeAllConnections();
-      server.close(() => resolve());
+    url: p => `${scheme}://${kResolvableLoopbackHost}:${server.PORT}${p}`,
+    loopbackUrl: p => `${scheme}://127.0.0.1:${server.PORT}${p}`,
+    wsUrl: p => `${tls ? 'wss' : 'ws'}://${kResolvableLoopbackHost}:${server.PORT}${p}`,
+    setRoute: (p, handler) => server.setRoute(p, (req, res) => {
+      hits.set(p, (hits.get(p) || 0) + 1);
+      handler(req, res);
     }),
+    hits: p => hits.get(p) || 0,
+    onWebSocket: handler => server.onceWebSocketConnection(handler),
   };
 }
 
@@ -151,28 +124,22 @@ type Fixtures = {
   origin: Origin;
   httpsOrigin: Origin;
   cacheDir: () => string;
-  startProxy: (entry: CacheEntry, upstream?: ProxySettings) => Promise<string>;
+  startProxy: (entry: CacheEntry, options?: CacheProxyOptions) => Promise<string>;
 };
 
 const it = base.extend<Fixtures>({
-  origin: async ({}, use) => {
-    const origin = await startOrigin();
-    await use(origin);
-    await origin.close();
-  },
-  httpsOrigin: async ({}, use) => {
-    const origin = await startOrigin(generateSelfSignedCertificate());
-    await use(origin);
-    await origin.close();
-  },
+  origin: async ({ server }, use) => use(wrapOrigin(server, false)),
+  httpsOrigin: async ({ httpsServer }, use) => use(wrapOrigin(httpsServer, true)),
   cacheDir: async ({}, use, testInfo) => {
     let index = 0;
     await use(() => testInfo.outputPath('cache-' + (index++)));
   },
   startProxy: async ({}, use) => {
     const started: CacheProxy[] = [];
-    await use(async (entry, upstream) => {
-      const proxy = new CacheProxy(entry, upstream);
+    await use(async (entry, options) => {
+      // The shared test https server is self-signed, so ignore upstream
+      // certificate errors unless a test opts back into verification.
+      const proxy = new CacheProxy(entry, { ignoreHTTPSErrors: true, ...options });
       const address = await proxy.start();
       started.push(proxy);
       return address;
@@ -182,10 +149,10 @@ const it = base.extend<Fixtures>({
 });
 
 // Convenience: a single-cache proxy over a fresh directory.
-async function cachingProxy(startProxy: Fixtures['startProxy'], cacheDir: Fixtures['cacheDir'], match: CacheEntry['match'] = undefined, upstream?: ProxySettings) {
+async function cachingProxy(startProxy: Fixtures['startProxy'], cacheDir: Fixtures['cacheDir'], match: CacheEntry['match'] = undefined, options?: CacheProxyOptions) {
   const dir = cacheDir();
   const cache = new ResponseCache(dir);
-  const address = await startProxy({ cache, match }, upstream);
+  const address = await startProxy({ cache, match }, options);
   return { address, dir, cache };
 }
 
@@ -452,7 +419,7 @@ it.describe('match callback', () => {
       url: origin.url('/probe'),
       method: 'GET',
       dest: 'image',
-      host: `${HOST}:${origin.port}`,
+      host: new URL(origin.url('/probe')).host,
       cookie: 'sid=1', // Node's Request keeps "forbidden" headers.
     });
   });
@@ -515,13 +482,25 @@ it.describe('https MITM', () => {
     expect((await driveTls(address, httpsOrigin.url('/img'), { 'sec-fetch-dest': 'image' })).body).toBe('secure');
     expect(httpsOrigin.hits('/img')).toBe(1);
   });
+
+  it('rejects a self-signed upstream when not ignoring HTTPS errors', async ({ httpsOrigin, startProxy, cacheDir }) => {
+    httpsOrigin.setRoute('/img', (req, res) => { res.writeHead(200, { 'content-type': 'image/png' }); res.end('secure'); });
+    const { address } = await cachingProxy(startProxy, cacheDir, undefined, { ignoreHTTPSErrors: false });
+    expect((await driveTls(address, httpsOrigin.url('/img'), { 'sec-fetch-dest': 'image' })).status).toBe(502);
+    expect(httpsOrigin.hits('/img')).toBe(0);
+  });
 });
 
 it.describe('errors and edge cases', () => {
-  it('returns 502 when the upstream is unreachable', async ({ origin, startProxy, cacheDir }) => {
-    const url = origin.url('/gone');
-    await origin.close();
+  it('returns 502 when the upstream is unreachable', async ({ startProxy, cacheDir }) => {
+    // Bind then release a port so nothing is listening on it.
+    const dead = http.createServer();
+    await new Promise<void>(resolve => dead.listen(0, '127.0.0.1', resolve));
+    const deadPort = (dead.address() as net.AddressInfo).port;
+    await new Promise<void>(resolve => dead.close(() => resolve()));
+
     const { address } = await cachingProxy(startProxy, cacheDir);
+    const url = `http://${kResolvableLoopbackHost}:${deadPort}/gone`;
     expect((await drive(address, url, { 'sec-fetch-dest': 'image' })).status).toBe(502);
   });
 
@@ -586,7 +565,7 @@ it.describe('upstream proxy chaining', () => {
 
     origin.setRoute('/img', (req, res) => { res.writeHead(200, { 'content-type': 'image/png' }); res.end('x'); });
     try {
-      const { address } = await cachingProxy(startProxy, cacheDir, undefined, { server: upstreamUrl });
+      const { address } = await cachingProxy(startProxy, cacheDir, undefined, { proxy: { server: upstreamUrl } });
       expect((await drive(address, origin.url('/img'), { 'sec-fetch-dest': 'image' })).body).toBe('x');
       expect(tunnelled.length).toBeGreaterThan(0);
       await drive(address, origin.url('/img'), { 'sec-fetch-dest': 'image' });

@@ -63,18 +63,15 @@ export class ResponseCache {
   }
 
   async load() {
-    let content: string;
-    try {
-      content = await fs.promises.readFile(this._indexFile, 'utf8');
-    } catch {
+    if (!await existsAsync(this._indexFile))
       return; // No cache yet.
-    }
-    // Discard an incompatible cache instead of mis-parsing it.
+    // Discard an incompatible cache instead of reading and mis-parsing it.
     if (await this._onDiskVersion() !== CACHE_VERSION) {
       await fs.promises.rm(this._indexFile, { force: true }).catch(() => {});
       await fs.promises.rm(this._blobsDir, { recursive: true, force: true }).catch(() => {});
       return;
     }
+    const content = await fs.promises.readFile(this._indexFile, 'utf8');
     for (const line of content.split('\n')) {
       if (!line.trim())
         continue;

@@ -65,7 +65,7 @@ test('should record and replay responses across runs', async ({ runInlineTest, h
   });
 
   const files = {
-    'playwright.config.ts': `export default { httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
+    'playwright.config.ts': `export default { use: { ignoreHTTPSErrors: true }, httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('load', async ({ page }) => {
@@ -102,7 +102,7 @@ test('should cache https responses via MITM', async ({ runInlineTest, httpsServe
   });
 
   const files = {
-    'playwright.config.ts': `export default { httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
+    'playwright.config.ts': `export default { use: { ignoreHTTPSErrors: true }, httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('load', async ({ page }) => {
@@ -127,7 +127,7 @@ test('should tunnel secure WebSockets through the MITM proxy', async ({ runInlin
   httpsServer.onceWebSocketConnection(ws => ws.on('message', () => ws.send('pong')));
 
   const result = await runInlineTest({
-    'playwright.config.ts': `export default { httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
+    'playwright.config.ts': `export default { use: { ignoreHTTPSErrors: true }, httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('wss', async ({ page }) => {
@@ -152,7 +152,7 @@ test('should tunnel plaintext WebSockets', async ({ runInlineTest, server }, tes
   server.onceWebSocketConnection(ws => ws.on('message', () => ws.send('pong')));
 
   const result = await runInlineTest({
-    'playwright.config.ts': `export default { httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
+    'playwright.config.ts': `export default { use: { ignoreHTTPSErrors: true }, httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('ws', async ({ page }) => {
@@ -181,7 +181,7 @@ test('should stream non-storable responses without buffering', async ({ runInlin
   });
 
   const result = await runInlineTest({
-    'playwright.config.ts': `export default { httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
+    'playwright.config.ts': `export default { use: { ignoreHTTPSErrors: true }, httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('stream', async ({ page }) => {
@@ -212,7 +212,7 @@ test('should cache only shared static assets by default', async ({ runInlineTest
   httpsServer.setRoute('/no-store', (req, res) => { ++counts.noStore; res.writeHead(200, { 'cache-control': 'no-store' }); res.end('a'); });
 
   const files = {
-    'playwright.config.ts': `export default { httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
+    'playwright.config.ts': `export default { use: { ignoreHTTPSErrors: true }, httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('load', async ({ page }) => {
@@ -243,7 +243,7 @@ test('should isolate cached entries by identity', async ({ runInlineTest, server
   server.setRoute('/me', (req, res) => { ++hits; res.end('user:' + (req.headers['x-user'] || 'guest')); });
 
   const files = {
-    'playwright.config.ts': `export default { httpCache: {
+    'playwright.config.ts': `export default { use: { ignoreHTTPSErrors: true }, httpCache: {
       dir: ${JSON.stringify(cacheDir)},
       match: request => ({ disposition: 'cache', identity: request.headers.get('x-user') }),
     } };`,
@@ -279,7 +279,7 @@ test('should key cached variants by Vary', async ({ runInlineTest, server }, tes
 
   const files = {
     // Force-cache so the fetch is stored; this isolates the Vary keying.
-    'playwright.config.ts': `export default { httpCache: { dir: ${JSON.stringify(cacheDir)}, match: () => ({ disposition: 'cache' }) } };`,
+    'playwright.config.ts': `export default { use: { ignoreHTTPSErrors: true }, httpCache: { dir: ${JSON.stringify(cacheDir)}, match: () => ({ disposition: 'cache' }) } };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('load', async ({ page }) => {
@@ -311,7 +311,7 @@ test('should not cache Vary: * responses', async ({ runInlineTest, server }, tes
 
   const files = {
     // Even when caching is forced, Vary: * is hard-blocked and never stored.
-    'playwright.config.ts': `export default { httpCache: { dir: ${JSON.stringify(cacheDir)}, match: () => ({ disposition: 'cache' }) } };`,
+    'playwright.config.ts': `export default { use: { ignoreHTTPSErrors: true }, httpCache: { dir: ${JSON.stringify(cacheDir)}, match: () => ({ disposition: 'cache' }) } };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('load', async ({ page }) => {
@@ -337,7 +337,7 @@ test('should cache redirects', async ({ runInlineTest, server }, testInfo) => {
   server.setRoute('/new', (req, res) => { res.end('arrived'); });
 
   const files = {
-    'playwright.config.ts': `export default { httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
+    'playwright.config.ts': `export default { use: { ignoreHTTPSErrors: true }, httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('load', async ({ page }) => {
@@ -364,7 +364,7 @@ test('should not cache loopback traffic', async ({ runInlineTest, server }, test
   });
 
   const files = {
-    'playwright.config.ts': `export default { httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
+    'playwright.config.ts': `export default { use: { ignoreHTTPSErrors: true }, httpCache: { dir: ${JSON.stringify(cacheDir)} } };`,
     // Reached over loopback (localhost), which the cache proxy bypasses.
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -399,7 +399,7 @@ test('should respect the match callback disposition', async ({ runInlineTest, ht
   });
 
   const files = {
-    'playwright.config.ts': `export default { httpCache: {
+    'playwright.config.ts': `export default { use: { ignoreHTTPSErrors: true }, httpCache: {
       dir: ${JSON.stringify(cacheDir)},
       match: request => {
         if (request.url.includes('/api/pinned'))
@@ -440,7 +440,7 @@ test('should coalesce concurrent identical requests into one upstream fetch', as
 
   const result = await runInlineTest({
     // Force-cache everything so that concurrent fetch() misses coalesce.
-    'playwright.config.ts': `export default { httpCache: { dir: ${JSON.stringify(cacheDir)}, match: () => ({ disposition: 'cache' }) } };`,
+    'playwright.config.ts': `export default { use: { ignoreHTTPSErrors: true }, httpCache: { dir: ${JSON.stringify(cacheDir)}, match: () => ({ disposition: 'cache' }) } };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('parallel', async ({ page }) => {
@@ -464,7 +464,7 @@ test('should only cache requests matching the filter', async ({ runInlineTest, h
   httpsServer.setRoute('/api/data.png', (req, res) => { ++api; res.end('data'); });
 
   const files = {
-    'playwright.config.ts': `export default { httpCache: { dir: ${JSON.stringify(cacheDir)}, match: '**/assets/**' } };`,
+    'playwright.config.ts': `export default { use: { ignoreHTTPSErrors: true }, httpCache: { dir: ${JSON.stringify(cacheDir)}, match: '**/assets/**' } };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('load', async ({ page }) => {
@@ -496,6 +496,7 @@ test('should chain to the configured proxy', async ({ runInlineTest, httpsServer
 
   const files = {
     'playwright.config.ts': `export default {
+      use: { ignoreHTTPSErrors: true },
       httpCache: { dir: ${JSON.stringify(cacheDir)}, proxy: { server: ${JSON.stringify(upstreamProxy.url)} } },
     };`,
     'a.test.ts': `

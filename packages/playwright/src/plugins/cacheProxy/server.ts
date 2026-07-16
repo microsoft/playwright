@@ -44,18 +44,26 @@ export type CacheEntry = { cache: ResponseCache, match: HttpCacheMatch };
 
 type Selection = { cache: ResponseCache, read: boolean, write: 'force' | 'never' | 'default', identity: string };
 
+export type CacheProxyOptions = { proxy?: ProxySettings, ignoreHTTPSErrors?: boolean };
+
 export class CacheProxy {
   private _entry: CacheEntry;
   private _proxy: ProxySettings | undefined;
   private _proxyAgent: http.Agent | undefined;
+  private _rejectUnauthorized: boolean;
   private _httpServer: http.Server;
   private _httpsServer: https.Server;
   private _inflight = new Map<string, Promise<CachedResponse | undefined>>();
 
-  constructor(entry: CacheEntry, proxy?: ProxySettings) {
+  constructor(entry: CacheEntry, options: CacheProxyOptions = {}) {
     this._entry = entry;
-    this._proxy = proxy;
-    this._proxyAgent = createProxyAgent(proxy, undefined, { keepAlive: true });
+    this._proxy = options.proxy;
+    // Cache misses are fetched over TLS with verification on, unless the user
+    // opted into ignoring HTTPS errors (e.g. a staging server's self-signed
+    // certificate). The browser <-> proxy leg uses a self-signed MITM cert, so
+    // certificate checking happens on this upstream leg instead.
+    this._rejectUnauthorized = !options.ignoreHTTPSErrors;
+    this._proxyAgent = createProxyAgent(options.proxy, undefined, { keepAlive: true });
     const { cert, key } = generateSelfSignedCertificate();
 
     this._httpServer = createHttpServer((req, res) => this._handleRequest(req, res, false));
@@ -92,9 +100,9 @@ export class CacheProxy {
       if (first[0] === 0x16) {
         this._httpsServer.emit('connection', socket);
       } else {
-        // The http server does not resume a socket handed over while paused
-        // (the TLS server does), so the tunnelled request would never parse.
         this._httpServer.emit('connection', socket);
+        // The plain http server, unlike the TLS server, does not resume a
+        // paused socket on its own; resume it so the request is read.
         socket.resume();
       }
     };
@@ -247,7 +255,7 @@ export class CacheProxy {
       method,
       headers,
       agent,
-      rejectUnauthorized: false,
+      rejectUnauthorized: this._rejectUnauthorized,
     });
   }
 
@@ -267,7 +275,7 @@ export class CacheProxy {
       upstream.pipe(socket);
     };
     const upstream = isTls
-      ? tls.connect({ host, port, rejectUnauthorized: false, servername: net.isIP(host) ? undefined : host }, onConnect)
+      ? tls.connect({ host, port, rejectUnauthorized: this._rejectUnauthorized, servername: net.isIP(host) ? undefined : host }, onConnect)
       : net.connect({ host, port }, onConnect);
     upstream.on('error', () => socket.destroy());
   }

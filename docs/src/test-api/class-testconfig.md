@@ -108,10 +108,10 @@ The following are therefore **not** cached by default:
 * Any response carrying a personalization signal: `Cache-Control: private`, a `Set-Cookie`
   header, or `Vary: Cookie`/`Vary: Authorization`.
 
-The `Authorization` and `Cookie` request headers are deliberately ignored when deciding
-what to cache. On a gated staging environment these are a shared environment credential
-attached to every request, not a per-user identity, so caching on their presence would be
-wrong.
+A request is still cached when it carries an `Authorization` or `Cookie` header — those are
+deliberately ignored when deciding what to cache. On a gated staging environment they are a
+shared environment credential attached to every request, not a per-user identity, so
+skipping the cache whenever they are present would defeat the feature.
 
 Freshness directives (`max-age`, `no-cache`, `Expires`) are ignored: once a response is
 recorded it is replayed until `dir` is deleted, keeping runs deterministic. `Vary` is
@@ -125,7 +125,7 @@ straight through to the network. For full control, pass a callback that returns 
 object per request:
 
 * `disposition` — `'cache'` force-stores the response and serves it back, `'no-cache'`
-  bypasses the cache entirely, and `'default'` (or an empty object) applies the rules above.
+  bypasses the cache entirely, and `'default'` (or undefined) applies the rules above.
 * `identity` — a stable principal id (such as a session token) that partitions the cache.
   Entries recorded under one identity are never served to a request with a different one,
   so per-user content can be cached without leaking across contexts. The value is hashed
@@ -169,7 +169,7 @@ export default defineConfig({
     match: request => {
       if (request.url.includes('/api/config'))
         return { disposition: 'cache', identity: request.headers.get('authorization') };
-      if (request.url.includes('/telemetry'))
+      if (request.url.includes('/status'))
         return { disposition: 'no-cache' };
       return {};
     },

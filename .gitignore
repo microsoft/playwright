@@ -37,6 +37,7 @@ test-results
 /tests/installation/output/
 /tests/installation/.registry.json
 .cache/
+.network-cache/
 .eslintcache
 playwright.env
 /firefox/

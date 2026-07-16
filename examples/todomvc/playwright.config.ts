@@ -12,6 +12,9 @@ export default defineConfig({
 
   testDir: './tests',
 
+  /* Cache large static assets from the remote demo app across runs. */
+  httpCache: { dir: '.network-cache' },
+
   /* Maximum time one test can run for. */
   timeout: 15_000,
 

@@ -19,11 +19,14 @@ import { ResponseCache } from './cacheProxy/cache';
 
 import type { TestRunnerPlugin } from '.';
 import type { FullConfigInternal } from '../common';
+import type { PlaywrightTestOptions } from '../../types/test';
 
 export const cacheProxyPluginForConfig = (config: FullConfigInternal): TestRunnerPlugin[] => {
   const httpCache = config.httpCache;
   if (!httpCache)
     return [];
+  // Skip upstream certificate verification only when the user opted into it.
+  const ignoreHTTPSErrors = config.projects.some(project => (project.project.use as PlaywrightTestOptions).ignoreHTTPSErrors);
 
   let cache: ResponseCache | undefined;
   let proxy: CacheProxy | undefined;
@@ -32,7 +35,7 @@ export const cacheProxyPluginForConfig = (config: FullConfigInternal): TestRunne
     setup: async () => {
       cache = new ResponseCache(httpCache.dir);
       await cache.load();
-      proxy = new CacheProxy({ cache, match: httpCache.match }, httpCache.proxy);
+      proxy = new CacheProxy({ cache, match: httpCache.match }, { proxy: httpCache.proxy, ignoreHTTPSErrors });
       process.env.PLAYWRIGHT_TEST_CACHE_PROXY = await proxy.start();
     },
     teardown: async () => {

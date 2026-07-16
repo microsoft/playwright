@@ -19,6 +19,7 @@ import type { ProxyServer } from '../third_party/proxy';
 import { createProxy } from '../third_party/proxy';
 import net from 'net';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
+import { kResolvableLoopbackHost } from './testserver';
 
 type SocksSocketClosedPayload = utils.SocksSocketClosedPayload;
 type SocksSocketDataPayload = utils.SocksSocketDataPayload;
@@ -152,7 +153,7 @@ export async function setupSocksForwardingServer({
   const socksProxy = new SocksProxy();
   socksProxy.setPattern('*');
   socksProxy.addListener(SocksProxy.Events.SocksRequested, async (payload: SocksSocketRequestedPayload) => {
-    if (!['127.0.0.1', 'fake-localhost-127-0-0-1.nip.io', 'localhost'].includes(payload.host) || payload.port !== allowedTargetPort) {
+    if (!['127.0.0.1', kResolvableLoopbackHost, 'localhost'].includes(payload.host) || payload.port !== allowedTargetPort) {
       socksProxy.sendSocketError({ uid: payload.uid, error: 'ECONNREFUSED' });
       return;
     }
