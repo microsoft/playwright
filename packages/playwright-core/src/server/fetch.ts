@@ -581,12 +581,14 @@ export abstract class APIRequestContext extends SdkObject {
         if (!(socket instanceof TLSSocket))
           return;
         const peerCertificate = socket.getPeerCertificate();
+        // Multi-value RDNs are reported as string arrays, take the first common name.
+        const commonName = (field: string | string[] | undefined) => Array.isArray(field) ? field[0] : field;
         securityDetails = {
           protocol: socket.getProtocol() ?? undefined,
-          subjectName: peerCertificate.subject.CN as string,
+          subjectName: commonName(peerCertificate.subject?.CN),
           validFrom: new Date(peerCertificate.valid_from).getTime() / 1000,
           validTo: new Date(peerCertificate.valid_to).getTime() / 1000,
-          issuer: peerCertificate.issuer.CN as string
+          issuer: commonName(peerCertificate.issuer?.CN)
         };
       };
 

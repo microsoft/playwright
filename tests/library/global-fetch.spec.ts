@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import os from 'os';
 import * as util from 'util';
-import { getPlaywrightVersion } from '../../packages/playwright-core/lib/coreBundle';
+import { getPlaywrightVersion, utils } from '../../packages/playwright-core/lib/coreBundle';
 import { expect, playwrightTest as base } from '../config/browserTest';
 
 const it = base.extend({
@@ -261,6 +262,30 @@ it('should return null security details for http response', async ({ playwright,
   const response = await request.get(server.EMPTY_PAGE);
   expect(await response.securityDetails()).toBeNull();
   await request.dispose();
+});
+
+it('should return security details for certificate with multiple CN attributes', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41815' },
+}, async ({ playwright, asset }) => {
+  const server = utils.createHttpsServer({
+    key: fs.readFileSync(asset('multi-value-rdn/key.pem')),
+    cert: fs.readFileSync(asset('multi-value-rdn/cert.pem')),
+  }, (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true }));
+  });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const request = await playwright.request.newContext({ ignoreHTTPSErrors: true });
+    const response = await request.get(`https://localhost:${server.address().port}/`);
+    expect(response.status()).toBe(200);
+    const securityDetails = await response.securityDetails();
+    expect(securityDetails.subjectName).toBe('localhost');
+    expect(securityDetails.issuer).toBe('localhost');
+    await request.dispose();
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
 });
 
 it('should resolve url relative to global baseURL option', async ({ playwright, server }) => {
