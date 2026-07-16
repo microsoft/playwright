@@ -816,3 +816,50 @@ test('should throw when overriding non-option fixture in config', async ({ runIn
   expect(result.output).not.toContain('Fixture "headless"');
   expect(result.output).not.toContain('Fixture "unknownThing"');
 });
+
+test('should throw when overriding option fixture with non-option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {};
+    `,
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        headless: [
+          async ({}, use) => await use(true),
+          { scope: 'worker', option: false },
+        ],
+      });
+      test('works', async ({ headless }) => {
+        expect(headless).toBe(true);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Fixture "headless" has already been registered as a { option: true } fixture');
+});
+
+test('should allow overriding option both in config and in test.use block', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          headless: true,
+        },
+      };
+    `,
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        headless: [
+          async ({}, use) => await use(true),
+          { scope: 'worker' },
+        ],
+      });
+      test('works', async ({ headless }) => {
+        expect(headless).toBe(true);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});

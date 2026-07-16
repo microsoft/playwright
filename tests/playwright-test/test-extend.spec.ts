@@ -287,21 +287,26 @@ test('undefined values in config and test.use should be reverted to default', as
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
-        use: { option1: undefined, option2: undefined },
+        use: { option1: undefined, option2: undefined, option4: 'from-config' },
       };
     `,
     'a.test.ts': `
       import { test as base, expect } from '@playwright/test';
-      const test = base.extend({
+      const test1 = base.extend({
         option1: [ 'default1', { option: true } ],
         option2: [ 'default2', { option: true } ],
         option3: [ 'default3', { option: true } ],
+        option4: [ 'default4', { option: true } ],
       });
-      test.use({ option2: undefined, option3: undefined });
-      test('my test', async ({ option1, option2, option3 }) => {
+      const test = test1.extend({
+        option4: [ 'new-default4', { scope: 'test' } ],
+      });
+      test.use({ option2: undefined, option3: undefined, option4: undefined });
+      test('my test', async ({ option1, option2, option3, option4 }) => {
         console.log('option1=' + option1);
         console.log('option2=' + option2);
         console.log('option3=' + option3);
+        console.log('option4=' + option4);
       });
     `,
   });
@@ -310,4 +315,5 @@ test('undefined values in config and test.use should be reverted to default', as
   expect(result.output).toContain('option1=default1');
   expect(result.output).toContain('option2=default2');
   expect(result.output).toContain('option3=default3');
+  expect(result.output).toContain('option4=from-config');
 });
