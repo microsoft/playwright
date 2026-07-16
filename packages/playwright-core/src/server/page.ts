@@ -1116,7 +1116,9 @@ export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Fra
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async (progress, continuePolling) => {
     try {
       // Note: the resolved frame might differ from the original |frame|.
-      const resolved = await progress.race(frame.selectors.callOnSelector(selector || 'body', { strict: true }, ({ injected, elements }, ariaOptions) => {
+      // See https://developer.mozilla.org/en-US/docs/Web/API/Document/body for body/frameset explanation.
+      // Non-strict, because pages with nested framesets have multiple "frameset" elements.
+      const resolved = await progress.race(frame.selectors.callOnSelector(selector || 'body,frameset', { strict: !!selector }, ({ injected, elements }, ariaOptions) => {
         return injected.ariaSnapshotWithRefs(elements[0], ariaOptions);
       }, {
         mode: options.mode ?? 'default',

@@ -668,6 +668,12 @@ it('should support many properties on iframes', async ({ page }) => {
   `);
 });
 
+it('should not timeout on frameset pages', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41784' } }, async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/frames/frameset.html');
+  const snapshot = await snapshotForAI(page, { timeout: 3000 });
+  expect(snapshot).toBe('');
+});
+
 it('should collapse inline generic nodes', async ({ page }) => {
   await page.setContent(`
     <ul>
