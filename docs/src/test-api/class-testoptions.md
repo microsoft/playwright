@@ -480,6 +480,42 @@ export default defineConfig({
 });
 ```
 
+## property: TestOptions.reuseContext
+* since: v1.62
+* discouraged: This option trades test isolation for speed and is intended for component tests that drive a story gallery. Leave it unset for end-to-end tests - a fresh browser context per test is one of the core guarantees of Playwright Test.
+- type: <[boolean]>
+
+**Experimental.** When set to `true`, all tests in a worker process run in a single browser context that is reused between tests, instead of getting a brand new context per test. Defaults to `false`.
+
+Between tests, Playwright resets the state that component tests typically touch: it clears cookies, cache, local storage and IndexedDB of visited origins, unregisters service workers, closes extra pages, removes routes, bindings and init scripts, and re-applies the configured storage state, viewport and emulation options.
+
+This reset is best-effort, not a guarantee of isolation. State that is **not** reset includes:
+* Permissions granted with [`method: BrowserContext.grantPermissions`] during a test.
+* Runtime changes made through [`method: BrowserContext.setGeolocation`], [`method: BrowserContext.setOffline`] and [`method: BrowserContext.setExtraHTTPHeaders`].
+* Browsing history, `window.name` and any browser-process-wide state.
+
+Additional restrictions:
+* The option is ignored when [`property: TestOptions.video`] recording is enabled.
+* Only a few context options may differ between consecutive tests: `colorScheme`, `forcedColors`, `reducedMotion`, `contrast`, `screen`, `userAgent`, `viewport` and `testIdAttribute`. Changing any other option in [`method: Test.use`], for example `locale` or `storageState`, silently forces a fresh context and negates the speedup.
+* Do not combine with [`property: TestOptions.connectOptions`] pointing multiple workers at a shared browser - workers would compete for the single reusable context.
+* `recordHar` in [`property: TestOptions.contextOptions`] is not supported and produces no HAR file.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'components',
+      testDir: './tests/components',
+      use: { reuseContext: true },
+    },
+  ],
+});
+```
+
 ## property: TestOptions.screenshot
 * since: v1.10
 - type: <[Object]|[ScreenshotMode]<"off"|"on"|"only-on-failure"|"on-first-failure">>

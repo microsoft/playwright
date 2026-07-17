@@ -461,9 +461,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
   _optionContextReuseMode: ['none', { scope: 'worker', option: true, box: true }],
   _optionConnectOptions: [undefined, { scope: 'worker', option: true, box: true }],
 
-  _reuseContext: [async ({ video, _optionContextReuseMode }, use) => {
+  reuseContext: [false, { scope: 'worker', option: true, box: true }],
+
+  _reuseContext: [async ({ video, _optionContextReuseMode, reuseContext }, use) => {
     let mode = _optionContextReuseMode;
-    if (process.env.PW_TEST_REUSE_CONTEXT)
+    if (process.env.PW_TEST_REUSE_CONTEXT || reuseContext)
       mode = 'when-possible';
     const reuse = mode === 'when-possible' && normalizeVideoMode(video) === 'off';
     await use(reuse);

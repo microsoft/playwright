@@ -7106,6 +7106,61 @@ export interface PlaywrightWorkerOptions {
    */
   connectOptions: ConnectOptions | undefined;
   /**
+   * **NOTE** This option trades test isolation for speed and is intended for component tests that drive a story gallery. Leave
+   * it unset for end-to-end tests - a fresh browser context per test is one of the core guarantees of Playwright Test.
+   *
+   * **Experimental.** When set to `true`, all tests in a worker process run in a single browser context that is reused
+   * between tests, instead of getting a brand new context per test. Defaults to `false`.
+   *
+   * Between tests, Playwright resets the state that component tests typically touch: it clears cookies, cache, local
+   * storage and IndexedDB of visited origins, unregisters service workers, closes extra pages, removes routes, bindings
+   * and init scripts, and re-applies the configured storage state, viewport and emulation options.
+   *
+   * This reset is best-effort, not a guarantee of isolation. State that is **not** reset includes:
+   * - Permissions granted with
+   *   [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
+   *   during a test.
+   * - Runtime changes made through
+   *   [browserContext.setGeolocation(geolocation)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-geolocation),
+   *   [browserContext.setOffline(offline)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-offline)
+   *   and
+   *   [browserContext.setExtraHTTPHeaders(headers)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-extra-http-headers).
+   * - Browsing history, `window.name` and any browser-process-wide state.
+   *
+   * Additional restrictions:
+   * - The option is ignored when
+   *   [testOptions.video](https://playwright.dev/docs/api/class-testoptions#test-options-video) recording is enabled.
+   * - Only a few context options may differ between consecutive tests: `colorScheme`, `forcedColors`,
+   *   `reducedMotion`, `contrast`, `screen`, `userAgent`, `viewport` and `testIdAttribute`. Changing any other option
+   *   in [test.use(options)](https://playwright.dev/docs/api/class-test#test-use), for example `locale` or
+   *   `storageState`, silently forces a fresh context and negates the speedup.
+   * - Do not combine with
+   *   [testOptions.connectOptions](https://playwright.dev/docs/api/class-testoptions#test-options-connect-options)
+   *   pointing multiple workers at a shared browser - workers would compete for the single reusable context.
+   * - `recordHar` in
+   *   [testOptions.contextOptions](https://playwright.dev/docs/api/class-testoptions#test-options-context-options) is
+   *   not supported and produces no HAR file.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     {
+   *       name: 'components',
+   *       testDir: './tests/components',
+   *       use: { reuseContext: true },
+   *     },
+   *   ],
+   * });
+   * ```
+   *
+   */
+  reuseContext: boolean;
+  /**
    * Whether to automatically capture a screenshot after each test. Defaults to `'off'`.
    * - `'off'`: Do not capture screenshots.
    * - `'on'`: Capture screenshot after each test.
@@ -8832,7 +8887,6 @@ export function mergeExpects<List extends any[]>(...expects: List): MergedExpect
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export { };
-
 
 
 /**

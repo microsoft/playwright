@@ -18,8 +18,13 @@ import { test, expect } from './playwright-test-fixtures';
 import { parseTrace } from '../config/utils';
 import fs from 'fs';
 
+const withReuseContext = (files: Record<string, string>) => ({
+  'playwright.config.ts': `export default { use: { reuseContext: true } };`,
+  ...files,
+});
+
 test('should reuse context', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
+  const result = await runInlineTest(withReuseContext({
     'src/reuse.test.ts': `
       import { test, expect } from '@playwright/test';
       let lastContextGuid;
@@ -52,17 +57,17 @@ test('should reuse context', async ({ runInlineTest }) => {
         });
       });
     `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+  }), { workers: 1 });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(5);
 });
 
 test('should not reuse context with video if mode=when-possible', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
+  const result = await runInlineTest(withReuseContext({
     'playwright.config.ts': `
       export default {
-        use: { video: 'on' },
+        use: { video: 'on', reuseContext: true },
       };
     `,
     'src/reuse.test.ts': `
@@ -77,7 +82,7 @@ test('should not reuse context with video if mode=when-possible', async ({ runIn
         expect(context._guid).not.toBe(lastContextGuid);
       });
     `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: 'when-possible' });
+  }), { workers: 1 });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
@@ -86,10 +91,10 @@ test('should not reuse context with video if mode=when-possible', async ({ runIn
 });
 
 test('should reuse context with trace if mode=when-possible', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
+  const result = await runInlineTest(withReuseContext({
     'playwright.config.ts': `
       export default {
-        use: { trace: 'on' },
+        use: { trace: 'on', reuseContext: true },
       };
     `,
     'reuse.spec.ts': `
@@ -117,7 +122,7 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
         await page.locator('input').click();
       });
     `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: 'when-possible' });
+  }), { workers: 1 });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
@@ -160,7 +165,7 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
 });
 
 test('should work with manually closed pages', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
+  const result = await runInlineTest(withReuseContext({
     'src/button.test.ts': `
       import { test, expect } from '@playwright/test';
 
@@ -182,14 +187,14 @@ test('should work with manually closed pages', async ({ runInlineTest }) => {
         await page.locator('button').click();
       });
     `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+  }), { workers: 1 });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(3);
 });
 
 test('should clean storage', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
+  const result = await runInlineTest(withReuseContext({
     'src/reuse.test.ts': `
       import { test, expect } from '@playwright/test';
       let lastContextGuid;
@@ -226,13 +231,13 @@ test('should clean storage', async ({ runInlineTest }) => {
         expect(session).toBeFalsy();
       });
     `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+  }), { workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
 });
 
 test('should restore localStorage', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
+  const result = await runInlineTest(withReuseContext({
     'src/reuse.test.ts': `
       import { test, expect } from '@playwright/test';
       let lastContextGuid;
@@ -300,14 +305,14 @@ test('should restore localStorage', async ({ runInlineTest }) => {
         expect(local).toBe('anotherValue');
       });
     `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+  }), { workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(3);
 });
 
 test('should clean db', async ({ runInlineTest }) => {
   test.slow();
-  const result = await runInlineTest({
+  const result = await runInlineTest(withReuseContext({
     'src/reuse.test.ts': `
       import { test, expect } from '@playwright/test';
       let lastContextGuid;
@@ -340,13 +345,13 @@ test('should clean db', async ({ runInlineTest }) => {
         expect(dbnames).toEqual([]);
       });
     `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+  }), { workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
 });
 
 test('should restore cookies', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
+  const result = await runInlineTest(withReuseContext({
     'src/reuse.test.ts': `
       import { test, expect } from '@playwright/test';
       let lastContextGuid;
@@ -398,13 +403,13 @@ test('should restore cookies', async ({ runInlineTest }) => {
         expect(cookie).toBe('');
       });
     `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+  }), { workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(3);
 });
 
 test('should reuse context with beforeunload', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
+  const result = await runInlineTest(withReuseContext({
     'src/reuse.test.ts': `
       import { test, expect } from '@playwright/test';
       let lastContextGuid;
@@ -422,14 +427,14 @@ test('should reuse context with beforeunload', async ({ runInlineTest }) => {
         expect(context._guid).toBe(lastContextGuid);
       });
     `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+  }), { workers: 1 });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
 });
 
 test('should cancel pending operations upon reuse', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
+  const result = await runInlineTest(withReuseContext({
     'src/reuse.test.ts': `
       import { test, expect } from '@playwright/test';
       test('one', async ({ page }) => {
@@ -446,7 +451,7 @@ test('should cancel pending operations upon reuse', async ({ runInlineTest }) =>
         expect(await page.evaluate('window._clicked')).toBe(undefined);
       });
     `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+  }), { workers: 1 });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
@@ -455,7 +460,7 @@ test('should cancel pending operations upon reuse', async ({ runInlineTest }) =>
 test('should reset tracing', async ({ runInlineTest }, testInfo) => {
   const traceFile1 = testInfo.outputPath('trace1.zip');
   const traceFile2 = testInfo.outputPath('trace2.zip');
-  const result = await runInlineTest({
+  const result = await runInlineTest(withReuseContext({
     'reuse.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('one', async ({ page }) => {
@@ -472,7 +477,7 @@ test('should reset tracing', async ({ runInlineTest }, testInfo) => {
         await page.context().tracing.stopChunk({ path: ${JSON.stringify(traceFile2)} });
       });
     `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+  }), { workers: 1 });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
@@ -494,7 +499,7 @@ test('should reset tracing', async ({ runInlineTest }, testInfo) => {
 });
 
 test('should not delete others contexts', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
+  const result = await runInlineTest(withReuseContext({
     'src/reuse.test.ts': `
       import { test as base, expect } from '@playwright/test';
       const test = base.extend<{ loggedInPage: Page }>({
@@ -508,17 +513,17 @@ test('should not delete others contexts', async ({ runInlineTest }) => {
         await loggedInPage.goto('data:text/plain,Hello world');
       });
     `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+  }), { workers: 1 });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
 
 test('should survive serial mode with tracing and reuse', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
+  const result = await runInlineTest(withReuseContext({
     'playwright.config.ts': `
       import { defineConfig } from '@playwright/test';
-      export default defineConfig({ use: { trace: 'on' } });
+      export default defineConfig({ use: { trace: 'on', reuseContext: true } });
     `,
     'reuse.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -540,7 +545,7 @@ test('should survive serial mode with tracing and reuse', async ({ runInlineTest
         await page.fill('input', 'value');
       });
     `,
-  }, { workers: 1 }, { PW_TEST_REUSE_CONTEXT: '1' });
+  }), { workers: 1 });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
