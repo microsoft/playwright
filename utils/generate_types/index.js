@@ -486,13 +486,37 @@ class TypesGenerator {
       lines.push(...member.comment.split('\n'));
     if (member.deprecated)
       lines.push('@deprecated ' + md.wrapText(member.deprecated, { flattenText: true, maxColumns: 120 - 5 }, ''));
-    lines.push(...member.argsArray.map(arg => {
-      const paramPrefix = `@param ${arg.alias.replace(/\./g, '')} `;
-      return paramPrefix + md.wrapText(arg.comment, { flattenText: true, maxColumns: 120 - 5 }, '');
-    }));
+    for (const arg of member.argsArray) {
+      const argName = arg.alias.replace(/\./g, '');
+      lines.push(this.paramJSDOC(arg, argName));
+      if (arg.name === 'options')
+        lines.push(...arg.type?.properties?.flatMap(property => this.propertyJSDOC(property, argName)) || []);
+    }
     if (!lines.length)
       return indent;
     return this.writeComment(lines.join('\n'), indent) + '\n' + indent;
+  }
+
+  /**
+   * @param {docs.Member} member
+   * @param {string} name
+   * @returns {string}
+   */
+  paramJSDOC(member, name) {
+    return `@param ${name} ` + md.wrapText(member.comment, { flattenText: true, maxColumns: 120 - 5 }, '');
+  }
+
+  /**
+   * @param {docs.Member} property
+   * @param {string} parentName
+   * @returns {string[]}
+   */
+  propertyJSDOC(property, parentName) {
+    const name = `${parentName}.${property.alias}`;
+    return [
+      ...(property.comment ? [this.paramJSDOC(property, name)] : []),
+      ...property.type?.properties?.flatMap(child => this.propertyJSDOC(child, name)) || [],
+    ];
   }
 }
 

@@ -133,6 +133,11 @@ export interface Page {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-option-expression).
    * @param options
+   * @param options.exposeFunctions When set to `true`, functions passed inside
+   * [`arg`](https://playwright.dev/docs/api/class-page#page-evaluate-option-arg) are exposed in the page and can be
+   * called from the page function. Calling one returns a [Promise] of its result. The page-side functions are scoped to
+   * the execution context they were passed to and disappear when the page navigates. Defaults to `false`, in which case
+   * functions are not serializable and passing one throws an error, as before.
    */
   evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<R>;
   /**
@@ -186,6 +191,11 @@ export interface Page {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-option-expression).
    * @param options
+   * @param options.exposeFunctions When set to `true`, functions passed inside
+   * [`arg`](https://playwright.dev/docs/api/class-page#page-evaluate-option-arg) are exposed in the page and can be
+   * called from the page function. Calling one returns a [Promise] of its result. The page-side functions are scoped to
+   * the execution context they were passed to and disappear when the page navigates. Defaults to `false`, in which case
+   * functions are not serializable and passing one throws an error, as before.
    */
   evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<R>;
 
@@ -234,6 +244,11 @@ export interface Page {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-handle-option-expression).
    * @param options
+   * @param options.exposeFunctions When set to `true`, functions passed inside
+   * [`arg`](https://playwright.dev/docs/api/class-page#page-evaluate-handle-option-arg) are exposed in the page and can
+   * be called from the page function. Calling one returns a [Promise] of its result. The page-side functions are scoped
+   * to the execution context they were passed to and disappear when the page navigates. Defaults to `false`, in which
+   * case functions are not serializable and passing one throws an error, as before.
    */
   evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
   /**
@@ -281,6 +296,11 @@ export interface Page {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-handle-option-expression).
    * @param options
+   * @param options.exposeFunctions When set to `true`, functions passed inside
+   * [`arg`](https://playwright.dev/docs/api/class-page#page-evaluate-handle-option-arg) are exposed in the page and can
+   * be called from the page function. Calling one returns a [Promise] of its result. The page-side functions are scoped
+   * to the execution context they were passed to and disappear when the page navigates. Defaults to `false`, in which
+   * case functions are not serializable and passing one throws an error, as before.
    */
   evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
 
@@ -334,6 +354,8 @@ export interface Page {
    * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for).
    * @param selector A selector to query for.
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   $<K extends keyof HTMLElementTagNameMap>(selector: K, options?: { strict: boolean }): Promise<ElementHandleForTag<K> | null>;
   /**
@@ -345,6 +367,8 @@ export interface Page {
    * [locator.waitFor([options])](https://playwright.dev/docs/api/class-locator#locator-wait-for).
    * @param selector A selector to query for.
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   $(selector: string, options?: { strict: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
 
@@ -398,6 +422,8 @@ export interface Page {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-option-expression).
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   /**
@@ -431,6 +457,8 @@ export interface Page {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-option-expression).
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   $eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<R>;
   /**
@@ -464,6 +492,8 @@ export interface Page {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-option-expression).
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
   /**
@@ -497,6 +527,8 @@ export interface Page {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-option-expression).
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   $eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, void, R>, arg?: any): Promise<R>;
 
@@ -658,6 +690,22 @@ export interface Page {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-wait-for-function-option-expression).
    * @param options
+   * @param options.polling If [`polling`](https://playwright.dev/docs/api/class-page#page-wait-for-function-option-polling) is `'raf'`, then
+   * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-wait-for-function-option-expression) is constantly
+   * executed in `requestAnimationFrame` callback. If
+   * [`polling`](https://playwright.dev/docs/api/class-page#page-wait-for-function-option-polling) is a number, then it
+   * is treated as an interval in milliseconds at which the function would be executed. Defaults to `raf`.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time to wait for in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `actionTimeout` option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForFunction<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
   /**
@@ -697,6 +745,22 @@ export interface Page {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-wait-for-function-option-expression).
    * @param options
+   * @param options.polling If [`polling`](https://playwright.dev/docs/api/class-page#page-wait-for-function-option-polling) is `'raf'`, then
+   * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-wait-for-function-option-expression) is constantly
+   * executed in `requestAnimationFrame` callback. If
+   * [`polling`](https://playwright.dev/docs/api/class-page#page-wait-for-function-option-polling) is a number, then it
+   * is treated as an interval in milliseconds at which the function would be executed. Defaults to `raf`.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time to wait for in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `actionTimeout` option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForFunction<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
 
@@ -742,6 +806,26 @@ export interface Page {
    *
    * @param selector A selector to query for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.state Defaults to `'visible'`. Can be either:
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
+   * without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
+   * `visibility:hidden`. This is opposite to the `'visible'` option.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
   /**
@@ -786,6 +870,26 @@ export interface Page {
    *
    * @param selector A selector to query for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.state Defaults to `'visible'`. Can be either:
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
+   * without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
+   * `visibility:hidden`. This is opposite to the `'visible'` option.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandle<SVGElement | HTMLElement>>;
   /**
@@ -830,6 +934,26 @@ export interface Page {
    *
    * @param selector A selector to query for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.state Defaults to `'visible'`. Can be either:
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
+   * without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
+   * `visibility:hidden`. This is opposite to the `'visible'` option.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
   /**
@@ -874,6 +998,26 @@ export interface Page {
    *
    * @param selector A selector to query for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.state Defaults to `'visible'`. Can be either:
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
+   * without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
+   * `visibility:hidden`. This is opposite to the `'visible'` option.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
 
@@ -948,6 +1092,12 @@ export interface Page {
    *
    * @param type
    * @param options
+   * @param options.behavior Specifies whether to wait for already running listeners and what to do if they throw errors:
+   * - `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result
+   * in unhandled error
+   * - `'wait'` - wait for current listener calls (if any) to finish
+   * - `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the
+   * listeners after removal are silently caught
    */
   removeAllListeners(type?: string): this;
   /**
@@ -969,6 +1119,12 @@ export interface Page {
    *
    * @param type
    * @param options
+   * @param options.behavior Specifies whether to wait for already running listeners and what to do if they throw errors:
+   * - `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result
+   * in unhandled error
+   * - `'wait'` - wait for current listener calls (if any) to finish
+   * - `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the
+   * listeners after removal are silently caught
    */
   removeAllListeners(type: string | undefined, options: {
     /**
@@ -1987,6 +2143,10 @@ export interface Page {
    * [`locator`](https://playwright.dev/docs/api/class-page#page-add-locator-handler-option-locator) appears. This
    * function should get rid of the element that blocks actions like click.
    * @param options
+   * @param options.noWaitAfter By default, after calling the handler Playwright will wait until the overlay becomes hidden, and only then
+   * Playwright will continue with the action/assertion that triggered the handler. This option allows to opt-out of
+   * this behavior, so that overlay can stay visible after the handler has run.
+   * @param options.times Specifies the maximum number of times this handler should be called. Unlimited by default.
    */
   addLocatorHandler(locator: Locator, handler: ((locator: Locator) => Promise<any>), options?: {
     /**
@@ -2006,6 +2166,12 @@ export interface Page {
    * Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload
    * fires or when the script content was injected into frame.
    * @param options
+   * @param options.content Raw JavaScript content to be injected into frame.
+   * @param options.path Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative
+   * to the current working directory.
+   * @param options.type Script type. Use 'module' in order to load a JavaScript ES6 module. See
+   * [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
+   * @param options.url URL of a script to be added.
    */
   addScriptTag(options?: {
     /**
@@ -2035,6 +2201,10 @@ export interface Page {
    * Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the
    * content. Returns the added tag when the stylesheet's onload fires or when the CSS content was injected into frame.
    * @param options
+   * @param options.content Raw CSS content to be injected into frame.
+   * @param options.path Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the
+   * current working directory.
+   * @param options.url URL of the `<link>` tag.
    */
   addStyleTag(options?: {
     /**
@@ -2057,6 +2227,24 @@ export interface Page {
   /**
    * Captures the aria snapshot of the page. Read more about [aria snapshots](https://playwright.dev/docs/aria-snapshots).
    * @param options
+   * @param options.boxes When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Coordinates are
+   * relative to the viewport, in CSS pixels, as returned by
+   * [`Element.getBoundingClientRect()`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
+   * Defaults to `false`.
+   * @param options.depth When specified, limits the depth of the snapshot.
+   * @param options.mode When set to `"ai"`, returns a snapshot optimized for AI consumption: including element references like `[ref=e2]`
+   * and snapshots of `<iframe>`s. Defaults to `"default"`.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   ariaSnapshot(options?: {
     /**
@@ -2134,6 +2322,29 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   check(selector: string, options?: {
     /**
@@ -2236,6 +2447,39 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.button Defaults to `left`.
+   * @param options.clickCount defaults to 1. See [UIEvent.detail].
+   * @param options.delay Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
+   * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
+   * navigating to inaccessible pages. Defaults to `false`.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+   * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+   * are pressed.
    */
   click(selector: string, options?: {
     /**
@@ -2338,6 +2582,9 @@ export interface Page {
    * [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) event.
    *
    * @param options
+   * @param options.reason The reason to be reported to the operations interrupted by the page closure.
+   * @param options.runBeforeUnload Defaults to `false`. Whether to run the
+   * [before unload](https://developer.mozilla.org/en-US/docs/Web/Events/beforeunload) page handlers.
    */
   close(options?: {
     /**
@@ -2356,6 +2603,7 @@ export interface Page {
    * Returns up to (currently) 200 last console messages from this page. See
    * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) for more details.
    * @param options
+   * @param options.filter Controls which messages are returned:
    */
   consoleMessages(options?: {
     /**
@@ -2401,6 +2649,36 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.button Defaults to `left`.
+   * @param options.delay Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+   * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+   * are pressed.
    */
   dblclick(selector: string, options?: {
     /**
@@ -2529,6 +2807,19 @@ export interface Page {
    * @param type DOM event type: `"click"`, `"dragstart"`, etc.
    * @param eventInit Optional event-specific initialization properties.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   dispatchEvent(selector: string, type: string, eventInit?: EvaluationArgument, options?: {
     /**
@@ -2577,6 +2868,33 @@ export interface Page {
    * @param target A selector to search for an element to drop onto. If there are multiple elements satisfying the selector, the first
    * will be used.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.sourcePosition Clicks on the source element at this point relative to the top-left corner of the element's padding box. If not
+   * specified, some visible point of the element is used.
+   * @param options.steps Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+   * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.targetPosition Drops on the target element at this point relative to the top-left corner of the element's padding box. If not
+   * specified, some visible point of the element is used.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   dragAndDrop(source: string, target: string, options?: {
     /**
@@ -2690,6 +3008,17 @@ export interface Page {
    * ```
    *
    * @param options
+   * @param options.colorScheme Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+   * media feature, supported values are `'light'` and `'dark'`. Passing `null` disables color scheme emulation.
+   * `'no-preference'` is deprecated.
+   * @param options.contrast Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. Passing `null`
+   * disables contrast emulation.
+   * @param options.forcedColors Emulates `'forced-colors'` media feature, supported values are `'active'` and `'none'`. Passing `null` disables
+   * forced colors emulation.
+   * @param options.media Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing
+   * `null` disables CSS media emulation.
+   * @param options.reducedMotion Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing
+   * `null` disables reduced motion emulation.
    */
   emulateMedia(options?: {
     /**
@@ -2795,6 +3124,21 @@ export interface Page {
    * used.
    * @param value Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   fill(selector: string, value: string, options?: {
     /**
@@ -2845,6 +3189,19 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   focus(selector: string, options?: {
     /**
@@ -2933,6 +3290,19 @@ export interface Page {
    * used.
    * @param name Attribute name to get the value for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   getAttribute(selector: string, name: string, options?: {
     /**
@@ -2978,6 +3348,8 @@ export interface Page {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByAltText(text: string|RegExp, options?: {
     /**
@@ -3008,6 +3380,8 @@ export interface Page {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByLabel(text: string|RegExp, options?: {
     /**
@@ -3038,6 +3412,8 @@ export interface Page {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByPlaceholder(text: string|RegExp, options?: {
     /**
@@ -3086,6 +3462,45 @@ export interface Page {
    * duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
    * @param role Required aria role.
    * @param options
+   * @param options.checked An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls.
+   *
+   * Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
+   * @param options.description Option to match the [accessible description](https://w3c.github.io/accname/#dfn-accessible-description). By
+   * default, matching is case-insensitive and searches for a substring, use
+   * [`exact`](https://playwright.dev/docs/api/class-page#page-get-by-role-option-exact) to control this behavior.
+   *
+   * Learn more about [accessible description](https://w3c.github.io/accname/#dfn-accessible-description).
+   * @param options.disabled An attribute that is usually set by `aria-disabled` or `disabled`.
+   *
+   * **NOTE** Unlike most other attributes, `disabled` is inherited through the DOM hierarchy. Learn more about
+   * [`aria-disabled`](https://www.w3.org/TR/wai-aria-1.2/#aria-disabled).
+   *
+   * @param options.exact Whether [`name`](https://playwright.dev/docs/api/class-page#page-get-by-role-option-name) and
+   * [`description`](https://playwright.dev/docs/api/class-page#page-get-by-role-option-description) are matched
+   * exactly: case-sensitive and whole-string. Defaults to false. Ignored when the value is a regular expression. Note
+   * that exact match still trims whitespace.
+   * @param options.expanded An attribute that is usually set by `aria-expanded`.
+   *
+   * Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
+   * @param options.includeHidden Option that controls whether hidden elements are matched. By default, only non-hidden elements, as
+   * [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector.
+   *
+   * Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
+   * @param options.level A number attribute that is usually present for roles `heading`, `listitem`, `row`, `treeitem`, with default values
+   * for `<h1>-<h6>` elements.
+   *
+   * Learn more about [`aria-level`](https://www.w3.org/TR/wai-aria-1.2/#aria-level).
+   * @param options.name Option to match the [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). By default, matching is
+   * case-insensitive and searches for a substring, use
+   * [`exact`](https://playwright.dev/docs/api/class-page#page-get-by-role-option-exact) to control this behavior.
+   *
+   * Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+   * @param options.pressed An attribute that is usually set by `aria-pressed`.
+   *
+   * Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
+   * @param options.selected An attribute that is usually set by `aria-selected`.
+   *
+   * Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
    */
   getByRole(role: "alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem", options?: {
     /**
@@ -3249,6 +3664,8 @@ export interface Page {
    * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByText(text: string|RegExp, options?: {
     /**
@@ -3277,6 +3694,8 @@ export interface Page {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByTitle(text: string|RegExp, options?: {
     /**
@@ -3292,6 +3711,26 @@ export interface Page {
    *
    * Navigate to the previous page in history.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `navigationTimeout` option in the config, or by using the
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout),
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.waitUntil When to consider operation succeeded, defaults to `load`. Events can be either:
+   * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+   * - `'load'` - consider operation to be finished when the `load` event is fired.
+   * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+   * at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
+   * - `'commit'` - consider operation to be finished when network response is received and the document started
+   * loading.
    */
   goBack(options?: {
     /**
@@ -3333,6 +3772,26 @@ export interface Page {
    *
    * Navigate to the next page in history.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `navigationTimeout` option in the config, or by using the
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout),
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.waitUntil When to consider operation succeeded, defaults to `load`. Events can be either:
+   * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+   * - `'load'` - consider operation to be finished when the `load` event is fired.
+   * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+   * at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
+   * - `'commit'` - consider operation to be finished when network response is received and the document started
+   * loading.
    */
   goForward(options?: {
     /**
@@ -3395,6 +3854,28 @@ export interface Page {
    * options was provided and the passed URL is a path, it gets merged via the
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param options
+   * @param options.referer Referer header value. If provided it will take preference over the referer header value set by
+   * [page.setExtraHTTPHeaders(headers)](https://playwright.dev/docs/api/class-page#page-set-extra-http-headers).
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `navigationTimeout` option in the config, or by using the
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout),
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.waitUntil When to consider operation succeeded, defaults to `load`. Events can be either:
+   * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+   * - `'load'` - consider operation to be finished when the `load` event is fired.
+   * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+   * at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
+   * - `'commit'` - consider operation to be finished when network response is received and the document started
+   * loading.
    */
   goto(url: string, options?: {
     /**
@@ -3465,6 +3946,34 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+   * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+   * are pressed.
    */
   hover(selector: string, options?: {
     /**
@@ -3545,6 +4054,19 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   innerHTML(selector: string, options?: {
     /**
@@ -3581,6 +4103,19 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   innerText(selector: string, options?: {
     /**
@@ -3622,6 +4157,19 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   inputValue(selector: string, options?: {
     /**
@@ -3658,6 +4206,19 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   isChecked(selector: string, options?: {
     /**
@@ -3700,6 +4261,19 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   isDisabled(selector: string, options?: {
     /**
@@ -3737,6 +4311,19 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   isEditable(selector: string, options?: {
     /**
@@ -3773,6 +4360,19 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   isEnabled(selector: string, options?: {
     /**
@@ -3811,6 +4411,8 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   isHidden(selector: string, options?: {
     /**
@@ -3837,6 +4439,8 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   isVisible(selector: string, options?: {
     /**
@@ -3861,6 +4465,26 @@ export interface Page {
    * [Learn more about locators](https://playwright.dev/docs/locators).
    * @param selector A selector to use when resolving DOM element.
    * @param options
+   * @param options.has Narrows down the results of the method to those which contain elements matching this relative locator. For example,
+   * `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+   *
+   * Inner locator **must be relative** to the outer locator and is queried starting with the outer locator match, not
+   * the document root. For example, you can find `content` that has `div` in
+   * `<article><content><div>Playwright</div></content></article>`. However, looking for `content` that has `article
+   * div` will fail, because the inner locator must be relative and should not use any elements outside the `content`.
+   *
+   * Note that outer and inner locators must belong to the same frame. Inner locator must not contain
+   * [FrameLocator](https://playwright.dev/docs/api/class-framelocator)s.
+   * @param options.hasNot Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+   * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+   *
+   * Note that outer and inner locators must belong to the same frame. Inner locator must not contain
+   * [FrameLocator](https://playwright.dev/docs/api/class-framelocator)s.
+   * @param options.hasNotText Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+   * When passed a [string], matching is case-insensitive and searches for a substring.
+   * @param options.hasText Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
+   * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+   * `<article><div>Playwright</div></article>`.
    */
   locator(selector: string, options?: {
     /**
@@ -3914,6 +4538,7 @@ export interface Page {
    * Returns up to (currently) 200 last page errors from this page. See
    * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) for more details.
    * @param options
+   * @param options.filter Controls which errors are returned:
    */
   pageErrors(options?: {
     /**
@@ -3989,6 +4614,40 @@ export interface Page {
    * templates.
    *
    * @param options
+   * @param options.displayHeaderFooter Display header and footer. Defaults to `false`.
+   * @param options.footerTemplate HTML template for the print footer. Should use the same format as the
+   * [`headerTemplate`](https://playwright.dev/docs/api/class-page#page-pdf-option-header-template).
+   * @param options.format Paper format. If set, takes priority over
+   * [`width`](https://playwright.dev/docs/api/class-page#page-pdf-option-width) or
+   * [`height`](https://playwright.dev/docs/api/class-page#page-pdf-option-height) options. Defaults to 'Letter'.
+   * @param options.headerTemplate HTML template for the print header. Should be valid HTML markup with following classes used to inject printing
+   * values into them:
+   * - `'date'` formatted print date
+   * - `'title'` document title
+   * - `'url'` document location
+   * - `'pageNumber'` current page number
+   * - `'totalPages'` total pages in the document
+   * @param options.height Paper height, accepts values labeled with units.
+   * @param options.landscape Paper orientation. Defaults to `false`.
+   * @param options.margin Paper margins, defaults to none.
+   * @param options.margin.top Top margin, accepts values labeled with units. Defaults to `0`.
+   * @param options.margin.right Right margin, accepts values labeled with units. Defaults to `0`.
+   * @param options.margin.bottom Bottom margin, accepts values labeled with units. Defaults to `0`.
+   * @param options.margin.left Left margin, accepts values labeled with units. Defaults to `0`.
+   * @param options.outline Whether or not to embed the document outline into the PDF. Defaults to `false`.
+   * @param options.pageRanges Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, which means print all pages.
+   * @param options.path The file path to save the PDF to. If [`path`](https://playwright.dev/docs/api/class-page#page-pdf-option-path) is a
+   * relative path, then it is resolved relative to the current working directory. If no path is provided, the PDF won't
+   * be saved to the disk.
+   * @param options.preferCSSPageSize Give any CSS `@page` size declared in the page priority over what is declared in
+   * [`width`](https://playwright.dev/docs/api/class-page#page-pdf-option-width) and
+   * [`height`](https://playwright.dev/docs/api/class-page#page-pdf-option-height) or
+   * [`format`](https://playwright.dev/docs/api/class-page#page-pdf-option-format) options. Defaults to `false`, which
+   * will scale the content to fit the paper size.
+   * @param options.printBackground Print background graphics. Defaults to `false`.
+   * @param options.scale Scale of the webpage rendering. Defaults to `1`. Scale amount must be between 0.1 and 2.
+   * @param options.tagged Whether or not to generate tagged (accessible) PDF. Defaults to `false`.
+   * @param options.width Paper width, accepts values labeled with units.
    */
   pdf(options?: {
     /**
@@ -4165,6 +4824,23 @@ export interface Page {
    * used.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    * @param options
+   * @param options.delay Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
+   * @param options.noWaitAfter Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
+   * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
+   * navigating to inaccessible pages. Defaults to `false`.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   press(selector: string, key: string, options?: {
     /**
@@ -4211,6 +4887,26 @@ export interface Page {
    * main resource response. In case of multiple redirects, the navigation will resolve with the response of the last
    * redirect.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `navigationTimeout` option in the config, or by using the
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout),
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.waitUntil When to consider operation succeeded, defaults to `load`. Events can be either:
+   * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+   * - `'load'` - consider operation to be finished when the `load` event is fired.
+   * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+   * at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
+   * - `'commit'` - consider operation to be finished when network response is received and the document started
+   * loading.
    */
   reload(options?: {
     /**
@@ -4358,6 +5054,7 @@ export interface Page {
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
    * @param options
+   * @param options.times How often a route should be used. By default it will be used every time.
    */
   route(url: string|RegExp|URLPattern|((url: URL) => boolean), handler: ((route: Route, request: Request) => Promise<any>|any), options?: {
     /**
@@ -4378,6 +5075,21 @@ export interface Page {
    * @param har Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a
    * relative path, then it is resolved relative to the current working directory.
    * @param options
+   * @param options.notFound - If set to 'abort' any request not found in the HAR file will be aborted.
+   * - If set to 'fallback' missing requests will be sent to the network.
+   *
+   * Defaults to abort.
+   * @param options.update If specified, updates the given HAR with the actual network information instead of serving from file. The file is
+   * written to disk when
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is
+   * called.
+   * @param options.updateContent Optional setting to control resource content management. If `attach` is specified, resources are persisted as
+   * separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
+   * @param options.updateMode When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+   * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to
+   * `minimal`.
+   * @param options.url A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the
+   * pattern will be served from the HAR file. If not specified, all requests are served from the HAR file.
    */
   routeFromHAR(har: string, options?: {
     /**
@@ -4445,6 +5157,55 @@ export interface Page {
   /**
    * Returns the buffer with the captured screenshot.
    * @param options
+   * @param options.animations When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different
+   * treatment depending on their duration:
+   * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+   * - infinite animations are canceled to initial state, and then played over after the screenshot.
+   *
+   * Defaults to `"allow"` that leaves animations untouched.
+   * @param options.caret When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be
+   * changed.  Defaults to `"hide"`.
+   * @param options.clip An object which specifies clipping of the resulting image.
+   * @param options.clip.x x-coordinate of top-left corner of clip area
+   * @param options.clip.y y-coordinate of top-left corner of clip area
+   * @param options.clip.width width of clipping area
+   * @param options.clip.height height of clipping area
+   * @param options.fullPage When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
+   * `false`.
+   * @param options.mask Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
+   * box `#FF00FF` (customized by
+   * [`maskColor`](https://playwright.dev/docs/api/class-page#page-screenshot-option-mask-color)) that completely covers
+   * its bounding box. The mask is also applied to invisible elements, see
+   * [Matching only visible elements](https://playwright.dev/docs/locators#matching-only-visible-elements) to disable that.
+   * @param options.maskColor Specify the color of the overlay box for masked elements, in
+   * [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.
+   * @param options.omitBackground Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+   * Defaults to `false`.
+   * @param options.path The file path to save the image to. The screenshot type will be inferred from file extension. If
+   * [`path`](https://playwright.dev/docs/api/class-page#page-screenshot-option-path) is a relative path, then it is
+   * resolved relative to the current working directory. If no path is provided, the image won't be saved to the disk.
+   * @param options.quality The quality of the image, between 0-100. Not applicable to `png` images. For `jpeg` the default is `80`. For
+   * `webp`, a quality of `100` (the default) produces a lossless image, while lower values use lossy compression.
+   * @param options.scale When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this
+   * will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so
+   * screenshots of high-dpi devices will be twice as large or even larger.
+   *
+   * Defaults to `"device"`.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.style Text of the stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make
+   * elements invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces
+   * the Shadow DOM and applies to the inner frames.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.type Specify screenshot type, defaults to `png`.
    */
   screenshot(options?: PageScreenshotOptions): Promise<Buffer>;
 
@@ -4487,6 +5248,21 @@ export interface Page {
    * only the first option matching one of the passed options is selected. String values are matching both values and
    * labels. Option is considered matching if all specified properties match.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   selectOption(selector: string, values: null|string|ElementHandle|ReadonlyArray<string>|{
     /**
@@ -4584,6 +5360,29 @@ export interface Page {
    * used.
    * @param checked Whether to check or uncheck the checkbox.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   setChecked(selector: string, checked: boolean, options?: {
     /**
@@ -4652,6 +5451,26 @@ export interface Page {
    * inheriting all its specific characteristics and behaviors.
    * @param html HTML markup to assign to the page.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `navigationTimeout` option in the config, or by using the
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout),
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.waitUntil When to consider operation succeeded, defaults to `load`. Events can be either:
+   * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+   * - `'load'` - consider operation to be finished when the `load` event is fired.
+   * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+   * at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
+   * - `'commit'` - consider operation to be finished when network response is received and the document started
+   * loading.
    */
   setContent(html: string, options?: {
     /**
@@ -4750,6 +5569,20 @@ export interface Page {
    * used.
    * @param files
    * @param options
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   setInputFiles(selector: string, files: string|ReadonlyArray<string>|{
     /**
@@ -4879,6 +5712,34 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+   * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+   * are pressed.
    */
   tap(selector: string, options?: {
     /**
@@ -4960,6 +5821,19 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   textContent(selector: string, options?: {
     /**
@@ -5010,6 +5884,21 @@ export interface Page {
    * used.
    * @param text A text to type into a focused element.
    * @param options
+   * @param options.delay Time to wait between key presses in milliseconds. Defaults to 0.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   type(selector: string, text: string, options?: {
     /**
@@ -5075,6 +5964,29 @@ export interface Page {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   uncheck(selector: string, options?: {
     /**
@@ -5153,6 +6065,12 @@ export interface Page {
    * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) and
    * [page.routeFromHAR(har[, options])](https://playwright.dev/docs/api/class-page#page-route-from-har).
    * @param options
+   * @param options.behavior Specifies whether to wait for already running handlers and what to do if they throw errors:
+   * - `'default'` - do not wait for current handler calls (if any) to finish, if unrouted handler throws, it may
+   * result in unhandled error
+   * - `'wait'` - wait for current handler calls (if any) to finish
+   * - `'ignoreErrors'` - do not wait for current handler calls (if any) to finish, all errors thrown by the handlers
+   * after unrouting are silently caught
    */
   unrouteAll(options?: {
     /**
@@ -5426,6 +6344,18 @@ export interface Page {
    * - `'networkidle'` - **DISCOURAGED** wait until there are no network connections for at least `500` ms. Don't use
    * this method for testing, rely on web assertions to assess readiness instead.
    * @param options
+   * @param options.signal Allows to cancel the waiting using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
+   * default timeout, which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+   * pass `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `navigationTimeout` option in the config, or by using the
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout),
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForLoadState(state?: "load"|"domcontentloaded"|"networkidle", options?: {
     /**
@@ -5473,6 +6403,28 @@ export interface Page {
    * @deprecated This method is inherently racy, please use
    * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url) instead.
    * @param options
+   * @param options.signal Allows to cancel the waiting using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
+   * default timeout, which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+   * pass `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `navigationTimeout` option in the config, or by using the
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout),
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.url A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while waiting for the navigation.
+   * Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that
+   * is exactly equal to the string.
+   * @param options.waitUntil When to consider operation succeeded, defaults to `load`. Events can be either:
+   * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+   * - `'load'` - consider operation to be finished when the `load` event is fired.
+   * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+   * at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
+   * - `'commit'` - consider operation to be finished when network response is received and the document started
+   * loading.
    */
   waitForNavigation(options?: {
     /**
@@ -5536,6 +6488,15 @@ export interface Page {
    *
    * @param urlOrPredicate Request URL string, regex or predicate receiving [Request](https://playwright.dev/docs/api/class-request) object.
    * @param options
+   * @param options.signal Allows to cancel the waiting using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
+   * default timeout, which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+   * pass `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can
+   * be changed by using the
+   * [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) method.
    */
   waitForRequest(urlOrPredicate: string|RegExp|((request: Request) => boolean|Promise<boolean>), options?: {
     /**
@@ -5582,6 +6543,16 @@ export interface Page {
    * context options was provided and the passed URL is a path, it gets merged via the
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param options
+   * @param options.signal Allows to cancel the waiting using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
+   * default timeout, which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+   * pass `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can
+   * be changed by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForResponse(urlOrPredicate: string|RegExp|((response: Response) => boolean|Promise<boolean>), options?: {
     /**
@@ -5638,6 +6609,25 @@ export interface Page {
    * Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that
    * is exactly equal to the string.
    * @param options
+   * @param options.signal Allows to cancel the waiting using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
+   * default timeout, which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+   * pass `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `navigationTimeout` option in the config, or by using the
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout),
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.waitUntil When to consider operation succeeded, defaults to `load`. Events can be either:
+   * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+   * - `'load'` - consider operation to be finished when the `load` event is fired.
+   * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+   * at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
+   * - `'commit'` - consider operation to be finished when network response is received and the document started
+   * loading.
    */
   waitForURL(url: string|RegExp|URLPattern|((url: URL) => boolean), options?: {
     /**
@@ -5836,6 +6826,11 @@ export interface Frame {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-option-expression).
    * @param options
+   * @param options.exposeFunctions When set to `true`, functions passed inside
+   * [`arg`](https://playwright.dev/docs/api/class-frame#frame-evaluate-option-arg) are exposed in the page and can be
+   * called from the page function. Calling one returns a [Promise] of its result. The page-side functions are scoped to
+   * the execution context they were passed to and disappear when the page navigates. Defaults to `false`, in which case
+   * functions are not serializable and passing one throws an error, as before.
    */
   evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<R>;
   /**
@@ -5885,6 +6880,11 @@ export interface Frame {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-option-expression).
    * @param options
+   * @param options.exposeFunctions When set to `true`, functions passed inside
+   * [`arg`](https://playwright.dev/docs/api/class-frame#frame-evaluate-option-arg) are exposed in the page and can be
+   * called from the page function. Calling one returns a [Promise] of its result. The page-side functions are scoped to
+   * the execution context they were passed to and disappear when the page navigates. Defaults to `false`, in which case
+   * functions are not serializable and passing one throws an error, as before.
    */
   evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<R>;
 
@@ -5935,6 +6935,11 @@ export interface Frame {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle-option-expression).
    * @param options
+   * @param options.exposeFunctions When set to `true`, functions passed inside
+   * [`arg`](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle-option-arg) are exposed in the page and
+   * can be called from the page function. Calling one returns a [Promise] of its result. The page-side functions are
+   * scoped to the execution context they were passed to and disappear when the page navigates. Defaults to `false`, in
+   * which case functions are not serializable and passing one throws an error, as before.
    */
   evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
   /**
@@ -5984,6 +6989,11 @@ export interface Frame {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle-option-expression).
    * @param options
+   * @param options.exposeFunctions When set to `true`, functions passed inside
+   * [`arg`](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle-option-arg) are exposed in the page and
+   * can be called from the page function. Calling one returns a [Promise] of its result. The page-side functions are
+   * scoped to the execution context they were passed to and disappear when the page navigates. Defaults to `false`, in
+   * which case functions are not serializable and passing one throws an error, as before.
    */
   evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
 
@@ -6000,6 +7010,8 @@ export interface Frame {
    * returns `null`.
    * @param selector A selector to query for.
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   $<K extends keyof HTMLElementTagNameMap>(selector: K, options?: { strict: boolean }): Promise<ElementHandleForTag<K> | null>;
   /**
@@ -6015,6 +7027,8 @@ export interface Frame {
    * returns `null`.
    * @param selector A selector to query for.
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   $(selector: string, options?: { strict: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
 
@@ -6078,6 +7092,8 @@ export interface Frame {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-option-expression).
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   /**
@@ -6111,6 +7127,8 @@ export interface Frame {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-option-expression).
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   $eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<R>;
   /**
@@ -6144,6 +7162,8 @@ export interface Frame {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-option-expression).
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
   /**
@@ -6177,6 +7197,8 @@ export interface Frame {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-option-expression).
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   $eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, void, R>, arg?: any): Promise<R>;
 
@@ -6336,6 +7358,22 @@ export interface Frame {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-wait-for-function-option-expression).
    * @param options
+   * @param options.polling If [`polling`](https://playwright.dev/docs/api/class-frame#frame-wait-for-function-option-polling) is `'raf'`, then
+   * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-wait-for-function-option-expression) is
+   * constantly executed in `requestAnimationFrame` callback. If
+   * [`polling`](https://playwright.dev/docs/api/class-frame#frame-wait-for-function-option-polling) is a number, then
+   * it is treated as an interval in milliseconds at which the function would be executed. Defaults to `raf`.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time to wait for in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `actionTimeout` option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForFunction<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
   /**
@@ -6373,6 +7411,22 @@ export interface Frame {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-wait-for-function-option-expression).
    * @param options
+   * @param options.polling If [`polling`](https://playwright.dev/docs/api/class-frame#frame-wait-for-function-option-polling) is `'raf'`, then
+   * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-wait-for-function-option-expression) is
+   * constantly executed in `requestAnimationFrame` callback. If
+   * [`polling`](https://playwright.dev/docs/api/class-frame#frame-wait-for-function-option-polling) is a number, then
+   * it is treated as an interval in milliseconds at which the function would be executed. Defaults to `raf`.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time to wait for in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `actionTimeout` option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForFunction<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
 
@@ -6418,6 +7472,26 @@ export interface Frame {
    *
    * @param selector A selector to query for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.state Defaults to `'visible'`. Can be either:
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
+   * without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
+   * `visibility:hidden`. This is opposite to the `'visible'` option.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
   /**
@@ -6462,6 +7536,26 @@ export interface Frame {
    *
    * @param selector A selector to query for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.state Defaults to `'visible'`. Can be either:
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
+   * without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
+   * `visibility:hidden`. This is opposite to the `'visible'` option.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandle<SVGElement | HTMLElement>>;
   /**
@@ -6506,6 +7600,26 @@ export interface Frame {
    *
    * @param selector A selector to query for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.state Defaults to `'visible'`. Can be either:
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
+   * without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
+   * `visibility:hidden`. This is opposite to the `'visible'` option.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
   /**
@@ -6550,6 +7664,26 @@ export interface Frame {
    *
    * @param selector A selector to query for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.state Defaults to `'visible'`. Can be either:
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
+   * without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
+   * `visibility:hidden`. This is opposite to the `'visible'` option.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
   /**
@@ -6557,6 +7691,12 @@ export interface Frame {
    *
    * Adds a `<script>` tag into the page with the desired url or content.
    * @param options
+   * @param options.content Raw JavaScript content to be injected into frame.
+   * @param options.path Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative
+   * to the current working directory.
+   * @param options.type Script type. Use 'module' in order to load a JavaScript ES6 module. See
+   * [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
+   * @param options.url URL of a script to be added.
    */
   addScriptTag(options?: {
     /**
@@ -6588,6 +7728,10 @@ export interface Frame {
    * Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the
    * content.
    * @param options
+   * @param options.content Raw CSS content to be injected into frame.
+   * @param options.path Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the
+   * current working directory.
+   * @param options.url URL of the `<link>` tag.
    */
   addStyleTag(options?: {
     /**
@@ -6633,6 +7777,29 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   check(selector: string, options?: {
     /**
@@ -6724,6 +7891,39 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.button Defaults to `left`.
+   * @param options.clickCount defaults to 1. See [UIEvent.detail].
+   * @param options.delay Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
+   * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
+   * navigating to inaccessible pages. Defaults to `false`.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+   * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+   * are pressed.
    */
   click(selector: string, options?: {
     /**
@@ -6846,6 +8046,36 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.button Defaults to `left`.
+   * @param options.delay Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+   * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+   * are pressed.
    */
   dblclick(selector: string, options?: {
     /**
@@ -6974,6 +8204,19 @@ export interface Frame {
    * @param type DOM event type: `"click"`, `"dragstart"`, etc.
    * @param eventInit Optional event-specific initialization properties.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   dispatchEvent(selector: string, type: string, eventInit?: EvaluationArgument, options?: {
     /**
@@ -7008,6 +8251,33 @@ export interface Frame {
    * @param target A selector to search for an element to drop onto. If there are multiple elements satisfying the selector, the first
    * will be used.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.sourcePosition Clicks on the source element at this point relative to the top-left corner of the element's padding box. If not
+   * specified, some visible point of the element is used.
+   * @param options.steps Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+   * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.targetPosition Drops on the target element at this point relative to the top-left corner of the element's padding box. If not
+   * specified, some visible point of the element is used.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   dragAndDrop(source: string, target: string, options?: {
     /**
@@ -7107,6 +8377,21 @@ export interface Frame {
    * used.
    * @param value Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   fill(selector: string, value: string, options?: {
     /**
@@ -7157,6 +8442,19 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   focus(selector: string, options?: {
     /**
@@ -7233,6 +8531,19 @@ export interface Frame {
    * used.
    * @param name Attribute name to get the value for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   getAttribute(selector: string, name: string, options?: {
     /**
@@ -7278,6 +8589,8 @@ export interface Frame {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByAltText(text: string|RegExp, options?: {
     /**
@@ -7308,6 +8621,8 @@ export interface Frame {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByLabel(text: string|RegExp, options?: {
     /**
@@ -7338,6 +8653,8 @@ export interface Frame {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByPlaceholder(text: string|RegExp, options?: {
     /**
@@ -7386,6 +8703,45 @@ export interface Frame {
    * duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
    * @param role Required aria role.
    * @param options
+   * @param options.checked An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls.
+   *
+   * Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
+   * @param options.description Option to match the [accessible description](https://w3c.github.io/accname/#dfn-accessible-description). By
+   * default, matching is case-insensitive and searches for a substring, use
+   * [`exact`](https://playwright.dev/docs/api/class-frame#frame-get-by-role-option-exact) to control this behavior.
+   *
+   * Learn more about [accessible description](https://w3c.github.io/accname/#dfn-accessible-description).
+   * @param options.disabled An attribute that is usually set by `aria-disabled` or `disabled`.
+   *
+   * **NOTE** Unlike most other attributes, `disabled` is inherited through the DOM hierarchy. Learn more about
+   * [`aria-disabled`](https://www.w3.org/TR/wai-aria-1.2/#aria-disabled).
+   *
+   * @param options.exact Whether [`name`](https://playwright.dev/docs/api/class-frame#frame-get-by-role-option-name) and
+   * [`description`](https://playwright.dev/docs/api/class-frame#frame-get-by-role-option-description) are matched
+   * exactly: case-sensitive and whole-string. Defaults to false. Ignored when the value is a regular expression. Note
+   * that exact match still trims whitespace.
+   * @param options.expanded An attribute that is usually set by `aria-expanded`.
+   *
+   * Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
+   * @param options.includeHidden Option that controls whether hidden elements are matched. By default, only non-hidden elements, as
+   * [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector.
+   *
+   * Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
+   * @param options.level A number attribute that is usually present for roles `heading`, `listitem`, `row`, `treeitem`, with default values
+   * for `<h1>-<h6>` elements.
+   *
+   * Learn more about [`aria-level`](https://www.w3.org/TR/wai-aria-1.2/#aria-level).
+   * @param options.name Option to match the [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). By default, matching is
+   * case-insensitive and searches for a substring, use
+   * [`exact`](https://playwright.dev/docs/api/class-frame#frame-get-by-role-option-exact) to control this behavior.
+   *
+   * Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+   * @param options.pressed An attribute that is usually set by `aria-pressed`.
+   *
+   * Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
+   * @param options.selected An attribute that is usually set by `aria-selected`.
+   *
+   * Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
    */
   getByRole(role: "alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem", options?: {
     /**
@@ -7549,6 +8905,8 @@ export interface Frame {
    * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByText(text: string|RegExp, options?: {
     /**
@@ -7577,6 +8935,8 @@ export interface Frame {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByTitle(text: string|RegExp, options?: {
     /**
@@ -7610,6 +8970,28 @@ export interface Frame {
    *
    * @param url URL to navigate frame to. The url should include scheme, e.g. `https://`.
    * @param options
+   * @param options.referer Referer header value. If provided it will take preference over the referer header value set by
+   * [page.setExtraHTTPHeaders(headers)](https://playwright.dev/docs/api/class-page#page-set-extra-http-headers).
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `navigationTimeout` option in the config, or by using the
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout),
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.waitUntil When to consider operation succeeded, defaults to `load`. Events can be either:
+   * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+   * - `'load'` - consider operation to be finished when the `load` event is fired.
+   * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+   * at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
+   * - `'commit'` - consider operation to be finished when network response is received and the document started
+   * loading.
    */
   goto(url: string, options?: {
     /**
@@ -7675,6 +9057,34 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+   * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+   * are pressed.
    */
   hover(selector: string, options?: {
     /**
@@ -7755,6 +9165,19 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   innerHTML(selector: string, options?: {
     /**
@@ -7791,6 +9214,19 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   innerText(selector: string, options?: {
     /**
@@ -7832,6 +9268,19 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   inputValue(selector: string, options?: {
     /**
@@ -7868,6 +9317,19 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   isChecked(selector: string, options?: {
     /**
@@ -7910,6 +9372,19 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   isDisabled(selector: string, options?: {
     /**
@@ -7947,6 +9422,19 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   isEditable(selector: string, options?: {
     /**
@@ -7980,6 +9468,19 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   isEnabled(selector: string, options?: {
     /**
@@ -8018,6 +9519,8 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   isHidden(selector: string, options?: {
     /**
@@ -8044,6 +9547,8 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
    */
   isVisible(selector: string, options?: {
     /**
@@ -8070,6 +9575,26 @@ export interface Frame {
    * [Learn more about locators](https://playwright.dev/docs/locators).
    * @param selector A selector to use when resolving DOM element.
    * @param options
+   * @param options.has Narrows down the results of the method to those which contain elements matching this relative locator. For example,
+   * `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+   *
+   * Inner locator **must be relative** to the outer locator and is queried starting with the outer locator match, not
+   * the document root. For example, you can find `content` that has `div` in
+   * `<article><content><div>Playwright</div></content></article>`. However, looking for `content` that has `article
+   * div` will fail, because the inner locator must be relative and should not use any elements outside the `content`.
+   *
+   * Note that outer and inner locators must belong to the same frame. Inner locator must not contain
+   * [FrameLocator](https://playwright.dev/docs/api/class-framelocator)s.
+   * @param options.hasNot Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+   * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+   *
+   * Note that outer and inner locators must belong to the same frame. Inner locator must not contain
+   * [FrameLocator](https://playwright.dev/docs/api/class-framelocator)s.
+   * @param options.hasNotText Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+   * When passed a [string], matching is case-insensitive and searches for a substring.
+   * @param options.hasText Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
+   * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+   * `<article><div>Playwright</div></article>`.
    */
   locator(selector: string, options?: {
     /**
@@ -8159,6 +9684,23 @@ export interface Frame {
    * used.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    * @param options
+   * @param options.delay Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
+   * @param options.noWaitAfter Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
+   * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
+   * navigating to inaccessible pages. Defaults to `false`.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   press(selector: string, key: string, options?: {
     /**
@@ -8237,6 +9779,21 @@ export interface Frame {
    * only the first option matching one of the passed options is selected. String values are matching both values and
    * labels. Option is considered matching if all specified properties match.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   selectOption(selector: string, values: null|string|ElementHandle|ReadonlyArray<string>|{
     /**
@@ -8334,6 +9891,29 @@ export interface Frame {
    * used.
    * @param checked Whether to check or uncheck the checkbox.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   setChecked(selector: string, checked: boolean, options?: {
     /**
@@ -8402,6 +9982,26 @@ export interface Frame {
    * inheriting all its specific characteristics and behaviors.
    * @param html HTML markup to assign to the page.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `navigationTimeout` option in the config, or by using the
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout),
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.waitUntil When to consider operation succeeded, defaults to `load`. Events can be either:
+   * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+   * - `'load'` - consider operation to be finished when the `load` event is fired.
+   * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+   * at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
+   * - `'commit'` - consider operation to be finished when network response is received and the document started
+   * loading.
    */
   setContent(html: string, options?: {
     /**
@@ -8453,6 +10053,20 @@ export interface Frame {
    * used.
    * @param files
    * @param options
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   setInputFiles(selector: string, files: string|ReadonlyArray<string>|{
     /**
@@ -8543,6 +10157,34 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+   * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+   * are pressed.
    */
   tap(selector: string, options?: {
     /**
@@ -8624,6 +10266,19 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   textContent(selector: string, options?: {
     /**
@@ -8674,6 +10329,21 @@ export interface Frame {
    * used.
    * @param text A text to type into a focused element.
    * @param options
+   * @param options.delay Time to wait between key presses in milliseconds. Defaults to 0.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   type(selector: string, text: string, options?: {
     /**
@@ -8739,6 +10409,29 @@ export interface Frame {
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
    * used.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   uncheck(selector: string, options?: {
     /**
@@ -8831,6 +10524,18 @@ export interface Frame {
    * - `'networkidle'` - **DISCOURAGED** wait until there are no network connections for at least `500` ms. Don't use
    * this method for testing, rely on web assertions to assess readiness instead.
    * @param options
+   * @param options.signal Allows to cancel the waiting using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
+   * default timeout, which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+   * pass `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `navigationTimeout` option in the config, or by using the
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout),
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForLoadState(state?: "load"|"domcontentloaded"|"networkidle", options?: {
     /**
@@ -8877,6 +10582,28 @@ export interface Frame {
    * @deprecated This method is inherently racy, please use
    * [frame.waitForURL(url[, options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-url) instead.
    * @param options
+   * @param options.signal Allows to cancel the waiting using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
+   * default timeout, which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+   * pass `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `navigationTimeout` option in the config, or by using the
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout),
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.url A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while waiting for the navigation.
+   * Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that
+   * is exactly equal to the string.
+   * @param options.waitUntil When to consider operation succeeded, defaults to `load`. Events can be either:
+   * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+   * - `'load'` - consider operation to be finished when the `load` event is fired.
+   * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+   * at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
+   * - `'commit'` - consider operation to be finished when network response is received and the document started
+   * loading.
    */
   waitForNavigation(options?: {
     /**
@@ -8945,6 +10672,25 @@ export interface Frame {
    * Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that
    * is exactly equal to the string.
    * @param options
+   * @param options.signal Allows to cancel the waiting using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
+   * default timeout, which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+   * pass `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `navigationTimeout` option in the config, or by using the
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout),
+   * [page.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.waitUntil When to consider operation succeeded, defaults to `load`. Events can be either:
+   * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+   * - `'load'` - consider operation to be finished when the `load` event is fired.
+   * - `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for
+   * at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
+   * - `'commit'` - consider operation to be finished when network response is received and the document started
+   * loading.
    */
   waitForURL(url: string|RegExp|URLPattern|((url: URL) => boolean), options?: {
     /**
@@ -9092,6 +10838,12 @@ export interface BrowserContext {
    * async listeners to complete or to ignore subsequent errors from these listeners.
    * @param type
    * @param options
+   * @param options.behavior Specifies whether to wait for already running listeners and what to do if they throw errors:
+   * - `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result
+   * in unhandled error
+   * - `'wait'` - wait for current listener calls (if any) to finish
+   * - `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the
+   * listeners after removal are silently caught
    */
   removeAllListeners(type?: string): this;
   /**
@@ -9099,6 +10851,12 @@ export interface BrowserContext {
    * async listeners to complete or to ignore subsequent errors from these listeners.
    * @param type
    * @param options
+   * @param options.behavior Specifies whether to wait for already running listeners and what to do if they throw errors:
+   * - `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result
+   * in unhandled error
+   * - `'wait'` - wait for current listener calls (if any) to finish
+   * - `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the
+   * listeners after removal are silently caught
    */
   removeAllListeners(type: string | undefined, options: {
     /**
@@ -9997,6 +11755,9 @@ export interface BrowserContext {
    * ```
    *
    * @param options
+   * @param options.domain Only removes cookies with the given domain.
+   * @param options.name Only removes cookies with the given name.
+   * @param options.path Only removes cookies with the given path.
    */
   clearCookies(options?: {
     /**
@@ -10036,6 +11797,7 @@ export interface BrowserContext {
    * **NOTE** The default browser context cannot be closed.
    *
    * @param options
+   * @param options.reason The reason to be reported to the operations interrupted by the context closure.
    */
   close(options?: {
     /**
@@ -10127,6 +11889,7 @@ export interface BrowserContext {
    * - `'storage-access'`
    * - `'screen-wake-lock'`
    * @param options
+   * @param options.origin The [origin] to grant permissions to, e.g. "https://example.com".
    */
   grantPermissions(permissions: ReadonlyArray<string>, options?: {
     /**
@@ -10220,6 +11983,7 @@ export interface BrowserContext {
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
    * @param options
+   * @param options.times How often a route should be used. By default it will be used every time.
    */
   route(url: string|RegExp|URLPattern|((url: URL) => boolean), handler: ((route: Route, request: Request) => Promise<any>|any), options?: {
     /**
@@ -10240,6 +12004,26 @@ export interface BrowserContext {
    * @param har Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a
    * relative path, then it is resolved relative to the current working directory.
    * @param options
+   * @param options.interceptAPIRequests If set to `true`, requests made via [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext)
+   * (such as [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) or
+   * [page.request](https://playwright.dev/docs/api/class-page#page-request)) are also served from the HAR file. By
+   * default these requests are sent to the network, matching the behavior prior to v1.62. Defaults to `false` for
+   * backward compatibility.
+   * @param options.notFound - If set to 'abort' any request not found in the HAR file will be aborted.
+   * - If set to 'fallback' falls through to the next route handler in the handler chain.
+   *
+   * Defaults to abort.
+   * @param options.update If specified, updates the given HAR with the actual network information instead of serving from file. The file is
+   * written to disk when
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is
+   * called.
+   * @param options.updateContent Optional setting to control resource content management. If `attach` is specified, resources are persisted as
+   * separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
+   * @param options.updateMode When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+   * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to
+   * `minimal`.
+   * @param options.url A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the
+   * pattern will be served from the HAR file. If not specified, all requests are served from the HAR file.
    */
   routeFromHAR(har: string, options?: {
     /**
@@ -10491,6 +12275,22 @@ export interface BrowserContext {
    * Returns storage state for this browser context, contains current cookies, local storage snapshot, IndexedDB
    * snapshot and virtual WebAuthn credentials.
    * @param options
+   * @param options.credentials Set to `true` to include the context's virtual WebAuthn
+   * [browserContext.credentials](https://playwright.dev/docs/api/class-browsercontext#browser-context-credentials)
+   * (passkeys) in the storage state snapshot. The captured credentials carry their private keys, so they can be
+   * re-seeded into a later context via the
+   * [`storageState`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-storage-state) option or
+   * [browserContext.setStorageState(storageState)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-storage-state).
+   * Note that restoring the storage state that contains credentials will automatically install the virtual WebAuthn
+   * authenticator (see [credentials.install()](https://playwright.dev/docs/api/class-credentials#credentials-install)),
+   * and prevent all real authenticators from working in this context.
+   * @param options.indexedDB Set to `true` to include [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) in the storage
+   * state snapshot. If your application uses IndexedDB to store authentication tokens, like Firebase Authentication,
+   * enable this.
+   * @param options.path The file path to save the storage state to. If
+   * [`path`](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state-option-path) is a
+   * relative path, then it is resolved relative to current working directory. If no path is provided, storage state is
+   * still returned, but won't be saved to the disk.
    */
   storageState(options?: {
     /**
@@ -10572,6 +12372,12 @@ export interface BrowserContext {
    * and
    * [browserContext.routeFromHAR(har[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-from-har).
    * @param options
+   * @param options.behavior Specifies whether to wait for already running handlers and what to do if they throw errors:
+   * - `'default'` - do not wait for current handler calls (if any) to finish, if unrouted handler throws, it may
+   * result in unhandled error
+   * - `'wait'` - wait for current handler calls (if any) to finish
+   * - `'ignoreErrors'` - do not wait for current handler calls (if any) to finish, all errors thrown by the handlers
+   * after unrouting are silently caught
    */
   unrouteAll(options?: {
     /**
@@ -10817,6 +12623,12 @@ export interface Browser {
    * async listeners to complete or to ignore subsequent errors from these listeners.
    * @param type
    * @param options
+   * @param options.behavior Specifies whether to wait for already running listeners and what to do if they throw errors:
+   * - `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result
+   * in unhandled error
+   * - `'wait'` - wait for current listener calls (if any) to finish
+   * - `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the
+   * listeners after removal are silently caught
    */
   removeAllListeners(type?: string): this;
   /**
@@ -10824,6 +12636,12 @@ export interface Browser {
    * async listeners to complete or to ignore subsequent errors from these listeners.
    * @param type
    * @param options
+   * @param options.behavior Specifies whether to wait for already running listeners and what to do if they throw errors:
+   * - `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result
+   * in unhandled error
+   * - `'wait'` - wait for current listener calls (if any) to finish
+   * - `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the
+   * listeners after removal are silently caught
    */
   removeAllListeners(type: string | undefined, options: {
     /**
@@ -10907,6 +12725,11 @@ export interface Browser {
    * Binds the browser to a named pipe or web socket, making it available for other clients to connect to.
    * @param title Title of the browser server, used for identification.
    * @param options
+   * @param options.host Host to bind the web socket server to. When specified, a web socket server is created instead of a named pipe.
+   * @param options.metadata Additional metadata to associate with the browser server.
+   * @param options.port Port to bind the web socket server to. When specified, a web socket server is created instead of a named pipe. Use
+   * `0` to let the OS pick an available port.
+   * @param options.workspaceDir Working directory associated with this browser server.
    */
   bind(title: string, options?: {
     /**
@@ -10956,6 +12779,7 @@ export interface Browser {
    * The [Browser](https://playwright.dev/docs/api/class-browser) object itself is considered to be disposed and cannot
    * be used anymore.
    * @param options
+   * @param options.reason The reason to be reported to the operations interrupted by the browser closure.
    */
   close(options?: {
     /**
@@ -11021,6 +12845,150 @@ export interface Browser {
    * ```
    *
    * @param options
+   * @param options.acceptDownloads Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
+   * @param options.baseURL When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
+   * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
+   * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request),
+   * or
+   * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response)
+   * it takes the base URL in consideration by using the
+   * [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
+   * Unset by default. Examples:
+   * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+   * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in
+   * `http://localhost:3000/foo/bar.html`
+   * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+   * `http://localhost:3000/bar.html`
+   * @param options.bypassCSP Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
+   * @param options.clientCertificates TLS Client Authentication allows the server to request a client certificate and verify it.
+   *
+   * **Details**
+   *
+   * An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`,
+   * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
+   * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
+   * with an exact match to the request origin that the certificate is valid for.
+   *
+   * Client certificate authentication is only active when at least one client certificate is provided. If you want to
+   * reject all client certificates sent by the server, you need to provide a client certificate with an `origin` that
+   * does not match any of the domains you plan to visit.
+   *
+   * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
+   * work by replacing `localhost` with `local.playwright`.
+   *
+   * @param options.colorScheme Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+   * media feature, supported values are `'light'` and `'dark'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
+   * @param options.contrast Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+   * @param options.deviceScaleFactor Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
+   * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
+   * @param options.extraHTTPHeaders An object containing additional HTTP headers to be sent with every request. Defaults to none.
+   * @param options.forcedColors Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'none'`.
+   * @param options.geolocation.latitude Latitude between -90 and 90.
+   * @param options.geolocation.longitude Longitude between -180 and 180.
+   * @param options.geolocation.accuracy Non-negative accuracy value. Defaults to `0`.
+   * @param options.hasTouch Specifies if viewport supports touch events. Defaults to false. Learn more about
+   * [mobile emulation](https://playwright.dev/docs/emulation#devices).
+   * @param options.httpCredentials Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+   * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+   * @param options.httpCredentials.origin Restrain sending http credentials on specific origin (scheme://host:port).
+   * @param options.httpCredentials.send This option only applies to the requests sent from corresponding
+   * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+   * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+   * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+   * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+   * @param options.ignoreHTTPSErrors Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   * @param options.isMobile Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
+   * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
+   * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
+   * @param options.javaScriptEnabled Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
+   * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
+   * @param options.locale Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
+   * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+   * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+   * @param options.logger Logger sink for Playwright logging.
+   * @param options.offline Whether to emulate network being offline. Defaults to `false`. Learn more about
+   * [network emulation](https://playwright.dev/docs/emulation#offline).
+   * @param options.permissions A list of permissions to grant to all pages in this context. See
+   * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
+   * for more details. Defaults to none.
+   * @param options.proxy Network proxy settings to use with this context. Defaults to none.
+   * @param options.proxy.server Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+   * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+   * @param options.proxy.bypass Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+   * @param options.proxy.username Optional username to use if HTTP proxy requires authentication.
+   * @param options.proxy.password Optional password to use if HTTP proxy requires authentication.
+   * @param options.recordHar Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
+   * If not specified, the HAR is not recorded. Make sure to await
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+   * the HAR to be saved.
+   * @param options.recordHar.omitContent Optional setting to control whether to omit request content from the HAR. Defaults to `false`. Deprecated, use
+   * `content` policy instead.
+   * @param options.recordHar.content Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
+   * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
+   * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
+   * files and to `embed` for all other file extensions.
+   * @param options.recordHar.path Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+   * default.
+   * @param options.recordHar.mode When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+   * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+   * @param options.recordHar.urlFilter A glob or regex pattern to filter requests that are stored in the HAR. When a
+   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
+   * options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
+   * @param options.recordVideo Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
+   * Make sure to await
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+   * videos to be saved.
+   * @param options.recordVideo.dir Path to the directory to put videos into. If not specified, the videos will be stored in `artifactsDir` (see
+   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch) options).
+   * @param options.recordVideo.size Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
+   * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
+   * each page will be scaled down if necessary to fit the specified size.
+   * @param options.recordVideo.size.width Video frame width.
+   * @param options.recordVideo.size.height Video frame height.
+   * @param options.recordVideo.showActions If specified, enables visual annotations on interacted elements during video recording.
+   * @param options.recordVideo.showActions.duration How long each annotation is displayed in milliseconds. Defaults to `500`.
+   * @param options.recordVideo.showActions.position Position of the action title overlay. Defaults to `"top-right"`.
+   * @param options.recordVideo.showActions.fontSize Font size of the action title in pixels. Defaults to `24`.
+   * @param options.recordVideo.showActions.cursor Cursor decoration shown for pointer actions. `"pointer"` (the default) renders a mouse pointer that animates from
+   * the previous action point to the next one. `"none"` disables the cursor decoration.
+   * @param options.reducedMotion Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+   * @param options.screen Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
+   * [`viewport`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-viewport) is set.
+   * @param options.screen.width page width in pixels.
+   * @param options.screen.height page height in pixels.
+   * @param options.serviceWorkers Whether to allow sites to register Service workers. Defaults to `'allow'`.
+   * - `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be
+   * registered.
+   * - `'block'`: Playwright will block all registration of Service Workers.
+   * @param options.storageState Learn more about [storage state and auth](https://playwright.dev/docs/auth).
+   *
+   * Populates context with given storage state. This option can be used to initialize context with logged-in
+   * information obtained via
+   * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
+   * @param options.strictSelectors If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
+   * selectors that imply single target DOM element will throw when more than one element matches the selector. This
+   * option does not affect any Locator APIs (Locators are always strict). Defaults to `false`. See
+   * [Locator](https://playwright.dev/docs/api/class-locator) to learn more about the strict mode.
+   * @param options.timezoneId Changes the timezone of the context. See
+   * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
+   * for a list of supported timezone IDs. Defaults to the system timezone.
+   * @param options.userAgent Specific user agent to use in this context.
+   * @param options.viewport Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
+   * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
+   *
+   * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
+   * by the operating system. It makes the execution of the tests non-deterministic.
+   *
    */
   newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
 
@@ -11033,6 +13001,150 @@ export interface Browser {
    * [browserContext.newPage()](https://playwright.dev/docs/api/class-browsercontext#browser-context-new-page) to
    * control their exact life times.
    * @param options
+   * @param options.acceptDownloads Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
+   * @param options.baseURL When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
+   * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
+   * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request),
+   * or
+   * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response)
+   * it takes the base URL in consideration by using the
+   * [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
+   * Unset by default. Examples:
+   * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+   * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in
+   * `http://localhost:3000/foo/bar.html`
+   * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+   * `http://localhost:3000/bar.html`
+   * @param options.bypassCSP Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
+   * @param options.clientCertificates TLS Client Authentication allows the server to request a client certificate and verify it.
+   *
+   * **Details**
+   *
+   * An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`,
+   * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
+   * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
+   * with an exact match to the request origin that the certificate is valid for.
+   *
+   * Client certificate authentication is only active when at least one client certificate is provided. If you want to
+   * reject all client certificates sent by the server, you need to provide a client certificate with an `origin` that
+   * does not match any of the domains you plan to visit.
+   *
+   * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
+   * work by replacing `localhost` with `local.playwright`.
+   *
+   * @param options.colorScheme Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+   * media feature, supported values are `'light'` and `'dark'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
+   * @param options.contrast Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+   * @param options.deviceScaleFactor Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
+   * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
+   * @param options.extraHTTPHeaders An object containing additional HTTP headers to be sent with every request. Defaults to none.
+   * @param options.forcedColors Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'none'`.
+   * @param options.geolocation.latitude Latitude between -90 and 90.
+   * @param options.geolocation.longitude Longitude between -180 and 180.
+   * @param options.geolocation.accuracy Non-negative accuracy value. Defaults to `0`.
+   * @param options.hasTouch Specifies if viewport supports touch events. Defaults to false. Learn more about
+   * [mobile emulation](https://playwright.dev/docs/emulation#devices).
+   * @param options.httpCredentials Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+   * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+   * @param options.httpCredentials.origin Restrain sending http credentials on specific origin (scheme://host:port).
+   * @param options.httpCredentials.send This option only applies to the requests sent from corresponding
+   * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+   * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+   * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+   * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+   * @param options.ignoreHTTPSErrors Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   * @param options.isMobile Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
+   * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
+   * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
+   * @param options.javaScriptEnabled Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
+   * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
+   * @param options.locale Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
+   * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+   * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+   * @param options.logger Logger sink for Playwright logging.
+   * @param options.offline Whether to emulate network being offline. Defaults to `false`. Learn more about
+   * [network emulation](https://playwright.dev/docs/emulation#offline).
+   * @param options.permissions A list of permissions to grant to all pages in this context. See
+   * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
+   * for more details. Defaults to none.
+   * @param options.proxy Network proxy settings to use with this context. Defaults to none.
+   * @param options.proxy.server Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+   * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+   * @param options.proxy.bypass Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+   * @param options.proxy.username Optional username to use if HTTP proxy requires authentication.
+   * @param options.proxy.password Optional password to use if HTTP proxy requires authentication.
+   * @param options.recordHar Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
+   * If not specified, the HAR is not recorded. Make sure to await
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+   * the HAR to be saved.
+   * @param options.recordHar.omitContent Optional setting to control whether to omit request content from the HAR. Defaults to `false`. Deprecated, use
+   * `content` policy instead.
+   * @param options.recordHar.content Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
+   * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
+   * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
+   * files and to `embed` for all other file extensions.
+   * @param options.recordHar.path Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+   * default.
+   * @param options.recordHar.mode When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+   * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+   * @param options.recordHar.urlFilter A glob or regex pattern to filter requests that are stored in the HAR. When a
+   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
+   * options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
+   * @param options.recordVideo Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
+   * Make sure to await
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+   * videos to be saved.
+   * @param options.recordVideo.dir Path to the directory to put videos into. If not specified, the videos will be stored in `artifactsDir` (see
+   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch) options).
+   * @param options.recordVideo.size Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
+   * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
+   * each page will be scaled down if necessary to fit the specified size.
+   * @param options.recordVideo.size.width Video frame width.
+   * @param options.recordVideo.size.height Video frame height.
+   * @param options.recordVideo.showActions If specified, enables visual annotations on interacted elements during video recording.
+   * @param options.recordVideo.showActions.duration How long each annotation is displayed in milliseconds. Defaults to `500`.
+   * @param options.recordVideo.showActions.position Position of the action title overlay. Defaults to `"top-right"`.
+   * @param options.recordVideo.showActions.fontSize Font size of the action title in pixels. Defaults to `24`.
+   * @param options.recordVideo.showActions.cursor Cursor decoration shown for pointer actions. `"pointer"` (the default) renders a mouse pointer that animates from
+   * the previous action point to the next one. `"none"` disables the cursor decoration.
+   * @param options.reducedMotion Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+   * @param options.screen Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
+   * [`viewport`](https://playwright.dev/docs/api/class-browser#browser-new-page-option-viewport) is set.
+   * @param options.screen.width page width in pixels.
+   * @param options.screen.height page height in pixels.
+   * @param options.serviceWorkers Whether to allow sites to register Service workers. Defaults to `'allow'`.
+   * - `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be
+   * registered.
+   * - `'block'`: Playwright will block all registration of Service Workers.
+   * @param options.storageState Learn more about [storage state and auth](https://playwright.dev/docs/auth).
+   *
+   * Populates context with given storage state. This option can be used to initialize context with logged-in
+   * information obtained via
+   * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
+   * @param options.strictSelectors If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
+   * selectors that imply single target DOM element will throw when more than one element matches the selector. This
+   * option does not affect any Locator APIs (Locators are always strict). Defaults to `false`. See
+   * [Locator](https://playwright.dev/docs/api/class-locator) to learn more about the strict mode.
+   * @param options.timezoneId Changes the timezone of the context. See
+   * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
+   * for a list of supported timezone IDs. Defaults to the system timezone.
+   * @param options.userAgent Specific user agent to use in this context.
+   * @param options.viewport Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
+   * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
+   *
+   * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
+   * by the operating system. It makes the execution of the tests non-deterministic.
+   *
    */
   newPage(options?: {
     /**
@@ -11521,6 +13633,9 @@ export interface Browser {
    *
    * @param page Optional, if specified, tracing includes screenshots of the given page.
    * @param options
+   * @param options.categories specify custom categories to use instead of default.
+   * @param options.path A path to write the trace file to.
+   * @param options.screenshots captures screenshots in the trace.
    */
   startTracing(page?: Page, options?: {
     /**
@@ -11788,6 +13903,11 @@ export interface JSHandle<T = any> {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-option-expression).
    * @param options
+   * @param options.exposeFunctions When set to `true`, functions passed inside
+   * [`arg`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-option-arg) are exposed in the
+   * page and can be called from the page function. Calling one returns a [Promise] of its result. The page-side
+   * functions are scoped to the execution context they were passed to and disappear when the page navigates. Defaults
+   * to `false`, in which case functions are not serializable and passing one throws an error, as before.
    */
   evaluate<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<R>;
   /**
@@ -11811,6 +13931,11 @@ export interface JSHandle<T = any> {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-option-expression).
    * @param options
+   * @param options.exposeFunctions When set to `true`, functions passed inside
+   * [`arg`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-option-arg) are exposed in the
+   * page and can be called from the page function. Calling one returns a [Promise] of its result. The page-side
+   * functions are scoped to the execution context they were passed to and disappear when the page navigates. Defaults
+   * to `false`, in which case functions are not serializable and passing one throws an error, as before.
    */
   evaluate<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<R>;
 
@@ -11835,6 +13960,11 @@ export interface JSHandle<T = any> {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-handle-option-expression).
    * @param options
+   * @param options.exposeFunctions When set to `true`, functions passed inside
+   * [`arg`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-handle-option-arg) are exposed
+   * in the page and can be called from the page function. Calling one returns a [Promise] of its result. The page-side
+   * functions are scoped to the execution context they were passed to and disappear when the page navigates. Defaults
+   * to `false`, in which case functions are not serializable and passing one throws an error, as before.
    */
   evaluateHandle<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
   /**
@@ -11858,6 +13988,11 @@ export interface JSHandle<T = any> {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-handle-option-expression).
    * @param options
+   * @param options.exposeFunctions When set to `true`, functions passed inside
+   * [`arg`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-handle-option-arg) are exposed
+   * in the page and can be called from the page function. Calling one returns a [Promise] of its result. The page-side
+   * functions are scoped to the execution context they were passed to and disappear when the page navigates. Defaults
+   * to `false`, in which case functions are not serializable and passing one throws an error, as before.
    */
   evaluateHandle<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
 
@@ -12328,6 +14463,26 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *
    * @param selector A selector to query for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.state Defaults to `'visible'`. Can be either:
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
+   * without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
+   * `visibility:hidden`. This is opposite to the `'visible'` option.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: ElementHandleWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
   /**
@@ -12364,6 +14519,26 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *
    * @param selector A selector to query for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.state Defaults to `'visible'`. Can be either:
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
+   * without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
+   * `visibility:hidden`. This is opposite to the `'visible'` option.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForSelector(selector: string, options?: ElementHandleWaitForSelectorOptionsNotHidden): Promise<ElementHandle<SVGElement | HTMLElement>>;
   /**
@@ -12400,6 +14575,26 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *
    * @param selector A selector to query for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.state Defaults to `'visible'`. Can be either:
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
+   * without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
+   * `visibility:hidden`. This is opposite to the `'visible'` option.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: ElementHandleWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
   /**
@@ -12436,6 +14631,26 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *
    * @param selector A selector to query for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.state Defaults to `'visible'`. Can be either:
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
+   * without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
+   * `visibility:hidden`. This is opposite to the `'visible'` option.
+   * @param options.strict When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+   * element, the call throws an exception.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForSelector(selector: string, options: ElementHandleWaitForSelectorOptions): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
   /**
@@ -12503,6 +14718,27 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [`timeout`](https://playwright.dev/docs/api/class-elementhandle#element-handle-check-option-timeout), this method
    * throws a [TimeoutError](https://playwright.dev/docs/api/class-timeouterror). Passing zero timeout disables this.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   check(options?: {
     /**
@@ -12582,6 +14818,37 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [`timeout`](https://playwright.dev/docs/api/class-elementhandle#element-handle-click-option-timeout), this method
    * throws a [TimeoutError](https://playwright.dev/docs/api/class-timeouterror). Passing zero timeout disables this.
    * @param options
+   * @param options.button Defaults to `left`.
+   * @param options.clickCount defaults to 1. See [UIEvent.detail].
+   * @param options.delay Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
+   * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
+   * navigating to inaccessible pages. Defaults to `false`.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.steps Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor
+   * position and the provided destination. When set to 1, emits a single `mousemove` event at the destination location.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   click(options?: {
     /**
@@ -12697,6 +14964,34 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * **NOTE** `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
    *
    * @param options
+   * @param options.button Defaults to `left`.
+   * @param options.delay Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.steps Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor
+   * position and the provided destination. When set to 1, emits a single `mousemove` event at the destination location.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   dblclick(options?: {
     /**
@@ -12841,6 +15136,19 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
    * @param value Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   fill(value: string, options?: {
     /**
@@ -12911,6 +15219,30 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [`timeout`](https://playwright.dev/docs/api/class-elementhandle#element-handle-hover-option-timeout), this method
    * throws a [TimeoutError](https://playwright.dev/docs/api/class-timeouterror). Passing zero timeout disables this.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   hover(options?: {
     /**
@@ -13096,6 +15428,21 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    * @param options
+   * @param options.delay Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
+   * @param options.noWaitAfter Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
+   * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
+   * navigating to inaccessible pages. Defaults to `false`.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   press(key: string, options?: {
     /**
@@ -13144,6 +15491,49 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *
    * Returns the buffer with the captured screenshot.
    * @param options
+   * @param options.animations When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different
+   * treatment depending on their duration:
+   * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+   * - infinite animations are canceled to initial state, and then played over after the screenshot.
+   *
+   * Defaults to `"allow"` that leaves animations untouched.
+   * @param options.caret When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be
+   * changed.  Defaults to `"hide"`.
+   * @param options.mask Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
+   * box `#FF00FF` (customized by
+   * [`maskColor`](https://playwright.dev/docs/api/class-elementhandle#element-handle-screenshot-option-mask-color))
+   * that completely covers its bounding box. The mask is also applied to invisible elements, see
+   * [Matching only visible elements](https://playwright.dev/docs/locators#matching-only-visible-elements) to disable that.
+   * @param options.maskColor Specify the color of the overlay box for masked elements, in
+   * [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.
+   * @param options.omitBackground Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+   * Defaults to `false`.
+   * @param options.path The file path to save the image to. The screenshot type will be inferred from file extension. If
+   * [`path`](https://playwright.dev/docs/api/class-elementhandle#element-handle-screenshot-option-path) is a relative
+   * path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
+   * saved to the disk.
+   * @param options.quality The quality of the image, between 0-100. Not applicable to `png` images. For `jpeg` the default is `80`. For
+   * `webp`, a quality of `100` (the default) produces a lossless image, while lower values use lossy compression.
+   * @param options.scale When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this
+   * will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so
+   * screenshots of high-dpi devices will be twice as large or even larger.
+   *
+   * Defaults to `"device"`.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.style Text of the stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make
+   * elements invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces
+   * the Shadow DOM and applies to the inner frames.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.type Specify screenshot type, defaults to `png`.
    */
   screenshot(options?: {
     /**
@@ -13252,6 +15642,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *
    * See [scrolling](https://playwright.dev/docs/input#scrolling) for alternative ways to scroll.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   scrollIntoViewIfNeeded(options?: {
     /**
@@ -13308,6 +15709,19 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * only the first option matching one of the passed options is selected. String values are matching both values and
    * labels. Option is considered matching if all specified properties match.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   selectOption(values: null|string|ElementHandle|ReadonlyArray<string>|{
     /**
@@ -13383,6 +15797,18 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), focuses and selects text in
    * the control instead.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   selectText(options?: {
     /**
@@ -13432,6 +15858,27 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * this.
    * @param checked Whether to check or uncheck the checkbox.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   setChecked(checked: boolean, options?: {
     /**
@@ -13504,6 +15951,18 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
    * @param files
    * @param options
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   setInputFiles(files: string|ReadonlyArray<string>|{
     /**
@@ -13583,6 +16042,30 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * **NOTE** `elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true.
    *
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   tap(options?: {
     /**
@@ -13670,6 +16153,19 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
    * @param text A text to type into a focused element.
    * @param options
+   * @param options.delay Time to wait between key presses in milliseconds. Defaults to 0.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   type(text: string, options?: {
     /**
@@ -13724,6 +16220,27 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * [`timeout`](https://playwright.dev/docs/api/class-elementhandle#element-handle-uncheck-option-timeout), this method
    * throws a [TimeoutError](https://playwright.dev/docs/api/class-timeouterror). Passing zero timeout disables this.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   uncheck(options?: {
     /**
@@ -13803,6 +16320,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * milliseconds, this method will throw.
    * @param state A state to wait for, see below for more details.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForElementState(state: "visible"|"hidden"|"stable"|"enabled"|"disabled"|"editable", options?: {
     /**
@@ -13866,6 +16394,20 @@ export interface Locator {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression).
    * @param options
+   * @param options.exposeFunctions When set to `true`, functions passed inside
+   * [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-arg) are exposed in the page and can
+   * be called from the page function. Calling one returns a [Promise] of its result. The page-side functions are scoped
+   * to the execution context they were passed to and disappear when the page navigates. Defaults to `false`, in which
+   * case functions are not serializable and passing one throws an error, as before.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds to wait for the locator before evaluating. Note that after locator is resolved,
+   * evaluation itself is not limited by the timeout. Defaults to `0` - no timeout.
    */
   evaluate<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal, exposeFunctions?: boolean }): Promise<R>;
   /**
@@ -13900,6 +16442,20 @@ export interface Locator {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression).
    * @param options
+   * @param options.exposeFunctions When set to `true`, functions passed inside
+   * [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-arg) are exposed in the page
+   * and can be called from the page function. Calling one returns a [Promise] of its result. The page-side functions
+   * are scoped to the execution context they were passed to and disappear when the page navigates. Defaults to `false`,
+   * in which case functions are not serializable and passing one throws an error, as before.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds to wait for the locator before evaluating. Note that after locator is resolved,
+   * evaluation itself is not limited by the timeout. Defaults to `0` - no timeout.
    */
   evaluateHandle<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal, exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
   /**
@@ -13968,6 +16524,17 @@ export interface Locator {
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-expression).
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time to wait for in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
+   * `actionTimeout` option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitForFunction<Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, any>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal }): Promise<void>;
   /**
@@ -13977,12 +16544,30 @@ export interface Locator {
    * Resolves given locator to the first matching DOM element. If there are no matching elements, waits for one. If
    * multiple elements match the locator, throws.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   elementHandle(options?: { timeout?: number }): Promise<ElementHandle<SVGElement | HTMLElement>>;
   /**
    * Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses
    * [locator.highlight([options])](https://playwright.dev/docs/api/class-locator#locator-highlight).
    * @param options
+   * @param options.style Inline CSS applied to the highlight overlay, e.g.
+   *
+   * ```js
+   * await locator.highlight({ style: 'outline: 2px dashed red' });
+   * await locator.highlight({ style: { color: 'red' } });
+   * ```
+   *
    */
   highlight(options?: { style?: string | { [key: string]: string | number } }): Promise<Disposable>;
   /**
@@ -14109,6 +16694,24 @@ export interface Locator {
    * 1. Includes element references `[ref=e2]`. 2. Does not wait for an element matching the locator, and throws when
    *    no elements match. 3. Includes snapshots of `<iframe>`s inside the target.
    * @param options
+   * @param options.boxes When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Coordinates are
+   * relative to the viewport, in CSS pixels, as returned by
+   * [`Element.getBoundingClientRect()`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
+   * Defaults to `false`.
+   * @param options.depth When specified, limits the depth of the snapshot.
+   * @param options.mode When set to `"ai"`, returns a snapshot optimized for AI consumption. Defaults to `"default"`. See details for more
+   * information.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   ariaSnapshot(options?: {
     /**
@@ -14153,6 +16756,17 @@ export interface Locator {
   /**
    * Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) on the element.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   blur(options?: {
     /**
@@ -14200,6 +16814,17 @@ export interface Locator {
    * ```
    *
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   boundingBox(options?: {
     /**
@@ -14270,6 +16895,27 @@ export interface Locator {
    * ```
    *
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   check(options?: {
     /**
@@ -14347,6 +16993,19 @@ export interface Locator {
    * ```
    *
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   clear(options?: {
     /**
@@ -14421,6 +17080,39 @@ export interface Locator {
    * ```
    *
    * @param options
+   * @param options.button Defaults to `left`.
+   * @param options.clickCount defaults to 1. See [UIEvent.detail].
+   * @param options.delay Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
+   * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
+   * navigating to inaccessible pages. Defaults to `false`.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.steps Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor
+   * position and the provided destination. When set to 1, emits a single `mousemove` event at the destination location.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+   * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+   * are pressed.
    */
   click(options?: {
     /**
@@ -14570,6 +17262,36 @@ export interface Locator {
    * **NOTE** `element.dblclick()` dispatches two `click` events and a single `dblclick` event.
    *
    * @param options
+   * @param options.button Defaults to `left`.
+   * @param options.delay Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.steps Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor
+   * position and the provided destination. When set to 1, emits a single `mousemove` event at the destination location.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+   * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+   * are pressed.
    */
   dblclick(options?: {
     /**
@@ -14731,6 +17453,17 @@ export interface Locator {
    * @param type DOM event type: `"click"`, `"dragstart"`, etc.
    * @param eventInit Optional event-specific initialization properties.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   dispatchEvent(type: string, eventInit?: EvaluationArgument, options?: {
     /**
@@ -14777,6 +17510,31 @@ export interface Locator {
    *
    * @param target Locator of the element to drag to.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.sourcePosition Clicks on the source element at this point relative to the top-left corner of the element's padding box. If not
+   * specified, some visible point of the element is used.
+   * @param options.steps Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+   * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+   * @param options.targetPosition Drops on the target element at this point relative to the top-left corner of the element's padding box. If not
+   * specified, some visible point of the element is used.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   dragTo(target: Locator, options?: {
     /**
@@ -14886,6 +17644,19 @@ export interface Locator {
    * @param payload Data to drop onto the target. Provide `files` (file paths or in-memory buffers), `data` (a mime-type → string map
    * for clipboard-like content such as `text/plain`, `text/html`, `text/uri-list`), or both.
    * @param options
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   drop(payload: {
     files?: string|Array<string>|{
@@ -14983,6 +17754,19 @@ export interface Locator {
    * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
    * @param value Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   fill(value: string, options?: {
     /**
@@ -15032,6 +17816,27 @@ export interface Locator {
    * ```
    *
    * @param options
+   * @param options.has Narrows down the results of the method to those which contain elements matching this relative locator. For example,
+   * `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+   *
+   * Inner locator **must be relative** to the outer locator and is queried starting with the outer locator match, not
+   * the document root. For example, you can find `content` that has `div` in
+   * `<article><content><div>Playwright</div></content></article>`. However, looking for `content` that has `article
+   * div` will fail, because the inner locator must be relative and should not use any elements outside the `content`.
+   *
+   * Note that outer and inner locators must belong to the same frame. Inner locator must not contain
+   * [FrameLocator](https://playwright.dev/docs/api/class-framelocator)s.
+   * @param options.hasNot Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+   * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+   *
+   * Note that outer and inner locators must belong to the same frame. Inner locator must not contain
+   * [FrameLocator](https://playwright.dev/docs/api/class-framelocator)s.
+   * @param options.hasNotText Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+   * When passed a [string], matching is case-insensitive and searches for a substring.
+   * @param options.hasText Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
+   * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+   * `<article><div>Playwright</div></article>`.
+   * @param options.visible Only matches visible or invisible elements.
    */
   filter(options?: {
     /**
@@ -15084,6 +17889,17 @@ export interface Locator {
   /**
    * Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus) on the matching element.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   focus(options?: {
     /**
@@ -15130,6 +17946,17 @@ export interface Locator {
    *
    * @param name Attribute name to get the value for.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   getAttribute(name: string, options?: {
     /**
@@ -15169,6 +17996,8 @@ export interface Locator {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByAltText(text: string|RegExp, options?: {
     /**
@@ -15199,6 +18028,8 @@ export interface Locator {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByLabel(text: string|RegExp, options?: {
     /**
@@ -15229,6 +18060,8 @@ export interface Locator {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByPlaceholder(text: string|RegExp, options?: {
     /**
@@ -15277,6 +18110,45 @@ export interface Locator {
    * duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
    * @param role Required aria role.
    * @param options
+   * @param options.checked An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls.
+   *
+   * Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
+   * @param options.description Option to match the [accessible description](https://w3c.github.io/accname/#dfn-accessible-description). By
+   * default, matching is case-insensitive and searches for a substring, use
+   * [`exact`](https://playwright.dev/docs/api/class-locator#locator-get-by-role-option-exact) to control this behavior.
+   *
+   * Learn more about [accessible description](https://w3c.github.io/accname/#dfn-accessible-description).
+   * @param options.disabled An attribute that is usually set by `aria-disabled` or `disabled`.
+   *
+   * **NOTE** Unlike most other attributes, `disabled` is inherited through the DOM hierarchy. Learn more about
+   * [`aria-disabled`](https://www.w3.org/TR/wai-aria-1.2/#aria-disabled).
+   *
+   * @param options.exact Whether [`name`](https://playwright.dev/docs/api/class-locator#locator-get-by-role-option-name) and
+   * [`description`](https://playwright.dev/docs/api/class-locator#locator-get-by-role-option-description) are matched
+   * exactly: case-sensitive and whole-string. Defaults to false. Ignored when the value is a regular expression. Note
+   * that exact match still trims whitespace.
+   * @param options.expanded An attribute that is usually set by `aria-expanded`.
+   *
+   * Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
+   * @param options.includeHidden Option that controls whether hidden elements are matched. By default, only non-hidden elements, as
+   * [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector.
+   *
+   * Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
+   * @param options.level A number attribute that is usually present for roles `heading`, `listitem`, `row`, `treeitem`, with default values
+   * for `<h1>-<h6>` elements.
+   *
+   * Learn more about [`aria-level`](https://www.w3.org/TR/wai-aria-1.2/#aria-level).
+   * @param options.name Option to match the [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). By default, matching is
+   * case-insensitive and searches for a substring, use
+   * [`exact`](https://playwright.dev/docs/api/class-locator#locator-get-by-role-option-exact) to control this behavior.
+   *
+   * Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+   * @param options.pressed An attribute that is usually set by `aria-pressed`.
+   *
+   * Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
+   * @param options.selected An attribute that is usually set by `aria-selected`.
+   *
+   * Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
    */
   getByRole(role: "alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem", options?: {
     /**
@@ -15440,6 +18312,8 @@ export interface Locator {
    * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByText(text: string|RegExp, options?: {
     /**
@@ -15468,6 +18342,8 @@ export interface Locator {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByTitle(text: string|RegExp, options?: {
     /**
@@ -15508,6 +18384,32 @@ export interface Locator {
    * [`timeout`](https://playwright.dev/docs/api/class-locator#locator-hover-option-timeout), this method throws a
    * [TimeoutError](https://playwright.dev/docs/api/class-timeouterror). Passing zero timeout disables this.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+   * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+   * are pressed.
    */
   hover(options?: {
     /**
@@ -15577,6 +18479,17 @@ export interface Locator {
   /**
    * Returns the [`element.innerHTML`](https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML).
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   innerHTML(options?: {
     /**
@@ -15609,6 +18522,17 @@ export interface Locator {
    * option to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   innerText(options?: {
     /**
@@ -15651,6 +18575,17 @@ export interface Locator {
    * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the
    * control.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   inputValue(options?: {
     /**
@@ -15687,6 +18622,17 @@ export interface Locator {
    * ```
    *
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   isChecked(options?: {
     /**
@@ -15723,6 +18669,17 @@ export interface Locator {
    * ```
    *
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   isDisabled(options?: {
     /**
@@ -15761,6 +18718,17 @@ export interface Locator {
    * ```
    *
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   isEditable(options?: {
     /**
@@ -15797,6 +18765,17 @@ export interface Locator {
    * ```
    *
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   isEnabled(options?: {
     /**
@@ -15887,6 +18866,26 @@ export interface Locator {
    * [Learn more about locators](https://playwright.dev/docs/locators).
    * @param selectorOrLocator A selector or locator to use when resolving DOM element.
    * @param options
+   * @param options.has Narrows down the results of the method to those which contain elements matching this relative locator. For example,
+   * `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+   *
+   * Inner locator **must be relative** to the outer locator and is queried starting with the outer locator match, not
+   * the document root. For example, you can find `content` that has `div` in
+   * `<article><content><div>Playwright</div></content></article>`. However, looking for `content` that has `article
+   * div` will fail, because the inner locator must be relative and should not use any elements outside the `content`.
+   *
+   * Note that outer and inner locators must belong to the same frame. Inner locator must not contain
+   * [FrameLocator](https://playwright.dev/docs/api/class-framelocator)s.
+   * @param options.hasNot Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+   * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+   *
+   * Note that outer and inner locators must belong to the same frame. Inner locator must not contain
+   * [FrameLocator](https://playwright.dev/docs/api/class-framelocator)s.
+   * @param options.hasNotText Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+   * When passed a [string], matching is case-insensitive and searches for a substring.
+   * @param options.hasText Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
+   * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+   * `<article><div>Playwright</div></article>`.
    */
   locator(selectorOrLocator: string|Locator, options?: {
     /**
@@ -16017,6 +19016,21 @@ export interface Locator {
    * specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    * @param options
+   * @param options.delay Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
+   * @param options.noWaitAfter Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
+   * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
+   * navigating to inaccessible pages. Defaults to `false`.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   press(key: string, options?: {
     /**
@@ -16080,6 +19094,19 @@ export interface Locator {
    *
    * @param text String of characters to sequentially press into a focused element.
    * @param options
+   * @param options.delay Time to wait between key presses in milliseconds. Defaults to 0.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   pressSequentially(text: string, options?: {
     /**
@@ -16139,6 +19166,49 @@ export interface Locator {
    *
    * Returns the buffer with the captured screenshot.
    * @param options
+   * @param options.animations When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different
+   * treatment depending on their duration:
+   * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+   * - infinite animations are canceled to initial state, and then played over after the screenshot.
+   *
+   * Defaults to `"allow"` that leaves animations untouched.
+   * @param options.caret When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be
+   * changed.  Defaults to `"hide"`.
+   * @param options.mask Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
+   * box `#FF00FF` (customized by
+   * [`maskColor`](https://playwright.dev/docs/api/class-locator#locator-screenshot-option-mask-color)) that completely
+   * covers its bounding box. The mask is also applied to invisible elements, see
+   * [Matching only visible elements](https://playwright.dev/docs/locators#matching-only-visible-elements) to disable that.
+   * @param options.maskColor Specify the color of the overlay box for masked elements, in
+   * [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.
+   * @param options.omitBackground Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+   * Defaults to `false`.
+   * @param options.path The file path to save the image to. The screenshot type will be inferred from file extension. If
+   * [`path`](https://playwright.dev/docs/api/class-locator#locator-screenshot-option-path) is a relative path, then it
+   * is resolved relative to the current working directory. If no path is provided, the image won't be saved to the
+   * disk.
+   * @param options.quality The quality of the image, between 0-100. Not applicable to `png` images. For `jpeg` the default is `80`. For
+   * `webp`, a quality of `100` (the default) produces a lossless image, while lower values use lossy compression.
+   * @param options.scale When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this
+   * will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so
+   * screenshots of high-dpi devices will be twice as large or even larger.
+   *
+   * Defaults to `"device"`.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.style Text of the stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make
+   * elements invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces
+   * the Shadow DOM and applies to the inner frames.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.type Specify screenshot type, defaults to `png`.
    */
   screenshot(options?: LocatorScreenshotOptions): Promise<Buffer>;
 
@@ -16149,6 +19219,17 @@ export interface Locator {
    *
    * See [scrolling](https://playwright.dev/docs/input#scrolling) for alternative ways to scroll.
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   scrollIntoViewIfNeeded(options?: {
     /**
@@ -16213,6 +19294,19 @@ export interface Locator {
    * only the first option matching one of the passed options is selected. String values are matching both values and
    * labels. Option is considered matching if all specified properties match.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   selectOption(values: null|string|ElementHandle|ReadonlyArray<string>|{
     /**
@@ -16284,6 +19378,18 @@ export interface Locator {
    * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), focuses and selects text in
    * the control instead.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   selectText(options?: {
     /**
@@ -16338,6 +19444,27 @@ export interface Locator {
    * [TimeoutError](https://playwright.dev/docs/api/class-timeouterror). Passing zero timeout disables this.
    * @param checked Whether to check or uncheck the checkbox.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   setChecked(checked: boolean, options?: {
     /**
@@ -16436,6 +19563,18 @@ export interface Locator {
    * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
    * @param files
    * @param options
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   setInputFiles(files: string|ReadonlyArray<string>|{
     /**
@@ -16517,6 +19656,32 @@ export interface Locator {
    * **NOTE** `element.tap()` requires that the `hasTouch` option of the browser context be set to true.
    *
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.modifiers Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+   * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+   * "Control" on Windows and Linux and to "Meta" on macOS.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+   * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+   * are pressed.
    */
   tap(options?: {
     /**
@@ -16591,6 +19756,17 @@ export interface Locator {
    * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
    *
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   textContent(options?: {
     /**
@@ -16627,6 +19803,19 @@ export interface Locator {
    * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
    * @param text A text to type into a focused element.
    * @param options
+   * @param options.delay Time to wait between key presses in milliseconds. Defaults to 0.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   type(text: string, options?: {
     /**
@@ -16687,6 +19876,27 @@ export interface Locator {
    * [`timeout`](https://playwright.dev/docs/api/class-locator#locator-uncheck-option-timeout), this method throws a
    * [TimeoutError](https://playwright.dev/docs/api/class-timeouterror). Passing zero timeout disables this.
    * @param options
+   * @param options.force Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.position A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+   * the element.
+   * @param options.scroll Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+   * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+   * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+   * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   * @param options.trial When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+   * to `false`. Useful to wait until the element is ready for the action without performing it.
    */
   uncheck(options?: {
     /**
@@ -16760,6 +19970,24 @@ export interface Locator {
    * ```
    *
    * @param options
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.state Defaults to `'visible'`. Can be either:
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element
+   * without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or
+   * `visibility:hidden`. This is opposite to the `'visible'` option.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   waitFor(options?: {
     /**
@@ -16840,6 +20068,25 @@ export interface BrowserType<Unused = {}> {
    * @param endpointURL A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or
    * `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
    * @param options
+   * @param options.artifactsDir If specified, browser artifacts (such as traces and downloads) are saved into this directory.
+   * @param options.headers Additional HTTP headers to be sent with connect request. Optional.
+   * @param options.isLocal Tells Playwright that it runs on the same host as the CDP server. It will enable certain optimizations that rely
+   * upon the file system being the same between Playwright and the Browser.
+   * @param options.noDefaults When true, Playwright will not apply its default overrides to the existing default browser context. Specifically,
+   * [`acceptDownloads`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-accept-downloads) is
+   * left at the browser's setting, focus emulation is not enabled, and media emulation options (such as
+   * [`colorScheme`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-color-scheme),
+   * [`reducedMotion`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-reduced-motion),
+   * [`forcedColors`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-forced-colors), and
+   * [`contrast`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-contrast)) are not applied.
+   * Useful when attaching to a user's daily-driver browser where these overrides would interfere with existing browser
+   * state. New contexts created via
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) are not
+   * affected. Defaults to `false`.
+   * @param options.slowMo Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
+   * on. Defaults to 0.
+   * @param options.timeout Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass
+   * `0` to disable timeout.
    */
   connectOverCDP(endpointURL: string, options?: ConnectOverCDPOptions): Promise<Browser>;
   /**
@@ -16870,6 +20117,25 @@ export interface BrowserType<Unused = {}> {
    * @param endpointURL A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or
    * `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
    * @param options
+   * @param options.artifactsDir If specified, browser artifacts (such as traces and downloads) are saved into this directory.
+   * @param options.headers Additional HTTP headers to be sent with connect request. Optional.
+   * @param options.isLocal Tells Playwright that it runs on the same host as the CDP server. It will enable certain optimizations that rely
+   * upon the file system being the same between Playwright and the Browser.
+   * @param options.noDefaults When true, Playwright will not apply its default overrides to the existing default browser context. Specifically,
+   * [`acceptDownloads`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-accept-downloads) is
+   * left at the browser's setting, focus emulation is not enabled, and media emulation options (such as
+   * [`colorScheme`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-color-scheme),
+   * [`reducedMotion`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-reduced-motion),
+   * [`forcedColors`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-forced-colors), and
+   * [`contrast`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-contrast)) are not applied.
+   * Useful when attaching to a user's daily-driver browser where these overrides would interfere with existing browser
+   * state. New contexts created via
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) are not
+   * affected. Defaults to `false`.
+   * @param options.slowMo Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
+   * on. Defaults to 0.
+   * @param options.timeout Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass
+   * `0` to disable timeout.
    */
   connectOverCDP(transport: ConnectOverCDPTransport, options?: ConnectOverCDPOptions): Promise<Browser>;
   /**
@@ -16904,6 +20170,25 @@ export interface BrowserType<Unused = {}> {
    * @param endpointURL A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or
    * `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
    * @param options
+   * @param options.artifactsDir If specified, browser artifacts (such as traces and downloads) are saved into this directory.
+   * @param options.headers Additional HTTP headers to be sent with connect request. Optional.
+   * @param options.isLocal Tells Playwright that it runs on the same host as the CDP server. It will enable certain optimizations that rely
+   * upon the file system being the same between Playwright and the Browser.
+   * @param options.noDefaults When true, Playwright will not apply its default overrides to the existing default browser context. Specifically,
+   * [`acceptDownloads`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-accept-downloads) is
+   * left at the browser's setting, focus emulation is not enabled, and media emulation options (such as
+   * [`colorScheme`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-color-scheme),
+   * [`reducedMotion`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-reduced-motion),
+   * [`forcedColors`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-forced-colors), and
+   * [`contrast`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-contrast)) are not applied.
+   * Useful when attaching to a user's daily-driver browser where these overrides would interfere with existing browser
+   * state. New contexts created via
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) are not
+   * affected. Defaults to `false`.
+   * @param options.slowMo Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
+   * on. Defaults to 0.
+   * @param options.timeout Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass
+   * `0` to disable timeout.
    */
   connectOverCDP(options: ConnectOverCDPOptions & { wsEndpoint?: string }): Promise<Browser>;
 
@@ -16915,6 +20200,23 @@ export interface BrowserType<Unused = {}> {
    *
    * @param endpoint A Playwright browser websocket endpoint to connect to. You obtain this endpoint via `BrowserServer.wsEndpoint`.
    * @param options
+   * @param options.exposeNetwork This option exposes network available on the connecting client to the browser being connected to. Consists of a
+   * list of rules separated by comma.
+   *
+   * Available rules:
+   * 1. Hostname pattern, for example: `example.com`, `*.org:99`, `x.*.y.com`, `*foo.org`.
+   * 1. IP literal, for example: `127.0.0.1`, `0.0.0.0:99`, `[::1]`, `[0:0::1]:99`.
+   * 1. `<loopback>` that matches local loopback interfaces: `localhost`, `*.localhost`, `127.0.0.1`, `[::1]`.
+   *
+   * Some common examples:
+   * 1. `"*"` to expose all network.
+   * 1. `"<loopback>"` to expose localhost network.
+   * 1. `"*.test.internal-domain,*.staging.internal-domain,<loopback>"` to expose test/staging deployments and
+   * localhost.
+   * @param options.headers Additional HTTP headers to be sent with web socket connect request. Optional.
+   * @param options.slowMo Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
+   * on. Defaults to 0.
+   * @param options.timeout Maximum time in milliseconds to wait for the connection to be established. Defaults to `0` (no timeout).
    */
   connect(wsEndpoint: string, options?: ConnectOptions): Promise<Browser>;
   /**
@@ -16931,6 +20233,23 @@ export interface BrowserType<Unused = {}> {
    *
    * @param endpoint A Playwright browser websocket endpoint to connect to. You obtain this endpoint via `BrowserServer.wsEndpoint`.
    * @param options
+   * @param options.exposeNetwork This option exposes network available on the connecting client to the browser being connected to. Consists of a
+   * list of rules separated by comma.
+   *
+   * Available rules:
+   * 1. Hostname pattern, for example: `example.com`, `*.org:99`, `x.*.y.com`, `*foo.org`.
+   * 1. IP literal, for example: `127.0.0.1`, `0.0.0.0:99`, `[::1]`, `[0:0::1]:99`.
+   * 1. `<loopback>` that matches local loopback interfaces: `localhost`, `*.localhost`, `127.0.0.1`, `[::1]`.
+   *
+   * Some common examples:
+   * 1. `"*"` to expose all network.
+   * 1. `"<loopback>"` to expose localhost network.
+   * 1. `"*.test.internal-domain,*.staging.internal-domain,<loopback>"` to expose test/staging deployments and
+   * localhost.
+   * @param options.headers Additional HTTP headers to be sent with web socket connect request. Optional.
+   * @param options.slowMo Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
+   * on. Defaults to 0.
+   * @param options.timeout Maximum time in milliseconds to wait for the connection to be established. Defaults to `0` (no timeout).
    */
   connect(options: ConnectOptions & { wsEndpoint?: string }): Promise<Browser>;
   /**
@@ -16970,6 +20289,53 @@ export interface BrowserType<Unused = {}> {
    * [This article](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md)
    * describes some differences for Linux users.
    * @param options
+   * @param options.args **NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.
+   *
+   * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
+   * [here](https://peter.sh/experiments/chromium-command-line-switches/).
+   * @param options.artifactsDir If specified, artifacts (traces, videos, downloads, HAR files, etc.) are saved into this directory. The directory
+   * is not cleaned up when the browser closes. If not specified, a temporary directory is used and cleaned up when the
+   * browser closes.
+   * @param options.channel Browser distribution channel.
+   *
+   * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#chromium-new-headless-mode).
+   *
+   * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
+   * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
+   * @param options.chromiumSandbox Enable Chromium sandboxing. Defaults to `false`.
+   * @param options.downloadsPath If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and
+   * is deleted when browser is closed. In either case, the downloads are deleted when the browser context they were
+   * created in is closed.
+   * @param options.executablePath Path to a browser executable to run instead of the bundled one. If
+   * [`executablePath`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-executable-path) is
+   * a relative path, then it is resolved relative to the current working directory. Note that Playwright only works
+   * with the bundled Chromium, Firefox or WebKit, use at your own risk.
+   * @param options.firefoxUserPrefs Firefox user preferences. Learn more about the Firefox user preferences at
+   * [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+   *
+   * You can also provide a path to a custom [`policies.json` file](https://mozilla.github.io/policy-templates/) via
+   * `PLAYWRIGHT_FIREFOX_POLICIES_JSON` environment variable.
+   * @param options.handleSIGHUP Close the browser process on SIGHUP. Defaults to `true`.
+   * @param options.handleSIGINT Close the browser process on Ctrl-C. Defaults to `true`.
+   * @param options.handleSIGTERM Close the browser process on SIGTERM. Defaults to `true`.
+   * @param options.headless Whether to run browser in headless mode. More details for
+   * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
+   * [Firefox](https://hacks.mozilla.org/2017/12/using-headless-mode-in-firefox/). Defaults to `true`.
+   * @param options.ignoreDefaultArgs If `true`, Playwright does not pass its own configurations args and only uses the ones from
+   * [`args`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-args). If an array is given,
+   * then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+   * @param options.logger Logger sink for Playwright logging.
+   * @param options.proxy Network proxy settings.
+   * @param options.proxy.server Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+   * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+   * @param options.proxy.bypass Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+   * @param options.proxy.username Optional username to use if HTTP proxy requires authentication.
+   * @param options.proxy.password Optional password to use if HTTP proxy requires authentication.
+   * @param options.slowMo Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
+   * on.
+   * @param options.timeout Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0`
+   * to disable timeout.
+   * @param options.tracesDir If specified, traces are saved into this directory.
    */
   launch(options?: LaunchOptions): Promise<Browser>;
 
@@ -16996,6 +20362,187 @@ export interface BrowserType<Unused = {}> {
    * for details.
    *
    * @param options
+   * @param options.acceptDownloads Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
+   * @param options.args **NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.
+   *
+   * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
+   * [here](https://peter.sh/experiments/chromium-command-line-switches/).
+   * @param options.artifactsDir If specified, artifacts (traces, videos, downloads, HAR files, etc.) are saved into this directory. The directory
+   * is not cleaned up when the browser closes. If not specified, a temporary directory is used and cleaned up when the
+   * browser closes.
+   * @param options.baseURL When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
+   * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
+   * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request),
+   * or
+   * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response)
+   * it takes the base URL in consideration by using the
+   * [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
+   * Unset by default. Examples:
+   * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+   * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in
+   * `http://localhost:3000/foo/bar.html`
+   * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+   * `http://localhost:3000/bar.html`
+   * @param options.bypassCSP Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
+   * @param options.channel Browser distribution channel.
+   *
+   * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#chromium-new-headless-mode).
+   *
+   * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
+   * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
+   * @param options.chromiumSandbox Enable Chromium sandboxing. Defaults to `false`.
+   * @param options.clientCertificates TLS Client Authentication allows the server to request a client certificate and verify it.
+   *
+   * **Details**
+   *
+   * An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`,
+   * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
+   * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
+   * with an exact match to the request origin that the certificate is valid for.
+   *
+   * Client certificate authentication is only active when at least one client certificate is provided. If you want to
+   * reject all client certificates sent by the server, you need to provide a client certificate with an `origin` that
+   * does not match any of the domains you plan to visit.
+   *
+   * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
+   * work by replacing `localhost` with `local.playwright`.
+   *
+   * @param options.colorScheme Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+   * media feature, supported values are `'light'` and `'dark'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
+   * @param options.contrast Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+   * @param options.deviceScaleFactor Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
+   * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
+   * @param options.downloadsPath If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and
+   * is deleted when browser is closed. In either case, the downloads are deleted when the browser context they were
+   * created in is closed.
+   * @param options.executablePath Path to a browser executable to run instead of the bundled one. If
+   * [`executablePath`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-executable-path)
+   * is a relative path, then it is resolved relative to the current working directory. Note that Playwright only works
+   * with the bundled Chromium, Firefox or WebKit, use at your own risk.
+   * @param options.extraHTTPHeaders An object containing additional HTTP headers to be sent with every request. Defaults to none.
+   * @param options.firefoxUserPrefs Firefox user preferences. Learn more about the Firefox user preferences at
+   * [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+   *
+   * You can also provide a path to a custom [`policies.json` file](https://mozilla.github.io/policy-templates/) via
+   * `PLAYWRIGHT_FIREFOX_POLICIES_JSON` environment variable.
+   * @param options.forcedColors Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'none'`.
+   * @param options.geolocation.latitude Latitude between -90 and 90.
+   * @param options.geolocation.longitude Longitude between -180 and 180.
+   * @param options.geolocation.accuracy Non-negative accuracy value. Defaults to `0`.
+   * @param options.handleSIGHUP Close the browser process on SIGHUP. Defaults to `true`.
+   * @param options.handleSIGINT Close the browser process on Ctrl-C. Defaults to `true`.
+   * @param options.handleSIGTERM Close the browser process on SIGTERM. Defaults to `true`.
+   * @param options.hasTouch Specifies if viewport supports touch events. Defaults to false. Learn more about
+   * [mobile emulation](https://playwright.dev/docs/emulation#devices).
+   * @param options.headless Whether to run browser in headless mode. More details for
+   * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
+   * [Firefox](https://hacks.mozilla.org/2017/12/using-headless-mode-in-firefox/). Defaults to `true`.
+   * @param options.httpCredentials Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+   * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+   * @param options.httpCredentials.origin Restrain sending http credentials on specific origin (scheme://host:port).
+   * @param options.httpCredentials.send This option only applies to the requests sent from corresponding
+   * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+   * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+   * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+   * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+   * @param options.ignoreDefaultArgs If `true`, Playwright does not pass its own configurations args and only uses the ones from
+   * [`args`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-args). If
+   * an array is given, then filters out the given default arguments. Dangerous option; use with care. Defaults to
+   * `false`.
+   * @param options.ignoreHTTPSErrors Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   * @param options.isMobile Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
+   * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
+   * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
+   * @param options.javaScriptEnabled Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
+   * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
+   * @param options.locale Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
+   * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+   * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+   * @param options.logger Logger sink for Playwright logging.
+   * @param options.offline Whether to emulate network being offline. Defaults to `false`. Learn more about
+   * [network emulation](https://playwright.dev/docs/emulation#offline).
+   * @param options.permissions A list of permissions to grant to all pages in this context. See
+   * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
+   * for more details. Defaults to none.
+   * @param options.proxy Network proxy settings.
+   * @param options.proxy.server Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+   * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+   * @param options.proxy.bypass Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+   * @param options.proxy.username Optional username to use if HTTP proxy requires authentication.
+   * @param options.proxy.password Optional password to use if HTTP proxy requires authentication.
+   * @param options.recordHar Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
+   * If not specified, the HAR is not recorded. Make sure to await
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+   * the HAR to be saved.
+   * @param options.recordHar.omitContent Optional setting to control whether to omit request content from the HAR. Defaults to `false`. Deprecated, use
+   * `content` policy instead.
+   * @param options.recordHar.content Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
+   * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
+   * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
+   * files and to `embed` for all other file extensions.
+   * @param options.recordHar.path Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+   * default.
+   * @param options.recordHar.mode When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+   * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+   * @param options.recordHar.urlFilter A glob or regex pattern to filter requests that are stored in the HAR. When a
+   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
+   * options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
+   * @param options.recordVideo Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
+   * Make sure to await
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+   * videos to be saved.
+   * @param options.recordVideo.dir Path to the directory to put videos into. If not specified, the videos will be stored in `artifactsDir` (see
+   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch) options).
+   * @param options.recordVideo.size Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
+   * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
+   * each page will be scaled down if necessary to fit the specified size.
+   * @param options.recordVideo.size.width Video frame width.
+   * @param options.recordVideo.size.height Video frame height.
+   * @param options.recordVideo.showActions If specified, enables visual annotations on interacted elements during video recording.
+   * @param options.recordVideo.showActions.duration How long each annotation is displayed in milliseconds. Defaults to `500`.
+   * @param options.recordVideo.showActions.position Position of the action title overlay. Defaults to `"top-right"`.
+   * @param options.recordVideo.showActions.fontSize Font size of the action title in pixels. Defaults to `24`.
+   * @param options.recordVideo.showActions.cursor Cursor decoration shown for pointer actions. `"pointer"` (the default) renders a mouse pointer that animates from
+   * the previous action point to the next one. `"none"` disables the cursor decoration.
+   * @param options.reducedMotion Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+   * @param options.screen Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
+   * [`viewport`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-viewport)
+   * is set.
+   * @param options.screen.width page width in pixels.
+   * @param options.screen.height page height in pixels.
+   * @param options.serviceWorkers Whether to allow sites to register Service workers. Defaults to `'allow'`.
+   * - `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be
+   * registered.
+   * - `'block'`: Playwright will block all registration of Service Workers.
+   * @param options.slowMo Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
+   * on.
+   * @param options.strictSelectors If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
+   * selectors that imply single target DOM element will throw when more than one element matches the selector. This
+   * option does not affect any Locator APIs (Locators are always strict). Defaults to `false`. See
+   * [Locator](https://playwright.dev/docs/api/class-locator) to learn more about the strict mode.
+   * @param options.timeout Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0`
+   * to disable timeout.
+   * @param options.timezoneId Changes the timezone of the context. See
+   * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
+   * for a list of supported timezone IDs. Defaults to the system timezone.
+   * @param options.tracesDir If specified, traces are saved into this directory.
+   * @param options.userAgent Specific user agent to use in this context.
+   * @param options.viewport Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
+   * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
+   *
+   * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
+   * by the operating system. It makes the execution of the tests non-deterministic.
+   *
    */
   launchPersistentContext(userDataDir: string, options?: {
     /**
@@ -17535,6 +21082,60 @@ export interface BrowserType<Unused = {}> {
    * ```
    *
    * @param options
+   * @param options.args **NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.
+   *
+   * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
+   * [here](https://peter.sh/experiments/chromium-command-line-switches/).
+   * @param options.artifactsDir If specified, artifacts (traces, videos, downloads, HAR files, etc.) are saved into this directory. The directory
+   * is not cleaned up when the browser closes. If not specified, a temporary directory is used and cleaned up when the
+   * browser closes.
+   * @param options.channel Browser distribution channel.
+   *
+   * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#chromium-new-headless-mode).
+   *
+   * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
+   * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
+   * @param options.chromiumSandbox Enable Chromium sandboxing. Defaults to `false`.
+   * @param options.downloadsPath If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and
+   * is deleted when browser is closed. In either case, the downloads are deleted when the browser context they were
+   * created in is closed.
+   * @param options.executablePath Path to a browser executable to run instead of the bundled one. If
+   * [`executablePath`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-server-option-executable-path)
+   * is a relative path, then it is resolved relative to the current working directory. Note that Playwright only works
+   * with the bundled Chromium, Firefox or WebKit, use at your own risk.
+   * @param options.firefoxUserPrefs Firefox user preferences. Learn more about the Firefox user preferences at
+   * [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+   *
+   * You can also provide a path to a custom [`policies.json` file](https://mozilla.github.io/policy-templates/) via
+   * `PLAYWRIGHT_FIREFOX_POLICIES_JSON` environment variable.
+   * @param options.handleSIGHUP Close the browser process on SIGHUP. Defaults to `true`.
+   * @param options.handleSIGINT Close the browser process on Ctrl-C. Defaults to `true`.
+   * @param options.handleSIGTERM Close the browser process on SIGTERM. Defaults to `true`.
+   * @param options.headless Whether to run browser in headless mode. More details for
+   * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
+   * [Firefox](https://hacks.mozilla.org/2017/12/using-headless-mode-in-firefox/). Defaults to `true`.
+   * @param options.host Host to use for the web socket. It is optional and defaults to `localhost`, accepting connections only from the
+   * loopback interface. Pass an explicit address (e.g. `0.0.0.0`) to accept connections from the network — be aware
+   * this exposes the browser RPC to anything that can reach the listening port.
+   * @param options.ignoreDefaultArgs If `true`, Playwright does not pass its own configurations args and only uses the ones from
+   * [`args`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-server-option-args). If an array is
+   * given, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
+   * @param options.logger Logger sink for Playwright logging.
+   * @param options.port Port to use for the web socket. Defaults to 0 that picks any available port.
+   * @param options.proxy Network proxy settings.
+   * @param options.proxy.server Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+   * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+   * @param options.proxy.bypass Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+   * @param options.proxy.username Optional username to use if HTTP proxy requires authentication.
+   * @param options.proxy.password Optional password to use if HTTP proxy requires authentication.
+   * @param options.timeout Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0`
+   * to disable timeout.
+   * @param options.tracesDir If specified, traces are saved into this directory.
+   * @param options.wsPath Path at which to serve the Browser Server. For security, this defaults to an unguessable string.
+   *
+   * **NOTE** Any process or web page (including those running in Playwright) with knowledge of the `wsPath` can take
+   * control of the OS user. For this reason, you should use an unguessable token when using this option.
+   *
    */
   launchServer(options?: {
     /**
@@ -18022,6 +21623,8 @@ export interface WebSocketRoute {
   /**
    * Closes one side of the WebSocket connection.
    * @param options
+   * @param options.code Optional [close code](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#code).
+   * @param options.reason Optional [close reason](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#reason).
    */
   close(options?: {
     /**
@@ -18124,6 +21727,15 @@ export interface Screencast {
    * ```
    *
    * @param options
+   * @param options.onFrame Callback that receives JPEG-encoded frame data along with the page viewport size at the time of capture.
+   * @param options.path Path where the video should be saved when the screencast is stopped. When provided, video recording is started.
+   * @param options.quality The quality of the image, between 0-100.
+   * @param options.size Specifies the dimensions of screencast frames. The actual frame is scaled to preserve the page's aspect ratio and
+   * may be smaller than these bounds. If a screencast is already active (e.g. started by tracing or video recording),
+   * the existing configuration takes precedence and the frame size may exceed these bounds or this option may be
+   * ignored. If not specified the size will be equal to page viewport scaled down to fit into 800×800.
+   * @param options.size.width Max frame width in pixels.
+   * @param options.size.height Max frame height in pixels.
    */
   start(options?: {
     onFrame?: (frame: { data: Buffer, timestamp: number, viewportWidth: number, viewportHeight: number }) => Promise<any>|any;
@@ -18152,6 +21764,11 @@ export interface Screencast {
   /**
    * Enables visual annotations on interacted elements. Returns a disposable that stops showing actions when disposed.
    * @param options
+   * @param options.cursor Cursor decoration shown for pointer actions. `"pointer"` (the default) renders a mouse pointer that animates from
+   * the previous action point to the next one. `"none"` disables the cursor decoration.
+   * @param options.duration How long each annotation is displayed in milliseconds. Defaults to `500`.
+   * @param options.fontSize Font size of the action title in pixels. Defaults to `24`.
+   * @param options.position Position of the action title overlay. Defaults to `"top-right"`.
    */
   showActions(options?: {
     /**
@@ -18181,6 +21798,8 @@ export interface Screencast {
    * for narrating video recordings. The overlay is removed after the specified duration, or 2000ms.
    * @param title Title text displayed prominently in the overlay.
    * @param options
+   * @param options.description Optional description text displayed below the title.
+   * @param options.duration Duration in milliseconds after which the overlay is automatically removed. Defaults to `2000`.
    */
   showChapter(title: string, options?: {
     /**
@@ -18199,6 +21818,8 @@ export interface Screencast {
    * disposable that removes the overlay when disposed.
    * @param html HTML content for the overlay.
    * @param options
+   * @param options.duration Duration in milliseconds after which the overlay is automatically removed. Overlay stays until dismissed if not
+   * provided.
    */
   showOverlay(html: string, options?: {
     /**
@@ -18568,6 +22189,9 @@ export interface ElectronApplication {
    * ```
    *
    * @param options
+   * @param options.timeout Maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The
+   * default value can be changed by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout).
    */
   firstWindow(options?: {
     /**
@@ -18748,6 +22372,66 @@ export interface APIRequest {
   /**
    * Creates new instances of [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext).
    * @param options
+   * @param options.baseURL Methods like
+   * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
+   * take the base URL into consideration by using the
+   * [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
+   * Examples:
+   * - baseURL: `http://localhost:3000` and sending request to `/bar.html` results in `http://localhost:3000/bar.html`
+   * - baseURL: `http://localhost:3000/foo/` and sending request to `./bar.html` results in
+   * `http://localhost:3000/foo/bar.html`
+   * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+   * `http://localhost:3000/bar.html`
+   * @param options.clientCertificates TLS Client Authentication allows the server to request a client certificate and verify it.
+   *
+   * **Details**
+   *
+   * An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`,
+   * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
+   * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
+   * with an exact match to the request origin that the certificate is valid for.
+   *
+   * Client certificate authentication is only active when at least one client certificate is provided. If you want to
+   * reject all client certificates sent by the server, you need to provide a client certificate with an `origin` that
+   * does not match any of the domains you plan to visit.
+   *
+   * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
+   * work by replacing `localhost` with `local.playwright`.
+   *
+   * @param options.extraHTTPHeaders An object containing additional HTTP headers to be sent with every request. Defaults to none.
+   * @param options.failOnStatusCode Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status
+   * codes.
+   * @param options.httpCredentials Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+   * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+   * @param options.httpCredentials.origin Restrain sending http credentials on specific origin (scheme://host:port).
+   * @param options.httpCredentials.send This option only applies to the requests sent from corresponding
+   * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+   * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+   * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+   * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+   * @param options.ignoreHTTPSErrors Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   * @param options.maxRedirects Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+   * exceeded. Defaults to `20`. Pass `0` to not follow redirects. This can be overwritten for each request
+   * individually.
+   * @param options.proxy Network proxy settings.
+   * @param options.proxy.server Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+   * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+   * @param options.proxy.bypass Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+   * @param options.proxy.username Optional username to use if HTTP proxy requires authentication.
+   * @param options.proxy.password Optional password to use if HTTP proxy requires authentication.
+   * @param options.storageState Populates context with given storage state. This option can be used to initialize context with logged-in
+   * information obtained via
+   * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state)
+   * or
+   * [apiRequestContext.storageState([options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-storage-state).
+   * Either a path to the file with saved storage, or the value returned by one of
+   * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state)
+   * or
+   * [apiRequestContext.storageState([options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-storage-state)
+   * methods.
+   * @param options.timeout Maximum time in milliseconds to wait for the response. Defaults to `30000` (30 seconds). Pass `0` to disable
+   * timeout.
+   * @param options.userAgent Specific user agent to use in this context.
    */
   newContext(options?: {
     /**
@@ -18987,6 +22671,35 @@ export interface APIRequestContext {
    * The method will automatically follow redirects.
    * @param url Target URL.
    * @param options
+   * @param options.data Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
+   * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
+   * header will be set to `application/octet-stream` if not explicitly set.
+   * @param options.failOnStatusCode Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status
+   * codes.
+   * @param options.form Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent
+   * as this request body. If this parameter is specified `content-type` header will be set to
+   * `application/x-www-form-urlencoded` unless explicitly provided.
+   * @param options.headers Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+   * it.
+   * @param options.ignoreHTTPSErrors Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   * @param options.maxRedirects Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+   * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+   * @param options.maxRetries Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+   * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+   * @param options.multipart Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
+   * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
+   * explicitly provided. File values can be passed either as
+   * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
+   * name, mime-type and its content.
+   * @param options.params Query parameters to be sent with the URL.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
    */
   delete(url: string, options?: {
     /**
@@ -19086,6 +22799,7 @@ export interface APIRequestContext {
    * its resources, calling any method on disposed
    * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) will throw an exception.
    * @param options
+   * @param options.reason The reason to be reported to the operations interrupted by the context disposal.
    */
   dispose(options?: {
     /**
@@ -19129,6 +22843,37 @@ export interface APIRequestContext {
    *
    * @param urlOrRequest Target URL or Request to get all parameters from.
    * @param options
+   * @param options.data Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
+   * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
+   * header will be set to `application/octet-stream` if not explicitly set.
+   * @param options.failOnStatusCode Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status
+   * codes.
+   * @param options.form Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent
+   * as this request body. If this parameter is specified `content-type` header will be set to
+   * `application/x-www-form-urlencoded` unless explicitly provided.
+   * @param options.headers Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+   * it.
+   * @param options.ignoreHTTPSErrors Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   * @param options.maxRedirects Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+   * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+   * @param options.maxRetries Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+   * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+   * @param options.method If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) or
+   * [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST)). If not specified, GET method is used.
+   * @param options.multipart Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
+   * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
+   * explicitly provided. File values can be passed either as
+   * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
+   * name, mime-type and its content.
+   * @param options.params Query parameters to be sent with the URL.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
    */
   fetch(urlOrRequest: string|Request, options?: {
     /**
@@ -19258,6 +23003,35 @@ export interface APIRequestContext {
    *
    * @param url Target URL.
    * @param options
+   * @param options.data Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
+   * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
+   * header will be set to `application/octet-stream` if not explicitly set.
+   * @param options.failOnStatusCode Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status
+   * codes.
+   * @param options.form Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent
+   * as this request body. If this parameter is specified `content-type` header will be set to
+   * `application/x-www-form-urlencoded` unless explicitly provided.
+   * @param options.headers Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+   * it.
+   * @param options.ignoreHTTPSErrors Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   * @param options.maxRedirects Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+   * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+   * @param options.maxRetries Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+   * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+   * @param options.multipart Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
+   * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
+   * explicitly provided. File values can be passed either as
+   * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
+   * name, mime-type and its content.
+   * @param options.params Query parameters to be sent with the URL.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
    */
   get(url: string, options?: {
     /**
@@ -19355,6 +23129,35 @@ export interface APIRequestContext {
    * The method will automatically follow redirects.
    * @param url Target URL.
    * @param options
+   * @param options.data Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
+   * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
+   * header will be set to `application/octet-stream` if not explicitly set.
+   * @param options.failOnStatusCode Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status
+   * codes.
+   * @param options.form Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent
+   * as this request body. If this parameter is specified `content-type` header will be set to
+   * `application/x-www-form-urlencoded` unless explicitly provided.
+   * @param options.headers Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+   * it.
+   * @param options.ignoreHTTPSErrors Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   * @param options.maxRedirects Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+   * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+   * @param options.maxRetries Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+   * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+   * @param options.multipart Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
+   * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
+   * explicitly provided. File values can be passed either as
+   * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
+   * name, mime-type and its content.
+   * @param options.params Query parameters to be sent with the URL.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
    */
   head(url: string, options?: {
     /**
@@ -19452,6 +23255,35 @@ export interface APIRequestContext {
    * The method will automatically follow redirects.
    * @param url Target URL.
    * @param options
+   * @param options.data Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
+   * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
+   * header will be set to `application/octet-stream` if not explicitly set.
+   * @param options.failOnStatusCode Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status
+   * codes.
+   * @param options.form Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent
+   * as this request body. If this parameter is specified `content-type` header will be set to
+   * `application/x-www-form-urlencoded` unless explicitly provided.
+   * @param options.headers Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+   * it.
+   * @param options.ignoreHTTPSErrors Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   * @param options.maxRedirects Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+   * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+   * @param options.maxRetries Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+   * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+   * @param options.multipart Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
+   * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
+   * explicitly provided. File values can be passed either as
+   * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
+   * name, mime-type and its content.
+   * @param options.params Query parameters to be sent with the URL.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
    */
   patch(url: string, options?: {
     /**
@@ -19591,6 +23423,35 @@ export interface APIRequestContext {
    *
    * @param url Target URL.
    * @param options
+   * @param options.data Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
+   * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
+   * header will be set to `application/octet-stream` if not explicitly set.
+   * @param options.failOnStatusCode Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status
+   * codes.
+   * @param options.form Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent
+   * as this request body. If this parameter is specified `content-type` header will be set to
+   * `application/x-www-form-urlencoded` unless explicitly provided.
+   * @param options.headers Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+   * it.
+   * @param options.ignoreHTTPSErrors Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   * @param options.maxRedirects Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+   * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+   * @param options.maxRetries Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+   * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+   * @param options.multipart Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
+   * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
+   * explicitly provided. File values can be passed either as
+   * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
+   * name, mime-type and its content.
+   * @param options.params Query parameters to be sent with the URL.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
    */
   post(url: string, options?: {
     /**
@@ -19688,6 +23549,35 @@ export interface APIRequestContext {
    * The method will automatically follow redirects.
    * @param url Target URL.
    * @param options
+   * @param options.data Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
+   * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
+   * header will be set to `application/octet-stream` if not explicitly set.
+   * @param options.failOnStatusCode Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status
+   * codes.
+   * @param options.form Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent
+   * as this request body. If this parameter is specified `content-type` header will be set to
+   * `application/x-www-form-urlencoded` unless explicitly provided.
+   * @param options.headers Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
+   * it.
+   * @param options.ignoreHTTPSErrors Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   * @param options.maxRedirects Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+   * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+   * @param options.maxRetries Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+   * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+   * @param options.multipart Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as this
+   * request body. If this parameter is specified `content-type` header will be set to `multipart/form-data` unless
+   * explicitly provided. File values can be passed either as
+   * [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream) or as file-like object containing file
+   * name, mime-type and its content.
+   * @param options.params Query parameters to be sent with the URL.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
    */
   put(url: string, options?: {
     /**
@@ -19783,6 +23673,11 @@ export interface APIRequestContext {
    * Returns storage state for this request context, contains current cookies and local storage snapshot if it was
    * passed to the constructor.
    * @param options
+   * @param options.indexedDB Set to `true` to include IndexedDB in the storage state snapshot.
+   * @param options.path The file path to save the storage state to. If
+   * [`path`](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-storage-state-option-path) is
+   * a relative path, then it is resolved relative to current working directory. If no path is provided, storage state
+   * is still returned, but won't be saved to the disk.
    */
   storageState(options?: {
     /**
@@ -20115,6 +24010,7 @@ export interface Clock {
    * [clock.runFor(ticks)](https://playwright.dev/docs/api/class-clock#clock-run-for) and
    * [clock.fastForward(ticks)](https://playwright.dev/docs/api/class-clock#clock-fast-forward) for more information.
    * @param options
+   * @param options.time Time to initialize with, current system time by default.
    */
   install(options?: {
     /**
@@ -20332,6 +24228,7 @@ export interface Coverage {
   /**
    * Returns coverage is started
    * @param options
+   * @param options.resetOnNavigation Whether to reset coverage on every navigation. Defaults to `true`.
    */
   startCSSCoverage(options?: {
     /**
@@ -20349,6 +24246,9 @@ export interface Coverage {
    * is set to `true`, anonymous scripts will have `__playwright_evaluation_script__` as their URL.
    *
    * @param options
+   * @param options.reportAnonymousScripts Whether anonymous scripts generated by the page should be reported. Defaults to `false`.
+   * @param options.resetOnNavigation Whether to reset coverage on every navigation. Defaults to `true`. Note that passing `false` does not guarantee
+   * that coverage persists through navigations, due to browser architecture limitations.
    */
   startJSCoverage(options?: {
     /**
@@ -20520,6 +24420,10 @@ export interface Credentials {
    * navigating to a page that uses WebAuthn.
    * @param rpId Relying party id (typically the site's effective domain).
    * @param options
+   * @param options.id Base64url-encoded credential id. Auto-generated if omitted.
+   * @param options.privateKey Base64url-encoded PKCS#8 (DER) private key. Auto-generated if omitted.
+   * @param options.publicKey Base64url-encoded SPKI (DER) public key. Auto-generated if omitted.
+   * @param options.userHandle Base64url-encoded user handle. Auto-generated if omitted.
    */
   create(rpId: string, options?: {
     /**
@@ -20589,6 +24493,8 @@ export interface Credentials {
    * [credentials.create(rpId[, options])](https://playwright.dev/docs/api/class-credentials#credentials-create) — see
    * the second example in the class overview.
    * @param options
+   * @param options.id Only return the credential with this base64url-encoded id.
+   * @param options.rpId Only return credentials for this relying party id.
    */
   get(options?: {
     /**
@@ -20917,6 +24823,18 @@ export interface FileChooser {
    * then they are resolved relative to the current working directory. For empty array, clears the selected files.
    * @param files
    * @param options
+   * @param options.noWaitAfter This option has no effect.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+   * option in the config, or by using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
    */
   setFiles(files: string|ReadonlyArray<string>|{
     /**
@@ -21045,6 +24963,8 @@ export interface FrameLocator {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByAltText(text: string|RegExp, options?: {
     /**
@@ -21075,6 +24995,8 @@ export interface FrameLocator {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByLabel(text: string|RegExp, options?: {
     /**
@@ -21105,6 +25027,8 @@ export interface FrameLocator {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByPlaceholder(text: string|RegExp, options?: {
     /**
@@ -21153,6 +25077,47 @@ export interface FrameLocator {
    * duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
    * @param role Required aria role.
    * @param options
+   * @param options.checked An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls.
+   *
+   * Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
+   * @param options.description Option to match the [accessible description](https://w3c.github.io/accname/#dfn-accessible-description). By
+   * default, matching is case-insensitive and searches for a substring, use
+   * [`exact`](https://playwright.dev/docs/api/class-framelocator#frame-locator-get-by-role-option-exact) to control
+   * this behavior.
+   *
+   * Learn more about [accessible description](https://w3c.github.io/accname/#dfn-accessible-description).
+   * @param options.disabled An attribute that is usually set by `aria-disabled` or `disabled`.
+   *
+   * **NOTE** Unlike most other attributes, `disabled` is inherited through the DOM hierarchy. Learn more about
+   * [`aria-disabled`](https://www.w3.org/TR/wai-aria-1.2/#aria-disabled).
+   *
+   * @param options.exact Whether [`name`](https://playwright.dev/docs/api/class-framelocator#frame-locator-get-by-role-option-name) and
+   * [`description`](https://playwright.dev/docs/api/class-framelocator#frame-locator-get-by-role-option-description)
+   * are matched exactly: case-sensitive and whole-string. Defaults to false. Ignored when the value is a regular
+   * expression. Note that exact match still trims whitespace.
+   * @param options.expanded An attribute that is usually set by `aria-expanded`.
+   *
+   * Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
+   * @param options.includeHidden Option that controls whether hidden elements are matched. By default, only non-hidden elements, as
+   * [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector.
+   *
+   * Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
+   * @param options.level A number attribute that is usually present for roles `heading`, `listitem`, `row`, `treeitem`, with default values
+   * for `<h1>-<h6>` elements.
+   *
+   * Learn more about [`aria-level`](https://www.w3.org/TR/wai-aria-1.2/#aria-level).
+   * @param options.name Option to match the [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). By default, matching is
+   * case-insensitive and searches for a substring, use
+   * [`exact`](https://playwright.dev/docs/api/class-framelocator#frame-locator-get-by-role-option-exact) to control
+   * this behavior.
+   *
+   * Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+   * @param options.pressed An attribute that is usually set by `aria-pressed`.
+   *
+   * Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
+   * @param options.selected An attribute that is usually set by `aria-selected`.
+   *
+   * Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
    */
   getByRole(role: "alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem", options?: {
     /**
@@ -21318,6 +25283,8 @@ export interface FrameLocator {
    * example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByText(text: string|RegExp, options?: {
     /**
@@ -21346,6 +25313,8 @@ export interface FrameLocator {
    *
    * @param text Text to locate the element for.
    * @param options
+   * @param options.exact Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+   * regular expression. Note that exact match still trims whitespace.
    */
   getByTitle(text: string|RegExp, options?: {
     /**
@@ -21370,6 +25339,26 @@ export interface FrameLocator {
    * [Learn more about locators](https://playwright.dev/docs/locators).
    * @param selectorOrLocator A selector or locator to use when resolving DOM element.
    * @param options
+   * @param options.has Narrows down the results of the method to those which contain elements matching this relative locator. For example,
+   * `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+   *
+   * Inner locator **must be relative** to the outer locator and is queried starting with the outer locator match, not
+   * the document root. For example, you can find `content` that has `div` in
+   * `<article><content><div>Playwright</div></content></article>`. However, looking for `content` that has `article
+   * div` will fail, because the inner locator must be relative and should not use any elements outside the `content`.
+   *
+   * Note that outer and inner locators must belong to the same frame. Inner locator must not contain
+   * [FrameLocator](https://playwright.dev/docs/api/class-framelocator)s.
+   * @param options.hasNot Matches elements that do not contain an element that matches an inner locator. Inner locator is queried against the
+   * outer one. For example, `article` that does not have `div` matches `<article><span>Playwright</span></article>`.
+   *
+   * Note that outer and inner locators must belong to the same frame. Inner locator must not contain
+   * [FrameLocator](https://playwright.dev/docs/api/class-framelocator)s.
+   * @param options.hasNotText Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+   * When passed a [string], matching is case-insensitive and searches for a substring.
+   * @param options.hasText Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
+   * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+   * `<article><div>Playwright</div></article>`.
    */
   locator(selectorOrLocator: string|Locator, options?: {
     /**
@@ -21578,6 +25567,7 @@ export interface Keyboard {
    * [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    * @param options
+   * @param options.delay Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
    */
   press(key: string, options?: {
     /**
@@ -21610,6 +25600,7 @@ export interface Keyboard {
    *
    * @param text A text to type into a focused element.
    * @param options
+   * @param options.delay Time to wait between key presses in milliseconds. Defaults to 0.
    */
   type(text: string, options?: {
     /**
@@ -21696,6 +25687,9 @@ export interface Mouse {
    * @param x X coordinate relative to the main frame's viewport in CSS pixels.
    * @param y Y coordinate relative to the main frame's viewport in CSS pixels.
    * @param options
+   * @param options.button Defaults to `left`.
+   * @param options.clickCount defaults to 1. See [UIEvent.detail].
+   * @param options.delay Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
    */
   click(x: number, y: number, options?: {
     /**
@@ -21723,6 +25717,8 @@ export interface Mouse {
    * @param x X coordinate relative to the main frame's viewport in CSS pixels.
    * @param y Y coordinate relative to the main frame's viewport in CSS pixels.
    * @param options
+   * @param options.button Defaults to `left`.
+   * @param options.delay Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
    */
   dblclick(x: number, y: number, options?: {
     /**
@@ -21739,6 +25735,8 @@ export interface Mouse {
   /**
    * Dispatches a `mousedown` event.
    * @param options
+   * @param options.button Defaults to `left`.
+   * @param options.clickCount defaults to 1. See [UIEvent.detail].
    */
   down(options?: {
     /**
@@ -21757,6 +25755,8 @@ export interface Mouse {
    * @param x X coordinate relative to the main frame's viewport in CSS pixels.
    * @param y Y coordinate relative to the main frame's viewport in CSS pixels.
    * @param options
+   * @param options.steps Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor
+   * position and the provided destination. When set to 1, emits a single `mousemove` event at the destination location.
    */
   move(x: number, y: number, options?: {
     /**
@@ -21769,6 +25769,8 @@ export interface Mouse {
   /**
    * Dispatches a `mouseup` event.
    * @param options
+   * @param options.button Defaults to `left`.
+   * @param options.clickCount defaults to 1. See [UIEvent.detail].
    */
   up(options?: {
     /**
@@ -22372,6 +26374,10 @@ export interface Route {
    * [browserContext.addCookies(cookies)](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-cookies).
    *
    * @param options
+   * @param options.headers If set changes the request HTTP headers. Header values will be converted to a string.
+   * @param options.method If set changes the request method (e.g. GET or POST).
+   * @param options.postData If set changes the post data of request.
+   * @param options.url If set changes the request URL. New URL must have same protocol as original one.
    */
   continue(options?: {
     /**
@@ -22465,6 +26471,11 @@ export interface Route {
    * Use [route.continue([options])](https://playwright.dev/docs/api/class-route#route-continue) to immediately send the
    * request to the network, other matching handlers won't be invoked in that case.
    * @param options
+   * @param options.headers If set changes the request HTTP headers. Header values will be converted to a string.
+   * @param options.method If set changes the request method (e.g. GET or POST).
+   * @param options.postData If set changes the post data of request.
+   * @param options.url If set changes the request URL. New URL must have same protocol as original one. Changing the URL won't affect the
+   * route matching, all the routes are matched using the original request URL.
    */
   fallback(options?: {
     /**
@@ -22512,6 +26523,24 @@ export interface Route {
    * not to redirects, look into [route.continue([options])](https://playwright.dev/docs/api/class-route#route-continue)
    * instead.
    * @param options
+   * @param options.headers If set changes the request HTTP headers. Header values will be converted to a string.
+   * @param options.maxRedirects Maximum number of request redirects that will be followed automatically. An error will be thrown if the number is
+   * exceeded. Defaults to `20`. Pass `0` to not follow redirects.
+   * @param options.maxRetries Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
+   * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+   * @param options.method If set changes the request method (e.g. GET or POST).
+   * @param options.postData Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
+   * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
+   * header will be set to `application/octet-stream` if not explicitly set.
+   * @param options.signal Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   * @param options.timeout Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+   * @param options.url If set changes the request URL. New URL must have same protocol as original one.
    */
   fetch(options?: {
     /**
@@ -22589,6 +26618,15 @@ export interface Route {
    * ```
    *
    * @param options
+   * @param options.body Response body.
+   * @param options.contentType If set, equals to setting `Content-Type` response header.
+   * @param options.headers Response headers. Header values will be converted to a string.
+   * @param options.json JSON response. This method will set the content type to `application/json` if not set.
+   * @param options.path File path to respond with. The content type will be inferred from file extension. If `path` is a relative path,
+   * then it is resolved relative to the current working directory.
+   * @param options.response [APIResponse](https://playwright.dev/docs/api/class-apiresponse) to fulfill route's request with. Individual fields
+   * of the response (such as headers) can be overridden using fulfill options.
+   * @param options.status Response status code, defaults to `200`.
    */
   fulfill(options?: {
     /**
@@ -22686,6 +26724,9 @@ export interface Selectors {
    * contain `[a-zA-Z0-9_]` characters.
    * @param script Script that evaluates to a selector engine instance. The script is evaluated in the page context.
    * @param options
+   * @param options.contentScript Whether to run this selector engine in isolated JavaScript environment. This environment has access to the same
+   * DOM, but not any JavaScript objects from the frame's scripts. Defaults to `false`. Note that running as a content
+   * script is not guaranteed when this engine is used together with other registered engines.
    */
   register(name: string, script: Function|string|{
     /**
@@ -22784,6 +26825,8 @@ export interface Tracing {
    *
    * @param name Group name shown in the trace viewer.
    * @param options
+   * @param options.location Specifies a custom location for the group to be shown in the trace viewer. Defaults to the location of the
+   * [tracing.group(name[, options])](https://playwright.dev/docs/api/class-tracing#tracing-group) call.
    */
   group(name: string, options?: {
     /**
@@ -22828,6 +26871,21 @@ export interface Tracing {
    * ```
    *
    * @param options
+   * @param options.live When enabled, the trace is written to an unarchived file that is updated in real time as actions occur, instead of
+   * caching changes and archiving them into a zip file at the end. This is useful for live trace viewing during test
+   * execution.
+   * @param options.name If specified, intermediate trace files are going to be saved into the files with the given name prefix inside the
+   * [`tracesDir`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-traces-dir) directory
+   * specified in
+   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). To specify
+   * the final trace zip file name, you need to pass `path` option to
+   * [tracing.stop([options])](https://playwright.dev/docs/api/class-tracing#tracing-stop) instead.
+   * @param options.screenshots Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview.
+   * @param options.snapshots If this option is true tracing will
+   * - capture DOM snapshot on every action
+   * - record network activity
+   * @param options.sources Whether to include source files for trace actions.
+   * @param options.title Trace name to be shown in the Trace Viewer.
    */
   start(options?: {
     /**
@@ -22897,6 +26955,13 @@ export interface Tracing {
    * ```
    *
    * @param options
+   * @param options.name If specified, intermediate trace files are going to be saved into the files with the given name prefix inside the
+   * [`tracesDir`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-traces-dir) directory
+   * specified in
+   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). To specify
+   * the final trace zip file name, you need to pass `path` option to
+   * [tracing.stopChunk([options])](https://playwright.dev/docs/api/class-tracing#tracing-stop-chunk) instead.
+   * @param options.title Trace name to be shown in the Trace Viewer.
    */
   startChunk(options?: {
     /**
@@ -22935,6 +27000,15 @@ export interface Tracing {
    * @param path Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, the HAR is saved as a zip
    * archive with response bodies attached as separate files.
    * @param options
+   * @param options.content Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
+   * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
+   * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
+   * files and to `embed` for all other file extensions.
+   * @param options.mode When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+   * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+   * @param options.resourcesDir Only used together with `content: 'attach'`. When set, response bodies are placed in this directory instead of next
+   * to the HAR file. Not compatible with a `.zip` HAR file.
+   * @param options.urlFilter A glob or regex pattern to filter requests that are stored in the HAR. Defaults to none.
    */
   startHar(path: string, options?: {
     /**
@@ -22966,6 +27040,7 @@ export interface Tracing {
   /**
    * Stop tracing.
    * @param options
+   * @param options.path Export trace into the file with the given path.
    */
   stop(options?: {
     /**
@@ -22979,6 +27054,9 @@ export interface Tracing {
    * [tracing.startChunk([options])](https://playwright.dev/docs/api/class-tracing#tracing-start-chunk) for more details
    * about multiple trace chunks.
    * @param options
+   * @param options.path Export trace collected since the last
+   * [tracing.startChunk([options])](https://playwright.dev/docs/api/class-tracing#tracing-start-chunk) call into the
+   * file with the given path.
    */
   stopChunk(options?: {
     /**
@@ -23462,6 +27540,80 @@ export interface Electron {
    * Launches electron application specified with the
    * [`executablePath`](https://playwright.dev/docs/api/class-electron#electron-launch-option-executable-path).
    * @param options
+   * @param options.acceptDownloads Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
+   * @param options.args Additional arguments to pass to the application when launching. You typically pass the main script name here.
+   * @param options.artifactsDir If specified, artifacts (traces, videos, downloads, HAR files, etc.) are saved into this directory. The directory
+   * is not cleaned up when the browser closes. If not specified, a temporary directory is used and cleaned up when the
+   * browser closes.
+   * @param options.bypassCSP Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
+   * @param options.chromiumSandbox Enable Chromium sandboxing. Defaults to `false`.
+   * @param options.colorScheme Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+   * media feature, supported values are `'light'` and `'dark'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
+   * @param options.cwd Current working directory to launch application from.
+   * @param options.env Specifies environment variables that will be visible to Electron. Defaults to `process.env`.
+   * @param options.executablePath Launches given Electron application. If not specified, launches the default Electron executable installed in this
+   * package, located at `node_modules/.bin/electron`.
+   * @param options.extraHTTPHeaders An object containing additional HTTP headers to be sent with every request. Defaults to none.
+   * @param options.geolocation.latitude Latitude between -90 and 90.
+   * @param options.geolocation.longitude Longitude between -180 and 180.
+   * @param options.geolocation.accuracy Non-negative accuracy value. Defaults to `0`.
+   * @param options.httpCredentials Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+   * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+   * @param options.httpCredentials.origin Restrain sending http credentials on specific origin (scheme://host:port).
+   * @param options.httpCredentials.send This option only applies to the requests sent from corresponding
+   * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+   * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+   * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+   * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+   * @param options.ignoreHTTPSErrors Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   * @param options.locale Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
+   * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+   * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+   * @param options.offline Whether to emulate network being offline. Defaults to `false`. Learn more about
+   * [network emulation](https://playwright.dev/docs/emulation#offline).
+   * @param options.recordHar Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
+   * If not specified, the HAR is not recorded. Make sure to await
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+   * the HAR to be saved.
+   * @param options.recordHar.omitContent Optional setting to control whether to omit request content from the HAR. Defaults to `false`. Deprecated, use
+   * `content` policy instead.
+   * @param options.recordHar.content Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
+   * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
+   * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
+   * files and to `embed` for all other file extensions.
+   * @param options.recordHar.path Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+   * default.
+   * @param options.recordHar.mode When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+   * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+   * @param options.recordHar.urlFilter A glob or regex pattern to filter requests that are stored in the HAR. When a
+   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
+   * options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
+   * @param options.recordVideo Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
+   * Make sure to await
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+   * videos to be saved.
+   * @param options.recordVideo.dir Path to the directory to put videos into. If not specified, the videos will be stored in `artifactsDir` (see
+   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch) options).
+   * @param options.recordVideo.size Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
+   * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
+   * each page will be scaled down if necessary to fit the specified size.
+   * @param options.recordVideo.size.width Video frame width.
+   * @param options.recordVideo.size.height Video frame height.
+   * @param options.recordVideo.showActions If specified, enables visual annotations on interacted elements during video recording.
+   * @param options.recordVideo.showActions.duration How long each annotation is displayed in milliseconds. Defaults to `500`.
+   * @param options.recordVideo.showActions.position Position of the action title overlay. Defaults to `"top-right"`.
+   * @param options.recordVideo.showActions.fontSize Font size of the action title in pixels. Defaults to `24`.
+   * @param options.recordVideo.showActions.cursor Cursor decoration shown for pointer actions. `"pointer"` (the default) renders a mouse pointer that animates from
+   * the previous action point to the next one. `"none"` disables the cursor decoration.
+   * @param options.timeout Maximum time in milliseconds to wait for the application to start. Defaults to `30000` (30 seconds). Pass `0` to
+   * disable timeout.
+   * @param options.timezoneId Changes the timezone of the context. See
+   * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
+   * for a list of supported timezone IDs. Defaults to the system timezone.
+   * @param options.tracesDir If specified, traces are saved into this directory.
    */
   launch(options?: {
     /**
@@ -23782,6 +27934,11 @@ export interface Android {
    * new Android server instance.
    * @param endpoint A browser websocket endpoint to connect to.
    * @param options
+   * @param options.headers Additional HTTP headers to be sent with web socket connect request. Optional.
+   * @param options.slowMo Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
+   * on. Defaults to `0`.
+   * @param options.timeout Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass
+   * `0` to disable timeout.
    */
   connect(endpoint: string, options?: {
     /**
@@ -23805,6 +27962,9 @@ export interface Android {
   /**
    * Returns the list of detected Android devices.
    * @param options
+   * @param options.host Optional host to establish ADB server connection. Default to `127.0.0.1`.
+   * @param options.omitDriverInstall Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
+   * @param options.port Optional port to establish ADB server connection. Default to `5037`.
    */
   devices(options?: {
     /**
@@ -23866,6 +28026,20 @@ export interface Android {
    * ```
    *
    * @param options
+   * @param options.adbHost Optional host to establish ADB server connection. Default to `127.0.0.1`.
+   * @param options.adbPort Optional port to establish ADB server connection. Default to `5037`.
+   * @param options.deviceSerialNumber Optional device serial number to launch the browser on. If not specified, it will throw if multiple devices are
+   * connected.
+   * @param options.host Host to use for the web socket. It is optional and defaults to `localhost`, accepting connections only from the
+   * loopback interface. Pass an explicit address (e.g. `0.0.0.0`) to accept connections from the network — be aware
+   * this exposes the device RPC to anything that can reach the listening port.
+   * @param options.omitDriverInstall Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
+   * @param options.port Port to use for the web socket. Defaults to 0 that picks any available port.
+   * @param options.wsPath Path at which to serve the Android Server. For security, this defaults to an unguessable string.
+   *
+   * **NOTE** Any process or web page (including those running in Playwright) with knowledge of the `wsPath` can take
+   * control of the OS user. For this reason, you should use an unguessable token when using this option.
+   *
    */
   launchServer(options?: {
     /**
@@ -23997,6 +28171,11 @@ export interface AndroidDevice {
    * @param selector Selector to drag.
    * @param dest Point to drag to.
    * @param options
+   * @param options.speed Optional speed of the drag in pixels per second.
+   * @param options.timeout Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+   * by using the
+   * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+   * method.
    */
   drag(selector: AndroidSelector, dest: {
     x: number;
@@ -24024,6 +28203,10 @@ export interface AndroidDevice {
    * @param selector Selector to fill.
    * @param text Text to be filled in the input box.
    * @param options
+   * @param options.timeout Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+   * by using the
+   * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+   * method.
    */
   fill(selector: AndroidSelector, text: string, options?: {
     /**
@@ -24042,6 +28225,11 @@ export interface AndroidDevice {
    * @param selector Selector to fling.
    * @param direction Fling direction.
    * @param options
+   * @param options.speed Optional speed of the fling in pixels per second.
+   * @param options.timeout Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+   * by using the
+   * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+   * method.
    */
   fling(selector: AndroidSelector, direction: "down"|"up"|"left"|"right", options?: {
     /**
@@ -24069,6 +28257,7 @@ export interface AndroidDevice {
    * Installs an apk on the device.
    * @param file Either a path to the apk file, or apk file content.
    * @param options
+   * @param options.args Optional arguments to pass to the `shell:cmd package install` call. Defaults to `-r -t -S`.
    */
   installApk(file: string|Buffer, options?: {
     /**
@@ -24080,6 +28269,135 @@ export interface AndroidDevice {
   /**
    * Launches Chrome browser on the device, and returns its persistent context.
    * @param options
+   * @param options.acceptDownloads Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
+   * @param options.args **NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.
+   *
+   * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
+   * [here](https://peter.sh/experiments/chromium-command-line-switches/).
+   * @param options.baseURL When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
+   * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
+   * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request),
+   * or
+   * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response)
+   * it takes the base URL in consideration by using the
+   * [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
+   * Unset by default. Examples:
+   * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+   * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in
+   * `http://localhost:3000/foo/bar.html`
+   * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+   * `http://localhost:3000/bar.html`
+   * @param options.bypassCSP Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
+   * @param options.colorScheme Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+   * media feature, supported values are `'light'` and `'dark'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
+   * @param options.contrast Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+   * @param options.deviceScaleFactor Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
+   * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
+   * @param options.extraHTTPHeaders An object containing additional HTTP headers to be sent with every request. Defaults to none.
+   * @param options.forcedColors Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'none'`.
+   * @param options.geolocation.latitude Latitude between -90 and 90.
+   * @param options.geolocation.longitude Longitude between -180 and 180.
+   * @param options.geolocation.accuracy Non-negative accuracy value. Defaults to `0`.
+   * @param options.hasTouch Specifies if viewport supports touch events. Defaults to false. Learn more about
+   * [mobile emulation](https://playwright.dev/docs/emulation#devices).
+   * @param options.httpCredentials Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+   * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+   * @param options.httpCredentials.origin Restrain sending http credentials on specific origin (scheme://host:port).
+   * @param options.httpCredentials.send This option only applies to the requests sent from corresponding
+   * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+   * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+   * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+   * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+   * @param options.ignoreHTTPSErrors Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   * @param options.isMobile Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
+   * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
+   * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
+   * @param options.javaScriptEnabled Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
+   * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
+   * @param options.locale Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
+   * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+   * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+   * @param options.logger Logger sink for Playwright logging.
+   * @param options.offline Whether to emulate network being offline. Defaults to `false`. Learn more about
+   * [network emulation](https://playwright.dev/docs/emulation#offline).
+   * @param options.permissions A list of permissions to grant to all pages in this context. See
+   * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
+   * for more details. Defaults to none.
+   * @param options.pkg Optional package name to launch instead of default Chrome for Android.
+   * @param options.proxy Network proxy settings.
+   * @param options.proxy.server Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+   * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+   * @param options.proxy.bypass Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+   * @param options.proxy.username Optional username to use if HTTP proxy requires authentication.
+   * @param options.proxy.password Optional password to use if HTTP proxy requires authentication.
+   * @param options.recordHar Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
+   * If not specified, the HAR is not recorded. Make sure to await
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+   * the HAR to be saved.
+   * @param options.recordHar.omitContent Optional setting to control whether to omit request content from the HAR. Defaults to `false`. Deprecated, use
+   * `content` policy instead.
+   * @param options.recordHar.content Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
+   * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
+   * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
+   * files and to `embed` for all other file extensions.
+   * @param options.recordHar.path Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+   * default.
+   * @param options.recordHar.mode When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+   * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+   * @param options.recordHar.urlFilter A glob or regex pattern to filter requests that are stored in the HAR. When a
+   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
+   * options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
+   * @param options.recordVideo Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
+   * Make sure to await
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+   * videos to be saved.
+   * @param options.recordVideo.dir Path to the directory to put videos into. If not specified, the videos will be stored in `artifactsDir` (see
+   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch) options).
+   * @param options.recordVideo.size Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
+   * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
+   * each page will be scaled down if necessary to fit the specified size.
+   * @param options.recordVideo.size.width Video frame width.
+   * @param options.recordVideo.size.height Video frame height.
+   * @param options.recordVideo.showActions If specified, enables visual annotations on interacted elements during video recording.
+   * @param options.recordVideo.showActions.duration How long each annotation is displayed in milliseconds. Defaults to `500`.
+   * @param options.recordVideo.showActions.position Position of the action title overlay. Defaults to `"top-right"`.
+   * @param options.recordVideo.showActions.fontSize Font size of the action title in pixels. Defaults to `24`.
+   * @param options.recordVideo.showActions.cursor Cursor decoration shown for pointer actions. `"pointer"` (the default) renders a mouse pointer that animates from
+   * the previous action point to the next one. `"none"` disables the cursor decoration.
+   * @param options.reducedMotion Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+   * @param options.screen Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
+   * [`viewport`](https://playwright.dev/docs/api/class-androiddevice#android-device-launch-browser-option-viewport) is
+   * set.
+   * @param options.screen.width page width in pixels.
+   * @param options.screen.height page height in pixels.
+   * @param options.serviceWorkers Whether to allow sites to register Service workers. Defaults to `'allow'`.
+   * - `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be
+   * registered.
+   * - `'block'`: Playwright will block all registration of Service Workers.
+   * @param options.strictSelectors If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
+   * selectors that imply single target DOM element will throw when more than one element matches the selector. This
+   * option does not affect any Locator APIs (Locators are always strict). Defaults to `false`. See
+   * [Locator](https://playwright.dev/docs/api/class-locator) to learn more about the strict mode.
+   * @param options.timezoneId Changes the timezone of the context. See
+   * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
+   * for a list of supported timezone IDs. Defaults to the system timezone.
+   * @param options.userAgent Specific user agent to use in this context.
+   * @param options.viewport Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
+   * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
+   *
+   * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
+   * by the operating system. It makes the execution of the tests non-deterministic.
+   *
    */
   launchBrowser(options?: {
     /**
@@ -24450,6 +28768,10 @@ export interface AndroidDevice {
    * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-long-tap-option-selector).
    * @param selector Selector to tap on.
    * @param options
+   * @param options.timeout Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+   * by using the
+   * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+   * method.
    */
   longTap(selector: AndroidSelector, options?: {
     /**
@@ -24479,6 +28801,11 @@ export interface AndroidDevice {
    * @param selector Selector to pinch close.
    * @param percent The size of the pinch as a percentage of the widget's size.
    * @param options
+   * @param options.speed Optional speed of the pinch in pixels per second.
+   * @param options.timeout Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+   * by using the
+   * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+   * method.
    */
   pinchClose(selector: AndroidSelector, percent: number, options?: {
     /**
@@ -24502,6 +28829,11 @@ export interface AndroidDevice {
    * @param selector Selector to pinch open.
    * @param percent The size of the pinch as a percentage of the widget's size.
    * @param options
+   * @param options.speed Optional speed of the pinch in pixels per second.
+   * @param options.timeout Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+   * by using the
+   * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+   * method.
    */
   pinchOpen(selector: AndroidSelector, percent: number, options?: {
     /**
@@ -24525,6 +28857,10 @@ export interface AndroidDevice {
    * @param selector Selector to press the key in.
    * @param key The key to press.
    * @param options
+   * @param options.timeout Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+   * by using the
+   * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+   * method.
    */
   press(selector: AndroidSelector, key: AndroidKey, options?: {
     /**
@@ -24541,6 +28877,7 @@ export interface AndroidDevice {
    * @param file Either a path to the file, or file content.
    * @param path Path to the file on the device.
    * @param options
+   * @param options.mode Optional file mode, defaults to `644` (`rw-r--r--`).
    */
   push(file: string|Buffer, path: string, options?: {
     /**
@@ -24552,6 +28889,10 @@ export interface AndroidDevice {
   /**
    * Returns the buffer with the captured screenshot of the device.
    * @param options
+   * @param options.path The file path to save the image to. If
+   * [`path`](https://playwright.dev/docs/api/class-androiddevice#android-device-screenshot-option-path) is a relative
+   * path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
+   * saved to the disk.
    */
   screenshot(options?: {
     /**
@@ -24572,6 +28913,11 @@ export interface AndroidDevice {
    * @param direction Scroll direction.
    * @param percent Distance to scroll as a percentage of the widget's size.
    * @param options
+   * @param options.speed Optional speed of the scroll in pixels per second.
+   * @param options.timeout Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+   * by using the
+   * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+   * method.
    */
   scroll(selector: AndroidSelector, direction: "down"|"up"|"left"|"right", percent: number, options?: {
     /**
@@ -24615,6 +28961,11 @@ export interface AndroidDevice {
    * @param direction Swipe direction.
    * @param percent Distance to swipe as a percentage of the widget's size.
    * @param options
+   * @param options.speed Optional speed of the swipe in pixels per second.
+   * @param options.timeout Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+   * by using the
+   * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+   * method.
    */
   swipe(selector: AndroidSelector, direction: "down"|"up"|"left"|"right", percent: number, options?: {
     /**
@@ -24636,6 +28987,11 @@ export interface AndroidDevice {
    * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-tap-option-selector).
    * @param selector Selector to tap on.
    * @param options
+   * @param options.duration Optional duration of the tap in milliseconds.
+   * @param options.timeout Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+   * by using the
+   * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+   * method.
    */
   tap(selector: AndroidSelector, options?: {
     /**
@@ -24659,6 +29015,13 @@ export interface AndroidDevice {
    * [`state`](https://playwright.dev/docs/api/class-androiddevice#android-device-wait-option-state).
    * @param selector Selector to wait for.
    * @param options
+   * @param options.state Optional state. Can be either:
+   * - default - wait for element to be present.
+   * - `'gone'` - wait for element to not be present.
+   * @param options.timeout Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+   * by using the
+   * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+   * method.
    */
   wait(selector: AndroidSelector, options?: {
     /**
@@ -24697,6 +29060,10 @@ export interface AndroidDevice {
    * immediately.
    * @param selector
    * @param options
+   * @param options.timeout Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+   * by using the
+   * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+   * method.
    */
   webView(selector: {
     /**

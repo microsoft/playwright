@@ -2398,6 +2398,9 @@ export interface TestInfo {
    * When passing [`kind`](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path-option-kind), multiple
    * name segments are not supported.
    * @param options
+   * @param options.kind The snapshot kind controls which snapshot path template is used. See
+   * [testConfig.snapshotPathTemplate](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-path-template)
+   * for more details. Defaults to `'snapshot'`.
    */
   snapshotPath(...name: ReadonlyArray<string>): string;
   /**
@@ -2437,6 +2440,9 @@ export interface TestInfo {
    * When passing [`kind`](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path-option-kind), multiple
    * name segments are not supported.
    * @param options
+   * @param options.kind The snapshot kind controls which snapshot path template is used. See
+   * [testConfig.snapshotPathTemplate](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-path-template)
+   * for more details. Defaults to `'snapshot'`.
    */
   snapshotPath(name: string, options: { kind: 'snapshot' | 'screenshot' | 'aria' }): string;
   /**
@@ -2475,6 +2481,14 @@ export interface TestInfo {
    *
    * @param name Attachment name. The name will also be sanitized and used as the prefix of file name when saving to disk.
    * @param options
+   * @param options.body Attachment body. Mutually exclusive with
+   * [`path`](https://playwright.dev/docs/api/class-testinfo#test-info-attach-option-path).
+   * @param options.contentType Content type of this attachment to properly present in the report, for example `'application/json'` or
+   * `'image/png'`. If omitted, content type is inferred based on the
+   * [`path`](https://playwright.dev/docs/api/class-testinfo#test-info-attach-option-path), or defaults to `text/plain`
+   * for [string] attachments and `application/octet-stream` for [Buffer] attachments.
+   * @param options.path Path on the filesystem to the attached file. Mutually exclusive with
+   * [`body`](https://playwright.dev/docs/api/class-testinfo#test-info-attach-option-body).
    */
   attach(name: string, options?: {
     /**
@@ -4417,6 +4431,11 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      *   ```
      *
      * @param options
+     * @param options.mode Execution mode. Learn more about the execution modes [here](https://playwright.dev/docs/test-parallel).
+     * @param options.retries The number of retries for each test.
+     * @param options.timeout Timeout for each test in milliseconds. Overrides
+     * [testProject.timeout](https://playwright.dev/docs/api/class-testproject#test-project-timeout) and
+     * [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout).
      */
     configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
   };
@@ -6594,6 +6613,14 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * @param title Step name.
    * @param body Step body.
    * @param options
+   * @param options.box Whether to box the step in the report. Defaults to `false`. When the step is boxed, errors thrown from the step
+   * internals point to the step call site. See below for more details.
+   * @param options.location Specifies a custom location for the step to be shown in test reports and trace viewer. By default, location of the
+   * [test.step(title, body[, options])](https://playwright.dev/docs/api/class-test#test-step) call is shown.
+   * @param options.timeout The maximum time, in milliseconds, allowed for the step to complete. If the step does not complete within the
+   * specified timeout, the [test.step(title, body[, options])](https://playwright.dev/docs/api/class-test#test-step)
+   * method will throw a [TimeoutError](https://playwright.dev/docs/api/class-timeouterror). Defaults to `0` (no
+   * timeout).
    */
   step: {
     /**
@@ -6753,6 +6780,14 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      * @param title Step name.
      * @param body Step body.
      * @param options
+     * @param options.box Whether to box the step in the report. Defaults to `false`. When the step is boxed, errors thrown from the step
+     * internals point to the step call site. See below for more details.
+     * @param options.location Specifies a custom location for the step to be shown in test reports and trace viewer. By default, location of the
+     * [test.step(title, body[, options])](https://playwright.dev/docs/api/class-test#test-step) call is shown.
+     * @param options.timeout The maximum time, in milliseconds, allowed for the step to complete. If the step does not complete within the
+     * specified timeout, the [test.step(title, body[, options])](https://playwright.dev/docs/api/class-test#test-step)
+     * method will throw a [TimeoutError](https://playwright.dev/docs/api/class-timeouterror). Defaults to `0` (no
+     * timeout).
      */
     <T>(title: string, body: (step: TestStepInfo) => T | Promise<T>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<T>;
     /**
@@ -6781,6 +6816,11 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      * @param title Step name.
      * @param body Step body.
      * @param options
+     * @param options.box Whether to box the step in the report. Defaults to `false`. When the step is boxed, errors thrown from the step
+     * internals point to the step call site. See below for more details.
+     * @param options.location Specifies a custom location for the step to be shown in test reports and trace viewer. By default, location of the
+     * [test.step(title, body[, options])](https://playwright.dev/docs/api/class-test#test-step) call is shown.
+     * @param options.timeout Maximum time in milliseconds for the step to finish. Defaults to `0` (no timeout).
      */
     skip(title: string, body: (step: TestStepInfo) => any | Promise<any>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<void>;
   }
@@ -8907,6 +8947,10 @@ interface LocatorAssertions {
    * ```
    *
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toBeAttached(options?: {
     attached?: boolean;
@@ -8935,6 +8979,17 @@ interface LocatorAssertions {
    * ```
    *
    * @param options
+   * @param options.checked Provides state to assert for. Asserts for input to be checked by default. This option can't be used when
+   * [`indeterminate`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-checked-option-indeterminate)
+   * is set to true.
+   * @param options.indeterminate Asserts that the element is in the indeterminate (mixed) state. Only supported for checkboxes and radio buttons.
+   * This option can't be true when
+   * [`checked`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-checked-option-checked)
+   * is provided.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toBeChecked(options?: {
     /**
@@ -8980,6 +9035,10 @@ interface LocatorAssertions {
    * ```
    *
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toBeDisabled(options?: {
     /**
@@ -9006,6 +9065,10 @@ interface LocatorAssertions {
    * ```
    *
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toBeEditable(options?: {
     editable?: boolean;
@@ -9035,6 +9098,10 @@ interface LocatorAssertions {
    * ```
    *
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toBeEmpty(options?: {
     /**
@@ -9061,6 +9128,10 @@ interface LocatorAssertions {
    * ```
    *
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toBeEnabled(options?: {
     enabled?: boolean;
@@ -9089,6 +9160,10 @@ interface LocatorAssertions {
    * ```
    *
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toBeFocused(options?: {
     /**
@@ -9116,6 +9191,10 @@ interface LocatorAssertions {
    * ```
    *
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toBeHidden(options?: {
     /**
@@ -9149,6 +9228,12 @@ interface LocatorAssertions {
    * ```
    *
    * @param options
+   * @param options.ratio The minimal ratio of the element to intersect viewport. If equals to `0`, then element should intersect viewport at
+   * any positive ratio. Defaults to `0`.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toBeInViewport(options?: {
     /**
@@ -9195,6 +9280,10 @@ interface LocatorAssertions {
    * ```
    *
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toBeVisible(options?: {
     /**
@@ -9249,6 +9338,10 @@ interface LocatorAssertions {
    * @param expected A string containing expected class names, separated by spaces, or a list of such strings to assert multiple
    * elements.
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toContainClass(expected: string|ReadonlyArray<string>, options?: {
     /**
@@ -9316,6 +9409,14 @@ interface LocatorAssertions {
    *
    * @param expected Expected substring or RegExp or a list of those.
    * @param options
+   * @param options.ignoreCase Whether to perform case-insensitive match.
+   * [`ignoreCase`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-contain-text-option-ignore-case)
+   * option takes precedence over the corresponding regular expression flag if specified.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+   * @param options.useInnerText Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
    */
   toContainText(expected: string|RegExp|ReadonlyArray<string|RegExp>, options?: {
     /**
@@ -9356,6 +9457,13 @@ interface LocatorAssertions {
    *
    * @param description Expected accessible description.
    * @param options
+   * @param options.ignoreCase Whether to perform case-insensitive match.
+   * [`ignoreCase`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-accessible-description-option-ignore-case)
+   * option takes precedence over the corresponding regular expression flag if specified.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveAccessibleDescription(description: string|RegExp, options?: {
     /**
@@ -9391,6 +9499,13 @@ interface LocatorAssertions {
    *
    * @param errorMessage Expected accessible error message.
    * @param options
+   * @param options.ignoreCase Whether to perform case-insensitive match.
+   * [`ignoreCase`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-accessible-error-message-option-ignore-case)
+   * option takes precedence over the corresponding regular expression flag if specified.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveAccessibleErrorMessage(errorMessage: string|RegExp, options?: {
     /**
@@ -9426,6 +9541,13 @@ interface LocatorAssertions {
    *
    * @param name Expected accessible name.
    * @param options
+   * @param options.ignoreCase Whether to perform case-insensitive match.
+   * [`ignoreCase`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-accessible-name-option-ignore-case)
+   * option takes precedence over the corresponding regular expression flag if specified.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveAccessibleName(name: string|RegExp, options?: {
     /**
@@ -9461,6 +9583,13 @@ interface LocatorAssertions {
    * @param name Attribute name.
    * @param value Expected attribute value.
    * @param options
+   * @param options.ignoreCase Whether to perform case-insensitive match.
+   * [`ignoreCase`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-attribute-option-ignore-case)
+   * option takes precedence over the corresponding regular expression flag if specified.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveAttribute(name: string, value: string|RegExp, options?: {
     /**
@@ -9496,6 +9625,10 @@ interface LocatorAssertions {
    *
    * @param name Attribute name.
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveAttribute(name: string, options?: {
     /**
@@ -9539,6 +9672,10 @@ interface LocatorAssertions {
    *
    * @param expected Expected class or RegExp or a list of those.
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveClass(expected: string|RegExp|ReadonlyArray<string|RegExp>, options?: {
     /**
@@ -9566,6 +9703,10 @@ interface LocatorAssertions {
    *
    * @param count Expected count.
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveCount(count: number, options?: {
     /**
@@ -9595,6 +9736,11 @@ interface LocatorAssertions {
    * @param name CSS property name.
    * @param value CSS property value.
    * @param options
+   * @param options.pseudo Pseudo-element to read computed styles from.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveCSS(name: string, value: string|RegExp, options?: {
     /**
@@ -9628,6 +9774,10 @@ interface LocatorAssertions {
    *
    * @param id Element id.
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveId(id: string|RegExp, options?: {
     /**
@@ -9657,6 +9807,10 @@ interface LocatorAssertions {
    * @param name Property name.
    * @param value Property value.
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveJSProperty(name: string, value: any, options?: {
     /**
@@ -9688,6 +9842,10 @@ interface LocatorAssertions {
    *
    * @param role Required aria role.
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveRole(role: "alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem", options?: {
     /**
@@ -9721,6 +9879,42 @@ interface LocatorAssertions {
    * @param name Snapshot name. Must have a `.png` or `.webp` extension, the screenshot is captured in the corresponding format.
    * Both formats are lossless.
    * @param options
+   * @param options.animations When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different
+   * treatment depending on their duration:
+   * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+   * - infinite animations are canceled to initial state, and then played over after the screenshot.
+   *
+   * Defaults to `"disabled"` that disables animations.
+   * @param options.caret When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be
+   * changed.  Defaults to `"hide"`.
+   * @param options.mask Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
+   * box `#FF00FF` (customized by
+   * [`maskColor`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-screenshot-1-option-mask-color))
+   * that completely covers its bounding box. The mask is also applied to invisible elements, see
+   * [Matching only visible elements](https://playwright.dev/docs/locators#matching-only-visible-elements) to disable that.
+   * @param options.maskColor Specify the color of the overlay box for masked elements, in
+   * [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.
+   * @param options.maxDiffPixelRatio An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+   * configurable with `TestConfig.expect`. Unset by default.
+   * @param options.maxDiffPixels An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+   * default.
+   * @param options.omitBackground Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+   * Defaults to `false`.
+   * @param options.scale When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this
+   * will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so
+   * screenshots of high-dpi devices will be twice as large or even larger.
+   *
+   * Defaults to `"css"`.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.stylePath File name containing the stylesheet to apply while making the screenshot. This is where you can hide dynamic
+   * elements, make elements invisible or change their properties to help you creating repeatable screenshots. This
+   * stylesheet pierces the Shadow DOM and applies to the inner frames.
+   * @param options.threshold An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
+   * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
+   * `TestConfig.expect`. Defaults to `0.2`.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveScreenshot(name: string|ReadonlyArray<string>, options?: {
     /**
@@ -9824,6 +10018,42 @@ interface LocatorAssertions {
    *
    * Note that screenshot assertions only work with Playwright test runner.
    * @param options
+   * @param options.animations When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different
+   * treatment depending on their duration:
+   * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+   * - infinite animations are canceled to initial state, and then played over after the screenshot.
+   *
+   * Defaults to `"disabled"` that disables animations.
+   * @param options.caret When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be
+   * changed.  Defaults to `"hide"`.
+   * @param options.mask Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
+   * box `#FF00FF` (customized by
+   * [`maskColor`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-screenshot-2-option-mask-color))
+   * that completely covers its bounding box. The mask is also applied to invisible elements, see
+   * [Matching only visible elements](https://playwright.dev/docs/locators#matching-only-visible-elements) to disable that.
+   * @param options.maskColor Specify the color of the overlay box for masked elements, in
+   * [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.
+   * @param options.maxDiffPixelRatio An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+   * configurable with `TestConfig.expect`. Unset by default.
+   * @param options.maxDiffPixels An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+   * default.
+   * @param options.omitBackground Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+   * Defaults to `false`.
+   * @param options.scale When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this
+   * will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so
+   * screenshots of high-dpi devices will be twice as large or even larger.
+   *
+   * Defaults to `"css"`.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.stylePath File name containing the stylesheet to apply while making the screenshot. This is where you can hide dynamic
+   * elements, make elements invisible or change their properties to help you creating repeatable screenshots. This
+   * stylesheet pierces the Shadow DOM and applies to the inner frames.
+   * @param options.threshold An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
+   * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
+   * `TestConfig.expect`. Defaults to `0.2`.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveScreenshot(options?: {
     /**
@@ -9962,6 +10192,14 @@ interface LocatorAssertions {
    *
    * @param expected Expected string or RegExp or a list of those.
    * @param options
+   * @param options.ignoreCase Whether to perform case-insensitive match.
+   * [`ignoreCase`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-text-option-ignore-case)
+   * option takes precedence over the corresponding regular expression flag if specified.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+   * @param options.useInnerText Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
    */
   toHaveText(expected: string|RegExp|ReadonlyArray<string|RegExp>, options?: {
     /**
@@ -10002,6 +10240,10 @@ interface LocatorAssertions {
    *
    * @param value Expected value.
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveValue(value: string|RegExp, options?: {
     /**
@@ -10041,6 +10283,10 @@ interface LocatorAssertions {
    *
    * @param values Expected options currently selected.
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveValues(values: ReadonlyArray<string|RegExp>, options?: {
     /**
@@ -10071,6 +10317,10 @@ interface LocatorAssertions {
    *
    * @param expected
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toMatchAriaSnapshot(expected: string, options?: {
     /**
@@ -10100,6 +10350,12 @@ interface LocatorAssertions {
    * ```
    *
    * @param options
+   * @param options.name Name of the snapshot to store in the snapshot folder corresponding to this test. Generates sequential names if not
+   * specified.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toMatchAriaSnapshot(options?: {
     /**
@@ -10169,6 +10425,49 @@ interface PageAssertions {
    * @param name Snapshot name. Must have a `.png` or `.webp` extension, the screenshot is captured in the corresponding format.
    * Both formats are lossless.
    * @param options
+   * @param options.animations When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different
+   * treatment depending on their duration:
+   * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+   * - infinite animations are canceled to initial state, and then played over after the screenshot.
+   *
+   * Defaults to `"disabled"` that disables animations.
+   * @param options.caret When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be
+   * changed.  Defaults to `"hide"`.
+   * @param options.clip An object which specifies clipping of the resulting image.
+   * @param options.clip.x x-coordinate of top-left corner of clip area
+   * @param options.clip.y y-coordinate of top-left corner of clip area
+   * @param options.clip.width width of clipping area
+   * @param options.clip.height height of clipping area
+   * @param options.fullPage When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
+   * `false`.
+   * @param options.mask Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
+   * box `#FF00FF` (customized by
+   * [`maskColor`](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1-option-mask-color))
+   * that completely covers its bounding box. The mask is also applied to invisible elements, see
+   * [Matching only visible elements](https://playwright.dev/docs/locators#matching-only-visible-elements) to disable that.
+   * @param options.maskColor Specify the color of the overlay box for masked elements, in
+   * [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.
+   * @param options.maxDiffPixelRatio An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+   * configurable with `TestConfig.expect`. Unset by default.
+   * @param options.maxDiffPixels An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+   * default.
+   * @param options.omitBackground Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+   * Defaults to `false`.
+   * @param options.scale When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this
+   * will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so
+   * screenshots of high-dpi devices will be twice as large or even larger.
+   *
+   * Defaults to `"css"`.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.stylePath File name containing the stylesheet to apply while making the screenshot. This is where you can hide dynamic
+   * elements, make elements invisible or change their properties to help you creating repeatable screenshots. This
+   * stylesheet pierces the Shadow DOM and applies to the inner frames.
+   * @param options.threshold An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
+   * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
+   * `TestConfig.expect`. Defaults to `0.2`.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveScreenshot(name: string|ReadonlyArray<string>, options?: PageAssertionsToHaveScreenshotOptions): Promise<void>;
 
@@ -10187,6 +10486,49 @@ interface PageAssertions {
    *
    * Note that screenshot assertions only work with Playwright test runner.
    * @param options
+   * @param options.animations When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different
+   * treatment depending on their duration:
+   * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+   * - infinite animations are canceled to initial state, and then played over after the screenshot.
+   *
+   * Defaults to `"disabled"` that disables animations.
+   * @param options.caret When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be
+   * changed.  Defaults to `"hide"`.
+   * @param options.clip An object which specifies clipping of the resulting image.
+   * @param options.clip.x x-coordinate of top-left corner of clip area
+   * @param options.clip.y y-coordinate of top-left corner of clip area
+   * @param options.clip.width width of clipping area
+   * @param options.clip.height height of clipping area
+   * @param options.fullPage When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
+   * `false`.
+   * @param options.mask Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
+   * box `#FF00FF` (customized by
+   * [`maskColor`](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-2-option-mask-color))
+   * that completely covers its bounding box. The mask is also applied to invisible elements, see
+   * [Matching only visible elements](https://playwright.dev/docs/locators#matching-only-visible-elements) to disable that.
+   * @param options.maskColor Specify the color of the overlay box for masked elements, in
+   * [CSS color format](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value). Default color is pink `#FF00FF`.
+   * @param options.maxDiffPixelRatio An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+   * configurable with `TestConfig.expect`. Unset by default.
+   * @param options.maxDiffPixels An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+   * default.
+   * @param options.omitBackground Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+   * Defaults to `false`.
+   * @param options.scale When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this
+   * will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so
+   * screenshots of high-dpi devices will be twice as large or even larger.
+   *
+   * Defaults to `"css"`.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.stylePath File name containing the stylesheet to apply while making the screenshot. This is where you can hide dynamic
+   * elements, make elements invisible or change their properties to help you creating repeatable screenshots. This
+   * stylesheet pierces the Shadow DOM and applies to the inner frames.
+   * @param options.threshold An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
+   * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
+   * `TestConfig.expect`. Defaults to `0.2`.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveScreenshot(options?: PageAssertionsToHaveScreenshotOptions): Promise<void>;
 
@@ -10201,6 +10543,10 @@ interface PageAssertions {
    *
    * @param titleOrRegExp Expected title or RegExp.
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveTitle(titleOrRegExp: string|RegExp, options?: {
     /**
@@ -10245,6 +10591,14 @@ interface PageAssertions {
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor and used for the comparison
    * against the current browser URL.
    * @param options
+   * @param options.ignoreCase Whether to perform case-insensitive match.
+   * [`ignoreCase`](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-url-option-ignore-case)
+   * option takes precedence over the corresponding regular expression parameter if specified. A provided predicate
+   * ignores this flag.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toHaveURL(url: string|RegExp|URLPattern|((url: URL) => boolean), options?: {
     /**
@@ -10283,6 +10637,10 @@ interface PageAssertions {
    *
    * @param expected
    * @param options
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toMatchAriaSnapshot(expected: string, options?: {
     /**
@@ -10312,6 +10670,12 @@ interface PageAssertions {
    * ```
    *
    * @param options
+   * @param options.name Name of the snapshot to store in the snapshot folder corresponding to this test. Generates sequential names if not
+   * specified.
+   * @param options.signal An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+   * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+   * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+   * @param options.timeout Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
    */
   toMatchAriaSnapshot(options?: {
     /**
@@ -10389,6 +10753,13 @@ interface SnapshotAssertions {
    * Note that matching snapshots only work with Playwright test runner.
    * @param name Snapshot name.
    * @param options
+   * @param options.maxDiffPixelRatio An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+   * configurable with `TestConfig.expect`. Unset by default.
+   * @param options.maxDiffPixels An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+   * default.
+   * @param options.threshold An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
+   * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
+   * `TestConfig.expect`. Defaults to `0.2`.
    */
   toMatchSnapshot(name: string|ReadonlyArray<string>, options?: {
     /**
@@ -10441,6 +10812,14 @@ interface SnapshotAssertions {
    *
    * Note that matching snapshots only work with Playwright test runner.
    * @param options
+   * @param options.maxDiffPixelRatio An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+   * configurable with `TestConfig.expect`. Unset by default.
+   * @param options.maxDiffPixels An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+   * default.
+   * @param options.name Snapshot name. If not passed, the test name and ordinals are used when called multiple times.
+   * @param options.threshold An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the
+   * same pixel in compared images, between zero (strict) and one (lax), default is configurable with
+   * `TestConfig.expect`. Defaults to `0.2`.
    */
   toMatchSnapshot(options?: {
     /**
@@ -10582,6 +10961,14 @@ export interface TestStepInfo {
    *
    * @param name Attachment name. The name will also be sanitized and used as the prefix of file name when saving to disk.
    * @param options
+   * @param options.body Attachment body. Mutually exclusive with
+   * [`path`](https://playwright.dev/docs/api/class-teststepinfo#test-step-info-attach-option-path).
+   * @param options.contentType Content type of this attachment to properly present in the report, for example `'application/json'` or
+   * `'image/png'`. If omitted, content type is inferred based on the
+   * [`path`](https://playwright.dev/docs/api/class-teststepinfo#test-step-info-attach-option-path), or defaults to
+   * `text/plain` for [string] attachments and `application/octet-stream` for [Buffer] attachments.
+   * @param options.path Path on the filesystem to the attached file. Mutually exclusive with
+   * [`body`](https://playwright.dev/docs/api/class-teststepinfo#test-step-info-attach-option-body).
    */
   attach(name: string, options?: {
     /**
