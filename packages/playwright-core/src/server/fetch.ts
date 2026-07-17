@@ -476,8 +476,7 @@ export abstract class APIRequestContext extends SdkObject {
               return;
             }
 
-            if (headers['host'])
-              headers['host'] = locationURL.host;
+            setHeader(headers, 'host', locationURL.host);
 
             // Drop credentials scoped to the original origin on cross-origin redirects.
             if (locationURL.origin !== url.origin)

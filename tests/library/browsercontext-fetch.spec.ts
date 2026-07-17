@@ -1436,7 +1436,7 @@ it('should update host header on redirect', async ({ context, server }) => {
   });
   const reqPromise = server.waitForRequest('/test');
   const response = await context.request.get(server.PREFIX + '/redirect', {
-    headers: { host: new URL(server.PREFIX).host }
+    headers: { HosT: new URL(server.PREFIX).host }
   });
   expect(redirectCount).toBe(2);
   await expect(response).toBeOK();
