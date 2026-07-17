@@ -37,34 +37,6 @@ const test = base.extend<{
   },
 });
 
-function isAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function expectDaemonExited(cliPromise: Promise<CliResult>): Promise<void> {
-  const { error } = await cliPromise;
-  const pidMatch = error.match(/Daemon pid=(\d+)/);
-  expect(pidMatch, `expected daemon pid in cli error:\n${error}`).toBeTruthy();
-  const pid = parseInt(pidMatch![1], 10);
-  await expect.poll(() => isAlive(pid)).toBe(false);
-}
-
-test('daemon exits when user closes the connect tab', async ({ startAttach, protocolVersion }) => {
-  // v2 defers opening the relay WS until the user clicks Allow, so closing the
-  // tab before Allow never opens a relay WS in v2.
-  test.skip(protocolVersion === 2, 'v2 defers the relay connection until Allow');
-  const { confirmationPage, cliPromise } = await startAttach();
-  // Wait for the page to fully load and the connection to the relay to be established before closing it.
-  await expect(confirmationPage.locator('.tab-item').first()).toBeVisible();
-  await confirmationPage.close();
-  await expectDaemonExited(cliPromise);
-});
-
 test('attach <url> --extension', async ({ startAttach, cli, server }) => {
   const { confirmationPage, cliPromise } = await startAttach();
   await clickAllowAndSelect(confirmationPage, 'Welcome');

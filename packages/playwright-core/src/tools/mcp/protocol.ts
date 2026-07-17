@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-// The latest protocol version defined in this file. Bumped whenever the
-// commands/events change. The latest extension version should remain
-// compatible with older MCP clients.
-export const LATEST_VERSION = 2;
-
-// The protocol version used by default when PLAYWRIGHT_EXTENSION_PROTOCOL is
-// not set. May lag behind LATEST_VERSION while a new version is rolling out.
-export const DEFAULT_VERSION = 2;
+// The protocol version defined in this file. Bumped whenever the
+// commands/events change. Sent to the extension, which rejects clients
+// requesting a version it does not support.
+export const VERSION = 2;
 
 // Structural mirrors of @types/chrome shapes used over the wire. The extension
 // imports the real chrome.* types and they are structurally compatible.
@@ -103,33 +99,3 @@ export type ExtensionEventsV2 = {
     params: [];
   };
 };
-
-// Protocol v1: legacy single-tab interface.
-export type ExtensionCommandV1 = {
-  'attachToTab': {
-    params: {};
-    result: { targetInfo: any };
-  };
-  'forwardCDPCommand': {
-    params: {
-      method: string,
-      sessionId?: string
-      params?: any,
-    };
-    result: any;
-  };
-};
-
-export type ExtensionEventsV1 = {
-  'forwardCDPEvent': {
-    params: {
-      method: string,
-      sessionId?: string
-      params?: any,
-    };
-  };
-};
-
-// Combined types for the relay which supports both protocol versions.
-export type ExtensionCommand = ExtensionCommandV1 & ExtensionCommandV2;
-export type ExtensionEvents = ExtensionEventsV1 & ExtensionEventsV2;

@@ -77,9 +77,7 @@ test('connected tab is in green Playwright group, connect page is closed', async
   }).toEqual({ color: 'green', title: 'Playwright' });
 });
 
-test('tab added to group gets auto-attached', async ({ browserWithExtension, startClient, server, protocolVersion }) => {
-  test.skip(protocolVersion === 1, 'Multi-tab not supported in protocol v1');
-
+test('tab added to group gets auto-attached', async ({ browserWithExtension, startClient, server }) => {
   server.setContent('/extra', '<title>Extra</title><body>Extra content</body>', 'text/html');
 
   const browserContext = await browserWithExtension.launch();
@@ -127,9 +125,7 @@ test('tab added to group gets auto-attached', async ({ browserWithExtension, sta
   }).toContain('Extra');
 });
 
-test('chrome:// tab dragged into group stays until it navigates to a debuggable URL', async ({ browserWithExtension, startClient, server, protocolVersion }) => {
-  test.skip(protocolVersion === 1, 'Multi-tab not supported in protocol v1');
-
+test('chrome:// tab dragged into group stays until it navigates to a debuggable URL', async ({ browserWithExtension, startClient, server }) => {
   server.setContent('/second', '<title>Second</title><body>Second</body>', 'text/html');
 
   const browserContext = await browserWithExtension.launch();
@@ -207,9 +203,7 @@ test('chrome:// tab dragged into group stays until it navigates to a debuggable 
   }).toEqual({ groupId, badge: '✓' });
 });
 
-test('tab removed from group gets auto-detached', async ({ browserWithExtension, startClient, server, protocolVersion }) => {
-  test.skip(protocolVersion === 1, 'Multi-tab not supported in protocol v1');
-
+test('tab removed from group gets auto-detached', async ({ browserWithExtension, startClient, server }) => {
   server.setContent('/second', '<title>Second</title><body>Second</body>', 'text/html');
 
   const browserContext = await browserWithExtension.launch();

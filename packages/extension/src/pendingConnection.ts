@@ -16,88 +16,29 @@
 
 import { RelayConnection, debugLog } from './relayConnection';
 
-interface PendingEntry {
-  connect(): Promise<RelayConnection>;
-  close(reason: string): void;
-}
-
-class EagerPending implements PendingEntry {
-  private _connection: RelayConnection;
-  onclose?: () => void;
-
-  static async create(mcpRelayUrl: string, protocolVersion: number): Promise<EagerPending> {
-    const connection = await openRelayConnection(mcpRelayUrl, protocolVersion);
-    return new EagerPending(connection);
-  }
-
-  private constructor(connection: RelayConnection) {
-    this._connection = connection;
-    this._connection.onclose = () => this.onclose?.();
-  }
-
-  async connect(): Promise<RelayConnection> {
-    return this._connection;
-  }
-
-  close(reason: string): void {
-    this._connection.close(reason);
-  }
-}
-
-class DeferredPending implements PendingEntry {
-  constructor(private _mcpRelayUrl: string, private _protocolVersion: number) {}
-
-  async connect(): Promise<RelayConnection> {
-    return openRelayConnection(this._mcpRelayUrl, this._protocolVersion);
-  }
-
-  close(_reason: string): void {
-  }
-}
-
+// Relay URLs recorded by `connectionRequested`, keyed by the connect page tab
+// id. The relay WebSocket opens lazily in `take` once the user clicks Allow.
 export class PendingConnections {
-  private _map = new Map<number, PendingEntry>();
+  private _map = new Map<number, string>();
 
   constructor() {
-    chrome.tabs.onRemoved.addListener(this._onTabRemoved.bind(this));
+    chrome.tabs.onRemoved.addListener(tabId => this._map.delete(tabId));
   }
 
-  // v1 opens the relay WS eagerly — the daemon expects a prompt connection.
-  // v2 records only the descriptor; the WS opens lazily in `take` once the
-  // user clicks Allow.
-  async create(selectorTabId: number, mcpRelayUrl: string, protocolVersion: number): Promise<void> {
-    if (protocolVersion !== 1) {
-      this._map.set(selectorTabId, new DeferredPending(mcpRelayUrl, protocolVersion));
-      return;
-    }
-    const entry = await EagerPending.create(mcpRelayUrl, protocolVersion);
-    entry.onclose = () => {
-      if (this._map.get(selectorTabId) !== entry)
-        return;
-      this._map.delete(selectorTabId);
-      chrome.tabs.sendMessage(selectorTabId, { type: 'pendingConnectionClosed' }).catch(() => {});
-    };
-    this._map.set(selectorTabId, entry);
+  create(selectorTabId: number, mcpRelayUrl: string): void {
+    this._map.set(selectorTabId, mcpRelayUrl);
   }
 
   async take(selectorTabId: number): Promise<RelayConnection | undefined> {
-    const entry = this._map.get(selectorTabId);
-    if (!entry)
+    const mcpRelayUrl = this._map.get(selectorTabId);
+    if (mcpRelayUrl === undefined)
       return undefined;
     this._map.delete(selectorTabId);
-    return entry.connect();
-  }
-
-  private _onTabRemoved(tabId: number): void {
-    const entry = this._map.get(tabId);
-    if (!entry)
-      return;
-    this._map.delete(tabId);
-    entry.close('Browser tab closed');
+    return openRelayConnection(mcpRelayUrl);
   }
 }
 
-async function openRelayConnection(mcpRelayUrl: string, protocolVersion: number): Promise<RelayConnection> {
+async function openRelayConnection(mcpRelayUrl: string): Promise<RelayConnection> {
   try {
     const socket = new WebSocket(mcpRelayUrl);
     await new Promise<void>((resolve, reject) => {
@@ -105,7 +46,7 @@ async function openRelayConnection(mcpRelayUrl: string, protocolVersion: number)
       socket.onerror = () => reject(new Error('WebSocket error'));
       setTimeout(() => reject(new Error('Connection timeout')), 5000);
     });
-    return new RelayConnection(socket, protocolVersion);
+    return new RelayConnection(socket);
   } catch (error: any) {
     const message = `Failed to connect to MCP relay: ${error.message}`;
     debugLog(message);

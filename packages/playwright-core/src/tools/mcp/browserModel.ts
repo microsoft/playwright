@@ -35,8 +35,19 @@
 
 import { logUnhandledError } from './log';
 
-import type { CDPMessage, SendCommand, SendToCDPClient } from './cdpRelayHandler';
 import type { DebuggerSession, Debuggee, Tab } from './protocol';
+
+export type CDPMessage = {
+  id?: number;
+  sessionId?: string;
+  method?: string;
+  params?: any;
+  result?: any;
+  error?: { code?: number; message: string };
+};
+
+export type SendCommand = (method: string, params: any) => Promise<any>;
+export type SendToCDPClient = (message: CDPMessage) => void;
 
 type TabSession = {
   tabId: number;

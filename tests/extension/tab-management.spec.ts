@@ -16,8 +16,6 @@
 
 import { test, expect, connectAndNavigate } from './extension-fixtures';
 
-test.skip(({ protocolVersion }) => protocolVersion === 1, 'Multi-tab not supported in protocol v1');
-
 test(`browser_tabs new creates a new tab`, async ({ startExtensionClient, server }) => {
   server.setContent('/second.html', '<title>Second</title><body>Second page<body>', 'text/html');
   const { browserContext, client } = await startExtensionClient();

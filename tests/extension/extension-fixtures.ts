@@ -36,10 +36,6 @@ export type CliResult = {
   error: string;
 };
 
-export type ExtensionTestOptions = {
-  protocolVersion: 1 | 2;
-};
-
 export type TestFixtures = {
   browserWithExtension: BrowserWithExtension,
   pathToExtension: string,
@@ -47,24 +43,9 @@ export type TestFixtures = {
   cli: (args: string[], options?: { env?: Record<string, string> }) => Promise<CliResult>;
 };
 
-type WorkerFixtures = {
-  _protocolEnv: void;
-};
-
 export const extensionId = 'mmlmfjhmonkocbjadbfplnigmagldckm';
 
-export const test = base.extend<TestFixtures, WorkerFixtures & ExtensionTestOptions>({
-  protocolVersion: [2, { option: true, scope: 'worker' }],
-
-  _protocolEnv: [async ({ protocolVersion }, use) => {
-    // Default is 2.
-    if (protocolVersion === 1)
-      process.env.PLAYWRIGHT_EXTENSION_PROTOCOL = '1';
-    else
-      delete process.env.PLAYWRIGHT_EXTENSION_PROTOCOL;
-    await use();
-  }, { auto: true, scope: 'worker' }],
-
+export const test = base.extend<TestFixtures>({
   pathToExtension: async ({}, use, testInfo) => {
     const extensionDir = testInfo.outputPath('extension');
     const srcDir = path.resolve(__dirname, '../../packages/extension/dist');

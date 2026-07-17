@@ -41,27 +41,7 @@ test(`navigate with extension`, async ({ startExtensionClient, server }) => {
   });
 });
 
-test(`connect.html protocolVersion search param matches fixture option`, async ({ startExtensionClient, server, protocolVersion }) => {
-  const { browserContext, client } = await startExtensionClient();
-
-  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
-    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
-  });
-
-  client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  }).catch(() => {});
-
-  const selectorPage = await confirmationPagePromise;
-  const url = new URL(selectorPage.url());
-  expect(url.searchParams.get('protocolVersion')).toBe(String(protocolVersion));
-});
-
-test(`protocolVersion defaults to 2`, async ({ startExtensionClient, server, protocolVersion }) => {
-  const saved = process.env.PLAYWRIGHT_EXTENSION_PROTOCOL;
-  delete process.env.PLAYWRIGHT_EXTENSION_PROTOCOL;
-
+test(`connect.html requests protocol version 2`, async ({ startExtensionClient, server }) => {
   const { browserContext, client } = await startExtensionClient();
 
   const confirmationPagePromise = browserContext.waitForEvent('page', page => {
@@ -76,12 +56,9 @@ test(`protocolVersion defaults to 2`, async ({ startExtensionClient, server, pro
   const selectorPage = await confirmationPagePromise;
   const url = new URL(selectorPage.url());
   expect(url.searchParams.get('protocolVersion')).toBe('2');
-
-  process.env.PLAYWRIGHT_EXTENSION_PROTOCOL = saved;
 });
 
-test(`browser_run_code_unsafe can evaluate in a web worker`, async ({ startExtensionClient, server, protocolVersion }) => {
-  test.skip(protocolVersion === 1, 'Multi-tab not supported in protocol v1');
+test(`browser_run_code_unsafe can evaluate in a web worker`, async ({ startExtensionClient, server }) => {
   server.setContent('/worker.js', `
     self.onmessage = (e) => self.postMessage('echo:' + e.data);
     self.workerName = 'mcp-worker';
@@ -344,39 +321,4 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
   expect(await navigateResponse).toHaveResponse({
     snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
   });
-});
-
-test(`pending connection closed when client disconnects`, async ({ startExtensionClient, server, protocolVersion }) => {
-  // v2 does not open a WS to the relay before the user clicks Allow, so there
-  // is no pending connection to tear down when the client dies pre-Allow.
-  test.skip(protocolVersion === 2, 'v2 defers the relay connection until Allow');
-  const { browserContext, client } = await startExtensionClient();
-
-  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
-    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
-  });
-
-  client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  }).catch(() => {});
-
-  const selectorPage = await confirmationPagePromise;
-  // Wait for the tab list to appear so we know the relay connection is established.
-  await selectorPage.locator('.tab-item').first().waitFor();
-
-  // Close the MCP client, which tears down the relay WebSocket.
-  await client.close();
-
-  await expect(selectorPage.locator('.status-banner')).toContainText('Pending client connection closed.');
-  await expect(selectorPage).toHaveTitle('Playwright Extension');
-
-  // The connect tab should be removed from the Playwright group.
-  await expect.poll(async () => {
-    return selectorPage.evaluate(async () => {
-      const chrome = (window as any).chrome;
-      const tab = await chrome.tabs.getCurrent();
-      return tab?.groupId ?? -1;
-    });
-  }).toBe(-1);
 });

@@ -31,10 +31,10 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { logUnhandledError } from './log';
 import { BrowserModel } from './browserModel';
 
-import type { ExtensionProtocolHandler, SendCommand, SendToCDPClient } from './cdpRelayHandler';
+import type { SendCommand, SendToCDPClient } from './browserModel';
 import type { ExtensionEventsV2 } from './protocol';
 
-export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
+export class ExtensionProtocolV2 {
   private _model: BrowserModel;
   // Resolved by `extension.initialized`. Purely a handshake signal for the
   // relay — the model itself is oblivious to this phase.
@@ -45,6 +45,8 @@ export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
     void this._ready.catch(logUnhandledError);
   }
 
+  // Resolves once the extension has completed its initial handshake and the
+  // relay may start processing CDP commands from Playwright.
   ready(): Promise<void> {
     return this._ready;
   }
@@ -53,6 +55,9 @@ export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
     this._model.connectOverCDP(sendToCDPClient);
   }
 
+  // Called when the extension WebSocket closes. Rejects a pending `ready()`
+  // promise so a blocked `establishExtensionConnection` bails out instead of
+  // hanging forever.
   onExtensionDisconnect(reason: string): void {
     if (!this._ready.isDone())
       this._ready.reject(new Error(`Extension disconnected before initialization: ${reason}`));
@@ -87,6 +92,8 @@ export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
     }
   }
 
+  // Handles a protocol-specific CDP command. Returns { result } if handled,
+  // undefined to fall through to forwarding to the extension.
   async handleCDPCommand(method: string, params: any, sessionId: string | undefined): Promise<{ result: any } | undefined> {
     switch (method) {
       case 'Target.setAutoAttach': {

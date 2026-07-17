@@ -21,7 +21,6 @@ import { ConnectedTabGroup, cleanupStalePlaywrightGroups, isNonDebuggableUrl } f
 type PageMessage = {
   type: 'connectionRequested';
   mcpRelayUrl: string;
-  protocolVersion: number;
 } | {
   type: 'getTabs';
 } | {
@@ -56,10 +55,9 @@ class PlaywrightExtension {
   private _onMessage(message: PageMessage, sender: chrome.runtime.MessageSender, sendResponse: (response: any) => void) {
     switch (message.type) {
       case 'connectionRequested':
-        this._pendingConnections.create(sender.tab!.id!, message.mcpRelayUrl, message.protocolVersion).then(
-            () => sendResponse({ success: true }),
-            (error: any) => sendResponse({ success: false, error: error.message }));
-        return true;
+        this._pendingConnections.create(sender.tab!.id!, message.mcpRelayUrl);
+        sendResponse({ success: true });
+        return false;
       case 'getTabs':
         this._getTabs().then(
             tabs => sendResponse({ success: true, tabs, currentTabId: sender.tab?.id }),

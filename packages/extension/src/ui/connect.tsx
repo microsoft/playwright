@@ -85,10 +85,13 @@ const ConnectApp: React.FC = () => {
         });
         return;
       }
-      // The background decides per protocolVersion: v1 opens the relay WS
-      // immediately (the daemon expects a prompt connection); v2 just records
-      // the descriptor and defers the WS until the user clicks Allow.
-      const response = await chrome.runtime.sendMessage({ type: 'connectionRequested', mcpRelayUrl: relayUrl, protocolVersion: requestedVersion });
+      if (requestedVersion < SUPPORTED_PROTOCOL_VERSION) {
+        setError('The client uses an unsupported protocol version. Update Playwright MCP or CLI to the latest version.');
+        return;
+      }
+      // The background only records the relay URL; the WS to the relay opens
+      // once the user clicks Allow.
+      const response = await chrome.runtime.sendMessage({ type: 'connectionRequested', mcpRelayUrl: relayUrl });
       if (!response.success) {
         setError(response.error);
         return;
@@ -112,8 +115,9 @@ const ConnectApp: React.FC = () => {
         await loadTabs();
     };
     void runAsync();
-    // Ping the background every 20s so the MV3 service worker (which owns the
-    // relay WebSocket) stays above its 30s idle timeout while the user decides.
+    // Ping the background every 20s so the MV3 service worker (which holds the
+    // pending connection state) stays above its 30s idle timeout while the
+    // user decides.
     const keepalive = setInterval(() => {
       chrome.runtime.sendMessage({ type: 'keepalive' }).catch(() => {});
     }, 20_000);
@@ -153,19 +157,6 @@ const ConnectApp: React.FC = () => {
       });
     }
   }, [clientInfo]);
-
-  useEffect(() => {
-    const listener = (message: any) => {
-      if (message.type === 'pendingConnectionClosed') {
-        setError('Pending client connection closed.');
-        document.title = 'Playwright Extension';
-      }
-    };
-    chrome.runtime.onMessage.addListener(listener);
-    return () => {
-      chrome.runtime.onMessage.removeListener(listener);
-    };
-  }, [setError]);
 
   return (
     <div className='app-container'>
