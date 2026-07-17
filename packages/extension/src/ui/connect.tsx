@@ -27,11 +27,19 @@ type Status =
 
 const SUPPORTED_PROTOCOL_VERSION = 2;
 
+// Client name comes from the URL and never changes for the lifetime of this page.
+const clientInfo = (() => {
+  try {
+    return JSON.parse(new URLSearchParams(window.location.search).get('client') || '{}').name || 'unknown';
+  } catch {
+    return 'unknown';
+  }
+})();
+
 const ConnectApp: React.FC = () => {
   const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
   const [status, setStatus] = useState<Status | null>(null);
   const [showTabList, setShowTabList] = useState(true);
-  const [clientInfo, setClientInfo] = useState('unknown');
 
   const setError = useCallback((message: string) => {
     setShowTabList(false);
@@ -59,19 +67,10 @@ const ConnectApp: React.FC = () => {
         return;
       }
 
-      let info: string;
-      try {
-        const client = JSON.parse(params.get('client') || '{}');
-        info = `${client.name || 'unknown'}`;
-        setClientInfo(info);
-        setStatus({
-          type: 'connecting',
-          message: `"${info}" is trying to connect to the Playwright Extension.`
-        });
-      } catch (e) {
-        setStatus({ type: 'error', message: 'Failed to parse client version.' });
-        return;
-      }
+      setStatus({
+        type: 'connecting',
+        message: `"${clientInfo}" is trying to connect to the Playwright Extension.`
+      });
 
       const parsedVersion = parseInt(params.get('protocolVersion') ?? '', 10);
       const requestedVersion = isNaN(parsedVersion) ? 1 : parsedVersion;
@@ -98,9 +97,7 @@ const ConnectApp: React.FC = () => {
       const expectedToken = getOrCreateAuthToken();
       const token = params.get('token');
       if (token === expectedToken) {
-        // Pass `info` explicitly: setClientInfo only schedules a re-render, so
-        // handleConnectToTab would still close over the initial 'unknown' state.
-        await handleConnectToTab(undefined, info);
+        await handleConnectToTab();
         return;
       }
       if (token) {
@@ -131,32 +128,31 @@ const ConnectApp: React.FC = () => {
       setStatus({ type: 'error', message: 'Failed to load tabs: ' + response.error });
   }, []);
 
-  const handleConnectToTab = useCallback(async (tab?: chrome.tabs.Tab, clientNameOverride?: string) => {
+  const handleConnectToTab = useCallback(async (tab?: chrome.tabs.Tab) => {
     setShowTabList(false);
-    const name = clientNameOverride ?? clientInfo;
 
     try {
       const response = await chrome.runtime.sendMessage({
         type: 'connectToTab',
         tab,
-        clientName: name,
+        clientName: clientInfo,
       });
 
       if (response?.success) {
-        setStatus({ type: 'connected', message: `"${name}" connected.` });
+        setStatus({ type: 'connected', message: `"${clientInfo}" connected.` });
       } else {
         setStatus({
           type: 'error',
-          message: response?.error || `"${name}" failed to connect.`
+          message: response?.error || `"${clientInfo}" failed to connect.`
         });
       }
     } catch (e) {
       setStatus({
         type: 'error',
-        message: `"${name}" failed to connect: ${e}`
+        message: `"${clientInfo}" failed to connect: ${e}`
       });
     }
-  }, [clientInfo]);
+  }, []);
 
   useEffect(() => {
     const listener = (message: any) => {
