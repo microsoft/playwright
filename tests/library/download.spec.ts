@@ -51,7 +51,7 @@ it.describe('download event', () => {
     });
   });
 
-  it('should report download when navigation turns into download @smoke', async ({ browser, server, browserName, browserMajorVersion }) => {
+  it('should report download when navigation turns into download @smoke', async ({ browser, server, browserName, browserMajorVersion, isBidi }) => {
     it.skip(browserName === 'chromium' && browserMajorVersion < 140, 'old chromium throws net::ERR_ABORTED, depends on https://chromium-review.googlesource.com/c/chromium/src/+/6696011');
     const page = await browser.newPage();
     const [download, responseOrError] = await Promise.all([
@@ -67,12 +67,12 @@ it.describe('download event', () => {
     expect(responseOrError instanceof Error).toBeTruthy();
     expect(responseOrError.message).toContain('Download is starting');
 
-    if (browserName !== 'firefox')
+    if (browserName !== 'firefox' || isBidi)
       expect(page.url()).toBe('about:blank');
     await page.close();
   });
 
-  it('should work with Cross-Origin-Opener-Policy', async ({ browser, server, browserName, browserMajorVersion }) => {
+  it('should work with Cross-Origin-Opener-Policy', async ({ browser, server, browserName, browserMajorVersion, isBidi }) => {
     it.skip(browserName === 'chromium' && browserMajorVersion < 140, 'old chromium throws net::ERR_ABORTED, depends on https://chromium-review.googlesource.com/c/chromium/src/+/6696011');
     const page = await browser.newPage();
     const [download, responseOrError] = await Promise.all([
@@ -86,7 +86,7 @@ it.describe('download event', () => {
     expect(fs.readFileSync(path).toString()).toBe('Hello world');
     expect(responseOrError instanceof Error).toBeTruthy();
     expect(responseOrError.message).toContain('Download is starting');
-    if (browserName !== 'firefox')
+    if (browserName !== 'firefox' || isBidi)
       expect(page.url()).toBe('about:blank');
     await page.close();
   });

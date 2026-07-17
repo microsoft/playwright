@@ -35,7 +35,7 @@ it('should work with navigation @smoke', async ({ page, server }) => {
   expect(requests.get('style.css').isNavigationRequest()).toBe(false);
 });
 
-it('should intercept after a service worker', async ({ page, server, browserName, isAndroid }) => {
+it('should intercept after a service worker', async ({ page, server, browserName, isAndroid, isBidi }) => {
   it.skip(isAndroid);
 
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
@@ -63,8 +63,8 @@ it('should intercept after a service worker', async ({ page, server, browserName
   const nonInterceptedResponse = await page.evaluate(() => window['fetchDummy']('passthrough'));
   expect(nonInterceptedResponse).toBe('FAILURE: Not Found');
 
-  // Firefox does not want to fetch the redirect for some reason.
-  if (browserName !== 'firefox') {
+  // Firefox/Juggler does not want to fetch the redirect for some reason.
+  if (browserName !== 'firefox' || isBidi) {
     // Page route is not applied to service worker initiated fetch with redirect.
     server.setRedirect('/serviceworkers/fetchdummy/passthrough', '/simple.json');
     const redirectedResponse = await page.evaluate(() => window['fetchDummy']('passthrough'));

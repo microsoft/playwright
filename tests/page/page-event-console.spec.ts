@@ -18,14 +18,14 @@
 import { test as it, expect } from './pageTest';
 import util from 'util';
 
-it('should work @smoke', async ({ page, browserName, channel }) => {
+it('should work @smoke', async ({ page, browserName, isBidi }) => {
   let message = null;
   page.once('console', m => message = m);
   await Promise.all([
     page.evaluate(() => console.log('hello', 5, { foo: 'bar' })),
     page.waitForEvent('console')
   ]);
-  if (browserName !== 'firefox' || channel?.startsWith('moz-firefox'))
+  if (browserName !== 'firefox' || isBidi)
     expect(message.text()).toEqual('hello 5 {foo: bar}');
   else
     expect(message.text()).toEqual('hello 5 JSHandle@object');
@@ -117,14 +117,14 @@ it('should format the message correctly with time/timeLog/timeEnd', async ({ pag
   expect(messages[1].text()).toMatch(/foo time: \d+(.\d+)? ?ms/);
 });
 
-it('should not fail for window object', async ({ page, browserName, channel }) => {
+it('should not fail for window object', async ({ page, browserName, isBidi }) => {
   let message = null;
   page.once('console', msg => message = msg);
   await Promise.all([
     page.evaluate(() => console.error(window)),
     page.waitForEvent('console')
   ]);
-  if (browserName !== 'firefox' || channel?.startsWith('moz-firefox'))
+  if (browserName !== 'firefox' || isBidi)
     expect(message.text()).toEqual('Window');
   else
     expect(message.text()).toEqual('JSHandle@object');
@@ -181,14 +181,14 @@ it('should not throw when there are console messages in detached iframes', async
   expect(await popup.evaluate('1 + 1')).toBe(2);
 });
 
-it('should use object previews for arrays and objects', async ({ page, browserName, channel }) => {
+it('should use object previews for arrays and objects', async ({ page, browserName, isBidi }) => {
   let text: string;
   page.on('console', message => {
     text = message.text();
   });
   await page.evaluate(() => console.log([1, 2, 3], { a: 1 }, window));
 
-  if (browserName !== 'firefox' || channel?.startsWith('moz-firefox'))
+  if (browserName !== 'firefox' || isBidi)
     expect(text).toEqual('[1, 2, 3] {a: 1} Window');
   else
     expect(text).toEqual('Array JSHandle@object JSHandle@object');

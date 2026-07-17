@@ -31,7 +31,6 @@ library/browsercontext-page-event.spec.ts › should have about:blank url with d
 library/browsercontext-page-event.spec.ts › should have an opener [fail]
 library/browsercontext-page-event.spec.ts › should have url [fail]
 library/browsercontext-page-event.spec.ts › should report when a new page is created and closed [fail]
-library/browsercontext-page-event.spec.ts › should work with Ctrl-clicking [timeout]
 library/browsercontext-pages.spec.ts › frame.focus should work multiple times [fail]
 library/browsercontext-pages.spec.ts › should click the button with deviceScaleFactor set [fail]
 library/browsercontext-reuse.spec.ts › reuse connect › should not cache resources [fail]

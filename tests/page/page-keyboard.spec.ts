@@ -98,8 +98,8 @@ it('should emit keydown, keypress, textInput and input when typing a character',
   expect(await events.jsonValue()).toEqual(['keydown', 'keypress', 'textInput', 'input', 'keyup']);
 });
 
-it('should dispatch key events in separate tasks', async ({ page, browserName }) => {
-  it.skip(browserName === 'firefox', 'Firefox dispatches keydown and keypress in the same task');
+it('should dispatch key events in separate tasks', async ({ page, browserName, isBidi }) => {
+  it.skip(browserName === 'firefox' && !isBidi, 'Firefox/Juggler dispatches keydown and keypress in the same task');
   await page.setContent(`<input>`);
   const log = await page.evaluateHandle(() => {
     const log: string[] = [];
