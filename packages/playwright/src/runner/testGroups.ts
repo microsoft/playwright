@@ -22,6 +22,9 @@ export type TestGroup = {
   repeatEachIndex: number;
   projectId: string;
   tests: test.TestCase[];
+  // Named locks held by the tests in the group. The group does not run
+  // concurrently with any other group that shares a lock.
+  locks: string[];
 };
 
 export function createTestGroups(projectSuite: test.Suite, expectedParallelism: number): TestGroup[] {
@@ -42,6 +45,8 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
     // There are 3 kinds of parallel tests:
     // - Tests belonging to parallel suites, without beforeAll/afterAll hooks.
     //   These can be run independently, they are put into their own group, key === test.
+    //   Tests with locks are also put into their own group, even with beforeAll/afterAll hooks,
+    //   so that a lock is not held for the duration of unrelated tests.
     // - Tests belonging to parallel suites, with beforeAll/afterAll hooks.
     //   These should share the worker as much as possible, put into single parallelWithHooks group.
     //   We'll divide them into equally-sized groups later.
@@ -58,10 +63,14 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
       repeatEachIndex: test.repeatEachIndex,
       projectId: test._projectId,
       tests: [],
+      locks: [],
     };
   };
 
+  const locksByTest = new Map<test.TestCase, string[]>();
+
   for (const test of projectSuite.allTests()) {
+    locksByTest.set(test, test._collectLocks());
     let withWorkerHash = groups.get(test._workerHash);
     if (!withWorkerHash) {
       withWorkerHash = new Map();
@@ -89,7 +98,7 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
     }
 
     if (insideParallel) {
-      if (hasAllHooks && !outerMostSequentialSuite) {
+      if (hasAllHooks && !outerMostSequentialSuite && !locksByTest.get(test)!.length) {
         withRequireFile.parallelWithHooks.tests.push(test);
       } else {
         const key = outerMostSequentialSuite || test;
@@ -126,6 +135,15 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
         lastGroup.tests.push(test);
       }
     }
+  }
+
+  for (const group of result) {
+    const locks = new Set<string>();
+    for (const test of group.tests) {
+      for (const lock of locksByTest.get(test)!)
+        locks.add(lock);
+    }
+    group.locks = [...locks];
   }
   return result;
 }

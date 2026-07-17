@@ -125,6 +125,43 @@ test('runs second', async () => {
 });
 ```
 
+## Test locks
+
+A few tests in your suite may access a shared resource that does not support concurrent access, for example an external service or a global account setting. You can declare named locks on such tests, so that tests sharing a lock name never run at the same time, while all other tests continue to run in parallel. Locks work across files, worker processes and [projects](./test-projects.md).
+
+```js title="settings.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test('update user settings', { lock: 'user-settings' }, async ({ page }) => {
+  // ...
+});
+```
+
+```js title="profile.spec.ts"
+import { test, expect } from '@playwright/test';
+
+// Never runs concurrently with 'update user settings' above,
+// even in a different project.
+test('rename user', { lock: 'user-settings' }, async ({ page }) => {
+  // ...
+});
+```
+
+A test can declare multiple locks and will only run when all of them are available. You can also declare locks on a group with [`method: Test.describe`], applying them to every test inside.
+
+```js
+test('reset the database', { lock: ['database', 'external-api'] }, async () => {
+  // ...
+});
+```
+
+Playwright acquires all the locks of a test before the test starts and releases them when it finishes. A test never waits for a lock while holding another one, so locks cannot deadlock. Waiting for a lock happens before the test is sent to a worker process and does not count towards the [test timeout](./test-timeouts.md).
+
+Note that locks are scoped to a scheduling unit:
+* In [fully parallel mode](#parallelize-tests-in-a-single-file), each test acquires its own locks. Locked tests run in their own worker job, so `beforeAll` and `afterAll` hooks execute under the lock.
+* In the default mode, all tests in a file run together in order, so a lock declared on any test is held for the duration of the whole file. The same applies to [serial mode](#serial-mode) groups.
+* When [sharding](#shard-tests-between-multiple-machines), locks are only enforced within each shard, because shards run on different machines.
+
 ## Opt out of fully parallel mode
 
 If your configuration applies parallel mode to all tests using [`property: TestConfig.fullyParallel`], you might still want to run some tests with default settings. You can override the mode per describe: 

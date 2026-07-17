@@ -85,6 +85,23 @@ You can also add annotations during runtime by manipulating [`property: TestInfo
 
 Learn more about [test annotations](../test-annotations.md).
 
+**Locks**
+
+You can declare named locks to prevent specific tests from running at the same time, while all other tests continue to run in parallel. Tests that share a lock name never run concurrently, even when they are declared in different files or belong to different [projects](../test-projects.md). This is useful when a few tests access a shared resource that does not support concurrent access.
+
+```js
+import { test, expect } from '@playwright/test';
+
+test('update user settings', {
+  lock: 'user-settings',
+}, async ({ page }) => {
+  // This test never runs concurrently with other tests
+  // that declare the 'user-settings' lock.
+});
+```
+
+Learn more about [test locks](../test-parallel.md#test-locks).
+
 ### param: Test.(call).title
 * since: v1.10
 - `title` <[string]>
@@ -98,6 +115,7 @@ Test title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]> Annotation type, for example `'issue'`.
     - `description` ?<[string]> Optional annotation description, for example an issue url.
+  - `lock` ?<[string]|[Array]<[string]>>
 
 Additional test details.
 
@@ -427,6 +445,26 @@ test.describe('two annotated tests', {
 
 Learn more about [test annotations](../test-annotations.md).
 
+**Locks**
+
+You can declare named locks for all tests in a group by providing additional details. Tests that share a lock name never run concurrently. Learn more about [test locks](../test-parallel.md#test-locks).
+
+```js
+import { test, expect } from '@playwright/test';
+
+test.describe('two tests with a lock', {
+  lock: 'user-settings',
+}, () => {
+  test('one', async ({ page }) => {
+    // ...
+  });
+
+  test('two', async ({ page }) => {
+    // ...
+  });
+});
+```
+
 ### param: Test.describe.title
 * since: v1.10
 - `title` ?<[string]>
@@ -440,6 +478,7 @@ Group title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]>
     - `description` ?<[string]>
+  - `lock` ?<[string]|[Array]<[string]>>
 
 Additional details for all tests in the group.
 

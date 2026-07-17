@@ -53,6 +53,8 @@ export class Suite extends Base {
   _staticAnnotations: TestAnnotation[] = [];
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
+  // Named locks that apply to all tests in the suite.
+  _locks: string[] = [];
   _modifiers: Modifier[] = [];
   _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
   _fullProject: FullProjectInternal | undefined;
@@ -224,6 +226,7 @@ export class Suite extends Base {
       retries: this._retries,
       staticAnnotations: this._staticAnnotations.slice(),
       tags: this._tags.slice(),
+      locks: this._locks.slice(),
       modifiers: this._modifiers.slice(),
       parallelMode: this._parallelMode,
       hooks: this._hooks.map(h => ({ type: h.type, location: h.location, title: h.title })),
@@ -240,6 +243,7 @@ export class Suite extends Base {
     suite._retries = data.retries;
     suite._staticAnnotations = data.staticAnnotations;
     suite._tags = data.tags;
+    suite._locks = data.locks;
     suite._modifiers = data.modifiers;
     suite._parallelMode = data.parallelMode;
     suite._hooks = data.hooks.map((h: any) => ({ type: h.type, location: h.location, title: h.title, fn: () => { } }));
@@ -283,6 +287,8 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _projectId = '';
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
+  // Named locks declared on the test itself, without the ones inherited from parent suites.
+  _locks: string[] = [];
   _planAnnotations: TestAnnotation[] = [];
 
   constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {
@@ -318,6 +324,16 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     ];
   }
 
+  // Named locks declared on the test and all of its parent suites.
+  _collectLocks(): string[] {
+    const locks = new Set<string>(this._locks);
+    for (let parent: Suite | undefined = this.parent; parent; parent = parent.parent) {
+      for (const lock of parent._locks)
+        locks.add(lock);
+    }
+    return [...locks];
+  }
+
   _applyPlanAnnotation(annotation: TestAnnotation): void {
     this.annotations.push(annotation);
     this._planAnnotations.push(annotation);
@@ -342,6 +358,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       workerHash: this._workerHash,
       annotations: this.annotations.slice(),
       tags: this._tags.slice(),
+      locks: this._locks.slice(),
       projectId: this._projectId,
     };
   }
@@ -358,6 +375,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     test._workerHash = data.workerHash;
     test.annotations = data.annotations;
     test._tags = data.tags;
+    test._locks = data.locks;
     test._projectId = data.projectId;
     return test;
   }

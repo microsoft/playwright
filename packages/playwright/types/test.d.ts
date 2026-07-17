@@ -2719,6 +2719,7 @@ export type TestAnnotation = TestDetailsAnnotation & {
 export type TestDetails = {
   tag?: string | string[];
   annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
+  lock?: string | string[];
 }
 
 type TestBody<TestArgs> = (args: TestArgs, testInfo: TestInfo) => Promise<unknown> | unknown;
@@ -2810,6 +2811,26 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).
    *
    * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
+   *
+   * **Locks**
+   *
+   * You can declare named locks to prevent specific tests from running at the same time, while all other tests continue
+   * to run in parallel. Tests that share a lock name never run concurrently, even when they are declared in different
+   * files or belong to different [projects](https://playwright.dev/docs/test-projects). This is useful when a few tests access a shared
+   * resource that does not support concurrent access.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('update user settings', {
+   *   lock: 'user-settings',
+   * }, async ({ page }) => {
+   *   // This test never runs concurrently with other tests
+   *   // that declare the 'user-settings' lock.
+   * });
+   * ```
+   *
+   * Learn more about [test locks](https://playwright.dev/docs/test-parallel#test-locks).
    * @param title Test title.
    * @param details Additional test details.
    * @param body Test body that takes one or two arguments: an object with fixtures and optional
@@ -2887,6 +2908,26 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).
    *
    * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
+   *
+   * **Locks**
+   *
+   * You can declare named locks to prevent specific tests from running at the same time, while all other tests continue
+   * to run in parallel. Tests that share a lock name never run concurrently, even when they are declared in different
+   * files or belong to different [projects](https://playwright.dev/docs/test-projects). This is useful when a few tests access a shared
+   * resource that does not support concurrent access.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('update user settings', {
+   *   lock: 'user-settings',
+   * }, async ({ page }) => {
+   *   // This test never runs concurrently with other tests
+   *   // that declare the 'user-settings' lock.
+   * });
+   * ```
+   *
+   * Learn more about [test locks](https://playwright.dev/docs/test-parallel#test-locks).
    * @param title Test title.
    * @param details Additional test details.
    * @param body Test body that takes one or two arguments: an object with fixtures and optional
@@ -3023,6 +3064,28 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * ```
    *
    * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
+   *
+   * **Locks**
+   *
+   * You can declare named locks for all tests in a group by providing additional details. Tests that share a lock name
+   * never run concurrently. Learn more about [test locks](https://playwright.dev/docs/test-parallel#test-locks).
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.describe('two tests with a lock', {
+   *   lock: 'user-settings',
+   * }, () => {
+   *   test('one', async ({ page }) => {
+   *     // ...
+   *   });
+   *
+   *   test('two', async ({ page }) => {
+   *     // ...
+   *   });
+   * });
+   * ```
+   *
    * @param title Group title.
    * @param details Additional details for all tests in the group.
    * @param callback A callback that is run immediately when calling
@@ -3118,6 +3181,28 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      * ```
      *
      * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
+     *
+     * **Locks**
+     *
+     * You can declare named locks for all tests in a group by providing additional details. Tests that share a lock name
+     * never run concurrently. Learn more about [test locks](https://playwright.dev/docs/test-parallel#test-locks).
+     *
+     * ```js
+     * import { test, expect } from '@playwright/test';
+     *
+     * test.describe('two tests with a lock', {
+     *   lock: 'user-settings',
+     * }, () => {
+     *   test('one', async ({ page }) => {
+     *     // ...
+     *   });
+     *
+     *   test('two', async ({ page }) => {
+     *     // ...
+     *   });
+     * });
+     * ```
+     *
      * @param title Group title.
      * @param details Additional details for all tests in the group.
      * @param callback A callback that is run immediately when calling
@@ -3213,6 +3298,28 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      * ```
      *
      * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
+     *
+     * **Locks**
+     *
+     * You can declare named locks for all tests in a group by providing additional details. Tests that share a lock name
+     * never run concurrently. Learn more about [test locks](https://playwright.dev/docs/test-parallel#test-locks).
+     *
+     * ```js
+     * import { test, expect } from '@playwright/test';
+     *
+     * test.describe('two tests with a lock', {
+     *   lock: 'user-settings',
+     * }, () => {
+     *   test('one', async ({ page }) => {
+     *     // ...
+     *   });
+     *
+     *   test('two', async ({ page }) => {
+     *     // ...
+     *   });
+     * });
+     * ```
+     *
      * @param title Group title.
      * @param details Additional details for all tests in the group.
      * @param callback A callback that is run immediately when calling
@@ -3308,6 +3415,28 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      * ```
      *
      * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
+     *
+     * **Locks**
+     *
+     * You can declare named locks for all tests in a group by providing additional details. Tests that share a lock name
+     * never run concurrently. Learn more about [test locks](https://playwright.dev/docs/test-parallel#test-locks).
+     *
+     * ```js
+     * import { test, expect } from '@playwright/test';
+     *
+     * test.describe('two tests with a lock', {
+     *   lock: 'user-settings',
+     * }, () => {
+     *   test('one', async ({ page }) => {
+     *     // ...
+     *   });
+     *
+     *   test('two', async ({ page }) => {
+     *     // ...
+     *   });
+     * });
+     * ```
+     *
      * @param title Group title.
      * @param details Additional details for all tests in the group.
      * @param callback A callback that is run immediately when calling

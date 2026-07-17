@@ -112,6 +112,7 @@ export class TestTypeImpl {
     test._requireFile = suite._requireFile;
     test.annotations.push(...validatedDetails.annotations);
     test._tags.push(...validatedDetails.tags);
+    test._locks.push(...validatedDetails.locks);
     suite._addTest(test);
 
     if (type === 'only' || type === 'fail.only')
@@ -152,6 +153,7 @@ export class TestTypeImpl {
     child.location = location;
     child._staticAnnotations.push(...validatedDetails.annotations);
     child._tags.push(...validatedDetails.tags);
+    child._locks.push(...validatedDetails.locks);
     suite._addSuite(child);
 
     if (type === 'only' || type === 'serial.only' || type === 'parallel.only')

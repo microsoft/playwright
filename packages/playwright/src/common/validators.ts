@@ -44,12 +44,19 @@ const testDetailsSchema: JsonSchema = {
         { type: 'array', items: testAnnotationSchema },
       ]
     },
+    lock: {
+      oneOf: [
+        { type: 'string' },
+        { type: 'array', items: { type: 'string' } },
+      ]
+    },
   },
 };
 
 type ValidTestDetails = {
   tags: string[];
   annotations: (TestDetailsAnnotation & { location: Location })[];
+  locks: string[];
   location: Location;
 };
 
@@ -65,9 +72,13 @@ export function validateTestDetails(details: unknown, location: Location): Valid
   const annotation = obj.annotation;
   const annotations: TestDetailsAnnotation[] = annotation === undefined ? [] : Array.isArray(annotation) ? annotation : [annotation as TestDetailsAnnotation];
 
+  const lock = obj.lock;
+  const locks: string[] = lock === undefined ? [] : typeof lock === 'string' ? [lock] : lock as string[];
+
   return {
     annotations: annotations.map(a => ({ ...a, location })),
     tags,
+    locks,
     location,
   };
 }
