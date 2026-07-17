@@ -59,9 +59,10 @@ const ConnectApp: React.FC = () => {
         return;
       }
 
+      let info: string;
       try {
         const client = JSON.parse(params.get('client') || '{}');
-        const info = `${client.name || 'unknown'}`;
+        info = `${client.name || 'unknown'}`;
         setClientInfo(info);
         setStatus({
           type: 'connecting',
@@ -97,7 +98,9 @@ const ConnectApp: React.FC = () => {
       const expectedToken = getOrCreateAuthToken();
       const token = params.get('token');
       if (token === expectedToken) {
-        await handleConnectToTab();
+        // Pass `info` explicitly: setClientInfo only schedules a re-render, so
+        // handleConnectToTab would still close over the initial 'unknown' state.
+        await handleConnectToTab(undefined, info);
         return;
       }
       if (token) {
@@ -128,28 +131,29 @@ const ConnectApp: React.FC = () => {
       setStatus({ type: 'error', message: 'Failed to load tabs: ' + response.error });
   }, []);
 
-  const handleConnectToTab = useCallback(async (tab?: chrome.tabs.Tab) => {
+  const handleConnectToTab = useCallback(async (tab?: chrome.tabs.Tab, clientNameOverride?: string) => {
     setShowTabList(false);
+    const name = clientNameOverride ?? clientInfo;
 
     try {
       const response = await chrome.runtime.sendMessage({
         type: 'connectToTab',
         tab,
-        clientName: clientInfo,
+        clientName: name,
       });
 
       if (response?.success) {
-        setStatus({ type: 'connected', message: `"${clientInfo}" connected.` });
+        setStatus({ type: 'connected', message: `"${name}" connected.` });
       } else {
         setStatus({
           type: 'error',
-          message: response?.error || `"${clientInfo}" failed to connect.`
+          message: response?.error || `"${name}" failed to connect.`
         });
       }
     } catch (e) {
       setStatus({
         type: 'error',
-        message: `"${clientInfo}" failed to connect: ${e}`
+        message: `"${name}" failed to connect: ${e}`
       });
     }
   }, [clientInfo]);

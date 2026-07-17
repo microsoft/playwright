@@ -328,7 +328,9 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
   const token = await page.locator('.auth-token-code').textContent();
   const [, value] = token?.split('=') || [];
 
+  const clientName = 'token-bypass-client';
   const { client } = await startClient({
+    clientName,
     args: [`--extension`],
     env: {
       PLAYWRIGHT_MCP_EXTENSION_TOKEN: value,
@@ -344,6 +346,9 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
   expect(await navigateResponse).toHaveResponse({
     snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
   });
+
+  await page.goto(`chrome-extension://${extensionId}/status.html`);
+  await expect(page.locator('.client-info')).toContainText(`Connected to "${clientName}"`);
 });
 
 test(`pending connection closed when client disconnects`, async ({ startExtensionClient, server, protocolVersion }) => {
