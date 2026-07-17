@@ -35,9 +35,7 @@ it.describe('element screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-element-bounding-box.png');
   });
 
-  it('should work with webp', async ({ page, server, isBidi }) => {
-    it.skip(isBidi, 'webp screenshots are not supported via WebDriver BiDi');
-
+  it('should work with webp', async ({ page, server }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');
     const elementHandle = await page.$('.box:nth-of-type(3)');

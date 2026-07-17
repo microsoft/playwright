@@ -279,9 +279,7 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('white.jpg');
   });
 
-  it('should produce a valid webp screenshot', async ({ page, server, isBidi }) => {
-    it.skip(isBidi, 'webp screenshots are not supported via WebDriver BiDi');
-
+  it('should produce a valid webp screenshot', async ({ page, server }) => {
     await page.setViewportSize({ width: 300, height: 300 });
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => (document.body.style.background = 'rgb(255, 0, 0)'));
@@ -289,9 +287,7 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('red.webp');
   });
 
-  it('path option should detect webp', async ({ page, server, isBidi }, testInfo) => {
-    it.skip(isBidi, 'webp screenshots are not supported via WebDriver BiDi');
-
+  it('path option should detect webp', async ({ page, server }, testInfo) => {
     await page.setViewportSize({ width: 300, height: 300 });
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => (document.body.style.background = 'rgb(255, 0, 0)'));
@@ -301,25 +297,21 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('red.webp');
   });
 
-  it('quality option should work for webp', async ({ page, server, isBidi }) => {
-    it.skip(isBidi, 'webp screenshots are not supported via WebDriver BiDi');
-
+  it('quality option should work for webp', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/grid.html');
     const lowQuality = await page.screenshot({ type: 'webp', quality: 0 });
     const highQuality = await page.screenshot({ type: 'webp', quality: 100 });
     expect(lowQuality.byteLength).toBeLessThan(highQuality.byteLength);
   });
 
-  it('webp screenshots should be lossless by default', async ({ page, server, isBidi }) => {
-    it.skip(isBidi, 'webp screenshots are not supported via WebDriver BiDi');
-
+  it('webp screenshots should be lossless by default', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/grid.html');
     expect(utils.isLosslessWebp(await page.screenshot({ type: 'webp' }))).toBe(true);
     expect(utils.isLosslessWebp(await page.screenshot({ type: 'webp', quality: 80 }))).toBe(false);
   });
 
   it('should allow transparency with webp', async ({ page, browserName, isBidi }) => {
-    it.skip(isBidi, 'webp screenshots are not supported via WebDriver BiDi');
+    it.skip(isBidi, 'transparency is not supported via WebDriver BiDi');
     it.fail(browserName === 'firefox');
 
     await page.setViewportSize({ width: 300, height: 300 });
