@@ -48,7 +48,6 @@ export class FullConfigInternal {
   readonly projects: FullProjectInternal[] = [];
   readonly singleTSConfigPath?: string;
   readonly captureGitInfo: Config['captureGitInfo'];
-  readonly httpCache: Config['httpCache'];
   readonly retryStrategy: 'immediate' | 'isolated';
   defineConfigWasUsed = false;
 
@@ -69,7 +68,6 @@ export class FullConfigInternal {
     this.plugins = (privateConfiguration?.plugins || []).map((p: any) => ({ factory: p }));
     this.singleTSConfigPath = pathResolve(configDir, userConfig.tsconfig);
     this.captureGitInfo = userConfig.captureGitInfo;
-    this.httpCache = resolveHttpCache(userConfig.httpCache, configDir);
     this.retryStrategy = takeFirst(userConfig.retryStrategy, 'immediate');
 
     this.globalSetups = (Array.isArray(userConfig.globalSetup) ? userConfig.globalSetup : [userConfig.globalSetup]).map(s => resolveScript(s, configDir)).filter(script => script !== undefined);
@@ -218,12 +216,6 @@ function resolveReporters(reporters: Config['reporter'], rootDir: string): Repor
       return [id, arg];
     return [require.resolve(id, { paths: [rootDir] }), arg];
   });
-}
-
-function resolveHttpCache(httpCache: Config['httpCache'], configDir: string): Config['httpCache'] {
-  if (!httpCache)
-    return undefined;
-  return { ...httpCache, dir: path.resolve(configDir, httpCache.dir) };
 }
 
 function resolveWorkers(workers: string | number): number {

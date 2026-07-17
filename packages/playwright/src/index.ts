@@ -226,7 +226,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
   }, { scope: 'worker', option: true, box: true }],
   video: ['off', { scope: 'worker', option: true, box: true }],
 
-  _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use, workerInfo) => {
+  _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
       handleSIGINT: false,
       ...launchOptions,
@@ -237,9 +237,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
       options.headless = headless;
     if (channel !== undefined)
       options.channel = channel;
-    const cacheProxy = cacheProxySettings();
-    if (cacheProxy)
-      options.proxy = cacheProxy;
 
     playwright._defaultLaunchOptions = options;
     await use(options);
@@ -369,12 +366,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
       options.baseURL = baseURL;
     if (serviceWorkers !== undefined)
       options.serviceWorkers = serviceWorkers;
-
-    const cacheProxy = cacheProxySettings();
-    if (cacheProxy) {
-      options.proxy = cacheProxy;
-      options.ignoreHTTPSErrors = true;
-    }
 
     await use({
       ...contextOptions,
@@ -583,14 +574,6 @@ function resolveClientCerticates(clientCertificates: ClientCertificates): Client
 }
 
 const kTracingStarted = Symbol('kTracingStarted');
-
-function cacheProxySettings(): { server: string, bypass: string } | undefined {
-  const server = process.env.PLAYWRIGHT_TEST_CACHE_PROXY;
-  // The cache targets remote environments (e.g. staging). Loopback is bypassed
-  // so a local dev server - which already serves from disk - is never cached,
-  // consistently across browsers.
-  return server ? { server, bypass: 'localhost, 127.0.0.1, ::1' } : undefined;
-}
 
 function connectOptionsFromEnv() {
   const wsEndpoint = process.env.PW_TEST_CONNECT_WS_ENDPOINT;

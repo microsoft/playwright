@@ -103,7 +103,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   return { cancel: e => cancelRequest(e) };
 }
 
-export function shouldBypassProxy(url: URL, bypass?: string): boolean {
+function shouldBypassProxy(url: URL, bypass?: string): boolean {
   if (!bypass)
     return false;
   const domains = bypass.split(',').map(s => {
@@ -124,7 +124,7 @@ function normalizeProxyURL(proxy: string): URL {
   return new URL(proxy);
 }
 
-export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL, agentOptions?: http.AgentOptions) {
+export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
   if (!proxy)
     return;
   if (forUrl && proxy.bypass && shouldBypassProxy(forUrl, proxy.bypass))
@@ -140,7 +140,7 @@ export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL, agentOptio
     else if (proxyURL.protocol === 'socks4:')
       proxyURL.protocol = 'socks4a:';
 
-    return new SocksProxyAgent(proxyURL, agentOptions);
+    return new SocksProxyAgent(proxyURL);
   }
   if (proxy.username) {
     proxyURL.username = proxy.username;
@@ -149,11 +149,11 @@ export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL, agentOptio
 
   if (forUrl && ['ws:', 'wss:'].includes(forUrl.protocol)) {
     // Force CONNECT method for WebSockets.
-    return new HttpsProxyAgent(proxyURL, agentOptions);
+    return new HttpsProxyAgent(proxyURL);
   }
 
   // TODO: This branch should be different from above. We should use HttpProxyAgent conditional on proxyURL.protocol instead of always using CONNECT method.
-  return new HttpsProxyAgent(proxyURL, agentOptions);
+  return new HttpsProxyAgent(proxyURL);
 }
 
 export function createHttpServer(requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): http.Server;
