@@ -4,6 +4,8 @@
 
 #include "nsScreencastService.h"
 
+#include <bit>
+
 #include "gfxPlatform.h"
 #include "HeadlessWidget.h"
 #include "HeadlessWindowCapturer.h"
@@ -212,17 +214,17 @@ class nsScreencastService::Session : public webrtc::RawFrameCallback {
     info.image_width = screenshotWidth;
     info.image_height = screenshotHeight;
 
-#if MOZ_LITTLE_ENDIAN()
-    if (frameInfo.videoType == webrtc::VideoType::kARGB)
-      info.in_color_space = JCS_EXT_BGRA;
-    if (frameInfo.videoType == webrtc::VideoType::kBGRA)
-      info.in_color_space = JCS_EXT_ARGB;
-#else
-    if (frameInfo.videoType == webrtc::VideoType::kARGB)
-      info.in_color_space = JCS_EXT_ARGB;
-    if (frameInfo.videoType == webrtc::VideoType::kBGRA)
-      info.in_color_space = JCS_EXT_BGRA;
-#endif
+    if constexpr (std::endian::native == std::endian::little) {
+      if (frameInfo.videoType == webrtc::VideoType::kARGB)
+        info.in_color_space = JCS_EXT_BGRA;
+      if (frameInfo.videoType == webrtc::VideoType::kBGRA)
+        info.in_color_space = JCS_EXT_ARGB;
+    } else {
+      if (frameInfo.videoType == webrtc::VideoType::kARGB)
+        info.in_color_space = JCS_EXT_ARGB;
+      if (frameInfo.videoType == webrtc::VideoType::kBGRA)
+        info.in_color_space = JCS_EXT_BGRA;
+    }
 
     // # of color components in input image
     info.input_components = 4;

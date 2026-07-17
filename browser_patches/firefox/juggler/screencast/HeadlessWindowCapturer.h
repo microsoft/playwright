@@ -26,9 +26,7 @@ class HeadlessWindowCapturer : public webrtc::VideoCaptureModuleEx {
 
   void RegisterCaptureDataCallback(
       webrtc::VideoSinkInterface<webrtc::VideoFrame>* dataCallback) override;
-  void DeRegisterCaptureDataCallback(
-      webrtc::VideoSinkInterface<webrtc::VideoFrame>* dataCallback) override;
-  int32_t StopCaptureIfAllClientsClose() override;
+  void DeRegisterCaptureDataCallback() override;
 
   void RegisterRawFrameCallback(webrtc::RawFrameCallback* rawFrameCallback) override;
   void RegisterCaptureDataCallback(webrtc::RawVideoSinkInterface* dataCallback) override;

@@ -24,6 +24,8 @@ let globalTabAndWindowActivationChain = Promise.resolve();
 let didCreateFirstPage = false;
 let globalNewPageChain = Promise.resolve();
 
+let globalContextCloseCounter = 0;
+
 class DownloadInterceptor {
   constructor(registry) {
     this._registry = registry
@@ -414,6 +416,8 @@ export class PageTarget {
     this._browserContext = browserContext;
     this._viewportSize = undefined;
     this._deviceScaleFactor = undefined;
+    this._screenSize = undefined;
+    this._isMobile = undefined;
     this._zoom = 1;
     this._initialDPPX = this._linkedBrowser.browsingContext.overrideDPPX;
     this._url = 'about:blank';
@@ -447,6 +451,7 @@ export class PageTarget {
     this._registry._browserToTarget.set(this._linkedBrowser, this);
 
     const browserId = this._linkedBrowser.browsingContext.browserId;
+    this._browserId = browserId;
     this._registry._browserIdToTarget.set(browserId, this);
     const actor = this._registry._browserIdToActor.get(browserId);
     if (actor)
@@ -456,7 +461,7 @@ export class PageTarget {
   }
 
   async activateAndRun(callback = () => {}, { muteNotificationsPopup = false } = {}) {
-    const ownerWindow = this._tab.linkedBrowser.ownerGlobal;
+    const ownerWindow = this._tab.linkedBrowser.documentGlobal;
     const tabBrowser = ownerWindow.gBrowser;
     // Serialize all tab-switching commands per tabbed browser
     // to disallow concurrent tab switching.
@@ -528,6 +533,7 @@ export class PageTarget {
     this.updateLanguageOverride(browsingContext);
     this.updatePlatform(browsingContext);
     this.updateDPPXOverride(browsingContext);
+    this.updateScreenEmulation(browsingContext);
     this.updateZoom(browsingContext);
     this.updateEmulatedMedia(browsingContext);
     this.updateColorSchemeOverride(browsingContext);
@@ -568,7 +574,8 @@ export class PageTarget {
   }
 
   updateLanguageOverride(browsingContext = undefined) {
-    (browsingContext || this._linkedBrowser.browsingContext).languageOverride = this._browserContext.languageOverride;
+    browsingContext ||= this._linkedBrowser.browsingContext;
+    browsingContext.languageOverride = this._browserContext.languageOverride || '';
   }
 
   updatePlatform(browsingContext = undefined) {
@@ -580,6 +587,32 @@ export class PageTarget {
     const deviceScaleFactor = this._deviceScaleFactor ?? this._browserContext.deviceScaleFactor;
     const dppx = this._zoom * (deviceScaleFactor || this._initialDPPX);
     browsingContext.overrideDPPX = dppx;
+  }
+
+  updateScreenEmulation(browsingContext = undefined) {
+    browsingContext ||= this._linkedBrowser.browsingContext;
+    const screenSize = this._screenSize || this._browserContext.screenSize;
+    const isMobile = this._isMobile ?? this._browserContext.isMobile;
+
+    // `isRDMPane` is a "mobile mode": viewport media queries, touch/pointer
+    // support, viewport media queries.
+    browsingContext.inRDMPane = !!isMobile;
+
+    // Set window.screen.width and window.screen.height
+    if (screenSize) {
+      browsingContext.setScreenAreaOverride(screenSize.width, screenSize.height);
+    } else {
+      browsingContext.resetScreenAreaOverride();
+    }
+
+    // Derive the orientation from the emulated screen size and keep it in sync
+    // with the screen area override.
+    if (screenSize && isMobile) {
+      const isPortrait = screenSize.height >= screenSize.width;
+      browsingContext.setOrientationOverride(isPortrait ? 'portrait-primary' : 'landscape-primary', isPortrait ? 0 : 90);
+    } else {
+      browsingContext.resetOrientationOverride();
+    }
   }
 
   async updateZoom(browsingContext = undefined) {
@@ -611,6 +644,7 @@ export class PageTarget {
   async updateViewportSize() {
     await waitForWindowReady(this._window);
     this.updateDPPXOverride();
+    this.updateScreenEmulation();
 
     // Viewport size is defined by three arguments:
     // 1. default size. Could be explicit if set as part of `window.open` call, e.g.
@@ -630,7 +664,6 @@ export class PageTarget {
       this._linkedBrowser.closest('.browserStack').style.setProperty('overflow', 'auto');
       this._linkedBrowser.closest('.browserStack').style.setProperty('contain', 'size');
       this._linkedBrowser.closest('.browserStack').style.setProperty('scrollbar-width', 'none');
-      this._linkedBrowser.browsingContext.inRDMPane = true;
 
       const stackRect = this._linkedBrowser.closest('.browserStack').getBoundingClientRect();
       const toolbarTop = stackRect.y;
@@ -644,7 +677,6 @@ export class PageTarget {
       this._linkedBrowser.closest('.browserStack').style.removeProperty('overflow');
       this._linkedBrowser.closest('.browserStack').style.removeProperty('contain');
       this._linkedBrowser.closest('.browserStack').style.removeProperty('scrollbar-width');
-      this._linkedBrowser.browsingContext.inRDMPane = false;
 
       const actualSize = this._linkedBrowser.getBoundingClientRect();
       await this._channel.connect('').send('awaitViewportDimensions', {
@@ -706,9 +738,11 @@ export class PageTarget {
     await this._channel.connect('').send('setInterceptFileChooserDialog', enabled).catch(e => {});
   }
 
-  async setViewportSize(viewportSize, deviceScaleFactor) {
+  async setViewportSize(viewportSize, deviceScaleFactor, screenSize, isMobile) {
     this._viewportSize = viewportSize;
     this._deviceScaleFactor = deviceScaleFactor;
+    this._screenSize = screenSize;
+    this._isMobile = isMobile;
     await this.updateViewportSize();
   }
 
@@ -749,7 +783,7 @@ export class PageTarget {
   }
 
   _updateCrossProcessCookie() {
-    Services.ppmm.sharedData.set('juggler:page-cookie-' + this._linkedBrowser.browsingContext.browserId, this.crossProcessCookie);
+    Services.ppmm.sharedData.set('juggler:page-cookie-' + this._browserId, this.crossProcessCookie);
     Services.ppmm.sharedData.flush();
   }
 
@@ -787,7 +821,7 @@ export class PageTarget {
     if (width < 10 || width > 10000 || height < 10 || height > 10000)
       throw new Error("Invalid size");
 
-    const docShell = this._gBrowser.ownerGlobal.docShell;
+    const docShell = this._gBrowser.documentGlobal.docShell;
     // Exclude address bar and navigation control from the video.
     const rect = this.linkedBrowser().getBoundingClientRect();
     const devicePixelRatio = this._window.devicePixelRatio;
@@ -841,7 +875,9 @@ export class PageTarget {
     this.stopScreencast();
     this._browserContext.pages.delete(this);
     this._registry._browserToTarget.delete(this._linkedBrowser);
-    this._registry._browserIdToTarget.delete(this._linkedBrowser.browsingContext.browserId);
+    this._registry._browserIdToTarget.delete(this._browserId);
+    Services.ppmm.sharedData.delete('juggler:page-cookie-' + this._browserId);
+    Services.ppmm.sharedData.flush();
     try {
       helper.removeListeners(this._eventListeners);
     } catch (e) {
@@ -917,6 +953,8 @@ class BrowserContext {
     this.downloadOptions = undefined;
     this.defaultViewportSize = undefined;
     this.deviceScaleFactor = undefined;
+    this.screenSize = undefined;
+    this.isMobile = undefined;
     this.defaultUserAgent = null;
     this.timezoneOverride = undefined;
     this.languageOverride = undefined;
@@ -983,7 +1021,18 @@ class BrowserContext {
     }
     this._registry._browserContextIdToBrowserContext.delete(this.browserContextId);
     this._registry._userContextIdToBrowserContext.delete(this.userContextId);
+    Services.ppmm.sharedData.delete('juggler:context-cookie-' + this.userContextId);
+    Services.ppmm.sharedData.flush();
     this._registry._updateProxiesWithSameAuthCacheAndDifferentCredentials();
+    // Clean the memory. on every 10'th context closure. On M1 Max, this method
+    // takes ~150ms, so we spread them out.
+    if (++globalContextCloseCounter % 10 === 0) {
+      await new Promise(x => {
+        Cc["@mozilla.org/memory-reporter-manager;1"]
+          .getService(Ci.nsIMemoryReporterManager)
+          .minimizeMemoryUsage(x);
+      });
+    }
   }
 
   setProxy(proxy) {
@@ -1056,6 +1105,8 @@ class BrowserContext {
   async setDefaultViewport(viewport) {
     this.defaultViewportSize = viewport ? viewport.viewportSize : undefined;
     this.deviceScaleFactor = viewport ? viewport.deviceScaleFactor : undefined;
+    this.screenSize = viewport ? viewport.screenSize : undefined;
+    this.isMobile = viewport ? viewport.isMobile : undefined;
     await Promise.all(Array.from(this.pages).map(page => page.updateViewportSize()));
   }
 

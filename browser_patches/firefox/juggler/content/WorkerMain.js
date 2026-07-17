@@ -52,6 +52,7 @@ class RuntimeAgent {
         disposeObject: this._runtime.disposeObject.bind(this._runtime),
       }),
     ];
+    channel.connect('worker').emit('ready');
   }
 
   _onExecutionContextCreated(executionContext) {

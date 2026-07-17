@@ -218,7 +218,7 @@ export class PageAgent {
   }
 
   _linkClicked(sync, anchorElement) {
-    if (anchorElement.ownerGlobal.docShell !== this._docShell)
+    if (anchorElement.documentGlobal.docShell !== this._docShell)
       return;
     this._browserPage.emit('pageLinkClicked', { phase: sync ? 'after' : 'before' });
   }
@@ -251,9 +251,9 @@ export class PageAgent {
   onWindowEvent(event) {
     if (event.type !== 'DOMContentLoaded' && event.type !== 'load')
       return;
-    if (!event.target.ownerGlobal)
+    if (!event.target.documentGlobal)
       return;
-    const docShell = event.target.ownerGlobal.docShell;
+    const docShell = event.target.documentGlobal.docShell;
     const frame = this._frameTree.frameForDocShell(docShell);
     if (!frame)
       return;
@@ -273,7 +273,7 @@ export class PageAgent {
   }
 
   _onDocumentOpenLoad(document) {
-    const docShell = document.ownerGlobal.docShell;
+    const docShell = document.documentGlobal.docShell;
     const frame = this._frameTree.frameForDocShell(docShell);
     if (!frame)
       return;
