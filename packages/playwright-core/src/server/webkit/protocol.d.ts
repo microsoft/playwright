@@ -8694,6 +8694,193 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
   }
   
+  /**
+   * Query and modify storage (cookies for now) under Site Isolation. Backed by the NetworkProcess-owned cookie store via API::HTTPCookieStore, so cross-origin iframe cookies are visible. The flat read also surfaces partitioned (CHIPS) cookies, each labeled with its partitionKey.
+   */
+  export namespace Storage {
+    /**
+     * Same-Site policy of a cookie.
+     */
+    export type CookieSameSitePolicy = "None"|"Lax"|"Strict";
+    /**
+     * Cookie object.
+     */
+    export interface Cookie {
+      /**
+       * Cookie name.
+       */
+      name: string;
+      /**
+       * Cookie value.
+       */
+      value: string;
+      /**
+       * Cookie domain.
+       */
+      domain: string;
+      /**
+       * Cookie path.
+       */
+      path: string;
+      /**
+       * Cookie expires.
+       */
+      expires: number;
+      /**
+       * True in case of session cookie.
+       */
+      session: boolean;
+      /**
+       * True if cookie is http-only.
+       */
+      httpOnly: boolean;
+      /**
+       * True if cookie is secure.
+       */
+      secure: boolean;
+      /**
+       * Cookie Same-Site policy.
+       */
+      sameSite: CookieSameSitePolicy;
+      /**
+       * Cookie partition key.
+       */
+      partitionKey?: string;
+    }
+    /**
+     * Filter parameters for cookie retrieval and deletion. Every provided field narrows the result set.
+     */
+    export interface CookieFilter {
+      /**
+       * The name of the cookie.
+       */
+      name?: string;
+      /**
+       * The value of the cookie.
+       */
+      value?: string;
+      /**
+       * The domain of the cookie.
+       */
+      domain?: string;
+      /**
+       * The path of the cookie.
+       */
+      path?: string;
+      /**
+       * If the cookie is HTTP only.
+       */
+      httpOnly?: boolean;
+      /**
+       * If the cookie is secure.
+       */
+      secure?: boolean;
+    }
+    /**
+     * Identifies the storage partition a cookie belongs to. At least one of 'userContext' or 'sourceOrigin' is present.
+     */
+    export interface PartitionKey {
+      /**
+       * The user context identifier of the partition.
+       */
+      userContext?: string;
+      /**
+       * The serialization of the origin of resources that can access the storage partition.
+       */
+      sourceOrigin?: string;
+    }
+    /**
+     * The type of storage partition descriptor.
+     */
+    export type PartitionDescriptorType = "context";
+    /**
+     * Describes a storage partition. Omit to target the inspected page's default data store. Type 'context' targets the inspected page's main-frame origin.
+     */
+    export interface PartitionDescriptor {
+      /**
+       * The type of partition descriptor.
+       */
+      type: PartitionDescriptorType;
+    }
+    
+    
+    /**
+     * Marks the Storage domain enabled for this target. No tracking is started; cookies are read on demand from the authoritative store, so this is effectively a no-op kept for domain-lifecycle symmetry.
+     */
+    export type enableParameters = {
+    }
+    export type enableReturnValue = {
+    }
+    /**
+     * Marks the Storage domain disabled for this target. Counterpart to enable; a no-op beyond lifecycle bookkeeping.
+     */
+    export type disableParameters = {
+    }
+    export type disableReturnValue = {
+    }
+    /**
+     * Retrieves zero or more cookies which match the provided filter, within the given partition.
+     */
+    export type getCookiesParameters = {
+      /**
+       * Filter parameters for cookie retrieval.
+       */
+      filter?: CookieFilter;
+      /**
+       * The storage partition in which to get cookies. Defaults to the origin of the inspected page's main frame.
+       */
+      partition?: PartitionDescriptor;
+    }
+    export type getCookiesReturnValue = {
+      /**
+       * The list of matching cookies.
+       */
+      cookies: Cookie[];
+      /**
+       * The storage partition key the cookies came from.
+       */
+      partitionKey: PartitionKey;
+    }
+    /**
+     * Creates a new cookie, replacing any cookie in the partition which matches.
+     */
+    export type setCookieParameters = {
+      /**
+       * The cookie to set.
+       */
+      cookie: Cookie;
+      /**
+       * The storage partition in which to set the cookie. Defaults to the origin of the inspected page's main frame.
+       */
+      partition?: PartitionDescriptor;
+    }
+    export type setCookieReturnValue = {
+      /**
+       * The storage partition key the cookie was set in.
+       */
+      partitionKey: PartitionKey;
+    }
+    /**
+     * Removes zero or more cookies which match the provided filter, within the given partition. A filter is required; omitting it fails rather than deleting every cookie.
+     */
+    export type deleteCookiesParameters = {
+      /**
+       * Filter parameters for cookie deletion. Required in practice: a request with no filter is rejected to avoid an accidental clear of the entire store.
+       */
+      filter?: CookieFilter;
+      /**
+       * The storage partition in which to delete cookies. Defaults to the origin of the inspected page's main frame.
+       */
+      partition?: PartitionDescriptor;
+    }
+    export type deleteCookiesReturnValue = {
+      /**
+       * The storage partition key the cookies were deleted from.
+       */
+      partitionKey: PartitionKey;
+    }
+  }
+  
   export namespace Target {
     /**
      * Description of a target.
@@ -8790,7 +8977,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     /**
      * Timeline record type.
      */
-    export type EventType = "EventDispatch"|"ScheduleStyleRecalculation"|"RecalculateStyles"|"InvalidateLayout"|"Layout"|"Paint"|"Composite"|"RenderingFrame"|"TimerInstall"|"TimerRemove"|"TimerFire"|"EvaluateScript"|"TimeStamp"|"Time"|"TimeEnd"|"FunctionCall"|"ProbeSample"|"ConsoleProfile"|"RequestAnimationFrame"|"CancelAnimationFrame"|"FireAnimationFrame"|"ObserverCallback"|"FirstContentfulPaint"|"LargestContentfulPaint"|"Screenshot";
+    export type EventType = "EventDispatch"|"ScheduleStyleRecalculation"|"RecalculateStyles"|"InvalidateLayout"|"ScheduleLayout"|"Layout"|"Paint"|"Composite"|"RenderingFrame"|"TimerInstall"|"TimerRemove"|"TimerFire"|"EvaluateScript"|"TimeStamp"|"Time"|"TimeEnd"|"FunctionCall"|"ProbeSample"|"ConsoleProfile"|"RequestAnimationFrame"|"CancelAnimationFrame"|"FireAnimationFrame"|"ObserverCallback"|"FirstContentfulPaint"|"LargestContentfulPaint"|"Screenshot";
     /**
      * Instrument types.
      */
@@ -9499,6 +9686,11 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "ScriptProfiler.startTracking": ScriptProfiler.startTrackingParameters;
     "ScriptProfiler.stopTracking": ScriptProfiler.stopTrackingParameters;
     "ServiceWorker.getInitializationInfo": ServiceWorker.getInitializationInfoParameters;
+    "Storage.enable": Storage.enableParameters;
+    "Storage.disable": Storage.disableParameters;
+    "Storage.getCookies": Storage.getCookiesParameters;
+    "Storage.setCookie": Storage.setCookieParameters;
+    "Storage.deleteCookies": Storage.deleteCookiesParameters;
     "Target.setPauseOnStart": Target.setPauseOnStartParameters;
     "Target.resume": Target.resumeParameters;
     "Target.sendMessageToTarget": Target.sendMessageToTargetParameters;
@@ -9804,6 +9996,11 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "ScriptProfiler.startTracking": ScriptProfiler.startTrackingReturnValue;
     "ScriptProfiler.stopTracking": ScriptProfiler.stopTrackingReturnValue;
     "ServiceWorker.getInitializationInfo": ServiceWorker.getInitializationInfoReturnValue;
+    "Storage.enable": Storage.enableReturnValue;
+    "Storage.disable": Storage.disableReturnValue;
+    "Storage.getCookies": Storage.getCookiesReturnValue;
+    "Storage.setCookie": Storage.setCookieReturnValue;
+    "Storage.deleteCookies": Storage.deleteCookiesReturnValue;
     "Target.setPauseOnStart": Target.setPauseOnStartReturnValue;
     "Target.resume": Target.resumeReturnValue;
     "Target.sendMessageToTarget": Target.sendMessageToTargetReturnValue;
