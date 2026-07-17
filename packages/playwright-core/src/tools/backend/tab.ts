@@ -199,6 +199,11 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   private _dialogShown(dialog: playwright.Dialog) {
+    // Only one native dialog can be open per page at a time. If we still track one
+    // when a new dialog opens, the tracked dialog was already handled outside of the
+    // tools, e.g. by the user in headed mode, and must not linger as a modal state.
+    for (const state of this._modalStates.filter(state => state.type === 'dialog'))
+      this.clearModalState(state);
     this.setModalState({
       type: 'dialog',
       description: `"${dialog.type()}" dialog with message "${dialog.message()}"`,

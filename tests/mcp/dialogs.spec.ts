@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './fixtures';
+import { test, expect, parseResponse } from './fixtures';
 
 test('alert dialog', async ({ client, server }) => {
   server.setContent('/', `<title>Title</title><button onclick="alert('Alert')">Button</button>`, 'text/html');
@@ -212,6 +212,64 @@ test('prompt dialog', async ({ client, server }) => {
 
   expect(result).toHaveResponse({
     modalState: undefined,
+  });
+});
+
+test('dialogs handled outside of the session', async ({ cdpServer, startClient, server }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41837' });
+
+  const browserContext = await cdpServer.start();
+  // Handle dialogs from a second client attached to the same browser. To this client,
+  // it is indistinguishable from the user dismissing them manually in headed mode.
+  const dismissed: string[] = [];
+  browserContext.on('dialog', dialog => {
+    dismissed.push(dialog.message());
+    void dialog.dismiss();
+  });
+
+  server.setContent('/', `
+    <title>Title</title>
+    <button onclick="alert('Alert 1');alert('Alert 2');alert('Alert 3')">Button</button>
+  `, 'text/html');
+
+  const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`- button "Button"`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Button', target: 'button' },
+  })).toHaveResponse({
+    modalState: expect.stringContaining(`"alert" dialog`),
+  });
+
+  await expect.poll(() => dismissed).toEqual(['Alert 1', 'Alert 2', 'Alert 3']);
+
+  // Every dialog opening proves the previous one was closed, so at most the last
+  // dialog may linger as a stale modal state.
+  await expect.poll(async () => {
+    const response = await client.callTool({ name: 'browser_snapshot' });
+    return parseResponse(response)?.modalState;
+  }).toBe(`- ["alert" dialog with message "Alert 3"]: can be handled by browser_handle_dialog`);
+
+  // Handling the stale dialog reports it was already handled instead of failing.
+  expect(await client.callTool({
+    name: 'browser_handle_dialog',
+    arguments: { accept: false },
+  })).toHaveResponse({
+    result: expect.stringContaining(`Dialog was already handled`),
+    modalState: undefined,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+  })).toHaveResponse({
+    modalState: undefined,
+    inlineSnapshot: expect.stringContaining(`- button "Button"`),
   });
 });
 
