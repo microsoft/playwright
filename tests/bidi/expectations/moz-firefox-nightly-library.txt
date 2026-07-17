@@ -101,7 +101,6 @@ library/defaultbrowsercontext-2.spec.ts › should support hasTouch option [fail
 library/defaultbrowsercontext-2.spec.ts › should support reducedMotion option [fail]
 library/defaultbrowsercontext-2.spec.ts › should work in persistent context [fail]
 library/download.spec.ts › download event › should be able to cancel pending downloads [timeout]
-library/download.spec.ts › download event › should report download path within page.on('download', …) handler for Blobs [timeout]
 library/download.spec.ts › download event › should report new window downloads [timeout]
 library/download.spec.ts › download event › should throw if browser dies [fail]
 library/emulation-focus.spec.ts › should focus popups by default [fail]

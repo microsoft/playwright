@@ -256,7 +256,9 @@ export class BidiPage implements PageDelegate {
   }
 
   private _onDownloadWillBegin(event: bidi.BrowsingContext.DownloadWillBeginParams) {
-    if (!event.navigation)
+    // TODO: remove the event.navigation fallback when Chrome supports event.download
+    // See https://github.com/GoogleChromeLabs/chromium-bidi/issues/4155
+    if (!event.download && !event.navigation)
       return;
 
     this._page.frameManager.frameAbortedNavigation(event.context, 'Download is starting');
@@ -268,13 +270,15 @@ export class BidiPage implements PageDelegate {
     if (!originPage)
       return;
 
-    this._browserContext._browser.downloadCreated(originPage, event.navigation, event.url, event.suggestedFilename, event.suggestedFilename);
+    this._browserContext._browser.downloadCreated(originPage, event.download ?? event.navigation, event.url, event.suggestedFilename, event.suggestedFilename);
   }
 
   private _onDownloadEnded(event: bidi.BrowsingContext.DownloadEndParams) {
-    if (!event.navigation)
+    // TODO: remove the event.navigation fallback when Chrome supports event.download
+    // See https://github.com/GoogleChromeLabs/chromium-bidi/issues/4155
+    if (!event.download && !event.navigation)
       return;
-    this._browserContext._browser.downloadFinished(event.navigation, event.status === 'canceled' ? 'canceled' : undefined);
+    this._browserContext._browser.downloadFinished(event.download ?? event.navigation, event.status === 'canceled' ? 'canceled' : undefined);
   }
 
   private _onLogEntryAdded(params: bidi.Log.Entry) {
