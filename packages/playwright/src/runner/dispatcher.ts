@@ -58,12 +58,21 @@ export class Dispatcher {
     }
   }
 
-  private _findFirstJobToRun() {
-    const heldLocks = new Set<string>();
+  private _heldLocks(): Set<string> | undefined {
+    let heldLocks: Set<string> | undefined;
     for (const slot of this._workerSlots) {
-      for (const lock of slot.jobDispatcher?.job.locks || [])
+      const locks = slot.jobDispatcher?.job.locks;
+      if (!locks?.length)
+        continue;
+      heldLocks ??= new Set();
+      for (const lock of locks)
         heldLocks.add(lock);
     }
+    return heldLocks;
+  }
+
+  private _findFirstJobToRun() {
+    const heldLocks = this._heldLocks();
     // Always pick the first job that can be run while respecting the project worker limit.
     for (let index = 0; index < this._queue.length; index++) {
       const job = this._queue[index];
@@ -73,7 +82,7 @@ export class Dispatcher {
       // Jobs sharing a lock do not run concurrently. All the locks are acquired
       // when the job is scheduled and released when it finishes, so that jobs
       // never wait for locks while holding some of them.
-      if (job.locks.some(lock => heldLocks.has(lock)))
+      if (heldLocks && job.locks.some(lock => heldLocks.has(lock)))
         continue;
       const projectIdWorkerLimit = this._workerLimitPerProjectId.get(job.projectId);
       if (!projectIdWorkerLimit)

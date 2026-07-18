@@ -45,14 +45,15 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
     // There are 3 kinds of parallel tests:
     // - Tests belonging to parallel suites, without beforeAll/afterAll hooks.
     //   These can be run independently, they are put into their own group, key === test.
-    //   Tests with locks are also put into their own group, even with beforeAll/afterAll hooks,
-    //   so that a lock is not held for the duration of unrelated tests.
+    //   Tests with locks are grouped by their lock signature instead, key === signature,
+    //   even with beforeAll/afterAll hooks. Tests sharing all the locks cannot run
+    //   concurrently anyway, and this way a lock is never held for unrelated tests.
     // - Tests belonging to parallel suites, with beforeAll/afterAll hooks.
     //   These should share the worker as much as possible, put into single parallelWithHooks group.
     //   We'll divide them into equally-sized groups later.
     // - Tests belonging to serial suites inside parallel suites.
     //   These should run as a serial group, each group is independent, key === serial suite.
-    parallel: Map<test.Suite | test.TestCase, TestGroup>,
+    parallel: Map<test.Suite | test.TestCase | string, TestGroup>,
     parallelWithHooks: TestGroup,
   }>>();
 
@@ -67,10 +68,7 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
     };
   };
 
-  const locksByTest = new Map<test.TestCase, string[]>();
-
   for (const test of projectSuite.allTests()) {
-    locksByTest.set(test, test._collectLocks());
     let withWorkerHash = groups.get(test._workerHash);
     if (!withWorkerHash) {
       withWorkerHash = new Map();
@@ -98,10 +96,10 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
     }
 
     if (insideParallel) {
-      if (hasAllHooks && !outerMostSequentialSuite && !locksByTest.get(test)!.length) {
+      if (hasAllHooks && !outerMostSequentialSuite && !test._locks.length) {
         withRequireFile.parallelWithHooks.tests.push(test);
       } else {
-        const key = outerMostSequentialSuite || test;
+        const key = outerMostSequentialSuite || (test._locks.length ? [...new Set(test._locks)].sort().join('\x1e') : test);
         let group = withRequireFile.parallel.get(key);
         if (!group) {
           group = createGroup(test);
@@ -138,12 +136,15 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
   }
 
   for (const group of result) {
-    const locks = new Set<string>();
+    let locks: Set<string> | undefined;
     for (const test of group.tests) {
-      for (const lock of locksByTest.get(test)!)
+      for (const lock of test._locks) {
+        locks ??= new Set();
         locks.add(lock);
+      }
     }
-    group.locks = [...locks];
+    if (locks)
+      group.locks = [...locks];
   }
   return result;
 }

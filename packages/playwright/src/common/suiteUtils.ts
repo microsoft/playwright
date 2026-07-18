@@ -57,6 +57,8 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     for (let parentSuite: Suite | undefined = suite; parentSuite; parentSuite = parentSuite.parent) {
       if (parentSuite._staticAnnotations.length)
         test.annotations.unshift(...parentSuite._staticAnnotations);
+      if (parentSuite._locks.length)
+        test._locks.push(...parentSuite._locks);
       if (inheritedRetries === undefined && parentSuite._retries !== undefined)
         inheritedRetries = parentSuite._retries;
       if (inheritedTimeout === undefined && parentSuite._timeout !== undefined)

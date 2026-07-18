@@ -287,7 +287,8 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _projectId = '';
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
-  // Named locks declared on the test itself, without the ones inherited from parent suites.
+  // Named locks of the test. Locks declared on parent suites are folded in
+  // when the file suite is bound to a project.
   _locks: string[] = [];
   _planAnnotations: TestAnnotation[] = [];
 
@@ -322,16 +323,6 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       ...titleTags,
       ...this._tags,
     ];
-  }
-
-  // Named locks declared on the test and all of its parent suites.
-  _collectLocks(): string[] {
-    const locks = new Set<string>(this._locks);
-    for (let parent: Suite | undefined = this.parent; parent; parent = parent.parent) {
-      for (const lock of parent._locks)
-        locks.add(lock);
-    }
-    return [...locks];
   }
 
   _applyPlanAnnotation(annotation: TestAnnotation): void {
