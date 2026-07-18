@@ -86,8 +86,8 @@ their names ahead of time.
 **Usage**
 
 ```js
-session.on('event', ({ name, params }) => {
-  console.log(`CDP event: ${name}`, params);
+session.on('event', ({ method, params }) => {
+  console.log(`CDP event: ${method}`, params);
 });
 ```
 

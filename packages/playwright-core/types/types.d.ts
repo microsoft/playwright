@@ -17750,8 +17750,8 @@ export interface CDPSession {
    * **Usage**
    *
    * ```js
-   * session.on('event', ({ name, params }) => {
-   *   console.log(`CDP event: ${name}`, params);
+   * session.on('event', ({ method, params }) => {
+   *   console.log(`CDP event: ${method}`, params);
    * });
    * ```
    *
@@ -17800,8 +17800,8 @@ export interface CDPSession {
    * **Usage**
    *
    * ```js
-   * session.on('event', ({ name, params }) => {
-   *   console.log(`CDP event: ${name}`, params);
+   * session.on('event', ({ method, params }) => {
+   *   console.log(`CDP event: ${method}`, params);
    * });
    * ```
    *
@@ -17870,8 +17870,8 @@ export interface CDPSession {
    * **Usage**
    *
    * ```js
-   * session.on('event', ({ name, params }) => {
-   *   console.log(`CDP event: ${name}`, params);
+   * session.on('event', ({ method, params }) => {
+   *   console.log(`CDP event: ${method}`, params);
    * });
    * ```
    *
