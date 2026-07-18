@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, countTimes } from './playwright-test-fixtures';
 
 // Each test prints '%%begin:<name>' and '%%end:<name>' lines. Walks the lines
 // and returns pairs of tests from the `conflicts` list that were running
@@ -37,8 +37,8 @@ function conflictingOverlaps(lines: string[], conflicts: [string, string][]): [s
   return overlaps;
 }
 
-const lockedTest = (name: string, lock: string | string[], delay: number) => `
-  test('${name}', { lock: ${JSON.stringify(lock)} }, async () => {
+const lockedTest = (name: string, delay: number, lock?: string | string[]) => `
+  test('${name}'${lock !== undefined ? `, { lock: ${JSON.stringify(lock)} }` : ''}, async () => {
     console.log('\\n%%begin:${name}');
     await new Promise(f => setTimeout(f, ${delay}));
     console.log('\\n%%end:${name}');
@@ -52,11 +52,11 @@ test('should not run tests with the same lock at the same time', async ({ runInl
     `,
     'a.test.ts': `
       import { test } from '@playwright/test';
-      ${lockedTest('test1', 'shared', 1000)}
+      ${lockedTest('test1', 1000, 'shared')}
     `,
     'b.test.ts': `
       import { test } from '@playwright/test';
-      ${lockedTest('test2', 'shared', 1000)}
+      ${lockedTest('test2', 1000, 'shared')}
     `,
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
@@ -131,16 +131,8 @@ test('should support locks declared on a describe group', async ({ runInlineTest
     'a.test.ts': `
       import { test } from '@playwright/test';
       test.describe('locked suite', { lock: 'shared' }, () => {
-        test('test1', async () => {
-          console.log('\\n%%begin:test1');
-          await new Promise(f => setTimeout(f, 1000));
-          console.log('\\n%%end:test1');
-        });
-        test('test2', async () => {
-          console.log('\\n%%begin:test2');
-          await new Promise(f => setTimeout(f, 1000));
-          console.log('\\n%%end:test2');
-        });
+        ${lockedTest('test1', 1000)}
+        ${lockedTest('test2', 1000)}
       });
     `,
   }, { workers: 2 });
@@ -156,15 +148,15 @@ test('should support multiple locks on a single test', async ({ runInlineTest })
     `,
     'a.test.ts': `
       import { test } from '@playwright/test';
-      ${lockedTest('test1', ['lock-a', 'lock-b'], 1000)}
+      ${lockedTest('test1', 1000, ['lock-a', 'lock-b'])}
     `,
     'b.test.ts': `
       import { test } from '@playwright/test';
-      ${lockedTest('test2', 'lock-a', 1000)}
+      ${lockedTest('test2', 1000, 'lock-a')}
     `,
     'c.test.ts': `
       import { test } from '@playwright/test';
-      ${lockedTest('test3', 'lock-b', 1000)}
+      ${lockedTest('test3', 1000, 'lock-b')}
     `,
   }, { workers: 3 });
   expect(result.exitCode).toBe(0);
@@ -176,16 +168,12 @@ test('should hold the lock for the whole file group in default mode', async ({ r
   const result = await runInlineTest({
     'a.test.ts': `
       import { test } from '@playwright/test';
-      ${lockedTest('a1', 'shared', 500)}
-      test('a2', async () => {
-        console.log('\\n%%begin:a2');
-        await new Promise(f => setTimeout(f, 500));
-        console.log('\\n%%end:a2');
-      });
+      ${lockedTest('a1', 500, 'shared')}
+      ${lockedTest('a2', 500)}
     `,
     'b.test.ts': `
       import { test } from '@playwright/test';
-      ${lockedTest('b1', 'shared', 1000)}
+      ${lockedTest('b1', 1000, 'shared')}
     `,
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
@@ -206,17 +194,39 @@ test('should run locked tests from a parallel suite with beforeAll hooks in a se
       });
       test('plain1', async () => {});
       test('plain2', async () => {});
-      ${lockedTest('test1', 'shared', 1000)}
+      ${lockedTest('test1', 1000, 'shared')}
     `,
     'b.test.ts': `
       import { test } from '@playwright/test';
-      ${lockedTest('test2', 'shared', 1000)}
+      ${lockedTest('test2', 1000, 'shared')}
     `,
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(4);
   expect(result.output).toContain('%%beforeAll');
   expect(conflictingOverlaps(result.outputLines, [['test1', 'test2']])).toEqual([]);
+});
+
+test('should run tests with the same locks as a single group', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { fullyParallel: true };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test.beforeAll(() => {
+        console.log('\\n%%beforeAll');
+      });
+      ${lockedTest('test1', 100, 'shared')}
+      ${lockedTest('test2', 100, 'shared')}
+      ${lockedTest('test3', 100, 'shared')}
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  // Tests sharing the same locks run as one group in one worker,
+  // so beforeAll executes once.
+  expect(countTimes(result.output, '%%beforeAll')).toBe(1);
 });
 
 test('should not count waiting for a lock towards the test timeout', async ({ runInlineTest }) => {
@@ -226,11 +236,11 @@ test('should not count waiting for a lock towards the test timeout', async ({ ru
     `,
     'a.test.ts': `
       import { test } from '@playwright/test';
-      ${lockedTest('test1', 'shared', 2000)}
+      ${lockedTest('test1', 2000, 'shared')}
     `,
     'b.test.ts': `
       import { test } from '@playwright/test';
-      ${lockedTest('test2', 'shared', 2000)}
+      ${lockedTest('test2', 2000, 'shared')}
     `,
   }, { workers: 2 });
   // Each test takes 2000ms, together above the 3000ms timeout. Waiting for

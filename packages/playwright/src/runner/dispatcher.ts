@@ -103,8 +103,9 @@ export class Dispatcher {
   private _scheduleJob(): boolean {
     // NOTE: keep this method synchronous for easier reasoning.
 
-    // 0. No more running jobs after stop.
-    if (this._isStopped)
+    // 0. No more running jobs after stop. Bail out early when all workers
+    // are busy to avoid scanning the queue.
+    if (this._isStopped || !this._workerSlots.some(w => !w.jobDispatcher))
       return false;
 
     // 1. Find a job to run.
