@@ -889,3 +889,13 @@ it('should ignore dangerous object keys', async ({ page }) => {
   const result = await page.evaluate(arg => arg, input);
   expect(result).toEqual({ safeKey: 'safeValue' });
 });
+
+it('promise collected', async ({ page, browserName }) => {
+  it.skip(browserName !== 'chromium', 'this is a chromium-only behavior');
+
+  const resultPromise = page.evaluate(() => new Promise<void>(() => {})).catch(e => e);
+  for (let i = 0; i < 20; i++)
+    await page.requestGC();
+  const error = await resultPromise;
+  expect(error.message).toContain('Resulting promise was garbage collected');
+});
