@@ -150,6 +150,16 @@ await page.GetByText("Click me").ClickAsync();
 await page.WaitForURL("**/login");
 ```
 
+## Back/Forward Cache (BFCache)
+
+Modern browsers utilize a Back/Forward Cache (BFCache) to instantly load a page when a user navigates back or forward. This is achieved by freezing the page's DOM and JavaScript heap in memory, and thawing it upon return.
+
+By default, Playwright disables the BFCache across all browsers to ensure consistent, clean testing environments. 
+
+Even if you explicitly enable BFCache, **testing BFCache restorations is not supported**. Because a BFCache restore skips the network fetch phase, the browser does not fire standard navigation lifecycle events (such as `commit`, `domcontentloaded`, or `load`). Playwright's internal `Page` state heavily relies on these network-level events to stay synchronized. 
+
+Consequently, triggering a BFCache restore (e.g., via `page.goBack()`) will bypass Playwright's lifecycle tracking, resulting in timeouts and a completely desynchronized `Page` object where subsequent interactions will fail.
+
 ## Navigation events
 
 Playwright splits the process of showing a new document in a page into **navigation** and **loading**.

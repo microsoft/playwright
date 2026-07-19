@@ -2354,6 +2354,11 @@ last redirect. If cannot go back, returns `null`.
 
 Navigate to the previous page in history.
 
+:::warning
+**Testing Back/Forward Cache (BFCache) is not supported.** 
+By default, Playwright disables the Back/Forward Cache across all browsers. Even if explicitly enabled, Playwright's internal state relies on network-level navigation events. Because BFCache restores unfreeze the DOM without firing these events, using `page.goBack()` or `page.goForward()` to trigger a BFCache restore will result in timeouts and a desynchronized `Page` state.
+:::
+
 ### option: Page.goBack.waitUntil = %%-navigation-wait-until-%%
 * since: v1.8
 
@@ -2373,6 +2378,11 @@ Returns the main resource response. In case of multiple redirects, the navigatio
 last redirect. If cannot go forward, returns `null`.
 
 Navigate to the next page in history.
+
+:::warning
+**Testing Back/Forward Cache (BFCache) is not supported.** 
+By default, Playwright disables the Back/Forward Cache across all browsers. Even if explicitly enabled, Playwright's internal state relies on network-level navigation events. Because BFCache restores unfreeze the DOM without firing these events, using `page.goBack()` or `page.goForward()` to trigger a BFCache restore will result in timeouts and a desynchronized `Page` state.
+:::
 
 ## async method: Page.requestGC
 * since: v1.48
