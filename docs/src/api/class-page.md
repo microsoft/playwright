@@ -589,6 +589,14 @@ await page.addInitScript(mock => {
 }, mock);
 ```
 
+```js
+// Pass a Node.js callback in `arg` that the page can call to report data back on navigation.
+const loaded = [];
+await page.addInitScript(report => {
+  void report(location.pathname);
+}, message => loaded.push(message));
+```
+
 ```java
 // In your playwright script, assuming the preload.js file is in same directory
 page.addInitScript(Paths.get("./preload.js"));
@@ -635,7 +643,13 @@ Script to be evaluated in all pages in the browser context.
 * langs: js
 - `arg` ?<[Serializable]>
 
-Optional argument to pass to [`param: script`] (only supported when passing a function).
+Optional argument to pass to [`param: script`] (only supported when passing a function). Any function
+found anywhere in [`param: arg`] is exposed as a callback invoked in the Playwright (Node.js)
+environment whenever the page calls it. The in-page function returns a [Promise] that resolves to the
+value returned by the Node.js callback, and it keeps working across navigations until the returned
+[Disposable] is disposed. Since the init script's return value is not awaited, this is best suited for
+reporting data back to the runner rather than blocking page scripts. Structured values such as `Date`
+are preserved when [`param: arg`] contains a callback, and are otherwise passed as plain JSON.
 
 ### param: Page.addInitScript.path
 * since: v1.8

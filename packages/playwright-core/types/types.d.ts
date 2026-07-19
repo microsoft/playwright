@@ -313,6 +313,14 @@ export interface Page {
    * }, mock);
    * ```
    *
+   * ```js
+   * // Pass a Node.js callback in `arg` that the page can call to report data back on navigation.
+   * const loaded = [];
+   * await page.addInitScript(report => {
+   *   void report(location.pathname);
+   * }, message => loaded.push(message));
+   * ```
+   *
    * **NOTE** The order of evaluation of multiple scripts installed via
    * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
    * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not
@@ -321,7 +329,15 @@ export interface Page {
    * @param script Script to be evaluated in the page.
    * @param arg Optional argument to pass to
    * [`script`](https://playwright.dev/docs/api/class-page#page-add-init-script-option-script) (only supported when
-   * passing a function).
+   * passing a function). Any function found anywhere in
+   * [`arg`](https://playwright.dev/docs/api/class-page#page-add-init-script-option-arg) is exposed as a callback
+   * invoked in the Playwright (Node.js) environment whenever the page calls it. The in-page function returns a
+   * [Promise] that resolves to the value returned by the Node.js callback, and it keeps working across navigations
+   * until the returned [Disposable](https://playwright.dev/docs/api/class-disposable) is disposed. Since the init
+   * script's return value is not awaited, this is best suited for reporting data back to the runner rather than
+   * blocking page scripts. Structured values such as `Date` are preserved when
+   * [`arg`](https://playwright.dev/docs/api/class-page#page-add-init-script-option-arg) contains a callback, and are
+   * otherwise passed as plain JSON.
    */
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<Disposable>;
 
@@ -9075,6 +9091,14 @@ export interface BrowserContext {
    * });
    * ```
    *
+   * ```js
+   * // Pass a Node.js callback in `arg` that any page in the context can call to report back.
+   * const loaded = [];
+   * await browserContext.addInitScript(report => {
+   *   void report(location.pathname);
+   * }, message => loaded.push(message));
+   * ```
+   *
    * **NOTE** The order of evaluation of multiple scripts installed via
    * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script)
    * and [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) is not
@@ -9083,7 +9107,16 @@ export interface BrowserContext {
    * @param script Script to be evaluated in all pages in the browser context.
    * @param arg Optional argument to pass to
    * [`script`](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script-option-script)
-   * (only supported when passing a function).
+   * (only supported when passing a function). Any function found anywhere in
+   * [`arg`](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script-option-arg) is exposed
+   * as a callback invoked in the Playwright (Node.js) environment whenever a page calls it. The in-page function
+   * returns a [Promise] that resolves to the value returned by the Node.js callback. The same callback is shared by all
+   * current and future pages in the context and keeps working across navigations until the returned
+   * [Disposable](https://playwright.dev/docs/api/class-disposable) is disposed. Since the init script's return value is
+   * not awaited, this is best suited for reporting data back to the runner rather than blocking page scripts.
+   * Structured values such as `Date` are preserved when
+   * [`arg`](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script-option-arg) contains a
+   * callback, and are otherwise passed as plain JSON.
    */
   addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<Disposable>;
 

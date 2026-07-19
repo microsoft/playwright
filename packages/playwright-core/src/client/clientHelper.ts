@@ -18,6 +18,13 @@
 import fs from 'fs';
 
 import { isString } from '@isomorphic/rtti';
+import { kBindingsControllerProperty, kFunctionBindingPrefix, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
+import { createGuid } from '@utils/crypto';
+import { DisposableObject, DisposableStub, disposeAll } from './disposable';
+
+import type { Disposable } from './disposable';
+import type * as channels from './channels';
+import type * as structs from '../../types/structs';
 
 export function envObjectToArray(env: NodeJS.ProcessEnv): { name: string, value: string }[] {
   const result: { name: string, value: string }[] = [];
@@ -28,12 +35,13 @@ export function envObjectToArray(env: NodeJS.ProcessEnv): { name: string, value:
   return result;
 }
 
+function serializeArgument(arg: any): string {
+  return Object.is(arg, undefined) ? 'undefined' : JSON.stringify(arg);
+}
+
 export async function evaluationScript(fun: Function | string | { path?: string, content?: string }, arg?: any, addSourceUrl: boolean = true): Promise<string> {
-  if (typeof fun === 'function') {
-    const source = fun.toString();
-    const argString = Object.is(arg, undefined) ? 'undefined' : JSON.stringify(arg);
-    return `(${source})(${argString})`;
-  }
+  if (typeof fun === 'function')
+    return `(${fun.toString()})(${serializeArgument(arg)})`;
   if (arg !== undefined)
     throw new Error('Cannot evaluate a string with arguments');
   if (isString(fun))
@@ -51,4 +59,74 @@ export async function evaluationScript(fun: Function | string | { path?: string,
 
 export function addSourceUrlToScript(source: string, path: string): string {
   return `${source}\n//# sourceURL=${path.replace(/\n/g, '')}`;
+}
+
+export async function exposeCallbackBinding(
+  bindings: Map<string, (source: structs.BindingSource, ...args: any[]) => any>,
+  exposeBinding: (params: { name: string, noGlobal: boolean }) => Promise<channels.DisposableChannel>,
+  name: string,
+  callback: Function,
+): Promise<Disposable> {
+  bindings.set(name, (source, ...args) => callback(...args));
+  let channel: channels.DisposableChannel;
+  try {
+    channel = await exposeBinding({ name, noGlobal: true });
+  } catch (error) {
+    bindings.delete(name);
+    throw error;
+  }
+  const binding = DisposableObject.from(channel);
+  return new DisposableStub(async () => {
+    try {
+      await binding.dispose();
+    } finally {
+      bindings.delete(name);
+    }
+  });
+}
+
+export async function addInitScript(
+  script: Function | string | { path?: string, content?: string },
+  arg: any,
+  exposeCallback: (name: string, callback: Function) => Promise<Disposable>,
+  installInitScript: (source: string) => Promise<channels.DisposableChannel>,
+) {
+  // String or file scripts take no `arg`, and functions without an `arg` cannot carry callbacks.
+  if (typeof script !== 'function' || arg === undefined)
+    return DisposableObject.from(await installInitScript(await evaluationScript(script, arg)));
+
+  const callbacksToExpose: { name: string, callback: Function }[] = [];
+  const serialized = serializeAsCallArgument(arg, value => {
+    if (typeof value === 'function') {
+      const name = kFunctionBindingPrefix + createGuid();
+      callbacksToExpose.push({ name, callback: value });
+      return { fn: name };
+    }
+    return { fallThrough: value };
+  });
+
+  if (!callbacksToExpose.length)
+    return DisposableObject.from(await installInitScript(await evaluationScript(script, arg)));
+
+  const source = `(${script.toString()})(globalThis['${kBindingsControllerProperty}'].parseArgument(${JSON.stringify(serialized)}))`;
+
+  const disposables: Disposable[] = [];
+  let scriptChannel: channels.DisposableChannel;
+  try {
+    for (const { name, callback } of callbacksToExpose)
+      disposables.push(await exposeCallback(name, callback));
+    scriptChannel = await installInitScript(source);
+  } catch (error) {
+    await disposeAll(disposables).catch(() => {});
+    throw error;
+  }
+
+  const scriptDisposable = DisposableObject.from(scriptChannel);
+  return new DisposableStub(async () => {
+    try {
+      await scriptDisposable.dispose();
+    } finally {
+      await disposeAll(disposables);
+    }
+  });
 }

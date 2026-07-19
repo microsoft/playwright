@@ -28,9 +28,9 @@ import { LongStandingScope } from '@isomorphic/manualPromise';
 import { isObject, isRegExp, isString } from '@isomorphic/rtti';
 import { Artifact } from './artifact';
 import { ChannelOwner } from './channelOwner';
-import { evaluationScript } from './clientHelper';
+import { addInitScript, exposeCallbackBinding } from './clientHelper';
 import { Coverage } from './coverage';
-import { DisposableObject, DisposableStub } from './disposable';
+import { DisposableObject, DisposableStub, disposeAll } from './disposable';
 import { Download } from './download';
 import { ElementHandle, determineScreenshotType } from './elementHandle';
 import { AbortError, PlaywrightError, TargetClosedError, isTargetClosedError, parseError, serializeError } from './errors';
@@ -50,6 +50,7 @@ import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 import { mkdirIfNeeded } from './fileUtils';
 import { ConsoleMessage } from './consoleMessage';
 import type { BrowserContext } from './browserContext';
+import type { Disposable } from './disposable';
 import type { EvaluateOptions } from './jsHandle';
 import type { Clock } from './clock';
 import type { APIRequestContext } from './fetch';
@@ -118,7 +119,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private _harRouters: HarRouter[] = [];
 
   private _locatorHandlers = new Map<number, { locator: Locator, handler: (locator: Locator) => any, times: number | undefined }>();
-  private _evaluateCallbacks: { name: string, disposable: DisposableObject }[] = [];
+  private _evaluateCallbackDisposables: Disposable[] = [];
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -376,18 +377,16 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return DisposableObject.from(result.disposable);
   }
 
-  async _exposeEvaluateCallback(name: string, callback: Function) {
-    this._bindings.set(name, (source, ...args) => callback(...args));
-    const result = await this._channel.exposeBinding({ name, noGlobal: true }, kNoTimeout);
-    this._evaluateCallbacks.push({ name, disposable: DisposableObject.from(result.disposable) });
+  _exposeCallbackBinding(name: string, callback: Function): Promise<Disposable> {
+    return exposeCallbackBinding(this._bindings, async params => (await this._channel.exposeBinding(params, kNoTimeout)).disposable, name, callback);
+  }
+
+  _registerCallbackDisposable(disposable: Disposable) {
+    this._evaluateCallbackDisposables.push(disposable);
   }
 
   _eraseEvaluateCallbacks() {
-    for (const { name, disposable } of this._evaluateCallbacks) {
-      this._bindings.delete(name);
-      disposable.dispose().catch(() => {});
-    }
-    this._evaluateCallbacks = [];
+    void disposeAll(this._evaluateCallbackDisposables).catch(() => {});
   }
 
   async setExtraHTTPHeaders(headers: Headers) {
@@ -550,8 +549,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
-    const source = await evaluationScript(script, arg);
-    return DisposableObject.from((await this._channel.addInitScript({ source }, kNoTimeout)).disposable);
+    return addInitScript(script, arg,
+        (name, callback) => this._exposeCallbackBinding(name, callback),
+        async source => (await this._channel.addInitScript({ source }, kNoTimeout)).disposable);
   }
 
   async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<DisposableStub> {

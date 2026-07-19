@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
+import { parseEvaluationResultValue, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
 
 import type { SerializedValue } from '@isomorphic/utilityScriptSerializers';
 
@@ -49,6 +49,10 @@ export class BindingsController {
     this._bindings.set(bindingName, data);
     if (!noGlobal)
       (this._global as any)[bindingName] = (...args: any[]) => this.callBinding(bindingName, ...args);
+  }
+
+  parseArgument(value: SerializedValue): any {
+    return parseEvaluationResultValue(value);
   }
 
   callBinding(bindingName: string, ...args: any[]): Promise<any> {

@@ -120,7 +120,9 @@ export async function serializeArgumentWithCallbacks(owner: ChannelOwner<any>, p
       if (!page)
         throw new Error('Passing a function is not supported as an argument here');
       const name = kFunctionBindingPrefix + createGuid();
-      exposePromises.push(page._exposeEvaluateCallback(name, callback));
+      exposePromises.push(page._exposeCallbackBinding(name, callback).then(disposable => {
+        page._registerCallbackDisposable(disposable);
+      }));
       return name;
     });
     await Promise.all(exposePromises);

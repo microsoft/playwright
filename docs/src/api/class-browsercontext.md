@@ -433,6 +433,14 @@ browser_context.add_init_script(path="preload.js")
 await Context.AddInitScriptAsync(scriptPath: "preload.js");
 ```
 
+```js
+// Pass a Node.js callback in `arg` that any page in the context can call to report back.
+const loaded = [];
+await browserContext.addInitScript(report => {
+  void report(location.pathname);
+}, message => loaded.push(message));
+```
+
 :::note
 The order of evaluation of multiple scripts installed via [`method: BrowserContext.addInitScript`] and
 [`method: Page.addInitScript`] is not defined.
@@ -460,7 +468,14 @@ Script to be evaluated in all pages in the browser context.
 * langs: js
 - `arg` ?<[Serializable]>
 
-Optional argument to pass to [`param: script`] (only supported when passing a function).
+Optional argument to pass to [`param: script`] (only supported when passing a function). Any function
+found anywhere in [`param: arg`] is exposed as a callback invoked in the Playwright (Node.js)
+environment whenever a page calls it. The in-page function returns a [Promise] that resolves to the
+value returned by the Node.js callback. The same callback is shared by all current and future pages in
+the context and keeps working across navigations until the returned [Disposable] is disposed. Since the
+init script's return value is not awaited, this is best suited for reporting data back to the runner
+rather than blocking page scripts. Structured values such as `Date` are preserved when [`param: arg`]
+contains a callback, and are otherwise passed as plain JSON.
 
 ### param: BrowserContext.addInitScript.path
 * since: v1.8

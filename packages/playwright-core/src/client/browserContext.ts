@@ -25,7 +25,7 @@ import { rewriteErrorMessage } from '@utils/stackTrace';
 import { Browser } from './browser';
 import { CDPSession } from './cdpSession';
 import { ChannelOwner } from './channelOwner';
-import { evaluationScript } from './clientHelper';
+import { addInitScript, exposeCallbackBinding } from './clientHelper';
 import { Clock } from './clock';
 import { ConsoleMessage } from './consoleMessage';
 import { Credentials } from './credentials';
@@ -46,6 +46,7 @@ import { Worker } from './worker';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 import { mkdirIfNeeded } from './fileUtils';
 
+import type { Disposable } from './disposable';
 import type { BrowserContextOptions, Headers, SetStorageState, StorageState, WaitForEventOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
@@ -359,8 +360,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
-    const source = await evaluationScript(script, arg);
-    return DisposableObject.from((await this._channel.addInitScript({ source }, kNoTimeout)).disposable);
+    return addInitScript(script, arg,
+        (name, callback) => this._exposeCallbackBinding(name, callback),
+        async source => (await this._channel.addInitScript({ source }, kNoTimeout)).disposable);
   }
 
   async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any): Promise<DisposableObject> {
@@ -374,6 +376,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     const binding = (source: structs.BindingSource, ...args: any[]) => callback(...args);
     this._bindings.set(name, binding);
     return DisposableObject.from(result.disposable);
+  }
+
+  _exposeCallbackBinding(name: string, callback: Function): Promise<Disposable> {
+    return exposeCallbackBinding(this._bindings, async params => (await this._channel.exposeBinding(params, kNoTimeout)).disposable, name, callback);
   }
 
   async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<DisposableStub> {

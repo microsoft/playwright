@@ -672,6 +672,20 @@ playwright.chromium.launch().then(async browser => {
     });
   }
 
+  {
+    // Functions anywhere in `arg` are exposed as Node callbacks.
+    await page.addInitScript(arg => {
+      void arg;
+    }, { tag: 'x', report: (name: string, count: number) => name.length + count });
+  }
+
+  {
+    // `arg` can itself be a function.
+    await page.addInitScript(report => {
+      void report;
+    }, (name: string) => name.length);
+  }
+
   await browser.close();
 })();
 

@@ -97,3 +97,49 @@ it('init script should run only once in popup', async ({ context }) => {
   ]);
   expect(await popup.evaluate('callCount')).toEqual(1);
 });
+
+it('should report data from all pages to a single node callback', async ({ context, server }) => {
+  const reports = [];
+  const page1 = await context.newPage();
+  await context.addInitScript(report => {
+    void report(location.pathname);
+  }, (pathname: string) => {
+    reports.push(pathname);
+  });
+  // `page1` existed before the call and `page2` is created after it.
+  await page1.goto(server.EMPTY_PAGE);
+  const page2 = await context.newPage();
+  await page2.goto(server.PREFIX + '/grid.html');
+  // New pages also run the init script on their initial `about:blank` document, so ignore those.
+  await expect.poll(() => [...new Set(reports.filter(p => p.startsWith('/')))].sort()).toEqual(['/empty.html', '/grid.html']);
+});
+
+it('should stop reporting after the context callback disposable is disposed', async ({ context, server }) => {
+  const reports = [];
+  const handle = await context.addInitScript(report => {
+    (window as any)['__report'] = report;
+    void report(location.pathname);
+  }, (pathname: string) => {
+    reports.push(pathname);
+  });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await expect.poll(() => reports).toContain('/empty.html');
+
+  await handle.dispose();
+
+  const page2 = await context.newPage();
+  await page2.goto(server.PREFIX + '/grid.html');
+  expect(await page2.evaluate(() => typeof (window as any)['__report'])).toBe('undefined');
+  expect(reports).not.toContain('/grid.html');
+});
+
+it('context should not register the callback on the global object', async ({ context, server }) => {
+  await context.addInitScript(report => {
+    void report();
+  }, () => {});
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  const globals = await page.evaluate(() => Object.getOwnPropertyNames(globalThis).filter(name => name.startsWith('__pw_fn_')));
+  expect(globals).toEqual([]);
+});

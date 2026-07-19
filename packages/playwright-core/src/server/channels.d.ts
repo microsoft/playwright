@@ -1426,9 +1426,10 @@ export type BrowserContextCookiesResult = {
 };
 export type BrowserContextExposeBindingParams = {
   name: string,
+  noGlobal?: boolean,
 };
 export type BrowserContextExposeBindingOptions = {
-
+  noGlobal?: boolean,
 };
 export type BrowserContextExposeBindingResult = {
   disposable: DisposableChannel,
