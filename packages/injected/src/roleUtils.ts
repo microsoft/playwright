@@ -279,6 +279,15 @@ function hasPresentationConflictResolution(element: Element, role: string | null
 }
 
 export function getAriaRole(element: Element): AriaRole | null {
+  const cached = cacheAriaRole?.get(element);
+  if (cached !== undefined)
+    return cached;
+  const role = computeAriaRole(element);
+  cacheAriaRole?.set(element, role);
+  return role;
+}
+
+function computeAriaRole(element: Element): AriaRole | null {
   const explicitRole = getExplicitAriaRole(element);
   if (!explicitRole)
     return getImplicitAriaRole(element);
@@ -1164,19 +1173,28 @@ function belongsToDisabledFieldSet(element: Element): boolean {
   return !legendElement || !legendElement.contains(element);
 }
 
-function hasExplicitAriaDisabled(element: Element | undefined, isAncestor = false): boolean {
-  if (!element)
+function hasExplicitAriaDisabled(element: Element): boolean {
+  if (!kAriaDisabledRoles.includes(getAriaRole(element) || ''))
     return false;
-  if (isAncestor || kAriaDisabledRoles.includes(getAriaRole(element) || '')) {
+  return hasAriaDisabledInChain(element);
+}
+
+function hasAriaDisabledInChain(element: Element): boolean {
+  let result = cacheAriaDisabled?.get(element);
+  if (result === undefined) {
     const attribute = (element.getAttribute('aria-disabled') || '').toLowerCase();
-    if (attribute === 'true')
-      return true;
-    if (attribute === 'false')
-      return false;
-    // aria-disabled works across shadow boundaries.
-    return hasExplicitAriaDisabled(parentElementOrShadowHost(element), true);
+    if (attribute === 'true') {
+      result = true;
+    } else if (attribute === 'false') {
+      result = false;
+    } else {
+      // aria-disabled works across shadow boundaries.
+      const parent = parentElementOrShadowHost(element);
+      result = parent ? hasAriaDisabledInChain(parent) : false;
+    }
+    cacheAriaDisabled?.set(element, result);
   }
-  return false;
+  return result;
 }
 
 function getAccessibleNameFromAssociatedLabels(labels: Iterable<HTMLLabelElement>, options: AccessibleNameOptions): CompositeString {
@@ -1236,11 +1254,15 @@ let cachePseudoContent: Map<Element, string | undefined> | undefined;
 let cachePseudoContentBefore: Map<Element, string | undefined> | undefined;
 let cachePseudoContentAfter: Map<Element, string | undefined> | undefined;
 let cachePointerEvents: Map<Element, boolean> | undefined;
+let cacheAriaRole: Map<Element, AriaRole | null> | undefined;
+let cacheAriaDisabled: Map<Element, boolean> | undefined;
 let cachesCounter = 0;
 
 export function beginAriaCaches() {
   beginDOMCaches();
   ++cachesCounter;
+  cacheAriaRole ??= new Map();
+  cacheAriaDisabled ??= new Map();
   cacheAccessibleName ??= new Map();
   cacheAccessibleNameHidden ??= new Map();
   cacheAccessibleNameText ??= new Map();
@@ -1269,6 +1291,8 @@ export function endAriaCaches() {
     cachePseudoContentBefore = undefined;
     cachePseudoContentAfter = undefined;
     cachePointerEvents = undefined;
+    cacheAriaRole = undefined;
+    cacheAriaDisabled = undefined;
   }
   endDOMCaches();
 }

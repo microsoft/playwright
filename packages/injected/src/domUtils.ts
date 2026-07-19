@@ -85,6 +85,15 @@ export function getElementComputedStyle(element: Element, pseudo?: string): CSSS
 }
 
 export function isElementStyleVisibilityVisible(element: Element, style?: CSSStyleDeclaration): boolean {
+  const cached = cacheStyleVisibility?.get(element);
+  if (cached !== undefined)
+    return cached;
+  const result = computeElementStyleVisibilityVisible(element, style);
+  cacheStyleVisibility?.set(element, result);
+  return result;
+}
+
+function computeElementStyleVisibilityVisible(element: Element, style?: CSSStyleDeclaration): boolean {
   style = style ?? getElementComputedStyle(element);
   if (!style)
     return true;
@@ -144,8 +153,15 @@ export function isVisibleTextNode(node: Text) {
 
 export function elementSafeTagName(element: Element) {
   const tagName = element.tagName;
-  if (typeof tagName === 'string')  // Fast path.
-    return tagName.toUpperCase();
+  if (typeof tagName === 'string') {  // Fast path.
+    // Tag names in html documents are already uppercase. Lowercase names come from
+    // svg/mathml elements and from xml/xhtml documents, and they all start with
+    // a lowercase letter, so uppercasing can be skipped otherwise.
+    const firstCharCode = tagName.charCodeAt(0);
+    if (firstCharCode >= 97 && firstCharCode <= 122)
+      return tagName.toUpperCase();
+    return tagName;
+  }
   // Named inputs, e.g. <input name=tagName>, will be exposed as fields on the parent <form>
   // and override its properties.
   if (element instanceof HTMLFormElement)
@@ -157,6 +173,7 @@ export function elementSafeTagName(element: Element) {
 let cacheStyle: Map<Element, CSSStyleDeclaration | undefined> | undefined;
 let cacheStyleBefore: Map<Element, CSSStyleDeclaration | undefined> | undefined;
 let cacheStyleAfter: Map<Element, CSSStyleDeclaration | undefined> | undefined;
+let cacheStyleVisibility: Map<Element, boolean> | undefined;
 let cachesCounter = 0;
 
 export function beginDOMCaches() {
@@ -164,6 +181,7 @@ export function beginDOMCaches() {
   cacheStyle ??= new Map();
   cacheStyleBefore ??= new Map();
   cacheStyleAfter ??= new Map();
+  cacheStyleVisibility ??= new Map();
 }
 
 export function endDOMCaches() {
@@ -171,5 +189,6 @@ export function endDOMCaches() {
     cacheStyle = undefined;
     cacheStyleBefore = undefined;
     cacheStyleAfter = undefined;
+    cacheStyleVisibility = undefined;
   }
 }
