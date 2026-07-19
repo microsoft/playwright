@@ -19,6 +19,7 @@ import { EventEmitter } from 'events';
 import { getMetainfo } from '@isomorphic/protocolMetainfo';
 import { eventsHelper } from '@utils/eventsHelper';
 import { isUnderTest } from '@utils/debug';
+import { debugLogger } from '@utils/debugLogger';
 import { assert } from '@isomorphic/assert';
 import { monotonicTime } from '@isomorphic/time';
 import { rewriteErrorMessage } from '@utils/stackTrace';
@@ -205,8 +206,15 @@ export class DispatcherConnection {
   }
 
   sendEvent(dispatcher: DispatcherScope, event: string, params: any) {
-    const validator = findValidator(dispatcher._type, event, 'Event');
-    params = validator(params, '', this._validatorToWireContext());
+    try {
+      const validator = findValidator(dispatcher._type, event, 'Event');
+      params = validator(params, '', this._validatorToWireContext());
+    } catch (e) {
+      if (isUnderTest() || !(e instanceof ValidationError))
+        throw e;
+      debugLogger.log('error', `sendEvent validation error for ${dispatcher._type}.${event}: ${e}`);
+      return;
+    }
     this.onmessage({ guid: dispatcher._guid, method: event, params });
   }
 
