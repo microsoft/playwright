@@ -305,10 +305,7 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async doUpdateExtraHTTPHeaders(): Promise<void> {
-    let allHeaders = this._options.extraHTTPHeaders || [];
-    if (this._options.locale)
-      allHeaders = network.mergeHeaders([allHeaders, network.singleHeader('Accept-Language', this._options.locale)]);
-    await this._browser.session.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId, headers: allHeaders });
+    await this._browser.session.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId, headers: this._options.extraHTTPHeaders || [] });
   }
 
   async setUserAgent(userAgent: string | undefined): Promise<void> {

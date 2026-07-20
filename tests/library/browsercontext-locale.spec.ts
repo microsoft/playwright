@@ -189,3 +189,38 @@ it('should affect Intl.DateTimeFormat().resolvedOptions().locale', async ({ brow
   expect(await page.evaluate(() => (new Intl.DateTimeFormat()).resolvedOptions().locale)).toBe('en-GB');
   await context.close();
 });
+
+it('should send user Accept-Language header', {
+  annotation: [{ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23732' }],
+}, async ({ browser, server, browserName }) => {
+  it.fixme(browserName === 'webkit', 'Implementation set Accept-Language header as extra HTTP header');
+  const context = await browser.newContext({ locale: 'en-GB' });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  {
+    const reqPromise = server.waitForRequest('/empty.html');
+    await page.evaluate(async url => {
+      await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept-Language': 'de'
+        },
+      });
+    }, server.EMPTY_PAGE);
+    const req = await reqPromise;
+    expect(req.headers['accept-language']).toBe('de');
+  }
+  {
+    const reqPromise = server.waitForRequest('/empty.html');
+    await page.evaluate(async url => {
+      await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      });
+    }, server.EMPTY_PAGE);
+    const req = await reqPromise;
+    expect(req.headers['accept-language']).toContain('en-GB');
+  }
+  await context.close();
+});
