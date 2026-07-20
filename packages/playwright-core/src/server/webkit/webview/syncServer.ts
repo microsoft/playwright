@@ -14,30 +14,31 @@
  * limitations under the License.
  */
 
+import { createGuid } from '@utils/crypto';
 import { debugLogger } from '@utils/debugLogger';
 import { createHttpServer } from '@utils/network';
 
 import type { IncomingMessage, Server, ServerResponse } from 'http';
 
-export type DialogRequest = {
-  type: 'alert' | 'confirm' | 'prompt';
-  message: string;
-  defaultValue: string;
+// Receives the parsed JSON request body and returns a value that is serialized
+// back to the caller as JSON.
+type SyncHandler = (body: any) => Promise<any>;
+
+export type SyncHandlerRegistration = {
+  endpoint: string;
+  dispose(): void;
 };
 
-export type DialogResult = {
-  accept: boolean;
-  promptText?: string;
-};
-
-type DialogHandler = (req: DialogRequest) => Promise<DialogResult>;
-
-export class DialogBridge {
+// Small HTTP server that lets page-side scripts perform synchronous XHR calls
+// into the server. Each handler is registered under an unguessable guid path so
+// the endpoint cannot be discovered by a script running in the page just by
+// knowing the (randomly bound) port.
+export class SyncServer {
   private readonly _server: Server;
   private readonly _baseUrl: string;
-  private readonly _handlers = new Map<string, DialogHandler>();
+  private readonly _handlers = new Map<string, SyncHandler>();
 
-  static async start(): Promise<DialogBridge> {
+  static async start(): Promise<SyncServer> {
     const server = createHttpServer();
     await new Promise<void>((resolve, reject) => {
       server.once('error', reject);
@@ -48,8 +49,8 @@ export class DialogBridge {
     });
     const address = server.address();
     if (!address || typeof address === 'string')
-      throw new Error('DialogBridge: failed to bind HTTP server');
-    return new DialogBridge(server, `http://127.0.0.1:${address.port}`);
+      throw new Error('SyncServer: failed to bind HTTP server');
+    return new SyncServer(server, `http://127.0.0.1:${address.port}`);
   }
 
   private constructor(server: Server, baseUrl: string) {
@@ -58,16 +59,13 @@ export class DialogBridge {
     this._server.on('request', (req, res) => this._handleRequest(req, res));
   }
 
-  endpointFor(pageId: string): string {
-    return `${this._baseUrl}/dialog?tab=${encodeURIComponent(pageId)}`;
-  }
-
-  registerTab(pageId: string, handler: DialogHandler): void {
-    this._handlers.set(pageId, handler);
-  }
-
-  unregisterTab(pageId: string): void {
-    this._handlers.delete(pageId);
+  addHandler(handler: SyncHandler): SyncHandlerRegistration {
+    const guid = createGuid();
+    this._handlers.set(guid, handler);
+    return {
+      endpoint: `${this._baseUrl}/${guid}`,
+      dispose: () => this._handlers.delete(guid),
+    };
   }
 
   async close(): Promise<void> {
@@ -91,16 +89,9 @@ export class DialogBridge {
     }
 
     const url = new URL(req.url || '/', this._baseUrl);
-    if (!(req.method === 'POST' && url.pathname === '/dialog')) {
-      res.statusCode = 404;
-      res.end();
-      return;
-    }
-
-    const tab = url.searchParams.get('tab') || '';
-    const handler = this._handlers.get(tab);
-    if (!handler) {
-      // Either the tab is gone or the page raced ahead of registerTab. Reply
+    const handler = this._handlers.get(url.pathname.slice(1));
+    if (req.method !== 'POST' || !handler) {
+      // Either the handler is gone or the page raced ahead of addHandler. Reply
       // 404 so the page-side override silently falls through.
       res.statusCode = 404;
       res.end();
@@ -111,18 +102,11 @@ export class DialogBridge {
     req.setEncoding('utf8');
     req.on('data', chunk => { body += chunk; });
     req.on('end', async () => {
-      let parsed: DialogRequest;
+      let parsed: any;
       try {
-        const json = JSON.parse(body);
-        if (json.type !== 'alert' && json.type !== 'confirm' && json.type !== 'prompt')
-          throw new Error(`Invalid dialog type: ${json.type}`);
-        parsed = {
-          type: json.type,
-          message: typeof json.message === 'string' ? json.message : '',
-          defaultValue: typeof json.defaultValue === 'string' ? json.defaultValue : '',
-        };
+        parsed = JSON.parse(body);
       } catch (e) {
-        debugLogger.log('error', `DialogBridge: bad request body: ${(e as Error).message}`);
+        debugLogger.log('error', `SyncServer: bad request body: ${(e as Error).message}`);
         res.statusCode = 400;
         res.end();
         return;
@@ -132,12 +116,9 @@ export class DialogBridge {
         const result = await handler(parsed);
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({
-          accept: !!result.accept,
-          promptText: result.promptText,
-        }));
+        res.end(JSON.stringify(result));
       } catch (e) {
-        debugLogger.log('error', `DialogBridge: handler error: ${(e as Error).message}`);
+        debugLogger.log('error', `SyncServer: handler error: ${(e as Error).message}`);
         res.statusCode = 500;
         res.end();
       }

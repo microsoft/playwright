@@ -29,7 +29,7 @@ import * as network from '../../network';
 import { perMessageDeflate } from '../../transport';
 import { getUserAgent } from '../../userAgent';
 import { BrowserContext } from '../../browserContext';
-import { DialogBridge } from './dialogBridge';
+import { SyncServer } from './syncServer';
 import { WVConnection } from './wvConnection';
 import { WVPage } from './wvPage';
 
@@ -143,8 +143,8 @@ export async function connectOverRDP(progress: Progress, parent: SdkObject, para
   };
 
   const browser = await progress.race((async () => {
-    const dialogBridge = await DialogBridge.start();
-    const created = new WVBrowser(parent, proxyBase, headersMap!, dialogBridge, transport, {
+    const syncServer = await SyncServer.start();
+    const created = new WVBrowser(parent, proxyBase, headersMap!, syncServer, transport, {
       slowMo: params.slowMo,
       name: 'webkit',
       browserType: 'webkit',
@@ -158,7 +158,7 @@ export async function connectOverRDP(progress: Progress, parent: SdkObject, para
     });
     const shutdown = async () => {
       await created._closeAllTabs();
-      await dialogBridge.close().catch(() => {});
+      await syncServer.close().catch(() => {});
       await doCleanup();
     };
     created.options.browserProcess = { close: shutdown, kill: shutdown };
@@ -183,18 +183,18 @@ export class WVBrowser extends Browser {
   readonly _context: WVBrowserContext;
   readonly _proxyBase: string;
   readonly _headers: { [key: string]: string };
-  readonly _dialogBridge: DialogBridge;
+  readonly _syncServer: SyncServer;
   readonly _directPageTransport: ConnectOverCDPTransport | undefined;
   readonly _tabs = new Map<string, TabEntry>();
   private _didCloseFired = false;
   // Backwards compat — old code still reads `_page` for the "primary" tab.
   _page!: WVPage;
 
-  constructor(parent: SdkObject, proxyBase: string, headers: { [key: string]: string }, dialogBridge: DialogBridge, directPageTransport: ConnectOverCDPTransport | undefined, options: BrowserOptions) {
+  constructor(parent: SdkObject, proxyBase: string, headers: { [key: string]: string }, syncServer: SyncServer, directPageTransport: ConnectOverCDPTransport | undefined, options: BrowserOptions) {
     super(parent, options);
     this._proxyBase = proxyBase;
     this._headers = headers;
-    this._dialogBridge = dialogBridge;
+    this._syncServer = syncServer;
     this._directPageTransport = directPageTransport;
     this._context = new WVBrowserContext(this);
   }
@@ -238,9 +238,7 @@ export class WVBrowser extends Browser {
 
   private async _attachTab(pageId: string, transport: ConnectOverCDPTransport): Promise<void> {
     const connection = new WVConnection(transport, () => this._detachTab(pageId), this.options.protocolLogger, this.options.browserLogsCollector);
-    const dialogEndpoint = this._dialogBridge.endpointFor(pageId);
-    const page = new WVPage(this._context, connection.outerSession, dialogEndpoint);
-    this._dialogBridge.registerTab(pageId, req => page.onBridgeDialog(req));
+    const page = new WVPage(this._context, connection.outerSession, this._syncServer);
     this._tabs.set(pageId, { pageId, transport, connection, page });
     transport.open?.();
     await page.waitForInitialized();
@@ -251,7 +249,6 @@ export class WVBrowser extends Browser {
     if (!entry)
       return;
     this._tabs.delete(pageId);
-    this._dialogBridge.unregisterTab(pageId);
     entry.connection.close();
     entry.page.didClose();
   }

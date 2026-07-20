@@ -40,6 +40,7 @@ import { WVWorkers } from './wvWorkers';
 import { WVInterceptableRequest, WVRouteImpl } from './wvInterceptableRequest';
 import { WVProvisionalPage } from './wvProvisionalPage';
 
+import type { SyncHandlerRegistration, SyncServer } from './syncServer';
 import type { Protocol } from './protocol';
 import type { WVBrowserContext } from './wvBrowser';
 import type { RegisteredListener } from '@utils/eventsHelper';
@@ -75,11 +76,10 @@ export class WVPage implements PageDelegate {
   private readonly _requestIdToResponseReceivedPayloadEvent = new Map<string, Protocol.Network.responseReceivedPayload>();
   private _timestampBaselineForWebSocket = new Map<string, number>();
 
-  private readonly _dialogEndpoint: string | undefined;
+  private readonly _dialogHandler: SyncHandlerRegistration | undefined;
 
-  constructor(browserContext: WVBrowserContext, outerSession: WVSession, dialogEndpoint?: string) {
+  constructor(browserContext: WVBrowserContext, outerSession: WVSession, syncServer?: SyncServer) {
     this._outerSession = outerSession;
-    this._dialogEndpoint = dialogEndpoint;
     this.rawKeyboard = new RawKeyboardImpl(this);
     this.rawMouse = new RawMouseImpl(this);
     this.rawTouchscreen = new RawTouchscreenImpl(this);
@@ -100,6 +100,8 @@ export class WVPage implements PageDelegate {
     });
     // Avoid unhandled rejection on disconnect in the middle of initialization.
     this._firstNonInitialNavigationCommittedPromise.catch(() => {});
+
+    this._dialogHandler = syncServer?.addHandler(body => this._onBridgeDialog(body));
   }
 
   waitForInitialized(): Promise<void> {
@@ -244,9 +246,9 @@ export class WVPage implements PageDelegate {
     // currently-loaded document too — bootstrap only applies to future navigations.
     await session.sendMayFail('Runtime.evaluate', { expression: webViewInputBootstrapSource, returnByValue: true } as any);
     await session.sendMayFail('Runtime.evaluate', { expression: sameDocumentNavigationBridgeSource, returnByValue: true } as any);
-    if (this._dialogEndpoint) {
+    if (this._dialogHandler) {
       await session.sendMayFail('Runtime.evaluate', {
-        expression: dialogBridgeSource(this._dialogEndpoint),
+        expression: dialogBridgeSource(this._dialogHandler.endpoint),
         returnByValue: true,
       } as any);
     }
@@ -339,19 +341,25 @@ export class WVPage implements PageDelegate {
     }
   }
 
-  async onBridgeDialog(req: { type: 'alert' | 'confirm' | 'prompt'; message: string; defaultValue: string }): Promise<{ accept: boolean; promptText?: string }> {
+  private async _onBridgeDialog(body: any): Promise<{ accept: boolean; promptText?: string }> {
+    const type = body?.type;
+    if (type !== 'alert' && type !== 'confirm' && type !== 'prompt')
+      throw new Error(`Invalid dialog type: ${type}`);
+    const message = typeof body?.message === 'string' ? body.message : '';
+    const defaultValue = typeof body?.defaultValue === 'string' ? body.defaultValue : '';
     return await new Promise<{ accept: boolean; promptText?: string }>(resolve => {
       this._page.browserContext.dialogManager.dialogDidOpen(new dialog.Dialog(
           this._page,
-          req.type,
-          req.message,
+          type,
+          message,
           async (accept: boolean, promptText?: string) => resolve({ accept, promptText }),
-          req.defaultValue,
+          defaultValue,
       ));
     });
   }
 
   didClose() {
+    this._dialogHandler?.dispose();
     eventsHelper.removeEventListeners(this._sessionListeners);
     eventsHelper.removeEventListeners(this._eventListeners);
     if (this._session)
@@ -704,8 +712,8 @@ export class WVPage implements PageDelegate {
     scripts.push(bindingBridgeSource);
     scripts.push(sameDocumentNavigationBridgeSource);
     scripts.push(webViewInputBootstrapSource);
-    if (this._dialogEndpoint)
-      scripts.push(dialogBridgeSource(this._dialogEndpoint));
+    if (this._dialogHandler)
+      scripts.push(dialogBridgeSource(this._dialogHandler.endpoint));
     scripts.push(...this._page.allInitScripts().map(script => script.source));
     return scripts.join(';\n');
   }
