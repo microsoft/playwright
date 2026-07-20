@@ -209,6 +209,23 @@ test(`extension needs update`, async ({ startExtensionClient, server }) => {
   await expect(confirmationPage.locator('.status-banner')).toContainText(`Playwright client trying to connect requires newer extension version`);
 });
 
+test(`extension rejects outdated client protocol version`, async ({ startExtensionClient, server }) => {
+  const { browserContext, client } = await startExtensionClient({ PLAYWRIGHT_EXTENSION_PROTOCOL: '1' });
+
+  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
+    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
+  });
+
+  // The call hangs as the extension never connects to the relay.
+  client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  }).catch(() => {});
+
+  const confirmationPage = await confirmationPagePromise;
+  await expect(confirmationPage.locator('.status-banner')).toContainText(`The client uses an unsupported protocol version. Update Playwright MCP or CLI to the latest version.`);
+});
+
 test(`custom executablePath skips local extension check`, {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1590' },
 }, async ({ startClient, server }) => {
