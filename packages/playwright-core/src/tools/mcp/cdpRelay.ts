@@ -71,6 +71,8 @@ export class CDPRelayServer {
   private _protocolVersion: number;
   private _handler: ExtensionProtocolHandler;
   private _extensionConnectionPromise = new ManualPromise<void>();
+  private _clientName: string = '';
+  private _stopped: boolean = false;
 
   constructor(server: http.Server, browserChannel: string, executablePath?: string) {
     this._wsHost = addressToString(server.address(), { protocol: 'ws' });
@@ -107,6 +109,7 @@ export class CDPRelayServer {
   }
 
   async establishExtensionConnection(clientName: string) {
+    this._clientName = clientName;
     debugLogger('Establishing extension connection');
     this._openConnectPageInBrowser(clientName);
     debugLogger('Waiting for incoming extension connection');
@@ -158,6 +161,7 @@ export class CDPRelayServer {
   }
 
   stop(): void {
+    this._stopped = true;
     this._closeConnections('Server stopped');
     this._wss.close();
   }
@@ -229,8 +233,14 @@ export class CDPRelayServer {
     this._extensionConnection = new ExtensionConnection(ws);
     this._extensionConnection.onclose = reason => {
       debugLogger('Extension WebSocket closed:', reason);
+      this._extensionConnection = null;
       this._handler.onExtensionDisconnect(reason);
       this._closeCDPConnection(`Extension disconnected: ${reason}`);
+      if (!this._stopped) {
+        this._extensionConnectionPromise = new ManualPromise<void>();
+        void this._extensionConnectionPromise.catch(logUnhandledError);
+        this._openConnectPageInBrowser(this._clientName);
+      }
     };
     this._extensionConnection.onmessage = (method, params) => this._handler.handleExtensionEvent(method, params);
     this._extensionConnectionPromise.resolve();
