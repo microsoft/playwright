@@ -40,32 +40,28 @@ export class BindingsController {
     this._globalBindingName = globalBindingName;
   }
 
-  addBinding(bindingName: string, noGlobal?: boolean) {
+  addBinding(bindingName: string) {
     const data: BindingData = {
       callbacks: new Map(),
       lastSeq: 0,
       removed: false,
     };
     this._bindings.set(bindingName, data);
-    if (!noGlobal)
-      (this._global as any)[bindingName] = (...args: any[]) => this.callBinding(bindingName, ...args);
-  }
-
-  callBinding(bindingName: string, ...args: any[]): Promise<any> {
-    const data = this._bindings.get(bindingName);
-    if (!data || data.removed)
-      throw new Error(`binding "${bindingName}" has been removed`);
-    const seq = ++data.lastSeq;
-    const promise = new Promise((resolve, reject) => data.callbacks.set(seq, { resolve, reject }));
-    const serializedArgs = [];
-    for (let i = 0; i < args.length; i++) {
-      serializedArgs[i] = serializeAsCallArgument(args[i], v => {
-        return { fallThrough: v };
-      });
-    }
-    const payload: BindingPayload = { name: bindingName, seq, serializedArgs };
-    (this._global as any)[this._globalBindingName](JSON.stringify(payload));
-    return promise;
+    (this._global as any)[bindingName] = (...args: any[]) => {
+      if (data.removed)
+        throw new Error(`binding "${bindingName}" has been removed`);
+      const seq = ++data.lastSeq;
+      const promise = new Promise((resolve, reject) => data.callbacks.set(seq, { resolve, reject }));
+      const serializedArgs = [];
+      for (let i = 0; i < args.length; i++) {
+        serializedArgs[i] = serializeAsCallArgument(args[i], v => {
+          return { fallThrough: v };
+        });
+      }
+      const payload: BindingPayload = { name: bindingName, seq, serializedArgs };
+      (this._global as any)[this._globalBindingName](JSON.stringify(payload));
+      return promise;
+    };
   }
 
   removeBinding(bindingName: string) {

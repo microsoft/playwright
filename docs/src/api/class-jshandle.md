@@ -96,9 +96,6 @@ Assert.AreEqual("10 retweets", await tweetHandle.EvaluateAsync("node => node.inn
 
 Optional argument to pass to [`param: expression`].
 
-### option: JSHandle.evaluate.exposeFunctions = %%-js-evaluate-expose-functions-%%
-* since: v1.62
-
 ## async method: JSHandle.evaluateHandle
 * since: v1.8
 - returns: <[JSHandle]>
@@ -125,9 +122,6 @@ See [`method: Page.evaluateHandle`] for more details.
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
-
-### option: JSHandle.evaluateHandle.exposeFunctions = %%-js-evaluate-expose-functions-%%
-* since: v1.62
 
 ## async method: JSHandle.getProperties
 * since: v1.8

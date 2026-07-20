@@ -745,9 +745,6 @@ await bodyHandle.DisposeAsync();
 
 Optional argument to pass to [`param: expression`].
 
-### option: Frame.evaluate.exposeFunctions = %%-js-evaluate-expose-functions-%%
-* since: v1.62
-
 ## async method: Frame.evaluateHandle
 * since: v1.8
 - returns: <[JSHandle]>
@@ -859,9 +856,6 @@ await resultHandle.DisposeAsync();
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
-
-### option: Frame.evaluateHandle.exposeFunctions = %%-js-evaluate-expose-functions-%%
-* since: v1.62
 
 ## async method: Frame.fill
 * since: v1.8

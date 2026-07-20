@@ -2318,7 +2318,6 @@ scheme.PageEmulateMediaParams = tObject({
 scheme.PageEmulateMediaResult = tOptional(tObject({}));
 scheme.PageExposeBindingParams = tObject({
   name: tString,
-  noGlobal: tOptional(tBoolean),
 });
 scheme.PageExposeBindingResult = tObject({
   disposable: tChannel(['Disposable']),
@@ -2986,7 +2985,6 @@ scheme.SerializedValue = tObject({
     v: tType('SerializedValue'),
   }))),
   h: tOptional(tInt),
-  fn: tOptional(tString),
   id: tOptional(tInt),
   ref: tOptional(tInt),
 });

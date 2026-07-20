@@ -81,15 +81,10 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
       throw new Error('Unexpected handle');
     return handles[value.h];
   }
-  if (value.fn !== undefined) {
-    const dummy = () => {};
-    Object.defineProperty(dummy, 'name', { value: value.fn });
-    return dummy;
-  }
   throw new Error(`Attempting to deserialize unexpected value${accessChainToDisplayString(accessChain)}: ${value}`);
 }
 
-export type HandleOrValue = { h: number } | { fn: string } | { fallThrough: any };
+export type HandleOrValue = { h: number } | { fallThrough: any };
 type VisitorInfo = {
   visited: Map<object, number>;
   lastId: number;
