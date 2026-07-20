@@ -114,6 +114,7 @@ function assertionArgument(className) {
     case 'genericassertions': return 'value';
     case 'snapshotassertions': return 'value';
     case 'apiresponseassertions': return 'response';
+    case 'fnassertions': return 'mockFunction';
   }
   throw new Error(`Unexpected assertion class: ${className}`);
 }

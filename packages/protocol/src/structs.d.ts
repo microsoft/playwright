@@ -285,6 +285,7 @@ export type SerializedValue = {
   }[],
   h?: number,
   fn?: string,
+  fn_rv?: SerializedValue[],
   id?: number,
   ref?: number,
 };

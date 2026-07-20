@@ -77,8 +77,10 @@ import {
   toHaveURL,
   toHaveValue,
   toHaveValues,
-  toPass
+  toPass,
+  timeoutFailureMessage
 } from './matchers';
+import { createMockFunction, mockMatchers } from './mockFunctions';
 import { toMatchAriaSnapshot } from './toMatchAriaSnapshot';
 import { toHaveScreenshot, toMatchSnapshot } from './toMatchSnapshot';
 
@@ -211,11 +213,16 @@ const customAsyncMatchers = {
   toPass,
 };
 
+const retryingMatchers = {
+  ...customAsyncMatchers,
+  ...mockMatchers,
+};
+
 const allBuiltinMatchers: MatchersObject = {
   ...expectMatchers,
   toThrow: createThrowMatcher('toThrow'),
   toThrowError: createThrowMatcher('toThrowError'),
-  ...customAsyncMatchers,
+  ...retryingMatchers,
   toMatchSnapshot,
 } as any;
 
@@ -252,6 +259,8 @@ function createExpect(info: ExpectMetaInfo): Expect<{}> {
     expectFn[name] = positive;
     notAsymmetric[name] = inverse;
   }
+
+  expectFn.fn = createMockFunction;
 
   expectFn.getState = () => ({});
 
@@ -429,7 +438,7 @@ async function invokePollMatcher(
 ): Promise<MatcherResult> {
   if (typeof actual !== 'function')
     throw new Error('`expect.poll()` accepts only function as a first argument');
-  if (promise || (customAsyncMatchers as any)[matcherName])
+  if (promise || (retryingMatchers as any)[matcherName])
     throw new Error(`\`expect.poll()\` does not support "${promise ?? matcherName}" matcher.`);
 
   const testInfo = expectConfig().testInfo;
@@ -448,15 +457,8 @@ async function invokePollMatcher(
       return { continuePolling: true, result: error };
     }
   }, deadline, poll.intervals ?? [100, 250, 500, 1000]);
-  if (result.timedOut) {
-    const message = result.result ? [
-      result.result.message,
-      '',
-      `Call Log:`,
-      `- ${timeoutMessage}`,
-    ].join('\n') : timeoutMessage;
-    return { pass: !!info.isNot, message: () => message };
-  }
+  if (result.timedOut)
+    return { pass: !!info.isNot, message: () => timeoutFailureMessage(result.result?.message, timeoutMessage) };
   return { pass: !info.isNot, message: () => '' };
 }
 

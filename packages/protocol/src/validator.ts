@@ -2987,6 +2987,7 @@ scheme.SerializedValue = tObject({
   }))),
   h: tOptional(tInt),
   fn: tOptional(tString),
+  fn_rv: tOptional(tArray(tType('SerializedValue'))),
   id: tOptional(tInt),
   ref: tOptional(tInt),
 });

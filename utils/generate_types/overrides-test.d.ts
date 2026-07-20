@@ -392,6 +392,113 @@ type FunctionAssertions = {
   toPass(options?: { timeout?: number, intervals?: number[] }): Promise<void>;
 };
 
+interface FnAssertions {
+  not: FnAssertions;
+  toHaveBeenCalled(): Promise<void>;
+  toHaveBeenCalledTimes(count: number): Promise<void>;
+  toHaveBeenCalledWith(...args: Array<unknown>): Promise<void>;
+  toHaveBeenLastCalledWith(...args: Array<unknown>): Promise<void>;
+  toHaveBeenNthCalledWith(n: number, ...args: Array<unknown>): Promise<void>;
+  toHaveLastResolvedWith(value: unknown): Promise<void>;
+  toHaveLastReturnedWith(value: unknown): Promise<void>;
+  toHaveNthResolvedWith(n: number, value: unknown): Promise<void>;
+  toHaveNthReturnedWith(n: number, value: unknown): Promise<void>;
+  toHaveResolved(): Promise<void>;
+  toHaveResolvedTimes(count: number): Promise<void>;
+  toHaveResolvedWith(value: unknown): Promise<void>;
+  toHaveReturned(): Promise<void>;
+  toHaveReturnedTimes(count: number): Promise<void>;
+  toHaveReturnedWith(value: unknown): Promise<void>;
+}
+
+/**
+ * A mock function created by [`expect.fn()`](https://playwright.dev/docs/test-assertions). Records all calls and
+ * their results, to be asserted with `await expect(mockFunction).toHaveBeenCalledWith(...)` and similar assertions.
+ */
+export interface MockFunction<Args extends any[] = any[], ReturnValue = any> {
+  (...args: Args): ReturnValue | Promise<ReturnValue>;
+  /**
+   * Recorded calls and results.
+   */
+  mock: {
+    /**
+     * Arguments of each recorded call.
+     */
+    calls: Args[];
+    /**
+     * Result of each recorded call, either a returned value or a thrown error.
+     */
+    results: { type: 'return' | 'throw', value: any }[];
+    /**
+     * Settled result of each recorded call: `'fulfilled'` once the returned promise resolves (immediately for
+     * non-promise values), `'rejected'` when the call throws or the promise rejects, `'incomplete'` while pending.
+     */
+    settledResults: { type: 'incomplete' | 'fulfilled' | 'rejected', value: any }[];
+    /**
+     * Arguments of the last recorded call, if any.
+     */
+    lastCall: Args | undefined;
+  };
+  /**
+   * Removes recorded calls and results, keeps the implementation.
+   */
+  mockClear(): this;
+  /**
+   * Removes recorded calls and results, removes "once" implementations and values, and resets the implementation to
+   * the one originally passed to `expect.fn()`, if any.
+   */
+  mockReset(): this;
+  /**
+   * Replaces the implementation of the mock function. The implementation runs in the test process, so when the mock
+   * function is passed into the page, for example to `page.evaluate()`, the page-side caller always receives a
+   * promise and must await it. That is why the implementation must be an async function. Use
+   * [mockFunction.mockReturnValue(value)](https://playwright.dev/docs/test-assertions) for values that should be
+   * available to the page synchronously.
+   */
+  mockImplementation(implementation: (...args: Args) => Promise<ReturnValue>): this;
+  /**
+   * Adds an implementation to be used for a single call, in the order of registration. See
+   * [mockFunction.mockImplementation(implementation)](https://playwright.dev/docs/test-assertions) for why the
+   * implementation must be an async function.
+   */
+  mockImplementationOnce(implementation: (...args: Args) => Promise<ReturnValue>): this;
+  /**
+   * Makes the mock function return the given value. When the mock function is passed into the page, for example to
+   * `page.evaluate()`, the value is serialized along with it and the page-side caller receives it synchronously.
+   */
+  mockReturnValue(value: ReturnValue): this;
+  /**
+   * Makes the mock function return the given value for a single call, in the order of registration. Like
+   * [mockFunction.mockReturnValue(value)](https://playwright.dev/docs/test-assertions), the values are serialized
+   * into the page and consumed synchronously.
+   */
+  mockReturnValueOnce(value: ReturnValue): this;
+  /**
+   * Makes the mock function return a promise resolved with the given value.
+   */
+  mockResolvedValue(value: ReturnValue): this;
+  /**
+   * Makes the mock function return a promise resolved with the given value for a single call, in the order of registration.
+   */
+  mockResolvedValueOnce(value: ReturnValue): this;
+  /**
+   * Makes the mock function return a promise rejected with the given error.
+   */
+  mockRejectedValue(error: unknown): this;
+  /**
+   * Makes the mock function return a promise rejected with the given error for a single call, in the order of registration.
+   */
+  mockRejectedValueOnce(error: unknown): this;
+  /**
+   * Sets the name of the mock function, used in the assertion error messages.
+   */
+  mockName(name: string): this;
+  /**
+   * Returns the name of the mock function.
+   */
+  getMockName(): string;
+}
+
 type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T> & SnapshotAssertions;
 type AllowedGenericMatchers<R, T> = PlaywrightTest.Matchers<R, T> & Pick<GenericAssertions<R>, 'toBe' | 'toBeDefined' | 'toBeFalsy' | 'toBeNull' | 'toBeTruthy' | 'toBeUndefined'>;
 
@@ -399,8 +506,8 @@ type SpecificMatchers<R, T> =
   T extends Page ? PageAssertions & AllowedGenericMatchers<R, T> :
   T extends Locator ? LocatorAssertions & AllowedGenericMatchers<R, T> :
   T extends APIResponse ? APIResponseAssertions & AllowedGenericMatchers<R, T> :
-  BaseMatchers<R, T> & (T extends Function ? FunctionAssertions : {});
-type AllMatchers<R, T> = PageAssertions & LocatorAssertions & APIResponseAssertions & FunctionAssertions & BaseMatchers<R, T>;
+  BaseMatchers<R, T> & (T extends Function ? FunctionAssertions & FnAssertions : {});
+type AllMatchers<R, T> = PageAssertions & LocatorAssertions & APIResponseAssertions & FunctionAssertions & FnAssertions & BaseMatchers<R, T>;
 
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
@@ -486,6 +593,28 @@ type PollMatchers<R, T, ExtendedMatchers> = {
 
 export type Expect<ExtendedMatchers = {}> = {
   <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T, ExtendedMatchers>;
+  /**
+   * Creates a {@link MockFunction} that records its calls and returned values, to be asserted with
+   * `await expect(mockFunction).toHaveBeenCalledWith(...)` and similar assertions. These assertions are asynchronous
+   * and retried until they pass or the expect timeout is reached, so the mock function can be handed to concurrent
+   * code, for example exposed into the page with
+   * [page.evaluate(pageFunction, arg, options)](https://playwright.dev/docs/api/class-page#page-evaluate) or
+   * [page.exposeBinding(name, callback, options)](https://playwright.dev/docs/api/class-page#page-expose-binding).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const callback = expect.fn();
+   * await page.evaluate(({ callback }) => {
+   *   document.addEventListener('click', () => callback('clicked'));
+   * }, { callback }, { exposeFunctions: true });
+   * await page.locator('body').click();
+   * await expect(callback).toHaveBeenCalledWith('clicked');
+   * ```
+   *
+   * @param implementation Optional implementation to be invoked by the mock function. Must be an async function: the implementation runs in the test process, so a page-side caller always receives a promise. By default, the mock function returns `undefined`.
+   */
+  fn<Args extends any[] = any[], ReturnValue = any>(implementation?: (...args: Args) => Promise<ReturnValue>): MockFunction<Args, ReturnValue>;
   soft: Expect<ExtendedMatchers>;
   poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => PollMatchers<Promise<void>, T, ExtendedMatchers>;
   extend<MoreMatchers extends Record<string, (this: ExpectMatcherState, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers>;

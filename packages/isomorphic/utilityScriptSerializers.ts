@@ -16,11 +16,6 @@
 
 type TypedArrayKind = 'i8' | 'ui8' | 'ui8c' | 'i16' | 'ui16' | 'i32' | 'ui32' | 'f32' | 'f64' | 'bi64' | 'bui64';
 
-// Name prefix of the page bindings backing the functions passed to evaluate()
-// as arguments. Only functions carrying this prefix serialize as { fn },
-// arbitrary functions are dropped as before.
-export const kFunctionBindingPrefix = '__pw_fn_';
-
 export const kBindingsControllerProperty = '__playwright__binding__controller__';
 
 export type SerializedValue =
@@ -35,7 +30,7 @@ export type SerializedValue =
     { o: { k: string, v: SerializedValue }[], id: number } |
     { ref: number } |
     { h: number } |
-    { fn: string } |
+    { fn: string, fn_rv?: SerializedValue[] } |
     { ta: { b: string, k: TypedArrayKind } } |
     { ab: { b: string } };
 
@@ -187,8 +182,20 @@ export function parseEvaluationResultValue(value: SerializedValue, handles: any[
       return handles[value.h];
     if ('fn' in value) {
       const name = value.fn;
-      // eslint-disable-next-line no-restricted-globals
-      return (...args: any[]) => (globalThis as any)[kBindingsControllerProperty].callBinding(name, ...args);
+      if (!value.fn_rv) {
+        // eslint-disable-next-line no-restricted-globals
+        return (...args: any[]) => (globalThis as any)[kBindingsControllerProperty].callBinding(name, ...args);
+      }
+      // Values are consumed in order, the last one repeats for all remaining calls.
+      const values = value.fn_rv.map(v => parseEvaluationResultValue(v, handles, refs));
+      return (...args: any[]) => {
+        // Still route every call to the client so that it is recorded.
+        // eslint-disable-next-line no-restricted-globals
+        const promise = (globalThis as any)[kBindingsControllerProperty].callBinding(name, ...args);
+        // The client records the result, the caller consumes the local value.
+        promise.catch(() => {});
+        return values.length > 1 ? values.shift() : values[0];
+      };
     }
     if ('ta' in value)
       return base64ToTypedArray(value.ta.b, typedArrayConstructors[value.ta.k]);
@@ -314,6 +321,16 @@ function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrVa
     return { o, id };
   }
 
-  if (typeof value === 'function' && value.name.startsWith(kFunctionBindingPrefix))
+  if (typeof value === 'function' && value.name.startsWith(kCallbackPrefix)) {
+    const returnValues = (value as any)[kCallbackReturnValuesProperty] as CallbackReturnValues | undefined;
+    if (returnValues)
+      return { fn: value.name, fn_rv: returnValues.map(v => serialize(v, handleSerializer, visitorInfo)) };
     return { fn: value.name };
+  }
 }
+
+// Never empty; the last value is the default that repeats for all remaining calls.
+export type CallbackReturnValues = any[];
+export const kCallbackPrefix = '__pw_fn_';
+export const kCallbackReturnValuesProperty = '__pw_callback_rv__';
+export const kCallbackReturnValuesSymbol = Symbol.for('playwright.callbackReturnValues');

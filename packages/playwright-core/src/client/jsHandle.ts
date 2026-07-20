@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { kFunctionBindingPrefix } from '@isomorphic/utilityScriptSerializers';
-import { parseSerializedValue, serializeValue } from '@protocol/serializers';
+import { kCallbackPrefix, kCallbackReturnValuesSymbol } from '@isomorphic/utilityScriptSerializers';
+import { parseSerializedValue, serializePlainValue, serializeValue } from '@protocol/serializers';
 import { createGuid } from '@utils/crypto';
 import { ChannelOwner } from './channelOwner';
 import { isTargetClosedError } from './errors';
@@ -104,8 +104,13 @@ export function serializeArgument(arg: any, registerCallback?: (callback: Functi
   const value = serializeValue(arg, value => {
     if (value instanceof JSHandle)
       return { h: pushHandle(value._channel) };
-    if (typeof value === 'function' && registerCallback)
-      return { fn: registerCallback(value as Function) };
+    if (typeof value === 'function' && registerCallback) {
+      const fn = registerCallback(value as Function);
+      const returnValues = (value as any)[kCallbackReturnValuesSymbol]?.();
+      if (returnValues)
+        return { fn, fn_rv: returnValues.map((v: any) => serializePlainValue(v)) };
+      return { fn };
+    }
     return { fallThrough: value };
   });
   return { value, handles };
@@ -119,7 +124,7 @@ export async function serializeArgumentWithCallbacks(owner: ChannelOwner<any>, p
     const serialized = serializeArgument(arg, callback => {
       if (!page)
         throw new Error('Passing a function is not supported as an argument here');
-      const name = kFunctionBindingPrefix + createGuid();
+      const name = kCallbackPrefix + createGuid();
       exposePromises.push(page._exposeEvaluateCallback(name, callback));
       return name;
     });
