@@ -137,7 +137,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   postData(): string | null {
-    return (this._fallbackOverrides.postDataBuffer || this._initializer.postData)?.toString('utf-8') || null;
+    return (this._fallbackOverrides.postDataBuffer ?? this._initializer.postData)?.toString('utf-8') ?? null;
   }
 
   postDataBuffer(): Buffer | null {
@@ -221,7 +221,8 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
         'Frame for this navigation request is not available, because the request',
         'was issued before the frame is created. You can check whether the request',
         'is a navigation request by calling isNavigationRequest() method.',
-      ].join('\n'));
+      ].join('
+'));
     }
     return frame;
   }
@@ -885,7 +886,9 @@ export class RouteHandler {
       if (isTargetClosedError(e)) {
         // We are failing in the handler because the target close closed.
         // Give user a hint!
-        rewriteErrorMessage(e, `"${e.message}" while running route callback.\nConsider awaiting \`await page.unrouteAll({ behavior: 'ignoreErrors' })\`\nbefore the end of the test to ignore remaining routes in flight.`);
+        rewriteErrorMessage(e, `"${e.message}" while running route callback.
+Consider awaiting \`await page.unrouteAll({ behavior: 'ignoreErrors' })\`
+before the end of the test to ignore remaining routes in flight.`);
       }
       throw e;
     } finally {
@@ -949,7 +952,8 @@ export class RawHeaders {
     const values = this.getAll(name);
     if (!values || !values.length)
       return null;
-    return values.join(name.toLowerCase() === 'set-cookie' ? '\n' : ', ');
+    return values.join(name.toLowerCase() === 'set-cookie' ? '
+' : ', ');
   }
 
   getAll(name: string): string[] {
