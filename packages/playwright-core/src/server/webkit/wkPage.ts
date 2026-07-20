@@ -676,13 +676,10 @@ export class WKPage implements PageDelegate {
   }
 
   _calculateExtraHTTPHeaders(): types.HeadersArray {
-    const locale = this._browserContext._options.locale;
-    const headers = network.mergeHeaders([
+    return network.mergeHeaders([
       this._browserContext._options.extraHTTPHeaders,
       this._page.extraHTTPHeaders(),
-      locale ? network.singleHeader('Accept-Language', locale) : undefined,
     ]);
-    return headers;
   }
 
   async updateEmulateMedia(): Promise<void> {

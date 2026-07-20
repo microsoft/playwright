@@ -192,8 +192,7 @@ it('should affect Intl.DateTimeFormat().resolvedOptions().locale', async ({ brow
 
 it('should send user Accept-Language header', {
   annotation: [{ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23732' }],
-}, async ({ browser, server, browserName }) => {
-  it.fixme(browserName === 'webkit', 'Implementation set Accept-Language header as extra HTTP header');
+}, async ({ browser, server }) => {
   const context = await browser.newContext({ locale: 'en-GB' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -222,5 +221,19 @@ it('should send user Accept-Language header', {
     const req = await reqPromise;
     expect(req.headers['accept-language']).toContain('en-GB');
   }
+  await context.close();
+});
+
+it('should send Accept-Language header on WebSocket handshake', {
+  annotation: [{ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23732' }],
+}, async ({ browser, server, browserName }) => {
+  it.fixme(browserName === 'firefox', 'Firefox does not send Accept-Language on WebSocket handshake');
+  const context = await browser.newContext({ locale: 'en-GB' });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  const reqPromise = server.waitForWebSocketConnectionRequest();
+  await page.evaluate(port => { new WebSocket(`ws://localhost:${port}/ws`); }, server.PORT);
+  const req = await reqPromise;
+  expect(req.headers['accept-language']).toContain('en-GB');
   await context.close();
 });
