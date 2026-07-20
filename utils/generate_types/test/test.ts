@@ -428,6 +428,34 @@ playwright.chromium.launch().then(async browser => {
   {
     await locator.evaluateAll((sel: HTMLSelectElement[]) => {})
   }
+  {
+    await locator.evaluate((e, cb) => {
+      const value = cb(2);
+      const assertion: AssertType<Promise<number>, typeof value> = true;
+    }, (x: number) => 2 * x);
+  }
+  {
+    await locator.evaluate((e, cb) => {
+      const value = cb(2);
+      const assertion: AssertType<Promise<number>, typeof value> = true;
+    }, async (x: number) => 2 * x);
+  }
+  {
+    await locator.evaluate((e, { cb }) => {
+      const value = cb(2);
+      const assertion: AssertType<Promise<number>, typeof value> = true;
+    }, { cb: (x: number) => page.evaluateHandle(y => 2 * y, x) });
+  }
+  {
+    const func = async (x: number) => {
+      const double = await page.evaluateHandle(y => 2 * y, x);
+      return { double, add: 17 };
+    };
+    await locator.evaluate((e, { cb }) => {
+      const value = cb(2);
+      const assertion: AssertType<Promise<{ double: number, add: number }>, typeof value> = true;
+    }, { cb: func });
+  }
   await browser.close();
 })();
 

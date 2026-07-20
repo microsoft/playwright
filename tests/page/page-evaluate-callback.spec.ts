@@ -18,7 +18,7 @@ import { attachFrame } from '../config/utils';
 import { test as it, expect } from './pageTest';
 
 it('should throw without the exposeFunctions option', async ({ page }) => {
-  await expect(page.evaluate(({ cb }) => (cb as any)(), { cb: () => {} }))
+  await expect(page.evaluate(({ cb }) => cb(), { cb: () => {} }))
       .rejects.toThrow(/Attempting to serialize unexpected value at position "cb": \(\) => {}/);
 });
 
@@ -27,7 +27,7 @@ it('should call a function passed as an argument', async ({ page }) => {
   await page.evaluate(async ({ cb }) => {
     await cb(1);
     await cb(2);
-  }, { cb: async (n: number) => { received.push(n); } }, { exposeFunctions: true });
+  }, { cb: (n: number) => { received.push(n); } }, { exposeFunctions: true });
   expect(received).toEqual([1, 2]);
 });
 
@@ -54,6 +54,26 @@ it('should return the callback result to the page', async ({ page }) => {
     cb: async (n: number) => n * 2,
   }, { exposeFunctions: true });
   expect(doubled).toBe(42);
+});
+
+it('should support handle as a callback result', async ({ page }) => {
+  const result = await page.evaluate(async cb => {
+    const value = await cb(42);
+    return value + 17;
+  }, (n: number) => page.evaluateHandle(x => 2 * x, n), { exposeFunctions: true });
+  expect(result).toBe(101);
+});
+
+it('should support nested handles in the callback result', async ({ page }) => {
+  const result = await page.evaluate(async cb => {
+    const res = await cb(42);
+    return res.mul[0] + res.mul[1] + res.add;
+  }, async (n: number) => {
+    const double = await page.evaluateHandle(x => 2 * x, n);
+    const triple = await page.evaluateHandle(x => 3 * x, n);
+    return { mul: [double, triple] as const, add: 17 };
+  }, { exposeFunctions: true });
+  expect(result).toBe(227);
 });
 
 it('should await an async callback result', async ({ page }) => {
