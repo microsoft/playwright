@@ -18,6 +18,7 @@ import type * as playwright from '../../..';
 import type { Tab } from './tab';
 
 export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>): Promise<R> {
+  const settleMs = tab.context.config.timeouts?.settle ?? 500;
   const requests: playwright.Request[] = [];
 
   const requestListener = (request: playwright.Request) => requests.push(request);
@@ -29,7 +30,7 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
   let result: R;
   try {
     result = await callback();
-    await tab.waitForTimeout(500);
+    await tab.waitForTimeout(settleMs);
   } finally {
     disposeListeners();
   }
@@ -50,7 +51,7 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
   const timeout = new Promise<void>(resolve => setTimeout(resolve, 5000));
   await Promise.race([Promise.all(promises), timeout]);
   if (requests.length)
-    await tab.waitForTimeout(500);
+    await tab.waitForTimeout(settleMs);
 
   return result;
 }
