@@ -89,6 +89,7 @@ const defaultConfig: MergedConfig = {
     action: 5000,
     navigation: 60000,
     expect: 5000,
+    settle: 500,
   },
 };
 
