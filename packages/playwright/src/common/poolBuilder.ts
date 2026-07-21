@@ -69,7 +69,20 @@ export class PoolBuilder {
     }
 
     pool.validateFunction(test.fn, 'Test', test.location);
+    if (this._type === 'loader')
+      this._setFixtureLocksForTest(test, pool, parents);
     return pool;
+  }
+
+  private _setFixtureLocksForTest(test: TestCase, pool: FixturePool, parents: Suite[]) {
+    test._locks.push(...pool.locksForAutoFixtures());
+    for (const parent of parents) {
+      for (const hook of parent._hooks)
+        test._locks.push(...pool.locksForFunction(hook.fn, hook.location));
+      for (const modifier of parent._modifiers)
+        test._locks.push(...pool.locksForFunction(modifier.fn, modifier.location));
+    }
+    test._locks.push(...pool.locksForFunction(test.fn, test.location));
   }
 
   private _buildTestTypePool(testType: TestTypeImpl, testErrors?: TestError[]): FixturePool {
