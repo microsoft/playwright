@@ -447,10 +447,16 @@ export async function loadConfig(configFile: string | undefined): Promise<Config
   if (configFile.endsWith('.ini'))
     return configFromIniFile(configFile);
 
+  const raw = await fs.promises.readFile(configFile, 'utf8');
+  const data = raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw;
   try {
-    const data = await fs.promises.readFile(configFile, 'utf8');
-    return JSON.parse(data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data);
-  } catch {
+    return JSON.parse(data);
+  } catch (jsonError) {
+    // A JSON config is always an object, so JSON-looking input must surface its
+    // parse error rather than silently falling back to INI (and the default
+    // config). A leading `[` stays with INI — it is a `[section]` header there.
+    if (/^\s*\{/.test(data))
+      throw jsonError;
     return configFromIniFile(configFile);
   }
 }

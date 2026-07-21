@@ -83,6 +83,25 @@ test.describe('browserName and channel', () => {
     expect(config.browser.launchOptions.channel).toBeUndefined();
   });
 
+  test('malformed JSON config throws instead of falling back to INI', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41893' },
+  }, async ({}, testInfo) => {
+    const configFile = testInfo.outputPath('config.json');
+    // Trailing comma makes this invalid JSON; it must not be silently parsed as INI.
+    await fs.promises.writeFile(configFile, '{ "browser": { "browserName": "firefox", } }');
+    await expect(resolveCLIConfigForMCP({ config: configFile }, emptyEnv)).rejects.toThrow();
+  });
+
+  test('INI config starting with a section header still parses', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41893' },
+  }, async ({}, testInfo) => {
+    const configFile = testInfo.outputPath('config.cfg');
+    // A leading `[section]` is INI, not JSON — it must not be treated as malformed JSON.
+    await fs.promises.writeFile(configFile, '[browser]\nbrowserName = firefox\n');
+    const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv);
+    expect(config.browser.browserName).toBe('firefox');
+  });
+
   test('config file browserName + channel are both preserved', async ({}, testInfo) => {
     const configFile = testInfo.outputPath('config.json');
     const fileConfig: Config = {
