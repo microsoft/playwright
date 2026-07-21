@@ -86,6 +86,54 @@ it('should remove context init script and keep working in new pages', async ({ c
   expect(await page.evaluate(() => (window as any)['temp'])).toBe(undefined);
 });
 
+it('should expose functions passed as arguments', async ({ context, server }) => {
+  const received: string[] = [];
+  await context.addInitScript(async ({ cb }) => {
+    await cb(location.href);
+  }, { cb: async (href: string) => { received.push(href); } }, { exposeFunctions: true });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await expect.poll(() => received).toContain(server.EMPTY_PAGE);
+});
+
+it('should expose functions that survive navigation', async ({ context, server }) => {
+  const received: number[] = [];
+  await context.addInitScript(({ cb }) => {
+    (window as any).cb = cb;
+  }, { cb: (n: number) => { received.push(n); return n * 2; } }, { exposeFunctions: true });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.evaluate(() => (window as any).cb(1))).toBe(2);
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  expect(await page.evaluate(() => (window as any).cb(2))).toBe(4);
+  expect(received).toEqual([1, 2]);
+});
+
+it('should expose functions in popups', async ({ context, server }) => {
+  await context.addInitScript(({ mul }) => {
+    (window as any).mul = mul;
+  }, { mul: (a: number, b: number) => a * b }, { exposeFunctions: true });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(() => window.open('about:blank')),
+  ]);
+  expect(await popup.evaluate(() => (window as any).mul(6, 7))).toBe(42);
+});
+
+it('should remove exposed functions after dispose', async ({ context, server }) => {
+  const disposable = await context.addInitScript(({ cb }) => {
+    (window as any).cb = cb;
+  }, { cb: (n: number) => n * 2 }, { exposeFunctions: true });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.evaluate(() => (window as any).cb(21))).toBe(42);
+  await disposable.dispose();
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.evaluate(() => typeof (window as any).cb)).toBe('undefined');
+});
+
 it('init script should run only once in popup', async ({ context }) => {
   await context.addInitScript(() => {
     window['callCount'] = (window['callCount'] || 0) + 1;

@@ -18,6 +18,8 @@
 import fs from 'fs';
 
 import { isString } from '@isomorphic/rtti';
+import { kBindingsControllerProperty, kFunctionBindingPrefix, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
+import { createGuid } from '@utils/crypto';
 
 export function envObjectToArray(env: NodeJS.ProcessEnv): { name: string, value: string }[] {
   const result: { name: string, value: string }[] = [];
@@ -47,6 +49,22 @@ export async function evaluationScript(fun: Function | string | { path?: string,
     return source;
   }
   throw new Error('Either path or content property must be present');
+}
+
+export async function initScriptSourceWithExposedFunctions(fun: Function, arg: any, expose: (name: string, callback: Function) => Promise<void>): Promise<string> {
+  const exposePromises: Promise<void>[] = [];
+  const serialized = serializeAsCallArgument(arg, value => {
+    if (typeof value === 'function') {
+      const name = kFunctionBindingPrefix + createGuid();
+      exposePromises.push(expose(name, value));
+      return { fn: name };
+    }
+    return { fallThrough: value };
+  });
+  await Promise.all(exposePromises);
+  // Bindings backing the functions are registered through their own init scripts
+  // that are guaranteed to run first, so the controller is available here.
+  return `(${fun.toString()})(globalThis['${kBindingsControllerProperty}'].parseInitScriptArg(${JSON.stringify(serialized)}))`;
 }
 
 export function addSourceUrlToScript(source: string, path: string): string {

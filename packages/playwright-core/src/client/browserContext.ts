@@ -37,8 +37,9 @@ import { Events } from './events';
 import { APIRequestContext } from './fetch';
 import { Frame } from './frame';
 import { HarRouter } from './harRouter';
+import { assertEvaluateOptions } from './jsHandle';
 import * as network from './network';
-import { BindingCall, Page } from './page';
+import { BindingCall, Page, addInitScriptWithExposedFunctions } from './page';
 import { Tracing } from './tracing';
 import { Waiter } from './waiter';
 import { WebError } from './webError';
@@ -46,6 +47,7 @@ import { Worker } from './worker';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 import { mkdirIfNeeded } from './fileUtils';
 
+import type { EvaluateOptions } from './jsHandle';
 import type { BrowserContextOptions, Headers, SetStorageState, StorageState, WaitForEventOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
@@ -358,7 +360,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.setHTTPCredentials({ httpCredentials: httpCredentials || undefined }, kNoTimeout);
   }
 
-  async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
+  async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any, options?: EvaluateOptions) {
+    assertEvaluateOptions(options);
+    if (options?.exposeFunctions)
+      return await addInitScriptWithExposedFunctions(this, script, arg);
     const source = await evaluationScript(script, arg);
     return DisposableObject.from((await this._channel.addInitScript({ source }, kNoTimeout)).disposable);
   }
@@ -366,6 +371,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any): Promise<DisposableObject> {
     const result = await this._channel.exposeBinding({ name }, kNoTimeout);
     this._bindings.set(name, callback);
+    return DisposableObject.from(result.disposable);
+  }
+
+  async _exposeCallbackBinding(name: string, callback: Function): Promise<DisposableObject> {
+    this._bindings.set(name, (source, ...args) => callback(...args));
+    const result = await this._channel.exposeBinding({ name, noGlobal: true }, kNoTimeout);
     return DisposableObject.from(result.disposable);
   }
 

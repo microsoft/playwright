@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
+import { parseEvaluationResultValue, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
 
 import type { SerializedValue } from '@isomorphic/utilityScriptSerializers';
 
@@ -66,6 +66,12 @@ export class BindingsController {
     const payload: BindingPayload = { name: bindingName, seq, serializedArgs };
     (this._global as any)[this._globalBindingName](JSON.stringify(payload));
     return promise;
+  }
+
+  parseInitScriptArg(value: SerializedValue): any {
+    // Functions serialized as { fn } deserialize into wrappers
+    // that route the call through this controller.
+    return parseEvaluationResultValue(value);
   }
 
   removeBinding(bindingName: string) {

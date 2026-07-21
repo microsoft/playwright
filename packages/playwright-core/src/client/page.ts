@@ -28,7 +28,7 @@ import { LongStandingScope } from '@isomorphic/manualPromise';
 import { isObject, isRegExp, isString } from '@isomorphic/rtti';
 import { Artifact } from './artifact';
 import { ChannelOwner } from './channelOwner';
-import { evaluationScript } from './clientHelper';
+import { evaluationScript, initScriptSourceWithExposedFunctions } from './clientHelper';
 import { Coverage } from './coverage';
 import { DisposableObject, DisposableStub } from './disposable';
 import { Download } from './download';
@@ -40,7 +40,7 @@ import { Frame, verifyLoadState } from './frame';
 import { HarRouter } from './harRouter';
 import { Keyboard, Mouse, Touchscreen } from './input';
 import { WebStorage } from './webStorage';
-import { assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
+import { assertEvaluateOptions, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
 import { Request, Response, Route, RouteHandler, WebSocket,  WebSocketRoute, WebSocketRouteHandler, validateHeaders } from './network';
 import { Video } from './video';
 import { Screencast } from './screencast';
@@ -376,10 +376,15 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return DisposableObject.from(result.disposable);
   }
 
-  async _exposeEvaluateCallback(name: string, callback: Function) {
+  async _exposeCallbackBinding(name: string, callback: Function): Promise<DisposableObject> {
     this._bindings.set(name, (source, ...args) => callback(...args));
     const result = await this._channel.exposeBinding({ name, noGlobal: true }, kNoTimeout);
-    this._evaluateCallbacks.push({ name, disposable: DisposableObject.from(result.disposable) });
+    return DisposableObject.from(result.disposable);
+  }
+
+  async _exposeEvaluateCallback(name: string, callback: Function) {
+    const disposable = await this._exposeCallbackBinding(name, callback);
+    this._evaluateCallbacks.push({ name, disposable });
   }
 
   _eraseEvaluateCallbacks() {
@@ -549,7 +554,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._mainFrame.evaluate(pageFunction, arg, options);
   }
 
-  async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
+  async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any, options?: EvaluateOptions) {
+    assertEvaluateOptions(options);
+    if (options?.exposeFunctions)
+      return await addInitScriptWithExposedFunctions(this, script, arg);
     const source = await evaluationScript(script, arg);
     return DisposableObject.from((await this._channel.addInitScript({ source }, kNoTimeout)).disposable);
   }
@@ -946,4 +954,24 @@ function trimUrl(param: any): string | undefined {
     return `/${trimStringWithEllipsis(param.source, 50)}/${param.flags}`;
   if (isString(param))
     return `"${trimStringWithEllipsis(param, 50)}"`;
+}
+
+export async function addInitScriptWithExposedFunctions(owner: Page | BrowserContext, script: Function | string | { path?: string, content?: string }, arg: any): Promise<DisposableStub> {
+  if (typeof script !== 'function')
+    throw new Error('Passing functions requires the init script to be a function');
+  const callbacks: { name: string, disposable: DisposableObject }[] = [];
+  const source = await owner._wrapApiCall(async () => {
+    return await initScriptSourceWithExposedFunctions(script, arg, async (name, callback) => {
+      const disposable = await owner._exposeCallbackBinding(name, callback);
+      callbacks.push({ name, disposable });
+    });
+  }, { internal: true });
+  const initScriptDisposable = DisposableObject.from((await owner._channel.addInitScript({ source }, kNoTimeout)).disposable);
+  return new DisposableStub(async () => {
+    for (const { name, disposable } of callbacks) {
+      owner._bindings.delete(name);
+      disposable.dispose().catch(() => {});
+    }
+    await initScriptDisposable.dispose();
+  });
 }

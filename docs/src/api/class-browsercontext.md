@@ -476,6 +476,9 @@ Path to the JavaScript file. If `path` is a relative path, then it is resolved r
 
 Script to be evaluated in all pages in the browser context. Optional.
 
+### option: BrowserContext.addInitScript.exposeFunctions = %%-js-init-script-expose-functions-%%
+* since: v1.62
+
 ## method: BrowserContext.backgroundPages
 * since: v1.11
 * deprecated: Background pages have been removed from Chromium together with Manifest V2 extensions.

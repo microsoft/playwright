@@ -39,7 +39,7 @@ export type SerializedValue =
     { ta: { b: string, k: TypedArrayKind } } |
     { ab: { b: string } };
 
-type HandleOrValue = { h: number } | { fallThrough: any };
+type HandleOrValue = { h: number } | { fn: string } | { fallThrough: any };
 
 type VisitorInfo = {
   visited: Map<object, number>;
