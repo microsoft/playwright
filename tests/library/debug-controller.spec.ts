@@ -225,7 +225,7 @@ test('should record expect signal', async ({ backend, connectedBrowser }) => {
   `);
 
   await page.getByRole('button', { name: 'Show' }).click();
-  // A click stalls for 200ms to detect a double click, and the next click cancels a pending one.
+  // A click is buffered for a while to detect a double click, so wait for it to be recorded.
   await expect.poll(() => events[events.length - 1]?.actions.length).toBe(2);
   await page.getByRole('button', { name: 'Other' }).click();
 

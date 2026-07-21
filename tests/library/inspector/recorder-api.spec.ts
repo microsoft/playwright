@@ -52,8 +52,7 @@ test('should click', async ({ context, browserName, platform, channel }) => {
   await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
   await page.getByRole('button', { name: 'Submit' }).click();
 
-  const clickActions = log.action('click');
-  expect(clickActions).toEqual([
+  await expect.poll(() => log.action('click')).toEqual([
     expect.objectContaining({
       action: expect.objectContaining({
         name: 'click',
@@ -66,7 +65,7 @@ test('should click', async ({ context, browserName, platform, channel }) => {
     })
   ]);
 
-  expect(normalizeCode(clickActions[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).click();`);
+  expect(normalizeCode(log.action('click')[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).click();`);
 });
 
 test('should double click', async ({ context, browserName, platform, channel }) => {
@@ -146,9 +145,11 @@ test('should disable recorder', async ({ context }) => {
   await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
   await page.getByRole('button', { name: 'Submit' }).click();
   await page.getByRole('button', { name: 'Submit' }).click();
-  expect(log.action('click')).toHaveLength(2);
+  await expect.poll(() => log.action('click').length).toBe(2);
   await (context as any)._disableRecorder();
   await page.getByRole('button', { name: 'Submit' }).click();
+  // Give it some time to produce more actions - there should be none.
+  await page.waitForTimeout(2000);
   expect(log.action('click')).toHaveLength(2);
 });
 

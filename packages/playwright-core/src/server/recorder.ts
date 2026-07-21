@@ -224,14 +224,11 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
         return false;
       });
 
-      // Input actions that potentially lead to navigation are intercepted on the page and are
-      // performed by the Playwright.
       await this._context.exposeBinding(progress, '__pw_recorderPerformAction',
-          (source: BindingSource, action: actions.PerformOnRecordAction, preconditionSelector?: string) => this._performAction(progress, source.frame, action, preconditionSelector));
+          (source: BindingSource, action: actions.PerformableAction) => this._performAction(progress, source.frame, action));
 
-      // Other non-essential actions are simply being recorded.
       await this._context.exposeBinding(progress, '__pw_recorderRecordAction',
-          (source: BindingSource, action: actions.Action) => this._recordAction(progress, source.frame, action));
+          (source: BindingSource, action: actions.Action, preconditionSelector?: string) => this._recordAction(progress, source.frame, action, preconditionSelector));
 
       await progress.race(this._context.extendInjectedScript(rawRecorderSource.source, { recorderMode: this._recorderMode, hideToolbar: !!this._params.hideToolbar }));
     });
@@ -556,22 +553,16 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     return actionInContext;
   }
 
-  private async _performAction(progress: Progress, frame: Frame, action: actions.PerformOnRecordAction, preconditionSelector?: string) {
+  private async _performAction(progress: Progress, frame: Frame, action: actions.PerformableAction) {
+    const framePath = await generateFrameSelector(progress, frame);
+    const selector = buildFullSelector(framePath, action.selector);
+    await performAction(progress, frame._page.mainFrame(), { ...action, selector });
+  }
+
+  private async _recordAction(progress: Progress, frame: Frame, action: actions.Action, preconditionSelector?: string) {
     const framePath = await generateFrameSelector(progress, frame);
     if (preconditionSelector)
       this._signalProcessor.signal(frame, { name: 'expect', selector: buildFullSelector(framePath, preconditionSelector) });
-    const actionInContext = this._appendContextToAction(frame, action, framePath);
-    this._signalProcessor.addAction(actionInContext);
-    try {
-      if (actionInContext.action.name !== 'openPage' && actionInContext.action.name !== 'closePage')
-        await performAction(progress, frame._page.mainFrame(), actionInContext);
-    } finally {
-      actionInContext.endTime = monotonicTime();
-    }
-  }
-
-  private async _recordAction(progress: Progress, frame: Frame, action: actions.Action) {
-    const framePath = await generateFrameSelector(progress, frame);
     const actionInContext = this._appendContextToAction(frame, action, framePath);
     this._signalProcessor.addAction(actionInContext);
   }

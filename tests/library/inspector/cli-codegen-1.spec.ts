@@ -556,6 +556,32 @@ await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
     expect(messages[1].text()).toBe('up:ArrowDown');
   });
 
+  test('should not record a click on Enter press', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`<button onclick="console.log('clicked')">Submit</button>`);
+
+    const locator = await recorder.focusElement('button');
+    expect(locator).toBe(`getByRole('button', { name: 'Submit' })`);
+
+    const [message] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
+      recorder.waitForOutput('JavaScript', `press('Enter')`),
+      page.keyboard.press('Enter'),
+    ]);
+    expect(message.text()).toBe('clicked');
+
+    // Wait for the next action to be recorded, to make sure the keyboard-activated
+    // click event that follows the Enter press did not produce a click action.
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', `press('Tab')`),
+      page.keyboard.press('Tab'),
+    ]);
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.getByRole('button', { name: 'Submit' }).press('Enter');`);
+    expect(sources.get('JavaScript')!.text).not.toContain(`click()`);
+  });
+
   test('should check', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 

@@ -666,7 +666,7 @@ await page.GetByRole(AriaRole.Textbox, new() { Name = "Country" }).ClickAsync();
 await page.GetByRole(AriaRole.Textbox, new() { Name = \"Coun\\\"try\" }).ClickAsync();`);
   });
 
-  test('should consume pointer events', async ({ openRecorder }) => {
+  test('should pass through pointer events', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -690,8 +690,6 @@ await page.GetByRole(AriaRole.Textbox, new() { Name = \"Coun\\\"try\" }).ClickAs
     expect(message.text()).toBe('clicked');
     expect(await page.evaluate('log')).toEqual([
       'pointermove', 'mousemove',
-      'pointermove',
-      'mousemove',
       'pointerdown', 'mousedown',
       'pointerup', 'mouseup',
       'click',
@@ -742,6 +740,52 @@ await page.GetByRole(AriaRole.Textbox, new() { Name = \"Coun\\\"try\" }).ClickAs
     ]);
     expect(message.text()).toBe('right-clicked');
     expect(await page.evaluate('log')).toEqual((isWindows && browserName === 'chromium') ? ['button: auxclick', 'button: contextmenu'] : ['button: contextmenu']);
+  });
+
+  test('should generate click action from dialog', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`<button onclick="console.log('clicked')">Submit</button>`);
+    await recorder.hoverOverElement('button');
+
+    const action = async () => {
+      await recorder.trustedClick({ button: 'right' });
+      await recorder.page.getByRole('listitem', { name: 'Click', exact: true }).click();
+    };
+
+    // The dialog kicks off a click; the page reacts and the click is recorded naturally.
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
+      recorder.waitForOutput('JavaScript', 'click'),
+      action(),
+    ]);
+    expect(message.text()).toBe('clicked');
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.getByRole('button', { name: 'Submit' }).click();`);
+  });
+
+  test('should generate double click action from dialog', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`<button ondblclick="console.log('dblclicked')">Submit</button>`);
+    await recorder.hoverOverElement('button');
+
+    const action = async () => {
+      await recorder.trustedClick({ button: 'right' });
+      await recorder.page.getByRole('listitem', { name: 'Double click' }).click();
+    };
+
+    // The dialog kicks off a double click; it is recorded as a single dblclick action.
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error' && msg.text() === 'dblclicked'),
+      recorder.waitForOutput('JavaScript', 'dblclick'),
+      action(),
+    ]);
+    expect(message.text()).toBe('dblclicked');
+    const text = sources.get('JavaScript')!.text;
+    expect(text).toContain(`
+  await page.getByRole('button', { name: 'Submit' }).dblclick();`);
+    expect(text).not.toContain(`.click();`);
   });
 
   test('should generate hover action', async ({ openRecorder }) => {
@@ -1082,9 +1126,22 @@ await page.GetByTestId("testid").HoverAsync();`);
       </script>
     `);
 
-    await page.getByRole('button', { name: 'Go Fullscreen' }).click();
-    await expect(page.getByRole('button', { name: 'Close Fullscreen' })).toBeVisible();
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'Go Fullscreen'),
+      page.getByRole('button', { name: 'Go Fullscreen' }).click(),
+    ]);
+    expect(sources.get('JavaScript')!.text).toContain(`getByRole('button', { name: 'Go Fullscreen' }).click()`);
+    await page.waitForFunction(() => !!document.fullscreenElement);
 
+    // Actions inside the fullscreen element are recorded.
+    const [sources2] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'Close Fullscreen'),
+      page.getByRole('button', { name: 'Close Fullscreen' }).click(),
+    ]);
+    expect(sources2.get('JavaScript')!.text).toContain(`getByRole('button', { name: 'Close Fullscreen' }).click()`);
+    await page.waitForFunction(() => !document.fullscreenElement);
+
+    // After exiting fullscreen, the toolbar is clickable again.
     await page.getByTitle('Assert text').click();
   });
 });
