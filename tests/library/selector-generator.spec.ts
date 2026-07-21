@@ -593,7 +593,7 @@ it.describe('selector generator', () => {
     expect.soft(await generate(page, '#target1')).toBe('internal:role=textbox[name=\"Target1\"i]');
     expect.soft(await generate(page, '#target2')).toBe('internal:role=button[name=\"Target2\"i]');
     expect.soft(await generate(page, '#target3')).toBe('internal:label=\"Target3\"i');
-    expect.soft(await generate(page, '#target4')).toBe('internal:label=\"Target4\"i');
+    expect.soft(await generate(page, '#target4')).toBe('internal:role=progressbar[name=\"Target4\"i]');
     expect.soft(await generate(page, '#target5')).toBe('#target5');
     expect.soft(await generate(page, '#target6')).toBe('internal:text="text"i');
 

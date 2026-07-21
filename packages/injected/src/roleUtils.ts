@@ -848,9 +848,9 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     // For "other form elements", we count select and any other input.
     //
     // Note: WebKit does not follow the spec and uses placeholder when aria-labelledby is present.
-    if (!labelledBy && (tagName === 'TEXTAREA' || tagName === 'SELECT' || tagName === 'INPUT')) {
+    if (!labelledBy && (tagName === 'TEXTAREA' || tagName === 'SELECT' || tagName === 'INPUT' || tagName === 'METER' || tagName === 'PROGRESS')) {
       options.visitedElements.add(element);
-      const labels = (element as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)).labels || [];
+      const labels = (element as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLMeterElement | HTMLProgressElement)).labels || [];
       if (labels.length)
         return getAccessibleNameFromAssociatedLabels(labels, options);
 
