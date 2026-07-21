@@ -406,8 +406,19 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._requests.length = 0;
   }
 
-  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, boxes: boolean | undefined, relativeTo: string | undefined): Promise<TabSnapshot> {
+  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, boxes: boolean | undefined, relativeTo: string | undefined, includeAria: boolean = true): Promise<TabSnapshot> {
     await this._initializedPromise;
+    // The caller will not render the aria snapshot, so skip the accessibility
+    // tree walk, which dominates response latency on heavy pages. Console,
+    // events and modal states are still reported.
+    if (!includeAria) {
+      if (this.modalStates().length)
+        return { ariaSnapshot: '', modalStates: this.modalStates(), events: [] };
+      const tabSnapshot: TabSnapshot = { ariaSnapshot: '', modalStates: [], events: this._recentEventEntries };
+      this._recentEventEntries = [];
+      tabSnapshot.consoleLink = await this._consoleLog.take(relativeTo);
+      return tabSnapshot;
+    }
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
       const ariaSnapshot = root
