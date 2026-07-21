@@ -123,12 +123,12 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
   'IMG': (e: Element) => (e.getAttribute('alt') === '') && !e.getAttribute('title') && !hasGlobalAriaAttribute(e) && !hasTabIndex(e) ? 'presentation' : 'img',
   'INPUT': (e: Element) => {
     const type = (e as HTMLInputElement).type.toLowerCase();
-    if (type === 'search')
-      return e.hasAttribute('list') ? 'combobox' : 'searchbox';
-    if (['email', 'tel', 'text', 'url', ''].includes(type)) {
+    if (['email', 'search', 'tel', 'text', 'url', ''].includes(type)) {
       // https://html.spec.whatwg.org/multipage/input.html#concept-input-list
       const list = getIdRefs(e, e.getAttribute('list'))[0];
-      return (list && elementSafeTagName(list) === 'DATALIST') ? 'combobox' : 'textbox';
+      if (list && elementSafeTagName(list) === 'DATALIST')
+        return 'combobox';
+      return type === 'search' ? 'searchbox' : 'textbox';
     }
     if (type === 'hidden')
       return null;
