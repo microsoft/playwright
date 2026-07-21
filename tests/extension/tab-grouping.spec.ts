@@ -203,6 +203,99 @@ test('chrome:// tab dragged into group stays until it navigates to a debuggable 
   }).toEqual({ groupId, badge: '✓' });
 });
 
+test(`extension's own pages are not attached when added to the group`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41864' },
+}, async ({ browserWithExtension, startClient, server }) => {
+
+  const browserContext = await browserWithExtension.launch();
+
+  const page = await browserContext.newPage();
+  await page.goto(server.HELLO_WORLD);
+
+  const client = await startWithExtensionFlag(browserWithExtension, startClient);
+
+  const connectPagePromise = browserContext.waitForEvent('page', p =>
+    p.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
+  );
+
+  const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
+  const connectPage = await connectPagePromise;
+
+  await clickAllowAndSelect(connectPage, 'Title');
+  await navigatePromise;
+
+  const [sw] = browserContext.serviceWorkers();
+
+  await expect.poll(async () => {
+    return sw.evaluate(async () => {
+      const chrome = (globalThis as any).chrome;
+      const [connectedTab] = await chrome.tabs.query({ title: 'Title' });
+      return connectedTab?.groupId ?? -1;
+    });
+  }).toBeGreaterThan(-1);
+  const groupId = await sw.evaluate(async () => {
+    const chrome = (globalThis as any).chrome;
+    const [connectedTab] = await chrome.tabs.query({ title: 'Title' });
+    return connectedTab.groupId as number;
+  });
+
+  // Open one of the extension's own pages (connection infrastructure) and drag
+  // it into the Playwright group. It must never be attached — attaching the seed
+  // connect.html page is what orphans it across tab groups.
+  const selfPageTabId = await sw.evaluate(async () => {
+    const chrome = (globalThis as any).chrome;
+    const tab = await chrome.tabs.create({ url: chrome.runtime.getURL('status.html'), active: false });
+    return tab.id as number;
+  });
+  await expect.poll(async () => {
+    return sw.evaluate(async (id: number) => {
+      const chrome = (globalThis as any).chrome;
+      const tab = await chrome.tabs.get(id);
+      return tab.url || '';
+    }, selfPageTabId);
+  }).toContain('status.html');
+  await sw.evaluate(async ({ id, gid }: { id: number, gid: number }) => {
+    const chrome = (globalThis as any).chrome;
+    await chrome.tabs.group({ groupId: gid, tabIds: [id] });
+  }, { id: selfPageTabId, gid: groupId });
+
+  // Drag a real debuggable tab into the group after the self-page. Once it gets
+  // the connected badge, the extension has already processed the earlier self-page
+  // group event, so the self-page having no badge is settled rather than transient.
+  const probeTabId = await sw.evaluate(async (url: string) => {
+    const chrome = (globalThis as any).chrome;
+    const tab = await chrome.tabs.create({ url, active: false });
+    return tab.id as number;
+  }, server.EMPTY_PAGE);
+  await expect.poll(async () => {
+    return sw.evaluate(async (id: number) => {
+      const chrome = (globalThis as any).chrome;
+      return (await chrome.tabs.get(id)).url || '';
+    }, probeTabId);
+  }).toContain('/empty.html');
+  await sw.evaluate(async ({ id, gid }: { id: number, gid: number }) => {
+    const chrome = (globalThis as any).chrome;
+    await chrome.tabs.group({ groupId: gid, tabIds: [id] });
+  }, { id: probeTabId, gid: groupId });
+  await expect.poll(async () => {
+    return sw.evaluate(async (id: number) => {
+      const chrome = (globalThis as any).chrome;
+      return await chrome.action.getBadgeText({ tabId: id });
+    }, probeTabId);
+  }).toBe('✓');
+
+  // The self-page is still in the group but was never attached (no debugger badge)
+  // and is not exposed as a page to the client.
+  const selfPageState = await sw.evaluate(async (id: number) => {
+    const chrome = (globalThis as any).chrome;
+    const tab = await chrome.tabs.get(id);
+    return { groupId: tab.groupId, badge: await chrome.action.getBadgeText({ tabId: id }) };
+  }, selfPageTabId);
+  expect(selfPageState).toEqual({ groupId, badge: '' });
+  const tabsList = await client.callTool({ name: 'browser_tabs', arguments: { action: 'list' } });
+  expect((tabsList as any).content?.[0]?.text ?? '').not.toContain('status.html');
+});
+
 test('tab removed from group gets auto-detached', async ({ browserWithExtension, startClient, server }) => {
   server.setContent('/second', '<title>Second</title><body>Second</body>', 'text/html');
 

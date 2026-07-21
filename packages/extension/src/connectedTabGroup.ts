@@ -25,6 +25,10 @@ export function isNonDebuggableUrl(url: string | undefined): boolean {
   return !!url && NON_DEBUGGABLE_SCHEMES.some(s => url.startsWith(s));
 }
 
+function isOwnExtensionUrl(url: string | undefined): boolean {
+  return !!url?.startsWith(chrome.runtime.getURL(''));
+}
+
 // Ungroups any Playwright-titled groups left behind by a prior service worker.
 export async function cleanupStalePlaywrightGroups(): Promise<void> {
   try {
@@ -88,7 +92,7 @@ export class ConnectedTabGroup {
     // Chrome resets per-tab badge state on navigation, so re-apply it.
     if (this._connection.attachedTabs.has(tabId))
       void this._updateBadge(tabId, CONNECTED_BADGE);
-    else if (this._groupTabIds.has(tabId) && !isNonDebuggableUrl(changeInfo.url))
+    else if (this._groupTabIds.has(tabId) && !isNonDebuggableUrl(changeInfo.url) && !isOwnExtensionUrl(changeInfo.url))
       this._connection.attachTab(tab);
   }
 
@@ -103,7 +107,7 @@ export class ConnectedTabGroup {
       return;
     if (inOurGroup) {
       this._groupTabIds.add(tabId);
-      if (!isNonDebuggableUrl(tab.url))
+      if (!isNonDebuggableUrl(tab.url) && !isOwnExtensionUrl(tab.url))
         this._connection.attachTab(tab);
     } else {
       this._groupTabIds.delete(tabId);
