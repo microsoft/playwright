@@ -1,17 +1,17 @@
 # Migrating from @playwright/experimental-ct-react / -vue
 
 The CT packages compiled JSX in the test file and marshalled it into the browser. The gallery
-pattern splits that in two: **structure** (which component, its children, providers) moves into a
-story export that runs natively in the browser; **data and behavior** (props, callbacks) stay in
-the test and travel through `mount(storyId, props)`. Callbacks, `update()` and `unmount()` work as
-before, so most specs port mechanically.
+pattern moves the scenario into a story export that runs natively in the browser: structure (which
+component, its children, providers) plus behavior (state and callbacks, recorded into a hidden
+form for the test to assert on). Plain data props travel through `mount(storyId, props)`;
+`update()` and `unmount()` work as before.
 
 ## Concept mapping
 
 | `@playwright/experimental-ct-*` | Gallery pattern |
 |---|---|
-| `mount(<Button title="…" onClick={spy} />)` | Story export `Default = props => <Button title="…" {...props} />` + `mount('Button/Default', { onClick: spy })` |
-| Props / callback props from the test | Unchanged in spirit: `mount(id, props)` — functions cross and run in Node, may be async and return values |
+| `mount(<Button title="…" onClick={spy} />)` | Stateful story: the story provides `onClick`, records the effect into a hidden form input; the test asserts `toHaveValue()` |
+| Plain data props from the test | Unchanged in spirit: `mount(id, props)` |
 | JSX children / slots from the test | Cannot cross — bake each composition into its own story export (Vue: `.story.vue` for slot-heavy scenarios) |
 | `component.update(<Button count={2} />)` | `component.update({ count: 2 })` — state-preserving, needs the gallery to reuse its root (`gallery-spec.md`) |
 | `component.unmount()` | `component.unmount()` — backed by the gallery's `window.unmount()` |
@@ -27,12 +27,15 @@ before, so most specs port mechanically.
 1. Set up the gallery and config per `SKILL.md`. Keep the old CT project running until the last
    spec is migrated.
 2. For each CT spec, split every `mount(<…/>)` call: JSX structure becomes a story export next to
-   the component; test-supplied props and callbacks stay in the test as `mount`'s second argument.
-   A call site that only varies props/callbacks usually needs just one generic story that spreads
-   them: `export const Default = (props: ButtonProps) => <Button title="Submit" {...props} />`.
-3. Rewrite the spec: import `test`/`expect` from `@playwright/test`; `mount(<X a={1} onB={spy}/>)`
-   → `mount('X/Default', { a: 1, onB: spy })`; `update(<X a={2}/>)` → `update({ a: 2 })`;
-   `unmount()` unchanged. Callback spies and their assertions survive verbatim.
+   the component; plain data props stay in the test as `mount`'s second argument. Callback spies
+   become story state recorded into a hidden form. A call site that only varies data props usually
+   needs just one generic story that spreads them:
+   `export const Default = (props: ButtonProps) => <Button title="Submit" {...props} />`.
+3. Rewrite the spec: import `test`/`expect` from `@playwright/test`; `mount(<X a={1}/>)`
+   → `mount('X/Default', { a: 1 })`; `update(<X a={2}/>)` → `update({ a: 2 })`;
+   `unmount()` unchanged. `mount` returns a locator for the gallery root — scope the queries:
+   `component.getByRole('button').click()`. Spy assertions become `toHaveValue()` on the story's
+   recorded state.
 4. Port `beforeMount` hooks: app-wide setup into the gallery's `window.mount`; per-test
    `hooksConfig` branches into props interpreted by a story or decorator.
 5. When all specs are green, delete the CT project from the config, drop the

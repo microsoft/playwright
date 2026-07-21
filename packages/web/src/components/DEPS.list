@@ -7,11 +7,11 @@
 ../shared
 ../../../isomorphic/**
 
-[expandable.spec.tsx]
+[expandable.spec.ts]
 ***
 
-[codeMirrorWrapper.spec.tsx]
+[codeMirrorWrapper.spec.ts]
 ***
 
-[splitView.spec.tsx]
+[splitView.spec.ts]
 ***

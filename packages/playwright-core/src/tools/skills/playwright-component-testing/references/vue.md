@@ -22,7 +22,7 @@ const clicks = ref(0);
 
 <template>
   <Button title="Submit" @click="clicks++" />
-  <output data-testid="click-count">{{ clicks }}</output>
+  <form hidden><input data-testid="click-count" readonly :value="String(clicks)" /></form>
 </template>
 ```
 

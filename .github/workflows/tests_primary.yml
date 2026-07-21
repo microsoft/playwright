@@ -140,6 +140,29 @@ jobs:
       env:
         PWTEST_SHARD_WEIGHTS: ${{ matrix.shardWeights }}
 
+  test_web_components:
+    name: Web Components - ${{ matrix.package }}
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
+    permissions:
+      id-token: write   # This is required for OIDC login (azure/login) to succeed
+      contents: read    # This is required for actions/checkout to succeed
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [html-reporter, web]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - uses: ./.github/actions/run-test
+      with:
+        node-version: 20
+        browsers-to-install: chromium
+        command: npm run test-${{ matrix.package }}
+        bot-name: "web-components-${{ matrix.package }}"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
+
   test_vscode_extension:
     name: VSCode Extension
     runs-on: ubuntu-latest

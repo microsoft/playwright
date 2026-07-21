@@ -2,14 +2,11 @@
 @web/**
 @isomorphic/**
 
-[chip.spec.tsx]
+[chip.spec.ts]
 ***
 
-[headerView.spec.tsx]
+[headerView.spec.ts]
 ***
 
-[imageDiffView.spec.tsx]
-***
-
-[testCaseView.spec.tsx]
+[testCaseView.spec.ts]
 ***

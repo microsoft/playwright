@@ -511,7 +511,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
       // The gallery is a single page (served at baseURL) that exposes window.mount()/window.unmount().
       await page.goto(baseURL);
       await callMount({ story: storyId, props });
-      return Object.assign(page.locator('#root >> internal:control=component'), {
+      // Points at the gallery root, scope the queries: component.getByRole(...).
+      return Object.assign(page.locator('#root'), {
         // update() re-renders the same story with new props without navigating; if the gallery
         // reuses its root/instance, the framework reconciles and component state is preserved.
         update: (newProps?: Record<string, any>) => callMount({ story: storyId, props: newProps }),

@@ -11,9 +11,9 @@ Test components with regular Playwright e2e tests against a small **story galler
 
 - A **story** is a tiny wrapper component that embeds the component under test in one specific scenario: hard-coded props, mock data, providers, recorded callbacks. Stories live next to the component in `*.story.tsx` (or `.ts`/`.jsx`/`.js`/`.vue`) files; each named export is one story.
 - The **gallery** is a single page you implement to `references/gallery-spec.md`: it exposes `window.mount(params)` / `window.unmount()` that render a story — resolved from your story files (e.g. with `import.meta.glob`) — into `#root`. It is framework-specific and yours to own — there is no template to copy for it.
-- Tests are plain Playwright tests. The built-in **`mount(storyId, props?)` fixture** (from `@playwright/test`) drives the gallery's `window.mount` and returns a `Locator` for the mounted component (the single element rendered into `#root`, or `#root` itself when the story renders a fragment) — so specs read just like the old component tests. Nothing to scaffold for it.
+- Tests are plain Playwright tests. The built-in **`mount(storyId, props?)` fixture** (from `@playwright/test`) drives the gallery's `window.mount` and returns a `Locator` for the gallery root (`#root`). Scope the queries from there — `component.getByRole('button').click()`, not `component.click()`. Nothing to scaffold for it.
 
-Everything the component needs must be set up *inside the story* (it runs in the browser); everything the test asserts must be observable *through the page* (DOM, URL, network). `mount(id, props)` passes `props` to the component, and props may include **callbacks** — the component calls them in the browser and your test-side function runs in Node.
+Everything the component needs must be set up *inside the story* (it runs in the browser); everything the test asserts must be observable *through the page* (DOM, URL, network). Where the component takes callbacks, the story creates the state, provides the callbacks and records the state into a hidden form for the test to assert on. `mount(id, props)` passes plain serializable `props` to the story.
 
 ## Setup workflow
 
@@ -54,38 +54,31 @@ Examples are React; the Vue equivalents differ only in story syntax.
 
 ### Callbacks and events
 
-**Pass the callback straight to `mount`** — it runs in Node, so you assert directly on what the component called it with:
-
-```ts
-test('fires onSubmit with the form data', async ({ mount }) => {
-  const calls: any[] = [];
-  const component = await mount('components/Form/Default', { onSubmit: (data: any) => calls.push(data) });
-  await component.getByRole('button', { name: 'Save' }).click();
-  expect(calls).toEqual([{ name: 'Ada' }]);
-});
-```
-
-Callbacks may be async and return a value the component `await`s — the return travels back from Node:
-
-```ts
-await mount('components/Field/Default', { validate: async (v: string) => v.length > 0 });
-```
-
-**Or record the effect in the DOM** inside the story — handy when you also want the state visible when eyeballing the gallery:
+**The story owns the state and provides the callbacks.** Where the component takes callbacks, create the state inside the story, wire the callbacks to it, and record the state into a hidden form next to the component. Tests perform operations and assert on the recorded values:
 
 ```tsx
-export const CountsClicks = () => {
-  const [clicks, setClicks] = useState(0);
+export const Stateful = () => {
+  const [expanded, setExpanded] = useState(false);
   return <>
-    <Button title="Submit" onClick={() => setClicks(c => c + 1)} />
-    <output data-testid="click-count">{clicks}</output>
+    <Expandable expanded={expanded} setExpanded={setExpanded} title="Title">Details</Expandable>
+    <form hidden><input data-testid="expanded" readOnly value={String(expanded)} /></form>
   </>;
 };
 ```
 
+```ts
+test('click should expand', async ({ mount }) => {
+  const component = await mount('components/Expandable/Stateful');
+  await component.locator('.codicon-chevron-right').click();
+  await expect(component.getByTestId('expanded')).toHaveValue('true');
+});
+```
+
+This keeps the whole scenario in the browser: no callback marshalling, the story doubles as documentation, and the recorded state is visible when eyeballing the gallery. Record each observed value in its own `data-testid` input (`String(...)` or `JSON.stringify(...)` for payloads) and assert with `toHaveValue()` — a web-first assertion that retries until the state lands. The negative direction works the same way: perform the operation, then assert the value did **not** change.
+
 ### Per-test props
 
-When a scenario is genuinely parametric (e.g. a boundary-value sweep), pass props as the second argument to `mount`; the gallery hands them to the story as its props. Props may include functions.
+When a scenario is genuinely parametric (e.g. a boundary-value sweep), pass props as the second argument to `mount`; the gallery hands them to the story as its props. Keep props to plain serializable data — callbacks belong inside the story.
 
 ```tsx
 export const WithTitle = ({ title = 'Default' }: { title?: string }) =>
@@ -118,7 +111,7 @@ await expect(await mount('Button/Primary')).toHaveScreenshot('primary.png');
 await expect(await mount('Button/Disabled')).toHaveScreenshot('disabled.png');
 ```
 
-For visual comparison, screenshot the component locator (as above), not the page, to avoid asserting on gallery chrome.
+For visual comparison, screenshot the returned root locator (as above), not the page, to avoid asserting on browser chrome.
 
 ### Network mocking
 

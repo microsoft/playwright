@@ -7,18 +7,16 @@ Playwright config, that exposes two methods on `window` for Playwright to drive:
 - `window.unmount()` — unmount the current story.
 
 The built-in `mount` fixture navigates to the gallery, then calls `window.mount` via
-`page.evaluate(fn, params, { exposeFunctions: true })`. Because `exposeFunctions` turns functions
-in the arguments into real, browser-callable functions, **props may include callbacks** — the
-component invokes them in the browser and your test-side function runs in Node (and can return a
-value back).
+`page.evaluate()`. Keep props to plain serializable data — where the component takes callbacks,
+the story creates the state, provides the callbacks and records the state into a hidden form for
+the test to assert on.
 
 ## `window.mount(params)`
 
 `params` is `{ story, props }`, straight from the test's `mount(story, props)` call:
 
 - `story` — the story id (string). Resolve it (see id grammar) to a component.
-- `props` — the props object passed to the component. May contain **functions**; they are real
-  callbacks, not data — call them and, if you like, `await` their result.
+- `props` — the plain serializable props object passed to the component.
 
 Render the resolved component with `props` into `#root`. Return a `Promise` that resolves once the
 component is mounted and **rejects on failure** (unknown story, render throw). The rejection
@@ -46,12 +44,10 @@ fresh, so tests are already isolated.
 
 ## `#root`
 
-Render the component into an element with `id="root"`. `mount` returns a `Locator` for the mounted
-component itself — the single element child of `#root` — so `component.click()` and
-`expect(component).toHaveClass(...)` target the component. When
-the story renders a fragment (several top-level elements, e.g. the component plus an `<output>`
-recording events), the locator falls back to `#root`; tests then scope their queries
-(`component.getByRole('button')`).
+Render the component into an element with `id="root"`. `mount` returns a `Locator` for `#root`
+itself, so tests scope their queries from there — `component.getByRole('button').click()`, not
+`component.click()`. Stories are free to render fragments, e.g. the component plus a hidden form
+recording its state.
 
 ## Story id grammar (recommended)
 
@@ -144,6 +140,5 @@ let app: App | undefined;
 };
 ```
 
-A callback prop just arrives as a function — `props.onSave?.(data)` inside the component runs the
-test's callback. Keep the story-resolution glob and the framework mount in this file; everything
+Keep the story-resolution glob and the framework mount in this file; everything
 else lives in your stories and tests.
