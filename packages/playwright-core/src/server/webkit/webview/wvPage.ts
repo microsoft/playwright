@@ -538,7 +538,7 @@ export class WVPage implements PageDelegate {
       const [bindingName, bindingArg] = parameters;
 
       if (bindingName.value === BINDING_CALL_TAG && bindingArg.type === 'string') {
-        const context = [...this._contextIdToContext.values()].find(c => c.frame === this._page.mainFrame());
+        const context = this._bindingCallContext(parameters);
         if (context)
           this._page.onBindingCalled(bindingArg.value, context).catch(e => debugLogger.log('error', e));
         return;
@@ -607,6 +607,15 @@ export class WVPage implements PageDelegate {
       },
     };
     this._onConsoleRepeatCountUpdated({ count: 1, timestamp: event.message.timestamp });
+  }
+
+  private _bindingCallContext(parameters: Protocol.Runtime.RemoteObject[]): dom.FrameExecutionContext | undefined {
+    const contextObject = parameters[2];
+    if (contextObject?.objectId) {
+      this._session.sendMayFail('Runtime.releaseObject', { objectId: contextObject.objectId });
+      return this._contextIdToContext.get(JSON.parse(contextObject.objectId).injectedScriptId);
+    }
+    return [...this._contextIdToContext.values()].find(c => c.frame === this._page.mainFrame());
   }
 
   _onConsoleRepeatCountUpdated(event: Protocol.Console.messageRepeatCountUpdatedPayload) {
@@ -1261,7 +1270,10 @@ const bindingBridgeSource = `
     Object.defineProperty(window, '${PageBinding.kBindingName}', {
       configurable: true,
       writable: false,
-      value: function(payload) { console.debug('${BINDING_CALL_TAG}', payload); },
+      value: function(payload) {
+        const contextObject = {};
+        console.debug('${BINDING_CALL_TAG}', payload, contextObject);
+      },
     });
   }
 `;

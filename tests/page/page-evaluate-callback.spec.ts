@@ -132,6 +132,18 @@ it('should work in a child frame', async ({ page, server }) => {
   expect(received).toEqual([42]);
 });
 
+it('should route callbacks back to the calling frame', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  const greet = async (where: string) => `hello ${where}`;
+  const [fromMain, fromChild] = await Promise.all([
+    page.evaluate(async ({ cb }) => await cb('main'), { cb: greet }, { exposeFunctions: true }),
+    frame.evaluate(async ({ cb }) => await cb('child'), { cb: greet }, { exposeFunctions: true }),
+  ]);
+  expect(fromMain).toBe('hello main');
+  expect(fromChild).toBe('hello child');
+});
+
 it('should work with jsHandle.evaluate', async ({ page }) => {
   const handle = await page.evaluateHandle(() => window);
   const received: number[] = [];
