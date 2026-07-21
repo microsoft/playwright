@@ -272,7 +272,24 @@ export class CRBrowser extends Browser {
   }
 
   async _closePage(crPage: CRPage) {
-    await this._session.send('Target.closeTarget', { targetId: crPage._targetId });
+    // When a `Target.closeTarget` happens at the same time as a navigation commit it can report success even though it
+    // actually doesnt do anything, leaving the target alive and causing this to hang forever (crbug.com/536385539).
+    const closed = crPage._page.closedPromise.then(() => true);
+    while (true) {
+      await this._session.send('Target.closeTarget', { targetId: crPage._targetId }).catch(() => {});
+      let timer: NodeJS.Timeout | undefined;
+      const success = await Promise.race([
+        closed,
+        new Promise<boolean>(resolve => {
+          timer = setTimeout(() => {
+            resolve(false);
+          }, 500);
+        }),
+      ]);
+      clearTimeout(timer);
+      if (success)
+        return;
+    }
   }
 
   async newBrowserCDPSession(): Promise<CDPSession> {

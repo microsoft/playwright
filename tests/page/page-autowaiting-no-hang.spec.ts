@@ -173,3 +173,19 @@ it('goBack in the middle of navigation that commits', async ({ page, server }) =
 
   await goBackPromise;
 });
+
+it('page.close() should not hang when racing a cross-origin navigation commit', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41900' },
+}, async ({ page, server, browserName }) => {
+  it.skip(browserName !== 'chromium', 'Chromium-specific Target.closeTarget commit race');
+  it.slow();
+  const context = page.context();
+  for (let i = 0; i < 15; i++) {
+    const other = await context.newPage();
+    await other.goto(server.PREFIX + '/empty.html');
+    other.goto(server.CROSS_PROCESS_PREFIX + '/empty.html').catch(() => {});
+    await new Promise(resolve => setTimeout(resolve, 10));
+    other.goto(server.PREFIX + '/empty.html').catch(() => {});
+    await other.close();
+  }
+});
