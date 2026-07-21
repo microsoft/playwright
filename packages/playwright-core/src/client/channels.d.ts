@@ -3599,9 +3599,15 @@ export interface RequestEventTarget {
 }
 export interface RequestChannel extends RequestEventTarget, Channel {
   _type_Request: boolean;
+  body(params: RequestBodyParams, options: TimeoutOptions): Promise<RequestBodyResult>;
   response(params: RequestResponseParams, options: TimeoutOptions): Promise<RequestResponseResult>;
   rawRequestHeaders(params: RequestRawRequestHeadersParams, options: TimeoutOptions): Promise<RequestRawRequestHeadersResult>;
 }
+export type RequestBodyParams = {};
+export type RequestBodyOptions = {};
+export type RequestBodyResult = {
+  body?: Binary,
+};
 export type RequestResponseParams = {};
 export type RequestResponseOptions = {};
 export type RequestResponseResult = {

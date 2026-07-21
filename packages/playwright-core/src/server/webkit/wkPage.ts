@@ -1070,6 +1070,18 @@ export class WKPage implements PageDelegate {
       this._onRequest(session, event, false);
   }
 
+  // When the request body references blobs, Network.requestWillBeSent only reports hasPostData,
+  // and the bytes must be retrieved asynchronously with Network.getRequestPostData. Fetch the body
+  // asynchronously and push it to the request once available. See https://github.com/microsoft/playwright/issues/6479.
+  private _maybeFetchPostData(session: WKSession, event: Protocol.Network.requestWillBeSentPayload, request: network.Request) {
+    if (!event.request.hasPostData || request.postDataBuffer())
+      return;
+    request.deferPostData();
+    session.send('Network.getRequestPostData', { requestId: event.requestId })
+        .then(result => request.resolvePostData(Buffer.from(result.postData, 'base64')))
+        .catch(() => request.resolvePostData(null));
+  }
+
   private _onRequest(session: WKSession, event: Protocol.Network.requestWillBeSentPayload, intercepted: boolean) {
     let redirectedFrom: WKInterceptableRequest | null = null;
     if (event.redirectResponse) {
@@ -1098,6 +1110,7 @@ export class WKPage implements PageDelegate {
       request.request.setRawRequestHeaders(null);
     }
     this._requestIdToRequest.set(event.requestId, request);
+    this._maybeFetchPostData(session, event, request.request);
     this._page.frameManager.requestStarted(request.request, route);
   }
 

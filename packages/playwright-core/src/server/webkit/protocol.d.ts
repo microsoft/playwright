@@ -5536,6 +5536,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       postData?: string;
       /**
+       * True when the request has a body which is not included in postData, e.g. because it references blobs. The body can be retrieved with getRequestPostData.
+       */
+      hasPostData?: boolean;
+      /**
        * The level of included referrer information.
        */
       referrerPolicy?: ReferrerPolicy;
@@ -6069,6 +6073,21 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       headers: Headers;
     }
     export type setExtraHTTPHeadersReturnValue = {
+    }
+    /**
+     * Returns post data sent with the request. Returns an error when no data was sent with the request.
+     */
+    export type getRequestPostDataParameters = {
+      /**
+       * Identifier of the network request to get content for.
+       */
+      requestId: RequestId;
+    }
+    export type getRequestPostDataReturnValue = {
+      /**
+       * Base64-encoded request body.
+       */
+      postData: string;
     }
     /**
      * Returns content served for the given request.
@@ -9588,6 +9607,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Network.enable": Network.enableParameters;
     "Network.disable": Network.disableParameters;
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersParameters;
+    "Network.getRequestPostData": Network.getRequestPostDataParameters;
     "Network.getResponseBody": Network.getResponseBodyParameters;
     "Network.setResourceCachingDisabled": Network.setResourceCachingDisabledParameters;
     "Network.setClearResourceDataOnNavigate": Network.setClearResourceDataOnNavigateParameters;
@@ -9898,6 +9918,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Network.enable": Network.enableReturnValue;
     "Network.disable": Network.disableReturnValue;
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersReturnValue;
+    "Network.getRequestPostData": Network.getRequestPostDataReturnValue;
     "Network.getResponseBody": Network.getResponseBodyReturnValue;
     "Network.setResourceCachingDisabled": Network.setResourceCachingDisabledReturnValue;
     "Network.setClearResourceDataOnNavigate": Network.setClearResourceDataOnNavigateReturnValue;
