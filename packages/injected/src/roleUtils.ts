@@ -843,6 +843,16 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       return compositeString(element.getAttribute('title') || '', element, options.collectElements);
     }
 
+    // <meter> and <progress> are labelable elements, so use their associated <label>.
+    // https://github.com/microsoft/playwright/issues/41891
+    if (!labelledBy && (tagName === 'METER' || tagName === 'PROGRESS')) {
+      options.visitedElements.add(element);
+      const labels = (element as HTMLMeterElement | HTMLProgressElement).labels || [];
+      if (labels.length)
+        return getAccessibleNameFromAssociatedLabels(labels, options);
+      return compositeString(element.getAttribute('title') || '', element, options.collectElements);
+    }
+
     // https://w3c.github.io/html-aam/#input-type-text-input-type-password-input-type-number-input-type-search-input-type-tel-input-type-email-input-type-url-and-textarea-element-accessible-name-computation
     // https://w3c.github.io/html-aam/#other-form-elements-accessible-name-computation
     // For "other form elements", we count select and any other input.

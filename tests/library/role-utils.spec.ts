@@ -312,6 +312,11 @@ test('native controls', async ({ page }) => {
 
     <input id="file1" type=file>
     <label for="file2">FILE2</label><input id="file2" type=file>
+
+    <label for="meter1">METER1</label><meter id="meter1" value="0.5"></meter>
+    <meter id="meter2" value="0.5" title="METER2"></meter>
+    <label for="progress1">PROGRESS1</label><progress id="progress1" value="0.5"></progress>
+    <progress id="progress2" value="0.5" title="PROGRESS2"></progress>
   `);
 
   expect.soft(await getNameAndRole(page, '#text1')).toEqual({ role: 'textbox', name: 'TEXT1' });
@@ -327,6 +332,10 @@ test('native controls', async ({ page }) => {
   expect.soft(await getNameAndRole(page, '#button4')).toEqual({ role: 'button', name: 'BUTTON4' });
   expect.soft(await getNameAndRole(page, '#file1')).toEqual({ role: 'button', name: 'Choose File' });
   expect.soft(await getNameAndRole(page, '#file2')).toEqual({ role: 'button', name: 'FILE2' });
+  expect.soft(await getNameAndRole(page, '#meter1')).toEqual({ role: 'meter', name: 'METER1' });
+  expect.soft(await getNameAndRole(page, '#meter2')).toEqual({ role: 'meter', name: 'METER2' });
+  expect.soft(await getNameAndRole(page, '#progress1')).toEqual({ role: 'progressbar', name: 'PROGRESS1' });
+  expect.soft(await getNameAndRole(page, '#progress2')).toEqual({ role: 'progressbar', name: 'PROGRESS2' });
 });
 
 test('native controls labelled-by', async ({ page }) => {
