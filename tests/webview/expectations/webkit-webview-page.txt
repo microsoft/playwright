@@ -30,6 +30,7 @@ page/elementhandle-screenshot.spec.ts › element screenshot › should wait for
 page/elementhandle-screenshot.spec.ts › element screenshot › should work [fail]
 page/elementhandle-screenshot.spec.ts › element screenshot › should work when main world busts JSON.stringify [fail]
 page/elementhandle-screenshot.spec.ts › element screenshot › should work with a rotated element [fail]
+page/elementhandle-screenshot.spec.ts › element screenshot › should work with webp [fail]
 page/expect-matcher-result.spec.ts › toHaveScreenshot should populate matcherResult [fail]
 page/locator-misc-2.spec.ts › should return bounding box [fail]
 page/locator-misc-2.spec.ts › should take screenshot [fail]
@@ -128,6 +129,7 @@ page/locator-misc-1.spec.ts › should focus and blur a button [fail]
 # because service-worker registration persists across tests.
 # ============================================================================
 page/interception.spec.ts › should intercept after a service worker [fail]
+page/page-event-request.spec.ts › should report navigation requests and responses handled by service worker [fail]
 page/page-event-request.spec.ts › should report requests and responses handled by service worker with routing [fail]
 page/page-goto.spec.ts › should be able to navigate to a page controlled by service worker [fail]
 
@@ -358,8 +360,15 @@ page/elementhandle-scroll-into-view.spec.ts › should wait for display:none to 
 page/frame-evaluate.spec.ts › should work in iframes that interrupted initial javascript url navigation [fail]
 page/frame-goto.spec.ts › should reject when frame detaches [fail]
 page/page-aria-snapshot-ai.spec.ts › should snapshot a locator inside an iframe [fail]
+# Unexpected pass: test.fail(webkit) expects ephemeral CacheStorage, but the iOS
+# WebView uses the persistent default data store, so the entry survives reload.
+page/page-cache-storage.spec.ts › CacheStorage entry should survive page.reload() [fail]
 page/page-click.spec.ts › should not wait with noAutoWaiting 2 [fail]
 page/page-emulate-media.spec.ts › should report hover and fine pointer for desktop [fail]
+# evaluate() function arguments (#41801) work in the main frame, but the
+# callback bridge is not wired for subframes, so the evaluate never resolves.
+page/page-evaluate-callback.spec.ts › should work in a child frame [fail]
+page/page-evaluate-callback.spec.ts › should work with locator.evaluate inside an iframe [fail]
 page/page-evaluate.spec.ts › should await promise from popup [fail]
 page/page-evaluate.spec.ts › should evaluate exception [fail]
 page/page-evaluate.spec.ts › should evaluate exception with a function on the stack [fail]
@@ -425,6 +434,9 @@ page/page-request-continue.spec.ts › should not forward Host header on cross-o
 page/page-request-continue.spec.ts › should work with Cross-Origin-Opener-Policy [fail]
 page/page-request-fallback.spec.ts › should fall back after exception [fail]
 page/page-request-fallback.spec.ts › should work [fail]
+# The hit-target interceptor element is not released on iOS WebKit, so the
+# WeakRef stays alive after requestGC().
+page/page-request-gc.spec.ts › should collect element retained by locator hit-target interceptor after detach [fail]
 page/page-route.spec.ts › should not support ? in glob pattern [fail]
 page/page-screenshot.spec.ts › page screenshot › should capture canvas changes [fail]
 page/page-screenshot.spec.ts › page screenshot › should work with odd clip size on Retina displays [fail]
@@ -432,6 +444,11 @@ page/page-set-input-files.spec.ts › should upload large file [fail]
 page/page-set-input-files.spec.ts › should upload large file with relative path [fail]
 page/page-wait-for-load-state.spec.ts › should wait for load state of newPage [fail]
 page/page-wait-for-url.spec.ts › should work on frame [fail]
+# allHeaders() for the worker script request/response is missing host and
+# content-type on the stock backend
+# (https://github.com/microsoft/playwright/issues/39948).
+page/workers.spec.ts › should resolve worker script allHeaders in iframe [fail]
+page/workers.spec.ts › should resolve worker script allHeaders in main frame [fail]
 
 # ============================================================================
 # subframe-navigation  (2 tests)
@@ -548,6 +565,11 @@ page/page-aria-snapshot-ai.spec.ts › should persist iframe references [fail]
 page/page-aria-snapshot-ai.spec.ts › should produce incremental snapshot for iframes [fail]
 page/page-aria-snapshot-ai.spec.ts › should snapshot a locator inside an iframe [fail]
 page/page-aria-snapshot-ai.spec.ts › should support many properties on iframes [fail]
+# frame/frameset elements are treated like iframes in aria snapshots (#41828) —
+# same frame-stitching gap as the iframe entries above.
+page/page-aria-snapshot-ai.spec.ts › should snapshot a locator inside a frameset frame [fail]
+page/page-aria-snapshot-ai.spec.ts › should stitch iframes inside a frameset frame [fail]
+page/page-aria-snapshot-ai.spec.ts › should stitch nested frameset documents [fail]
 page/page-aria-snapshot.spec.ts › auto-waits the locator and does not include iframes [fail]
 page/page-aria-snapshot.spec.ts › should snapshot a locator inside an iframe [fail]
 page/page-autowaiting-no-hang.spec.ts › opening a popup [fail]
@@ -662,6 +684,9 @@ page/elementhandle-query-selector.spec.ts › should work for adopted elements [
 page/elementhandle-scroll-into-view.spec.ts › should scroll display:contents into view [fail]
 page/frame-hierarchy.spec.ts › should send "framenavigated" when navigating on anchor URLs [fail]
 page/interception.spec.ts › should intercept worker requests when enabled after worker creation [fail]
+# The custom selector navigates cross-process from inside query(), killing the
+# page target.
+page/locator-query.spec.ts › count() should not throw during navigation [fail]
 page/network-post-data.spec.ts › should get post data for file/blob [fail]
 page/network-post-data.spec.ts › should get post data for navigator.sendBeacon api calls [fail]
 page/page-add-init-script.spec.ts › should work after a cross origin navigation [fail]
