@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 
+// Tabs showing this extension's own UI (connect/status pages) are transient
+// chrome. Chrome records the previously active tab as their opener and may
+// place them inside another connection's tab group; neither must grant the
+// tab to that connection. Such pages can still be attached explicitly when
+// they are a connection's selected initial tab.
+export function isOwnUiUrl(url: string | undefined): boolean {
+  return !!url && url.startsWith(chrome.runtime.getURL(''));
+}
+
 export function debugLog(...args: unknown[]): void {
   const enabled = true;
   if (enabled) {
@@ -185,6 +194,10 @@ export class RelayConnection {
         return (args[0] as chrome.debugger.Debuggee | undefined)?.tabId;
       case 'chrome.tabs.onCreated': {
         const tab = args[0] as chrome.tabs.Tab;
+        // Own UI pages (e.g. another client's connect page) are never genuine
+        // popups of an attached tab, even when Chrome records one as opener.
+        if (isOwnUiUrl(tab.url) || isOwnUiUrl(tab.pendingUrl))
+          return undefined;
         // Forward only popups opened by an attached tab; report the opener so cdpRelay
         // can filter / decide. We use the openerTabId for the attached-tab check.
         return tab.openerTabId;

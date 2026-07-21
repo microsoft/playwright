@@ -14,25 +14,55 @@
  * limitations under the License.
  */
 
-import { RelayConnection, debugLog } from './relayConnection';
+import { RelayConnection, debugLog, isOwnUiUrl } from './relayConnection';
 
-const PLAYWRIGHT_GROUP_TITLE = 'Playwright';
-const PLAYWRIGHT_GROUP_COLOR = 'green';
 const NON_DEBUGGABLE_SCHEMES = ['chrome:', 'edge:', 'devtools:'];
 const CONNECTED_BADGE = { text: '✓', color: '#4CAF50', title: 'Connected to Playwright client' };
+// Title used by extension versions that supported a single connection. Still
+// matched during cleanup so an upgrade reconciles groups they left behind.
+const LEGACY_GROUP_TITLE = 'Playwright';
+// storage.local key listing tab group titles created by this extension, so a
+// restarted service worker can recognize which groups are stale.
+const GROUP_TITLES_KEY = 'playwrightGroupTitles';
+
+export type GroupStyle = {
+  title: string;
+  color: NonNullable<chrome.tabGroups.UpdateProperties['color']>;
+};
 
 export function isNonDebuggableUrl(url: string | undefined): boolean {
   return !!url && NON_DEBUGGABLE_SCHEMES.some(s => url.startsWith(s));
 }
 
-// Ungroups any Playwright-titled groups left behind by a prior service worker.
+// storage.local writes are read-modify-write, so serialize them to avoid
+// losing a title when two connections create groups at the same time.
+let groupTitlesWriteQueue: Promise<void> = Promise.resolve();
+
+function registerGroupTitle(title: string): Promise<void> {
+  groupTitlesWriteQueue = groupTitlesWriteQueue.then(async () => {
+    const stored = await chrome.storage.local.get(GROUP_TITLES_KEY);
+    const titles: string[] = stored[GROUP_TITLES_KEY] ?? [];
+    if (!titles.includes(title))
+      await chrome.storage.local.set({ [GROUP_TITLES_KEY]: [...titles, title] });
+  }).catch((error: any) => {
+    debugLog('Error registering group title:', error);
+  });
+  return groupTitlesWriteQueue;
+}
+
+// Ungroups any groups left behind by a prior service worker, identified by the
+// titles that service worker registered in storage.local.
 export async function cleanupStalePlaywrightGroups(): Promise<void> {
   try {
-    const groups = await chrome.tabGroups.query({ title: PLAYWRIGHT_GROUP_TITLE });
-    const tabsPerGroup = await Promise.all(groups.map(g => chrome.tabs.query({ groupId: g.id })));
+    const stored = await chrome.storage.local.get(GROUP_TITLES_KEY);
+    const staleTitles = new Set<string>([...(stored[GROUP_TITLES_KEY] ?? []), LEGACY_GROUP_TITLE]);
+    const groups = await chrome.tabGroups.query({});
+    const staleGroups = groups.filter(g => g.title !== undefined && staleTitles.has(g.title));
+    const tabsPerGroup = await Promise.all(staleGroups.map(g => chrome.tabs.query({ groupId: g.id })));
     const tabIds = tabsPerGroup.flat().map(t => t.id).filter((id): id is number => id !== undefined);
     if (tabIds.length)
       await chrome.tabs.ungroup(tabIds);
+    await chrome.storage.local.remove(GROUP_TITLES_KEY);
   } catch (error: any) {
     debugLog('Error cleaning up stale groups:', error);
   }
@@ -48,6 +78,7 @@ export async function cleanupStalePlaywrightGroups(): Promise<void> {
 // in `_onTabUpdated` stay synchronous.
 export class ConnectedTabGroup {
   private _connection: RelayConnection;
+  private _style: GroupStyle;
   private _groupId: number | null = null;
   private _groupTabIds: Set<number> = new Set();
   private _onTabUpdatedListener: (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => void;
@@ -55,8 +86,9 @@ export class ConnectedTabGroup {
 
   onclose?: () => void;
 
-  constructor(connection: RelayConnection, selectedTab: chrome.tabs.Tab) {
+  constructor(connection: RelayConnection, selectedTab: chrome.tabs.Tab, style: GroupStyle) {
     this._connection = connection;
+    this._style = style;
     this._connection.onclose = () => this._onConnectionClose();
     this._connection.ontabattached = (tabId: number) => this._onTabAttached(tabId);
     this._connection.ontabdetached = (tabId: number) => this._onTabDetached(tabId);
@@ -88,7 +120,7 @@ export class ConnectedTabGroup {
     // Chrome resets per-tab badge state on navigation, so re-apply it.
     if (this._connection.attachedTabs.has(tabId))
       void this._updateBadge(tabId, CONNECTED_BADGE);
-    else if (this._groupTabIds.has(tabId) && !isNonDebuggableUrl(changeInfo.url))
+    else if (this._groupTabIds.has(tabId) && !isNonDebuggableUrl(changeInfo.url) && !isOwnUiUrl(changeInfo.url))
       this._connection.attachTab(tab);
   }
 
@@ -103,7 +135,7 @@ export class ConnectedTabGroup {
       return;
     if (inOurGroup) {
       this._groupTabIds.add(tabId);
-      if (!isNonDebuggableUrl(tab.url))
+      if (!isNonDebuggableUrl(tab.url) && !isOwnUiUrl(tab.url))
         this._connection.attachTab(tab);
     } else {
       this._groupTabIds.delete(tabId);
@@ -164,7 +196,8 @@ export class ConnectedTabGroup {
       await this._retryOnDrag(async () => {
         if (this._groupId === null) {
           this._groupId = await chrome.tabs.group({ tabIds: [tabId] });
-          await chrome.tabGroups.update(this._groupId, { color: PLAYWRIGHT_GROUP_COLOR, title: PLAYWRIGHT_GROUP_TITLE });
+          await chrome.tabGroups.update(this._groupId, { color: this._style.color, title: this._style.title });
+          await registerGroupTitle(this._style.title);
         } else {
           await chrome.tabs.group({ groupId: this._groupId, tabIds: [tabId] });
         }

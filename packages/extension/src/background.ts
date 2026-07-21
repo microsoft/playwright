@@ -18,6 +18,8 @@ import { debugLog } from './relayConnection';
 import { PendingConnections } from './pendingConnection';
 import { ConnectedTabGroup, cleanupStalePlaywrightGroups, isNonDebuggableUrl } from './connectedTabGroup';
 
+import type { GroupStyle } from './connectedTabGroup';
+
 type PageMessage = {
   type: 'connectionRequested';
   mcpRelayUrl: string;
@@ -33,13 +35,25 @@ type PageMessage = {
   type: 'getConnectionStatus';
 } | {
   type: 'disconnect';
+  // Absent to disconnect all clients.
+  connectionId?: number;
 } | {
   type: 'keepalive';
 };
 
+type ActiveConnection = {
+  id: number;
+  clientName: string | undefined;
+  label: string;
+  group: ConnectedTabGroup;
+};
+
+// Rotated per connection so concurrent clients get visually distinct groups.
+const GROUP_COLORS: GroupStyle['color'][] = ['green', 'blue', 'purple', 'orange', 'pink', 'cyan', 'red', 'yellow'];
+
 class PlaywrightExtension {
-  private _activeGroup: ConnectedTabGroup | undefined;
-  private _activeClientName: string | undefined;
+  private _connections = new Map<number, ActiveConnection>();
+  private _lastConnectionId = 0;
   private _pendingConnections = new PendingConnections();
   // Service worker restarts lose all connection state, so any existing
   // Playwright groups are stale. Connections wait on this before reconciling.
@@ -69,20 +83,25 @@ class PlaywrightExtension {
         // sender.tab and UI-supplied tabs come from chrome.tabs.query / runtime
         // message sender, where `id` is always defined.
         const selectedTab = (message.tab ?? sender.tab!) as chrome.tabs.Tab & { id: number };
-        this._connectTab(sender.tab!.id!, selectedTab, message.clientName).then(
+        const userSelected = message.tab !== undefined;
+        this._connectTab(sender.tab!.id!, selectedTab, message.clientName, userSelected).then(
             () => sendResponse({ success: true }),
             (error: any) => sendResponse({ success: false, error: error.message }));
         return true; // Return true to indicate that the response will be sent asynchronously
       }
       case 'getConnectionStatus':
         sendResponse({
-          connectedTabIds: this._activeGroup?.connectedTabIds() ?? [],
-          clientName: this._activeClientName,
+          connections: [...this._connections.values()].map(connection => ({
+            id: connection.id,
+            clientName: connection.clientName,
+            label: connection.label,
+            connectedTabIds: connection.group.connectedTabIds(),
+          })),
         });
         return false;
       case 'disconnect':
         try {
-          this._disconnect('User disconnected');
+          this._disconnect(message.connectionId, 'User disconnected');
           sendResponse({ success: true });
         } catch (error: any) {
           sendResponse({ success: false, error: error.message });
@@ -95,29 +114,30 @@ class PlaywrightExtension {
     }
   }
 
-  private async _connectTab(selectorTabId: number, tab: chrome.tabs.Tab & { id: number }, clientName: string | undefined): Promise<void> {
+  private async _connectTab(selectorTabId: number, tab: chrome.tabs.Tab & { id: number }, clientName: string | undefined, userSelected: boolean): Promise<void> {
     try {
       await this._cleanupPromise;
-      this._disconnect('Another connection is requested');
 
       const connection = await this._pendingConnections.take(selectorTabId);
       if (!connection)
         throw new Error('Pending client connection closed');
 
-      const group = new ConnectedTabGroup(connection, tab);
-      group.onclose = () => {
-        if (this._activeGroup === group) {
-          this._activeGroup = undefined;
-          this._activeClientName = undefined;
-        }
-      };
-      this._activeGroup = group;
-      this._activeClientName = clientName;
+      const id = ++this._lastConnectionId;
+      const label = `${clientName || 'Playwright'} #${id}`;
+      const style: GroupStyle = { title: label, color: GROUP_COLORS[(id - 1) % GROUP_COLORS.length] };
+      const group = new ConnectedTabGroup(connection, tab, style);
+      group.onclose = () => this._connections.delete(id);
+      this._connections.set(id, { id, clientName, label, group });
 
-      await Promise.all([
-        chrome.tabs.update(tab.id, { active: true }),
-        chrome.windows.update(tab.windowId, { focused: true }),
-      ]).catch(() => {});
+      // Honor the "Allow & select" semantics when the user explicitly picked a
+      // tab. Token-bypass connections skip this so a background agent never
+      // steals window focus.
+      if (userSelected) {
+        await Promise.all([
+          chrome.tabs.update(tab.id, { active: true }),
+          chrome.windows.update(tab.windowId, { focused: true }),
+        ]).catch(() => {});
+      }
 
       if (tab.id !== selectorTabId)
         await chrome.tabs.remove(selectorTabId).catch(() => {});
@@ -139,12 +159,14 @@ class PlaywrightExtension {
     });
   }
 
-  // Closes the active group's connection if any. ConnectedTabGroup's onclose
-  // handles state cleanup (connectedTabIds, badges, reconcile).
-  private _disconnect(reason: string) {
-    this._activeGroup?.close(reason);
-    this._activeGroup = undefined;
-    this._activeClientName = undefined;
+  // Closes one connection when connectionId is given, all of them otherwise.
+  // ConnectedTabGroup's onclose removes the entry from _connections.
+  private _disconnect(connectionId: number | undefined, reason: string) {
+    const targets = connectionId === undefined
+      ? [...this._connections.values()]
+      : [this._connections.get(connectionId)].filter((c): c is ActiveConnection => c !== undefined);
+    for (const connection of targets)
+      connection.group.close(reason);
   }
 }
 
