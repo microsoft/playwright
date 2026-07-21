@@ -358,8 +358,6 @@ export class WKBrowserContext extends BrowserContext {
       await (page.delegate as WKPage).exposePlaywrightBinding();
   }
 
-  onClosePersistent() {}
-
   override async clearCache(): Promise<void> {
     // We use ephemeral contexts so there is no disk cache.
     await this._browser._browserSession.send('Playwright.clearMemoryCache', {

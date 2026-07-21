@@ -392,8 +392,6 @@ export class FFBrowserContext extends BrowserContext {
     this._browser.session.send('Browser.addBinding', { browserContextId: this._browserContextId, name: PageBinding.kBindingName, script: '' });
   }
 
-  onClosePersistent() {}
-
   override async clearCache(): Promise<void> {
     // Clearing only the context cache does not work: https://bugzilla.mozilla.org/show_bug.cgi?id=1819147
     await this._browser.session.send('Browser.clearCache');

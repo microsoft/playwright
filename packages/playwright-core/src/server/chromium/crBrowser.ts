@@ -576,9 +576,6 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
     }
   }
 
-  onClosePersistent() {
-  }
-
   override async clearCache(): Promise<void> {
     for (const page of this._crPages())
       await page._networkManager.clearCache();

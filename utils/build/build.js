@@ -192,7 +192,8 @@ async function runWatch() {
   for (const { files, from, to, ignored } of copyFiles) {
     const watcher = chokidar.watch([filePath(files)], { ignored });
     watcher.on('all', (event, file) => {
-      copyFile(file, from, to);
+      if (event === 'add' || event === 'change')
+        copyFile(file, from, to);
     });
   }
 

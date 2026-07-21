@@ -271,8 +271,6 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     this._closedStatus = 'closed';
     this._clientCertificatesProxy?.close().catch(() => {});
     this.tracing.abort();
-    if (this._isPersistentContext)
-      this.onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
     this.emit(BrowserContext.Events.Close);
   }
@@ -303,7 +301,6 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   protected abstract doUpdateDefaultEmulatedMedia(): Promise<void>;
   protected abstract doExposePlaywrightBinding(): Promise<void>;
   protected abstract doClose(reason: string | undefined): Promise<void | 'close-browser'>;
-  protected abstract onClosePersistent(): void;
 
   async cookies(progress: Progress, urls: string | string[] | undefined = []): Promise<channels.NetworkCookie[]> {
     return await progress.race(this._cookies(urls));

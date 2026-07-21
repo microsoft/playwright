@@ -409,7 +409,6 @@ export class WVBrowserContext extends BrowserContext {
       await (page.delegate as WVPage).exposePlaywrightBinding();
   }
 
-  override async onClosePersistent() {}
   override async doUpdateDefaultViewport() {}
   override async doUpdateDefaultEmulatedMedia() {}
   override async clearCache(): Promise<void> { throw new Error('Method not implemented.'); }

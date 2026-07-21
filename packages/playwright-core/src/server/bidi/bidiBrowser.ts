@@ -512,8 +512,6 @@ export class BidiBrowserContext extends BrowserContext {
     await Promise.all(promises);
   }
 
-  onClosePersistent() {}
-
   override async clearCache(): Promise<void> {
   }
 
