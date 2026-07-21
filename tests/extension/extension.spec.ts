@@ -342,5 +342,5 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
   });
 
   await page.goto(`chrome-extension://${extensionId}/status.html`);
-  await expect(page.locator('.client-info')).toContainText(`Connected to "${clientName}"`);
+  await expect(page.locator('.client-info')).toContainText(`Connected to "${clientName} #1"`);
 });

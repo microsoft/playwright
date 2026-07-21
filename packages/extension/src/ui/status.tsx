@@ -19,19 +19,32 @@ import { createRoot } from 'react-dom/client';
 import { Button, TabItem  } from './tabItem';
 import { AuthTokenSection } from './authToken';
 
+type ConnectionInfo = {
+  id: number;
+  clientName?: string;
+  label: string;
+  connectedTabIds: number[];
+};
+
+type ConnectionView = {
+  info: ConnectionInfo;
+  tabs: chrome.tabs.Tab[];
+};
+
 const StatusApp: React.FC = () => {
-  const [connectedTabs, setConnectedTabs] = useState<chrome.tabs.Tab[]>([]);
-  const [clientName, setClientName] = useState<string | undefined>(undefined);
+  const [connections, setConnections] = useState<ConnectionView[]>([]);
 
   useEffect(() => {
     void loadStatus();
   }, []);
 
   const loadStatus = async () => {
-    const { connectedTabIds, clientName } = await chrome.runtime.sendMessage({ type: 'getConnectionStatus' });
-    const tabs = await Promise.all((connectedTabIds as number[] ?? []).map(tabId => chrome.tabs.get(tabId)));
-    setConnectedTabs(tabs);
-    setClientName(clientName);
+    const { connections: infos } = await chrome.runtime.sendMessage({ type: 'getConnectionStatus' });
+    const views = await Promise.all(((infos ?? []) as ConnectionInfo[]).map(async info => {
+      const tabs = await Promise.all(info.connectedTabIds.map(tabId => chrome.tabs.get(tabId).catch(() => undefined)));
+      return { info, tabs: tabs.filter((tab): tab is chrome.tabs.Tab => tab !== undefined) };
+    }));
+    setConnections(views);
   };
 
   const openTab = async (tabId: number) => {
@@ -39,29 +52,29 @@ const StatusApp: React.FC = () => {
     window.close();
   };
 
-  const disconnect = async () => {
-    await chrome.runtime.sendMessage({ type: 'disconnect' });
-    window.close();
+  const disconnect = async (connectionId: number) => {
+    await chrome.runtime.sendMessage({ type: 'disconnect', connectionId });
+    await loadStatus();
   };
 
   return (
     <div className='app-container'>
       <div className='content-wrapper'>
-        {connectedTabs.length > 0 ? (
-          <div>
+        {connections.length > 0 ? connections.map(({ info, tabs }) => (
+          <div key={info.id}>
             <div className='connection-header'>
               <div className='client-info'>
-                Connected to <strong>"{clientName || 'unknown'}"</strong>
+                Connected to <strong>"{info.label}"</strong>
               </div>
-              <Button variant='primary' onClick={disconnect}>
+              <Button variant='primary' onClick={() => disconnect(info.id)}>
                 Disconnect
               </Button>
             </div>
             <div className='tab-section-title'>
-              {connectedTabs.length === 1 ? 'Accessible page:' : 'Accessible pages:'}
+              {tabs.length === 1 ? 'Accessible page:' : 'Accessible pages:'}
             </div>
             <div>
-              {connectedTabs.map(tab => (
+              {tabs.map(tab => (
                 <TabItem
                   key={tab.id}
                   tab={tab}
@@ -70,7 +83,7 @@ const StatusApp: React.FC = () => {
               ))}
             </div>
           </div>
-        ) : (
+        )) : (
           <div className='status-banner'>
             No clients are currently connected. You can connect from the Playwright CLI or MCP server by passing the --extension flag.
           </div>

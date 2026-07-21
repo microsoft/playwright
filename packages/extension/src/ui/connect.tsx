@@ -179,7 +179,7 @@ const ConnectApp: React.FC = () => {
         {showTabList && (
           <div>
             <div className='tab-section-title'>
-              You can drag tabs into the Playwright group later to make them accessible to the client.
+              You can drag tabs into this client's tab group later to make them accessible to the client.
               Optionally, select a tab to allow and immediately switch to it:
             </div>
             <div>
