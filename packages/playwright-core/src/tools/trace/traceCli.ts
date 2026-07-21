@@ -26,7 +26,7 @@ import { traceSnapshot } from './traceSnapshot';
 import { traceScreenshot } from './traceScreenshot';
 import { traceAttachments } from './traceAttachments';
 import { traceAttachment } from './traceAttachments';
-import { installSkill } from './installSkill';
+import { installSkills } from '../utils/installSkills';
 
 import type { Command } from 'commander';
 
@@ -145,6 +145,6 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       .command('install-skill')
       .description('install SKILL.md for LLM integration')
       .action(async () => {
-        installSkill().catch(logErrorAndExit);
+        installSkills(['playwright-trace']).catch(logErrorAndExit);
       });
 }

@@ -32,4 +32,4 @@ npx playwright cli video-stop
 # afterwards, use ffmpeg to turn the video into mp4 for sharing.
 ```
 
-Full CLI reference: `packages/playwright-core/src/tools/cli-client/skill/SKILL.md`. In this repo, invoke as `npx playwright cli` instead of `playwright-cli`.
+Full CLI reference: `packages/playwright-core/src/tools/skills/playwright-cli/SKILL.md`. In this repo, invoke as `npx playwright cli` instead of `playwright-cli`.

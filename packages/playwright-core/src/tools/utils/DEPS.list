@@ -6,3 +6,7 @@
 
 [extension.ts]
 "strict"
+
+[installSkills.ts]
+"strict"
+../../package.ts

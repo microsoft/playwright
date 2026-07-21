@@ -185,6 +185,23 @@ function addInitAgentsCommand(program: Command) {
   });
 }
 
+function addInitSkillsCommand(program: Command) {
+  const command = program.command('init-skills');
+  command.description('Install Playwright agent skills');
+  const option = command.createOption('--loop <loop>', 'Agentic loop provider');
+  option.choices(['claude', 'agents']);
+  option.default('claude');
+  command.addOption(option);
+  command.action(async opts => {
+    try {
+      await tools.installSkills(tools.allSkills, opts.loop);
+    } catch (e) {
+      console.error(e);
+      gracefullyProcessExitDoNotHang(1);
+    }
+  });
+}
+
 const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries', 'retain-on-failure', 'retain-on-first-failure', 'retain-on-failure-and-retries'];
 
 // Note: update docs/src/test-cli-js.md when you update this, program is the source of truth.
@@ -237,3 +254,4 @@ addClearCacheCommand(program);
 addTestMCPServerCommand(program);
 addTestServerCommand(program);
 addInitAgentsCommand(program);
+addInitSkillsCommand(program);

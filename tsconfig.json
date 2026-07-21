@@ -43,6 +43,6 @@
   "exclude": [
     "packages/*/lib",
     "packages/extension",
-    "packages/skills",
+    "packages/playwright-core/src/tools/skills",
   ]
 }

@@ -1,5 +1,6 @@
 [*]
 ../../package.ts
+../utils/installSkills.ts
 @isomorphic/**
 @utils/**
 

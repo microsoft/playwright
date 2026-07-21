@@ -101,7 +101,7 @@ export async function program(options?: { embedderVersion?: string}) {
     } else {
       const lines = ['playwright-cli - run playwright mcp commands from terminal'];
       if (process.env.CLAUDECODE || process.env.COPILOT_CLI)
-        lines.push(`Agent skill: ${path.relative(process.cwd(), libPath('tools', 'cli-client', 'skill', 'SKILL.md'))}`);
+        lines.push(`Agent skill: ${path.relative(process.cwd(), libPath('tools', 'skills', 'playwright-cli', 'SKILL.md'))}`);
       lines.push(help.global);
       output.help(lines.join('\n\n'));
     }

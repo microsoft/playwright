@@ -22,12 +22,12 @@ import path from 'path';
 
 import { getAsBooleanFromENV, guessClientName } from '@utils/env';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
-import { libPath } from '../../package';
 import { startCliDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../mcp/watchdog';
 import { createBrowserWithInfo } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
 import { createClientInfo } from '../cli-client/registry';
+import { installSkills } from '../utils/installSkills';
 import { registry as browserRegistry } from '../../server/registry/index';
 import type { Command } from 'commander';
 
@@ -92,16 +92,14 @@ export async function initWorkspace(initSkills: string | undefined) {
   console.log(`✅ Workspace initialized at \`${cwd}\`.`);
 
   if (initSkills) {
-    const skillSourceDir = libPath('tools', 'cli-client', 'skill');
     const target = initSkills === 'agents' ? 'agents' : 'claude';
-    const skillDestDir = path.join(cwd, `.${target}`, 'skills', 'playwright-cli');
-    if (!fs.existsSync(skillSourceDir)) {
-      console.error('❌ Skills source directory not found:', skillSourceDir);
+    try {
+      await installSkills(['playwright-cli'], target);
+    } catch (error) {
+      console.error('❌', error instanceof Error ? error.message : error);
       // eslint-disable-next-line no-restricted-properties
       process.exit(1);
     }
-    await fs.promises.cp(skillSourceDir, skillDestDir, { recursive: true });
-    console.log(`✅ Skills installed to \`${path.relative(cwd, skillDestDir)}\`.`);
   }
 
   await ensureConfiguredBrowserInstalled();

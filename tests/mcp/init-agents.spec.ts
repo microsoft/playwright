@@ -121,3 +121,22 @@ test('codex generates agent toml files', async ({  }) => {
   expect(healerToml).toContain(`sandbox_mode = "workspace-write"`);
   expect(healerToml).toMatch(/enabled_tools = \[[^\]]*"test_debug"[^\]]*\]/);
 });
+
+test('init-skills installs all skills', async ({  }) => {
+  const baseDir = await writeFiles({});
+
+  await spawnAsync('npx', ['playwright', 'init-skills'], { cwd: baseDir, shell: true });
+
+  for (const skill of ['playwright-cli', 'playwright-component-testing', 'playwright-trace'])
+    expect(fs.existsSync(path.join(baseDir, '.claude', 'skills', skill, 'SKILL.md'))).toBe(true);
+  expect(fs.existsSync(path.join(baseDir, '.claude', 'skills', 'playwright-cli', 'references', 'tracing.md'))).toBe(true);
+});
+
+test('init-skills installs into .agents with --loop agents', async ({  }) => {
+  const baseDir = await writeFiles({});
+
+  await spawnAsync('npx', ['playwright', 'init-skills', '--loop', 'agents'], { cwd: baseDir, shell: true });
+
+  for (const skill of ['playwright-cli', 'playwright-component-testing', 'playwright-trace'])
+    expect(fs.existsSync(path.join(baseDir, '.agents', 'skills', skill, 'SKILL.md'))).toBe(true);
+});
