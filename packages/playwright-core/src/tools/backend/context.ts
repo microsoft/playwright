@@ -56,6 +56,7 @@ export type ContextConfig = {
     action?: number;
     navigation?: number;
     expect?: number;
+    settle?: number;
   };
   browser?: {
     initScript?: string[];
