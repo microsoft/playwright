@@ -89,6 +89,16 @@ export const WithTitle = ({ title = 'Default' }: { title?: string }) =>
 const component = await mount('components/Button/WithTitle', { title: 'Hello' });
 ```
 
+`mount` is generic over the story: pass the story type as a template argument to type-check the props (and `update()`):
+
+```ts
+import type { WithTitle } from './Button.story';
+
+const component = await mount<typeof WithTitle>('components/Button/WithTitle', { title: 'Hello' });
+```
+
+This works for React and Vue stories alike; Vue stories must additionally declare the props at runtime — see the `Typed props` sections in `references/react.md` / `references/vue.md`.
+
 ### Prop transitions with `update()`
 
 To test how a component reacts to a prop change **without remounting** (state preserved), call `component.update(newProps)` — it re-renders the same story with new props on the existing root:

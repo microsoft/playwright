@@ -47,6 +47,29 @@ export function withStore(story: Component) {
 
 For plugins that must be installed on the app instance (`app.use(...)`), add them in your gallery right after `createApp(...)` — that is the equivalent of the app's own bootstrap.
 
+## Typed props
+
+A story that takes per-test props declares them twice: in the setup signature (for the type) and in the `props` option (so Vue delivers them as props rather than `attrs`):
+
+```ts
+// src/components/Button.story.ts
+export const WithTitle = defineComponent(
+  (props: { title?: string }) => () => h(Button, { title: props.title ?? 'Default' }),
+  { props: ['title'] },
+);
+```
+
+`mount` is generic over the story: pass the story type as a template argument to type-check the props (and `update()`):
+
+```ts
+// src/components/button.spec.ts
+import type { WithTitle } from './Button.story';
+
+const component = await mount<typeof WithTitle>('components/Button/WithTitle', { title: 'Hello' });
+```
+
+Options-API stories (`defineComponent({ props: { ... } })`) infer props the same way. For `.story.vue` SFC stories, prop types are only inferable when the setup generates SFC types (Volar/vue-tsc); otherwise pass the props type directly: `mount<{ title?: string }>('components/Button.primary', { title: 'Hello' })`.
+
 ## CSS
 
 Import global stylesheets in your gallery entry (`playwright/gallery/main.ts`, e.g. `import '../../src/assets/main.css'`), mirroring the app's entry point.

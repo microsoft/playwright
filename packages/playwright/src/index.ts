@@ -505,7 +505,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
           throw new Error('The gallery page does not define window.mount().');
         await w.mount(p);
       }, params, { exposeFunctions: true });
-    await use(async (storyId: string, props?: Record<string, any>) => {
+    await use(async (storyId: string, props?: any) => {
       if (!baseURL)
         throw new Error('mount() requires `baseURL` to point at the component gallery. Set it in your Playwright config.');
       // The gallery is a single page (served at baseURL) that exposes window.mount()/window.unmount().
@@ -515,7 +515,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
       return Object.assign(page.locator('#root'), {
         // update() re-renders the same story with new props without navigating; if the gallery
         // reuses its root/instance, the framework reconciles and component state is preserved.
-        update: (newProps?: Record<string, any>) => callMount({ story: storyId, props: newProps }),
+        update: (newProps?: any) => callMount({ story: storyId, props: newProps }),
         unmount: () => page.evaluate(async () => {
           await (window as any).unmount?.();
         }),

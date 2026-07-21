@@ -579,7 +579,6 @@ class TypesGenerator {
         'Config',
         'ExpectMatcherUtils',
         'Matchers',
-        'PlaywrightTestArgs.mount',
         'PlaywrightWorkerArgs.playwright',
         'PlaywrightWorkerOptions.defaultBrowserType',
         'PlaywrightWorkerOptions.reuseContext',

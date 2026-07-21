@@ -40,6 +40,23 @@ export const LoggedIn = () => (
 
 Do not build the decorator into the gallery — keeping it in story files makes the wrapping visible and lets stories opt out.
 
+## Typed props
+
+`mount` is generic over the story: pass the story type as a template argument to type-check per-test props (and `update()`). Props are inferred from the component signature; function and class components both work.
+
+```tsx
+// src/components/Button.story.tsx
+export const WithTitle = ({ title = 'Default' }: { title?: string }) =>
+  <Button title={title} />;
+```
+
+```ts
+// src/components/button.spec.ts
+import type { WithTitle } from './Button.story';
+
+const component = await mount<typeof WithTitle>('components/Button/WithTitle', { title: 'Hello' });
+```
+
 ## CSS
 
 - Global stylesheets: import them in your gallery entry (`playwright/gallery/main.tsx`, e.g. `import '../../src/index.css'`), mirroring the app's own entry point.

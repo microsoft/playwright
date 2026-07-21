@@ -16,10 +16,12 @@
 
 import { expect, test } from '@playwright/test';
 
+import type { Default } from './imageDiffView.story';
+
 test.use({ viewport: { width: 1000, height: 800 } });
 
 test('should render links', async ({ mount }) => {
-  const component = await mount('shared/imageDiffView/Default');
+  const component = await mount<typeof Default>('shared/imageDiffView/Default');
   await expect(component.locator('a')).toHaveText([
     'screenshot-diff.png',
     'screenshot-actual.png',
@@ -28,7 +30,7 @@ test('should render links', async ({ mount }) => {
 });
 
 test('should show diff by default', async ({ mount }) => {
-  const component = await mount('shared/imageDiffView/Default');
+  const component = await mount<typeof Default>('shared/imageDiffView/Default');
   const image = component.locator('img');
   const box = await image.boundingBox();
   expect(box).toEqual(expect.objectContaining({ width: 48, height: 48 }));

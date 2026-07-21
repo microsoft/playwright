@@ -305,14 +305,17 @@ export interface PlaywrightWorkerArgs {
   browser: Browser;
 }
 
+type StoryProps<Story> =
+  Story extends (props: infer Props) => any ? Props :
+  Story extends new (...args: any[]) => { $props: infer Props } ? Props :
+  Story extends new (props: infer Props, ...args: any[]) => any ? Props :
+  Story;
+
 export interface PlaywrightTestArgs {
   context: BrowserContext;
   page: Page;
   request: APIRequestContext;
-  // Experimental, undocumented: mount a story from the component gallery and return a locator
-  // for the gallery root, augmented with update()/unmount(). Scope the queries:
-  // component.getByRole(...). See the playwright-component-testing skill.
-  mount: (storyId: string, props?: Record<string, any>) => Promise<Locator & { update(props?: Record<string, any>): Promise<void>, unmount(): Promise<void> }>;
+  mount: <Story = Record<string, any>>(storyId: string, props?: StoryProps<Story>) => Promise<Locator & { update(props?: StoryProps<Story>): Promise<void>, unmount(): Promise<void> }>;
 }
 
 type ExcludeProps<A, B> = {

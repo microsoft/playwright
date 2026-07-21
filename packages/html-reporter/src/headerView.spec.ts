@@ -16,10 +16,12 @@
 
 import { expect, test } from '@playwright/test';
 
+import type { Default } from './headerView.story';
+
 test.use({ viewport: { width: 720, height: 200 } });
 
 test('should render counters', async ({ mount }) => {
-  const component = await mount('headerView/Default');
+  const component = await mount<typeof Default>('headerView/Default');
   await expect(component.locator('a', { hasText: 'All' }).locator('.counter')).toHaveText('90');
   await expect(component.locator('a', { hasText: 'Passed' }).locator('.counter')).toHaveText('42');
   await expect(component.locator('a', { hasText: 'Failed' }).locator('.counter')).toHaveText('31');
@@ -36,7 +38,7 @@ test('should render counters', async ({ mount }) => {
 });
 
 test('should toggle filters', async ({ page, mount }) => {
-  const component = await mount('headerView/Default');
+  const component = await mount<typeof Default>('headerView/Default');
   const filterText = component.getByTestId('filter-text');
   await component.locator('a', { hasText: 'All' }).click();
   await expect(filterText).toHaveValue('');

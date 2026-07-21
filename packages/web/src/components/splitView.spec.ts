@@ -16,10 +16,12 @@
 
 import { expect, test } from '@playwright/test';
 
+import type { Default } from './splitView.story';
+
 test.use({ viewport: { width: 500, height: 500 } });
 
 test('should render', async ({ mount }) => {
-  const component = await mount('components/splitView/Default');
+  const component = await mount<typeof Default>('components/splitView/Default');
   const mainBox = await component.locator('#main').boundingBox();
   const sidebarBox = await component.locator('#sidebar').boundingBox();
   expect.soft(mainBox).toEqual({ x: 0, y: 0, width: 500, height: 400 });
@@ -27,7 +29,7 @@ test('should render', async ({ mount }) => {
 });
 
 test('should render sidebar first', async ({ mount }) => {
-  const component = await mount('components/splitView/Default', { sidebarIsFirst: true });
+  const component = await mount<typeof Default>('components/splitView/Default', { sidebarIsFirst: true });
   const mainBox = await component.locator('#main').boundingBox();
   const sidebarBox = await component.locator('#sidebar').boundingBox();
   expect.soft(mainBox).toEqual({ x: 0, y: 100, width: 500, height: 400 });
@@ -35,7 +37,7 @@ test('should render sidebar first', async ({ mount }) => {
 });
 
 test('should render horizontal split', async ({ mount }) => {
-  const component = await mount('components/splitView/Default', { sidebarIsFirst: true, orientation: 'horizontal' });
+  const component = await mount<typeof Default>('components/splitView/Default', { sidebarIsFirst: true, orientation: 'horizontal' });
   const mainBox = await component.locator('#main').boundingBox();
   const sidebarBox = await component.locator('#sidebar').boundingBox();
   expect.soft(mainBox).toEqual({ x: 100, y: 0, width: 400, height: 500 });
@@ -43,13 +45,13 @@ test('should render horizontal split', async ({ mount }) => {
 });
 
 test('should hide sidebar', async ({ mount }) => {
-  const component = await mount('components/splitView/Default', { orientation: 'horizontal', sidebarHidden: true });
+  const component = await mount<typeof Default>('components/splitView/Default', { orientation: 'horizontal', sidebarHidden: true });
   const mainBox = await component.locator('#main').boundingBox();
   expect.soft(mainBox).toEqual({ x: 0, y: 0, width: 500, height: 500 });
 });
 
 test('drag resize', async ({ page, mount }) => {
-  const component = await mount('components/splitView/Default');
+  const component = await mount<typeof Default>('components/splitView/Default');
   await page.mouse.move(25, 400);
   await page.mouse.down();
   await page.mouse.move(25, 100);

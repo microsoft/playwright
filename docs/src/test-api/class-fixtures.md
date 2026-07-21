@@ -69,6 +69,51 @@ test('example test', async ({ page, context }) => {
 });
 ```
 
+## method: Fixtures.mount
+* since: v1.62
+- returns: <[Locator]>
+
+Mounts a component story and returns a [Locator] pointing to the root element the story was rendered into. Scope your queries from the returned locator: `component.getByRole('button')`, not `page.getByRole('button')`.
+
+A **story** is a small wrapper component that embeds the component under test in one specific scenario: hard-coded props, mock data, providers, recorded callbacks. Stories are rendered by a **gallery** page that you implement and serve at [`property: TestOptions.baseURL`]. The gallery exposes `window.mount(params)` and `window.unmount()` functions that render a story into its root element. Each call to [`method: Fixtures.mount`] navigates to [`property: TestOptions.baseURL`] and calls `window.mount()` with the story id and props, so tests are fully isolated from each other.
+
+**Usage**
+
+```js
+test('click should expand', async ({ mount }) => {
+  const component = await mount('components/Expandable/Stateful');
+  await component.getByRole('button').click();
+  await expect(component.getByTestId('expanded')).toHaveValue('true');
+});
+```
+
+Pass the story type as a template argument to type-check the props:
+
+```js
+import type { WithTitle } from './Button.story';
+
+test('renders the title', async ({ mount }) => {
+  const component = await mount<typeof WithTitle>('Button/WithTitle', { title: 'Hello' });
+  await expect(component).toContainText('Hello');
+});
+```
+
+The returned locator is augmented with two methods:
+* `update(props)` - re-renders the same story with new props without remounting, preserving component state;
+* `unmount()` - unmounts the story.
+
+### param: Fixtures.mount.storyId
+* since: v1.62
+- `storyId` <[string]>
+
+Identifier of the story to mount, as resolved by the gallery page. Conventionally, the story file path plus the exported story name, for example `'components/Button/Primary'`.
+
+### param: Fixtures.mount.props
+* since: v1.62
+- `props` ?<[Object]>
+
+Optional plain, serializable props passed to the story.
+
 ## property: Fixtures.page
 * since: v1.10
 - type: <[Page]>

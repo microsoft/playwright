@@ -16,6 +16,8 @@
 
 import { expect, test } from '@playwright/test';
 
+import type { Default, Editable } from './codeMirrorWrapper.story';
+
 test.use({ viewport: { width: 500, height: 500 } });
 
 const javascriptSnippet = `import { test, expect } from '@playwright/test';
@@ -68,27 +70,27 @@ class Program
 `;
 
 test('highlight JavaScript', async ({ mount }) => {
-  const component = await mount('components/codeMirrorWrapper/Default', { text: javascriptSnippet, highlighter: 'javascript' });
+  const component = await mount<typeof Default>('components/codeMirrorWrapper/Default', { text: javascriptSnippet, highlighter: 'javascript' });
   await expect(component.locator('text="async"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight Python', async ({ mount }) => {
-  const component = await mount('components/codeMirrorWrapper/Default', { text: pythonSnippet, highlighter: 'python' });
+  const component = await mount<typeof Default>('components/codeMirrorWrapper/Default', { text: pythonSnippet, highlighter: 'python' });
   await expect(component.locator('text="async"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight Java', async ({ mount }) => {
-  const component = await mount('components/codeMirrorWrapper/Default', { text: javaSnippet, highlighter: 'java' });
+  const component = await mount<typeof Default>('components/codeMirrorWrapper/Default', { text: javaSnippet, highlighter: 'java' });
   await expect(component.locator('text="public"').first()).toHaveClass('cm-keyword');
 });
 
 test('highlight C#', async ({ mount }) => {
-  const component = await mount('components/codeMirrorWrapper/Default', { text: csharpSnippet, highlighter: 'csharp' });
+  const component = await mount<typeof Default>('components/codeMirrorWrapper/Default', { text: csharpSnippet, highlighter: 'csharp' });
   await expect(component.locator('text="public"').first()).toHaveClass('cm-keyword');
 });
 
 test('should report changes via onChange', async ({ mount, page }) => {
-  const component = await mount('components/codeMirrorWrapper/Editable');
+  const component = await mount<typeof Editable>('components/codeMirrorWrapper/Editable');
   await component.locator('.CodeMirror').click();
   await page.keyboard.type('!');
   await expect(component.getByTestId('value')).toHaveValue(/!/);
@@ -96,7 +98,7 @@ test('should report changes via onChange', async ({ mount, page }) => {
 });
 
 test('should not report changes when read-only', async ({ mount, page }) => {
-  const component = await mount('components/codeMirrorWrapper/Editable', { readOnly: true });
+  const component = await mount<typeof Editable>('components/codeMirrorWrapper/Editable', { readOnly: true });
   await component.locator('.CodeMirror').click();
   await page.keyboard.type('!');
   await expect(component.locator('.CodeMirror')).toContainText('initial');
@@ -104,7 +106,7 @@ test('should not report changes when read-only', async ({ mount, page }) => {
 });
 
 test('highlight lines', async ({ mount }) => {
-  const component = await mount('components/codeMirrorWrapper/Default', {
+  const component = await mount<typeof Default>('components/codeMirrorWrapper/Default', {
     text: javascriptSnippet,
     highlighter: 'javascript',
     highlight: [

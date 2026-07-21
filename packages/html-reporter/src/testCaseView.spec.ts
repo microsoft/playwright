@@ -16,10 +16,12 @@
 
 import { expect, test } from '@playwright/test';
 
+import type { AnnotationLinks, AttachmentLinks, Default, PrevNext, TwoAttempts } from './testCaseView.story';
+
 test.use({ viewport: { width: 800, height: 600 } });
 
 test('should render test case', async ({ mount }) => {
-  const component = await mount('testCaseView/Default');
+  const component = await mount<typeof Default>('testCaseView/Default');
   await expect(component.getByText('Annotation text', { exact: false }).first()).toBeVisible();
   await expect(component.getByText('Hidden annotation')).toBeHidden();
   await component.getByText('Annotations').click();
@@ -35,7 +37,7 @@ test('should render test case', async ({ mount }) => {
 test('should render copy buttons for annotations', async ({ mount, page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
-  const component = await mount('testCaseView/Default');
+  const component = await mount<typeof Default>('testCaseView/Default');
   await expect(component.getByText('Annotation text', { exact: false }).first()).toBeVisible();
   await component.getByText('Annotation text', { exact: false }).first().hover();
   await expect(component.locator('.test-case-annotation').getByLabel('Copy to clipboard').first()).toBeVisible();
@@ -46,7 +48,7 @@ test('should render copy buttons for annotations', async ({ mount, page, context
 });
 
 test('should correctly render links in annotations', async ({ mount }) => {
-  const component = await mount('testCaseView/AnnotationLinks');
+  const component = await mount<typeof AnnotationLinks>('testCaseView/AnnotationLinks');
 
   const firstLink = component.getByText('https://playwright.dev/docs/intro').first();
   await expect(firstLink).toBeVisible();
@@ -66,7 +68,7 @@ test('should correctly render links in annotations', async ({ mount }) => {
 });
 
 test('should correctly render links in attachments', async ({ mount }) => {
-  const component = await mount('testCaseView/AttachmentLinks');
+  const component = await mount<typeof AttachmentLinks>('testCaseView/AttachmentLinks');
   await component.getByText('first attachment').click();
   const body = component.getByText('The body with https://playwright.dev/docs/intro link');
   await expect(body).toBeVisible();
@@ -79,7 +81,7 @@ test('should correctly render links in attachments', async ({ mount }) => {
 });
 
 test('should correctly render links in attachment name', async ({ mount }) => {
-  const component = await mount('testCaseView/AttachmentLinks');
+  const component = await mount<typeof AttachmentLinks>('testCaseView/AttachmentLinks');
   const link = component.getByText('attachment with inline link').locator('a');
   await expect(link).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/31284');
   await expect(link).toHaveText('https://github.com/microsoft/playwright/issues/31284');
@@ -89,7 +91,7 @@ test('should correctly render links in attachment name', async ({ mount }) => {
 });
 
 test('should correctly render prev and next', async ({ mount }) => {
-  const component = await mount('testCaseView/PrevNext');
+  const component = await mount<typeof PrevNext>('testCaseView/PrevNext');
   await expect(component).toMatchAriaSnapshot(`
     - text: group
     - link "« previous"
@@ -99,7 +101,7 @@ test('should correctly render prev and next', async ({ mount }) => {
 });
 
 test('total duration is selected run duration', async ({ mount, page }) => {
-  const component = await mount('testCaseView/TwoAttempts');
+  const component = await mount<typeof TwoAttempts>('testCaseView/TwoAttempts');
   await expect(component).toMatchAriaSnapshot(`
     - text: "My test test.spec.ts:42 200ms chromium"
     - tablist:

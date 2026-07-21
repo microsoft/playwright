@@ -7774,6 +7774,12 @@ export interface PlaywrightWorkerArgs {
   browser: Browser;
 }
 
+type StoryProps<Story> =
+  Story extends (props: infer Props) => any ? Props :
+  Story extends new (...args: any[]) => { $props: infer Props } ? Props :
+  Story extends new (props: infer Props, ...args: any[]) => any ? Props :
+  Story;
+
 /**
  * Playwright Test is based on the concept of the [test fixtures](https://playwright.dev/docs/test-fixtures). Test fixtures are used to
  * establish environment for each test, giving the test everything it needs and nothing else.
@@ -7865,10 +7871,48 @@ export interface PlaywrightTestArgs {
    *
    */
   request: APIRequestContext;
-  // Experimental, undocumented: mount a story from the component gallery and return a locator
-  // for the gallery root, augmented with update()/unmount(). Scope the queries:
-  // component.getByRole(...). See the playwright-component-testing skill.
-  mount: (storyId: string, props?: Record<string, any>) => Promise<Locator & { update(props?: Record<string, any>): Promise<void>, unmount(): Promise<void> }>;
+  /**
+   * Mounts a component story and returns a [Locator](https://playwright.dev/docs/api/class-locator) pointing to the
+   * root element the story was rendered into. Scope your queries from the returned locator:
+   * `component.getByRole('button')`, not `page.getByRole('button')`.
+   *
+   * A **story** is a small wrapper component that embeds the component under test in one specific scenario: hard-coded
+   * props, mock data, providers, recorded callbacks. Stories are rendered by a **gallery** page that you implement and
+   * serve at [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url). The
+   * gallery exposes `window.mount(params)` and `window.unmount()` functions that render a story into its root element.
+   * Each call to [fixtures.mount(storyId[, props])](https://playwright.dev/docs/api/class-fixtures#fixtures-mount)
+   * navigates to [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) and
+   * calls `window.mount()` with the story id and props, so tests are fully isolated from each other.
+   *
+   * **Usage**
+   *
+   * ```js
+   * test('click should expand', async ({ mount }) => {
+   *   const component = await mount('components/Expandable/Stateful');
+   *   await component.getByRole('button').click();
+   *   await expect(component.getByTestId('expanded')).toHaveValue('true');
+   * });
+   * ```
+   *
+   * Pass the story type as a template argument to type-check the props:
+   *
+   * ```js
+   * import type { WithTitle } from './Button.story';
+   *
+   * test('renders the title', async ({ mount }) => {
+   *   const component = await mount<typeof WithTitle>('Button/WithTitle', { title: 'Hello' });
+   *   await expect(component).toContainText('Hello');
+   * });
+   * ```
+   *
+   * The returned locator is augmented with two methods:
+   * - `update(props)` - re-renders the same story with new props without remounting, preserving component state;
+   * - `unmount()` - unmounts the story.
+   * @param storyId Identifier of the story to mount, as resolved by the gallery page. Conventionally, the story file path plus the
+   * exported story name, for example `'components/Button/Primary'`.
+   * @param props Optional plain, serializable props passed to the story.
+   */
+  mount: <Story = Record<string, any>>(storyId: string, props?: StoryProps<Story>) => Promise<Locator & { update(props?: StoryProps<Story>): Promise<void>, unmount(): Promise<void> }>;
 }
 
 type ExcludeProps<A, B> = {
