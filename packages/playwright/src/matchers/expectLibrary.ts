@@ -164,8 +164,6 @@ export const utils = Object.freeze({
   subsetEquality,
 });
 
-export { equals };
-
 function hasProperty(obj: object | null, property: string | symbol): boolean {
   if (!obj)
     return false;

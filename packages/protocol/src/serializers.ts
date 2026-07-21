@@ -84,19 +84,12 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
   if (value.fn !== undefined) {
     const dummy = () => {};
     Object.defineProperty(dummy, 'name', { value: value.fn });
-    if (value.fn_rv !== undefined) {
-      // Keep the parsed return values on the dummy so that the page-bound
-      // serializer can pass them along. Each value was serialized separately,
-      // so each one is parsed with a fresh refs map. The property name must
-      // match kCallbackReturnValuesProperty in utilityScriptSerializers.ts.
-      (dummy as any)['__pw_callback_rv__'] = value.fn_rv.map(v => parseSerializedValue(v, undefined));
-    }
     return dummy;
   }
   throw new Error(`Attempting to deserialize unexpected value${accessChainToDisplayString(accessChain)}: ${value}`);
 }
 
-export type HandleOrValue = { h: number } | { fn: string, fn_rv?: SerializedValue[] } | { fallThrough: any };
+export type HandleOrValue = { h: number } | { fn: string } | { fallThrough: any };
 type VisitorInfo = {
   visited: Map<object, number>;
   lastId: number;

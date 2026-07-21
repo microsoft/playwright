@@ -517,7 +517,12 @@ export async function toPass(
   }, deadline, intervals);
 
   if (result.timedOut) {
-    const message = timeoutFailureMessage(result.result?.message, timeoutMessage);
+    const message = result.result ? [
+      result.result.message,
+      '',
+      `Call Log:`,
+      `- ${timeoutMessage}`,
+    ].join('\n') : timeoutMessage;
     return { message: () => message, pass: !!this.isNot };
   }
   return { pass: !this.isNot, message: () => '' };
@@ -535,10 +540,6 @@ export function computeMatcherTitleSuffix(matcherName: string, receiver: any, ar
     }
   }
   return {};
-}
-
-export function timeoutFailureMessage(message: string | undefined, timeoutMessage: string): string {
-  return message ? [message, '', `Call Log:`, `- ${timeoutMessage}`].join('\n') : timeoutMessage;
 }
 
 export function deadlineForMatcher(testInfo: ExpectTestInfo | null, timeout: number): { deadline: number; timeoutMessage: string } {

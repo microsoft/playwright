@@ -82,14 +82,6 @@ SerializedValue:
     # Name of a page-side callback that routes back to a client-side function.
     # Used when passing a function as (part of) an evaluate argument.
     fn: string?
-    # Return values that accompany `fn` when the function has configured return
-    # values, e.g. a mock function created with expect.fn(). Never empty.
-    # Values are consumed in order, the last one repeats for all remaining
-    # calls. The page-side stub returns them synchronously, while still routing
-    # each call to the client for recording.
-    fn_rv:
-      type: array?
-      items: SerializedValue
     # Index of the object in value-type for circular reference resolution.
     id: int?
     # Ref to the object in value-type for circular reference resolution.

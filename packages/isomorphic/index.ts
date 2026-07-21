@@ -35,7 +35,6 @@ export * from './time';
 export * from './timeoutRunner';
 export * from './trace/snapshotServer';
 export * from './urlMatch';
-export * from './utilityScriptSerializers';
 export * from './cssParser';
 export * from './locatorParser';
 export * from './selectorParser';

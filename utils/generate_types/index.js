@@ -504,7 +504,6 @@ class TypesGenerator {
   const reporterDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-reporter-api'));
   const assertionClasses = new Set([
     'APIResponseAssertions',
-    'FnAssertions',
     'GenericAssertions',
     'LocatorAssertions',
     'PageAssertions',
@@ -580,7 +579,6 @@ class TypesGenerator {
         'Config',
         'ExpectMatcherUtils',
         'Matchers',
-        'MockFunction',
         'PlaywrightTestArgs.mount',
         'PlaywrightWorkerArgs.playwright',
         'PlaywrightWorkerOptions.defaultBrowserType',
