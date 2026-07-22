@@ -315,3 +315,17 @@ it('exposes browser', async ({ launchPersistent }) => {
   // Next line should not throw.
   await context.close();
 });
+
+it('should support storage.getDirectory()', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18235' }
+}, async ({ launchPersistent, server }) => {
+  const { context } = await launchPersistent();
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  const name = await page.evaluate(async () => {
+    const dir = await navigator.storage.getDirectory();
+    return dir.name;
+  }).catch(e => e);
+  expect(name).toBe('');
+  await context.close();
+});
