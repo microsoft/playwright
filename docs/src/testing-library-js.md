@@ -5,7 +5,7 @@ title: "Migrating from Testing Library"
 
 ## Migration principles
 
-This guide describes migration to Playwright's [Experimental Component Testing](./test-components) from [DOM Testing Library](https://testing-library.com/docs/dom-testing-library/intro/), [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) and [Vue Testing Library](https://testing-library.com/docs/vue-testing-library/intro).
+This guide describes migration to Playwright's [Component Testing](./test-components) from [DOM Testing Library](https://testing-library.com/docs/dom-testing-library/intro/), [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) and [Vue Testing Library](https://testing-library.com/docs/vue-testing-library/intro).
 
 :::note
 If you use DOM Testing Library in the browser (for example, you bundle end-to-end tests with webpack), you can switch directly to Playwright Test. Examples below are focused on component tests, but for end-to-end test you just need to replace `await mount` with `await page.goto('http://localhost:3000/')` to open the page under test.
@@ -28,9 +28,9 @@ If you use DOM Testing Library in the browser (for example, you bundle end-to-en
 | `screen.queryByPlaceholderText('...')`                                          | `component.getByPlaceholder('...')`                                    |
 | `screen.findByText('...')`                                                      | `component.getByText('...')`                                           |
 | `screen.getByTestId('...')`                                                     | `component.getByTestId('...')`                                         |
-| `render(<Component />);`                                                        | `mount(<Component />);`                                                |
-| `const { unmount } = render(<Component />);`                                    | `const { unmount } = await mount(<Component />);`                      |
-| `const { rerender } = render(<Component />);`                                   | `const { update } = await mount(<Component />);`                       |
+| `render(<Component />);`                                                        | `mount('Component/Default');`                                          |
+| `const { unmount } = render(<Component />);`                                    | `const { unmount } = await mount('Component/Default');`                |
+| `const { rerender } = render(<Component />);`                                   | `const { update } = await mount('Component/Default');`                 |
 
 
 ## Example
@@ -57,14 +57,23 @@ test('sign in', async () => {
 });
 ```
 
+In Playwright, the rendered scenario becomes a [story](./test-components) next to the component:
+
+```js
+// src/pages/SignInPage.story.tsx
+import { SignInPage } from './SignInPage';
+
+export const Default = () => <SignInPage />;
+```
+
 Line-by-line migration to Playwright Test:
 
 ```js
-const { test, expect } = require('@playwright/experimental-ct-react'); // 1
+import { test, expect } from '@playwright/test'; // 1
 
 test('sign in', async ({ mount }) => { // 2
   // Setup the page.
-  const component = await mount(<SignInPage />); // 3
+  const component = await mount('pages/SignInPage/Default'); // 3
 
   // Perform actions.
   await component.getByLabel('Username').fill('John'); // 4
@@ -78,9 +87,9 @@ test('sign in', async ({ mount }) => { // 2
 
 Migration highlights (see inline comments in the Playwright Test code snippet):
 
-1. Import everything from `@playwright/experimental-ct-react` (or -vue) for component tests, or from `@playwright/test` for end-to-end tests.
-1. Test function is given a `page` that is isolated from other tests, and `mount` that renders a component in this page. These are two of the [useful fixtures](./api/class-fixtures) in Playwright Test.
-1. Replace `render` with `mount` that returns a [component locator](./locators).
+1. Import everything from `@playwright/test` for both component and end-to-end tests.
+1. Test function is given a `page` that is isolated from other tests, and `mount` that renders a story in this page. These are two of the [useful fixtures](./api/class-fixtures) in Playwright Test.
+1. Replace `render` with a story export plus `mount`, which returns a [component locator](./locators).
 1. Use locators created with [`method: Locator.locator`] or [`method: Page.locator`] to perform most of the actions.
 1. Use [assertions](./test-assertions) to verify the state.
 
@@ -149,7 +158,7 @@ You also get all these ✨ awesome tools ✨ that come bundled with Playwright T
 Learn more about Playwright Test runner:
 
 - [Getting Started](./intro)
-- [Experimental Component Testing](./test-components)
+- [Component Testing](./test-components)
 - [Locators](./locators.md)
 - [Assertions](./test-assertions)
 - [Auto-waiting](./actionability)

@@ -92,12 +92,6 @@ const injectedScripts = [
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
     true,
   ],
-  [
-    path.join(ROOT, 'packages', 'playwright-ct-core', 'src', 'injected', 'index.ts'),
-    path.join(ROOT, 'packages', 'playwright-ct-core', 'lib', 'injected', 'packed'),
-    path.join(ROOT, 'packages', 'playwright-ct-core', 'src', 'generated'),
-    false,
-  ]
 ];
 
 const modulePrefix = `

@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import path from 'path';
 import timers from 'timers/promises';
-import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -684,129 +683,6 @@ test('should not watch unfiltered files', async ({ runWatchTest, writeFiles }) =
   await testProcess.waitForOutput('npx playwright test a.test.ts (files changed)');
   await testProcess.waitForOutput('a.test.ts:3:11 › passes');
   expect(testProcess.output).not.toContain('b.test');
-  await testProcess.waitForOutput('Waiting for file changes.');
-});
-
-test('should run CT on changed deps', async ({ runWatchTest, writeFiles }) => {
-  const testProcess = await runWatchTest({
-    'playwright.config.ts': playwrightCtConfigText,
-    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
-    'playwright/index.ts': ``,
-    'src/button.tsx': `
-      export const Button = () => <button>Button</button>;
-    `,
-    'src/button.spec.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './button';
-      test('pass', async ({ mount }) => {
-        const component = await mount(<Button></Button>);
-        await expect(component).toHaveText('Button', { timeout: 1000 });
-      });
-    `,
-    'src/link.spec.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      test('pass', async ({ mount }) => {
-        const component = await mount(<a>hello</a>);
-        await expect(component).toHaveText('hello');
-      });
-    `,
-  }, undefined, { PWTEST_RECOVERY_DISABLED: '1' });
-  await testProcess.waitForOutput('Waiting for file changes.');
-  await writeFiles({
-    'src/button.tsx': `
-      export const Button = () => <button>Button 2</button>;
-    `,
-  });
-
-  await testProcess.waitForOutput(`src${path.sep}button.spec.tsx:4:11 › pass`);
-  expect(testProcess.output).not.toContain(`src${path.sep}link.spec.tsx`);
-  await testProcess.waitForOutput(`Error: expect(locator).toHaveText(expected) failed`);
-  await testProcess.waitForOutput('Timeout:  1000ms');
-  await testProcess.waitForOutput('Waiting for file changes.');
-});
-
-test('should run CT on indirect deps change', async ({ runWatchTest, writeFiles }) => {
-  const testProcess = await runWatchTest({
-    'playwright.config.ts': playwrightCtConfigText,
-    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
-    'playwright/index.ts': ``,
-    'src/button.css': `
-      button { color: red; }
-    `,
-    'src/button.tsx': `
-      import './button.css';
-      export const Button = () => <button>Button</button>;
-    `,
-    'src/helper.tsx': `
-      import { Button } from "./button";
-      export const buttonInstance = <Button></Button>
-    `,
-    'src/button.spec.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { buttonInstance } from './helper';
-      test('pass', async ({ mount }) => {
-        const component = await mount(buttonInstance);
-        await expect(component).toHaveText('Button', { timeout: 1000 });
-      });
-    `,
-    'src/link.spec.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      test('pass', async ({ mount }) => {
-        const component = await mount(<a>hello</a>);
-        await expect(component).toHaveText('hello');
-      });
-    `,
-  });
-  await testProcess.waitForOutput('Waiting for file changes.');
-  await writeFiles({
-    'src/button.css': `
-      button { color: blue; }
-    `,
-  });
-
-  await testProcess.waitForOutput(`src${path.sep}button.spec.tsx:4:11 › pass`);
-  expect(testProcess.output).not.toContain(`src${path.sep}link.spec.tsx`);
-  await testProcess.waitForOutput('Waiting for file changes.');
-});
-
-test('should run CT on indirect deps change ESM mode', async ({ runWatchTest, writeFiles }) => {
-  const testProcess = await runWatchTest({
-    'playwright.config.ts': playwrightCtConfigText,
-    'package.json': `{ "type": "module" }`,
-    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
-    'playwright/index.ts': ``,
-    'src/button.css': `
-      button { color: red; }
-    `,
-    'src/button.tsx': `
-      import './button.css';
-      export const Button = () => <button>Button</button>;
-    `,
-    'src/button.spec.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './button.jsx';
-      test('pass', async ({ mount }) => {
-        const component = await mount(<Button></Button>);
-        await expect(component).toHaveText('Button', { timeout: 1000 });
-      });
-    `,
-    'src/link.spec.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      test('pass', async ({ mount }) => {
-        const component = await mount(<a>hello</a>);
-        await expect(component).toHaveText('hello');
-      });
-    `,
-  });
-  await testProcess.waitForOutput('Waiting for file changes.');
-  await writeFiles({
-    'src/button.css': `
-      button { color: blue; }
-    `,
-  });
-
-  await testProcess.waitForOutput(`src${path.sep}button.spec.tsx:4:7 › pass`);
-  expect(testProcess.output).not.toContain(`src${path.sep}link.spec.tsx`);
   await testProcess.waitForOutput('Waiting for file changes.');
 });
 

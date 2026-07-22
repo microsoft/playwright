@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test.slow();
 
@@ -166,46 +166,39 @@ test('should throw nice error message if git doesnt work', async ({ runInlineTes
   expect(result.output, 'contains git command output').toContain('unknown revision or path not in the working tree');
 });
 
-test('should support component tests', async ({ runInlineTest, git, writeFiles }) => {
+test('should support transitive dependencies', async ({ runInlineTest, git, writeFiles }) => {
   await writeFiles({
-    'playwright.config.ts': playwrightCtConfigText,
-    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
-    'playwright/index.ts': `
-    `,
     'src/contents.ts': `
       export const content = "Button";
     `,
-    'src/button.tsx': `
+    'src/button.ts': `
       import {content} from './contents';
-      export const Button = () => <button>{content}</button>;
+      export const button = () => content;
     `,
     'src/helper.ts': `
-      export { Button } from "./button";
+      export { button } from "./button";
     `,
-    'src/button.test.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './helper';
+    'src/button.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { button } from './helper';
 
-      test('pass', async ({ mount }) => {
-        const component = await mount(<Button></Button>);
-        await expect(component).toHaveText('Button', { timeout: 1000 });
+      test('pass', async ({}) => {
+        expect(button()).toBe('Button');
       });
     `,
-    'src/button2.test.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './helper';
+    'src/button2.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { button } from './helper';
 
-      test('pass', async ({ mount }) => {
-        const component = await mount(<Button></Button>);
-        await expect(component).toHaveText('Button', { timeout: 1000 });
+      test('pass', async ({}) => {
+        expect(button()).toBe('Button');
       });
     `,
-    'src/button3.test.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
+    'src/button3.test.ts': `
+      import { test, expect } from '@playwright/test';
 
-      test('pass', async ({ mount }) => {
-        const component = await mount(<p>Hello World</p>);
-        await expect(component).toHaveText('Hello World');
+      test('pass', async ({}) => {
+        expect('Hello World').toBe('Hello World');
       });
     `,
   });
@@ -220,13 +213,12 @@ test('should support component tests', async ({ runInlineTest, git, writeFiles }
   expect(result.failed).toBe(0);
 
   const result2 = await runInlineTest({
-    'src/button2.test.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './helper';
+    'src/button2.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import { button } from './helper';
 
-      test('pass', async ({ mount }) => {
-        const component = await mount(<Button></Button>);
-        await expect(component).toHaveText('Different Button', { timeout: 1000 });
+      test('pass', async ({}) => {
+        expect(button()).toBe('Different Button');
       });
     `
   }, { 'only-changed': true });
@@ -234,9 +226,9 @@ test('should support component tests', async ({ runInlineTest, git, writeFiles }
   expect(result2.exitCode).toBe(1);
   expect(result2.failed).toBe(1);
   expect(result2.passed).toBe(0);
-  expect(result2.output).toContain('button2.test.tsx');
-  expect(result2.output).not.toContain('button.test.tsx');
-  expect(result2.output).not.toContain('button3.test.tsx');
+  expect(result2.output).toContain('button2.test.ts');
+  expect(result2.output).not.toContain('button.test.ts');
+  expect(result2.output).not.toContain('button3.test.ts');
 
   git(`commit -am "update button2 test"`);
 

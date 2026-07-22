@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test('should load nested as esm when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -538,29 +538,6 @@ test('should resolve no-extension import to .jsx file in ESM mode', async ({ run
       }
     `,
   });
-  expect(result.passed).toBe(1);
-  expect(result.exitCode).toBe(0);
-});
-
-test('should resolve .js import to .tsx file in ESM mode for components', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'package.json': `{ "type": "module" }`,
-    'playwright.config.ts': playwrightCtConfigText,
-    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
-    'playwright/index.ts': ``,
-
-    'src/button.tsx': `
-      export const Button = () => <button>Button</button>;
-    `,
-
-    'src/test.spec.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './button.js';
-      test('pass', async ({ mount }) => {
-        await mount(<Button></Button>);
-      });
-    `,
-  }, { workers: 1 });
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });

@@ -23,11 +23,6 @@
     "./lib/program": "./lib/program.js",
     "./lib/runner": "./lib/runner/index.js",
     "./lib/transform/babelBundle": "./lib/transform/babelBundle.js",
-    "./jsx-runtime": {
-      "import": "./jsx-runtime.mjs",
-      "require": "./jsx-runtime.js",
-      "default": "./jsx-runtime.js"
-    },
     "./lib/util": "./lib/util.js",
     "./types/test": {
       "types": "./types/test.d.ts"

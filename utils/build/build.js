@@ -958,7 +958,6 @@ onChanges.push({
   inputs: [
     'packages/injected/src/**',
     'packages/playwright-core/src/third_party/**',
-    'packages/playwright-ct-core/src/injected/**',
     'packages/isomorphic/**',
     'utils/generate_injected_builtins.js',
     'utils/generate_injected.js',

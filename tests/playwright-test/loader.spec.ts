@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 import fs from 'fs';
 import path from 'path';
 import url from 'url';
@@ -524,22 +524,10 @@ test('should load jsx with top-level component', async ({ runInlineTest }) => {
       import { test, expect } from '@playwright/test';
       const component = <div>Hello <span>world</span></div>;
       test('succeeds', () => {
-        expect(component).toEqual({
-          __pw_type: 'jsx',
-          type: 'div',
-          props: {
-            children: [
-              'Hello ',
-              {
-                __pw_type: 'jsx',
-                type: 'span',
-                props: {
-                  children: 'world'
-                },
-              }
-            ]
-          },
-        });
+        expect(component.type).toBe('div');
+        expect(component.props.children[0]).toBe('Hello ');
+        expect(component.props.children[1].type).toBe('span');
+        expect(component.props.children[1].props.children).toBe('world');
       });
     `,
   });
@@ -752,28 +740,6 @@ test('should resolve .js import to .tsx file in non-ESM mode', async ({ runInlin
       }
     `,
   });
-  expect(result.passed).toBe(1);
-  expect(result.exitCode).toBe(0);
-});
-
-test('should resolve .js import to .tsx file in non-ESM mode for components', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': playwrightCtConfigText,
-    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
-    'playwright/index.ts': ``,
-
-    'src/button.tsx': `
-      export const Button = () => <button>Button</button>;
-    `,
-
-    'src/test.spec.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './button.js';
-      test('pass', async ({ mount }) => {
-        await mount(<Button></Button>);
-      });
-    `,
-  }, { workers: 1 });
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
 });

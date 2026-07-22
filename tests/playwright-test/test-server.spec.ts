@@ -18,7 +18,6 @@
 
 import { test as baseTest, expect } from './ui-mode-fixtures';
 import { TestServerConnection } from '../../packages/playwright/lib/isomorphic';
-import { playwrightCtConfigText } from './playwright-test-fixtures';
 import ws from 'ws';
 import type { TestChildProcess } from '../config/commonFixtures';
 
@@ -80,20 +79,19 @@ const test = baseTest.extend<{ startTestServer: (options?: { env?: NodeJS.Proces
   }
 });
 
-const ctFiles = {
-  'playwright.config.ts': playwrightCtConfigText,
-  'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
-  'playwright/index.ts': ``,
-  'src/button.tsx': `
-    export const Button = () => <button>Button</button>;
+const dependencyFiles = {
+  'playwright.config.ts': `
+    export default { projects: [{ name: 'default' }] };
   `,
-  'src/button.test.tsx': `
-    import { test, expect } from '@playwright/experimental-ct-react';
-    import { Button } from './button';
+  'src/helper.ts': `
+    export const answer = 42;
+  `,
+  'src/helper.test.ts': `
+    import { test, expect } from '@playwright/test';
+    import { answer } from './helper';
 
-    test('pass', async ({ mount }) => {
-      const component = await mount(<Button></Button>);
-      await expect(component).toHaveText('Button', { timeout: 1 });
+    test('pass', async ({}) => {
+      expect(answer).toBe(42);
     });
   `,
 };
@@ -199,21 +197,21 @@ test('find related test files errors', async ({ startTestServer, writeFiles }) =
 });
 
 test('find related test files', async ({ startTestServer, writeFiles }) => {
-  await writeFiles(ctFiles);
+  await writeFiles(dependencyFiles);
   const testServerConnection = await startTestServer();
   await testServerConnection.initialize({ interceptStdio: true });
   expect((await testServerConnection.runGlobalSetup({})).status).toBe('passed');
 
-  const buttonTsx = test.info().outputPath('src/button.tsx');
-  const buttonTestTsx = test.info().outputPath('src/button.test.tsx');
-  const result = await testServerConnection.findRelatedTestFiles({ files: [buttonTsx] });
-  expect(result).toEqual({ testFiles: [buttonTestTsx] });
+  const helperTs = test.info().outputPath('src/helper.ts');
+  const helperTestTs = test.info().outputPath('src/helper.test.ts');
+  const result = await testServerConnection.findRelatedTestFiles({ files: [helperTs] });
+  expect(result).toEqual({ testFiles: [helperTestTs] });
 
   expect((await testServerConnection.runGlobalTeardown({})).status).toBe('passed');
 });
 
 test('clear cache', async ({ startTestServer, writeFiles }) => {
-  await writeFiles(ctFiles);
+  await writeFiles(dependencyFiles);
   const testServerConnection = await startTestServer();
   await testServerConnection.initialize({ interceptStdio: true });
   expect((await testServerConnection.runGlobalSetup({})).status).toBe('passed');

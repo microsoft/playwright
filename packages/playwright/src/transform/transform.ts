@@ -44,13 +44,10 @@ type ParsedTsConfigData = {
 const cachedTSConfigs = new Map<string, ParsedTsConfigData[]>();
 
 export type TransformConfig = {
-  babelPlugins: [string, any?][];
   external: string[];
-  jsxImportSource?: string;
 };
 
 let _transformConfig: TransformConfig = {
-  babelPlugins: [],
   external: [],
 };
 
@@ -211,20 +208,13 @@ export function shouldTransform(filename: string): boolean {
   return !cc.belongsToNodeModules(filename);
 }
 
-let transformData: Map<string, any>;
-
-export function setTransformData(pluginName: string, value: any) {
-  transformData.set(pluginName, value);
-}
-
 export function transformHook(originalCode: string, filename: string, moduleUrl?: string): { code: string, serializedCache?: any } {
   const hasPreprocessor =
     process.env.PW_TEST_SOURCE_TRANSFORM &&
     process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
     process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
-  const pluginsPrologue = _transformConfig.babelPlugins;
   const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
-  const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsEpilogue);
   const { cachedCode, addToCache, serializedCache } = cc.getFromCompilationCache(filename, hash, moduleUrl);
   if (cachedCode !== undefined)
     return { code: cachedCode, serializedCache };
@@ -234,32 +224,20 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
 
   const { babelTransform }: { babelTransform: BabelTransformFunction } = require(libPath('transform', 'babelBundle'));
-  transformData = new Map<string, any>();
-  // Pass `setTransformData` to plugins via plugin options instead of having
-  // them import it. The bundled esmLoader inlines its own copy of this file,
-  // so an import-based approach would close over the wrong `transformData`
-  // module-level variable. The closure here always references the bundle copy
-  // currently driving the transform.
-  const setTransformDataForPlugin = (key: string, value: any) => transformData.set(key, value);
-  const wrappedPrologue: BabelPlugin[] = pluginsPrologue.map(([name, opts]) => [
-    name,
-    { ...(opts || {}), setTransformData: setTransformDataForPlugin },
-  ]);
-  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, wrappedPrologue, pluginsEpilogue, _transformConfig.jsxImportSource);
+  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, pluginsEpilogue);
   if (!babelResult?.code)
     return { code: originalCode, serializedCache };
   const { code, map } = babelResult;
-  const added = addToCache!(code, map, transformData);
+  const added = addToCache!(code, map);
   return { code, serializedCache: added.serializedCache };
 }
 
-function calculateHash(content: string, filePath: string, isModule: boolean, pluginsPrologue: BabelPlugin[], pluginsEpilogue: BabelPlugin[]): string {
+function calculateHash(content: string, filePath: string, isModule: boolean, pluginsEpilogue: BabelPlugin[]): string {
   const hash = crypto.createHash('sha1')
       .update(isModule ? 'esm' : 'no_esm')
       .update(content)
       .update(filePath)
       .update(version)
-      .update(pluginsPrologue.map(p => p[0]).join(','))
       .update(pluginsEpilogue.map(p => p[0]).join(','))
       .digest('hex');
   return hash;
