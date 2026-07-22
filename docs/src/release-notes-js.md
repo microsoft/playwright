@@ -6,6 +6,138 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.62
+
+### 🧱 New component testing model
+
+[Component testing](./test-components.md) moves to a **stories and galleries** model.
+A **story** wraps your component in one specific scenario — hard-coded props, mock data, providers — and a
+**gallery** page that you serve renders stories on demand. The new [`method: Fixtures.mount`] fixture navigates
+to the gallery, mounts a story by id, and returns a [Locator] scoped to the story's root element:
+
+```js
+test('click should expand', async ({ mount }) => {
+  const component = await mount('components/Expandable/Stateful');
+  await component.getByRole('button').click();
+  await expect(component.getByTestId('expanded')).toHaveValue('true');
+});
+```
+
+Pass a story type as a template argument to type-check its props, and use `update(props)` /
+`unmount()` on the returned locator to re-render or tear down within a test.
+
+### 🛑 Cancel operations with AbortSignal
+
+Most operations and web-first assertions now accept a `signal` option that takes an
+[`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal), letting you
+cancel long-running actions, navigations, waits, and assertions:
+
+```js
+const controller = new AbortController();
+setTimeout(() => controller.abort(), 1000);
+
+await page.getByRole('button', { name: 'Submit' }).click({ signal: controller.signal });
+await expect(page.getByText('Done')).toBeVisible({ signal: controller.signal });
+```
+
+Providing a signal does not disable the default timeout; pass `timeout: 0` to disable it.
+
+### 🖼️ WebP screenshots
+
+[`method: PageAssertions.toHaveScreenshot#1`] and [`method: LocatorAssertions.toHaveScreenshot#1`]
+can now store snapshots in the WebP format — just give the snapshot a `.webp` name:
+
+```js
+// Visual comparisons store the golden snapshot as lossless WebP.
+await expect(page).toHaveScreenshot('homepage.webp');
+
+// Standalone screenshots can trade quality for size with lossy WebP.
+await page.screenshot({ path: 'homepage.webp', quality: 50 });
+```
+
+[`method: Page.screenshot`] and [`method: Locator.screenshot`] also accept `webp` as a `type`,
+where quality `100` (the default) is lossless and lower values use lossy compression.
+
+### 🧩 Custom test filtering with Reporter.preprocess()
+
+New [`method: Reporter.preprocess`] hook runs after the configuration is resolved and before
+[`method: Reporter.onBegin`], letting a reporter mark individual tests as skipped, excluded,
+fixed, or failing through a [TestRun] object:
+
+```js
+class MyReporter {
+  async preprocess({ config, suite, testRun }) {
+    for (const test of suite.allTests()) {
+      if (shouldSkip(test))
+        testRun.skip(test);
+    }
+  }
+}
+```
+
+### 🔁 Isolated retries
+
+New [`property: TestConfig.retryStrategy`] controls when failed tests are retried. The default
+`'immediate'` retries as soon as a worker is free; `'isolated'` runs all retries at the end,
+one by one in a single worker, to minimize interference with the rest of the suite:
+
+```js title="playwright.config.ts"
+export default defineConfig({
+  retries: 2,
+  retryStrategy: 'isolated',
+});
+```
+
+### New APIs
+
+#### Browser and Context
+
+- New option [`option: BrowserContext.storageState.credentials`] includes the context's virtual WebAuthn [Credentials] (passkeys) in the storage state, so they can be persisted and re-seeded into later contexts.
+
+#### Actions
+
+- New `scroll` option (`"auto"` | `"none"`) on actions to opt out of Playwright's automatic scroll-into-view.
+
+#### Network
+
+- New [`method: APIResponse.timing`] returns resource timing information for an API response.
+
+#### Evaluation
+
+- New [`method: Locator.waitForFunction`] waits until a function — called with the matching element — returns a truthy value.
+- [`method: Page.evaluate`] and related methods now accept functions as evaluate arguments.
+- [`method: Page.addInitScript`] / [`method: BrowserContext.addInitScript`] now accept functions as init-script arguments.
+
+#### Command line & MCP
+
+- Playwright now bundles the [Playwright MCP](./getting-started-mcp.md) server and [`playwright-cli`](./getting-started-cli.md), runnable via `npx playwright mcp` and `npx playwright cli`.
+
+#### Reporters
+
+- The HTML report's **Merge files** grouping — previously only a UI toggle — can now be enabled from the config with the new `mergeFiles` reporter option:
+
+```js title="playwright.config.ts"
+export default defineConfig({
+  reporter: [['html', { mergeFiles: true }]],
+});
+```
+
+### Announcements
+
+* ⚠️ Debian 11 is not supported anymore.
+
+### Browser Versions
+
+- Chromium 151.0.7922.34
+- Mozilla Firefox 153.0
+- WebKit 26.5
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 151
+- Microsoft Edge 151
+
+
 ## Version 1.61
 
 ### 🔑 WebAuthn passkeys
