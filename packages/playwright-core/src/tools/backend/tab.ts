@@ -338,6 +338,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       abortDownloadEvent();
     } catch (_e: unknown) {
       const e = _e as Error;
+      if (e.message.includes('Target page, context or browser has been closed') && this.page.isClosed())
+        return;
       const mightBeDownload =
         e.message.includes('net::ERR_ABORTED') // chromium
         || e.message.includes('Download is starting'); // firefox + webkit
