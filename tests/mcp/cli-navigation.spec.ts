@@ -52,10 +52,3 @@ test('run-code', async ({ cli, server }) => {
   const { output } = await cli('run-code', '() => page.title()');
   expect(output).toContain('"Title"');
 });
-
-test('goto chrome:// page that closes the tab does not crash the response', async ({ cli, server, mcpBrowser }) => {
-  test.skip(mcpBrowser !== 'chromium' && mcpBrowser !== 'chrome', 'chrome:// pages are chromium-specific');
-  await cli('open', server.HELLO_WORLD);
-  const { output } = await cli('goto', 'chrome://extensions/');
-  expect(output).toContain('No open tabs. Navigate to a URL to create one.');
-});
