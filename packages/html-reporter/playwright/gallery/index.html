@@ -22,11 +22,17 @@
     <title>Component Gallery</title>
     <style>
       html, body { margin: 0; padding: 0; }
-      #root { position: fixed; inset: 0; }
+      body { display: flex; flex-direction: column; height: 100vh; }
+      #picker { flex: none; margin: 4px; align-self: flex-start; }
+      #wrapper { flex: auto; position: relative; }
+      #root { position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
     </style>
   </head>
   <body>
-    <div id="root"></div>
+    <select id="picker">
+      <option>Select a story…</option>
+    </select>
+    <div id="wrapper"></div>
     <script type="module" src="./main.tsx"></script>
   </body>
 </html>

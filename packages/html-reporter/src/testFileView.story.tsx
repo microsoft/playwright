@@ -14,22 +14,8 @@
  * limitations under the License.
  */
 
-import * as React from 'react';
-import { GlobalFilterView } from './headerView';
+import { report, testFile } from './sampleReport';
+import { TestFileView } from './testFileView';
 
-const stats = {
-  total: 100,
-  expected: 42,
-  unexpected: 31,
-  flaky: 17,
-  skipped: 10,
-  ok: false,
-};
-
-export const Default = () => {
-  const [filterText, setFilterText] = React.useState('');
-  return <>
-    <GlobalFilterView stats={stats} filterText={filterText} setFilterText={setFilterText} />
-    <form hidden><input data-testid='filter-text' readOnly value={filterText} /></form>
-  </>;
-};
+export const Default = () =>
+  <TestFileView file={testFile} projectNames={report.projectNames} />;

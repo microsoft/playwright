@@ -17,6 +17,7 @@
 import { flushSync } from 'react-dom';
 import { createRoot, type Root } from 'react-dom/client';
 import '../../src/theme.css';
+import { SearchParamsProvider } from '../../src/links';
 
 const stories = import.meta.glob('../../src/**/*.story.{tsx,jsx}');
 const storyId = (file: string) => file.replace(/^(\.\.\/)+src\//, '').replace(/\.story\.\w+$/, '');
@@ -29,7 +30,7 @@ async function resolveStory(id: string): Promise<React.ComponentType<any> | unde
   return mod?.[name] ?? mod?.default;
 }
 
-const rootElement = document.getElementById('root')!;
+const wrapperElement = document.getElementById('wrapper')!;
 let root: Root | undefined;
 
 (window as any).mount = async ({ story, props }: { story: string, props?: Record<string, any> }) => {
@@ -37,12 +38,44 @@ let root: Root | undefined;
   if (!Story)
     throw new Error(`Unknown story: ${story}`);
   // Reuse the root so that update() reconciles and preserves state.
-  root ??= createRoot(rootElement);
+  root ??= createRoot(wrapperElement);
   // flushSync so that a render error rejects the promise instead of being swallowed.
-  flushSync(() => root!.render(<Story {...props} />));
+  flushSync(() => root!.render(
+    <SearchParamsProvider>
+      <div id="root">
+        <Story {...props} />
+      </div>
+    </SearchParamsProvider>
+  ));
 };
 
 (window as any).unmount = async () => {
   root?.unmount();
   root = undefined;
 };
+
+async function listStories(): Promise<string[]> {
+  const lists = await Promise.all(Object.entries(stories).map(async ([file, loadModule]) => {
+    const mod = await loadModule() as Record<string, any>;
+    return Object.keys(mod).filter(name => typeof mod[name] === 'function').map(name => `${storyId(file)}/${name}`);
+  }));
+  return lists.flat().sort();
+}
+
+const pickerElement = document.getElementById('picker') as HTMLSelectElement;
+let pickerPopulated = false;
+async function populatePicker() {
+  if (pickerPopulated)
+    return;
+  pickerPopulated = true;
+  for (const id of await listStories())
+    pickerElement.add(new Option(id, id));
+}
+// Populate on mouseenter/focus rather than on click, because an already-open
+// select popup does not refresh when options are added.
+pickerElement.addEventListener('mouseenter', () => void populatePicker());
+pickerElement.addEventListener('focus', () => void populatePicker());
+pickerElement.addEventListener('change', () => {
+  if (pickerElement.value)
+    void (window as any).mount({ story: pickerElement.value });
+});

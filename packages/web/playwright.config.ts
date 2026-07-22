@@ -17,6 +17,8 @@
 import path from 'path';
 import { devices, defineConfig } from '@playwright/test';
 
+process.env.PWTEST_UNDER_TEST = '1';
+
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 
 export default defineConfig({

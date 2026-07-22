@@ -219,7 +219,7 @@ This pattern is the heart of the methodology:
 
 ### Per-test props
 
-When a scenario is genuinely parametric — a boundary-value sweep, a text matrix — pass plain serializable props as the second argument to `mount`. The gallery hands them to the story as its props:
+When a scenario benefits from parameterizing, pass plain serializable props as the second argument to `mount`. The gallery hands them to the story as its props:
 
 ```js title="src/components/Button.story.tsx"
 import { Button } from './Button';
@@ -256,7 +256,7 @@ await expect(await mount('Button/Primary')).toHaveScreenshot('primary.png');
 await expect(await mount('Button/Disabled')).toHaveScreenshot('disabled.png');
 ```
 
-Screenshot the returned root locator, not the page, to avoid asserting on browser chrome.
+Screenshot the returned root locator, not the page, to avoid asserting on anything extra you might put in the gallery.
 
 ### Handling network requests
 

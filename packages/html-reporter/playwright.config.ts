@@ -18,6 +18,8 @@ import path from 'path';
 import url from 'url';
 import { devices, defineConfig } from '@playwright/test';
 
+process.env.PWTEST_UNDER_TEST = '1';
+
 const dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const outputDir = path.join(dirname, '..', '..', 'test-results');
 

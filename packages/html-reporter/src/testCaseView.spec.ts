@@ -96,24 +96,24 @@ test('should correctly render prev and next', async ({ mount }) => {
     - text: group
     - link "« previous"
     - link "next »"
-    - text: "My test test.spec.ts:42 10ms chromium"
+    - text: "Test with attachment links test.spec.ts:42 10ms chromium"
   `);
 });
 
 test('total duration is selected run duration', async ({ mount, page }) => {
   const component = await mount<typeof TwoAttempts>('testCaseView/TwoAttempts');
   await expect(component).toMatchAriaSnapshot(`
-    - text: "My test test.spec.ts:42 200ms chromium"
+    - text: "Test with two attempts test.spec.ts:42 200ms chromium"
     - tablist:
       - tab "Run 50ms"
       - 'tab "Retry #1 150ms"'
   `);
   await page.getByRole('tab', { name: 'Run' }).click();
   await expect(component).toMatchAriaSnapshot(`
-    - text: "My test test.spec.ts:42 200ms chromium"
+    - text: "Test with two attempts test.spec.ts:42 200ms chromium"
   `);
   await page.getByRole('tab', { name: 'Retry' }).click();
   await expect(component).toMatchAriaSnapshot(`
-    - text: "My test test.spec.ts:42 200ms chromium"
+    - text: "Test with two attempts test.spec.ts:42 200ms chromium"
   `);
 });
