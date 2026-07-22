@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, countTimes } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 // Given '%%begin:<name>' and '%%end:<name>' lines, returns pairs from the
 // `conflicts` list that were running at the same time.
@@ -181,7 +181,7 @@ test('should hold the lock for the whole file group in default mode', async ({ r
   expect(conflictingOverlaps(result.outputLines, [['a1', 'b1'], ['a2', 'b1']])).toEqual([]);
 });
 
-test('should run locked tests from a parallel suite with beforeAll hooks in a separate group', async ({ runInlineTest }) => {
+test('should respect locks on tests from a parallel suite with beforeAll hooks', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { fullyParallel: true };
@@ -204,27 +204,6 @@ test('should run locked tests from a parallel suite with beforeAll hooks in a se
   expect(result.passed).toBe(4);
   expect(result.output).toContain('%%beforeAll');
   expect(conflictingOverlaps(result.outputLines, [['test1', 'test2']])).toEqual([]);
-});
-
-test('should run tests with the same locks as a single group', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { fullyParallel: true };
-    `,
-    'a.test.ts': `
-      import { test } from '@playwright/test';
-      test.beforeAll(() => {
-        console.log('\\n%%beforeAll');
-      });
-      ${lockedTest('test1', 100, 'shared')}
-      ${lockedTest('test2', 100, 'shared')}
-      ${lockedTest('test3', 100, 'shared')}
-    `,
-  }, { workers: 2 });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(3);
-  // Same-lock tests run as one group in one worker, so beforeAll executes once.
-  expect(countTimes(result.output, '%%beforeAll')).toBe(1);
 });
 
 test('should not count waiting for a lock towards the test timeout', async ({ runInlineTest }) => {

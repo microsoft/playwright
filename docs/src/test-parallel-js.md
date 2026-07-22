@@ -155,12 +155,11 @@ test('reset the database', { lock: ['database', 'external-api'] }, async () => {
 });
 ```
 
-Playwright acquires all the locks of a test before the test starts and releases them when it finishes. A test never waits for a lock while holding another one, so locks cannot deadlock. Waiting for a lock happens before the test is sent to a worker process and does not count towards the [test timeout](./test-timeouts.md).
+Playwright acquires all the locks of a test before the test starts and releases them when it finishes.
 
-Note that locks are scoped to a scheduling unit:
-* In [fully parallel mode](#parallelize-tests-in-a-single-file), each test acquires its own locks. Tests from the same file that declare an identical set of locks run one after another in the same worker, and `beforeAll` and `afterAll` hooks execute under the lock.
-* In the default mode, all tests in a file run together in order, so a lock declared on any test is held for the duration of the whole file. The same applies to [serial mode](#serial-mode) groups.
-* When [sharding](#shard-tests-between-multiple-machines), locks are only enforced within each shard, because shards run on different machines.
+:::note
+In the default and [serial](#serial-mode) modes, all tests in a file run together in order, so a lock declared on any test is held for the duration of the whole file.
+:::
 
 ## Opt out of fully parallel mode
 

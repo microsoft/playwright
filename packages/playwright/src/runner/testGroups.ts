@@ -22,7 +22,6 @@ export type TestGroup = {
   repeatEachIndex: number;
   projectId: string;
   tests: test.TestCase[];
-  // Named locks held by the tests in the group.
   locks: string[];
 };
 
@@ -44,15 +43,12 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
     // There are 3 kinds of parallel tests:
     // - Tests belonging to parallel suites, without beforeAll/afterAll hooks.
     //   These can be run independently, they are put into their own group, key === test.
-    // - Tests with locks are grouped by their lock signature instead, key === signature,
-    //   even with beforeAll/afterAll hooks. Tests sharing all the locks cannot run
-    //   concurrently anyway, and this way a lock is never held for unrelated tests.
     // - Tests belonging to parallel suites, with beforeAll/afterAll hooks.
     //   These should share the worker as much as possible, put into single parallelWithHooks group.
     //   We'll divide them into equally-sized groups later.
     // - Tests belonging to serial suites inside parallel suites.
     //   These should run as a serial group, each group is independent, key === serial suite.
-    parallel: Map<test.Suite | test.TestCase | string, TestGroup>,
+    parallel: Map<test.Suite | test.TestCase, TestGroup>,
     parallelWithHooks: TestGroup,
   }>>();
 
@@ -95,10 +91,10 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
     }
 
     if (insideParallel) {
-      if (hasAllHooks && !outerMostSequentialSuite && !test._locks.length) {
+      if (hasAllHooks && !outerMostSequentialSuite) {
         withRequireFile.parallelWithHooks.tests.push(test);
       } else {
-        const key = outerMostSequentialSuite || (test._locks.length ? [...new Set(test._locks)].sort().join('\x1e') : test);
+        const key = outerMostSequentialSuite || test;
         let group = withRequireFile.parallel.get(key);
         if (!group) {
           group = createGroup(test);

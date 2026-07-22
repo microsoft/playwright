@@ -53,7 +53,6 @@ export class Suite extends Base {
   _staticAnnotations: TestAnnotation[] = [];
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
-  // Named locks that apply to all tests in the suite.
   _locks: string[] = [];
   _modifiers: Modifier[] = [];
   _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
@@ -287,7 +286,6 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _projectId = '';
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
-  // Named locks of the test. Parent suite locks are folded in at bind time.
   _locks: string[] = [];
   _planAnnotations: TestAnnotation[] = [];
 

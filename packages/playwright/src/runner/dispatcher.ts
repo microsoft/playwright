@@ -75,7 +75,6 @@ export class Dispatcher {
       // Isolated retries only run one at a time, after all other jobs have finished.
       if (this._isolatedJobs.has(job) && this._workerSlots.some(w => !!w.jobDispatcher))
         continue;
-      // Jobs sharing a lock do not run concurrently.
       if (job.locks.some(lock => heldLocks.has(lock)))
         continue;
       const projectIdWorkerLimit = this._workerLimitPerProjectId.get(job.projectId);
