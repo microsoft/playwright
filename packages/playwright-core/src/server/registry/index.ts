@@ -495,7 +495,7 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
   },
 };
 
-export const defaultCacheDirectory = (() => {
+function computeDefaultCacheDirectory(): string {
   if (process.platform === 'linux')
     return process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
   if (process.platform === 'darwin')
@@ -503,9 +503,17 @@ export const defaultCacheDirectory = (() => {
   if (process.platform === 'win32')
     return process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
   throw new Error('Unsupported platform: ' + process.platform);
-})();
+}
 
-export const defaultRegistryDirectory = path.join(defaultCacheDirectory, 'ms-playwright');
+let _defaultCacheDirectory: string | undefined;
+
+export function defaultCacheDirectory(): string {
+  return _defaultCacheDirectory ??= computeDefaultCacheDirectory();
+}
+
+export function defaultRegistryDirectory(): string {
+  return path.join(defaultCacheDirectory(), 'ms-playwright');
+}
 
 export const registryDirectory = (() => {
   let result: string;
@@ -516,7 +524,7 @@ export const registryDirectory = (() => {
   else if (envDefined)
     result = envDefined;
   else
-    result = defaultRegistryDirectory;
+    result = defaultRegistryDirectory();
 
   if (!path.isAbsolute(result)) {
     // It is important to resolve to the absolute path:

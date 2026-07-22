@@ -195,7 +195,7 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
 }
 
 async function createUserDataDir(config: FullConfig, clientInfo: ClientInfo) {
-  const dir = process.env.PWMCP_PROFILES_DIR_FOR_TEST ?? path.join(defaultCacheDirectory, 'ms-playwright-mcp');
+  const dir = process.env.PWMCP_PROFILES_DIR_FOR_TEST ?? path.join(defaultCacheDirectory(), 'ms-playwright-mcp');
   const browserToken = config.browser.launchOptions?.channel ?? config.browser?.browserName;
   // Hesitant putting hundreds of files into the user's workspace, so using it for hashing instead.
   const rootPathToken = createHash(clientInfo.cwd);
