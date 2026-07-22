@@ -151,8 +151,9 @@ it('should return body with compression', async ({ page, server, asset }) => {
 
 it('should return non-utf8 body even when content-type says utf8', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40510' },
-}, async ({ page, server, browserName }) => {
+}, async ({ page, server, browserName, browserMajorVersion }) => {
   it.fixme(browserName === 'webkit', 'webkit encodes the response body');
+  it.fixme(browserName === 'chromium' && browserMajorVersion < 151, 'older chromium re-encodes the non-utf8 response body and lacks Response.bytes()');
 
   // Binary data with bytes that are invalid UTF-8.
   const bytes = [0x80, 0x81, 0x82, 0xFF, 0xFE, 0x00, 0x01, 0x02];
