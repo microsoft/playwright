@@ -34,7 +34,7 @@ import ws, { WebSocketServer as wsServer } from 'ws';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { registry } from '../../server/registry/index';
 
-import { playwrightExtensionId } from '../utils/extension';
+import { findPlaywrightExtensionProfile, playwrightExtensionId } from '../utils/extension';
 import { addressToString } from '../utils/mcp/http';
 import { logUnhandledError } from './log';
 import { ExtensionProtocolV2 } from './cdpRelayV2';
@@ -61,6 +61,7 @@ export class CDPRelayServer {
   private _wsHost: string;
   private _browserChannel: string;
   private _executablePath?: string;
+  private _userDataDir?: string;
   private _cdpPath: string;
   private _extensionPath: string;
   private _wss: WebSocketServer;
@@ -70,10 +71,11 @@ export class CDPRelayServer {
   private _handler: ExtensionProtocolV2;
   private _extensionConnectionPromise = new ManualPromise<void>();
 
-  constructor(server: http.Server, browserChannel: string, executablePath?: string) {
+  constructor(server: http.Server, browserChannel: string, executablePath?: string, userDataDir?: string) {
     this._wsHost = addressToString(server.address(), { protocol: 'ws' });
     this._browserChannel = browserChannel;
     this._executablePath = executablePath;
+    this._userDataDir = userDataDir;
     this._protocolVersion = parseInt(process.env.PLAYWRIGHT_EXTENSION_PROTOCOL ?? protocol.VERSION.toString(), 10);
 
     const sendCommand = (method: string, params: any): Promise<any> => {
@@ -102,14 +104,14 @@ export class CDPRelayServer {
 
   async establishExtensionConnection(clientName: string) {
     debugLogger('Establishing extension connection');
-    this._openConnectPageInBrowser(clientName);
+    await this._openConnectPageInBrowser(clientName);
     debugLogger('Waiting for incoming extension connection');
     await this._extensionConnectionPromise;
     await this._handler.ready();
     debugLogger('Extension connection established');
   }
 
-  private _openConnectPageInBrowser(clientName: string) {
+  private async _openConnectPageInBrowser(clientName: string) {
     const mcpRelayEndpoint = `${this._wsHost}${this._extensionPath}`;
     const url = new URL(`chrome-extension://${playwrightExtensionId}/connect.html`);
     url.searchParams.set('mcpRelayUrl', mcpRelayEndpoint);
@@ -137,9 +139,13 @@ export class CDPRelayServer {
     }
 
     const args: string[] = [];
-    const userDataDir = process.env.PWTEST_EXTENSION_USER_DATA_DIR;
-    if (userDataDir)
-      args.push(`--user-data-dir=${userDataDir}`);
+    const testUserDataDir = process.env.PWTEST_EXTENSION_USER_DATA_DIR;
+    if (testUserDataDir)
+      args.push(`--user-data-dir=${testUserDataDir}`);
+    const userDataDir = testUserDataDir ?? this._userDataDir;
+    const profileDirectory = userDataDir ? await findPlaywrightExtensionProfile(userDataDir) : undefined;
+    if (profileDirectory)
+      args.push(`--profile-directory=${profileDirectory}`);
     if (os.platform() === 'linux' && channel === 'chromium')
       args.push('--no-sandbox');
     args.push(href);

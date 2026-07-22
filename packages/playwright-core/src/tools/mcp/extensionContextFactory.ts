@@ -27,15 +27,16 @@ const debugLogger = debug('pw:mcp:relay');
 
 export async function createExtensionBrowser(channel: string, executablePath: string | undefined, clientName: string): Promise<playwrightTypes.Browser> {
   // Custom executablePath may target a browser in a different filesystem (e.g. Windows chrome.exe from WSL2), so the local profile path is not meaningful.
+  let userDataDir: string | undefined;
   if (!executablePath) {
-    const userDataDir = process.env.PWTEST_EXTENSION_USER_DATA_DIR ?? defaultUserDataDirForChannel(channel);
+    userDataDir = process.env.PWTEST_EXTENSION_USER_DATA_DIR ?? defaultUserDataDirForChannel(channel);
     if (userDataDir && !await isPlaywrightExtensionInstalled(userDataDir))
       throw new Error(`Playwright Extension not found in "${userDataDir}". Install it from ${playwrightExtensionInstallUrl}`);
   }
 
   const httpServer = createHttpServer();
   await startHttpServer(httpServer, {});
-  const relay = new CDPRelayServer(httpServer, channel, executablePath);
+  const relay = new CDPRelayServer(httpServer, channel, executablePath, userDataDir);
   debugLogger(`CDP relay server started, extension endpoint: ${relay.extensionEndpoint()}.`);
 
   try {

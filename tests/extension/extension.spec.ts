@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs/promises';
+import path from 'path';
 
 import { test, testWithOldExtensionVersion, expect, extensionId, clickAllowAndSelect, connectAndNavigate, startWithExtensionFlag } from './extension-fixtures';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
@@ -245,6 +246,31 @@ test(`custom executablePath skips local extension check`, {
   await expect(async () => {
     const output = await fs.readFile(test.info().outputPath('output.txt'), 'utf8');
     expect(output).toMatch(new RegExp(`Custom exec args.*chrome-extension://${extensionId}/connect\\.html\\?`));
+  }).toPass();
+});
+
+test(`launches the profile that has the extension`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41916' },
+}, async ({ startClient, server }, testInfo) => {
+  // The extension lives in a non-default profile only; the launch must target that profile via
+  // `--profile-directory`, otherwise Chrome opens the default profile without the extension and the
+  // connection hangs. A fake executable records the launch arguments, so no real browser is needed.
+  const userDataDir = testInfo.outputPath('multi-profile');
+  await fs.mkdir(path.join(userDataDir, 'Default'), { recursive: true });
+  await fs.mkdir(path.join(userDataDir, 'Profile 1', 'Extensions', extensionId), { recursive: true });
+
+  const executablePath = testInfo.outputPath('echo.sh');
+  await fs.writeFile(executablePath, '#!/bin/bash\necho "Custom exec args: $@" > "$(dirname "$0")/output.txt"', { mode: 0o755 });
+
+  const { client } = await startClient({
+    args: [`--extension`, `--executable-path=${executablePath}`],
+    env: { PWTEST_EXTENSION_USER_DATA_DIR: userDataDir },
+  });
+
+  client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } }).catch(() => {});
+  await expect(async () => {
+    const output = await fs.readFile(testInfo.outputPath('output.txt'), 'utf8');
+    expect(output).toContain(`--profile-directory=Profile 1`);
   }).toPass();
 });
 
