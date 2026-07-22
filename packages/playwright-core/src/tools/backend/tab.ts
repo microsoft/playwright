@@ -332,19 +332,31 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
     this._clearCollectedArtifacts();
 
-    const { promise: downloadEvent, abort: abortDownloadEvent } = eventWaiter<playwright.Download>(this.page, 'download', 3000);
+    const eventTimeout = Math.max(this.actionTimeoutOptions.timeout || 0, 5000);
+    const { promise: downloadEvent, abort: abortDownloadEvent } = eventWaiter<playwright.Download>(this.page, 'download', eventTimeout);
+    const { promise: crashEvent, abort: abortCrashEvent } = eventWaiter<playwright.Page>(this.page, 'crash', eventTimeout);
     try {
       await this.page.goto(url, { waitUntil: 'domcontentloaded', ...this.navigationTimeoutOptions });
       abortDownloadEvent();
+      abortCrashEvent();
     } catch (_e: unknown) {
       const e = _e as Error;
       const mightBeDownload =
         e.message.includes('net::ERR_ABORTED') // chromium
         || e.message.includes('Download is starting'); // firefox + webkit
-      if (!mightBeDownload)
+      if (!mightBeDownload) {
+        abortDownloadEvent();
+        abortCrashEvent();
         throw e;
-      // on chromium, the download event is fired *after* page.goto rejects, so we wait a lil bit
-      const download = await downloadEvent;
+      }
+      // Chromium reports both downloads and renderer crashes as net::ERR_ABORTED.
+      const event = await Promise.race([
+        downloadEvent.then(download => ({ download })),
+        crashEvent.then(crashed => ({ crashed })),
+      ]);
+      abortDownloadEvent();
+      abortCrashEvent();
+      const download = 'download' in event ? event.download : undefined;
       if (!download)
         throw e;
       // Make sure other "download" listeners are notified first.

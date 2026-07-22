@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { test, expect, parseResponse, consoleEntries } from './fixtures';
 
@@ -48,6 +49,44 @@ test.describe('crash recovery', () => {
     })).toHaveResponse({
       page: `- Page URL: ${server.HELLO_WORLD}\n- Page Title: Title`,
     });
+  });
+
+  test('waits for a delayed crash event', async ({ startClient, server }, testInfo) => {
+    const preloadPath = testInfo.outputPath('delayCrashEvent.cjs');
+    await fs.promises.writeFile(preloadPath, `
+      const { EventEmitter } = require('events');
+      const emit = EventEmitter.prototype.emit;
+      EventEmitter.prototype.emit = function(event, ...args) {
+        if (event === 'crash') {
+          setTimeout(() => emit.call(this, event, ...args), 3500);
+          return true;
+        }
+        return emit.call(this, event, ...args);
+      };
+    `);
+    const { client } = await startClient({
+      args: ['--isolated', '--timeout-action=0'],
+      env: { NODE_OPTIONS: `--require=${preloadPath.replaceAll('\\', '/')}` },
+      omitArgs: ['--timeout-action=10000'],
+    });
+    await client.callTool({
+      name: 'browser_navigate',
+      arguments: { url: server.HELLO_WORLD },
+    });
+    await client.callTool({
+      name: 'browser_navigate',
+      arguments: { url: 'chrome://crash' },
+    });
+
+    const result = await client.callTool({
+      name: 'browser_snapshot',
+    });
+    expect(result).toHaveResponse({
+      page: '- Page URL: about:blank',
+    });
+
+    const log = await consoleEntries(parseResponse(result));
+    expect(log).toContain('Page crashed and was reset to about:blank.');
   });
 
   test('lists only one tab', async ({ client }) => {
