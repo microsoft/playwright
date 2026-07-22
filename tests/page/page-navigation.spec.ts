@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { test as it } from './pageTest';
+import { test as it, expect } from './pageTest';
 
 it('should work with _blank target', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
@@ -58,4 +58,22 @@ it('should work with _blank target in form', async ({ page, server }) => {
     page.waitForEvent('popup'),
     page.click('"Click me"')
   ]);
+});
+
+it('should not throw TargetClosedException on cross-origin redirect after click', async ({ page, server }) => {
+  server.setRoute('/target.html', (req, res) => res.end('<title>final page</title>'));
+  server.setRedirect('/redirect', server.CROSS_PROCESS_PREFIX + '/target.html');
+  await page.goto(server.PREFIX + '/empty.html');
+  await page.setContent(`
+    <form action="${server.PREFIX}/redirect" method="POST">
+      <button type="submit">Submit</button>
+    </form>
+  `);
+  await Promise.all([
+    page.waitForNavigation(),
+    // triggers POST -> 302 -> cross-origin
+    page.click('button'),
+  ]);
+  await expect(page).toHaveURL(server.CROSS_PROCESS_PREFIX + '/target.html');
+  await expect(page).toHaveTitle('final page');
 });
