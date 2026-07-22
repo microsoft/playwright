@@ -53,9 +53,10 @@ test('run-code', async ({ cli, server }) => {
   expect(output).toContain('"Title"');
 });
 
-test('goto chrome:// page that closes the tab does not crash the response', async ({ cli, server, mcpBrowser }) => {
+test('goto chrome:// page that closes the tab reports an error', async ({ cli, server, mcpBrowser }) => {
   test.skip(mcpBrowser !== 'chromium' && mcpBrowser !== 'chrome', 'chrome:// pages are chromium-specific');
   await cli('open', server.HELLO_WORLD);
   const { output } = await cli('goto', 'chrome://extensions/');
-  expect(output).toContain('No open tabs. Navigate to a URL to create one.');
+  expect(output).toContain('Error: Navigation to "chrome://extensions/" failed because the page was closed.');
+  expect(output).not.toContain('### Ran Playwright code');
 });

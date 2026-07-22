@@ -332,6 +332,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
     this._clearCollectedArtifacts();
 
+    const pageClosedError = () => new Error(`Navigation to "${url}" failed because the page was closed.`);
     const { promise: downloadEvent, abort: abortDownloadEvent } = eventWaiter<playwright.Download>(this.page, 'download', 3000);
     try {
       await this.page.goto(url, { waitUntil: 'domcontentloaded', ...this.navigationTimeoutOptions });
@@ -339,7 +340,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     } catch (_e: unknown) {
       const e = _e as Error;
       if (e.message.includes('Target page, context or browser has been closed') && this.page.isClosed())
-        return;
+        throw pageClosedError();
       const mightBeDownload =
         e.message.includes('net::ERR_ABORTED') // chromium
         || e.message.includes('Download is starting'); // firefox + webkit
@@ -356,6 +357,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
     // Cap load event to 5 seconds, the page is operational at this point.
     await this.waitForLoadState('load', { timeout: 5000 });
+    if (this.page.isClosed())
+      throw pageClosedError();
   }
 
   async consoleMessageCount(): Promise<{ total: number, errors: number, warnings: number }> {
