@@ -237,6 +237,38 @@ test.describe('mobile', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Config file loading — JSON vs INI detection
+// ---------------------------------------------------------------------------
+
+test.describe('config file loading', () => {
+  test('malformed JSON config throws instead of being parsed as INI', async ({}, testInfo) => {
+    const configFile = testInfo.outputPath('config.json');
+    await fs.promises.writeFile(configFile, '{ "browser": { "browserName": "firefox", } }');
+
+    await expect(resolveCLIConfigForMCP({ config: configFile }, emptyEnv))
+        .rejects.toThrow(SyntaxError);
+  });
+
+  test('valid JSON with UTF-8 BOM is accepted', async ({}, testInfo) => {
+    const configFile = testInfo.outputPath('config.json');
+    const json = JSON.stringify({ timeouts: { action: 3000 } });
+    await fs.promises.writeFile(configFile, '﻿' + json);
+
+    const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv);
+    expect(config.timeouts.action).toBe(3000);
+  });
+
+  test('INI content without .ini extension is still supported', async ({}, testInfo) => {
+    const configFile = testInfo.outputPath('config.json');
+    await fs.promises.writeFile(configFile, 'browser.browserName = firefox\nbrowser.launchOptions.headless = true\n');
+
+    const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv);
+    expect(config.browser.browserName).toBe('firefox');
+    expect(config.browser.launchOptions.headless).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Shared behavior — merge order and config file
 // ---------------------------------------------------------------------------
 

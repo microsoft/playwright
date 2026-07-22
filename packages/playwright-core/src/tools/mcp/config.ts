@@ -447,12 +447,15 @@ export async function loadConfig(configFile: string | undefined): Promise<Config
   if (configFile.endsWith('.ini'))
     return configFromIniFile(configFile);
 
-  try {
-    const data = await fs.promises.readFile(configFile, 'utf8');
-    return JSON.parse(data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data);
-  } catch {
-    return configFromIniFile(configFile);
-  }
+  const data = await fs.promises.readFile(configFile, 'utf8');
+  const content = data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data;
+
+  // If the content looks like JSON, parse it as JSON and surface parse errors
+  // instead of silently falling back to INI parsing.
+  if (content.trimStart().startsWith('{'))
+    return JSON.parse(content);
+
+  return configFromIniFile(configFile);
 }
 
 // initPage/initScript paths are resolved against a per-source base dir
