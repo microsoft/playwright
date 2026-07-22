@@ -278,18 +278,19 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async doGrantPermissions(origin: string, permissions: string[]) {
-    const webPermissionToProtocol = new Map<string, string>([
-      ['geolocation', 'geo'],
-      ['persistent-storage', 'persistent-storage'],
-      ['push', 'push'],
-      ['notifications', 'desktop-notification'],
-      ['screen-wake-lock', 'screen-wake-lock'],
+    const webPermissionToProtocol = new Map<string, string[]>([
+      ['geolocation', ['geo']],
+      ['persistent-storage', ['persistent-storage']],
+      ['push', ['push']],
+      ['notifications', ['desktop-notification']],
+      ['screen-wake-lock', ['screen-wake-lock']],
+      ['local-network-access', ['local-network', 'loopback-network']],
     ]);
-    const filtered = permissions.map(permission => {
-      const protocolPermission = webPermissionToProtocol.get(permission);
-      if (!protocolPermission)
+    const filtered = permissions.flatMap(permission => {
+      const protocolPermissions = webPermissionToProtocol.get(permission);
+      if (!protocolPermissions)
         throw new Error('Unknown permission: ' + permission);
-      return protocolPermission;
+      return protocolPermissions;
     });
     await this._browser.session.send('Browser.grantPermissions', { origin: origin, browserContextId: this._browserContextId, permissions: filtered });
   }

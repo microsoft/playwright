@@ -270,7 +270,7 @@ it('local network request is allowed from public origin', {
   it.skip(browserName === 'webkit');
   it.skip(browserName === 'chromium' && browserMajorVersion < 145, 'local-network-access permission support has changed between versions');
 
-  if (browserName === 'chromium')
+  if (browserName === 'chromium' || browserName === 'firefox')
     await context.grantPermissions(['local-network-access']);
   const serverRequests = [];
   server.setRoute('/cors', (req, res) => {
