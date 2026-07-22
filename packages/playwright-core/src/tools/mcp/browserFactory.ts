@@ -250,12 +250,15 @@ export function isProfileLocked(userDataDir: string): boolean {
 function throwIfExecutableMissing(error: Error, config: FullConfig): void {
   // The "Executable doesn't exist" prefix is shared by all managed binaries
   // (browser, ffmpeg, winldd). Disambiguate by the path so the user is told
-  // which dependency to install.
+  // which dependency to install, and surface the executable path itself so a
+  // version mismatch (an installed build vs. the expected build) is
+  // diagnosable rather than looking like a missing install.
   if (!error.message.includes(`Executable doesn't exist`))
     return;
   const target = error.message.includes('ffmpeg') ? 'ffmpeg' : (config.browser.launchOptions?.channel ?? config.browser.browserName);
   const label = target === 'ffmpeg' ? 'FFmpeg' : `Browser "${target}"`;
-  if (config.skillMode)
-    throw new Error(`${label} is not installed. Run \`playwright-cli install-browser ${target}\` to install`);
-  throw new Error(`${label} is not installed. Run \`npx @playwright/mcp install-browser ${target}\` to install`);
+  const command = config.skillMode ? `playwright-cli install-browser ${target}` : `npx @playwright/mcp install-browser ${target}`;
+  const match = error.message.match(/Executable doesn't exist at ([^\r\n]+)/);
+  const location = match ? `; expected executable at ${match[1].trim()}` : '';
+  throw new Error(`${label} is not installed${location}. Run \`${command}\` to install`);
 }

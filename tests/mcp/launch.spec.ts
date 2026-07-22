@@ -61,6 +61,36 @@ test('executable path', async ({ startClient, server }) => {
   });
 });
 
+test('surfaces the missing browser executable path so a version mismatch is diagnosable', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41871' },
+}, async ({ startClient, server, mcpBrowser }, testInfo) => {
+  test.skip(mcpBrowser === 'chrome' || mcpBrowser === 'msedge', 'Channel browsers use system-installed binaries, which are unaffected by PLAYWRIGHT_BROWSERS_PATH');
+
+  const emptyBrowsersPath = testInfo.outputPath('empty-browsers');
+  await fs.promises.mkdir(emptyBrowsersPath, { recursive: true });
+
+  const { client } = await startClient({
+    env: { PLAYWRIGHT_BROWSERS_PATH: emptyBrowsersPath },
+  });
+
+  const response = await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+  // The surfaced path must include the version-specific browser directory
+  // (e.g. chromium-1234) — that's the detail that reveals a version mismatch,
+  // as opposed to a generic "not installed".
+  const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  expect.soft(response).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining('is not installed'),
+  });
+  expect.soft(response).toHaveResponse({
+    isError: true,
+    error: expect.stringMatching(new RegExp(escapeRegExp(emptyBrowsersPath) + String.raw`[\\/][\w.]+-\d+[\\/]`)),
+  });
+});
+
 test('persistent context', async ({ startClient, server }, testInfo) => {
   server.setContent('/', `
     <body>
