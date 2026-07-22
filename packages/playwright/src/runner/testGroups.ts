@@ -136,15 +136,12 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
   }
 
   for (const group of result) {
-    let locks: Set<string> | undefined;
+    const locks = new Set<string>();
     for (const test of group.tests) {
-      for (const lock of test._locks) {
-        locks ??= new Set();
+      for (const lock of test._locks)
         locks.add(lock);
-      }
     }
-    if (locks)
-      group.locks = [...locks];
+    group.locks = [...locks];
   }
   return result;
 }

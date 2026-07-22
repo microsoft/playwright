@@ -58,14 +58,10 @@ export class Dispatcher {
     }
   }
 
-  private _heldLocks(): Set<string> | undefined {
-    let heldLocks: Set<string> | undefined;
+  private _heldLocks(): Set<string> {
+    const heldLocks = new Set<string>();
     for (const slot of this._workerSlots) {
-      const locks = slot.jobDispatcher?.job.locks;
-      if (!locks?.length)
-        continue;
-      heldLocks ??= new Set();
-      for (const lock of locks)
+      for (const lock of slot.jobDispatcher?.job.locks || [])
         heldLocks.add(lock);
     }
     return heldLocks;
@@ -82,7 +78,7 @@ export class Dispatcher {
       // Jobs sharing a lock do not run concurrently. All the locks are acquired
       // when the job is scheduled and released when it finishes, so that jobs
       // never wait for locks while holding some of them.
-      if (heldLocks && job.locks.some(lock => heldLocks.has(lock)))
+      if (job.locks.some(lock => heldLocks.has(lock)))
         continue;
       const projectIdWorkerLimit = this._workerLimitPerProjectId.get(job.projectId);
       if (!projectIdWorkerLimit)
