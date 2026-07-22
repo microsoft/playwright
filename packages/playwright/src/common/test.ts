@@ -287,8 +287,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _projectId = '';
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
-  // Named locks of the test. Locks declared on parent suites are folded in
-  // when the file suite is bound to a project.
+  // Named locks of the test. Parent suite locks are folded in at bind time.
   _locks: string[] = [];
   _planAnnotations: TestAnnotation[] = [];
 

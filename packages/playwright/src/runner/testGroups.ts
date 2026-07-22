@@ -22,8 +22,7 @@ export type TestGroup = {
   repeatEachIndex: number;
   projectId: string;
   tests: test.TestCase[];
-  // Named locks held by the tests in the group. The group does not run
-  // concurrently with any other group that shares a lock.
+  // Named locks held by the tests in the group.
   locks: string[];
 };
 
@@ -45,7 +44,7 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
     // There are 3 kinds of parallel tests:
     // - Tests belonging to parallel suites, without beforeAll/afterAll hooks.
     //   These can be run independently, they are put into their own group, key === test.
-    //   Tests with locks are grouped by their lock signature instead, key === signature,
+    // - Tests with locks are grouped by their lock signature instead, key === signature,
     //   even with beforeAll/afterAll hooks. Tests sharing all the locks cannot run
     //   concurrently anyway, and this way a lock is never held for unrelated tests.
     // - Tests belonging to parallel suites, with beforeAll/afterAll hooks.

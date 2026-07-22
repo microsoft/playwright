@@ -16,9 +16,8 @@
 
 import { test, expect, countTimes } from './playwright-test-fixtures';
 
-// Each test prints '%%begin:<name>' and '%%end:<name>' lines. Walks the lines
-// and returns pairs of tests from the `conflicts` list that were running
-// at the same time.
+// Given '%%begin:<name>' and '%%end:<name>' lines, returns pairs from the
+// `conflicts` list that were running at the same time.
 function conflictingOverlaps(lines: string[], conflicts: [string, string][]): [string, string][] {
   const running = new Set<string>();
   const overlaps: [string, string][] = [];
@@ -224,8 +223,7 @@ test('should run tests with the same locks as a single group', async ({ runInlin
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(3);
-  // Tests sharing the same locks run as one group in one worker,
-  // so beforeAll executes once.
+  // Same-lock tests run as one group in one worker, so beforeAll executes once.
   expect(countTimes(result.output, '%%beforeAll')).toBe(1);
 });
 
@@ -243,8 +241,7 @@ test('should not count waiting for a lock towards the test timeout', async ({ ru
       ${lockedTest('test2', 2000, 'shared')}
     `,
   }, { workers: 2 });
-  // Each test takes 2000ms, together above the 3000ms timeout. Waiting for
-  // the lock happens before the test starts and is not a part of the test time.
+  // Together the tests exceed the 3000ms timeout; waiting for the lock is not test time.
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
   expect(conflictingOverlaps(result.outputLines, [['test1', 'test2']])).toEqual([]);

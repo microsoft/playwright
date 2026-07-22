@@ -75,9 +75,7 @@ export class Dispatcher {
       // Isolated retries only run one at a time, after all other jobs have finished.
       if (this._isolatedJobs.has(job) && this._workerSlots.some(w => !!w.jobDispatcher))
         continue;
-      // Jobs sharing a lock do not run concurrently. All the locks are acquired
-      // when the job is scheduled and released when it finishes, so that jobs
-      // never wait for locks while holding some of them.
+      // Jobs sharing a lock do not run concurrently.
       if (job.locks.some(lock => heldLocks.has(lock)))
         continue;
       const projectIdWorkerLimit = this._workerLimitPerProjectId.get(job.projectId);
@@ -91,16 +89,14 @@ export class Dispatcher {
   }
 
   private _scheduleJobs() {
-    // Schedule as many jobs as possible. Finishing a job releases its locks,
-    // which may unblock multiple queued jobs at once.
+    // Finishing a job releases its locks, which may unblock multiple queued jobs.
     while (this._scheduleJob()) {}
   }
 
   private _scheduleJob(): boolean {
     // NOTE: keep this method synchronous for easier reasoning.
 
-    // 0. No more running jobs after stop. Bail out early when all workers
-    // are busy to avoid scanning the queue.
+    // 0. No more running jobs after stop, no scheduling without a free worker.
     if (this._isStopped || !this._workerSlots.some(w => !w.jobDispatcher))
       return false;
 
