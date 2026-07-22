@@ -17,6 +17,8 @@ const IDENTITY_NAME = 'JUGGLER ';
 const ALL_PERMISSIONS = [
   'geo',
   'desktop-notification',
+  'local-network',
+  'loopback-network',
 ];
 
 let globalTabAndWindowActivationChain = Promise.resolve();
