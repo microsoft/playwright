@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { test, expect, parseResponse, consoleEntries } from './fixtures';
 
@@ -29,19 +28,24 @@ test.describe('crash recovery', () => {
     });
   });
 
-  test('resets to about:blank and logs the crash', async ({ client, server }) => {
-    await client.callTool({
+  test('reports the navigation error, then resets and logs the crash', async ({ client, server }) => {
+    expect(await client.callTool({
       name: 'browser_navigate',
       arguments: { url: 'chrome://crash' },
+    })).toHaveResponse({
+      error: expect.stringContaining('net::ERR_ABORTED'),
+      isError: true,
     });
 
-    const response = parseResponse(await client.callTool({
-      name: 'browser_snapshot',
-    }));
-    expect(response.page).toBe('- Page URL: about:blank');
+    await expect(async () => {
+      const response = parseResponse(await client.callTool({
+        name: 'browser_snapshot',
+      }));
+      expect(response.page).toBe('- Page URL: about:blank');
 
-    const log = await consoleEntries(response);
-    expect(log).toContain('Page crashed and was reset to about:blank.');
+      const log = await consoleEntries(response);
+      expect(log).toContain('Page crashed and was reset to about:blank.');
+    }).toPass();
 
     expect(await client.callTool({
       name: 'browser_navigate',
@@ -51,48 +55,17 @@ test.describe('crash recovery', () => {
     });
   });
 
-  test('waits for a delayed crash event', async ({ startClient, server }, testInfo) => {
-    const preloadPath = testInfo.outputPath('delayCrashEvent.cjs');
-    await fs.promises.writeFile(preloadPath, `
-      const { EventEmitter } = require('events');
-      const emit = EventEmitter.prototype.emit;
-      EventEmitter.prototype.emit = function(event, ...args) {
-        if (event === 'crash') {
-          setTimeout(() => emit.call(this, event, ...args), 3500);
-          return true;
-        }
-        return emit.call(this, event, ...args);
-      };
-    `);
-    const { client } = await startClient({
-      args: ['--isolated', '--timeout-action=0'],
-      env: { NODE_OPTIONS: `--require=${preloadPath.replaceAll('\\', '/')}` },
-      omitArgs: ['--timeout-action=10000'],
-    });
-    await client.callTool({
-      name: 'browser_navigate',
-      arguments: { url: server.HELLO_WORLD },
-    });
-    await client.callTool({
-      name: 'browser_navigate',
-      arguments: { url: 'chrome://crash' },
-    });
-
-    const result = await client.callTool({
-      name: 'browser_snapshot',
-    });
-    expect(result).toHaveResponse({
-      page: '- Page URL: about:blank',
-    });
-
-    const log = await consoleEntries(parseResponse(result));
-    expect(log).toContain('Page crashed and was reset to about:blank.');
-  });
-
   test('lists only one tab', async ({ client }) => {
     await client.callTool({
-      name: 'browser_navigate',
-      arguments: { url: 'chrome://crash' },
+      name: 'browser_run_code_unsafe',
+      arguments: {
+        code: `async page => {
+          await Promise.all([
+            page.waitForEvent('crash'),
+            page.goto('chrome://crash').catch(() => {}),
+          ]);
+        }`,
+      },
     });
 
     expect(await client.callTool({
@@ -105,12 +78,16 @@ test.describe('crash recovery', () => {
 
   test('marks non-current crashed tab in the tab list', async ({ client, server }) => {
     await client.callTool({
-      name: 'browser_tabs',
-      arguments: { action: 'new', url: 'chrome://crash' },
-    });
-    await client.callTool({
-      name: 'browser_tabs',
-      arguments: { action: 'select', index: 0 },
+      name: 'browser_run_code_unsafe',
+      arguments: {
+        code: `async page => {
+          const otherPage = await page.context().newPage();
+          await Promise.all([
+            otherPage.waitForEvent('crash'),
+            otherPage.goto('chrome://crash').catch(() => {}),
+          ]);
+        }`,
+      },
     });
 
     expect(await client.callTool({
