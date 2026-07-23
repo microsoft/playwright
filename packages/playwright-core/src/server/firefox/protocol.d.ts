@@ -136,7 +136,7 @@ export namespace Protocol {
         username: string;
         password: string;
         origin?: string;
-      }|null;
+      }[]|null;
     };
     export type setHTTPCredentialsReturnValue = void;
     export type setRequestInterceptionParameters = {

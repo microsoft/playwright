@@ -301,12 +301,11 @@ class NetworkRequest {
       const proxy = this._networkObserver._targetRegistry.getProxyInfo(aChannel);
       credentials = proxy ? {username: proxy.username, password: proxy.password} : null;
     } else {
-      credentials = pageNetwork._target.browserContext().httpCredentials;
+      const origin = (aChannel.URI.scheme + '://' + aChannel.URI.hostPort).toLowerCase();
+      const httpCredentials = pageNetwork._target.browserContext().httpCredentials || [];
+      credentials = httpCredentials.find(c => !c.origin || c.origin.toLowerCase() === origin) || null;
     }
     if (!credentials)
-      return false;
-    const origin = aChannel.URI.scheme + '://' + aChannel.URI.hostPort;
-    if (credentials.origin && origin.toLowerCase() !== credentials.origin.toLowerCase())
       return false;
     authInfo.username = credentials.username;
     authInfo.password = credentials.password;

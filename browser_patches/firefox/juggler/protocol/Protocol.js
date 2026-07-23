@@ -273,7 +273,7 @@ const Browser = {
     'setHTTPCredentials': {
       params: {
         browserContextId: t.Optional(t.String),
-        credentials: t.Nullable(networkTypes.HTTPCredentials),
+        credentials: t.Nullable(t.Array(networkTypes.HTTPCredentials)),
       },
     },
     'setRequestInterception': {
