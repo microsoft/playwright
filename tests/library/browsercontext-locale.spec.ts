@@ -225,8 +225,9 @@ it('should send user Accept-Language header', {
 
 it('should send Accept-Language header on WebSocket handshake', {
   annotation: [{ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23732' }],
-}, async ({ browser, server, browserName }) => {
+}, async ({ browser, server, browserName, channel }) => {
   it.fixme(browserName === 'firefox', 'Firefox does not send Accept-Language on WebSocket handshake');
+  it.fixme(!!channel, 'Branded Chrome/Edge do not apply the context locale to the WebSocket handshake Accept-Language, https://github.com/microsoft/playwright/issues/23732');
   const context = await browser.newContext({ locale: 'en-GB' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
