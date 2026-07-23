@@ -28,7 +28,7 @@ import { ElementHandle, convertInputFiles, convertSelectOptionValues } from './e
 import { AbortError, PlaywrightError } from './errors';
 import { Events } from './events';
 import { JSHandle, assertEvaluateOptions, assertMaxArguments, parseResult, serializeArgument, serializeArgumentWithCallbacks } from './jsHandle';
-import { FrameLocator, Locator, testIdAttributeName } from './locator';
+import { FrameLocator, kPierceFramesSelector, Locator, testIdAttributeName } from './locator';
 import * as network from './network';
 import { kLifecycleEvents } from './types';
 import { Waiter } from './waiter';
@@ -395,6 +395,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   frameLocator(selector: string): FrameLocator {
     return new FrameLocator(this, selector);
+  }
+
+  pierceFrames(): FrameLocator {
+    return new FrameLocator(this, kPierceFramesSelector);
   }
 
   async focus(selector: string, options: channels.FrameFocusOptions & TimeoutOptions = {}) {

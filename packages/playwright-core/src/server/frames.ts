@@ -28,7 +28,7 @@ import { makeWaitForNextTask } from '@utils/task';
 import { createGuid } from '@utils/crypto';
 import { BrowserContext } from './browserContext';
 import * as dom from './dom';
-import { TimeoutError, isTargetClosedError } from './errors';
+import { EvaluationStalledError, TimeoutError, isTargetClosedError } from './errors';
 import { prepareFilesForUpload } from './fileUploadUtils';
 import { FrameSelectors } from './frameSelectors';
 import { helper } from './helper';
@@ -585,7 +585,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   _setPendingDocument(documentInfo: DocumentInfo | undefined) {
     this._pendingDocument = documentInfo;
     if (documentInfo)
-      this.invalidateNonStallingEvaluations(new Error('Navigation interrupted the evaluation'));
+      this.invalidateNonStallingEvaluations(new EvaluationStalledError('Navigation interrupted the evaluation'));
   }
 
   pendingDocument(): DocumentInfo | undefined {
@@ -601,9 +601,9 @@ export class Frame extends SdkObject<FrameEventMap> {
 
   async raceAgainstEvaluationStallingEvents<T>(cb: () => Promise<T>): Promise<T> {
     if (this._pendingDocument)
-      throw new Error('Frame is currently attempting a navigation');
+      throw new EvaluationStalledError('Frame is currently attempting a navigation');
     if (this._page.browserContext.dialogManager.hasOpenDialogsForPage(this._page))
-      throw new Error('Open JavaScript dialog prevents evaluation');
+      throw new EvaluationStalledError('Open JavaScript dialog prevents evaluation');
 
     const promise = new ManualPromise<T>();
     this._raceAgainstEvaluationStallingEventsPromises.add(promise);
@@ -1535,7 +1535,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       });
     } catch (e) {
       const details: ExpectErrorDetails = {};
-      if (isInvalidSelectorError(e)) {
+      if (isInvalidSelectorError(e) || dom.isNonRecoverableDOMError(e)) {
         details.customErrorMessage = e.message;
       } else if (js.isJavaScriptErrorInEvaluate(e)) {
         details.customErrorMessage = e.message.startsWith('Error: ') ? e.message.substring('Error: '.length) : e.message;

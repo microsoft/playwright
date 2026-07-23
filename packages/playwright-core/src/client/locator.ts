@@ -207,6 +207,8 @@ export class Locator implements api.Locator {
   }
 
   frameLocator(selector: string): FrameLocator {
+    if (selectorPiercesFrames(this._selector))
+      throw new Error(`Entering frames is not allowed while piercing frames.`);
     return new FrameLocator(this._frame, this._selector + ' >> ' + selector);
   }
 
@@ -421,6 +423,12 @@ export class Locator implements api.Locator {
   }
 }
 
+export const kPierceFramesSelector = 'internal:control=pierce-frames';
+
+function selectorPiercesFrames(selector: string): boolean {
+  return selector === kPierceFramesSelector || selector.startsWith(kPierceFramesSelector + ' >> ');
+}
+
 export class FrameLocator implements api.FrameLocator {
   private _frame: Frame;
   private _frameSelector: string;
@@ -430,12 +438,18 @@ export class FrameLocator implements api.FrameLocator {
     this._frameSelector = selector;
   }
 
+  private _childSelector(selector: string): string {
+    if (this._frameSelector === kPierceFramesSelector)
+      return this._frameSelector + ' >> ' + selector;
+    return this._frameSelector + ' >> internal:control=enter-frame >> ' + selector;
+  }
+
   locator(selectorOrLocator: string | Locator, options?: LocatorOptions): Locator {
     if (isString(selectorOrLocator))
-      return new Locator(this._frame, this._frameSelector + ' >> internal:control=enter-frame >> ' + selectorOrLocator, options);
+      return new Locator(this._frame, this._childSelector(selectorOrLocator), options);
     if (selectorOrLocator._frame !== this._frame)
       throw new Error(`Locators must belong to the same frame.`);
-    return new Locator(this._frame, this._frameSelector + ' >> internal:control=enter-frame >> ' + selectorOrLocator._selector, options);
+    return new Locator(this._frame, this._childSelector(selectorOrLocator._selector), options);
   }
 
   getByTestId(testId: string | RegExp): Locator {
@@ -471,19 +485,27 @@ export class FrameLocator implements api.FrameLocator {
   }
 
   frameLocator(selector: string): FrameLocator {
-    return new FrameLocator(this._frame, this._frameSelector + ' >> internal:control=enter-frame >> ' + selector);
+    if (selectorPiercesFrames(this._frameSelector))
+      throw new Error(`Entering frames is not allowed while piercing frames.`);
+    return new FrameLocator(this._frame, this._childSelector(selector));
+  }
+
+  private _nthSelector(nth: string): string {
+    if (selectorPiercesFrames(this._frameSelector))
+      throw new Error(`Selecting the nth frame is not allowed while piercing frames.`);
+    return this._frameSelector + ` >> nth=${nth}`;
   }
 
   first(): FrameLocator {
-    return new FrameLocator(this._frame, this._frameSelector + ' >> nth=0');
+    return new FrameLocator(this._frame, this._nthSelector('0'));
   }
 
   last(): FrameLocator {
-    return new FrameLocator(this._frame, this._frameSelector + ` >> nth=-1`);
+    return new FrameLocator(this._frame, this._nthSelector('-1'));
   }
 
   nth(index: number): FrameLocator {
-    return new FrameLocator(this._frame, this._frameSelector + ` >> nth=${index}`);
+    return new FrameLocator(this._frame, this._nthSelector(String(index)));
   }
 }
 

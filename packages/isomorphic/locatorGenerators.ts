@@ -21,7 +21,7 @@ import type { NestedSelectorBody } from './selectorParser';
 import type { ParsedSelector } from './selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
-export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'visible' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'frame-locator' | 'and' | 'or' | 'chain';
+export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'visible' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'frame-locator' | 'pierce-frames' | 'and' | 'or' | 'chain';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 export type Quote = '\'' | '"' | '`';
 
@@ -205,6 +205,11 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
         continue;
       }
     }
+    if (part.name === 'internal:control' && (part.body as string) === 'pierce-frames') {
+      tokens.push([factory.generateLocator(base, 'pierce-frames', '')]);
+      nextBase = 'frame-locator';
+      continue;
+    }
     if (part.name === 'internal:control' && (part.body as string) === 'enter-frame') {
       // transform last tokens from `${selector}` into `${selector}.contentFrame()` and `frameLocator(${selector})`
       const lastTokens = tokens[tokens.length - 1];
@@ -315,6 +320,8 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
         return `frameLocator(${this.quote(body as string)})`;
       case 'frame':
         return `contentFrame()`;
+      case 'pierce-frames':
+        return `pierceFrames()`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -414,6 +421,8 @@ export class PythonLocatorFactory implements LocatorFactory {
         return `frame_locator(${this.quote(body as string)})`;
       case 'frame':
         return `content_frame`;
+      case 'pierce-frames':
+        return `pierce_frames`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -526,6 +535,8 @@ export class JavaLocatorFactory implements LocatorFactory {
         return `frameLocator(${this.quote(body as string)})`;
       case 'frame':
         return `contentFrame()`;
+      case 'pierce-frames':
+        return `pierceFrames()`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -628,6 +639,8 @@ export class CSharpLocatorFactory implements LocatorFactory {
         return `FrameLocator(${this.quote(body as string)})`;
       case 'frame':
         return `ContentFrame`;
+      case 'pierce-frames':
+        return `PierceFrames`;
       case 'nth':
         return `Nth(${body})`;
       case 'first':

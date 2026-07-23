@@ -3293,7 +3293,7 @@ export interface Page {
    *
    * Navigate to the previous page in history.
    *
-   * **NOTE** **Testing Back/Forward Cache (BFCache) is not supported.**  By default, Playwright disables the
+   * **NOTE** **Testing Back/Forward Cache (BFCache) is not supported.** By default, Playwright disables the
    * Back/Forward Cache across all browsers. Even if explicitly enabled, Playwright's internal state relies on
    * network-level navigation events. Because BFCache restores unfreeze the DOM without firing these events, using
    * `page.goBack()` or `page.goForward()` to trigger a BFCache restore will result in timeouts and a desynchronized
@@ -3341,7 +3341,7 @@ export interface Page {
    *
    * Navigate to the next page in history.
    *
-   * **NOTE** **Testing Back/Forward Cache (BFCache) is not supported.**  By default, Playwright disables the
+   * **NOTE** **Testing Back/Forward Cache (BFCache) is not supported.** By default, Playwright disables the
    * Back/Forward Cache across all browsers. Even if explicitly enabled, Playwright's internal state relies on
    * network-level navigation events. Because BFCache restores unfreeze the DOM without firing these events, using
    * `page.goBack()` or `page.goForward()` to trigger a BFCache restore will result in timeouts and a desynchronized
@@ -4131,6 +4131,26 @@ export interface Page {
    *
    */
   pickLocator(): Promise<Locator>;
+
+  /**
+   * When working with iframes, you can create a frame locator that will search for elements in the main frame and in
+   * all iframes on the page, so that you don't need to locate each iframe first.
+   *
+   * Note that all elements matching the locator must belong to a single frame. For example, if the page contains two
+   * iframes, each with a `Submit` button, piercing frames and locating a button will throw an error because it matches
+   * elements from multiple frames.
+   *
+   * **Usage**
+   *
+   * Following snippet locates a button, either in the main frame or in one of the iframes:
+   *
+   * ```js
+   * const locator = page.pierceFrames().getByRole('button');
+   * await locator.click();
+   * ```
+   *
+   */
+  pierceFrames(): FrameLocator;
 
   /**
    * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
@@ -8144,6 +8164,26 @@ export interface Frame {
    * Parent frame, if any. Detached frames and main frames return `null`.
    */
   parentFrame(): null|Frame;
+
+  /**
+   * When working with iframes, you can create a frame locator that will search for elements in the main frame and in
+   * all iframes on the page, so that you don't need to locate each iframe first.
+   *
+   * Note that all elements matching the locator must belong to a single frame. For example, if the page contains two
+   * iframes, each with a `Submit` button, piercing frames and locating a button will throw an error because it matches
+   * elements from multiple frames.
+   *
+   * **Usage**
+   *
+   * Following snippet locates a button, either in the main frame or in one of the iframes:
+   *
+   * ```js
+   * const locator = frame.pierceFrames().getByRole('button');
+   * await locator.click();
+   * ```
+   *
+   */
+  pierceFrames(): FrameLocator;
 
   /**
    * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)

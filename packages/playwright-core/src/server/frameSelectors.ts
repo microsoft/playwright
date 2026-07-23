@@ -18,6 +18,7 @@ import { InvalidSelectorError,  splitSelectorByFrame, stringifySelector, visitAl
 import { asLocator } from '@isomorphic/locatorGenerators';
 
 import { NonRecoverableDOMError } from './dom';
+import { EvaluationStalledError } from './errors';
 
 import type { ElementHandle, FrameExecutionContext } from './dom';
 import type { Frame } from './frames';
@@ -306,7 +307,11 @@ export class FrameSelectors {
         }
         return { result: evalResult as R | SmartHandle<R> };
       };
-      const maybeResult = noStall ? await frame.raceAgainstEvaluationStallingEvents(getResult).catch(() => undefined) : await getResult();
+      const maybeResult = noStall ? await frame.raceAgainstEvaluationStallingEvents(getResult).catch(e => {
+        if (e instanceof EvaluationStalledError)
+          return;
+        throw e;
+      }) : await getResult();
       if (!maybeResult)
         continue;
       if (aggregatedResult)

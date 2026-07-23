@@ -126,8 +126,11 @@ export function splitSelectorByFrame(selectorText: string): { pierce: boolean, c
       chunk.capture = i - chunkStartIndex;
     chunk.parts.push(part);
   }
-  if (!chunk.parts.length)
+  if (!chunk.parts.length) {
+    if (pierce)
+      throw new InvalidSelectorError(`Selector cannot be empty when piercing frames, while parsing selector ${selectorText}`);
     throw new InvalidSelectorError(`Selector cannot end with entering frame, while parsing selector ${selectorText}`);
+  }
   chunks.push(chunk);
   if (typeof selector.capture === 'number' && typeof chunks[chunks.length - 1].capture !== 'number')
     throw new InvalidSelectorError(`Can not capture the selector before diving into the frame. Only use * after the last frame has been selected`);

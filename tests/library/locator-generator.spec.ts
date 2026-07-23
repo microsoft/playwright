@@ -442,6 +442,22 @@ it('reverse engineer frameLocator', async ({ page }) => {
   expect.soft(asLocator('javascript', selector)).toBe(`locator('div').locator('iframe').contentFrame().locator('span')`);
 });
 
+it('reverse engineer pierceFrames', async ({ page }) => {
+  expect.soft(generate(page.pierceFrames().getByText('foo').locator('span'))).toEqual({
+    csharp: `PierceFrames.GetByText("foo").Locator("span")`,
+    java: `pierceFrames().getByText("foo").locator("span")`,
+    javascript: `pierceFrames().getByText('foo').locator('span')`,
+    python: `pierce_frames.get_by_text("foo").locator("span")`,
+  });
+
+  // Note that bare `pierce_frames` and `PierceFrames` are not restored back,
+  // because they are indistinguishable from a css selector.
+  expect.soft(asLocator('javascript', 'internal:control=pierce-frames')).toBe(`pierceFrames()`);
+  expect.soft(asLocator('python', 'internal:control=pierce-frames')).toBe(`pierce_frames`);
+  expect.soft(asLocator('java', 'internal:control=pierce-frames')).toBe(`pierceFrames()`);
+  expect.soft(asLocator('csharp', 'internal:control=pierce-frames')).toBe(`PierceFrames`);
+});
+
 it('generate multiple locators', async ({ page }) => {
   const selector = (page.locator('div', { hasText: 'foo' }).nth(0).filter({ has: page.locator('span', { hasNotText: 'bar' }).nth(-1) }) as any)._selector;
   const locators = {

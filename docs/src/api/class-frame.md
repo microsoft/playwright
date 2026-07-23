@@ -1439,6 +1439,46 @@ Returns the page containing this frame.
 
 Parent frame, if any. Detached frames and main frames return `null`.
 
+## method: Frame.pierceFrames
+* since: v1.63
+- returns: <[FrameLocator]>
+
+When working with iframes, you can create a frame locator that will search for elements in the main frame
+and in all iframes on the page, so that you don't need to locate each iframe first.
+
+Note that all elements matching the locator must belong to a single frame. For example, if the page contains
+two iframes, each with a `Submit` button, piercing frames and locating a button will throw an error
+because it matches elements from multiple frames.
+
+**Usage**
+
+Following snippet locates a button, either in the main frame or in one of the iframes:
+
+```js
+const locator = frame.pierceFrames().getByRole('button');
+await locator.click();
+```
+
+```java
+Locator locator = frame.pierceFrames().getByRole(AriaRole.BUTTON);
+locator.click();
+```
+
+```python async
+locator = frame.pierce_frames.get_by_role("button")
+await locator.click()
+```
+
+```python sync
+locator = frame.pierce_frames.get_by_role("button")
+locator.click()
+```
+
+```csharp
+var locator = frame.PierceFrames.GetByRole(AriaRole.Button);
+await locator.ClickAsync();
+```
+
 ## async method: Frame.press
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.press`] instead. Read more about [locators](../locators.md).

@@ -28,6 +28,8 @@ class CustomError extends Error {
 
 export class TimeoutError extends CustomError {}
 
+export class EvaluationStalledError extends CustomError {}
+
 export class TargetClosedError extends CustomError {
   constructor(cause: string | undefined, logs?: string) {
     super((cause || 'Target page, context or browser has been closed') + (logs || ''));
