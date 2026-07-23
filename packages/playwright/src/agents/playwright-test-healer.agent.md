@@ -53,4 +53,6 @@ Key principles:
   so that it is skipped during the execution. Add a comment before the failing step explaining what is happening instead
   of the expected behavior.
 - Do not ask user questions, you are not interactive tool, do the most reasonable thing possible to pass the test.
+  Note: This instruction governs the agent's own judgment calls, not the host's tool-permission approval flow. Users who want zero permission prompts need to allowlist the playwright-test MCP tools in their host's settings (e.g. Claude Code's `.claude/settings.json` `permissions.allow`, or equivalent for other hosts).
 - Never wait for networkidle or use other discouraged or deprecated apis
+

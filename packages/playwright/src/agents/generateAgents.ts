@@ -58,6 +58,35 @@ export class ClaudeGenerator {
       }
     }, null, 2), '🔧', 'mcp configuration');
 
+    const settingsPath = '.claude/settings.json';
+    let settings: any = {};
+    try {
+      const content = await fs.promises.readFile(settingsPath, 'utf-8');
+      settings = JSON.parse(content);
+    } catch (e) {
+    }
+    if (!settings.permissions)
+      settings.permissions = {};
+    if (!Array.isArray(settings.permissions.allow))
+      settings.permissions.allow = [];
+
+    const allowedTools = [
+      'mcp__playwright-test__browser_console_messages',
+      'mcp__playwright-test__browser_evaluate',
+      'mcp__playwright-test__browser_generate_locator',
+      'mcp__playwright-test__browser_network_request',
+      'mcp__playwright-test__browser_network_requests',
+      'mcp__playwright-test__browser_snapshot',
+      'mcp__playwright-test__test_debug',
+      'mcp__playwright-test__test_list',
+      'mcp__playwright-test__test_run',
+    ];
+    for (const tool of allowedTools) {
+      if (!settings.permissions.allow.includes(tool))
+        settings.permissions.allow.push(tool);
+    }
+    await writeFile(settingsPath, JSON.stringify(settings, null, 2), '🔧', 'claude settings');
+
     initRepoDone();
   }
 

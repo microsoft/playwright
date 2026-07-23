@@ -89,6 +89,19 @@ test('claude generates correct mcp config', async ({  }) => {
     expect(mcpJson.mcpServers['playwright-test'].command).toBe('npx');
     expect(mcpJson.mcpServers['playwright-test'].args).toEqual(['playwright', 'run-test-mcp-server']);
   }
+
+  const settingsJson = JSON.parse(fs.readFileSync(path.join(baseDir, '.claude', 'settings.json'), 'utf-8'));
+  expect(settingsJson.permissions.allow).toEqual([
+    'mcp__playwright-test__browser_console_messages',
+    'mcp__playwright-test__browser_evaluate',
+    'mcp__playwright-test__browser_generate_locator',
+    'mcp__playwright-test__browser_network_request',
+    'mcp__playwright-test__browser_network_requests',
+    'mcp__playwright-test__browser_snapshot',
+    'mcp__playwright-test__test_debug',
+    'mcp__playwright-test__test_list',
+    'mcp__playwright-test__test_run',
+  ]);
 });
 
 test('codex generates agent toml files', async ({  }) => {
