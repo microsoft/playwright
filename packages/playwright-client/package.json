@@ -24,6 +24,6 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "playwright-core": "1.62.0-next"
+    "playwright-core": "1.63.0-next"
   }
 }
