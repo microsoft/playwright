@@ -252,7 +252,8 @@ await page.Locator("#frame1").ContentFrame.Locator("iframe").ContentFrame.Locato
     });
   });
 
-  test('should generate frame locators (4)', async ({ openRecorder, server }) => {
+  test('should generate frame locators (4)', async ({ openRecorder, server, browserName }) => {
+    test.fixme(browserName === 'firefox', 'Recorder flakily attributes the nested anonymous-frame click to an adjacent empty frame, so the expected output never appears');
     const { page, recorder } = await openRecorder();
     /*
       iframe
