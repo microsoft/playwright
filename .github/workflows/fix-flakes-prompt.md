@@ -37,6 +37,11 @@ down your step-1 ranking, re-checking each; only stop once the whole shortlist i
   in that test's file since. Only move on if enough subsequent runs show the failures stopped;
   a browser roll alone is not evidence of a fix.
 
+Compare the test across every bot that runs it, not only the failing bot. A clean boundary
+between stable, beta, and dev browser channels often points to a browser-version regression.
+Read the exact versions from the job logs and record the failing and passing versions; channel
+names alone do not identify the affected behaviour.
+
 ## 3. Reproduce on this OS
 
 Read the test and its `error_message`.
@@ -76,6 +81,18 @@ Broader OS coverage comes from different agent runs on other OSes, not from you.
   ```ts
   it.fixme(browserName === 'webkit' && isLinux, 'https://github.com/microsoft/playwright/issues/NNNNN');
   ```
+
+  For browser-specific failures, prefer the narrowest observed version predicate over a channel
+  predicate. Channels roll forward, so `channel === 'chrome'` can keep skipping the test after
+  the browser fixes the bug. If stable fails while beta/dev passes, use `browserVersion` or
+  `browserMajorVersion` and gate only the affected version:
+
+  ```ts
+  it.fixme(browserName === 'chromium' && browserMajorVersion === 150, 'https://github.com/microsoft/playwright/issues/NNNNN');
+  ```
+
+  Do not invent a wider threshold for untested versions. Keep a channel predicate only when the
+  same browser version behaves differently between channels.
 
   Link an issue if one exists or explain why the test is skipped. **Default to `fixme`** — it parks
   the debt and stays greppable. Use `skip` only if reproduction shows the test is genuinely

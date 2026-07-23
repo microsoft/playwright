@@ -225,9 +225,9 @@ it('should send user Accept-Language header', {
 
 it('should send Accept-Language header on WebSocket handshake', {
   annotation: [{ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23732' }],
-}, async ({ browser, server, browserName, channel }) => {
+}, async ({ browser, server, browserName, browserMajorVersion }) => {
   it.fixme(browserName === 'firefox', 'Firefox does not send Accept-Language on WebSocket handshake');
-  it.fixme(!!channel && (channel.startsWith('chrome') || channel.startsWith('msedge')), 'Google Chrome and Microsoft Edge send the browser Accept-Language instead of the emulated locale on WebSocket handshake, https://github.com/microsoft/playwright/issues/23732');
+  it.fixme(browserName === 'chromium' && browserMajorVersion === 150, 'Chromium 150 sends the browser Accept-Language instead of the emulated locale on WebSocket handshake, https://github.com/microsoft/playwright/issues/23732');
   const context = await browser.newContext({ locale: 'en-GB' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
