@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
+import { getAsBooleanFromENV } from '@utils/env';
+
 import { markErrorsAsReported, TerminalReporter } from './base';
 
+import type { DotReporterOptions } from '../../types/test';
 import type { FullResult, Suite, TestCase, TestError, TestResult } from '../../types/testReporter';
+import type { CommonReporterOptions, TerminalReporterOptions } from './base';
 
 class DotReporter extends TerminalReporter {
   private _counter = 0;
+
+  constructor(options?: DotReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
+    super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_DOT_OMIT_TAGS', options?.omitTags) });
+  }
 
   override onBegin(suite: Suite) {
     super.onBegin(suite);

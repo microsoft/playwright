@@ -107,12 +107,23 @@ export default defineConfig({
 });
 ```
 
+You can omit test tags that are automatically appended to test titles:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [['list', { omitTags: true }]],
+});
+```
+
 List report supports the following configuration options and environment variables:
 
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
 | `PLAYWRIGHT_LIST_PRINT_STEPS` | `printSteps` | Whether to print each step on its own line. | `false`
 | `PLAYWRIGHT_LIST_PRINT_FAILURES_INLINE` | `printFailuresInline` | Whether to print failure details immediately after a failed test instead of at the end. | `false`
+| `PLAYWRIGHT_LIST_OMIT_TAGS` | `omitTags` | Whether to omit test tags that are automatically appended to test titles. | `false`
 | `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. Supports `true`, `1`, `false`, `0`, `[WIDTH]`, and `[WIDTH]x[HEIGHT]`. `[WIDTH]` and `[WIDTH]x[HEIGHT]` specifies the TTY dimensions. | `true` when terminal is in TTY mode, `false` otherwise.
 | `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
 | `NO_COLOR` | | Whether to disable colored output ([no-color.org](https://no-color.org/)). Any non-empty value disables colors. | unset
@@ -152,6 +163,7 @@ Line report supports the following configuration options and environment variabl
 
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
+| `PLAYWRIGHT_LINE_OMIT_TAGS` | `omitTags` | Whether to omit test tags that are automatically appended to test titles. | `false`
 | `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. Supports `true`, `1`, `false`, `0`, `[WIDTH]`, and `[WIDTH]x[HEIGHT]`. `[WIDTH]` and `[WIDTH]x[HEIGHT]` specifies the TTY dimensions. | `true` when terminal is in TTY mode, `false` otherwise.
 | `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
 | `NO_COLOR` | | Whether to disable colored output ([no-color.org](https://no-color.org/)). Any non-empty value disables colors. | unset
@@ -195,6 +207,7 @@ Dot report supports the following configuration options and environment variable
 
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
+| `PLAYWRIGHT_DOT_OMIT_TAGS` | `omitTags` | Whether to omit test tags that are automatically appended to test titles. | `false`
 | `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. Supports `true`, `1`, `false`, `0`, `[WIDTH]`, and `[WIDTH]x[HEIGHT]`. `[WIDTH]` and `[WIDTH]x[HEIGHT]` specifies the TTY dimensions. | `true` when terminal is in TTY mode, `false` otherwise.
 | `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
 | `NO_COLOR` | | Whether to disable colored output ([no-color.org](https://no-color.org/)). Any non-empty value disables colors. | unset
@@ -414,6 +427,7 @@ JUnit report supports following configuration options and environment variables:
 | `PLAYWRIGHT_JUNIT_OUTPUT_FILE` | `outputFile` | Full path to the output file. If defined, `PLAYWRIGHT_JUNIT_OUTPUT_DIR` and `PLAYWRIGHT_JUNIT_OUTPUT_NAME` will be ignored. | JUnit report is printed to the stdout.
 | `PLAYWRIGHT_JUNIT_STRIP_ANSI` | `stripANSIControlSequences` | Whether to remove ANSI control sequences from the text before writing it in the report. | By default output text is added as is.
 | `PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME` | `includeProjectInTestName` | Whether to include Playwright project name in every test case as a name prefix. | By default not included.
+| `PLAYWRIGHT_JUNIT_OMIT_TAGS` | `omitTags` | Whether to omit test tags that are automatically appended to failure details. | `false`
 | `PLAYWRIGHT_JUNIT_SUITE_ID` |  | Value of the `id` attribute on the root `<testsuites/>` report entry. | Empty string.
 | `PLAYWRIGHT_JUNIT_SUITE_NAME` |  | Value of the `name` attribute on the root `<testsuites/>` report entry. | Empty string.
 
@@ -434,6 +448,8 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
 });
 ```
+
+The `github` reporter accepts `omitTags` (or the `PLAYWRIGHT_GITHUB_OMIT_TAGS` environment variable) to suppress test tags in its annotations, for example `reporter: [['github', { omitTags: true }]]`.
 
 ## Custom reporters
 

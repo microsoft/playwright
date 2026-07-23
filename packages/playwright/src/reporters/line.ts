@@ -14,15 +14,23 @@
  * limitations under the License.
  */
 
+import { getAsBooleanFromENV } from '@utils/env';
+
 import { markErrorsAsReported, TerminalReporter } from './base';
 
+import type { LineReporterOptions } from '../../types/test';
 import type { FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { CommonReporterOptions, TerminalReporterOptions } from './base';
 
 class LineReporter extends TerminalReporter {
   private _current = 0;
   private _failures = 0;
   private _lastTest: TestCase | undefined;
   private _didBegin = false;
+
+  constructor(options?: LineReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
+    super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_LINE_OMIT_TAGS', options?.omitTags) });
+  }
 
   override onBegin(suite: Suite) {
     super.onBegin(suite);

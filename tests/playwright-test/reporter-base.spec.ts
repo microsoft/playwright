@@ -486,5 +486,106 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(text).toContain('› passes @bar1 @bar2 (');
       expect(text).toContain('› passes @baz1 @baz2 (');
     });
+
+    test('should omit tags when omitTags is set', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            reporter: [['list', { omitTags: true }]],
+          };
+        `,
+        'a.test.ts': `
+          const { test, expect } = require('@playwright/test');
+          test('passes', { tag: ['@foo1', '@foo2'] }, async ({}) => {
+            expect(0).toBe(0);
+          });
+          test('passes @bar1 @bar2', async ({}) => {
+            expect(0).toBe(0);
+          });
+          test('passes @baz1', { tag: ['@baz2'] }, async ({}) => {
+            expect(0).toBe(0);
+          });
+        `,
+      });
+      const text = stripAnsi(result.output);
+      // Tags appended from the `tag` annotation are omitted.
+      expect(text).toContain('› passes (');
+      expect(text).not.toContain('@foo1');
+      expect(text).not.toContain('@foo2');
+      expect(text).not.toContain('@baz2');
+      // Tags authored directly in the title are preserved.
+      expect(text).toContain('› passes @bar1 @bar2 (');
+      expect(text).toContain('› passes @baz1 (');
+      expect(result.exitCode).toBe(0);
+    });
+
+    test('should omit tags from failures when omitTags is set', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            reporter: [['list', { omitTags: true }]],
+          };
+        `,
+        'a.test.ts': `
+          const { test, expect } = require('@playwright/test');
+          test('fails', { tag: ['@qux1'] }, async ({}) => {
+            expect(1).toBe(2);
+          });
+        `,
+      });
+      const text = stripAnsi(result.output);
+      const titleLines = text.split('\n').filter(line => line.includes('a.test.ts') && line.includes('› fails'));
+      expect(titleLines.length).toBeGreaterThan(0);
+      for (const line of titleLines)
+        expect(line).not.toContain('@qux1');
+      expect(result.exitCode).toBe(1);
+    });
+
+    test('should omit tags via the PLAYWRIGHT_LIST_OMIT_TAGS environment variable', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            reporter: [['list']],
+          };
+        `,
+        'a.test.ts': `
+          const { test, expect } = require('@playwright/test');
+          test('passes', { tag: ['@foo1', '@foo2'] }, async ({}) => {
+            expect(0).toBe(0);
+          });
+          test('passes @bar1 @bar2', async ({}) => {
+            expect(0).toBe(0);
+          });
+        `,
+      }, undefined, { PLAYWRIGHT_LIST_OMIT_TAGS: '1' });
+      const text = stripAnsi(result.output);
+      // Tags appended from the `tag` annotation are omitted.
+      expect(text).toContain('› passes (');
+      expect(text).not.toContain('@foo1');
+      expect(text).not.toContain('@foo2');
+      // Tags authored directly in the title are preserved.
+      expect(text).toContain('› passes @bar1 @bar2 (');
+      expect(result.exitCode).toBe(0);
+    });
+
+    test('should let PLAYWRIGHT_LIST_OMIT_TAGS override the omitTags option', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            reporter: [['list', { omitTags: true }]],
+          };
+        `,
+        'a.test.ts': `
+          const { test, expect } = require('@playwright/test');
+          test('passes', { tag: ['@foo1', '@foo2'] }, async ({}) => {
+            expect(0).toBe(0);
+          });
+        `,
+      }, undefined, { PLAYWRIGHT_LIST_OMIT_TAGS: '0' });
+      const text = stripAnsi(result.output);
+      // The environment variable disables omitTags, so the appended tags are shown.
+      expect(text).toContain('› passes @foo1 @foo2 (');
+      expect(result.exitCode).toBe(0);
+    });
   });
 }

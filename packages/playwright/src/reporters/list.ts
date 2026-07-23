@@ -43,7 +43,7 @@ class ListReporter extends TerminalReporter {
   private _paused = new Set<TestResult>();
 
   constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
-    super(options);
+    super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_LIST_OMIT_TAGS', options?.omitTags) });
     this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options?.printSteps);
     this._printFailuresInline = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_FAILURES_INLINE', options?.printFailuresInline);
   }

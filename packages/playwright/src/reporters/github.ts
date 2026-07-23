@@ -18,10 +18,12 @@ import path from 'path';
 
 import { noColors } from '@isomorphic/colors';
 import { msToString } from '@isomorphic/formatUtils';
+import { getAsBooleanFromENV } from '@utils/env';
 
 import { TerminalReporter, formatResultFailure, formatRetry } from './base';
 import { stripAnsiEscapes } from '../util';
 
+import type { TerminalReporterOptions } from './base';
 import type { FullResult, TestCase, TestError, TestResult } from '../../types/testReporter';
 
 type GitHubLogType = 'debug' | 'notice' | 'warning' | 'error';
@@ -71,8 +73,8 @@ export class GitHubReporter extends TerminalReporter {
   githubLogger = new GitHubLogger();
   private _failedTestCount = 0;
 
-  constructor(options: { omitFailures?: boolean } = {}) {
-    super(options);
+  constructor(options: TerminalReporterOptions = {}) {
+    super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_GITHUB_OMIT_TAGS', options.omitTags) });
     this.screen = { ...this.screen, colors: noColors };
   }
 

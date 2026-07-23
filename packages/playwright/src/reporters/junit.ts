@@ -39,11 +39,13 @@ class JUnitReporter implements ReporterV2 {
   private stripANSIControlSequences = false;
   private includeProjectInTestName = false;
   private includeRetries = false;
+  private omitTags = false;
 
   constructor(options: JUnitReporterOptions & CommonReporterOptions) {
     this.stripANSIControlSequences = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_STRIP_ANSI', !!options.stripANSIControlSequences);
     this.includeProjectInTestName = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME', !!options.includeProjectInTestName);
     this.includeRetries = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_RETRIES', !!options.includeRetries);
+    this.omitTags = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_OMIT_TAGS', !!options.omitTags);
     this.configDir = options.configDir;
     this.resolvedOutputFile = resolveOutputFile('JUNIT', options)?.outputFile;
   }
@@ -222,7 +224,7 @@ class JUnitReporter implements ReporterV2 {
       entry.children!.push({
         name: errorInfo.elementName,
         attributes: { message: errorInfo.message, type: errorInfo.type },
-        text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
+        text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test, undefined, { omitTags: this.omitTags }))
       });
       return errorInfo.elementName;
     }
@@ -232,7 +234,7 @@ class JUnitReporter implements ReporterV2 {
         message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
         type: 'FAILURE',
       },
-      text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
+      text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test, undefined, { omitTags: this.omitTags }))
     });
     return 'failure';
   }
