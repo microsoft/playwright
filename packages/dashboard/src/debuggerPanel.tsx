@@ -31,14 +31,19 @@ type DebuggerPanelProps = {
 
 // Modeled after the recorder's CallLogView + debug toolbar (packages/recorder/src).
 export const DebuggerPanel: React.FC<DebuggerPanelProps> = ({ model }) => {
-  const { apiCalls, debuggerPaused, debuggerSource } = model.state;
+  const { apiCalls, debuggerPaused, debuggerPauseRequested, debuggerSource } = model.state;
+  const callLogRef = React.useRef<HTMLDivElement>(null);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  // Follow the log only while the user is already near the bottom, so that
+  // live updates do not steal a scrolled-up position.
+  const stickToBottomRef = React.useRef(true);
   // Explicit expand/collapse overrides per call id; when absent, the default is
   // driven by status (running/error expanded, success collapsed).
   const [expandOverrides, setExpandOverrides] = React.useState<Map<string, boolean>>(new Map());
 
   React.useLayoutEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (stickToBottomRef.current)
+      messagesEndRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }, [apiCalls]);
 
   React.useEffect(() => {
@@ -58,13 +63,16 @@ export const DebuggerPanel: React.FC<DebuggerPanelProps> = ({ model }) => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [debuggerPaused, model]);
 
+  const pausePending = debuggerPauseRequested && !debuggerPaused;
   return (
-    <div className='debugger-panel'>
+    <div className={clsx('debugger-panel', debuggerPaused && 'paused', pausePending && 'pause-pending')}>
       <Toolbar>
         <div className='debugger-panel-title'>Actions</div>
         <ToolbarButton className='debugger-run-control' icon='debug-continue' title='Resume (F8)' ariaLabel='Resume' disabled={!debuggerPaused} onClick={() => model.debuggerResume()} />
-        <ToolbarButton icon='debug-pause' title='Pause (F8)' ariaLabel='Pause' disabled={debuggerPaused} onClick={() => model.debuggerPause()} />
+        <ToolbarButton icon='debug-pause' title='Pause (F8)' ariaLabel='Pause' disabled={debuggerPaused} toggled={pausePending} onClick={() => model.debuggerPause()} />
         <ToolbarButton className='debugger-run-control' icon='debug-step-over' title='Step over (F10)' ariaLabel='Step over' disabled={!debuggerPaused} onClick={() => model.debuggerStep()} />
+        {debuggerPaused && <div className='debugger-status'>Paused</div>}
+        {pausePending && <div className='debugger-status'>Pausing before the next action…</div>}
         <div style={{ flex: 'auto' }}></div>
       </Toolbar>
       <SplitView
@@ -72,22 +80,29 @@ export const DebuggerPanel: React.FC<DebuggerPanelProps> = ({ model }) => {
         sidebarSize={380}
         minSidebarSize={220}
         settingName='dashboardDebuggerSource'
-        main={<div className='debugger-call-log'>
+        sidebarHidden={!debuggerSource}
+        main={<div className='debugger-call-log' ref={callLogRef} onScroll={() => {
+          const element = callLogRef.current!;
+          stickToBottomRef.current = element.scrollTop + element.clientHeight >= element.scrollHeight - 40;
+        }}>
           {apiCalls.length === 0 && <div className='debugger-empty'>No actions yet</div>}
           {apiCalls.map(call => {
+            const hasDetails = call.logs.length > 0 || !!call.error;
             const override = expandOverrides.get(call.id);
-            const isExpanded = typeof override === 'boolean' ? override : call.status !== 'success';
+            const isExpanded = hasDetails && (typeof override === 'boolean' ? override : call.status !== 'success');
             return (
               <div className={clsx('debugger-call', call.status)} key={call.id}>
-                <div className='debugger-call-header' onClick={() => {
+                <div className={clsx('debugger-call-header', hasDetails && 'expandable')} onClick={() => {
+                  if (!hasDetails)
+                    return;
                   const next = new Map(expandOverrides);
                   next.set(call.id, !isExpanded);
                   setExpandOverrides(next);
                 }}>
-                  <span className={clsx('codicon', `codicon-chevron-${isExpanded ? 'down' : 'right'}`)}></span>
+                  <span className={clsx('codicon', `codicon-chevron-${isExpanded ? 'down' : 'right'}`)} style={{ visibility: hasDetails ? 'visible' : 'hidden' }}></span>
                   <span className='debugger-call-title'>{call.title}</span>
                   {call.location && <span className='debugger-call-location'>{locationLabel(call.location)}</span>}
-                  <span className={clsx('codicon', iconClass(call.status))}></span>
+                  {call.status !== 'success' && <span className={clsx('codicon', iconClass(call.status))}></span>}
                 </div>
                 {isExpanded && call.logs.map((message, i) => (
                   <div className='debugger-call-message' key={i}>{message.trim()}</div>
@@ -124,10 +139,9 @@ const SourceView: React.FC<{ source: DebuggerSource | null }> = ({ source }) => 
   </div>;
 };
 
-function iconClass(status: ApiCall['status']): string {
+function iconClass(status: Exclude<ApiCall['status'], 'success'>): string {
   switch (status) {
     case 'running': return 'codicon-loading codicon-modifier-spin';
-    case 'success': return 'codicon-check';
     case 'error': return 'codicon-error';
   }
 }

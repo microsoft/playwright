@@ -66,6 +66,9 @@ export type DashboardState = {
   debuggerPanelOpen: boolean;
   apiCalls: ApiCall[];
   debuggerPaused: boolean;
+  // Pause was requested, but the debugger has not paused yet — it engages
+  // before the next action.
+  debuggerPauseRequested: boolean;
   debuggerSource: DebuggerSource | null;
 };
 
@@ -84,6 +87,7 @@ const initialState: DashboardState = {
   debuggerPanelOpen: false,
   apiCalls: [],
   debuggerPaused: false,
+  debuggerPauseRequested: false,
   debuggerSource: null,
 };
 
@@ -104,7 +108,7 @@ export class DashboardModel {
     client.on('annotate', () => this.enterAnnotate('cli'));
     client.on('cancelAnnotate', () => this.cancelAnnotate(false));
     client.on('apiCalls', params => this._emit({ apiCalls: params.apiCalls }));
-    client.on('debuggerPaused', params => this._emit({ debuggerPaused: params.paused }));
+    client.on('debuggerPaused', params => this._emit({ debuggerPaused: params.paused, debuggerPauseRequested: params.paused ? false : this.state.debuggerPauseRequested }));
     client.on('debuggerSource', params => this._emit({ debuggerSource: params.source }));
   }
 
@@ -287,10 +291,12 @@ export class DashboardModel {
   }
 
   debuggerResume() {
+    this._emit({ debuggerPauseRequested: false });
     void this._client.debuggerResume();
   }
 
   debuggerPause() {
+    this._emit({ debuggerPauseRequested: true });
     void this._client.debuggerPause();
   }
 

@@ -34,6 +34,19 @@
   color: var(--color-success-fg);
 }
 
+.debugger-panel.paused .toolbar,
+.debugger-panel.pause-pending .toolbar {
+  background: var(--color-attention-subtle);
+}
+
+.debugger-status {
+  flex: none;
+  padding: 0 8px;
+  font-weight: 500;
+  color: var(--color-attention-fg);
+  white-space: nowrap;
+}
+
 .debugger-call-log {
   display: flex;
   flex-direction: column;
@@ -91,11 +104,14 @@
   display: flex;
   align-items: center;
   padding: 0 2px;
-  cursor: pointer;
   gap: 2px;
 }
 
-.debugger-call-header:hover {
+.debugger-call-header.expandable {
+  cursor: pointer;
+}
+
+.debugger-call-header.expandable:hover {
   background: var(--color-canvas-subtle);
 }
 
@@ -114,11 +130,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--color-fg-muted);
-}
-
-.debugger-call .codicon-check {
-  color: var(--color-success-fg, #21a945);
-  margin-left: auto;
 }
 
 .debugger-call .codicon-loading {

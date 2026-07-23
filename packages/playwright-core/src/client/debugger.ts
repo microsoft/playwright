@@ -42,7 +42,7 @@ export class Debugger extends ChannelOwner<channels.DebuggerChannel> implements 
   }
 
   async _enable(): Promise<void> {
-    await this._channel.enable({}, undefined);
+    await this._channel.enable({}, kNoTimeout);
   }
 
   async requestPause(): Promise<void> {
