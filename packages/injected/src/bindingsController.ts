@@ -64,7 +64,17 @@ export class BindingsController {
       });
     }
     const payload: BindingPayload = { name: bindingName, seq, serializedArgs };
-    (this._global as any)[this._globalBindingName](JSON.stringify(payload));
+    // Some pages (e.g. Prototype.js) define Array.prototype.toJSON, which
+    // makes JSON.stringify turn arrays into strings and breaks binding args.
+    const arrayToJSON = (Array.prototype as any).toJSON;
+    if (arrayToJSON)
+      delete (Array.prototype as any).toJSON;
+    try {
+      (this._global as any)[this._globalBindingName](JSON.stringify(payload));
+    } finally {
+      if (arrayToJSON)
+        (Array.prototype as any).toJSON = arrayToJSON;
+    }
     return promise;
   }
 
