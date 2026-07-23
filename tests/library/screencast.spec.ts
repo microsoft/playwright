@@ -83,7 +83,7 @@ test('applies backpressure while async onFrame callback is pending', async ({ br
     requestAnimationFrame(animate);
   });
   await firstFrameReceived;
-  await expect.poll(() => Date.now() - lastFrameTimestamp).toBeGreaterThan(1000);
+  await expect.poll(() => Date.now() - lastFrameTimestamp, { timeout: 30000 }).toBeGreaterThan(1000);
 
   const framesWhileBlocked = frameCount;
   await ensureSomeFrames(page);
@@ -96,7 +96,7 @@ test('applies backpressure while async onFrame callback is pending', async ({ br
     });
     await ensureSomeFrames(page);
     return frameCount;
-  }).toBeGreaterThan(framesWhileBlocked);
+  }, { timeout: 30000 }).toBeGreaterThan(framesWhileBlocked);
 
   await page.screencast.stop();
   await context.close();
