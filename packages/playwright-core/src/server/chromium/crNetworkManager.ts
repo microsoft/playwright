@@ -419,13 +419,20 @@ export class CRNetworkManager {
     } else {
       response._serverAddrFinished();
     }
-    response._securityDetailsFinished({
-      protocol: responsePayload?.securityDetails?.protocol,
-      subjectName: responsePayload?.securityDetails?.subjectName,
-      issuer: responsePayload?.securityDetails?.issuer,
-      validFrom: responsePayload?.securityDetails?.validFrom,
-      validTo: responsePayload?.securityDetails?.validTo,
-    });
+    // Only surface details when the browser provided them (HTTPS). Passing an
+    // all-undefined object is truthy and makes securityDetails() return {} on
+    // plain HTTP; WebKit correctly resolves null instead.
+    if (responsePayload?.securityDetails) {
+      response._securityDetailsFinished({
+        protocol: responsePayload.securityDetails.protocol,
+        subjectName: responsePayload.securityDetails.subjectName,
+        issuer: responsePayload.securityDetails.issuer,
+        validFrom: responsePayload.securityDetails.validFrom,
+        validTo: responsePayload.securityDetails.validTo,
+      });
+    } else {
+      response._securityDetailsFinished();
+    }
     this._responseExtraInfoTracker.processResponse(request._requestId, response, hasExtraInfo);
     return response;
   }

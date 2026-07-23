@@ -124,13 +124,18 @@ export class FFNetworkManager {
     } else {
       response._serverAddrFinished();
     }
-    response._securityDetailsFinished({
-      protocol: event?.securityDetails?.protocol,
-      subjectName: event?.securityDetails?.subjectName,
-      issuer: event?.securityDetails?.issuer,
-      validFrom: event?.securityDetails?.validFrom,
-      validTo: event?.securityDetails?.validTo,
-    });
+    // Match Chromium/WebKit: no security details for non-HTTPS responses.
+    if (event?.securityDetails) {
+      response._securityDetailsFinished({
+        protocol: event.securityDetails.protocol,
+        subjectName: event.securityDetails.subjectName,
+        issuer: event.securityDetails.issuer,
+        validFrom: event.securityDetails.validFrom,
+        validTo: event.securityDetails.validTo,
+      });
+    } else {
+      response._securityDetailsFinished();
+    }
     // "raw" headers are the same as "provisional" headers in Firefox.
     response.setRawResponseHeaders(null);
     // Headers size are not available in Firefox.
