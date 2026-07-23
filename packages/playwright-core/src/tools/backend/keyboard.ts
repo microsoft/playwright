@@ -15,6 +15,7 @@
  */
 
 import * as z from 'zod';
+import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { defineTabTool } from './tool';
 import { elementSchema } from './snapshot';
 
@@ -33,7 +34,7 @@ const press = defineTabTool({
 
   handle: async (tab, params, response) => {
     response.addCode(`// Press ${params.key}`);
-    response.addCode(`await page.keyboard.press('${params.key}');`);
+    response.addCode(`await page.keyboard.press(${escapeWithQuotes(params.key)});`);
     if (params.key === 'Enter') {
       response.setIncludeSnapshot();
       await tab.waitForCompletion(async () => {
@@ -62,7 +63,7 @@ const pressSequentially = defineTabTool({
 
   handle: async (tab, params, response) => {
     response.addCode(`// Press ${params.text}`);
-    response.addCode(`await page.keyboard.type('${params.text}');`);
+    response.addCode(`await page.keyboard.type(${escapeWithQuotes(params.text)});`);
     await tab.page.keyboard.type(params.text);
     if (params.submit) {
       response.addCode(`await page.keyboard.press('Enter');`);
@@ -133,7 +134,7 @@ const keydown = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    response.addCode(`await page.keyboard.down('${params.key}');`);
+    response.addCode(`await page.keyboard.down(${escapeWithQuotes(params.key)});`);
     await tab.page.keyboard.down(params.key);
   },
 });
@@ -153,7 +154,7 @@ const keyup = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    response.addCode(`await page.keyboard.up('${params.key}');`);
+    response.addCode(`await page.keyboard.up(${escapeWithQuotes(params.key)});`);
     await tab.page.keyboard.up(params.key);
   },
 });

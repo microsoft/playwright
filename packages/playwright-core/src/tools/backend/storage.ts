@@ -15,6 +15,7 @@
  */
 
 import * as z from 'zod';
+import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { defineTool } from './tool';
 
 const storageState = defineTool({
@@ -35,7 +36,7 @@ const storageState = defineTool({
     const state = await browserContext.storageState();
     const serializedState = JSON.stringify(state, null, 2);
     const resolvedFile = await response.resolveClientFile({ prefix: 'storage-state', ext: 'json', suggestedFilename: params.filename }, 'Storage state');
-    response.addCode(`await page.context().storageState({ path: '${resolvedFile.relativeName}' });`);
+    response.addCode(`await page.context().storageState({ path: ${escapeWithQuotes(resolvedFile.relativeName)} });`);
     await response.addFileResult(resolvedFile, serializedState);
   },
 });
@@ -58,7 +59,7 @@ const setStorageState = defineTool({
     const resolvedFilename = await response.resolveClientFilename(params.filename);
     await browserContext.setStorageState(resolvedFilename);
     response.addTextResult(`Storage state restored from ${params.filename}`);
-    response.addCode(`await page.context().setStorageState('${params.filename}');`);
+    response.addCode(`await page.context().setStorageState(${escapeWithQuotes(params.filename)});`);
   },
 });
 

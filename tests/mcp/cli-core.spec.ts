@@ -368,3 +368,10 @@ test('--raw on command without output', async ({ cli, server }) => {
   expect(output).not.toContain('### ');
   expect(output).not.toContain('Page URL');
 });
+
+test('codegen escapes single quotes in user input', async ({ cli, server }) => {
+  server.setContent('/', `<input type=text>`, 'text/html');
+  await cli('open', server.PREFIX);
+  const { output } = await cli('type', "it's working");
+  expect(output).toContain(`await page.keyboard.type('it\\'s working');`);
+});

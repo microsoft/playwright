@@ -15,6 +15,7 @@
  */
 
 import * as z from 'zod';
+import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { defineTool } from './tool';
 
 const cookieList = defineTool({
@@ -137,7 +138,7 @@ const cookieDelete = defineTool({
   handle: async (context, params, response) => {
     const browserContext = await context.ensureBrowserContext();
     await browserContext.clearCookies({ name: params.name });
-    response.addCode(`await page.context().clearCookies({ name: '${params.name}' });`);
+    response.addCode(`await page.context().clearCookies({ name: ${escapeWithQuotes(params.name)} });`);
   },
 });
 

@@ -15,6 +15,7 @@
  */
 
 import * as z from 'zod';
+import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { defineTabTool } from './tool';
 
 const localStorageList = defineTabTool({
@@ -59,7 +60,7 @@ const localStorageGet = defineTabTool({
       response.addTextResult(`localStorage key '${params.key}' not found`);
     else
       response.addTextResult(`${params.key}=${value}`);
-    response.addCode(`await page.localStorage.getItem('${params.key}');`);
+    response.addCode(`await page.localStorage.getItem(${escapeWithQuotes(params.key)});`);
   },
 });
 
@@ -79,7 +80,7 @@ const localStorageSet = defineTabTool({
 
   handle: async (tab, params, response) => {
     await tab.page.localStorage.setItem(params.key, params.value);
-    response.addCode(`await page.localStorage.setItem('${params.key}', '${params.value}');`);
+    response.addCode(`await page.localStorage.setItem(${escapeWithQuotes(params.key)}, ${escapeWithQuotes(params.value)});`);
   },
 });
 
@@ -98,7 +99,7 @@ const localStorageDelete = defineTabTool({
 
   handle: async (tab, params, response) => {
     await tab.page.localStorage.removeItem(params.key);
-    response.addCode(`await page.localStorage.removeItem('${params.key}');`);
+    response.addCode(`await page.localStorage.removeItem(${escapeWithQuotes(params.key)});`);
   },
 });
 
@@ -163,7 +164,7 @@ const sessionStorageGet = defineTabTool({
       response.addTextResult(`sessionStorage key '${params.key}' not found`);
     else
       response.addTextResult(`${params.key}=${value}`);
-    response.addCode(`await page.sessionStorage.getItem('${params.key}');`);
+    response.addCode(`await page.sessionStorage.getItem(${escapeWithQuotes(params.key)});`);
   },
 });
 
@@ -183,7 +184,7 @@ const sessionStorageSet = defineTabTool({
 
   handle: async (tab, params, response) => {
     await tab.page.sessionStorage.setItem(params.key, params.value);
-    response.addCode(`await page.sessionStorage.setItem('${params.key}', '${params.value}');`);
+    response.addCode(`await page.sessionStorage.setItem(${escapeWithQuotes(params.key)}, ${escapeWithQuotes(params.value)});`);
   },
 });
 
@@ -202,7 +203,7 @@ const sessionStorageDelete = defineTabTool({
 
   handle: async (tab, params, response) => {
     await tab.page.sessionStorage.removeItem(params.key);
-    response.addCode(`await page.sessionStorage.removeItem('${params.key}');`);
+    response.addCode(`await page.sessionStorage.removeItem(${escapeWithQuotes(params.key)});`);
   },
 });
 

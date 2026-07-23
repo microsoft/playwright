@@ -15,6 +15,7 @@
  */
 
 import * as z from 'zod';
+import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { defineTool } from './tool';
 
 import type * as playwright from '../../..';
@@ -81,7 +82,7 @@ const route = defineTool({
 
     await context.addRoute(entry);
     response.addTextResult(`Route added for pattern: ${params.pattern}`);
-    response.addCode(`await page.context().route('${params.pattern}', async route => { /* route handler */ });`);
+    response.addCode(`await page.context().route(${escapeWithQuotes(params.pattern)}, async route => { /* route handler */ });`);
   },
 });
 
