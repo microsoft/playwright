@@ -20,14 +20,15 @@ import type { Page } from '@playwright/test';
 import type * as actions from '@isomorphic/codegen/actions';
 
 class RecorderLog {
-  actions: (actions.ActionInContext & { code: string })[] = [];
+  actions: { action: actions.Action, code: string }[] = [];
+  signals: { signal: actions.Signal, code: string }[] = [];
 
-  actionAdded(page: Page, actionInContext: actions.ActionInContext, code: string): void {
-    this.actions.push({ ...actionInContext, code });
+  actionAdded(page: Page, action: actions.Action, code: string): void {
+    this.actions.push({ action, code });
   }
 
-  actionUpdated(page: Page, actionInContext: actions.ActionInContext, code: string): void {
-    this.actions[this.actions.length - 1] = { ...actionInContext, code };
+  signalAdded(page: Page, signal: actions.Signal, code: string): void {
+    this.signals.push({ signal, code });
   }
 }
 
@@ -39,6 +40,7 @@ async function startRecording(context) {
   }, log);
   return {
     action: (name: string) => log.actions.filter(a => a.action.name === name),
+    signals: () => log.signals,
   };
 }
 
@@ -61,7 +63,6 @@ test('should click', async ({ context, browserName, platform, channel }) => {
         // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
         ariaSnapshot: (browserName === 'webkit' && (platform === 'darwin' || (platform === 'win32' && channel !== 'webkit-wsl'))) ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
-      startTime: expect.any(Number),
     })
   ]);
 
@@ -74,8 +75,7 @@ test('should double click', async ({ context, browserName, platform, channel }) 
   await page.setContent(`<button onclick="console.log('click')" ondblclick="console.log('dblclick')">Submit</button>`);
   await page.getByRole('button', { name: 'Submit' }).dblclick();
 
-  const clickActions = log.action('click');
-  expect(clickActions).toEqual([
+  await expect.poll(() => log.action('click')).toEqual([
     expect.objectContaining({
       action: expect.objectContaining({
         name: 'click',
@@ -85,11 +85,10 @@ test('should double click', async ({ context, browserName, platform, channel }) 
         // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
         ariaSnapshot: (browserName === 'webkit' && (platform === 'darwin' || (platform === 'win32' && channel !== 'webkit-wsl'))) ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
-      startTime: expect.any(Number),
     })
   ]);
 
-  expect(normalizeCode(clickActions[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).dblclick();`);
+  expect(normalizeCode(log.action('click')[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).dblclick();`);
 });
 
 test('should right click', async ({ context, browserName, platform, channel }) => {
@@ -109,11 +108,24 @@ test('should right click', async ({ context, browserName, platform, channel }) =
         // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
         ariaSnapshot: (browserName === 'webkit' && (platform === 'darwin' || (platform === 'win32' && channel !== 'webkit-wsl'))) ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
-      startTime: expect.any(Number),
     })
   ]);
 
   expect(normalizeCode(clickActions[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).click({ button: 'right' });`);
+});
+
+test('should send updated code with the signal', async ({ context, server }) => {
+  const recorder = await startRecording(context);
+  const page = await context.newPage();
+  await page.setContent(`<a target=_blank rel=noopener href="${server.EMPTY_PAGE}">link</a>`);
+  await page.getByRole('link', { name: 'link' }).click();
+
+  // The popup signal attaches to the click, so the click's code is re-generated to await it.
+  await expect.poll(() => recorder.signals().map(s => s.signal.name)).toContain('popup');
+  const code = recorder.signals().find(s => s.signal.name === 'popup')!.code;
+  expect(normalizeCode(code)).toContain(`const page1Promise = page.waitForEvent('popup');`);
+  expect(normalizeCode(code)).toContain(`await page.getByRole('link', { name: 'link' }).click();`);
+  expect(normalizeCode(code)).toContain(`const page1 = await page1Promise;`);
 });
 
 test('should type', async ({ context }) => {
@@ -123,8 +135,7 @@ test('should type', async ({ context }) => {
 
   await page.getByRole('textbox').pressSequentially('Hello');
 
-  const fillActions = log.action('fill');
-  expect(fillActions).toEqual([
+  await expect.poll(() => log.action('fill')).toEqual([
     expect.objectContaining({
       action: expect.objectContaining({
         name: 'fill',
@@ -132,11 +143,10 @@ test('should type', async ({ context }) => {
         ref: 'e2',
         ariaSnapshot: '- textbox [active] [ref=e2]: Hello',
       }),
-      startTime: expect.any(Number),
     })
   ]);
 
-  expect(normalizeCode(fillActions[0].code)).toEqual(`await page.getByRole('textbox').fill('Hello');`);
+  expect(normalizeCode(log.action('fill')[0].code)).toEqual(`await page.getByRole('textbox').fill('Hello');`);
 });
 
 test('should disable recorder', async ({ context }) => {

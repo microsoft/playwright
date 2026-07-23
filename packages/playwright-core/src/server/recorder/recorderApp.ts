@@ -26,7 +26,6 @@ import { syncLocalStorageWithSettings } from '../launchApp';
 import { launchApp } from '../launchApp';
 import { nullProgress, ProgressController } from '../progress';
 import { ThrottledFile } from './throttledFile';
-import { collapseActions, shouldMergeAction } from './recorderUtils';
 import { Recorder, RecorderEvent } from '../recorder';
 import { BrowserContext } from '../browserContext';
 
@@ -290,7 +289,7 @@ export class RecorderApp {
   private _onSignalAdded(signal: actions.SignalInContext) {
     const lastAction = this._actions.findLast(a => a.pageGuid === signal.pageGuid);
     if (lastAction)
-      lastAction.action.signals.push(signal.signal);
+      lastAction.signals.push(signal.signal);
     this._updateActions();
   }
 
@@ -315,11 +314,9 @@ export class RecorderApp {
 
   private _updateActions(reveal?: 'reveal') {
     const recorderSources = [];
-    const actions = collapseActions(this._actions);
-
     let revealSourceId: string | undefined;
     for (const languageGenerator of languageSet()) {
-      const { header, footer, actionTexts, text } = generateCode(actions, languageGenerator, this._languageGeneratorOptions);
+      const { header, footer, actionTexts, text } = generateCode(this._actions, languageGenerator, this._languageGeneratorOptions);
       const source: Source = {
         isRecorded: true,
         label: languageGenerator.name,
@@ -357,7 +354,7 @@ function determinePrimaryGeneratorId(sdkLanguage: Language): string {
 
 export class ProgrammaticRecorderApp {
   static async run(inspectedContext: BrowserContext, recorder: Recorder, browserName: string, params: channels.BrowserContextEnableRecorderParams) {
-    let lastAction: actions.ActionInContext | null = null;
+    let lastAction: actions.ActionInContext | undefined;
     const languages = [...languageSet()];
 
     const languageGeneratorOptions = {
@@ -369,22 +366,23 @@ export class ProgrammaticRecorderApp {
     };
     const languageGenerator = languages.find(l => l.id === params.language) ?? languages.find(l => l.id === 'playwright-test')!;
 
-    recorder.on(RecorderEvent.ActionAdded, action => {
-      const page = findPageByGuid(inspectedContext, action.pageGuid);
+    recorder.on(RecorderEvent.ActionAdded, actionInContext => {
+      const page = findPageByGuid(inspectedContext, actionInContext.pageGuid);
       if (!page)
         return;
-      const code = languageGenerator.generateAction(action, languageGeneratorOptions);
-      if (!lastAction || !shouldMergeAction(action, lastAction))
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action, page, code });
-      else
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action, page, code });
-      lastAction = action;
+      lastAction = actionInContext;
+      const code = languageGenerator.generateAction(actionInContext, languageGeneratorOptions);
+      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: actionInContext.action, page, code });
     });
-    recorder.on(RecorderEvent.SignalAdded, signal => {
-      const page = findPageByGuid(inspectedContext, signal.pageGuid);
+    recorder.on(RecorderEvent.SignalAdded, signalInContext => {
+      const page = findPageByGuid(inspectedContext, signalInContext.pageGuid);
       if (!page)
         return;
-      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signal, page, code: '' });
+      // The signal belongs to the last action, so re-generate its code with the signal
+      // included (e.g. a popup or download wait around the action).
+      lastAction?.signals.push(signalInContext.signal);
+      const code = lastAction ? languageGenerator.generateAction(lastAction, languageGeneratorOptions) : '';
+      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signalInContext.signal, page, code });
     });
   }
 }

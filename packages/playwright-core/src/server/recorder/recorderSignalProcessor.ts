@@ -26,81 +26,105 @@ export interface ProcessorDelegate {
   addSignal(signalInContext: actions.SignalInContext): void;
 }
 
-// How long a single click is held back, waiting for a double click to arrive and merge with it.
-const kClickBufferTimeout = 500;
+// How long an action is held back, waiting for a superseding action to merge with it:
+// a double click after a click, another keystroke after a fill, another navigation.
+const kActionBufferTimeout = 500;
 
 type BufferedSignal = { frame: Frame, signal: Signal, timestamp: number };
 
 export class RecorderSignalProcessor {
   private _delegate: ProcessorDelegate;
   private _lastAction: actions.ActionInContext | null = null;
-  private _bufferedClick: { actionInContext: actions.ActionInContext, signals: BufferedSignal[], timeout: NodeJS.Timeout } | undefined;
+  private _lastActionTimestamp = 0;
+  private _pendingAction: { actionInContext: actions.ActionInContext, receivedAt: number, signals: BufferedSignal[], timeout: NodeJS.Timeout } | undefined;
 
   constructor(actionSink: ProcessorDelegate) {
     this._delegate = actionSink;
   }
 
   addAction(actionInContext: actions.ActionInContext) {
-    if (this._bufferedClick) {
-      if (this._isDoubleClick(actionInContext, this._bufferedClick.actionInContext)) {
-        // A double click - merge it into the buffered single click and emit the result.
-        actionInContext.startTime = this._bufferedClick.actionInContext.startTime;
-        this._flushBufferedClick(actionInContext);
+    const timestamp = monotonicTime();
+    if (this._pendingAction) {
+      if (this._supersedes(actionInContext, this._pendingAction.actionInContext)) {
+        this._pendingAction.actionInContext = actionInContext;
+        this._pendingAction.receivedAt = timestamp;
+        this._resetPendingTimeout();
         return;
       }
-      // A different action - emit the buffered click before proceeding.
-      this._flushBufferedClick();
+      this._flushPendingAction();
     }
 
-    if (this._isBufferableClick(actionInContext)) {
-      this._bufferedClick = {
+    if (this._shouldBuffer(actionInContext)) {
+      this._pendingAction = {
         actionInContext,
+        receivedAt: timestamp,
         signals: [],
-        timeout: setTimeout(() => this._flushBufferedClick(), kClickBufferTimeout),
+        timeout: setTimeout(() => this._flushPendingAction(), kActionBufferTimeout),
       };
       return;
     }
 
-    this._emitAction(actionInContext);
+    this._emitAction(actionInContext, timestamp);
   }
 
   signal(frame: Frame, signal: Signal) {
     const timestamp = monotonicTime();
-    if (this._bufferedClick) {
-      this._bufferedClick.signals.push({ frame, signal, timestamp });
+    const isMainFrameNavigation = signal.name === 'navigation' && frame._page.mainFrame() === frame;
+    if (this._pendingAction?.actionInContext.action.name === 'navigate' && isMainFrameNavigation && this._pendingAction.actionInContext.pageGuid === frame._page.guid) {
+      this._pendingAction.actionInContext.action.url = frame.url();
+      this._resetPendingTimeout();
       return;
     }
-    this._processSignal(frame, signal, timestamp);
+    if (this._pendingAction)
+      this._pendingAction.signals.push({ frame, signal, timestamp });
+    else
+      this._processSignal(frame, signal, timestamp);
   }
 
-  private _isBufferableClick(actionInContext: actions.ActionInContext): boolean {
+  private _shouldBuffer(actionInContext: actions.ActionInContext): boolean {
     const action = actionInContext.action;
-    return action.name === 'click' && action.button === 'left' && action.clickCount === 1;
+    return (action.name === 'click' && action.button === 'left') || action.name === 'fill' || action.name === 'navigate';
   }
 
-  private _isDoubleClick(actionInContext: actions.ActionInContext, bufferedClick: actions.ActionInContext): boolean {
+  private _supersedes(actionInContext: actions.ActionInContext, pending: actions.ActionInContext): boolean {
     const action = actionInContext.action;
-    const buffered = bufferedClick.action;
-    return action.name === 'click' && buffered.name === 'click'
-      && actionInContext.pageGuid === bufferedClick.pageGuid
-      && action.selector === buffered.selector
-      && action.clickCount > buffered.clickCount;
+    const pendingAction = pending.action;
+    if (actionInContext.pageGuid !== pending.pageGuid)
+      return false;
+    // A higher click count on the same target is a double (or triple) click.
+    if (action.name === 'click' && pendingAction.name === 'click')
+      return action.selector === pendingAction.selector && action.clickCount > pendingAction.clickCount;
+    // Another keystroke into the same field supersedes the previous value.
+    if (action.name === 'fill' && pendingAction.name === 'fill')
+      return action.selector === pendingAction.selector;
+    // Another navigation on the same page supersedes the previous url.
+    if (action.name === 'navigate' && pendingAction.name === 'navigate')
+      return true;
+    return false;
   }
 
-  private _emitAction(actionInContext: actions.ActionInContext) {
+  private _resetPendingTimeout() {
+    if (!this._pendingAction)
+      return;
+    clearTimeout(this._pendingAction.timeout);
+    this._pendingAction.timeout = setTimeout(() => this._flushPendingAction(), kActionBufferTimeout);
+  }
+
+  private _emitAction(actionInContext: actions.ActionInContext, timestamp: number) {
     this._lastAction = actionInContext;
+    this._lastActionTimestamp = timestamp;
     this._delegate.addAction(actionInContext);
   }
 
-  private _flushBufferedClick(replacement?: actions.ActionInContext) {
-    const buffered = this._bufferedClick;
-    if (!buffered)
+  private _flushPendingAction() {
+    const pending = this._pendingAction;
+    if (!pending)
       return;
-    clearTimeout(buffered.timeout);
-    this._bufferedClick = undefined;
-    this._emitAction(replacement ?? buffered.actionInContext);
+    clearTimeout(pending.timeout);
+    this._pendingAction = undefined;
+    this._emitAction(pending.actionInContext, pending.receivedAt);
     // Replay the signals with their original timestamps, so that they attach to the emitted action.
-    for (const { frame, signal, timestamp } of buffered.signals)
+    for (const { frame, signal, timestamp } of pending.signals)
       this._processSignal(frame, signal, timestamp);
   }
 
@@ -114,19 +138,17 @@ export class RecorderSignalProcessor {
         generateGoto = true;
       else if (lastAction.action.name !== 'click' && lastAction.action.name !== 'press' && lastAction.action.name !== 'fill')
         generateGoto = true;
-      else if (timestamp - lastAction.startTime > signalThreshold)
+      else if (timestamp - this._lastActionTimestamp > signalThreshold)
         generateGoto = true;
 
       if (generateGoto) {
-        this._emitAction({
+        this.addAction({
           pageGuid: frame._page.guid,
           action: {
             name: 'navigate',
             url: frame.url(),
-            signals: [],
           },
-          startTime: timestamp,
-          endTime: timestamp,
+          signals: [],
         });
       }
       return;
@@ -135,7 +157,6 @@ export class RecorderSignalProcessor {
     this._delegate.addSignal({
       pageGuid: frame._page.guid,
       signal,
-      timestamp,
     });
   }
 }

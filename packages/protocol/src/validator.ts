@@ -732,7 +732,7 @@ scheme.BrowserContextResponseEvent = tObject({
   page: tOptional(tChannel(['Page'])),
 });
 scheme.BrowserContextRecorderEventEvent = tObject({
-  event: tEnum(['actionAdded', 'actionUpdated', 'signalAdded']),
+  event: tEnum(['actionAdded', 'signalAdded']),
   data: tAny,
   page: tChannel(['Page']),
   code: tString,

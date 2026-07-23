@@ -449,7 +449,6 @@ BrowserContext:
           type: enum
           literals:
           - actionAdded
-          - actionUpdated
           - signalAdded
         data: json
         page: Page

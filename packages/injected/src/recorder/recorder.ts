@@ -171,7 +171,6 @@ class InspectTool implements RecorderTool {
       void this._recorder.recordAction({
         name: 'assertVisible',
         selector,
-        signals: [],
       });
       this._recorder.setMode('recording');
       this._recorder.overlay?.flashToolSucceeded('assertingVisibility');
@@ -269,39 +268,14 @@ class RecordActionTool implements RecorderTool {
       this._recordAction({
         name: checkbox.checked ? 'check' : 'uncheck',
         selector: this._hoveredModel?.selector ?? this._selectorForElement(target),
-        signals: [],
       }, { autoExpect: true });
       return;
     }
 
-    // Only single clicks are recorded here; double clicks are recorded in onDblClick.
-    if (event.detail !== 1)
-      return;
     this._recordAction({
       name: 'click',
       selector: this._hoveredModel?.selector ?? this._selectorForElement(target),
       position: positionForEvent(event),
-      signals: [],
-      button: buttonForEvent(event),
-      modifiers: modifiersForEvent(event),
-      clickCount: event.detail
-    }, { autoExpect: true });
-  }
-
-  onDblClick(event: MouseEvent) {
-    if (this._dialog.isShowing())
-      return;
-    if (isRangeInput(this._hoveredElement))
-      return;
-    if (this._shouldIgnoreMouseEvent(event))
-      return;
-
-    const target = this._recorder.deepEventTarget(event);
-    this._recordAction({
-      name: 'click',
-      selector: this._hoveredModel?.selector ?? this._selectorForElement(target),
-      position: positionForEvent(event),
-      signals: [],
       button: buttonForEvent(event),
       modifiers: modifiersForEvent(event),
       clickCount: event.detail
@@ -324,7 +298,6 @@ class RecordActionTool implements RecorderTool {
         name: 'click',
         selector: this._hoveredModel?.selector ?? this._selectorForElement(target),
         position: positionForEvent(event),
-        signals: [],
         button: 'right',
         modifiers: modifiersForEvent(event),
         clickCount: 1,
@@ -409,7 +382,6 @@ class RecordActionTool implements RecorderTool {
       this._recordAction({
         name: 'setInputFiles',
         selector,
-        signals: [],
         files: [...((target as HTMLInputElement).files || [])].map(file => file.name),
       });
       return;
@@ -420,7 +392,6 @@ class RecordActionTool implements RecorderTool {
         name: 'fill',
         // must use hoveredModel instead of activeModel for it to work in webkit
         selector: this._hoveredModel?.selector ?? this._selectorForElement(target),
-        signals: [],
         text: target.value,
       });
       return;
@@ -435,7 +406,6 @@ class RecordActionTool implements RecorderTool {
       this._recordAction({
         name: 'fill',
         selector: this._activeSelectorForEvent(event),
-        signals: [],
         text: target.isContentEditable ? target.innerText : (target as HTMLInputElement).value,
       });
     }
@@ -446,7 +416,6 @@ class RecordActionTool implements RecorderTool {
         name: 'select',
         selector: this._activeSelectorForEvent(event),
         options: [...selectElement.selectedOptions].map(option => option.value),
-        signals: []
       });
     }
   }
@@ -463,7 +432,6 @@ class RecordActionTool implements RecorderTool {
         this._recordAction({
           name: checkbox.checked ? 'uncheck' : 'check',
           selector: this._activeSelectorForEvent(event),
-          signals: [],
         }, { autoExpect: true });
         return;
       }
@@ -472,7 +440,6 @@ class RecordActionTool implements RecorderTool {
     this._recordAction({
       name: 'press',
       selector: this._activeSelectorForEvent(event),
-      signals: [],
       key: event.key,
       modifiers: modifiersForEvent(event),
     }, { autoExpect: true });
@@ -498,7 +465,6 @@ class RecordActionTool implements RecorderTool {
           name: 'click',
           selector: model.selector,
           position: actionPosition,
-          signals: [],
           button: 'left',
           modifiers: 0,
           clickCount: 1,
@@ -510,7 +476,6 @@ class RecordActionTool implements RecorderTool {
           name: 'click',
           selector: model.selector,
           position: actionPosition,
-          signals: [],
           button: 'right',
           modifiers: 0,
           clickCount: 1,
@@ -522,7 +487,6 @@ class RecordActionTool implements RecorderTool {
           name: 'click',
           selector: model.selector,
           position: actionPosition,
-          signals: [],
           button: 'left',
           modifiers: 0,
           clickCount: 2,
@@ -534,7 +498,6 @@ class RecordActionTool implements RecorderTool {
           name: 'hover',
           selector: model.selector,
           position: actionPosition,
-          signals: [],
         }),
       },
       {
@@ -731,7 +694,6 @@ class JsonRecordActionTool implements RecorderTool {
         name: checkbox.checked ? 'check' : 'uncheck',
         selector,
         ref,
-        signals: [],
         ariaSnapshot,
       });
       return;
@@ -743,7 +705,6 @@ class JsonRecordActionTool implements RecorderTool {
       ref,
       ariaSnapshot,
       position: positionForEvent(event),
-      signals: [],
       button: buttonForEvent(event),
       modifiers: modifiersForEvent(event),
       clickCount: event.detail,
@@ -759,7 +720,6 @@ class JsonRecordActionTool implements RecorderTool {
       ref,
       ariaSnapshot,
       position: positionForEvent(event),
-      signals: [],
       button: 'right',
       modifiers: modifiersForEvent(event),
       clickCount: 1,
@@ -776,7 +736,6 @@ class JsonRecordActionTool implements RecorderTool {
         selector,
         ref,
         ariaSnapshot,
-        signals: [],
         text: element.value,
       });
       return;
@@ -793,7 +752,6 @@ class JsonRecordActionTool implements RecorderTool {
         ref,
         selector,
         ariaSnapshot,
-        signals: [],
         text: element.isContentEditable ? element.innerText : (element as HTMLInputElement).value,
       });
       return;
@@ -807,7 +765,6 @@ class JsonRecordActionTool implements RecorderTool {
         ref,
         ariaSnapshot,
         options: [...selectElement.selectedOptions].map(option => option.value),
-        signals: []
       });
       return;
     }
@@ -829,7 +786,6 @@ class JsonRecordActionTool implements RecorderTool {
           selector,
           ref,
           ariaSnapshot,
-          signals: [],
         });
         return;
       }
@@ -840,7 +796,6 @@ class JsonRecordActionTool implements RecorderTool {
       selector,
       ref,
       ariaSnapshot,
-      signals: [],
       key: event.key,
       modifiers: modifiersForEvent(event),
     });
@@ -992,7 +947,6 @@ class TextAssertionTool implements RecorderTool {
         return {
           name: 'assertChecked',
           selector,
-          signals: [],
           // Interestingly, inputElement.checked is reversed inside this event handler.
           checked: !(target as HTMLInputElement).checked,
         };
@@ -1000,7 +954,6 @@ class TextAssertionTool implements RecorderTool {
         return {
           name: 'assertValue',
           selector,
-          signals: [],
           value: (target as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)).value,
         };
       }
@@ -1013,7 +966,6 @@ class TextAssertionTool implements RecorderTool {
       return {
         name: 'assertSnapshot',
         selector: this._hoverHighlight.selector,
-        signals: [],
         ariaSnapshot: this._recorder.injectedScript.ariaSnapshot(target, { mode: 'codegen' }),
       };
     } else {
@@ -1025,7 +977,6 @@ class TextAssertionTool implements RecorderTool {
       return {
         name: 'assertText',
         selector: this._hoverHighlight.selector,
-        signals: [],
         text: this._recorder.injectedScript.utils.elementText(this._textCache, target).normalized,
         substring: true,
       };

@@ -67,7 +67,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     }
 
     const subject = pageAlias;
-    const signals = toSignalMap(action);
+    const signals = toSignalMap(actionInContext);
 
     if (signals.dialog) {
       formatter.add(`  ${pageAlias}.once('dialog', dialog => {

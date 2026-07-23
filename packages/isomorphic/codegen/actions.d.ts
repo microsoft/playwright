@@ -36,7 +36,6 @@ export type ActionName =
 
 export type ActionBase = {
   name: ActionName,
-  signals: Signal[],
   ariaSnapshot?: string,
 };
 
@@ -166,12 +165,10 @@ export type Signal = NavigationSignal | PopupSignal | DownloadSignal | DialogSig
 export type ActionInContext = {
   pageGuid: string;
   action: Action;
-  startTime: number;
-  endTime?: number;
+  signals: Signal[];
 };
 
 export type SignalInContext = {
   pageGuid: string;
   signal: Signal;
-  timestamp: number;
 };

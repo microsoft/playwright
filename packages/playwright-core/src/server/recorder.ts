@@ -22,7 +22,6 @@ import { stringifySelector } from '@isomorphic/selectorParser';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { isUnderTest } from '@utils/debug';
 import { eventsHelper } from '@utils/eventsHelper';
-import { monotonicTime } from '@isomorphic/time';
 import { BrowserContext } from './browserContext';
 import { Debugger } from './debugger';
 import { buildFullSelector, generateFrameSelector, metadataToCallLog } from './recorder/recorderUtils';
@@ -496,9 +495,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
         pageGuid: page.guid,
         action: {
           name: 'closePage',
-          signals: [],
         },
-        startTime: monotonicTime()
+        signals: [],
       });
       this._filePrimaryURLChanged();
     });
@@ -518,9 +516,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
         action: {
           name: 'openPage',
           url: page.mainFrame().url(),
-          signals: [],
         },
-        startTime: monotonicTime()
+        signals: [],
       });
     }
     this._filePrimaryURLChanged();
@@ -548,7 +545,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     const actionInContext: actions.ActionInContext = {
       pageGuid: frame._page.guid,
       action,
-      startTime: monotonicTime(),
+      signals: [],
     };
     return actionInContext;
   }

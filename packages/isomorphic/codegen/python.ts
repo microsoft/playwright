@@ -74,7 +74,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     }
 
     const subject = pageAlias;
-    const signals = toSignalMap(action);
+    const signals = toSignalMap(actionInContext);
 
     if (signals.dialog)
       formatter.add(`  ${pageAlias}.once("dialog", lambda dialog: dialog.dismiss())`);

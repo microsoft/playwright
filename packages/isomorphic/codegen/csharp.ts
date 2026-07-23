@@ -91,7 +91,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     }
 
     const subject = pageAlias;
-    const signals = toSignalMap(action);
+    const signals = toSignalMap(actionInContext);
 
     if (signals.dialog) {
       formatter.add(`    void ${pageAlias}_Dialog${signals.dialog.dialogAlias}_EventHandler(object sender, IDialog dialog)

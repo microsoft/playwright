@@ -56,9 +56,8 @@ import type * as channels from './channels';
 import type * as actions from '@isomorphic/codegen/actions';
 
 interface RecorderEventSink {
-  actionAdded?(page: Page, actionInContext: actions.ActionInContext, code: string): void;
-  actionUpdated?(page: Page, actionInContext: actions.ActionInContext, code: string): void;
-  signalAdded?(page: Page, signal: actions.SignalInContext): void;
+  actionAdded?(page: Page, action: actions.Action, code: string): void;
+  signalAdded?(page: Page, signal: actions.Signal, code: string): void;
 }
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
@@ -162,11 +161,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
     this._channel.on('recorderEvent', ({ event, data, page, code }) => {
       if (event === 'actionAdded')
-        this._onRecorderEventSink?.actionAdded?.(Page.from(page), data as actions.ActionInContext, code);
-      else if (event === 'actionUpdated')
-        this._onRecorderEventSink?.actionUpdated?.(Page.from(page), data as actions.ActionInContext, code);
+        this._onRecorderEventSink?.actionAdded?.(Page.from(page), data as actions.Action, code);
       else if (event === 'signalAdded')
-        this._onRecorderEventSink?.signalAdded?.(Page.from(page), data as actions.SignalInContext);
+        this._onRecorderEventSink?.signalAdded?.(Page.from(page), data as actions.Signal, code);
     });
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
 

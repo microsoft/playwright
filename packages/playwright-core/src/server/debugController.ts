@@ -23,7 +23,6 @@ import { generateCode } from '@isomorphic/codegen/language';
 import { JavaScriptLanguageGenerator } from '@isomorphic/codegen/javascript';
 import { SdkObject, createInstrumentation } from './instrumentation';
 import { Recorder, RecorderEvent } from './recorder';
-import { collapseActions } from './recorder/recorderUtils';
 
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { BrowserContext } from './browserContext';
@@ -188,8 +187,7 @@ function wireListeners(recorder: Recorder, debugController: DebugController) {
   const languageGenerator = new JavaScriptLanguageGenerator(/* isPlaywrightTest */true);
 
   const actionsChanged = () => {
-    const aa = collapseActions(actions);
-    const { header, footer, text, actionTexts } = generateCode(aa, languageGenerator, {
+    const { header, footer, text, actionTexts } = generateCode(actions, languageGenerator, {
       browserName: 'chromium',
       launchOptions: {},
       contextOptions: {},
@@ -215,7 +213,7 @@ function wireListeners(recorder: Recorder, debugController: DebugController) {
   recorder.on(RecorderEvent.SignalAdded, (signal: actions.SignalInContext) => {
     const lastAction = actions.findLast(a => a.pageGuid === signal.pageGuid);
     if (lastAction)
-      lastAction.action.signals.push(signal.signal);
+      lastAction.signals.push(signal.signal);
     actionsChanged();
   });
 }
