@@ -448,8 +448,11 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (error) {
       // This check is here because closing the browser removes the tracesDir and tracing
       // cannot access removed files. Clients are ready for the missing artifact.
-      if (!isAbortError(error) && this._context instanceof BrowserContext && !this._context._browser.isConnected())
-        return {};
+      if (!isAbortError(error)) {
+        const context = this._context instanceof BrowserContext ? this._context : this._context.attribution.browserContext;
+        if (context instanceof BrowserContext && !context._browser.isConnected())
+          return {};
+      }
       throw error;
     }
 
@@ -484,6 +487,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string) {
     // IMPORTANT: no awaits in this method, this._appendTraceEvent must be called synchronously.
+    if (this._context instanceof BrowserContext && sdkObject.attribution.apiRequestContext)
+      return Promise.resolve();
     const event = createBeforeActionTraceEvent(metadata, parentId ?? this._currentGroupId());
     if (!event)
       return Promise.resolve();

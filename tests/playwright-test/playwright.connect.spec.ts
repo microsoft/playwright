@@ -210,9 +210,9 @@ test('should record trace', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
 
-  // A single tracing artifact should be created. We see it in the logs twice:
+  // One tracing artifact should be created for each tracing stream. We see each in the logs twice:
   // as a regular message and wrapped inside a jsonPipe.
-  expect(countTimes(result.output, `"type":"Artifact","initializer"`)).toBe(2);
+  expect(countTimes(result.output, `"type":"Artifact","initializer"`)).toBe(4);
 
   expect(fs.existsSync(test.info().outputPath('test-results', 'a-pass', 'trace.zip'))).toBe(false);
 
