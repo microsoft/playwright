@@ -918,3 +918,5 @@ Set to `true` to include IndexedDB in the storage state snapshot.
 ## property: APIRequestContext.tracing
 * since: v1.60
 - type: <[Tracing]>
+
+Tracing recorder for requests made through this API request context.

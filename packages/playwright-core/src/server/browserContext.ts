@@ -222,6 +222,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
 
   async resetForReuse(progress: Progress, params: channels.BrowserNewContextForReuseParams | null) {
     await this.tracing.resetForReuse(progress);
+    await this.fetchRequest.tracing().resetForReuse(progress);
 
     if (params) {
       for (const key of paramsThatAllowContextReuse)
@@ -269,6 +270,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     this._closedStatus = 'closed';
     this._clientCertificatesProxy?.close().catch(() => {});
     this.tracing.abort();
+    this.fetchRequest.tracing().abort();
     this._closePromiseFulfill!(new Error('Context closed'));
     this.emit(BrowserContext.Events.Close);
   }
@@ -558,7 +560,10 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
-      await progress.race(this.tracing.flush());
+      await progress.race(Promise.all([
+        this.tracing.flush(),
+        this.fetchRequest.tracing().flush(),
+      ]));
       await progress.race(Promise.all(this.pages().map(page => page.screencast.handlePageOrContextClose())));
 
       if (this._customCloseHandler) {

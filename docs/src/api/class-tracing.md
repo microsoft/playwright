@@ -320,7 +320,7 @@ To specify the final trace zip file name, you need to pass `path` option to
 
 Start recording a HAR (HTTP Archive) of network activity in this context. The HAR file is written to disk when [`method: Tracing.stopHar`] is called, or when the returned [Disposable] is disposed.
 
-Only one HAR recording can be active at a time per [BrowserContext].
+Only one HAR recording can be active at a time per [Tracing] instance.
 
 **Usage**
 

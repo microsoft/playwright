@@ -125,6 +125,7 @@ export abstract class APIRequestContext extends SdkObject {
 
   constructor(parent: SdkObject) {
     super(parent, 'request-context');
+    this.attribution.context = this;
     APIRequestContext.allInstances.add(this);
   }
 
@@ -676,19 +677,22 @@ class SafeEmptyStreamTransform extends Transform {
 
 export class BrowserContextAPIRequestContext extends APIRequestContext {
   private readonly _context: BrowserContext;
+  private readonly _tracing: Tracing;
 
   constructor(context: BrowserContext) {
     super(context);
     this._context = context;
+    this._tracing = new Tracing(this, context._browser.options.tracesDir);
     context.once(BrowserContext.Events.Close, () => this._disposeImpl());
   }
 
   override tracing() {
-    return this._context.tracing;
+    return this._tracing;
   }
 
   override async dispose(options: { reason?: string }) {
     this._closeReason = options.reason;
+    await this._tracing.flush();
     this.fetchResponses.clear();
   }
 
@@ -727,7 +731,6 @@ export class GlobalAPIRequestContext extends APIRequestContext {
 
   constructor(playwright: Playwright, options: channels.PlaywrightNewRequestOptions) {
     super(playwright);
-    this.attribution.context = this;
     if (options.storageState) {
       this._origins = options.storageState.origins?.map(origin => ({ indexedDB: [], ...origin }));
       this._cookieStore.addCookies(options.storageState.cookies || []);
