@@ -4373,6 +4373,17 @@ might return multiple quads for inline nodes.
   }
   
   export namespace Emulation {
+    /**
+     * Credentials for HTTP authentication.
+     */
+    export interface AuthCredentials {
+      username: string;
+      password: string;
+      /**
+       * When specified, the credentials are only used for challenges from the matching origin.
+       */
+      origin?: string;
+    }
     
     
     /**
@@ -4395,12 +4406,10 @@ might return multiple quads for inline nodes.
     export type setJavaScriptEnabledReturnValue = {
     }
     /**
-     * Credentials to use during HTTP authentication.
+     * Credentials to use during HTTP authentication. The first credentials with matching origin are used. When missing, automation handling of authentication challenges is disabled.
      */
     export type setAuthCredentialsParameters = {
-      username?: string;
-      password?: string;
-      origin?: string;
+      credentials?: AuthCredentials[];
     }
     export type setAuthCredentialsReturnValue = {
     }
