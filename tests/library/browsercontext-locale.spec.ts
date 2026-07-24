@@ -191,7 +191,9 @@ it('should affect Intl.DateTimeFormat().resolvedOptions().locale', async ({ brow
 
 it('should send user Accept-Language header', {
   annotation: [{ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23732' }],
-}, async ({ browser, server }) => {
+}, async ({ browser, server, browserName, isWindows }) => {
+  it.fixme(browserName === 'webkit' && isWindows, 'WebKit on Windows appends the default language to the page-set Accept-Language header, https://github.com/microsoft/playwright/issues/23732');
+
   const context = await browser.newContext({ locale: 'en-GB' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
