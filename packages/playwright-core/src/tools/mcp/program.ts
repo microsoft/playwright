@@ -129,8 +129,7 @@ export function decorateMCPCommand(command: Command) {
               await browser.bind(sessionName, { workspaceDir: clientInfo.cwd });
             }
             const browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
-            const backend = new BrowserBackend(config, browserContext, tools);
-            backend.once('disposed', async () => {
+            return new BrowserBackend(config, browserContext, tools, async () => {
               clientCount--;
 
               if (sharedBrowserPromise && clientCount > 0) {
@@ -146,7 +145,6 @@ export function decorateMCPCommand(command: Command) {
               await browserContext.close().catch(() => { });
               await browserContext.browser()?.close().catch(() => { });
             });
-            return backend;
           },
         };
         await mcpServer.start(factory, config.server);

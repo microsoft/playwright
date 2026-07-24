@@ -40,8 +40,9 @@ export type ClientInfo = {
 
 export interface ServerBackend {
   initialize?(clientInfo: ClientInfo): Promise<void>;
-  callTool(name: string, args: CallToolRequest['params']['arguments'], signal: AbortSignal): Promise<CallToolResult & { isClose?: boolean }>;
+  callTool(name: string, args: CallToolRequest['params']['arguments'], signal: AbortSignal): Promise<CallToolResult>;
   dispose?(): Promise<void>;
+  once(event: 'disposed', listener: () => void): void;
 }
 
 export type ServerBackendFactory = {
@@ -79,7 +80,10 @@ export function createServer(name: string, version: string, factory: ServerBacke
 
     try {
       if (!backendPromise) {
-        backendPromise = initializeServer(server, factory, transportInitialized, runHeartbeat).catch(e => {
+        backendPromise = initializeServer(server, factory, transportInitialized, runHeartbeat).then(backend => {
+          backend.once('disposed', () => { backendPromise = undefined; });
+          return backend;
+        }).catch(e => {
           backendPromise = undefined;
           throw e;
         });
@@ -87,12 +91,6 @@ export function createServer(name: string, version: string, factory: ServerBacke
 
       const backend = await backendPromise;
       const toolResult = await backend.callTool(request.params.name, request.params.arguments || {}, extra.signal);
-      if (toolResult.isClose) {
-        await backend.dispose?.().catch(serverDebug);
-        backendPromise = undefined;
-        delete toolResult.isClose;
-      }
-
       const mergedResult = mergeTextParts(toolResult);
       serverDebugResponse('callResult', mergedResult);
       return mergedResult;

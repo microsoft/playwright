@@ -35,12 +35,14 @@ export class BrowserBackend extends EventEmitter<{ disposed: [] }> implements Se
   private _disconnected = false;
   private _disposed = false;
   private _browserContext: playwright.BrowserContext;
+  private _disposeCallback: (() => Promise<void>) | undefined;
 
-  constructor(config: ContextConfig, browserContext: playwright.BrowserContext, tools: Tool[]) {
+  constructor(config: ContextConfig, browserContext: playwright.BrowserContext, tools: Tool[], disposeCallback?: () => Promise<void>) {
     super();
     this._config = config;
     this._tools = tools;
     this._browserContext = browserContext;
+    this._disposeCallback = disposeCallback;
     const markDisconnected = () => { this._disconnected = true; };
     this._browserContext.once('close', markDisconnected);
     this._browserContext.browser()?.once('disconnected', markDisconnected);
@@ -60,10 +62,11 @@ export class BrowserBackend extends EventEmitter<{ disposed: [] }> implements Se
       return;
     this._disposed = true;
     await this._context?.dispose().catch(e => debug('pw:tools:error')(e));
+    await this._disposeCallback?.().catch(e => debug('pw:tools:error')(e));
     this.emit('disposed');
   }
 
-  async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> } = {}, signal?: AbortSignal): Promise<mcpServer.CallToolResult & { isClose?: boolean }> {
+  async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> } = {}, signal?: AbortSignal): Promise<mcpServer.CallToolResult> {
     const json = !!rawArguments._meta?.json;
     const formatError = (message: string): mcpServer.CallToolResult => ({
       content: [{ type: 'text' as const, text: json ? JSON.stringify({ isError: true, error: message }, null, 2) : `### Error\n${message}` }],
@@ -98,8 +101,10 @@ export class BrowserBackend extends EventEmitter<{ disposed: [] }> implements Se
     } finally {
       context.setRunningTool(undefined);
     }
-    if (this._disconnected)
-      responseObject.isClose = true;
+    if (this._disconnected || responseObject.isClose) {
+      delete responseObject.isClose;
+      await this.dispose();
+    }
     return responseObject;
   }
 }
