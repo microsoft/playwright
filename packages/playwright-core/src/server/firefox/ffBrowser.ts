@@ -322,7 +322,7 @@ export class FFBrowserContext extends BrowserContext {
     let credentials = null;
     if (httpCredentials) {
       const { username, password, origin } = httpCredentials;
-      credentials = { username, password, origin };
+      credentials = [{ username, password, origin }];
     }
     await this._browser.session.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId, credentials });
   }
