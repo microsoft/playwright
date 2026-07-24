@@ -130,6 +130,33 @@ test('auto-recover when remote browser disconnects mid-session', async ({ cdpSer
   });
 });
 
+test('transparently reconnects when the remote browser is restarted', async ({ cdpServer, startClient, server }) => {
+  const browserContext = await cdpServer.start();
+  const { client, stderr } = await startClient({
+    args: [`--cdp-endpoint=${cdpServer.endpoint}`],
+    env: { DEBUG: 'pw:mcp:backend' },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
+  });
+
+  await browserContext.close();
+  await expect.poll(() => stderr()).toContain('browser disconnected');
+  await cdpServer.start();
+
+  // The very next tool call must reconnect, with no failed call in between.
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
+  });
+});
+
 test('does not support --device', async () => {
   const result = spawnSync('node', [
     ...mcpServerPath, '--device=Pixel 5', '--cdp-endpoint=http://localhost:1234',
