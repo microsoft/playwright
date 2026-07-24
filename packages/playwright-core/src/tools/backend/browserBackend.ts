@@ -27,6 +27,8 @@ import type { Tool } from './tool';
 import type * as mcpServer from '../utils/mcp/server';
 import type { ClientInfo, ServerBackend } from '../utils/mcp/server';
 
+const backendDebug = debug('pw:mcp:backend');
+
 export class BrowserBackend extends EventEmitter<{ disconnected: [], disposed: [] }> implements ServerBackend {
   private _tools: Tool[];
   private _context: Context | undefined;
@@ -35,9 +37,9 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], disposed: [
   private _disconnected = false;
   private _disposed = false;
   private _browserContext: playwright.BrowserContext;
-  private _disposeCallback: (() => Promise<void>) | undefined;
+  private _disposeCallback: ((disconnected: boolean) => Promise<void>) | undefined;
 
-  constructor(config: ContextConfig, browserContext: playwright.BrowserContext, tools: Tool[], disposeCallback?: () => Promise<void>) {
+  constructor(config: ContextConfig, browserContext: playwright.BrowserContext, tools: Tool[], disposeCallback?: (disconnected: boolean) => Promise<void>) {
     super();
     this._config = config;
     this._tools = tools;
@@ -46,6 +48,7 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], disposed: [
     const markDisconnected = () => {
       if (this._disconnected)
         return;
+      backendDebug('browser disconnected');
       this._disconnected = true;
       this.emit('disconnected');
     };
@@ -67,7 +70,7 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], disposed: [
       return;
     this._disposed = true;
     await this._context?.dispose().catch(e => debug('pw:tools:error')(e));
-    await this._disposeCallback?.().catch(e => debug('pw:tools:error')(e));
+    await this._disposeCallback?.(this._disconnected).catch(e => debug('pw:tools:error')(e));
     this.emit('disposed');
   }
 

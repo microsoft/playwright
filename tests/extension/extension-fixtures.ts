@@ -197,6 +197,15 @@ export async function startWithExtensionFlag(browserWithExtension: BrowserWithEx
   return client;
 }
 
+export async function readExtensionToken(browserContext: BrowserContext): Promise<string> {
+  const page = await browserContext.newPage();
+  await page.goto(`chrome-extension://${extensionId}/status.html`);
+  const token = await page.locator('.auth-token-code').textContent();
+  await page.close();
+  const [, value] = token?.split('=') || [];
+  return value;
+}
+
 // The connect page closes itself once a different tab is selected, which races
 // with the click — the request reaches the background while the page is being
 // torn down. Swallow the resulting "Target closed" error.
