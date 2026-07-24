@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { EventEmitter } from 'events';
+
 import * as z from 'zod';
 import debug from 'debug';
 import { Context } from './context';
@@ -25,26 +27,28 @@ import type { Tool } from './tool';
 import type * as mcpServer from '../utils/mcp/server';
 import type { ClientInfo, ServerBackend } from '../utils/mcp/server';
 
-export class BrowserBackend implements ServerBackend {
+export class BrowserBackend extends EventEmitter<{ disposed: [] }> implements ServerBackend {
   private _tools: Tool[];
   private _context: Context | undefined;
   private _sessionLog: SessionLog | undefined;
   private _config: ContextConfig;
   private _disconnected = false;
-  readonly browserContext: playwright.BrowserContext;
+  private _disposed = false;
+  private _browserContext: playwright.BrowserContext;
 
   constructor(config: ContextConfig, browserContext: playwright.BrowserContext, tools: Tool[]) {
+    super();
     this._config = config;
     this._tools = tools;
-    this.browserContext = browserContext;
+    this._browserContext = browserContext;
     const markDisconnected = () => { this._disconnected = true; };
-    this.browserContext.once('close', markDisconnected);
-    this.browserContext.browser()?.once('disconnected', markDisconnected);
+    this._browserContext.once('close', markDisconnected);
+    this._browserContext.browser()?.once('disconnected', markDisconnected);
   }
 
   async initialize(clientInfo: ClientInfo): Promise<void> {
     this._sessionLog = this._config.saveSession ? await SessionLog.create(this._config, clientInfo.cwd) : undefined;
-    this._context = new Context(this.browserContext, {
+    this._context = new Context(this._browserContext, {
       config: this._config,
       sessionLog: this._sessionLog,
       cwd: clientInfo.cwd,
@@ -52,7 +56,11 @@ export class BrowserBackend implements ServerBackend {
   }
 
   async dispose() {
+    if (this._disposed)
+      return;
+    this._disposed = true;
     await this._context?.dispose().catch(e => debug('pw:tools:error')(e));
+    this.emit('disposed');
   }
 
   async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> } = {}, signal?: AbortSignal): Promise<mcpServer.CallToolResult & { isClose?: boolean }> {

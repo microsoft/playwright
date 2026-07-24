@@ -152,7 +152,6 @@ function addTestMCPServerCommand(program: Command) {
       version: packageJSON.version,
       toolSchemas: testServerBackendTools.map(tool => tool.schema),
       create: async () => new TestServerBackend(options.config, { muteConsole: options.port === undefined, headless: options.headless }),
-      disposed: async () => { }
     };
     // TODO: add all options from mcp.startHttpServer.
     await tools.start(factory, { port: options.port === undefined ? undefined : +options.port, host: options.host });
