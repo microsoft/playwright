@@ -27,7 +27,7 @@ import type { Tool } from './tool';
 import type * as mcpServer from '../utils/mcp/server';
 import type { ClientInfo, ServerBackend } from '../utils/mcp/server';
 
-export class BrowserBackend extends EventEmitter<{ disposed: [] }> implements ServerBackend {
+export class BrowserBackend extends EventEmitter<{ disconnected: [], disposed: [] }> implements ServerBackend {
   private _tools: Tool[];
   private _context: Context | undefined;
   private _sessionLog: SessionLog | undefined;
@@ -43,7 +43,12 @@ export class BrowserBackend extends EventEmitter<{ disposed: [] }> implements Se
     this._tools = tools;
     this._browserContext = browserContext;
     this._disposeCallback = disposeCallback;
-    const markDisconnected = () => { this._disconnected = true; };
+    const markDisconnected = () => {
+      if (this._disconnected)
+        return;
+      this._disconnected = true;
+      this.emit('disconnected');
+    };
     this._browserContext.once('close', markDisconnected);
     this._browserContext.browser()?.once('disconnected', markDisconnected);
   }
