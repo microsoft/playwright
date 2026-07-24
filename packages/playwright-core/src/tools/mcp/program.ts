@@ -114,8 +114,6 @@ export function decorateMCPCommand(command: Command) {
                 const { browser, canBind } = await createBrowserWithInfo(config, clientInfo, options);
                 if (canBind)
                   await browser.bind(clientInfo.clientName, { workspaceDir: clientInfo.cwd });
-                // Drop the dead browser, the next client will create a fresh
-                // one. The identity check avoids clobbering a replacement.
                 browser.once('disconnected', () => {
                   if (sharedBrowserPromise === promise)
                     sharedBrowserPromise = undefined;
@@ -157,8 +155,7 @@ export function decorateMCPCommand(command: Command) {
                 await browser.close().catch(() => { });
               });
             } catch (error) {
-              // The dispose callback will not run for a failed create — undo
-              // the count.
+              // The dispose callback never runs for a failed create.
               clientCount--;
               throw error;
             }
