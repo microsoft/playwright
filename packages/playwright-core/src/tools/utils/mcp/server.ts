@@ -42,7 +42,7 @@ export interface ServerBackend {
   initialize?(clientInfo: ClientInfo): Promise<void>;
   callTool(name: string, args: CallToolRequest['params']['arguments'], signal: AbortSignal): Promise<CallToolResult>;
   dispose?(): Promise<void>;
-  once(event: 'disposed' | 'disconnected', listener: () => void): void;
+  once(event: 'disconnected', listener: () => void): void;
 }
 
 export type ServerBackendFactory = {
@@ -81,16 +81,9 @@ export function createServer(name: string, version: string, factory: ServerBacke
     try {
       if (!backendPromise) {
         const promise = initializeServer(server, factory, transportInitialized, runHeartbeat).then(backend => {
-          const reset = () => {
-            // A concurrent call may have already replaced the backend.
+          backend.once('disconnected', () => {
             if (backendPromise === promise)
               backendPromise = undefined;
-          };
-          backend.once('disposed', reset);
-          // The browser disconnected between tool calls — dispose the backend
-          // right away, so that the next call runs against a live browser.
-          backend.once('disconnected', () => {
-            reset();
             void backend.dispose?.().catch(serverDebug);
           });
           return backend;

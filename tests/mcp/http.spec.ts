@@ -159,6 +159,7 @@ test('http transport browser sigint', async ({ serverEndpoint, server }) => {
     'create context': 1,
     'create http session': 1,
     'gracefully closing 1': 1,
+    'close browser': 1,
   });
 });
 
@@ -287,14 +288,14 @@ test('http transport isolated multiclient relaunches a crashed shared browser', 
   await transport2.terminateSession();
   await client2.close();
 
-  await expect.poll(() => formatLog(stderr())).toEqual({
+  await expect.poll(() => formatLog(stderr())).toEqual(({
     'create http session': 2,
     'delete http session': 2,
     'create browser (isolated)': 2,
     'create context': 4,
-    'close context': 1,
-    'close browser': 1,
-  });
+    'close browser': 2,
+    'close context': 2,
+  }));
 });
 
 test('http transport isolated closes the browser despite an earlier failed backend creation', async ({ serverEndpoint, server }, testInfo) => {

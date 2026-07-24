@@ -139,10 +139,10 @@ export function decorateMCPCommand(command: Command) {
                 await browser.bind(sessionName, { workspaceDir: clientInfo.cwd });
               }
               const browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
-              return new BrowserBackend(config, browserContext, tools, async disconnected => {
+              return new BrowserBackend(config, browserContext, tools, async () => {
                 clientCount--;
 
-                if (clientCount > 0 && !disconnected) {
+                if (sharedBrowserPromise && clientCount > 0) {
                   if (config.browser.isolated) {
                     testDebug('close context');
                     await browserContext.close().catch(() => { });
@@ -150,8 +150,7 @@ export function decorateMCPCommand(command: Command) {
                   return;
                 }
 
-                if (!disconnected)
-                  testDebug('close browser');
+                testDebug('close browser');
                 if (sharedBrowserPromise === promise)
                   sharedBrowserPromise = undefined;
                 await browserContext.close().catch(() => { });
