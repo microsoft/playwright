@@ -644,8 +644,7 @@ test('should work with video size', async ({ runInlineTest }) => {
   expect(videoPlayer.videoHeight).toBe(110);
 });
 
-test('should work with video.path() throwing', async ({ runInlineTest }, testInfo) => {
-  // When running remotely, video.path() is not available, so we must not use it.
+test('should save video when the page is closed before the test ends', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.js': `
       module.exports = {
@@ -657,9 +656,9 @@ test('should work with video.path() throwing', async ({ runInlineTest }, testInf
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
-        page.video().path = () => { throw new Error('No-no!'); };
         await page.setContent('<div>PASS</div>');
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(1000);
+        await page.close();
       });
     `,
   }, { workers: 1 });
@@ -667,7 +666,12 @@ test('should work with video.path() throwing', async ({ runInlineTest }, testInf
   expect(result.passed).toBe(1);
   const dir = testInfo.outputPath(`test-results/a-pass-chromium/`);
   const video = fs.readdirSync(dir).find(file => file.endsWith('webm'));
-  expect(video).toBeTruthy();
+  expect(video).toBe('video.webm');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].attachments).toEqual([{
+    name: 'video',
+    contentType: 'video/webm',
+    path: path.join(dir, video!),
+  }]);
 });
 
 test('should pass fixture defaults to tests', async ({ runInlineTest }) => {

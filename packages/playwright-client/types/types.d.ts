@@ -18262,7 +18262,8 @@ export interface Screencast {
 
   /**
    * Stops the screencast and video recording if active. If a video was being recorded, saves it to the path specified
-   * in [screencast.start([options])](https://playwright.dev/docs/api/class-screencast#screencast-start).
+   * in [screencast.start([options])](https://playwright.dev/docs/api/class-screencast#screencast-start). Stopping after
+   * the page has been closed still saves the video recorded up to the moment the page was closed.
    */
   stop(): Promise<void>;
 }

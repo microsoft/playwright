@@ -35,13 +35,13 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
     return (await this._channel.pathAfterFinished({}, kNoTimeout)).value;
   }
 
-  async saveAs(path: string): Promise<void> {
+  async saveAs(path: string, options: { dispose?: boolean } = {}): Promise<void> {
     if (!this._connection.isRemote()) {
-      await this._channel.saveAs({ path }, kNoTimeout);
+      await this._channel.saveAs({ path, dispose: options.dispose }, kNoTimeout);
       return;
     }
 
-    const result = await this._channel.saveAsStream({}, kNoTimeout);
+    const result = await this._channel.saveAsStream({ dispose: options.dispose }, kNoTimeout);
     const stream = Stream.from(result.stream);
     await mkdirIfNeeded(path);
     await new Promise((resolve, reject) => {

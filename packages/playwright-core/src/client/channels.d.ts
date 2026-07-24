@@ -690,13 +690,18 @@ export type ArtifactPathAfterFinishedResult = {
 };
 export type ArtifactSaveAsParams = {
   path: string,
+  dispose?: boolean,
 };
 export type ArtifactSaveAsOptions = {
-
+  dispose?: boolean,
 };
 export type ArtifactSaveAsResult = void;
-export type ArtifactSaveAsStreamParams = {};
-export type ArtifactSaveAsStreamOptions = {};
+export type ArtifactSaveAsStreamParams = {
+  dispose?: boolean,
+};
+export type ArtifactSaveAsStreamOptions = {
+  dispose?: boolean,
+};
 export type ArtifactSaveAsStreamResult = {
   stream: StreamChannel,
 };

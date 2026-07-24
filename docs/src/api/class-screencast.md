@@ -68,7 +68,7 @@ If not specified the size will be equal to page viewport scaled down to fit into
 ## async method: Screencast.stop
 * since: v1.59
 
-Stops the screencast and video recording if active. If a video was being recorded, saves it to the path specified in [`method: Screencast.start`].
+Stops the screencast and video recording if active. If a video was being recorded, saves it to the path specified in [`method: Screencast.start`]. Stopping after the page has been closed still saves the video recorded up to the moment the page was closed.
 
 ## async method: Screencast.showOverlay
 * since: v1.59

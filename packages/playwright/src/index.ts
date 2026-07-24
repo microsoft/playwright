@@ -25,6 +25,7 @@ import { jsonStringifyForceASCII } from '@utils/ascii';
 import { createGuid } from '@utils/crypto';
 import { debugMode } from '@utils/debug';
 import { debugLogger } from '@utils/debugLogger';
+import { existsAsync } from '@utils/fileUtils';
 import { currentZone } from '@utils/zones';
 import { buildErrorContext } from './errorContext';
 import { config, testType } from './common';
@@ -40,7 +41,7 @@ import type { BrowserContext as BrowserContextImpl } from '../../playwright-core
 import type { APIRequestContext as APIRequestContextImpl, NewContextOptions as APIRequestContextOptions } from '../../playwright-core/src/client/fetch';
 import type { ChannelOwner } from '../../playwright-core/src/client/channelOwner';
 import type { Page as PageImpl } from '../../playwright-core/src/client/page';
-import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing } from 'playwright-core';
+import type { BrowserContext, BrowserContextOptions, Disposable, LaunchOptions, Page, Tracing } from 'playwright-core';
 
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = testType.rootTestType.test;
@@ -393,7 +394,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     const testInfoImpl = testInfo as TestInfoImpl;
     const videoMode = normalizeVideoMode(video);
     const captureVideo = shouldCaptureVideo(videoMode, testInfo) && !_reuseContext;
-    const contexts = new Map<BrowserContext, { close: () => Promise<void>, pagesWithVideo: Page[] }>();
+    type VideoRecording = { savedPath: string, disposablePromise: Promise<Disposable | null> };
+    const contexts = new Map<BrowserContext, { close: () => Promise<void>, videos: VideoRecording[] }>();
     let counter = 0;
 
     await use(async options => {
@@ -406,14 +408,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
         ].join('\n'));
       }
       const show = typeof video === 'string' ? undefined : video.show;
-      const videoOptions: BrowserContextOptions = captureVideo ? {
-        recordVideo: {
-          dir: tracing().artifactsDir(),
-          size: typeof video === 'string' ? undefined : video.size,
-          showActions: show?.actions,
-        }
-      } : {};
-      const context = await browser.newContext({ ...videoOptions, ...options }) as BrowserContextImpl;
+      const size = typeof video === 'string' ? undefined : video.size;
+      const context = await browser.newContext(options) as BrowserContextImpl;
 
       let closed = false;
       const close = async () => {
@@ -424,14 +420,15 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
         await context.close({ reason: closeReason });
         const preserveVideo = captureVideo && shouldPreserveVideo(videoMode, testInfo);
         if (preserveVideo) {
-          const { pagesWithVideo: pagesForVideo } = contexts.get(context)!;
-          const videos = pagesForVideo.map(p => p.video()).filter(video => !!video);
-          await Promise.all(videos.map(async v => {
+          const { videos } = contexts.get(context)!;
+          await Promise.all(videos.map(async ({ savedPath, disposablePromise }) => {
             try {
-              const savedPath = testInfo.outputPath(`video${counter ? '-' + counter : ''}.webm`);
-              ++counter;
-              await v.saveAs(savedPath);
-              testInfo.attachments.push({ name: 'video', path: savedPath, contentType: 'video/webm' });
+              const disposable = await disposablePromise;
+              if (!disposable)
+                return;
+              await disposable.dispose();
+              if (await existsAsync(savedPath))
+                testInfo.attachments.push({ name: 'video', path: savedPath, contentType: 'video/webm' });
             } catch (e) {
               // Silent catch empty videos.
             }
@@ -439,9 +436,20 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
         }
       };
 
-      const contextData = { close, pagesWithVideo: [] as Page[] };
-      if (captureVideo)
-        context.on('page', page => contextData.pagesWithVideo.push(page));
+      const contextData = { close, videos: [] as VideoRecording[] };
+      if (captureVideo) {
+        context.on('page', page => {
+          // Note: outputPath() would create the output directory, do not use it here.
+          const savedPath = testInfoImpl._getOutputPath(`video${counter ? '-' + counter : ''}.webm`);
+          ++counter;
+          if (show?.actions)
+            void page.screencast.showActions(show.actions).catch(() => {});
+          contextData.videos.push({
+            savedPath,
+            disposablePromise: page.screencast.start({ path: savedPath, size }).catch(() => null),
+          });
+        });
+      }
       contexts.set(context, contextData);
       return { context, close };
     });
