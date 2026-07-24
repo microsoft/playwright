@@ -90,12 +90,19 @@ async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo)
   testDebug('create browser (isolated)');
   const browserType = playwright[config.browser.browserName];
   const tracesDir = await computeTracesDir(config, clientInfo);
-  const browser = await browserType.launch({
+  const launchOptions: playwrightTypes.LaunchOptions = {
     tracesDir,
     ...config.browser.launchOptions,
     handleSIGINT: false,
     handleSIGTERM: false,
-  }).catch(error => {
+  };
+  if (config.browser.launchOptions?.env) {
+    launchOptions.env = {
+      ...process.env,
+      ...config.browser.launchOptions.env,
+    };
+  }
+  const browser = await browserType.launch(launchOptions).catch(error => {
     throwIfExecutableMissing(error, config);
     throw error;
   });
@@ -178,6 +185,12 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
         ...Array.isArray(configIgnoreDefaultArgs) ? configIgnoreDefaultArgs : [],
       ],
   };
+  if (config.browser.launchOptions?.env) {
+    launchOptions.env = {
+      ...process.env,
+      ...config.browser.launchOptions.env,
+    };
+  }
   try {
     const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
     const browser = browserContext.browser()!;

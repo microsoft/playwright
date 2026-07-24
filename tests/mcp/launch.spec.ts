@@ -256,3 +256,41 @@ exit 1
     error: expect.not.stringContaining(`Browser is already in use`),
   });
 });
+
+test('environment variables are merged and propagated to browser process', async ({ startClient, server }, testInfo) => {
+  test.skip(process.platform === 'win32', 'Skipping on Windows because we cannot easily spawn mock script without shell.');
+  const scriptPath = testInfo.outputPath('launcher.sh');
+  const scriptContent = `#!/bin/sh\necho "MY_CUSTOM_VAR=$MY_CUSTOM_VAR"\necho "MY_PROCESS_VAR=$MY_PROCESS_VAR"\nexit 1\n`;
+  await fs.promises.writeFile(scriptPath, scriptContent, { mode: 0o755 });
+
+  const { client } = await startClient({
+    config: {
+      browser: {
+        launchOptions: {
+          env: {
+            MY_CUSTOM_VAR: 'custom-val',
+          },
+        },
+      },
+    },
+    args: [`--executable-path=${scriptPath}`],
+    env: {
+      MY_PROCESS_VAR: 'process-val',
+    },
+  });
+
+  const result = await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect.soft(result).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining('MY_CUSTOM_VAR=custom-val'),
+  });
+  expect.soft(result).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining('MY_PROCESS_VAR=process-val'),
+  });
+});
+
