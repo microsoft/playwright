@@ -87,6 +87,8 @@ export class TestInfoImpl implements TestInfo {
   private _callbacks: TestInfoCallbacks;
   private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   private _ariaSnapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
+  // Snapshot path => path prefix shared by all platform/project flavors of this snapshot.
+  readonly _usedSnapshots = new Map<string, string>();
   readonly _timeoutManager: TimeoutManager;
   readonly _startTime: number;
   readonly _startWallTime: number;
@@ -616,10 +618,29 @@ export class TestInfoImpl implements TestInfo {
 
     const nameArgument = path.join(path.dirname(subPath), path.basename(subPath, ext));
     const absoluteSnapshotPath = this._applyPathTemplate(template, nameArgument, ext);
+    this._trackUsedSnapshot(template, nameArgument, ext, absoluteSnapshotPath);
     return { absoluteSnapshotPath, relativeOutputPath };
   }
 
-  _applyPathTemplate(template: string, nameArgument: string, ext: string) {
+  private _trackUsedSnapshot(template: string, nameArgument: string, ext: string, absoluteSnapshotPath: string) {
+    if (this._usedSnapshots.has(absoluteSnapshotPath))
+      return;
+    // Resolve the template with platform/project-specific tokens erased and compute the common
+    // path prefix with the actual snapshot path. Any file sharing this prefix is considered
+    // a flavor of the same snapshot for another platform/project and is never deleted
+    // by --delete-unused-snapshots. For templates where these tokens do not directly precede
+    // the varying part, the prefix degrades towards the directory path, which errs on the side
+    // of keeping files.
+    let strippedPath = this._applyPathTemplate(template, nameArgument, ext, 'eraseFlavorTokens');
+    if (ext && strippedPath.endsWith(ext))
+      strippedPath = strippedPath.substring(0, strippedPath.length - ext.length);
+    let commonLength = 0;
+    while (commonLength < absoluteSnapshotPath.length && commonLength < strippedPath.length && absoluteSnapshotPath[commonLength] === strippedPath[commonLength])
+      ++commonLength;
+    this._usedSnapshots.set(absoluteSnapshotPath, absoluteSnapshotPath.substring(0, commonLength));
+  }
+
+  _applyPathTemplate(template: string, nameArgument: string, ext: string, eraseFlavorTokens?: 'eraseFlavorTokens') {
     const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
@@ -627,10 +648,10 @@ export class TestInfoImpl implements TestInfo {
     const snapshotPath = template
         .replace(/\{(.)?testDir\}/g, '$1' + this.project.testDir)
         .replace(/\{(.)?snapshotDir\}/g, '$1' + this.project.snapshotDir)
-        .replace(/\{(.)?snapshotSuffix\}/g, this.snapshotSuffix ? '$1' + this.snapshotSuffix : '')
+        .replace(/\{(.)?snapshotSuffix\}/g, this.snapshotSuffix && !eraseFlavorTokens ? '$1' + this.snapshotSuffix : '')
         .replace(/\{(.)?testFileDir\}/g, '$1' + parsedRelativeTestFilePath.dir)
-        .replace(/\{(.)?platform\}/g, '$1' + process.platform)
-        .replace(/\{(.)?projectName\}/g, projectNamePathSegment ? '$1' + projectNamePathSegment : '')
+        .replace(/\{(.)?platform\}/g, eraseFlavorTokens ? '' : '$1' + process.platform)
+        .replace(/\{(.)?projectName\}/g, projectNamePathSegment && !eraseFlavorTokens ? '$1' + projectNamePathSegment : '')
         .replace(/\{(.)?testName\}/g, '$1' + this._fsSanitizedTestName())
         .replace(/\{(.)?testFileBaseName\}/g, '$1' + parsedRelativeTestFilePath.name)
         .replace(/\{(.)?testFileName\}/g, '$1' + parsedRelativeTestFilePath.base)

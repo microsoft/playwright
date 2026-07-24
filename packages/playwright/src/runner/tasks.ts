@@ -27,6 +27,7 @@ import { Dispatcher  } from './dispatcher';
 import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook, loadTestList } from './loadUtils';
 import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
 import { applySuggestedRebaselines, clearSuggestedRebaselines } from './rebase';
+import { deleteUnusedSnapshots } from './unusedSnapshots';
 import { TaskRunner } from './taskRunner';
 import { detectChangedTestFiles } from './vcs';
 import { cc, config as commonConfig, FullConfigInternal, suiteUtils, test as testNs } from '../common';
@@ -39,6 +40,7 @@ import type { TestRunnerPluginRegistration } from '../plugins';
 import type { Task } from './taskRunner';
 import type { FullResult, TestError } from '../../types/testReporter';
 import type { Matcher, TestCaseFilter } from '../util';
+import type { UsedSnapshot } from './unusedSnapshots';
 import type { InternalReporter } from '../reporters/internalReporter';
 
 const readDirAsync = promisify(fs.readdir);
@@ -72,6 +74,7 @@ export type TestRunOptions = {
   onTestPaused?: (params: TestPausedParams) => void;
   preserveOutputDir?: boolean;
   shardWeights?: number[];
+  deleteUnusedSnapshots?: boolean;
 };
 
 export type TestPausedParams = {
@@ -94,6 +97,7 @@ export class TestRun {
   readonly loadFileFilters: Matcher[] = [];
   readonly preOnlyTestFilters: TestCaseFilter[] = [];
   readonly postShardTestFilters: TestCaseFilter[] = [];
+  readonly usedSnapshots: UsedSnapshot[] = [];
 
   constructor(config: FullConfigInternal, reporter: InternalReporter, options?: TestRunOptions) {
     this.config = config;
@@ -367,6 +371,18 @@ export function createLoadTask(mode: 'out-of-process' | 'in-process', options: {
         }
         throw new Error(`No tests found`);
       }
+    },
+  };
+}
+
+export function createDeleteUnusedSnapshotsTask(): Task<TestRun> {
+  // This task must come after the "test suite" task, so that its setup runs
+  // when all the tests have finished, but is skipped when the test run
+  // was interrupted or a preceding task failed.
+  return {
+    title: 'delete unused snapshots',
+    setup: async testRun => {
+      await deleteUnusedSnapshots(testRun);
     },
   };
 }

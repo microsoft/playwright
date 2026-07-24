@@ -372,6 +372,8 @@ class JobDispatcher {
     test.annotations = [...params.annotations]; // last test result wins
     test.expectedStatus = params.expectedStatus;
     test.timeout = params.timeout;
+    if (this._testRun.options.deleteUnusedSnapshots)
+      this._testRun.usedSnapshots.push(...params.usedSnapshots.map(snapshot => ({ ...snapshot, testFile: test.location.file })));
     const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
     if (isFailure)
       this._failedTests.add(test);

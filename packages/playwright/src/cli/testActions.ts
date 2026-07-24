@@ -44,7 +44,33 @@ export async function runTests(args: string[], opts: { [key: string]: any }) {
     testList: opts.testList ? path.resolve(process.cwd(), opts.testList) : undefined,
     testListInvert: opts.testListInvert ? path.resolve(process.cwd(), opts.testListInvert) : undefined,
     shardWeights: resolveShardWeightsOption(),
+    deleteUnusedSnapshots: !!opts.deleteUnusedSnapshots,
   };
+
+  if (opts.deleteUnusedSnapshots) {
+    const conflicting: [string, any][] = [
+      ['--grep', opts.grep],
+      ['--grep-invert', opts.grepInvert],
+      ['--shard', opts.shard],
+      ['--last-failed', opts.lastFailed],
+      ['--only-changed', opts.onlyChanged],
+      ['--test-list', opts.testList],
+      ['--test-list-invert', opts.testListInvert],
+      ['--list', opts.list],
+      ['--ignore-snapshots', opts.ignoreSnapshots],
+      ['--ui', opts.ui || opts.uiHost || opts.uiPort],
+      ['watch mode', process.env.PWTEST_WATCH],
+    ];
+    for (const [name, value] of conflicting) {
+      if (value)
+        throw new Error(`--delete-unused-snapshots cannot be used with ${name}`);
+    }
+    // Allow whole test files as arguments, but not individual test locations like "foo.spec.ts:42".
+    for (const arg of args) {
+      if (/:\d+$/.test(arg))
+        throw new Error(`--delete-unused-snapshots cannot be used with individual test locations like "${arg}", pass whole test files instead`);
+    }
+  }
 
   // Evaluate project filters against config before starting execution. This enables a consistent error message across run modes
   projectUtils.filterProjects(config.projects, options.projectFilter);

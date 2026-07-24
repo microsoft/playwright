@@ -119,6 +119,13 @@ export type TestEndPayload = {
   expectedStatus: TestStatus;
   annotations: TestAnnotation[];
   timeout: number;
+  usedSnapshots: UsedSnapshotPayload[];
+};
+
+export type UsedSnapshotPayload = {
+  path: string;
+  // Path prefix shared by all platform/project flavors of this snapshot.
+  prefix: string;
 };
 
 export type StepBeginPayload = {
