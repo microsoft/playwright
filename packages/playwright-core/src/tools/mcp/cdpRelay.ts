@@ -34,7 +34,7 @@ import ws, { WebSocketServer as wsServer } from 'ws';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { registry } from '../../server/registry/index';
 
-import { findPlaywrightExtensionProfile, playwrightExtensionId } from '../utils/extension';
+import { defaultUserDataDir, findPlaywrightExtensionProfile, playwrightExtensionId } from '../utils/extension';
 import { addressToString } from '../utils/mcp/http';
 import { logUnhandledError } from './log';
 import { ExtensionProtocolV2 } from './cdpRelayV2';
@@ -142,7 +142,7 @@ export class CDPRelayServer {
     const testUserDataDir = process.env.PWTEST_EXTENSION_USER_DATA_DIR;
     if (testUserDataDir)
       args.push(`--user-data-dir=${testUserDataDir}`);
-    const userDataDir = testUserDataDir ?? this._userDataDir;
+    const userDataDir = testUserDataDir ?? this._userDataDir ?? defaultUserDataDir(channel);
     const profileDirectory = userDataDir ? await findPlaywrightExtensionProfile(userDataDir) : undefined;
     if (profileDirectory)
       args.push(`--profile-directory=${profileDirectory}`);
