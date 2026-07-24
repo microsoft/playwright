@@ -18,8 +18,8 @@
 
 import type { Progress } from './progress';
 
-import type { Binary, Channel, AndroidWebView, AndroidSelector, AndroidElementInfo, APIResponse, Metadata, ClientSideCallMetadata, SDKLanguage, WaitInfo, SetNetworkCookie, NetworkCookie, ResourceTiming, SecurityDetails, RequestSizes, RemoteAddr, ExpectedTextValue, SelectorEngine, FormField, LifecycleEvent, ConsoleMessagesFilter, RecorderSource, IndexedDBDatabase, SetOriginStorage, OriginStorage, RecordHarOptions, SerializedValue, SerializedArgument, SerializedError, StackFrame, VirtualCredential, Point, Rect, URLPattern, NameValue } from '@protocol/structs';
-export type { Binary, Channel, AndroidWebView, AndroidSelector, AndroidElementInfo, APIResponse, Metadata, ClientSideCallMetadata, SDKLanguage, WaitInfo, SetNetworkCookie, NetworkCookie, ResourceTiming, SecurityDetails, RequestSizes, RemoteAddr, ExpectedTextValue, SelectorEngine, FormField, LifecycleEvent, ConsoleMessagesFilter, RecorderSource, IndexedDBDatabase, SetOriginStorage, OriginStorage, RecordHarOptions, SerializedValue, SerializedArgument, SerializedError, StackFrame, VirtualCredential, Point, Rect, URLPattern, NameValue } from '@protocol/structs';
+import type { Binary, Channel, AndroidWebView, AndroidSelector, AndroidElementInfo, APIResponse, Metadata, ClientSideCallMetadata, SDKLanguage, WaitInfo, HttpCredentials, SetNetworkCookie, NetworkCookie, ResourceTiming, SecurityDetails, RequestSizes, RemoteAddr, ExpectedTextValue, SelectorEngine, FormField, LifecycleEvent, ConsoleMessagesFilter, RecorderSource, IndexedDBDatabase, SetOriginStorage, OriginStorage, RecordHarOptions, SerializedValue, SerializedArgument, SerializedError, StackFrame, VirtualCredential, Point, Rect, URLPattern, NameValue } from '@protocol/structs';
+export type { Binary, Channel, AndroidWebView, AndroidSelector, AndroidElementInfo, APIResponse, Metadata, ClientSideCallMetadata, SDKLanguage, WaitInfo, HttpCredentials, SetNetworkCookie, NetworkCookie, ResourceTiming, SecurityDetails, RequestSizes, RemoteAddr, ExpectedTextValue, SelectorEngine, FormField, LifecycleEvent, ConsoleMessagesFilter, RecorderSource, IndexedDBDatabase, SetOriginStorage, OriginStorage, RecordHarOptions, SerializedValue, SerializedArgument, SerializedError, StackFrame, VirtualCredential, Point, Rect, URLPattern, NameValue } from '@protocol/structs';
 
 // ----------- Initializer Traits -----------
 export type InitializerTraits<T> =
@@ -405,12 +405,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
   offline?: boolean,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
+  httpCredentials?: HttpCredentials[],
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
@@ -477,12 +472,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
   offline?: boolean,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
+  httpCredentials?: HttpCredentials[],
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
@@ -862,12 +852,7 @@ export type BrowserNewContextParams = {
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
   offline?: boolean,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
+  httpCredentials?: HttpCredentials[],
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
@@ -937,12 +922,7 @@ export type BrowserNewContextOptions = {
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
   offline?: boolean,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
+  httpCredentials?: HttpCredentials[],
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
@@ -1015,12 +995,7 @@ export type BrowserNewContextForReuseParams = {
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
   offline?: boolean,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
+  httpCredentials?: HttpCredentials[],
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
@@ -1090,12 +1065,7 @@ export type BrowserNewContextForReuseOptions = {
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
   offline?: boolean,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
+  httpCredentials?: HttpCredentials[],
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
@@ -1207,12 +1177,7 @@ export type BrowserContextInitializer = {
     permissions?: string[],
     extraHTTPHeaders?: NameValue[],
     offline?: boolean,
-    httpCredentials?: {
-      username: string,
-      password: string,
-      origin?: string,
-      send?: 'always' | 'unauthorized',
-    },
+    httpCredentials?: HttpCredentials[],
     deviceScaleFactor?: number,
     isMobile?: boolean,
     hasTouch?: boolean,
@@ -1482,18 +1447,10 @@ export type BrowserContextSetGeolocationOptions = {
 };
 export type BrowserContextSetGeolocationResult = void;
 export type BrowserContextSetHTTPCredentialsParams = {
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-  },
+  httpCredentials?: HttpCredentials[],
 };
 export type BrowserContextSetHTTPCredentialsOptions = {
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-  },
+  httpCredentials?: HttpCredentials[],
 };
 export type BrowserContextSetHTTPCredentialsResult = void;
 export type BrowserContextSetNetworkInterceptionPatternsParams = {
@@ -1858,12 +1815,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
   offline?: boolean,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
+  httpCredentials?: HttpCredentials[],
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
@@ -1946,12 +1898,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
   offline?: boolean,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
+  httpCredentials?: HttpCredentials[],
   deviceScaleFactor?: number,
   isMobile?: boolean,
   hasTouch?: boolean,
@@ -2057,11 +2004,7 @@ export type ElectronLaunchParams = {
     latitude: number,
     accuracy?: number,
   },
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-  },
+  httpCredentials?: HttpCredentials[],
   ignoreHTTPSErrors?: boolean,
   locale?: string,
   offline?: boolean,
@@ -2100,11 +2043,7 @@ export type ElectronLaunchOptions = {
     latitude: number,
     accuracy?: number,
   },
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-  },
+  httpCredentials?: HttpCredentials[],
   ignoreHTTPSErrors?: boolean,
   locale?: string,
   offline?: boolean,
@@ -4652,12 +4591,7 @@ export type PlaywrightNewRequestParams = {
     pfx?: Binary,
   }[],
   maxRedirects?: number,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
+  httpCredentials?: HttpCredentials[],
   proxy?: {
     server: string,
     bypass?: string,
@@ -4684,12 +4618,7 @@ export type PlaywrightNewRequestOptions = {
     pfx?: Binary,
   }[],
   maxRedirects?: number,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
+  httpCredentials?: HttpCredentials[],
   proxy?: {
     server: string,
     bypass?: string,

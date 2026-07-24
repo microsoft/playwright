@@ -10453,13 +10453,28 @@ export interface BrowserContext {
 
   /**
    * @deprecated Browsers may cache credentials after successful authentication. Create a new browser context instead.
-   * @param httpCredentials
+   * @param httpCredentials Pass an array to use different credentials for different origins. The first entry that matches the request origin
+   * is used, and entries with no origin match any request.
    */
   setHTTPCredentials(httpCredentials: null|{
     username: string;
 
     password: string;
-  }): Promise<void>;
+
+    /**
+     * Restrain sending http credentials on specific origin (scheme://host:port).
+     */
+    origin?: string;
+  }|ReadonlyArray<{
+    username: string;
+
+    password: string;
+
+    /**
+     * Restrain sending http credentials on specific origin (scheme://host:port).
+     */
+    origin?: string;
+  }>): Promise<void>;
 
   /**
    * @param offline Whether to emulate network being offline for the browser context.
@@ -11229,6 +11244,9 @@ export interface Browser {
     /**
      * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
      * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+     *
+     * Pass an array to use different credentials for different origins. The first entry that matches the request origin
+     * is used, and entries with no origin match any request.
      */
     httpCredentials?: {
       username: string;
@@ -11248,7 +11266,25 @@ export interface Browser {
        * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
       send?: "unauthorized"|"always";
-    };
+    }|Array<{
+      username: string;
+
+      password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
+      origin?: string;
+
+      /**
+       * This option only applies to the requests sent from corresponding
+       * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+       * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+       * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+       * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+       */
+      send?: "unauthorized"|"always";
+    }>;
 
     /**
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
@@ -17270,6 +17306,9 @@ export interface BrowserType<Unused = {}> {
     /**
      * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
      * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+     *
+     * Pass an array to use different credentials for different origins. The first entry that matches the request origin
+     * is used, and entries with no origin match any request.
      */
     httpCredentials?: {
       username: string;
@@ -17289,7 +17328,25 @@ export interface BrowserType<Unused = {}> {
        * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
       send?: "unauthorized"|"always";
-    };
+    }|Array<{
+      username: string;
+
+      password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
+      origin?: string;
+
+      /**
+       * This option only applies to the requests sent from corresponding
+       * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+       * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+       * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+       * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+       */
+      send?: "unauthorized"|"always";
+    }>;
 
     /**
      * If `true`, Playwright does not pass its own configurations args and only uses the ones from
@@ -18885,6 +18942,9 @@ export interface APIRequest {
     /**
      * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
      * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+     *
+     * Pass an array to use different credentials for different origins. The first entry that matches the request origin
+     * is used, and entries with no origin match any request.
      */
     httpCredentials?: {
       username: string;
@@ -18904,7 +18964,25 @@ export interface APIRequest {
        * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
       send?: "unauthorized"|"always";
-    };
+    }|Array<{
+      username: string;
+
+      password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
+      origin?: string;
+
+      /**
+       * This option only applies to the requests sent from corresponding
+       * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+       * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+       * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+       * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+       */
+      send?: "unauthorized"|"always";
+    }>;
 
     /**
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
@@ -23588,6 +23666,9 @@ export interface Electron {
     /**
      * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
      * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+     *
+     * Pass an array to use different credentials for different origins. The first entry that matches the request origin
+     * is used, and entries with no origin match any request.
      */
     httpCredentials?: {
       username: string;
@@ -23607,7 +23688,25 @@ export interface Electron {
        * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
       send?: "unauthorized"|"always";
-    };
+    }|Array<{
+      username: string;
+
+      password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
+      origin?: string;
+
+      /**
+       * This option only applies to the requests sent from corresponding
+       * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+       * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+       * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+       * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+       */
+      send?: "unauthorized"|"always";
+    }>;
 
     /**
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
@@ -24225,6 +24324,9 @@ export interface AndroidDevice {
     /**
      * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
      * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+     *
+     * Pass an array to use different credentials for different origins. The first entry that matches the request origin
+     * is used, and entries with no origin match any request.
      */
     httpCredentials?: {
       username: string;
@@ -24244,7 +24346,25 @@ export interface AndroidDevice {
        * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
        */
       send?: "unauthorized"|"always";
-    };
+    }|Array<{
+      username: string;
+
+      password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
+      origin?: string;
+
+      /**
+       * This option only applies to the requests sent from corresponding
+       * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+       * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+       * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+       * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+       */
+      send?: "unauthorized"|"always";
+    }>;
 
     /**
      * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
@@ -25457,8 +25577,11 @@ export interface BrowserContextOptions {
   /**
    * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
    * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+   *
+   * Pass an array to use different credentials for different origins. The first entry that matches the request origin
+   * is used, and entries with no origin match any request.
    */
-  httpCredentials?: HTTPCredentials;
+  httpCredentials?: HTTPCredentials|Array<HTTPCredentials>;
 
   /**
    * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.

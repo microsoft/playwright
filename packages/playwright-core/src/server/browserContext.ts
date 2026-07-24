@@ -45,6 +45,7 @@ import type { ClientCertificatesProxy } from './socksClientCertificatesIntercept
 import type { SerializedStorage } from '@injected/storageScript';
 import type * as types from './types';
 import type * as channels from './channels';
+import type { HttpCredentials } from '@protocol/structs';
 
 const BrowserContextEvent = {
   Console: 'console',
@@ -288,7 +289,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   protected abstract doClearCookies(): Promise<void>;
   protected abstract doGrantPermissions(origin: string, permissions: string[]): Promise<void>;
   protected abstract doClearPermissions(): Promise<void>;
-  protected abstract doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
+  protected abstract doSetHTTPCredentials(httpCredentials?: HttpCredentials[]): Promise<void>;
   protected abstract doAddInitScript(initScript: InitScript): Promise<void>;
   protected abstract doRemoveInitScripts(initScripts: InitScript[]): Promise<void>;
   protected abstract doUpdateExtraHTTPHeaders(): Promise<void>;
@@ -343,11 +344,11 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     })));
   }
 
-  setHTTPCredentials(progress: Progress, httpCredentials?: types.Credentials): Promise<void> {
+  setHTTPCredentials(progress: Progress, httpCredentials?: HttpCredentials[]): Promise<void> {
     return progress.race(this.innerSetHTTPCredentials(httpCredentials));
   }
 
-  innerSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+  innerSetHTTPCredentials(httpCredentials?: HttpCredentials[]): Promise<void> {
     return this.doSetHTTPCredentials(httpCredentials);
   }
 
@@ -479,7 +480,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     const proxy = this._options.proxy || this._browser.options.proxy || { username: undefined, password: undefined };
     const { username, password } = proxy;
     if (username) {
-      this._options.httpCredentials = { username, password: password! };
+      this._options.httpCredentials = [{ username, password: password! }];
       const token = Buffer.from(`${username}:${password}`).toString('base64');
       this._options.extraHTTPHeaders = network.mergeHeaders([
         this._options.extraHTTPHeaders,
@@ -494,7 +495,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       return;
     const { username, password } = proxy;
     if (username)
-      this._options.httpCredentials = { username, password: password || '' };
+      this._options.httpCredentials = [{ username, password: password || '' }];
   }
 
   async addInitScript(progress: Progress, source: string): Promise<InitScript> {
@@ -766,6 +767,11 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   if (options.proxy)
     options.proxy = normalizeProxySettings(options.proxy);
   verifyGeolocation(options.geolocation);
+}
+
+export function findMatchingHttpCredentials(credentials: HttpCredentials[] | undefined, url: string): HttpCredentials | undefined {
+  const origin = new URL(url).origin.toLowerCase();
+  return credentials?.find(c => !c.origin || c.origin.toLowerCase() === origin);
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation): asserts geolocation is types.Geolocation {

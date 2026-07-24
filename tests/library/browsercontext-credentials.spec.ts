@@ -51,6 +51,22 @@ it('should work with setHTTPCredentials', async ({ browser, server, failsOn401 }
   await context.close();
 });
 
+it('should work with setHTTPCredentials and multiple credentials', async ({ browser, server, browserName }) => {
+  server.setAuth('/empty.html', 'user1', 'pass1');
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await context.setHTTPCredentials([
+    { username: 'user1', password: 'pass1', origin: server.PREFIX },
+    { username: 'user2', password: 'pass2', origin: server.CROSS_PROCESS_PREFIX },
+  ]);
+  const response1 = await page.goto(server.EMPTY_PAGE);
+  expect(response1!.status()).toBe(200);
+  // Wrong credentials are picked for the other origin.
+  const response2 = await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  expect(response2!.status()).toBe(401);
+  await context.close();
+});
+
 it('should work with correct credentials @smoke', async ({ browser, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
@@ -83,6 +99,65 @@ it('should return resource body', async ({ browser, server }) => {
   expect(response!.status()).toBe(200);
   expect(await page.title()).toBe('Playground');
   expect((await response!.body()).toString()).toContain('Playground');
+  await context.close();
+});
+
+it('should work with a single credential in an array', async ({ browser, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const context = await browser.newContext({
+    httpCredentials: [{ username: 'user', password: 'pass' }]
+  });
+  const page = await context.newPage();
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response!.status()).toBe(200);
+  await context.close();
+});
+
+it('should work with multiple credentials for different origins', async ({ browser, server, browserName }) => {
+  server.setAuth('/empty.html', 'user1', 'pass1');
+  const context = await browser.newContext({
+    httpCredentials: [
+      { username: 'user1', password: 'pass1', origin: server.PREFIX },
+      { username: 'user2', password: 'pass2', origin: server.CROSS_PROCESS_PREFIX },
+    ]
+  });
+  const page = await context.newPage();
+  const response1 = await page.goto(server.EMPTY_PAGE);
+  expect(response1!.status()).toBe(200);
+  // Wrong credentials are picked for the other origin.
+  const response2 = await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  expect(response2!.status()).toBe(401);
+  await context.close();
+});
+
+it('should fall back to credentials without origin', async ({ browser, server, browserName }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const context = await browser.newContext({
+    httpCredentials: [
+      { username: 'user2', password: 'pass2', origin: server.CROSS_PROCESS_PREFIX },
+      { username: 'user', password: 'pass' },
+    ]
+  });
+  const page = await context.newPage();
+  const response1 = await page.goto(server.EMPTY_PAGE);
+  expect(response1!.status()).toBe(200);
+  // First matching entry has wrong credentials for this origin.
+  const response2 = await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  expect(response2!.status()).toBe(401);
+  await context.close();
+});
+
+it('should use the first matching credential', async ({ browser, server, browserName }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const context = await browser.newContext({
+    httpCredentials: [
+      { username: 'wrong', password: 'wrong' },
+      { username: 'user', password: 'pass', origin: server.PREFIX },
+    ]
+  });
+  const page = await context.newPage();
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response!.status()).toBe(401);
   await context.close();
 });
 

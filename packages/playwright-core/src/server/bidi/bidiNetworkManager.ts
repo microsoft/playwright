@@ -15,6 +15,7 @@
  */
 
 import { eventsHelper } from '@utils/eventsHelper';
+import { findMatchingHttpCredentials } from '../browserContext';
 import { parseRawCookie } from '../cookieStore';
 import * as network from '../network';
 import * as bidi from './third_party/bidiProtocol';
@@ -23,6 +24,7 @@ import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as frames from '../frames';
 import type { Page } from '../page';
 import type * as types from '../types';
+import type { HttpCredentials } from '@protocol/structs';
 import type { BidiSession } from './bidiConnection';
 import type { BidiPage } from './bidiPage';
 
@@ -35,7 +37,7 @@ export class BidiNetworkManager {
   private readonly _eventListeners: RegisteredListener[];
   private _userRequestInterceptionEnabled: boolean = false;
   private _protocolRequestInterceptionEnabled: boolean = false;
-  private _credentials: types.Credentials | undefined;
+  private _credentials: HttpCredentials[] | undefined;
   private _attemptedAuthentications = new Set<string>();
   private _intercepId: bidi.Network.Intercept | undefined;
 
@@ -197,8 +199,8 @@ export class BidiNetworkManager {
 
   private _onAuthRequired(params: bidi.Network.AuthRequiredParameters) {
     const isBasic = params.response.authChallenges?.some(challenge => challenge.scheme.startsWith('Basic'));
-    const credentials = this._page.browserContext._options.httpCredentials;
-    if (isBasic && credentials && (!credentials.origin || (new URL(params.request.url).origin).toLowerCase() === credentials.origin.toLowerCase())) {
+    const credentials = findMatchingHttpCredentials(this._page.browserContext._options.httpCredentials, params.request.url);
+    if (isBasic && credentials) {
       if (this._attemptedAuthentications.has(params.request.request)) {
         this._session.sendMayFail('network.continueWithAuth', {
           request: params.request.request,
@@ -234,13 +236,13 @@ export class BidiNetworkManager {
     await this._updateProtocolRequestInterception();
   }
 
-  async setCredentials(credentials: types.Credentials | undefined) {
+  async setCredentials(credentials: HttpCredentials[] | undefined) {
     this._credentials = credentials;
     await this._updateProtocolRequestInterception();
   }
 
   async _updateProtocolRequestInterception(initial?: boolean) {
-    const enabled = this._userRequestInterceptionEnabled || !!this._credentials;
+    const enabled = this._userRequestInterceptionEnabled || !!this._credentials?.length;
     if (enabled === this._protocolRequestInterceptionEnabled)
       return;
     this._protocolRequestInterceptionEnabled = enabled;

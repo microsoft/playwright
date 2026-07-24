@@ -31,6 +31,7 @@ import type { SdkObject } from '../instrumentation';
 import type { InitScript, Page } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
+import type { HttpCredentials } from '@protocol/structs';
 import type { BidiSession } from './bidiConnection';
 import type * as channels from '../channels';
 
@@ -409,7 +410,7 @@ export class BidiBrowserContext extends BrowserContext {
     });
   }
 
-  async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+  async doSetHTTPCredentials(httpCredentials?: HttpCredentials[]): Promise<void> {
     this._options.httpCredentials = httpCredentials;
     for (const page of this.pages())
       await (page.delegate as BidiPage).updateHttpCredentials();

@@ -892,6 +892,9 @@ function csharpOptionOverloadSuffix(option, type) {
     case 'int': return 'Int';
     case 'long': return 'Int64';
     case 'Date': return 'Date';
+    // Object keeps the original option name, e.g. for `Object|Array<Object>` unions.
+    case 'Object': return '';
+    case 'Array': return 'List';
   }
   throw new Error(`CSharp option "${option}" has unsupported type overload "${type}"`);
 }

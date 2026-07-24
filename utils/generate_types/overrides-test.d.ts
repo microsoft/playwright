@@ -280,7 +280,7 @@ export interface PlaywrightTestOptions {
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
   geolocation: Geolocation | undefined;
   hasTouch: boolean;
-  httpCredentials: HTTPCredentials | undefined;
+  httpCredentials: HTTPCredentials | HTTPCredentials[] | undefined;
   ignoreHTTPSErrors: boolean;
   isMobile: boolean;
   javaScriptEnabled: boolean;

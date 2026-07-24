@@ -28,7 +28,7 @@ import { eventsHelper } from '@utils/eventsHelper';
 import { monotonicTime } from '@isomorphic/time';
 import { createProxyAgent } from '@utils/network';
 import { getUserAgent } from './userAgent';
-import { BrowserContext, verifyClientCertificates } from './browserContext';
+import { BrowserContext, findMatchingHttpCredentials, verifyClientCertificates } from './browserContext';
 import { Cookie, CookieStore, domainMatches, parseRawCookie } from './cookieStore';
 import { MultipartFormData } from './formData';
 import { TargetClosedError } from './errors';
@@ -43,7 +43,7 @@ import type { Playwright } from './playwright';
 import type { Progress } from './progress';
 import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
-import type { HTTPCredentials } from '../../types/types';
+import type { HttpCredentials } from '@protocol/structs';
 import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as channels from './channels';
 import type * as har from '@trace/har';
@@ -55,7 +55,7 @@ type FetchRequestOptions = {
   userAgent: string;
   extraHTTPHeaders?: HeadersArray;
   failOnStatusCode?: boolean;
-  httpCredentials?: HTTPCredentials;
+  httpCredentials?: HttpCredentials[];
   proxy?: ProxySettings;
   ignoreHTTPSErrors?: boolean;
   maxRedirects?: number;
@@ -632,9 +632,7 @@ export abstract class APIRequestContext extends SdkObject {
   }
 
   private _getHttpCredentials(url: URL) {
-    if (!this._defaultOptions().httpCredentials?.origin || url.origin.toLowerCase() === this._defaultOptions().httpCredentials?.origin?.toLowerCase())
-      return this._defaultOptions().httpCredentials;
-    return undefined;
+    return findMatchingHttpCredentials(this._defaultOptions().httpCredentials, url.toString());
   }
 }
 
@@ -841,7 +839,7 @@ function isNetworkConnectionError(e: any): boolean {
   return code === 'ECONNRESET' || code === 'EPIPE' || code === 'ECONNABORTED';
 }
 
-function setBasicAuthorizationHeader(headers: { [name: string]: string }, credentials: HTTPCredentials) {
+function setBasicAuthorizationHeader(headers: { [name: string]: string }, credentials: HttpCredentials) {
   const { username, password } = credentials;
   const encoded = Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
   setHeader(headers, 'authorization', `Basic ${encoded}`);

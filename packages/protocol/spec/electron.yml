@@ -52,11 +52,8 @@ Electron:
             latitude: float
             accuracy: float?
         httpCredentials:
-          type: object?
-          properties:
-            username: string
-            password: string
-            origin: string?
+          type: array?
+          items: HttpCredentials
         ignoreHTTPSErrors: boolean?
         locale: string?
         offline: boolean?

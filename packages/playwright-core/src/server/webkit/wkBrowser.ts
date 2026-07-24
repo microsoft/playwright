@@ -28,6 +28,7 @@ import type { SdkObject } from '../instrumentation';
 import type { InitScript, Page } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
+import type { HttpCredentials } from '@protocol/structs';
 import type { Protocol } from './protocol';
 import type { PageProxyMessageReceivedPayload } from './wkConnection';
 import type * as channels from '../channels';
@@ -324,7 +325,7 @@ export class WKBrowserContext extends BrowserContext {
       await (page.delegate as WKPage).updateOffline();
   }
 
-  async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+  async doSetHTTPCredentials(httpCredentials?: HttpCredentials[]): Promise<void> {
     this._options.httpCredentials = httpCredentials;
     for (const page of this.pages())
       await (page.delegate as WKPage).updateHttpCredentials();

@@ -110,6 +110,13 @@ export type WaitInfo = {
   error?: string,
 };
 
+export type HttpCredentials = {
+  username: string,
+  password: string,
+  origin?: string,
+  send?: 'always' | 'unauthorized',
+};
+
 export type SetNetworkCookie = {
   name: string,
   value: string,

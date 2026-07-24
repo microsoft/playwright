@@ -58,13 +58,6 @@ export type ScreencastFrame = {
   viewportHeight: number,
 };
 
-export type Credentials = {
-  username: string;
-  password: string;
-  origin?: string;
-  sendImmediately?: boolean;
-};
-
 export type Geolocation = {
   longitude: number;
   latitude: number;

@@ -49,6 +49,7 @@ import { mkdirIfNeeded } from './fileUtils';
 
 import type { EvaluateOptions } from './jsHandle';
 import type { BrowserContextOptions, Headers, SetStorageState, StorageState, WaitForEventOptions } from './types';
+import type { HttpCredentials } from '@protocol/structs';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { URLMatch } from '@isomorphic/urlMatch';
@@ -353,8 +354,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.setOffline({ offline }, kNoTimeout);
   }
 
-  async setHTTPCredentials(httpCredentials: { username: string, password: string } | null): Promise<void> {
-    await this._channel.setHTTPCredentials({ httpCredentials: httpCredentials || undefined }, kNoTimeout);
+  async setHTTPCredentials(httpCredentials: HttpCredentials | HttpCredentials[] | null): Promise<void> {
+    await this._channel.setHTTPCredentials({ httpCredentials: toHttpCredentialsProtocol(httpCredentials || undefined) }, kNoTimeout);
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any, options?: EvaluateOptions) {
@@ -567,10 +568,18 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     contrast: options.contrast === null ? 'no-override' : options.contrast,
     acceptDownloads: toAcceptDownloadsProtocol(options.acceptDownloads),
     clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
+    httpCredentials: toHttpCredentialsProtocol(options.httpCredentials),
   };
   if (contextParams.recordVideo && contextParams.recordVideo.dir)
     contextParams.recordVideo.dir = path.resolve(contextParams.recordVideo.dir);
   return contextParams;
+}
+
+export function toHttpCredentialsProtocol(credentials?: HttpCredentials | HttpCredentials[]): HttpCredentials[] | undefined {
+  if (!credentials)
+    return undefined;
+  const list = Array.isArray(credentials) ? credentials : [credentials];
+  return list.length ? list : undefined;
 }
 
 function toAcceptDownloadsProtocol(acceptDownloads?: boolean) {

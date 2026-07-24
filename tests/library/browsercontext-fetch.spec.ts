@@ -563,6 +563,21 @@ it('should return error with wrong credentials', async ({ context, server }) => 
   expect(response2.status()).toBe(401);
 });
 
+it('should support multiple httpCredentials', async ({ contextFactory, server, browserName }) => {
+  server.setAuth('/empty.html', 'user1', 'pass1');
+  const context = await contextFactory({
+    httpCredentials: [
+      { username: 'user1', password: 'pass1', origin: server.PREFIX },
+      { username: 'user2', password: 'pass2', origin: server.CROSS_PROCESS_PREFIX },
+    ]
+  });
+  const response1 = await context.request.get(server.EMPTY_PAGE);
+  expect(response1.status()).toBe(200);
+  // Wrong credentials are picked for the other origin.
+  const response2 = await context.request.get(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  expect(response2.status()).toBe(401);
+});
+
 it('should support HTTPCredentials.send for newContext', async ({ contextFactory, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30534' });
   const context = await contextFactory({

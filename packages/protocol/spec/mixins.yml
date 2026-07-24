@@ -94,6 +94,18 @@ LaunchOptions:
     firefoxUserPrefs: json?
     cdpPort: int?
 
+HttpCredentials:
+  type: object
+  properties:
+    username: string
+    password: string
+    origin: string?
+    send:
+      type: enum?
+      literals:
+      - always
+      - unauthorized
+
 ContextOptions:
   type: mixin
   properties:
@@ -138,16 +150,8 @@ ContextOptions:
       items: NameValue
     offline: boolean?
     httpCredentials:
-      type: object?
-      properties:
-        username: string
-        password: string
-        origin: string?
-        send:
-          type: enum?
-          literals:
-          - always
-          - unauthorized
+      type: array?
+      items: HttpCredentials
     deviceScaleFactor: float?
     isMobile: boolean?
     hasTouch: boolean?

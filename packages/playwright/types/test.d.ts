@@ -7446,6 +7446,9 @@ export interface PlaywrightTestOptions {
    * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
    * origin is specified, the username and password are sent to any servers upon unauthorized responses.
    *
+   * Pass an array to use different credentials for different origins. The first entry that matches the request origin
+   * is used, and entries with no origin match any request.
+   *
    * **Usage**
    *
    * ```js
@@ -7463,7 +7466,7 @@ export interface PlaywrightTestOptions {
    * ```
    *
    */
-  httpCredentials: HTTPCredentials | undefined;
+  httpCredentials: HTTPCredentials | HTTPCredentials[] | undefined;
   /**
    * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
    *

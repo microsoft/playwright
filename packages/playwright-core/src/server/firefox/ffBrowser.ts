@@ -28,6 +28,7 @@ import type { SdkObject } from '../instrumentation';
 import type { InitScript, Page } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
+import type { HttpCredentials } from '@protocol/structs';
 import type { FFSession } from './ffConnection';
 import type { Protocol } from './protocol';
 import type * as channels from '../channels';
@@ -317,13 +318,9 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser.session.send('Browser.setOnlineOverride', { browserContextId: this._browserContextId, override: this._options.offline ? 'offline' : 'online' });
   }
 
-  async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+  async doSetHTTPCredentials(httpCredentials?: HttpCredentials[]): Promise<void> {
     this._options.httpCredentials = httpCredentials;
-    let credentials = null;
-    if (httpCredentials) {
-      const { username, password, origin } = httpCredentials;
-      credentials = [{ username, password, origin }];
-    }
+    const credentials = httpCredentials ? httpCredentials.map(({ username, password, origin }) => ({ username, password, origin })) : null;
     await this._browser.session.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId, credentials });
   }
 

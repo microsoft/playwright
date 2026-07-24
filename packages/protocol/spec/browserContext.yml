@@ -136,11 +136,8 @@ BrowserContext:
       group: configuration
       parameters:
         httpCredentials:
-          type: object?
-          properties:
-            username: string
-            password: string
-            origin: string?
+          type: array?
+          items: HttpCredentials
 
     setNetworkInterceptionPatterns:
       title: Route requests

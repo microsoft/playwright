@@ -33,12 +33,13 @@ import type * as childProcess from 'child_process';
 import type { BrowserWindow } from 'electron';
 import type { Playwright } from './playwright';
 
-type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'|'acceptDownloads'> & {
+type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'|'acceptDownloads'|'httpCredentials'> & {
   env?: NodeJS.ProcessEnv,
   extraHTTPHeaders?: Headers,
   recordHar?: BrowserContextOptions['recordHar'],
   colorScheme?: 'dark' | 'light' | 'no-preference' | null,
   acceptDownloads?: boolean,
+  httpCredentials?: BrowserContextOptions['httpCredentials'],
   timeout?: number,
 };
 
