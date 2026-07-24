@@ -15,12 +15,41 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 // Also pinned via the "key" field in packages/extension/manifest.json.
 export const playwrightExtensionId = 'mmlmfjhmonkocbjadbfplnigmagldckm';
 
 export const playwrightExtensionInstallUrl = `https://chromewebstore.google.com/detail/playwright-extension/${playwrightExtensionId}`;
+
+export function defaultUserDataDir(channel: string): string | undefined {
+  const home = os.homedir();
+  switch (os.platform()) {
+    case 'win32': {
+      const localAppData = process.env.LOCALAPPDATA;
+      if (!localAppData)
+        return undefined;
+      if (channel === 'chrome')
+        return path.join(localAppData, 'Google', 'Chrome', 'User Data');
+      if (channel === 'msedge')
+        return path.join(localAppData, 'Microsoft', 'Edge', 'User Data');
+      return undefined;
+    }
+    case 'darwin':
+      if (channel === 'chrome')
+        return path.join(home, 'Library', 'Application Support', 'Google', 'Chrome');
+      if (channel === 'msedge')
+        return path.join(home, 'Library', 'Application Support', 'Microsoft Edge');
+      return undefined;
+    default:
+      if (channel === 'chrome')
+        return path.join(home, '.config', 'google-chrome');
+      if (channel === 'msedge')
+        return path.join(home, '.config', 'microsoft-edge');
+      return undefined;
+  }
+}
 
 export async function findPlaywrightExtensionProfile(userDataDir: string): Promise<string | undefined> {
   const profiles = await listProfileDirectories(userDataDir);
