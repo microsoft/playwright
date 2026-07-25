@@ -49,6 +49,19 @@ import type * as channels from '../channels';
 
 export type WindowBounds = { top?: number, left?: number, width?: number, height?: number };
 
+// Chromium does not allow these WebUI hosts in off-the-record profiles, and instead redirects them
+// to a normal window in the original profile. That redirect crashes the browser process when the
+// profile was created over CDP, as it is for every non-persistent context. Refuse the navigation
+// rather than lose the whole browser. See https://github.com/microsoft/playwright/issues/41935.
+const kWebUIHostsUnavailableOffTheRecord = new Set([
+  'apps',
+  'extensions',
+  'help',
+  'history',
+  'password-manager',
+  'settings',
+]);
+
 export class CRPage implements PageDelegate {
   readonly utilityWorldName: string;
   readonly _mainFrameSession: FrameSession;
@@ -152,7 +165,20 @@ export class CRPage implements PageDelegate {
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
+    this._assertNavigationDoesNotCrashBrowser(url);
     return this._sessionForFrame(frame)._navigate(frame, url, referrer);
+  }
+
+  private _assertNavigationDoesNotCrashBrowser(url: string) {
+    if (this._browserContext.isPersistentContext())
+      return;
+    if (!URL.canParse(url))
+      return;
+    // "chrome:" is not a special scheme, so the URL parser leaves the host case alone
+    // while Chromium resolves it case-insensitively.
+    const { protocol, hostname } = new URL(url);
+    if (protocol === 'chrome:' && kWebUIHostsUnavailableOffTheRecord.has(hostname.toLowerCase()))
+      throw new Error(`Cannot navigate to "${url}": Chromium does not allow this page in an isolated browser context, and opening it crashes the browser. Use browserType.launchPersistentContext() instead.`);
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {

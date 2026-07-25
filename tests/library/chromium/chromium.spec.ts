@@ -747,6 +747,44 @@ test('should capture console.log from ServiceWorker start', async ({ context, pa
   expect(consoleMessage.type()).toBe('log');
 });
 
+test.describe('chrome:// navigation', () => {
+  // Chromium disallows these WebUI hosts in off-the-record profiles.
+  const unavailableHosts = ['apps', 'extensions', 'help', 'history', 'password-manager', 'settings'];
+
+  test('should refuse WebUI pages that crash the browser in an isolated context', async ({ browser, page }) => {
+    test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41935' });
+
+    for (const url of [...unavailableHosts.map(host => `chrome://${host}`), 'chrome://extensions/', 'chrome://settings/help', 'chrome://SETTINGS']) {
+      const error = await page.goto(url).catch(e => e);
+      expect(error.message).toContain(`Cannot navigate to "${url}"`);
+    }
+    // The refusal only matters because it keeps the browser process alive.
+    expect(browser.isConnected()).toBe(true);
+    expect(await page.evaluate(() => 1 + 1)).toBe(2);
+  });
+
+  test('should navigate to WebUI pages that work in an isolated context', async ({ page, headless }) => {
+    test.skip(headless, 'WebUI pages are not available in headless');
+
+    const response = await page.goto('chrome://version');
+    expect(response.status()).toBe(200);
+  });
+
+  test('should navigate to any WebUI page in a persistent context', async ({ browserType, createUserDataDir, headless }) => {
+    test.skip(headless, 'WebUI pages are not available in headless');
+
+    const context = await browserType.launchPersistentContext(await createUserDataDir());
+    try {
+      const page = await context.newPage();
+      // Committing the navigation is all this asserts - waiting for the WebUI to load is slow and beside the point.
+      const response = await page.goto('chrome://extensions', { waitUntil: 'commit' });
+      expect(response.status()).toBe(200);
+    } finally {
+      await context.close();
+    }
+  });
+});
+
 test('should fire dialogclosed event when dialog is closed out of band', async ({ page }) => {
   // Establish the CDP session up front: creating one while a dialog is blocking the page hangs.
   const client = await page.context().newCDPSession(page);
