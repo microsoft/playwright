@@ -987,3 +987,23 @@ test('AggregateError sub-errors are spread into testInfo.errors', async ({ runIn
     expect.stringMatching(/^FRAME Error: sub b: at .*a\.spec\.ts:19:/),
   ]);
 });
+
+test('--add-reporter should append to configured reporters instead of replacing them', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'configured-reporter.js': `
+      module.exports = class { onBegin() { console.log('FROM_CONFIGURED_REPORTER'); } };
+    `,
+    'added-reporter.js': `
+      module.exports = class { onBegin() { console.log('FROM_ADDED_REPORTER'); } };
+    `,
+    'playwright.config.ts': `module.exports = { reporter: [['./configured-reporter.js']] };`,
+    'a.spec.js': `
+      const { test } = require('@playwright/test');
+      test('test', () => {});
+    `,
+  }, { 'workers': 1 }, undefined, { additionalArgs: ['--add-reporter=./added-reporter.js'] });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('FROM_CONFIGURED_REPORTER');
+  expect(result.output).toContain('FROM_ADDED_REPORTER');
+});

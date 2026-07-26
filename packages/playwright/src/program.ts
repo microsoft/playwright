@@ -206,6 +206,7 @@ const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries
 // Note: update docs/src/test-cli-js.md when you update this, program is the source of truth.
 
 const testOptions: [string, { description: string, choices?: string[], preset?: string }][] = [
+  ['--add-reporter <reporter>', { description: `Reporter to add on top of the configured reporters, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} or a path to a reporter module` }],
   /* deprecated */ ['--browser <browser>', { description: `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")` }],
   ['-c, --config <file>', { description: `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"` }],
   ['--debug [mode]', { description: `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`, choices: ['inspector', 'cli'], preset: 'inspector' }],

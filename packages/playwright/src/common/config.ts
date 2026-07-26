@@ -100,7 +100,7 @@ export class FullConfigInternal {
       preserveOutput: takeFirst(userConfig.preserveOutput, 'always'),
       projects: [],
       quiet: takeFirst(configCLIOverrides.quiet, userConfig.quiet, false),
-      reporter: takeFirst(configCLIOverrides.reporter, resolveReporters(userConfig.reporter, configDir), [[defaultReporter]]),
+      reporter: [...takeFirst(configCLIOverrides.reporter, resolveReporters(userConfig.reporter, configDir), [[defaultReporter]]), ...(configCLIOverrides.additionalReporters ?? [])],
       reportSlowTests: takeFirst(userConfig.reportSlowTests, { max: 5, threshold: 300_000 /* 5 minutes */ }),
       shard: takeFirst(configCLIOverrides.shard, userConfig.shard, null),
       tags: globalTags,
