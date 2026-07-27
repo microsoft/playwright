@@ -19,6 +19,11 @@ import * as playwright from 'playwright';
 type AssertType<T, S> = S extends T ? AssertNotAny<S> : false;
 type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;
 
+declare const __brand: unique symbol;
+type Branded<T, B> = T & { [__brand]: B };
+type IsoDate = Branded<string, 'IsoDate'>;
+type UserId = Branded<number, 'UserId'>;
+
 // Examples taken from README
 (async () => {
   const browser = await playwright.chromium.launch();
@@ -456,6 +461,36 @@ playwright.chromium.launch().then(async browser => {
       const assertion: AssertType<Promise<{ double: number, add: number }>, typeof value> = true;
     }, { cb: func });
   }
+  await browser.close();
+})();
+
+// branded primitive args must stay branded through Unboxed (https://github.com/microsoft/playwright/issues/42000)
+(async () => {
+  const browser = await playwright.chromium.launch();
+  const page = await browser.newPage();
+
+  function takesIsoDate(date: IsoDate): void { void date; }
+  function takesUserId(id: UserId): void { void id; }
+
+  const date = '2026-01-15' as IsoDate;
+  const userId = 42 as UserId;
+
+  {
+    await page.evaluate((d: IsoDate) => void d, date);
+  }
+  {
+    await page.evaluate(d => takesIsoDate(d), date);
+  }
+  {
+    await page.evaluate(({ d }) => takesIsoDate(d), { d: date });
+  }
+  {
+    await page.evaluate(id => takesUserId(id), userId);
+  }
+  {
+    await page.evaluate(({ id }) => takesUserId(id), { id: userId });
+  }
+
   await browser.close();
 })();
 

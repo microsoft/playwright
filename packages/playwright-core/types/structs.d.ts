@@ -26,10 +26,13 @@ export type Serializable = any;
 export type EvaluationArgument = {};
 
 type CallbackResult<T> = T extends PromiseLike<infer U> ? Promise<Unboxed<U>> : Promise<Unboxed<T>>;
-export type NoHandles<Arg> = Arg extends JSHandle ? never : (Arg extends Function ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg));
+// Primitive guard must come before `object` / `Function` so branded primitives like
+// `string & { [brand]: ... }` stay themselves instead of being mapped over String.prototype.
+export type NoHandles<Arg> = Arg extends JSHandle ? never : (Arg extends string | number | boolean | bigint | symbol ? Arg : (Arg extends Function ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg)));
 export type Unboxed<Arg> =
   Arg extends ElementHandle<infer T> ? T :
   Arg extends JSHandle<infer T> ? T :
+  Arg extends string | number | boolean | bigint | symbol | null | undefined ? Arg :
   Arg extends (...args: infer T) => infer R ? (...args: T) => CallbackResult<R> :
   Arg extends NoHandles<Arg> ? Arg :
   Arg extends [infer A0] ? [Unboxed<A0>] :
