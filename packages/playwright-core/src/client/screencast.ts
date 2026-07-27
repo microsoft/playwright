@@ -59,7 +59,7 @@ export class Screencast implements api.Screencast {
     return new DisposableStub(() => this.stop());
   }
 
-  async stop(): Promise<void> {
+  async stop(options: { discard?: boolean } = {}): Promise<void> {
     await this._page._wrapApiCall(async () => {
       this._started = false;
       this._onFrame = null;
@@ -74,7 +74,11 @@ export class Screencast implements api.Screencast {
         if (!isTargetClosedError(e))
           throw e;
       }
-      if (artifact && savePath)
+      if (!artifact || !savePath)
+        return;
+      if (options.discard)
+        await artifact.delete();
+      else
         await artifact.saveAs(savePath, { dispose: true });
     });
   }

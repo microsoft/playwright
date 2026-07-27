@@ -262,6 +262,35 @@ test('stop should not fail after page is closed', async ({ browser }) => {
   await context.close();
 });
 
+test('stop should discard video', async ({ browserType }, testInfo) => {
+  const artifactsDir = testInfo.outputPath('artifacts');
+  const browser = await browserType.launch({ artifactsDir });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const videoPath = testInfo.outputPath('video.webm');
+  await page.screencast.start({ path: videoPath });
+  await ensureSomeFrames(page);
+  await page.screencast.stop({ discard: true });
+  expect(fs.existsSync(videoPath)).toBe(false);
+  expect(fs.readdirSync(artifactsDir).filter(f => f.endsWith('.webm'))).toHaveLength(0);
+  await browser.close();
+});
+
+test('stop should discard video after page is closed', async ({ browserType }, testInfo) => {
+  const artifactsDir = testInfo.outputPath('artifacts');
+  const browser = await browserType.launch({ artifactsDir });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const videoPath = testInfo.outputPath('video.webm');
+  await page.screencast.start({ path: videoPath });
+  await ensureSomeFrames(page);
+  await page.close();
+  await page.screencast.stop({ discard: true });
+  expect(fs.existsSync(videoPath)).toBe(false);
+  expect(fs.readdirSync(artifactsDir).filter(f => f.endsWith('.webm'))).toHaveLength(0);
+  await browser.close();
+});
+
 test('empty video', async ({ browser }, testInfo) => {
   const size = { width: 800, height: 800 };
   const context = await browser.newContext({ viewport: size });

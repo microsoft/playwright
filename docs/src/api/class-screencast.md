@@ -70,6 +70,12 @@ If not specified the size will be equal to page viewport scaled down to fit into
 
 Stops the screencast and video recording if active. If a video was being recorded, saves it to the path specified in [`method: Screencast.start`]. Stopping after the page has been closed still saves the video recorded up to the moment the page was closed.
 
+### option: Screencast.stop.discard
+* since: v1.63
+- `discard` <[boolean]>
+
+Discard the recorded video instead of saving it to the [`option: Screencast.start.path`]. Defaults to `false`.
+
 ## async method: Screencast.showOverlay
 * since: v1.59
 - returns: <[Disposable]>
