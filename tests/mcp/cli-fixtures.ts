@@ -54,7 +54,8 @@ export const test = baseTest.extend<{
       return page;
     });
   },
-  connectToDashboard: async ({ cli, playwright }, use) => {
+  connectToDashboard: async ({ cli, playwright }, use, testInfo) => {
+    testInfo.slow();
     await use(async (bindTitle: string) => {
       let endpoint = '';
       await expect(async () => {
