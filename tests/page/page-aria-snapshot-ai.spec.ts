@@ -395,6 +395,30 @@ it('should omit redundant name when a contributor is a skipped leaf generic', as
   `);
 });
 
+it('should keep the name when the contributing wrapper collapses into repeating text', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41985' });
+  // The outer span is marked as represented while it still wraps the icon. Once the nameless
+  // image is dropped, the span collapses into a lone text repeating the button's name and removes
+  // itself, so the button must keep the name derived from it.
+  await page.setContent(`
+    <button>
+      <span>
+        <span>
+          <svg focusable="false" tabindex="-1" aria-hidden="true" viewBox="0 0 448 512">
+            <path d="M416 208H272V64c0-17.67-14.33-32-32-32h-32c-17.67 0-32 14.33-32 32v144H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h144v144c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32V304h144c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"/>
+          </svg>
+        </span>
+        <span>Add New Item</span>
+      </span>
+    </button>
+  `);
+
+  const snapshot = await snapshotForAI(page);
+  expect(snapshot).toContainYaml(`
+    - button "Add New Item" [ref=e2]
+  `);
+});
+
 it('should keep names not derived from printed nodes', async ({ page }) => {
   await page.setContent(`
     <h3 aria-label="Clipboard API issue"><a style="cursor: pointer" href="/issues/1">Clipboard API</a></h3>
