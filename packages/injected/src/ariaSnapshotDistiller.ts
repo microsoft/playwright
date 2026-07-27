@@ -195,8 +195,9 @@ const removeRedundantNames: DistillerPlugin = {
 // name - that repeats the parent's accessible name adds no information, so it removes itself.
 // `inlineTextIntoGeneric` runs first, bubbling text up through nameless wrappers, so by the time
 // a wrapper exits its text faces the real parent - no need to look further up the ancestor chain.
-// Whenever the node is the source of that name, `removeRedundantNames` keeps the name - the node
-// is a leaf generic - so the text is never lost.
+// The removed text then only survives through the names derived from it, so the node's ref is
+// marked pending again - it may have been cleared on enter, before the node's other children
+// (e.g. a decorative image) were distilled away - and `removeRedundantNames` keeps those names.
 const removeNameRepeatingChild: DistillerPlugin = {
   name: 'removeNameRepeatingChild',
   exit(node: aria.AriaNode, ctx: DistillerContext): 'remove' | void {
@@ -205,8 +206,11 @@ const removeNameRepeatingChild: DistillerPlugin = {
       return;
     const singleTextChild = node.children.length === 1 && typeof node.children[0] === 'string' ? node.children[0] : undefined;
     const text = node.name ? (node.children.length ? undefined : node.name) : singleTextChild;
-    if (text && text === parent.name)
+    if (text && text === parent.name) {
+      if (node.ref)
+        ctx.pendingContentRefs.add(node.ref);
       return 'remove';
+    }
   },
 };
 
