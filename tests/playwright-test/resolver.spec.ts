@@ -622,6 +622,146 @@ test('should resolve extends from an explicit node_modules subpath', async ({ ru
   expect(result.exitCode).toBe(0);
 });
 
+test('should resolve extends from a hoisted node_modules package', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41989' });
+
+  // The extending tsconfig lives in a nested directory without its own node_modules,
+  // while the base config package is hoisted to a parent node_modules. Like tsc,
+  // the bare specifier is resolved with Node module resolution, walking up node_modules.
+  const result = await runInlineTest({
+    'package.json': `{ "name": "test-project" }`,
+    'node_modules/hoisted-config-package/package.json': `{
+      "name": "hoisted-config-package",
+      "version": "1.0.0"
+    }`,
+    'node_modules/hoisted-config-package/tsconfig.json': `{
+      "compilerOptions": {
+        "paths": {
+          "util/*": ["./mapped/*"],
+        },
+      },
+    }`,
+    'dir/tsconfig.json': `{
+      "extends": "hoisted-config-package/tsconfig.json",
+      "compilerOptions": {
+        "baseUrl": ".",
+      },
+    }`,
+    'dir/a.test.ts': `
+      import { foo } from 'util/file';
+      import { test, expect } from '@playwright/test';
+      test('test', () => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'dir/mapped/file.ts': `
+      export const foo = 'foo';
+    `,
+  });
+
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should resolve extends through package.json exports subpath', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41989' });
+
+  // The "./next" subpath only exists in the exports map, there is no "next.json" file.
+  const result = await runInlineTest({
+    'package.json': `{ "name": "test-project" }`,
+    'node_modules/@repo/tsconfig/package.json': `{
+      "name": "@repo/tsconfig",
+      "version": "1.0.0",
+      "exports": {
+        "./next": "./tsconfig.next.json"
+      }
+    }`,
+    'node_modules/@repo/tsconfig/tsconfig.next.json': `{
+      "compilerOptions": {
+        "paths": {
+          "util/*": ["./mapped/*"],
+        },
+      },
+    }`,
+    'tsconfig.json': `{
+      "extends": "@repo/tsconfig/next",
+      "compilerOptions": {
+        "baseUrl": ".",
+      },
+    }`,
+    'a.test.ts': `
+      import { foo } from 'util/file';
+      import { test, expect } from '@playwright/test';
+      test('test', () => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'mapped/file.ts': `
+      export const foo = 'foo';
+    `,
+  });
+
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should resolve extends through package.json root export', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41989' });
+
+  // The tsconfig is the root export of the package, e.g. "typescript-config-silverwind".
+  const result = await runInlineTest({
+    'package.json': `{ "name": "test-project" }`,
+    'node_modules/typescript-config-pkg/package.json': `{
+      "name": "typescript-config-pkg",
+      "version": "1.0.0",
+      "exports": "./tsconfig.json"
+    }`,
+    'node_modules/typescript-config-pkg/tsconfig.json': `{
+      "compilerOptions": {
+        "paths": {
+          "util/*": ["./mapped/*"],
+        },
+      },
+    }`,
+    'tsconfig.json': `{
+      "extends": "typescript-config-pkg",
+      "compilerOptions": {
+        "baseUrl": ".",
+      },
+    }`,
+    'a.test.ts': `
+      import { foo } from 'util/file';
+      import { test, expect } from '@playwright/test';
+      test('test', () => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'mapped/file.ts': `
+      export const foo = 'foo';
+    `,
+  });
+
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should fail loudly when bare extends specifier cannot be resolved', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41989' });
+
+  const result = await runInlineTest({
+    'tsconfig.json': `{
+      "extends": "does-not-exist-tsconfig-package/tsconfig.json",
+    }`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', () => {});
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Failed to resolve "extends" path "does-not-exist-tsconfig-package/tsconfig.json"');
+});
+
 test('should fail loudly when extends path cannot be resolved', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41543' });
 

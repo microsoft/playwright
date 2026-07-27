@@ -69,6 +69,21 @@ function resolveConfigFile(baseConfigFile: string, referencedConfigFile: string,
   let resolvedConfigFile = path.resolve(currentDir, referencedConfigFile);
   if (referencedConfigFile.includes('/') && referencedConfigFile.includes('.') && !fs.existsSync(resolvedConfigFile))
     resolvedConfigFile = path.join(currentDir, 'node_modules', referencedConfigFile);
+  if (kind === 'extends' && !fs.existsSync(resolvedConfigFile) && !path.isAbsolute(originalReferencedConfigFile) && !originalReferencedConfigFile.startsWith('.')) {
+    // Similar to tsc, resolve bare specifiers with Node module resolution - walking up
+    // node_modules directories and honoring package.json "exports"/"main".
+    // See https://github.com/microsoft/playwright/issues/41989.
+    for (const request of new Set([originalReferencedConfigFile, referencedConfigFile])) {
+      try {
+        const resolved = require.resolve(request, { paths: [currentDir] });
+        if (resolved.endsWith('.json')) {
+          resolvedConfigFile = resolved;
+          break;
+        }
+      } catch {
+      }
+    }
+  }
   if (!fs.existsSync(resolvedConfigFile))
     throw new Error(`Failed to resolve "${kind}" path "${originalReferencedConfigFile}" referenced from ${baseConfigFile}`);
   return resolvedConfigFile;
