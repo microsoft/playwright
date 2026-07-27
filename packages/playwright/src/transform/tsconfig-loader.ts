@@ -61,16 +61,18 @@ export function loadTsConfig(configPath: string): LoadedTsConfig[] {
   }
 }
 
-function resolveConfigFile(baseConfigFile: string, referencedConfigFile: string, kind: 'extends' | 'references') {
-  const originalReferencedConfigFile = referencedConfigFile;
+function resolveConfigFile(baseConfigFile: string, referencedConfigFile: string) {
   if (!referencedConfigFile.endsWith('.json'))
     referencedConfigFile += '.json';
   const currentDir = path.dirname(baseConfigFile);
   let resolvedConfigFile = path.resolve(currentDir, referencedConfigFile);
   if (referencedConfigFile.includes('/') && referencedConfigFile.includes('.') && !fs.existsSync(resolvedConfigFile))
     resolvedConfigFile = path.join(currentDir, 'node_modules', referencedConfigFile);
-  if (!fs.existsSync(resolvedConfigFile))
-    throw new Error(`Failed to resolve "${kind}" path "${originalReferencedConfigFile}" referenced from ${baseConfigFile}`);
+  // Note: this function may return a non-existing file, and the caller silently ignores it.
+  // We deliberately do not throw in this case, because we do not want to repeat the whole
+  // resolution process that tsc has, e.g. node_modules walk-up and package.json "exports".
+  // See https://github.com/microsoft/playwright/issues/41989.
+  // TODO: implement tsc-compatible resolution and start throwing on invalid "extends"/"references".
   return resolvedConfigFile;
 }
 
@@ -97,7 +99,7 @@ function innerLoadTsConfig(
 
   const extendsArray = Array.isArray(parsedConfig.extends) ? parsedConfig.extends : (parsedConfig.extends ? [parsedConfig.extends] : []);
   for (const extendedConfig of extendsArray) {
-    const extendedConfigPath = resolveConfigFile(configFilePath, extendedConfig, 'extends');
+    const extendedConfigPath = resolveConfigFile(configFilePath, extendedConfig);
     const base = innerLoadTsConfig(extendedConfigPath, references, visited);
     // Retain result instance, so that caching works.
     Object.assign(result, base, { tsConfigPath: configFilePath });
@@ -122,7 +124,7 @@ function innerLoadTsConfig(
   }
 
   for (const ref of parsedConfig.references || [])
-    references.push(innerLoadTsConfig(resolveConfigFile(configFilePath, ref.path, 'references'), references, visited));
+    references.push(innerLoadTsConfig(resolveConfigFile(configFilePath, ref.path), references, visited));
 
   if (path.basename(configFilePath) === 'jsconfig.json' && result.allowJs === undefined)
     result.allowJs = true;
