@@ -170,11 +170,25 @@ export class ProcessHost extends EventEmitter {
       return;
     const exitPromise = new Promise<void>(f => this.once('exit', () => f()));
     const timeout = +(process.env.PWTEST_CHILD_PROCESS_TIMEOUT || 5 * 60 * 1000);
-    const result = await raceAgainstDeadline(() => exitPromise, monotonicTime() + timeout);
-    if (result.timedOut) {
-      this.emit('processError', { message: `Error: ${this._processName} process did not exit within ${timeout}ms after stop, force-killed it` });
-      this._forceKill();
-      await exitPromise;
+    // Child sends heartbeats while gracefully closing, e.g. running a slow fixture
+    // teardown with "timeout: 0". Only force-kill when heartbeats stop coming.
+    let lastHeartbeat = monotonicTime();
+    const onHeartbeat = () => lastHeartbeat = monotonicTime();
+    this.on('__heartbeat__', onHeartbeat);
+    try {
+      while (true) {
+        const result = await raceAgainstDeadline(() => exitPromise, lastHeartbeat + timeout);
+        if (!result.timedOut)
+          return;
+        if (monotonicTime() < lastHeartbeat + timeout)
+          continue;
+        this.emit('processError', { message: `Error: ${this._processName} process did not exit within ${timeout}ms after stop, force-killed it` });
+        this._forceKill();
+        await exitPromise;
+        return;
+      }
+    } finally {
+      this.off('__heartbeat__', onHeartbeat);
     }
   }
 
