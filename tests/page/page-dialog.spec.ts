@@ -17,6 +17,8 @@
 
 import { test as it, expect } from './pageTest';
 
+import type { Dialog } from 'playwright-core';
+
 it('should fire', async ({ page, server }) => {
   page.on('dialog', dialog => {
     expect(dialog.type()).toBe('alert');
@@ -25,6 +27,39 @@ it('should fire', async ({ page, server }) => {
     void dialog.accept();
   });
   await page.evaluate(() => alert('yo'));
+});
+
+it('should fire dialogclosed when dialog is accepted', async ({ page }) => {
+  const closed: Dialog[] = [];
+  page.on('dialogclosed', dialog => closed.push(dialog));
+  let opened: Dialog | undefined;
+  page.on('dialog', dialog => {
+    opened = dialog;
+    void dialog.accept();
+  });
+  await page.evaluate(() => alert('yo'));
+  await expect.poll(() => closed.length).toBe(1);
+  expect(closed[0]).toBe(opened);
+  // Perform some roundtrips to ensure the event does not fire twice.
+  await page.evaluate(() => 1);
+  await page.evaluate(() => 1);
+  expect(closed.length).toBe(1);
+});
+
+it('should fire dialogclosed when dialog is dismissed', async ({ page }) => {
+  const closedPromise = page.waitForEvent('dialogclosed');
+  page.on('dialog', dialog => void dialog.dismiss());
+  await page.evaluate(() => confirm('boolean?'));
+  const dialog = await closedPromise;
+  expect(dialog.type()).toBe('confirm');
+  expect(dialog.message()).toBe('boolean?');
+});
+
+it('should fire dialogclosed for auto-dismissed dialogs', async ({ page }) => {
+  const closedPromise = page.waitForEvent('dialogclosed');
+  await page.evaluate(() => alert('yo'));
+  const dialog = await closedPromise;
+  expect(dialog.message()).toBe('yo');
 });
 
 it('should allow accepting prompts @smoke', async ({ page, isElectron }) => {

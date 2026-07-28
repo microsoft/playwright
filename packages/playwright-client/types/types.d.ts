@@ -1047,6 +1047,14 @@ export interface Page {
   on(event: 'dialog', listener: (dialog: Dialog) => any): this;
 
   /**
+   * Emitted when a JavaScript dialog has been closed, either by
+   * [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept), by
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss), or manually by the user in the
+   * headed browser.
+   */
+  on(event: 'dialogclosed', listener: (dialog: Dialog) => any): this;
+
+  /**
    * Emitted when the JavaScript
    * [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded) event is dispatched.
    */
@@ -1210,6 +1218,11 @@ export interface Page {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
+  once(event: 'dialogclosed', listener: (dialog: Dialog) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
   once(event: 'domcontentloaded', listener: (page: Page) => any): this;
 
   /**
@@ -1347,6 +1360,14 @@ export interface Page {
    *
    */
   addListener(event: 'dialog', listener: (dialog: Dialog) => any): this;
+
+  /**
+   * Emitted when a JavaScript dialog has been closed, either by
+   * [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept), by
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss), or manually by the user in the
+   * headed browser.
+   */
+  addListener(event: 'dialogclosed', listener: (dialog: Dialog) => any): this;
 
   /**
    * Emitted when the JavaScript
@@ -1512,6 +1533,11 @@ export interface Page {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'dialogclosed', listener: (dialog: Dialog) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   removeListener(event: 'domcontentloaded', listener: (page: Page) => any): this;
 
   /**
@@ -1603,6 +1629,11 @@ export interface Page {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'dialog', listener: (dialog: Dialog) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'dialogclosed', listener: (dialog: Dialog) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -1744,6 +1775,14 @@ export interface Page {
    *
    */
   prependListener(event: 'dialog', listener: (dialog: Dialog) => any): this;
+
+  /**
+   * Emitted when a JavaScript dialog has been closed, either by
+   * [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept), by
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss), or manually by the user in the
+   * headed browser.
+   */
+  prependListener(event: 'dialogclosed', listener: (dialog: Dialog) => any): this;
 
   /**
    * Emitted when the JavaScript
@@ -5286,6 +5325,14 @@ export interface Page {
    *
    */
   waitForEvent(event: 'dialog', optionsOrPredicate?: { predicate?: (dialog: Dialog) => boolean | Promise<boolean>, timeout?: number, signal?: AbortSignal } | ((dialog: Dialog) => boolean | Promise<boolean>)): Promise<Dialog>;
+
+  /**
+   * Emitted when a JavaScript dialog has been closed, either by
+   * [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept), by
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss), or manually by the user in the
+   * headed browser.
+   */
+  waitForEvent(event: 'dialogclosed', optionsOrPredicate?: { predicate?: (dialog: Dialog) => boolean | Promise<boolean>, timeout?: number, signal?: AbortSignal } | ((dialog: Dialog) => boolean | Promise<boolean>)): Promise<Dialog>;
 
   /**
    * Emitted when the JavaScript
@@ -9223,6 +9270,14 @@ export interface BrowserContext {
   on(event: 'dialog', listener: (dialog: Dialog) => any): this;
 
   /**
+   * Emitted when a JavaScript dialog in any page belonging to this context has been closed, either by
+   * [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept), by
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss), or manually by the user in the
+   * headed browser.
+   */
+  on(event: 'dialogclosed', listener: (dialog: Dialog) => any): this;
+
+  /**
    * Emitted when attachment download started in any page belonging to this context. User can access basic file
    * operations on downloaded content via the passed [Download](https://playwright.dev/docs/api/class-download)
    * instance. See also [page.on('download')](https://playwright.dev/docs/api/class-page#page-event-download) to receive
@@ -9370,6 +9425,11 @@ export interface BrowserContext {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
+  once(event: 'dialogclosed', listener: (dialog: Dialog) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
   once(event: 'download', listener: (download: Download) => any): this;
 
   /**
@@ -9487,6 +9547,14 @@ export interface BrowserContext {
    *
    */
   addListener(event: 'dialog', listener: (dialog: Dialog) => any): this;
+
+  /**
+   * Emitted when a JavaScript dialog in any page belonging to this context has been closed, either by
+   * [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept), by
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss), or manually by the user in the
+   * headed browser.
+   */
+  addListener(event: 'dialogclosed', listener: (dialog: Dialog) => any): this;
 
   /**
    * Emitted when attachment download started in any page belonging to this context. User can access basic file
@@ -9636,6 +9704,11 @@ export interface BrowserContext {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'dialogclosed', listener: (dialog: Dialog) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   removeListener(event: 'download', listener: (download: Download) => any): this;
 
   /**
@@ -9717,6 +9790,11 @@ export interface BrowserContext {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'dialog', listener: (dialog: Dialog) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'dialogclosed', listener: (dialog: Dialog) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -9838,6 +9916,14 @@ export interface BrowserContext {
    *
    */
   prependListener(event: 'dialog', listener: (dialog: Dialog) => any): this;
+
+  /**
+   * Emitted when a JavaScript dialog in any page belonging to this context has been closed, either by
+   * [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept), by
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss), or manually by the user in the
+   * headed browser.
+   */
+  prependListener(event: 'dialogclosed', listener: (dialog: Dialog) => any): this;
 
   /**
    * Emitted when attachment download started in any page belonging to this context. User can access basic file
@@ -10702,6 +10788,14 @@ export interface BrowserContext {
    *
    */
   waitForEvent(event: 'dialog', optionsOrPredicate?: { predicate?: (dialog: Dialog) => boolean | Promise<boolean>, timeout?: number, signal?: AbortSignal } | ((dialog: Dialog) => boolean | Promise<boolean>)): Promise<Dialog>;
+
+  /**
+   * Emitted when a JavaScript dialog in any page belonging to this context has been closed, either by
+   * [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept), by
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss), or manually by the user in the
+   * headed browser.
+   */
+  waitForEvent(event: 'dialogclosed', optionsOrPredicate?: { predicate?: (dialog: Dialog) => boolean | Promise<boolean>, timeout?: number, signal?: AbortSignal } | ((dialog: Dialog) => boolean | Promise<boolean>)): Promise<Dialog>;
 
   /**
    * Emitted when attachment download started in any page belonging to this context. User can access basic file

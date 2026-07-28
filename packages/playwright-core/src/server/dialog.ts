@@ -33,6 +33,7 @@ export class Dialog extends SdkObject {
   private _message: string;
   private _onHandle: OnHandle;
   private _handled = false;
+  private _closed = false;
   private _defaultValue: string;
 
   constructor(page: Page, type: DialogType, message: string, onHandle: OnHandle, defaultValue?: string) {
@@ -73,6 +74,7 @@ export class Dialog extends SdkObject {
     this._handled = true;
     this._page.browserContext.dialogManager._dialogWillClose(this);
     await this._onHandle(true, promptText);
+    this._didClose();
   }
 
   async _dismiss() {
@@ -80,6 +82,14 @@ export class Dialog extends SdkObject {
     this._handled = true;
     this._page.browserContext.dialogManager._dialogWillClose(this);
     await this._onHandle(false);
+    this._didClose();
+  }
+
+  _didClose() {
+    if (this._closed)
+      return;
+    this._closed = true;
+    this._page.browserContext.dialogManager._dialogDidClose(this);
   }
 
   async _close() {
@@ -93,6 +103,7 @@ export class Dialog extends SdkObject {
 export class DialogManager {
   private _instrumentation: Instrumentation;
   private _dialogHandlers = new Set<(dialog: Dialog) => boolean>();
+  private _dialogClosedListeners = new Set<(dialog: Dialog) => void>();
   private _openedDialogs = new Set<Dialog>();
 
   constructor(instrumentation: Instrumentation) {
@@ -117,6 +128,27 @@ export class DialogManager {
 
   _dialogWillClose(dialog: Dialog) {
     this._openedDialogs.delete(dialog);
+  }
+
+  _dialogDidClose(dialog: Dialog) {
+    this._openedDialogs.delete(dialog);
+    for (const listener of this._dialogClosedListeners)
+      listener(dialog);
+  }
+
+  dialogWasClosedInBrowser(page: Page) {
+    for (const dialog of this._openedDialogs) {
+      if (dialog.page() === page)
+        dialog._didClose();
+    }
+  }
+
+  addDialogClosedListener(listener: (dialog: Dialog) => void) {
+    this._dialogClosedListeners.add(listener);
+  }
+
+  removeDialogClosedListener(listener: (dialog: Dialog) => void) {
+    this._dialogClosedListeners.delete(listener);
   }
 
   addDialogHandler(handler: (dialog: Dialog) => boolean) {

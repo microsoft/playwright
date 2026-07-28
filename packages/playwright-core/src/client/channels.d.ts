@@ -1210,6 +1210,7 @@ export interface BrowserContextEventTarget {
   on(event: 'console', callback: (params: BrowserContextConsoleEvent) => void): this;
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
   on(event: 'dialog', callback: (params: BrowserContextDialogEvent) => void): this;
+  on(event: 'dialogClosed', callback: (params: BrowserContextDialogClosedEvent) => void): this;
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
   on(event: 'pageError', callback: (params: BrowserContextPageErrorEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
@@ -1279,6 +1280,9 @@ export type BrowserContextConsoleEvent = {
 };
 export type BrowserContextCloseEvent = {};
 export type BrowserContextDialogEvent = {
+  dialog: DialogChannel,
+};
+export type BrowserContextDialogClosedEvent = {
   dialog: DialogChannel,
 };
 export type BrowserContextPageEvent = {
@@ -1575,7 +1579,7 @@ export type BrowserContextCreateTempFilesResult = {
   writableStreams: WritableStreamChannel[],
 };
 export type BrowserContextUpdateSubscriptionParams = {
-  event: 'console' | 'dialog' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
+  event: 'console' | 'dialog' | 'dialogClosed' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
   enabled: boolean,
 };
 export type BrowserContextUpdateSubscriptionOptions = {
@@ -1682,6 +1686,7 @@ export interface BrowserContextEvents {
   'console': BrowserContextConsoleEvent;
   'close': BrowserContextCloseEvent;
   'dialog': BrowserContextDialogEvent;
+  'dialogClosed': BrowserContextDialogClosedEvent;
   'page': BrowserContextPageEvent;
   'pageError': BrowserContextPageErrorEvent;
   'route': BrowserContextRouteEvent;
@@ -4462,7 +4467,7 @@ export type PageScreencastStopParams = {};
 export type PageScreencastStopOptions = {};
 export type PageScreencastStopResult = void;
 export type PageUpdateSubscriptionParams = {
-  event: 'console' | 'dialog' | 'fileChooser' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
+  event: 'console' | 'dialog' | 'dialogClosed' | 'fileChooser' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
   enabled: boolean,
 };
 export type PageUpdateSubscriptionOptions = {

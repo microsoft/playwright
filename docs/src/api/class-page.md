@@ -319,6 +319,12 @@ page.RequestFailed += (_, request) =>
 When no [`event: Page.dialog`] or [`event: BrowserContext.dialog`] listeners are present, all dialogs are automatically dismissed.
 :::
 
+## event: Page.dialogClosed
+* since: v1.63
+- argument: <[Dialog]>
+
+Emitted when a JavaScript dialog has been closed, either by [`method: Dialog.accept`], by [`method: Dialog.dismiss`], or manually by the user in the headed browser.
+
 ## event: Page.DOMContentLoaded
 * since: v1.9
 - argument: <[Page]>

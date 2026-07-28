@@ -417,6 +417,7 @@ class FrameSession {
       eventsHelper.addEventListener(this._client, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
       eventsHelper.addEventListener(this._client, 'Page.frameRequestedNavigation', event => this._onFrameRequestedNavigation(event)),
       eventsHelper.addEventListener(this._client, 'Page.javascriptDialogOpening', event => this._onDialog(event)),
+      eventsHelper.addEventListener(this._client, 'Page.javascriptDialogClosed', () => this._onDialogClosed()),
       eventsHelper.addEventListener(this._client, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
       eventsHelper.addEventListener(this._client, 'Runtime.bindingCalled', event => this._onBindingCalled(event)),
       eventsHelper.addEventListener(this._client, 'Runtime.consoleAPICalled', event => this._onConsoleAPI(event)),
@@ -840,6 +841,10 @@ class FrameSession {
           await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
         },
         event.defaultPrompt));
+  }
+
+  _onDialogClosed() {
+    this._page.browserContext.dialogManager.dialogWasClosedInBrowser(this._page);
   }
 
   _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {

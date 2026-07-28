@@ -100,6 +100,19 @@ test('dialog event should work @smoke', async ({ page }) => {
   expect(await promise).toBe('hello');
 });
 
+test('dialogclosed event should work', async ({ page }) => {
+  const promise = page.evaluate(() => prompt('hey?'));
+  const dialog = await page.context().waitForEvent('dialog');
+  const [closed1, closed2] = await Promise.all([
+    page.context().waitForEvent('dialogclosed'),
+    page.waitForEvent('dialogclosed'),
+    dialog.accept('hello'),
+  ]);
+  expect(closed1).toBe(dialog);
+  expect(closed2).toBe(dialog);
+  expect(await promise).toBe('hello');
+});
+
 test('dialog event should work in popup', async ({ page }) => {
   const promise = page.evaluate(() => {
     const win = window.open('');

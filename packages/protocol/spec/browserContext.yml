@@ -273,6 +273,7 @@ BrowserContext:
           literals:
           - console
           - dialog
+          - dialogClosed
           - request
           - response
           - requestFinished
@@ -366,6 +367,10 @@ BrowserContext:
     close:
 
     dialog:
+      parameters:
+        dialog: Dialog
+
+    dialogClosed:
       parameters:
         dialog: Dialog
 

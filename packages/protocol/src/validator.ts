@@ -670,6 +670,9 @@ scheme.BrowserContextCloseEvent = tOptional(tObject({}));
 scheme.BrowserContextDialogEvent = tObject({
   dialog: tChannel(['Dialog']),
 });
+scheme.BrowserContextDialogClosedEvent = tObject({
+  dialog: tChannel(['Dialog']),
+});
 scheme.BrowserContextPageEvent = tObject({
   page: tChannel(['Page']),
 });
@@ -870,7 +873,7 @@ scheme.BrowserContextCreateTempFilesResult = tObject({
   writableStreams: tArray(tChannel(['WritableStream'])),
 });
 scheme.BrowserContextUpdateSubscriptionParams = tObject({
-  event: tEnum(['console', 'dialog', 'request', 'response', 'requestFinished', 'requestFailed']),
+  event: tEnum(['console', 'dialog', 'dialogClosed', 'request', 'response', 'requestFinished', 'requestFailed']),
   enabled: tBoolean,
 });
 scheme.BrowserContextUpdateSubscriptionResult = tOptional(tObject({}));
@@ -2592,7 +2595,7 @@ scheme.PageScreencastFrameAckResult = tOptional(tObject({}));
 scheme.PageScreencastStopParams = tOptional(tObject({}));
 scheme.PageScreencastStopResult = tOptional(tObject({}));
 scheme.PageUpdateSubscriptionParams = tObject({
-  event: tEnum(['console', 'dialog', 'fileChooser', 'request', 'response', 'requestFinished', 'requestFailed']),
+  event: tEnum(['console', 'dialog', 'dialogClosed', 'fileChooser', 'request', 'response', 'requestFinished', 'requestFailed']),
   enabled: tBoolean,
 });
 scheme.PageUpdateSubscriptionResult = tOptional(tObject({}));

@@ -86,6 +86,7 @@ export class FFPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Page.uncaughtError', this._onUncaughtError.bind(this)),
       eventsHelper.addEventListener(this._session, 'Runtime.console', this._onConsole.bind(this)),
       eventsHelper.addEventListener(this._session, 'Page.dialogOpened', this._onDialogOpened.bind(this)),
+      eventsHelper.addEventListener(this._session, 'Page.dialogClosed', this._onDialogClosed.bind(this)),
       eventsHelper.addEventListener(this._session, 'Page.bindingCalled', this._onBindingCalled.bind(this)),
       eventsHelper.addEventListener(this._session, 'Page.fileChooserOpened', this._onFileChooserOpened.bind(this)),
       eventsHelper.addEventListener(this._session, 'Page.workerCreated', this._onWorkerCreated.bind(this)),
@@ -299,6 +300,10 @@ export class FFPage implements PageDelegate {
           await this._session.sendMayFail('Page.handleDialog', { dialogId: params.dialogId, accept, promptText });
         },
         params.defaultValue));
+  }
+
+  _onDialogClosed() {
+    this._page.browserContext.dialogManager.dialogWasClosedInBrowser(this._page);
   }
 
   async _onBindingCalled(event: Protocol.Page.bindingCalledPayload) {
