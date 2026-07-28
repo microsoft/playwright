@@ -51,8 +51,6 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   };
   const reporters: ReporterV2[] = [];
   descriptions ??= config.config.reporter;
-  if (runOptions?.additionalReporters)
-    descriptions = [...descriptions, ...runOptions.additionalReporters];
   const reportOptions = reporterCommandOptions(config, mode, runOptions);
   for (const r of descriptions) {
     const [name, arg] = r;
