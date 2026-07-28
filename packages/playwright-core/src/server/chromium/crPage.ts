@@ -49,17 +49,13 @@ import type * as channels from '../channels';
 
 export type WindowBounds = { top?: number, left?: number, width?: number, height?: number };
 
-// Chromium disallows these WebUI hosts in off-the-record profiles and redirects them to the original
-// profile, which crashes browsers launched over CDP.
+// Browsers disallow these WebUI hosts in off-the-record profiles and redirect them to the original
+// profile, which crashes when the profile was created over CDP. Edge allows most of them in InPrivate.
 // See https://github.com/microsoft/playwright/issues/41935.
-const kCrashingWebUIHosts = new Set([
-  'apps',
-  'extensions',
-  'help',
-  'history',
-  'password-manager',
-  'settings',
-]);
+const kCrashingWebUIHosts = {
+  chromium: new Set(['apps', 'extensions', 'help', 'history', 'password-manager', 'settings']),
+  edge: new Set(['history']),
+};
 
 // Chromium canonicalizes WebUI urls as standard ones, so "VIEW-SOURCE:Chrome:Settings" ends up
 // being "chrome://settings/".
@@ -179,7 +175,8 @@ export class CRPage implements PageDelegate {
   private _assertNavigationDoesNotCrashBrowser(url: string) {
     if (this._browserContext.isPersistentContext())
       return;
-    if (kCrashingWebUIHosts.has(webUIHost(url)))
+    const isEdge = this._browserContext._browser.userAgent().includes('Edg/');
+    if ((isEdge ? kCrashingWebUIHosts.edge : kCrashingWebUIHosts.chromium).has(webUIHost(url)))
       throw new Error(`Cannot navigate to "${url}": this page is not available in an isolated browser context, and opening it crashes the browser. Use browserType.launchPersistentContext() instead.`);
   }
 

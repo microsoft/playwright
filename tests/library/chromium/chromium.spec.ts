@@ -18,6 +18,8 @@
 import { contextTest as test, expect } from '../../config/browserTest';
 import { playwrightTest } from '../../config/browserTest';
 
+import type { Page } from 'playwright-core';
+
 test('should create a worker from a service worker', async ({ page, server }) => {
   const [worker] = await Promise.all([
     page.context().waitForEvent('serviceworker'),
@@ -748,28 +750,30 @@ test('should capture console.log from ServiceWorker start', async ({ context, pa
 });
 
 test.describe('WebUI navigation', () => {
-  const crashingHosts = ['apps', 'extensions', 'help', 'history', 'password-manager', 'settings'];
-  const crashingUrls = [
-    ...crashingHosts.map(host => `chrome://${host}`),
-    'chrome://extensions/',
-    'chrome://settings/help',
-    'chrome://SETTINGS',
-    'chrome:settings',
-    'chrome:///settings',
-    'view-source:chrome://settings',
-    'edge://settings',
-  ];
+  const isEdge = (channel: string | undefined) => !!channel?.startsWith('msedge');
+  const gotoError = (page: Page, url: string) => page.goto(url).then(() => '', e => e.message);
 
-  test('should refuse WebUI pages that crash the browser in an isolated context', async ({ browser, page }) => {
+  test('should refuse WebUI pages that crash the browser in an isolated context', async ({ browser, page, channel }) => {
     test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41935' });
+    test.skip(isEdge(channel), 'Edge only disallows chrome://history');
 
-    for (const url of crashingUrls) {
-      const error = await page.goto(url).catch(e => e);
-      expect(error.message).toContain(`Cannot navigate to "${url}"`);
-    }
+    const hosts = ['apps', 'extensions', 'help', 'history', 'password-manager', 'settings'];
+    for (const url of [...hosts.map(host => `chrome://${host}`), 'chrome://extensions/', 'chrome://settings/help', 'chrome://SETTINGS', 'chrome:settings', 'chrome:///settings', 'view-source:chrome://settings'])
+      expect(await gotoError(page, url)).toContain(`Cannot navigate to "${url}"`);
     // The refusal only matters because it keeps the browser process alive.
     expect(browser.isConnected()).toBe(true);
     expect(await page.evaluate(() => 1 + 1)).toBe(2);
+  });
+
+  test('should refuse WebUI pages that crash Edge in an isolated context', async ({ browser, page, channel }) => {
+    test.skip(!isEdge(channel), 'Edge has its own list of pages disallowed in InPrivate');
+
+    for (const url of ['edge://history', 'chrome://history', 'view-source:edge://history'])
+      expect(await gotoError(page, url)).toContain(`Cannot navigate to "${url}"`);
+    // Edge does allow these in InPrivate, so they must not be refused.
+    for (const url of ['edge://settings', 'edge://extensions'])
+      expect(await gotoError(page, url)).not.toContain('Cannot navigate to');
+    expect(browser.isConnected()).toBe(true);
   });
 
   test('should navigate to WebUI pages that work in an isolated context', async ({ page, headless }) => {
