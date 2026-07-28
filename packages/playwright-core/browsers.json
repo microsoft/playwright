@@ -49,9 +49,7 @@
       "installByDefault": true,
       "revisionOverrides": {
         "mac14": "2251",
-        "mac14-arm64": "2251",
-        "ubuntu20.04-x64": "2092",
-        "ubuntu20.04-arm64": "2092"
+        "mac14-arm64": "2251"
       },
       "browserVersion": "26.5",
       "title": "WebKit"
