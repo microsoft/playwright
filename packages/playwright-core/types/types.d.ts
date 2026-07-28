@@ -8166,16 +8166,16 @@ export interface Frame {
   parentFrame(): null|Frame;
 
   /**
-   * When working with iframes, you can create a frame locator that will search for elements in the main frame and in
-   * all iframes on the page, so that you don't need to locate each iframe first.
+   * When working with iframes, you can create a frame locator that will search for elements in this frame and in all
+   * iframes inside it, so that you don't need to locate each iframe first.
    *
-   * Note that all elements matching the locator must belong to a single frame. For example, if the page contains two
+   * Note that all elements matching the locator must belong to a single frame. For example, if the frame contains two
    * iframes, each with a `Submit` button, piercing frames and locating a button will throw an error because it matches
    * elements from multiple frames.
    *
    * **Usage**
    *
-   * Following snippet locates a button, either in the main frame or in one of the iframes:
+   * Following snippet locates a button, either in the frame or in one of the iframes inside it:
    *
    * ```js
    * const locator = frame.pierceFrames().getByRole('button');

@@ -237,6 +237,68 @@ it('should support first/last/nth as the last operation', async ({ page, server 
   await expect(page.pierceFrames().locator('span').nth(1)).toHaveText('two');
 });
 
+it('should pierce a frame inside the scope', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<section><iframe src="a.html"></iframe></section><button>outside</button>`);
+  await routePage(page, 'a.html', `<button>inside</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await waitForAllFrames(page, 2, 'button');
+  const scope = (await page.$('section'))!;
+  const buttons = await scope.$$('internal:control=pierce-frames >> button');
+  expect(buttons.length).toBe(1);
+  expect(await buttons[0].textContent()).toBe('inside');
+});
+
+it('should pierce a nested frame inside the scope', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<section><iframe src="a.html"></iframe></section><iframe src="b.html"></iframe>`);
+  await routePage(page, 'a.html', `<iframe src="c.html"></iframe>`);
+  await routePage(page, 'b.html', `<button>outside</button>`);
+  await routePage(page, 'c.html', `<button>deep</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect.poll(() => page.frames().length).toBe(4);
+  for (const frame of page.frames()) {
+    if (frame.url().includes('b.html') || frame.url().includes('c.html'))
+      await frame.waitForSelector('button', { state: 'attached' });
+  }
+  const scope = (await page.$('section'))!;
+  const buttons = await scope.$$('internal:control=pierce-frames >> button');
+  expect(buttons.length).toBe(1);
+  expect(await buttons[0].textContent()).toBe('deep');
+});
+
+it('should respect the scope without a frame inside the scope', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<section><button>target</button></section><iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<button>in-frame</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await waitForAllFrames(page, 2, 'button');
+  const scope = (await page.$('section'))!;
+  const buttons = await scope.$$('internal:control=pierce-frames >> button');
+  expect(buttons.length).toBe(1);
+  expect(await buttons[0].textContent()).toBe('target');
+});
+
+it('should pierce nested frames below a matching prefix', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<section><iframe src="a.html"></iframe></section>`);
+  await routePage(page, 'a.html', `<iframe src="b.html"></iframe>`);
+  await routePage(page, 'b.html', `<button>deep</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect.poll(() => page.frames().length).toBe(3);
+  const deepFrame = page.frames().find(f => f.url().includes('b.html'))!;
+  await deepFrame.waitForSelector('button', { state: 'attached' });
+  await expect(page.pierceFrames().locator('section').locator('button')).toHaveText('deep');
+});
+
+it('should pierce only frames inside the starting frame', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><button>main</button>`);
+  await routePage(page, 'a.html', `<iframe src="b.html"></iframe>`);
+  await routePage(page, 'b.html', `<button>deep</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect.poll(() => page.frames().length).toBe(3);
+  const deepFrame = page.frames().find(f => f.url().includes('b.html'))!;
+  await deepFrame.waitForSelector('button', { state: 'attached' });
+  const middleFrame = page.frames().find(f => f.url().includes('a.html'))!;
+  await expect(middleFrame.pierceFrames().locator('button')).toHaveText('deep');
+});
+
 it('should not allow nth in the middle', async ({ page }) => {
   const error = await page.pierceFrames().locator('div').first().locator('span').count().catch(e => e);
   expect(error.message).toContain(`nth can only be the last locator when piercing frames, while querying "pierceFrames().locator('div').first().locator('span')"`);
