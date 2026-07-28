@@ -4340,6 +4340,10 @@ might return multiple quads for inline nodes.
        */
       defaultPrompt?: string;
     }
+    /**
+     * Fired when a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload) has been closed.
+     */
+    export type javascriptDialogClosedPayload = void;
     
     /**
      * Enables dialog domain notifications.
@@ -9218,6 +9222,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Debugger.didSampleProbe": Debugger.didSampleProbePayload;
     "Debugger.playBreakpointActionSound": Debugger.playBreakpointActionSoundPayload;
     "Dialog.javascriptDialogOpening": Dialog.javascriptDialogOpeningPayload;
+    "Dialog.javascriptDialogClosed": Dialog.javascriptDialogClosedPayload;
     "Heap.garbageCollected": Heap.garbageCollectedPayload;
     "Heap.trackingStart": Heap.trackingStartPayload;
     "Heap.trackingComplete": Heap.trackingCompletePayload;
@@ -9345,6 +9350,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     ["Debugger.didSampleProbe"]: [Debugger.didSampleProbePayload];
     ["Debugger.playBreakpointActionSound"]: [Debugger.playBreakpointActionSoundPayload];
     ["Dialog.javascriptDialogOpening"]: [Dialog.javascriptDialogOpeningPayload];
+    ["Dialog.javascriptDialogClosed"]: [Dialog.javascriptDialogClosedPayload];
     ["Heap.garbageCollected"]: [Heap.garbageCollectedPayload];
     ["Heap.trackingStart"]: [Heap.trackingStartPayload];
     ["Heap.trackingComplete"]: [Heap.trackingCompletePayload];
