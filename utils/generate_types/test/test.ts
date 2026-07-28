@@ -428,10 +428,12 @@ playwright.chromium.launch().then(async browser => {
   {
     await locator.evaluateAll((sel: HTMLSelectElement[]) => {})
   }
+  // Handles in callback results are unboxed, but the callback keeps its authored
+  // sync/async signature, even though the runtime always exposes it as async on the page side.
   {
     await locator.evaluate((e, cb) => {
       const value = cb(2);
-      const assertion: AssertType<Promise<number>, typeof value> = true;
+      const assertion: AssertType<number, typeof value> = true;
     }, (x: number) => 2 * x);
   }
   {
@@ -455,6 +457,54 @@ playwright.chromium.launch().then(async browser => {
       const value = cb(2);
       const assertion: AssertType<Promise<{ double: number, add: number }>, typeof value> = true;
     }, { cb: func });
+  }
+  {
+    // Promises nested in the argument are not awaited, only callback results are.
+    const result = await page.evaluate(arg => {
+      const assertion: AssertType<Promise<number>, typeof arg.a> = true;
+      return arg;
+    }, { a: new Promise<number>(() => {}), b: 42 });
+    const assertion: AssertType<{ a: Promise<number>, b: number }, typeof result> = true;
+  }
+  await browser.close();
+})();
+
+// branded primitives in evaluate arguments — https://github.com/microsoft/playwright/issues/42000
+declare const __brand: unique symbol;
+type Branded<T, B> = T & { [__brand]: B };
+type IsoDate = Branded<string, 'IsoDate'>;
+declare function takesIsoDate(date: IsoDate): void;
+
+(async () => {
+  const browser = await playwright.chromium.launch();
+  const page = await browser.newPage();
+  const date = '2026-01-15' as IsoDate;
+  {
+    const result = await page.evaluate((d: IsoDate) => d, date);
+    const assertion: AssertType<IsoDate, typeof result> = true;
+  }
+  {
+    await page.evaluate(d => takesIsoDate(d), date);
+  }
+  {
+    await page.evaluate(({ d }) => takesIsoDate(d), { d: date });
+  }
+  {
+    const count = 42 as Branded<number, 'Count'>;
+    const result = await page.evaluate(c => c, count);
+    const assertion: AssertType<Branded<number, 'Count'>, typeof result> = true;
+  }
+  {
+    const result = await page.evaluate((arg: { d?: IsoDate }) => arg.d, { d: date } as { d?: IsoDate });
+    const assertion: AssertType<IsoDate | undefined, typeof result> = true;
+  }
+  {
+    const result = await page.evaluate((dates: readonly IsoDate[]) => dates[0], [date] as readonly IsoDate[]);
+    const assertion: AssertType<IsoDate, typeof result> = true;
+  }
+  {
+    const result = await page.evaluate((pair: [IsoDate, number]) => pair[0], [date, 42] as [IsoDate, number]);
+    const assertion: AssertType<IsoDate, typeof result> = true;
   }
   await browser.close();
 })();
