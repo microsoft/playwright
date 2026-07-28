@@ -181,18 +181,17 @@ export class FrameSelectors {
   private async _resolveFramePiercingSelector(parsed: ParsedSelector, options: types.StrictOptions, scope: ElementHandle | undefined) {
     const candidates = new Map<Frame, Set<number>>();
     const infos = parsed.parts.map(part => this._parseSelector({ parts: [part] }, options));
-    for (const frame of this.frame._page.frameManager.frames())
-      await this._pierceFramesRecursivelyIfNotSeen(frame, infos, scope, 0, candidates);
+    await this._pierceFramesRecursivelyIfNotSeen(this.frame, infos, scope, 0, candidates);
     const result: SelectorInFrame[] = [];
-    for (const [frame, matches] of candidates) {
-      for (const match of matches) {
-        const suffix = infos.slice(match);
+    for (const [frame, startIndexes] of candidates) {
+      for (const startIndex of startIndexes) {
+        const suffix = infos.slice(startIndex);
         const partialInfo: SelectorInfo = {
           parsed: { parts: suffix.map(info => info.parsed.parts[0]) },
           world: suffix.some(info => info.world === 'main') ? 'main' : 'utility',
           strict: !!options.strict,
         };
-        result.push({ frame, info: partialInfo });
+        result.push({ frame, info: partialInfo, scope: frame === this.frame && startIndex === 0 ? scope : undefined });
       }
     }
     return result;
@@ -206,7 +205,7 @@ export class FrameSelectors {
     }
     if (!set.has(startIndex)) {
       set.add(startIndex);
-      await this._pierceFramesRecursively(frame, infos, undefined, startIndex, result);
+      await this._pierceFramesRecursively(frame, infos, scope, startIndex, result);
     }
   }
 
@@ -215,7 +214,8 @@ export class FrameSelectors {
       const injected = await context.injectedScript();
       const frameCandidatesHandle = await injected.evaluateHandle((injected, { infos, scope, startIndex }) => {
         const frameElements = injected.querySelectorAll(injected.parseSelector('css=frame,iframe'), scope || document);
-        const result = frameElements.map(frameElement => ({ frameElement, matches: [] as number[] }));
+        // Any frame inside the search root may contain the whole selector suffix, so seed with startIndex.
+        const result = frameElements.map(frameElement => ({ frameElement, nextIndexes: [startIndex] }));
 
         let roots = [scope || document];
         for (let index = startIndex; index < infos.length; index++) {
@@ -227,9 +227,9 @@ export class FrameSelectors {
           }
           roots = [...next];
           if (index + 1 < infos.length && !['nth', 'visible'].includes(infos[index + 1].parsed.parts[0].name)) {
-            for (const { frameElement, matches } of result) {
+            for (const { frameElement, nextIndexes } of result) {
               if (roots.some(root => injected.utils.isInsideScope(root, frameElement)))
-                matches.push(index);
+                nextIndexes.push(index + 1);
             }
           }
         }
@@ -242,9 +242,9 @@ export class FrameSelectors {
           const frameElement = await frameCandidatesHandle.evaluateHandle((list, i) => list[i].frameElement, i) as ElementHandle<Element>;
           const childFrame = await frame._page.delegate.getContentFrame(frameElement).catch(() => null);
           if (childFrame) {
-            const matches = await frameCandidatesHandle.evaluate((list, i) => list[i].matches, i) as number[];
-            for (const match of matches)
-              await this._pierceFramesRecursivelyIfNotSeen(childFrame, infos, undefined, match + 1, result);
+            const nextIndexes = await frameCandidatesHandle.evaluate((list, i) => list[i].nextIndexes, i) as number[];
+            for (const nextIndex of nextIndexes)
+              await this._pierceFramesRecursivelyIfNotSeen(childFrame, infos, undefined, nextIndex, result);
           }
         } catch {
           // Ignore errors for this frame candidate.
