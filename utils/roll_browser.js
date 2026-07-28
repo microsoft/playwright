@@ -149,11 +149,7 @@ Example:
 
     // 8. Update docs.
     console.log('\nUpdating documentation...');
-    try {
-      execSync('npm run doc', { stdio: 'inherit' });
-    } catch (e) {
-      console.log('npm run doc failed with non-zero exit code. This might have updated generated files.');
-    }
+    execSync('npm run doc -- --allow-dirty', { stdio: 'inherit' });
   }
   console.log(`\nRolled ${browserName} to ${revision}`);
 })().catch(err => {

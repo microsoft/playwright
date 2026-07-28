@@ -269,6 +269,11 @@ async function run() {
   }
 
   if (dirtyFiles.size) {
+    if (process.argv.includes('--allow-dirty')) {
+      console.log('Regenerated files:');
+      [...dirtyFiles].forEach(f => console.log(f));
+      process.exit(0);
+    }
     console.log('============================')
     console.log('ERROR: generated files have changed, this is only error if happens in CI:');
     [...dirtyFiles].forEach(f => console.log(f));
