@@ -186,8 +186,9 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
-    test('should ignore page.pause when headed', async ({ connect, startRemoteServer, browserType, channel }) => {
+    test('should ignore page.pause when headed', async ({ connect, startRemoteServer, browserType, browserName, channel, isMac }) => {
       test.skip(channel === 'chromium-headless-shell', 'shell is never headed');
+      test.fixme(browserName === 'chromium' && isMac, 'Headed Chromium occasionally does not exit on SIGINT, hanging startRemoteServer teardown on macOS.');
 
       const headless = (browserType as any)._playwright._defaultLaunchOptions.headless;
       (browserType as any)._playwright._defaultLaunchOptions.headless = false;
