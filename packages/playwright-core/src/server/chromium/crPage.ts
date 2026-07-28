@@ -49,11 +49,10 @@ import type * as channels from '../channels';
 
 export type WindowBounds = { top?: number, left?: number, width?: number, height?: number };
 
-// Chromium does not allow these WebUI hosts in off-the-record profiles, and instead redirects them
-// to a normal window in the original profile. That redirect crashes the browser process when the
-// profile was created over CDP, as it is for every non-persistent context. Refuse the navigation
-// rather than lose the whole browser. See https://github.com/microsoft/playwright/issues/41935.
-const kWebUIHostsUnavailableOffTheRecord = new Set([
+// Chromium disallows these WebUI hosts in off-the-record profiles and redirects them to the original
+// profile, which crashes browsers launched over CDP.
+// See https://github.com/microsoft/playwright/issues/41935.
+const kCrashingWebUIHosts = new Set([
   'apps',
   'extensions',
   'help',
@@ -61,6 +60,14 @@ const kWebUIHostsUnavailableOffTheRecord = new Set([
   'password-manager',
   'settings',
 ]);
+
+// Chromium canonicalizes WebUI urls as standard ones, so "VIEW-SOURCE:Chrome:Settings" ends up
+// being "chrome://settings/".
+function webUIHost(url: string): string {
+  const match = /^(?:view-source:)?(?:chrome|edge):\/*([^/?#]+)/i.exec(url);
+  const authority = match ? `http://${match[1]}` : '';
+  return URL.canParse(authority) ? new URL(authority).hostname : '';
+}
 
 export class CRPage implements PageDelegate {
   readonly utilityWorldName: string;
@@ -172,13 +179,8 @@ export class CRPage implements PageDelegate {
   private _assertNavigationDoesNotCrashBrowser(url: string) {
     if (this._browserContext.isPersistentContext())
       return;
-    if (!URL.canParse(url))
-      return;
-    // "chrome:" is not a special scheme, so the URL parser leaves the host case alone
-    // while Chromium resolves it case-insensitively.
-    const { protocol, hostname } = new URL(url);
-    if (protocol === 'chrome:' && kWebUIHostsUnavailableOffTheRecord.has(hostname.toLowerCase()))
-      throw new Error(`Cannot navigate to "${url}": Chromium does not allow this page in an isolated browser context, and opening it crashes the browser. Use browserType.launchPersistentContext() instead.`);
+    if (kCrashingWebUIHosts.has(webUIHost(url)))
+      throw new Error(`Cannot navigate to "${url}": this page is not available in an isolated browser context, and opening it crashes the browser. Use browserType.launchPersistentContext() instead.`);
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {

@@ -747,14 +747,23 @@ test('should capture console.log from ServiceWorker start', async ({ context, pa
   expect(consoleMessage.type()).toBe('log');
 });
 
-test.describe('chrome:// navigation', () => {
-  // Chromium disallows these WebUI hosts in off-the-record profiles.
-  const unavailableHosts = ['apps', 'extensions', 'help', 'history', 'password-manager', 'settings'];
+test.describe('WebUI navigation', () => {
+  const crashingHosts = ['apps', 'extensions', 'help', 'history', 'password-manager', 'settings'];
+  const crashingUrls = [
+    ...crashingHosts.map(host => `chrome://${host}`),
+    'chrome://extensions/',
+    'chrome://settings/help',
+    'chrome://SETTINGS',
+    'chrome:settings',
+    'chrome:///settings',
+    'view-source:chrome://settings',
+    'edge://settings',
+  ];
 
   test('should refuse WebUI pages that crash the browser in an isolated context', async ({ browser, page }) => {
     test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41935' });
 
-    for (const url of [...unavailableHosts.map(host => `chrome://${host}`), 'chrome://extensions/', 'chrome://settings/help', 'chrome://SETTINGS']) {
+    for (const url of crashingUrls) {
       const error = await page.goto(url).catch(e => e);
       expect(error.message).toContain(`Cannot navigate to "${url}"`);
     }
