@@ -37,7 +37,6 @@ import type { TestGroup } from '../runner/testGroups';
 import type { EnvByProjectId } from './dispatcher';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { Task } from './taskRunner';
-import type { ReporterDescription } from '../../types/test';
 import type { FullResult, TestError } from '../../types/testReporter';
 import type { Matcher, TestCaseFilter } from '../util';
 import type { InternalReporter } from '../reporters/internalReporter';
@@ -72,7 +71,6 @@ export type TestRunOptions = {
   pauseAtEnd?: boolean;
   onTestPaused?: (params: TestPausedParams) => void;
   preserveOutputDir?: boolean;
-  additionalReporters?: ReporterDescription[];
   shardWeights?: number[];
 };
 
