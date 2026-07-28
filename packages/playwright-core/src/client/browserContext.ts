@@ -156,6 +156,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
           dialog.dismiss({}, kNoTimeout).catch(() => {});
       }
     });
+    this._channel.on('dialogClosed', ({ dialog }) => {
+      const dialogObject = Dialog.from(dialog);
+      this.emit(Events.BrowserContext.DialogClosed, dialogObject);
+      const page = dialogObject.page();
+      if (page)
+        page.emit(Events.Page.DialogClosed, dialogObject);
+    });
     this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
     this._channel.on('requestFinished', params => this._onRequestFinished(params));
@@ -171,6 +178,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._setEventToSubscriptionMapping(new Map<string, channels.BrowserContextUpdateSubscriptionParams['event']>([
       [Events.BrowserContext.Console, 'console'],
       [Events.BrowserContext.Dialog, 'dialog'],
+      [Events.BrowserContext.DialogClosed, 'dialogClosed'],
       [Events.BrowserContext.Request, 'request'],
       [Events.BrowserContext.Response, 'response'],
       [Events.BrowserContext.RequestFinished, 'requestFinished'],

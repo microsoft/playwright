@@ -89,6 +89,7 @@ export class BidiPage implements PageDelegate {
       eventsHelper.addEventListener(bidiSession, 'browsingContext.downloadWillBegin', this._onDownloadWillBegin.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.downloadEnd', this._onDownloadEnded.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.userPromptOpened', this._onUserPromptOpened.bind(this)),
+      eventsHelper.addEventListener(bidiSession, 'browsingContext.userPromptClosed', this._onUserPromptClosed.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'log.entryAdded', this._onLogEntryAdded.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'input.fileDialogOpened', this._onFileDialogOpened.bind(this)),
     ];
@@ -255,6 +256,10 @@ export class BidiPage implements PageDelegate {
           await this._session.send('browsingContext.handleUserPrompt', { context: event.context, accept, userText });
         },
         event.defaultValue));
+  }
+
+  private _onUserPromptClosed() {
+    this._page.browserContext.dialogManager.dialogWasClosedInBrowser(this._page);
   }
 
   private _onDownloadWillBegin(event: bidi.BrowsingContext.DownloadWillBeginParams) {

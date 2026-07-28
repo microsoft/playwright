@@ -198,6 +198,12 @@ Context.Dialog += async (_, dialog) =>
 When no [`event: Page.dialog`] or [`event: BrowserContext.dialog`] listeners are present, all dialogs are automatically dismissed.
 :::
 
+## event: BrowserContext.dialogClosed
+* since: v1.63
+- argument: <[Dialog]>
+
+Emitted when a JavaScript dialog in any page belonging to this context has been closed, either by [`method: Dialog.accept`], by [`method: Dialog.dismiss`], or manually by the user in the headed browser.
+
 ## event: BrowserContext.download
 * since: v1.60
 - argument: <[Download]>

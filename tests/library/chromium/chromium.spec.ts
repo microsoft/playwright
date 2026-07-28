@@ -746,3 +746,17 @@ test('should capture console.log from ServiceWorker start', async ({ context, pa
   expect(consoleMessage.text()).toBe('Hello from the first line of sw.js');
   expect(consoleMessage.type()).toBe('log');
 });
+
+test('should fire dialogclosed event when dialog is closed out of band', async ({ page }) => {
+  // Establish the CDP session up front: creating one while a dialog is blocking the page hangs.
+  const client = await page.context().newCDPSession(page);
+  await client.send('Page.enable');
+  const dialogPromise = page.waitForEvent('dialog');
+  const closedPromise = page.waitForEvent('dialogclosed');
+  const evaluatePromise = page.evaluate(() => alert('yo'));
+  const dialog = await dialogPromise;
+  // Handle the dialog out of band, similar to the user closing it in the headed browser.
+  await client.send('Page.handleJavaScriptDialog', { accept: true });
+  expect(await closedPromise).toBe(dialog);
+  await evaluatePromise;
+});

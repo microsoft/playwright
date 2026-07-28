@@ -57,6 +57,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   _webSocketInterceptionPatterns: channels.BrowserContextSetWebSocketInterceptionPatternsParams['patterns'] = [];
   private _disposables: Disposable[] = [];
   private _dialogHandler: (dialog: Dialog) => boolean;
+  private _dialogClosedListener: (dialog: Dialog) => void;
   private _clockPaused = false;
   private _requestInterceptor: RouteHandler;
   private _interceptionUrlMatchers: URLMatch[] = [];
@@ -138,6 +139,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       return true;
     };
     context.dialogManager.addDialogHandler(this._dialogHandler);
+    this._dialogClosedListener = dialog => {
+      if (!this._shouldDispatchEvent(dialog.page(), 'dialogClosed'))
+        return;
+      const dialogDispatcher = this.connection.existingDispatcher<DialogDispatcher>(dialog) || new DialogDispatcher(this, dialog);
+      this._dispatchEvent('dialogClosed', { dialog: dialogDispatcher });
+    };
+    context.dialogManager.addDialogClosedListener(this._dialogClosedListener);
 
     if (context._browser.options.name === 'chromium' && this._object._browser instanceof CRBrowser) {
       for (const serviceWorker of (context as CRBrowserContext).serviceWorkers())
@@ -444,6 +452,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
     // Cleanup properly and leave the page in a good state. Other clients may still connect and use it.
     this._context.dialogManager.removeDialogHandler(this._dialogHandler);
+    this._context.dialogManager.removeDialogClosedListener(this._dialogClosedListener);
     this._interceptionUrlMatchers = [];
     this._context.removeRequestInterceptor(this._requestInterceptor).catch(() => {});
     disposeAll(this._disposables).catch(() => {});

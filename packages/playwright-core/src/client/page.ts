@@ -178,6 +178,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._setEventToSubscriptionMapping(new Map<string, channels.PageUpdateSubscriptionParams['event']>([
       [Events.Page.Console, 'console'],
       [Events.Page.Dialog, 'dialog'],
+      [Events.Page.DialogClosed, 'dialogClosed'],
       [Events.Page.Request, 'request'],
       [Events.Page.Response, 'response'],
       [Events.Page.RequestFinished, 'requestFinished'],

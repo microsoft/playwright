@@ -603,6 +603,7 @@ Page:
           literals:
           - console
           - dialog
+          - dialogClosed
           - fileChooser
           - request
           - response
