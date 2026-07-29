@@ -139,7 +139,7 @@ export class Chromium extends BrowserType {
     try {
       const browserProcess: BrowserProcess = { close: doClose, kill: doClose };
       const persistent: types.BrowserContextOptions = {
-        noDefaultViewport: true,
+        viewportMode: 'none',
         ...(options.noDefaults ? { acceptDownloads: 'internal-browser-default' as const } : {}),
       };
       const browserOptions: BrowserOptions = {

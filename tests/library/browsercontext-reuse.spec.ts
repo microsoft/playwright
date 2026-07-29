@@ -421,5 +421,18 @@ for (const scenario of ['launch', 'connect'] as const) {
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
       await verifyViewport(page, 600, 800);
     });
+
+    test('should restore maximized viewport after reset', async ({ reusedContext, headless, isBidi }) => {
+      test.skip(headless || isBidi, 'maximized viewport requires a headed native browser');
+      let context = await reusedContext({ viewport: 'maximized' });
+      let page = await context.newPage();
+      const viewportSize = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, screenWidth: screen.width, screenHeight: screen.height }));
+      await page.setViewportSize({ width: 567, height: 345 });
+
+      context = await reusedContext({ viewport: 'maximized' });
+      page = context.pages()[0];
+      expect(page.viewportSize()).toBeNull();
+      expect(await page.evaluate(() => ({ width: innerWidth, height: innerHeight, screenWidth: screen.width, screenHeight: screen.height }))).toEqual(viewportSize);
+    });
   });
 }

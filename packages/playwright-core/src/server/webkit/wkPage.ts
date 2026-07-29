@@ -109,7 +109,7 @@ export class WKPage implements PageDelegate {
     });
     // Avoid unhandled rejection on disconnect in the middle of initialization.
     this._firstNonInitialNavigationCommittedPromise.catch(() => {});
-    if (opener && !browserContext._options.noDefaultViewport && opener._nextWindowOpenPopupFeatures) {
+    if (opener && browserContext._options.viewportMode !== 'none' && opener._nextWindowOpenPopupFeatures) {
       const viewportSize = helper.getViewportSizeFromWindowFeatures(opener._nextWindowOpenPopupFeatures);
       opener._nextWindowOpenPopupFeatures = undefined;
       if (viewportSize)
@@ -717,8 +717,17 @@ export class WKPage implements PageDelegate {
   async _updateViewport(): Promise<void> {
     const options = this._browserContext._options;
     const emulatedSize = this._page.emulatedSize();
-    if (!emulatedSize)
+    if (!emulatedSize) {
+      if (options.viewportMode === 'maximized') {
+        await Promise.all([
+          this._browserContext._browser._browserSession.send('Playwright.maximizeWindow', {
+            pageProxyId: this._pageProxySession.sessionId,
+          }),
+          this._session.send('Page.setScreenSizeOverride', {}),
+        ]);
+      }
       return;
+    }
     const viewportSize = emulatedSize.viewport;
     const screenSize = emulatedSize.screen;
     const promises: Promise<any>[] = [

@@ -284,7 +284,7 @@ function formatContextOptions(contextOptions: BrowserContextOptions, deviceName:
     lines.push(`  .setTimezoneId(${quote(options.timezoneId)})`);
   if (options.userAgent)
     lines.push(`  .setUserAgent(${quote(options.userAgent)})`);
-  if (options.viewport)
+  if (options.viewport && options.viewport !== 'maximized')
     lines.push(`  .setViewportSize(${options.viewport.width}, ${options.viewport.height})`);
   return lines.join('\n');
 }

@@ -753,10 +753,15 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
 }
 
 export function validateBrowserContextOptions(options: types.BrowserContextOptions, browserOptions: BrowserOptions) {
-  if (options.noDefaultViewport && options.deviceScaleFactor !== undefined)
-    throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
-  if (options.noDefaultViewport && !!options.isMobile)
-    throw new Error(`"isMobile" option is not supported with null "viewport"`);
+  options.viewportMode ||= options.noDefaultViewport ? 'none' : 'fixed';
+  delete options.noDefaultViewport;
+  const viewportDescription = options.viewportMode === 'maximized' ? '"maximized" viewport' : 'null "viewport"';
+  if (options.viewportMode !== 'fixed' && options.deviceScaleFactor !== undefined)
+    throw new Error(`"deviceScaleFactor" option is not supported with ${viewportDescription}`);
+  if (options.viewportMode !== 'fixed' && !!options.isMobile)
+    throw new Error(`"isMobile" option is not supported with ${viewportDescription}`);
+  if (options.viewportMode === 'maximized' && !browserOptions.headful)
+    throw new Error(`"maximized" viewport is not supported in headless mode`);
   if (options.acceptDownloads === undefined && browserOptions.name !== 'electron')
     options.acceptDownloads = 'accept';
   // Electron requires explicit acceptDownloads: true since we wait for
@@ -764,7 +769,7 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   // In 6-12 months, we can remove this check.
   else if (options.acceptDownloads === undefined && browserOptions.name === 'electron')
     options.acceptDownloads = 'internal-browser-default';
-  if (!options.viewport && !options.noDefaultViewport)
+  if (!options.viewport && options.viewportMode === 'fixed')
     options.viewport = { width: 1280, height: 720 };
   if (options.proxy)
     options.proxy = normalizeProxySettings(options.proxy);
@@ -844,6 +849,7 @@ const paramsThatAllowContextReuse: (keyof channels.BrowserNewContextForReusePara
 
 const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {
   noDefaultViewport: false,
+  viewportMode: 'fixed',
   ignoreHTTPSErrors: false,
   javaScriptEnabled: true,
   bypassCSP: false,

@@ -118,6 +118,7 @@ export class BidiBrowser extends Browser {
   }
 
   async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
+    this._validateViewportMode(options);
     const proxy = options.proxyOverride || options.proxy;
     const { userContext } = await this._browserSession.send('browser.createUserContext', {
       acceptInsecureCerts: options.internalIgnoreHTTPSErrors || options.ignoreHTTPSErrors,
@@ -127,6 +128,11 @@ export class BidiBrowser extends Browser {
     await context.initialize();
     this._contexts.set(userContext, context);
     return context;
+  }
+
+  _validateViewportMode(options: types.BrowserContextOptions) {
+    if (options.viewportMode === 'maximized')
+      throw new Error('"maximized" viewport is not supported for this browser');
   }
 
   contexts(): BrowserContext[] {
@@ -236,6 +242,7 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   override async initialize() {
+    this._browser._validateViewportMode(this._options);
     const promises: Promise<any>[] = [
       super.initialize(),
     ];
