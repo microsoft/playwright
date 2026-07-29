@@ -6,6 +6,38 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.62
+
+### 🖼️ WebP screenshots
+
+[`method: Page.screenshot`] and [`method: Locator.screenshot`] can now capture screenshots in the WebP format — Playwright infers the format from a `.webp` file extension, or you can set the `type` explicitly. Quality `100` (the default) is lossless, while lower values use lossy compression:
+
+```python
+page.screenshot(path="homepage.webp", quality=50)
+```
+
+### New APIs
+
+- New `scroll` option (`"auto"` | `"none"`) on actions to opt out of Playwright's automatic scroll-into-view.
+- New [`method: Locator.waitForFunction`] waits until a function — called with the matching element — returns a truthy value.
+- New [`method: APIResponse.timing`] returns resource timing information for an API response.
+
+### Announcements
+
+* ⚠️ Debian 11 is not supported anymore.
+
+### Browser Versions
+
+- Chromium 151.0.7922.34
+- Mozilla Firefox 153.0
+- WebKit 26.5
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 151
+- Microsoft Edge 151
+
+
 ## Version 1.61
 
 ### 🔑 WebAuthn passkeys
