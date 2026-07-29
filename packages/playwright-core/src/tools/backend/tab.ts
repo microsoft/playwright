@@ -129,6 +129,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
         });
       }),
       eventsHelper.addEventListener(p, 'dialog', dialog => this._dialogShown(dialog)),
+      eventsHelper.addEventListener(p, 'dialogclosed', dialog => this._dialogClosed(dialog)),
       eventsHelper.addEventListener(p, 'download', download => {
         void this._downloadStarted(download);
       }),
@@ -205,6 +206,12 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       dialog,
       clearedBy: { tool: handleDialog.schema.name, skill: 'dialog-accept or dialog-dismiss' }
     });
+  }
+
+  private _dialogClosed(dialog: playwright.Dialog) {
+    const modalState = this._modalStates.find(state => state.type === 'dialog' && state.dialog === dialog);
+    if (modalState)
+      this.clearModalState(modalState);
   }
 
   private async _downloadStarted(download: playwright.Download) {
