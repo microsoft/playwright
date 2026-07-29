@@ -24,7 +24,7 @@ import { isUnderTest } from '@utils/debug';
 import { eventsHelper } from '@utils/eventsHelper';
 import { BrowserContext } from './browserContext';
 import { Debugger } from './debugger';
-import { buildFullSelector, generateFrameSelector, metadataToCallLog } from './recorder/recorderUtils';
+import { buildFullSelectorForFrame, metadataToCallLog } from './recorder/recorderUtils';
 import { nullProgress, ProgressController } from './progress';
 
 import { RecorderSignalProcessor } from './recorder/recorderSignalProcessor';
@@ -194,8 +194,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       });
 
       await this._context.exposeBinding(progress, '__pw_recorderElementPicked', async ({ frame }, elementInfo: ElementInfo) => {
-        const selectorChain = await generateFrameSelector(progress, frame);
-        this.emit(RecorderEvent.ElementPicked, { selector: buildFullSelector(selectorChain, elementInfo.selector), ariaSnapshot: elementInfo.ariaSnapshot }, true);
+        const selector = await buildFullSelectorForFrame(progress, frame, elementInfo.selector);
+        this.emit(RecorderEvent.ElementPicked, { selector, ariaSnapshot: elementInfo.ariaSnapshot }, true);
       });
 
       await this._context.exposeBinding(progress, '__pw_recorderSetMode', async ({ frame }, mode: Mode) => {
@@ -539,28 +539,21 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     return this._params.testIdAttributeName || this._context.selectors().testIdAttributeName() || 'data-testid';
   }
 
-  private _appendContextToAction(frame: Frame, action: actions.Action, framePath: string[]): actions.ActionInContext {
-    if (framePath.length && 'selector' in action)
-      action.selector = buildFullSelector(framePath, action.selector);
+  private async _performAction(progress: Progress, frame: Frame, action: actions.PerformableAction) {
+    const selector = await buildFullSelectorForFrame(progress, frame, action.selector);
+    await performAction(progress, frame._page.mainFrame(), { ...action, selector });
+  }
+
+  private async _recordAction(progress: Progress, frame: Frame, action: actions.Action, preconditionSelector?: string) {
+    if (preconditionSelector)
+      this._signalProcessor.signal(frame, { name: 'expect', selector: await buildFullSelectorForFrame(progress, frame, preconditionSelector) });
+    if ('selector' in action)
+      action.selector = await buildFullSelectorForFrame(progress, frame, action.selector);
     const actionInContext: actions.ActionInContext = {
       pageGuid: frame._page.guid,
       action,
       signals: [],
     };
-    return actionInContext;
-  }
-
-  private async _performAction(progress: Progress, frame: Frame, action: actions.PerformableAction) {
-    const framePath = await generateFrameSelector(progress, frame);
-    const selector = buildFullSelector(framePath, action.selector);
-    await performAction(progress, frame._page.mainFrame(), { ...action, selector });
-  }
-
-  private async _recordAction(progress: Progress, frame: Frame, action: actions.Action, preconditionSelector?: string) {
-    const framePath = await generateFrameSelector(progress, frame);
-    if (preconditionSelector)
-      this._signalProcessor.signal(frame, { name: 'expect', selector: buildFullSelector(framePath, preconditionSelector) });
-    const actionInContext = this._appendContextToAction(frame, action, framePath);
     this._signalProcessor.addAction(actionInContext);
   }
 

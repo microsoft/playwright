@@ -7587,6 +7587,26 @@ export interface PlaywrightTestOptions {
    */
   permissions: string[] | undefined;
   /**
+   * If set to true, all selectors in this context will pierce frames by default, as if every locator was created
+   * through [page.pierceFrames([options])](https://playwright.dev/docs/api/class-page#page-pierce-frames). Defaults to
+   * `false`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     pierceFrames: true,
+   *   }
+   * });
+   * ```
+   *
+   */
+  pierceFrames: boolean;
+  /**
    * Network proxy settings.
    *
    * **Usage**

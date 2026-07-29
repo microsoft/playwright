@@ -885,6 +885,12 @@ Actual picture of each page will be scaled down if necessary to fit the specifie
 
 Network proxy settings to use with this context. Defaults to none.
 
+## context-option-pierce-frames
+- `pierceFrames` <[boolean]>
+
+If set to true, all selectors in this context will pierce frames by default, as if every locator
+was created through [`method: Page.pierceFrames`]. Defaults to `false`.
+
 ## context-option-strict
 - `strictSelectors` <[boolean]>
 
@@ -1124,6 +1130,7 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 - %%-context-option-recordvideo-%%
 - %%-context-option-recordvideo-dir-%%
 - %%-context-option-recordvideo-size-%%
+- %%-context-option-pierce-frames-%%
 - %%-context-option-strict-%%
 - %%-context-option-service-worker-policy-%%
 

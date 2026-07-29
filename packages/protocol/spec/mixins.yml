@@ -201,6 +201,7 @@ ContextOptions:
           properties:
             $mixin: ShowActionsOptions
     strictSelectors: boolean?
+    pierceFrames: boolean?
     serviceWorkers:
       type: enum?
       literals:

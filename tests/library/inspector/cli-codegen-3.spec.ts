@@ -1146,6 +1146,62 @@ await page.GetByTestId("testid").HoverAsync();`);
   });
 });
 
+test.describe('cli codegen with pierceFrames', () => {
+  test.use({
+    contextOptions: async ({ contextOptions }, use) => {
+      await use({ ...contextOptions, pierceFrames: true });
+    },
+  });
+
+  test('should generate a short selector when unique across frames', async ({ openRecorder, server }) => {
+    const { page, recorder } = await openRecorder();
+    const { frameHello2 } = await createFrameHierarchy(page, recorder, server);
+
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'Hello2'),
+      frameHello2.click('text=Hello2'),
+    ]);
+
+    expect.soft(sources.get('JavaScript')!.text).toContain(`
+  await page.getByText('Hello2').click();`);
+  });
+
+  test('should prepend the frame selector to disambiguate', async ({ openRecorder, server }) => {
+    const { page, recorder } = await openRecorder();
+    await recorder.setContentAndWait(`
+      <iframe id=frame1 srcdoc="<iframe srcdoc='<button>Hello</button>'></iframe>"></iframe>
+      <iframe id=frame2 srcdoc="<iframe srcdoc='<button>Hello</button>'></iframe>"></iframe>
+    `, server.EMPTY_PAGE, 5);
+
+    // Both the bare selector and the "iframe >> enter-frame" prefix are ambiguous,
+    // so two frame selectors must be prepended to pinpoint the target frame.
+    const frame = page.mainFrame().childFrames()[0].childFrames()[0];
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'click'),
+      frame.click('text=Hello'),
+    ]);
+
+    expect.soft(sources.get('JavaScript')!.text).toContain(`
+  await page.locator('#frame1').contentFrame().locator('iframe').contentFrame().getByRole('button', { name: 'Hello' }).click();`);
+  });
+
+  test('should opt out of piercing when the frame chain does not pinpoint the frame', async ({ openRecorder, server }) => {
+    const { page, recorder } = await openRecorder();
+    await recorder.setContentAndWait(`
+      <iframe id=frame1 srcdoc="<button>Hello</button><iframe srcdoc='<button>Hello</button>'></iframe>"></iframe>
+    `, server.EMPTY_PAGE, 3);
+
+    const frame = page.mainFrame().childFrames()[0];
+    const [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'click'),
+      frame.click('internal:control=no-pierce-frames >> text=Hello'),
+    ]);
+
+    expect.soft(sources.get('JavaScript')!.text).toContain(`
+  await page.pierceFrames({ pierce: false }).locator('#frame1').contentFrame().getByRole('button', { name: 'Hello' }).click();`);
+  });
+});
+
 async function createFrameHierarchy(page: Page, recorder: Recorder, server: TestServer) {
   /*
     iframe

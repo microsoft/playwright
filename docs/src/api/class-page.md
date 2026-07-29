@@ -3208,6 +3208,13 @@ var locator = page.PierceFrames.GetByRole(AriaRole.Button);
 await locator.ClickAsync();
 ```
 
+### option: Page.pierceFrames.pierce
+* since: v1.63
+- `pierce` <[boolean]>
+
+Whether to pierce frames. Pass `false` to opt out of frame piercing enabled
+by the [`option: Browser.newContext.pierceFrames`] context option. Defaults to `true`.
+
 ## async method: Page.press
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.press`] instead. Read more about [locators](../locators.md).

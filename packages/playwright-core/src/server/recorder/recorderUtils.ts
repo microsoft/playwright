@@ -24,8 +24,37 @@ import type { CallMetadata } from '../instrumentation';
 import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
 import type { Progress } from '../progress';
 
-export function buildFullSelector(framePath: string[], selector: string) {
+function buildFullSelector(framePath: string[], selector: string) {
   return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
+}
+
+export async function buildFullSelectorForFrame(progress: Progress, frame: Frame, selector: string): Promise<string> {
+  const framePath = await generateFrameSelector(progress, frame);
+  if (!frame._page.browserContext._options.pierceFrames || !framePath.length)
+    return buildFullSelector(framePath, selector);
+
+  // Prefer the shortest selector that resolves to the target frame.
+  const result = await progress.race(raceAgainstDeadline(async () => {
+    for (let i = framePath.length; i >= 0; i--) {
+      const candidate = buildFullSelector(framePath.slice(i), selector);
+      if (await resolvesToFrame(progress, candidate, frame))
+        return candidate;
+    }
+  }, monotonicTime() + 2000));
+  if (!result.timedOut && result.result)
+    return result.result;
+
+  return 'internal:control=no-pierce-frames >> ' + buildFullSelector(framePath, selector);
+}
+
+async function resolvesToFrame(progress: Progress, selector: string, frame: Frame): Promise<boolean> {
+  try {
+    const resolved = await progress.race(frame._page.mainFrame().selectors.callOnSelector(selector, { strict: false }, () => true, {}));
+    return resolved?.frame === frame;
+  } catch (e) {
+    // Errors like "matched in multiple frames" mean the selector does not pinpoint the frame.
+    return false;
+  }
 }
 
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
@@ -54,7 +83,7 @@ export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus)
 }
 
 
-export async function generateFrameSelector(progress: Progress, frame: Frame): Promise<string[]> {
+async function generateFrameSelector(progress: Progress, frame: Frame): Promise<string[]> {
   const selectorPromises: Promise<string>[] = [];
   progress.setAllowConcurrentOrNestedRaces(true);
   while (frame) {
