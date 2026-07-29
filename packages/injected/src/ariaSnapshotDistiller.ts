@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { hasPointerCursor } from '@isomorphic/ariaSnapshot';
 import { normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
 import type * as aria from '@isomorphic/ariaSnapshot';
@@ -102,6 +103,11 @@ function isLeafGeneric(node: aria.AriaNode): boolean {
   return node.role === 'generic' && node.children.every(child => typeof child === 'string');
 }
 
+// Removing the click target root would hide an actionable element from the snapshot.
+function isClickTargetRoot(node: aria.AriaNode, ctx: DistillerContext): boolean {
+  return !!node.ref && hasPointerCursor(node) && !ctx.ancestors.some(ancestor => !!ancestor.ref && hasPointerCursor(ancestor));
+}
+
 // The tree builder emits raw text tokens - text nodes, CSS content, block spacing markers - as
 // string children. Coalesce the adjacent ones, normalize whitespace and drop the empties, then
 // drop a lone text child that merely repeats the node's accessible name. Runs on `exit`, so the
@@ -137,22 +143,27 @@ const mergeStringChildren: DistillerPlugin = {
 // Only unwrap a generic that encloses at most one element, logical grouping still makes sense,
 // even if it is not ref-able. The decision is made on `exit` - whether the node encloses a single
 // ref-bearing child is only known after its own descendants were unwrapped - so nested wrappers
-// collapse bottom-up.
+// collapse bottom-up. A generic emptied by the other plugins is dropped, unless it is the
+// click target root, for example an icon-only button.
 const unwrapSingleChildGenerics: DistillerPlugin = {
   name: 'unwrapSingleChildGenerics',
-  exit(node: aria.AriaNode): 'unwrap' | void {
-    if (node.role === 'generic' && !node.name && node.children.length <= 1 && node.children.every(child => typeof child !== 'string' && !!child.ref))
-      return 'unwrap';
+  exit(node: aria.AriaNode, ctx: DistillerContext): 'unwrap' | void {
+    if (node.role !== 'generic' || node.name || node.children.length > 1 || !node.children.every(child => typeof child !== 'string' && !!child.ref))
+      return;
+    if (!node.children.length && isClickTargetRoot(node, ctx))
+      return;
+    return 'unwrap';
   },
 };
 
 // A decorative image - role `img` with no accessible name and no content - carries no
 // information. The decision is made on `exit` - whether the node has content is only known after
-// `mergeStringChildren` dropped the empty text tokens.
+// `mergeStringChildren` dropped the empty text tokens. A clickable image outside of any clickable
+// container is not decorative though - e.g. a bare svg icon acting as a button - and is kept.
 const removeNamelessImages: DistillerPlugin = {
   name: 'removeNamelessImages',
-  exit(node: aria.AriaNode): 'remove' | void {
-    if (node.role === 'img' && !node.name && !node.children.length)
+  exit(node: aria.AriaNode, ctx: DistillerContext): 'remove' | void {
+    if (node.role === 'img' && !node.name && !node.children.length && !isClickTargetRoot(node, ctx))
       return 'remove';
   },
 };
