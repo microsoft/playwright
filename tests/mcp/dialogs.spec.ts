@@ -252,7 +252,7 @@ test('dialog closed out of band', {
   await cdpSession.send('Page.handleJavaScriptDialog', { accept: true });
   await closedPromise;
 
-  expect(await client.callTool({
+  await expect.poll(() => client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
     modalState: undefined,
