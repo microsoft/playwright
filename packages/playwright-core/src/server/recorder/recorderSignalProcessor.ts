@@ -133,6 +133,12 @@ export class RecorderSignalProcessor {
       const lastAction = this._lastAction;
       const signalThreshold = isUnderTest() ? 500 : 5000;
 
+      // A duplicate navigation signal to the URL we already recorded a goto for
+      // (e.g. a second commit for the same about:blank navigation) must not
+      // produce a second identical goto.
+      if (lastAction?.action.name === 'navigate' && lastAction.pageGuid === frame._page.guid && lastAction.action.url === frame.url())
+        return;
+
       let generateGoto = false;
       if (!lastAction)
         generateGoto = true;
