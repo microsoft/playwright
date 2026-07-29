@@ -99,8 +99,7 @@ const test = baseTest.extend<BrowserTestTestFixtures & { _contextFactory: Contex
 
   isHeadlessShell: [async ({ browserName, channel, headless }, use) => {
     const isShell = channel === 'chromium-headless-shell' || (!channel && headless);
-    const isToTShell = channel === 'chromium-tip-of-tree-headless-shell' || (channel === 'chromium-tip-of-tree' && headless);
-    await use(browserName === 'chromium' && (isShell || isToTShell));
+    await use(browserName === 'chromium' && isShell);
   }, { scope: 'worker' }],
 
   isFrozenWebkit: [async ({ browserName, isMac, macVersion }, use) => {

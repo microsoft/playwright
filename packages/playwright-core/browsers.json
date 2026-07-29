@@ -16,32 +16,11 @@
       "title": "Chrome Headless Shell"
     },
     {
-      "name": "chromium-tip-of-tree",
-      "revision": "1433",
-      "installByDefault": false,
-      "browserVersion": "151.0.7893.0",
-      "title": "Chrome Canary for Testing"
-    },
-    {
-      "name": "chromium-tip-of-tree-headless-shell",
-      "revision": "1433",
-      "installByDefault": false,
-      "browserVersion": "151.0.7893.0",
-      "title": "Chrome Canary Headless Shell"
-    },
-    {
       "name": "firefox",
       "revision": "1539",
       "installByDefault": true,
       "browserVersion": "153.0",
       "title": "Firefox"
-    },
-    {
-      "name": "firefox-beta",
-      "revision": "1526",
-      "installByDefault": false,
-      "browserVersion": "152.0b1",
-      "title": "Firefox Beta"
     },
     {
       "name": "webkit",
