@@ -480,6 +480,10 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `BC-081` | `library/browsercontext-reuse.spec.ts` | reuse {launch, connect} › should continue issuing events after closing the reused page *(2 copies)* |
 | `BC-082` | `library/browsercontext-reuse.spec.ts` | reuse {launch, connect} › should work with routeWebSocket *(2 copies)* |
 | `BC-083` | `library/browsercontext-reuse.spec.ts` | reuse {launch, connect} › should update viewport and media *(2 copies)* |
+| `BC-084` | `library/browsercontext-basic.spec.ts` | should not allow deviceScaleFactor with maximized viewport |
+| `BC-085` | `library/browsercontext-basic.spec.ts` | should not allow isMobile with maximized viewport |
+| `BC-086` | `library/browsercontext-basic.spec.ts` | should not allow maximized viewport in headless mode |
+| `BC-087` | `library/browsercontext-reuse.spec.ts` | reuse {launch, connect} › should restore maximized viewport after reset *(2 copies)* |
 
 ### BP — Browsers path
 
@@ -981,6 +985,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CG-189` | `library/unit/codegen.spec.ts` | java › generatePlaywrightRequestCall with PATCH method and form data |
 | `CG-190` | `library/unit/codegen.spec.ts` | java › generatePlaywrightRequestCall with DELETE method and custom header |
 | `CG-191` | `library/unit/codegen.spec.ts` | java › escape sequences |
+| `CG-192` | `library/unit/codegen.spec.ts` | should generate maximized viewport context options |
 
 ### CH — Check
 
@@ -3183,6 +3188,11 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `HE-014` | `library/headful.spec.ts` | should click bottom row w/ infobar in OOPIF |
 | `HE-015` | `library/headful.spec.ts` | headless and headful should use same default fonts |
 | `HE-016` | `library/headful.spec.ts` | should have the same hyphen rendering on headless and headed |
+| `HE-017` | `library/headful.spec.ts` | maximized viewport › should create context in maximized window without entering fullscreen |
+| `HE-018` | `library/headful.spec.ts` | maximized viewport › should open shift-clicked links in maximized windows |
+| `HE-019` | `library/headful.spec.ts` | maximized viewport › should respect explicitly sized popup geometry |
+| `HE-020` | `library/headful.spec.ts` | maximized viewport › should override maximized viewport when resizing a page |
+| `HE-021` | `library/headful.spec.ts` | maximized viewport › should launch persistent context in maximized window |
 
 ### HS — HTTP server
 

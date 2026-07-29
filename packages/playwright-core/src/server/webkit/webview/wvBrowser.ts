@@ -268,6 +268,8 @@ export class WVBrowser extends Browser {
   }
 
   async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
+    if (options.viewportMode === 'maximized')
+      throw new Error('"maximized" viewport is not supported for this browser');
     throw new Error('Not supported');
   }
 

@@ -354,6 +354,12 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   override async doUpdateDefaultViewport() {
+    if (this._options.viewportMode === 'maximized') {
+      await this._browser.session.send('Browser.setWindowMaximized', {
+        browserContextId: this._browserContextId,
+      });
+      return;
+    }
     if (!this._options.viewport)
       return;
     const viewport = {

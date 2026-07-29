@@ -15,7 +15,26 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { CSharpLanguageGenerator } from '../../../packages/isomorphic/codegen/csharp';
+import { JavaLanguageGenerator } from '../../../packages/isomorphic/codegen/java';
+import { PythonLanguageGenerator } from '../../../packages/isomorphic/codegen/python';
 import { getAPIRequestCodeGen } from '../../../packages/trace-viewer/src/ui/codegen';
+
+test('CG-192 should generate maximized viewport context options', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/1086' } }, () => {
+  const cases = [
+    { generator: new PythonLanguageGenerator(false, false), expected: 'browser.new_context(viewport="maximized")' },
+    { generator: new JavaLanguageGenerator('library'), expected: '.setViewportSize(ViewportSize.MAXIMIZED)' },
+    { generator: new CSharpLanguageGenerator('library'), expected: 'ViewportSize = ViewportSize.Maximized,' },
+  ];
+  for (const { generator, expected } of cases) {
+    const header = generator.generateHeader({
+      browserName: 'chromium',
+      launchOptions: { headless: false },
+      contextOptions: { viewport: 'maximized' },
+    });
+    expect(header, generator.id).toContain(expected);
+  }
+});
 
 test.describe('javascript', () => {
   const impl = getAPIRequestCodeGen('javascript');
