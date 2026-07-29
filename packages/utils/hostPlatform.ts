@@ -88,7 +88,7 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
       if (major < 20)
         return { hostPlatform: ('ubuntu18.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
       if (major < 22)
-        return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '20.04' };
+        return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
       if (major < 24)
         return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '22.04' };
       if (major < 26)
