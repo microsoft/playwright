@@ -42,7 +42,7 @@ export class Session {
     return compareSemver(clientInfo.version, this.config.version) >= 0;
   }
 
-  async run(clientInfo: ClientInfo, args: MinimistArgs, options?: { raw?: boolean, json?: boolean }): Promise<{ text: string }> {
+  async run(clientInfo: ClientInfo, args: MinimistArgs, options?: { raw?: boolean, json?: boolean }): Promise<{ text: string, isError?: boolean }> {
     if (!this.isCompatible(clientInfo))
       throw new Error(`Client is v${clientInfo.version}, session '${this.name}' is v${this.config.version}. Run\n\n  playwright-cli${this.name !== 'default' ? ` -s=${this.name}` : ''} open\n\nto restart the browser session.`);
 

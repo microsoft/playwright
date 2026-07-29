@@ -369,6 +369,18 @@ test('--raw on command without output', async ({ cli, server }) => {
   expect(output).not.toContain('Page URL');
 });
 
+test('tool error exits with non-zero code', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42028' } }, async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
+
+  const { output, exitCode } = await cli('click', 'e999');
+  expect(output).toContain('Ref e999 not found in the current page snapshot.');
+  expect(exitCode).toBe(1);
+
+  const { output: jsonOutput, exitCode: jsonExitCode } = await cli('--json', 'click', 'e999');
+  expect(JSON.parse(jsonOutput).isError).toBe(true);
+  expect(jsonExitCode).toBe(1);
+});
+
 test('codegen escapes single quotes in user input', async ({ cli, server }) => {
   server.setContent('/', `<input type=text>`, 'text/html');
   await cli('open', server.PREFIX);
