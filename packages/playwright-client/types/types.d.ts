@@ -11816,6 +11816,12 @@ export interface Browser {
        */
       height: number;
     };
+
+    /**
+     * Controls the native browser window state for every page. When unset, the window state is left to the browser. Does
+     * not trigger the web Fullscreen API. Has no effect when the browser has no visible window.
+     */
+    windowState?: "normal"|"minimized"|"maximized"|"fullscreen";
   }): Promise<Page>;
 
   /**
@@ -18137,6 +18143,12 @@ export interface BrowserType<Unused = {}> {
        */
       height: number;
     };
+
+    /**
+     * Controls the native browser window state for every page. When unset, the window state is left to the browser. Does
+     * not trigger the web Fullscreen API. Has no effect when the browser has no visible window.
+     */
+    windowState?: "normal"|"minimized"|"maximized"|"fullscreen";
   }): Promise<BrowserContext>;
 
   /**
@@ -26639,6 +26651,12 @@ export interface BrowserContextOptions {
    *
    */
   viewport?: null|ViewportSize;
+
+  /**
+   * Controls the native browser window state for every page. When unset, the window state is left to the browser. Does
+   * not trigger the web Fullscreen API. Has no effect when the browser has no visible window.
+   */
+  windowState?: "normal"|"minimized"|"maximized"|"fullscreen";
 }
 
 export interface ViewportSize {

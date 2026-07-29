@@ -399,6 +399,11 @@ It makes the execution of the tests non-deterministic.
 Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
 [`option: viewport`] is set.
 
+## context-option-windowstate
+- `windowState` <[WindowState]<"normal"|"minimized"|"maximized"|"fullscreen">>
+
+Controls the native browser window state for every page. When unset, the window state is left to the browser. Does not trigger the web Fullscreen API. Has no effect when the browser has no visible window.
+
 ## page-agent-cache-key
 * since: v1.58
 - `cacheKey` <[string]>

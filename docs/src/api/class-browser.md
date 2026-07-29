@@ -264,6 +264,9 @@ await browser.CloseAsync();
 ### option: Browser.newContext.clientCertificates = %%-context-option-clientCertificates-%%
 * since: 1.46
 
+### option: Browser.newContext.windowState = %%-context-option-windowstate-%%
+* since: v1.63
+
 ### option: Browser.newContext.storageState = %%-js-python-context-option-storage-state-%%
 * since: v1.8
 
@@ -291,6 +294,9 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 
 ### option: Browser.newPage.clientCertificates = %%-context-option-clientCertificates-%%
 * since: 1.46
+
+### option: Browser.newPage.windowState = %%-context-option-windowstate-%%
+* since: v1.63
 
 ### option: Browser.newPage.storageState = %%-js-python-context-option-storage-state-%%
 * since: v1.8

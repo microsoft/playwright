@@ -107,7 +107,7 @@ export class WKPage implements PageDelegate {
     });
     // Avoid unhandled rejection on disconnect in the middle of initialization.
     this._firstNonInitialNavigationCommittedPromise.catch(() => {});
-    if (opener && !browserContext._options.noDefaultViewport && opener._nextWindowOpenPopupFeatures) {
+    if (opener && (!browserContext._options.noDefaultViewport || !!browserContext._options.windowState) && opener._nextWindowOpenPopupFeatures) {
       const viewportSize = helper.getViewportSizeFromWindowFeatures(opener._nextWindowOpenPopupFeatures);
       opener._nextWindowOpenPopupFeatures = undefined;
       if (viewportSize)
@@ -133,6 +133,13 @@ export class WKPage implements PageDelegate {
     }
     startAutomaticVideoRecording(this._page);
     await Promise.all(promises);
+    if (contextOptions.windowState && this._browserContext._browser.options.headful) {
+      await this._browserContext._browser._browserSession.send('Playwright.setWindowState', {
+        pageProxyId: this._pageProxySession.sessionId,
+        windowState: contextOptions.windowState,
+      });
+      await this._updateViewport();
+    }
   }
 
   private _setSession(session: WKSession) {

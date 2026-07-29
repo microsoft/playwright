@@ -7163,6 +7163,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type PageProxyID = string;
     /**
+     * Native browser window state.
+     */
+    export type WindowState = "normal"|"minimized"|"maximized"|"fullscreen";
+    /**
      * Same-Site policy of a cookie.
      */
     export type CookieSameSitePolicy = "None"|"Lax"|"Strict";
@@ -7429,6 +7433,21 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Unique identifier of the page proxy.
        */
       pageProxyId: PageProxyID;
+    }
+    /**
+     * Changes the native browser window state.
+     */
+    export type setWindowStateParameters = {
+      /**
+       * Unique identifier of the page proxy.
+       */
+      pageProxyId: PageProxyID;
+      /**
+       * Native browser window state.
+       */
+      windowState: WindowState;
+    }
+    export type setWindowStateReturnValue = {
     }
     /**
      * Navigates current page to the given URL.
@@ -9692,6 +9711,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.createContext": Playwright.createContextParameters;
     "Playwright.deleteContext": Playwright.deleteContextParameters;
     "Playwright.createPage": Playwright.createPageParameters;
+    "Playwright.setWindowState": Playwright.setWindowStateParameters;
     "Playwright.navigate": Playwright.navigateParameters;
     "Playwright.grantFileReadAccess": Playwright.grantFileReadAccessParameters;
     "Playwright.takePageScreenshot": Playwright.takePageScreenshotParameters;
@@ -10002,6 +10022,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.createContext": Playwright.createContextReturnValue;
     "Playwright.deleteContext": Playwright.deleteContextReturnValue;
     "Playwright.createPage": Playwright.createPageReturnValue;
+    "Playwright.setWindowState": Playwright.setWindowStateReturnValue;
     "Playwright.navigate": Playwright.navigateReturnValue;
     "Playwright.grantFileReadAccess": Playwright.grantFileReadAccessReturnValue;
     "Playwright.takePageScreenshot": Playwright.takePageScreenshotReturnValue;

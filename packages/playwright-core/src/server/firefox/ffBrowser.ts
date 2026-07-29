@@ -185,6 +185,12 @@ export class FFBrowserContext extends BrowserContext {
         },
       }));
     }
+    if (this._options.windowState) {
+      promises.push(this._browser.session.send('Browser.setWindowState', {
+        browserContextId,
+        windowState: this._options.windowState,
+      }));
+    }
     promises.push(this.doUpdateDefaultViewport());
     if (this._options.hasTouch)
       promises.push(this._browser.session.send('Browser.setTouchOverride', { browserContextId, hasTouch: true }));
