@@ -250,6 +250,8 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
 
 function formatObject(value: any, indent = '    ', name = ''): string {
   if (typeof value === 'string') {
+    if (name === 'viewport' && value === 'maximized')
+      return 'ViewportSize.Maximized';
     if (['colorScheme', 'modifiers', 'button', 'recordHarContent', 'recordHarMode', 'serviceWorkers'].includes(name))
       return `${getEnumName(name)}.${toPascal(value)}`;
     return quote(value);
