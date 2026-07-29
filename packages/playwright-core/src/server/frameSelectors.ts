@@ -136,7 +136,7 @@ export class FrameSelectors {
     }
 
     if (pierce) {
-      const parsed = chunks[0];  // Only one chunk is allowed with pierce.
+      const parsed = chunks[0];  // Only one chunk is allowed with pierce, it may contain enter-frame parts.
       if (parsed.parts.some((part, index) => part.name === 'nth' && index !== parsed.parts.length - 1)) {
         const locator = asLocator(this.frame._page.browserContext._browser.sdkLanguage(), selector);
         throw new InvalidSelectorError(`nth can only be the last locator when piercing frames, while querying "${locator}"`);
@@ -186,6 +186,9 @@ export class FrameSelectors {
     for (const [frame, startIndexes] of candidates) {
       for (const startIndex of startIndexes) {
         const suffix = infos.slice(startIndex);
+        // A leftover "enter-frame" token means we are not going to match anything in this frame.
+        if (suffix.some(info => isEnterFramePart(info.parsed.parts[0])))
+          continue;
         const partialInfo: SelectorInfo = {
           parsed: { parts: suffix.map(info => info.parsed.parts[0]) },
           world: suffix.some(info => info.world === 'main') ? 'main' : 'utility',
@@ -225,8 +228,17 @@ export class FrameSelectors {
             for (const element of all)
               next.add(element);
           }
+          const nextPart = index + 1 < infos.length ? infos[index + 1].parsed.parts[0] : undefined;
+          if (nextPart && nextPart.name === 'internal:control' && nextPart.body === 'enter-frame') {
+            // We must enter the iframe now, so stop matching any further.
+            for (const { frameElement, nextIndexes } of result) {
+              if (next.has(frameElement))
+                nextIndexes.push(index + 2);
+            }
+            break;
+          }
           roots = [...next];
-          if (index + 1 < infos.length && !['nth', 'visible'].includes(infos[index + 1].parsed.parts[0].name)) {
+          if (nextPart && !['nth', 'visible'].includes(nextPart.name)) {
             for (const { frameElement, nextIndexes } of result) {
               if (roots.some(root => injected.utils.isInsideScope(root, frameElement)))
                 nextIndexes.push(index + 1);
@@ -340,6 +352,10 @@ export class FrameSelectors {
     const result = await this._callOnSelectorInternal(selector, { ...options, callWithoutMatches: false }, pageFunction, arg, false /* returnByValue */);
     return result as { frame: Frame, info: SelectorInfo, result: SmartHandle<R> } | null;
   }
+}
+
+function isEnterFramePart(part: ParsedSelector['parts'][0]): boolean {
+  return part.name === 'internal:control' && part.body === 'enter-frame';
 }
 
 async function adoptIfNeeded<T extends Node>(handle: ElementHandle<T>, context: FrameExecutionContext): Promise<ElementHandle<T>> {

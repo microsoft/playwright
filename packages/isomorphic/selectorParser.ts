@@ -92,8 +92,8 @@ export function parseSelector(selector: string): ParsedSelector {
 }
 
 // Splits a selector into per-frame chunks separated by "enter-frame" boundaries. When the selector
-// starts with the "pierce-frames" token, `pierce` is set globally and no "enter-frame" boundaries
-// are allowed (piercing already searches every descendant frame), so `chunks` holds a single chunk.
+// starts with the "pierce-frames" token, `pierce` is set globally and "enter-frame" tokens are
+// preserved, so `chunks` holds a single chunk.
 export function splitSelectorByFrame(selectorText: string): { pierce: boolean, chunks: ParsedSelector[] } {
   const selector = parseSelector(selectorText);
   const chunks: ParsedSelector[] = [];
@@ -113,10 +113,13 @@ export function splitSelectorByFrame(selectorText: string): { pierce: boolean, c
       continue;
     }
     if (part.name === 'internal:control' && part.body === 'enter-frame') {
-      if (pierce)
-        throw new InvalidSelectorError(`Entering frames is not allowed while piercing frames, while parsing selector ${selectorText}`);
-      if (!chunk.parts.length)
+      const lastPart = chunk.parts[chunk.parts.length - 1];
+      if (!lastPart || (lastPart.name === 'internal:control' && lastPart.body === 'enter-frame'))
         throw new InvalidSelectorError('Selector cannot start with entering frame, select the iframe first');
+      if (pierce) {
+        chunk.parts.push(part);
+        continue;
+      }
       chunks.push(chunk);
       chunk = { parts: [] };
       chunkStartIndex = i + 1;
@@ -131,6 +134,9 @@ export function splitSelectorByFrame(selectorText: string): { pierce: boolean, c
       throw new InvalidSelectorError(`Selector cannot be empty when piercing frames, while parsing selector ${selectorText}`);
     throw new InvalidSelectorError(`Selector cannot end with entering frame, while parsing selector ${selectorText}`);
   }
+  const lastPart = chunk.parts[chunk.parts.length - 1];
+  if (lastPart.name === 'internal:control' && lastPart.body === 'enter-frame')
+    throw new InvalidSelectorError(`Selector cannot end with entering frame, while parsing selector ${selectorText}`);
   chunks.push(chunk);
   if (typeof selector.capture === 'number' && typeof chunks[chunks.length - 1].capture !== 'number')
     throw new InvalidSelectorError(`Can not capture the selector before diving into the frame. Only use * after the last frame has been selected`);

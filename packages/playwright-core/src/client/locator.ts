@@ -207,8 +207,6 @@ export class Locator implements api.Locator {
   }
 
   frameLocator(selector: string): FrameLocator {
-    if (selectorPiercesFrames(this._selector))
-      throw new Error(`Entering frames is not allowed while piercing frames.`);
     return new FrameLocator(this._frame, this._selector + ' >> ' + selector);
   }
 
@@ -485,8 +483,6 @@ export class FrameLocator implements api.FrameLocator {
   }
 
   frameLocator(selector: string): FrameLocator {
-    if (selectorPiercesFrames(this._frameSelector))
-      throw new Error(`Entering frames is not allowed while piercing frames.`);
     return new FrameLocator(this._frame, this._childSelector(selector));
   }
 

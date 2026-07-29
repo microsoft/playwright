@@ -299,27 +299,121 @@ it('should pierce only frames inside the starting frame', async ({ page, server 
   await expect(middleFrame.pierceFrames().locator('button')).toHaveText('deep');
 });
 
+it('should enter a frame found in a nested frame', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><button>main</button>`);
+  await routePage(page, 'a.html', `<iframe id="target" src="b.html"></iframe><button>decoy</button>`);
+  await routePage(page, 'b.html', `<button>inside</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.pierceFrames().frameLocator('#target').locator('button')).toHaveText('inside');
+});
+
+it('should click inside an entered frame', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<iframe id="target" src="b.html"></iframe><button>Click me</button>`);
+  await routePage(page, 'b.html', `<button onclick="window.__clicked = true">Click me</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await page.pierceFrames().frameLocator('#target').getByRole('button', { name: 'Click me' }).click();
+  const frame = page.frames().find(f => f.url().includes('b.html'))!;
+  expect(await frame.evaluate(() => (window as any).__clicked)).toBe(true);
+});
+
+it('should pierce frames inside the entered frame', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe id="target" src="a.html"></iframe><button>main</button>`);
+  await routePage(page, 'a.html', `<iframe src="b.html"></iframe>`);
+  await routePage(page, 'b.html', `<button>deep</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.pierceFrames().frameLocator('#target').locator('button')).toHaveText('deep');
+});
+
+it('should support two frameLocators while piercing', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<iframe id="x" src="b.html"></iframe>`);
+  await routePage(page, 'b.html', `<iframe id="y" src="c.html"></iframe><button>decoy</button>`);
+  await routePage(page, 'c.html', `<button>bottom</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.pierceFrames().frameLocator('#x').frameLocator('#y').locator('button')).toHaveText('bottom');
+});
+
+it('should support locator before frameLocator while piercing', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<section><iframe src="b.html"></iframe></section><iframe src="c.html"></iframe>`);
+  await routePage(page, 'b.html', `<button>in-section</button>`);
+  await routePage(page, 'c.html', `<button>outside</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.pierceFrames().locator('section').frameLocator('iframe').locator('button')).toHaveText('in-section');
+});
+
+it('should support owner of a frameLocator while piercing', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<iframe id="target" src="b.html"></iframe>`);
+  await routePage(page, 'b.html', `<button>inside</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.pierceFrames().frameLocator('#target').owner().getAttribute('id')).toBe('target');
+});
+
+it('should wait for the frame to enter to appear', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<div>Nothing yet</div>`);
+  await routePage(page, 'b.html', `<button>late</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect.poll(() => page.frames().length).toBe(2);
+  await page.frames()[1].evaluate(() => {
+    window.builtins.setTimeout(() => {
+      const iframe = document.createElement('iframe');
+      iframe.id = 'late';
+      iframe.src = 'b.html';
+      document.body.appendChild(iframe);
+    }, 3000);
+  });
+  await expect(page.pierceFrames().frameLocator('#late').locator('button')).toHaveText('late');
+});
+
+it('should fail when the frame to enter matches in multiple frames', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><iframe src="b.html"></iframe>`);
+  await routePage(page, 'a.html', `<iframe class="inner" src="c.html"></iframe>`);
+  await routePage(page, 'b.html', `<iframe class="inner" src="c.html"></iframe>`);
+  await routePage(page, 'c.html', `<button>Click me</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect.poll(() => page.frames().length).toBe(5);
+  for (const frame of page.frames()) {
+    if (frame.url().includes('c.html'))
+      await frame.waitForSelector('button', { state: 'attached' });
+  }
+  const error = await page.pierceFrames().frameLocator('.inner').locator('button').click({ timeout: 3000 }).catch(e => e);
+  expect(error.message).toContain('Pierce-frame mode matched elements from multiple frames');
+});
+
+it('should support contentFrame while piercing', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<iframe id="target" src="b.html"></iframe><button>decoy</button>`);
+  await routePage(page, 'b.html', `<button>inside</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.pierceFrames().locator('#target').contentFrame().locator('button')).toHaveText('inside');
+});
+
+it('should enter only the frame element when the selector matches other elements too', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<div class="foo">not a frame</div><iframe class="foo" src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<iframe src="b.html"></iframe>`);
+  await routePage(page, 'b.html', `<div id="target">found</div>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.pierceFrames().locator('.foo').contentFrame().locator('#target')).toHaveText('found');
+});
+
+it('should render frameLocator while piercing in the locator description', async ({ page }) => {
+  expect(String(page.pierceFrames().frameLocator('#x').locator('button'))).toBe(`pierceFrames().locator('#x').contentFrame().locator('button')`);
+  expect(String(page.pierceFrames().locator('section').frameLocator('iframe').getByText('foo'))).toBe(`pierceFrames().locator('section').locator('iframe').contentFrame().getByText('foo')`);
+});
+
 it('should not allow nth in the middle', async ({ page }) => {
   const error = await page.pierceFrames().locator('div').first().locator('span').count().catch(e => e);
   expect(error.message).toContain(`nth can only be the last locator when piercing frames, while querying "pierceFrames().locator('div').first().locator('span')"`);
-});
-
-it('should not allow frameLocator after pierceFrames', async ({ page }) => {
-  expect(() => page.pierceFrames().frameLocator('iframe')).toThrow('Entering frames is not allowed while piercing frames');
-  expect(() => page.pierceFrames().locator('div').frameLocator('iframe')).toThrow('Entering frames is not allowed while piercing frames');
 });
 
 it('should not allow first/last/nth after pierceFrames', async ({ page }) => {
   expect(() => page.pierceFrames().first()).toThrow('Selecting the nth frame is not allowed while piercing frames');
   expect(() => page.pierceFrames().last()).toThrow('Selecting the nth frame is not allowed while piercing frames');
   expect(() => page.pierceFrames().nth(1)).toThrow('Selecting the nth frame is not allowed while piercing frames');
-});
-
-it('should not allow chaining pierce-frames and enter-frame selectors', async ({ page }) => {
-  const error1 = await page.locator('internal:control=pierce-frames >> iframe >> internal:control=enter-frame >> button').count().catch(e => e);
-  expect(error1.message).toContain('Entering frames is not allowed while piercing frames');
-  const error2 = await page.locator('iframe >> internal:control=enter-frame >> internal:control=pierce-frames >> button').count().catch(e => e);
-  expect(error2.message).toContain('"pierce-frames" is only allowed as the first selector token');
+  expect(() => page.pierceFrames().frameLocator('#x').first()).toThrow('Selecting the nth frame is not allowed while piercing frames');
 });
 
 it('should not allow composite locators', async ({ page }) => {
