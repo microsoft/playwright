@@ -56,7 +56,7 @@ expect.soft(page.get_by_role("heading", name="Make another order")).to_be_visibl
 Note that soft assertions only work with the
 [`pytest-playwright`](https://pypi.org/project/pytest-playwright/) (or
 [`pytest-playwright-asyncio`](https://pypi.org/project/pytest-playwright-asyncio/))
-plugin, version `0.7.3` or newer.
+plugin, version `0.8.0` or newer.
 
 ## Custom Expect Message
 * langs: python, csharp
