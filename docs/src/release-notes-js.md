@@ -124,6 +124,7 @@ export default defineConfig({
 
 ### Announcements
 
+* 📋 The clipboard is now isolated from the operating system in headless mode, so tests that use `navigator.clipboard` no longer read or overwrite the clipboard of the machine running them.
 * ⚠️ Debian 11 is not supported anymore.
 
 ### Browser Versions
