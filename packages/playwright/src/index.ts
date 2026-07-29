@@ -283,6 +283,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
   locale: [({ contextOptions }, use) => use(contextOptions.locale ?? 'en-US'), { option: true, box: true }],
   offline: [({ contextOptions }, use) => use(contextOptions.offline ?? false), { option: true, box: true }],
   permissions: [({ contextOptions }, use) => use(contextOptions.permissions), { option: true, box: true }],
+  pierceFrames: [({ contextOptions }, use) => use(contextOptions.pierceFrames ?? false), { option: true, box: true }],
   proxy: [({ contextOptions }, use) => use(contextOptions.proxy), { option: true, box: true }],
   storageState: [({ contextOptions }, use) => use(contextOptions.storageState), { option: true, box: true }],
   clientCertificates: [({ contextOptions }, use) => use(contextOptions.clientCertificates), { option: true, box: true }],
@@ -312,6 +313,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     locale,
     offline,
     permissions,
+    pierceFrames,
     proxy,
     storageState,
     viewport,
@@ -350,6 +352,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
       options.offline = offline;
     if (permissions !== undefined)
       options.permissions = permissions;
+    if (pierceFrames !== undefined)
+      options.pierceFrames = pierceFrames;
     if (proxy !== undefined)
       options.proxy = proxy;
     if (storageState !== undefined)

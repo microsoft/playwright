@@ -120,8 +120,9 @@ export class FrameSelectors {
     return jumptToFrame;
   }
 
-  private async _resolveFramesForSelector(selector: string, options: types.StrictOptions = {}, scope?: ElementHandle): Promise<SelectorInFrame[]> {
-    const { pierce, chunks } = splitSelectorByFrame(selector);
+  private async _resolveFramesForSelector(selector: string, options: types.StrictOptions & { noDefaultPierce?: boolean } = {}, scope?: ElementHandle): Promise<SelectorInFrame[]> {
+    const pierceByDefault = !!this.frame._page.browserContext._options.pierceFrames && !options.noDefaultPierce;
+    const { pierce, chunks } = splitSelectorByFrame(selector, pierceByDefault);
     for (const chunk of chunks) {
       visitAllSelectorParts(chunk, (part, nested) => {
         if (nested && part.name === 'internal:control' && part.body === 'enter-frame') {
@@ -279,7 +280,7 @@ export class FrameSelectors {
 
   private async _callOnSelectorInternal<Arg, R>(
     selector: string,
-    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none' },
+    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none', noDefaultPierce?: boolean },
     pageFunction: MatchedElementsCallback<Arg, R>,
     arg: Arg,
     returnByValue: boolean,
@@ -335,7 +336,7 @@ export class FrameSelectors {
 
   async callOnSelector<Arg, R>(
     selector: string,
-    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none' },
+    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none', noDefaultPierce?: boolean },
     pageFunction: MatchedElementsCallback<Arg, R>,
     arg: Arg,
   ): Promise<{ frame: Frame, info: SelectorInfo, result: R } | null> {

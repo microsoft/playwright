@@ -404,6 +404,30 @@ it('should render frameLocator while piercing in the locator description', async
   expect(String(page.pierceFrames().locator('section').frameLocator('iframe').getByText('foo'))).toBe(`pierceFrames().locator('section').locator('iframe').contentFrame().getByText('foo')`);
 });
 
+it('should support the pierce option', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><div id="main">main</div>`);
+  await routePage(page, 'a.html', `<div id="inner">inner</div>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.pierceFrames({ pierce: true }).locator('#inner')).toHaveText('inner');
+  await expect(page.pierceFrames({ pierce: false }).locator('#inner')).toHaveCount(0);
+  await expect(page.pierceFrames({ pierce: false }).locator('#main')).toHaveText('main');
+});
+
+it('should support frameLocator with pierce: false', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<button>inside</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.pierceFrames({ pierce: false }).frameLocator('iframe').locator('button')).toHaveText('inside');
+});
+
+it('should render pierce: false in the locator description', async ({ page }) => {
+  expect(String(page.pierceFrames({ pierce: false }).locator('div'))).toBe(`pierceFrames({ pierce: false }).locator('div')`);
+});
+
+it('should not allow first/last/nth after pierceFrames({ pierce: false })', async ({ page }) => {
+  expect(() => page.pierceFrames({ pierce: false }).first()).toThrow('Selecting the nth frame is not allowed on the root frame locator');
+});
+
 it('should not allow nth in the middle', async ({ page }) => {
   const error = await page.pierceFrames().locator('div').first().locator('span').count().catch(e => e);
   expect(error.message).toContain(`nth can only be the last locator when piercing frames, while querying "pierceFrames().locator('div').first().locator('span')"`);

@@ -91,24 +91,25 @@ export function parseSelector(selector: string): ParsedSelector {
   };
 }
 
-// Splits a selector into per-frame chunks separated by "enter-frame" boundaries. When the selector
-// starts with the "pierce-frames" token, `pierce` is set globally and "enter-frame" tokens are
-// preserved, so `chunks` holds a single chunk.
-export function splitSelectorByFrame(selectorText: string): { pierce: boolean, chunks: ParsedSelector[] } {
+// Splits a selector into per-frame chunks separated by "enter-frame" boundaries in non-piercing mode.
+// In piercing mode, "enter-frame" tokens are preserved, so `chunks` holds a single chunk.
+export function splitSelectorByFrame(selectorText: string, pierceByDefault?: boolean): { pierce: boolean, chunks: ParsedSelector[] } {
   const selector = parseSelector(selectorText);
   const chunks: ParsedSelector[] = [];
   let chunk: ParsedSelector = {
     parts: [],
   };
-  let pierce = false;
+  let pierce = !!pierceByDefault;
+  let pierceToken = false;
   let chunkStartIndex = 0;
   for (let i = 0; i < selector.parts.length; ++i) {
     const part = selector.parts[i];
-    if (part.name === 'internal:control' && part.body === 'pierce-frames') {
-      // Piercing is a whole-page operation, so it only makes sense as the very first token.
+    if (part.name === 'internal:control' && (part.body === 'pierce-frames' || part.body === 'no-pierce-frames')) {
+      // Piercing applies to the whole selector, so the token only makes sense as the very first one.
       if (i !== 0)
-        throw new InvalidSelectorError(`"pierce-frames" is only allowed as the first selector token, while parsing selector ${selectorText}`);
-      pierce = true;
+        throw new InvalidSelectorError(`"${part.body}" is only allowed as the first selector token, while parsing selector ${selectorText}`);
+      pierce = part.body === 'pierce-frames';
+      pierceToken = true;
       chunkStartIndex = i + 1;
       continue;
     }
@@ -130,7 +131,7 @@ export function splitSelectorByFrame(selectorText: string): { pierce: boolean, c
     chunk.parts.push(part);
   }
   if (!chunk.parts.length) {
-    if (pierce)
+    if (pierceToken)
       throw new InvalidSelectorError(`Selector cannot be empty when piercing frames, while parsing selector ${selectorText}`);
     throw new InvalidSelectorError(`Selector cannot end with entering frame, while parsing selector ${selectorText}`);
   }

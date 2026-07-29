@@ -4188,8 +4188,16 @@ export interface Page {
    * await locator.click();
    * ```
    *
+   * @param options
    */
-  pierceFrames(): FrameLocator;
+  pierceFrames(options?: {
+    /**
+     * Whether to pierce frames. Pass `false` to opt out of frame piercing enabled by the
+     * [`pierceFrames`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-pierce-frames) context
+     * option. Defaults to `true`.
+     */
+    pierce?: boolean;
+  }): FrameLocator;
 
   /**
    * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
@@ -8229,8 +8237,16 @@ export interface Frame {
    * await locator.click();
    * ```
    *
+   * @param options
    */
-  pierceFrames(): FrameLocator;
+  pierceFrames(options?: {
+    /**
+     * Whether to pierce frames. Pass `false` to opt out of frame piercing enabled by the
+     * [`pierceFrames`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-pierce-frames) context
+     * option. Defaults to `true`.
+     */
+    pierce?: boolean;
+  }): FrameLocator;
 
   /**
    * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
@@ -11423,6 +11439,13 @@ export interface Browser {
      * for more details. Defaults to none.
      */
     permissions?: Array<string>;
+
+    /**
+     * If set to true, all selectors in this context will pierce frames by default, as if every locator was created
+     * through [page.pierceFrames([options])](https://playwright.dev/docs/api/class-page#page-pierce-frames). Defaults to
+     * `false`.
+     */
+    pierceFrames?: boolean;
 
     /**
      * Network proxy settings to use with this context. Defaults to none.
@@ -17493,6 +17516,13 @@ export interface BrowserType<Unused = {}> {
      * for more details. Defaults to none.
      */
     permissions?: Array<string>;
+
+    /**
+     * If set to true, all selectors in this context will pierce frames by default, as if every locator was created
+     * through [page.pierceFrames([options])](https://playwright.dev/docs/api/class-page#page-pierce-frames). Defaults to
+     * `false`.
+     */
+    pierceFrames?: boolean;
 
     /**
      * Network proxy settings.
@@ -24505,6 +24535,13 @@ export interface AndroidDevice {
     permissions?: Array<string>;
 
     /**
+     * If set to true, all selectors in this context will pierce frames by default, as if every locator was created
+     * through [page.pierceFrames([options])](https://playwright.dev/docs/api/class-page#page-pierce-frames). Defaults to
+     * `false`.
+     */
+    pierceFrames?: boolean;
+
+    /**
      * Optional package name to launch instead of default Chrome for Android.
      */
     pkg?: string;
@@ -25720,6 +25757,13 @@ export interface BrowserContextOptions {
    * for more details. Defaults to none.
    */
   permissions?: Array<string>;
+
+  /**
+   * If set to true, all selectors in this context will pierce frames by default, as if every locator was created
+   * through [page.pierceFrames([options])](https://playwright.dev/docs/api/class-page#page-pierce-frames). Defaults to
+   * `false`.
+   */
+  pierceFrames?: boolean;
 
   /**
    * Network proxy settings to use with this context. Defaults to none.
