@@ -32,9 +32,9 @@ usage: ${SCRIPT_NAME} <browser> <revision> [version]
 
 Roll the <browser> to a specific <revision> and generate new protocol.
 Version is required for chromium-based browsers.
-Supported browsers: chromium, firefox, webkit, ffmpeg, firefox-beta.
+Supported browsers: chromium, firefox, webkit, ffmpeg.
 
-Rolling firefox or firefox-beta requires a playwright-browsers checkout
+Rolling firefox requires a playwright-browsers checkout
 next to the playwright checkout, to roll browser patches from upstream.
 Set PW_BROWSERS_CHECKOUT to point to a checkout in a custom location.
 
@@ -63,7 +63,6 @@ Example:
   const browserName = {
     'cr': 'chromium',
     'ff': 'firefox',
-    'ff-beta': 'firefox-beta',
     'wk': 'webkit',
   }[args[0].toLowerCase()] ?? args[0].toLowerCase();
   const browserTypeName = browserName.split('-')[0];

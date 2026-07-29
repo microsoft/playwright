@@ -45,7 +45,6 @@ it('should kill browser process on timeout after close', async ({ browserType, m
 it('should throw a friendly error if its headed and there is no xserver on linux running', async ({ mode, browserType, platform, channel }) => {
   it.skip(platform !== 'linux');
   it.skip(channel === 'chromium-headless-shell', 'shell is never headed');
-  it.skip(channel === 'chromium-tip-of-tree-headless-shell', 'shell is never headed');
 
   const error: Error = await browserType.launch({
     headless: false,

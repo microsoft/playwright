@@ -356,7 +356,6 @@ it('should add cookies with an expiration', async ({ context }) => {
 it('should support requestStorageAccess', async ({ page, server, channel, browserName, isMac, isLinux, isWindows, macVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17285' });
   it.skip(browserName === 'chromium', 'requestStorageAccess API is not available in Chromium');
-  it.skip(channel === 'firefox-beta', 'hasStorageAccess returns true, but no cookie is sent');
 
   server.setRoute('/set-cookie.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value; Path=/');

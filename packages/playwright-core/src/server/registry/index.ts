@@ -78,22 +78,6 @@ const EXECUTABLE_PATHS = {
     'mac-arm64': ['chrome-headless-shell-mac-arm64', 'chrome-headless-shell'],
     'win-x64': ['chrome-headless-shell-win64', 'chrome-headless-shell.exe'],
   },
-  'chromium-tip-of-tree': {
-    '<unknown>': undefined,
-    'linux-x64': ['chrome-linux64', 'chrome'],
-    'linux-arm64': ['chrome-linux', 'chrome'],  // non-cft build
-    'mac-x64': ['chrome-mac-x64', 'Google Chrome for Testing.app', 'Contents', 'MacOS', 'Google Chrome for Testing'],
-    'mac-arm64': ['chrome-mac-arm64', 'Google Chrome for Testing.app', 'Contents', 'MacOS', 'Google Chrome for Testing'],
-    'win-x64': ['chrome-win64', 'chrome.exe'],
-  },
-  'chromium-tip-of-tree-headless-shell': {
-    '<unknown>': undefined,
-    'linux-x64': ['chrome-headless-shell-linux64', 'chrome-headless-shell'],
-    'linux-arm64': ['chrome-linux', 'headless_shell'],  // non-cft build
-    'mac-x64': ['chrome-headless-shell-mac-x64', 'chrome-headless-shell'],
-    'mac-arm64': ['chrome-headless-shell-mac-arm64', 'chrome-headless-shell'],
-    'win-x64': ['chrome-headless-shell-win64', 'chrome-headless-shell.exe'],
-  },
   'firefox': {
     '<unknown>': undefined,
     'linux-x64': ['firefox', 'firefox'],
@@ -213,76 +197,6 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac26-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
     'win64': cftUrl('win64/chrome-headless-shell-win64.zip'),
   },
-  'chromium-tip-of-tree': {
-    '<unknown>': undefined,
-    'ubuntu18.04-x64': undefined,
-    'ubuntu20.04-x64': undefined,
-    'ubuntu22.04-x64': cftUrl('linux64/chrome-linux64.zip'),
-    'ubuntu24.04-x64': cftUrl('linux64/chrome-linux64.zip'),
-    'ubuntu26.04-x64': cftUrl('linux64/chrome-linux64.zip'),
-    'ubuntu18.04-arm64': undefined,
-    'ubuntu20.04-arm64': undefined,
-    'ubuntu22.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
-    'ubuntu24.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
-    'ubuntu26.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
-    'debian11-x64': undefined,
-    'debian11-arm64': undefined,
-    'debian12-x64': cftUrl('linux64/chrome-linux64.zip'),
-    'debian12-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
-    'debian13-x64': cftUrl('linux64/chrome-linux64.zip'),
-    'debian13-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
-    'mac10.13': undefined,
-    'mac10.14': undefined,
-    'mac10.15': undefined,
-    'mac11': undefined,
-    'mac11-arm64': undefined,
-    'mac12': undefined,
-    'mac12-arm64': undefined,
-    'mac13': undefined,
-    'mac13-arm64': undefined,
-    'mac14': cftUrl('mac-x64/chrome-mac-x64.zip'),
-    'mac14-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
-    'mac15': cftUrl('mac-x64/chrome-mac-x64.zip'),
-    'mac15-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
-    'mac26': cftUrl('mac-x64/chrome-mac-x64.zip'),
-    'mac26-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
-    'win64': cftUrl('win64/chrome-win64.zip'),
-  },
-  'chromium-tip-of-tree-headless-shell': {
-    '<unknown>': undefined,
-    'ubuntu18.04-x64': undefined,
-    'ubuntu20.04-x64': undefined,
-    'ubuntu22.04-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
-    'ubuntu24.04-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
-    'ubuntu26.04-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
-    'ubuntu18.04-arm64': undefined,
-    'ubuntu20.04-arm64': undefined,
-    'ubuntu22.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux-arm64.zip',
-    'ubuntu24.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux-arm64.zip',
-    'ubuntu26.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux-arm64.zip',
-    'debian11-x64': undefined,
-    'debian11-arm64': undefined,
-    'debian12-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
-    'debian12-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux-arm64.zip',
-    'debian13-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
-    'debian13-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux-arm64.zip',
-    'mac10.13': undefined,
-    'mac10.14': undefined,
-    'mac10.15': undefined,
-    'mac11': undefined,
-    'mac11-arm64': undefined,
-    'mac12': undefined,
-    'mac12-arm64': undefined,
-    'mac13': undefined,
-    'mac13-arm64': undefined,
-    'mac14': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
-    'mac14-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
-    'mac15': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
-    'mac15-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
-    'mac26': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
-    'mac26-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
-    'win64': cftUrl('win64/chrome-headless-shell-win64.zip'),
-  },
   'firefox': {
     '<unknown>': undefined,
     'ubuntu18.04-x64': undefined,
@@ -317,41 +231,6 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac26': 'builds/firefox/%s/firefox-mac.zip',
     'mac26-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
     'win64': 'builds/firefox/%s/firefox-win64.zip',
-  },
-  'firefox-beta': {
-    '<unknown>': undefined,
-    'ubuntu18.04-x64': undefined,
-    'ubuntu20.04-x64': undefined,
-    'ubuntu22.04-x64': 'builds/firefox-beta/%s/firefox-beta-ubuntu-22.04.zip',
-    'ubuntu24.04-x64': 'builds/firefox-beta/%s/firefox-beta-ubuntu-24.04.zip',
-    'ubuntu26.04-x64': 'builds/firefox-beta/%s/firefox-beta-ubuntu-24.04.zip',
-    'ubuntu18.04-arm64': undefined,
-    'ubuntu20.04-arm64': undefined,
-    'ubuntu22.04-arm64': 'builds/firefox-beta/%s/firefox-beta-ubuntu-22.04-arm64.zip',
-    'ubuntu24.04-arm64': 'builds/firefox-beta/%s/firefox-beta-ubuntu-24.04-arm64.zip',
-    'ubuntu26.04-arm64': 'builds/firefox-beta/%s/firefox-beta-ubuntu-24.04-arm64.zip',
-    'debian11-x64': undefined,
-    'debian11-arm64': undefined,
-    'debian12-x64': 'builds/firefox-beta/%s/firefox-beta-debian-12.zip',
-    'debian12-arm64': 'builds/firefox-beta/%s/firefox-beta-debian-12-arm64.zip',
-    'debian13-x64': 'builds/firefox-beta/%s/firefox-beta-debian-12.zip',
-    'debian13-arm64': 'builds/firefox-beta/%s/firefox-beta-debian-12-arm64.zip',
-    'mac10.13': undefined,
-    'mac10.14': undefined,
-    'mac10.15': undefined,
-    'mac11': undefined,
-    'mac11-arm64': undefined,
-    'mac12': undefined,
-    'mac12-arm64': undefined,
-    'mac13': undefined,
-    'mac13-arm64': undefined,
-    'mac14': 'builds/firefox-beta/%s/firefox-beta-mac.zip',
-    'mac14-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-arm64.zip',
-    'mac15': 'builds/firefox-beta/%s/firefox-beta-mac.zip',
-    'mac15-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-arm64.zip',
-    'mac26': 'builds/firefox-beta/%s/firefox-beta-mac.zip',
-    'mac26-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-arm64.zip',
-    'win64': 'builds/firefox-beta/%s/firefox-beta-win64.zip',
   },
   'webkit': {
     '<unknown>': undefined,
@@ -717,44 +596,6 @@ export class Registry {
       _isHermeticInstallation: true,
     });
 
-    const chromiumTipOfTreeHeadlessShell = descriptors.find(d => d.name === 'chromium-tip-of-tree-headless-shell')!;
-    const chromiumTipOfTreeHeadlessShellExecutable = findExecutablePath(chromiumTipOfTreeHeadlessShell.dir, 'chromium-tip-of-tree-headless-shell');
-    this._executables.push({
-      name: 'chromium-tip-of-tree-headless-shell',
-      browserName: 'chromium',
-      directory: chromiumTipOfTreeHeadlessShell.dir,
-      executablePath: () => chromiumTipOfTreeHeadlessShellExecutable,
-      executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumTipOfTreeHeadlessShellExecutable, chromiumTipOfTreeHeadlessShell.installByDefault, sdkLanguage),
-      installType: chromiumTipOfTreeHeadlessShell.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumTipOfTreeHeadlessShell.dir, ['chrome-linux'], [], ['chrome-win']),
-      downloadURLs: this._downloadURLs(chromiumTipOfTreeHeadlessShell),
-      title: chromiumTipOfTreeHeadlessShell.title,
-      revision: chromiumTipOfTreeHeadlessShell.revision,
-      browserVersion: chromiumTipOfTreeHeadlessShell.browserVersion,
-      _install: force => this._downloadExecutable(chromiumTipOfTreeHeadlessShell, force, chromiumTipOfTreeHeadlessShellExecutable),
-      _dependencyGroup: 'chromium',
-      _isHermeticInstallation: true,
-    });
-
-    const chromiumTipOfTree = descriptors.find(d => d.name === 'chromium-tip-of-tree')!;
-    const chromiumTipOfTreeExecutable = findExecutablePath(chromiumTipOfTree.dir, 'chromium-tip-of-tree');
-    this._executables.push({
-      name: 'chromium-tip-of-tree',
-      browserName: 'chromium',
-      directory: chromiumTipOfTree.dir,
-      executablePath: () => chromiumTipOfTreeExecutable,
-      executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium-tip-of-tree', chromiumTipOfTreeExecutable, chromiumTipOfTree.installByDefault, sdkLanguage),
-      installType: chromiumTipOfTree.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumTipOfTree.dir, ['chrome-linux'], [], ['chrome-win']),
-      downloadURLs: this._downloadURLs(chromiumTipOfTree),
-      title: chromiumTipOfTree.title,
-      revision: chromiumTipOfTree.revision,
-      browserVersion: chromiumTipOfTree.browserVersion,
-      _install: force => this._downloadExecutable(chromiumTipOfTree, force, chromiumTipOfTreeExecutable),
-      _dependencyGroup: 'chromium',
-      _isHermeticInstallation: true,
-    });
-
     this._executables.push(this._createChromiumChannel('chrome', {
       'linux': '/opt/google/chrome/chrome',
       'darwin': '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
@@ -854,25 +695,6 @@ export class Registry {
       revision: firefox.revision,
       browserVersion: firefox.browserVersion,
       _install: force => this._downloadExecutable(firefox, force, firefoxExecutable),
-      _dependencyGroup: 'firefox',
-      _isHermeticInstallation: true,
-    });
-
-    const firefoxBeta = descriptors.find(d => d.name === 'firefox-beta')!;
-    const firefoxBetaExecutable = findExecutablePath(firefoxBeta.dir, 'firefox');
-    this._executables.push({
-      name: 'firefox-beta',
-      browserName: 'firefox',
-      directory: firefoxBeta.dir,
-      executablePath: () => firefoxBetaExecutable,
-      executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('firefox-beta', firefoxBetaExecutable, firefoxBeta.installByDefault, sdkLanguage),
-      installType: firefoxBeta.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, firefoxBeta.dir, ['firefox'], [], ['firefox']),
-      downloadURLs: this._downloadURLs(firefoxBeta),
-      title: firefoxBeta.title,
-      revision: firefoxBeta.revision,
-      browserVersion: firefoxBeta.browserVersion,
-      _install: force => this._downloadExecutable(firefoxBeta, force, firefoxBetaExecutable),
       _dependencyGroup: 'firefox',
       _isHermeticInstallation: true,
     });
@@ -1439,9 +1261,9 @@ export class Registry {
   private _defaultBrowsersToInstall(options: { shell?: 'no' | 'only' }): Executable[] {
     let executables = this.defaultExecutables();
     if (options.shell === 'no')
-      executables = executables.filter(e => e.name !== 'chromium-headless-shell' && e.name !== 'chromium-tip-of-tree-headless-shell');
+      executables = executables.filter(e => e.name !== 'chromium-headless-shell');
     if (options.shell === 'only')
-      executables = executables.filter(e => e.name !== 'chromium' && e.name !== 'chromium-tip-of-tree');
+      executables = executables.filter(e => e.name !== 'chromium');
     return executables;
   }
 
@@ -1477,11 +1299,6 @@ export class Registry {
           handleArgument('chromium');
         if (options.shell !== 'no')
           handleArgument('chromium-headless-shell');
-      } else if (alias === 'chromium-tip-of-tree') {
-        if (options.shell !== 'only')
-          handleArgument('chromium-tip-of-tree');
-        if (options.shell !== 'no')
-          handleArgument('chromium-tip-of-tree-headless-shell');
       } else {
         handleArgument(alias);
       }
