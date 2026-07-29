@@ -388,9 +388,20 @@ it('should not allow pierce-frames in the middle of a selector', async ({ page, 
   expect(error.message).toContain('"pierce-frames" is only allowed as the first selector token');
 });
 
-it('should not allow entering frames while piercing', async ({ page, server }) => {
+it('should allow entering frames while piercing', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
-  const error = await page.locator('internal:control=pierce-frames >> iframe >> internal:control=enter-frame >> div').waitFor().catch(e => e);
-  expect(error.message).toContain('Entering frames is not allowed while piercing frames');
+  const button = page.locator('internal:control=pierce-frames >> iframe[src="iframe-2.html"] >> internal:control=enter-frame >> button');
+  await button.waitFor();
+  expect(await button.innerText()).toBe('Hello nested iframe');
+});
+
+it('should not allow pierce-frames after entering a frame', async ({ page }) => {
+  const error = await page.locator('iframe >> internal:control=enter-frame >> internal:control=pierce-frames >> button').count().catch(e => e);
+  expect(error.message).toContain('"pierce-frames" is only allowed as the first selector token');
+});
+
+it('should not allow dangling enter-frame while piercing', async ({ page }) => {
+  const error = await page.locator('internal:control=pierce-frames >> iframe >> internal:control=enter-frame').count().catch(e => e);
+  expect(error.message).toContain('Selector cannot end with entering frame');
 });
