@@ -192,11 +192,9 @@ it.describe('permissions', () => {
   });
 });
 
-it('should support clipboard read', async ({ page, context, server, browserName, isWindows, isLinux, headless, isHeadlessShell }) => {
+it('should support clipboard read', async ({ page, context, server, browserName, isWindows, isHeadlessShell }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27475' });
   it.fail(browserName === 'firefox', 'No such permissions (requires flag) in Firefox');
-  it.fixme(browserName === 'webkit' && isWindows, 'WebPasteboardProxy::allPasteboardItemInfo not implemented for Windows.');
-  it.fixme(browserName === 'webkit' && isLinux && headless, 'WebPasteboardProxy::allPasteboardItemInfo not implemented for WPE.');
 
   await page.goto(server.EMPTY_PAGE);
   // There is no 'clipboard-read' permission in WebKit Web API.
@@ -217,6 +215,37 @@ it('should support clipboard read', async ({ page, context, server, browserName,
     await context.grantPermissions(['clipboard-write']);
   await page.evaluate(() => navigator.clipboard.writeText('test content'));
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('test content');
+});
+
+it('should isolate the headless clipboard from the operating system', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13097' },
+}, async ({ browserType, server, browserName, isFrozenWebkit }) => {
+  it.skip(isFrozenWebkit, 'needs recent webkit');
+
+  // Each headless browser gets its own clipboard, so neither can see the clipboard of the operating system nor of another browser.
+  const browser1 = await browserType.launch({ headless: true });
+  const browser2 = await browserType.launch({ headless: true });
+  const [page1, page2] = await Promise.all([browser1, browser2].map(async browser => {
+    const context = await browser.newContext();
+    // There is no 'clipboard-write' permission in WebKit Web API and no clipboard permission at all in Firefox.
+    if (browserName === 'chromium')
+      await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    else if (browserName === 'webkit')
+      await context.grantPermissions(['clipboard-read']);
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    return page;
+  }));
+
+  await page1.evaluate(() => navigator.clipboard.writeText('first'));
+  expect(await page1.evaluate(() => navigator.clipboard.readText())).toBe('first');
+
+  await page2.evaluate(() => navigator.clipboard.writeText('second'));
+  expect(await page2.evaluate(() => navigator.clipboard.readText())).toBe('second');
+
+  expect(await page1.evaluate(() => navigator.clipboard.readText())).toBe('first');
+
+  await Promise.all([browser1.close(), browser2.close()]);
 });
 
 it('storage access', {
