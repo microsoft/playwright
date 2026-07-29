@@ -355,7 +355,24 @@ When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitFor
 * baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in `http://localhost:3000/bar.html`
 
 ## context-option-viewport
-* langs: js, java
+* langs: js
+- `viewport` <[null]|"maximized"|[Object]>
+  * alias: ViewportSize
+  - `width` <[int]> page width in pixels.
+  - `height` <[int]> page height in pixels.
+
+Emulates consistent viewport for each page. Defaults to an 1280x720 viewport.
+Use `null` to disable the consistent viewport emulation. Learn more about [viewport emulation](../emulation#viewport).
+Use `"maximized"` to disable viewport emulation and maximize each native browser window. This is only supported in headed mode and does not enter fullscreen mode or trigger the web Fullscreen API.
+
+:::note
+The `null` and `"maximized"` values opt out from the default presets and make viewport depend on the
+host window size defined by the operating system. It makes the execution of the
+tests non-deterministic.
+:::
+
+## java-context-option-viewport
+* langs: java
   - alias-java: viewportSize
 - `viewport` <[null]|[Object]>
   * alias: ViewportSize
@@ -1090,6 +1107,7 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 - %%-context-option-bypasscsp-%%
 - %%-context-option-baseURL-%%
 - %%-context-option-viewport-%%
+- %%-java-context-option-viewport-%%
 - %%-csharp-context-option-viewport-%%
 - %%-python-context-option-viewport-%%
 - %%-context-option-screen-%%

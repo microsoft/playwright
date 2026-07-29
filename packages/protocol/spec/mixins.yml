@@ -115,6 +115,7 @@ ContextOptions:
       properties:
         width: int
         height: int
+    viewportMaximized: boolean?
     screen:
       type: object?
       properties:

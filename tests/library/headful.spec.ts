@@ -18,6 +18,8 @@ import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import { expect, playwrightTest as it } from '../config/browserTest';
 
+import type { BrowserContext, Page } from 'playwright-core';
+
 const { compare } = utils;
 
 it.skip(({ headless }) => headless, 'avoid popping windows in headless mode');
@@ -210,6 +212,69 @@ it('should not override viewport size when passed null', async function({ browse
   await popup.waitForLoadState();
   await popup.waitForFunction(() => window.outerWidth === 500 && window.outerHeight === 450);
   await context.close();
+});
+
+it.describe('maximized viewport', () => {
+  it.skip(({ isBidi }) => isBidi, 'maximized viewport is not supported by BiDi');
+
+  async function windowIsMaximized(context: BrowserContext, page: Page, browserName: string) {
+    if (browserName === 'chromium') {
+      const client = await context.newCDPSession(page);
+      const { windowId } = await client.send('Browser.getWindowForTarget');
+      const { bounds } = await client.send('Browser.getWindowBounds', { windowId });
+      await client.detach();
+      return bounds.windowState === 'maximized';
+    }
+    return await page.evaluate(() => Math.abs(outerWidth - screen.availWidth) <= 20 && Math.abs(outerHeight - screen.availHeight) <= 20);
+  }
+
+  it('should create context in maximized window without entering fullscreen', async ({ browser, browserName }) => {
+    const context = await browser.newContext({ viewport: 'maximized' });
+    const page = await context.newPage();
+    await expect.poll(() => windowIsMaximized(context, page, browserName)).toBe(true);
+    expect(await page.evaluate(() => document.fullscreenElement)).toBeNull();
+    await context.close();
+  });
+
+  it('should open shift-clicked links in maximized windows', async ({ browser, browserName, server }) => {
+    const context = await browser.newContext({ viewport: 'maximized' });
+    const page = await context.newPage();
+    await page.setContent(`<a href="${server.EMPTY_PAGE}">link</a>`);
+    const [popup] = await Promise.all([
+      context.waitForEvent('page'),
+      page.click('a', { modifiers: ['Shift'] }),
+    ]);
+    await expect.poll(() => windowIsMaximized(context, popup, browserName)).toBe(true);
+    await context.close();
+  });
+
+  it('should override explicitly sized popup geometry', async ({ browser, browserName, server }) => {
+    const context = await browser.newContext({ viewport: 'maximized' });
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.evaluate(() => window.open('', '_blank', 'left=100,top=100,width=320,height=320')),
+    ]);
+    await expect.poll(() => windowIsMaximized(context, popup, browserName)).toBe(true);
+    await context.close();
+  });
+
+  it('should keep native window maximized when resizing viewport', async ({ browser, browserName }) => {
+    const context = await browser.newContext({ viewport: 'maximized' });
+    const page = await context.newPage();
+    const outerSize = await page.evaluate(() => ({ width: outerWidth, height: outerHeight }));
+    await page.setViewportSize({ width: 567, height: 345 });
+    expect(await page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }))).toEqual({ width: 567, height: 345 });
+    expect(await page.evaluate(() => ({ width: outerWidth, height: outerHeight }))).toEqual(outerSize);
+    await expect.poll(() => windowIsMaximized(context, page, browserName)).toBe(true);
+    await context.close();
+  });
+
+  it('should launch persistent context in maximized window', async ({ browserName, launchPersistent }) => {
+    const { context, page } = await launchPersistent({ viewport: 'maximized' });
+    await expect.poll(() => windowIsMaximized(context, page, browserName)).toBe(true);
+  });
 });
 
 it('Page.bringToFront should work', async ({ browser }) => {

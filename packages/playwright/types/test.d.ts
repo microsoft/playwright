@@ -7750,10 +7750,12 @@ export interface PlaywrightTestOptions {
   userAgent: string | undefined;
   /**
    * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
-   * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
+   * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport). Use `"maximized"` to disable
+   * viewport emulation and maximize each native browser window. This is only supported in headed mode and does not
+   * enter fullscreen mode or trigger the web Fullscreen API.
    *
-   * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
-   * by the operating system. It makes the execution of the tests non-deterministic.
+   * **NOTE** The `null` and `"maximized"` values opt out from the default presets and make viewport depend on the host
+   * window size defined by the operating system. It makes the execution of the tests non-deterministic.
    *
    * **Usage**
    *
@@ -7769,7 +7771,7 @@ export interface PlaywrightTestOptions {
    * ```
    *
    */
-  viewport: ViewportSize | null;
+  viewport: ViewportSize | 'maximized' | null;
   /**
    * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
    * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
