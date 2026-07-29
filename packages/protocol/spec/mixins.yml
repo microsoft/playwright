@@ -115,12 +115,19 @@ HttpCredentials:
 ContextOptions:
   type: mixin
   properties:
+    # Legacy bindings use this when viewportMode is not set.
     noDefaultViewport: boolean?
     viewport:
       type: object?
       properties:
         width: int
         height: int
+    viewportMode:
+      type: enum?
+      literals:
+      - none
+      - maximized
+      - fixed
     screen:
       type: object?
       properties:

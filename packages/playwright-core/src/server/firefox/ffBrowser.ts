@@ -354,14 +354,17 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   override async doUpdateDefaultViewport() {
-    if (!this._options.viewport)
-      return;
-    const viewport = {
-      viewportSize: { width: this._options.viewport.width, height: this._options.viewport.height },
-      screenSize: this._options.screen,
-      deviceScaleFactor: this._options.deviceScaleFactor || 1,
-      isMobile: !!this._options.isMobile,
-    };
+    let viewport: Protocol.Browser.setDefaultViewportParameters['viewport'] = null;
+    if (this._options.viewportMode === 'maximized') {
+      viewport = 'maximized';
+    } else if (this._options.viewport) {
+      viewport = {
+        viewportSize: { width: this._options.viewport.width, height: this._options.viewport.height },
+        screenSize: this._options.screen,
+        deviceScaleFactor: this._options.deviceScaleFactor || 1,
+        isMobile: !!this._options.isMobile,
+      };
+    }
     await this._browser.session.send('Browser.setDefaultViewport', { browserContextId: this._browserContextId, viewport });
   }
 

@@ -574,8 +574,8 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     network.validateHeaders(options.extraHTTPHeaders);
   const contextParams: channels.BrowserNewContextParams = {
     ...options,
-    viewport: options.viewport === null ? undefined : options.viewport,
-    noDefaultViewport: options.viewport === null,
+    viewport: options.viewport === null || options.viewport === 'maximized' ? undefined : options.viewport,
+    viewportMode: options.viewport === 'maximized' ? 'maximized' : options.viewport === null ? 'none' : 'fixed',
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
     storageState: options.storageState ? await prepareStorageState(options.storageState) : undefined,
     serviceWorkers: options.serviceWorkers,

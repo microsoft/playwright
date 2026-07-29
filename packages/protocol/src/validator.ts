@@ -147,6 +147,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
     width: tInt,
     height: tInt,
   })),
+  viewportMode: tOptional(tEnum(['none', 'maximized', 'fixed'])),
   screen: tOptional(tObject({
     width: tInt,
     height: tInt,
@@ -457,6 +458,7 @@ scheme.BrowserNewContextParams = tObject({
     width: tInt,
     height: tInt,
   })),
+  viewportMode: tOptional(tEnum(['none', 'maximized', 'fixed'])),
   screen: tOptional(tObject({
     width: tInt,
     height: tInt,
@@ -536,6 +538,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
     width: tInt,
     height: tInt,
   })),
+  viewportMode: tOptional(tEnum(['none', 'maximized', 'fixed'])),
   screen: tOptional(tObject({
     width: tInt,
     height: tInt,
@@ -637,6 +640,7 @@ scheme.BrowserContextInitializer = tObject({
       width: tInt,
       height: tInt,
     })),
+    viewportMode: tOptional(tEnum(['none', 'maximized', 'fixed'])),
     screen: tOptional(tObject({
       width: tInt,
       height: tInt,
@@ -1044,6 +1048,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
     width: tInt,
     height: tInt,
   })),
+  viewportMode: tOptional(tEnum(['none', 'maximized', 'fixed'])),
   screen: tOptional(tObject({
     width: tInt,
     height: tInt,
