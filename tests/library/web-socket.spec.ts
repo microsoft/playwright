@@ -243,3 +243,33 @@ it('should turn off when offline', async ({ page }) => {
   expect(await result).toBe('successfully closed');
   await new Promise(x => webSocketServer.close(x));
 });
+
+it('should send extra HTTP headers on WebSocket handshake', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28948' },
+}, async ({ page, server, browserName, browserMajorVersion }) => {
+  it.fixme(browserName === 'chromium' && browserMajorVersion < 151, 'Chromium before 151 does not send extra HTTP headers on WebSocket handshake');
+
+  await page.setExtraHTTPHeaders({ foo: 'bar' });
+  await page.goto(server.EMPTY_PAGE);
+  const reqPromise = server.waitForWebSocketConnectionRequest();
+  await page.evaluate(host => { new WebSocket(`ws://${host}/ws`); }, server.HOST);
+  const req = await reqPromise;
+  expect(req.headers['foo']).toBe('bar');
+});
+
+it('should send extra HTTP headers on WebSocket handshake from a worker', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28948' },
+}, async ({ page, server, browserName, browserMajorVersion }) => {
+  it.fixme(browserName === 'chromium' && browserMajorVersion < 151, 'Chromium before 151 does not send extra HTTP headers on WebSocket handshake');
+  it.fixme(browserName === 'firefox', 'Firefox does not associate a WebSocket opened inside a worker with its browsing context');
+
+  await page.setExtraHTTPHeaders({ foo: 'bar' });
+  await page.goto(server.EMPTY_PAGE);
+  const reqPromise = server.waitForWebSocketConnectionRequest();
+  await page.evaluate(host => {
+    const code = `new WebSocket(${JSON.stringify('ws://' + host + '/ws')});`;
+    new Worker(URL.createObjectURL(new Blob([code], { type: 'text/javascript' })));
+  }, server.HOST);
+  const req = await reqPromise;
+  expect(req.headers['foo']).toBe('bar');
+});
