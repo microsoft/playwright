@@ -433,20 +433,19 @@ export class FrameManager {
     this._webSockets.set(requestId, ws);
   }
 
-  onWebSocketRequest(requestId: string, requestData?: { headers: types.HeadersArray, wallTimeMs?: number }) {
+  onWebSocketRequest(requestId: string, requestData: { headers: types.HeadersArray, wallTimeMs?: number }) {
     const ws = this._webSockets.get(requestId);
     if (!ws)
       return;
 
-    ws.setWallTimeMs(requestData?.wallTimeMs);
+    ws.setWallTimeMs(requestData.wallTimeMs);
 
     if (ws.markAsNotified()) {
       this._page.emit(Page.Events.WebSocket, ws);
       this._page.browserContext.emit(BrowserContext.Events.WebSocket, ws, this._page);
     }
 
-    if (requestData)
-      ws.requestSent(requestData.headers);
+    ws.requestSent(requestData.headers);
   }
 
   onWebSocketResponse(requestId: string, responseData: { status: number, statusText: string, headers: types.HeadersArray }) {
