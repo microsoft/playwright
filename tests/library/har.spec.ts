@@ -697,18 +697,16 @@ it('should return server address directly from response', async ({ page, server,
   expect(port).toBe(server.PORT);
 });
 
-it('should return security details directly from response', async ({ contextFactory, httpsServer, browserName, platform, channel, isFrozenWebkit }) => {
+it('should return security details directly from response', async ({ contextFactory, httpsServer, browserName, platform, isFrozenWebkit }) => {
   it.skip(isFrozenWebkit);
 
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   const response = await page.goto(httpsServer.EMPTY_PAGE);
   const securityDetails = await response!.securityDetails();
-  if (channel === 'webkit-wsl')
-    // The Linux WebKit build reports the real subject name, but (like the Windows port) does not surface the TLS protocol.
+  if (browserName === 'webkit' && platform === 'win32')
+    // WebKit on Windows does not surface the TLS protocol.
     expect({ ...securityDetails, protocol: undefined }).toEqual({ subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
-  else if (browserName === 'webkit' && platform === 'win32')
-    expect({ ...securityDetails, protocol: undefined }).toEqual({ subjectName: 'true', validFrom: 1691708270, validTo: 2007068270 });
   else if (browserName === 'webkit')
     expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
   else
