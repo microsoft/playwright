@@ -219,6 +219,21 @@ export default defineConfig({
 });
 ```
 
+## property: TestOptions.contrast = %%-context-option-contrast-%%
+* since: v1.50
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    contrast: 'more',
+  },
+});
+```
+
 ## property: TestOptions.deviceScaleFactor = %%-context-option-devicescalefactor-%%
 * since: v1.10
 
@@ -248,6 +263,21 @@ export default defineConfig({
     extraHTTPHeaders: {
       'X-My-Header': 'value',
     },
+  },
+});
+```
+
+## property: TestOptions.forcedColors = %%-context-option-forcedColors-%%
+* since: v1.50
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    forcedColors: 'active',
   },
 });
 ```
@@ -491,6 +521,21 @@ export default defineConfig({
       server: 'http://myproxy.com:3128',
       bypass: 'localhost',
     },
+  },
+});
+```
+
+## property: TestOptions.reducedMotion = %%-context-option-reducedMotion-%%
+* since: v1.50
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    reducedMotion: 'reduce',
   },
 });
 ```

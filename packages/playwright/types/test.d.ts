@@ -6873,6 +6873,9 @@ export type Fixtures<T extends {} = {}, W extends {} = {}, PT extends {} = {}, P
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type BrowserChannel = Exclude<LaunchOptions['channel'], undefined>;
 type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
+type Contrast = Exclude<BrowserContextOptions['contrast'], undefined>;
+type ForcedColors = Exclude<BrowserContextOptions['forcedColors'], undefined>;
+type ReducedMotion = Exclude<BrowserContextOptions['reducedMotion'], undefined>;
 type ClientCertificate = Exclude<BrowserContextOptions['clientCertificates'], undefined>[0];
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
@@ -7333,6 +7336,26 @@ export interface PlaywrightTestOptions {
    */
   colorScheme: ColorScheme;
   /**
+   * Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     contrast: 'more',
+   *   },
+   * });
+   * ```
+   *
+   */
+  contrast: Contrast;
+  /**
    * TLS Client Authentication allows the server to request a client certificate and verify it.
    *
    * **Details**
@@ -7409,6 +7432,26 @@ export interface PlaywrightTestOptions {
    *
    */
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
+  /**
+   * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'none'`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     forcedColors: 'active',
+   *   },
+   * });
+   * ```
+   *
+   */
+  forcedColors: ForcedColors;
   /**
    * **Usage**
    *
@@ -7627,6 +7670,26 @@ export interface PlaywrightTestOptions {
    *
    */
   proxy: Proxy | undefined;
+  /**
+   * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     reducedMotion: 'reduce',
+   *   },
+   * });
+   * ```
+   *
+   */
+  reducedMotion: ReducedMotion;
   /**
    * Learn more about [storage state and auth](https://playwright.dev/docs/auth).
    *
