@@ -101,7 +101,7 @@ playwright-cli check <ref>              # check a checkbox or radio button
 playwright-cli uncheck <ref>            # uncheck a checkbox
 playwright-cli hover <ref>              # hover over element
 playwright-cli drag <startRef> <endRef> # drag and drop between elements
-playwright-cli upload <file>            # upload files
+playwright-cli upload <files...>        # upload one or multiple files
 playwright-cli close                    # close the page
 ```
 

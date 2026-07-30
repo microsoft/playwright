@@ -946,6 +946,7 @@ steps.push(new ProgramStep({
 // Generate CLI help.
 onChanges.push({
   inputs: [
+    'packages/playwright-core/src/tools/cli-daemon/command.ts',
     'packages/playwright-core/src/tools/cli-daemon/commands.ts',
     'packages/playwright-core/src/tools/cli-daemon/helpGenerator.ts',
     'utils/generate_cli_help.js',

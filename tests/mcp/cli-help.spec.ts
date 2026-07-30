@@ -31,6 +31,11 @@ test('prints command help', async ({ cli }) => {
   expect(output).toContain('playwright-cli click <target> [button]');
 });
 
+test('prints variadic command help', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42047' } }, async ({ cli }) => {
+  const { output } = await cli('upload', '--help');
+  expect(output).toContain('playwright-cli upload <files...>');
+});
+
 test('prints agent skill path when running under a coding agent', async ({ cli }) => {
   const { output } = await cli('--help', { env: { CLAUDECODE: '1' } });
   expect(output).toContain('Agent skill:');
