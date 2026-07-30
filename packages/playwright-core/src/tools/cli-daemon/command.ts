@@ -40,6 +40,19 @@ export function declareCommand<Args extends zodType.ZodTypeAny, Options extends 
 const kEmptyOptions = z.object({});
 const kEmptyArgs = z.object({});
 
+// The last positional argument absorbs the remaining argv when its schema accepts an array.
+export function isVariadicArg(schema: zodType.ZodTypeAny): boolean {
+  if (schema instanceof z.ZodArray)
+    return true;
+  if (schema instanceof z.ZodUnion)
+    return schema.options.some(option => isVariadicArg(option as zodType.ZodTypeAny));
+  if (schema instanceof z.ZodOptional)
+    return isVariadicArg(schema.unwrap() as zodType.ZodTypeAny);
+  if (schema instanceof z.ZodPipe)
+    return isVariadicArg(schema.in as zodType.ZodTypeAny);
+  return false;
+}
+
 export function parseCommand(command: AnyCommandSchema, args: Record<string, string> & { _: string[] }): { toolName: string, toolParams: any } {
   const optionsObject = { ...args } as Record<string, string>;
   delete optionsObject['_'];
@@ -49,11 +62,17 @@ export function parseCommand(command: AnyCommandSchema, args: Record<string, str
   const argsSchema = (command.args ?? kEmptyArgs).strict();
   const argNames = [...Object.keys(argsSchema.shape)];
   const argv = args['_'].slice(1);
-  if (argv.length > argNames.length)
+  const variadic = argNames.length > 0 && isVariadicArg(argsSchema.shape[argNames[argNames.length - 1]]);
+  if (argv.length > argNames.length && !variadic)
     throw new Error(`error: too many arguments: expected ${argNames.length}, received ${argv.length}`);
-  const argsObject: Record<string, string> = {};
-  argNames.forEach((name, index) => argsObject[name] = argv[index]);
-  const parsedArgsObject: Record<string, string> = zodParse(argsSchema, argsObject, 'argument');
+  const argsObject: Record<string, string | string[] | undefined> = {};
+  argNames.forEach((name, index) => {
+    if (variadic && index === argNames.length - 1)
+      argsObject[name] = index < argv.length ? argv.slice(index) : undefined;
+    else
+      argsObject[name] = argv[index];
+  });
+  const parsedArgsObject: Record<string, string | string[]> = zodParse(argsSchema, argsObject, 'argument');
 
   const toolName = typeof command.toolName === 'function' ? command.toolName({ ...parsedArgsObject, ...options }) : command.toolName;
   const toolParams = command.toolParams({ ...parsedArgsObject, ...options });
@@ -72,6 +91,10 @@ function zodParse(schema: zodType.ZodAny, data: unknown, type: 'option' | 'argum
         switch (issue.code) {
           case 'invalid_type':
             return 'error: ' + label + ': ' + issue.message.replace(/Invalid input:/, '').trim();
+          case 'invalid_union': {
+            const message = issue.errors[0]?.[0]?.message ?? issue.message;
+            return 'error: ' + label + ': ' + message.replace(/Invalid input:/, '').trim();
+          }
           case 'unrecognized_keys':
             return 'error: unknown ' + label;
           default:

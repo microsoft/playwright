@@ -57,6 +57,13 @@ test('missing argument', async ({ cli, server }) => {
   expect(error).toContain(`error: 'key' argument: expected string, received undefined`);
 });
 
+test('missing variadic argument', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42047' } }, async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
+  const { error, exitCode } = await cli('upload');
+  expect(exitCode).toBe(1);
+  expect(error).toContain(`error: 'files' argument: expected string, received undefined`);
+});
+
 test('wrong argument type', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
   const { error, exitCode } = await cli('mousemove', '12', 'foo');

@@ -30,7 +30,7 @@ export { compareSemver } from './utils/socketConnection';
 export { extractTrace, DirTraceLoaderBackend } from './trace/traceParser';
 export { decorateMCPCommand } from './mcp/program';
 export { program as cliProgram } from './cli-client/program';
-export { generateHelp, generateHelpJSON } from './cli-daemon/helpGenerator';
+export { generateHelp, generateHelpJSON, generateReadme } from './cli-daemon/helpGenerator';
 export { decorateProgram as decorateCliDaemonProgram, initWorkspace } from './cli-daemon/program';
 export { allSkills, installSkills } from './utils/installSkills';
 export { openDashboardApp, openDashboardForContext } from './dashboard/dashboardApp';

@@ -343,10 +343,10 @@ const fileUpload = declareCommand({
   description: 'Upload one or multiple files',
   category: 'core',
   args: z.object({
-    file: z.string().describe('The absolute paths to the files to upload'),
+    files: stringArrayArg.describe('The absolute paths to the files to upload'),
   }),
   toolName: 'browser_file_upload',
-  toolParams: ({ file }) => ({ paths: [file] }),
+  toolParams: ({ files }) => ({ paths: files }),
 });
 
 const check = declareCommand({
