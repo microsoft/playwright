@@ -1427,3 +1427,28 @@ test('should record custom test timeout in trace', async ({ runInlineTest }, tes
   const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
   expect(trace.model.testTimeout).toBe(120_000);
 });
+
+test('should record test annotations in trace', async ({ runInlineTest }, testInfo) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42035' });
+
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', {
+        annotation: { type: 'note1', description: 'static annotation' },
+      }, async ({}) => {
+        test.info().annotations.push({ type: 'note2', description: 'dynamic annotation' });
+        test.info().annotations.push({ type: 'note3' });
+      });
+    `,
+  }, { trace: 'on' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  expect(trace.model.annotations).toEqual([
+    { type: 'note1', description: 'static annotation' },
+    { type: 'note2', description: 'dynamic annotation' },
+    { type: 'note3' },
+  ]);
+});

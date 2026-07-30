@@ -57,7 +57,7 @@ export type WorkbenchProps = {
   isLive?: boolean;
   hideTimeline?: boolean;
   status?: UITestStatus;
-  annotations?: TestAnnotation[];
+  defaultAnnotations?: TestAnnotation[];
   inert?: boolean;
   onOpenExternally?: (location: SourceLocation) => void;
   revealSource?: boolean;
@@ -72,7 +72,9 @@ export const Workbench: React.FunctionComponent<WorkbenchProps> = props => {
 };
 
 const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition: string }> = props => {
-  const { partition, model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource, testRunMetadata } = props;
+  const { partition, model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, inert, onOpenExternally, revealSource, testRunMetadata } = props;
+  // Default annotations come from the test model before the test runs, shown for the empty workbench / trace.
+  const annotations = model?.annotations ?? props.defaultAnnotations;
 
   // UI settings, shared for all models.
   const [selectedNavigatorTab, setSelectedNavigatorTab] = useSetting<string>('navigatorTab',  'actions');

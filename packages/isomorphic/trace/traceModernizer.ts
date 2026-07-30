@@ -99,6 +99,7 @@ export class TraceModernizer {
         contextEntry.testIdAttributeName = event.testIdAttributeName;
         contextEntry.contextId = event.contextId ?? '';
         contextEntry.testTimeout = event.testTimeout;
+        contextEntry.annotations = event.annotations;
         break;
       }
       case 'screencast-frame': {

@@ -42,6 +42,7 @@ export type ContextEntry = {
   hasSource: boolean;
   contextId: string;
   testTimeout?: number;
+  annotations?: trace.TraceEventAnnotation[];
 };
 
 export type PageEntry = {

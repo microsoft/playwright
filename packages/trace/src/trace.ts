@@ -94,6 +94,7 @@ export type ContextCreatedTraceEvent = {
   testIdAttributeName?: string,
   contextId?: string,
   testTimeout?: number,
+  annotations?: TraceEventAnnotation[],
 };
 
 export type ScreencastFrameTraceEvent = {
@@ -137,7 +138,7 @@ export type AfterActionTraceEventAttachment = {
   base64?: string;
 };
 
-export type AfterActionTraceEventAnnotation = {
+export type TraceEventAnnotation = {
   type: string,
   description?: string
 };
@@ -149,7 +150,7 @@ export type AfterActionTraceEvent = {
   afterSnapshot?: string;
   error?: SerializedError['error'];
   attachments?: AfterActionTraceEventAttachment[];
-  annotations?: AfterActionTraceEventAnnotation[];
+  annotations?: TraceEventAnnotation[];
   result?: any;
   point?: Point;
 };
