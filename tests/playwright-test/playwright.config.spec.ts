@@ -127,8 +127,10 @@ test('should override contextOptions', async ({ runInlineTest }) => {
         acceptDownloads: false,
         bypassCSP: true,
         colorScheme: 'dark',
+        contrast: 'more',
         deviceScaleFactor: 2,
         extraHTTPHeaders: {'foo': 'bar'},
+        forcedColors: 'active',
         hasTouch: true,
         ignoreHTTPSErrors: true,
         isMobile: true,
@@ -136,6 +138,7 @@ test('should override contextOptions', async ({ runInlineTest }) => {
         locale: 'fr-FR',
         offline: true,
         permissions: ['geolocation'],
+        reducedMotion: 'reduce',
         timezoneId: 'TIMEZONE',
         userAgent: 'UA',
         viewport: null,
@@ -143,8 +146,10 @@ test('should override contextOptions', async ({ runInlineTest }) => {
             acceptDownloads: true,
             bypassCSP: false,
             colorScheme: 'light',
+            contrast: 'no-preference',
             deviceScaleFactor: 1,
             extraHTTPHeaders: {'foo': 'bar2'},
+            forcedColors: 'none',
             hasTouch: false,
             ignoreHTTPSErrors: false,
             isMobile: false,
@@ -152,6 +157,7 @@ test('should override contextOptions', async ({ runInlineTest }) => {
             locale: 'en-US',
             offline: false,
             permissions: [],
+            reducedMotion: 'no-preference',
             timezoneId: 'TIMEZONE 2',
             userAgent: 'UA 2',
             viewport: { width: 500, height: 500 }
@@ -161,12 +167,14 @@ test('should override contextOptions', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
-      test('pass', async ({ acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, timezoneId, userAgent, viewport }) => {
+      test('pass', async ({ acceptDownloads, bypassCSP, colorScheme, contrast, deviceScaleFactor, extraHTTPHeaders, forcedColors, hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, reducedMotion, timezoneId, userAgent, viewport }) => {
         expect.soft(acceptDownloads).toBe(false);
         expect.soft(bypassCSP).toBe(true);
         expect.soft(colorScheme).toBe('dark');
+        expect.soft(contrast).toBe('more');
         expect.soft(deviceScaleFactor).toBe(2);
         expect.soft(extraHTTPHeaders).toEqual({'foo': 'bar'});
+        expect.soft(forcedColors).toBe('active');
         expect.soft(hasTouch).toBe(true);
         expect.soft(ignoreHTTPSErrors).toBe(true);
         expect.soft(isMobile).toBe(true);
@@ -174,6 +182,7 @@ test('should override contextOptions', async ({ runInlineTest }) => {
         expect.soft(locale).toBe('fr-FR');
         expect.soft(offline).toBe(true);
         expect.soft(permissions).toEqual(['geolocation']);
+        expect.soft(reducedMotion).toBe('reduce');
         expect.soft(timezoneId).toBe('TIMEZONE');
         expect.soft(userAgent).toBe('UA');
         expect.soft(viewport).toBe(null);

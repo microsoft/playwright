@@ -220,6 +220,9 @@ export type Fixtures<T extends {} = {}, W extends {} = {}, PT extends {} = {}, P
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type BrowserChannel = Exclude<LaunchOptions['channel'], undefined>;
 type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
+type Contrast = Exclude<BrowserContextOptions['contrast'], undefined>;
+type ForcedColors = Exclude<BrowserContextOptions['forcedColors'], undefined>;
+type ReducedMotion = Exclude<BrowserContextOptions['reducedMotion'], undefined>;
 type ClientCertificate = Exclude<BrowserContextOptions['clientCertificates'], undefined>[0];
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
@@ -278,9 +281,11 @@ export interface PlaywrightTestOptions {
   acceptDownloads: boolean;
   bypassCSP: boolean;
   colorScheme: ColorScheme;
+  contrast: Contrast;
   clientCertificates: ClientCertificate[] | undefined;
   deviceScaleFactor: number | undefined;
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
+  forcedColors: ForcedColors;
   geolocation: Geolocation | undefined;
   hasTouch: boolean;
   httpCredentials: HTTPCredentials | HTTPCredentials[] | undefined;
@@ -292,6 +297,7 @@ export interface PlaywrightTestOptions {
   permissions: string[] | undefined;
   pierceFrames: boolean;
   proxy: Proxy | undefined;
+  reducedMotion: ReducedMotion;
   storageState: StorageState | undefined;
   timezoneId: string | undefined;
   userAgent: string | undefined;

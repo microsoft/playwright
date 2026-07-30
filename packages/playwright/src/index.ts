@@ -272,8 +272,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true, box: true }],
   bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP ?? false), { option: true, box: true }],
   colorScheme: [({ contextOptions }, use) => use(contextOptions.colorScheme === undefined ? 'light' : contextOptions.colorScheme), { option: true, box: true }],
+  contrast: [({ contextOptions }, use) => use(contextOptions.contrast === undefined ? 'no-preference' : contextOptions.contrast), { option: true, box: true }],
   deviceScaleFactor: [({ contextOptions }, use) => use(contextOptions.deviceScaleFactor), { option: true, box: true }],
   extraHTTPHeaders: [({ contextOptions }, use) => use(contextOptions.extraHTTPHeaders), { option: true, box: true }],
+  forcedColors: [({ contextOptions }, use) => use(contextOptions.forcedColors === undefined ? 'none' : contextOptions.forcedColors), { option: true, box: true }],
   geolocation: [({ contextOptions }, use) => use(contextOptions.geolocation), { option: true, box: true }],
   hasTouch: [({ contextOptions }, use) => use(contextOptions.hasTouch ?? false), { option: true, box: true }],
   httpCredentials: [({ contextOptions }, use) => use(contextOptions.httpCredentials), { option: true, box: true }],
@@ -285,6 +287,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
   permissions: [({ contextOptions }, use) => use(contextOptions.permissions), { option: true, box: true }],
   pierceFrames: [({ contextOptions }, use) => use(contextOptions.pierceFrames ?? false), { option: true, box: true }],
   proxy: [({ contextOptions }, use) => use(contextOptions.proxy), { option: true, box: true }],
+  reducedMotion: [({ contextOptions }, use) => use(contextOptions.reducedMotion === undefined ? 'no-preference' : contextOptions.reducedMotion), { option: true, box: true }],
   storageState: [({ contextOptions }, use) => use(contextOptions.storageState), { option: true, box: true }],
   clientCertificates: [({ contextOptions }, use) => use(contextOptions.clientCertificates), { option: true, box: true }],
   timezoneId: [({ contextOptions }, use) => use(contextOptions.timezoneId), { option: true, box: true }],
@@ -302,8 +305,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     bypassCSP,
     clientCertificates,
     colorScheme,
+    contrast,
     deviceScaleFactor,
     extraHTTPHeaders,
+    forcedColors,
     hasTouch,
     geolocation,
     httpCredentials,
@@ -315,6 +320,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     permissions,
     pierceFrames,
     proxy,
+    reducedMotion,
     storageState,
     viewport,
     timezoneId,
@@ -330,10 +336,14 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
       options.bypassCSP = bypassCSP;
     if (colorScheme !== undefined)
       options.colorScheme = colorScheme;
+    if (contrast !== undefined)
+      options.contrast = contrast;
     if (deviceScaleFactor !== undefined)
       options.deviceScaleFactor = deviceScaleFactor;
     if (extraHTTPHeaders !== undefined)
       options.extraHTTPHeaders = extraHTTPHeaders;
+    if (forcedColors !== undefined)
+      options.forcedColors = forcedColors;
     if (geolocation !== undefined)
       options.geolocation = geolocation;
     if (hasTouch !== undefined)
@@ -356,6 +366,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
       options.pierceFrames = pierceFrames;
     if (proxy !== undefined)
       options.proxy = proxy;
+    if (reducedMotion !== undefined)
+      options.reducedMotion = reducedMotion;
     if (storageState !== undefined)
       options.storageState = storageState;
     if (clientCertificates?.length)
