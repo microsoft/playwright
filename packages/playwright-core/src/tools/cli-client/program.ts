@@ -295,6 +295,8 @@ async function runInSession(entry: SessionFile, clientInfo: ClientInfo, args: Mi
     delete args[globalOption];
   const session = new Session(entry);
   const result = await session.run(clientInfo, args, { raw, json: output.json });
+  if (result.isError)
+    process.exitCode = 1;
   return result.text;
 }
 
