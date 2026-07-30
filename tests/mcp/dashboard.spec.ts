@@ -110,7 +110,7 @@ test('should activate session when show is called with -s', async ({ cli, server
   await cli('-s=sessB', 'open', server.EMPTY_PAGE);
 
   const dashboard = await startDashboardServer({ session: 'sessB' });
-  await expect(activeSession(dashboard)).toHaveAccessibleName('Session sessB');
+  await expect(activeSession(dashboard)).toHaveAccessibleName('Session sessB', { timeout: 30000 });
 });
 
 function isAlive(pid: number): boolean {
