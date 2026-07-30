@@ -58,7 +58,7 @@ result to report, not a non-finding.
    match. (A version ending in `-next`, e.g. `1.62.0-next`, is **not** an npm version — it means
    tip-of-tree, which is the `@next` build you already tried.)
 
-To step through a test interactively, use the [playwright-cli](../playwright-cli/SKILL.md) skill.
+To step through a test interactively, use the [playwright-cli](../../../packages/playwright-core/src/tools/skills/playwright-cli/SKILL.md) skill.
 
 Reports sometimes target another part of the Playwright project — `@playwright/mcp` (its source is
 in this repo), `playwright-vscode`, `playwright-python`, `playwright-java`, `playwright-dotnet`.
