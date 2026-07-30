@@ -866,6 +866,55 @@ test('should run nothing with --last-failed when previous run had no failures', 
   expect(result2.didNotRun).toBe(0);
 });
 
+test('should run last failed tests that did not run because a beforeAll hook failed', async ({ runInlineTest }) => {
+  const workspace = {
+    'a.spec.js': `
+      import fs from 'fs';
+      import { test, expect } from '@playwright/test';
+      test.beforeAll(() => {
+        if (!fs.existsSync('marker.txt')) {
+          fs.writeFileSync('marker.txt', '');
+          throw new Error('from beforeAll');
+        }
+      });
+      test('one', () => {});
+      test('two', () => {});
+    `
+  };
+  const result1 = await runInlineTest(workspace);
+  expect(result1.exitCode).toBe(1);
+  expect(result1.failed).toBe(1);
+  expect(result1.didNotRun).toBe(1);
+
+  const result2 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(0);
+  expect(result2.passed).toBe(2);
+  expect(result2.didNotRun).toBe(0);
+});
+
+test('should not run intentionally skipped tests with --last-failed', async ({ runInlineTest }) => {
+  const workspace = {
+    'a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('fail', () => {
+        expect(1).toBe(2);
+      });
+      test('skipped', () => {
+        test.skip();
+      });
+    `
+  };
+  const result1 = await runInlineTest(workspace);
+  expect(result1.exitCode).toBe(1);
+  expect(result1.failed).toBe(1);
+  expect(result1.skipped).toBe(1);
+
+  const result2 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.failed).toBe(1);
+  expect(result2.skipped).toBe(0);
+});
+
 test('should run last failed tests in a shard', async ({ runInlineTest }) => {
   const workspace = {
     'a.spec.js': `
