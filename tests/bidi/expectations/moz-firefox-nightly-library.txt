@@ -155,7 +155,6 @@ library/page-event-crash.spec.ts › should cancel navigation when page crashes 
 library/page-event-crash.spec.ts › should cancel waitForEvent when page crashes [timeout]
 library/page-event-crash.spec.ts › should emit crash event when page crashes [timeout]
 library/page-event-crash.spec.ts › should throw on any action after page crashes [timeout]
-library/permissions.spec.ts › local network request is allowed from public origin [timeout]
 library/permissions.spec.ts › permissions › should deny permission when not listed [fail]
 library/permissions.spec.ts › permissions › should fail when bad permission is given [fail]
 library/permissions.spec.ts › permissions › should isolate permissions between browser contexts [fail]
