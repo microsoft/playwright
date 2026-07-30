@@ -172,6 +172,7 @@ export class TestTracing {
 
   async stopIfNeeded() {
     this._contextCreatedEvent.testTimeout = this._testInfo.timeout;
+    this._contextCreatedEvent.annotations = this._testInfo.annotations.map(({ type, description }) => ({ type, description }));
 
     if (!this._options)
       return;
@@ -290,7 +291,7 @@ export class TestTracing {
     });
   }
 
-  appendAfterActionForStep(callId: string, error?: trace.SerializedError['error'], attachments: Attachment[] = [], annotations?: trace.AfterActionTraceEventAnnotation[]) {
+  appendAfterActionForStep(callId: string, error?: trace.SerializedError['error'], attachments: Attachment[] = [], annotations?: trace.TraceEventAnnotation[]) {
     this._appendTraceEvent({
       type: 'after',
       callId,
