@@ -72,19 +72,18 @@ export type GenerateSelectorOptions = {
   omitInternalEngines?: boolean;
   root?: Element | Document;
   forTextExpect?: boolean;
-  multiple?: boolean;
   noText?: boolean; // Do not use text of the target element in the generated selector.
 };
 
-export function generateSelector(injectedScript: InjectedScript, targetElement: Element, options: GenerateSelectorOptions): { selector: string, selectors: string[], elements: Element[] } {
+export function generateSelector(injectedScript: InjectedScript, targetElement: Element, options: GenerateSelectorOptions): { selector: string, elements: Element[] } {
   injectedScript._evaluator.begin();
   const cache: Cache = { allowText: new Map(), disallowText: new Map() };
   beginAriaCaches();
   beginDOMCaches();
   try {
-    let selectors: string[] = [];
+    let targetTokens: SelectorToken[];
     if (options.forTextExpect) {
-      let targetTokens = cssFallback(injectedScript, targetElement.ownerDocument.documentElement, options);
+      targetTokens = cssFallback(injectedScript, targetElement.ownerDocument.documentElement, options);
       for (let element: Element | undefined = targetElement; element; element = parentElementOrShadowHost(element)) {
         const tokens = generateSelectorFor(cache, injectedScript, element, { ...options, noText: true });
         if (!tokens)
@@ -95,7 +94,6 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
           break;
         }
       }
-      selectors = [joinTokens(targetTokens)];
     } else {
       // Note: this matches InjectedScript.retarget().
       if (!targetElement.matches('input,textarea,select') && !(targetElement as any).isContentEditable) {
@@ -103,38 +101,12 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
         if (interactiveParent && isElementVisible(interactiveParent))
           targetElement = interactiveParent;
       }
-      if (options.multiple) {
-        const withText = generateSelectorFor(cache, injectedScript, targetElement, options);
-        const withoutText = generateSelectorFor(cache, injectedScript, targetElement, { ...options, noText: true });
-        let tokens = [withText, withoutText];
-
-        // Clear cache to re-generate without css id.
-        cache.allowText.clear();
-        cache.disallowText.clear();
-
-        if (withText && hasCSSIdToken(withText))
-          tokens.push(generateSelectorFor(cache, injectedScript, targetElement, { ...options, noCSSId: true }));
-        if (withoutText && hasCSSIdToken(withoutText))
-          tokens.push(generateSelectorFor(cache, injectedScript, targetElement, { ...options, noText: true, noCSSId: true }));
-
-        tokens = tokens.filter(Boolean);
-        if (!tokens.length) {
-          const css = cssFallback(injectedScript, targetElement, options);
-          tokens.push(css);
-          if (hasCSSIdToken(css))
-            tokens.push(cssFallback(injectedScript, targetElement, { ...options, noCSSId: true }));
-        }
-        selectors = [...new Set(tokens.map(t => joinTokens(t!)))];
-      } else {
-        const targetTokens = generateSelectorFor(cache, injectedScript, targetElement, options) || cssFallback(injectedScript, targetElement, options);
-        selectors = [joinTokens(targetTokens)];
-      }
+      targetTokens = generateSelectorFor(cache, injectedScript, targetElement, options) || cssFallback(injectedScript, targetElement, options);
     }
-    const selector = selectors[0];
+    const selector = joinTokens(targetTokens);
     const parsedSelector = injectedScript.parseSelector(selector);
     return {
       selector,
-      selectors,
       elements: injectedScript.querySelectorAll(parsedSelector, options.root ?? targetElement.ownerDocument)
     };
   } finally {
@@ -144,7 +116,7 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
   }
 }
 
-type InternalOptions = GenerateSelectorOptions & { noCSSId?: boolean, isRecursive?: boolean };
+type InternalOptions = GenerateSelectorOptions & { isRecursive?: boolean };
 
 function generateSelectorFor(cache: Cache, injectedScript: InjectedScript, targetElement: Element, options: InternalOptions): SelectorToken[] | null {
   if (options.root && !isInsideScope(options.root, targetElement))
@@ -240,11 +212,9 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
         candidates.push({ engine: 'css', selector: `[${attr}=${quoteCSSAttributeValue(element.getAttribute(attr)!)}]`, score: kOtherTestIdScore });
     }
 
-    if (!options.noCSSId) {
-      const idAttr = element.getAttribute('id');
-      if (idAttr && !isGuidLike(idAttr))
-        candidates.push({ engine: 'css', selector: makeSelectorForId(idAttr), score: kCSSIdScore });
-    }
+    const idAttr = element.getAttribute('id');
+    if (idAttr && !isGuidLike(idAttr))
+      candidates.push({ engine: 'css', selector: makeSelectorForId(idAttr), score: kCSSIdScore });
 
     candidates.push({ engine: 'css', selector: escapeNodeName(element), score: kCSSTagNameScore });
   }
@@ -386,10 +356,6 @@ function makeSelectorForId(id: string) {
   return /^[a-zA-Z][a-zA-Z0-9\-\_]+$/.test(id) ? '#' + id : `[id=${quoteCSSAttributeValue(id)}]`;
 }
 
-function hasCSSIdToken(tokens: SelectorToken[]) {
-  return tokens.some(token => token.engine === 'css' && (token.selector.startsWith('#') || token.selector.startsWith('[id="')));
-}
-
 function cssFallback(injectedScript: InjectedScript, targetElement: Element, options: InternalOptions): SelectorToken[] {
   const root: Node = options.root ?? targetElement.ownerDocument;
   const tokens: string[] = [];
@@ -418,7 +384,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, opt
     let bestTokenForLevel: string = '';
 
     // Element ID is the strongest signal, use it.
-    if (element.id && !options.noCSSId) {
+    if (element.id) {
       const token = makeSelectorForId(element.id);
       const selector = uniqueCSSSelector(token);
       if (selector)
