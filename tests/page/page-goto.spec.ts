@@ -34,6 +34,15 @@ it('should work with file URL', async ({ page, asset, isAndroid, mode, channel }
   expect(page.frames().length).toBe(1);
 });
 
+it('should navigate from file URL to about:blank', async ({ page, asset, isAndroid, channel }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42050' });
+  it.skip(isAndroid, 'No files on Android');
+  it.skip(channel === 'webkit-wsl', 'separate filesystem on wsl');
+
+  await page.goto(url.pathToFileURL(asset('empty.html')).href);
+  await page.goto('about:blank');
+});
+
 it('should work with file URL with subframes', async ({ page, asset, isAndroid, mode, channel }) => {
   it.skip(isAndroid, 'No files on Android');
   it.skip(channel === 'webkit-wsl', 'separate filesystem on wsl');
