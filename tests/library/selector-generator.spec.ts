@@ -32,6 +32,10 @@ async function generateMultiple(pageOrFrame: Page | Frame, target: string): Prom
   return pageOrFrame.$eval(target, e => (window as any).__injectedScript.generateSelector(e, { multiple: true, testIdAttributeName: 'data-testid' }).selectors);
 }
 
+async function generateNoText(pageOrFrame: Page | Frame, target: string): Promise<string> {
+  return pageOrFrame.$eval(target, e => (window as any).__injectedScript.generateSelector(e, { noText: true, testIdAttributeName: 'data-testid' }).selector);
+}
+
 it.describe('selector generator', () => {
   it.skip(({ mode }) => mode !== 'default');
 
@@ -697,6 +701,53 @@ it.describe('selector generator', () => {
     ]);
   });
 
+  it('should generate noText: no text engine', async ({ page }) => {
+    await page.setContent(`<div>Some text</div>`);
+    expect(await generateNoText(page, 'div')).toBe(`div`);
+  });
+
+  it('should generate noText: no name from content', async ({ page }) => {
+    await page.setContent(`<button><span>Send</span></button>`);
+    expect(await generateNoText(page, 'button')).toBe(`internal:role=button`);
+  });
+
+  it('should generate noText: name from aria-label', async ({ page }) => {
+    await page.setContent(`<button aria-label="Send message"><span>Send</span></button>`);
+    expect(await generateNoText(page, 'button')).toBe(`internal:role=button[name="Send message"i]`);
+  });
+
+  it('should generate noText: name from external aria-labelledby', async ({ page }) => {
+    await page.setContent(`<span id="label">Editor</span><div role="textbox" aria-labelledby="label" contenteditable>Text</div>`);
+    expect(await generateNoText(page, 'div[role=textbox]')).toBe(`internal:role=textbox[name="Editor"i]`);
+  });
+
+  it('should generate noText: ignore aria-labelledby pointing inside the element', async ({ page }) => {
+    await page.setContent(`<div role="textbox" aria-labelledby="child" contenteditable><p id="child">Title</p><p>Text</p></div>`);
+    expect(await generateNoText(page, 'div[role=textbox]')).toBe(`internal:role=textbox`);
+  });
+
+  it('should generate noText: contenteditable heading', async ({ page }) => {
+    await page.setContent(`<h1 contenteditable>Page title</h1>`);
+    expect(await generateNoText(page, 'h1')).toBe(`internal:role=heading`);
+  });
+
+  it('should generate noText: description from external aria-describedby', async ({ page }) => {
+    await page.setContent(`
+      <span id="desc1">First</span><span id="desc2">Second</span>
+      <div role="textbox" aria-label="Editor" aria-describedby="desc1" contenteditable>foo</div>
+      <div role="textbox" aria-label="Editor" aria-describedby="desc2" contenteditable>bar</div>
+    `);
+    expect(await generateNoText(page, 'div[aria-describedby=desc1]')).toBe(`internal:role=textbox[name="Editor"i][description="First"i]`);
+  });
+
+  it('should generate noText: ignore aria-describedby pointing inside the element', async ({ page }) => {
+    await page.setContent(`
+      <div role="textbox" aria-label="Editor" aria-describedby="child" contenteditable><p id="child">First</p></div>
+      <div role="textbox" aria-label="Editor" contenteditable>Second</div>
+    `);
+    expect(await generateNoText(page, 'div[aria-describedby=child]')).toBe(`internal:role=textbox[name="Editor"i] >> nth=0`);
+  });
+
   it('should generate multiple: noId noText', async ({ page }) => {
     await page.setContent(`
       <div id=first><span>Some span</span></div>
@@ -725,7 +776,7 @@ it.describe('selector generator', () => {
     `);
     expect(await generateMultiple(page, 'input')).toEqual([
       `internal:role=listitem >> internal:has-text=\"buy flowers\"i >> internal:label=\"Toggle Todo\"i`,
-      `internal:label=\"Toggle Todo\"i >> nth=0`,
+      `internal:role=checkbox[name=\"Toggle Todo\"i] >> nth=0`,
     ]);
   });
 

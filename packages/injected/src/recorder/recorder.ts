@@ -403,9 +403,12 @@ class RecordActionTool implements RecorderTool {
         return;
       }
 
+      // By the time the input event arrives, the contenteditable already contains the new text.
+      // Generate a selector that does not depend on that text, so that it works before the fill.
+      const selector = target.isContentEditable ? this._selectorForElement(target, { noText: true }) : this._activeSelectorForEvent(event);
       this._recordAction({
         name: 'fill',
-        selector: this._activeSelectorForEvent(event),
+        selector,
         text: target.isContentEditable ? target.innerText : (target as HTMLInputElement).value,
       });
     }
@@ -561,8 +564,8 @@ class RecordActionTool implements RecorderTool {
       consumeEvent(event);
   }
 
-  private _selectorForElement(element: HTMLElement): string {
-    return this._recorder.injectedScript.generateSelector(element, { testIdAttributeName: this._recorder.state.testIdAttributeName }).selector;
+  private _selectorForElement(element: HTMLElement, options?: { noText?: boolean }): string {
+    return this._recorder.injectedScript.generateSelector(element, { ...options, testIdAttributeName: this._recorder.state.testIdAttributeName }).selector;
   }
 
   private _modelForElement(element: HTMLElement): HighlightModelWithSelector | null {

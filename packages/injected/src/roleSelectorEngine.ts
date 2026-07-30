@@ -175,7 +175,7 @@ function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: bo
     }
     if (options.description !== undefined) {
       // Always normalize whitespace in the accessible description.
-      const accessibleDescription = normalizeWhiteSpace(getElementAccessibleDescription(element, !!options.includeHidden));
+      const accessibleDescription = normalizeWhiteSpace(getElementAccessibleDescription(element, !!options.includeHidden).text);
       if (typeof options.description === 'string')
         options.description = normalizeWhiteSpace(options.description);
       // internal:role assumes that [description="foo"i] also means substring.

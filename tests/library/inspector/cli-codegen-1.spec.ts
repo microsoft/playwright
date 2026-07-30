@@ -429,6 +429,26 @@ await page.Locator("#input").FillAsync(\"てすと\");`);
     expect(message.text()).toBe('John Doe');
   });
 
+  test('should fill [contentEditable] with initial text', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <section aria-label="First"><h1 contenteditable="" oninput="console.log(event.target.innerText)">Initial text</h1></section>
+      <section aria-label="Second"><h1 contenteditable="">More text</h1></section>
+    `);
+
+    const [message, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error'),
+      recorder.waitForOutput('JavaScript', 'fill'),
+      page.fill('section[aria-label=First] h1', 'John Doe')
+    ]);
+    // The selector should not be derived from the text that is being changed by the fill,
+    // but can use the accessible name of the parent element.
+    expect(sources.get('JavaScript')!.text).toContain(`
+  await page.getByRole('region', { name: 'First' }).getByRole('heading').fill('John Doe');`);
+    expect(message.text()).toBe('John Doe');
+  });
+
   test('should press', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
