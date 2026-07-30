@@ -3571,6 +3571,7 @@ might return multiple quads for inline nodes.
      * Unique script identifier.
      */
     export type ScriptId = string;
+    export type ScriptType = "program"|"module"|"webassembly";
     /**
      * Call frame identifier.
      */
@@ -3588,7 +3589,7 @@ might return multiple quads for inline nodes.
        */
       lineNumber: number;
       /**
-       * Column number in the script (0-based).
+       * Column number in the script (0-based) or bytecode offset for WebAssembly modules (0-based).
        */
       columnNumber?: number;
     }
@@ -3791,9 +3792,17 @@ might return multiple quads for inline nodes.
        */
       endLine: number;
       /**
-       * Length of the last line of the script.
+       * Length of the last line of the script or the end bytecode offset for WebAssembly modules.
        */
       endColumn: number;
+      /**
+       * Identifier of the execution context in which this script was parsed.
+       */
+      executionContextId: Runtime.ExecutionContextId;
+      /**
+       * Type of script.
+       */
+      scriptType: ScriptType;
       /**
        * Determines whether this script is a user extension script.
        */
@@ -3807,9 +3816,13 @@ might return multiple quads for inline nodes.
        */
       sourceMapURL?: string;
       /**
-       * True if this script was parsed as a module.
+       * Human-readable name of the script.
        */
-      module?: boolean;
+      displayName?: string;
+      /**
+       * Identifier of the network request associated with this script (if any).
+       */
+      requestId?: Network.RequestId;
     }
     /**
      * Fired when virtual machine fails to parse the script.
