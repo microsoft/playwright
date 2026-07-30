@@ -331,8 +331,11 @@ export class BidiBrowserContext extends BrowserContext {
   async doGrantPermissions(origin: string, permissions: string[]) {
     if (origin === 'null')
       return;
+    const protocolPermissions = permissions.flatMap(
+        permission => permission === 'local-network-access' ? ['local-network', 'loopback-network'] : permission
+    );
     const currentPermissions = this._originToPermissions.get(origin) || [];
-    const toGrant = permissions.filter(permission => !currentPermissions.includes(permission));
+    const toGrant = protocolPermissions.filter(permission => !currentPermissions.includes(permission));
     this._originToPermissions.set(origin, [...currentPermissions, ...toGrant]);
     if (origin === '*') {
       await Promise.all(this._bidiPages().flatMap(page =>
