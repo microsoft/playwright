@@ -192,6 +192,10 @@ export interface RawMouse {
   down(progress: Progress, x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void>;
   up(progress: Progress, x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void>;
   wheel(progress: Progress, x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void>;
+  // Optional. Mouse.click() runs the whole click sequence inside this callback, so that the
+  // implementation may deliver it as a single protocol message. WebDriver BiDi only synthesizes
+  // dblclick when all the pointer actions belong to the same action chain.
+  batchActions?<T>(progress: Progress, callback: (progress: Progress) => Promise<T>): Promise<T>;
 }
 
 export class Mouse {
@@ -263,6 +267,8 @@ export class Mouse {
   async click(progress: Progress, x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number, steps?: number } = {}) {
     const { delay = null, clickCount = 1, steps } = options;
     if (delay) {
+      // Not batched: the delay has to be observed between the actions, and a click that is held
+      // for that long should not be reported as a double click anyway.
       await this.move(progress, x, y, { forClick: true, steps });
       for (let cc = 1; cc <= clickCount; ++cc) {
         await this.down(progress, { ...options, clickCount: cc });
@@ -272,20 +278,26 @@ export class Mouse {
           await progress.wait(delay);
       }
     } else {
-      progress.setAllowConcurrentOrNestedRaces(true);
-      const promises = [];
-      const movePromise = this.move(progress, x, y, { forClick: true, steps });
-      if (steps !== undefined && steps > 1)
-        await movePromise;
-      else
-        promises.push(movePromise);
-      for (let cc = 1; cc <= clickCount; ++cc) {
-        promises.push(this.down(progress, { ...options, clickCount: cc }));
-        promises.push(this.up(progress, { ...options, clickCount: cc }));
-      }
-      await Promise.all(promises);
-      progress.setAllowConcurrentOrNestedRaces(false);
+      await this._batchActions(progress, async () => {
+        progress.setAllowConcurrentOrNestedRaces(true);
+        const promises = [];
+        const movePromise = this.move(progress, x, y, { forClick: true, steps });
+        if (steps !== undefined && steps > 1)
+          await movePromise;
+        else
+          promises.push(movePromise);
+        for (let cc = 1; cc <= clickCount; ++cc) {
+          promises.push(this.down(progress, { ...options, clickCount: cc }));
+          promises.push(this.up(progress, { ...options, clickCount: cc }));
+        }
+        await Promise.all(promises);
+        progress.setAllowConcurrentOrNestedRaces(false);
+      });
     }
+  }
+
+  private _batchActions<T>(progress: Progress, callback: (progress: Progress) => Promise<T>): Promise<T> {
+    return this._raw.batchActions ? this._raw.batchActions(progress, callback) : callback(progress);
   }
 
   async apiWheel(progress: Progress, deltaX: number, deltaY: number) {

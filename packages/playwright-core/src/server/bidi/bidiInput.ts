@@ -83,9 +83,25 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 
 export class RawMouseImpl implements input.RawMouse {
   private readonly _session: BidiSession;
+  private _batchedActions: bidi.Input.PointerSourceAction[] | undefined;
 
   constructor(session: BidiSession) {
     this._session = session;
+  }
+
+  async batchActions<T>(progress: Progress, callback: (progress: Progress) => Promise<T>): Promise<T> {
+    const previousActions = this._batchedActions;
+    const actions: bidi.Input.PointerSourceAction[] = [];
+    this._batchedActions = actions;
+    try {
+      const result = await callback(progress);
+      // Bidi only synthesizes a double click when all the actions come in a single chain.
+      if (actions.length)
+        await this._sendActions(progress, actions);
+      return result;
+    } finally {
+      this._batchedActions = previousActions;
+    }
   }
 
   async move(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
@@ -117,6 +133,14 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   private async _performActions(progress: Progress, actions: bidi.Input.PointerSourceAction[]) {
+    if (this._batchedActions) {
+      this._batchedActions.push(...actions);
+      return;
+    }
+    await this._sendActions(progress, actions);
+  }
+
+  private async _sendActions(progress: Progress, actions: bidi.Input.PointerSourceAction[]) {
     await progress.race(this._session.send('input.performActions', {
       context: this._session.sessionId,
       actions: [
