@@ -334,7 +334,103 @@ test('should collect locks from automatic fixtures, hooks and modifiers', async 
   ])).toEqual([]);
 });
 
-test('should preserve fixture locks through project option overrides', async ({ runInlineTest }) => {
+test('should resolve fixture locks through project option overrides', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        fullyParallel: true,
+        use: { account: 'override' },
+      };
+    `,
+    'a.test.ts': `
+      import { expect, test as base } from '@playwright/test';
+      import fs from 'fs';
+
+      const test = base.extend<{ database: void, account: string }>({
+        database: [undefined, { locks: ['database'] }],
+        account: [async ({ database }, use) => {
+          await use('default');
+        }, { option: true, locks: ['account'] }],
+      });
+      test.use({ account: undefined });
+
+      test('account one', async ({ account }) => {
+        console.log('\\n%%begin:account-one:' + account);
+        fs.writeFileSync(test.info().project.outputDir + '/account', '');
+        await expect.poll(() => fs.existsSync(test.info().project.outputDir + '/database')).toBe(true);
+        console.log('\\n%%end:account-one');
+      });
+
+      test('account two', async ({ account }) => {
+        console.log('\\n%%begin:account-two:' + account);
+        await new Promise(f => setTimeout(f, 500));
+        console.log('\\n%%end:account-two');
+      });
+
+      test('database', async ({ database }) => {
+        console.log('\\n%%begin:database');
+        fs.writeFileSync(test.info().project.outputDir + '/database', '');
+        await expect.poll(() => fs.existsSync(test.info().project.outputDir + '/account')).toBe(true);
+        console.log('\\n%%end:database');
+      });
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.outputLines).toContain('begin:account-one:override');
+  expect(conflictingOverlaps(result.outputLines, [['account-one', 'database']])).toHaveLength(1);
+  expect(conflictingOverlaps(result.outputLines, [['account-one', 'account-two']])).toEqual([]);
+});
+
+test('should resolve fixture locks through suite option overrides', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { fullyParallel: true };
+    `,
+    'a.test.ts': `
+      import { expect, test as base } from '@playwright/test';
+      import fs from 'fs';
+
+      const test = base.extend<{ database: void, account: string }>({
+        database: [undefined, { locks: ['database'] }],
+        account: [async ({ database }, use) => {
+          await use('default');
+        }, { option: true, locks: ['account'] }],
+      });
+
+      test.describe('overridden', () => {
+        test.use({ account: 'override' });
+
+        test('account one', async ({ account }) => {
+          console.log('\\n%%begin:account-one:' + account);
+          fs.writeFileSync(test.info().project.outputDir + '/account', '');
+          await expect.poll(() => fs.existsSync(test.info().project.outputDir + '/database')).toBe(true);
+          console.log('\\n%%end:account-one');
+        });
+
+        test('account two', async ({ account }) => {
+          console.log('\\n%%begin:account-two:' + account);
+          await new Promise(f => setTimeout(f, 500));
+          console.log('\\n%%end:account-two');
+        });
+      });
+
+      test('database', async ({ database }) => {
+        console.log('\\n%%begin:database');
+        fs.writeFileSync(test.info().project.outputDir + '/database', '');
+        await expect.poll(() => fs.existsSync(test.info().project.outputDir + '/account')).toBe(true);
+        console.log('\\n%%end:database');
+      });
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.outputLines).toContain('begin:account-one:override');
+  expect(conflictingOverlaps(result.outputLines, [['account-one', 'database']])).toHaveLength(1);
+  expect(conflictingOverlaps(result.outputLines, [['account-one', 'account-two']])).toEqual([]);
+});
+
+test('should preserve fixture locks reachable outside an overridden option', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
@@ -345,23 +441,74 @@ test('should preserve fixture locks through project option overrides', async ({ 
     'a.test.ts': `
       import { test as base } from '@playwright/test';
 
-      type Options = { account: string };
-      const test = base.extend<Options>({
-        account: ['default', { option: true, locks: ['account'] }],
+      const test = base.extend<{ database: void, account: string, audit: void }>({
+        database: [undefined, { locks: ['database'] }],
+        account: [async ({ database }, use) => {
+          await use('default');
+        }, { option: true }],
+        audit: async ({ database }, use) => {
+          await use();
+        },
       });
 
-      for (const name of ['one', 'two']) {
-        test(name, async ({ account }) => {
-          void account;
-          console.log('\\n%%begin:' + name);
-          await new Promise(f => setTimeout(f, 500));
-          console.log('\\n%%end:' + name);
-        });
-      }
+      test('one', async ({ account, audit }) => {
+        console.log('\\n%%begin:one:' + account);
+        await new Promise(f => setTimeout(f, 500));
+        console.log('\\n%%end:one');
+      });
+
+      test('two', async ({ database }) => {
+        console.log('\\n%%begin:two');
+        await new Promise(f => setTimeout(f, 500));
+        console.log('\\n%%end:two');
+      });
     `,
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
+  expect(result.outputLines).toContain('begin:one:override');
+  expect(conflictingOverlaps(result.outputLines, [['one', 'two']])).toEqual([]);
+});
+
+test('should preserve dependency locks added after an option declaration', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        fullyParallel: true,
+        use: { account: 'override' },
+      };
+    `,
+    'a.test.ts': `
+      import { test as base } from '@playwright/test';
+
+      const baseWithOption = base.extend<{ database: void, account: string }>({
+        database: [undefined, { locks: ['database'] }],
+        account: [async ({}, use) => {
+          await use('default');
+        }, { option: true }],
+      });
+      const test = baseWithOption.extend({
+        account: async ({ account, database }, use) => {
+          await use(account);
+        },
+      });
+
+      test('one', async ({ account }) => {
+        console.log('\\n%%begin:one:' + account);
+        await new Promise(f => setTimeout(f, 500));
+        console.log('\\n%%end:one');
+      });
+
+      test('two', async ({ database }) => {
+        console.log('\\n%%begin:two');
+        await new Promise(f => setTimeout(f, 500));
+        console.log('\\n%%end:two');
+      });
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.outputLines).toContain('begin:one:override');
   expect(conflictingOverlaps(result.outputLines, [['one', 'two']])).toEqual([]);
 });
 

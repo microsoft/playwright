@@ -54,8 +54,14 @@ export type FixtureRegistration = {
   super?: FixtureRegistration;
   // Whether this fixture is an option override value set from the config.
   optionOverride?: boolean;
+  // Whether project.use replaces this registration's dependencies.
+  depsReplacedByProjectUse: boolean;
   // Do not generate the step for this fixture, consider it internal.
   box?: boolean | 'self';
+};
+export type FixtureLockCandidate = {
+  lock: string;
+  invalidatedByProjectUse: string[];
 };
 export type LoadError = {
   message: string;
@@ -123,6 +129,7 @@ export class FixturePool {
       const name = entry[0];
       let value = entry[1];
       const previous = this._registrations.get(name);
+      const depsReplacedByProjectUse = !isOptionsOverride && (isFixtureOption(value) || (value === undefined && !!previous && isOptionFixture(previous)));
       let options: { auto: FixtureAuto, scope: FixtureScope, option?: boolean, locks: string[], timeout: number | undefined, customTitle?: string, box?: boolean | 'self' } | undefined;
       if (isFixtureTuple(value)) {
         const locks = value[1].locks ?? [];
@@ -190,7 +197,7 @@ export class FixturePool {
       }
 
       const deps = fixtureParameterNames(fn, location, e => this._onLoadError(e));
-      const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: !!options.option, locks: options.locks, timeout: options.timeout, customTitle: options.customTitle, box: options.box, deps, super: previous, optionOverride: isOptionsOverride };
+      const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: !!options.option, locks: options.locks, timeout: options.timeout, customTitle: options.customTitle, box: options.box, deps, super: previous, optionOverride: isOptionsOverride, depsReplacedByProjectUse };
       registrationId(registration);
       this._registrations.set(name, registration);
     }
@@ -298,6 +305,40 @@ export class FixturePool {
         this.collectFixturesInSetupOrder(dependency, collector);
     }
     collector.add(registration);
+  }
+
+  lockCandidatesForFunction(fn: Function, location: Location): FixtureLockCandidate[] {
+    const result: FixtureLockCandidate[] = [];
+    for (const name of fixtureParameterNames(fn, location, e => this._onLoadError(e))) {
+      const registration = this.resolve(name);
+      if (registration)
+        this._collectLockCandidates(registration, [], new Set(), result);
+    }
+    return result;
+  }
+
+  lockCandidatesForAutoFixtures(): FixtureLockCandidate[] {
+    const result: FixtureLockCandidate[] = [];
+    for (const registration of this.autoFixtures())
+      this._collectLockCandidates(registration, [], new Set(), result);
+    return result;
+  }
+
+  private _collectLockCandidates(registration: FixtureRegistration, invalidatedByProjectUse: string[], path: Set<FixtureRegistration>, result: FixtureLockCandidate[]) {
+    if (path.has(registration))
+      return;
+    path.add(registration);
+    for (const lock of registration.locks)
+      result.push({ lock, invalidatedByProjectUse });
+    let dependencyInvalidators = invalidatedByProjectUse;
+    if (registration.depsReplacedByProjectUse && !invalidatedByProjectUse.includes(registration.name))
+      dependencyInvalidators = [...invalidatedByProjectUse, registration.name];
+    for (const name of registration.deps) {
+      const dependency = this.resolve(name, registration);
+      if (dependency)
+        this._collectLockCandidates(dependency, dependencyInvalidators, path, result);
+    }
+    path.delete(registration);
   }
 
   private _addLoadError(message: string, location: Location) {
