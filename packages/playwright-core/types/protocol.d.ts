@@ -828,7 +828,7 @@ may be used by the front-end as additional context.
       sourceCodeLocation?: SourceCodeLocation;
     }
     export type MixedContentResolutionStatus = "MixedContentBlocked"|"MixedContentAutomaticallyUpgraded"|"MixedContentWarning";
-    export type MixedContentResourceType = "AttributionSrc"|"Audio"|"Beacon"|"CSPReport"|"Download"|"EventSource"|"Favicon"|"Font"|"Form"|"Frame"|"Image"|"Import"|"JSON"|"Manifest"|"Ping"|"PluginData"|"PluginResource"|"Prefetch"|"Resource"|"Script"|"ServiceWorker"|"SharedWorker"|"SpeculationRules"|"Stylesheet"|"Track"|"Video"|"Worker"|"XMLHttpRequest"|"XSLT";
+    export type MixedContentResourceType = "Audio"|"Beacon"|"CSPReport"|"Download"|"EventSource"|"Favicon"|"Font"|"Form"|"Frame"|"Image"|"Import"|"JSON"|"Manifest"|"Ping"|"PluginData"|"PluginResource"|"Prefetch"|"Resource"|"Script"|"ServiceWorker"|"SharedWorker"|"SpeculationRules"|"Stylesheet"|"Track"|"Video"|"Worker"|"XMLHttpRequest"|"XSLT";
     export interface MixedContentIssueDetails {
       /**
        * The type of resource causing the mixed content issue (css, js, iframe,
@@ -936,21 +936,10 @@ CORS RFC1918 enforcement.
       resourceIPAddressSpace?: Network.IPAddressSpace;
       clientSecurityState?: Network.ClientSecurityState;
     }
-    export type AttributionReportingIssueType = "PermissionPolicyDisabled"|"UntrustworthyReportingOrigin"|"InsecureContext"|"InvalidHeader"|"InvalidRegisterTriggerHeader"|"SourceAndTriggerHeaders"|"SourceIgnored"|"TriggerIgnored"|"OsSourceIgnored"|"OsTriggerIgnored"|"InvalidRegisterOsSourceHeader"|"InvalidRegisterOsTriggerHeader"|"WebAndOsHeaders"|"NoWebOrOsSupport"|"NavigationRegistrationWithoutTransientUserActivation"|"InvalidInfoHeader"|"NoRegisterSourceHeader"|"NoRegisterTriggerHeader"|"NoRegisterOsSourceHeader"|"NoRegisterOsTriggerHeader"|"NavigationRegistrationUniqueScopeAlreadySet";
     export type SharedDictionaryError = "UseErrorCrossOriginNoCorsRequest"|"UseErrorDictionaryLoadFailure"|"UseErrorMatchingDictionaryNotUsed"|"UseErrorUnexpectedContentDictionaryHeader"|"WriteErrorCossOriginNoCorsRequest"|"WriteErrorDisallowedBySettings"|"WriteErrorExpiredResponse"|"WriteErrorFeatureDisabled"|"WriteErrorInsufficientResources"|"WriteErrorInvalidMatchField"|"WriteErrorInvalidStructuredHeader"|"WriteErrorInvalidTTLField"|"WriteErrorNavigationRequest"|"WriteErrorNoMatchField"|"WriteErrorNonIntegerTTLField"|"WriteErrorNonListMatchDestField"|"WriteErrorNonSecureContext"|"WriteErrorNonStringIdField"|"WriteErrorNonStringInMatchDestList"|"WriteErrorInvalidMatchDestList"|"WriteErrorNonStringMatchField"|"WriteErrorNonTokenTypeField"|"WriteErrorRequestAborted"|"WriteErrorShuttingDown"|"WriteErrorTooLongIdField"|"WriteErrorUnsupportedType";
     export type SRIMessageSignatureError = "MissingSignatureHeader"|"MissingSignatureInputHeader"|"InvalidSignatureHeader"|"InvalidSignatureInputHeader"|"SignatureHeaderValueIsNotByteSequence"|"SignatureHeaderValueIsParameterized"|"SignatureHeaderValueIsIncorrectLength"|"SignatureInputHeaderMissingLabel"|"SignatureInputHeaderValueNotInnerList"|"SignatureInputHeaderValueMissingComponents"|"SignatureInputHeaderInvalidComponentType"|"SignatureInputHeaderInvalidComponentName"|"SignatureInputHeaderInvalidHeaderComponentParameter"|"SignatureInputHeaderInvalidDerivedComponentParameter"|"SignatureInputHeaderKeyIdLength"|"SignatureInputHeaderInvalidParameter"|"SignatureInputHeaderMissingRequiredParameters"|"ValidationFailedSignatureExpired"|"ValidationFailedInvalidLength"|"ValidationFailedSignatureMismatch"|"ValidationFailedIntegrityMismatch"|"SignatureBaseUnknownDerivedComponent"|"SignatureBaseMissingHeader"|"SignatureBaseInvalidUnencodedDigest"|"SignatureBaseUnsupportedComponent";
     export type UnencodedDigestError = "MalformedDictionary"|"UnknownAlgorithm"|"IncorrectDigestType"|"IncorrectDigestLength";
     export type ConnectionAllowlistError = "InvalidHeader"|"MoreThanOneList"|"ItemNotInnerList"|"InvalidAllowlistItemType"|"ReportingEndpointNotToken"|"InvalidUrlPattern";
-    /**
-     * Details for issues around "Attribution Reporting API" usage.
-Explainer: https://github.com/WICG/attribution-reporting-api
-     */
-    export interface AttributionReportingIssueDetails {
-      violationType: AttributionReportingIssueType;
-      request?: AffectedRequest;
-      violatingNodeId?: DOM.BackendNodeId;
-      invalidParameter?: string;
-    }
     /**
      * Details for issues about documents in Quirks Mode
 or Limited Quirks Mode that affects page layouting.
@@ -1213,11 +1202,28 @@ Selective Permissions Intervention.
       stackTrace?: Runtime.StackTrace;
     }
     /**
+     * Details for issues about lazy-loaded images without explicit dimensions.
+     */
+    export interface LazyLoadImageIssueDetails {
+      /**
+       * DOM node of the problematic HTMLImageElement.
+       */
+      nodeId: DOM.BackendNodeId;
+      /**
+       * URL or src attribute of the image.
+       */
+      url: string;
+      /**
+       * Frame containing the image.
+       */
+      frameId: Page.FrameId;
+    }
+    /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"PartitioningBlobURLIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue"|"BounceTrackingIssue"|"CookieDeprecationMetadataIssue"|"StylesheetLoadingIssue"|"FederatedAuthUserInfoRequestIssue"|"PropertyRuleIssue"|"SharedDictionaryIssue"|"ElementAccessibilityIssue"|"SRIMessageSignatureIssue"|"UnencodedDigestIssue"|"ConnectionAllowlistIssue"|"UserReidentificationIssue"|"PermissionElementIssue"|"PerformanceIssue"|"SelectivePermissionsInterventionIssue"|"EmailVerificationRequestIssue";
+    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"CorsIssue"|"QuirksModeIssue"|"PartitioningBlobURLIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue"|"BounceTrackingIssue"|"CookieDeprecationMetadataIssue"|"StylesheetLoadingIssue"|"FederatedAuthUserInfoRequestIssue"|"PropertyRuleIssue"|"SharedDictionaryIssue"|"ElementAccessibilityIssue"|"SRIMessageSignatureIssue"|"UnencodedDigestIssue"|"ConnectionAllowlistIssue"|"UserReidentificationIssue"|"PermissionElementIssue"|"PerformanceIssue"|"SelectivePermissionsInterventionIssue"|"EmailVerificationRequestIssue"|"LazyLoadImageIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -1231,7 +1237,6 @@ add a new optional field to this type.
       contentSecurityPolicyIssueDetails?: ContentSecurityPolicyIssueDetails;
       sharedArrayBufferIssueDetails?: SharedArrayBufferIssueDetails;
       corsIssueDetails?: CorsIssueDetails;
-      attributionReportingIssueDetails?: AttributionReportingIssueDetails;
       quirksModeIssueDetails?: QuirksModeIssueDetails;
       partitioningBlobURLIssueDetails?: PartitioningBlobURLIssueDetails;
       navigatorUserAgentIssueDetails?: NavigatorUserAgentIssueDetails;
@@ -1254,6 +1259,7 @@ add a new optional field to this type.
       performanceIssueDetails?: PerformanceIssueDetails;
       selectivePermissionsInterventionIssueDetails?: SelectivePermissionsInterventionIssueDetails;
       emailVerificationRequestIssueDetails?: EmailVerificationRequestIssueDetails;
+      lazyLoadImageIssueDetails?: LazyLoadImageIssueDetails;
     }
     /**
      * A unique id for a DevTools inspector issue. Allows other entities (e.g.
@@ -2005,7 +2011,6 @@ Note that userVisibleOnly = true is the only currently supported type.
        */
       buckets: Bucket[];
     }
-    export type PrivacySandboxAPI = "BiddingAndAuctionServices"|"TrustedKeyValue";
     
     /**
      * Fired when page is about to start a download.
@@ -2355,24 +2360,6 @@ without the site actually being enrolled. Only supported on page targets.
       url: string;
     }
     export type addPrivacySandboxEnrollmentOverrideReturnValue = {
-    }
-    /**
-     * Configures encryption keys used with a given privacy sandbox API to talk
-to a trusted coordinator.  Since this is intended for test automation only,
-coordinatorOrigin must be a .test domain. No existing coordinator
-configuration for the origin may exist.
-     */
-    export type addPrivacySandboxCoordinatorKeyConfigParameters = {
-      api: PrivacySandboxAPI;
-      coordinatorOrigin: string;
-      keyConfig: string;
-      /**
-       * BrowserContext to perform the action in. When omitted, default browser
-context is used.
-       */
-      browserContextId?: BrowserContextID;
-    }
-    export type addPrivacySandboxCoordinatorKeyConfigReturnValue = {
     }
   }
   
@@ -6775,6 +6762,44 @@ selectPrompt or cancelPrompt command.
       gamma: number;
     }
     export type setDeviceOrientationOverrideReturnValue = {
+    }
+  }
+  
+  /**
+   * This domain allows interacting with the Digital Credentials API for automation.
+   */
+  export namespace DigitalCredentials {
+    /**
+     * The type of virtual wallet action.
+     */
+    export type VirtualWalletAction = "respond"|"decline"|"wait"|"clear";
+    
+    
+    /**
+     * Sets the behavior of the virtual wallet for digital credential requests
+issued from this frame.
+     */
+    export type setVirtualWalletBehaviorParameters = {
+      /**
+       * The action of the virtual wallet.
+       */
+      action: VirtualWalletAction;
+      /**
+       * The protocol identifier (e.g. "openid4vp"). Required when |action| is
+"respond", forbidden otherwise.
+       */
+      protocol?: string;
+      /**
+       * The response data object returned by the wallet.
+Required when |action| is "respond", forbidden otherwise.
+       */
+      response?: { [key: string]: string };
+      /**
+       * The frame to scope the virtual wallet behavior to.
+       */
+      frameId?: Page.FrameId;
+    }
+    export type setVirtualWalletBehaviorReturnValue = {
     }
   }
   
@@ -11703,8 +11728,9 @@ details; this boolean is true if that value is populated.
     export type DeviceBoundSessionEventId = string;
     /**
      * A fetch result for a device bound session creation or refresh.
+LINT.IfChange(DeviceBoundSessionFetchResult)
      */
-    export type DeviceBoundSessionFetchResult = "Success"|"KeyError"|"SigningError"|"TransientSigningError"|"ServerRequestedTermination"|"InvalidSessionId"|"InvalidChallenge"|"TooManyChallenges"|"InvalidFetcherUrl"|"InvalidRefreshUrl"|"TransientHttpError"|"ScopeOriginSameSiteMismatch"|"RefreshUrlSameSiteMismatch"|"MismatchedSessionId"|"MissingScope"|"NoCredentials"|"SubdomainRegistrationWellKnownUnavailable"|"SubdomainRegistrationUnauthorized"|"SubdomainRegistrationWellKnownMalformed"|"SessionProviderWellKnownUnavailable"|"RelyingPartyWellKnownUnavailable"|"FederatedKeyThumbprintMismatch"|"InvalidFederatedSessionUrl"|"InvalidFederatedKey"|"TooManyRelyingOriginLabels"|"BoundCookieSetForbidden"|"NetError"|"ProxyError"|"EmptySessionConfig"|"InvalidCredentialsConfig"|"InvalidCredentialsType"|"InvalidCredentialsEmptyName"|"InvalidCredentialsCookie"|"PersistentHttpError"|"RegistrationAttemptedChallenge"|"InvalidScopeOrigin"|"ScopeOriginContainsPath"|"RefreshInitiatorNotString"|"RefreshInitiatorInvalidHostPattern"|"InvalidScopeSpecification"|"MissingScopeSpecificationType"|"EmptyScopeSpecificationDomain"|"EmptyScopeSpecificationPath"|"InvalidScopeSpecificationType"|"InvalidScopeIncludeSite"|"MissingScopeIncludeSite"|"FederatedNotAuthorizedByProvider"|"FederatedNotAuthorizedByRelyingParty"|"SessionProviderWellKnownMalformed"|"SessionProviderWellKnownHasProviderOrigin"|"RelyingPartyWellKnownMalformed"|"RelyingPartyWellKnownHasRelyingOrigins"|"InvalidFederatedSessionProviderSessionMissing"|"InvalidFederatedSessionWrongProviderOrigin"|"InvalidCredentialsCookieCreationTime"|"InvalidCredentialsCookieName"|"InvalidCredentialsCookieParsing"|"InvalidCredentialsCookieUnpermittedAttribute"|"InvalidCredentialsCookieInvalidDomain"|"InvalidCredentialsCookiePrefix"|"InvalidScopeRulePath"|"InvalidScopeRuleHostPattern"|"ScopeRuleOriginScopedHostPatternMismatch"|"ScopeRuleSiteScopedHostPatternMismatch"|"SigningQuotaExceeded"|"InvalidConfigJson"|"InvalidFederatedSessionProviderFailedToRestoreKey"|"FailedToUnwrapKey"|"SessionDeletedDuringRefresh"|"CrossOriginRegistrationSiteNotIncluded";
+    export type DeviceBoundSessionFetchResult = "Success"|"SigningKeyGenerationError"|"AttestationKeyGenerationError"|"SigningError"|"TransientSigningError"|"ServerRequestedTermination"|"InvalidSessionId"|"InvalidChallenge"|"TooManyChallenges"|"InvalidFetcherUrl"|"InvalidRefreshUrl"|"TransientHttpError"|"ScopeOriginSameSiteMismatch"|"RefreshUrlSameSiteMismatch"|"MismatchedSessionId"|"MissingScope"|"NoCredentials"|"SubdomainRegistrationWellKnownUnavailable"|"SubdomainRegistrationUnauthorized"|"SubdomainRegistrationWellKnownMalformed"|"SessionProviderWellKnownUnavailable"|"RelyingPartyWellKnownUnavailable"|"FederatedKeyThumbprintMismatch"|"InvalidFederatedSessionUrl"|"InvalidFederatedKey"|"TooManyRelyingOriginLabels"|"BoundCookieSetForbidden"|"NetError"|"ProxyError"|"EmptySessionConfig"|"InvalidCredentialsConfig"|"InvalidCredentialsType"|"InvalidCredentialsEmptyName"|"InvalidCredentialsCookie"|"PersistentHttpError"|"RegistrationAttemptedChallenge"|"InvalidScopeOrigin"|"ScopeOriginContainsPath"|"RefreshInitiatorNotString"|"RefreshInitiatorInvalidHostPattern"|"InvalidScopeSpecification"|"MissingScopeSpecificationType"|"EmptyScopeSpecificationDomain"|"EmptyScopeSpecificationPath"|"InvalidScopeSpecificationType"|"InvalidScopeIncludeSite"|"MissingScopeIncludeSite"|"FederatedNotAuthorizedByProvider"|"FederatedNotAuthorizedByRelyingParty"|"SessionProviderWellKnownMalformed"|"SessionProviderWellKnownHasProviderOrigin"|"RelyingPartyWellKnownMalformed"|"RelyingPartyWellKnownHasRelyingOrigins"|"InvalidFederatedSessionProviderSessionMissing"|"InvalidFederatedSessionWrongProviderOrigin"|"InvalidCredentialsCookieCreationTime"|"InvalidCredentialsCookieName"|"InvalidCredentialsCookieParsing"|"InvalidCredentialsCookieUnpermittedAttribute"|"InvalidCredentialsCookieInvalidDomain"|"InvalidCredentialsCookiePrefix"|"InvalidScopeRulePath"|"InvalidScopeRuleHostPattern"|"ScopeRuleOriginScopedHostPatternMismatch"|"ScopeRuleSiteScopedHostPatternMismatch"|"SigningQuotaExceeded"|"InvalidConfigJson"|"InvalidFederatedSessionProviderFailedToRestoreKey"|"FailedToUnwrapKey"|"SessionDeletedDuringRefresh"|"CrossOriginRegistrationSiteNotIncluded"|"InvalidPreProvisionedKeyInitiatorMissing"|"PreProvisionedKeyAccessNotGranted"|"PreProvisionedKeyNotFound";
     /**
      * Details about a failed device bound session network request.
      */
@@ -11754,7 +11780,7 @@ one.
       /**
        * The result of a refresh.
        */
-      refreshResult: "Refreshed"|"InitializedService"|"Unreachable"|"ServerError"|"RefreshQuotaExceeded"|"FatalError"|"SigningQuotaExceeded"|"RefreshedAsWaiter"|"TransientSigningError";
+      refreshResult: "Refreshed"|"InitializedService"|"Unreachable"|"ServerError"|"FatalError"|"SigningQuotaExceeded"|"RefreshedAsWaiter"|"TransientSigningError";
       /**
        * If there was a fetch attempt, the result of that.
        */
@@ -14463,7 +14489,7 @@ supported yet.
 in services/network/public/cpp/permissions_policy/permissions_policy_features.json5.
 LINT.IfChange(PermissionsPolicyFeature)
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"attribution-reporting"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"record-ad-auction-events"|"rewriter"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"tools"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"webnn"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"record-ad-auction-events"|"rewriter"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"tools"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"webnn"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -17718,7 +17744,7 @@ Microsoft: https://learn.microsoft.com/en-us/windows/win32/api/winscard/nf-winsc
     /**
      * Enum of possible storage types.
      */
-    export type StorageType = "cookies"|"file_systems"|"indexeddb"|"local_storage"|"shader_cache"|"websql"|"service_workers"|"cache_storage"|"interest_groups"|"shared_storage"|"storage_buckets"|"all"|"other";
+    export type StorageType = "cookies"|"file_systems"|"indexeddb"|"local_storage"|"shader_cache"|"websql"|"service_workers"|"cache_storage"|"shared_storage"|"storage_buckets"|"all"|"other";
     /**
      * Usage for a storage type.
      */
@@ -17741,25 +17767,9 @@ Tokens from that issuer.
       count: number;
     }
     /**
-     * Protected audience interest group auction identifier.
-     */
-    export type InterestGroupAuctionId = string;
-    /**
-     * Enum of interest group access types.
-     */
-    export type InterestGroupAccessType = "join"|"leave"|"update"|"loaded"|"bid"|"win"|"additionalBid"|"additionalBidWin"|"topLevelBid"|"topLevelAdditionalBid"|"clear";
-    /**
-     * Enum of auction events.
-     */
-    export type InterestGroupAuctionEventType = "started"|"configResolved";
-    /**
-     * Enum of network fetches auctions can do.
-     */
-    export type InterestGroupAuctionFetchType = "bidderJs"|"bidderWasm"|"sellerJs"|"bidderTrustedSignals"|"sellerTrustedSignals";
-    /**
      * Enum of shared storage access scopes.
      */
-    export type SharedStorageAccessScope = "window"|"sharedStorageWorklet"|"protectedAudienceWorklet"|"header";
+    export type SharedStorageAccessScope = "window"|"sharedStorageWorklet"|"header";
     /**
      * Enum of shared storage access methods.
      */
@@ -18055,63 +18065,6 @@ Present only for SharedStorageAccessMethod: batchUpdate.
        * Storage bucket to update.
        */
       bucketId: string;
-    }
-    /**
-     * One of the interest groups was accessed. Note that these events are global
-to all targets sharing an interest group store.
-     */
-    export type interestGroupAccessedPayload = {
-      accessTime: Network.TimeSinceEpoch;
-      type: InterestGroupAccessType;
-      ownerOrigin: string;
-      name: string;
-      /**
-       * For topLevelBid/topLevelAdditionalBid, and when appropriate,
-win and additionalBidWin
-       */
-      componentSellerOrigin?: string;
-      /**
-       * For bid or somethingBid event, if done locally and not on a server.
-       */
-      bid?: number;
-      bidCurrency?: string;
-      /**
-       * For non-global events --- links to interestGroupAuctionEvent
-       */
-      uniqueAuctionId?: InterestGroupAuctionId;
-    }
-    /**
-     * An auction involving interest groups is taking place. These events are
-target-specific.
-     */
-    export type interestGroupAuctionEventOccurredPayload = {
-      eventTime: Network.TimeSinceEpoch;
-      type: InterestGroupAuctionEventType;
-      uniqueAuctionId: InterestGroupAuctionId;
-      /**
-       * Set for child auctions.
-       */
-      parentAuctionId?: InterestGroupAuctionId;
-      /**
-       * Set for started and configResolved
-       */
-      auctionConfig?: { [key: string]: string };
-    }
-    /**
-     * Specifies which auctions a particular network fetch may be related to, and
-in what role. Note that it is not ordered with respect to
-Network.requestWillBeSent (but will happen before loadingFinished
-loadingFailed).
-     */
-    export type interestGroupAuctionNetworkRequestCreatedPayload = {
-      type: InterestGroupAuctionFetchType;
-      requestId: Network.RequestId;
-      /**
-       * This is the set of the auctions using the worklet that issued this
-request.  In the case of trusted signals, it's possible that only some of
-them actually care about the keys being queried.
-       */
-      auctions: InterestGroupAuctionId[];
     }
     /**
      * Shared storage was accessed by the associated page.
@@ -18441,39 +18394,6 @@ Leaves other stored data, including the issuer's Redemption Records, intact.
       didDeleteTokens: boolean;
     }
     /**
-     * Gets details for a named interest group.
-     */
-    export type getInterestGroupDetailsParameters = {
-      ownerOrigin: string;
-      name: string;
-    }
-    export type getInterestGroupDetailsReturnValue = {
-      /**
-       * This largely corresponds to:
-https://wicg.github.io/turtledove/#dictdef-generatebidinterestgroup
-but has absolute expirationTime instead of relative lifetimeMs and
-also adds joiningOrigin.
-       */
-      details: { [key: string]: string };
-    }
-    /**
-     * Enables/Disables issuing of interestGroupAccessed events.
-     */
-    export type setInterestGroupTrackingParameters = {
-      enable: boolean;
-    }
-    export type setInterestGroupTrackingReturnValue = {
-    }
-    /**
-     * Enables/Disables issuing of interestGroupAuctionEventOccurred and
-interestGroupAuctionNetworkRequestCreated.
-     */
-    export type setInterestGroupAuctionTrackingParameters = {
-      enable: boolean;
-    }
-    export type setInterestGroupAuctionTrackingReturnValue = {
-    }
-    /**
      * Gets metadata for an origin's shared storage.
      */
     export type getSharedStorageMetadataParameters = {
@@ -18572,13 +18492,6 @@ session. The effective Related Website Sets will not change during a browser ses
     }
     export type getRelatedWebsiteSetsReturnValue = {
       sets: RelatedWebsiteSet[];
-    }
-    export type setProtectedAudienceKAnonymityParameters = {
-      owner: string;
-      name: string;
-      hashes: binary[];
-    }
-    export type setProtectedAudienceKAnonymityReturnValue = {
     }
   }
   
@@ -19898,6 +19811,13 @@ Defaults to false.
        */
       hasHmacSecretMc?: boolean;
       /**
+       * If set to true, the authenticator will support the cmtgKey (Credential
+Manager Trust Group Key) extension.
+https://github.com/w3c/webauthn/pull/2377
+Defaults to false.
+       */
+      hasCmtgKey?: boolean;
+      /**
        * If set to true, tests of user presence will succeed immediately.
 Otherwise, they will not be resolved. Defaults to true.
        */
@@ -19938,11 +19858,12 @@ credential to a specific user.
        */
       userHandle?: binary;
       /**
-       * Signature counter. This is incremented by one for each successful
-assertion.
+       * Signature counter. Must be equal to or greater than -1.
+If -1, the credential won't have an associated signature counter, and
+every assertion operation will report a value of 0.
 See https://w3c.github.io/webauthn/#signature-counter
        */
-      signCount: number;
+      signCount?: number;
       /**
        * The large blob associated with the credential.
 See https://w3c.github.io/webauthn/#sctn-large-blob-extension
@@ -19971,6 +19892,18 @@ not set.
 https://w3c.github.io/webauthn/#dom-publickeycredentialuserentity-displayname
        */
       userDisplayName?: string;
+      /**
+       * The CMTG keys associated with the credential.
+       */
+      cmtgKeys?: binary[];
+      /**
+       * The 0-based index of the active key in cmtgKeys.
+       */
+      activeCmtgKeyIndex?: number;
+      /**
+       * If true, the authenticator will generate a new CMTG key on the next operation.
+       */
+      generateCmtgKeyOnNextOperation?: boolean;
     }
     
     /**
@@ -20142,6 +20075,15 @@ https://w3c.github.io/webauthn/#sctn-automation-set-credential-properties
       credentialId: binary;
       backupEligibility?: boolean;
       backupState?: boolean;
+      activeCmtgKeyIndex?: number;
+      generateCmtgKeyOnNextOperation?: boolean;
+      /**
+       * Must be equal to or greater than -1.
+If -1, the signature counter is removed from the credential, and every
+assertion operation will report a value of 0.
+See https://w3c.github.io/webauthn/#signature-counter
+       */
+      signCount?: number;
     }
     export type setCredentialPropertiesReturnValue = {
     }
@@ -23196,9 +23138,6 @@ Error was thrown.
     "Storage.cacheStorageListUpdated": Storage.cacheStorageListUpdatedPayload;
     "Storage.indexedDBContentUpdated": Storage.indexedDBContentUpdatedPayload;
     "Storage.indexedDBListUpdated": Storage.indexedDBListUpdatedPayload;
-    "Storage.interestGroupAccessed": Storage.interestGroupAccessedPayload;
-    "Storage.interestGroupAuctionEventOccurred": Storage.interestGroupAuctionEventOccurredPayload;
-    "Storage.interestGroupAuctionNetworkRequestCreated": Storage.interestGroupAuctionNetworkRequestCreatedPayload;
     "Storage.sharedStorageAccessed": Storage.sharedStorageAccessedPayload;
     "Storage.sharedStorageWorkletOperationExecutionFinished": Storage.sharedStorageWorkletOperationExecutionFinishedPayload;
     "Storage.storageBucketCreatedOrUpdated": Storage.storageBucketCreatedOrUpdatedPayload;
@@ -23435,9 +23374,6 @@ Error was thrown.
     ["Storage.cacheStorageListUpdated"]: [Storage.cacheStorageListUpdatedPayload];
     ["Storage.indexedDBContentUpdated"]: [Storage.indexedDBContentUpdatedPayload];
     ["Storage.indexedDBListUpdated"]: [Storage.indexedDBListUpdatedPayload];
-    ["Storage.interestGroupAccessed"]: [Storage.interestGroupAccessedPayload];
-    ["Storage.interestGroupAuctionEventOccurred"]: [Storage.interestGroupAuctionEventOccurredPayload];
-    ["Storage.interestGroupAuctionNetworkRequestCreated"]: [Storage.interestGroupAuctionNetworkRequestCreatedPayload];
     ["Storage.sharedStorageAccessed"]: [Storage.sharedStorageAccessedPayload];
     ["Storage.sharedStorageWorkletOperationExecutionFinished"]: [Storage.sharedStorageWorkletOperationExecutionFinishedPayload];
     ["Storage.storageBucketCreatedOrUpdated"]: [Storage.storageBucketCreatedOrUpdatedPayload];
@@ -23563,7 +23499,6 @@ Error was thrown.
     "Browser.setDockTile": Browser.setDockTileParameters;
     "Browser.executeBrowserCommand": Browser.executeBrowserCommandParameters;
     "Browser.addPrivacySandboxEnrollmentOverride": Browser.addPrivacySandboxEnrollmentOverrideParameters;
-    "Browser.addPrivacySandboxCoordinatorKeyConfig": Browser.addPrivacySandboxCoordinatorKeyConfigParameters;
     "CSS.addRule": CSS.addRuleParameters;
     "CSS.collectClassNames": CSS.collectClassNamesParameters;
     "CSS.createStyleSheet": CSS.createStyleSheetParameters;
@@ -23694,6 +23629,7 @@ Error was thrown.
     "DeviceAccess.cancelPrompt": DeviceAccess.cancelPromptParameters;
     "DeviceOrientation.clearDeviceOrientationOverride": DeviceOrientation.clearDeviceOrientationOverrideParameters;
     "DeviceOrientation.setDeviceOrientationOverride": DeviceOrientation.setDeviceOrientationOverrideParameters;
+    "DigitalCredentials.setVirtualWalletBehavior": DigitalCredentials.setVirtualWalletBehaviorParameters;
     "Emulation.canEmulate": Emulation.canEmulateParameters;
     "Emulation.clearDeviceMetricsOverride": Emulation.clearDeviceMetricsOverrideParameters;
     "Emulation.clearGeolocationOverride": Emulation.clearGeolocationOverrideParameters;
@@ -24021,9 +23957,6 @@ Error was thrown.
     "Storage.untrackIndexedDBForStorageKey": Storage.untrackIndexedDBForStorageKeyParameters;
     "Storage.getTrustTokens": Storage.getTrustTokensParameters;
     "Storage.clearTrustTokens": Storage.clearTrustTokensParameters;
-    "Storage.getInterestGroupDetails": Storage.getInterestGroupDetailsParameters;
-    "Storage.setInterestGroupTracking": Storage.setInterestGroupTrackingParameters;
-    "Storage.setInterestGroupAuctionTracking": Storage.setInterestGroupAuctionTrackingParameters;
     "Storage.getSharedStorageMetadata": Storage.getSharedStorageMetadataParameters;
     "Storage.getSharedStorageEntries": Storage.getSharedStorageEntriesParameters;
     "Storage.setSharedStorageEntry": Storage.setSharedStorageEntryParameters;
@@ -24035,7 +23968,6 @@ Error was thrown.
     "Storage.deleteStorageBucket": Storage.deleteStorageBucketParameters;
     "Storage.runBounceTrackingMitigations": Storage.runBounceTrackingMitigationsParameters;
     "Storage.getRelatedWebsiteSets": Storage.getRelatedWebsiteSetsParameters;
-    "Storage.setProtectedAudienceKAnonymity": Storage.setProtectedAudienceKAnonymityParameters;
     "SystemInfo.getInfo": SystemInfo.getInfoParameters;
     "SystemInfo.getFeatureState": SystemInfo.getFeatureStateParameters;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoParameters;
@@ -24234,7 +24166,6 @@ Error was thrown.
     "Browser.setDockTile": Browser.setDockTileReturnValue;
     "Browser.executeBrowserCommand": Browser.executeBrowserCommandReturnValue;
     "Browser.addPrivacySandboxEnrollmentOverride": Browser.addPrivacySandboxEnrollmentOverrideReturnValue;
-    "Browser.addPrivacySandboxCoordinatorKeyConfig": Browser.addPrivacySandboxCoordinatorKeyConfigReturnValue;
     "CSS.addRule": CSS.addRuleReturnValue;
     "CSS.collectClassNames": CSS.collectClassNamesReturnValue;
     "CSS.createStyleSheet": CSS.createStyleSheetReturnValue;
@@ -24365,6 +24296,7 @@ Error was thrown.
     "DeviceAccess.cancelPrompt": DeviceAccess.cancelPromptReturnValue;
     "DeviceOrientation.clearDeviceOrientationOverride": DeviceOrientation.clearDeviceOrientationOverrideReturnValue;
     "DeviceOrientation.setDeviceOrientationOverride": DeviceOrientation.setDeviceOrientationOverrideReturnValue;
+    "DigitalCredentials.setVirtualWalletBehavior": DigitalCredentials.setVirtualWalletBehaviorReturnValue;
     "Emulation.canEmulate": Emulation.canEmulateReturnValue;
     "Emulation.clearDeviceMetricsOverride": Emulation.clearDeviceMetricsOverrideReturnValue;
     "Emulation.clearGeolocationOverride": Emulation.clearGeolocationOverrideReturnValue;
@@ -24692,9 +24624,6 @@ Error was thrown.
     "Storage.untrackIndexedDBForStorageKey": Storage.untrackIndexedDBForStorageKeyReturnValue;
     "Storage.getTrustTokens": Storage.getTrustTokensReturnValue;
     "Storage.clearTrustTokens": Storage.clearTrustTokensReturnValue;
-    "Storage.getInterestGroupDetails": Storage.getInterestGroupDetailsReturnValue;
-    "Storage.setInterestGroupTracking": Storage.setInterestGroupTrackingReturnValue;
-    "Storage.setInterestGroupAuctionTracking": Storage.setInterestGroupAuctionTrackingReturnValue;
     "Storage.getSharedStorageMetadata": Storage.getSharedStorageMetadataReturnValue;
     "Storage.getSharedStorageEntries": Storage.getSharedStorageEntriesReturnValue;
     "Storage.setSharedStorageEntry": Storage.setSharedStorageEntryReturnValue;
@@ -24706,7 +24635,6 @@ Error was thrown.
     "Storage.deleteStorageBucket": Storage.deleteStorageBucketReturnValue;
     "Storage.runBounceTrackingMitigations": Storage.runBounceTrackingMitigationsReturnValue;
     "Storage.getRelatedWebsiteSets": Storage.getRelatedWebsiteSetsReturnValue;
-    "Storage.setProtectedAudienceKAnonymity": Storage.setProtectedAudienceKAnonymityReturnValue;
     "SystemInfo.getInfo": SystemInfo.getInfoReturnValue;
     "SystemInfo.getFeatureState": SystemInfo.getFeatureStateReturnValue;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoReturnValue;
