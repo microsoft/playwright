@@ -82,6 +82,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   readonly _serviceWorkers = new Set<Worker>();
   private _closingStatus: 'none' | 'closing' | 'closed' = 'none';
+  private _closeFailure: Error | undefined;
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
   private _onRecorderEventSink: RecorderEventSink | undefined;
@@ -521,15 +522,25 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async close(options: { reason?: string } = {}): Promise<void> {
-    if (this.isClosed())
+    if (this._closingStatus === 'closed')
       return;
+    if (this._closeFailure)
+      throw this._closeFailure;
     this._closeReason = options.reason;
     this._closingStatus = 'closing';
-    await this.request.dispose(options);
-    await this._instrumentation.runBeforeCloseBrowserContext(this);
-    await this.tracing._exportAllHars();
-    await this._channel.close(options, kNoTimeout);
-    await this._closedPromise;
+    try {
+      await this.request.dispose(options);
+      await this._instrumentation.runBeforeCloseBrowserContext(this);
+      await this.tracing._exportAllHars();
+      await this._channel.close(options, kNoTimeout);
+      await this._closedPromise;
+    } catch (error) {
+      this._closeFailure = error;
+      // The context did not close, so isClosed() must not claim otherwise.
+      if (this._closingStatus === 'closing')
+        this._closingStatus = 'none';
+      throw error;
+    }
   }
 
   async _enableRecorder(params: channels.BrowserContextEnableRecorderParams, eventSink?: RecorderEventSink) {

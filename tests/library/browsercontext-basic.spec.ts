@@ -17,6 +17,7 @@
 
 import { kTargetClosedErrorMessage } from '../config/errors';
 import { browserTest as it, expect } from '../config/browserTest';
+import os from 'os';
 import { attachFrame, verifyViewport } from '../config/utils';
 import type { Page } from '@playwright/test';
 
@@ -210,6 +211,20 @@ it('close() should be callable twice', async ({ browser }) => {
   const context = await browser.newContext();
   await context.close();
   await context.close();
+});
+
+it('close() should report a failure instead of silently succeeding', async ({ browserType }) => {
+  const browser = await browserType.launch();
+  // Writing the HAR into a directory fails, which makes close() reject.
+  const context = await browser.newContext({ recordHar: { path: os.tmpdir() } });
+  await context.newPage();
+  const firstError = await context.close().catch(e => e);
+  expect(firstError).toBeInstanceOf(Error);
+  // The context is still alive, so it must not report itself as closed.
+  expect(context.isClosed()).toBe(false);
+  const secondError = await context.close().catch(e => e);
+  expect(secondError).toBeInstanceOf(Error);
+  await browser.close();
 });
 
 it('should pass self to close event', async ({ browser }) => {
