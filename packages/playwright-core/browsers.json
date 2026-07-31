@@ -35,7 +35,7 @@
     },
     {
       "name": "ffmpeg",
-      "revision": "1011",
+      "revision": "1012",
       "installByDefault": true
     },
     {
