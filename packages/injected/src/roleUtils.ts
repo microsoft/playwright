@@ -510,26 +510,32 @@ function allowsNameFromContent(role: string, targetDescendant: boolean) {
   return alwaysAllowsNameFromContent || descendantAllowsNameFromContent;
 }
 
-function computeAccessibleNameComposite(element: Element, includeHidden: boolean, collectElements: boolean): CompositeString {
+export type AccessibleName = CompositeString & {
+  derivedFromContent: boolean,
+};
+
+function computeAccessibleNameComposite(element: Element, includeHidden: boolean, collectElements: boolean): AccessibleName {
   // https://w3c.github.io/accname/#computation-steps
 
   // step 1.
   // https://w3c.github.io/aria/#namefromprohibited
   const elementProhibitsNaming = ['caption', 'code', 'definition', 'deletion', 'emphasis', 'generic', 'insertion', 'mark', 'paragraph', 'presentation', 'strong', 'subscript', 'suggestion', 'superscript', 'term', 'time'].includes(getAriaRole(element) || '');
   if (elementProhibitsNaming)
-    return emptyCompositeString();
+    return { ...emptyCompositeString(), derivedFromContent: false };
 
   // step 2.
+  const outDerivedFromContent = { value: false };
   const result = getTextAlternativeInternal(element, {
     includeHidden,
     collectElements,
+    outDerivedFromContent,
     visitedElements: new Set(),
     embeddedInTargetElement: 'self',
   });
-  return { text: asFlatString(result.text), elements: result.elements };
+  return { text: asFlatString(result.text), elements: result.elements, derivedFromContent: outDerivedFromContent.value };
 }
 
-export function getElementAccessibleName(element: Element, includeHidden: boolean): CompositeString {
+export function getElementAccessibleName(element: Element, includeHidden: boolean): AccessibleName {
   const cache = (includeHidden ? cacheAccessibleNameHidden : cacheAccessibleName);
   let accessibleName = cache?.get(element);
   if (accessibleName === undefined) {
@@ -553,31 +559,37 @@ export function getElementAccessibleNameText(element: Element, includeHidden: bo
   return text;
 }
 
-export function getElementAccessibleDescription(element: Element, includeHidden: boolean): string {
+export type AccessibleDescription = {
+  text: string,
+  derivedFromContent: boolean,
+};
+
+export function getElementAccessibleDescription(element: Element, includeHidden: boolean): AccessibleDescription {
   const cache = (includeHidden ? cacheAccessibleDescriptionHidden : cacheAccessibleDescription);
   let accessibleDescription = cache?.get(element);
 
   if (accessibleDescription === undefined) {
     // https://w3c.github.io/accname/#mapping_additional_nd_description
     // https://www.w3.org/TR/html-aam-1.0/#accdesc-computation
-    accessibleDescription = '';
+    accessibleDescription = { text: '', derivedFromContent: false };
 
     if (element.hasAttribute('aria-describedby')) {
       // precedence 1
       const describedBy = getIdRefs(element, element.getAttribute('aria-describedby'));
-      accessibleDescription = asFlatString(describedBy.map(ref => getTextAlternativeInternal(ref, {
+      accessibleDescription.text = asFlatString(describedBy.map(ref => getTextAlternativeInternal(ref, {
         includeHidden,
         visitedElements: new Set(),
         embeddedInDescribedBy: { element: ref, hidden: isElementHiddenForAria(ref) },
       }).text).join(' '));
+      accessibleDescription.derivedFromContent = describedBy.some(ref => ref === element || element.contains(ref));
     } else if (element.hasAttribute('aria-description')) {
       // precedence 2
-      accessibleDescription = asFlatString(element.getAttribute('aria-description') || '');
+      accessibleDescription.text = asFlatString(element.getAttribute('aria-description') || '');
     } else {
       // TODO: handle precedence 3 - html-aam-specific cases like table>caption.
       // https://www.w3.org/TR/html-aam-1.0/#accdesc-computation
       // precedence 4
-      accessibleDescription = asFlatString(element.getAttribute('title') || '');
+      accessibleDescription.text = asFlatString(element.getAttribute('title') || '');
     }
 
     cache?.set(element, accessibleDescription);
@@ -658,12 +670,19 @@ type AccessibleNameOptions = {
   visitedElements: Set<Element>,
   collectElements?: boolean,
   includeHidden?: boolean,
+  // Set to true during the computation when the name is derived from the content of the target
+  // element, e.g. inner text or aria-labelledby pointing inside the element.
+  outDerivedFromContent?: { value: boolean },
   embeddedInDescribedBy?: { element: Element, hidden: boolean },
   embeddedInLabelledBy?: { element: Element, hidden: boolean },
   embeddedInLabel?: { element: Element, hidden: boolean },
   embeddedInNativeTextAlternative?: { element: Element, hidden: boolean },
   embeddedInTargetElement?: 'self' | 'descendant',
 };
+
+function insideTargetElement(options: AccessibleNameOptions) {
+  return options.embeddedInTargetElement === 'self' || options.embeddedInTargetElement === 'descendant';
+}
 
 function getTextAlternativeInternal(element: Element, options: AccessibleNameOptions): CompositeString {
   if (options.visitedElements.has(element))
@@ -705,8 +724,11 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       embeddedInLabel: undefined,
       embeddedInNativeTextAlternative: undefined,
     })), ' ', options.collectElements);
-    if (accessibleName.text)
+    if (accessibleName.text) {
+      if (options.outDerivedFromContent && insideTargetElement(options) && (labelledBy || []).some(ref => ref === element || element.contains(ref)))
+        options.outDerivedFromContent.value = true;
       return accessibleName;
+    }
   }
 
   const role = getAriaRole(element) || '';
@@ -972,6 +994,8 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     // So we follow the spec everywhere except for the target element itself. This can probably be improved.
     const maybeTrimmedAccessibleName = options.embeddedInTargetElement === 'self' ? trimFlatString(accessibleName.text) : accessibleName.text;
     if (maybeTrimmedAccessibleName) {
+      if (options.outDerivedFromContent && insideTargetElement(options) && trimFlatString(accessibleName.text))
+        options.outDerivedFromContent.value = true;
       // This element owns the accumulated content - record it alongside the descendants it was computed from.
       accessibleName.elements?.add(element);
       return accessibleName;
@@ -1242,12 +1266,12 @@ export function receivesPointerEvents(element: Element): boolean {
   return result;
 }
 
-let cacheAccessibleName: Map<Element, CompositeString> | undefined;
-let cacheAccessibleNameHidden: Map<Element, CompositeString> | undefined;
+let cacheAccessibleName: Map<Element, AccessibleName> | undefined;
+let cacheAccessibleNameHidden: Map<Element, AccessibleName> | undefined;
 let cacheAccessibleNameText: Map<Element, string> | undefined;
 let cacheAccessibleNameTextHidden: Map<Element, string> | undefined;
-let cacheAccessibleDescription: Map<Element, string> | undefined;
-let cacheAccessibleDescriptionHidden: Map<Element, string> | undefined;
+let cacheAccessibleDescription: Map<Element, AccessibleDescription> | undefined;
+let cacheAccessibleDescriptionHidden: Map<Element, AccessibleDescription> | undefined;
 let cacheAccessibleErrorMessage: Map<Element, string> | undefined;
 let cacheIsHidden: Map<Element, boolean> | undefined;
 let cachePseudoContent: Map<Element, string | undefined> | undefined;

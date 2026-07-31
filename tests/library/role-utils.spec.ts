@@ -85,7 +85,7 @@ for (let range = 0; range <= ranges.length; range++) {
             if (!element)
               throw new Error(`Unable to resolve "${step.selector}"`);
             const injected = (window as any).__injectedScript;
-            const received = step.property === 'name' ? injected.utils.getElementAccessibleNameText(element) : injected.utils.getElementAccessibleDescription(element);
+            const received = step.property === 'name' ? injected.utils.getElementAccessibleNameText(element) : injected.utils.getElementAccessibleDescription(element).text;
             result.push({ selector: step.selector, expected: step.value, received });
           }
           return result;

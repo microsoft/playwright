@@ -112,10 +112,13 @@ export function elementMatchesText(cache: Map<Element | ShadowRoot, ElementText>
   return 'self';
 }
 
-export function getElementLabels(textCache: Map<Element | ShadowRoot, ElementText>, element: Element): ElementText[] {
-  const labels = getAriaLabelledByElements(element);
-  if (labels)
+export function getElementLabels(textCache: Map<Element | ShadowRoot, ElementText>, element: Element, options?: { skipRefsInsideElement?: boolean }): ElementText[] {
+  let labels = getAriaLabelledByElements(element);
+  if (labels) {
+    if (options?.skipRefsInsideElement)
+      labels = labels.filter(label => label !== element && !element.contains(label));
     return labels.map(label => elementText(textCache, label));
+  }
   const ariaLabel = element.getAttribute('aria-label');
   if (ariaLabel !== null && !!ariaLabel.trim())
     return [{ full: ariaLabel, normalized: normalizeWhiteSpace(ariaLabel), immediate: [ariaLabel] }];
