@@ -123,11 +123,9 @@ export class FixturePool {
       const name = entry[0];
       let value = entry[1];
       const previous = this._registrations.get(name);
-      let locksSpecified = false;
       let options: { auto: FixtureAuto, scope: FixtureScope, option?: boolean, locks: string[], timeout: number | undefined, customTitle?: string, box?: boolean | 'self' } | undefined;
       if (isFixtureTuple(value)) {
-        locksSpecified = value[1].locks !== undefined;
-        const locks = value[1].locks ?? previous?.locks ?? [];
+        const locks = value[1].locks ?? [];
         if (!Array.isArray(locks)) {
           this._addLoadError(`Fixture "${name}" option "locks" must be an array.`, location);
           continue;
@@ -164,7 +162,7 @@ export class FixturePool {
         }
       } else if (previous) {
         // Note: deliberately not inheriting "options.box" so that fixture override is visible by default.
-        options = { auto: previous.auto, scope: previous.scope, option: previous.option, locks: previous.locks, timeout: previous.timeout, customTitle: previous.customTitle };
+        options = { auto: previous.auto, scope: previous.scope, option: previous.option, locks: [], timeout: previous.timeout, customTitle: previous.customTitle };
       } else if (!options) {
         options = { auto: false, scope: 'test', option: false, locks: [], timeout: undefined };
       }
@@ -177,7 +175,7 @@ export class FixturePool {
         this._addLoadError(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, location);
         continue;
       }
-      if (options.scope === 'worker' && locksSpecified) {
+      if (options.scope === 'worker' && options.locks.length) {
         this._addLoadError(`Fixture "${name}" cannot specify locks because it has worker scope.`, location);
         continue;
       }

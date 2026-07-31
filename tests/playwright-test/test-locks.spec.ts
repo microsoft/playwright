@@ -206,6 +206,90 @@ test('should collect locks from the used fixture graph', async ({ runInlineTest 
   expect(conflictingOverlaps(result.outputLines, [['fixture', 'unused']])).toEqual([['fixture', 'unused']]);
 });
 
+test('should not inherit locks when replacing a fixture', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { fullyParallel: true };
+    `,
+    'helper.ts': `
+      import fs from 'fs';
+      import path from 'path';
+      export async function signalAndWait(signal: string, waitFor: string) {
+        fs.mkdirSync(process.env.SIGNAL_DIR, { recursive: true });
+        fs.writeFileSync(path.join(process.env.SIGNAL_DIR, signal), '');
+        while (!fs.existsSync(path.join(process.env.SIGNAL_DIR, waitFor)))
+          await new Promise(f => setTimeout(f, 100));
+      }
+    `,
+    'a.test.ts': `
+      import { test as base } from '@playwright/test';
+      import { signalAndWait } from './helper';
+
+      const withLockedFixture = base.extend<{ resource: void }>({
+        resource: [undefined, { locks: ['shared'] }],
+      });
+      const test = withLockedFixture.extend({
+        resource: async ({}, use) => use(),
+      });
+
+      test('replacement', async ({ resource }) => {
+        void resource;
+        console.log('\\n%%begin:replacement');
+        await signalAndWait('replacement', 'direct');
+        console.log('\\n%%end:replacement');
+      });
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      import { signalAndWait } from './helper';
+
+      test('direct', { lock: 'shared' }, async () => {
+        console.log('\\n%%begin:direct');
+        await signalAndWait('direct', 'replacement');
+        console.log('\\n%%end:direct');
+      });
+    `,
+  }, { workers: 2 }, { SIGNAL_DIR: test.info().outputDir });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(conflictingOverlaps(result.outputLines, [['replacement', 'direct']])).toEqual([['replacement', 'direct']]);
+});
+
+test('should collect locks when an overriding fixture uses its base implementation', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { fullyParallel: true };
+    `,
+    'a.test.ts': `
+      import { test as base } from '@playwright/test';
+
+      const withLockedFixture = base.extend<{ resource: void }>({
+        resource: [undefined, { locks: ['shared'] }],
+      });
+      const test = withLockedFixture.extend({
+        resource: async ({ resource }, use) => {
+          void resource;
+          await use();
+        },
+      });
+
+      test('fixture', async ({ resource }) => {
+        void resource;
+        console.log('\\n%%begin:fixture');
+        await new Promise(f => setTimeout(f, 500));
+        console.log('\\n%%end:fixture');
+      });
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('direct', 500, 'shared')}
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(conflictingOverlaps(result.outputLines, [['fixture', 'direct']])).toEqual([]);
+});
+
 test('should collect locks from automatic fixtures, hooks and modifiers', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
@@ -367,6 +451,18 @@ test('should validate fixture locks', async ({ runInlineTest }) => {
   });
   expect(worker.exitCode).toBe(1);
   expect(worker.output).toContain('cannot specify locks because it has worker scope');
+
+  const emptyWorker = await runInlineTest({
+    'a.test.js': `
+      const { test: base } = require('@playwright/test');
+      const test = base.extend({
+        fixture: [undefined, { scope: 'worker', locks: [] }],
+      });
+      test('test', async ({ fixture }) => {});
+    `,
+  });
+  expect(emptyWorker.exitCode).toBe(0);
+  expect(emptyWorker.passed).toBe(1);
 
   const nonArray = await runInlineTest({
     'a.test.js': `
