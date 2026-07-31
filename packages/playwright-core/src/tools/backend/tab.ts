@@ -411,19 +411,31 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._requests.length = 0;
   }
 
-  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, boxes: boolean | undefined, relativeTo: string | undefined): Promise<TabSnapshot> {
+  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, boxes: boolean | undefined, relativeTo: string | undefined, includeAria: boolean = true): Promise<TabSnapshot> {
     await this._initializedPromise;
     let tabSnapshot: TabSnapshot | undefined;
-    const modalStates = await this._raceAgainstModalStates(async () => {
-      const ariaSnapshot = root
-        ? await root.ariaSnapshot({ mode: 'ai', depth, boxes })
-        : await this.page.ariaSnapshot({ mode: 'ai', depth, boxes });
-      tabSnapshot = {
-        ariaSnapshot,
-        modalStates: [],
-        events: [],
-      };
-    });
+    let modalStates: ModalState[] = [];
+    if (includeAria) {
+      modalStates = await this._raceAgainstModalStates(async () => {
+        const ariaSnapshot = root
+          ? await root.ariaSnapshot({ mode: 'ai', depth, boxes })
+          : await this.page.ariaSnapshot({ mode: 'ai', depth, boxes });
+        tabSnapshot = {
+          ariaSnapshot,
+          modalStates: [],
+          events: [],
+        };
+      });
+    } else if (this.modalStates().length) {
+      // Matches the aria path's modal fallback below, without the race: there
+      // is no tree walk for a modal to interrupt.
+      modalStates = this.modalStates();
+    } else {
+      // The caller will not render the aria snapshot, so skip the accessibility
+      // tree walk, which dominates response latency on heavy pages. Console and
+      // events are still reported via the shared tail below.
+      tabSnapshot = { ariaSnapshot: '', modalStates: [], events: [] };
+    }
     if (tabSnapshot) {
       tabSnapshot.consoleLink = await this._consoleLog.take(relativeTo);
       tabSnapshot.events = this._recentEventEntries;
