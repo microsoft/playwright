@@ -316,18 +316,19 @@ test('basic test', async ({ todoPage, page }) => {
 ## Fixture locks
 
 Test-scoped fixtures can declare named locks, and every test using the fixture will inherit those locks.
+For example, tests that depend on specific server-wide settings must not run concurrently with other tests that change them.
 
 ```js title="my-test.ts"
 import { test as base } from '@playwright/test';
-import { testInbox } from './test-inbox';
 
 export const test = base.extend({
-  inbox: [
-    async ({}, use) => {
-      await testInbox.clear();
-      await use(testInbox);
+  smtpSettings: [
+    async ({ request }, use) => {
+      const updateSettings = settings =>
+        request.put('/api/admin/smtp-settings', { data: settings });
+      await use(updateSettings);
     },
-    { locks: ['test-inbox'] },
+    { locks: ['smtp-settings'] },
   ],
 });
 ```
