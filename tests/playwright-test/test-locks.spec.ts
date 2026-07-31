@@ -352,8 +352,6 @@ test('should resolve fixture locks through project option overrides', async ({ r
           await use('default');
         }, { option: true, locks: ['account'] }],
       });
-      test.use({ account: undefined });
-
       test('account one', async ({ account }) => {
         console.log('\\n%%begin:account-one:' + account);
         fs.writeFileSync(test.info().project.outputDir + '/account', '');
@@ -427,7 +425,37 @@ test('should resolve fixture locks through suite option overrides', async ({ run
   expect(result.passed).toBe(3);
   expect(result.outputLines).toContain('begin:account-one:override');
   expect(conflictingOverlaps(result.outputLines, [['account-one', 'database']])).toHaveLength(1);
-  expect(conflictingOverlaps(result.outputLines, [['account-one', 'account-two']])).toEqual([]);
+  expect(conflictingOverlaps(result.outputLines, [['account-one', 'account-two']])).toHaveLength(1);
+});
+
+test('should not inherit locks when resetting an option with test.use(undefined)', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { fullyParallel: true };
+    `,
+    'a.test.ts': `
+      import { test as base } from '@playwright/test';
+
+      const test = base.extend<{ account: string }>({
+        account: ['default', { option: true, locks: ['account'] }],
+      });
+      test.use({ account: undefined });
+
+      test('option', async ({ account }) => {
+        console.log('\\n%%begin:option:' + account);
+        await new Promise(f => setTimeout(f, 500));
+        console.log('\\n%%end:option');
+      });
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('direct', 500, 'account')}
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.outputLines).toContain('begin:option:default');
+  expect(conflictingOverlaps(result.outputLines, [['option', 'direct']])).toHaveLength(1);
 });
 
 test('should preserve fixture locks reachable outside an overridden option', async ({ runInlineTest }) => {

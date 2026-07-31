@@ -196,8 +196,6 @@ test('fixture locks survive loader process serialization', async ({ startTestSer
           await use('default');
         }, { option: true, locks: ['account'] }],
       });
-      test.use({ account: undefined });
-
       test('account one', async ({ account }) => {
         expect(account).toBe('override');
         fs.writeFileSync(test.info().project.outputDir + '/account-started', '');
