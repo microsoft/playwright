@@ -25,7 +25,7 @@ import type * as playwrightTypes from '../../..';
 
 const debugLogger = debug('pw:mcp:relay');
 
-export async function createExtensionBrowser(channel: string, executablePath: string | undefined, clientName: string): Promise<playwrightTypes.Browser> {
+export async function createExtensionBrowser(channel: string, executablePath: string | undefined, clientName: string, taskId?: string): Promise<playwrightTypes.Browser> {
   // Custom executablePath may target a browser in a different filesystem (e.g. Windows chrome.exe from WSL2), so the local profile path is not meaningful.
   let userDataDir: string | undefined;
   if (!executablePath) {
@@ -36,12 +36,17 @@ export async function createExtensionBrowser(channel: string, executablePath: st
 
   const httpServer = createHttpServer();
   await startHttpServer(httpServer, {});
-  const relay = new CDPRelayServer(httpServer, channel, executablePath, userDataDir);
+  const relay = new CDPRelayServer(httpServer, channel, executablePath, userDataDir, taskId ?? clientName);
   debugLogger(`CDP relay server started, extension endpoint: ${relay.extensionEndpoint()}.`);
 
   try {
     await relay.establishExtensionConnection(clientName);
-    return await playwright.chromium.connectOverCDP(relay.cdpEndpoint(), { isLocal: true, timeout: 0 });
+    const browser = await playwright.chromium.connectOverCDP(relay.cdpEndpoint(), { isLocal: true, timeout: 0 });
+    // Extension mode attaches to the user's browser. Browser.close() must tear
+    // down only this Playwright connection, not forward Browser.close over CDP.
+    // eslint-disable-next-line no-restricted-syntax
+    (browser as any)._shouldCloseConnectionOnClose = true;
+    return browser;
   } catch (error) {
     relay.stop();
     httpServer.close();

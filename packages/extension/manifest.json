@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Playwright Extension",
-  "version": "0.2.1",
-  "description": "Connect your browser to AI agents through Playwright MCP server and CLI. Enables AI-driven web testing, debugging, and automation.",
+  "name": "Playwright Extension (Task Isolated)",
+  "version": "0.2.2",
+  "description": "Local Playwright bridge with task-isolated tabs, background authorization, and ownership-safe cleanup.",
   "permissions": [
     "debugger",
     "activeTab",
+    "storage",
     "tabs",
     "tabGroups"
   ],
@@ -17,7 +18,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "Playwright Extension",
+    "default_title": "Playwright Extension (Task Isolated)",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png",
@@ -31,5 +32,5 @@
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
   },
-  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwRsUUO4mmbCi4JpmrIoIw31iVW9+xUJRZ6nSzya17PQkaUPDxe1IpgM+vpd/xB6mJWlJSyE1Lj95c0sbomGfVY1M0zUeKbaRVcAb+/a6m59gNR+ubFlmTX0nK9/8fE2FpRB9D+4N5jyeIPQuASW/0oswI2/ijK7hH5NTRX8gWc/ROMSgUj7rKhTAgBrICt/NsStgDPsxRTPPJnhJ/ViJtM1P5KsSYswE987DPoFnpmkFpq8g1ae0eYbQfXy55ieaacC4QWyJPj3daU2kMfBQw7MXnnk0H/WDxouMOIHnd8MlQxpEMqAihj7KpuONH+MUhuj9HEQo4df6bSaIuQ0b4QIDAQAB"
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmf/uFlhrk6mLM2TbJU29fjbpGvXkEBQ3CxhF77CQImtgtC9WRhqW0r1e7bRTMcxFuRMNQoWRy/tWS1Kg26mrdh5WySAemgykscVmPkHrEggS/PTn1MEVkOwmbCOVSPefCqVrz+vkraR7I66FGCjoQn/0U/4hNbQNzE10IQgsyl2EVNswq50B4+eL6gy7VTh1Xg/bo/PSCNSG5wMUjl8iPo2vlpVHTtWzMZ7taLKMjOCN3kX0lKBboaeXk5mJ1Whg+ZP31SIZNIr92zzfiO+uT/YytoWu5jkrQ2Gj7I+u4lWd1dgvCharzwnrEJngO0e0CXOkxa43QxKsZjmCzovbjQIDAQAB"
 }

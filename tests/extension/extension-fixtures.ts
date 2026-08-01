@@ -43,7 +43,7 @@ export type TestFixtures = {
   cli: (args: string[], options?: { env?: Record<string, string> }) => Promise<CliResult>;
 };
 
-export const extensionId = 'mmlmfjhmonkocbjadbfplnigmagldckm';
+export const extensionId = 'mmblklcefccekjbfjehkpmeibpjlanca';
 
 export const test = base.extend<TestFixtures>({
   pathToExtension: async ({}, use, testInfo) => {
@@ -77,7 +77,6 @@ export const test = base.extend<TestFixtures>({
             `--load-extension=${pathToExtension}`,
           ],
         });
-
         // MV3 service workers start lazily; wait for the extension's
         // background to be ready so tests can reach `chrome.*` via it.
         if (!browserContext.serviceWorkers().length)
@@ -201,7 +200,11 @@ export async function startWithExtensionFlag(browserWithExtension: BrowserWithEx
 // with the click — the request reaches the background while the page is being
 // torn down. Swallow the resulting "Target closed" error.
 export async function clickAllowAndSelect(connectPage: Page, tabTitle: RegExp | string): Promise<void> {
-  await connectPage.locator('.tab-item', { hasText: tabTitle }).getByRole('button', { name: 'Allow & select' }).click().catch(e => {
+  const matchingTab = connectPage.locator('.tab-item', { hasText: tabTitle });
+  const button = await matchingTab.count()
+    ? matchingTab.getByRole('button', { name: 'Allow & select' })
+    : connectPage.getByRole('button', { name: 'Allow in background' });
+  await button.click().catch(e => {
     if (!e?.message?.includes(kTargetClosedErrorMessage))
       throw e;
   });

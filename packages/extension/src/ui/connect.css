@@ -108,6 +108,11 @@ body {
   min-width: 90px;
 }
 
+.button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .button.primary {
   background-color: #f8f9fa;
   color: #3c4043;
@@ -153,6 +158,21 @@ body {
 .client-info {
   font-size: 14px;
   color: #1f2328;
+  min-width: 0;
+}
+
+.connection-section + .connection-section {
+  border-top: 1px solid #d8dee4;
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.task-info {
+  max-width: 420px;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Tab selection */

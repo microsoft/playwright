@@ -58,6 +58,8 @@ export class RelayConnection {
   private _ws: WebSocket;
   // Tabs whose debugger we have explicitly attached for this connection.
   private _attachedTabs = new Set<number>();
+  // Tabs already reported to the relay but not attached by chrome.debugger yet.
+  private _pendingTabs = new Set<number>();
   // Once we've attached at least one tab, detaching the last one closes the connection.
   private _hasEverAttached = false;
   private _eventListeners: Array<{ remove: () => void }> = [];
@@ -66,6 +68,7 @@ export class RelayConnection {
   onclose?: () => void;
   ontabattached?: (tabId: number) => void;
   ontabdetached?: (tabId: number) => void;
+  onownedtabcreated?: (tabId: number) => void;
 
   get attachedTabs(): ReadonlySet<number> {
     return this._attachedTabs;
@@ -99,8 +102,9 @@ export class RelayConnection {
   // chrome.debugger.attach, which flows through _handleCommand and fires
   // ontabattached.
   attachTab(tab: chrome.tabs.Tab): void {
-    if (this._closed || this._attachedTabs.has(tab.id!))
+    if (this._closed || this._attachedTabs.has(tab.id!) || this._pendingTabs.has(tab.id!))
       return;
+    this._pendingTabs.add(tab.id!);
     this._sendMessage({ method: 'chrome.tabs.onCreated', params: [tab] });
   }
 
@@ -123,12 +127,14 @@ export class RelayConnection {
   }
 
   private _notifyTabAttached(tabId: number): void {
+    this._pendingTabs.delete(tabId);
     this._attachedTabs.add(tabId);
     this._hasEverAttached = true;
     this.ontabattached?.(tabId);
   }
 
   private _notifyTabDetached(tabId: number): void {
+    this._pendingTabs.delete(tabId);
     this._attachedTabs.delete(tabId);
     this.ontabdetached?.(tabId);
   }
@@ -155,6 +161,7 @@ export class RelayConnection {
       chrome.debugger.detach({ tabId }).catch(() => {});
       this._notifyTabDetached(tabId);
     }
+    this._pendingTabs.clear();
     this.onclose?.();
   }
 
@@ -166,6 +173,15 @@ export class RelayConnection {
   // Forwards chrome.* events concerning attached tabs to the relay, then runs
   // shared detach bookkeeping.
   private _onChromeEvent(fullMethod: string, args: any[]): void {
+    if (fullMethod === 'chrome.tabs.onCreated') {
+      const tab = args[0] as chrome.tabs.Tab;
+      if (tab.openerTabId === undefined || !this._attachedTabs.has(tab.openerTabId) || tab.id === undefined || this._attachedTabs.has(tab.id) || this._pendingTabs.has(tab.id))
+        return;
+      this._pendingTabs.add(tab.id);
+      this.onownedtabcreated?.(tab.id);
+      this._sendMessage({ method: fullMethod, params: args });
+      return;
+    }
     const tabId = this._tabIdForEventArgs(fullMethod, args);
     if (tabId === undefined || !this._attachedTabs.has(tabId))
       return;
@@ -215,6 +231,11 @@ export class RelayConnection {
     try {
       response.result = await this._handleCommand(message);
     } catch (error: any) {
+      if (message.method === 'chrome.debugger.attach') {
+        const target = (message.params as any[] | undefined)?.[0] as chrome.debugger.Debuggee | undefined;
+        if (target?.tabId !== undefined)
+          this._pendingTabs.delete(target.tabId);
+      }
       debugLog(`Error handling command ${JSON.stringify(message)}:`, error);
       response.error = error.message;
     }
@@ -225,12 +246,23 @@ export class RelayConnection {
     if (!ALLOWED_CHROME_COMMANDS.has(message.method))
       throw new Error(`Unknown method: ${message.method}`);
     const args = (message.params ?? []) as any[];
+    if (message.method === 'chrome.tabs.create')
+      args[0] = { ...args[0], active: false };
+    // Playwright uses Page.bringToFront when changing its logical current tab.
+    // In extension mode that must not change the user's active Chrome tab.
+    if (message.method === 'chrome.debugger.sendCommand' && args[1] === 'Page.bringToFront')
+      return {};
     const result = await invokeChromeMethod(message.method, args);
     // Attach bookkeeping; detach flows through the chrome.debugger.onDetach event.
     if (message.method === 'chrome.debugger.attach') {
       const target = args[0] as chrome.debugger.Debuggee | undefined;
       if (target?.tabId !== undefined)
         this._notifyTabAttached(target.tabId);
+    }
+    if (message.method === 'chrome.tabs.create') {
+      const tabId = (result as chrome.tabs.Tab | undefined)?.id;
+      if (tabId !== undefined)
+        this.onownedtabcreated?.(tabId);
     }
     return result ?? {};
   }

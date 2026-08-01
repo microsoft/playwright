@@ -38,8 +38,82 @@ test(`navigate with extension`, async ({ startExtensionClient, server }) => {
   await clickAllowAndSelect(selectorPage, 'Welcome');
 
   expect(await navigateResponse).toHaveResponse({
-    snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
+    snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
   });
+});
+
+test(`parallel extension tasks isolate groups, preserve focus, and clean owned tabs`, async ({ browserWithExtension, startClient, server }) => {
+  const browserContext = await browserWithExtension.launch();
+  const statusPage = await browserContext.newPage();
+  await statusPage.goto(`chrome-extension://${extensionId}/status.html`);
+  const token = await statusPage.locator('.auth-token-code').textContent();
+  const [, tokenValue] = token?.split('=') || [];
+
+  const userPage = await browserContext.newPage();
+  await userPage.setContent('<title>User-owned A</title><body>User-owned A</body>');
+
+  const { client: clientA } = await startClient({
+    clientName: 'parallel-a',
+    args: [`--extension`],
+    env: {
+      PLAYWRIGHT_MCP_TASK_ID: 'task-a',
+      PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
+    },
+  });
+  const confirmationPagePromise = browserContext.waitForEvent('page', page =>
+    page.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
+  );
+  const snapshotPromise = clientA.callTool({ name: 'browser_snapshot', arguments: {} });
+  await clickAllowAndSelect(await confirmationPagePromise, 'User-owned A');
+  await snapshotPromise;
+
+  const { client: clientB } = await startClient({
+    clientName: 'parallel-b',
+    args: [`--extension`],
+    env: {
+      PLAYWRIGHT_MCP_EXTENSION_TOKEN: tokenValue,
+      PLAYWRIGHT_MCP_TASK_ID: 'task-b',
+      PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
+    },
+  });
+  await clientB.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
+
+  const groupTitles = () => statusPage.evaluate(async () =>
+    (await chrome.tabGroups.query({})).map(group => group.title || '').filter(title => title.startsWith('Playwright · ')).sort()
+  );
+  await expect.poll(groupTitles).toEqual([
+    expect.stringMatching(/^Playwright · task-a · /),
+    expect.stringMatching(/^Playwright · task-b · /),
+  ]);
+
+  await statusPage.bringToFront();
+  const ownedUrl = server.PREFIX + '/owned-by-task-b';
+  await clientB.callTool({ name: 'browser_tabs', arguments: { action: 'new', url: ownedUrl } });
+  await expect.poll(() => statusPage.evaluate(async url => {
+    const [taskTab] = await chrome.tabs.query({ url });
+    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    return { taskTabActive: taskTab?.active, activeTabUrl: activeTab?.url };
+  }, ownedUrl)).toEqual({ taskTabActive: false, activeTabUrl: statusPage.url() });
+  await clientB.callTool({ name: 'browser_tabs', arguments: { action: 'select', index: 0 } });
+  expect(await statusPage.evaluate(async () => (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.url)).toBe(statusPage.url());
+
+  await clientA.close();
+  await expect.poll(groupTitles).toEqual([
+    expect.stringMatching(/^Playwright · task-b · /),
+  ]);
+  await expect(userPage).toHaveTitle('User-owned A');
+  expect(await statusPage.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ title: 'User-owned A' });
+    return tab?.groupId === chrome.tabs.TAB_ID_NONE;
+  })).toBe(true);
+
+  expect(await clientB.callTool({ name: 'browser_tabs', arguments: { action: 'list' } })).toHaveResponse({
+    result: expect.stringContaining(ownedUrl),
+  });
+
+  await clientB.close();
+  await expect.poll(groupTitles).toEqual([]);
+  await expect.poll(() => statusPage.evaluate(async url => (await chrome.tabs.query({ url })).length, ownedUrl)).toBe(0);
 });
 
 test(`connect.html requests protocol version 2`, async ({ startExtensionClient, server }) => {
@@ -188,7 +262,7 @@ testWithOldExtensionVersion(`works with old extension version`, async ({ startEx
   await clickAllowAndSelect(selectorPage, 'Welcome');
 
   expect(await navigateResponse).toHaveResponse({
-    snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
+    snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
   });
 });
 
@@ -364,9 +438,9 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
   });
 
   expect(await navigateResponse).toHaveResponse({
-    snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
+    snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
   });
 
   await page.goto(`chrome-extension://${extensionId}/status.html`);
-  await expect(page.locator('.client-info')).toContainText(`Connected to "${clientName}"`);
+  await expect(page.locator('.client-info')).toContainText(`Connected client: "${clientName}"`);
 });

@@ -16,13 +16,15 @@
 
 import React from 'react';
 
-export const Button: React.FC<{ variant: 'primary' | 'default' | 'reject'; onClick: () => void; children: React.ReactNode }> = ({
+export const Button: React.FC<{ variant: 'primary' | 'default' | 'reject'; onClick: () => void; children: React.ReactNode; disabled?: boolean; ariaLabel?: string }> = ({
   variant,
   onClick,
-  children
+  children,
+  disabled,
+  ariaLabel,
 }) => {
   return (
-    <button className={`button ${variant}`} onClick={onClick}>
+    <button className={`button ${variant}`} onClick={onClick} disabled={disabled} aria-label={ariaLabel}>
       {children}
     </button>
   );

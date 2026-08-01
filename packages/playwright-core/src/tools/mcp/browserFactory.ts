@@ -36,7 +36,7 @@ import type { Playwright } from '../../client/playwright';
 import type * as playwrightTypes from '../../..';
 import type { BrowserInfo } from '../../serverRegistry';
 
-type BrowserWithInfo = {
+export type BrowserWithInfo = {
   browser: playwrightTypes.Browser,
   browserInfo: BrowserInfo,
   canBind: boolean,
@@ -60,7 +60,7 @@ export async function createBrowserWithInfo(config: FullConfig, clientInfo: Clie
     ownership = 'own';
   } else if (config.extension) {
     const { channel, executablePath } = resolveExtensionOptions(cliOptions);
-    browser = await createExtensionBrowser(channel, executablePath, clientInfo.clientName);
+    browser = await createExtensionBrowser(channel, executablePath, clientInfo.clientName, clientInfo.taskId);
     ownership = 'attached';
   } else {
     browser = await createPersistentBrowser(config, clientInfo);

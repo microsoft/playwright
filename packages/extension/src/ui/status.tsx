@@ -19,19 +19,35 @@ import { createRoot } from 'react-dom/client';
 import { Button, TabItem  } from './tabItem';
 import { AuthTokenSection } from './authToken';
 
+type ConnectionStatus = {
+  connectionId: string;
+  clientName?: string;
+  taskId: string;
+  connectedTabIds: number[];
+};
+
+type ConnectionView = Omit<ConnectionStatus, 'connectedTabIds'> & {
+  tabs: chrome.tabs.Tab[];
+};
+
 const StatusApp: React.FC = () => {
-  const [connectedTabs, setConnectedTabs] = useState<chrome.tabs.Tab[]>([]);
-  const [clientName, setClientName] = useState<string | undefined>(undefined);
+  const [connections, setConnections] = useState<ConnectionView[]>([]);
+  const [disconnecting, setDisconnecting] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     void loadStatus();
   }, []);
 
   const loadStatus = async () => {
-    const { connectedTabIds, clientName } = await chrome.runtime.sendMessage({ type: 'getConnectionStatus' });
-    const tabs = await Promise.all((connectedTabIds as number[] ?? []).map(tabId => chrome.tabs.get(tabId)));
-    setConnectedTabs(tabs);
-    setClientName(clientName);
+    const response = await chrome.runtime.sendMessage({ type: 'getConnectionStatus' });
+    const views = await Promise.all((response.connections as ConnectionStatus[] ?? []).map(async connection => ({
+      connectionId: connection.connectionId,
+      clientName: connection.clientName,
+      taskId: connection.taskId,
+      tabs: (await Promise.all(connection.connectedTabIds.map(tabId => chrome.tabs.get(tabId).catch(() => undefined))))
+          .filter((tab): tab is chrome.tabs.Tab => !!tab),
+    })));
+    setConnections(views);
   };
 
   const openTab = async (tabId: number) => {
@@ -39,36 +55,55 @@ const StatusApp: React.FC = () => {
     window.close();
   };
 
-  const disconnect = async () => {
-    await chrome.runtime.sendMessage({ type: 'disconnect' });
-    window.close();
+  const disconnect = async (connectionId: string) => {
+    setDisconnecting(current => new Set(current).add(connectionId));
+    try {
+      await chrome.runtime.sendMessage({ type: 'disconnect', connectionId });
+      await loadStatus();
+    } finally {
+      setDisconnecting(current => {
+        const next = new Set(current);
+        next.delete(connectionId);
+        return next;
+      });
+    }
   };
 
   return (
     <div className='app-container'>
       <div className='content-wrapper'>
-        {connectedTabs.length > 0 ? (
+        {connections.length > 0 ? (
           <div>
-            <div className='connection-header'>
-              <div className='client-info'>
-                Connected to <strong>"{clientName || 'unknown'}"</strong>
-              </div>
-              <Button variant='primary' onClick={disconnect}>
-                Disconnect
-              </Button>
-            </div>
-            <div className='tab-section-title'>
-              {connectedTabs.length === 1 ? 'Accessible page:' : 'Accessible pages:'}
-            </div>
-            <div>
-              {connectedTabs.map(tab => (
-                <TabItem
-                  key={tab.id}
-                  tab={tab}
-                  onClick={() => openTab(tab.id!)}
-                />
-              ))}
-            </div>
+            {connections.map(connection => (
+              <section className='connection-section' key={connection.connectionId}>
+                <div className='connection-header'>
+                  <div className='client-info'>
+                    <div>Connected client: <strong>"{connection.clientName || 'unknown'}"</strong></div>
+                    <div className='task-info' title={connection.taskId}>Task: <strong>{connection.taskId}</strong></div>
+                  </div>
+                  <Button
+                    variant='primary'
+                    onClick={() => disconnect(connection.connectionId)}
+                    disabled={disconnecting.has(connection.connectionId)}
+                    ariaLabel={`Disconnect ${connection.clientName || 'unknown'} task ${connection.taskId}`}
+                  >
+                    {disconnecting.has(connection.connectionId) ? 'Disconnecting…' : 'Disconnect'}
+                  </Button>
+                </div>
+                <div className='tab-section-title'>
+                  {connection.tabs.length === 0 ? 'No accessible pages.' : connection.tabs.length === 1 ? 'Accessible page:' : 'Accessible pages:'}
+                </div>
+                <div>
+                  {connection.tabs.map(tab => (
+                    <TabItem
+                      key={tab.id}
+                      tab={tab}
+                      onClick={() => openTab(tab.id!)}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
           </div>
         ) : (
           <div className='status-banner'>

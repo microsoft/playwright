@@ -1,70 +1,82 @@
-# Playwright Chrome Extension
+# Playwright Chrome Extension (Task Isolated)
 
-## Introduction
+This local fork of the Playwright Chrome extension keeps every CLI or MCP task in a separately owned tab group. It is intended for running concurrent automation against an existing Chrome profile without replacing the official extension or interrupting the user's active tab.
 
-The Playwright Chrome Extension allows you to connect to pages in your existing browser and leverage the state of your default user profile. This means the AI assistant can interact with websites where you're already logged in, using your existing cookies, sessions, and browser state, providing a seamless experience without requiring separate authentication or setup.
+## Behavior
 
-## Prerequisites
+- Each CLI session name, explicit `PLAYWRIGHT_MCP_TASK_ID`, or generated MCP connection ID gets a unique tab group.
+- Background approval creates an inactive task-owned blank tab. New tabs and popups created by the task stay owned by that task.
+- Playwright's logical `bringToFront` command does not activate a Chrome tab. The only path that activates a selected target is the explicit **Allow & select** button.
+- Disconnect, success, failure, cancellation, timeout, transport loss, and stale service-worker recovery close only tabs recorded as task-owned. User tabs that were explicitly shared or dragged into the group are only ungrouped.
+- Multiple connections can coexist; the extension status page can disconnect them individually.
 
-- Chrome/Edge/Chromium browser
+## Build and install alongside the official extension
 
-## Installation Steps
+Prerequisites: Node.js, npm, and Chrome/Edge/Chromium.
 
-### Install the Extension
-
-Install [Playwright Extension](https://chromewebstore.google.com/detail/playwright-extension/mmlmfjhmonkocbjadbfplnigmagldckm) from the Chrome Web Store.
-
-### Configure Playwright MCP server
-
-Configure Playwright MCP server to connect to the browser using the extension by passing the `--extension` option when running the MCP server:
-
-```json
-{
-  "mcpServers": {
-    "playwright-extension": {
-      "command": "npx",
-      "args": [
-        "@playwright/mcp@latest",
-        "--extension"
-      ]
-    }
-  }
-}
+```bash
+git clone https://github.com/WitMiao/playwright.git
+cd playwright
+git checkout codex/session-isolated-extension
+npm ci
+npm run build
 ```
 
-## Usage
+Then open `chrome://extensions`:
 
-### Browser Tab Selection
+1. Enable **Developer mode**.
+2. Choose **Load unpacked**.
+3. Select `packages/extension/dist` from this checkout.
+4. Verify the displayed ID is `mmblklcefccekjbfjehkpmeibpjlanca`.
 
-When the LLM interacts with the browser for the first time, it will load a page where you can select which browser tab the LLM will connect to. This allows you to control which specific page the AI assistant will interact with during the session.
+The fork uses a separate pinned extension ID, so the Chrome Web Store version can remain installed. Do not disable or uninstall the official extension. Use the CLI/MCP entry points from this checkout because they are pinned to the local extension ID.
 
-### Bypassing the Connection Approval Dialog
+## CLI usage
 
-By default, you'll need to approve each connection when the MCP server tries to connect to your browser. To bypass this approval dialog and allow automatic connections, you can use an authentication token.
+Use a distinct session name for every concurrent task. That name becomes the readable ownership label and allows subsequent commands or generated scripts to reuse the same daemon session.
 
-#### Using Your Unique Authentication Token
+```bash
+npm run playwright-cli -- -s=invoice-audit attach --extension=chrome
+npm run playwright-cli -- -s=invoice-audit tab-new https://example.com
+npm run playwright-cli -- -s=invoice-audit run-code --filename=automation.js
+npm run playwright-cli -- -s=invoice-audit detach
+```
 
-1. After installing the extension, click on the extension icon or navigate to the extension's status page
-2. Copy the `PLAYWRIGHT_MCP_EXTENSION_TOKEN` value displayed in the extension UI
-3. Add it to your MCP server configuration:
+`detach` ends the task connection and triggers extension cleanup. `close` is also supported. Keep unrelated concurrent work on a different `-s=<name>`.
+
+## MCP usage
+
+Run the MCP entry point built by this checkout and provide an explicit task ID when the caller can identify the job:
 
 ```json
 {
   "mcpServers": {
-    "playwright-extension": {
-      "command": "npx",
+    "playwright-isolated": {
+      "command": "node",
       "args": [
-        "@playwright/mcp@latest",
-        "--extension"
+        "/absolute/path/to/playwright/packages/playwright-core/lib/entry/mcp.js",
+        "--extension",
+        "--snapshot-mode=none"
       ],
       "env": {
-        "PLAYWRIGHT_MCP_EXTENSION_TOKEN": "your-token-here"
+        "PLAYWRIGHT_MCP_TASK_ID": "replace-with-one-id-per-task"
       }
     }
   }
 }
 ```
 
-This token is unique to your browser profile and provides secure authentication between the MCP server and the extension. Once configured, you won't need to manually approve connections each time.
+If `PLAYWRIGHT_MCP_TASK_ID` is omitted, the server generates a unique ID. Never reuse one explicit task ID for concurrently running jobs.
 
+The optional authentication token shown by the extension can skip the approval page. Treat it as a secret: provide it only through the `PLAYWRIGHT_MCP_EXTENSION_TOKEN` environment variable and never commit or log it.
 
+## Lower-token workflow
+
+- Prefer one named CLI session plus `run-code --filename=...` for a complete multi-step flow instead of many one-command round trips.
+- For MCP jobs that do not need element references in every response, use `--snapshot-mode=none` and request a snapshot only when needed.
+- Reuse generated scripts and session names; avoid repeated full snapshots, console dumps, network logs, traces, and screenshots unless they answer a specific diagnostic question.
+- Give every parallel task its own session/task ID so retries never inherit another job's resources.
+
+## Focus limitation
+
+Extension-created tabs are inactive and Playwright tab selection is kept logical. However, when Chrome is launched or asked by the operating system to open the extension's `connect.html` URL, Chrome itself may briefly foreground that connection page before extension JavaScript runs. Chrome does not expose an extension API that can retroactively guarantee the original application focus in this startup path. Token-based approval avoids the interactive page after Chrome has already received the URL, but cannot eliminate this browser/OS startup limitation.

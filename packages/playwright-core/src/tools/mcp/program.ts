@@ -26,7 +26,7 @@ import { packageJSON } from '../../package';
 
 import type { Command } from 'commander';
 import type { ClientInfo } from '../utils/mcp/server';
-import type * as playwright from '../../..';
+import type { BrowserWithInfo } from './browserFactory';
 
 const version = packageJSON.version;
 
@@ -99,7 +99,7 @@ export function decorateMCPCommand(command: Command) {
         const config = await resolveCLIConfigForMCP(options);
         const tools = filteredTools(config);
         const useSharedBrowser = config.sharedBrowserContext || config.browser.isolated;
-        let sharedBrowserPromise: Promise<playwright.Browser> | undefined;
+        let sharedBrowserPromise: Promise<BrowserWithInfo> | undefined;
         let clientCount = 0;
         const clientNameCounters = new Map<string, number>();
 
@@ -111,17 +111,17 @@ export function decorateMCPCommand(command: Command) {
           create: async (clientInfo: ClientInfo) => {
             if (useSharedBrowser && !sharedBrowserPromise) {
               sharedBrowserPromise = (async () => {
-                const { browser, canBind } = await createBrowserWithInfo(config, clientInfo, options);
-                if (canBind)
-                  await browser.bind(clientInfo.clientName, { workspaceDir: clientInfo.cwd });
-                return browser;
+                const browserWithInfo = await createBrowserWithInfo(config, clientInfo, options);
+                if (browserWithInfo.canBind)
+                  await browserWithInfo.browser.bind(clientInfo.clientName, { workspaceDir: clientInfo.cwd });
+                return browserWithInfo;
               })().catch(error => {
                 sharedBrowserPromise = undefined;
                 throw error;
               });
             }
             clientCount++;
-            const { browser, canBind } = sharedBrowserPromise ? { browser: await sharedBrowserPromise, canBind: false } : await createBrowserWithInfo(config, clientInfo, options);
+            const { browser, canBind, ownership } = sharedBrowserPromise ? { ...await sharedBrowserPromise, canBind: false } : await createBrowserWithInfo(config, clientInfo, options);
             if (canBind) {
               const count = (clientNameCounters.get(clientInfo.clientName) ?? 0) + 1;
               clientNameCounters.set(clientInfo.clientName, count);
@@ -137,6 +137,13 @@ export function decorateMCPCommand(command: Command) {
                   testDebug('close context');
                   await browserContext.close().catch(() => { });
                 }
+                return;
+              }
+
+              if (ownership === 'attached') {
+                testDebug('disconnect attached browser');
+                sharedBrowserPromise = undefined;
+                await browser.close().catch(() => { });
                 return;
               }
 

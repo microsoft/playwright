@@ -44,9 +44,14 @@ test('attach <url> --extension', async ({ startAttach, cli, server }) => {
   {
     const { output } = await cliPromise;
     expect(output).toContain(`### Page`);
-    expect(output).toContain(`- Page URL: chrome-extension://${extensionId}/connect.html?`);
-    expect(output).toContain(`- Page Title: Welcome`);
+    expect(output).toContain(`- Page URL: about:blank`);
   }
+
+  const [serviceWorker] = confirmationPage.context().serviceWorkers();
+  await expect.poll(() => serviceWorker.evaluate(async () => {
+    const chrome = (globalThis as any).chrome;
+    return (await chrome.tabGroups.query({})).map((group: any) => group.title);
+  })).toContainEqual(expect.stringMatching(/^Playwright · chromium · /));
 
   {
     const { output } = await cli(['-s=chromium', 'goto', server.HELLO_WORLD]);

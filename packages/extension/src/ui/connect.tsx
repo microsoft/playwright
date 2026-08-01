@@ -36,6 +36,16 @@ const clientInfo = (() => {
   }
 })();
 
+const connectionInfo = (() => {
+  const params = new URLSearchParams(window.location.search);
+  const relayUrl = params.get('mcpRelayUrl') ?? '';
+  const fallbackConnectionId = relayUrl.split('/').filter(Boolean).at(-1) || crypto.randomUUID();
+  return {
+    connectionId: params.get('connectionId') || fallbackConnectionId,
+    taskId: params.get('taskId') || clientInfo,
+  };
+})();
+
 const ConnectApp: React.FC = () => {
   const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
   const [status, setStatus] = useState<Status | null>(null);
@@ -91,7 +101,11 @@ const ConnectApp: React.FC = () => {
       }
       // The background only records the relay URL; the WS to the relay opens
       // once the user clicks Allow.
-      await chrome.runtime.sendMessage({ type: 'connectionRequested', mcpRelayUrl: relayUrl });
+      await chrome.runtime.sendMessage({
+        type: 'connectionRequested',
+        mcpRelayUrl: relayUrl,
+        ...connectionInfo,
+      });
 
       const expectedToken = getOrCreateAuthToken();
       const token = params.get('token');
@@ -176,11 +190,19 @@ const ConnectApp: React.FC = () => {
           <AuthTokenSection />
         )}
 
+        {status?.type === 'connecting' && (
+          <div className='button-container'>
+            <Button variant='primary' onClick={() => handleConnectToTab()}>
+              Allow in background
+            </Button>
+          </div>
+        )}
+
         {showTabList && (
           <div>
             <div className='tab-section-title'>
               You can drag tabs into the Playwright group later to make them accessible to the client.
-              Optionally, select a tab to allow and immediately switch to it:
+              Only choose a tab below if you explicitly want to authorize and switch to it:
             </div>
             <div>
               {tabs.map(tab => (
@@ -203,13 +225,12 @@ const ConnectApp: React.FC = () => {
 };
 
 const VersionMismatchError: React.FC<{ extensionVersion: string }> = ({ extensionVersion }) => {
-  const readmeUrl = 'https://github.com/microsoft/playwright/blob/main/packages/extension/README.md';
-  const chromeWebStoreUrl = 'https://chromewebstore.google.com/detail/playwright-extension/mmlmfjhmonkocbjadbfplnigmagldckm';
+  const readmeUrl = 'https://github.com/WitMiao/playwright/blob/codex/session-isolated-extension/packages/extension/README.md';
   return (
     <div>
       Playwright client trying to connect requires newer extension version (current version: {extensionVersion}).{' '}
-      Update <a href={chromeWebStoreUrl} target='_blank' rel='noopener noreferrer'>Playwright Extension</a> from the Chrome Web Store to the latest version.{' '}
-      See <a href={readmeUrl} target='_blank' rel='noopener noreferrer'>installation instructions</a> for more details.
+      Rebuild and reload the local extension.{' '}
+      See <a href={readmeUrl} target='_blank' rel='noopener noreferrer'>local installation instructions</a> for details.
     </div>
   );
 };

@@ -18,9 +18,9 @@ import fs from 'fs';
 import path from 'path';
 
 // Also pinned via the "key" field in packages/extension/manifest.json.
-export const playwrightExtensionId = 'mmlmfjhmonkocbjadbfplnigmagldckm';
+export const playwrightExtensionId = 'mmblklcefccekjbfjehkpmeibpjlanca';
 
-export const playwrightExtensionInstallUrl = `https://chromewebstore.google.com/detail/playwright-extension/${playwrightExtensionId}`;
+export const playwrightExtensionInstallUrl = 'https://github.com/WitMiao/playwright/tree/codex/session-isolated-extension/packages/extension';
 
 export async function findPlaywrightExtensionProfile(userDataDir: string): Promise<string | undefined> {
   const profiles = await listProfileDirectories(userDataDir);

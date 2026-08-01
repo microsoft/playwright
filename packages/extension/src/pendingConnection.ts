@@ -16,25 +16,39 @@
 
 import { RelayConnection, debugLog } from './relayConnection';
 
+export type PendingConnection = {
+  connection: RelayConnection;
+  connectionId: string;
+  taskId: string;
+};
+
+type PendingConnectionRequest = Omit<PendingConnection, 'connection'> & {
+  mcpRelayUrl: string;
+};
+
 // Relay URLs recorded by `connectionRequested`, keyed by the connect page tab
 // id. The relay WebSocket opens lazily in `take` once the user clicks Allow.
 export class PendingConnections {
-  private _map = new Map<number, string>();
+  private _map = new Map<number, PendingConnectionRequest>();
 
   constructor() {
     chrome.tabs.onRemoved.addListener(tabId => this._map.delete(tabId));
   }
 
-  create(selectorTabId: number, mcpRelayUrl: string): void {
-    this._map.set(selectorTabId, mcpRelayUrl);
+  create(selectorTabId: number, request: PendingConnectionRequest): void {
+    this._map.set(selectorTabId, request);
   }
 
-  async take(selectorTabId: number): Promise<RelayConnection | undefined> {
-    const mcpRelayUrl = this._map.get(selectorTabId);
-    if (mcpRelayUrl === undefined)
+  async take(selectorTabId: number): Promise<PendingConnection | undefined> {
+    const request = this._map.get(selectorTabId);
+    if (!request)
       return undefined;
     this._map.delete(selectorTabId);
-    return openRelayConnection(mcpRelayUrl);
+    return {
+      connection: await openRelayConnection(request.mcpRelayUrl),
+      connectionId: request.connectionId,
+      taskId: request.taskId,
+    };
   }
 }
 

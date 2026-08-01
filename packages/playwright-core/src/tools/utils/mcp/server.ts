@@ -15,6 +15,7 @@
  */
 
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import debug from 'debug';
@@ -36,6 +37,7 @@ const serverDebugResponse = debug('pw:mcp:server:response');
 export type ClientInfo = {
   cwd: string;
   clientName: string;
+  taskId?: string;
 };
 
 export interface ServerBackend {
@@ -119,6 +121,7 @@ const initializeServer = async (server: ServerType, factory: ServerBackendFactor
   const clientInfo: ClientInfo = {
     cwd: firstRootPath(clientRoots),
     clientName: server.getClientVersion()?.name ?? 'Playwright MCP',
+    taskId: process.env.PLAYWRIGHT_MCP_TASK_ID || crypto.randomUUID(),
   };
 
   const backend = await factory.create(clientInfo);

@@ -58,6 +58,7 @@ export function decorateProgram(program: Command) {
         const mcpClientInfo = {
           cwd: process.cwd(),
           clientName: guessClientName(),
+          taskId: sessionName,
         };
 
         try {
