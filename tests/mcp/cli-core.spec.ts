@@ -192,10 +192,12 @@ test('eval <ref>', async ({ cli, server }) => {
   expect(output).toContain('"BUTTON"');
 });
 
+// Firefox can deliver Page.dialogOpened after the default 5s action timeout
+// (seen after the FF 153 roll, especially on Windows), so the click loses the
+// modal race and the response never includes the dialog. Keep the race open longer.
 test('dialog-accept', async ({ cli, server, mcpBrowser }) => {
-  test.fixme(mcpBrowser === 'firefox' && process.platform === 'win32', 'Clicking an element that opens a synchronous alert() intermittently hangs the click action on Firefox + Windows.');
   server.setContent('/', `<button onclick="alert('MyAlert')">Button</button>`, 'text/html');
-  await cli('open', server.PREFIX);
+  await cli('open', server.PREFIX, { env: { PLAYWRIGHT_MCP_TIMEOUT_ACTION: mcpBrowser === 'firefox' ? '30000' : '' } });
   const { output } = await cli('click', 'e2');
   expect(output).toContain('MyAlert');
   expect(output).toContain('["alert" dialog with message "MyAlert"]: can be handled by dialog-accept or dialog-dismiss');
@@ -205,9 +207,8 @@ test('dialog-accept', async ({ cli, server, mcpBrowser }) => {
 });
 
 test('dialog-dismiss', async ({ cli, server, mcpBrowser }) => {
-  test.fixme(mcpBrowser === 'firefox' && process.platform === 'win32', 'Clicking an element that opens a synchronous alert() intermittently hangs the click action on Firefox + Windows.');
   server.setContent('/', `<button onclick="alert('MyAlert')">Button</button>`, 'text/html');
-  await cli('open', server.PREFIX);
+  await cli('open', server.PREFIX, { env: { PLAYWRIGHT_MCP_TIMEOUT_ACTION: mcpBrowser === 'firefox' ? '30000' : '' } });
   const { output } = await cli('click', 'e2');
   expect(output).toContain('MyAlert');
   await cli('dialog-dismiss');
@@ -216,9 +217,8 @@ test('dialog-dismiss', async ({ cli, server, mcpBrowser }) => {
 });
 
 test('dialog-accept <prompt>', async ({ cli, server, mcpBrowser }) => {
-  test.fixme(mcpBrowser === 'firefox' && process.platform === 'win32', 'Clicking an element that opens a synchronous prompt() intermittently hangs the click action on Firefox + Windows.');
   server.setContent('/', `<button onclick="document.body.textContent = prompt('MyAlert')">Button</button>`, 'text/html');
-  await cli('open', server.PREFIX);
+  await cli('open', server.PREFIX, { env: { PLAYWRIGHT_MCP_TIMEOUT_ACTION: mcpBrowser === 'firefox' ? '30000' : '' } });
   await cli('click', 'e2');
   await cli('dialog-accept', 'my reply');
   const { inlineSnapshot } = await cli('snapshot');
