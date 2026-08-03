@@ -1,5 +1,6 @@
 # Reusable CI triage for PR test failures. Callable from other repos
 # (e.g. microsoft/playwright-browsers) via workflow_call.
+# Drafts only - the caller posts the comment with pull-requests: write.
 name: PR CI Triage
 
 on:
@@ -9,6 +10,10 @@ on:
         description: 'PR number to triage'
         required: true
         type: string
+    outputs:
+      has_draft:
+        description: 'Whether output/triage.md was produced'
+        value: ${{ jobs.triage.outputs.has_draft }}
 
 permissions: {}
 
@@ -89,46 +94,3 @@ jobs:
           name: ci-triage-${{ inputs.pr_number }}
           path: output/triage.md
           if-no-files-found: warn
-
-  post:
-    needs: triage
-    if: ${{ needs.triage.outputs.has_draft == 'true' }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    env:
-      PR_NUMBER: ${{ inputs.pr_number }}
-      GH_TOKEN: ${{ github.token }}
-      WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-      REPORT_NAME: ${{ github.event.workflow_run.name || github.workflow }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          repository: microsoft/playwright
-          ref: main
-
-      - name: Download triage draft
-        uses: actions/download-artifact@v4
-        with:
-          name: ci-triage-${{ inputs.pr_number }}
-          path: output
-
-      - name: Post triage comment
-        uses: actions/github-script@v9
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const { collapsePreviousComments } = require('./tests/config/postReportComment');
-            const sentinel = `<!-- playwright-ci-triage --><!-- ${process.env.REPORT_NAME} -->`;
-            const prNumber = +process.env.PR_NUMBER;
-            await collapsePreviousComments(github, context, prNumber, sentinel);
-            const triage = fs.readFileSync('output/triage.md', 'utf8');
-            const body = `${triage}\n\n<sub>Triaged by the Playwright bot - [agent run](${process.env.WORKFLOW_URL})</sub>\n${sentinel}\n`;
-            await github.rest.issues.createComment({
-              ...context.repo,
-              issue_number: prNumber,
-              body,
-            });
