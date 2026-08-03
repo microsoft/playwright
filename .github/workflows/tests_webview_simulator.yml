@@ -25,8 +25,8 @@ jobs:
       matrix:
         shard: [1, 2, 3, 4]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 20
 
@@ -81,7 +81,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Boot iOS Simulator
-        uses: futureware-tech/simulator-action@v5
+        uses: futureware-tech/simulator-action@e89aa8f93d3aec35083ff49d2854d07f7186f7f5 # v5
         with:
           # Per wiki/Devices-macos-15.md only iPhone 16/17 series ship pre-installed; iPhone 15 isn't.
           model: 'iPhone 16'
@@ -152,7 +152,7 @@ jobs:
 
       - name: Upload artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: webview-simulator-logs-${{ matrix.shard }}
           path: |
