@@ -119,47 +119,8 @@ jobs:
     permissions:
       contents: read
       actions: read
-      pull-requests: read
+      pull-requests: write
       copilot-requests: write
     uses: ./.github/workflows/pr-ci-triage.yml
     with:
       pr_number: ${{ needs.merge-reports.outputs.pr_number }}
-
-  post:
-    needs: [merge-reports, triage]
-    if: needs.triage.outputs.has_draft == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    env:
-      PR_NUMBER: ${{ needs.merge-reports.outputs.pr_number }}
-      GH_TOKEN: ${{ github.token }}
-      WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-      REPORT_NAME: ${{ github.event.workflow_run.name }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Download triage draft
-        uses: actions/download-artifact@v4
-        with:
-          name: ci-triage-${{ needs.merge-reports.outputs.pr_number }}
-          path: output
-
-      - name: Post triage comment
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const fs = require('fs');
-            const { collapsePreviousComments } = require('./tests/config/postReportComment');
-            const sentinel = `<!-- playwright-ci-triage --><!-- ${process.env.REPORT_NAME} -->`;
-            const prNumber = +process.env.PR_NUMBER;
-            await collapsePreviousComments(github, context, prNumber, sentinel);
-            const triage = fs.readFileSync('output/triage.md', 'utf8');
-            const body = `${triage}\n\n<sub>Triaged by the Playwright bot - [agent run](${process.env.WORKFLOW_URL})</sub>\n${sentinel}\n`;
-            await github.rest.issues.createComment({
-              ...context.repo,
-              issue_number: prNumber,
-              body,
-            });
