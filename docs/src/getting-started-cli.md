@@ -42,6 +42,12 @@ Coding agents like Claude Code and GitHub Copilot can use locally installed skil
 playwright-cli install --skills
 ```
 
+To share the skills across all your projects, add the `-g` flag to install them into your home directory (`~/.claude/skills` or, with `--skills=agents`, `~/.agents/skills`):
+
+```bash
+playwright-cli install --skills -g
+```
+
 ### Skills-less operation
 
 You can also point your agent at the CLI directly and let it discover commands on its own:

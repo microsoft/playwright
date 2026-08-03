@@ -57,6 +57,7 @@ export interface Output {
   errorDetachNotAttached(session: string): never;
   errorBrowserNotOpenForTool(session: string): never;
   errorAttachNoTarget(): never;
+  errorInstallGlobalRequiresSkills(): never;
 
   list(data: ListData): void;
   closeAll(sessions: string[]): void;
@@ -123,6 +124,11 @@ export class TextOutput implements Output {
 
   errorAttachNoTarget(): never {
     console.error(`Error: no target specified for attach command; use one of [name], --cdp, --endpoint, or --extension to specify the target to attach to.`);
+    return process.exit(1);
+  }
+
+  errorInstallGlobalRequiresSkills(): never {
+    console.error(`Error: --global requires --skills`);
     return process.exit(1);
   }
 
@@ -304,6 +310,11 @@ export class JsonOutput implements Output {
 
   errorAttachNoTarget(): never {
     this._emit({ isError: true, error: `no target specified for attach command; use one of [name], --cdp, --endpoint, or --extension to specify the target to attach to.` });
+    return process.exit(1);
+  }
+
+  errorInstallGlobalRequiresSkills(): never {
+    this._emit({ isError: true, error: `--global requires --skills` });
     return process.exit(1);
   }
 
