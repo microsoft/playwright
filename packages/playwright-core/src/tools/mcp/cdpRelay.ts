@@ -32,6 +32,7 @@ import os from 'os';
 import debug from 'debug';
 import ws, { WebSocketServer as wsServer } from 'ws';
 import { ManualPromise } from '@isomorphic/manualPromise';
+import { hostnameFromHostHeader } from '@utils/httpServer';
 import { registry } from '../../server/registry/index';
 
 import { findPlaywrightExtensionProfile, playwrightExtensionId } from '../utils/extension';
@@ -47,6 +48,8 @@ import type { WebSocket, WebSocketServer } from 'ws';
 
 
 const debugLogger = debug('pw:mcp:relay');
+
+const kLoopbackHostnames = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 type CDPCommand = {
   id: number;
@@ -92,7 +95,7 @@ export class CDPRelayServer {
     this._extensionPath = `/extension/${uuid}`;
 
     void this._extensionConnectionPromise.catch(logUnhandledError);
-    this._wss = new wsServer({ server });
+    this._wss = new wsServer({ server, verifyClient: this._verifyClient.bind(this) });
     this._wss.on('connection', this._onConnection.bind(this));
   }
 
@@ -168,6 +171,25 @@ export class CDPRelayServer {
   private _closeConnections(reason: string) {
     this._closeCDPConnection(reason);
     this._closeExtensionConnection(reason);
+  }
+
+  // The relay server binds to localhost only, and its legitimate clients are the
+  // local Playwright client (no Origin header) and the extension
+  // (chrome-extension:// Origin). Reject upgrades with a non-loopback Host
+  // (DNS rebinding) or a web page Origin — WebSocket connections are not
+  // restricted by the same-origin policy, so any page could dial the relay directly.
+  private _verifyClient(info: { origin?: string, req: http.IncomingMessage }): boolean {
+    const host = info.req.headers.host;
+    const hostname = host ? hostnameFromHostHeader(host.toLowerCase()) : undefined;
+    if (!hostname || !kLoopbackHostnames.has(hostname)) {
+      debugLogger(`Rejected WebSocket upgrade with Host: ${host}`);
+      return false;
+    }
+    if (info.origin && /^https?:/i.test(info.origin)) {
+      debugLogger(`Rejected WebSocket upgrade with Origin: ${info.origin}`);
+      return false;
+    }
+    return true;
   }
 
   private _onConnection(ws: WebSocket, request: http.IncomingMessage): void {
