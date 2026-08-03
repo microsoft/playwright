@@ -110,41 +110,55 @@ export function decorateMCPCommand(command: Command) {
           toolSchemas: tools.map(tool => tool.schema),
           create: async (clientInfo: ClientInfo) => {
             if (useSharedBrowser && !sharedBrowserPromise) {
-              sharedBrowserPromise = (async () => {
+              const promise = (async () => {
                 const { browser, canBind } = await createBrowserWithInfo(config, clientInfo, options);
                 if (canBind)
                   await browser.bind(clientInfo.clientName, { workspaceDir: clientInfo.cwd });
+                browser.once('disconnected', () => {
+                  if (sharedBrowserPromise === promise)
+                    sharedBrowserPromise = undefined;
+                });
                 return browser;
               })().catch(error => {
-                sharedBrowserPromise = undefined;
+                if (sharedBrowserPromise === promise)
+                  sharedBrowserPromise = undefined;
                 throw error;
               });
+              sharedBrowserPromise = promise;
             }
             clientCount++;
-            const { browser, canBind } = sharedBrowserPromise ? { browser: await sharedBrowserPromise, canBind: false } : await createBrowserWithInfo(config, clientInfo, options);
-            if (canBind) {
-              const count = (clientNameCounters.get(clientInfo.clientName) ?? 0) + 1;
-              clientNameCounters.set(clientInfo.clientName, count);
-              const sessionName = count > 1 ? `${clientInfo.clientName} (${count})` : clientInfo.clientName;
-              await browser.bind(sessionName, { workspaceDir: clientInfo.cwd });
-            }
-            const browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
-            return new BrowserBackend(config, browserContext, tools, async () => {
-              clientCount--;
-
-              if (sharedBrowserPromise && clientCount > 0) {
-                if (config.browser.isolated) {
-                  testDebug('close context');
-                  await browserContext.close().catch(() => { });
-                }
-                return;
+            try {
+              const promise = sharedBrowserPromise;
+              const { browser, canBind } = promise ? { browser: await promise, canBind: false } : await createBrowserWithInfo(config, clientInfo, options);
+              if (canBind) {
+                const count = (clientNameCounters.get(clientInfo.clientName) ?? 0) + 1;
+                clientNameCounters.set(clientInfo.clientName, count);
+                const sessionName = count > 1 ? `${clientInfo.clientName} (${count})` : clientInfo.clientName;
+                await browser.bind(sessionName, { workspaceDir: clientInfo.cwd });
               }
+              const browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
+              return new BrowserBackend(config, browserContext, tools, async () => {
+                clientCount--;
 
-              testDebug('close browser');
-              sharedBrowserPromise = undefined;
-              await browserContext.close().catch(() => { });
-              await browserContext.browser()?.close().catch(() => { });
-            });
+                if (sharedBrowserPromise && clientCount > 0) {
+                  if (config.browser.isolated) {
+                    testDebug('close context');
+                    await browserContext.close().catch(() => { });
+                  }
+                  return;
+                }
+
+                testDebug('close browser');
+                if (sharedBrowserPromise === promise)
+                  sharedBrowserPromise = undefined;
+                await browserContext.close().catch(() => { });
+                await browser.close().catch(() => { });
+              });
+            } catch (error) {
+              // The dispose callback never runs for a failed create.
+              clientCount--;
+              throw error;
+            }
           },
         };
         await mcpServer.start(factory, config.server);

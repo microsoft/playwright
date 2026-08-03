@@ -58,6 +58,7 @@ type CDPCommand = {
 type CDPResponse = CDPMessage;
 
 export class CDPRelayServer {
+  private _httpServer: http.Server;
   private _wsHost: string;
   private _browserChannel: string;
   private _executablePath?: string;
@@ -72,6 +73,7 @@ export class CDPRelayServer {
   private _extensionConnectionPromise = new ManualPromise<void>();
 
   constructor(server: http.Server, browserChannel: string, executablePath?: string, userDataDir?: string) {
+    this._httpServer = server;
     this._wsHost = addressToString(server.address(), { protocol: 'ws' });
     this._browserChannel = browserChannel;
     this._executablePath = executablePath;
@@ -160,6 +162,7 @@ export class CDPRelayServer {
   stop(): void {
     this._closeConnections('Server stopped');
     this._wss.close();
+    this._httpServer.close();
   }
 
   private _closeConnections(reason: string) {

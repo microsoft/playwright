@@ -16,6 +16,8 @@
 
 import fs from 'fs';
 
+import { chromium } from 'playwright';
+
 import { test, expect, formatLog } from './fixtures';
 
 test('test reopen browser', async ({ startClient, server }) => {
@@ -156,6 +158,40 @@ test('isolated context', async ({ startClient, server }) => {
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
     snapshot: expect.stringContaining(`Storage: NO`),
+  });
+});
+
+test('isolated context relaunches the browser after it dies', async ({ startClient, server, mcpBrowser }, testInfo) => {
+  test.skip(!['chrome', 'msedge', 'chromium'].includes(mcpBrowser!), 'The test kills the browser over CDP');
+
+  // The CDP port lets the test kill the browser from the outside.
+  const port = 9300 + testInfo.workerIndex;
+  const { client, stderr } = await startClient({
+    args: [`--isolated`],
+    config: { browser: { launchOptions: { args: [`--remote-debugging-port=${port}`] } } },
+    env: { DEBUG: 'pw:mcp:backend' },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
+  });
+
+  // Kill the browser, as if it crashed.
+  const cdpBrowser = await chromium.connectOverCDP(`http://localhost:${port}`);
+  const session = await cdpBrowser.newBrowserCDPSession();
+  await session.send('Browser.close').catch(() => {});
+  await expect.poll(() => stderr()).toContain('browser disconnected');
+
+  // The very next tool call must relaunch the browser, with no failed call
+  // in between.
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
   });
 });
 

@@ -42,7 +42,7 @@ export interface ServerBackend {
   initialize?(clientInfo: ClientInfo): Promise<void>;
   callTool(name: string, args: CallToolRequest['params']['arguments'], signal: AbortSignal): Promise<CallToolResult>;
   dispose?(): Promise<void>;
-  once(event: 'disposed', listener: () => void): void;
+  once(event: 'disconnected', listener: () => void): void;
 }
 
 export type ServerBackendFactory = {
@@ -80,13 +80,19 @@ export function createServer(name: string, version: string, factory: ServerBacke
 
     try {
       if (!backendPromise) {
-        backendPromise = initializeServer(server, factory, transportInitialized, runHeartbeat).then(backend => {
-          backend.once('disposed', () => { backendPromise = undefined; });
+        const promise = initializeServer(server, factory, transportInitialized, runHeartbeat).then(backend => {
+          backend.once('disconnected', () => {
+            if (backendPromise === promise)
+              backendPromise = undefined;
+            void backend.dispose?.().catch(serverDebug);
+          });
           return backend;
         }).catch(e => {
-          backendPromise = undefined;
+          if (backendPromise === promise)
+            backendPromise = undefined;
           throw e;
         });
+        backendPromise = promise;
       }
 
       const backend = await backendPromise;

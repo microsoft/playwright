@@ -18,6 +18,7 @@ import fs from 'fs';
 import dns from 'dns';
 
 import { ChildProcess, spawn } from 'child_process';
+import { chromium } from 'playwright';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { test as baseTest, expect, mcpServerPath, formatLog } from './fixtures';
@@ -158,6 +159,7 @@ test('http transport browser sigint', async ({ serverEndpoint, server }) => {
     'create context': 1,
     'create http session': 1,
     'gracefully closing 1': 1,
+    'close browser': 1,
   });
 });
 
@@ -231,6 +233,103 @@ test('http transport browser lifecycle (isolated, concurrent clients)', { annota
     'create context': 3,
     'create browser (isolated)': 1,
     'close context': 2,
+    'close browser': 1,
+  });
+});
+
+test('http transport isolated multiclient relaunches a crashed shared browser', async ({ serverEndpoint, server }, testInfo) => {
+  // The CDP port lets the test kill the browser from the outside.
+  const port = 9400 + testInfo.workerIndex;
+  const configFile = testInfo.outputPath('config.json');
+  await fs.promises.writeFile(configFile, JSON.stringify({
+    browser: { launchOptions: { args: [`--remote-debugging-port=${port}`] } },
+  }));
+  const { url, stderr } = await serverEndpoint({
+    args: ['--isolated', `--config=${configFile}`],
+    env: { DEBUG: 'pw:mcp:test,pw:mcp:backend' },
+  });
+
+  const transport1 = new StreamableHTTPClientTransport(new URL('/mcp', url));
+  const client1 = new Client({ name: 'test', version: '1.0.0' });
+  await client1.connect(transport1);
+  await client1.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  const transport2 = new StreamableHTTPClientTransport(new URL('/mcp', url));
+  const client2 = new Client({ name: 'test', version: '1.0.0' });
+  await client2.connect(transport2);
+  await client2.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  // Kill the shared browser, as if it crashed, and wait for both backends
+  // to observe the disconnect.
+  const cdpBrowser = await chromium.connectOverCDP(`http://localhost:${port}`);
+  const session = await cdpBrowser.newBrowserCDPSession();
+  await session.send('Browser.close').catch(() => {});
+  await expect.poll(() => stderr().match(/browser disconnected/g)?.length).toBe(2);
+
+  // Each client transparently migrates to a fresh shared browser on its
+  // next tool call.
+  for (const client of [client1, client2]) {
+    expect(await client.callTool({
+      name: 'browser_navigate',
+      arguments: { url: server.HELLO_WORLD },
+    })).toHaveResponse({
+      snapshot: expect.stringContaining(`Hello, world!`),
+    });
+  }
+
+  await transport1.terminateSession();
+  await client1.close();
+  await transport2.terminateSession();
+  await client2.close();
+
+  await expect.poll(() => formatLog(stderr())).toEqual(({
+    'create http session': 2,
+    'delete http session': 2,
+    'create browser (isolated)': 2,
+    'create context': 4,
+    'close browser': 2,
+    'close context': 2,
+  }));
+});
+
+test('http transport isolated closes the browser despite an earlier failed backend creation', async ({ serverEndpoint, server }, testInfo) => {
+  // A failed backend creation must not leak the client count, otherwise the
+  // browser is never closed once the last client disconnects.
+  const storageStatePath = testInfo.outputPath('storage-state.json');
+  const { url, stderr } = await serverEndpoint({ args: ['--isolated', `--storage-state=${storageStatePath}`] });
+
+  const transport = new StreamableHTTPClientTransport(new URL('/mcp', url));
+  const client = new Client({ name: 'test', version: '1.0.0' });
+  await client.connect(transport);
+
+  // The browser launches, but context creation fails on the missing file.
+  expect((await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).isError).toBe(true);
+
+  await fs.promises.writeFile(storageStatePath, JSON.stringify({ origins: [] }));
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
+  });
+
+  await transport.terminateSession();
+  await client.close();
+
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create http session': 1,
+    'delete http session': 1,
+    'create browser (isolated)': 1,
+    'create context': 1,
     'close browser': 1,
   });
 });

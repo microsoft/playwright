@@ -17,7 +17,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { test, testWithOldExtensionVersion, expect, extensionId, clickAllowAndSelect, connectAndNavigate, startWithExtensionFlag } from './extension-fixtures';
+import { test, testWithOldExtensionVersion, expect, extensionId, clickAllowAndSelect, connectAndNavigate, readExtensionToken, startWithExtensionFlag } from './extension-fixtures';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 
 const { defaultUserDataDirForChannel } = utils;
@@ -342,18 +342,14 @@ test(`browser_cookie_list and browser_cookie_set work in extension mode`, {
 
 test(`bypass connection dialog with token`, async ({ browserWithExtension, startClient, server }) => {
   const browserContext = await browserWithExtension.launch();
-
-  const page = await browserContext.newPage();
-  await page.goto(`chrome-extension://${extensionId}/status.html`);
-  const token = await page.locator('.auth-token-code').textContent();
-  const [, value] = token?.split('=') || [];
+  const token = await readExtensionToken(browserContext);
 
   const clientName = 'token-bypass-client';
   const { client } = await startClient({
     clientName,
     args: [`--extension`],
     env: {
-      PLAYWRIGHT_MCP_EXTENSION_TOKEN: value,
+      PLAYWRIGHT_MCP_EXTENSION_TOKEN: token,
       PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
     },
   });
@@ -367,6 +363,45 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
     snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
   });
 
+  const page = await browserContext.newPage();
   await page.goto(`chrome-extension://${extensionId}/status.html`);
   await expect(page.locator('.client-info')).toContainText(`Connected to "${clientName}"`);
+});
+
+test(`reconnects after the extension connection drops`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41874' },
+}, async ({ browserWithExtension, startClient, server }) => {
+  const browserContext = await browserWithExtension.launch();
+  const token = await readExtensionToken(browserContext);
+
+  const { client, stderr } = await startClient({
+    args: [`--extension`],
+    env: {
+      DEBUG: 'pw:mcp:backend',
+      PLAYWRIGHT_MCP_EXTENSION_TOKEN: token,
+      PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
+    },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
+  });
+
+  // Closing the last controlled tab drops the relay WebSocket, like the MV3
+  // service worker idle timeout would.
+  await browserContext.pages().find(page => page.url() === server.HELLO_WORLD)!.close();
+
+  // Wait for the MCP server to observe the disconnect.
+  await expect.poll(() => stderr()).toContain('browser disconnected');
+
+  // The next tool call reconnects transparently; the token bypasses the dialog.
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
+  });
 });

@@ -27,7 +27,9 @@ import type { Tool } from './tool';
 import type * as mcpServer from '../utils/mcp/server';
 import type { ClientInfo, ServerBackend } from '../utils/mcp/server';
 
-export class BrowserBackend extends EventEmitter<{ disconnected: [], disposed: [] }> implements ServerBackend {
+const backendDebug = debug('pw:mcp:backend');
+
+export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implements ServerBackend {
   private _tools: Tool[];
   private _context: Context | undefined;
   private _sessionLog: SessionLog | undefined;
@@ -46,6 +48,7 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], disposed: [
     const markDisconnected = () => {
       if (this._disconnected)
         return;
+      backendDebug('browser disconnected');
       this._disconnected = true;
       this.emit('disconnected');
     };
@@ -68,7 +71,6 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], disposed: [
     this._disposed = true;
     await this._context?.dispose().catch(e => debug('pw:tools:error')(e));
     await this._disposeCallback?.().catch(e => debug('pw:tools:error')(e));
-    this.emit('disposed');
   }
 
   async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> } = {}, signal?: AbortSignal): Promise<mcpServer.CallToolResult> {
