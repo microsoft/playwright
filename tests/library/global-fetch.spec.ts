@@ -707,6 +707,52 @@ it('should retry ECONNRESET', {
   await request.dispose();
 });
 
+it('should not crash when server resets while request body is still writing', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42074' }
+}, async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  server.setRoute('/upload', (req, res) => {
+    res.writeHead(413, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ error: 'too large' }));
+    // Body never read; cannot resynchronise — same as Cloudflare workerd.
+    req.socket.destroy();
+  });
+  // CROSS_PROCESS_PREFIX uses 127.0.0.1 (IP Happy Eyeballs path) where the crash repros.
+  // TCP timing may reject the write or return 413 — either must be catchable (no process exit).
+  // If post() resolves, the body must still be readable (not the disposed-response failure mode).
+  const response = await request.post(server.CROSS_PROCESS_PREFIX + '/upload', {
+    data: 'x'.repeat(5 * 1024 * 1024),
+    headers: { 'content-type': 'text/plain' },
+  }).catch(e => e);
+  if (response instanceof Error) {
+    expect(response.message).toMatch(/EPIPE|ECONNRESET|ECONNABORTED/);
+    await request.dispose();
+    return;
+  }
+  expect(response.status()).toBe(413);
+  expect(await response.json()).toEqual({ error: 'too large' });
+  await request.dispose();
+});
+
+it('should return 413 body when server refuses upload without reading it', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42074' }
+}, async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  server.setRoute('/upload', (req, res) => {
+    res.writeHead(413, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ error: 'too large' }));
+    // Drain unread body so the refusal is delivered without a flaky mid-write reset.
+    req.resume();
+  });
+  const response = await request.post(server.CROSS_PROCESS_PREFIX + '/upload', {
+    data: 'x'.repeat(5 * 1024 * 1024),
+    headers: { 'content-type': 'text/plain' },
+  });
+  expect(response.status()).toBe(413);
+  expect(await response.json()).toEqual({ error: 'too large' });
+  await request.dispose();
+});
+
 it('should throw when failOnStatusCode is set to true inside APIRequest context options', async ({ playwright, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34204' });
   const request = await playwright.request.newContext({ failOnStatusCode: true });

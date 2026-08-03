@@ -337,6 +337,8 @@ export abstract class APIRequestContext extends SdkObject {
       throw new TargetClosedError(this._closeReason || 'Request context disposed.');
 
     let destroyRequest: (() => void) | undefined;
+    let requestSocket: net.Socket | undefined;
+    let handleConnectionError: ((error: Error) => void) | undefined;
     progress.setAllowConcurrentOrNestedRaces(true);
     const resultPromise = new Promise<SendRequestResult>((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
@@ -356,10 +358,30 @@ export abstract class APIRequestContext extends SdkObject {
       let serverPort: number | undefined;
 
       let securityDetails: har.SecurityDetails | undefined;
+      let responseReceived = false;
+      let pendingConnectionError: Error | undefined;
 
       const listeners: RegisteredListener[] = [];
 
+      const onConnectionError = (error: Error) => {
+        // Write reset (ECONNRESET/EPIPE) can race with response headers when a server
+        // refuses the body without reading it. Buffer network errors and only reject on
+        // request close if no response arrived — so a late 413 can still win (Node fetch).
+        // Always attach a socket listener so keep-alive / IP Happy Eyeballs never leave an
+        // unhandled Socket 'error' that kills the process.
+        // See https://github.com/microsoft/playwright/issues/42074.
+        if (isNetworkConnectionError(error)) {
+          if (responseReceived)
+            return;
+          pendingConnectionError = error;
+          return;
+        }
+        reject(error);
+      };
+      handleConnectionError = onConnectionError;
+
       const request = requestConstructor(url, requestOptions as any, async response => {
+        responseReceived = true;
         const responseAt = monotonicTime();
 
         const notifyRequestFinished = (body?: Buffer) => {
@@ -559,7 +581,7 @@ export abstract class APIRequestContext extends SdkObject {
         body.on('data', chunk => chunks.push(chunk));
         body.on('end', notifyBodyFinished);
       });
-      request.on('error', reject);
+      request.on('error', onConnectionError);
       destroyRequest = () => request.destroy();
 
       listeners.push(
@@ -568,7 +590,12 @@ export abstract class APIRequestContext extends SdkObject {
             request.destroy();
           })
       );
-      request.on('close', () => eventsHelper.removeEventListeners(listeners));
+      request.on('close', () => {
+        eventsHelper.removeEventListeners(listeners);
+        // Reject buffered write-reset errors only after close, and only if headers never arrived.
+        if (!responseReceived && pendingConnectionError)
+          reject(pendingConnectionError);
+      });
 
       const captureSecurityDetails = (socket: net.Socket) => {
         if (!(socket instanceof TLSSocket))
@@ -586,6 +613,11 @@ export abstract class APIRequestContext extends SdkObject {
       };
 
       request.on('socket', socket => {
+        // Not tied to request 'close': Node can emit write EPIPE after 'close' on keep-alive.
+        // Removed in settleCleanup after the request promise settles.
+        requestSocket = socket;
+        socket.on('error', onConnectionError);
+
         serverIPAddress = socket.remoteAddress;
         serverPort = socket.remotePort;
 
@@ -623,10 +655,26 @@ export abstract class APIRequestContext extends SdkObject {
       request.end();
     });
 
+    const settleCleanup = () => {
+      // Defer so a late write reset in the same turn is still handled by handleConnectionError.
+      setImmediate(() => {
+        if (!requestSocket || !handleConnectionError)
+          return;
+        requestSocket.removeListener('error', handleConnectionError);
+        // Shared one-shot sink for the keep-alive gap after our handler is removed.
+        // Reuse a named function so listeners do not stack across successful requests.
+        if (!requestSocket.destroyed) {
+          requestSocket.removeListener('error', absorbSocketError);
+          requestSocket.once('error', absorbSocketError);
+        }
+      });
+    };
+
     return progress.race(resultPromise).catch(error => {
       destroyRequest?.();
       throw error;
     }).finally(() => {
+      settleCleanup();
       progress.setAllowConcurrentOrNestedRaces(false);
     });
   }
@@ -838,6 +886,10 @@ function isNetworkConnectionError(e: any): boolean {
   const code = e?.code;
   return code === 'ECONNRESET' || code === 'EPIPE' || code === 'ECONNABORTED';
 }
+
+// Shared keep-alive sink so settleCleanup does not stack per-request once() listeners.
+function absorbSocketError() {}
+
 
 function setBasicAuthorizationHeader(headers: { [name: string]: string }, credentials: HttpCredentials) {
   const { username, password } = credentials;
