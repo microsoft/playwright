@@ -36,11 +36,13 @@ type ResolvedFile = {
   printableLink: string;
 };
 
+type SectionContent = string[] | { json: unknown };
+
 type Section = {
   title: string;
-  content: string[];
+  content: SectionContent;
   isError?: boolean;
-  codeframe?: 'yaml' | 'js';
+  codeframe?: 'yaml' | 'js' | 'json';
 };
 
 export class Response {
@@ -169,9 +171,14 @@ export class Response {
       if (isError)
         payload.isError = true;
       for (const section of sections) {
+        const key = section.title.toLowerCase();
+        if (!Array.isArray(section.content)) {
+          if (section.content.json !== undefined)
+            payload[key] = section.content.json;
+          continue;
+        }
         if (!section.content.length)
           continue;
-        const key = section.title.toLowerCase();
         if (key === 'snapshot') {
           const match = section.content[0]?.match(/^- \[Snapshot\]\(([^)]+)\)$/);
           payload.snapshot = match ? { file: match[1] } : section.content.join('\n');
@@ -183,17 +190,18 @@ export class Response {
     } else {
       const text: string[] = [];
       for (const section of sections) {
-        if (!section.content.length)
+        const lines = Array.isArray(section.content) ? section.content : (section.content.json === undefined ? [] : [JSON.stringify(section.content.json, null, 2)]);
+        if (!lines.length)
           continue;
         if (!this._raw) {
           text.push(`### ${section.title}`);
           if (section.codeframe)
             text.push(`\`\`\`${section.codeframe}`);
-          text.push(...section.content);
+          text.push(...lines);
           if (section.codeframe)
             text.push('```');
         } else {
-          text.push(...section.content);
+          text.push(...lines);
         }
       }
       serializedText = text.join('\n');
@@ -254,7 +262,7 @@ export class Response {
 
   private async _build(): Promise<Section[]> {
     const sections: Section[] = [];
-    const addSection = (title: string, content: string[], codeframe?: 'yaml' | 'js') => {
+    const addSection = (title: string, content: SectionContent, codeframe?: 'yaml' | 'js' | 'json') => {
       const section = { title, content, isError: title === 'Error', codeframe };
       sections.push(section);
       return content;
@@ -271,7 +279,9 @@ export class Response {
       addSection('Ran Playwright code', this._code, 'js');
 
     // Render tab titles upon changes or when more than one tab.
-    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotRoot, this._includeSnapshotDepth, this._includeSnapshotBoxes, this._clientWorkspace, this._includeSnapshot !== 'none') : undefined;
+    const snapshotToFile = this._includeSnapshot !== 'explicit' || !!this._includeSnapshotFileName;
+    const ariaFormat = this._includeSnapshot === 'none' ? 'none' : (this._json && !snapshotToFile ? 'json' : 'text');
+    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotRoot, this._includeSnapshotDepth, this._includeSnapshotBoxes, this._clientWorkspace, ariaFormat) : undefined;
     const tabHeaders = await Promise.all(this._context.tabs().map(tab => tab.headerSnapshot()));
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1)
@@ -285,11 +295,13 @@ export class Response {
 
     // Handle tab snapshot
     if (tabSnapshot && this._includeSnapshot !== 'none') {
-      if (this._includeSnapshot !== 'explicit' || this._includeSnapshotFileName) {
+      if (snapshotToFile) {
         const suggestedFilename = this._includeSnapshotFileName === '<auto>' ? undefined : this._includeSnapshotFileName;
         const resolvedFile = await this.resolveClientFile({ prefix: 'page', ext: 'yml', suggestedFilename }, 'Snapshot');
         await this._writeFile(resolvedFile, tabSnapshot.ariaSnapshot);
         addSection('Snapshot', [resolvedFile.printableLink]);
+      } else if (tabSnapshot.ariaSnapshotJSON !== undefined) {
+        addSection('Snapshot', { json: tabSnapshot.ariaSnapshotJSON }, 'json');
       } else {
         addSection('Snapshot', [tabSnapshot.ariaSnapshot], 'yaml');
       }

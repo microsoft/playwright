@@ -126,6 +126,7 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Frame.addScriptTag', { title: 'Add script tag', snapshot: true, pause: true, }],
   ['Frame.addStyleTag', { title: 'Add style tag', snapshot: true, pause: true, }],
   ['Frame.ariaSnapshot', { title: 'Aria snapshot', group: 'getter', }],
+  ['Frame.ariaSnapshotJSON', { title: 'Aria snapshot JSON', group: 'getter', }],
   ['Frame.blur', { title: 'Blur', slowMo: true, snapshot: true, pause: true, }],
   ['Frame.check', { title: 'Check', slowMo: true, snapshot: true, pause: true, input: true, isAutoWaiting: true, }],
   ['Frame.click', { title: 'Click', slowMo: true, snapshot: true, pause: true, input: true, isAutoWaiting: true, }],

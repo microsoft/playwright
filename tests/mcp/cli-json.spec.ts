@@ -151,13 +151,41 @@ test('tab-close closes a tab and returns remaining tabs', async ({ cli, server }
   ]);
 });
 
-test('snapshot returns inline snapshot yaml', async ({ cli, server }) => {
+test('snapshot returns structured inline snapshot', async ({ cli, server }) => {
   server.setContent('/', '<h1>Hi</h1>', 'text/html');
   await cli('open', server.PREFIX);
   const { output } = await cli('--json', 'snapshot');
   const parsed = JSON.parse(output);
-  expect(typeof parsed.snapshot).toBe('string');
-  expect(parsed.snapshot).toContain('heading "Hi"');
+  expect(parsed.snapshot).toEqual([
+    { role: 'heading', name: 'Hi', level: 1, ref: expect.stringMatching(/^e\d+$/) },
+  ]);
+});
+
+test('snapshot returns structured children and flags', async ({ cli, server }) => {
+  server.setContent('/', `
+    <a style="cursor: pointer" href="https://example.com/">Link</a>
+    <button disabled>Click</button>
+  `, 'text/html');
+  await cli('open', server.PREFIX);
+  const { output } = await cli('--json', 'snapshot');
+  const parsed = JSON.parse(output);
+  expect(parsed.snapshot).toEqual([
+    {
+      role: 'generic',
+      active: true,
+      ref: expect.stringMatching(/^e\d+$/),
+      children: [
+        {
+          role: 'link',
+          name: 'Link',
+          url: 'https://example.com/',
+          ref: expect.stringMatching(/^e\d+$/),
+          cursor: 'pointer',
+        },
+        { role: 'button', name: 'Click', disabled: true, ref: expect.stringMatching(/^e\d+$/) },
+      ],
+    },
+  ]);
 });
 
 test('tool error on bad navigation returns JSON error', async ({ cli, server }) => {

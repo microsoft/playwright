@@ -90,6 +90,21 @@ Frame:
       returns:
         snapshot: string
 
+    ariaSnapshotJSON:
+      title: Aria snapshot JSON
+      group: getter
+      parameters:
+        mode:
+          type: enum?
+          literals:
+            - ai
+            - default
+        selector: string?
+        depth: int?
+        boxes: boolean?
+      returns:
+        snapshot: json
+
     blur:
       title: Blur
       parameters:

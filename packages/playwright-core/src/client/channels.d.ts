@@ -2179,6 +2179,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   addScriptTag(params: FrameAddScriptTagParams, options: TimeoutOptions): Promise<FrameAddScriptTagResult>;
   addStyleTag(params: FrameAddStyleTagParams, options: TimeoutOptions): Promise<FrameAddStyleTagResult>;
   ariaSnapshot(params: FrameAriaSnapshotParams, options: TimeoutOptions): Promise<FrameAriaSnapshotResult>;
+  ariaSnapshotJSON(params: FrameAriaSnapshotJSONParams, options: TimeoutOptions): Promise<FrameAriaSnapshotJSONResult>;
   blur(params: FrameBlurParams, options: TimeoutOptions): Promise<FrameBlurResult>;
   check(params: FrameCheckParams, options: TimeoutOptions): Promise<FrameCheckResult>;
   click(params: FrameClickParams, options: TimeoutOptions): Promise<FrameClickResult>;
@@ -2300,6 +2301,21 @@ export type FrameAriaSnapshotOptions = {
 };
 export type FrameAriaSnapshotResult = {
   snapshot: string,
+};
+export type FrameAriaSnapshotJSONParams = {
+  mode?: 'ai' | 'default',
+  selector?: string,
+  depth?: number,
+  boxes?: boolean,
+};
+export type FrameAriaSnapshotJSONOptions = {
+  mode?: 'ai' | 'default',
+  selector?: string,
+  depth?: number,
+  boxes?: boolean,
+};
+export type FrameAriaSnapshotJSONResult = {
+  snapshot: any,
 };
 export type FrameBlurParams = {
   selector: string,

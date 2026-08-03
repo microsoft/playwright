@@ -924,6 +924,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.snapshot;
   }
 
+  async ariaSnapshotJSON(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<any> {
+    const result = await this.mainFrame()._channel.ariaSnapshotJSON({ mode: options.mode, depth: options.depth, boxes: options.boxes }, this._timeoutSettings.timeout(options));
+    return result.snapshot;
+  }
+
   async _setDockTile(image: Buffer) {
     await this._channel.setDockTile({ image }, kNoTimeout);
   }

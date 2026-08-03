@@ -583,6 +583,74 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
   return { text: lines.join('\n'), iframeDepths };
 }
 
+export function renderAriaTreeAsJSON(ariaSnapshot: AriaSnapshot, publicOptions: AriaTreeOptions): { json: aria.AriaSnapshotJSON, iframeDepths: Record<string, number> } {
+  const options = toInternalOptions(publicOptions);
+  const iframeDepths: Record<string, number> = {};
+
+  const visit = (ariaNode: aria.AriaNode, depth: number, renderCursorPointer: boolean): aria.AriaNodeJSON => {
+    if (ariaNode.role === 'iframe' && ariaNode.ref)
+      iframeDepths[ariaNode.ref] = depth;
+
+    const node: aria.AriaNodeJSON = { role: ariaNode.role };
+    if (ariaNode.name)
+      node.name = ariaNode.name;
+    if (ariaNode.checked === 'mixed' || ariaNode.checked === true)
+      node.checked = ariaNode.checked;
+    if (ariaNode.disabled)
+      node.disabled = true;
+    if (ariaNode.expanded)
+      node.expanded = true;
+    if (ariaNode.active && options.renderActive)
+      node.active = true;
+    if (ariaNode.invalid)
+      node.invalid = ariaNode.invalid;
+    if (ariaNode.level)
+      node.level = ariaNode.level;
+    if (ariaNode.pressed === 'mixed' || ariaNode.pressed === true)
+      node.pressed = ariaNode.pressed;
+    if (ariaNode.selected === true)
+      node.selected = true;
+    if (ariaNode.ref) {
+      node.ref = ariaNode.ref;
+      if (renderCursorPointer && aria.hasPointerCursor(ariaNode))
+        node.cursor = 'pointer';
+    }
+    if (options.renderBoxes) {
+      const element = ariaNodeElement(ariaNode);
+      if (element) {
+        const r = element.getBoundingClientRect();
+        node.box = { x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.width), height: Math.round(r.height) };
+      }
+    }
+    for (const [name, value] of Object.entries(ariaNode.props))
+      node[name] = value;
+
+    const singleTextChild = ariaNode.children.length === 1 && typeof ariaNode.children[0] === 'string' ? ariaNode.children[0] : undefined;
+    const isAtDepthLimit = !!publicOptions.depth && depth === publicOptions.depth;
+    if (singleTextChild !== undefined) {
+      node.text = singleTextChild;
+    } else if (!isAtDepthLimit && ariaNode.children.length) {
+      const inCursorPointer = !!ariaNode.ref && renderCursorPointer && aria.hasPointerCursor(ariaNode);
+      node.children = ariaNode.children.map(child => {
+        if (typeof child === 'string')
+          return child;
+        return visit(child, depth + 1, renderCursorPointer && !inCursorPointer);
+      });
+    }
+    return node;
+  };
+
+  const json: aria.AriaSnapshotJSON = [];
+  const nodesToRender = ariaSnapshot.root.role === 'fragment' ? ariaSnapshot.root.children : [ariaSnapshot.root];
+  for (const nodeToRender of nodesToRender) {
+    if (typeof nodeToRender === 'string')
+      json.push(nodeToRender);
+    else
+      json.push(visit(nodeToRender, 0, !!options.renderCursorPointer));
+  }
+  return { json, iframeDepths };
+}
+
 function convertToBestGuessRegex(text: string): string {
   const dynamicContent = [
     // 550e8400-e29b-41d4-a716-446655440000
