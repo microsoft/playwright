@@ -15,7 +15,6 @@
  */
 
 import * as z from 'zod';
-import { escapeWithQuotes } from '@isomorphic/stringUtils';
 
 import { defineTabTool } from './tool';
 import { elementSchema } from './snapshot';
@@ -39,18 +38,17 @@ const fillForm = defineTabTool({
 
   handle: async (tab, params, response) => {
     for (const field of params.fields) {
-      const { locator, resolved } = await tab.targetLocator({ element: field.name, target: field.target });
-      const locatorSource = `await page.${resolved}`;
+      const { locator, selector } = await tab.targetLocator({ element: field.name, target: field.target });
       if (field.type === 'textbox' || field.type === 'slider') {
         const secret = tab.context.lookupSecret(field.value);
         await locator.fill(secret.value, tab.actionTimeoutOptions);
-        response.addCode(`${locatorSource}.fill(${secret.code});`);
+        response.addAction({ name: 'fill', selector, text: secret.isSecret ? `SECRET_${field.value}` : field.value });
       } else if (field.type === 'checkbox' || field.type === 'radio') {
         await locator.setChecked(field.value === 'true', tab.actionTimeoutOptions);
-        response.addCode(`${locatorSource}.setChecked(${field.value});`);
+        response.addAction({ name: field.value === 'true' ? 'check' : 'uncheck', selector });
       } else if (field.type === 'combobox') {
         await locator.selectOption({ label: field.value }, tab.actionTimeoutOptions);
-        response.addCode(`${locatorSource}.selectOption(${escapeWithQuotes(field.value)});`);
+        response.addAction({ name: 'select', selector, options: [field.value] });
       }
     }
   },

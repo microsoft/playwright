@@ -261,11 +261,11 @@ test('browser_verify_list_visible', async ({ client, server }) => {
   })).toHaveResponse({
     result: 'Done',
     code: expect.stringContaining(`await expect(page.locator('body')).toMatchAriaSnapshot(\`
-- list:
-  - listitem: "Apple"
-  - listitem: "Banana"
-  - listitem: "Cherry"
-\`);`),
+  - list:
+    - listitem: "Apple"
+    - listitem: "Banana"
+    - listitem: "Cherry"
+  \`);`),
   });
 });
 
@@ -295,10 +295,10 @@ test('browser_verify_list_visible (partial items)', async ({ client, server }) =
   })).toHaveResponse({
     result: 'Done',
     code: expect.stringContaining(`await expect(page.locator('body')).toMatchAriaSnapshot(\`
-- list:
-  - listitem: "Apple"
-  - listitem: "Cherry"
-\`);`),
+  - list:
+    - listitem: "Apple"
+    - listitem: "Cherry"
+  \`);`),
   });
 });
 

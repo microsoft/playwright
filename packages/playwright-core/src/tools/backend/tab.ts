@@ -488,12 +488,12 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this._raceAgainstModalStates(() => waitForCompletion(this, callback));
   }
 
-  async targetLocator(params: { element?: string, target: string }): Promise<{ locator: playwright.Locator, resolved: string }> {
+  async targetLocator(params: { element?: string, target: string }): Promise<{ locator: playwright.Locator, resolved: string, selector: string }> {
     await this._initializedPromise;
     return (await this.targetLocators([params]))[0];
   }
 
-  async targetLocators(params: { element?: string, target: string }[]): Promise<{ locator: playwright.Locator, resolved: string }[]> {
+  async targetLocators(params: { element?: string, target: string }[]): Promise<{ locator: playwright.Locator, resolved: string, selector: string }[]> {
     await this._initializedPromise;
     return Promise.all(params.map(async param => {
       if (!param.target.match(/^(f\d+)?e\d+$/)) {
@@ -502,14 +502,14 @@ export class Tab extends EventEmitter<TabEventsInterface> {
         if (!handle)
           throw new Error(`"${param.target}" does not match any elements.`);
         handle.dispose().catch(() => {});
-        return { locator: this.page.locator(selector), resolved: asLocator('javascript', selector) };
+        return { locator: this.page.locator(selector), resolved: asLocator('javascript', selector), selector };
       } else {
         try {
           let locator = this.page.locator(`aria-ref=${param.target}`);
           if (param.element)
             locator = locator.describe(param.element);
           const resolved = await locator.normalize();
-          return { locator, resolved: resolved.toString() };
+          return { locator, resolved: resolved.toString(), selector: locatorSelector(resolved) };
         } catch (e) {
           throw new Error(`Ref ${param.target} not found in the current page snapshot. Try capturing new snapshot.`);
         }
@@ -533,6 +533,10 @@ export type ConsoleMessage = {
   text: string;
   toString(): string;
 };
+
+export function locatorSelector(locator: playwright.Locator): string {
+  return (locator as unknown as { _selector: string })._selector;
+}
 
 function messageToConsoleMessage(message: playwright.ConsoleMessage): ConsoleMessage {
   return {

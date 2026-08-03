@@ -18,12 +18,15 @@ import fs from 'fs';
 import path from 'path';
 
 import debug from 'debug';
+import { actionInContext, renderCode, substituteSecrets } from './codegen';
 import { renderModalStates } from './tab';
 import { scaleImageToFitMessage } from './screenshot';
 
 import { outputDir as resolveOutputDir } from './context';
 
 import type * as playwright from '../../..';
+import type * as actions from '@isomorphic/codegen/actions';
+import type { CodeItem } from './codegen';
 import type { TabHeader } from './tab';
 import type { CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import type { Context, FilenameTemplate } from './context';
@@ -42,13 +45,13 @@ type Section = {
   title: string;
   content: SectionContent;
   isError?: boolean;
-  codeframe?: 'yaml' | 'js' | 'json';
+  codeframe?: 'yaml' | 'js' | 'json' | 'python' | 'java' | 'csharp';
 };
 
 export class Response {
   private _results: string[] = [];
   private _errors: string[] = [];
-  private _code: string[] = [];
+  private _code: CodeItem[] = [];
   private _context: Context;
   private _includeSnapshot: 'none' | 'full' | 'explicit' = 'none';
   private _includeSnapshotFileName: string | undefined;
@@ -143,6 +146,10 @@ export class Response {
 
   addCode(code: string) {
     this._code.push(code);
+  }
+
+  addAction(action: actions.Action) {
+    this._code.push(actionInContext(action));
   }
 
   setIncludeSnapshot() {
@@ -262,7 +269,7 @@ export class Response {
 
   private async _build(): Promise<Section[]> {
     const sections: Section[] = [];
-    const addSection = (title: string, content: SectionContent, codeframe?: 'yaml' | 'js' | 'json') => {
+    const addSection = (title: string, content: SectionContent, codeframe?: Section['codeframe']) => {
       const section = { title, content, isError: title === 'Error', codeframe };
       sections.push(section);
       return content;
@@ -275,8 +282,11 @@ export class Response {
       addSection('Result', this._results);
 
     // Code
-    if (this._context.config.codegen !== 'none' && this._code.length)
-      addSection('Ran Playwright code', this._code, 'js');
+    const codegen = this._context.config.codegen ?? 'typescript';
+    if (codegen !== 'none' && this._code.length) {
+      const code = substituteSecrets(renderCode(this._code, codegen), codegen, Object.keys(this._context.config.secrets ?? {}));
+      addSection('Ran Playwright code', code, codegen === 'typescript' ? 'js' : codegen);
+    }
 
     // Render tab titles upon changes or when more than one tab.
     const snapshotToFile = this._includeSnapshot !== 'explicit' || !!this._includeSnapshotFileName;
@@ -411,7 +421,7 @@ export function parseResponse(response: CallToolResult, cwd?: string) {
   const events = sections.get('Events');
   const modalState = sections.get('Modal state');
   const paused = sections.get('Paused');
-  const codeNoFrame = code?.replace(/^```js\n/, '').replace(/\n```$/, '');
+  const codeNoFrame = code?.replace(/^```(?:js|python|java|csharp)\n/, '').replace(/\n```$/, '');
   const isError = response.isError;
   const attachments = response.content.length > 1 ? response.content.slice(1) : undefined;
 

@@ -15,7 +15,6 @@
  */
 
 import * as z from 'zod';
-import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { defineTool } from './tool';
 import { renderTabsMarkdown } from './response';
 
@@ -45,7 +44,7 @@ const browserTabs = defineTool({
         if (params.url) {
           const url = await tab.checkUrlAndNavigate(params.url);
           response.setIncludeSnapshot();
-          response.addCode(`await page.goto(${escapeWithQuotes(url)});`);
+          response.addAction({ name: 'navigate', url });
         }
         break;
       }

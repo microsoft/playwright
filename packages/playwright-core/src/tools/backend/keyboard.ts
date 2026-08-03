@@ -92,7 +92,7 @@ const type = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const { locator, resolved } = await tab.targetLocator(params);
+    const { locator, resolved, selector } = await tab.targetLocator(params);
     const secret = tab.context.lookupSecret(params.text);
 
     const action = async () => {
@@ -101,13 +101,13 @@ const type = defineTabTool({
         response.addCode(`await page.${resolved}.pressSequentially(${secret.code});`);
         await locator.pressSequentially(secret.value, tab.actionTimeoutOptions);
       } else {
-        response.addCode(`await page.${resolved}.fill(${secret.code});`);
+        response.addAction({ name: 'fill', selector, text: secret.isSecret ? `SECRET_${params.text}` : params.text });
         await locator.fill(secret.value, tab.actionTimeoutOptions);
       }
 
       if (params.submit) {
         response.setIncludeSnapshot();
-        response.addCode(`await page.${resolved}.press('Enter');`);
+        response.addAction({ name: 'press', selector, key: 'Enter', modifiers: 0 });
         await locator.press('Enter', tab.actionTimeoutOptions);
       }
     };

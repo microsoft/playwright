@@ -136,7 +136,7 @@ test('browser_click (modifiers)', async ({ client, server, mcpBrowser }) => {
     })).toHaveResponse({
       code: [
         `await page.getByRole('button', { name: 'Submit' }).click({`,
-        `  modifiers: ['Control']`,
+        `  modifiers: ['ControlOrMeta']`,
         `});`
       ].join('\n'),
       snapshot: expect.stringContaining(`generic [ref=e3]: ctrlKey:true metaKey:false shiftKey:false altKey:false`),
@@ -169,7 +169,7 @@ test('browser_click (modifiers)', async ({ client, server, mcpBrowser }) => {
   })).toHaveResponse({
     code: [
       `await page.getByRole('button', { name: 'Submit' }).click({`,
-      `  modifiers: ['Shift', 'Alt']`,
+      `  modifiers: ['Alt', 'Shift']`,
       `});`
     ].join('\n'),
     snapshot: expect.stringContaining(`generic [ref=e3]: ctrlKey:false metaKey:false shiftKey:true altKey:true`),
