@@ -32,7 +32,7 @@ import os from 'os';
 import debug from 'debug';
 import ws, { WebSocketServer as wsServer } from 'ws';
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { hostnameFromHostHeader } from '@utils/httpServer';
+import { isAllowedHost, kLoopbackHosts } from '@utils/httpServer';
 import { registry } from '../../server/registry/index';
 
 import { findPlaywrightExtensionProfile, playwrightExtensionId } from '../utils/extension';
@@ -48,8 +48,6 @@ import type { WebSocket, WebSocketServer } from 'ws';
 
 
 const debugLogger = debug('pw:mcp:relay');
-
-const kLoopbackHostnames = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 type CDPCommand = {
   id: number;
@@ -176,10 +174,8 @@ export class CDPRelayServer {
   // Reject upgrades with a non-loopback Host (DNS rebinding) or a web page
   // Origin — legitimate clients are local and don't send an http(s) Origin.
   private _verifyClient(info: { origin?: string, req: http.IncomingMessage }): boolean {
-    const host = info.req.headers.host;
-    const hostname = host ? hostnameFromHostHeader(host.toLowerCase()) : undefined;
-    if (!hostname || !kLoopbackHostnames.has(hostname)) {
-      debugLogger(`Rejected WebSocket upgrade with Host: ${host}`);
+    if (!isAllowedHost(info.req, kLoopbackHosts)) {
+      debugLogger(`Rejected WebSocket upgrade with Host: ${info.req.headers.host}`);
       return false;
     }
     if (info.origin && /^https?:/i.test(info.origin)) {

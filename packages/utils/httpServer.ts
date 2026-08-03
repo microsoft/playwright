@@ -89,6 +89,11 @@ export class HttpServer {
       const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
       if (pathname !== wsPath)
         return;
+      if (!isAllowedHost(request, this._allowedHosts)) {
+        socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+        socket.destroy();
+        return;
+      }
       wss.handleUpgrade(request, socket, head, ws => wss.emit('connection', ws, request));
     });
     // HMR end
@@ -268,14 +273,10 @@ export class HttpServer {
       return;
     }
 
-    if (this._allowedHosts) {
-      const host = request.headers.host?.toLowerCase();
-      const hostname = host ? hostnameFromHostHeader(host) : undefined;
-      if (!hostname || !this._allowedHosts.has(hostname)) {
-        response.statusCode = 403;
-        response.end();
-        return;
-      }
+    if (!isAllowedHost(request, this._allowedHosts)) {
+      response.statusCode = 403;
+      response.end();
+      return;
     }
 
     request.on('error', () => response.end());
@@ -299,6 +300,9 @@ export class HttpServer {
   }
 }
 
+// Loopback hosts in the Host header form.
+export const kLoopbackHosts = new Set(['localhost', '127.0.0.1', '[::1]']);
+
 export function computeAllowedHosts(requested: string | undefined, bound: string): Set<string> | null {
   const loopback = new Set(['127.0.0.1', '::1', 'localhost']);
   const isLoopback = (h: string | undefined) => h !== undefined && loopback.has(h.toLowerCase());
@@ -306,7 +310,16 @@ export function computeAllowedHosts(requested: string | undefined, bound: string
     return null;
   if (!isLoopback(bound) && requested === undefined)
     return null;
-  return new Set(['localhost', '127.0.0.1', '[::1]']);
+  return new Set(kLoopbackHosts);
+}
+
+// A null allowlist disables the check (server deliberately bound to a public address).
+export function isAllowedHost(request: http.IncomingMessage, allowedHosts: Set<string> | null): boolean {
+  if (!allowedHosts)
+    return true;
+  const host = request.headers.host?.toLowerCase();
+  const hostname = host ? hostnameFromHostHeader(host) : undefined;
+  return !!hostname && allowedHosts.has(hostname);
 }
 
 // Bracket IPv6 literals so they can be used as the host part of a URL.
