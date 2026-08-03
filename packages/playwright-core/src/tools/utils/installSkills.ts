@@ -17,6 +17,7 @@
 /* eslint-disable no-console */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { libPath } from '../../package';
@@ -26,14 +27,15 @@ export const allSkills = ['playwright-cli', 'playwright-component-testing', 'pla
 export type SkillName = typeof allSkills[number];
 export type SkillTarget = 'claude' | 'agents';
 
-export async function installSkills(skills: readonly SkillName[], target: SkillTarget = 'claude') {
+export async function installSkills(skills: readonly SkillName[], target: SkillTarget = 'claude', options?: { global?: boolean }) {
   const cwd = process.cwd();
+  const baseDir = options?.global ? os.homedir() : cwd;
   for (const skill of skills) {
     const sourceDir = libPath('tools', 'skills', skill);
     if (!fs.existsSync(sourceDir))
       throw new Error(`Skill source directory not found: ${sourceDir}`);
-    const destDir = path.join(cwd, `.${target}`, 'skills', skill);
+    const destDir = path.join(baseDir, `.${target}`, 'skills', skill);
     await fs.promises.cp(sourceDir, destDir, { recursive: true });
-    console.log(`✅ Skill installed to \`${path.relative(cwd, destDir)}\`.`);
+    console.log(`✅ Skill installed to \`${options?.global ? destDir : path.relative(cwd, destDir)}\`.`);
   }
 }

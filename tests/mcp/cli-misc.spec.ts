@@ -60,6 +60,32 @@ test('install workspace w/--skills=agents', async ({ cli }, testInfo) => {
   expect(fs.existsSync(skillFile)).toBe(true);
 });
 
+test('install w/--skills -g installs into the home directory', async ({ cli }, testInfo) => {
+  const fakeHome = testInfo.outputPath('fake-home');
+  await fs.promises.mkdir(fakeHome, { recursive: true });
+  const { output } = await cli('install', '--skills', '-g', { env: { HOME: fakeHome, USERPROFILE: fakeHome } });
+  expect(output).toContain('Skill installed to');
+  expect(output).not.toContain('Workspace initialized');
+
+  const skillFile = path.join(fakeHome, '.claude', 'skills', 'playwright-cli', 'SKILL.md');
+  expect(fs.existsSync(skillFile)).toBe(true);
+});
+
+test('install w/--skills=agents --global installs into the home directory', async ({ cli }, testInfo) => {
+  const fakeHome = testInfo.outputPath('fake-home');
+  await fs.promises.mkdir(fakeHome, { recursive: true });
+  await cli('install', '--skills=agents', '--global', { env: { HOME: fakeHome, USERPROFILE: fakeHome } });
+
+  const skillFile = path.join(fakeHome, '.agents', 'skills', 'playwright-cli', 'SKILL.md');
+  expect(fs.existsSync(skillFile)).toBe(true);
+});
+
+test('install -g without --skills errors', async ({ cli }) => {
+  const result = await cli('install', '-g');
+  expect(result.exitCode).toBe(1);
+  expect(result.error).toContain('--global requires --skills');
+});
+
 test('install handles browser detection', async ({ cli }) => {
   const { output } = await cli('install');
   // Verify that one of the browser detection outcomes occurred

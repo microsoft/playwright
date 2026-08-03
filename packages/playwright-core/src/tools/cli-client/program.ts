@@ -65,8 +65,9 @@ const globalOptions: (keyof (GlobalOptions & OpenOptions & AttachOptions))[] = [
   'session',
 ];
 
-const booleanOptions: (keyof (GlobalOptions & OpenOptions & AttachOptions & { all?: boolean }))[] = [
+const booleanOptions: (keyof (GlobalOptions & OpenOptions & AttachOptions & { all?: boolean, g?: boolean }))[] = [
   'all',
+  'g',
   'help',
   'json',
   'raw',
@@ -84,6 +85,11 @@ export async function program(options?: { embedderVersion?: string}) {
   if (args.s) {
     args.session = args.s;
     delete args.s;
+  }
+  // Normalize -g alias to --global
+  if (args.g) {
+    args.global = true;
+    delete args.g;
   }
 
   const output: Output = args.json ? new JsonOutput() : new TextOutput();
@@ -196,6 +202,8 @@ export async function program(options?: { embedderVersion?: string}) {
       return;
     }
     case 'install':
+      if (args.global && !args.skills)
+        output.errorInstallGlobalRequiresSkills();
       await runInitWorkspace(args, output);
       output.installed();
       return;
@@ -315,7 +323,11 @@ async function runInSessionOrStop(entry: SessionFile, clientInfo: ClientInfo, ar
 
 async function runInitWorkspace(args: MinimistArgs, output: Output) {
   const cliPath = libPath('entry', 'cliDaemon.js');
-  const daemonArgs: string[] = [cliPath, '--init-workspace', ...(args.skills ? ['--init-skills', String(args.skills)] : [])];
+  const daemonArgs: string[] = [
+    cliPath,
+    '--init-workspace',
+    ...(args.skills ? [args.global ? '--init-skills-global' : '--init-skills', String(args.skills)] : []),
+  ];
   await new Promise<void>((resolve, reject) => {
     const child = spawn(process.execPath, daemonArgs, {
       stdio: output.installStdio(),

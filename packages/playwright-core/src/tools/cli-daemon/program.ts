@@ -45,10 +45,11 @@ export function decorateProgram(program: Command) {
       .option('--endpoint <endpoint>', 'attach to a running Playwright browser endpoint')
       .option('--init-workspace', 'initialize workspace')
       .option('--init-skills <value>', 'install skills for the given agent type ("claude" or "agents")')
+      .option('--init-skills-global <value>', 'install skills for the given agent type ("claude" or "agents") into the home directory')
 
       .action(async (sessionName: string, options: any) => {
         if (options.initWorkspace) {
-          await initWorkspace(options.initSkills);
+          await initWorkspace(options.initSkills, options.initSkillsGlobal);
           return;
         }
 
@@ -85,16 +86,20 @@ function globalConfigFile(): string {
   return path.join(process.env['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
 }
 
-export async function initWorkspace(initSkills: string | undefined) {
-  const cwd = process.cwd();
-  const playwrightDir = path.join(cwd, '.playwright');
-  await fs.promises.mkdir(playwrightDir, { recursive: true });
-  console.log(`✅ Workspace initialized at \`${cwd}\`.`);
+export async function initWorkspace(initSkills: string | undefined, initSkillsGlobal?: string) {
+  const globalSkills = !!initSkillsGlobal;
+  if (!globalSkills) {
+    const cwd = process.cwd();
+    const playwrightDir = path.join(cwd, '.playwright');
+    await fs.promises.mkdir(playwrightDir, { recursive: true });
+    console.log(`✅ Workspace initialized at \`${cwd}\`.`);
+  }
 
-  if (initSkills) {
-    const target = initSkills === 'agents' ? 'agents' : 'claude';
+  const skills = initSkillsGlobal ?? initSkills;
+  if (skills) {
+    const target = skills === 'agents' ? 'agents' : 'claude';
     try {
-      await installSkills(['playwright-cli'], target);
+      await installSkills(['playwright-cli'], target, { global: globalSkills });
     } catch (error) {
       console.error('❌', error instanceof Error ? error.message : error);
       // eslint-disable-next-line no-restricted-properties
@@ -102,7 +107,8 @@ export async function initWorkspace(initSkills: string | undefined) {
     }
   }
 
-  await ensureConfiguredBrowserInstalled();
+  if (!globalSkills)
+    await ensureConfiguredBrowserInstalled();
 }
 
 async function ensureConfiguredBrowserInstalled() {
