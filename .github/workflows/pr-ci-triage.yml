@@ -43,11 +43,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # Cross-repo calls: github.workflow_sha is the *caller* commit and is
-          # not fetchable from microsoft/playwright. The workflow YAML is already
-          # loaded from the uses: ref; checkout only needs the guides/scripts,
-          # which live on the default branch.
+          # Must set ref explicitly: checkout defaults ref to github.sha (the
+          # *caller* commit / PR merge SHA), which does not exist on playwright.
           repository: microsoft/playwright
+          ref: main
 
       - uses: actions/setup-node@v6
         with:
@@ -137,11 +136,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # Cross-repo calls: github.workflow_sha is the *caller* commit and is
-          # not fetchable from microsoft/playwright. The workflow YAML is already
-          # loaded from the uses: ref; checkout only needs the guides/scripts,
-          # which live on the default branch.
+          # Must set ref explicitly: checkout defaults ref to github.sha (the
+          # *caller* commit / PR merge SHA), which does not exist on playwright.
           repository: microsoft/playwright
+          ref: main
 
       - uses: actions/download-artifact@v4
         with:
