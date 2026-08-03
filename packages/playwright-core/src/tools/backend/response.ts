@@ -145,13 +145,14 @@ export class Response {
 
   setIncludeSnapshot() {
     this._includeSnapshot = this._context.config.snapshot?.mode ?? 'full';
+    this._includeSnapshotBoxes = this._context.config.snapshot?.boxes;
   }
 
   setIncludeFullSnapshot(includeSnapshotFileName?: string, root?: playwright.Locator, depth?: number, boxes?: boolean) {
     this._includeSnapshot = 'explicit';
     this._includeSnapshotFileName = includeSnapshotFileName;
     this._includeSnapshotDepth = depth;
-    this._includeSnapshotBoxes = boxes;
+    this._includeSnapshotBoxes = boxes ?? this._context.config.snapshot?.boxes;
     this._includeSnapshotRoot = root;
   }
 

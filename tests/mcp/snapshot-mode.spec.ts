@@ -96,6 +96,32 @@ test('should not inline console messages with --snapshot-mode=none', async ({ st
   });
 });
 
+test('should respect --snapshot-boxes', async ({ startClient, server }) => {
+  server.setContent('/', `
+    <style>body { margin: 0; }</style>
+    <button style="position:absolute;left:100px;top:50px;width:80px;height:40px;margin:0;padding:0;border:0;">click</button>
+  `, 'text/html');
+
+  const { client } = await startClient({
+    args: ['--snapshot-boxes'],
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.PREFIX,
+    },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`- button "click" [ref=e1] [box=100,50,80,40]`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+  })).toHaveResponse({
+    inlineSnapshot: expect.stringContaining(`- button "click" [ref=e1] [box=100,50,80,40]`),
+  });
+});
+
 test('should respect snapshot[filename]', async ({ client, server }, testInfo) => {
   server.setContent('/', `<button>Button 1</button>`, 'text/html');
 

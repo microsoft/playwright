@@ -185,4 +185,5 @@ const longhandTypes: Record<string, LonghandType> = {
 
   // snapshot
   'snapshot.mode': 'string',
+  'snapshot.boxes': 'boolean',
 };
