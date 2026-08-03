@@ -26,10 +26,12 @@ import type { PlaywrightInitializeResult } from './playwrightConnection';
 export class PlaywrightWebSocketServer {
   private _wsServer: WSServer;
   private _browser: Browser;
-  private _path = '/';
+  private _path: string;
 
-  constructor(browser: Browser) {
+  constructor(browser: Browser, path: string) {
     this._browser = browser;
+    this._path = path;
+
     browser.on(Browser.Events.Disconnected, () => this.close());
 
     const semaphore = new Semaphore(Infinity);
@@ -63,8 +65,7 @@ export class PlaywrightWebSocketServer {
     };
   }
 
-  async listen(port: number = 0, hostname?: string, path?: string): Promise<string> {
-    this._path = path || '/';
+  async listen(port: number = 0, hostname?: string): Promise<string> {
     return await this._wsServer.listen(port, hostname, this._path);
   }
 

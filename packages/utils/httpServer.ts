@@ -311,7 +311,7 @@ export function computeAllowedHosts(requested: string | undefined, bound: string
 }
 
 // A null allowlist disables the check (server deliberately bound to a public address).
-function isAllowedHost(request: http.IncomingMessage, allowedHosts: Set<string> | null): boolean {
+export function isAllowedHost(request: http.IncomingMessage, allowedHosts: Set<string> | null): boolean {
   if (!allowedHosts)
     return true;
   const host = request.headers.host?.toLowerCase();
@@ -324,7 +324,7 @@ export function urlHostFromAddress(address: { address: string, family: string })
   return address.family === 'IPv6' ? `[${address.address}]` : address.address;
 }
 
-export function hostnameFromHostHeader(host: string): string {
+function hostnameFromHostHeader(host: string): string {
   if (host.startsWith('[')) {
     const end = host.indexOf(']');
     return end < 0 ? host : host.substring(0, end + 1);

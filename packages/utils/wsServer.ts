@@ -15,7 +15,7 @@
  */
 
 import { WebSocketServer as wsServer } from 'ws';
-import { computeAllowedHosts, hostnameFromHostHeader, urlHostFromAddress } from './httpServer';
+import { computeAllowedHosts, isAllowedHost, urlHostFromAddress } from './httpServer';
 import { createHttpServer } from './network';
 import { debugLogger } from './debugLogger';
 
@@ -61,7 +61,7 @@ export class WSServer {
     this._delegate = delegate;
   }
 
-  async listen(port: number = 0, hostname: string | undefined, path: string): Promise<string> {
+  async listen(port: number = 0, hostname: string | undefined, defaultPath: string): Promise<string> {
     debugLogger.log('server', `Server started at ${new Date()}`);
 
     // Default to loopback so the WebSocket RPC is not exposed to the network unless
@@ -80,14 +80,14 @@ export class WSServer {
           return;
         }
         if (typeof address === 'string') {
-          resolve(`${address}${path}`);
+          resolve(`${address}${defaultPath}`);
           return;
         }
         // Advertise the bound IP literal in the wsEndpoint so the client connects to
         // the same address family the server bound to. Otherwise the client and
         // server resolvers can disagree on what 'localhost' means (see #40605).
         this._allowedHosts = computeAllowedHosts(hostname, address.address);
-        resolve(`ws://${urlHostFromAddress(address)}:${address.port}${path}`);
+        resolve(`ws://${urlHostFromAddress(address)}:${address.port}${defaultPath}`);
       }).on('error', reject);
     });
 
@@ -107,7 +107,7 @@ export class WSServer {
         socket.destroy();
         return;
       }
-      if (!this._isAllowedHost(request) || !this._isAllowedOrigin(request.headers.origin)) {
+      if (!isAllowedHost(request, this._allowedHosts) || !this._isAllowedOrigin(request.headers.origin)) {
         socket.write(`HTTP/${request.httpVersion} 403 Forbidden\r\n\r\n`);
         socket.destroy();
         return;
@@ -134,20 +134,12 @@ export class WSServer {
   }
 
   private _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
-    if (!this._isAllowedHost(request)) {
+    if (!isAllowedHost(request, this._allowedHosts)) {
       response.statusCode = 403;
       response.end();
       return;
     }
     this._delegate.onRequest(request, response);
-  }
-
-  private _isAllowedHost(request: http.IncomingMessage): boolean {
-    if (!this._allowedHosts)
-      return true;
-    const host = request.headers.host?.toLowerCase();
-    const hostname = host ? hostnameFromHostHeader(host) : undefined;
-    return !!hostname && this._allowedHosts.has(hostname);
   }
 
   private _isAllowedOrigin(origin: string | undefined): boolean {
