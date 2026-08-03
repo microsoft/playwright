@@ -23,8 +23,6 @@ import { UIModeView } from './ui/uiModeView';
 (async () => {
   applyTheme();
   if (window.location.protocol !== 'file:') {
-    if (window.location.href.includes('isUnderTest=true'))
-      await new Promise(f => setTimeout(f, 1000));
     if (!navigator.serviceWorker)
       throw new Error(`Service workers are not supported.\nMake sure to serve the website (${window.location}) via HTTPS or localhost.`);
     navigator.serviceWorker.register('sw.bundle.js');
