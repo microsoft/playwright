@@ -1,0 +1,224 @@
+# Publish Playwright npm packages via ESRP.
+#
+# TRIAL: triggers/schedules disabled — queue manually from ADO.
+# After a successful @next publish, restore:
+#   trigger:
+#     tags: { include: [v*], exclude: [v*-*] }
+#     branches: { include: [release-*] }
+#   schedules:
+#     - cron: "10 5 * * *"  # daily @next on main
+#       branches: { include: [main] }
+#       always: true
+#
+# Channels (set releaseChannel on manual run, or use auto once triggers are back):
+#   @latest — git tag v* (excluding pre-release tags like v1.2.3-beta)
+#   @beta   — push to release-* branches
+#   @next   — daily schedule on main, or manual run with releaseChannel=next
+
+pr: none
+trigger: none
+
+parameters:
+  - name: releaseChannel
+    displayName: "Release channel (use next for trial publishes)"
+    type: string
+    default: next
+    values:
+      - auto
+      - latest
+      - beta
+      - next
+
+resources:
+  repositories:
+    - repository: 1esPipelines
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
+
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1esPipelines
+  parameters:
+    pool:
+      name: DevDivPlaywrightAzurePipelinesUbuntu2204
+      os: linux
+    sdl:
+      sourceAnalysisPool:
+        name: DevDivPlaywrightAzurePipelinesWindows2022
+        # The image must be windows-based due to restrictions of the SDL tools. See: https://aka.ms/AAo6v8e
+        os: windows
+    stages:
+      - stage: Stage
+        jobs:
+          - job: Build
+            displayName: Build & pack npm packages
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  path: $(Build.ArtifactStagingDirectory)/esrp-build
+                  artifact: esrp-build
+            steps:
+              - checkout: self
+                fetchDepth: 0
+                displayName: Checkout code
+
+              - task: UseNode@1
+                inputs:
+                  version: "24.x"
+                displayName: Install Node.js
+
+              - task: Bash@3
+                displayName: setup .npmrc
+                inputs:
+                  targetType: inline
+                  script: |
+                    echo "registry=https://devdiv.pkgs.visualstudio.com/DevDiv/_packaging/DevDiv_PublicPackages/npm/registry/" >> .npmrc
+                    echo "registry=https://devdiv.pkgs.visualstudio.com/DevDiv/_packaging/DevDiv_PublicPackages/npm/registry/" >> tests/playwright-test/stable-test-runner/.npmrc
+
+              - task: npmAuthenticate@0
+                displayName: authenticate the private npm registry
+                inputs:
+                  workingFile: .npmrc
+
+              - task: npmAuthenticate@0
+                displayName: authenticate the private npm registry for stable-test-runner
+                inputs:
+                  workingFile: tests/playwright-test/stable-test-runner/.npmrc
+
+              - script: npm ci
+                displayName: npm ci
+
+              - script: npm run build
+                displayName: npm run build
+
+              - task: Bash@3
+                name: resolve_channel
+                displayName: Resolve release channel
+                inputs:
+                  targetType: inline
+                  script: |
+                    set -euo pipefail
+                    PARAM_CHANNEL="${{ parameters.releaseChannel }}"
+                    BRANCH="$(Build.SourceBranch)"
+                    REASON="$(Build.Reason)"
+
+                    if [[ "${PARAM_CHANNEL}" != "auto" ]]; then
+                      CHANNEL="${PARAM_CHANNEL}"
+                    elif [[ "${BRANCH}" == refs/tags/v* && "${BRANCH}" != refs/tags/v*-* ]]; then
+                      CHANNEL="latest"
+                    elif [[ "${BRANCH}" == refs/heads/release-* ]]; then
+                      CHANNEL="beta"
+                    elif [[ "${BRANCH}" == refs/heads/main ]]; then
+                      CHANNEL="next"
+                    else
+                      echo "ERROR: cannot infer release channel from branch '${BRANCH}'. Pass releaseChannel explicitly."
+                      exit 1
+                    fi
+
+                    case "${CHANNEL}" in
+                      latest) PUBLISH_FLAG="--release" ;;
+                      beta)   PUBLISH_FLAG="--beta" ;;
+                      next)   PUBLISH_FLAG="--alpha" ;;
+                      *)
+                        echo "ERROR: unknown channel '${CHANNEL}'"
+                        exit 1
+                        ;;
+                    esac
+
+                    # @next version stamp: schedule uses today's date; manual uses commit timestamp.
+                    VERSION_STAMP=""
+                    if [[ "${CHANNEL}" == "next" ]]; then
+                      if [[ "${REASON}" == "Schedule" ]]; then
+                        VERSION_STAMP="--today-date"
+                      else
+                        VERSION_STAMP="--commit-timestamp"
+                      fi
+                    elif [[ "${CHANNEL}" == "beta" ]]; then
+                      VERSION_STAMP="--commit-timestamp"
+                    fi
+
+                    echo "Channel=${CHANNEL} flag=${PUBLISH_FLAG} stamp=${VERSION_STAMP:-none} reason=${REASON}"
+                    echo "##vso[task.setvariable variable=channel]${CHANNEL}"
+                    echo "##vso[task.setvariable variable=publishFlag]${PUBLISH_FLAG}"
+                    echo "##vso[task.setvariable variable=versionStamp]${VERSION_STAMP}"
+
+              - task: Bash@3
+                displayName: Bump canary version (beta/next)
+                condition: and(succeeded(), ne(variables['versionStamp'], ''))
+                inputs:
+                  targetType: inline
+                  script: |
+                    set -euo pipefail
+                    node utils/build/update_canary_version.js $(publishFlag) $(versionStamp)
+
+              - task: Bash@3
+                displayName: Pack packages for ESRP
+                inputs:
+                  targetType: inline
+                  script: |
+                    set -euo pipefail
+                    OUT="$(Build.ArtifactStagingDirectory)/esrp-build"
+                    mkdir -p "${OUT}"
+                    utils/publish_all_packages.sh $(publishFlag) --pack-destination "${OUT}"
+                    echo "Packed artifacts:"
+                    ls -la "${OUT}"
+                    # Sanity: expect one .tgz per public package (plus the .npm-tag side file).
+                    TGZ_COUNT=$(find "${OUT}" -name '*.tgz' | wc -l | tr -d ' ')
+                    echo "Packed ${TGZ_COUNT} tarballs"
+                    if [[ "${TGZ_COUNT}" -lt 1 ]]; then
+                      echo "ERROR: no packages were packed"
+                      exit 1
+                    fi
+
+          - job: Publish
+            displayName: ESRP release to npmjs.com
+            dependsOn: Build
+            templateContext:
+              type: releaseJob
+              isProduction: true
+              inputs:
+                - input: pipelineArtifact
+                  artifactName: esrp-build
+                  targetPath: $(Build.ArtifactStagingDirectory)/esrp-build
+            steps:
+              - checkout: none
+
+              - task: Bash@3
+                name: read_tag
+                displayName: Read npm dist-tag
+                inputs:
+                  targetType: inline
+                  script: |
+                    set -euo pipefail
+                    TAG_FILE="$(Build.ArtifactStagingDirectory)/esrp-build/.npm-tag"
+                    if [[ ! -f "${TAG_FILE}" ]]; then
+                      echo "ERROR: missing ${TAG_FILE}"
+                      exit 1
+                    fi
+                    TAG="$(cat "${TAG_FILE}")"
+                    echo "npm dist-tag / ESRP productstate: ${TAG}"
+                    echo "##vso[task.setvariable variable=npmTag]${TAG}"
+                    # ESRP rejects unknown files in the folder; drop the side-file before publish.
+                    rm -f "${TAG_FILE}"
+
+              - task: EsrpRelease@11
+                displayName: ESRP Release to npmjs.com
+                inputs:
+                  connectedservicename: "Playwright-ESRP-PME"
+                  usemanagedidentity: true
+                  keyvaultname: "playwright-esrp-pme"
+                  signcertname: "ESRP-Release-Sign"
+                  clientid: "13434a40-7de4-4c23-81a3-d843dc81c2c5"
+                  intent: "PackageDistribution"
+                  contenttype: "npm"
+                  # Keeping it commented out as a workaround for:
+                  # https://portal.microsofticm.com/imp/v3/incidents/incident/499972482/summary
+                  # contentsource: "folder"
+                  folderlocation: "$(Build.ArtifactStagingDirectory)/esrp-build"
+                  productstate: "$(npmTag)"
+                  waitforreleasecompletion: true
+                  owners: "simonknott@microsoft.com"
+                  approvers: "simonknott@microsoft.com"
+                  serviceendpointurl: "https://api.esrp.microsoft.com"
+                  mainpublisher: "Playwright"
+                  domaintenantid: "975f013f-7f24-47e8-a7d3-abc4752bf346"

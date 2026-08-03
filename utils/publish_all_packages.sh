@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+set -o pipefail
 set -x
 
 function cleanup {
@@ -15,13 +16,14 @@ trap "cleanup; cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 
 if [[ $1 == "--help" ]]; then
-  echo "usage: $(basename $0) [--release|--alpha|--beta]"
+  echo "usage: $(basename $0) [--release|--alpha|--beta] [--pack-destination <dir>]"
   echo
-  echo "Publishes all packages."
+  echo "Publishes all packages, or packs them into <dir> for ESRP."
   echo
   echo "--release                publish @latest version of all packages"
   echo "--alpha                  publish @next version of all packages"
   echo "--beta                   publish @beta version of all packages"
+  echo "--pack-destination <dir> pack .tgz files into <dir> instead of npm publish"
   exit 1
 fi
 
@@ -37,11 +39,44 @@ fi
 
 cd ..
 
+CHANNEL=""
+PACK_DESTINATION=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --release|--alpha|--beta)
+      if [[ -n "${CHANNEL}" ]]; then
+        echo "ERROR: multiple channel flags specified"
+        exit 1
+      fi
+      CHANNEL="$1"
+      shift
+      ;;
+    --pack-destination)
+      if [[ -z "${2:-}" ]]; then
+        echo "ERROR: --pack-destination requires a directory argument"
+        exit 1
+      fi
+      PACK_DESTINATION="$2"
+      shift 2
+      ;;
+    *)
+      echo "unknown argument - '$1'"
+      exit 1
+      ;;
+  esac
+done
+
+if [[ -z "${CHANNEL}" ]]; then
+  echo "Please specify either --release, --beta or --alpha"
+  exit 1
+fi
+
 NPM_PUBLISH_TAG="next"
 
 VERSION=$(node -e 'console.log(require("./package.json").version)')
 
-if [[ "$1" == "--release" ]]; then
+if [[ "${CHANNEL}" == "--release" ]]; then
   if [[ -n $(git status -s) ]]; then
     echo "ERROR: git status is dirty; some uncommitted changes or untracked files"
     exit 1
@@ -52,7 +87,7 @@ if [[ "$1" == "--release" ]]; then
     exit 1
   fi
   NPM_PUBLISH_TAG="latest"
-elif [[ "$1" == "--alpha" ]]; then
+elif [[ "${CHANNEL}" == "--alpha" ]]; then
   # Ensure package version contains alpha.
   if [[ "${VERSION}" != *-alpha* ]]; then
     echo "ERROR: cannot publish release version ${VERSION} with --alpha flag"
@@ -60,7 +95,7 @@ elif [[ "$1" == "--alpha" ]]; then
   fi
 
   NPM_PUBLISH_TAG="next"
-elif [[ "$1" == "--beta" ]]; then
+elif [[ "${CHANNEL}" == "--beta" ]]; then
   # Ensure package version contains beta.
   if [[ "${VERSION}" != *-beta* ]]; then
     echo "ERROR: cannot publish release version ${VERSION} with --beta flag"
@@ -68,16 +103,25 @@ elif [[ "$1" == "--beta" ]]; then
   fi
 
   NPM_PUBLISH_TAG="beta"
-else
-  echo "unknown argument - '$1'"
-  exit 1
 fi
 
-echo "==================== Publishing version ${VERSION} ================"
 node ./utils/workspace.js --ensure-consistent
-node ./utils/workspace.js --list-public-package-paths | while read package
-do
-  npm publish --access=public ${package} --tag="${NPM_PUBLISH_TAG}"
-done
+
+if [[ -n "${PACK_DESTINATION}" ]]; then
+  echo "==================== Packing version ${VERSION} (tag ${NPM_PUBLISH_TAG}) ================"
+  mkdir -p "${PACK_DESTINATION}"
+  # Record the dist-tag for the ESRP productstate input.
+  echo -n "${NPM_PUBLISH_TAG}" > "${PACK_DESTINATION}/.npm-tag"
+  node ./utils/workspace.js --list-public-package-paths | while read package
+  do
+    npm pack --pack-destination="${PACK_DESTINATION}" "${package}"
+  done
+else
+  echo "==================== Publishing version ${VERSION} ================"
+  node ./utils/workspace.js --list-public-package-paths | while read package
+  do
+    npm publish --access=public ${package} --tag="${NPM_PUBLISH_TAG}"
+  done
+fi
 
 echo "Done."
