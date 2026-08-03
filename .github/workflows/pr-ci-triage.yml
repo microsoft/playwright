@@ -1,0 +1,163 @@
+# Reusable CI triage for PR test failures.
+# Call from any repo that runs the Playwright test suite (playwright, playwright-browsers, …).
+name: PR CI Triage
+
+on:
+  workflow_call:
+    inputs:
+      repository:
+        description: 'owner/repo the PR lives in'
+        required: true
+        type: string
+      pr_number:
+        description: 'PR number to triage'
+        required: true
+        type: string
+      report_name:
+        description: 'Disambiguates triage comments when a PR has multiple reports'
+        required: false
+        default: 'CI'
+        type: string
+      model:
+        required: false
+        default: 'claude-opus-4.8'
+        type: string
+
+permissions: {}
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+      copilot-requests: write
+      pull-requests: read
+    outputs:
+      has_draft: ${{ steps.triage.outputs.has_draft }}
+    env:
+      PR_NUMBER: ${{ inputs.pr_number }}
+      TARGET_REPO: ${{ inputs.repository }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: microsoft/playwright
+          ref: ${{ github.workflow_sha }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download test-results DB
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node utils/test-results-db/cli.ts download
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Triage failures with Copilot CLI
+        id: triage
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          PROMPT=$(cat <<PROMPT_EOF
+          Come up with a verdict on the CI test failures on pull request #${PR_NUMBER} of ${TARGET_REPO}: are they likely caused by this PR? Follow the pr-ci-triage guide (.github/workflows/pr-ci-triage.md) for the analysis.
+
+          The test-results DuckDB is already at utils/test-results-db/test-results.duckdb — query it via the playwright-test-results skill. Do not re-download it. You may run a short \`update --lookback-days 1\` if the snapshot is missing this PR's runs, but prefer the PR's github-actions[bot] report comment for what failed on this PR.
+
+          Write your verdict to output/triage.md as a PR comment, in the format the guide specifies and the bot voice register (.github/workflows/bot-voice.md).
+
+          Do not post anything yourself — a later workflow step posts output/triage.md.
+          PROMPT_EOF
+          )
+          copilot \
+            --allow-all-tools \
+            --allow-all-paths \
+            --no-ask-user \
+            --enable-all-github-mcp-tools \
+            --share=output/copilot-session.md \
+            --model "${{ inputs.model }}" \
+            --max-ai-credits 500 \
+            -p "$PROMPT"
+
+          if [ -s output/triage.md ]; then
+            echo "has_draft=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_draft=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Add session transcript to job summary
+        if: ${{ always() }}
+        run: |
+          {
+            echo "## CI triage session transcript (PR #$PR_NUMBER on $TARGET_REPO)"
+            echo ''
+            if [ -f output/triage.md ]; then
+              echo '### Draft comment'
+              echo ''
+              cat output/triage.md
+              echo ''
+            fi
+            echo '### Agent transcript'
+            echo ''
+            cat output/copilot-session.md 2>/dev/null || echo "(no transcript)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload triage draft
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-triage-${{ inputs.pr_number }}
+          path: |
+            output/triage.md
+            output/copilot-session.md
+          if-no-files-found: warn
+
+  post:
+    needs: triage
+    if: ${{ needs.triage.outputs.has_draft == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      PR_NUMBER: ${{ inputs.pr_number }}
+      WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: microsoft/playwright
+          ref: ${{ github.workflow_sha }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ci-triage-${{ inputs.pr_number }}
+          path: output
+
+      - name: Post triage comment
+        uses: actions/github-script@v9
+        env:
+          REPORT_NAME: ${{ inputs.report_name }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const { collapsePreviousComments } = require('./tests/config/postReportComment');
+            const sentinel = `<!-- playwright-ci-triage --><!-- ${process.env.REPORT_NAME} -->`;
+            const prNumber = +process.env.PR_NUMBER;
+            await collapsePreviousComments(github, context, prNumber, sentinel);
+            const triage = fs.readFileSync('output/triage.md', 'utf8');
+            const body = `${triage}\n\n<sub>Triaged by the Playwright bot - [agent run](${process.env.WORKFLOW_URL})</sub>\n${sentinel}\n`;
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: prNumber,
+              body,
+            });
