@@ -84,6 +84,8 @@ export class PlaywrightServer {
           return { error: `HTTP/${request.httpVersion} 428 Precondition Required\r\n\r\n${uaError}` };
       },
 
+      isAllowedPathname: pathname => pathname === this._options.path,
+
       onHeaders: headers => {
         if (process.env.PWTEST_SERVER_WS_HEADERS)
           headers.push(process.env.PWTEST_SERVER_WS_HEADERS!);

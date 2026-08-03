@@ -26,8 +26,9 @@ import type { PlaywrightInitializeResult } from './playwrightConnection';
 export class PlaywrightWebSocketServer {
   private _wsServer: WSServer;
   private _browser: Browser;
+  private _path = '/';
 
-  constructor(browser: Browser, path: string) {
+  constructor(browser: Browser) {
     this._browser = browser;
     browser.on(Browser.Events.Disconnected, () => this.close());
 
@@ -38,6 +39,7 @@ export class PlaywrightWebSocketServer {
       },
       onUpgrade: () => undefined,
       onHeaders: () => {},
+      isAllowedPathname: pathname => pathname === this._path,
       onConnection: (request, url, ws, id) => {
         debugLogger.log('server', `[${id}] ws client connected`);
         return new PlaywrightConnection(
@@ -62,7 +64,8 @@ export class PlaywrightWebSocketServer {
   }
 
   async listen(port: number = 0, hostname?: string, path?: string): Promise<string> {
-    return await this._wsServer.listen(port, hostname, path || '/');
+    this._path = path || '/';
+    return await this._wsServer.listen(port, hostname, this._path);
   }
 
   async close() {

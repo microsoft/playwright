@@ -95,7 +95,7 @@ export class CDPRelayServer {
       },
       onHeaders: () => {},
       onUpgrade: () => undefined,
-      isValidPathname: pathname => pathname === this._cdpPath || pathname === this._extensionPath,
+      isAllowedPathname: pathname => pathname === this._cdpPath || pathname === this._extensionPath,
       onConnection: (request, url, ws) => {
         debugLogger(`New connection to ${url.pathname}`);
         if (url.pathname === this._cdpPath)

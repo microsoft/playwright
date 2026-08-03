@@ -222,7 +222,7 @@ export class BrowserServer {
 
     let endpoint: string;
     if (options.host !== undefined || options.port !== undefined) {
-      this._wsServer = new PlaywrightWebSocketServer(this._browser, '/');
+      this._wsServer = new PlaywrightWebSocketServer(this._browser);
       endpoint = await this._wsServer.listen(options.port ?? 0, options.host, '/' + createGuid());
     } else {
       this._pipeServer = new PlaywrightPipeServer(this._browser);

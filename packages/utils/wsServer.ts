@@ -47,8 +47,7 @@ export type WSServerDelegate = {
   onHeaders: (headers: string[]) => void;
   onUpgrade: (request: http.IncomingMessage, socket: stream.Duplex) => { error: string } | undefined;
   onConnection: (request: http.IncomingMessage, url: URL, ws: WebSocket, id: string) => WSConnection;
-  // Overrides the default `pathname === path` check on upgrade requests.
-  isValidPathname?: (pathname: string) => boolean;
+  isAllowedPathname: (pathname: string) => boolean;
 };
 
 export class WSServer {
@@ -103,8 +102,7 @@ export class WSServer {
 
     server.on('upgrade', (request, socket, head) => {
       const pathname = new URL('http://localhost' + request.url!).pathname;
-      const isValidPathname = this._delegate.isValidPathname ?? (pathname => pathname === path);
-      if (!isValidPathname(pathname)) {
+      if (!this._delegate.isAllowedPathname(pathname)) {
         socket.write(`HTTP/${request.httpVersion} 400 Bad Request\r\n\r\n`);
         socket.destroy();
         return;
