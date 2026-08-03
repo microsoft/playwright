@@ -192,7 +192,8 @@ test('eval <ref>', async ({ cli, server }) => {
   expect(output).toContain('"BUTTON"');
 });
 
-test('dialog-accept', async ({ cli, server }) => {
+test('dialog-accept', async ({ cli, server, mcpBrowser }) => {
+  test.fixme(mcpBrowser === 'firefox' && process.platform === 'win32', 'Clicking an element that opens a synchronous alert() intermittently hangs the click action on Firefox + Windows.');
   server.setContent('/', `<button onclick="alert('MyAlert')">Button</button>`, 'text/html');
   await cli('open', server.PREFIX);
   const { output } = await cli('click', 'e2');
@@ -203,7 +204,8 @@ test('dialog-accept', async ({ cli, server }) => {
   expect(inlineSnapshot).not.toContain('MyAlert');
 });
 
-test('dialog-dismiss', async ({ cli, server }) => {
+test('dialog-dismiss', async ({ cli, server, mcpBrowser }) => {
+  test.fixme(mcpBrowser === 'firefox' && process.platform === 'win32', 'Clicking an element that opens a synchronous alert() intermittently hangs the click action on Firefox + Windows.');
   server.setContent('/', `<button onclick="alert('MyAlert')">Button</button>`, 'text/html');
   await cli('open', server.PREFIX);
   const { output } = await cli('click', 'e2');
@@ -213,7 +215,8 @@ test('dialog-dismiss', async ({ cli, server }) => {
   expect(inlineSnapshot).not.toContain('MyAlert');
 });
 
-test('dialog-accept <prompt>', async ({ cli, server }) => {
+test('dialog-accept <prompt>', async ({ cli, server, mcpBrowser }) => {
+  test.fixme(mcpBrowser === 'firefox' && process.platform === 'win32', 'Clicking an element that opens a synchronous prompt() intermittently hangs the click action on Firefox + Windows.');
   server.setContent('/', `<button onclick="document.body.textContent = prompt('MyAlert')">Button</button>`, 'text/html');
   await cli('open', server.PREFIX);
   await cli('click', 'e2');
