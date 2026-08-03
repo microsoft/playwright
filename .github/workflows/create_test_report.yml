@@ -116,109 +116,11 @@ jobs:
   triage:
     needs: merge-reports
     if: ${{ needs.merge-reports.outputs.has_failures == 'true' && needs.merge-reports.outputs.pr_number && needs.merge-reports.outputs.triage_allowed == 'true' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
     permissions:
-      copilot-requests: write
-    outputs:
-      has_draft: ${{ steps.triage.outputs.has_draft }}
-      pr_number: ${{ needs.merge-reports.outputs.pr_number }}
-    env:
-      PR_NUMBER: ${{ needs.merge-reports.outputs.pr_number }}
-      GH_TOKEN: ${{ github.token }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-
-      - name: Install Copilot CLI
-        run: npm install -g @github/copilot
-
-      - name: Triage failures with Copilot CLI
-        id: triage
-        env:
-          COPILOT_GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p output
-          PROMPT=$(cat <<EOF
-          Come up with a verdict on the CI test failures on pull request #$PR_NUMBER of ${{ github.repository }}: are they likely caused by this PR? Follow the pr-ci-triage guide (.github/workflows/pr-ci-triage.md) for the analysis.
-
-          Write your verdict to output/triage.md as a PR comment, in the format the guide specifies and the playwright-bot-voice register (.claude/skills/playwright-bot-voice/SKILL.md).
-
-          Do not post anything yourself — a later workflow step posts output/triage.md.
-          EOF
-          )
-          copilot \
-            --allow-all-tools \
-            --allow-all-paths \
-            --no-ask-user \
-            --enable-all-github-mcp-tools \
-            --share=output/copilot-session.md \
-            --model claude-opus-4.8 \
-            --max-ai-credits 500 \
-            -p "$PROMPT"
-
-          if [ -s output/triage.md ]; then
-            echo "has_draft=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_draft=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Add session transcript to job summary
-        if: ${{ always() }}
-        run: |
-          {
-            echo "## CI triage session transcript (PR #$PR_NUMBER)"
-            echo ''
-            cat "output/copilot-session.md" 2>/dev/null || echo "(no transcript)"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload output
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ci-triage-${{ needs.merge-reports.outputs.pr_number }}
-          path: output/triage.md
-          if-no-files-found: warn
-
-  post:
-    needs: triage
-    if: needs.triage.outputs.has_draft == 'true'
-    runs-on: ubuntu-latest
-    permissions:
+      contents: read
+      actions: read
       pull-requests: write
-    env:
-      PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
-      GH_TOKEN: ${{ github.token }}
-      WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Download triage output
-        uses: actions/download-artifact@v4
-        with:
-          name: ci-triage-${{ needs.triage.outputs.pr_number }}
-          path: output
-
-      - name: Post triage comment
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const fs = require('fs');
-            const { collapsePreviousComments } = require('./tests/config/postReportComment');
-            const sentinel = `<!-- playwright-ci-triage --><!-- ${context.payload.workflow_run.name} -->`;
-            const prNumber = +process.env.PR_NUMBER;
-            await collapsePreviousComments(github, context, prNumber, sentinel);
-
-            const triage = fs.readFileSync('output/triage.md', 'utf8');
-            const body = `${triage}\n\n<sub>Triaged by the Playwright bot - [agent run](${process.env.WORKFLOW_URL})</sub>\n${sentinel}\n`;
-            await github.rest.issues.createComment({
-              ...context.repo,
-              issue_number: prNumber,
-              body,
-            });
+      copilot-requests: write
+    uses: ./.github/workflows/pr-ci-triage.yml
+    with:
+      pr_number: ${{ needs.merge-reports.outputs.pr_number }}
