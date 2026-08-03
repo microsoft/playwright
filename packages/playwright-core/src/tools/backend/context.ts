@@ -50,6 +50,7 @@ export type ContextConfig = {
   secrets?: Record<string, string>;
   snapshot?: {
     mode?: 'full' | 'none';
+    boxes?: boolean;
   };
   testIdAttribute?: string;
   timeouts?: {
