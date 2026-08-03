@@ -132,6 +132,17 @@ test('init-skills installs all skills', async ({  }) => {
   expect(fs.existsSync(path.join(baseDir, '.claude', 'skills', 'playwright-cli', 'references', 'tracing.md'))).toBe(true);
 });
 
+test('init-skills installs globally with -g', async ({  }, testInfo) => {
+  const baseDir = await writeFiles({});
+  const fakeHome = testInfo.outputPath('fake-home');
+
+  await spawnAsync('npx', ['playwright', 'init-skills', '-g'], { cwd: baseDir, shell: true, env: { ...process.env, PWTEST_CLI_GLOBAL_CONFIG: fakeHome } });
+
+  for (const skill of ['playwright-cli', 'playwright-component-testing', 'playwright-trace'])
+    expect(fs.existsSync(path.join(fakeHome, '.claude', 'skills', skill, 'SKILL.md'))).toBe(true);
+  expect(fs.existsSync(path.join(baseDir, '.claude'))).toBe(false);
+});
+
 test('init-skills installs into .agents with --loop agents', async ({  }) => {
   const baseDir = await writeFiles({});
 

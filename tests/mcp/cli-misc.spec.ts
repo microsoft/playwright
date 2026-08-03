@@ -60,6 +60,15 @@ test('install workspace w/--skills=agents', async ({ cli }, testInfo) => {
   expect(fs.existsSync(skillFile)).toBe(true);
 });
 
+test('install workspace w/--skills -g', async ({ cli }, testInfo) => {
+  const fakeHome = testInfo.outputPath('fake-home');
+  const { output } = await cli('install', '--skills', '-g', { env: { PWTEST_CLI_GLOBAL_CONFIG: fakeHome } });
+  expect(output).toContain(`Skill installed to \`${path.join(fakeHome, '.claude', 'skills', 'playwright-cli')}\`.`);
+
+  expect(fs.existsSync(path.join(fakeHome, '.claude', 'skills', 'playwright-cli', 'SKILL.md'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('.claude'))).toBe(false);
+});
+
 test('install handles browser detection', async ({ cli }) => {
   const { output } = await cli('install');
   // Verify that one of the browser detection outcomes occurred

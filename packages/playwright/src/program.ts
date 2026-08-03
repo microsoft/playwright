@@ -191,9 +191,10 @@ function addInitSkillsCommand(program: Command) {
   option.choices(['claude', 'agents']);
   option.default('claude');
   command.addOption(option);
+  command.option('-g, --global', 'Install skills into the home directory instead of the current workspace');
   command.action(async opts => {
     try {
-      await tools.installSkills(tools.allSkills, opts.loop);
+      await tools.installSkills(tools.allSkills, opts.loop, { global: !!opts.global });
     } catch (e) {
       console.error(e);
       gracefullyProcessExitDoNotHang(1);

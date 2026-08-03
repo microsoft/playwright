@@ -124,6 +124,12 @@ Optionally install skills for richer agent integration:
 playwright-cli install --skills
 ```
 
+Pass `-g` (or `--global`) to install the skills into the home directory so that they are available in all projects:
+
+```bash
+playwright-cli install --skills -g
+```
+
 ### Usage
 
 Point your coding agent at a task:

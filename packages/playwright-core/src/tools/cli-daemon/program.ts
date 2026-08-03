@@ -45,10 +45,11 @@ export function decorateProgram(program: Command) {
       .option('--endpoint <endpoint>', 'attach to a running Playwright browser endpoint')
       .option('--init-workspace', 'initialize workspace')
       .option('--init-skills <value>', 'install skills for the given agent type ("claude" or "agents")')
+      .option('--init-skills-global', 'install skills into the home directory')
 
       .action(async (sessionName: string, options: any) => {
         if (options.initWorkspace) {
-          await initWorkspace(options.initSkills);
+          await initWorkspace(options.initSkills, { global: !!options.initSkillsGlobal });
           return;
         }
 
@@ -85,7 +86,7 @@ function globalConfigFile(): string {
   return path.join(process.env['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
 }
 
-export async function initWorkspace(initSkills: string | undefined) {
+export async function initWorkspace(initSkills: string | undefined, options?: { global?: boolean }) {
   const cwd = process.cwd();
   const playwrightDir = path.join(cwd, '.playwright');
   await fs.promises.mkdir(playwrightDir, { recursive: true });
@@ -94,7 +95,7 @@ export async function initWorkspace(initSkills: string | undefined) {
   if (initSkills) {
     const target = initSkills === 'agents' ? 'agents' : 'claude';
     try {
-      await installSkills(['playwright-cli'], target);
+      await installSkills(['playwright-cli'], target, options);
     } catch (error) {
       console.error('❌', error instanceof Error ? error.message : error);
       // eslint-disable-next-line no-restricted-properties

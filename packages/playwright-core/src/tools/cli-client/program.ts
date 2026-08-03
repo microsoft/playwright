@@ -78,13 +78,17 @@ export async function program(options?: { embedderVersion?: string}) {
   const help = require(libPath('tools', 'cli-client', 'help.json'));
 
   const argv = process.argv.slice(2);
-  const boolean = [...help.booleanOptions, ...booleanOptions];
+  const boolean = [...help.booleanOptions, ...booleanOptions, 'g'];
   const args: MinimistArgs = minimist(argv, { boolean, string: ['_'] });
   // Normalize -s alias to --session
   if (args.s) {
     args.session = args.s;
     delete args.s;
   }
+  // Normalize -g alias to --global
+  if (args.g)
+    args.global = args.g;
+  delete args.g;
 
   const output: Output = args.json ? new JsonOutput() : new TextOutput();
   const commandName = args._?.[0];
@@ -315,7 +319,12 @@ async function runInSessionOrStop(entry: SessionFile, clientInfo: ClientInfo, ar
 
 async function runInitWorkspace(args: MinimistArgs, output: Output) {
   const cliPath = libPath('entry', 'cliDaemon.js');
-  const daemonArgs: string[] = [cliPath, '--init-workspace', ...(args.skills ? ['--init-skills', String(args.skills)] : [])];
+  const daemonArgs: string[] = [
+    cliPath,
+    '--init-workspace',
+    ...(args.skills ? ['--init-skills', String(args.skills)] : []),
+    ...(args.skills && args.global ? ['--init-skills-global'] : []),
+  ];
   await new Promise<void>((resolve, reject) => {
     const child = spawn(process.execPath, daemonArgs, {
       stdio: output.installStdio(),
