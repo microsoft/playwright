@@ -426,10 +426,10 @@ test(`relay rejects websocket upgrades with forged host or origin`, {
   await clickAllowAndSelect(connectPage, 'Welcome');
   await navigateResponse;
 
-  expect(await wsUpgradeResult(relayUrl, { host: 'evil.com' })).toBe(401);
-  expect(await wsUpgradeResult(relayUrl, { host: 'evil.com:80' })).toBe(401);
-  expect(await wsUpgradeResult(relayUrl, { origin: 'http://evil.com' })).toBe(401);
-  expect(await wsUpgradeResult(relayUrl, { origin: 'https://evil.com' })).toBe(401);
+  expect(await wsUpgradeResult(relayUrl, { host: 'evil.com' })).toBe(403);
+  expect(await wsUpgradeResult(relayUrl, { host: 'evil.com:80' })).toBe(403);
+  expect(await wsUpgradeResult(relayUrl, { origin: 'http://evil.com' })).toBe(403);
+  expect(await wsUpgradeResult(relayUrl, { origin: 'https://evil.com' })).toBe(403);
 
   // Control: default headers pass the upgrade validation.
   expect(await wsUpgradeResult(relayUrl)).toBe('connected');

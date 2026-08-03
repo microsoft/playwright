@@ -47,6 +47,8 @@ export type WSServerDelegate = {
   onHeaders: (headers: string[]) => void;
   onUpgrade: (request: http.IncomingMessage, socket: stream.Duplex) => { error: string } | undefined;
   onConnection: (request: http.IncomingMessage, url: URL, ws: WebSocket, id: string) => WSConnection;
+  // Overrides the default `pathname === path` check on upgrade requests.
+  isValidPathname?: (pathname: string) => boolean;
 };
 
 export class WSServer {
@@ -101,12 +103,13 @@ export class WSServer {
 
     server.on('upgrade', (request, socket, head) => {
       const pathname = new URL('http://localhost' + request.url!).pathname;
-      if (pathname !== path) {
+      const isValidPathname = this._delegate.isValidPathname ?? (pathname => pathname === path);
+      if (!isValidPathname(pathname)) {
         socket.write(`HTTP/${request.httpVersion} 400 Bad Request\r\n\r\n`);
         socket.destroy();
         return;
       }
-      if (this._allowedHosts && !this._isAllowedOrigin(request.headers.origin)) {
+      if (!this._isAllowedHost(request) || !this._isAllowedOrigin(request.headers.origin)) {
         socket.write(`HTTP/${request.httpVersion} 403 Forbidden\r\n\r\n`);
         socket.destroy();
         return;
@@ -133,25 +136,34 @@ export class WSServer {
   }
 
   private _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
-    if (this._allowedHosts) {
-      const host = request.headers.host?.toLowerCase();
-      const hostname = host ? hostnameFromHostHeader(host) : undefined;
-      if (!hostname || !this._allowedHosts.has(hostname)) {
-        response.statusCode = 403;
-        response.end();
-        return;
-      }
+    if (!this._isAllowedHost(request)) {
+      response.statusCode = 403;
+      response.end();
+      return;
     }
     this._delegate.onRequest(request, response);
   }
 
+  private _isAllowedHost(request: http.IncomingMessage): boolean {
+    if (!this._allowedHosts)
+      return true;
+    const host = request.headers.host?.toLowerCase();
+    const hostname = host ? hostnameFromHostHeader(host) : undefined;
+    return !!hostname && this._allowedHosts.has(hostname);
+  }
+
   private _isAllowedOrigin(origin: string | undefined): boolean {
-    if (!origin)
+    if (!this._allowedHosts || !origin)
       return true;
     try {
-      const hostname = new URL(origin).hostname.toLowerCase();
+      const url = new URL(origin);
+      // Only web page origins are subject to the check; e.g. browser
+      // extensions are allowed.
+      if (url.protocol !== 'http:' && url.protocol !== 'https:')
+        return true;
+      const hostname = url.hostname.toLowerCase();
       const bracketed = hostname.includes(':') ? `[${hostname}]` : hostname;
-      return this._allowedHosts!.has(hostname) || this._allowedHosts!.has(bracketed);
+      return this._allowedHosts.has(hostname) || this._allowedHosts.has(bracketed);
     } catch {
       return false;
     }

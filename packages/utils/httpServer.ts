@@ -300,9 +300,6 @@ export class HttpServer {
   }
 }
 
-// Loopback hosts in the Host header form.
-export const kLoopbackHosts = new Set(['localhost', '127.0.0.1', '[::1]']);
-
 export function computeAllowedHosts(requested: string | undefined, bound: string): Set<string> | null {
   const loopback = new Set(['127.0.0.1', '::1', 'localhost']);
   const isLoopback = (h: string | undefined) => h !== undefined && loopback.has(h.toLowerCase());
@@ -310,11 +307,11 @@ export function computeAllowedHosts(requested: string | undefined, bound: string
     return null;
   if (!isLoopback(bound) && requested === undefined)
     return null;
-  return new Set(kLoopbackHosts);
+  return new Set(['localhost', '127.0.0.1', '[::1]']);
 }
 
 // A null allowlist disables the check (server deliberately bound to a public address).
-export function isAllowedHost(request: http.IncomingMessage, allowedHosts: Set<string> | null): boolean {
+function isAllowedHost(request: http.IncomingMessage, allowedHosts: Set<string> | null): boolean {
   if (!allowedHosts)
     return true;
   const host = request.headers.host?.toLowerCase();

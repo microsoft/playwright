@@ -15,7 +15,6 @@
  */
 
 import debug from 'debug';
-import { createHttpServer, startHttpServer } from '@utils/network';
 import { defaultUserDataDirForChannel } from '@utils/chromiumChannels';
 import { playwright } from '../../inprocess';
 import { isPlaywrightExtensionInstalled, playwrightExtensionInstallUrl } from '../utils/extension';
@@ -34,9 +33,8 @@ export async function createExtensionBrowser(channel: string, executablePath: st
       throw new Error(`Playwright Extension not found in "${userDataDir}". Install it from ${playwrightExtensionInstallUrl}`);
   }
 
-  const httpServer = createHttpServer();
-  await startHttpServer(httpServer, {});
-  const relay = new CDPRelayServer(httpServer, channel, executablePath, userDataDir);
+  const relay = new CDPRelayServer(channel, executablePath, userDataDir);
+  await relay.start();
   debugLogger(`CDP relay server started, extension endpoint: ${relay.extensionEndpoint()}.`);
 
   try {
