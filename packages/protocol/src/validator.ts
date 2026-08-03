@@ -1248,6 +1248,15 @@ scheme.FrameAriaSnapshotParams = tObject({
 scheme.FrameAriaSnapshotResult = tObject({
   snapshot: tString,
 });
+scheme.FrameAriaSnapshotJSONParams = tObject({
+  mode: tOptional(tEnum(['ai', 'default'])),
+  selector: tOptional(tString),
+  depth: tOptional(tInt),
+  boxes: tOptional(tBoolean),
+});
+scheme.FrameAriaSnapshotJSONResult = tObject({
+  snapshot: tAny,
+});
 scheme.FrameBlurParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),

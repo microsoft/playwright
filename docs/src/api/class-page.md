@@ -4427,6 +4427,43 @@ When `true`, appends each element's bounding box as `[box=x,y,width,height]` to 
 relative to the viewport, in CSS pixels, as returned by [`Element.getBoundingClientRect()`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
 Defaults to `false`.
 
+## async method: Page.ariaSnapshotJSON
+* since: v1.63
+* langs: js
+- returns: <[Serializable]>
+
+Captures the aria snapshot of the page as a free form JSON object.
+Returns the same tree as [`method: Page.ariaSnapshot`], serialized as a JSON value instead of YAML markup.
+See [`method: Locator.ariaSnapshotJSON`] for the details of the format.
+
+### option: Page.ariaSnapshotJSON.mode
+* since: v1.63
+- `mode` <[AriaSnapshotMode]<"ai"|"default">>
+
+When set to `"ai"`, returns a snapshot optimized for AI consumption: including element references like `[ref=e2]` and snapshots of `<iframe>`s. Defaults to `"default"`.
+
+### option: Page.ariaSnapshotJSON.timeout = %%-input-timeout-%%
+* since: v1.63
+
+### option: Page.ariaSnapshotJSON.timeout = %%-input-timeout-js-%%
+* since: v1.63
+
+### option: Page.ariaSnapshotJSON.signal = %%-input-signal-%%
+
+### option: Page.ariaSnapshotJSON.depth
+* since: v1.63
+- `depth` <[int]>
+
+When specified, limits the depth of the snapshot.
+
+### option: Page.ariaSnapshotJSON.boxes
+* since: v1.63
+- `boxes` <[boolean]>
+
+When `true`, includes each element's bounding box as a `box` property with `x`, `y`, `width` and `height`. Coordinates are
+relative to the viewport, in CSS pixels, as returned by [`Element.getBoundingClientRect()`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
+Defaults to `false`.
+
 ## async method: Page.tap
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.tap`] instead. Read more about [locators](../locators.md).

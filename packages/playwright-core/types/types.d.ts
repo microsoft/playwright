@@ -2139,6 +2139,54 @@ export interface Page {
   }): Promise<string>;
 
   /**
+   * Captures the aria snapshot of the page as a free form JSON object. Returns the same tree as
+   * [page.ariaSnapshot([options])](https://playwright.dev/docs/api/class-page#page-aria-snapshot), serialized as a JSON
+   * value instead of YAML markup. See
+   * [locator.ariaSnapshotJSON([options])](https://playwright.dev/docs/api/class-locator#locator-aria-snapshot-json) for
+   * the details of the format.
+   * @param options
+   */
+  ariaSnapshotJSON(options?: {
+    /**
+     * When `true`, includes each element's bounding box as a `box` property with `x`, `y`, `width` and `height`.
+     * Coordinates are relative to the viewport, in CSS pixels, as returned by
+     * [`Element.getBoundingClientRect()`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
+     * Defaults to `false`.
+     */
+    boxes?: boolean;
+
+    /**
+     * When specified, limits the depth of the snapshot.
+     */
+    depth?: number;
+
+    /**
+     * When set to `"ai"`, returns a snapshot optimized for AI consumption: including element references like `[ref=e2]`
+     * and snapshots of `<iframe>`s. Defaults to `"default"`.
+     */
+    mode?: "ai"|"default";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
+     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+     * option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<Serializable>;
+
+  /**
    * Brings page to front (activates tab).
    */
   bringToFront(): Promise<void>;
@@ -14349,6 +14397,74 @@ export interface Locator {
      */
     timeout?: number;
   }): Promise<string>;
+
+  /**
+   * Captures the aria snapshot of the given element as a free form JSON object.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.getByRole('list').ariaSnapshotJSON();
+   * ```
+   *
+   * **Details**
+   *
+   * This method returns the same tree as
+   * [locator.ariaSnapshot([options])](https://playwright.dev/docs/api/class-locator#locator-aria-snapshot), serialized
+   * as a JSON value instead of YAML markup. The result is a list of nodes, each node being either a plain string with
+   * static text, or an object with the following properties:
+   * - `role` <[string]> Aria role of the element.
+   * - `name` <[string]> Accessible name of the element, if any.
+   * - `text` <[string]> Text content of the element, when it is the only child.
+   * - `children` <[Array]> Child nodes and text fragments.
+   * - Boolean and value properties for element state flags: `checked`, `disabled`, `expanded`, `active`, `invalid`,
+   *   `level`, `pressed` and `selected`.
+   * - Additional element properties, for example `url` for links and `placeholder` for text boxes.
+   * - `ref` <[string]> Element reference for AI-optimized snapshots.
+   * - `cursor` <[string]> Set to `"pointer"` for clickable elements in AI-optimized snapshots.
+   * - `box` <[Object]> Bounding box of the element when
+   *   [`boxes`](https://playwright.dev/docs/api/class-locator#locator-aria-snapshot-json-option-boxes) is set.
+   * @param options
+   */
+  ariaSnapshotJSON(options?: {
+    /**
+     * When `true`, includes each element's bounding box as a `box` property with `x`, `y`, `width` and `height`.
+     * Coordinates are relative to the viewport, in CSS pixels, as returned by
+     * [`Element.getBoundingClientRect()`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
+     * Defaults to `false`.
+     */
+    boxes?: boolean;
+
+    /**
+     * When specified, limits the depth of the snapshot.
+     */
+    depth?: number;
+
+    /**
+     * When set to `"ai"`, returns a snapshot optimized for AI consumption. Defaults to `"default"`. See details in
+     * [locator.ariaSnapshot([options])](https://playwright.dev/docs/api/class-locator#locator-aria-snapshot).
+     */
+    mode?: "ai"|"default";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
+     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+     * option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<Serializable>;
 
   /**
    * Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) on the element.

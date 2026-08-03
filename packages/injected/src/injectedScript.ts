@@ -20,7 +20,7 @@ import { splitTestIdAttributeNames } from '@isomorphic/locatorUtils';
 import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelectorParts } from '@isomorphic/selectorParser';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
 
-import { generateAriaTree, getAllElementsMatchingExpectAriaTemplate, matchesExpectAriaTemplate, renderAriaTree, findNewElement } from './ariaSnapshot';
+import { generateAriaTree, getAllElementsMatchingExpectAriaTemplate, matchesExpectAriaTemplate, renderAriaTree, renderAriaTreeAsJSON, findNewElement } from './ariaSnapshot';
 import { beginDOMCaches, enclosingShadowRootOrDocument, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost, setGlobalOptions } from './domUtils';
 import { Highlight } from './highlight';
 import { kLayoutSelectorNames, layoutSelectorScore } from './layoutSelectorUtils';
@@ -33,7 +33,7 @@ import { XPathEngine } from './xpathSelectorEngine';
 import { ConsoleAPI } from './consoleApi';
 import { UtilityScript } from './utilityScript';
 
-import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
+import type { AriaSnapshotJSON, AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 import type { CSSComplexSelectorList } from '@isomorphic/cssParser';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { AttributeSelectorPart, NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '@isomorphic/selectorParser';
@@ -326,6 +326,16 @@ export class InjectedScript {
     const rendered = renderAriaTree(ariaSnapshot, options);
     this._lastAriaSnapshotForQuery = ariaSnapshot;
     return { text: rendered.text, iframeRefs: ariaSnapshot.iframeRefs, iframeDepths: rendered.iframeDepths };
+  }
+
+  ariaSnapshotJSON(node: Node, options: AriaTreeOptions & { depth?: number }): { json: AriaSnapshotJSON, iframeRefs: string[], iframeDepths: Record<string, number> } {
+    if (node.nodeType !== Node.ELEMENT_NODE)
+      throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
+    options = { ...options, refPrefix: this._frameSeq && options.mode === 'ai' ? 'f' + this._frameSeq : '' };
+    const ariaSnapshot = generateAriaTree(node as Element, options);
+    const rendered = renderAriaTreeAsJSON(ariaSnapshot, options);
+    this._lastAriaSnapshotForQuery = ariaSnapshot;
+    return { json: rendered.json, iframeRefs: ariaSnapshot.iframeRefs, iframeDepths: rendered.iframeDepths };
   }
 
   ariaSnapshotForRecorder(): { ariaSnapshot: string, refs: Map<Element, string> } {

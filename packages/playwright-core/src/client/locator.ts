@@ -333,6 +333,11 @@ export class Locator implements api.Locator {
     return result.snapshot;
   }
 
+  async ariaSnapshotJSON(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<any> {
+    const result = await this._frame._channel.ariaSnapshotJSON({ mode: options.mode, selector: this._selector, depth: options.depth, boxes: options.boxes }, this._frame._timeout(options));
+    return result.snapshot;
+  }
+
   async scrollIntoViewIfNeeded(options: channels.ElementHandleScrollIntoViewIfNeededOptions & TimeoutOptions = {}) {
     return await this._withElement((h, timeout) => h.scrollIntoViewIfNeeded({ ...options, timeout }), { title: 'Scroll into view', timeout: options.timeout, signal: options.signal });
   }

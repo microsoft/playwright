@@ -83,6 +83,7 @@ export type TabHeader = {
 
 type TabSnapshot = {
   ariaSnapshot: string;
+  ariaSnapshotJSON?: unknown;
   modalStates: ModalState[];
   events: EventEntry[];
   consoleLink?: string;
@@ -411,20 +412,32 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._requests.length = 0;
   }
 
-  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, boxes: boolean | undefined, relativeTo: string | undefined, includeAria: boolean = true): Promise<TabSnapshot> {
+  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, boxes: boolean | undefined, relativeTo: string | undefined, ariaFormat: 'none' | 'text' | 'json' = 'text'): Promise<TabSnapshot> {
     await this._initializedPromise;
     let tabSnapshot: TabSnapshot | undefined;
     let modalStates: ModalState[] = [];
-    if (includeAria) {
+    if (ariaFormat !== 'none') {
       modalStates = await this._raceAgainstModalStates(async () => {
-        const ariaSnapshot = root
-          ? await root.ariaSnapshot({ mode: 'ai', depth, boxes })
-          : await this.page.ariaSnapshot({ mode: 'ai', depth, boxes });
-        tabSnapshot = {
-          ariaSnapshot,
-          modalStates: [],
-          events: [],
-        };
+        if (ariaFormat === 'json') {
+          const ariaSnapshotJSON = root
+            ? await root.ariaSnapshotJSON({ mode: 'ai', depth, boxes })
+            : await this.page.ariaSnapshotJSON({ mode: 'ai', depth, boxes });
+          tabSnapshot = {
+            ariaSnapshot: '',
+            ariaSnapshotJSON,
+            modalStates: [],
+            events: [],
+          };
+        } else {
+          const ariaSnapshot = root
+            ? await root.ariaSnapshot({ mode: 'ai', depth, boxes })
+            : await this.page.ariaSnapshot({ mode: 'ai', depth, boxes });
+          tabSnapshot = {
+            ariaSnapshot,
+            modalStates: [],
+            events: [],
+          };
+        }
       });
     } else if (this.modalStates().length) {
       // Matches the aria path's modal fallback below, without the race: there

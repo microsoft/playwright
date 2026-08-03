@@ -138,6 +138,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     return await this._frame.ariaSnapshot(progress, params);
   }
 
+  async ariaSnapshotJSON(params: channels.FrameAriaSnapshotJSONParams, progress: Progress): Promise<channels.FrameAriaSnapshotJSONResult> {
+    return await this._frame.ariaSnapshotJSON(progress, params);
+  }
+
   async click(params: channels.FrameClickParams, progress: Progress): Promise<void> {
     return await this._frame.click(progress, params.selector, params);
   }
