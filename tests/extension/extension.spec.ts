@@ -426,15 +426,12 @@ test(`relay rejects websocket upgrades with forged host or origin`, {
   await clickAllowAndSelect(connectPage, 'Welcome');
   await navigateResponse;
 
-  // Non-loopback Host (DNS rebinding) and web page Origin must be rejected
-  // during the upgrade.
   expect(await wsUpgradeResult(relayUrl, { host: 'evil.com' })).toBe(401);
   expect(await wsUpgradeResult(relayUrl, { host: 'evil.com:80' })).toBe(401);
   expect(await wsUpgradeResult(relayUrl, { origin: 'http://evil.com' })).toBe(401);
   expect(await wsUpgradeResult(relayUrl, { origin: 'https://evil.com' })).toBe(401);
 
-  // Control: default headers pass the upgrade validation; the connection is
-  // then closed only because the extension is already connected.
+  // Control: default headers pass the upgrade validation.
   expect(await wsUpgradeResult(relayUrl)).toBe('connected');
 });
 

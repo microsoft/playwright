@@ -173,11 +173,8 @@ export class CDPRelayServer {
     this._closeExtensionConnection(reason);
   }
 
-  // The relay server binds to localhost only, and its legitimate clients are the
-  // local Playwright client (no Origin header) and the extension
-  // (chrome-extension:// Origin). Reject upgrades with a non-loopback Host
-  // (DNS rebinding) or a web page Origin — WebSocket connections are not
-  // restricted by the same-origin policy, so any page could dial the relay directly.
+  // Reject upgrades with a non-loopback Host (DNS rebinding) or a web page
+  // Origin — legitimate clients are local and don't send an http(s) Origin.
   private _verifyClient(info: { origin?: string, req: http.IncomingMessage }): boolean {
     const host = info.req.headers.host;
     const hostname = host ? hostnameFromHostHeader(host.toLowerCase()) : undefined;
