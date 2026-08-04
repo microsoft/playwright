@@ -171,6 +171,37 @@ test(`snapshot of an existing page`, async ({ browserWithExtension, startClient,
   });
 });
 
+test(`extension connection uses noDefaults`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42117' },
+}, async ({ browserWithExtension, startClient, server }) => {
+  const browserContext = await browserWithExtension.launch();
+
+  const page = await browserContext.newPage();
+  await page.goto(server.HELLO_WORLD);
+  await page.emulateMedia({ media: 'print' });
+  expect(await page.evaluate(() => matchMedia('print').matches)).toBe(true);
+
+  const client = await startWithExtensionFlag(browserWithExtension, startClient);
+
+  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
+    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
+  });
+
+  const snapshotResponse = client.callTool({
+    name: 'browser_snapshot',
+    arguments: { },
+  });
+
+  const selectorPage = await confirmationPagePromise;
+  await clickAllowAndSelect(selectorPage, 'Title');
+
+  expect(await snapshotResponse).toHaveResponse({
+    inlineSnapshot: expect.stringContaining(`Hello, world!`),
+  });
+
+  expect(await page.evaluate(() => matchMedia('print').matches)).toBe(true);
+});
+
 testWithOldExtensionVersion(`works with old extension version`, async ({ startExtensionClient, server }) => {
   // Prelaunch the browser, so that it is properly closed after the test.
   const { browserContext, client } = await startExtensionClient();
