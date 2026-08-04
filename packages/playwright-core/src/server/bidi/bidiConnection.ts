@@ -248,6 +248,8 @@ export class BidiSession extends EventEmitter {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
       if (object.type === 'error') {
+        if (object.error === 'no such frame')
+          callback.error.type = 'closed';
         callback.error.setMessage(object.error + '\nMessage: ' + object.message);
         callback.reject(callback.error);
       } else if (object.type === 'success') {
