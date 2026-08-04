@@ -26,16 +26,15 @@
  */
 
 import { spawn } from 'child_process';
-import http from 'http';
 import os from 'os';
 
 import debug from 'debug';
-import ws, { WebSocketServer as wsServer } from 'ws';
+import ws from 'ws';
 import { ManualPromise } from '@isomorphic/manualPromise';
+import { WSServer } from '@utils/wsServer';
 import { registry } from '../../server/registry/index';
 
 import { findPlaywrightExtensionProfile, playwrightExtensionId } from '../utils/extension';
-import { addressToString } from '../utils/mcp/http';
 import { logUnhandledError } from './log';
 import { ExtensionProtocolV2 } from './cdpRelayV2';
 import * as protocol from './protocol';
@@ -43,7 +42,7 @@ import * as protocol from './protocol';
 import type websocket from 'ws';
 import type { ExtensionCommandV2, ExtensionEventsV2 } from './protocol';
 import type { CDPMessage } from './browserModel';
-import type { WebSocket, WebSocketServer } from 'ws';
+import type { WebSocket } from 'ws';
 
 
 const debugLogger = debug('pw:mcp:relay');
@@ -58,23 +57,20 @@ type CDPCommand = {
 type CDPResponse = CDPMessage;
 
 export class CDPRelayServer {
-  private _httpServer: http.Server;
-  private _wsHost: string;
+  private _wsServer: WSServer;
+  private _wsHost!: string;
   private _browserChannel: string;
   private _executablePath?: string;
   private _userDataDir?: string;
   private _cdpPath: string;
   private _extensionPath: string;
-  private _wss: WebSocketServer;
   private _cdpConnection: WebSocket | null = null;
   private _extensionConnection: ExtensionConnection | null = null;
   private _protocolVersion: number;
   private _handler: ExtensionProtocolV2;
   private _extensionConnectionPromise = new ManualPromise<void>();
 
-  constructor(server: http.Server, browserChannel: string, executablePath?: string, userDataDir?: string) {
-    this._httpServer = server;
-    this._wsHost = addressToString(server.address(), { protocol: 'ws' });
+  constructor(browserChannel: string, executablePath?: string, userDataDir?: string) {
     this._browserChannel = browserChannel;
     this._executablePath = executablePath;
     this._userDataDir = userDataDir;
@@ -92,8 +88,27 @@ export class CDPRelayServer {
     this._extensionPath = `/extension/${uuid}`;
 
     void this._extensionConnectionPromise.catch(logUnhandledError);
-    this._wss = new wsServer({ server });
-    this._wss.on('connection', this._onConnection.bind(this));
+    this._wsServer = new WSServer({
+      onRequest: (request, response) => {
+        response.statusCode = 404;
+        response.end();
+      },
+      onHeaders: () => {},
+      onUpgrade: () => undefined,
+      isAllowedPathname: pathname => pathname === this._cdpPath || pathname === this._extensionPath,
+      onConnection: (request, url, ws) => {
+        debugLogger(`New connection to ${url.pathname}`);
+        if (url.pathname === this._cdpPath)
+          this._handlePlaywrightConnection(ws);
+        else
+          this._handleExtensionConnection(ws);
+        return undefined;
+      },
+    });
+  }
+
+  async start(): Promise<void> {
+    this._wsHost = await this._wsServer.listen(0, undefined, '');
   }
 
   cdpEndpoint() {
@@ -161,26 +176,12 @@ export class CDPRelayServer {
 
   stop(): void {
     this._closeConnections('Server stopped');
-    this._wss.close();
-    this._httpServer.close();
+    void this._wsServer.close().catch(logUnhandledError);
   }
 
   private _closeConnections(reason: string) {
     this._closeCDPConnection(reason);
     this._closeExtensionConnection(reason);
-  }
-
-  private _onConnection(ws: WebSocket, request: http.IncomingMessage): void {
-    const url = new URL(`http://localhost${request.url}`);
-    debugLogger(`New connection to ${url.pathname}`);
-    if (url.pathname === this._cdpPath) {
-      this._handlePlaywrightConnection(ws);
-    } else if (url.pathname === this._extensionPath) {
-      this._handleExtensionConnection(ws);
-    } else {
-      debugLogger(`Invalid path: ${url.pathname}`);
-      ws.close(4004, 'Invalid path');
-    }
   }
 
   private _handlePlaywrightConnection(ws: WebSocket): void {

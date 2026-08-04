@@ -15,7 +15,7 @@
  */
 
 import { WebSocketServer as wsServer } from 'ws';
-import { computeAllowedHosts, hostnameFromHostHeader, urlHostFromAddress } from './httpServer';
+import { computeAllowedHosts, isAllowedHost, urlHostFromAddress } from './httpServer';
 import { createHttpServer } from './network';
 import { debugLogger } from './debugLogger';
 
@@ -46,7 +46,8 @@ export type WSServerDelegate = {
   onRequest: (request: http.IncomingMessage, response: http.ServerResponse) => void;
   onHeaders: (headers: string[]) => void;
   onUpgrade: (request: http.IncomingMessage, socket: stream.Duplex) => { error: string } | undefined;
-  onConnection: (request: http.IncomingMessage, url: URL, ws: WebSocket, id: string) => WSConnection;
+  onConnection: (request: http.IncomingMessage, url: URL, ws: WebSocket, id: string) => WSConnection | undefined;
+  isAllowedPathname: (pathname: string) => boolean;
 };
 
 export class WSServer {
@@ -60,7 +61,7 @@ export class WSServer {
     this._delegate = delegate;
   }
 
-  async listen(port: number = 0, hostname: string | undefined, path: string): Promise<string> {
+  async listen(port: number = 0, hostname: string | undefined, defaultPath: string): Promise<string> {
     debugLogger.log('server', `Server started at ${new Date()}`);
 
     // Default to loopback so the WebSocket RPC is not exposed to the network unless
@@ -79,14 +80,14 @@ export class WSServer {
           return;
         }
         if (typeof address === 'string') {
-          resolve(`${address}${path}`);
+          resolve(`${address}${defaultPath}`);
           return;
         }
         // Advertise the bound IP literal in the wsEndpoint so the client connects to
         // the same address family the server bound to. Otherwise the client and
         // server resolvers can disagree on what 'localhost' means (see #40605).
         this._allowedHosts = computeAllowedHosts(hostname, address.address);
-        resolve(`ws://${urlHostFromAddress(address)}:${address.port}${path}`);
+        resolve(`ws://${urlHostFromAddress(address)}:${address.port}${defaultPath}`);
       }).on('error', reject);
     });
 
@@ -101,12 +102,12 @@ export class WSServer {
 
     server.on('upgrade', (request, socket, head) => {
       const pathname = new URL('http://localhost' + request.url!).pathname;
-      if (pathname !== path) {
+      if (!this._delegate.isAllowedPathname(pathname)) {
         socket.write(`HTTP/${request.httpVersion} 400 Bad Request\r\n\r\n`);
         socket.destroy();
         return;
       }
-      if (this._allowedHosts && !this._isAllowedOrigin(request.headers.origin)) {
+      if (!isAllowedHost(request, this._allowedHosts) || !this._isAllowedOrigin(request.headers.origin)) {
         socket.write(`HTTP/${request.httpVersion} 403 Forbidden\r\n\r\n`);
         socket.destroy();
         return;
@@ -133,25 +134,26 @@ export class WSServer {
   }
 
   private _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
-    if (this._allowedHosts) {
-      const host = request.headers.host?.toLowerCase();
-      const hostname = host ? hostnameFromHostHeader(host) : undefined;
-      if (!hostname || !this._allowedHosts.has(hostname)) {
-        response.statusCode = 403;
-        response.end();
-        return;
-      }
+    if (!isAllowedHost(request, this._allowedHosts)) {
+      response.statusCode = 403;
+      response.end();
+      return;
     }
     this._delegate.onRequest(request, response);
   }
 
   private _isAllowedOrigin(origin: string | undefined): boolean {
-    if (!origin)
+    if (!this._allowedHosts || !origin)
       return true;
     try {
-      const hostname = new URL(origin).hostname.toLowerCase();
+      const url = new URL(origin);
+      // Only web page origins are subject to the check; e.g. browser
+      // extensions are allowed.
+      if (url.protocol !== 'http:' && url.protocol !== 'https:')
+        return true;
+      const hostname = url.hostname.toLowerCase();
       const bracketed = hostname.includes(':') ? `[${hostname}]` : hostname;
-      return this._allowedHosts!.has(hostname) || this._allowedHosts!.has(bracketed);
+      return this._allowedHosts.has(hostname) || this._allowedHosts.has(bracketed);
     } catch {
       return false;
     }

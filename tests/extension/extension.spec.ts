@@ -17,6 +17,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 
+import WebSocket from 'ws';
+
 import { test, testWithOldExtensionVersion, expect, extensionId, clickAllowAndSelect, connectAndNavigate, readExtensionToken, startWithExtensionFlag } from './extension-fixtures';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 
@@ -405,3 +407,45 @@ test(`reconnects after the extension connection drops`, {
     snapshot: expect.stringContaining(`Hello, world!`),
   });
 });
+
+test(`relay rejects websocket upgrades with forged host or origin`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1694' },
+}, async ({ startExtensionClient, server }) => {
+  const { browserContext, client } = await startExtensionClient();
+
+  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
+    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
+  });
+  const navigateResponse = client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+  const connectPage = await confirmationPagePromise;
+  const relayUrl = new URL(connectPage.url()).searchParams.get('mcpRelayUrl')!;
+  expect(relayUrl).toBeTruthy();
+  await clickAllowAndSelect(connectPage, 'Welcome');
+  await navigateResponse;
+
+  expect(await wsUpgradeResult(relayUrl, { host: 'evil.com' })).toBe(403);
+  expect(await wsUpgradeResult(relayUrl, { host: 'evil.com:80' })).toBe(403);
+  expect(await wsUpgradeResult(relayUrl, { origin: 'http://evil.com' })).toBe(403);
+  expect(await wsUpgradeResult(relayUrl, { origin: 'https://evil.com' })).toBe(403);
+
+  // Control: default headers pass the upgrade validation.
+  expect(await wsUpgradeResult(relayUrl)).toBe('connected');
+});
+
+function wsUpgradeResult(url: string, headers?: Record<string, string>): Promise<number | 'connected'> {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(url, { headers });
+    ws.on('open', () => {
+      ws.close();
+      resolve('connected');
+    });
+    ws.on('unexpected-response', (request, response) => {
+      request.destroy();
+      resolve(response.statusCode!);
+    });
+    ws.on('error', reject);
+  });
+}
