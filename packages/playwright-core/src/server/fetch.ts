@@ -100,6 +100,8 @@ type SendRequestResult = {
   response: Omit<channels.APIResponse, 'fetchUid'>,
 };
 
+const socketsWithSwallowedErrors = new WeakSet<net.Socket>();
+
 export abstract class APIRequestContext extends SdkObject {
   static Events = {
     Dispose: 'dispose',
@@ -588,6 +590,15 @@ export abstract class APIRequestContext extends SdkObject {
       request.on('socket', socket => {
         serverIPAddress = socket.remoteAddress;
         serverPort = socket.remotePort;
+
+        // Node.js detaches the request from its socket once the full response has been received, so a
+        // late socket error (e.g. the server reset the connection without reading the request body) is
+        // left without a listener and crashes the process with an unhandled 'error'. The response is
+        // already in hand by then; earlier failures are still surfaced by the request 'error' handler.
+        if (!socketsWithSwallowedErrors.has(socket)) {
+          socketsWithSwallowedErrors.add(socket);
+          socket.on('error', () => {});
+        }
 
         if (request.reusedSocket) {
           reusedSocketAt = monotonicTime();

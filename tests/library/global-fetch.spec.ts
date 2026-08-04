@@ -707,6 +707,29 @@ it('should retry ECONNRESET', {
   await request.dispose();
 });
 
+it('should not crash when the server resets the connection before reading the request body', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42074' }
+}, async ({ playwright, server }) => {
+  server.setRoute('/refuse', (req, res) => {
+    res.writeHead(413, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ error: 'too large' }));
+    req.socket.destroy();
+  });
+  const request = await playwright.request.newContext();
+  // A large body keeps the upload in flight when the server resets, so the request socket sees a
+  // late write error after the response arrived; issuing several in parallel makes it reliable.
+  const body = 'x'.repeat(8 * 1024 * 1024);
+  const results = await Promise.all(Array.from({ length: 20 }, () =>
+    request.post(server.PREFIX + '/refuse', { data: body }).catch(e => e)));
+  for (const result of results) {
+    if (result instanceof Error)
+      expect(result.message).toContain('apiRequestContext.post:');
+    else
+      expect(result.status()).toBe(413);
+  }
+  await request.dispose();
+});
+
 it('should throw when failOnStatusCode is set to true inside APIRequest context options', async ({ playwright, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34204' });
   const request = await playwright.request.newContext({ failOnStatusCode: true });
