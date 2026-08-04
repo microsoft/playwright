@@ -714,12 +714,10 @@ it('should not crash when server resets while request body is still writing', {
   server.setRoute('/upload', (req, res) => {
     res.writeHead(413, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ error: 'too large' }));
-    // Body never read; cannot resynchronise — same as Cloudflare workerd.
     req.socket.destroy();
   });
-  // CROSS_PROCESS_PREFIX uses 127.0.0.1 (IP Happy Eyeballs path) where the crash repros.
-  // TCP timing may reject the write or return 413 — either must be catchable (no process exit).
-  // If post() resolves, the body must still be readable (not the disposed-response failure mode).
+  // Either rejected or 413 - both catchable, never a process exit.
+  // CROSS_PROCESS_PREFIX uses 127.0.0.1 (Happy Eyeballs IP path).
   const response = await request.post(server.CROSS_PROCESS_PREFIX + '/upload', {
     data: 'x'.repeat(5 * 1024 * 1024),
     headers: { 'content-type': 'text/plain' },
@@ -741,8 +739,7 @@ it('should return 413 body when server refuses upload without reading it', {
   server.setRoute('/upload', (req, res) => {
     res.writeHead(413, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ error: 'too large' }));
-    // Drain unread body so the refusal is delivered without a flaky mid-write reset.
-    req.resume();
+    req.resume(); // Drain unread body so 413 arrives without a mid-write reset.
   });
   const response = await request.post(server.CROSS_PROCESS_PREFIX + '/upload', {
     data: 'x'.repeat(5 * 1024 * 1024),

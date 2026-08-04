@@ -338,7 +338,7 @@ export abstract class APIRequestContext extends SdkObject {
 
     let destroyRequest: (() => void) | undefined;
     let requestSocket: net.Socket | undefined;
-    let handleConnectionError: ((error: Error) => void) | undefined;
+    let onConnectionError!: (error: Error) => void;
     progress.setAllowConcurrentOrNestedRaces(true);
     const resultPromise = new Promise<SendRequestResult>((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
@@ -363,13 +363,8 @@ export abstract class APIRequestContext extends SdkObject {
 
       const listeners: RegisteredListener[] = [];
 
-      const onConnectionError = (error: Error) => {
-        // Write reset (ECONNRESET/EPIPE) can race with response headers when a server
-        // refuses the body without reading it. Buffer network errors and only reject on
-        // request close if no response arrived — so a late 413 can still win (Node fetch).
-        // Always attach a socket listener so keep-alive / IP Happy Eyeballs never leave an
-        // unhandled Socket 'error' that kills the process.
-        // See https://github.com/microsoft/playwright/issues/42074.
+      // Buffer write resets until request close so a racing response (e.g. 413) can win.
+      onConnectionError = (error: Error) => {
         if (isNetworkConnectionError(error)) {
           if (responseReceived)
             return;
@@ -378,7 +373,6 @@ export abstract class APIRequestContext extends SdkObject {
         }
         reject(error);
       };
-      handleConnectionError = onConnectionError;
 
       const request = requestConstructor(url, requestOptions as any, async response => {
         responseReceived = true;
@@ -592,7 +586,7 @@ export abstract class APIRequestContext extends SdkObject {
       );
       request.on('close', () => {
         eventsHelper.removeEventListeners(listeners);
-        // Reject buffered write-reset errors only after close, and only if headers never arrived.
+        // Reject buffered write reset only if no response headers arrived.
         if (!responseReceived && pendingConnectionError)
           reject(pendingConnectionError);
       });
@@ -613,8 +607,6 @@ export abstract class APIRequestContext extends SdkObject {
       };
 
       request.on('socket', socket => {
-        // Not tied to request 'close': Node can emit write EPIPE after 'close' on keep-alive.
-        // Removed in settleCleanup after the request promise settles.
         requestSocket = socket;
         socket.on('error', onConnectionError);
 
@@ -656,13 +648,12 @@ export abstract class APIRequestContext extends SdkObject {
     });
 
     const settleCleanup = () => {
-      // Defer so a late write reset in the same turn is still handled by handleConnectionError.
+      // Defer so a same-turn late write reset is still handled by onConnectionError.
       setImmediate(() => {
-        if (!requestSocket || !handleConnectionError)
+        if (!requestSocket)
           return;
-        requestSocket.removeListener('error', handleConnectionError);
-        // Shared one-shot sink for the keep-alive gap after our handler is removed.
-        // Reuse a named function so listeners do not stack across successful requests.
+        requestSocket.removeListener('error', onConnectionError);
+        // Keep-alive gap: absorb later reset without stacking per-request listeners.
         if (!requestSocket.destroyed) {
           requestSocket.removeListener('error', absorbSocketError);
           requestSocket.once('error', absorbSocketError);
