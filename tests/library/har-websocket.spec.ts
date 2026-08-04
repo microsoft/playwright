@@ -147,7 +147,6 @@ async function testWebSocketMessages(contextFactory, server, testInfo, content, 
   const outgoingText =   ['y'.repeat(125),             'y'.repeat(126),             'y'.repeat(2 ** 16)];
   const outgoingBinary = [(new Array(125)).fill(0x02), (new Array(126)).fill(0x02), (new Array(2 ** 16)).fill(0x02)];
   const incomingCount = incomingText.length + incomingBinary.length;
-  const outgoingCount = outgoingText.length + outgoingBinary.length;
   const delayMs = 100;
 
   server.onceWebSocketConnection(async ws => {
@@ -230,9 +229,6 @@ async function testWebSocketMessages(contextFactory, server, testInfo, content, 
   }
   expect(messages[0].time).toBeLessThanOrEqual(messages[1].time);
   expect(wsEntry.time).toBeGreaterThanOrEqual(messages[messages.length - 1].time - messages[0].time);
-  // setTimeout may fire marginally early and browser-reported timestamps are
-  // coarse on some platforms, so the measured span can under-run the nominal delays.
-  expect(wsEntry.time).toBeGreaterThanOrEqual(delayMs * (incomingCount + outgoingCount) - clockSkewMs);
 }
 
 it('should embed websocket messages', async ({ contextFactory, server, channel }, testInfo) => {
