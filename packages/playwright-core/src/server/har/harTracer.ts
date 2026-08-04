@@ -481,9 +481,9 @@ export class HarTracer {
         oldestWallTimeMs = wallTimeMs;
       if (wallTimeMs > newestWallTimeMs)
         newestWallTimeMs = wallTimeMs;
-      if (oldestWallTimeMs === newestWallTimeMs)
-        return;
 
+      // On coarse clocks all frames may share a single timestamp, in which case
+      // the duration is reported as zero rather than left unknown.
       harEntry.time = newestWallTimeMs - oldestWallTimeMs;
     };
 

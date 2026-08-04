@@ -61,6 +61,11 @@ function responseHeadersSize(headers: { name: string, value: string }[]): number
   return result;
 }
 
+// Browser-reported message times are derived from a wall-clock baseline plus
+// monotonic timestamps in the browser process, so they can drift by a few
+// milliseconds relative to Date.now() in the test process.
+const clockSkewMs = 100;
+
 function messageSize(message: string | number[]): number {
   // The payload is short enough that they only need the minimum frame header size.
   if (message.length <= 125)
@@ -119,8 +124,8 @@ it('should include websocket handshake headers and status', async ({ contextFact
   expect(wsEntry.response.headersSize).toBe(responseHeadersSize(wsEntry.response.headers));
 
   const wallTimeMs = new Date(wsEntry.startedDateTime).getTime();
-  expect(wallTimeMs).toBeGreaterThanOrEqual(beforeMs);
-  expect(wallTimeMs).toBeLessThanOrEqual(afterMs);
+  expect(wallTimeMs).toBeGreaterThanOrEqual(beforeMs - clockSkewMs);
+  expect(wallTimeMs).toBeLessThanOrEqual(afterMs + clockSkewMs);
 
   const requestHeaderNames = wsEntry.request.headers.map(h => h.name.toLowerCase());
   expect(requestHeaderNames).toContain('upgrade');
@@ -219,13 +224,15 @@ async function testWebSocketMessages(contextFactory, server, testInfo, content, 
   // message times cannot be compared against the host wall clock.
   if (channel !== 'webkit-wsl') {
     for (const m of messages) {
-      expect(m.time).toBeGreaterThanOrEqual(beforeMs - 1);
-      expect(m.time).toBeLessThanOrEqual(afterMs + 1);
+      expect(m.time).toBeGreaterThanOrEqual(beforeMs - clockSkewMs);
+      expect(m.time).toBeLessThanOrEqual(afterMs + clockSkewMs);
     }
   }
   expect(messages[0].time).toBeLessThanOrEqual(messages[1].time);
   expect(wsEntry.time).toBeGreaterThanOrEqual(messages[messages.length - 1].time - messages[0].time);
-  expect(wsEntry.time).toBeGreaterThanOrEqual(delayMs * (incomingCount + outgoingCount));
+  // setTimeout may fire marginally early and browser-reported timestamps are
+  // coarse on some platforms, so the measured span can under-run the nominal delays.
+  expect(wsEntry.time).toBeGreaterThanOrEqual(delayMs * (incomingCount + outgoingCount) - clockSkewMs);
 }
 
 it('should embed websocket messages', async ({ contextFactory, server, channel }, testInfo) => {
@@ -297,8 +304,8 @@ it('should attach websocket messages for a still open websocket after stopping',
   // message times cannot be compared against the host wall clock.
   if (channel !== 'webkit-wsl') {
     for (const m of messages) {
-      expect(m.time).toBeGreaterThanOrEqual(beforeMs - 1);
-      expect(m.time).toBeLessThanOrEqual(afterMs + 1);
+      expect(m.time).toBeGreaterThanOrEqual(beforeMs - clockSkewMs);
+      expect(m.time).toBeLessThanOrEqual(afterMs + clockSkewMs);
     }
   }
   expect(messages[0].time).toBeLessThanOrEqual(messages[1].time);
