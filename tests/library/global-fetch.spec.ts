@@ -730,9 +730,9 @@ it('should not crash when server refuses body before reading it', {
     headers: { 'content-type': 'text/plain' },
     maxRetries: 0,
   }).catch(e => e);
-  if (result instanceof Error)
+  if (result instanceof Error) {
     expect(result.message).toMatch(/apiRequestContext\.post|ECONNRESET|EPIPE|ECONNABORTED|socket/i);
-  else {
+  } else {
     expect(result.status()).toBe(413);
     expect(await result.text()).toBe(JSON.stringify({ error: 'too large' }));
   }
