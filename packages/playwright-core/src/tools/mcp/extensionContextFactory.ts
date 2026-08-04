@@ -30,7 +30,7 @@ export async function createExtensionBrowser(channel: string, executablePath: st
   if (!executablePath) {
     userDataDir = process.env.PWTEST_EXTENSION_USER_DATA_DIR ?? defaultUserDataDirForChannel(channel);
     if (userDataDir && !await isPlaywrightExtensionInstalled(userDataDir))
-      throw new Error(`Playwright Extension not found in "${userDataDir}". Install it from ${playwrightExtensionInstallUrl}`);
+      throw new Error(`Playwright Extension not found in "${userDataDir}". Install it from ${playwrightExtensionInstallUrl}, or set the PLAYWRIGHT_MCP_EXECUTABLE_PATH environment variable to use a browser at a custom location.`);
   }
 
   const relay = new CDPRelayServer(channel, executablePath, userDataDir);
