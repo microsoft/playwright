@@ -176,6 +176,14 @@ it('should throw if page argument is passed', async ({ browserType, server, crea
   expect(error.message).toContain('can not specify page');
 });
 
+it('should throw if --no-startup-window is passed as an argument', async ({ browserType, createUserDataDir, browserName }) => {
+  it.skip(browserName !== 'chromium');
+
+  const options = { args: ['--no-startup-window'] };
+  const error = await browserType.launchPersistentContext(await createUserDataDir(), options).catch(e => e);
+  expect(error.message).toContain(`Cannot use '--no-startup-window' argument when launching a persistent context`);
+});
+
 it('should have passed URL when launching with ignoreDefaultArgs: true', async ({ browserType, server, createUserDataDir, toImpl, browserName }) => {
   const userDataDir = await createUserDataDir();
   const args = (await toImpl(browserType).defaultArgs((browserType as any)._playwright._defaultLaunchOptions, 'persistent', userDataDir, 0)).filter(a => a !== 'about:blank');

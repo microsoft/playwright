@@ -355,10 +355,13 @@ export class Chromium extends BrowserType {
     const chromeArguments = this._innerDefaultArgs(options);
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
     chromeArguments.push('--remote-debugging-pipe');
-    if (isPersistent)
+    if (isPersistent) {
+      if (options.args?.some(arg => arg === '--no-startup-window'))
+        throw new Error(`Cannot use '--no-startup-window' argument when launching a persistent context`);
       chromeArguments.push('about:blank');
-    else
+    } else {
       chromeArguments.push('--no-startup-window');
+    }
     return chromeArguments;
   }
 
