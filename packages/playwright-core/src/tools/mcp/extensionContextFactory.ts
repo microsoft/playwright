@@ -39,7 +39,7 @@ export async function createExtensionBrowser(channel: string, executablePath: st
 
   try {
     await relay.establishExtensionConnection(clientName);
-    const browser = await playwright.chromium.connectOverCDP(relay.cdpEndpoint(), { isLocal: true, timeout: 0 });
+    const browser = await playwright.chromium.connectOverCDP(relay.cdpEndpoint(), { isLocal: true, timeout: 0, noDefaults: true });
     browser.on('disconnected', () => relay.stop());
     return browser;
   } catch (error) {
