@@ -46,7 +46,7 @@ export type WSServerDelegate = {
   onRequest: (request: http.IncomingMessage, response: http.ServerResponse) => void;
   onHeaders: (headers: string[]) => void;
   onUpgrade: (request: http.IncomingMessage, socket: stream.Duplex) => { error: string } | undefined;
-  onConnection: (request: http.IncomingMessage, url: URL, ws: WebSocket, id: string) => WSConnection;
+  onConnection: (request: http.IncomingMessage, url: URL, ws: WebSocket, id: string) => WSConnection | undefined;
   isAllowedPathname: (pathname: string) => boolean;
 };
 

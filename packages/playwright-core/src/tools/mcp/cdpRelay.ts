@@ -102,7 +102,7 @@ export class CDPRelayServer {
           this._handlePlaywrightConnection(ws);
         else
           this._handleExtensionConnection(ws);
-        return { close: async () => {} };
+        return undefined;
       },
     });
   }

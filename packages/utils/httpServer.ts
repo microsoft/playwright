@@ -90,7 +90,7 @@ export class HttpServer {
       if (pathname !== wsPath)
         return;
       if (!isAllowedHost(request, this._allowedHosts)) {
-        socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+        socket.write(`HTTP/${request.httpVersion} 403 Forbidden\r\n\r\n`);
         socket.destroy();
         return;
       }
