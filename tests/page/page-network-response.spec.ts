@@ -354,6 +354,28 @@ it('should return body for prefetch script', async ({ page, server, browserName 
   expect(body.toString()).toBe('// Scripts will be pre-fetched');
 });
 
+it('should not fetch the resource again when reading the body', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42002' });
+  let requestCount = 0;
+  server.setRoute('/pixel.gif', (req, res) => {
+    ++requestCount;
+    res.setHeader('content-type', 'image/gif');
+    res.end(Buffer.from('R0lGODlhAQABAAAAACw=', 'base64')); // truncated 1x1 gif
+  });
+  server.setRoute('/page.html', (req, res) => {
+    res.setHeader('content-type', 'text/html');
+    res.end('<html><body><img src="/pixel.gif"></body></html>');
+  });
+  const [response] = await Promise.all([
+    page.waitForResponse('**/pixel.gif'),
+    page.goto(server.PREFIX + '/page.html'),
+  ]);
+  // Chromium may evict the body of the response, in which case reading it
+  // must not fall back to re-fetching the resource over the network.
+  await response.body().catch(() => {});
+  expect(requestCount).toBe(1);
+});
+
 it('should bypass disk cache when page interception is enabled', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30000' });
   await page.goto(server.PREFIX + '/frames/one-frame.html');

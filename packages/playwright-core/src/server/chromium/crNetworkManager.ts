@@ -599,6 +599,12 @@ class InterceptableRequest {
       if (interceptable._originalRequestRoute?._fulfilled)
         return Buffer.from('');
 
+      // Only prefetch requests are safe to load again - they are served from the http
+      // cache. For anything else, loading the resource again may reach the server and
+      // produce side effects, so prefer an empty body instead.
+      if (!request.headerValue('sec-purpose')?.startsWith('prefetch'))
+        return Buffer.from('');
+
       // For <link prefetch we are going to receive empty body with non-empty content-length expectation. Reach out for the actual content.
       const resource = await session.send('Network.loadNetworkResource', { url: request.url(), frameId: request.serviceWorker() ? undefined : request.frame()!._id, options: { disableCache: false, includeCredentials: true } });
       const chunks: Buffer[] = [];
