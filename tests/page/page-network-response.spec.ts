@@ -354,6 +354,25 @@ it('should return body for prefetch script', async ({ page, server, browserName 
   expect(body.toString()).toBe('// Scripts will be pre-fetched');
 });
 
+it('should return body for image with evicted body', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42002' });
+  const imageBase64 = 'R0lGODlhAQABAAAAACw='; // truncated 1x1 gif, Chromium evicts its body
+  server.setRoute('/pixel.gif', (req, res) => {
+    res.setHeader('content-type', 'image/gif');
+    res.end(Buffer.from(imageBase64, 'base64'));
+  });
+  server.setRoute('/page.html', (req, res) => {
+    res.setHeader('content-type', 'text/html');
+    res.end('<html><body><img src="/pixel.gif"></body></html>');
+  });
+  const [response] = await Promise.all([
+    page.waitForResponse('**/pixel.gif'),
+    page.goto(server.PREFIX + '/page.html'),
+  ]);
+  const body = await response.body();
+  expect(body.toString('base64')).toBe(imageBase64);
+});
+
 it('should bypass disk cache when page interception is enabled', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30000' });
   await page.goto(server.PREFIX + '/frames/one-frame.html');

@@ -557,6 +557,12 @@ export class CRNetworkManager {
   }
 }
 
+// Sec-Fetch-Dest values of static subresources that are safe to fetch again.
+const kRefetchSafeDestinations = new Set([
+  'audio', 'audioworklet', 'font', 'image', 'manifest', 'paintworklet', 'script',
+  'serviceworker', 'sharedworker', 'style', 'track', 'video', 'worker', 'xslt',
+]);
+
 const kInterceptableRequest = Symbol('InterceptableRequest');
 
 class InterceptableRequest {
@@ -599,7 +605,17 @@ class InterceptableRequest {
       if (interceptable._originalRequestRoute?._fulfilled)
         return Buffer.from('');
 
-      // For <link prefetch we are going to receive empty body with non-empty content-length expectation. Reach out for the actual content.
+      // Re-fetching the resource may produce side effects on the server, only
+      // do it for GETs of static subresources and prefetch requests.
+      if (request.method() !== 'GET')
+        return Buffer.from('');
+      const rawHeaders = await request.internalRawRequestHeaders();
+      const rawHeaderValue = (name: string) => rawHeaders.find(h => h.name.toLowerCase() === name)?.value;
+      const isPrefetch = !!rawHeaderValue('sec-purpose')?.startsWith('prefetch');
+      const secFetchDest = rawHeaderValue('sec-fetch-dest');
+      if (!isPrefetch && (!secFetchDest || !kRefetchSafeDestinations.has(secFetchDest)))
+        return Buffer.from('');
+
       const resource = await session.send('Network.loadNetworkResource', { url: request.url(), frameId: request.serviceWorker() ? undefined : request.frame()!._id, options: { disableCache: false, includeCredentials: true } });
       const chunks: Buffer[] = [];
       while (resource.resource.stream) {
