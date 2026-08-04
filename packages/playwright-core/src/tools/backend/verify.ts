@@ -18,6 +18,7 @@ import * as z from 'zod';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
 
 import { defineTabTool } from './tool';
+import { locatorSelector } from './tab';
 import type * as playwright from '../../..';
 
 const verifyElement = defineTabTool({
@@ -38,7 +39,7 @@ const verifyElement = defineTabTool({
       const locator = frame.getByRole(params.role as Parameters<playwright.Frame['getByRole']>[0], { name: params.accessibleName });
       if (await locator.count() > 0) {
         const resolved = await locator.normalize();
-        response.addCode(`await expect(page.${resolved}).toBeVisible();`);
+        response.addAction({ name: 'assertVisible', selector: locatorSelector(resolved) });
         response.addTextResult('Done');
         return;
       }
@@ -64,7 +65,7 @@ const verifyText = defineTabTool({
       const locator = frame.getByText(params.text).filter({ visible: true });
       if (await locator.count() > 0) {
         const resolved = await locator.normalize();
-        response.addCode(`await expect(page.${resolved}).toBeVisible();`);
+        response.addAction({ name: 'assertVisible', selector: locatorSelector(resolved) });
         response.addTextResult('Done');
         return;
       }
@@ -98,11 +99,9 @@ const verifyList = defineTabTool({
       }
       itemTexts.push((await itemLocator.textContent(tab.expectTimeoutOptions))!);
     }
-    const ariaSnapshot = `\`
-- list:
-${itemTexts.map(t => `  - listitem: ${escapeWithQuotes(t, '"')}`).join('\n')}
-\``;
-    response.addCode(`await expect(page.locator('body')).toMatchAriaSnapshot(${ariaSnapshot});`);
+    const ariaSnapshot = `- list:
+${itemTexts.map(t => `  - listitem: ${escapeWithQuotes(t, '"')}`).join('\n')}`;
+    response.addAction({ name: 'assertSnapshot', selector: 'body', ariaSnapshot });
     response.addTextResult('Done');
   },
 });
@@ -123,23 +122,21 @@ const verifyValue = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const { locator, resolved } = await tab.targetLocator(params);
-    const locatorSource = `page.${resolved}`;
+    const { locator, selector } = await tab.targetLocator(params);
     if (params.type === 'textbox' || params.type === 'slider' || params.type === 'combobox') {
       const value = await locator.inputValue(tab.expectTimeoutOptions);
       if (value !== params.value) {
         response.addError(`Expected value "${params.value}", but got "${value}"`);
         return;
       }
-      response.addCode(`await expect(${locatorSource}).toHaveValue(${escapeWithQuotes(params.value)});`);
+      response.addAction({ name: 'assertValue', selector, value: params.value });
     } else if (params.type === 'checkbox' || params.type === 'radio') {
       const value = await locator.isChecked(tab.expectTimeoutOptions);
       if (value !== (params.value === 'true')) {
         response.addError(`Expected value "${params.value}", but got "${value}"`);
         return;
       }
-      const matcher = value ? 'toBeChecked' : 'not.toBeChecked';
-      response.addCode(`await expect(${locatorSource}).${matcher}();`);
+      response.addAction({ name: 'assertChecked', selector, checked: value });
     }
     response.addTextResult('Done');
   },

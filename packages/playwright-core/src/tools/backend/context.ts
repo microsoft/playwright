@@ -25,6 +25,7 @@ import { eventsHelper } from '@utils/eventsHelper';
 import { isPathInside, isSystemDirectory, isWritable } from '@utils/fileUtils';
 import { playwright } from '../../inprocess';
 
+import { secretCode } from './codegen';
 import { Tab } from './tab';
 
 import type * as playwrightTypes from '../../..';
@@ -37,7 +38,7 @@ const testDebug = debug('pw:mcp:test');
 export type ContextConfig = {
   allowUnrestrictedFileAccess?: boolean;
   capabilities?: ToolCapability[];
-  codegen?: 'typescript' | 'none';
+  codegen?: 'typescript' | 'python' | 'java' | 'csharp' | 'none';
   console?: { level?: 'error' | 'warning' | 'info' | 'debug' };
   imageResponses?: 'allow' | 'omit';
   network?: {
@@ -348,12 +349,14 @@ export class Context {
       throw new Error(`Access to "file:" protocol is blocked. Attempted URL: "${url}"`);
   }
 
-  lookupSecret(secretName: string): { value: string, code: string } {
+  lookupSecret(secretName: string): { value: string, code: string, isSecret: boolean } {
     if (!this.config.secrets?.[secretName])
-      return { value: secretName, code: escapeWithQuotes(secretName, '\'') };
+      return { value: secretName, code: escapeWithQuotes(secretName, '\''), isSecret: false };
+    const codegen = this.config.codegen ?? 'typescript';
     return {
       value: this.config.secrets[secretName]!,
-      code: `process.env['${secretName}']`,
+      code: secretCode(codegen === 'none' ? 'typescript' : codegen, secretName),
+      isSecret: true,
     };
   }
 

@@ -15,7 +15,7 @@
  */
 
 import * as z from 'zod';
-import { formatObject, formatObjectOrVoid } from '@isomorphic/stringUtils';
+import { fromKeyboardModifiers } from '@isomorphic/codegen/language';
 import { defineTabTool } from './tool';
 
 import type * as playwright from '../../..';
@@ -74,18 +74,19 @@ const click = defineTabTool({
   handle: async (tab, params, response) => {
     response.setIncludeSnapshot();
 
-    const { locator, resolved } = await tab.targetLocator(params);
+    const { locator, selector } = await tab.targetLocator(params);
     const options = {
       button: params.button,
       modifiers: params.modifiers,
       ...tab.actionTimeoutOptions,
     };
-    const optionsArg = formatObjectOrVoid(options);
-
-    if (params.doubleClick)
-      response.addCode(`await page.${resolved}.dblclick(${optionsArg});`);
-    else
-      response.addCode(`await page.${resolved}.click(${optionsArg});`);
+    response.addAction({
+      name: 'click',
+      selector,
+      button: params.button ?? 'left',
+      modifiers: fromKeyboardModifiers(params.modifiers),
+      clickCount: params.doubleClick ? 2 : 1,
+    });
 
     await tab.waitForCompletion(async () => {
       if (params.doubleClick)
@@ -140,8 +141,8 @@ const hover = defineTabTool({
   handle: async (tab, params, response) => {
     response.setIncludeSnapshot();
 
-    const { locator, resolved } = await tab.targetLocator(params);
-    response.addCode(`await page.${resolved}.hover();`);
+    const { locator, selector } = await tab.targetLocator(params);
+    response.addAction({ name: 'hover', selector });
 
     await locator.hover(tab.actionTimeoutOptions);
   },
@@ -164,8 +165,8 @@ const selectOption = defineTabTool({
   handle: async (tab, params, response) => {
     response.setIncludeSnapshot();
 
-    const { locator, resolved } = await tab.targetLocator(params);
-    response.addCode(`await page.${resolved}.selectOption(${formatObject(params.values)});`);
+    const { locator, selector } = await tab.targetLocator(params);
+    response.addAction({ name: 'select', selector, options: params.values });
 
     await locator.selectOption(params.values, tab.actionTimeoutOptions);
   },
@@ -200,8 +201,8 @@ const check = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const { locator, resolved } = await tab.targetLocator(params);
-    response.addCode(`await page.${resolved}.check();`);
+    const { locator, selector } = await tab.targetLocator(params);
+    response.addAction({ name: 'check', selector });
     await locator.check(tab.actionTimeoutOptions);
   },
 });
@@ -218,8 +219,8 @@ const uncheck = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const { locator, resolved } = await tab.targetLocator(params);
-    response.addCode(`await page.${resolved}.uncheck();`);
+    const { locator, selector } = await tab.targetLocator(params);
+    response.addAction({ name: 'uncheck', selector });
     await locator.uncheck(tab.actionTimeoutOptions);
   },
 });

@@ -79,10 +79,10 @@ test('click with --modifiers', { annotation: { type: 'issue', description: 'http
   await cli('open', server.PREFIX);
 
   const single = await cli('click', 'e2', '--modifiers', 'Control');
-  expect(single.output).toContain(`await page.getByRole('button', { name: 'Submit' }).click({\n  modifiers: ['Control']\n});`);
+  expect(single.output).toContain(`await page.getByRole('button', { name: 'Submit' }).click({\n  modifiers: ['ControlOrMeta']\n});`);
 
   const repeated = await cli('click', 'e2', '--modifiers', 'Control', '--modifiers', 'Shift');
-  expect(repeated.output).toContain(`await page.getByRole('button', { name: 'Submit' }).click({\n  modifiers: ['Control', 'Shift']\n});`);
+  expect(repeated.output).toContain(`await page.getByRole('button', { name: 'Submit' }).click({\n  modifiers: ['ControlOrMeta', 'Shift']\n});`);
 });
 
 test('type', async ({ cli, server }) => {
