@@ -600,6 +600,10 @@ export abstract class APIRequestContext extends SdkObject {
         serverPort = socket.remotePort;
 
         socket.on('error', handleRequestError);
+        request.once('close', () => {
+          if (!socket.destroyed)
+            socket.off('error', handleRequestError);
+        });
 
         if (request.reusedSocket) {
           reusedSocketAt = monotonicTime();
