@@ -28,9 +28,24 @@ export async function mkdirIfNeeded(filePath: string) {
 }
 
 export async function removeFolders(dirs: string[]): Promise<(Error| undefined)[]> {
-  return await Promise.all(dirs.map((dir: string) =>
-    fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10 }).catch(e => e)
-  ));
+  return await Promise.all(dirs.map(removeFolder));
+}
+
+async function removeFolder(dir: string): Promise<Error | undefined> {
+  // fs.rm retries every level of the tree, so maxRetries compounds with the depth and can hang forever on an entry that can never be removed; retry the whole tree here to keep it bounded.
+  const maxAttempts = 5;
+  let lastError: Error | undefined;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (attempt)
+      await new Promise(f => setTimeout(f, 100 * attempt));
+    try {
+      await fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 0 });
+      return undefined;
+    } catch (e) {
+      lastError = e as Error;
+    }
+  }
+  return lastError;
 }
 
 export function canAccessFile(file: string) {
