@@ -443,7 +443,8 @@ test('should cancel browser_annotate when the MCP client disconnects', async ({ 
 });
 
 
-test('should switch screencast to -s session on show --annotate', async ({ connectToDashboard, cli, server }) => {
+test('should switch screencast to -s session on show --annotate', async ({ connectToDashboard, cli, server, mcpBrowser }) => {
+  test.fixme(mcpBrowser === 'firefox' && process.platform === 'win32', 'Flaky on Firefox/Windows: the bound show server occasionally never registers, so connectToDashboard times out with "reading \'endpoint\'".');
   test.slow();
   server.setContent('/red', '<html><head><style>html,body{margin:0;height:100vh;background:#ff0000}</style></head><body></body></html>', 'text/html');
   server.setContent('/green', '<html><head><style>html,body{margin:0;height:100vh;background:#00ff00}</style></head><body></body></html>', 'text/html');
