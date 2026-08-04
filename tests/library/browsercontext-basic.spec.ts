@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { kTargetClosedErrorMessage } from '../config/errors';
 import { browserTest as it, expect } from '../config/browserTest';
 import { attachFrame, verifyViewport } from '../config/utils';
@@ -211,6 +213,24 @@ it('close() should be callable twice', async ({ browser }) => {
   await context.close();
   await context.close();
 });
+
+// The HAR path points at a directory, so writing the HAR fails. A plain HAR is written by
+// the server, a zipped one by the client - closing must survive either failure.
+for (const harName of ['test.har', 'test.har.zip']) {
+  it(`close() should still close the context when the ${harName} export fails`, async ({ browser }, testInfo) => {
+    const harPath = testInfo.outputPath(harName);
+    fs.mkdirSync(harPath, { recursive: true });
+    const context = await browser.newContext({ recordHar: { path: harPath } });
+    const page = await context.newPage();
+
+    const error = await context.close().catch(e => e);
+    expect(error.message).toContain(harPath);
+    expect(context.isClosed()).toBe(true);
+    expect(browser.contexts().length).toBe(0);
+    expect(page.isClosed()).toBe(true);
+    await context.close();
+  });
+}
 
 it('should pass self to close event', async ({ browser }) => {
   const newContext = await browser.newContext();

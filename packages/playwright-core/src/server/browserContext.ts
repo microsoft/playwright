@@ -558,8 +558,16 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
-      await progress.race(this.tracing.flush());
-      await progress.race(Promise.all(this.pages().map(page => page.screencast.handlePageOrContextClose())));
+      // Saving artifacts may fail, e.g. when the HAR path is not writable. Do not let that
+      // abort the close - the context would be stuck in the 'closing' state, and every
+      // subsequent close() would hang on _closePromise. Close it first, report afterwards.
+      let error: Error | undefined;
+      try {
+        await progress.race(this.tracing.flush());
+        await progress.race(Promise.all(this.pages().map(page => page.screencast.handlePageOrContextClose())));
+      } catch (e) {
+        error = e;
+      }
 
       if (this._customCloseHandler) {
         await progress.race(this._customCloseHandler());
@@ -580,6 +588,9 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       // Custom handler should trigger didCloseInternal itself.
       if (!this._customCloseHandler)
         this._didCloseInternal();
+
+      if (error)
+        throw error;
     }
     await this._closePromise;
   }

@@ -525,11 +525,25 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       return;
     this._closeReason = options.reason;
     this._closingStatus = 'closing';
-    await this.request.dispose(options);
-    await this._instrumentation.runBeforeCloseBrowserContext(this);
-    await this.tracing._exportAllHars();
-    await this._channel.close(options, kNoTimeout);
-    await this._closedPromise;
+    // Saving artifacts may fail, e.g. when the HAR path is not writable. Do not let that
+    // abort the close - the context would be left running while reporting itself as closed,
+    // and could never be closed again. Close it first, report the first failure afterwards.
+    let error: Error | undefined;
+    try {
+      await this.request.dispose(options);
+      await this._instrumentation.runBeforeCloseBrowserContext(this);
+      await this.tracing._exportAllHars();
+    } catch (e) {
+      error = e;
+    }
+    try {
+      await this._channel.close(options, kNoTimeout);
+      await this._closedPromise;
+    } catch (e) {
+      error ??= e;
+    }
+    if (error)
+      throw error;
   }
 
   async _enableRecorder(params: channels.BrowserContextEnableRecorderParams, eventSink?: RecorderEventSink) {
