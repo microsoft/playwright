@@ -224,7 +224,7 @@ export class TextOutput implements Output {
   attach(session: string, pid: number | undefined, endpoint: string | undefined, toolResult: string): void {
     if (endpoint) {
       console.log(`### Session \`${session}\` created, attached to \`${endpoint}\`.`);
-      console.log(`Run commands with: playwright-cli --s=${session} <command>`);
+      console.log(`Run commands with: playwright-cli -s=${session} <command>`);
       console.log('');
     } else {
       console.log(`### Browser \`${session}\` opened with pid ${pid}.`);
