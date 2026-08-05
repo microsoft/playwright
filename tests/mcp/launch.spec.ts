@@ -162,7 +162,7 @@ test('isolated context', async ({ startClient, server }) => {
 });
 
 test('isolated stdio server closes browser on client transport disconnect', async ({ startClient, server }) => {
-  const { client, stderr, transport } = await startClient({
+  const { client, stderr, closeTransport } = await startClient({
     args: [`--isolated`],
     env: { DEBUG: 'pw:mcp:test' },
   });
@@ -174,7 +174,7 @@ test('isolated stdio server closes browser on client transport disconnect', asyn
     snapshot: expect.stringContaining(`Hello, world!`),
   });
 
-  await transport.close();
+  await closeTransport();
 
   await expect.poll(() => formatLog(stderr())).toEqual({
     'create browser (isolated)': 1,
