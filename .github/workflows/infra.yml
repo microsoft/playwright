@@ -19,12 +19,7 @@ jobs:
     - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
       with:
         node-version: lts/*
-    # CFS proxy enforces the same ~7-day npm quarantine as corp machines.
-    # Retries cover first-touch cold-ingest 404s from the feed.
-    - run: npm ci || { sleep 20; npm ci; } || { sleep 40; npm ci; }
-      env:
-        npm_config_registry: https://packagefeedproxy.microsoft.io/npm/
-        npm_config_replace_registry_host: npmjs
+    - run: npm ci
     - run: npm run build
     - run: npx playwright install --with-deps
     - run: npm run lint
@@ -38,6 +33,10 @@ jobs:
     - name: Audit prod NPM dependencies
       run: node utils/check_audit.js
       continue-on-error: true
+    # Match Dependabot's 7-day cooldown / corp CFS quarantine: reject lockfile
+    # pins younger than 7 days. Checks packument publish times only (no install).
+    - name: Check NPM package release age
+      run: node utils/check_package_age.js
   lint-snippets:
     name: "Lint snippets"
     runs-on: ubuntu-latest
