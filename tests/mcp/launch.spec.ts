@@ -161,6 +161,29 @@ test('isolated context', async ({ startClient, server }) => {
   });
 });
 
+test('isolated stdio server closes browser on client transport disconnect', async ({ startClient, server }) => {
+  const { client, stderr, transport } = await startClient({
+    args: [`--isolated`],
+    env: { DEBUG: 'pw:mcp:test' },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
+  });
+
+  await transport.close();
+
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create browser (isolated)': 1,
+    'create context': 1,
+    'close browser': 1,
+    'gracefully closing 1': 1,
+  });
+});
+
 test('isolated context relaunches the browser after it dies', async ({ startClient, server, mcpBrowser }, testInfo) => {
   test.skip(!['chrome', 'msedge', 'chromium'].includes(mcpBrowser!), 'The test kills the browser over CDP');
 

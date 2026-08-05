@@ -61,7 +61,7 @@ export type StartClient = (options?: {
   rootsResponseDelay?: number,
   env?: NodeJS.ProcessEnv,
   noTimeoutForTest?: boolean,
-}) => Promise<{ client: Client, stderr: () => string }>;
+}) => Promise<{ client: Client, stderr: () => string, transport: Transport }>;
 
 
 type TestFixtures = {
@@ -151,10 +151,10 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
       clients.push(client);
       await client.connect(transport);
       await client.ping();
-      return { client, stderr: () => stderrBuffer };
+      return { client, stderr: () => stderrBuffer, transport };
     });
 
-    await Promise.all(clients.map(client => client.close()));
+    await Promise.all(clients.map(client => client.close().catch(() => {})));
   },
 
   wsEndpoint: async ({ }, use) => {
