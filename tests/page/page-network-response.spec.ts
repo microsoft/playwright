@@ -354,8 +354,10 @@ it('should return body for prefetch script', async ({ page, server, browserName 
   expect(body.toString()).toBe('// Scripts will be pre-fetched');
 });
 
-it('should return body for image with evicted body', async ({ page, server }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42002' });
+it('should return body for image with evicted body', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42002' },
+}, async ({ page, server, isMac, browserName }) => {
+  it.fixme(isMac && browserName === 'webkit', 'WebKit on Mac evicts the body and returns empty buffer');
   const imageBase64 = 'R0lGODlhAQABAAAAACw='; // truncated 1x1 gif, Chromium evicts its body
   server.setRoute('/pixel.gif', (req, res) => {
     res.setHeader('content-type', 'image/gif');
