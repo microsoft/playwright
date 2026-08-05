@@ -600,10 +600,8 @@ export abstract class APIRequestContext extends SdkObject {
         serverPort = socket.remotePort;
 
         socket.on('error', handleRequestError);
-        // Keep-alive sockets outlive the request - drop our listener so they do not
-        // pile up. If the socket is already destroyed (server reset after refusing the
-        // body), keep it: a late write EPIPE can still fire, and the listener dies with
-        // the socket anyway.
+        // Drop on keep-alive reuse so listeners do not accumulate. Keep if destroyed:
+        // a late write EPIPE may still fire after a refused-body reset.
         request.once('close', () => {
           if (!socket.destroyed)
             socket.off('error', handleRequestError);
