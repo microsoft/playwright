@@ -74,9 +74,10 @@ const booleanOptions: (keyof (GlobalOptions & OpenOptions & AttachOptions & { al
   'version',
 ];
 
-export async function program(options?: { embedderVersion?: string}) {
+export async function program(options?: { embedderVersion?: string, cliCommand?: string }) {
   const clientInfo = createClientInfo();
   const help = require(libPath('tools', 'cli-client', 'help.json'));
+  const cliCommand = options?.cliCommand || 'playwright-cli';
 
   const argv = process.argv.slice(2);
   const boolean = [...help.booleanOptions, ...booleanOptions];
@@ -204,7 +205,7 @@ export async function program(options?: { embedderVersion?: string}) {
     case 'install':
       if (args.global && !args.skills)
         output.errorInstallGlobalRequiresSkills();
-      await runInitWorkspace(args, output);
+      await runInitWorkspace(args, output, cliCommand);
       output.installed();
       return;
     case 'install-browser':
@@ -321,12 +322,13 @@ async function runInSessionOrStop(entry: SessionFile, clientInfo: ClientInfo, ar
   }
 }
 
-async function runInitWorkspace(args: MinimistArgs, output: Output) {
+async function runInitWorkspace(args: MinimistArgs, output: Output, cliCommand: string) {
   const cliPath = libPath('entry', 'cliDaemon.js');
   const daemonArgs: string[] = [
     cliPath,
     '--init-workspace',
     ...(args.skills ? [args.global ? '--init-skills-global' : '--init-skills', String(args.skills)] : []),
+    ...(args.skills ? ['--cli-command', cliCommand] : []),
   ];
   await new Promise<void>((resolve, reject) => {
     const child = spawn(process.execPath, daemonArgs, {

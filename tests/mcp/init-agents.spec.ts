@@ -130,6 +130,25 @@ test('init-skills installs all skills', async ({  }) => {
   for (const skill of ['playwright-cli', 'playwright-component-testing', 'playwright-trace'])
     expect(fs.existsSync(path.join(baseDir, '.claude', 'skills', skill, 'SKILL.md'))).toBe(true);
   expect(fs.existsSync(path.join(baseDir, '.claude', 'skills', 'playwright-cli', 'references', 'tracing.md'))).toBe(true);
+
+  const skill = fs.readFileSync(path.join(baseDir, '.claude', 'skills', 'playwright-cli', 'SKILL.md'), 'utf-8');
+  expect(skill).toContain('npx playwright cli open');
+  expect(skill).toContain('name: playwright-cli');
+  expect(skill).toContain('.playwright-cli/');
+  expect(skill).not.toMatch(/(^|\n)playwright-cli open\b/);
+});
+
+test('playwright cli install --skills templates npx playwright cli command', async ({  }) => {
+  const baseDir = await writeFiles({});
+
+  await spawnAsync('npx', ['playwright', 'cli', 'install', '--skills'], { cwd: baseDir, shell: true });
+
+  const skill = fs.readFileSync(path.join(baseDir, '.claude', 'skills', 'playwright-cli', 'SKILL.md'), 'utf-8');
+  expect(skill).toContain('npx playwright cli open');
+  expect(skill).toContain('name: playwright-cli');
+  expect(skill).toContain('.playwright-cli/');
+  expect(skill).toContain('Bash(playwright-cli:*)');
+  expect(skill).not.toMatch(/(^|\n)playwright-cli open\b/);
 });
 
 test('init-skills installs into .agents with --loop agents', async ({  }) => {

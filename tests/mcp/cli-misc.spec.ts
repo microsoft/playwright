@@ -50,6 +50,16 @@ test('install workspace w/skills', async ({ cli }, testInfo) => {
   const referencesDir = testInfo.outputPath('.claude', 'skills', 'playwright-cli', 'references');
   const references = await fs.promises.readdir(referencesDir);
   expect(references.length).toBeGreaterThan(0);
+
+  const skill = await fs.promises.readFile(skillFile, 'utf8');
+  expect(skill).toContain('playwright-cli open');
+  expect(skill).not.toContain('npx playwright cli open');
+  expect(skill).toContain('name: playwright-cli');
+  expect(skill).toContain('.playwright-cli/');
+  expect(skill).toContain('Bash(playwright-cli:*)');
+
+  const sessionRef = await fs.promises.readFile(path.join(referencesDir, 'session-management.md'), 'utf8');
+  expect(sessionRef).toContain('playwright-cli list');
 });
 
 test('install workspace w/--skills=agents', async ({ cli }, testInfo) => {

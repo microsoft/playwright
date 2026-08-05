@@ -20,6 +20,7 @@ import 'playwright-core/lib/bootstrap';
 
 import { libCli, tools } from 'playwright-core/lib/coreBundle';
 import { program } from 'commander';
+import { getPackageManagerExecCommand } from '@utils/env';
 import { setBoxedStackPrefixes } from '@utils/stackTrace';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { builtInReporters, config, configLoader } from './common';
@@ -193,7 +194,7 @@ function addInitSkillsCommand(program: Command) {
   command.addOption(option);
   command.action(async opts => {
     try {
-      await tools.installSkills(tools.allSkills, opts.loop);
+      await tools.installSkills(tools.allSkills, opts.loop, { cliCommand: `${getPackageManagerExecCommand()} playwright cli` });
     } catch (e) {
       console.error(e);
       gracefullyProcessExitDoNotHang(1);

@@ -27,7 +27,13 @@ export const allSkills = ['playwright-cli', 'playwright-component-testing', 'pla
 export type SkillName = typeof allSkills[number];
 export type SkillTarget = 'claude' | 'agents';
 
-export async function installSkills(skills: readonly SkillName[], target: SkillTarget = 'claude', options?: { global?: boolean }) {
+// Source skill docs use this as the command. Kept literal so GitHub/search still
+// reads as a real CLI. At install time it is rewritten when the invoker differs
+// (e.g. `npx`/`yarn`/`pnpm exec` playwright cli), while skill identity and
+// artifact paths stay put.
+const sourceCliCommand = 'playwright-cli';
+
+export async function installSkills(skills: readonly SkillName[], target: SkillTarget = 'claude', options?: { global?: boolean, cliCommand?: string }) {
   const cwd = process.cwd();
   const baseDir = options?.global ? os.homedir() : cwd;
   for (const skill of skills) {
@@ -35,7 +41,35 @@ export async function installSkills(skills: readonly SkillName[], target: SkillT
     if (!fs.existsSync(sourceDir))
       throw new Error(`Skill source directory not found: ${sourceDir}`);
     const destDir = path.join(baseDir, `.${target}`, 'skills', skill);
-    await fs.promises.cp(sourceDir, destDir, { recursive: true });
+    await copySkillDir(sourceDir, destDir, options?.cliCommand || sourceCliCommand);
     console.log(`✅ Skill installed to \`${options?.global ? destDir : path.relative(cwd, destDir)}\`.`);
   }
+}
+
+async function copySkillDir(sourceDir: string, destDir: string, cliCommand: string) {
+  await fs.promises.mkdir(destDir, { recursive: true });
+  const entries = await fs.promises.readdir(sourceDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const from = path.join(sourceDir, entry.name);
+    const to = path.join(destDir, entry.name);
+    if (entry.isDirectory()) {
+      await copySkillDir(from, to, cliCommand);
+      continue;
+    }
+    if (!entry.isFile())
+      continue;
+    const content = await fs.promises.readFile(from, 'utf8');
+    await fs.promises.writeFile(to, rewriteCliCommand(content, cliCommand));
+  }
+}
+
+function rewriteCliCommand(content: string, cliCommand: string): string {
+  // Must not contain `playwright-cli`, or the bulk replace below would rewrite it.
+  const protectedToken = '\0PWCLI\0';
+  return content
+      .replaceAll(`name: ${sourceCliCommand}`, `name: ${protectedToken}`)
+      .replaceAll(`Bash(${sourceCliCommand}:*)`, `Bash(${protectedToken}:*)`)
+      .replaceAll(`.${sourceCliCommand}/`, `.${protectedToken}/`)
+      .replaceAll(sourceCliCommand, cliCommand)
+      .replaceAll(protectedToken, sourceCliCommand);
 }

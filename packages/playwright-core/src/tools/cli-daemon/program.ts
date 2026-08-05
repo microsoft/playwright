@@ -20,6 +20,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { Option } from 'commander';
 import { getAsBooleanFromENV, guessClientName } from '@utils/env';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { startCliDaemonServer } from './daemon';
@@ -29,6 +30,7 @@ import * as configUtils from '../mcp/config';
 import { createClientInfo } from '../cli-client/registry';
 import { installSkills } from '../utils/installSkills';
 import { registry as browserRegistry } from '../../server/registry/index';
+
 import type { Command } from 'commander';
 
 export function decorateProgram(program: Command) {
@@ -46,10 +48,11 @@ export function decorateProgram(program: Command) {
       .option('--init-workspace', 'initialize workspace')
       .option('--init-skills <value>', 'install skills for the given agent type ("claude" or "agents")')
       .option('--init-skills-global <value>', 'install skills for the given agent type ("claude" or "agents") into the home directory')
+      .addOption(new Option('--cli-command <command>', 'command prefix to embed into installed skills').hideHelp())
 
       .action(async (sessionName: string, options: any) => {
         if (options.initWorkspace) {
-          await initWorkspace(options.initSkills, options.initSkillsGlobal);
+          await initWorkspace(options.initSkills, options.initSkillsGlobal, options.cliCommand);
           return;
         }
 
@@ -86,7 +89,7 @@ function globalConfigFile(): string {
   return path.join(process.env['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
 }
 
-export async function initWorkspace(initSkills: string | undefined, initSkillsGlobal?: string) {
+export async function initWorkspace(initSkills: string | undefined, initSkillsGlobal?: string, cliCommand?: string) {
   const globalSkills = !!initSkillsGlobal;
   if (!globalSkills) {
     const cwd = process.cwd();
@@ -99,7 +102,7 @@ export async function initWorkspace(initSkills: string | undefined, initSkillsGl
   if (skills) {
     const target = skills === 'agents' ? 'agents' : 'claude';
     try {
-      await installSkills(['playwright-cli'], target, { global: globalSkills });
+      await installSkills(['playwright-cli'], target, { global: globalSkills, cliCommand });
     } catch (error) {
       console.error('❌', error instanceof Error ? error.message : error);
       // eslint-disable-next-line no-restricted-properties

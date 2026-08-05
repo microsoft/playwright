@@ -242,9 +242,9 @@ export function decorateProgram(program: Command) {
       .allowExcessArguments(true)
       .allowUnknownOption(true)
       .helpOption(false)
-      .action(async options => {
+      .action(async () => {
         process.argv.splice(process.argv.indexOf('cli'), 1);
-        cliProgram().catch(logErrorAndExit);
+        cliProgram({ cliCommand: `${getPackageManagerExecCommand()} playwright cli` }).catch(logErrorAndExit);
       });
 
   decorateMCPCommand(program

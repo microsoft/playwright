@@ -8,4 +8,5 @@
 @utils/**
 ../../server/registry/index.ts
 @utils/**
+node_modules/commander
 node_modules/zod
