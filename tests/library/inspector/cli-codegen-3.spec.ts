@@ -1167,8 +1167,9 @@ test.describe('cli codegen with pierceFrames', () => {
   });
 
   test('should prepend the frame selector to disambiguate', async ({ openRecorder, server, browserName, isMac }) => {
-    test.fixme(browserName === 'firefox' && isMac && process.arch === 'x64', 'Cross-frame selector disambiguation races the recorder\'s 2s deadline under load on Intel macOS, emitting the pierce:false opt-out. https://github.com/microsoft/playwright/issues/41811');
-    const { page, recorder } = await openRecorder();
+    const { page, recorder } = await openRecorder({
+      __testHookFrameSelectorTimeout: browserName === 'firefox' && isMac && process.arch === 'x64' ? 10_000 : undefined,
+    });
     await recorder.setContentAndWait(`
       <iframe id=frame1 srcdoc="<iframe srcdoc='<button>Hello</button>'></iframe>"></iframe>
       <iframe id=frame2 srcdoc="<iframe srcdoc='<button>Hello</button>'></iframe>"></iframe>
