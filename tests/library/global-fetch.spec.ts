@@ -707,6 +707,38 @@ it('should retry ECONNRESET', {
   await request.dispose();
 });
 
+it('should not crash when server refuses body before reading it', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42074' }
+}, async ({ playwright, server }) => {
+  // Respond without reading the body, then reset. Node emits a late write
+  // EPIPE/ECONNRESET on the request socket; without a listener that becomes an
+  // unhandled 'error' and kills the process.
+  server.setRoute('/refuse', (req, res) => {
+    req.pause();
+    setTimeout(() => {
+      res.writeHead(413, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ error: 'too large' }));
+      req.socket.destroy();
+    }, 50);
+  });
+
+  const request = await playwright.request.newContext();
+  // Large body so the client is still writing when the reset lands.
+  // Prefer CROSS_PROCESS_PREFIX (127.0.0.1) over PREFIX (localhost/::1) for a stable race.
+  const result = await request.post(server.CROSS_PROCESS_PREFIX + '/refuse', {
+    data: Buffer.alloc(20 * 1024 * 1024, 0x78),
+    headers: { 'content-type': 'text/plain' },
+    maxRetries: 0,
+  }).catch(e => e);
+  if (result instanceof Error) {
+    expect(result.message).toMatch(/apiRequestContext\.post|ECONNRESET|EPIPE|ECONNABORTED|socket/i);
+  } else {
+    expect(result.status()).toBe(413);
+    expect(await result.text()).toBe(JSON.stringify({ error: 'too large' }));
+  }
+  await request.dispose();
+});
+
 it('should throw when failOnStatusCode is set to true inside APIRequest context options', async ({ playwright, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34204' });
   const request = await playwright.request.newContext({ failOnStatusCode: true });

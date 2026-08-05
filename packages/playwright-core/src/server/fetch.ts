@@ -356,10 +356,20 @@ export abstract class APIRequestContext extends SdkObject {
       let serverPort: number | undefined;
 
       let securityDetails: har.SecurityDetails | undefined;
+      let responseReceived = false;
 
       const listeners: RegisteredListener[] = [];
 
+      const handleRequestError = (error: Error) => {
+        // Write errors after we received a response are swallowed, following undici behaviour:
+        // https://github.com/nodejs/undici/blob/01a912e49a50c48009ed2639d2a457a6ec26752a/lib/dispatcher/client-h1.js#L735
+        if (responseReceived && isNetworkConnectionError(error))
+          return;
+        reject(error);
+      };
+
       const request = requestConstructor(url, requestOptions as any, async response => {
+        responseReceived = true;
         const responseAt = monotonicTime();
 
         const notifyRequestFinished = (body?: Buffer) => {
@@ -559,7 +569,7 @@ export abstract class APIRequestContext extends SdkObject {
         body.on('data', chunk => chunks.push(chunk));
         body.on('end', notifyBodyFinished);
       });
-      request.on('error', reject);
+      request.on('error', handleRequestError);
       destroyRequest = () => request.destroy();
 
       listeners.push(
@@ -588,6 +598,14 @@ export abstract class APIRequestContext extends SdkObject {
       request.on('socket', socket => {
         serverIPAddress = socket.remoteAddress;
         serverPort = socket.remotePort;
+
+        socket.on('error', handleRequestError);
+        // Drop on keep-alive reuse so listeners do not accumulate. Keep if destroyed:
+        // a late write EPIPE may still fire after a refused-body reset.
+        request.once('close', () => {
+          if (!socket.destroyed)
+            socket.off('error', handleRequestError);
+        });
 
         if (request.reusedSocket) {
           reusedSocketAt = monotonicTime();
