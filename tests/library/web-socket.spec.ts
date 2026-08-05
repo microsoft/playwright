@@ -259,9 +259,9 @@ it('should send extra HTTP headers on WebSocket handshake', {
 
 it('should send extra HTTP headers on WebSocket handshake from a worker', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28948' },
-}, async ({ page, server, browserName, browserMajorVersion }) => {
+}, async ({ page, server, browserName, browserMajorVersion, isBidi }) => {
   it.fixme(browserName === 'chromium' && browserMajorVersion < 151, 'Chromium before 151 does not send extra HTTP headers on WebSocket handshake');
-  it.fixme(browserName === 'firefox', 'Firefox does not associate a WebSocket opened inside a worker with its browsing context');
+  it.fixme(browserName === 'firefox' && !isBidi, 'Firefox/Juggler does not associate a WebSocket opened inside a worker with its browsing context');
 
   await page.setExtraHTTPHeaders({ foo: 'bar' });
   await page.goto(server.EMPTY_PAGE);
