@@ -1,6 +1,4 @@
-# Publishes @next (alpha) versions of all npm packages via ESRP.
-# For now this pipeline only supports alpha releases with a commit timestamp
-# version, e.g. 1.55.0-alpha-1754000000000. Trigger it manually from the ADO UI.
+# Publishes @next (alpha) versions of all npm packages via ESRP. Manual trigger only.
 trigger: none
 
 pr: none
