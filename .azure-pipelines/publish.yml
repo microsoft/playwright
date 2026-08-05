@@ -20,8 +20,8 @@ extends:
       os: linux
     sdl:
       sourceAnalysisPool:
+        # SDL tools require windows, see https://aka.ms/AAo6v8e
         name: DevDivPlaywrightAzurePipelinesWindows2022
-        # The image must be windows-based due to restrictions of the SDL tools. See: https://aka.ms/AAo6v8e
         os: windows
     stages:
     - stage: Stage
