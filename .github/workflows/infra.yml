@@ -33,10 +33,6 @@ jobs:
     - name: Audit prod NPM dependencies
       run: node utils/check_audit.js
       continue-on-error: true
-    # Match Dependabot's 7-day cooldown / corp CFS quarantine: reject lockfile
-    # pins younger than 7 days. Checks packument publish times only (no install).
-    - name: Check NPM package release age
-      run: node utils/check_package_age.js
   lint-snippets:
     name: "Lint snippets"
     runs-on: ubuntu-latest

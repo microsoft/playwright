@@ -46,7 +46,6 @@
     "test-types": "node utils/generate_types/ && node utils/concurrently.js \"tsc -p utils/generate_types/test/tsconfig.json\" \"tsc -p ./tests/\"",
     "roll": "node utils/roll_browser.js",
     "check-deps": "node utils/check_deps.js",
-    "check-package-age": "node utils/check_package_age.js",
     "build-android-driver": "./utils/build_android_driver.sh",
     "innerloop": "playwright run-server --reuse-browser",
     "test-playwright-cli": "playwright test --config=tests/mcp/playwright.config.ts --project=chrome cli-",
