@@ -19,8 +19,8 @@ jobs:
       id-token: write  # This is required for OIDC login (NPM publish) to succeed
       contents: read   # This is required for actions/checkout to succeed
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-node@v6
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
       with:
         node-version: lts/*
         registry-url: 'https://registry.npmjs.org'
@@ -51,11 +51,11 @@ jobs:
     runs-on: ubuntu-24.04
     if: github.repository == 'microsoft/playwright'
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-node@v6
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
       with:
         node-version: lts/*
-    - uses: actions/create-github-app-token@v3
+    - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: app-token
       with:
         client-id: ${{ vars.PLAYWRIGHT_APP_CLIENT_ID }}

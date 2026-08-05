@@ -13,7 +13,7 @@ runs:
   steps:
     - name: Upload parquet report to GitHub
       if: ${{ hashFiles(inputs.report_file) != '' }}
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: parquet-report-${{ inputs.job_name }}
         path: ${{ inputs.report_file }}

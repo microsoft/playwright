@@ -39,8 +39,8 @@ jobs:
     steps:
     - name: Create ~/.azure directory
       run: mkdir -p ~/.azure
-    - uses: actions/checkout@v6
-    - uses: actions/setup-node@v6
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
       with:
         node-version: 22
       env:
@@ -51,7 +51,7 @@ jobs:
     # main repo, where the secrets are present; forks fall back to Docker Hub.
     - name: Azure Login
       if: ${{ github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      uses: azure/login@v3
+      uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
       with:
         client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
@@ -114,7 +114,7 @@ jobs:
 
     - name: Azure Login
       if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      uses: azure/login@v3
+      uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
       with:
         client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
