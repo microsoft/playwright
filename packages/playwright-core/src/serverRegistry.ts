@@ -48,6 +48,8 @@ export type BrowserDescriptor = EndpointInfo & {
   browser: BrowserInfo;
 };
 
+export type BrowserStatus = BrowserDescriptor & { canConnect: boolean };
+
 export interface ServerRegistryEvents {
   added: (descriptor: BrowserDescriptor) => void;
   removed: (guid: string) => void;
@@ -96,13 +98,13 @@ class ServerRegistry extends EventEmitter {
       await this._ready;
       const statuses = await Promise.all(
           [...this._descriptors.values()].map(async descriptor => {
-            const dead = await endpointIsDead(descriptor);
-            return { descriptor, dead };
+            const canConnect = await canConnectTo(descriptor);
+            return { descriptor, canConnect };
           }),
       );
       const result = new Map<string, BrowserDescriptor[]>();
-      for (const { descriptor, dead } of statuses) {
-        if (dead) {
+      for (const { descriptor, canConnect } of statuses) {
+        if (!canConnect) {
           await fs.promises.unlink(path.join(this._browsersDir(), descriptor.browser.guid)).catch(() => {});
           continue;
         }
@@ -218,30 +220,25 @@ class ServerRegistry extends EventEmitter {
   }
 }
 
-// Error codes that prove no server is listening on the endpoint. Anything else
-// (e.g. EBUSY when a Windows named pipe rejects a concurrent connection while
-// another client is mid-handshake, or a timeout) may come from a live server,
-// so the registry entry must be kept.
-const deadEndpointErrorCodes = new Set(['ECONNREFUSED', 'ENOENT']);
-
-async function endpointIsDead(descriptor: BrowserDescriptor): Promise<boolean> {
+async function canConnectTo(descriptor: BrowserDescriptor): Promise<boolean> {
   if (!descriptor.endpoint)
-    return true;
-  let socket: net.Socket;
+    return false;
   if (descriptor.endpoint.startsWith('ws://') || descriptor.endpoint.startsWith('wss://')) {
-    const url = new URL(descriptor.endpoint);
-    socket = net.createConnection(Number(url.port), url.hostname);
-  } else {
-    socket = net.createConnection(descriptor.endpoint);
+    return await new Promise(resolve => {
+      const url = new URL(descriptor.endpoint!);
+      const socket = net.createConnection(Number(url.port), url.hostname, () => {
+        socket.destroy();
+        resolve(true);
+      });
+      socket.on('error', () => resolve(false));
+    });
   }
   return await new Promise(resolve => {
-    const done = (dead: boolean) => {
+    const socket = net.createConnection(descriptor.endpoint ?? (descriptor as any).pipeName, () => {
       socket.destroy();
-      resolve(dead);
-    };
-    socket.once('connect', () => done(false));
-    socket.once('error', (error: NodeJS.ErrnoException) => done(deadEndpointErrorCodes.has(error.code ?? '')));
-    socket.setTimeout(5000, () => done(false));
+      resolve(true);
+    });
+    socket.on('error', () => resolve(false));
   });
 }
 
