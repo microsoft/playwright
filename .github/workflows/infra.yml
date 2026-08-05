@@ -19,7 +19,11 @@ jobs:
     - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
       with:
         node-version: lts/*
+    # CFS proxy enforces the same ~7-day npm quarantine as corp machines.
     - run: npm ci
+      env:
+        npm_config_registry: https://packagefeedproxy.microsoft.io/npm/
+        npm_config_replace_registry_host: npmjs
     - run: npm run build
     - run: npx playwright install --with-deps
     - run: npm run lint
