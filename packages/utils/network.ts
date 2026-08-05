@@ -228,6 +228,11 @@ async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean, onLog?: (dat
 }
 
 export function decorateServer(server: net.Server) {
+  // Windows named-pipe servers pre-post only 4 accept instances by default,
+  // so concurrent clients can transiently fail to connect. Node reads this
+  // env var when a server starts listening on a pipe.
+  if (process.platform === 'win32')
+    process.env.NODE_PENDING_PIPE_INSTANCES ??= '32';
   const sockets = new Set<net.Socket>();
   server.on('connection', socket => {
     sockets.add(socket);
