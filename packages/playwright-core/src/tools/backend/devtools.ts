@@ -135,7 +135,7 @@ const annotate = defineTabTool({
     const daemonArgs = [daemonScript, `--pageId=${pageId}`];
 
     // Spawn the dashboard daemon (idempotent — the singleton socket guards against duplicates).
-    const daemon = spawn(process.execPath, daemonArgs, { detached: true, stdio: 'ignore' });
+    const daemon = spawn(process.execPath, daemonArgs, { detached: true, stdio: 'ignore', windowsHide: true });
     daemon.unref();
 
     // Spawn the annotate client in JSON mode to capture the raw payload over stdout.

@@ -248,6 +248,7 @@ export async function program(options?: { embedderVersion?: string}) {
       const child = spawn(process.execPath, daemonArgs, {
         detached: !foreground,
         stdio: foreground ? 'inherit' : ['pipe', 'pipe', 'ignore'],
+        windowsHide: true,
       });
       if (foreground) {
         await new Promise<void>(resolve => child.on('exit', () => resolve()));

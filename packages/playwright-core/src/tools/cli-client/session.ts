@@ -148,6 +148,7 @@ export class Session {
       detached: true,
       stdio: ['ignore', 'pipe', err],
       cwd: process.cwd(), // Will be used as root.
+      windowsHide: true,
     });
 
     let signalled = false;
