@@ -50,6 +50,17 @@ test('body render prop is rendered', async ({ mount }) => {
   await expect(component.getByText('Chip children')).toBeVisible();
 });
 
+test('expand collapse with the keyboard', async ({ mount, page }) => {
+  const component = await mount<typeof AutoCollapsed>('chip/AutoCollapsed');
+  const header = component.getByRole('button', { name: 'Title' });
+  await header.focus();
+  await expect(header).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(component.getByText('Body')).toBeVisible();
+  await page.keyboard.press('Space');
+  await expect(component.getByText('Body')).not.toBeVisible();
+});
+
 test('setExpanded should work', async ({ mount }) => {
   const component = await mount<typeof AutoCollapsed>('chip/AutoCollapsed');
   await component.getByText('Title').click();

@@ -34,8 +34,7 @@ export const Chip: React.FC<{
 }> = ({ header, footer, expanded, setExpanded, children, noInsets, body, dataTestId }) => {
   const id = React.useId();
   return <div className='chip' data-testid={dataTestId}>
-    <div
-      role='button'
+    <button
       aria-expanded={!!expanded}
       aria-controls={id}
       className={clsx('chip-header', setExpanded && ' expanded-' + expanded)}
@@ -43,7 +42,7 @@ export const Chip: React.FC<{
       title={typeof header === 'string' ? header : undefined}>
       {setExpanded ? (expanded ? <icons.downArrow /> : <icons.rightArrow />) : <icons.spacer />}
       {header}
-    </div>
+    </button>
     {(!setExpanded || expanded) && <div id={id} role='region' className={clsx('chip-body', noInsets && 'chip-body-no-insets')}>
       {children}
       {body && body()}
