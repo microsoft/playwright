@@ -50,10 +50,13 @@ test('body render prop is rendered', async ({ mount }) => {
   await expect(component.getByText('Chip children')).toBeVisible();
 });
 
-test('chip without setExpanded is not a button', async ({ mount }) => {
+test('chip without setExpanded is a heading', async ({ mount }) => {
   const component = await mount<typeof NotExpandable>('chip/NotExpandable');
   await expect(component.getByRole('button')).toHaveCount(0);
-  await expect(component.getByText('Body')).toBeVisible();
+  await expect(component).toMatchAriaSnapshot(`
+    - heading "Title" [level=2]
+    - region: Body
+  `);
 });
 
 test('expand collapse with the keyboard', async ({ mount, page }) => {

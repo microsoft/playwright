@@ -3431,7 +3431,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.getByRole('link', { name: 'Speedboard' })).toHaveAttribute('aria-selected', 'true');
 
         await expect(page).toMatchAriaSnapshot(`
-          - text: /Slowest Tests/
+          - heading "Slowest Tests" [level=2]
           - region:
             - list:
               - listitem:
@@ -3455,7 +3455,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         `);
         await page.getByText('foo').first().click();
         await expect(page).toMatchAriaSnapshot(`
-          - text: /Slowest Tests/
+          - heading "Slowest Tests" [level=2]
         `);
 
         await page.getByRole('link', { name: 'Failed' }).click();

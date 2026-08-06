@@ -47,9 +47,9 @@ export const Chip: React.FC<{
       onClick={() => setExpanded(!expanded)}
       title={title}>
       {headerContent}
-    </button> : <div className='chip-header' title={title}>
+    </button> : <h2 className='chip-header' title={title}>
       {headerContent}
-    </div>}
+    </h2>}
     {(!setExpanded || expanded) && <div id={id} role='region' className={clsx('chip-body', noInsets && 'chip-body-no-insets')}>
       {children}
       {body && body()}
