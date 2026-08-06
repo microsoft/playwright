@@ -1537,6 +1537,38 @@ Locator is resolved to the element immediately before performing an action, so a
 
 [Learn more about locators](../locators.md).
 
+## template-locator-get
+
+Binds a page-free [By] locator, returning a [Locator] scoped to this object.
+
+**Usage**
+
+Consider a page object that describes elements without a page:
+
+```js
+// todo-page.ts
+import { by } from '@playwright/test';
+
+export const newTodo = by.placeholder('What needs to be done?');
+export const todoItems = by.testId('todo-list').role('listitem');
+```
+
+```js
+import { expect, test } from '@playwright/test';
+import { newTodo, todoItems } from './todo-page';
+
+test('adds a todo', async ({ page }) => {
+  await page.get(newTodo).fill('buy milk');
+  await expect(page.get(todoItems)).toHaveCount(1);
+});
+```
+
+**Details**
+
+The resolved [Locator] is the same one the equivalent `getBy*` chain would produce, so
+`page.get(by.testId('list').text('Row'))` and `page.getByTestId('list').getByText('Row')` match the
+same element.
+
 ## template-locator-get-by-test-id
 
 Locate element by the test id.

@@ -1778,6 +1778,47 @@ await page.GetByRole(AriaRole.Button).CountAsync();
 
 You can explicitly opt-out from strictness check by telling Playwright which element to use when multiple elements match, through [`method: Locator.first`], [`method: Locator.last`], and [`method: Locator.nth`]. These methods are **not recommended** because when your page changes, Playwright may click on an element you did not intend. Instead, follow best practices above to create a locator that uniquely identifies the target element.
 
+## Page-free locators
+* langs: js
+
+A [Locator] is bound to a page, so it can only be created once a page exists. [By] describes the
+same element without a page, which means it can be defined once at module scope and shared between
+tests. Build one with the top-level `by` object and bind it with [`method: Page.get`],
+[`method: Frame.get`] or [`method: Locator.get`].
+
+```js
+// todo-page.ts
+import { by } from '@playwright/test';
+
+export const newTodo = by.placeholder('What needs to be done?');
+export const todoItems = by.testId('todo-list').role('listitem');
+```
+
+```js
+import { expect, test } from '@playwright/test';
+import { newTodo, todoItems } from './todo-page';
+
+test('adds a todo', async ({ page }) => {
+  await page.get(newTodo).fill('buy milk');
+  await page.get(newTodo).press('Enter');
+  await expect(page.get(todoItems)).toHaveCount(1);
+});
+```
+
+A [By] supports the same chaining, filtering and operators as a [Locator], and resolves to exactly
+the same element, so `page.get(by.testId('list').text('Row'))` and
+`page.getByTestId('list').getByText('Row')` are interchangeable. Since a [By] is immutable, scoping
+one never changes the original:
+
+```js
+const list = by.testId('todo-list');
+const first = list.role('listitem').first();
+const active = list.filter({ has: by.get('.active') });
+```
+
+Test ids are resolved when the [By] is bound to a page, so a module-scope [By] still honours the
+`testIdAttribute` option from the config.
+
 ## More Locators
 
 For less commonly used locators, look at the [other locators](./other-locators.md) guide.
