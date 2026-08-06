@@ -187,6 +187,7 @@ export class Request extends SdkObject {
   readonly _serviceWorker: pages.Worker | null = null;
   readonly _context: contexts.BrowserContext;
   private _rawRequestHeadersPromise = new ManualPromise<HeadersArray>();
+  private _deferredPostDataPromise: ManualPromise<Buffer | null> | undefined;
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
   private _overrides: NormalizedContinueOverrides | undefined;
@@ -265,6 +266,22 @@ export class Request extends SdkObject {
 
   postDataBuffer(): Buffer | null {
     return this._overrides?.postData || this._postData;
+  }
+
+  // Marks that the post data is not available at request start and will be delivered
+  // asynchronously via resolvePostData().
+  deferPostData() {
+    this._deferredPostDataPromise = new ManualPromise();
+  }
+
+  resolvePostData(postData: Buffer | null) {
+    if (postData && !this._postData)
+      this._postData = postData;
+    this._deferredPostDataPromise?.resolve(this.postDataBuffer());
+  }
+
+  async body(progress: Progress): Promise<Buffer | null> {
+    return await this.raceWithPageClosure(progress, this._deferredPostDataPromise ?? Promise.resolve(this.postDataBuffer()));
   }
 
   headers(): HeadersArray {

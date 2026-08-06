@@ -136,6 +136,18 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return this._fallbackOverrides.method || this._initializer.method;
   }
 
+  async body(): Promise<string | null> {
+    return (await this.bodyBuffer())?.toString('utf-8') || null;
+  }
+
+  async bodyBuffer(): Promise<Buffer | null> {
+    return this._fallbackOverrides.postDataBuffer || (await this._channel.body({}, kNoTimeout)).body || null;
+  }
+
+  async bodyJSON(): Promise<Object | null> {
+    return this._postDataJSON(await this.body());
+  }
+
   postData(): string | null {
     return (this._fallbackOverrides.postDataBuffer ?? this._initializer.postData)?.toString('utf-8') ?? null;
   }
@@ -145,7 +157,10 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   postDataJSON(): Object | null {
-    const postData = this.postData();
+    return this._postDataJSON(this.postData());
+  }
+
+  private _postDataJSON(postData: string | null): Object | null {
     if (!postData)
       return null;
 

@@ -217,6 +217,19 @@ export class CRNetworkManager {
     }
   }
 
+  // When the request body is not available synchronously (e.g. a Blob or File body), Network.requestWillBeSent
+  // only reports hasPostData, and the bytes must be retrieved with Network.getRequestPostData. Fetch the body
+  // asynchronously and push it to the request once available. See https://github.com/microsoft/playwright/issues/6479.
+  private _maybeFetchPostData(sessionInfo: SessionInfo, requestWillBeSentEvent: Protocol.Network.requestWillBeSentPayload, requestPausedEvent: Protocol.Fetch.requestPausedPayload | undefined, request: network.Request) {
+    const cdpRequest = requestPausedEvent ? requestPausedEvent.request : requestWillBeSentEvent.request;
+    if (!cdpRequest.hasPostData || request.postDataBuffer())
+      return;
+    request.deferPostData();
+    sessionInfo.session.send('Network.getRequestPostData', { requestId: requestWillBeSentEvent.requestId })
+        .then(result => request.resolvePostData(Buffer.from(result.postData, result.base64Encoded ? 'base64' : 'utf-8')))
+        .catch(() => request.resolvePostData(null));
+  }
+
   _onRequestServedFromCache(event: Protocol.Network.requestServedFromCachePayload) {
     this._responseExtraInfoTracker.requestServedFromCache(event);
   }
@@ -368,6 +381,7 @@ export class CRNetworkManager {
       headersOverride: headersOverride || null,
     });
     this._requestIdToRequest.set(requestWillBeSentEvent.requestId, request);
+    this._maybeFetchPostData(requestWillBeSentSessionInfo, requestWillBeSentEvent, requestPausedEvent, request.request);
 
     if (route) {
       // We may not receive extra info when intercepting the request.

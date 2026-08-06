@@ -22217,6 +22217,26 @@ export interface Request {
   allHeaders(): Promise<{ [key: string]: string; }>;
 
   /**
+   * The request body, if present. Unlike
+   * [request.postData()](https://playwright.dev/docs/api/class-request#request-post-data), this method also works for
+   * request bodies that the browser only reports after the request has been sent, for example `Blob` or `File` payloads
+   * in Chromium-based browsers.
+   */
+  body(): Promise<null|string>;
+
+  /**
+   * The request body in a binary form. Returns null if the request has no body.
+   */
+  bodyBuffer(): Promise<null|Buffer>;
+
+  /**
+   * Returns the request body as a parsed JSON object. If the request `Content-Type` is
+   * `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise,
+   * it parses the body as JSON.
+   */
+  bodyJSON(): Promise<null|Serializable>;
+
+  /**
    * Returns the [Response](https://playwright.dev/docs/api/class-response) object if the response has already been
    * received, `null` otherwise.
    *
@@ -22323,20 +22343,25 @@ export interface Request {
   method(): string;
 
   /**
-   * Request's post body, if any.
+   * **NOTE** Use [request.body()](https://playwright.dev/docs/api/class-request#request-body) instead.
+   *
+   * The request body, if present.
    */
   postData(): null|string;
 
   /**
-   * Request's post body in a binary form, if any.
+   * **NOTE** Use [request.bodyBuffer()](https://playwright.dev/docs/api/class-request#request-body-buffer) instead.
+   *
+   * The request body in a binary form. Returns null if the request has no body.
    */
   postDataBuffer(): null|Buffer;
 
   /**
-   * Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
+   * **NOTE** Use [request.bodyJSON()](https://playwright.dev/docs/api/class-request#request-body-json) instead.
    *
-   * When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
-   * Otherwise it will be parsed as JSON.
+   * Returns the request body as a parsed JSON object. If the request `Content-Type` is
+   * `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise,
+   * it parses the body as JSON.
    */
   postDataJSON(): null|Serializable;
 

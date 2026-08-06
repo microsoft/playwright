@@ -2040,6 +2040,10 @@ scheme.RequestInitializer = tObject({
   isNavigationRequest: tBoolean,
   redirectedFrom: tOptional(tChannel(['Request'])),
 });
+scheme.RequestBodyParams = tOptional(tObject({}));
+scheme.RequestBodyResult = tObject({
+  body: tOptional(tBinary),
+});
 scheme.RequestResponseParams = tOptional(tObject({}));
 scheme.RequestResponseResult = tObject({
   response: tOptional(tChannel(['Response'])),
