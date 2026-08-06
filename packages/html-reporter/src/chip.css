@@ -23,7 +23,7 @@
   background-color: var(--color-canvas-subtle);
   padding: 0 8px;
   border-bottom: none;
-  margin-top: 12px;
+  margin: 12px 0 0;
   color: inherit;
   font: inherit;
   font-weight: 600;
