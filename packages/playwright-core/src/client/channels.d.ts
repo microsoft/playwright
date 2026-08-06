@@ -1264,6 +1264,11 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, Channe
   clockRunFor(params: BrowserContextClockRunForParams, options: TimeoutOptions): Promise<BrowserContextClockRunForResult>;
   clockSetFixedTime(params: BrowserContextClockSetFixedTimeParams, options: TimeoutOptions): Promise<BrowserContextClockSetFixedTimeResult>;
   clockSetSystemTime(params: BrowserContextClockSetSystemTimeParams, options: TimeoutOptions): Promise<BrowserContextClockSetSystemTimeResult>;
+  clipboardInstall(params: BrowserContextClipboardInstallParams, options: TimeoutOptions): Promise<BrowserContextClipboardInstallResult>;
+  clipboardReadText(params: BrowserContextClipboardReadTextParams, options: TimeoutOptions): Promise<BrowserContextClipboardReadTextResult>;
+  clipboardWriteText(params: BrowserContextClipboardWriteTextParams, options: TimeoutOptions): Promise<BrowserContextClipboardWriteTextResult>;
+  clipboardRead(params: BrowserContextClipboardReadParams, options: TimeoutOptions): Promise<BrowserContextClipboardReadResult>;
+  clipboardWrite(params: BrowserContextClipboardWriteParams, options: TimeoutOptions): Promise<BrowserContextClipboardWriteResult>;
   credentialsInstall(params: BrowserContextCredentialsInstallParams, options: TimeoutOptions): Promise<BrowserContextCredentialsInstallResult>;
   credentialsCreate(params: BrowserContextCredentialsCreateParams, options: TimeoutOptions): Promise<BrowserContextCredentialsCreateResult>;
   credentialsGet(params: BrowserContextCredentialsGetParams, options: TimeoutOptions): Promise<BrowserContextCredentialsGetResult>;
@@ -1650,6 +1655,39 @@ export type BrowserContextClockSetSystemTimeOptions = {
   timeString?: string,
 };
 export type BrowserContextClockSetSystemTimeResult = void;
+export type BrowserContextClipboardInstallParams = {};
+export type BrowserContextClipboardInstallOptions = {};
+export type BrowserContextClipboardInstallResult = void;
+export type BrowserContextClipboardReadTextParams = {};
+export type BrowserContextClipboardReadTextOptions = {};
+export type BrowserContextClipboardReadTextResult = {
+  text: string,
+};
+export type BrowserContextClipboardWriteTextParams = {
+  text: string,
+};
+export type BrowserContextClipboardWriteTextOptions = {
+
+};
+export type BrowserContextClipboardWriteTextResult = void;
+export type BrowserContextClipboardReadParams = {};
+export type BrowserContextClipboardReadOptions = {};
+export type BrowserContextClipboardReadResult = {
+  items: {
+    mimeType: string,
+    buffer: Binary,
+  }[],
+};
+export type BrowserContextClipboardWriteParams = {
+  items: {
+    mimeType: string,
+    buffer: Binary,
+  }[],
+};
+export type BrowserContextClipboardWriteOptions = {
+
+};
+export type BrowserContextClipboardWriteResult = void;
 export type BrowserContextCredentialsInstallParams = {};
 export type BrowserContextCredentialsInstallOptions = {};
 export type BrowserContextCredentialsInstallResult = void;

@@ -913,6 +913,30 @@ scheme.BrowserContextClockSetSystemTimeParams = tObject({
   timeString: tOptional(tString),
 });
 scheme.BrowserContextClockSetSystemTimeResult = tOptional(tObject({}));
+scheme.BrowserContextClipboardInstallParams = tOptional(tObject({}));
+scheme.BrowserContextClipboardInstallResult = tOptional(tObject({}));
+scheme.BrowserContextClipboardReadTextParams = tOptional(tObject({}));
+scheme.BrowserContextClipboardReadTextResult = tObject({
+  text: tString,
+});
+scheme.BrowserContextClipboardWriteTextParams = tObject({
+  text: tString,
+});
+scheme.BrowserContextClipboardWriteTextResult = tOptional(tObject({}));
+scheme.BrowserContextClipboardReadParams = tOptional(tObject({}));
+scheme.BrowserContextClipboardReadResult = tObject({
+  items: tArray(tObject({
+    mimeType: tString,
+    buffer: tBinary,
+  })),
+});
+scheme.BrowserContextClipboardWriteParams = tObject({
+  items: tArray(tObject({
+    mimeType: tString,
+    buffer: tBinary,
+  })),
+});
+scheme.BrowserContextClipboardWriteResult = tOptional(tObject({}));
 scheme.BrowserContextCredentialsInstallParams = tOptional(tObject({}));
 scheme.BrowserContextCredentialsInstallResult = tOptional(tObject({}));
 scheme.BrowserContextCredentialsCreateParams = tObject({

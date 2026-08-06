@@ -60,6 +60,47 @@ test('should respect viewport option', async ({ runInlineTest }) => {
   expect(result.passed).toBe(2);
 });
 
+test('should respect clipboard option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { clipboard: true } };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('installed via the option', async ({ context, page }) => {
+        // Native Ctrl+C is only captured when the clipboard was installed before the page loaded.
+        await page.evaluate(() => document.body.innerHTML = '<div id="src">copied text</div>');
+        await page.locator('#src').selectText();
+        await page.keyboard.press('ControlOrMeta+c');
+        await expect.poll(() => context.clipboard.readText()).toBe('copied text');
+      });
+    `,
+    'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.use({ clipboard: false });
+      test('opted out', async ({ context, page }) => {
+        await page.evaluate(() => document.body.innerHTML = '<div id="src">copied text</div>');
+        await page.locator('#src').selectText();
+        await page.keyboard.press('ControlOrMeta+c');
+        expect(await context.clipboard.readText()).toBe('');
+      });
+    `,
+    'c.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.use({ clipboard: { install: true } });
+      test('installed via the object form', async ({ context, page }) => {
+        await page.evaluate(() => document.body.innerHTML = '<div id="src">object form</div>');
+        await page.locator('#src').selectText();
+        await page.keyboard.press('ControlOrMeta+c');
+        await expect.poll(() => context.clipboard.readText()).toBe('object form');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+});
+
 test('should run in three browsers with --browser', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

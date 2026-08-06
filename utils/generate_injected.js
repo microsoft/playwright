@@ -81,6 +81,12 @@ const injectedScripts = [
     true,
   ],
   [
+    path.join(ROOT, 'packages', 'injected', 'src', 'clipboard.ts'),
+    path.join(ROOT, 'packages', 'injected', 'lib'),
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
+    true,
+  ],
+  [
     path.join(ROOT, 'packages', 'injected', 'src', 'webview', 'webViewInput.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),

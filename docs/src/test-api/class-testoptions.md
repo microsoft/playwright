@@ -159,6 +159,25 @@ export default defineConfig({
 });
 ```
 
+## property: TestOptions.clipboard
+* since: v1.62
+- type: <[boolean]|[Object]>
+  - `install` <[boolean]> Whether to install the virtual clipboard.
+
+Whether to install the virtual clipboard into the [BrowserContext] created for each test, so that tests can use [`property: BrowserContext.clipboard`] and native clipboard shortcuts without calling [`method: Clipboard.install`] themselves. Pass `true` as a shorthand for `{ install: true }`. Defaults to `false`.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    clipboard: true,
+  },
+});
+```
+
 ## property: TestOptions.colorScheme = %%-context-option-colorscheme-%%
 * since: v1.10
 

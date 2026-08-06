@@ -20,6 +20,7 @@ import fs from 'fs';
 import { rewriteErrorMessage } from '@utils/stackTrace';
 import { debugMode, isUnderTest } from '@utils/debug';
 import { Clock } from './clock';
+import { Clipboard } from './clipboard';
 import { Credentials } from './credentials';
 import { Debugger } from './debugger';
 import { DialogManager } from './dialog';
@@ -116,6 +117,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   private _debugger!: Debugger;
   _closeReason: string | undefined;
   readonly clock: Clock;
+  readonly clipboard: Clipboard;
   readonly credentials: Credentials;
   _clientCertificatesProxy: ClientCertificatesProxy | undefined;
   private _playwrightBindingExposed?: Promise<void>;
@@ -135,6 +137,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     this.fetchRequest = new BrowserContextAPIRequestContext(this);
     this.tracing = new Tracing(this, browser.options.tracesDir);
     this.clock = new Clock(this);
+    this.clipboard = new Clipboard(this);
     this.credentials = new Credentials(this);
     this.dialogManager = new DialogManager(this.instrumentation);
   }
@@ -246,6 +249,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     // Note: we only need to reset properties from the "paramsThatAllowContextReuse" list.
     // All other properties force a new context.
     await this.clock.uninstall(progress);
+    await this.clipboard.resetForReuse(progress);
     await progress.race(this.setUserAgent(this._options.userAgent));
     await progress.race(this.doUpdateDefaultEmulatedMedia());
     await progress.race(this.doUpdateDefaultViewport());

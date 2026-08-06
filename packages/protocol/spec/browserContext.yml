@@ -319,6 +319,41 @@ BrowserContext:
         timeNumber: float?
         timeString: string?
 
+    clipboardInstall:
+      title: Install clipboard
+
+    clipboardReadText:
+      title: Read clipboard text
+      returns:
+        text: string
+
+    clipboardWriteText:
+      title: Write clipboard text
+      parameters:
+        text: string
+
+    clipboardRead:
+      title: Read clipboard
+      returns:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              mimeType: string
+              buffer: binary
+
+    clipboardWrite:
+      title: Write clipboard
+      parameters:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              mimeType: string
+              buffer: binary
+
     credentialsInstall:
       title: Install virtual WebAuthn authenticator
       group: configuration
