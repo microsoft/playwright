@@ -31,6 +31,20 @@ async function navigateToForm(client: Client, server: any) {
   });
 }
 
+test('codegen defaults to PW_LANG_NAME', async ({ startClient, server }) => {
+  const { client } = await startClient({ env: { PW_LANG_NAME: 'python' } });
+  expect(await navigateToForm(client, server)).toHaveResponse({
+    code: `page.goto("${server.PREFIX}")`,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Submit button', target: 'e2' },
+  })).toHaveResponse({
+    code: `page.get_by_role("button", name="Submit").click()`,
+  });
+});
+
 test('codegen python', async ({ startClient, server }) => {
   const { client } = await startClient({ args: ['--codegen=python'] });
   expect(await navigateToForm(client, server)).toHaveResponse({
