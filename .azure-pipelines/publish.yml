@@ -99,15 +99,6 @@ extends:
               set -e
               mkdir -p "$(Build.ArtifactStagingDirectory)/esrp-build"
               node utils/workspace.js --list-public-package-paths | while read package; do
-                # ESRP runs `npm publish` without a --tag argument, so the dist-tag
-                # has to be baked into each tarball via publishConfig.tag.
-                node -e "
-                  const fs = require('fs');
-                  const file = process.argv[1] + '/package.json';
-                  const pkg = JSON.parse(fs.readFileSync(file, 'utf8'));
-                  pkg.publishConfig = { ...pkg.publishConfig, tag: 'next' };
-                  fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + '\n');
-                " "$package"
                 npm pack --pack-destination="$(Build.ArtifactStagingDirectory)/esrp-build" "$package"
               done
               ls -la "$(Build.ArtifactStagingDirectory)/esrp-build"
@@ -133,6 +124,8 @@ extends:
               clientid: '13434a40-7de4-4c23-81a3-d843dc81c2c5'
               intent: 'PackageDistribution'
               contenttype: 'npm'
+              # npm dist-tag to publish with.
+              productstate: 'next'
               folderlocation: '$(Build.ArtifactStagingDirectory)/esrp-build'
               waitforreleasecompletion: true
               owners: 'yurys@microsoft.com'
