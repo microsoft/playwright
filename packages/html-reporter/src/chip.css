@@ -15,6 +15,8 @@
 */
 
 .chip-header {
+  display: block;
+  width: 100%;
   border: 1px solid var(--color-border-default);
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
@@ -22,12 +24,20 @@
   padding: 0 8px;
   border-bottom: none;
   margin-top: 12px;
+  color: inherit;
+  font: inherit;
   font-weight: 600;
   line-height: 38px;
+  text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   user-select: none;
+}
+
+.chip-header:focus-visible {
+  outline: 1px solid var(--color-accent-fg);
+  outline-offset: -1px;
 }
 
 .chip-header-allow-selection {

@@ -33,3 +33,6 @@ export const Stateful = () => {
 
 export const WithBody = () =>
   <AutoChip header='Title' body={() => 'Body from render prop'}>Chip children</AutoChip>;
+
+export const NotExpandable = () =>
+  <Chip header='Title'>Body</Chip>;

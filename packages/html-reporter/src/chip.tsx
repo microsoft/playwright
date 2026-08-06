@@ -33,17 +33,23 @@ export const Chip: React.FC<{
   dataTestId?: string,
 }> = ({ header, footer, expanded, setExpanded, children, noInsets, body, dataTestId }) => {
   const id = React.useId();
+  const title = typeof header === 'string' ? header : undefined;
+  const headerContent = <>
+    {setExpanded ? (expanded ? <icons.downArrow /> : <icons.rightArrow />) : <icons.spacer />}
+    {header}
+  </>;
   return <div className='chip' data-testid={dataTestId}>
-    <div
-      role='button'
+    {setExpanded ? <button
+      type='button'
       aria-expanded={!!expanded}
       aria-controls={id}
-      className={clsx('chip-header', setExpanded && ' expanded-' + expanded)}
-      onClick={() => setExpanded?.(!expanded)}
-      title={typeof header === 'string' ? header : undefined}>
-      {setExpanded ? (expanded ? <icons.downArrow /> : <icons.rightArrow />) : <icons.spacer />}
-      {header}
-    </div>
+      className={clsx('chip-header', 'expanded-' + expanded)}
+      onClick={() => setExpanded(!expanded)}
+      title={title}>
+      {headerContent}
+    </button> : <div className='chip-header' title={title}>
+      {headerContent}
+    </div>}
     {(!setExpanded || expanded) && <div id={id} role='region' className={clsx('chip-body', noInsets && 'chip-body-no-insets')}>
       {children}
       {body && body()}
