@@ -148,6 +148,17 @@ a timeline preview.
 
 ### option: Tracing.start.snapshots
 * since: v1.12
+* langs: js
+- `snapshots` <[boolean]|[Object]>
+  - `dom` ?<[boolean]> Capture DOM snapshot on every action and record network activity. Optional.
+  - `aria` ?<[boolean]> Capture aria snapshot of the page on every action. Optional.
+  - `screen` ?<[boolean]> Capture a screenshot of the page on every action. Optional.
+
+Which snapshots to capture on every action. Passing `true` is a shortcut for `{ dom: true }`.
+
+### option: Tracing.start.snapshots
+* since: v1.12
+* langs: java, python, csharp
 - `snapshots` <[boolean]>
 
 If this option is true tracing will

@@ -23692,11 +23692,24 @@ export interface Tracing {
     screenshots?: boolean;
 
     /**
-     * If this option is true tracing will
-     * - capture DOM snapshot on every action
-     * - record network activity
+     * Which snapshots to capture on every action. Passing `true` is a shortcut for `{ dom: true }`.
      */
-    snapshots?: boolean;
+    snapshots?: boolean|{
+      /**
+       * Capture DOM snapshot on every action and record network activity. Optional.
+       */
+      dom?: boolean;
+
+      /**
+       * Capture aria snapshot of the page on every action. Optional.
+       */
+      aria?: boolean;
+
+      /**
+       * Capture a screenshot of the page on every action. Optional.
+       */
+      screen?: boolean;
+    };
 
     /**
      * Whether to include source files for trace actions.

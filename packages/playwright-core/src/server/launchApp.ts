@@ -62,7 +62,7 @@ export async function launchApp(browserType: BrowserType, options: {
       acceptDownloads: options?.persistentContextOptions?.acceptDownloads ?? (isUnderTest() ? 'accept' : 'internal-browser-default'),
       colorScheme: options?.persistentContextOptions?.colorScheme ?? 'no-override',
       args,
-    }), 0); // Deliberately no timeout for our apps.
+    }), { timeout: 0 }); // Deliberately no timeout for our apps.
   } catch (error) {
     if (channel) {
       error = rewriteErrorMessage(error, [

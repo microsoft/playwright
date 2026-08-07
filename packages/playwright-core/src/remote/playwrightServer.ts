@@ -216,7 +216,7 @@ export class PlaywrightServer {
       browser = await controller.run(progress => browserType.launch(progress, {
         ...launchOptions,
         headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS,
-      }), launchOptions.timeout);
+      }), { timeout: launchOptions.timeout });
     }
 
     return {
@@ -243,7 +243,7 @@ export class PlaywrightServer {
     if (!browser) {
       const browserType = this._playwright[browserName as 'chromium'];
       const controller = new ProgressController();
-      browser = await controller.run(progress => browserType.launch(progress, launchOptions), launchOptions.timeout);
+      browser = await controller.run(progress => browserType.launch(progress, launchOptions), { timeout: launchOptions.timeout });
       this._dontReuse(browser);
     }
 
@@ -295,7 +295,7 @@ export class PlaywrightServer {
     }
     const browserType = this._playwright[browserName as 'chromium'];
     const controller = new ProgressController();
-    const browser = await controller.run(progress => browserType.launch(progress, launchOptions), launchOptions.timeout);
+    const browser = await controller.run(progress => browserType.launch(progress, launchOptions), { timeout: launchOptions.timeout });
     this._dontReuseBrowsers.add(browser);
     return {
       preLaunchedBrowser: browser,

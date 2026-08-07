@@ -117,7 +117,8 @@ export class Debugger extends SdkObject<DebuggerEventMap> implements Instrumenta
     this._muted = muted;
   }
 
-  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  async onBeforeCall(progress: Progress, sdkObject: SdkObject): Promise<void> {
+    const { metadata } = progress;
     if (!metadata.internal && metadata.method)
       this._ongoingCalls.set(metadata.id, { metadata, sentLogCount: 0, status: 'running' });
     if (this._apiCallsEnabled) {
@@ -131,10 +132,11 @@ export class Debugger extends SdkObject<DebuggerEventMap> implements Instrumenta
     const pauseBeforeAction = !!this._pauseAt.next && !!metainfo?.pause && (this._pauseBeforeWaitingActions || !metainfo?.isAutoWaiting);
     const pauseOnLocation = !!this._pauseAt.location && matchesLocation(metadata, this._pauseAt.location);
     if (pauseOnPauseCall || pauseBeforeAction || pauseOnLocation)
-      await this._pause(sdkObject, metadata);
+      await this._pause(progress, sdkObject);
   }
 
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, point?: Point): Promise<void> {
+  async onBeforeInputAction(progress: Progress, sdkObject: SdkObject, point?: Point): Promise<void> {
+    const { metadata } = progress;
     const call = this._ongoingCalls.get(metadata.id);
     if (call) {
       call.actionPoint = point;
@@ -148,10 +150,11 @@ export class Debugger extends SdkObject<DebuggerEventMap> implements Instrumenta
     const metainfo = getMetainfo(metadata);
     const pauseBeforeInput = !!this._pauseAt.next && !!metainfo?.pause && !!metainfo?.isAutoWaiting && !this._pauseBeforeWaitingActions;
     if (pauseBeforeInput)
-      await this._pause(sdkObject, metadata);
+      await this._pause(progress, sdkObject);
   }
 
-  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  async onAfterCall(progress: Progress, sdkObject: SdkObject): Promise<void> {
+    const { metadata } = progress;
     const call = this._ongoingCalls.get(metadata.id);
     if (!call)
       return;
@@ -212,7 +215,8 @@ export class Debugger extends SdkObject<DebuggerEventMap> implements Instrumenta
       this.emit(Debugger.Events.ApiCallsUpdated, updates);
   }
 
-  private async _pause(sdkObject: SdkObject, metadata: CallMetadata) {
+  private async _pause(progress: Progress, sdkObject: SdkObject) {
+    const { metadata } = progress;
     if (this._muted || metadata.internal)
       return;
     if (this._pausedCall)

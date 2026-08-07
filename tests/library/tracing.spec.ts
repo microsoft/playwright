@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import { jpegjs } from 'playwright-core/lib/utilsBundle';
+import { PNG, jpegjs } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
 import { browserTest, contextTest as test, expect } from '../config/browserTest';
 import { parseTraceRaw } from '../config/utils';
@@ -106,6 +106,51 @@ test('should not collect snapshots by default', async ({ context, page, server }
   const { events } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
   expect(events.some(e => e.type === 'frame-snapshot')).toBeFalsy();
   expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
+});
+
+test('should not collect action screenshots and aria snapshots by default', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ snapshots: true });
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.click('button');
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+
+  const { events } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  expect(events.some(e => e.type === 'screenshot')).toBeFalsy();
+  expect(events.some(e => e.type === 'aria-snapshot')).toBeFalsy();
+});
+
+test('should collect action screenshots', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ snapshots: { screen: true } });
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.click('button');
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+
+  const { events, resources } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  const clickCallId = events.find(e => e.type === 'before' && e.method === 'click').callId;
+  const screenshots = events.filter(e => e.type === 'screenshot' && e.callId === clickCallId);
+  expect(screenshots.map(e => e.phase)).toEqual(['before', 'action', 'after']);
+  for (const screenshot of screenshots) {
+    const buffer = resources.get('resources/' + screenshot.sha1);
+    expect(PNG.sync.read(buffer).width).toBeGreaterThan(0);
+  }
+});
+
+test('should collect aria snapshots', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ snapshots: { aria: true } });
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.click('button');
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+
+  const { events, resources } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  const clickCallId = events.find(e => e.type === 'before' && e.method === 'click').callId;
+  const ariaSnapshots = events.filter(e => e.type === 'aria-snapshot' && e.callId === clickCallId);
+  expect(ariaSnapshots.map(e => e.phase)).toEqual(['before', 'action', 'after']);
+  const hasButton = nodes => nodes.some(node => typeof node === 'object' && (node.role === 'button' && node.name === 'Click target' || hasButton(node.children ?? [])));
+  for (const ariaSnapshot of ariaSnapshots) {
+    expect(ariaSnapshot.sha1).toMatch(/\.json$/);
+    const snapshot = JSON.parse(resources.get('resources/' + ariaSnapshot.sha1).toString());
+    expect(hasButton(snapshot)).toBe(true);
+  }
 });
 
 test('can call tracing.group/groupEnd at any time and auto-close', async ({ context, page, server }, testInfo) => {
