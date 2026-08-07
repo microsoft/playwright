@@ -88,6 +88,15 @@ it('should snapshot text fragments in children', async ({ page }) => {
   ]);
 });
 
+it('should snapshot top-level text fragments as text nodes', async ({ page }) => {
+  await page.setContent(`Hello <button>One</button> again`);
+  expect(await page.ariaSnapshotJSON()).toEqual([
+    { role: 'text', text: 'Hello' },
+    { role: 'button', name: 'One' },
+    { role: 'text', text: 'again' },
+  ]);
+});
+
 it('should generate refs in ai mode', async ({ page }) => {
   await page.setContent(`
     <button>One</button>

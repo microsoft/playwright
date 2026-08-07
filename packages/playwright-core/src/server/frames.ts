@@ -17,6 +17,7 @@
 
 import yaml from 'yaml';
 import { parseAriaSnapshotUnsafe } from '@isomorphic/ariaSnapshot';
+import { renderAriaSnapshotAsYaml } from '@isomorphic/ariaSnapshotRenderer';
 import { isInvalidSelectorError } from '@isomorphic/selectorParser';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper } from '@utils/eventsHelper';
@@ -35,7 +36,7 @@ import { helper } from './helper';
 import { SdkObject } from './instrumentation';
 import * as js from './javascript';
 import * as network from './network';
-import { Page, ariaSnapshotForFrame, ariaSnapshotJSONForFrame } from './page';
+import { Page, ariaSnapshotJSONForFrame } from './page';
 import { isAbortError, nullProgress, ProgressController, raceUncancellableOperationWithCleanup } from './progress';
 import * as types from './types';
 import { isSessionClosedError } from './protocolError';
@@ -1864,15 +1865,9 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async ariaSnapshot(progress: Progress, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, selector?: string, depth?: number, boxes?: boolean } = {}): Promise<{ snapshot: string }> {
-    if (options.selector && options.mode !== 'ai') {
-      // Non-ai locator snapshot is auto-waiting and does not include iframes.
-      const snapshot = await this._retryWithProgressIfNotConnected(progress, options.selector, { strict: true, performActionPreChecks: true }, async (progress, handle) => {
-        return await progress.race(handle.evaluateInUtility(([injected, element, opts]) => injected.ariaSnapshot(element, opts), { mode: 'default' as const, depth: options.depth, boxes: options.boxes }));
-      });
-      return { snapshot };
-    }
-    const lines = await ariaSnapshotForFrame(progress, this, options.selector, options);
-    return { snapshot: lines.join('\n') };
+    // Serialize to yaml at the last moment, before returning to the client.
+    const { snapshot } = await this.ariaSnapshotJSON(progress, options);
+    return { snapshot: renderAriaSnapshotAsYaml(snapshot) };
   }
 
   async ariaSnapshotJSON(progress: Progress, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, selector?: string, depth?: number, boxes?: boolean } = {}): Promise<{ snapshot: AriaSnapshotJSON }> {

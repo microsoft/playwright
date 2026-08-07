@@ -14481,11 +14481,11 @@ export interface Locator {
    *
    * This method returns the same tree as
    * [locator.ariaSnapshot([options])](https://playwright.dev/docs/api/class-locator#locator-aria-snapshot), serialized
-   * as a JSON value instead of YAML markup. The result is a list of nodes, each node being either a plain string with
-   * static text, or an object with the following properties:
-   * - `role` Aria role of the element.
+   * as a JSON value instead of YAML markup. The result is a list of nodes, each node being an object with the following
+   * properties:
+   * - `role` Aria role of the element, or `"text"` for a static text fragment.
    * - `name` Accessible name of the element, if any.
-   * - `text` Text content of the element, when it is the only child.
+   * - `text` Text content of the element when it is the only child, or the content of a static text fragment.
    * - `children` Child nodes and text fragments.
    * - Boolean and value properties for element state flags: `checked`, `disabled`, `expanded`, `active`, `invalid`,
    *   `level`, `pressed` and `selected`.

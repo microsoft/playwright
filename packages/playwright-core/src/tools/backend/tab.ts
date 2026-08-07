@@ -27,6 +27,7 @@ import { ModalState } from './tool';
 import { handleDialog } from './dialogs';
 import { uploadFile } from './files';
 
+import type { AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
 import type { Disposable } from '@isomorphic/disposable';
 import type { Context, ContextConfig } from './context';
 import type * as playwright from '../../..';
@@ -83,7 +84,7 @@ export type TabHeader = {
 
 type TabSnapshot = {
   ariaSnapshot: string;
-  ariaSnapshotJSON?: unknown;
+  ariaSnapshotJSON?: AriaSnapshotJSON;
   modalStates: ModalState[];
   events: EventEntry[];
   consoleLink?: string;

@@ -32,6 +32,7 @@ import type { EvaluateOptions } from './jsHandle';
 import type { DropPayload, FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
+import type { AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
 import type { By } from '@isomorphic/by';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
 import type * as channels from './channels';
@@ -339,7 +340,7 @@ export class Locator implements api.Locator {
     return result.snapshot;
   }
 
-  async ariaSnapshotJSON(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<any> {
+  async ariaSnapshotJSON(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<AriaSnapshotJSON> {
     const result = await this._frame._channel.ariaSnapshotJSON({ mode: options.mode, selector: this._selector, depth: options.depth, boxes: options.boxes }, this._frame._timeout(options));
     return result.snapshot;
   }

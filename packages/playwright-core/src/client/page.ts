@@ -59,6 +59,7 @@ import type { RouteHandlerCallback, WebSocketRouteHandlerCallback } from './netw
 import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, TimeoutOptions, WaitForEventOptions, WaitForFunctionOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
+import type { AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
 import type { By } from '@isomorphic/by';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
 import type { URLMatch } from '@isomorphic/urlMatch';
@@ -929,7 +930,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.snapshot;
   }
 
-  async ariaSnapshotJSON(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<any> {
+  async ariaSnapshotJSON(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<AriaSnapshotJSON> {
     const result = await this.mainFrame()._channel.ariaSnapshotJSON({ mode: options.mode, depth: options.depth, boxes: options.boxes }, this._timeoutSettings.timeout(options));
     return result.snapshot;
   }

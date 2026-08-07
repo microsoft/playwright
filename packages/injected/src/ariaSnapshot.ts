@@ -15,8 +15,8 @@
  */
 
 import * as aria from '@isomorphic/ariaSnapshot';
-import { escapeRegExp, longestCommonSubstring, normalizeWhiteSpace, truncateDataUrl } from '@isomorphic/stringUtils';
-import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from '@isomorphic/yaml';
+import { renderAriaSnapshotAsYaml } from '@isomorphic/ariaSnapshotRenderer';
+import { normalizeWhiteSpace, truncateDataUrl } from '@isomorphic/stringUtils';
 
 import { distillAriaSnapshot } from './ariaSnapshotDistiller';
 import { computeBox, getElementComputedStyle, isElementVisible } from './domUtils';
@@ -52,7 +52,6 @@ type InternalOptions = {
   includeGenericRole?: boolean,
   renderCursorPointer?: boolean,
   renderActive?: boolean,
-  renderStringsAsRegex?: boolean,
   renderBoxes?: boolean,
 };
 
@@ -74,11 +73,8 @@ function toInternalOptions(options: AriaTreeOptions): InternalOptions {
     // To auto-generate assertions on visible elements.
     return { visibility: 'ariaAndVisible', refs: 'none', renderBoxes };
   }
-  if (options.mode === 'codegen') {
-    // To generate aria assertion with regex heurisitcs.
-    return { visibility: 'aria', refs: 'none', renderStringsAsRegex: true, renderBoxes };
-  }
-  // To match aria snapshot.
+  // To match aria snapshot. In 'codegen' mode, the generated tree is the same,
+  // strings are converted to regexes when serializing to yaml.
   return { visibility: 'aria', refs: 'none', renderBoxes };
 }
 
@@ -360,11 +356,12 @@ export type MatcherReceived = {
 export function matchesExpectAriaTemplate(rootElement: Element, template: aria.AriaTemplateNode): { matches: aria.AriaNode[], received: MatcherReceived } {
   const snapshot = generateAriaTree(rootElement, { mode: 'default' });
   const matches = matchesNodeDeep(snapshot.root, template, false, false);
+  const { json } = renderAriaTreeAsJSON(snapshot, { mode: 'default' });
   return {
     matches,
     received: {
-      raw: renderAriaTree(snapshot, { mode: 'default' }).text,
-      regex: renderAriaTree(snapshot, { mode: 'codegen' }).text,
+      raw: renderAriaSnapshotAsYaml(json),
+      regex: renderAriaSnapshotAsYaml(json, { convertStringsToRegex: true }),
     }
   };
 }
@@ -462,127 +459,6 @@ function matchesNodeDeep(root: aria.AriaNode, template: aria.AriaTemplateNode, c
   return results;
 }
 
-function indent(depth: number): string {
-  return '  '.repeat(depth);
-}
-
-export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTreeOptions): { text: string, iframeDepths: Record<string, number> } {
-  const options = toInternalOptions(publicOptions);
-  const lines: string[] = [];
-  const iframeDepths: Record<string, number> = {};
-  const includeText = options.renderStringsAsRegex ? textContributesInfo : () => true;
-  const renderString = options.renderStringsAsRegex ? convertToBestGuessRegex : (str: string) => str;
-
-  // Do not render the root fragment, just its children.
-  const nodesToRender = ariaSnapshot.root.role === 'fragment' ? ariaSnapshot.root.children : [ariaSnapshot.root];
-
-  const visitText = (text: string, depth: number) => {
-    if (publicOptions.depth && depth > publicOptions.depth)
-      return;
-    const escaped = yamlEscapeValueIfNeeded(renderString(text));
-    if (escaped)
-      lines.push(indent(depth) + '- text: ' + escaped);
-  };
-
-  const createKey = (ariaNode: aria.AriaNode, renderCursorPointer: boolean): string => {
-    let key = ariaNode.role;
-    // Yaml has a limit of 1024 characters per key, and we leave some space for role and attributes.
-    if (ariaNode.name && ariaNode.name.length <= 900) {
-      const name = renderString(ariaNode.name);
-      if (name) {
-        const stringifiedName = name.startsWith('/') && name.endsWith('/') ? name : JSON.stringify(name);
-        key += ' ' + stringifiedName;
-      }
-    }
-    if (ariaNode.checked === 'mixed')
-      key += ` [checked=mixed]`;
-    if (ariaNode.checked === true)
-      key += ` [checked]`;
-    if (ariaNode.disabled)
-      key += ` [disabled]`;
-    if (ariaNode.expanded)
-      key += ` [expanded]`;
-    if (ariaNode.active && options.renderActive)
-      key += ` [active]`;
-    if (ariaNode.invalid === 'grammar' || ariaNode.invalid === 'spelling')
-      key += ` [invalid=${ariaNode.invalid}]`;
-    if (ariaNode.invalid === true)
-      key += ` [invalid]`;
-    if (ariaNode.level)
-      key += ` [level=${ariaNode.level}]`;
-    if (ariaNode.pressed === 'mixed')
-      key += ` [pressed=mixed]`;
-    if (ariaNode.pressed === true)
-      key += ` [pressed]`;
-    if (ariaNode.selected === true)
-      key += ` [selected]`;
-
-    if (ariaNode.ref) {
-      key += ` [ref=${ariaNode.ref}]`;
-      if (renderCursorPointer && aria.hasPointerCursor(ariaNode))
-        key += ' [cursor=pointer]';
-    }
-    if (options.renderBoxes) {
-      const element = ariaNodeElement(ariaNode);
-      if (element) {
-        const r = element.getBoundingClientRect();
-        key += ` [box=${Math.round(r.x)},${Math.round(r.y)},${Math.round(r.width)},${Math.round(r.height)}]`;
-      }
-    }
-    return key;
-  };
-
-  const getSingleTextChild = (ariaNode: aria.AriaNode): string | undefined => {
-    return ariaNode.children.length === 1 && typeof ariaNode.children[0] === 'string' && !Object.keys(ariaNode.props).length ? ariaNode.children[0] : undefined;
-  };
-
-  const visit = (ariaNode: aria.AriaNode, depth: number, renderCursorPointer: boolean) => {
-    if (publicOptions.depth && depth > publicOptions.depth)
-      return;
-
-    if (ariaNode.role === 'iframe' && ariaNode.ref)
-      iframeDepths[ariaNode.ref] = depth;
-
-    const escapedKey = indent(depth) + '- ' + yamlEscapeKeyIfNeeded(createKey(ariaNode, renderCursorPointer));
-    const singleTextChild = getSingleTextChild(ariaNode);
-    const isAtDepthLimit = !!publicOptions.depth && depth === publicOptions.depth;
-    const hasNoChildren = !singleTextChild && (!ariaNode.children.length || isAtDepthLimit);
-
-    if (hasNoChildren && !Object.keys(ariaNode.props).length) {
-      // Leaf node without children.
-      lines.push(escapedKey);
-    } else if (singleTextChild !== undefined) {
-      // Leaf node with just some text inside.
-      const shouldInclude = includeText(ariaNode, singleTextChild);
-      if (shouldInclude)
-        lines.push(escapedKey + ': ' + yamlEscapeValueIfNeeded(renderString(singleTextChild)));
-      else
-        lines.push(escapedKey);
-    } else {
-      // Node with (optional) props and some children.
-      lines.push(escapedKey + ':');
-      for (const [name, value] of Object.entries(ariaNode.props))
-        lines.push(indent(depth + 1) + '- /' + name + ': ' + yamlEscapeValueIfNeeded(value));
-
-      const inCursorPointer = !!ariaNode.ref && renderCursorPointer && aria.hasPointerCursor(ariaNode);
-      for (const child of ariaNode.children) {
-        if (typeof child === 'string')
-          visitText(includeText(ariaNode, child) ? child : '', depth + 1);
-        else
-          visit(child, depth + 1, renderCursorPointer && !inCursorPointer);
-      }
-    }
-  };
-
-  for (const nodeToRender of nodesToRender) {
-    if (typeof nodeToRender === 'string')
-      visitText(nodeToRender, 0);
-    else
-      visit(nodeToRender, 0, !!options.renderCursorPointer);
-  }
-  return { text: lines.join('\n'), iframeDepths };
-}
-
 export function renderAriaTreeAsJSON(ariaSnapshot: AriaSnapshot, publicOptions: AriaTreeOptions): { json: aria.AriaSnapshotJSON, iframeDepths: Record<string, number> } {
   const options = toInternalOptions(publicOptions);
   const iframeDepths: Record<string, number> = {};
@@ -591,7 +467,7 @@ export function renderAriaTreeAsJSON(ariaSnapshot: AriaSnapshot, publicOptions: 
     if (ariaNode.role === 'iframe' && ariaNode.ref)
       iframeDepths[ariaNode.ref] = depth;
 
-    const node: aria.AriaNodeJSON = { role: ariaNode.role };
+    const node: aria.AriaNodeJSON = { role: ariaNode.role as aria.AriaNodeJSON['role'] };
     if (ariaNode.name)
       node.name = ariaNode.name;
     if (ariaNode.checked === 'mixed' || ariaNode.checked === true)
@@ -622,8 +498,10 @@ export function renderAriaTreeAsJSON(ariaSnapshot: AriaSnapshot, publicOptions: 
         node.box = { x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.width), height: Math.round(r.height) };
       }
     }
-    for (const [name, value] of Object.entries(ariaNode.props))
-      node[name] = value;
+    if (ariaNode.props.url !== undefined)
+      node.url = ariaNode.props.url;
+    if (ariaNode.props.placeholder !== undefined)
+      node.placeholder = ariaNode.props.placeholder;
 
     const singleTextChild = ariaNode.children.length === 1 && typeof ariaNode.children[0] === 'string' ? ariaNode.children[0] : undefined;
     const isAtDepthLimit = !!publicOptions.depth && depth === publicOptions.depth;
@@ -644,68 +522,11 @@ export function renderAriaTreeAsJSON(ariaSnapshot: AriaSnapshot, publicOptions: 
   const nodesToRender = ariaSnapshot.root.role === 'fragment' ? ariaSnapshot.root.children : [ariaSnapshot.root];
   for (const nodeToRender of nodesToRender) {
     if (typeof nodeToRender === 'string')
-      json.push(nodeToRender);
+      json.push({ role: 'text', text: nodeToRender });
     else
       json.push(visit(nodeToRender, 0, !!options.renderCursorPointer));
   }
   return { json, iframeDepths };
-}
-
-function convertToBestGuessRegex(text: string): string {
-  const dynamicContent = [
-    // 550e8400-e29b-41d4-a716-446655440000
-    { regex: /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/, replacement: '[0-9a-fA-F-]+' },
-    // 2mb
-    { regex: /\b[\d,.]+[bkmBKM]+\b/, replacement: '[\\d,.]+[bkmBKM]+' },
-    // 2ms, 20s
-    { regex: /\b\d+[hmsp]+\b/, replacement: '\\d+[hmsp]+' },
-    { regex: /\b[\d,.]+[hmsp]+\b/, replacement: '[\\d,.]+[hmsp]+' },
-    // Do not replace single digits with regex by default.
-    // 2+ digits: [Issue 22, 22.3, 2.33, 2,333]
-    { regex: /\b\d+,\d+\b/, replacement: '\\d+,\\d+' },
-    { regex: /\b\d+\.\d{2,}\b/, replacement: '\\d+\\.\\d+' },
-    { regex: /\b\d{2,}\.\d+\b/, replacement: '\\d+\\.\\d+' },
-    { regex: /\b\d{2,}\b/, replacement: '\\d+' },
-  ];
-
-  let pattern = '';
-  let lastIndex = 0;
-
-  const combinedRegex = new RegExp(dynamicContent.map(r => '(' + r.regex.source + ')').join('|'), 'g');
-  text.replace(combinedRegex, (match, ...args) => {
-    const offset = args[args.length - 2];
-    const groups = args.slice(0, -2);
-    pattern += escapeRegExp(text.slice(lastIndex, offset));
-    for (let i = 0; i < groups.length; i++) {
-      if (groups[i]) {
-        const { replacement } = dynamicContent[i];
-        pattern += replacement;
-        break;
-      }
-    }
-    lastIndex = offset + match.length;
-    return match;
-  });
-  if (!pattern)
-    return text;
-
-  pattern += escapeRegExp(text.slice(lastIndex));
-  return String(new RegExp(pattern));
-}
-
-function textContributesInfo(node: aria.AriaNode, text: string): boolean {
-  if (!text.length)
-    return false;
-
-  if (!node.name)
-    return true;
-
-  // Figure out if text adds any value. "longestCommonSubstring" is expensive, so limit strings length.
-  const substr = (text.length <= 200 && node.name.length <= 200) ? longestCommonSubstring(text, node.name) : '';
-  let filtered = text;
-  while (substr && filtered.includes(substr))
-    filtered = filtered.replace(substr, '');
-  return filtered.trim().length / text.length > 0.1;
 }
 
 const elementSymbol = Symbol('element');
