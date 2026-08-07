@@ -107,6 +107,22 @@ export type ScreencastFrameTraceEvent = {
   frameSwapWallTime?: number,
 };
 
+export type ActionPhase = 'before' | 'action' | 'after';
+
+export type ScreenshotTraceEvent = {
+  type: 'screenshot',
+  callId: string,
+  phase: ActionPhase,
+  sha1: string,
+};
+
+export type AriaSnapshotTraceEvent = {
+  type: 'aria-snapshot',
+  callId: string,
+  phase: ActionPhase,
+  sha1: string,
+};
+
 export type BeforeActionTraceEvent = {
   type: 'before',
   callId: string;
@@ -217,6 +233,8 @@ export type ErrorTraceEvent = {
 export type TraceEvent =
     ContextCreatedTraceEvent |
     ScreencastFrameTraceEvent |
+    ScreenshotTraceEvent |
+    AriaSnapshotTraceEvent |
     ActionTraceEvent |
     BeforeActionTraceEvent |
     InputActionTraceEvent |

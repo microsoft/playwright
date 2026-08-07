@@ -22,8 +22,10 @@ Tracing:
       group: configuration
       parameters:
         name: string?
-        snapshots: boolean?
-        screenshots: boolean?
+        snapshotDom: boolean?
+        snapshotAria: boolean?
+        snapshotScreen: boolean?
+        screencast: boolean?
         live: boolean?
 
     tracingStartChunk:

@@ -16,7 +16,7 @@
 
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { assert } from '@isomorphic/assert';
-import { monotonicTime } from '@isomorphic/time';
+import { monotonicTime, timeoutToDeadline } from '@isomorphic/time';
 import { debugLogger } from '@utils/debugLogger';
 import { TimeoutError } from './errors';
 
@@ -78,8 +78,7 @@ export class ProgressController {
     await this._donePromise;
   }
 
-  async run<T>(task: (progress: Progress) => Promise<T>, timeout?: number): Promise<T> {
-    const deadline = timeout ? monotonicTime() + timeout : 0;
+  async run<T>(task: (progress: Progress) => Promise<T>, options?: { timeout: number } | { deadline: number }): Promise<T> {
     assert(this._state === 'before');
     this._state = 'running';
 
@@ -88,8 +87,18 @@ export class ProgressController {
     let outerProgress: string | undefined;
     let allowConcurrent = false;
 
+    let deadline: number;
+    let timeoutHint: number;
+    if (typeof options === 'object' && 'deadline' in options) {
+      deadline = options.deadline;
+      timeoutHint = this.metadata.timeout ?? 0;
+    } else {
+      deadline = timeoutToDeadline(options?.timeout);
+      timeoutHint = options?.timeout ?? 0;
+    }
+
     const progress: Progress = {
-      timeout: timeout ?? 0,
+      timeout: timeoutHint,
       deadline,
       disableTimeout: () => {
         clearTimeout(timer);
@@ -132,7 +141,7 @@ export class ProgressController {
     };
 
     if (deadline) {
-      const timeoutError = new TimeoutError(`Timeout ${timeout}ms exceeded.`);
+      const timeoutError = new TimeoutError(`Timeout ${timeoutHint}ms exceeded.`);
       timer = setTimeout(() => {
         // TODO: migrate this to "progress.disableTimeout()".
         if (this.metadata.pauseStartTime && !this.metadata.pauseEndTime)

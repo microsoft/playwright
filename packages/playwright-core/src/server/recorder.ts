@@ -241,7 +241,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     // If we are called upon page.pause, we don't have metadatas, populate them.
     const pausedDetails = this._debugger.pausedDetails();
     if (pausedDetails && !this._currentCallsMetadata.has(pausedDetails.metadata))
-      this.onBeforeCall(pausedDetails.sdkObject, pausedDetails.metadata);
+      this._onBeforeCall(pausedDetails.sdkObject, pausedDetails.metadata);
     this.emit(RecorderEvent.PausedStateChanged, this._debugger.isPaused());
     this._updateUserSources();
     this._updateCallLog([...this._currentCallsMetadata.keys()]);
@@ -397,7 +397,11 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
         page => page.safeNonStallingEvaluateInAllFrames('window.__pw_refreshOverlay()', 'main')));
   }
 
-  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
+  async onBeforeCall(progress: Progress, sdkObject: SdkObject) {
+    this._onBeforeCall(sdkObject, progress.metadata);
+  }
+
+  private _onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
     if (this._omitCallTracking || this._isRecording())
       return;
     this._currentCallsMetadata.set(metadata, sdkObject);
@@ -409,7 +413,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       this._highlightedElement = { selector: metadata.params.selector };
   }
 
-  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
+  async onAfterCall(progress: Progress) {
+    const { metadata } = progress;
     this._actionPoints.delete(metadata.id);
     if (this._omitCallTracking || this._isRecording())
       return;
@@ -419,7 +424,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this._updateCallLog([metadata]);
   }
 
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, point?: Point): Promise<void> {
+  async onBeforeInputAction(progress: Progress, sdkObject: SdkObject, point?: Point): Promise<void> {
+    const { metadata } = progress;
     if (point)
       this._actionPoints.set(metadata.id, point);
   }

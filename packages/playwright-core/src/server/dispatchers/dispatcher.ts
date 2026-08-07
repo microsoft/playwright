@@ -20,7 +20,7 @@ import { getMetainfo } from '@isomorphic/protocolMetainfo';
 import { eventsHelper } from '@utils/eventsHelper';
 import { isUnderTest } from '@utils/debug';
 import { assert } from '@isomorphic/assert';
-import { monotonicTime } from '@isomorphic/time';
+import { monotonicTime, timeoutToDeadline } from '@isomorphic/time';
 import { rewriteErrorMessage } from '@utils/stackTrace';
 import { ValidationError, createMetadataValidator, createWaitInfoValidator, findValidator, maybeFindValidator } from '@protocol/validator';
 import { AbortError, TargetClosedError, isTargetClosedError, serializeError } from '../errors';
@@ -352,16 +352,22 @@ export class DispatcherConnection {
       log: [],
     };
 
-    const controller = dispatcher.createProgressController(callMetadata);
-    this._activeProgressControllers.set(callMetadata.id, controller);
+    const deadline = timeoutToDeadline(validMetadata.timeout);
 
-    await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
+    const beforeController = dispatcher.createProgressController(callMetadata);
+    this._activeProgressControllers.set(callMetadata.id, beforeController);
+    await beforeController.run(progress => sdkObject.instrumentation.onBeforeCall(progress, sdkObject), { deadline });
+    this._activeProgressControllers.delete(callMetadata.id);
+
     const response: any = { id };
     try {
       // If the dispatcher has been disposed while running the instrumentation call, error out.
       if (this._dispatcherByGuid.get(guid) !== dispatcher)
         throw new TargetClosedError(sdkObject.closeReason());
-      const result = await controller.run(progress => (dispatcher as any)[method](validParams, progress), validMetadata.timeout);
+      const controller = dispatcher.createProgressController(callMetadata);
+      this._activeProgressControllers.set(callMetadata.id, controller);
+      const result = await controller.run(progress => (dispatcher as any)[method](validParams, progress), { deadline });
+      this._activeProgressControllers.delete(callMetadata.id);
       const validator = findValidator(dispatcher._type, method, 'Result');
       response.result = validator(result, '', this._validatorToWireContext());
       callMetadata.result = result;
@@ -384,7 +390,9 @@ export class DispatcherConnection {
       callMetadata.error = response.error;
     } finally {
       callMetadata.endTime = monotonicTime();
-      await sdkObject.instrumentation.onAfterCall(sdkObject, callMetadata);
+      const afterController = dispatcher.createProgressController(callMetadata);
+      this._activeProgressControllers.set(callMetadata.id, afterController);
+      await afterController.run(progress => sdkObject.instrumentation.onAfterCall(progress, sdkObject), { deadline });
       if (metainfo?.slowMo)
         await this._doSlowMo(sdkObject);
       this._activeProgressControllers.delete(callMetadata.id);
@@ -432,7 +440,8 @@ export class DispatcherConnection {
         log: [],
       };
       this._waitOperations.set(info.waitId, callMetadata);
-      await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata).catch(() => {});
+      const controller = ProgressController.createForSdkObject(sdkObject, callMetadata);
+      await controller.run(progress => sdkObject.instrumentation.onBeforeCall(progress, sdkObject).catch(() => {}));
       return;
     }
 
@@ -448,7 +457,8 @@ export class DispatcherConnection {
       originalMetadata.endTime = monotonicTime();
       originalMetadata.error = info.error ? { error: { name: 'Error', message: info.error } } : undefined;
       this._waitOperations.delete(info.waitId);
-      await sdkObject.instrumentation.onAfterCall(sdkObject, originalMetadata).catch(() => {});
+      const controller = ProgressController.createForSdkObject(sdkObject, originalMetadata);
+      await controller.run(progress => sdkObject.instrumentation.onAfterCall(progress, sdkObject).catch(() => {}));
     }
   }
 }

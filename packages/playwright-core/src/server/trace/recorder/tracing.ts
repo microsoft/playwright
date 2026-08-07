@@ -23,7 +23,7 @@ import { assert } from '@isomorphic/assert';
 import { monotonicTime } from '@isomorphic/time';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper  } from '@utils/eventsHelper';
-import { createGuid  } from '@utils/crypto';
+import { calculateSha1, createGuid  } from '@utils/crypto';
 import { removeFolders  } from '@utils/fileUtils';
 import { SerializedFS  } from '@utils/serializedFS';
 import { getPlaywrightVersion } from '../../userAgent';
@@ -35,7 +35,7 @@ import { serializeError } from '../../errors';
 import { HarRecorder } from '../../har/harRecorder';
 import { HarTracer } from '../../har/harTracer';
 import { SdkObject } from '../../instrumentation';
-import { Page } from '../../page';
+import { Page, ariaSnapshotJSONForFrame } from '../../page';
 import { isAbortError, nullProgress } from '../../progress';
 
 import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
@@ -60,8 +60,10 @@ const version: trace.VERSION = 8;
 
 export type TracerOptions = {
   name?: string;
-  snapshots?: boolean;
-  screenshots?: boolean;
+  snapshotDom?: boolean;
+  snapshotAria?: boolean;
+  snapshotScreen?: boolean;
+  screencast?: boolean;
   live?: boolean;
 };
 
@@ -76,7 +78,7 @@ type RecordingState = {
   networkSha1s: Set<string>,
   traceSha1s: Set<string>,
   recording: boolean;
-  callIds: Set<string>;
+  callsInProgress: Set<string>;
   groupStack: string[];
 };
 
@@ -172,13 +174,13 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       traceSha1s: new Set(),
       networkSha1s: new Set(),
       recording: false,
-      callIds: new Set(),
+      callsInProgress: new Set(),
       groupStack: [],
     };
     this._fs.mkdir(this._state.resourcesDir);
     this._fs.writeFile(this._state.networkFile, '');
     // Tracing is 10x bigger if we include scripts in every trace.
-    if (options.snapshots)
+    if (options.snapshotDom)
       this._harTracer.start({ omitScripts: !options.live });
     this._started = true;
   }
@@ -193,7 +195,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       throw new Error('Cannot start a trace chunk while stopping');
 
     this._state.recording = true;
-    this._state.callIds.clear();
+    this._state.callsInProgress.clear();
 
     // - Browser context network trace is shared across chunks as it contains resources
     // used to serve page snapshots, so make a copy with the new name.
@@ -220,10 +222,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
         eventsHelper.addEventListener(this._context, BrowserContext.Events.Console, this._onConsoleMessage.bind(this)),
         eventsHelper.addEventListener(this._context, BrowserContext.Events.PageError, this._onPageError.bind(this)),
     );
-    if (this._state.options.screenshots)
+    if (this._state.options.screencast)
       this._startScreencast();
     this._harTracer.setOmitWebSocketFrames(!!process.env.PLAYWRIGHT_TRACING_NO_WEBSOCKET_FRAMES);
-    if (this._state.options.snapshots)
+    if (this._state.options.snapshotDom)
       await this._snapshotter?.start(progress);
     return { traceName: this._state.traceName };
   }
@@ -392,12 +394,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
     this._context.instrumentation.removeListener(this);
     eventsHelper.removeEventListeners(this._eventListeners);
-    if (this._state.options.screenshots)
+    if (this._state.options.screencast)
       this._stopScreencast();
     // We don't need websocket frames outside of the recording window. This also
     // stops updating websocket content blobs, which we want to stay unchanged for zipping.
     this._harTracer.setOmitWebSocketFrames(true);
-    if (this._state.options.snapshots)
+    if (this._state.options.snapshotDom)
       this._snapshotter?.stop();
 
     this.flushHarEntries();
@@ -461,56 +463,96 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return { artifact };
   }
 
-  private async _captureSnapshot(snapshotName: string | undefined, sdkObject: SdkObject, metadata: CallMetadata, resetTargets: boolean): Promise<void> {
-    if (!snapshotName || !sdkObject.attribution.page)
+  private async _captureSnapshot(progress: Progress, sdkObject: SdkObject, phase: trace.ActionPhase, domSnapshotName: string | undefined): Promise<void> {
+    const page = sdkObject.attribution.page;
+    if (!page)
       return;
-    await this._snapshotter?.captureSnapshot(sdkObject.attribution.page, metadata.id, snapshotName, resetTargets).catch(() => {});
+
+    if (domSnapshotName) {
+      // Node references are only reset by the first snapshot of the action.
+      const resetTargets = phase === 'before';
+      await this._snapshotter?.captureSnapshot(page, progress.metadata.id, domSnapshotName, resetTargets).catch(() => {});
+    }
+
+    const options = this._state?.options;
+    if (!options?.snapshotScreen && !options?.snapshotAria)
+      return;
+    if (!this._shouldCaptureAtPhase(progress.metadata, phase))
+      return;
+    if (options.snapshotScreen)
+      await this._captureScreenshot(progress, page, phase);
+    if (options.snapshotAria)
+      await this._captureAriaSnapshot(progress, page, phase);
   }
 
-  private _shouldCaptureSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: 'before' | 'after' | 'input') {
+  private _shouldCaptureDOMSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: trace.ActionPhase) {
     if (!sdkObject.attribution.page || !this._snapshotter?.started())
-      return;
+      return false;
+    return this._shouldCaptureAtPhase(metadata, phase);
+  }
 
+  private _shouldCaptureAtPhase(metadata: CallMetadata, phase: trace.ActionPhase) {
     const metainfo = getMetainfo(metadata);
     if (!metainfo?.snapshot)
       return false;
 
     switch (phase) {
       case 'before': return !metainfo.input || !!metainfo.isAutoWaiting;
-      case 'input': return !!metainfo.input;
+      case 'action': return !!metainfo.input;
       case 'after': return true;
     }
   }
 
-  onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string) {
+  private async _captureScreenshot(progress: Progress, page: Page, phase: trace.ActionPhase): Promise<void> {
+    const buffer = await page.screenshot(progress, { type: 'png' }).catch(() => undefined);
+    if (!buffer || !this._state?.recording)
+      return;
+    const sha1 = calculateSha1(buffer) + '.png';
+    this._appendResource(sha1, buffer);
+    this._appendTraceEvent({ type: 'screenshot', callId: progress.metadata.id, phase, sha1 });
+  }
+
+  private async _captureAriaSnapshot(progress: Progress, page: Page, phase: trace.ActionPhase): Promise<void> {
+    const snapshot = await ariaSnapshotJSONForFrame(progress, page.mainFrame(), undefined, { mode: 'default' }).catch(() => null);
+    if (!snapshot || !this._state?.recording)
+      return;
+    const buffer = Buffer.from(JSON.stringify(snapshot), 'utf8');
+    const sha1 = calculateSha1(buffer) + '.json';
+    this._appendResource(sha1, buffer);
+    this._appendTraceEvent({ type: 'aria-snapshot', callId: progress.metadata.id, phase, sha1 });
+  }
+
+  onBeforeCall(progress: Progress, sdkObject: SdkObject, parentId?: string) {
     // IMPORTANT: no awaits in this method, this._appendTraceEvent must be called synchronously.
+    const { metadata } = progress;
     const event = createBeforeActionTraceEvent(metadata, parentId ?? this._currentGroupId());
     if (!event)
       return Promise.resolve();
     this._temporarilyDisableThrottling(sdkObject.attribution.page);
-    if (this._shouldCaptureSnapshot(sdkObject, metadata, 'before'))
+    if (this._shouldCaptureDOMSnapshot(sdkObject, metadata, 'before'))
       event.beforeSnapshot = `before@${metadata.id}`;
-    this._state?.callIds.add(metadata.id);
+    this._state?.callsInProgress.add(metadata.id);
     this._appendTraceEvent(event);
-    return this._captureSnapshot(event.beforeSnapshot, sdkObject, metadata, true);
+    return this._captureSnapshot(progress, sdkObject, 'before', event.beforeSnapshot);
   }
 
-  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, point?: types.Point) {
+  onBeforeInputAction(progress: Progress, sdkObject: SdkObject, point?: types.Point) {
+    const { metadata } = progress;
     // IMPORTANT: no awaits in this method, this._appendTraceEvent must be called synchronously.
-    if (!this._state?.callIds.has(metadata.id))
+    if (!this._state?.callsInProgress.has(metadata.id))
       return Promise.resolve();
     const event = createInputActionTraceEvent(metadata, point);
     if (!event)
       return Promise.resolve();
     this._temporarilyDisableThrottling(sdkObject.attribution.page);
-    if (this._shouldCaptureSnapshot(sdkObject, metadata, 'input'))
+    if (this._shouldCaptureDOMSnapshot(sdkObject, metadata, 'action'))
       event.inputSnapshot = `input@${metadata.id}`;
     this._appendTraceEvent(event);
-    return this._captureSnapshot(event.inputSnapshot, sdkObject, metadata, false);
+    return this._captureSnapshot(progress, sdkObject, 'action', event.inputSnapshot);
   }
 
   onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string) {
-    if (!this._state?.callIds.has(metadata.id))
+    if (!this._state?.callsInProgress.has(metadata.id))
       return;
     if (metadata.internal)
       return;
@@ -521,19 +563,20 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._appendTraceEvent(event);
   }
 
-  onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
+  onAfterCall(progress: Progress, sdkObject: SdkObject) {
     // IMPORTANT: no awaits in this method, this._appendTraceEvent must be called synchronously.
-    if (!this._state?.callIds.has(metadata.id))
+    const { metadata } = progress;
+    if (!this._state?.callsInProgress.has(metadata.id))
       return Promise.resolve();
-    this._state?.callIds.delete(metadata.id);
+    this._state?.callsInProgress.delete(metadata.id);
     const event = createAfterActionTraceEvent(metadata);
     if (!event)
       return Promise.resolve();
     this._temporarilyDisableThrottling(sdkObject.attribution.page);
-    if (this._shouldCaptureSnapshot(sdkObject, metadata, 'after'))
+    if (this._shouldCaptureDOMSnapshot(sdkObject, metadata, 'after'))
       event.afterSnapshot = `after@${metadata.id}`;
     this._appendTraceEvent(event);
-    return this._captureSnapshot(event.afterSnapshot, sdkObject, metadata, false);
+    return this._captureSnapshot(progress, sdkObject, 'after', event.afterSnapshot);
   }
 
   onEntryStarted(entry: har.Entry) {

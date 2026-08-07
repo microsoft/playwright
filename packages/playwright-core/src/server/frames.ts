@@ -682,7 +682,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     const controller = new ProgressController();
     const data = {
       url,
-      gotoPromise: controller.run(progress => this.gotoImpl(progress, url, { referer }), 0),
+      gotoPromise: controller.run(progress => this.gotoImpl(progress, url, { referer }), { timeout: 0 }),
     };
     this._redirectedNavigations.set(documentId, data);
     data.gotoPromise.finally(() => this._redirectedNavigations.delete(documentId));
