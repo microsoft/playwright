@@ -20300,6 +20300,9 @@ export interface APIRequestContext {
     }>;
   }>;
 
+  /**
+   * Tracing recorder for requests made through this API request context.
+   */
   tracing: Tracing;
 
   [Symbol.asyncDispose](): Promise<void>;
@@ -23759,8 +23762,8 @@ export interface Tracing {
    * [tracing.stopHar()](https://playwright.dev/docs/api/class-tracing#tracing-stop-har) is called, or when the returned
    * [Disposable](https://playwright.dev/docs/api/class-disposable) is disposed.
    *
-   * Only one HAR recording can be active at a time per
-   * [BrowserContext](https://playwright.dev/docs/api/class-browsercontext).
+   * Only one HAR recording can be active at a time per [Tracing](https://playwright.dev/docs/api/class-tracing)
+   * instance.
    *
    * **Usage**
    *

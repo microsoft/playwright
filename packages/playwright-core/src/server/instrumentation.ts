@@ -36,7 +36,8 @@ export type Attribution = {
   playwright: Playwright;
   browserType?: BrowserType;
   browser?: Browser;
-  context?: BrowserContext | APIRequestContext;
+  browserContext?: BrowserContext;
+  apiRequestContext?: APIRequestContext;
   page?: Page;
   frame?: Frame;
   worker?: Worker;
@@ -67,7 +68,8 @@ export class SdkObject<EM extends EventMap = EventMap> extends EventEmitter<EM> 
   closeReason(): string | undefined {
     return this.attribution.worker?._closeReason ||
       this.attribution.page?._closeReason ||
-      this.attribution.context?._closeReason ||
+      this.attribution.apiRequestContext?._closeReason ||
+      this.attribution.browserContext?._closeReason ||
       this.attribution.browser?._closeReason;
   }
 }
@@ -159,11 +161,11 @@ export function createInstrumentation(): Instrumentation {
         return obj[prop];
       return async (sdkObject: SdkObject, ...params: any[]) => {
         for (const [listener, context] of listeners) {
-          if (!context || sdkObject.attribution.context === context)
+          if (!context || sdkObject.attribution.browserContext === context || sdkObject.attribution.apiRequestContext === context)
             await (listener as any)[prop]?.(sdkObject, ...params);
         }
         for (const [listener, context] of lastListeners) {
-          if (!context || sdkObject.attribution.context === context)
+          if (!context || sdkObject.attribution.browserContext === context || sdkObject.attribution.apiRequestContext === context)
             await (listener as any)[prop]?.(sdkObject, ...params);
         }
       };

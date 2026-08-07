@@ -105,11 +105,7 @@ export class HarTracer {
       return;
     this._options.omitScripts = options.omitScripts;
     this._started = true;
-    const apiRequest = this._context instanceof APIRequestContext ? this._context : this._context.fetchRequest;
-    this._eventListeners = [
-      eventsHelper.addEventListener(apiRequest, APIRequestContext.Events.Request, (event: APIRequestEvent) => this._onAPIRequest(event)),
-      eventsHelper.addEventListener(apiRequest, APIRequestContext.Events.RequestFinished, (event: APIRequestFinishedEvent) => this._onAPIRequestFinished(event)),
-    ];
+    this._eventListeners = [];
     if (this._context instanceof BrowserContext) {
       this._eventListeners.push(
           eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._createPageEntryIfNeeded(page)),
@@ -124,6 +120,12 @@ export class HarTracer {
       );
       for (const page of this._context.pages())
         this._createPageEntryIfNeeded(page);
+    }
+    if (this._context instanceof APIRequestContext) {
+      this._eventListeners.push(
+          eventsHelper.addEventListener(this._context, APIRequestContext.Events.Request, (event: APIRequestEvent) => this._onAPIRequest(event)),
+          eventsHelper.addEventListener(this._context, APIRequestContext.Events.RequestFinished, (event: APIRequestFinishedEvent) => this._onAPIRequestFinished(event)),
+      );
     }
   }
 

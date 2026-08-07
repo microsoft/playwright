@@ -162,16 +162,31 @@ test('should exclude internal pages', async ({ browserName, context, page, serve
   expect(pageIds.size).toBe(1);
 });
 
-test('should include context API requests', async ({ context, page, server }, testInfo) => {
+test('should record context API request trace independently', async ({ context, page, server }, testInfo) => {
+  const browserTracePath = testInfo.outputPath('browser-trace.zip');
+  const apiTracePath = testInfo.outputPath('api-trace.zip');
+  const apiURL = server.PREFIX + '/simple.json';
+  expect(context.request.tracing).not.toBe(context.tracing);
+
   await context.tracing.start({ snapshots: true });
-  await page.request.post(server.PREFIX + '/simple.json', { data: { foo: 'bar' } });
-  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
-  const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
-  expect(actions).toContain('POST "/simple.json"');
-  const harEntry = events.find(e => e.type === 'resource-snapshot');
-  expect(harEntry).toBeTruthy();
-  expect(harEntry.snapshot.request.url).toBe(server.PREFIX + '/simple.json');
-  expect(harEntry.snapshot.response.status).toBe(200);
+  await context.request.tracing.start({ snapshots: true });
+  await page.goto(server.PREFIX + '/one-style.html');
+  await page.request.post(apiURL, { data: { foo: 'bar' } });
+  await context.tracing.stop({ path: browserTracePath });
+  await context.request.tracing.stop({ path: apiTracePath });
+
+  const browserTrace = await parseTraceRaw(browserTracePath);
+  expect(browserTrace.actions).toContain('Navigate to "/one-style.html"');
+  expect(browserTrace.actions).not.toContain('POST "/simple.json"');
+  expect(browserTrace.events.some(event => event.type === 'resource-snapshot' && event.snapshot._apiRequest)).toBe(false);
+  expect(browserTrace.events.some(event => event.type === 'resource-snapshot' && event.snapshot.request.url.endsWith('/one-style.html'))).toBe(true);
+
+  const apiTrace = await parseTraceRaw(apiTracePath);
+  expect(apiTrace.actions).toContain('POST "/simple.json"');
+  expect(apiTrace.actions).not.toContain('Navigate to "/one-style.html"');
+  const apiAction = apiTrace.actionObjects.find(action => action.class === 'APIRequestContext' && action.method === 'fetch')!;
+  expect(relativeStack(apiAction, apiTrace.stacks)).toEqual(['tracing.spec.ts']);
+  expect(apiTrace.events.filter(event => event.type === 'resource-snapshot').map(event => event.snapshot.request.url)).toEqual([apiURL]);
 });
 
 test('should collect two traces', async ({ context, page, server }, testInfo) => {

@@ -188,9 +188,11 @@ test('should not mixup network files between contexts', async ({ runInlineTest, 
       test.beforeAll(async ({ browser }) => {
         page1 = await browser.newPage();
         await page1.goto("${server.EMPTY_PAGE}");
+        await page1.request.get("${server.PREFIX}/simple.json?context=1");
 
         page2 = await browser.newPage();
         await page2.goto("${server.EMPTY_PAGE}");
+        await page2.request.get("${server.PREFIX}/simple.json?context=2");
       });
 
       test.afterAll(async () => {
@@ -200,12 +202,46 @@ test('should not mixup network files between contexts', async ({ runInlineTest, 
 
       test('example', async ({ page }) => {
         await page.goto("${server.EMPTY_PAGE}");
+        await page.request.get("${server.PREFIX}/simple.json?context=3");
       });
     `,
   }, { workers: 1, timeout: 15000 });
   expect(result.exitCode).toEqual(0);
   expect(result.passed).toBe(1);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-example', 'trace.zip'))).toBe(true);
+  const tracePath = testInfo.outputPath('test-results', 'a-example', 'trace.zip');
+  const { resources } = await parseTraceRaw(tracePath);
+  const traceEntries = [...resources].filter(([name]) => name.endsWith('.trace')).map(([name, content]) => ({
+    prefix: name.slice(0, -'.trace'.length),
+    contextOptions: JSON.parse(content.toString().split('\n')[0]),
+  })).filter(entry => entry.contextOptions.origin === 'library');
+  const traceEntriesByContextId = new Map<string, typeof traceEntries>();
+  for (const entry of traceEntries) {
+    const entries = traceEntriesByContextId.get(entry.contextOptions.contextId) || [];
+    entries.push(entry);
+    traceEntriesByContextId.set(entry.contextOptions.contextId, entries);
+  }
+  const contextTraces = [...traceEntriesByContextId.values()];
+  const browserTraces = contextTraces.filter(entries => entries[0].contextOptions.browserName);
+  const apiTraces = contextTraces.filter(entries => !entries[0].contextOptions.browserName);
+  expect(browserTraces).toHaveLength(3);
+  expect(apiTraces).toHaveLength(3);
+  for (const entries of browserTraces) {
+    const network = entries.map(entry => resources.get(entry.prefix + '.network')!.toString()).join('\n');
+    expect(network).not.toContain('?context=');
+  }
+  const apiURLs = [
+    server.PREFIX + '/simple.json?context=1',
+    server.PREFIX + '/simple.json?context=2',
+    server.PREFIX + '/simple.json?context=3',
+  ];
+  const apiURLsByTrace = apiTraces.map(entries => {
+    const network = entries.map(entry => resources.get(entry.prefix + '.network')!.toString()).join('\n');
+    return apiURLs.filter(url => network.includes(url));
+  });
+  expect(apiURLsByTrace.map(urls => urls.length)).toEqual([1, 1, 1]);
+  expect(apiURLsByTrace.flat().sort()).toEqual(apiURLs);
+  const trace = await parseTrace(tracePath);
+  expect(trace.model.resources.filter(resource => resource._apiRequest).map(resource => resource.request.url).sort()).toEqual(apiURLs);
 });
 
 test('should save sources when requested', async ({ runInlineTest }, testInfo) => {
