@@ -522,3 +522,41 @@ test('plan.suite temporarily exposes dependencies without changing final project
     'ran keep/keep-test',
   ]);
 });
+
+test('serial suites expose a serial annotation for custom sharding', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      class Reporter {
+        async preprocess({ suite }) {
+          for (const t of suite.allTests())
+            console.log('%% ' + t.title + ':' + t.annotations.filter(a => a.type === 'serial').length);
+        }
+      }
+      module.exports = Reporter;
+    `,
+    'playwright.config.ts': `module.exports = { reporter: './reporter.ts' };`,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('plain', async () => {});
+      test.describe.serial('s', () => {
+        test('serial', async () => {});
+      });
+      test.describe('c', () => {
+        test.describe.configure({ mode: 'serial' });
+        test('configure', async () => {});
+      });
+      test.describe.serial('outer', () => {
+        test.describe.serial('inner', () => {
+          test('nested', async () => {});
+        });
+      });
+    `,
+  }, { reporter: '', workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    'plain:0',
+    'serial:1',
+    'configure:1',
+    'nested:2',
+  ]);
+});
