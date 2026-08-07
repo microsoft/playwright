@@ -1,7 +1,25 @@
-# Publishes @next (alpha) versions of all npm packages via ESRP. Manual trigger only.
-trigger: none
+# Publishes all npm packages via ESRP:
+# - @next (alpha with today's date) from main, daily on schedule
+# - @next (alpha with commit timestamp) from main, on manual trigger
+# - @beta (beta with commit timestamp) from release-* branches, on push
+# - @latest from v* release tags (pushed when a GitHub release is published)
+trigger:
+  branches:
+    include:
+    - release-*
+  tags:
+    include:
+    - v*
 
 pr: none
+
+schedules:
+- cron: '10 5 * * *'
+  displayName: "Daily @next publish"
+  branches:
+    include:
+    - main
+  always: true
 
 resources:
   repositories:
@@ -36,12 +54,12 @@ extends:
           displayName: "Checkout code"
 
         - task: Bash@3
-          displayName: "Check the branch is main"
+          displayName: "Check the branch is main, release-* or a v* tag"
           inputs:
             targetType: "inline"
             script: |
-              if [[ "$BUILD_SOURCE_BRANCH" != "refs/heads/main" ]]; then
-                echo "Alpha versions can only be published from main."
+              if [[ "$BUILD_SOURCE_BRANCH" != "refs/heads/main" && "$BUILD_SOURCE_BRANCH" != refs/heads/release-* && "$BUILD_SOURCE_BRANCH" != refs/tags/v* ]]; then
+                echo "Can only publish from main, release-* branches or v* tags."
                 echo "Unexpected branch: $BUILD_SOURCE_BRANCH"
                 exit 1
               fi
@@ -78,18 +96,44 @@ extends:
           displayName: "npm run build"
 
         - task: Bash@3
-          displayName: "Set alpha version with commit timestamp"
+          name: setVersion
+          displayName: "Set version and dist-tag"
           inputs:
             targetType: "inline"
             script: |
               set -e
-              node utils/build/update_canary_version.js --alpha --commit-timestamp
+              if [[ "$BUILD_SOURCE_BRANCH" == refs/tags/v* ]]; then
+                # Release version is already checked in, only publish what the tag points at.
+                NPM_DIST_TAG="latest"
+              elif [[ "$BUILD_SOURCE_BRANCH" == refs/heads/release-* ]]; then
+                NPM_DIST_TAG="beta"
+                node utils/build/update_canary_version.js --beta --commit-timestamp
+              elif [[ "$BUILD_REASON" == "Schedule" ]]; then
+                NPM_DIST_TAG="next"
+                node utils/build/update_canary_version.js --alpha --today-date
+              else
+                NPM_DIST_TAG="next"
+                node utils/build/update_canary_version.js --alpha --commit-timestamp
+              fi
               node utils/workspace.js --ensure-consistent
               VERSION=$(node utils/workspace.js --get-version)
-              if [[ "$VERSION" != *-alpha-* ]]; then
+              if [[ "$NPM_DIST_TAG" == "latest" && "$BUILD_SOURCE_BRANCH" != "refs/tags/v$VERSION" ]]; then
+                echo "ERROR: version '$VERSION' does not match tag '$BUILD_SOURCE_BRANCH'"
+                exit 1
+              fi
+              if [[ "$NPM_DIST_TAG" == "beta" && "$VERSION" != *-beta-* ]]; then
+                echo "ERROR: unexpected version '$VERSION', must be a beta version"
+                exit 1
+              fi
+              if [[ "$NPM_DIST_TAG" == "next" && "$VERSION" != *-alpha-* ]]; then
                 echo "ERROR: unexpected version '$VERSION', must be an alpha version"
                 exit 1
               fi
+              echo "Publishing version $VERSION with dist-tag $NPM_DIST_TAG"
+              echo "##vso[task.setvariable variable=npmDistTag;isOutput=true]$NPM_DIST_TAG"
+          env:
+            BUILD_SOURCE_BRANCH: $(Build.SourceBranch)
+            BUILD_REASON: $(Build.Reason)
 
         - task: Bash@3
           displayName: "Pack all packages"
@@ -106,6 +150,8 @@ extends:
       - job: Publish
         displayName: "ESRP Release to npm"
         dependsOn: Build
+        variables:
+          npmDistTag: $[ dependencies.Build.outputs['setVersion.npmDistTag'] ]
         templateContext:
           type: releaseJob
           isProduction: true
@@ -125,7 +171,7 @@ extends:
               intent: 'PackageDistribution'
               contenttype: 'npm'
               # npm dist-tag to publish with.
-              productstate: 'next'
+              productstate: '$(npmDistTag)'
               folderlocation: '$(Build.ArtifactStagingDirectory)/esrp-build'
               waitforreleasecompletion: true
               owners: 'yurys@microsoft.com'
