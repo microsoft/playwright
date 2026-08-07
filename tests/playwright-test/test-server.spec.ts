@@ -177,6 +177,49 @@ test('stdio interception', async ({ startTestServer, writeFiles }) => {
   ]));
 });
 
+test('fixture locks survive loader process serialization', async ({ startTestServer, writeFiles }) => {
+  await writeFiles({
+    'playwright.config.ts': `
+      module.exports = {
+        fullyParallel: true,
+        workers: 2,
+        use: { account: 'override' },
+      };
+    `,
+    'a.test.ts': `
+      import { expect, test as base } from '@playwright/test';
+      import fs from 'fs';
+
+      const test = base.extend<{ database: void, account: string }>({
+        database: [undefined, { locks: ['database'] }],
+        account: [async ({ database }, use) => {
+          await use('default');
+        }, { option: true, locks: ['account'] }],
+      });
+      test('account one', async ({ account }) => {
+        expect(account).toBe('override');
+        fs.writeFileSync(test.info().project.outputDir + '/account-started', '');
+        fs.writeFileSync(test.info().project.outputDir + '/account-active', '');
+        await expect.poll(() => fs.existsSync(test.info().project.outputDir + '/database')).toBe(true);
+        fs.unlinkSync(test.info().project.outputDir + '/account-active');
+      });
+
+      test('account two', async ({ account }) => {
+        expect(account).toBe('override');
+        await expect.poll(() => fs.existsSync(test.info().project.outputDir + '/account-started')).toBe(true);
+        expect(fs.existsSync(test.info().project.outputDir + '/account-active')).toBe(false);
+      });
+
+      test('database', async ({ database }) => {
+        fs.writeFileSync(test.info().project.outputDir + '/database', '');
+        await expect.poll(() => fs.existsSync(test.info().project.outputDir + '/account-started')).toBe(true);
+      });
+    `,
+  });
+  const testServerConnection = await startTestServer();
+  expect(await testServerConnection.runTests({ locations: [] })).toEqual({ status: 'passed' });
+});
+
 test('find related test files errors', async ({ startTestServer, writeFiles }) => {
   await writeFiles({
     'a.spec.ts': `

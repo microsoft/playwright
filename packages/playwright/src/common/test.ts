@@ -17,7 +17,7 @@
 import { rootTestType } from './testType';
 import { computeTestCaseOutcome } from '../isomorphic/teleReceiver';
 import type { FixturesWithLocation, FullProjectInternal } from './config';
-import type { FixturePool } from './fixtures';
+import type { FixtureLockCandidate, FixturePool } from './fixtures';
 import type { TestTypeImpl } from './testType';
 import type { TestAnnotation } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
@@ -287,6 +287,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
   _locks: string[] = [];
+  _lockCandidates: FixtureLockCandidate[] = [];
   _planAnnotations: TestAnnotation[] = [];
 
   constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {
@@ -347,6 +348,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       annotations: this.annotations.slice(),
       tags: this._tags.slice(),
       locks: this._locks.slice(),
+      lockCandidates: this._lockCandidates,
       projectId: this._projectId,
     };
   }
@@ -364,6 +366,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     test.annotations = data.annotations;
     test._tags = data.tags;
     test._locks = data.locks;
+    test._lockCandidates = data.lockCandidates;
     test._projectId = data.projectId;
     return test;
   }

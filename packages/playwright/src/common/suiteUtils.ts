@@ -36,6 +36,11 @@ export function filterTestsRemoveEmptySuites(suite: Suite, filter: TestCaseFilte
 export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suite): Suite {
   const relativeFile = path.relative(project.project.testDir, suite.location!.file);
   const fileId = calculateSha1(toPosixPath(relativeFile)).slice(0, 20);
+  const overriddenFixtureOptions = new Set<string>();
+  for (const [name, value] of Object.entries(project.project.use)) {
+    if (value !== undefined)
+      overriddenFixtureOptions.add(name);
+  }
 
   // Clone suite.
   const result = suite._deepClone();
@@ -50,6 +55,10 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     const testId = fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
     test.id = testId;
     test._projectId = project.id;
+    for (const candidate of test._lockCandidates) {
+      if (!candidate.invalidatedByProjectUse.some(name => overriddenFixtureOptions.has(name)))
+        test._locks.push(candidate.lock);
+    }
 
     // Inherit properties from parent suites.
     let inheritedRetries: number | undefined;
