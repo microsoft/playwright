@@ -12153,6 +12153,185 @@ export interface JSHandle<T = any> {
 }
 
 /**
+ * [APIResponse](https://playwright.dev/docs/api/class-apiresponse) class represents responses returned by
+ * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
+ * and similar methods.
+ */
+export interface APIResponse<T = any> {
+  /**
+   * Returns the JSON representation of response body.
+   *
+   * This method will throw if the response body is not parsable via `JSON.parse`.
+   */
+  json(): Promise<T>;
+  /**
+   * Returns the buffer with response body.
+   */
+  body(): Promise<Buffer>;
+
+  /**
+   * Disposes the body of this response. If not called then the body will stay in memory until the context closes.
+   */
+  dispose(): Promise<void>;
+
+  /**
+   * An object with all the response HTTP headers associated with this response.
+   */
+  headers(): { [key: string]: string; };
+
+  /**
+   * An array with all the response HTTP headers associated with this response. Header names are not lower-cased.
+   * Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
+   */
+  headersArray(): Array<{
+    /**
+     * Name of the header.
+     */
+    name: string;
+
+    /**
+     * Value of the header.
+     */
+    value: string;
+  }>;
+
+  /**
+   * Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
+   */
+  ok(): boolean;
+
+  /**
+   * Returns SSL and other security information. Resolves to `null` for non-HTTPS responses. For redirected requests,
+   * returns the information for the last request in the redirect chain.
+   */
+  securityDetails(): Promise<null|{
+    /**
+     * Common Name component of the Issuer field. from the certificate. This should only be used for informational
+     * purposes. Optional.
+     */
+    issuer?: string;
+
+    /**
+     * The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
+     */
+    protocol?: string;
+
+    /**
+     * Common Name component of the Subject field from the certificate. This should only be used for informational
+     * purposes. Optional.
+     */
+    subjectName?: string;
+
+    /**
+     * Unix timestamp (in seconds) specifying when this cert becomes valid. Optional.
+     */
+    validFrom?: number;
+
+    /**
+     * Unix timestamp (in seconds) specifying when this cert becomes invalid. Optional.
+     */
+    validTo?: number;
+  }>;
+
+  /**
+   * Returns the IP address and port of the server. Resolves to `null` if the server address is not available. For
+   * redirected requests, returns the information for the last request in the redirect chain.
+   */
+  serverAddr(): Promise<null|{
+    /**
+     * IPv4 or IPV6 address of the server.
+     */
+    ipAddress: string;
+
+    port: number;
+  }>;
+
+  /**
+   * Contains the status code of the response (e.g., 200 for a success).
+   */
+  status(): number;
+
+  /**
+   * Contains the status text of the response (e.g. usually an "OK" for a success).
+   */
+  statusText(): string;
+
+  /**
+   * Returns the text representation of response body.
+   */
+  text(): Promise<string>;
+
+  /**
+   * Returns resource timing information for given response. For redirected requests, returns the information for the
+   * last request in the redirect chain. When the response is served [from the HAR file](https://playwright.dev/docs/mock#replaying-from-har),
+   * timing information is not available and all the values are -1. Find more information at
+   * [Resource Timing API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming).
+   */
+  timing(): {
+    /**
+     * Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
+     */
+    startTime: number;
+
+    /**
+     * Time immediately before the client starts the domain name lookup for the resource. The value is given in
+     * milliseconds relative to `startTime`, -1 if not available.
+     */
+    domainLookupStart: number;
+
+    /**
+     * Time immediately after the client ends the domain name lookup for the resource. The value is given in milliseconds
+     * relative to `startTime`, -1 if not available.
+     */
+    domainLookupEnd: number;
+
+    /**
+     * Time immediately before the client starts establishing the connection to the server to retrieve the resource. The
+     * value is given in milliseconds relative to `startTime`, -1 if not available.
+     */
+    connectStart: number;
+
+    /**
+     * Time immediately before the client starts the handshake process to secure the current connection. The value is
+     * given in milliseconds relative to `startTime`, -1 if not available.
+     */
+    secureConnectionStart: number;
+
+    /**
+     * Time immediately after the client establishes the connection to the server to retrieve the resource. The value is
+     * given in milliseconds relative to `startTime`, -1 if not available.
+     */
+    connectEnd: number;
+
+    /**
+     * Time immediately before the client starts requesting the resource from the server, cache, or local resource. The
+     * value is given in milliseconds relative to `startTime`, -1 if not available.
+     */
+    requestStart: number;
+
+    /**
+     * Time immediately after the client receives the first byte of the response from the server, cache, or local
+     * resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+     */
+    responseStart: number;
+
+    /**
+     * Time immediately after the client receives the last byte of the resource or immediately before the transport
+     * connection is closed, whichever comes first. The value is given in milliseconds relative to `startTime`, -1 if not
+     * available.
+     */
+    responseEnd: number;
+  };
+
+  /**
+   * Contains the URL of the response.
+   */
+  url(): string;
+
+  [Symbol.asyncDispose](): Promise<void>;
+}
+
+/**
  * - extends: [JSHandle](https://playwright.dev/docs/api/class-jshandle)
  *
  * ElementHandle represents an in-page DOM element. ElementHandles can be created with the
@@ -19353,7 +19532,7 @@ export interface APIRequestContext {
    * @param url Target URL.
    * @param options
    */
-  delete(url: string, options?: {
+  delete<T = any>(url: string, options?: {
     /**
      * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
      * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
@@ -19441,7 +19620,7 @@ export interface APIRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<APIResponse>;
+  }): Promise<APIResponse<T>>;
 
   /**
    * All responses returned by
@@ -19495,7 +19674,7 @@ export interface APIRequestContext {
    * @param urlOrRequest Target URL or Request to get all parameters from.
    * @param options
    */
-  fetch(urlOrRequest: string|Request, options?: {
+  fetch<T = any>(urlOrRequest: string|Request, options?: {
     /**
      * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
      * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
@@ -19589,7 +19768,7 @@ export interface APIRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<APIResponse>;
+  }): Promise<APIResponse<T>>;
 
   /**
    * Sends HTTP(S) [GET](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET) request and returns its
@@ -19624,7 +19803,7 @@ export interface APIRequestContext {
    * @param url Target URL.
    * @param options
    */
-  get(url: string, options?: {
+  get<T = any>(url: string, options?: {
     /**
      * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
      * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
@@ -19712,7 +19891,7 @@ export interface APIRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<APIResponse>;
+  }): Promise<APIResponse<T>>;
 
   /**
    * Sends HTTP(S) [HEAD](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD) request and returns its
@@ -19721,7 +19900,7 @@ export interface APIRequestContext {
    * @param url Target URL.
    * @param options
    */
-  head(url: string, options?: {
+  head<T = any>(url: string, options?: {
     /**
      * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
      * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
@@ -19809,7 +19988,7 @@ export interface APIRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<APIResponse>;
+  }): Promise<APIResponse<T>>;
 
   /**
    * Sends HTTP(S) [PATCH](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PATCH) request and returns its
@@ -19818,7 +19997,7 @@ export interface APIRequestContext {
    * @param url Target URL.
    * @param options
    */
-  patch(url: string, options?: {
+  patch<T = any>(url: string, options?: {
     /**
      * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
      * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
@@ -19906,7 +20085,7 @@ export interface APIRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<APIResponse>;
+  }): Promise<APIResponse<T>>;
 
   /**
    * Sends HTTP(S) [POST](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST) request and returns its
@@ -19957,7 +20136,7 @@ export interface APIRequestContext {
    * @param url Target URL.
    * @param options
    */
-  post(url: string, options?: {
+  post<T = any>(url: string, options?: {
     /**
      * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
      * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
@@ -20045,7 +20224,7 @@ export interface APIRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<APIResponse>;
+  }): Promise<APIResponse<T>>;
 
   /**
    * Sends HTTP(S) [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) request and returns its
@@ -20054,7 +20233,7 @@ export interface APIRequestContext {
    * @param url Target URL.
    * @param options
    */
-  put(url: string, options?: {
+  put<T = any>(url: string, options?: {
     /**
      * Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
      * and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type`
@@ -20142,7 +20321,7 @@ export interface APIRequestContext {
      * Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
      */
     timeout?: number;
-  }): Promise<APIResponse>;
+  }): Promise<APIResponse<T>>;
 
   /**
    * Returns storage state for this request context, contains current cookies and local storage snapshot if it was
@@ -20196,186 +20375,6 @@ export interface APIRequestContext {
   }>;
 
   tracing: Tracing;
-
-  [Symbol.asyncDispose](): Promise<void>;
-}
-
-/**
- * [APIResponse](https://playwright.dev/docs/api/class-apiresponse) class represents responses returned by
- * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
- * and similar methods.
- */
-export interface APIResponse {
-  /**
-   * Returns the buffer with response body.
-   */
-  body(): Promise<Buffer>;
-
-  /**
-   * Disposes the body of this response. If not called then the body will stay in memory until the context closes.
-   */
-  dispose(): Promise<void>;
-
-  /**
-   * An object with all the response HTTP headers associated with this response.
-   */
-  headers(): { [key: string]: string; };
-
-  /**
-   * An array with all the response HTTP headers associated with this response. Header names are not lower-cased.
-   * Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
-   */
-  headersArray(): Array<{
-    /**
-     * Name of the header.
-     */
-    name: string;
-
-    /**
-     * Value of the header.
-     */
-    value: string;
-  }>;
-
-  /**
-   * Returns the JSON representation of response body.
-   *
-   * This method will throw if the response body is not parsable via `JSON.parse`.
-   */
-  json(): Promise<Serializable>;
-
-  /**
-   * Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
-   */
-  ok(): boolean;
-
-  /**
-   * Returns SSL and other security information. Resolves to `null` for non-HTTPS responses. For redirected requests,
-   * returns the information for the last request in the redirect chain.
-   */
-  securityDetails(): Promise<null|{
-    /**
-     * Common Name component of the Issuer field. from the certificate. This should only be used for informational
-     * purposes. Optional.
-     */
-    issuer?: string;
-
-    /**
-     * The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
-     */
-    protocol?: string;
-
-    /**
-     * Common Name component of the Subject field from the certificate. This should only be used for informational
-     * purposes. Optional.
-     */
-    subjectName?: string;
-
-    /**
-     * Unix timestamp (in seconds) specifying when this cert becomes valid. Optional.
-     */
-    validFrom?: number;
-
-    /**
-     * Unix timestamp (in seconds) specifying when this cert becomes invalid. Optional.
-     */
-    validTo?: number;
-  }>;
-
-  /**
-   * Returns the IP address and port of the server. Resolves to `null` if the server address is not available. For
-   * redirected requests, returns the information for the last request in the redirect chain.
-   */
-  serverAddr(): Promise<null|{
-    /**
-     * IPv4 or IPV6 address of the server.
-     */
-    ipAddress: string;
-
-    port: number;
-  }>;
-
-  /**
-   * Contains the status code of the response (e.g., 200 for a success).
-   */
-  status(): number;
-
-  /**
-   * Contains the status text of the response (e.g. usually an "OK" for a success).
-   */
-  statusText(): string;
-
-  /**
-   * Returns the text representation of response body.
-   */
-  text(): Promise<string>;
-
-  /**
-   * Returns resource timing information for given response. For redirected requests, returns the information for the
-   * last request in the redirect chain. When the response is served [from the HAR file](https://playwright.dev/docs/mock#replaying-from-har),
-   * timing information is not available and all the values are -1. Find more information at
-   * [Resource Timing API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming).
-   */
-  timing(): {
-    /**
-     * Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
-     */
-    startTime: number;
-
-    /**
-     * Time immediately before the client starts the domain name lookup for the resource. The value is given in
-     * milliseconds relative to `startTime`, -1 if not available.
-     */
-    domainLookupStart: number;
-
-    /**
-     * Time immediately after the client ends the domain name lookup for the resource. The value is given in milliseconds
-     * relative to `startTime`, -1 if not available.
-     */
-    domainLookupEnd: number;
-
-    /**
-     * Time immediately before the client starts establishing the connection to the server to retrieve the resource. The
-     * value is given in milliseconds relative to `startTime`, -1 if not available.
-     */
-    connectStart: number;
-
-    /**
-     * Time immediately before the client starts the handshake process to secure the current connection. The value is
-     * given in milliseconds relative to `startTime`, -1 if not available.
-     */
-    secureConnectionStart: number;
-
-    /**
-     * Time immediately after the client establishes the connection to the server to retrieve the resource. The value is
-     * given in milliseconds relative to `startTime`, -1 if not available.
-     */
-    connectEnd: number;
-
-    /**
-     * Time immediately before the client starts requesting the resource from the server, cache, or local resource. The
-     * value is given in milliseconds relative to `startTime`, -1 if not available.
-     */
-    requestStart: number;
-
-    /**
-     * Time immediately after the client receives the first byte of the response from the server, cache, or local
-     * resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-     */
-    responseStart: number;
-
-    /**
-     * Time immediately after the client receives the last byte of the resource or immediately before the transport
-     * connection is closed, whichever comes first. The value is given in milliseconds relative to `startTime`, -1 if not
-     * available.
-     */
-    responseEnd: number;
-  };
-
-  /**
-   * Contains the URL of the response.
-   */
-  url(): string;
 
   [Symbol.asyncDispose](): Promise<void>;
 }
@@ -22879,7 +22878,7 @@ export interface Route {
    * instead.
    * @param options
    */
-  fetch(options?: {
+  fetch<T = any>(options?: {
     /**
      * If set changes the request HTTP headers. Header values will be converted to a string.
      */
@@ -22929,7 +22928,7 @@ export interface Route {
      * If set changes the request URL. New URL must have same protocol as original one.
      */
     url?: string;
-  }): Promise<APIResponse>;
+  }): Promise<APIResponse<T>>;
 
   /**
    * Fulfills route's request with given response.

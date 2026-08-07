@@ -298,14 +298,19 @@ class TypesGenerator {
       let type = this.stringifyComplexType(member.type, 'out', indent, [classDesc.name, member.alias]);
       if (member.async)
         type = `Promise<${type}>`;
+      let typeParams = '';
+      if (type === 'Promise<APIResponse>') {
+        typeParams = '<T = any>';
+        type = 'Promise<APIResponse<T>>';
+      }
       // do this late, because we still want object definitions for overridden types
       if (!this.hasOwnMethod(classDesc, member))
         return '';
       if (exportMembersAsGlobals) {
-        const memberType = member.kind === 'method' ? `${args} => ${type}` : type;
+        const memberType = member.kind === 'method' ? `${typeParams}${args} => ${type}` : type;
         return `${jsdoc}${exportMembersAsGlobals ? 'export const ' : ''}${member.alias}: ${memberType};`
       }
-      return `${jsdoc}${member.alias}${member.required ? '' : '?'}${args}: ${type};`
+      return `${jsdoc}${member.alias}${member.required ? '' : '?'}${typeParams}${args}: ${type};`
     }).filter(x => x).join('\n\n'));
     return parts.join('\n') + '\n';
   }
