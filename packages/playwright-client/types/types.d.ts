@@ -14413,16 +14413,16 @@ export interface Locator {
    * [locator.ariaSnapshot([options])](https://playwright.dev/docs/api/class-locator#locator-aria-snapshot), serialized
    * as a JSON value instead of YAML markup. The result is a list of nodes, each node being either a plain string with
    * static text, or an object with the following properties:
-   * - `role` <[string]> Aria role of the element.
-   * - `name` <[string]> Accessible name of the element, if any.
-   * - `text` <[string]> Text content of the element, when it is the only child.
-   * - `children` <[Array]> Child nodes and text fragments.
+   * - `role` Aria role of the element.
+   * - `name` Accessible name of the element, if any.
+   * - `text` Text content of the element, when it is the only child.
+   * - `children` Child nodes and text fragments.
    * - Boolean and value properties for element state flags: `checked`, `disabled`, `expanded`, `active`, `invalid`,
    *   `level`, `pressed` and `selected`.
    * - Additional element properties, for example `url` for links and `placeholder` for text boxes.
-   * - `ref` <[string]> Element reference for AI-optimized snapshots.
-   * - `cursor` <[string]> Set to `"pointer"` for clickable elements in AI-optimized snapshots.
-   * - `box` <[Object]> Bounding box of the element when
+   * - `ref` Element reference for AI-optimized snapshots.
+   * - `cursor` Set to `"pointer"` for clickable elements in AI-optimized snapshots.
+   * - `box` Bounding box of the element when
    *   [`boxes`](https://playwright.dev/docs/api/class-locator#locator-aria-snapshot-json-option-boxes) is set.
    * @param options
    */
