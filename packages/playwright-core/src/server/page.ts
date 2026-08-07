@@ -1112,66 +1112,6 @@ export class InitScript extends DisposableObject {
   }
 }
 
-export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, selector: string | undefined, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, depth?: number, boxes?: boolean, strict?: boolean, noDefaultPierce?: boolean } = {}): Promise<string[]> {
-  const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async (progress, continuePolling) => {
-    try {
-      // Note: the resolved frame might differ from the original |frame|.
-      // See https://developer.mozilla.org/en-US/docs/Web/API/Document/body for body/frameset explanation.
-      // Non-strict, because pages with nested framesets have multiple "frameset" elements.
-      const resolved = await progress.race(frame.selectors.callOnSelector(selector || 'body,frameset', { strict: options.strict ?? !!selector, noDefaultPierce: !selector || options.noDefaultPierce }, ({ injected, elements }, ariaOptions) => {
-        return injected.ariaSnapshotWithRefs(elements[0], ariaOptions);
-      }, {
-        mode: options.mode ?? 'default',
-        doNotRenderActive: options.doNotRenderActive,
-        depth: options.depth,
-        boxes: options.boxes,
-      }));
-      if (!resolved) {
-        if (selector)
-          throw new NonRecoverableDOMError(`Selector "${selector}" does not match any element`);
-        // Retry only for the main frame "body" being absent, so that `page.ariaSnapshot()` does not fail.
-        return continuePolling;
-      }
-      return { ...resolved.result, resolvedFrame: resolved.frame };
-    } catch (e) {
-      if (frame.isNonRetriableError(e))
-        throw e;
-      return continuePolling;
-    }
-  });
-
-  // Only fetch child snapshots for iframes that were actually rendered (not filtered by depth).
-  const renderedIframeRefs = snapshot.iframeRefs.filter(ref => ref in snapshot.iframeDepths);
-  progress.setAllowConcurrentOrNestedRaces(true);
-  const childSnapshotPromises = renderedIframeRefs.map(async ref => {
-    const childDepth = options.depth ? options.depth - snapshot.iframeDepths[ref] - 1 : undefined;
-    // Non-strict, because child frameset documents have multiple "frameset" elements.
-    const frameRootSelector = `aria-ref=${ref} >> internal:control=enter-frame >> body,frameset`;
-    try {
-      return await ariaSnapshotForFrame(progress, snapshot.resolvedFrame, frameRootSelector, { ...options, depth: childDepth, strict: false, noDefaultPierce: true });
-    } catch {
-      return [];
-    }
-  });
-  const childSnapshots = await Promise.all(childSnapshotPromises);
-  progress.setAllowConcurrentOrNestedRaces(false);
-
-  const lines = [];
-  for (const line of snapshot.text.split('\n')) {
-    const match = line.match(/^(\s*)- iframe (?:\[active\] )?\[ref=([^\]]*)\]/);
-    if (!match) {
-      lines.push(line);
-      continue;
-    }
-    const leadingSpace = match[1];
-    const ref = match[2];
-    const childSnapshot = childSnapshots[renderedIframeRefs.indexOf(ref)] ?? [];
-    lines.push(childSnapshot.length ? line + ':' : line);
-    lines.push(...childSnapshot.map(l => leadingSpace + '  ' + l));
-  }
-  return lines;
-}
-
 export async function ariaSnapshotJSONForFrame(progress: Progress, frame: frames.Frame, selector: string | undefined, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, depth?: number, boxes?: boolean, strict?: boolean, noDefaultPierce?: boolean } = {}): Promise<AriaSnapshotJSON> {
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async (progress, continuePolling) => {
     try {

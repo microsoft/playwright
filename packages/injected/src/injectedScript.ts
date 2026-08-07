@@ -15,12 +15,13 @@
  */
 
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
+import { renderAriaSnapshotAsYaml } from '@isomorphic/ariaSnapshotRenderer';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { splitTestIdAttributeNames } from '@isomorphic/locatorUtils';
 import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelectorParts } from '@isomorphic/selectorParser';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
 
-import { generateAriaTree, getAllElementsMatchingExpectAriaTemplate, matchesExpectAriaTemplate, renderAriaTree, renderAriaTreeAsJSON, findNewElement } from './ariaSnapshot';
+import { generateAriaTree, getAllElementsMatchingExpectAriaTemplate, matchesExpectAriaTemplate, renderAriaTreeAsJSON, findNewElement } from './ariaSnapshot';
 import { beginDOMCaches, enclosingShadowRootOrDocument, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost, setGlobalOptions } from './domUtils';
 import { Highlight } from './highlight';
 import { kLayoutSelectorNames, layoutSelectorScore } from './layoutSelectorUtils';
@@ -315,17 +316,8 @@ export class InjectedScript {
   }
 
   ariaSnapshot(node: Node, options: AriaTreeOptions): string {
-    return this.ariaSnapshotWithRefs(node, options).text;
-  }
-
-  ariaSnapshotWithRefs(node: Node, options: AriaTreeOptions & { depth?: number }): { text: string, iframeRefs: string[], iframeDepths: Record<string, number> } {
-    if (node.nodeType !== Node.ELEMENT_NODE)
-      throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
-    options = { ...options, refPrefix: this._frameSeq && options.mode === 'ai' ? 'f' + this._frameSeq : '' };
-    const ariaSnapshot = generateAriaTree(node as Element, options);
-    const rendered = renderAriaTree(ariaSnapshot, options);
-    this._lastAriaSnapshotForQuery = ariaSnapshot;
-    return { text: rendered.text, iframeRefs: ariaSnapshot.iframeRefs, iframeDepths: rendered.iframeDepths };
+    const { json } = this.ariaSnapshotJSON(node, options);
+    return renderAriaSnapshotAsYaml(json, { convertStringsToRegex: options.mode === 'codegen' });
   }
 
   ariaSnapshotJSON(node: Node, options: AriaTreeOptions & { depth?: number }): { json: AriaSnapshotJSON, iframeRefs: string[], iframeDepths: Record<string, number> } {
@@ -340,14 +332,15 @@ export class InjectedScript {
 
   ariaSnapshotForRecorder(): { ariaSnapshot: string, refs: Map<Element, string> } {
     const tree = generateAriaTree(this.document.body, { mode: 'ai' });
-    const { text: ariaSnapshot } = renderAriaTree(tree, { mode: 'ai' });
-    return { ariaSnapshot, refs: tree.refs };
+    const { json } = renderAriaTreeAsJSON(tree, { mode: 'ai' });
+    return { ariaSnapshot: renderAriaSnapshotAsYaml(json), refs: tree.refs };
   }
 
   ariaSnapshotForExpectFailure(element: Element, options: AriaTreeOptions): string {
     // Bypass _lastAriaSnapshotForQuery — that cache is reserved for explicit
     // ariaSnapshot() calls used by the aria-ref selector engine.
-    return renderAriaTree(generateAriaTree(element, options), options).text;
+    const { json } = renderAriaTreeAsJSON(generateAriaTree(element, options), options);
+    return renderAriaSnapshotAsYaml(json);
   }
 
   getAllElementsMatchingExpectAriaTemplate(document: Document, template: AriaTemplateNode): Element[] {

@@ -55,14 +55,27 @@ export function hasPointerCursor(ariaNode: AriaNode): boolean {
   return ariaNode.box.cursor === 'pointer';
 }
 
-// Free form JSON serialization of the aria tree. Nodes are either static text
-// fragments or plain objects with the role, name, state flags and children.
 export type AriaNodeJSON = {
-  [key: string]: string | number | boolean | object | undefined;
+  role: AriaRole | 'iframe' | 'text';
+  name?: string;
+  checked?: true | 'mixed';
+  disabled?: true;
+  expanded?: true;
+  active?: true;
+  invalid?: true | 'grammar' | 'spelling';
+  level?: number;
+  pressed?: true | 'mixed';
+  selected?: true;
+  ref?: string;
+  cursor?: 'pointer';
+  box?: { x: number, y: number, width: number, height: number };
+  url?: string;
+  placeholder?: string;
+  text?: string;
   children?: (AriaNodeJSON | string)[];
 };
 
-export type AriaSnapshotJSON = (AriaNodeJSON | string)[];
+export type AriaSnapshotJSON = AriaNodeJSON[];
 
 // We pass parsed template between worlds using JSON, make it easy.
 export type AriaRegex = { pattern: string };
