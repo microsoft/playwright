@@ -2252,6 +2252,19 @@ await locator.ClickAsync();
 
 An array of all frames attached to the page.
 
+## method: Page.get
+* since: v1.63
+* langs: js
+- returns: <[Locator]>
+
+%%-template-locator-get-%%
+
+### param: Page.get.by
+* since: v1.63
+- `by` <[By]>
+
+Page-free locator built with [`property: Playwright.by`].
+
 ## async method: Page.getAttribute
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.getAttribute`] instead. Read more about [locators](../locators.md).

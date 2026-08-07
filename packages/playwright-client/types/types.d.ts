@@ -3012,6 +3012,41 @@ export interface Page {
   frames(): Array<Frame>;
 
   /**
+   * Binds a page-free [By](https://playwright.dev/docs/api/class-by) locator, returning a
+   * [Locator](https://playwright.dev/docs/api/class-locator) scoped to this object.
+   *
+   * **Usage**
+   *
+   * Consider a page object that describes elements without a page:
+   *
+   * ```js
+   * // todo-page.ts
+   * import { by } from '@playwright/test';
+   *
+   * export const newTodo = by.placeholder('What needs to be done?');
+   * export const todoItems = by.testId('todo-list').role('listitem');
+   * ```
+   *
+   * ```js
+   * import { expect, test } from '@playwright/test';
+   * import { newTodo, todoItems } from './todo-page';
+   *
+   * test('adds a todo', async ({ page }) => {
+   *   await page.get(newTodo).fill('buy milk');
+   *   await expect(page.get(todoItems)).toHaveCount(1);
+   * });
+   * ```
+   *
+   * **Details**
+   *
+   * The resolved [Locator](https://playwright.dev/docs/api/class-locator) is the same one the equivalent `getBy*` chain
+   * would produce, so `page.get(by.testId('list').text('Row'))` and `page.getByTestId('list').getByText('Row')` match
+   * the same element.
+   * @param by Page-free locator built with [playwright.by](https://playwright.dev/docs/api/class-playwright#playwright-by).
+   */
+  get(by: By): Locator;
+
+  /**
    * **NOTE** Use locator-based
    * [locator.getAttribute(name[, options])](https://playwright.dev/docs/api/class-locator#locator-get-attribute)
    * instead. Read more about [locators](https://playwright.dev/docs/locators).
@@ -7360,6 +7395,41 @@ export interface Frame {
    * @param selector A selector to use when resolving DOM element.
    */
   frameLocator(selector: string): FrameLocator;
+
+  /**
+   * Binds a page-free [By](https://playwright.dev/docs/api/class-by) locator, returning a
+   * [Locator](https://playwright.dev/docs/api/class-locator) scoped to this object.
+   *
+   * **Usage**
+   *
+   * Consider a page object that describes elements without a page:
+   *
+   * ```js
+   * // todo-page.ts
+   * import { by } from '@playwright/test';
+   *
+   * export const newTodo = by.placeholder('What needs to be done?');
+   * export const todoItems = by.testId('todo-list').role('listitem');
+   * ```
+   *
+   * ```js
+   * import { expect, test } from '@playwright/test';
+   * import { newTodo, todoItems } from './todo-page';
+   *
+   * test('adds a todo', async ({ page }) => {
+   *   await page.get(newTodo).fill('buy milk');
+   *   await expect(page.get(todoItems)).toHaveCount(1);
+   * });
+   * ```
+   *
+   * **Details**
+   *
+   * The resolved [Locator](https://playwright.dev/docs/api/class-locator) is the same one the equivalent `getBy*` chain
+   * would produce, so `page.get(by.testId('list').text('Row'))` and `page.getByTestId('list').getByText('Row')` match
+   * the same element.
+   * @param by Page-free locator built with [playwright.by](https://playwright.dev/docs/api/class-playwright#playwright-by).
+   */
+  get(by: By): Locator;
 
   /**
    * **NOTE** Use locator-based
@@ -15438,6 +15508,41 @@ export interface Locator {
   frameLocator(selector: string): FrameLocator;
 
   /**
+   * Binds a page-free [By](https://playwright.dev/docs/api/class-by) locator, returning a
+   * [Locator](https://playwright.dev/docs/api/class-locator) scoped to this object.
+   *
+   * **Usage**
+   *
+   * Consider a page object that describes elements without a page:
+   *
+   * ```js
+   * // todo-page.ts
+   * import { by } from '@playwright/test';
+   *
+   * export const newTodo = by.placeholder('What needs to be done?');
+   * export const todoItems = by.testId('todo-list').role('listitem');
+   * ```
+   *
+   * ```js
+   * import { expect, test } from '@playwright/test';
+   * import { newTodo, todoItems } from './todo-page';
+   *
+   * test('adds a todo', async ({ page }) => {
+   *   await page.get(newTodo).fill('buy milk');
+   *   await expect(page.get(todoItems)).toHaveCount(1);
+   * });
+   * ```
+   *
+   * **Details**
+   *
+   * The resolved [Locator](https://playwright.dev/docs/api/class-locator) is the same one the equivalent `getBy*` chain
+   * would produce, so `page.get(by.testId('list').text('Row'))` and `page.getByTestId('list').getByText('Row')` match
+   * the same element.
+   * @param by Page-free locator built with [playwright.by](https://playwright.dev/docs/api/class-playwright#playwright-by).
+   */
+  get(by: By): Locator;
+
+  /**
    * Returns the matching element's attribute value.
    *
    * **NOTE** If you need to assert an element's attribute, prefer
@@ -20439,6 +20544,319 @@ export interface BrowserServer {
 }
 
 /**
+ * [By](https://playwright.dev/docs/api/class-by) describes an element without being bound to a
+ * [Page](https://playwright.dev/docs/api/class-page) or a [Frame](https://playwright.dev/docs/api/class-frame). It is
+ * built with the top-level [playwright.by](https://playwright.dev/docs/api/class-playwright#playwright-by) object and
+ * turned into a regular [Locator](https://playwright.dev/docs/api/class-locator) with
+ * [page.get(by)](https://playwright.dev/docs/api/class-page#page-get),
+ * [frame.get(by)](https://playwright.dev/docs/api/class-frame#frame-get) or
+ * [locator.get(by)](https://playwright.dev/docs/api/class-locator#locator-get).
+ *
+ * Since a [By](https://playwright.dev/docs/api/class-by) carries no page, it can be defined once at module scope and
+ * reused by every test, which makes it a natural fit for page objects.
+ *
+ * **Usage**
+ *
+ * ```js
+ * import { by, expect, test } from '@playwright/test';
+ *
+ * const saveButton = by.role('button', { name: 'Save' });
+ * const todoItems = by.testId('todo-list').role('listitem');
+ *
+ * test('saves a todo', async ({ page }) => {
+ *   await page.get(saveButton).click();
+ *   await expect(page.get(todoItems)).toHaveCount(1);
+ * });
+ * ```
+ *
+ * A [By](https://playwright.dev/docs/api/class-by) chain resolves to the same element as the matching
+ * [Locator](https://playwright.dev/docs/api/class-locator) chain, so `page.get(by.testId('list').text('Row'))` and
+ * `page.getByTestId('list').getByText('Row')` are interchangeable. Chaining composes rather than replaces:
+ * `page.get(outer.get(inner))` and `page.get(outer).get(inner)` describe the same element.
+ */
+export interface By {
+  /**
+   * Matches a descendant element by its `alt` text.
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  altText(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+     * regular expression. Note that exact match still trims whitespace.
+     */
+    exact?: boolean;
+  }): By;
+
+  /**
+   * Narrows down the match to elements that match both this and the given
+   * [By](https://playwright.dev/docs/api/class-by).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const saveButton = by.role('button').and(by.title('Subscribe'));
+   * ```
+   *
+   * @param by Additional locator to match.
+   */
+  and(by: By): By;
+
+  /**
+   * Describes the element, the description is used in the trace viewer and the reports.
+   * @param description Locator description.
+   */
+  describe(description: string): By;
+
+  /**
+   * Narrows down the match according to the options, for example filters by text. It can be chained to filter multiple
+   * times.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const rowWithButton = by.get('tr')
+   *     .filter({ hasText: 'text in column 1' })
+   *     .filter({ has: by.role('button', { name: 'column 2 button' }) });
+   * ```
+   *
+   * @param options
+   */
+  filter(options?: {
+    /**
+     * Narrows down the results to those which contain elements matching this relative
+     * [By](https://playwright.dev/docs/api/class-by). The inner [By](https://playwright.dev/docs/api/class-by) is queried
+     * starting with the outer match, not the document root.
+     */
+    has?: By;
+
+    /**
+     * Matches elements that do not contain an element matching this relative
+     * [By](https://playwright.dev/docs/api/class-by). The inner [By](https://playwright.dev/docs/api/class-by) is queried
+     * starting with the outer match, not the document root.
+     */
+    hasNot?: By;
+
+    /**
+     * Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element.
+     * When passed a [string], matching is case-insensitive and searches for a substring.
+     */
+    hasNotText?: string|RegExp;
+
+    /**
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When
+     * passed a [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
+     */
+    hasText?: string|RegExp;
+
+    /**
+     * Only matches visible or invisible elements.
+     */
+    visible?: boolean;
+  }): By;
+
+  /**
+   * Matches the first matching element.
+   */
+  first(): By;
+
+  /**
+   * Matches a descendant element by a selector or by another [By](https://playwright.dev/docs/api/class-by).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const firstCell = by.get('table').get('td').first();
+   *
+   * const listItem = by.role('listitem');
+   * const unread = by.testId('inbox').get(listItem).filter({ hasText: 'Unread' });
+   * ```
+   *
+   * **Details**
+   *
+   * Passing a [By](https://playwright.dev/docs/api/class-by) composes rather than replaces, so
+   * `outer.get(inner.get(innermost))` and `outer.get(inner).get(innermost)` describe the same element.
+   * @param selectorOrBy A selector or a [By](https://playwright.dev/docs/api/class-by) to match inside this one.
+   */
+  get(selectorOrBy: string|By): By;
+
+  /**
+   * Matches an input element by the text of the associated `<label>` or `aria-label` attribute.
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  label(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+     * regular expression. Note that exact match still trims whitespace.
+     */
+    exact?: boolean;
+  }): By;
+
+  /**
+   * Matches the last matching element.
+   */
+  last(): By;
+
+  /**
+   * Matches the n-th matching element. It is zero based, `nth(0)` selects the first element.
+   * @param index
+   */
+  nth(index: number): By;
+
+  /**
+   * Matches elements matching either this or the given [By](https://playwright.dev/docs/api/class-by).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const dialogOrButton = by.role('dialog').or(by.role('button'));
+   * ```
+   *
+   * @param by Alternative locator to match.
+   */
+  or(by: By): By;
+
+  /**
+   * Matches an input element by the placeholder text.
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  placeholder(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+     * regular expression. Note that exact match still trims whitespace.
+     */
+    exact?: boolean;
+  }): By;
+
+  /**
+   * Matches an element by its [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles),
+   * [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and
+   * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+   * @param role Required aria role.
+   * @param options
+   */
+  role(role: "alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem", options?: {
+    /**
+     * An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls.
+     *
+     * Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
+     */
+    checked?: boolean;
+
+    /**
+     * Option to match the [accessible description](https://w3c.github.io/accname/#dfn-accessible-description). By
+     * default, matching is case-insensitive and searches for a substring, use
+     * [`exact`](https://playwright.dev/docs/api/class-by#by-role-option-exact) to control this behavior.
+     *
+     * Learn more about [accessible description](https://w3c.github.io/accname/#dfn-accessible-description).
+     */
+    description?: string|RegExp;
+
+    /**
+     * An attribute that is usually set by `aria-disabled` or `disabled`.
+     *
+     * **NOTE** Unlike most other attributes, `disabled` is inherited through the DOM hierarchy. Learn more about
+     * [`aria-disabled`](https://www.w3.org/TR/wai-aria-1.2/#aria-disabled).
+     *
+     */
+    disabled?: boolean;
+
+    /**
+     * Whether [`name`](https://playwright.dev/docs/api/class-by#by-role-option-name) and
+     * [`description`](https://playwright.dev/docs/api/class-by#by-role-option-description) are matched exactly:
+     * case-sensitive and whole-string. Defaults to false. Ignored when the value is a regular expression. Note that exact
+     * match still trims whitespace.
+     */
+    exact?: boolean;
+
+    /**
+     * An attribute that is usually set by `aria-expanded`.
+     *
+     * Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
+     */
+    expanded?: boolean;
+
+    /**
+     * Option that controls whether hidden elements are matched. By default, only non-hidden elements, as
+     * [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector.
+     *
+     * Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
+     */
+    includeHidden?: boolean;
+
+    /**
+     * A number attribute that is usually present for roles `heading`, `listitem`, `row`, `treeitem`, with default values
+     * for `<h1>-<h6>` elements.
+     *
+     * Learn more about [`aria-level`](https://www.w3.org/TR/wai-aria-1.2/#aria-level).
+     */
+    level?: number;
+
+    /**
+     * Option to match the [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). By default, matching is
+     * case-insensitive and searches for a substring, use
+     * [`exact`](https://playwright.dev/docs/api/class-by#by-role-option-exact) to control this behavior.
+     *
+     * Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+     */
+    name?: string|RegExp;
+
+    /**
+     * An attribute that is usually set by `aria-pressed`.
+     *
+     * Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
+     */
+    pressed?: boolean;
+
+    /**
+     * An attribute that is usually set by `aria-selected`.
+     *
+     * Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
+     */
+    selected?: boolean;
+  }): By;
+
+  /**
+   * Matches an element by the test id. The test id attribute is resolved when the
+   * [By](https://playwright.dev/docs/api/class-by) is bound to a page, so a
+   * [By](https://playwright.dev/docs/api/class-by) built at module scope still honours
+   * [selectors.setTestIdAttribute(attributeName)](https://playwright.dev/docs/api/class-selectors#selectors-set-test-id-attribute)
+   * and the `testIdAttribute` option.
+   * @param testId Id to locate the element by.
+   */
+  testId(testId: string|RegExp): By;
+
+  /**
+   * Matches an element containing the given text.
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  text(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+     * regular expression. Note that exact match still trims whitespace.
+     */
+    exact?: boolean;
+  }): By;
+
+  /**
+   * Matches an element by its `title` attribute.
+   * @param text Text to locate the element for.
+   * @param options
+   */
+  title(text: string|RegExp, options?: {
+    /**
+     * Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a
+     * regular expression. Note that exact match still trims whitespace.
+     */
+    exact?: boolean;
+  }): By;
+}
+
+/**
  * Accurately simulating time-dependent behavior is essential for verifying the correctness of applications. Learn
  * more about [clock emulation](https://playwright.dev/docs/clock).
  *
@@ -21395,6 +21813,41 @@ export interface FrameLocator {
   frameLocator(selector: string): FrameLocator;
 
   /**
+   * Binds a page-free [By](https://playwright.dev/docs/api/class-by) locator, returning a
+   * [Locator](https://playwright.dev/docs/api/class-locator) scoped to this object.
+   *
+   * **Usage**
+   *
+   * Consider a page object that describes elements without a page:
+   *
+   * ```js
+   * // todo-page.ts
+   * import { by } from '@playwright/test';
+   *
+   * export const newTodo = by.placeholder('What needs to be done?');
+   * export const todoItems = by.testId('todo-list').role('listitem');
+   * ```
+   *
+   * ```js
+   * import { expect, test } from '@playwright/test';
+   * import { newTodo, todoItems } from './todo-page';
+   *
+   * test('adds a todo', async ({ page }) => {
+   *   await page.get(newTodo).fill('buy milk');
+   *   await expect(page.get(todoItems)).toHaveCount(1);
+   * });
+   * ```
+   *
+   * **Details**
+   *
+   * The resolved [Locator](https://playwright.dev/docs/api/class-locator) is the same one the equivalent `getBy*` chain
+   * would produce, so `page.get(by.testId('list').text('Row'))` and `page.getByTestId('list').getByText('Row')` match
+   * the same element.
+   * @param by Page-free locator built with [playwright.by](https://playwright.dev/docs/api/class-playwright#playwright-by).
+   */
+  get(by: By): Locator;
+
+  /**
    * Allows locating elements by their alt text.
    *
    * **Usage**
@@ -22160,6 +22613,26 @@ export interface Mouse {
    */
   wheel(deltaX: number, deltaY: number): Promise<void>;
 }
+
+/**
+ * Builds page-free locators that are resolved with
+ * [page.get(by)](https://playwright.dev/docs/api/class-page#page-get),
+ * [frame.get(by)](https://playwright.dev/docs/api/class-frame#frame-get) or
+ * [locator.get(by)](https://playwright.dev/docs/api/class-locator#locator-get). See
+ * [By](https://playwright.dev/docs/api/class-by) for details.
+ *
+ * ```js
+ * import { by, test } from '@playwright/test';
+ *
+ * const saveButton = by.role('button', { name: 'Save' });
+ *
+ * test('saves', async ({ page }) => {
+ *   await page.get(saveButton).click();
+ * });
+ * ```
+ *
+ */
+export const by: By;
 
 /**
  * This object can be used to launch or connect to Chromium, returning instances of

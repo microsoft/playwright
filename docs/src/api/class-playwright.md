@@ -84,6 +84,24 @@ class PlaywrightExample
 }
 ```
 
+## property: Playwright.by
+* since: v1.63
+* langs: js
+- type: <[By]>
+
+Builds page-free locators that are resolved with [`method: Page.get`], [`method: Frame.get`] or
+[`method: Locator.get`]. See [By] for details.
+
+```js
+import { by, test } from '@playwright/test';
+
+const saveButton = by.role('button', { name: 'Save' });
+
+test('saves', async ({ page }) => {
+  await page.get(saveButton).click();
+});
+```
+
 ## property: Playwright.chromium
 * since: v1.8
 - type: <[BrowserType]>
