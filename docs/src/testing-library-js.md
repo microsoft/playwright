@@ -5,11 +5,13 @@ title: "Migrating from Testing Library"
 
 ## Migration principles
 
-This guide describes migration to Playwright's [Experimental Component Testing](./test-components) from [DOM Testing Library](https://testing-library.com/docs/dom-testing-library/intro/), [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) and [Vue Testing Library](https://testing-library.com/docs/vue-testing-library/intro).
+This guide describes migration to Playwright's [component testing](./test-components) from [DOM Testing Library](https://testing-library.com/docs/dom-testing-library/intro/), [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) and [Vue Testing Library](https://testing-library.com/docs/vue-testing-library/intro).
 
 :::note
 If you use DOM Testing Library in the browser (for example, you bundle end-to-end tests with webpack), you can switch directly to Playwright Test. Examples below are focused on component tests, but for end-to-end test you just need to replace `await mount` with `await page.goto('http://localhost:3000/')` to open the page under test.
 :::
+
+Playwright renders a component through a **story** — a small wrapper that embeds the component in one specific scenario — served from a **gallery** page by your own dev server. Where Testing Library calls `render()` inline in the test, Playwright moves that setup into the story and refers to it by id from the test. See [Component testing](./test-components) for how to set up the gallery.
 
 ## Cheat Sheet
 
@@ -28,9 +30,9 @@ If you use DOM Testing Library in the browser (for example, you bundle end-to-en
 | `screen.queryByPlaceholderText('...')`                                          | `component.getByPlaceholder('...')`                                    |
 | `screen.findByText('...')`                                                      | `component.getByText('...')`                                           |
 | `screen.getByTestId('...')`                                                     | `component.getByTestId('...')`                                         |
-| `render(<Component />);`                                                        | `mount(<Component />);`                                                |
-| `const { unmount } = render(<Component />);`                                    | `const { unmount } = await mount(<Component />);`                      |
-| `const { rerender } = render(<Component />);`                                   | `const { update } = await mount(<Component />);`                       |
+| `render(<Component />);`                                                        | a story export + `await mount('Component/Default');`                   |
+| `const { unmount } = render(<Component />);`                                    | `const component = await mount('...'); await component.unmount();`     |
+| `const { rerender } = render(<Component />);`                                   | `const component = await mount('...'); await component.update(props);` |
 
 
 ## Example
@@ -57,30 +59,39 @@ test('sign in', async () => {
 });
 ```
 
-Line-by-line migration to Playwright Test:
+Line-by-line migration to Playwright Test. First, the scenario moves from the test into a story next to the component:
+
+```js title="src/pages/SignInPage.story.tsx"
+import { SignInPage } from './SignInPage';
+
+export const Default = () => <SignInPage />; // 1
+```
+
+Then the test mounts that story by id:
 
 ```js
-const { test, expect } = require('@playwright/experimental-ct-react'); // 1
+const { test, expect } = require('@playwright/test'); // 2
 
-test('sign in', async ({ mount }) => { // 2
+test('sign in', async ({ mount }) => { // 3
   // Setup the page.
-  const component = await mount(<SignInPage />); // 3
+  const component = await mount('pages/SignInPage/Default'); // 4
 
   // Perform actions.
-  await component.getByLabel('Username').fill('John'); // 4
+  await component.getByLabel('Username').fill('John'); // 5
   await component.getByLabel('Password').fill('secret');
   await component.getByRole('button', { name: 'Sign in' }).click();
 
   // Verify signed in state by waiting until "Welcome" message appears.
-  await expect(component.getByText('Welcome, John')).toBeVisible(); // 5
+  await expect(component.getByText('Welcome, John')).toBeVisible(); // 6
 });
 ```
 
-Migration highlights (see inline comments in the Playwright Test code snippet):
+Migration highlights (see inline comments in the Playwright Test code snippets):
 
-1. Import everything from `@playwright/experimental-ct-react` (or -vue) for component tests, or from `@playwright/test` for end-to-end tests.
-1. Test function is given a `page` that is isolated from other tests, and `mount` that renders a component in this page. These are two of the [useful fixtures](./api/class-fixtures) in Playwright Test.
-1. Replace `render` with `mount` that returns a [component locator](./locators).
+1. Whatever `render()` used to set up inline — props, providers, mock data — becomes a story export. Stories run in the browser, so live objects no longer have to cross into the test.
+1. Import everything from `@playwright/test`, for both component and end-to-end tests.
+1. Test function is given a `page` that is isolated from other tests, and `mount` that renders a story in this page. These are two of the [useful fixtures](./api/class-fixtures) in Playwright Test.
+1. Replace `render` with [`method: Fixtures.mount`], which takes a story id and returns a [component locator](./locators) scoped to the gallery root.
 1. Use locators created with [`method: Locator.locator`] or [`method: Page.locator`] to perform most of the actions.
 1. Use [assertions](./test-assertions) to verify the state.
 
@@ -149,7 +160,7 @@ You also get all these ✨ awesome tools ✨ that come bundled with Playwright T
 Learn more about Playwright Test runner:
 
 - [Getting Started](./intro)
-- [Experimental Component Testing](./test-components)
+- [Component testing](./test-components)
 - [Locators](./locators.md)
 - [Assertions](./test-assertions)
 - [Auto-waiting](./actionability)

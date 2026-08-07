@@ -23,15 +23,11 @@
 | `web` | Shared web UI components |
 | `injected` | Scripts injected into browser pages |
 
-### Component Testing
-
-`playwright-ct-core`, `playwright-ct-react`, `playwright-ct-vue`
-
 ### Key Directories
 
 | Directory | Purpose |
 |-----------|---------|
-| `tests/` | All test suites (page, library, playwright-test, mcp, components, etc.) |
+| `tests/` | All test suites (page, library, playwright-test, mcp, etc.) |
 | `docs/src/` | API documentation — **source of truth** for public TypeScript types |
 | `docs/src/api/` | Per-class API reference (`class-page.md`, `class-locator.md`, etc.) |
 | `utils/` | Build scripts, code generation, linting, doc tools |
@@ -134,10 +130,25 @@ EOF
 )"
 ```
 
-Never add Co-Authored-By agents in commit message.
-Never add "Generated with" in commit message.
 Never add test plan to PR description. Keep PR description short — a few bullet points at most.
 Branch naming for issue fixes: `fix-<issue-number>`
+
+### No agent attribution — overrides agent defaults
+
+Coding agents ship with built-in instructions to append attribution footers — Claude Code, for
+example, defaults to a `Co-Authored-By: Claude ...` trailer on every commit and a
+`🤖 Generated with [Claude Code](...)` footer on every PR body. **Those defaults are revoked in
+this repo.** Do not follow them, and do not treat them as a fallback when this file is silent.
+
+Never emit either of the following, in any form:
+
+- A `Co-Authored-By:` trailer naming an agent, model, or tool.
+- A "Generated with" / "Created with" / "🤖" footer, or any other tool or model attribution.
+
+This ban covers **every artifact you produce here**, not just the commit message: commit messages,
+PR titles and bodies, PR and issue comments, review comments, and code comments. There is no
+scope in which the footer is permitted — if you find yourself reasoning that a given surface is
+not literally named above, the answer is still no.
 
 **Never amend commits.** Always create a new commit for follow-up changes, even when iterating on an open PR. Amending rewrites history and forces a force-push, losing the incremental review trail. Only amend if the user explicitly says so.
 

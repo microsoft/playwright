@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 
 test.slow();
 
@@ -164,91 +164,6 @@ test('should throw nice error message if git doesnt work', async ({ runInlineTes
   expect(result.output, 'contains our error message').toContain('Cannot detect changed files for --only-changed mode');
   expect(result.output, 'contains command').toContain('git diff this-commit-does-not-exist --name-only');
   expect(result.output, 'contains git command output').toContain('unknown revision or path not in the working tree');
-});
-
-test('should support component tests', async ({ runInlineTest, git, writeFiles }) => {
-  await writeFiles({
-    'playwright.config.ts': playwrightCtConfigText,
-    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
-    'playwright/index.ts': `
-    `,
-    'src/contents.ts': `
-      export const content = "Button";
-    `,
-    'src/button.tsx': `
-      import {content} from './contents';
-      export const Button = () => <button>{content}</button>;
-    `,
-    'src/helper.ts': `
-      export { Button } from "./button";
-    `,
-    'src/button.test.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './helper';
-
-      test('pass', async ({ mount }) => {
-        const component = await mount(<Button></Button>);
-        await expect(component).toHaveText('Button', { timeout: 1000 });
-      });
-    `,
-    'src/button2.test.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './helper';
-
-      test('pass', async ({ mount }) => {
-        const component = await mount(<Button></Button>);
-        await expect(component).toHaveText('Button', { timeout: 1000 });
-      });
-    `,
-    'src/button3.test.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-
-      test('pass', async ({ mount }) => {
-        const component = await mount(<p>Hello World</p>);
-        await expect(component).toHaveText('Hello World');
-      });
-    `,
-  });
-
-  git(`add .`);
-  git(`commit -m "init"`);
-
-  const result = await runInlineTest({}, { 'only-changed': true });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(0);
-  expect(result.failed).toBe(0);
-
-  const result2 = await runInlineTest({
-    'src/button2.test.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './helper';
-
-      test('pass', async ({ mount }) => {
-        const component = await mount(<Button></Button>);
-        await expect(component).toHaveText('Different Button', { timeout: 1000 });
-      });
-    `
-  }, { 'only-changed': true });
-
-  expect(result2.exitCode).toBe(1);
-  expect(result2.failed).toBe(1);
-  expect(result2.passed).toBe(0);
-  expect(result2.output).toContain('button2.test.tsx');
-  expect(result2.output).not.toContain('button.test.tsx');
-  expect(result2.output).not.toContain('button3.test.tsx');
-
-  git(`commit -am "update button2 test"`);
-
-  const result3 = await runInlineTest({
-    'src/contents.ts': `
-      export const content = 'Changed Content';
-    `
-  }, { 'only-changed': true });
-
-  expect(result3.exitCode).toBe(1);
-  expect(result3.failed).toBe(2);
-  expect(result3.passed).toBe(0);
 });
 
 test.describe('should work the same if being called in subdirectory', () => {

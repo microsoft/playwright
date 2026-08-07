@@ -27,7 +27,6 @@ import { packageRoot } from '../package';
 export type MemoryCache = {
   codePath: string;
   sourceMapPath: string;
-  dataPath: string;
   moduleUrl?: string;
 };
 
@@ -125,7 +124,7 @@ function readCodeCache(codePath: string): string {
 type CompilationCacheLookupResult = {
   serializedCache?: any;
   cachedCode?: string;
-  addToCache?: (code: string, map: any | undefined | null, data: Map<string, any>) => { serializedCache?: any };
+  addToCache?: (code: string, map: any | undefined | null) => { serializedCache?: any };
 };
 
 export function getFromCompilationCache(filename: string, contentHash: string, moduleUrl?: string): CompilationCacheLookupResult {
@@ -147,16 +146,15 @@ export function getFromCompilationCache(filename: string, contentHash: string, m
   const cachePath = calculateCachePath(filename, cacheFolderName, hashPrefix);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
-  const dataPath = cachePath + '.data';
   try {
     const cachedCode = readCodeCache(codePath);
-    const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
+    const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, moduleUrl });
     return { cachedCode, serializedCache };
   } catch {
   }
 
   return {
-    addToCache: (code: string, map: any | undefined | null, data: Map<string, any>) => {
+    addToCache: (code: string, map: any | undefined | null) => {
       if (isWorkerProcess())
         return {};
       // Trim cache. This won't help with deleted files, but it will remove storing multiple copies of the same file
@@ -164,10 +162,8 @@ export function getFromCompilationCache(filename: string, contentHash: string, m
       fs.mkdirSync(path.dirname(cachePath), { recursive: true });
       if (map)
         fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
-      if (data.size)
-        fs.writeFileSync(dataPath, JSON.stringify(Object.fromEntries(data.entries()), undefined, 2), 'utf8');
       writeCodeCache(codePath, code);
-      const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
+      const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, moduleUrl });
       return { serializedCache };
     }
   };
@@ -310,18 +306,4 @@ export function belongsToNodeModules(file: string) {
   if (file.startsWith(kPlaywrightInternalPrefix) && (file.endsWith('.js') || file.endsWith('.mjs')))
     return true;
   return false;
-}
-
-export async function getUserData(pluginName: string): Promise<Map<string, any>> {
-  const result = new Map<string, any>();
-  for (const [fileName, cache] of memoryCache) {
-    if (!cache.dataPath)
-      continue;
-    if (!fs.existsSync(cache.dataPath))
-      continue;
-    const data = JSON.parse(await fs.promises.readFile(cache.dataPath, 'utf8'));
-    if (data[pluginName])
-      result.set(fileName, data[pluginName]);
-  }
-  return result;
 }

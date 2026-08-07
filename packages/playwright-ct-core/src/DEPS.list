@@ -1,7 +1,0 @@
-[vitePlugin.ts]
-generated/indexSource.ts
-
-[viteDevPlugin.ts]
-
-[mount.ts]
-injected/**

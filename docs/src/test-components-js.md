@@ -20,7 +20,7 @@ test('click should expand', async ({ mount }) => {
 Tests run in Node.js while components run in a real browser: real clicks are triggered, real layout is executed, visual regression is possible. At the same time, tests get everything Playwright Test offers: parallelism, parametrization, retries and post-mortem tracing.
 
 :::note
-This guide replaces the experimental `@playwright/experimental-ct-react` and `@playwright/experimental-ct-vue` packages. If you are using them today, see the [migration guide](#migration-from-the-experimental-packages) below.
+The experimental `@playwright/experimental-ct-react`, `-ct-react17` and `-ct-vue` packages have been removed and are no longer published. If you are still on them, stay on Playwright 1.62 until you have followed the [migration guide](#migration-from-the-experimental-packages) below.
 :::
 
 ## Why a framework-agnostic approach
@@ -331,7 +331,7 @@ test('counts clicks', async ({ mount }) => {
 });
 ```
 
-Migrate incrementally: set up the gallery and the `components` project while the old CT project keeps running, port spec by spec, then drop the `@playwright/experimental-ct-*` dependency along with `playwright/index.html`, `playwright/index.ts` and `playwright/.cache`.
+Migrate incrementally: while pinned to Playwright 1.62, set up the gallery and the `components` project alongside the old CT project, port spec by spec, then drop the `@playwright/experimental-ct-*` dependency along with `playwright/index.html`, `playwright/index.ts` and `playwright/.cache` and upgrade.
 
 Things to watch for:
 

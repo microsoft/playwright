@@ -15,8 +15,6 @@
  */
 
 import EventEmitter from 'events';
-import fs from 'fs';
-import path from 'path';
 
 import { registry } from 'playwright-core/lib/coreBundle';
 
@@ -267,12 +265,6 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       this._ignoredProjectOutputs.add(p.project.outputDir);
     }
 
-    const result = await resolveCtDirs(config);
-    if (result) {
-      this._watchedProjectDirs.add(result.templateDir);
-      this._ignoredProjectOutputs.add(result.outDir);
-    }
-
     if (this._watchTestDirs)
       await this._updateWatcher(false);
   }
@@ -426,20 +418,6 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
 function printInternalError(e: Error) {
   // eslint-disable-next-line no-console
   console.error('Internal error:', e);
-}
-
-// TODO: remove CT dependency.
-async function resolveCtDirs(config: FullConfigInternal) {
-  const use = config.config.projects[0].use as any;
-  const relativeTemplateDir = use.ctTemplateDir || 'playwright';
-  const templateDir = await fs.promises.realpath(path.normalize(path.join(config.configDir, relativeTemplateDir))).catch(() => undefined);
-  if (!templateDir)
-    return null;
-  const outDir = use.ctCacheDir ? path.resolve(config.configDir, use.ctCacheDir) : path.resolve(templateDir, '.cache');
-  return {
-    outDir,
-    templateDir
-  };
 }
 
 export async function runAllTestsWithConfig(config: FullConfigInternal, options: TestRunOptions): Promise<FullResultStatus> {

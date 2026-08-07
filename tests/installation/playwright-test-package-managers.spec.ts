@@ -51,13 +51,6 @@ test('npm: @playwright/test should install playwright-core bin', async ({ exec, 
   expect(result).toContain('Version 1.');
 });
 
-test('npm: uninstalling ct removes playwright bin', async ({ exec, tmpWorkspace }) => {
-  await exec('npm i @playwright/test');
-  await exec('npm i @playwright/experimental-ct-react');
-  await exec('npm uninstall @playwright/experimental-ct-react');
-  await exec('npx playwright test', { expectToExitWithError: true, message: 'command not found' });
-});
-
 test('yarn: @playwright/test should work', async ({ exec, tmpWorkspace }) => {
   await exec('yarn add @playwright/test');
   await exec('yarn playwright install');

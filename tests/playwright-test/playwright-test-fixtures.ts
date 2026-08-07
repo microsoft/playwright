@@ -464,16 +464,6 @@ export function parseTestRunnerOutput(output: string) {
   };
 }
 
-export const playwrightCtConfigText = `
-import { defineConfig } from '@playwright/experimental-ct-react';
-export default defineConfig({
-  use: {
-    ctPort: ${3200 + (+process.env.TEST_PARALLEL_INDEX)}
-  },
-  projects: [{name: 'default'}],
-});
-`;
-
 export async function removeFolders(dirs: string[]): Promise<Error[]> {
   return await Promise.all(dirs.map((dir: string) =>
     fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10 }).catch(e => e)
