@@ -23,81 +23,64 @@ const ROOT = path.join(__dirname, '..');
 const esbuild = require('esbuild');
 
 /**
- * @type {[string, string, string, boolean][]}
+ * @type {[string, string, string][]}
  */
 const injectedScripts = [
   [
     path.join(ROOT, 'packages', 'injected', 'src', 'utilityScript.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
-    true,
   ],
   [
     path.join(ROOT, 'packages', 'injected', 'src', 'injectedScript.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
-    true,
   ],
   [
     path.join(ROOT, 'packages', 'injected', 'src', 'recorder', 'pollingRecorder.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
-    true,
   ],
   [
     path.join(ROOT, 'packages', 'injected', 'src', 'clock.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
-    true,
   ],
   [
     path.join(ROOT, 'packages', 'injected', 'src', 'storageScript.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
-    true,
   ],
   [
     path.join(ROOT, 'packages', 'injected', 'src', 'bindingsController.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
-    true,
   ],
   [
     path.join(ROOT, 'packages', 'injected', 'src', 'webSocketMock.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
-    true,
   ],
   [
     path.join(ROOT, 'packages', 'injected', 'src', 'webAuthn.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
-    true,
   ],
   [
     path.join(ROOT, 'packages', 'injected', 'src', 'bidiInsertText.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
-    true,
   ],
   [
     path.join(ROOT, 'packages', 'injected', 'src', 'webview', 'webViewInput.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
-    true,
   ],
   [
     path.join(ROOT, 'packages', 'injected', 'src', 'webview', 'webViewDialog.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
-    true,
   ],
-  [
-    path.join(ROOT, 'packages', 'playwright-ct-core', 'src', 'injected', 'index.ts'),
-    path.join(ROOT, 'packages', 'playwright-ct-core', 'lib', 'injected', 'packed'),
-    path.join(ROOT, 'packages', 'playwright-ct-core', 'src', 'generated'),
-    false,
-  ]
 ];
 
 const modulePrefix = `
@@ -150,7 +133,7 @@ const inlineCSSPlugin = {
 };
 
 (async () => {
-  for (const [injected, outdir, generatedFolder, hasExports] of injectedScripts) {
+  for (const [injected, outdir, generatedFolder] of injectedScripts) {
     await fs.promises.mkdir(generatedFolder, { recursive: true });
     const buildOutput = await esbuild.build({
       entryPoints: [injected],
@@ -165,9 +148,7 @@ const inlineCSSPlugin = {
       console.log(message.text);
     const baseName = path.basename(injected);
     const outFileJs = path.join(outdir, baseName.replace('.ts', '.js'));
-    let content = await fs.promises.readFile(outFileJs, 'utf-8');
-    if (hasExports)
-      content = await replaceEsbuildHeader(content, outFileJs);
+    const content = await replaceEsbuildHeader(await fs.promises.readFile(outFileJs, 'utf-8'), outFileJs);
     const newContent = `export const source = ${JSON.stringify(content)};`;
     await fs.promises.writeFile(path.join(generatedFolder, baseName.replace('.ts', 'Source.ts')), newContent);
   }

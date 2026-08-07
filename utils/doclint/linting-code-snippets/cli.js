@@ -134,8 +134,6 @@ class JSLintingService extends LintingService {
   _knownBadSnippets = [
     'mount(',
     'render(',
-    'vue-router',
-    'experimental-ct',
   ];
 
   async _init() {

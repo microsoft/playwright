@@ -15,7 +15,7 @@
  */
 
 import * as fs from 'fs';
-import { test, expect, playwrightCtConfigText, stripAnsi } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 import { execSync } from 'child_process';
 
 test.describe.configure({ mode: 'parallel' });
@@ -299,21 +299,12 @@ test('should generate baseline with special characters', async ({ runInlineTest 
 test('should update missing snapshots in tsx', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     '.git/marker': '',
-    'playwright.config.ts': playwrightCtConfigText,
-    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
-    'playwright/index.ts': ``,
-
-    'src/button.tsx': `
-      export const Button = () => <button>Button</button>;
-    `,
-
     'src/button.test.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './button.tsx';
+      import { test, expect } from '@playwright/test';
 
-      test('pass', async ({ mount }) => {
-        const component = await mount(<Button></Button>);
-        await expect(component).toMatchAriaSnapshot(\`\`);
+      test('pass', async ({ page }) => {
+        await page.setContent(\`<button>Button</button>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
       });
     `,
   });
@@ -324,12 +315,12 @@ test('should update missing snapshots in tsx', async ({ runInlineTest }, testInf
   expect(trimPatch(data)).toBe(`diff --git a/src/button.test.tsx b/src/button.test.tsx
 --- a/src/button.test.tsx
 +++ b/src/button.test.tsx
-@@ -4,6 +4,8 @@
+@@ -3,6 +3,8 @@
 
-       test('pass', async ({ mount }) => {
-         const component = await mount(<Button></Button>);
--        await expect(component).toMatchAriaSnapshot(\`\`);
-+        await expect(component).toMatchAriaSnapshot(\`
+       test('pass', async ({ page }) => {
+         await page.setContent(\`<button>Button</button>\`);
+-        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
++        await expect(page.locator('body')).toMatchAriaSnapshot(\`
 +          - button \"Button\"
 +        \`);
        });
@@ -345,31 +336,21 @@ test('should update missing snapshots in tsx', async ({ runInlineTest }, testInf
 test('should update multiple files', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     '.git/marker': '',
-    'playwright.config.ts': playwrightCtConfigText,
-    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
-    'playwright/index.ts': ``,
+    'src/button-1.test.ts': `
+      import { test, expect } from '@playwright/test';
 
-    'src/button.tsx': `
-      export const Button = () => <button>Button</button>;
-    `,
-
-    'src/button-1.test.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './button.tsx';
-
-      test('pass 1', async ({ mount }) => {
-        const component = await mount(<Button></Button>);
-        await expect(component).toMatchAriaSnapshot(\`\`);
+      test('pass 1', async ({ page }) => {
+        await page.setContent(\`<button>Button</button>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
       });
     `,
 
-    'src/button-2.test.tsx': `
-      import { test, expect } from '@playwright/experimental-ct-react';
-      import { Button } from './button.tsx';
+    'src/button-2.test.ts': `
+      import { test, expect } from '@playwright/test';
 
-      test('pass 2', async ({ mount }) => {
-        const component = await mount(<Button></Button>);
-        await expect(component).toMatchAriaSnapshot(\`\`);
+      test('pass 2', async ({ page }) => {
+        await page.setContent(\`<button>Button</button>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
       });
     `,
   });
@@ -378,38 +359,38 @@ test('should update multiple files', async ({ runInlineTest }, testInfo) => {
 
   expect(stripAnsi(result.output).replace(/\\/g, '/')).toContain(`New baselines created for:
 
-  src/button-1.test.tsx
-  src/button-2.test.tsx
+  src/button-1.test.ts
+  src/button-2.test.ts
 
   git apply test-results/rebaselines.patch
 `);
 
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
-  expect(trimPatch(data)).toBe(`diff --git a/src/button-1.test.tsx b/src/button-1.test.tsx
---- a/src/button-1.test.tsx
-+++ b/src/button-1.test.tsx
-@@ -4,6 +4,8 @@
+  expect(trimPatch(data)).toBe(`diff --git a/src/button-1.test.ts b/src/button-1.test.ts
+--- a/src/button-1.test.ts
++++ b/src/button-1.test.ts
+@@ -3,6 +3,8 @@
 
-       test('pass 1', async ({ mount }) => {
-         const component = await mount(<Button></Button>);
--        await expect(component).toMatchAriaSnapshot(\`\`);
-+        await expect(component).toMatchAriaSnapshot(\`
+       test('pass 1', async ({ page }) => {
+         await page.setContent(\`<button>Button</button>\`);
+-        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
++        await expect(page.locator('body')).toMatchAriaSnapshot(\`
 +          - button \"Button\"
 +        \`);
        });
 
 \\ No newline at end of file
 
-diff --git a/src/button-2.test.tsx b/src/button-2.test.tsx
---- a/src/button-2.test.tsx
-+++ b/src/button-2.test.tsx
-@@ -4,6 +4,8 @@
+diff --git a/src/button-2.test.ts b/src/button-2.test.ts
+--- a/src/button-2.test.ts
++++ b/src/button-2.test.ts
+@@ -3,6 +3,8 @@
 
-       test('pass 2', async ({ mount }) => {
-         const component = await mount(<Button></Button>);
--        await expect(component).toMatchAriaSnapshot(\`\`);
-+        await expect(component).toMatchAriaSnapshot(\`
+       test('pass 2', async ({ page }) => {
+         await page.setContent(\`<button>Button</button>\`);
+-        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
++        await expect(page.locator('body')).toMatchAriaSnapshot(\`
 +          - button \"Button\"
 +        \`);
        });
