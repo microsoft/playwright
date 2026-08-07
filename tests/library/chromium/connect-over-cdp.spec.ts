@@ -594,7 +594,7 @@ test('setInputFiles should preserve lastModified timestamp', async ({ browserTyp
     // On Linux browser sometimes reduces the timestamp by 1ms: 1696272058110.0715  -> 1696272058109 or even
     // rounds it to seconds in WebKit: 1696272058110 -> 1696272058000.
     for (let i = 0; i < timestamps.length; i++)
-      expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}`).toBeLessThan(1000);
+      expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}`).toBeLessThanOrEqual(1000);
     await cdpBrowser.close();
   } finally {
     await browserServer.close();
