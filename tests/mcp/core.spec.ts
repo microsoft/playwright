@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs/promises';
+import path from 'path';
 import { pathToFileURL } from 'url';
 import { test, expect } from './fixtures';
 
@@ -28,6 +29,33 @@ test('browser_navigate', async ({ client, server }) => {
 - Page Title: Title`,
     snapshot: `- generic [active] [ref=e1]: Hello, world!`,
   });
+});
+
+test('browser_cleanup deletes MCP output files', async ({ startClient }, testInfo) => {
+  const outputDir = testInfo.outputPath('.playwright-mcp');
+  await fs.mkdir(path.join(outputDir, 'traces', 'resources'), { recursive: true });
+  await fs.writeFile(path.join(outputDir, 'screenshot.png'), 'screenshot');
+  await fs.writeFile(path.join(outputDir, 'traces', 'resources', 'resource'), 'resource');
+
+  const { client } = await startClient();
+  expect(await client.callTool({
+    name: 'browser_cleanup',
+  })).toHaveResponse({
+    result: 'MCP output files cleaned up.',
+  });
+
+  await expect(fs.stat(outputDir)).rejects.toThrow();
+});
+
+test('browser_cleanup deletes configured output files', async ({ startClient }, testInfo) => {
+  const outputDir = testInfo.outputPath('output');
+  await fs.mkdir(outputDir);
+  await fs.writeFile(path.join(outputDir, 'screenshot.png'), 'screenshot');
+
+  const { client } = await startClient({ config: { outputDir } });
+  await client.callTool({ name: 'browser_cleanup' });
+
+  await expect(fs.stat(outputDir)).rejects.toThrow();
 });
 
 test('browser_navigate surfaces non-2xx HTTP status', async ({ client, server }) => {

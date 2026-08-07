@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import * as z from 'zod';
 import { defineTabTool, defineTool } from './tool';
 import { renderTabsMarkdown } from './response';
+import { outputDir } from './context';
 
 const close = defineTool({
   capability: 'core',
@@ -56,7 +59,25 @@ const resize = defineTabTool({
   },
 });
 
+const cleanup = defineTool({
+  capability: 'core',
+
+  schema: {
+    name: 'browser_cleanup',
+    title: 'Clean up output files',
+    description: 'Delete all files created by the MCP server in its output directory, which defaults to .playwright-mcp.',
+    inputSchema: z.object({}),
+    type: 'action',
+  },
+
+  handle: async (context, params, response) => {
+    await fs.promises.rm(outputDir(context.options), { recursive: true, force: true });
+    response.addTextResult('MCP output files cleaned up.');
+  },
+});
+
 export default [
   close,
-  resize
+  resize,
+  cleanup,
 ];

@@ -31,6 +31,7 @@ test('test snapshot tool list', async ({ client }) => {
     'browser_hover',
     'browser_select_option',
     'browser_type',
+    'browser_cleanup',
     'browser_close',
     'browser_navigate_back',
     'browser_navigate',
