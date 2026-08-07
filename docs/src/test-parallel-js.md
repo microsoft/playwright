@@ -155,6 +155,8 @@ test('reset the database', { lock: ['database', 'external-api'] }, async () => {
 });
 ```
 
+Test-scoped [fixtures](./test-fixtures.md#fixture-locks) can also contribute locks to a test. Playwright combines them with locks declared in the test details before scheduling the test.
+
 Playwright acquires all the locks of a test before the test starts and releases them when it finishes.
 
 :::note

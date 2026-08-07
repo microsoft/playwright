@@ -313,6 +313,28 @@ test('basic test', async ({ todoPage, page }) => {
 });
 ```
 
+## Fixture locks
+
+Test-scoped fixtures can declare named locks, and every test using the fixture will inherit those locks.
+For example, tests that depend on specific server-wide settings must not run concurrently with other tests that change them.
+
+```js title="my-test.ts"
+import { test as base } from '@playwright/test';
+
+export const test = base.extend({
+  smtpSettings: [
+    async ({ request }, use) => {
+      const updateSettings = settings =>
+        request.put('/api/admin/smtp-settings', { data: settings });
+      await use(updateSettings);
+    },
+    { locks: ['smtp-settings'] },
+  ],
+});
+```
+
+Learn more about [test locks](./test-parallel.md#test-locks).
+
 ## Overriding fixtures
 
 In addition to creating your own fixtures, you can also override existing fixtures to fit your needs. Consider the following example which overrides the `page` fixture by automatically navigating to the `baseURL`:

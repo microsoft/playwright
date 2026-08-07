@@ -26,7 +26,7 @@ import type { Location } from '../../types/testReporter';
 export type FixtureScope = 'test' | 'worker';
 type FixtureAuto = boolean | 'all-hooks-included';
 const kScopeOrder: FixtureScope[] = ['test', 'worker'];
-type FixtureOptions = { auto?: FixtureAuto, scope?: FixtureScope, option?: boolean, timeout?: number | undefined, title?: string, box?: boolean | 'self' };
+type FixtureOptions = { auto?: FixtureAuto, scope?: FixtureScope, option?: boolean, locks?: string[], timeout?: number | undefined, title?: string, box?: boolean | 'self' };
 type FixtureTuple = [ value: any, options: FixtureOptions ];
 export type FixtureRegistration = {
   // Fixture registration location.
@@ -46,6 +46,8 @@ export type FixtureRegistration = {
   timeout?: number;
   // Names of the dependencies, comes from the declaration "({ foo, bar }) => {...}"
   deps: string[];
+  // Named locks required by this test-scoped fixture.
+  locks: string[];
   // Unique id, to differentiate between fixtures with the same name.
   id: string;
   // A fixture override can use the previous version of the fixture.
@@ -120,12 +122,23 @@ export class FixturePool {
     for (const entry of Object.entries(fixtures)) {
       const name = entry[0];
       let value = entry[1];
-      let options: { auto: FixtureAuto, scope: FixtureScope, option?: boolean, timeout: number | undefined, customTitle?: string, box?: boolean | 'self' } | undefined;
+      const previous = this._registrations.get(name);
+      let options: { auto: FixtureAuto, scope: FixtureScope, option?: boolean, locks: string[], timeout: number | undefined, customTitle?: string, box?: boolean | 'self' } | undefined;
       if (isFixtureTuple(value)) {
+        const locks = value[1].locks ?? [];
+        if (!Array.isArray(locks)) {
+          this._addLoadError(`Fixture "${name}" option "locks" must be an array.`, location);
+          continue;
+        }
+        if (locks.some(lock => typeof lock !== 'string')) {
+          this._addLoadError(`Fixture "${name}" option "locks" must contain only strings.`, location);
+          continue;
+        }
         options = {
           auto: value[1].auto ?? false,
           scope: value[1].scope || 'test',
           option: value[1].option,
+          locks: [...locks],
           timeout: value[1].timeout,
           customTitle: value[1].title,
           box: value[1].box,
@@ -134,7 +147,6 @@ export class FixturePool {
       }
       let fn = value as (Function | any);
 
-      const previous = this._registrations.get(name);
       if (previous && options) {
         if (previous.scope !== options.scope) {
           this._addLoadError(`Fixture "${name}" has already been registered as a { scope: '${previous.scope}' } fixture defined in ${formatLocation(previous.location)}.`, location);
@@ -150,9 +162,9 @@ export class FixturePool {
         }
       } else if (previous) {
         // Note: deliberately not inheriting "options.box" so that fixture override is visible by default.
-        options = { auto: previous.auto, scope: previous.scope, option: previous.option, timeout: previous.timeout, customTitle: previous.customTitle };
+        options = { auto: previous.auto, scope: previous.scope, option: previous.option, locks: [], timeout: previous.timeout, customTitle: previous.customTitle };
       } else if (!options) {
-        options = { auto: false, scope: 'test', option: false, timeout: undefined };
+        options = { auto: false, scope: 'test', option: false, locks: [], timeout: undefined };
       }
 
       if (!kScopeOrder.includes(options.scope)) {
@@ -161,6 +173,10 @@ export class FixturePool {
       }
       if (options.scope === 'worker' && disallowWorkerFixtures) {
         this._addLoadError(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, location);
+        continue;
+      }
+      if (options.scope === 'worker' && options.locks.length) {
+        this._addLoadError(`Fixture "${name}" cannot specify locks because it has worker scope.`, location);
         continue;
       }
 
@@ -174,7 +190,7 @@ export class FixturePool {
       }
 
       const deps = fixtureParameterNames(fn, location, e => this._onLoadError(e));
-      const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: !!options.option, timeout: options.timeout, customTitle: options.customTitle, box: options.box, deps, super: previous, optionOverride: isOptionsOverride };
+      const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: !!options.option, locks: options.locks, timeout: options.timeout, customTitle: options.customTitle, box: options.box, deps, super: previous, optionOverride: isOptionsOverride };
       registrationId(registration);
       this._registrations.set(name, registration);
     }
@@ -263,6 +279,25 @@ export class FixturePool {
 
   autoFixtures() {
     return [...this._registrations.values()].filter(r => r.auto !== false);
+  }
+
+  collectFixturesForFunction(fn: Function, location: Location, collector: Set<FixtureRegistration>) {
+    for (const name of fixtureParameterNames(fn, location, e => this._onLoadError(e))) {
+      const registration = this.resolve(name);
+      if (registration)
+        this.collectFixturesInSetupOrder(registration, collector);
+    }
+  }
+
+  collectFixturesInSetupOrder(registration: FixtureRegistration, collector: Set<FixtureRegistration>) {
+    if (collector.has(registration))
+      return;
+    for (const name of registration.deps) {
+      const dependency = this.resolve(name, registration);
+      if (dependency)
+        this.collectFixturesInSetupOrder(dependency, collector);
+    }
+    collector.add(registration);
   }
 
   private _addLoadError(message: string, location: Location) {
