@@ -695,10 +695,11 @@ test('static modifiers should be added in serial mode', async ({ runInlineTest }
   expect(result.passed).toBe(0);
   expect(result.skipped).toBe(2);
   expect(result.didNotRun).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'slow', location: { file: expect.any(String), line: 6, column: 14 } }]);
-  expect(result.report.suites[0].specs[1].tests[0].annotations).toEqual([{ type: 'fixme', location: { file: expect.any(String), line: 9, column: 12 } }]);
-  expect(result.report.suites[0].specs[2].tests[0].annotations).toEqual([{ type: 'skip', location: { file: expect.any(String), line: 11, column: 12 } }]);
-  expect(result.report.suites[0].specs[3].tests[0].annotations).toEqual([]);
+  const serial = { type: 'serial', location: { file: expect.any(String), line: 0, column: 0 } };
+  expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([serial, { type: 'slow', location: { file: expect.any(String), line: 6, column: 14 } }]);
+  expect(result.report.suites[0].specs[1].tests[0].annotations).toEqual([serial, { type: 'fixme', location: { file: expect.any(String), line: 9, column: 12 } }]);
+  expect(result.report.suites[0].specs[2].tests[0].annotations).toEqual([serial, { type: 'skip', location: { file: expect.any(String), line: 11, column: 12 } }]);
+  expect(result.report.suites[0].specs[3].tests[0].annotations).toEqual([serial]);
 });
 
 test('should contain only one slow modifier', async ({ runInlineTest }) => {

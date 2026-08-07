@@ -57,6 +57,8 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     for (let parentSuite: Suite | undefined = suite; parentSuite; parentSuite = parentSuite.parent) {
       if (parentSuite._staticAnnotations.length)
         test.annotations.unshift(...parentSuite._staticAnnotations);
+      if (parentSuite._parallelMode === 'serial')
+        test.annotations.unshift({ type: 'serial', location: parentSuite.location });
       if (parentSuite._locks.length)
         test._locks.push(...parentSuite._locks);
       if (inheritedRetries === undefined && parentSuite._retries !== undefined)
