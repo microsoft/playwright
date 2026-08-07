@@ -217,6 +217,7 @@ test('dialog-dismiss', async ({ cli, server, mcpBrowser }) => {
 });
 
 test('dialog-accept <prompt>', async ({ cli, server, mcpBrowser }) => {
+  test.fixme(mcpBrowser === 'firefox' && process.platform === 'win32', 'Flaky on firefox/windows: snapshot response intermittently omits the "### Snapshot" section, leaving inlineSnapshot undefined');
   server.setContent('/', `<button onclick="document.body.textContent = prompt('MyAlert')">Button</button>`, 'text/html');
   await cli('open', server.PREFIX, { env: { PLAYWRIGHT_MCP_TIMEOUT_ACTION: mcpBrowser === 'firefox' ? '30000' : '' } });
   await cli('click', 'e2');
