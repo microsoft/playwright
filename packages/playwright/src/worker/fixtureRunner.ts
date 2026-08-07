@@ -199,16 +199,6 @@ export class FixtureRunner {
     this.pool = pool;
   }
 
-  private _collectFixturesInSetupOrder(registration: fixtures.FixtureRegistration, collector: Set<fixtures.FixtureRegistration>) {
-    if (collector.has(registration))
-      return;
-    for (const name of registration.deps) {
-      const dep = this.pool!.resolve(name, registration)!;
-      this._collectFixturesInSetupOrder(dep, collector);
-    }
-    collector.add(registration);
-  }
-
   async teardownScope(scope: fixtures.FixtureScope, testInfo: TestInfoImpl, runnable: RunnableDescription) {
     // Teardown fixtures in the reverse order.
     const allFixtures = Array.from(this.instanceForId.values()).reverse();
@@ -245,12 +235,12 @@ export class FixtureRunner {
     }
     auto.sort((r1, r2) => (r1.scope === 'worker' ? 0 : 1) - (r2.scope === 'worker' ? 0 : 1));
     for (const registration of auto)
-      this._collectFixturesInSetupOrder(registration, collector);
+      this.pool!.collectFixturesInSetupOrder(registration, collector);
 
     // Collect used fixtures.
     const names = getRequiredFixtureNames(fn);
     for (const name of names)
-      this._collectFixturesInSetupOrder(this.pool!.resolve(name)!, collector);
+      this.pool!.collectFixturesInSetupOrder(this.pool!.resolve(name)!, collector);
 
     // Setup fixtures.
     for (const registration of collector)

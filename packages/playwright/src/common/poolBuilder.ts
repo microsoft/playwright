@@ -17,8 +17,8 @@
 import { FixturePool } from './fixtures';
 import { formatLocation } from '../util';
 
+import type { FixtureRegistration, LoadError } from './fixtures';
 import type { FullProjectInternal } from './config';
-import type { LoadError } from './fixtures';
 import type { Suite, TestCase } from './test';
 import type { TestTypeImpl } from './testType';
 import type { TestError } from '../../types/testReporter';
@@ -75,14 +75,17 @@ export class PoolBuilder {
   }
 
   private _setFixtureLocksForTest(test: TestCase, pool: FixturePool, parents: Suite[]) {
-    test._locks.push(...pool.locksForAutoFixtures());
+    const collector = new Set<FixtureRegistration>();
+    for (const registration of pool.autoFixtures())
+      pool.collectFixturesInSetupOrder(registration, collector);
     for (const parent of parents) {
       for (const hook of parent._hooks)
-        test._locks.push(...pool.locksForFunction(hook.fn, hook.location));
+        pool.collectFixturesForFunction(hook.fn, hook.location, collector);
       for (const modifier of parent._modifiers)
-        test._locks.push(...pool.locksForFunction(modifier.fn, modifier.location));
+        pool.collectFixturesForFunction(modifier.fn, modifier.location, collector);
     }
-    test._locks.push(...pool.locksForFunction(test.fn, test.location));
+    pool.collectFixturesForFunction(test.fn, test.location, collector);
+    test._locks.push(...[...collector].flatMap(registration => registration.locks));
   }
 
   private _buildTestTypePool(testType: TestTypeImpl, testErrors?: TestError[]): FixturePool {

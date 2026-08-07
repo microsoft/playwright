@@ -281,32 +281,23 @@ export class FixturePool {
     return [...this._registrations.values()].filter(r => r.auto !== false);
   }
 
-  locksForFunction(fn: Function, location: Location): string[] {
-    const collector = new Set<FixtureRegistration>();
+  collectFixturesForFunction(fn: Function, location: Location, collector: Set<FixtureRegistration>) {
     for (const name of fixtureParameterNames(fn, location, e => this._onLoadError(e))) {
       const registration = this.resolve(name);
       if (registration)
-        this._collectRegistrations(registration, collector);
+        this.collectFixturesInSetupOrder(registration, collector);
     }
-    return [...collector].flatMap(registration => registration.locks);
   }
 
-  locksForAutoFixtures(): string[] {
-    const collector = new Set<FixtureRegistration>();
-    for (const registration of this.autoFixtures())
-      this._collectRegistrations(registration, collector);
-    return [...collector].flatMap(registration => registration.locks);
-  }
-
-  private _collectRegistrations(registration: FixtureRegistration, collector: Set<FixtureRegistration>) {
+  collectFixturesInSetupOrder(registration: FixtureRegistration, collector: Set<FixtureRegistration>) {
     if (collector.has(registration))
       return;
-    collector.add(registration);
     for (const name of registration.deps) {
       const dependency = this.resolve(name, registration);
       if (dependency)
-        this._collectRegistrations(dependency, collector);
+        this.collectFixturesInSetupOrder(dependency, collector);
     }
+    collector.add(registration);
   }
 
   private _addLoadError(message: string, location: Location) {
