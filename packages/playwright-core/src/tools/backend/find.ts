@@ -92,21 +92,26 @@ const find = defineTabTool({
         path.add(ancestor);
     }
 
-    const snippets = windows.map(window => {
-      const indices = ancestorIndices(lines, indents, window.start);
+    // Render all the windows into a single tree, so that a path shared by several matches is
+    // printed once instead of being repeated for every one of them.
+    const included = new Set<number>();
+    for (const window of windows) {
+      for (const ancestor of ancestorIndices(lines, indents, window.start))
+        included.add(ancestor);
       for (let i = window.start; i <= window.end; i++)
-        indices.push(i);
-      const out: string[] = [];
-      for (let i = 0; i < indices.length; i++) {
-        const index = indices[i];
-        if (i > 0 && index > indices[i - 1] + 1 && !path.has(index) && !path.has(indices[i - 1]))
-          out.push(' '.repeat(indents[index]) + '...');
-        out.push(lines[index]);
-      }
-      return out.join('\n');
-    });
+        included.add(i);
+    }
+
+    const indices = [...included].sort((a, b) => a - b);
+    const out: string[] = [];
+    for (let i = 0; i < indices.length; i++) {
+      const index = indices[i];
+      if (i > 0 && index > indices[i - 1] + 1 && !path.has(index) && !path.has(indices[i - 1]))
+        out.push(' '.repeat(indents[index]) + '...');
+      out.push(lines[index]);
+    }
     const matchWord = matchedLines.length === 1 ? 'match' : 'matches';
-    response.addTextResult(`Found ${matchedLines.length} ${matchWord} for ${query}:\n\n${snippets.join('\n\n----\n\n')}`);
+    response.addTextResult(`Found ${matchedLines.length} ${matchWord} for ${query}:\n\n${out.join('\n')}`);
   },
 });
 

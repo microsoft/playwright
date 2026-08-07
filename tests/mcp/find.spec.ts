@@ -132,6 +132,51 @@ test('browser_find marks gaps within off-path context with an ellipsis', async (
   });
 });
 
+const repeatedPage = `
+  <main>
+    <section aria-label="Sidebar">
+      <nav aria-label="Primary">
+        <ul>
+          <li><a href="/a">Target A</a></li>
+          <li>filler one</li>
+          <li>filler two</li>
+          <li>filler three</li>
+          <li>filler four</li>
+          <li>filler five</li>
+          <li><a href="/b">Target B</a></li>
+        </ul>
+      </nav>
+    </section>
+  </main>
+`;
+
+test('browser_find prints the path shared by several matches once', async ({ client, server }) => {
+  server.setContent('/', repeatedPage, 'text/html');
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+  const response = await client.callTool({
+    name: 'browser_find',
+    arguments: { text: 'Target' },
+  });
+
+  expect(response).toHaveResponse({
+    result: expect.stringContaining(`Found 2 matches for "Target":
+
+- main [ref=e2]:
+  - region "Sidebar" [ref=e3]:
+    - navigation "Primary" [ref=e4]:
+      - list [ref=e5]:
+        - listitem [ref=e6]:`),
+  });
+  // Both matches live in the same tree, so the path above them is printed once and the gap
+  // between the two context windows is marked with an ellipsis.
+  expect(response).toHaveResponse({
+    result: expect.stringContaining(`        - listitem [ref=e9]: filler two
+        ...
+        - listitem [ref=e11]: filler four`),
+  });
+});
+
 test('browser_find is case-insensitive for text', async ({ client, server }) => {
   server.setContent('/', listPage, 'text/html');
   await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
