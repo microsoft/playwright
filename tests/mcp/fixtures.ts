@@ -61,7 +61,7 @@ export type StartClient = (options?: {
   rootsResponseDelay?: number,
   env?: NodeJS.ProcessEnv,
   noTimeoutForTest?: boolean,
-}) => Promise<{ client: Client, stderr: () => string }>;
+}) => Promise<{ client: Client, stderr: () => string, closeTransport: () => Promise<void> }>;
 
 
 type TestFixtures = {
@@ -95,6 +95,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
   startClient: async ({ mcpHeadless, mcpBrowser, mcpArgs, mcpServerType, mcpCaps }, use, testInfo) => {
     const configDir = path.dirname(test.info().config.configFile!);
     const clients: Client[] = [];
+    const disconnectedClients = new Set<Client>();
 
     await use(async options => {
       let args: string[] = mcpArgs ?? [];
@@ -151,10 +152,24 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
       clients.push(client);
       await client.connect(transport);
       await client.ping();
-      return { client, stderr: () => stderrBuffer };
+      return {
+        client,
+        stderr: () => stderrBuffer,
+        closeTransport: async () => {
+          disconnectedClients.add(client);
+          await transport.close();
+        },
+      };
     });
 
-    await Promise.all(clients.map(client => client.close()));
+    await Promise.all(clients.map(async client => {
+      try {
+        await client.close();
+      } catch (e) {
+        if (!disconnectedClients.has(client))
+          throw e;
+      }
+    }));
   },
 
   wsEndpoint: async ({ }, use) => {
