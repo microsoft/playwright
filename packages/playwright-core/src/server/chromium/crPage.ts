@@ -49,6 +49,22 @@ import type * as channels from '../channels';
 
 export type WindowBounds = { top?: number, left?: number, width?: number, height?: number };
 
+// Browsers disallow these WebUI hosts in off-the-record profiles and redirect them to the original
+// profile, which crashes when the profile was created over CDP. Edge allows most of them in InPrivate.
+// See https://github.com/microsoft/playwright/issues/41935.
+const kCrashingWebUIHosts = {
+  chromium: new Set(['apps', 'extensions', 'help', 'history', 'password-manager', 'settings']),
+  edge: new Set(['history']),
+};
+
+// Chromium canonicalizes WebUI urls as standard ones, so "VIEW-SOURCE:Chrome:Settings" ends up
+// being "chrome://settings/".
+function webUIHost(url: string): string {
+  const match = /^(?:view-source:)?(?:chrome|edge):\/*([^/?#]+)/i.exec(url);
+  const authority = match ? `http://${match[1]}` : '';
+  return URL.canParse(authority) ? new URL(authority).hostname : '';
+}
+
 export class CRPage implements PageDelegate {
   readonly utilityWorldName: string;
   readonly _mainFrameSession: FrameSession;
@@ -152,7 +168,16 @@ export class CRPage implements PageDelegate {
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
+    this._assertNavigationDoesNotCrashBrowser(url);
     return this._sessionForFrame(frame)._navigate(frame, url, referrer);
+  }
+
+  private _assertNavigationDoesNotCrashBrowser(url: string) {
+    if (this._browserContext.isPersistentContext())
+      return;
+    const isEdge = this._browserContext._browser.userAgent().includes('Edg/');
+    if ((isEdge ? kCrashingWebUIHosts.edge : kCrashingWebUIHosts.chromium).has(webUIHost(url)))
+      throw new Error(`Cannot navigate to "${url}": this page is not available in an isolated browser context, and opening it crashes the browser. Use browserType.launchPersistentContext() instead.`);
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
