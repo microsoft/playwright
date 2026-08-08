@@ -1166,8 +1166,10 @@ test.describe('cli codegen with pierceFrames', () => {
   await page.getByText('Hello2').click();`);
   });
 
-  test('should prepend the frame selector to disambiguate', async ({ openRecorder, server }) => {
-    const { page, recorder } = await openRecorder();
+  test('should prepend the frame selector to disambiguate', async ({ openRecorder, server, browserName, isMac }) => {
+    const { page, recorder } = await openRecorder({
+      __testHookFrameSelectorTimeout: browserName === 'firefox' && isMac && process.arch === 'x64' ? 10_000 : undefined,
+    });
     await recorder.setContentAndWait(`
       <iframe id=frame1 srcdoc="<iframe srcdoc='<button>Hello</button>'></iframe>"></iframe>
       <iframe id=frame2 srcdoc="<iframe srcdoc='<button>Hello</button>'></iframe>"></iframe>
