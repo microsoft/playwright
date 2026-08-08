@@ -644,22 +644,22 @@ test('should work with video size', async ({ runInlineTest }) => {
   expect(videoPlayer.videoHeight).toBe(110);
 });
 
-test('should work with video.path() throwing', async ({ runInlineTest }, testInfo) => {
-  // When running remotely, video.path() is not available, so we must not use it.
+test('should record video for contexts created by the test', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.js': `
       module.exports = {
-        use: { video: { mode: 'on' } },
+        use: { video: 'on' },
         name: 'chromium',
-        preserveOutput: 'always',
       };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
-      test('pass', async ({ page }) => {
-        page.video().path = () => { throw new Error('No-no!'); };
+      test('pass', async ({ browser }) => {
+        const context = await browser.newContext();
+        const page = await context.newPage();
         await page.setContent('<div>PASS</div>');
         await page.waitForTimeout(3000);
+        await context.close();
       });
     `,
   }, { workers: 1 });
@@ -667,7 +667,74 @@ test('should work with video.path() throwing', async ({ runInlineTest }, testInf
   expect(result.passed).toBe(1);
   const dir = testInfo.outputPath(`test-results/a-pass-chromium/`);
   const video = fs.readdirSync(dir).find(file => file.endsWith('webm'));
-  expect(video).toBeTruthy();
+  expect(video).toBe('video.webm');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].attachments).toEqual([{
+    name: 'video',
+    contentType: 'video/webm',
+    path: path.join(dir, video!),
+  }]);
+});
+
+test('should save video when the page is closed before the test ends', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        use: { video: 'on' },
+        name: 'chromium',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<div>PASS</div>');
+        await page.waitForTimeout(3000);
+        await page.close();
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const dir = testInfo.outputPath(`test-results/a-pass-chromium/`);
+  const video = fs.readdirSync(dir).find(file => file.endsWith('webm'));
+  expect(video).toBe('video.webm');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].attachments).toEqual([{
+    name: 'video',
+    contentType: 'video/webm',
+    path: path.join(dir, video!),
+  }]);
+});
+
+test('should record video for pages created before the test', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        use: { video: 'on' },
+        name: 'chromium',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      let page;
+      test.beforeAll(async ({ browser }) => {
+        const context = await browser.newContext();
+        page = await context.newPage();
+      });
+      test('one', async () => {
+        await page.setContent('<div>ONE</div>');
+        await page.waitForTimeout(3000);
+      });
+      test('two', async () => {
+        await page.setContent('<div>TWO</div>');
+        await page.waitForTimeout(3000);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  for (const dir of ['a-one-chromium', 'a-two-chromium']) {
+    const video = fs.readdirSync(testInfo.outputPath('test-results', dir)).find(file => file.endsWith('webm'));
+    expect(video, dir).toBe('video.webm');
+  }
 });
 
 test('should pass fixture defaults to tests', async ({ runInlineTest }) => {

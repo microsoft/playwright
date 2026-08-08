@@ -51,7 +51,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
   }
 
   async saveAs(params: channels.ArtifactSaveAsParams, progress: Progress): Promise<channels.ArtifactSaveAsResult> {
-    return await progress.race(new Promise((resolve, reject) => {
+    await progress.race(new Promise<void>((resolve, reject) => {
       this._object.saveAs(progress, async (localPath, error) => {
         if (error) {
           reject(error);
@@ -66,6 +66,8 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
         }
       });
     }));
+    if (params.dispose)
+      this._dispose();
   }
 
   async saveAsStream(params: channels.ArtifactSaveAsStreamParams, progress: Progress): Promise<channels.ArtifactSaveAsStreamResult> {
@@ -77,7 +79,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
         }
         try {
           const readable = fs.createReadStream(localPath, { highWaterMark: 1024 * 1024 });
-          const stream = new StreamDispatcher(this, readable);
+          const stream = new StreamDispatcher(this, readable, { onClose: params.dispose ? () => this._dispose() : undefined });
           // Resolve with a stream, so that client starts saving the data.
           resolve({ stream });
           // Block the Artifact until the stream is consumed.
