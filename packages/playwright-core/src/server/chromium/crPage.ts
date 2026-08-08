@@ -542,6 +542,7 @@ class FrameSession {
       promises.push(this._updateGeolocation(true));
       if (!skipDefaultOverrides)
         promises.push(this._updateEmulateMedia());
+      promises.push(this._crPage.updateOffline());
       promises.push(this._updateFileChooserInterception(true));
       for (const initScript of this._crPage._page.allInitScripts())
         promises.push(this._evaluateOnNewDocument(initScript, 'main', true /* runImmediately */));
