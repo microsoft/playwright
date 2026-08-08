@@ -16,6 +16,9 @@
 
 import fs from 'fs';
 import path from 'path';
+import { execFileSync } from 'child_process';
+
+import { chromium } from 'playwright-core';
 
 import { test, expect } from './trace-cli-fixtures';
 
@@ -257,4 +260,140 @@ test('trace attachments lists attachments', async ({ runTraceCli }) => {
   expect(exitCode).toBe(0);
   // Our test trace has no attachments, just verify it doesn't crash
   expect(stdout).toBeTruthy();
+});
+
+test('trace requests --pending-at reports requests outstanding when an action started', async ({ __servers }, testInfo) => {
+  const server = __servers.server;
+  // /slow stays open well past the click; /fast settles before it.
+  server.setRoute('/slow', (req, res) => void setTimeout(() => res.end('slow'), 3000));
+  server.setRoute('/fast', (req, res) => res.end('fast'));
+  server.setContent('/inflight', `
+    <button id="go">Go</button>
+    <script>fetch('/slow'); fetch('/fast');</script>
+  `, 'text/html');
+
+  const browser = await chromium.launch();
+  const context = await browser.newContext();
+  await context.tracing.start({ snapshots: true });
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/inflight');
+  // Click while /slow is still outstanding but /fast has long since finished.
+  await page.waitForTimeout(500);
+  await page.locator('#go').click();
+  const cwd = testInfo.outputPath('inflight');
+  const tracePath = path.join(cwd, 'trace.zip');
+  await context.tracing.stop({ path: tracePath });
+  await browser.close();
+  server.reset();
+
+  fs.mkdirSync(cwd, { recursive: true });
+  const cliPath = path.resolve(__dirname, '../../packages/playwright-core/cli.js');
+  const run = (...args: string[]) => execFileSync(process.execPath, [cliPath, 'trace', ...args], { cwd, encoding: 'utf-8' });
+
+  run('open', tracePath);
+  const clickId = /^\s*(\d+)\..*Click/m.exec(run('actions'))?.[1];
+  expect(clickId).toBeTruthy();
+
+  const forClick = run('requests', '--pending-at', clickId!);
+  expect(forClick).toContain('slow');
+  // /fast completed before the click, so it is not outstanding.
+  expect(forClick).not.toContain('fast');
+
+  // Without an action id, every action that started mid-request is summarized.
+  expect(run('actions', '--pending')).toContain('Click');
+
+  // Filtering narrows to matching URLs only.
+  expect(run('requests', '--pending-at', clickId!, '--grep', 'fast')).toContain('No requests were pending');
+});
+
+test('trace requests --pending-at --phase end separates carried-over requests from ones the action started', async ({ __servers }, testInfo) => {
+  const server = __servers.server;
+  server.setRoute('/slow', (req, res) => void setTimeout(() => res.end('slow'), 5000));
+  server.setRoute('/onclick', (req, res) => void setTimeout(() => res.end('onclick'), 5000));
+  server.setContent('/inflight-end', `
+    <button id="go" onmousedown="fetch('/onclick')">Go</button>
+    <script>fetch('/slow');</script>
+  `, 'text/html');
+
+  const browser = await chromium.launch();
+  const context = await browser.newContext();
+  await context.tracing.start({ snapshots: true });
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/inflight-end');
+  await page.waitForTimeout(500);
+  // The click returns without waiting for the request it triggered. `delay` holds the button
+  // down between mousedown and mouseup, so the request it starts is comfortably inside the
+  // action rather than racing its end.
+  await page.locator('#go').click({ delay: 1000 });
+  const cwd = testInfo.outputPath('inflight-end');
+  const tracePath = path.join(cwd, 'trace.zip');
+  await context.tracing.stop({ path: tracePath });
+  await browser.close();
+  server.reset();
+
+  fs.mkdirSync(cwd, { recursive: true });
+  const cliPath = path.resolve(__dirname, '../../packages/playwright-core/cli.js');
+  const run = (...args: string[]) => execFileSync(process.execPath, [cliPath, 'trace', ...args], { cwd, encoding: 'utf-8' });
+
+  run('open', tracePath);
+  const clickId = /^\s*(\d+)\..*Click/m.exec(run('actions'))?.[1];
+  expect(clickId).toBeTruthy();
+
+  // At the start, only the request that predates the click is outstanding.
+  const atStart = run('requests', '--pending-at', clickId!);
+  expect(atStart).toContain('slow');
+  expect(atStart).not.toContain('onclick');
+
+  // At the end, the request the click itself triggered is outstanding too, and the two
+  // are distinguished by origin.
+  const atEnd = run('requests', '--pending-at', clickId!, '--phase', 'end');
+  expect(atEnd).toContain('slow');
+  expect(atEnd).toContain('onclick');
+  expect(atEnd).toContain('before');
+  expect(atEnd).toContain('during');
+
+  // The summary honours the phase as well.
+  expect(run('actions', '--pending', '--phase', 'end')).toContain('finished while requests were still pending');
+});
+
+test('trace requests --pending-at does not report aborted requests as pending', async ({ __servers }, testInfo) => {
+  const server = __servers.server;
+  server.setRoute('/late', (req, res) => void setTimeout(() => res.end('late'), 5000));
+  server.setContent('/inflight-abort', `
+    <button id="go">Go</button>
+    <script>fetch('/blocked').catch(() => {}); fetch('/late');</script>
+  `, 'text/html');
+
+  const browser = await chromium.launch();
+  const context = await browser.newContext();
+  // An aborted request finishes without a recorded duration; it must not be mistaken for one
+  // that is still running.
+  await context.route('**/blocked', route => route.abort());
+  await context.tracing.start({ snapshots: true });
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/inflight-abort');
+  await page.waitForTimeout(500);
+  await page.locator('#go').click();
+  const cwd = testInfo.outputPath('inflight-abort');
+  const tracePath = path.join(cwd, 'trace.zip');
+  await context.tracing.stop({ path: tracePath });
+  await browser.close();
+  server.reset();
+
+  fs.mkdirSync(cwd, { recursive: true });
+  const cliPath = path.resolve(__dirname, '../../packages/playwright-core/cli.js');
+  const run = (...args: string[]) => execFileSync(process.execPath, [cliPath, 'trace', ...args], { cwd, encoding: 'utf-8' });
+
+  run('open', tracePath);
+  const clickId = /^\s*(\d+)\..*Click/m.exec(run('actions'))?.[1];
+  const output = run('requests', '--pending-at', clickId!);
+  expect(output).toContain('late');
+  expect(output).not.toContain('blocked');
+  expect(output).toContain('no recorded end time');
+});
+
+test('trace requests --pending-at rejects an unknown --phase value', async ({ runTraceCli }) => {
+  const { stderr, exitCode } = await runTraceCli(['requests', '--pending-at', '1', '--phase', 'middle']);
+  expect(exitCode).toBe(1);
+  expect(stderr).toContain(`Invalid --phase value 'middle'`);
 });

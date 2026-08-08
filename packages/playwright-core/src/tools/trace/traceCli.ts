@@ -54,7 +54,9 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       .description('list actions in the trace')
       .option('--grep <pattern>', 'filter actions by title pattern')
       .option('--errors-only', 'only show failed actions')
-      .action(async (options: { grep?: string, errorsOnly?: boolean }) => {
+      .option('--pending', 'only actions that ran while requests were still pending')
+      .option('--phase <phase>', `with --pending, measure at each action's "start" or "end"`, 'start')
+      .action(async (options: { grep?: string, errorsOnly?: boolean, pending?: boolean, phase?: string }) => {
         traceActions(options).catch(logErrorAndExit);
       });
 
@@ -72,7 +74,9 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       .option('--method <method>', 'filter by HTTP method')
       .option('--status <code>', 'filter by status code')
       .option('--failed', 'only show failed requests (status >= 400)')
-      .action(async (options: { grep?: string, method?: string, status?: string, failed?: boolean }) => {
+      .option('--pending-at <action-id>', 'only requests still pending when the given action ran')
+      .option('--phase <phase>', `with --pending-at, measure at the action's "start" or "end"`, 'start')
+      .action(async (options: { grep?: string, method?: string, status?: string, failed?: boolean, pendingAt?: string, phase?: string }) => {
         traceRequests(options).catch(logErrorAndExit);
       });
 

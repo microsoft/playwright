@@ -20,13 +20,21 @@ import { buildActionTree } from '@isomorphic/trace/traceModel';
 import { asLocatorDescription } from '@isomorphic/locatorGenerators';
 import { msToString } from '@isomorphic/formatUtils';
 import { loadTrace, formatTimestamp, actionTitle } from './traceUtils';
+import { parsePhase, printPendingActions } from './tracePending';
 
 import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
 import type { Language } from '@isomorphic/locatorGenerators';
 
-export async function traceActions(options: { grep?: string, errorsOnly?: boolean }) {
+export async function traceActions(options: { grep?: string, errorsOnly?: boolean, pending?: boolean, phase?: string }) {
   const trace = await loadTrace();
   const actions = filterActions(trace.model.actions, options);
+
+  if (options.pending) {
+    const phase = parsePhase(options.phase);
+    if (phase !== undefined)
+      printPendingActions(trace, actions, phase, () => true);
+    return;
+  }
 
   // Tree view
   const { rootItem } = buildActionTree(actions);
