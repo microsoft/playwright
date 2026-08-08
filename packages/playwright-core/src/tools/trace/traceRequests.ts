@@ -19,10 +19,20 @@
 import path from 'path';
 import { msToString } from '@isomorphic/formatUtils';
 import { loadTrace } from './traceUtils';
+import { parsePhase, printPendingRequests } from './tracePending';
 
-export async function traceRequests(options: { grep?: string, method?: string, status?: string, failed?: boolean }) {
+export async function traceRequests(options: { grep?: string, method?: string, status?: string, failed?: boolean, pendingAt?: string, phase?: string }) {
   const trace = await loadTrace();
   const model = trace.model;
+
+  if (options.pendingAt !== undefined) {
+    const phase = parsePhase(options.phase);
+    if (phase === undefined)
+      return;
+    const pattern = options.grep ? new RegExp(options.grep, 'i') : undefined;
+    printPendingRequests(trace, options.pendingAt, phase, r => !pattern || pattern.test(r.resource.request.url));
+    return;
+  }
 
   // Build indexed list with stable ordinals before filtering.
   let indexed = model.resources.map((r, i) => ({ resource: r, ordinal: i + 1 }));
