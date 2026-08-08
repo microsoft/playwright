@@ -102,3 +102,13 @@ test('open with very long session name (issue 40878)', async ({ cli, server }) =
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain('Page URL');
 });
+
+test('open with long multi-byte session name (issue 42153)', async ({ cli, server }) => {
+  // Multi-byte session names fit the character-based trim but still overflow
+  // sun_path's byte limit, so the daemon could not listen on the socket.
+  const longSessionName = 'セッション名がとても長い場合の動作を確認するためのテスト';
+  const result = await cli(`-s=${longSessionName}`, 'open', server.PREFIX);
+  expect(result.error).toBe('');
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('Page URL');
+});
