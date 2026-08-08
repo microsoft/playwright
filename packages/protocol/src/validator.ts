@@ -3037,8 +3037,10 @@ scheme.NameValue = tObject({
 scheme.TracingInitializer = tOptional(tObject({}));
 scheme.TracingTracingStartParams = tObject({
   name: tOptional(tString),
-  snapshots: tOptional(tBoolean),
-  screenshots: tOptional(tBoolean),
+  snapshotDom: tOptional(tBoolean),
+  snapshotAria: tOptional(tBoolean),
+  snapshotScreen: tOptional(tBoolean),
+  screencast: tOptional(tBoolean),
   live: tOptional(tBoolean),
 });
 scheme.TracingTracingStartResult = tOptional(tObject({}));

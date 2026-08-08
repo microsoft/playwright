@@ -60,7 +60,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
         return;
       }
       try {
-        frame = await progress.race(element.contentFrame(progress));
+        frame = await element.contentFrame(progress);
       } finally {
         element.dispose();
       }

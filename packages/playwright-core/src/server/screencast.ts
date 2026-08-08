@@ -21,8 +21,9 @@ import { Page } from './page';
 import { nullProgress } from './progress';
 import { ElementHandle } from './dom';
 
-import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
+import type { InstrumentationListener, SdkObject } from './instrumentation';
 import type * as types from './types';
+import type { Progress } from './progress';
 
 export type ScreencastClient = {
   onFrame: (frame: types.ScreencastFrame) => Promise<void> | void;
@@ -157,7 +158,7 @@ export class Screencast implements InstrumentationListener {
       await Promise.race(asyncResults);
   }
 
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, point?: types.Point, box?: types.Rect): Promise<void> {
+  async onBeforeInputAction(progress: Progress, sdkObject: SdkObject, point?: types.Point, box?: types.Rect): Promise<void> {
     if (!this._actions)
       return;
 
@@ -168,17 +169,18 @@ export class Screencast implements InstrumentationListener {
     if (!box && (sdkObject instanceof ElementHandle))
       box = await sdkObject.boundingBox(nullProgress) || undefined;
 
-    const actionTitle = renderTitleForCall(metadata);
-    const utility = await page.mainFrame().utilityContext();
+    const actionTitle = renderTitleForCall(progress.metadata);
+    const utility = await progress.race(page.mainFrame().utilityContext());
 
     // Run this outside of the progress timer.
-    await utility.evaluate(async options => {
+    const injected = await progress.race(utility.injectedScript());
+    await progress.race(utility.evaluate(async options => {
       const { injected, duration } = options;
       injected.setScreencastAnnotation(options);
       await new Promise(f => injected.utils.builtins.setTimeout(f, duration));
       injected.setScreencastAnnotation(null);
     }, {
-      injected: await utility.injectedScript(),
+      injected,
       duration: this._actions?.duration ?? 500,
       point,
       box,
@@ -186,6 +188,6 @@ export class Screencast implements InstrumentationListener {
       position: this._actions?.position,
       fontSize: this._actions?.fontSize,
       cursor: this._actions?.cursor ?? 'pointer',
-    }).catch(e => debugLogger.log('error', e));
+    }).catch(e => debugLogger.log('error', e)));
   }
 }

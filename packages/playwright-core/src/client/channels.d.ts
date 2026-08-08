@@ -5047,14 +5047,18 @@ export interface TracingChannel extends TracingEventTarget, Channel {
 }
 export type TracingTracingStartParams = {
   name?: string,
-  snapshots?: boolean,
-  screenshots?: boolean,
+  snapshotDom?: boolean,
+  snapshotAria?: boolean,
+  snapshotScreen?: boolean,
+  screencast?: boolean,
   live?: boolean,
 };
 export type TracingTracingStartOptions = {
   name?: string,
-  snapshots?: boolean,
-  screenshots?: boolean,
+  snapshotDom?: boolean,
+  snapshotAria?: boolean,
+  snapshotScreen?: boolean,
+  screencast?: boolean,
   live?: boolean,
 };
 export type TracingTracingStartResult = void;
