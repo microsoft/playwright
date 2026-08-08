@@ -6,6 +6,12 @@ allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)
 
 # Browser Automation with playwright-cli
 
+> **Installation note:** The commands below use `playwright-cli` for brevity. If
+> you installed the skills with `npx playwright cli install --skills agents`,
+> use `npx playwright cli` instead. For example, `playwright-cli open` becomes
+> `npx playwright cli open`. The standalone `playwright-cli` command is only
+> available when `@playwright/cli` has been installed globally.
+
 ## Quick start
 
 ```bash
