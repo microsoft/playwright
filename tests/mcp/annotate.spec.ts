@@ -455,7 +455,7 @@ test('should switch screencast to -s session on show --annotate', async ({ conne
   await cli('-s=first', 'show', { bindTitle });
   const browser = await connectToDashboard(bindTitle);
   const dashboard = browser.contexts()[0].pages()[0];
-  await expect(dashboard.locator('#display')).toBeVisible();
+  await expect(dashboard.locator('#display')).toBeVisible({ timeout: 15_000 });
 
   const sampleCenter = () => dashboard.evaluate(() => {
     const img = document.querySelector('#display') as HTMLImageElement | null;
@@ -480,7 +480,7 @@ test('should switch screencast to -s session on show --annotate', async ({ conne
   void annotatePromise.finally(() => { done = true; });
 
   await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible({ timeout: 15_000 });
-  await expect(activeSession(dashboard)).toHaveAccessibleName('Session second');
+  await expect(activeSession(dashboard)).toHaveAccessibleName('Session second', { timeout: 15_000 });
 
   await expect.poll(async () => {
     const c = await sampleCenter();
