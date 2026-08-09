@@ -9,7 +9,7 @@ Playwright is available in multiple languages that share the same underlying imp
 
 ## JavaScript and TypeScript
 
-Playwright for Node.js comes with its own [test runner](https://playwright.dev/docs/running-tests) that provides great parallelization mechanism, screenshot assertions, html reporter, automatic tracing etc.
+Playwright for Node.js comes with its own [test runner](https://playwright.dev/docs/running-tests) that provides great parallelization mechanism, screenshot assertions, HTML reporter, automatic tracing etc.
 
 * [Documentation](https://playwright.dev/docs/intro)
 * [GitHub repo](https://github.com/microsoft/playwright)
