@@ -102,13 +102,14 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async move(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
+    const inputScale = this._page._inputScale();
     const actualMove = async (progress: Progress) => {
       await progress.race(this._client.send('Input.dispatchMouseEvent', {
         type: 'mouseMoved',
         button,
         buttons: toButtonsMask(buttons),
-        x,
-        y,
+        x: x * inputScale,
+        y: y * inputScale,
         modifiers: toModifiersMask(modifiers),
         force: buttons.size > 0 ? 0.5 : 0,
       }));
@@ -125,12 +126,13 @@ export class RawMouseImpl implements input.RawMouse {
   async down(progress: Progress, x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
     if (this._dragManager.isDragging())
       return;
+    const inputScale = this._page._inputScale();
     await progress.race(this._client.send('Input.dispatchMouseEvent', {
       type: 'mousePressed',
       button,
       buttons: toButtonsMask(buttons),
-      x,
-      y,
+      x: x * inputScale,
+      y: y * inputScale,
       modifiers: toModifiersMask(modifiers),
       clickCount,
       force: buttons.size > 0 ? 0.5 : 0,
@@ -142,22 +144,24 @@ export class RawMouseImpl implements input.RawMouse {
       await this._dragManager.drop(progress, x, y, modifiers);
       return;
     }
+    const inputScale = this._page._inputScale();
     await progress.race(this._client.send('Input.dispatchMouseEvent', {
       type: 'mouseReleased',
       button,
       buttons: toButtonsMask(buttons),
-      x,
-      y,
+      x: x * inputScale,
+      y: y * inputScale,
       modifiers: toModifiersMask(modifiers),
       clickCount
     }));
   }
 
   async wheel(progress: Progress, x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
+    const inputScale = this._page._inputScale();
     await progress.race(this._client.send('Input.dispatchMouseEvent', {
       type: 'mouseWheel',
-      x,
-      y,
+      x: x * inputScale,
+      y: y * inputScale,
       modifiers: toModifiersMask(modifiers),
       deltaX,
       deltaY,
@@ -167,17 +171,20 @@ export class RawMouseImpl implements input.RawMouse {
 
 export class RawTouchscreenImpl implements input.RawTouchscreen {
   private _client: CRSession;
+  private _page: CRPage;
 
-  constructor(client: CRSession) {
+  constructor(page: CRPage, client: CRSession) {
+    this._page = page;
     this._client = client;
   }
   async tap(progress: Progress, x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
+    const inputScale = this._page._inputScale();
     await progress.race(Promise.all([
       this._client.send('Input.dispatchTouchEvent', {
         type: 'touchStart',
         modifiers: toModifiersMask(modifiers),
         touchPoints: [{
-          x, y
+          x: x * inputScale, y: y * inputScale
         }]
       }),
       this._client.send('Input.dispatchTouchEvent', {

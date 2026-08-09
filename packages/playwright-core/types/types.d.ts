@@ -11649,7 +11649,11 @@ export interface Browser {
       /**
        * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
        * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
-       * each page will be scaled down if necessary to fit the specified size.
+       * each page will be scaled down if necessary to fit the specified size. In headless Chromium, when
+       * [`deviceScaleFactor`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-device-scale-factor)
+       * is larger than `1`, the page is captured at device resolution, so a `size` of `viewport` multiplied by
+       * [`deviceScaleFactor`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-device-scale-factor)
+       * produces a high-dpi ("retina") video.
        */
       size?: {
         /**
@@ -17829,7 +17833,11 @@ export interface BrowserType<Unused = {}> {
       /**
        * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
        * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
-       * each page will be scaled down if necessary to fit the specified size.
+       * each page will be scaled down if necessary to fit the specified size. In headless Chromium, when
+       * [`deviceScaleFactor`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-device-scale-factor)
+       * is larger than `1`, the page is captured at device resolution, so a `size` of `viewport` multiplied by
+       * [`deviceScaleFactor`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-device-scale-factor)
+       * produces a high-dpi ("retina") video.
        */
       size?: {
         /**
@@ -24497,7 +24505,11 @@ export interface Electron {
       /**
        * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
        * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
-       * each page will be scaled down if necessary to fit the specified size.
+       * each page will be scaled down if necessary to fit the specified size. In headless Chromium, when
+       * [`deviceScaleFactor`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-device-scale-factor)
+       * is larger than `1`, the page is captured at device resolution, so a `size` of `viewport` multiplied by
+       * [`deviceScaleFactor`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-device-scale-factor)
+       * produces a high-dpi ("retina") video.
        */
       size?: {
         /**
@@ -25219,7 +25231,11 @@ export interface AndroidDevice {
       /**
        * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
        * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
-       * each page will be scaled down if necessary to fit the specified size.
+       * each page will be scaled down if necessary to fit the specified size. In headless Chromium, when
+       * [`deviceScaleFactor`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-device-scale-factor)
+       * is larger than `1`, the page is captured at device resolution, so a `size` of `viewport` multiplied by
+       * [`deviceScaleFactor`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-device-scale-factor)
+       * produces a high-dpi ("retina") video.
        */
       size?: {
         /**
@@ -26438,7 +26454,11 @@ export interface BrowserContextOptions {
     /**
      * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
      * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
-     * each page will be scaled down if necessary to fit the specified size.
+     * each page will be scaled down if necessary to fit the specified size. In headless Chromium, when
+     * [`deviceScaleFactor`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-device-scale-factor)
+     * is larger than `1`, the page is captured at device resolution, so a `size` of `viewport` multiplied by
+     * [`deviceScaleFactor`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-device-scale-factor)
+     * produces a high-dpi ("retina") video.
      */
     size?: {
       /**

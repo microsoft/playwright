@@ -842,7 +842,7 @@ When set to `minimal`, only record information necessary for routing from HAR. T
   - `dir` ?<[path]> Path to the directory to put videos into. If not specified, the videos will be stored in `artifactsDir` (see [`method: BrowserType.launch`] options).
   - `size` ?<[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`
     scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450.
-    Actual picture of each page will be scaled down if necessary to fit the specified size.
+    Actual picture of each page will be scaled down if necessary to fit the specified size. In headless Chromium, when [`option: Browser.newContext.deviceScaleFactor`] is larger than `1`, the page is captured at device resolution, so a `size` of `viewport` multiplied by [`option: Browser.newContext.deviceScaleFactor`] produces a high-dpi ("retina") video.
     - `width` <[int]> Video frame width.
     - `height` <[int]> Video frame height.
   - `showActions` ?<[Object]> If specified, enables visual annotations on interacted elements during video recording.
@@ -872,7 +872,7 @@ not recorded. Make sure to call [`method: BrowserContext.close`] for videos to b
 
 Dimensions of the recorded videos. If not specified the size will be equal to `viewport`
 scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450.
-Actual picture of each page will be scaled down if necessary to fit the specified size.
+Actual picture of each page will be scaled down if necessary to fit the specified size. In headless Chromium, when [`option: Browser.newContext.deviceScaleFactor`] is larger than `1`, the page is captured at device resolution, so a `size` of `viewport` multiplied by [`option: Browser.newContext.deviceScaleFactor`] produces a high-dpi ("retina") video.
 
 ## context-option-proxy
 - `proxy` <[Object]>

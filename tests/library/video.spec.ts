@@ -733,6 +733,45 @@ it.describe('screencast', () => {
     expectAll(pixels, isAlmostRed);
   });
 
+  it('should record retina video with deviceScaleFactor', async ({ browserType, browserName, headless }, testInfo) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37701' });
+    it.fixme(browserName !== 'chromium', 'Screencast cannot produce more pixels than the css viewport size');
+    it.fixme(browserName === 'chromium' && !headless, 'Headed window surface is laid out in real screen pixels');
+
+    const viewport = { width: 320, height: 240 };
+    const size = { width: 640, height: 480 };
+    const browser = await browserType.launch();
+
+    const videoDir = testInfo.outputPath('');
+    const context = await browser.newContext({
+      viewport,
+      deviceScaleFactor: 2,
+      recordVideo: {
+        dir: videoDir,
+        size,
+      },
+    });
+
+    const page = await context.newPage();
+    await page.setContent(`<div style='margin: 0; background: red; position: fixed; right:0; bottom:0; width: 30px; height: 30px;'></div>`);
+    await ensureSomeFrames(page);
+    await page.close();
+    await context.close();
+    await browser.close();
+
+    const videoFiles = findVideos(videoDir);
+    expect(videoFiles.length).toBe(1);
+    const videoPlayer = new VideoPlayer(videoFiles[0]);
+    expect(videoPlayer.videoWidth).toBe(size.width);
+    expect(videoPlayer.videoHeight).toBe(size.height);
+
+    // The whole video frame must be covered by the page: the bottom right corner
+    // should be part of the red square rendered at device pixels, not the gray
+    // letterboxing that used to fill everything beyond the css viewport size.
+    const pixels = videoPlayer.seekLastFrame({ x: size.width - 20, y: size.height - 20 }).data;
+    expectAll(pixels, isAlmostRed);
+  });
+
   it('should work with video+trace', async ({ browser, trace, headless, browserName, isHeadlessShell }, testInfo) => {
     it.skip(trace === 'on');
     it.fixme(!headless, 'different trace screencast image size on all browsers');

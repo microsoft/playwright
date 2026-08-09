@@ -82,7 +82,7 @@ export class CRPage implements PageDelegate {
     const dragManager = new DragManager(this);
     this.rawKeyboard = new RawKeyboardImpl(client, browserContext._browser._platform() === 'mac', dragManager);
     this.rawMouse = new RawMouseImpl(this, client, dragManager);
-    this.rawTouchscreen = new RawTouchscreenImpl(client);
+    this.rawTouchscreen = new RawTouchscreenImpl(this, client);
     this._pdf = new CRPDF(client);
     this._coverage = new CRCoverage(client);
     this._browserContext = browserContext;
@@ -177,6 +177,12 @@ export class CRPage implements PageDelegate {
 
   async updateEmulatedViewportSize(preserveWindowBoundaries?: boolean): Promise<void> {
     await this._mainFrameSession._updateViewport(preserveWindowBoundaries);
+  }
+
+  // Input.dispatch* coordinates are interpreted in window coordinates, before the
+  // emulation scale (if any) is applied - see _surfaceScale().
+  _inputScale(): number {
+    return this._mainFrameSession._surfaceScale();
   }
 
   async bringToFront(): Promise<void> {
@@ -451,8 +457,14 @@ class FrameSession {
       }
     }
 
-    if (this._isMainFrame() && hasUIWindow && !this._page.isStorageStatePage)
+    if (this._isMainFrame() && hasUIWindow && !this._page.isStorageStatePage) {
+      // When the surface is scaled for high-dpi video recording, resize the window
+      // before Page.startScreencast, so that the screencast captures the final surface
+      // size instead of adapting to the resize mid-stream - see _surfaceScale().
+      if (this._surfaceScale() !== 1)
+        await this._updateViewport();
       startAutomaticVideoRecording(this._crPage._page);
+    }
 
     let lifecycleEventsEnabled: Promise<any>;
     if (!this._isMainFrame())
@@ -924,6 +936,7 @@ class FrameSession {
     const viewportSize = emulatedSize.viewport;
     const screenSize = emulatedSize.screen;
     const isLandscape = screenSize.width > screenSize.height;
+    const surfaceScale = this._surfaceScale();
     const metricsOverride: Protocol.Emulation.setDeviceMetricsOverrideParameters = {
       mobile: !!options.isMobile,
       width: viewportSize.width,
@@ -934,7 +947,10 @@ class FrameSession {
       screenOrientation: !!options.isMobile ? (
         isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' }
       ) : { angle: 0, type: 'landscapePrimary' },
-      dontSetVisibleSize: preserveWindowBoundaries
+      // Rendering the viewport into a larger window requires the visible size
+      // to stay at the window size, and the page to be scaled up to fill it.
+      scale: surfaceScale !== 1 ? surfaceScale : undefined,
+      dontSetVisibleSize: preserveWindowBoundaries || (surfaceScale !== 1 ? true : undefined)
     };
     if (JSON.stringify(this._metricsOverride) === JSON.stringify(metricsOverride))
       return;
@@ -958,14 +974,37 @@ class FrameSession {
         }
       }
       promises.push(this.setWindowBounds({
-        width: viewportSize.width + insets.width,
-        height: viewportSize.height + insets.height
+        width: Math.round(viewportSize.width * surfaceScale) + insets.width,
+        height: Math.round(viewportSize.height * surfaceScale) + insets.height
       }));
     }
     // Make sure that the viewport emulationis set after the embedder window resize.
     promises.push(this._client.send('Emulation.setDeviceMetricsOverride', metricsOverride));
     await Promise.all(promises);
     this._metricsOverride = metricsOverride;
+  }
+
+  // In headless, the compositor surface has exactly one physical pixel per CSS pixel of
+  // the window, no matter the emulated deviceScaleFactor. Screencast captures the surface,
+  // so video recording could never contain more pixels than the CSS viewport size and
+  // "deviceScaleFactor: 2" did not produce a retina video. When recording video with
+  // deviceScaleFactor > 1, grow the window to viewport * deviceScaleFactor and render the
+  // page scaled up by the same factor, so that the surface holds true high-dpi pixels for
+  // the screencast to capture. Page.captureScreenshot re-rasters with its own scale and is
+  // not affected by the surface scale.
+  _surfaceScale(): number {
+    const browserContext = this._crPage._browserContext;
+    const deviceScaleFactor = browserContext._options.deviceScaleFactor || 1;
+    if (deviceScaleFactor === 1 || !browserContext._options.recordVideo)
+      return 1;
+    // A headful window is laid out in real screen pixels - on an actual high-dpi display
+    // the surface is scaled by the OS already, and growing the window would change its
+    // visible size on screen.
+    if (browserContext._browser.options.headful)
+      return 1;
+    if (!this._windowId)
+      return 1;
+    return deviceScaleFactor;
   }
 
   async windowBounds(): Promise<WindowBounds> {
