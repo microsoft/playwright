@@ -134,7 +134,7 @@ export class WebKit extends BrowserType {
     // the host setting. Must come before 'about:blank': the embedder treats any argument not
     // starting with '--' as an initial URL, and 'about:blank' must remain the last one.
     // See https://github.com/microsoft/playwright/issues/41808.
-    if (process.platform === 'darwin' && !isWSL)
+    if (process.platform === 'darwin')
       webkitArguments.push('-AppleKeyboardUIMode', '2');
     const proxy = options.proxyOverride || options.proxy;
     if (proxy) {
