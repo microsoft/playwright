@@ -127,6 +127,15 @@ export class WebKit extends BrowserType {
       webkitArguments.push(`--user-data-dir=${isWSL ? await translatePathToWSL(userDataDir) : userDataDir}`);
     else
       webkitArguments.push(`--no-startup-window`);
+    // On macOS, WebKit decides whether Tab traverses all focusable elements (buttons, links)
+    // based on the "AppleKeyboardUIMode" preference, which defaults to the OS-level
+    // "Keyboard navigation" setting and makes Tab behavior machine-dependent. Pass it as an
+    // NSUserDefaults argument so Tab always traverses all focusable elements regardless of
+    // the host setting. Must come before 'about:blank': the embedder treats any argument not
+    // starting with '--' as an initial URL, and 'about:blank' must remain the last one.
+    // See https://github.com/microsoft/playwright/issues/41808.
+    if (process.platform === 'darwin' && !isWSL)
+      webkitArguments.push('-AppleKeyboardUIMode', '2');
     const proxy = options.proxyOverride || options.proxy;
     if (proxy) {
       if (process.platform === 'darwin') {
