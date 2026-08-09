@@ -78,9 +78,9 @@ it('should traverse focus in all directions', async function({ page }) {
   expect(await page.evaluate(() => (document.activeElement as HTMLInputElement).value)).toBe('1');
 });
 
-it('should traverse only form elements', async function({ page, browserName, platform }) {
+it('should traverse all controls with Tab', async function({ page, browserName, platform }) {
   it.skip(platform !== 'darwin' || browserName !== 'webkit',
-      'Chromium and WebKit both have settings for tab traversing all links, but it is only on by default in WebKit.');
+      'WebKit on macOS only traverses all controls with Tab when full keyboard access is enabled, which Playwright now forces. See https://github.com/microsoft/playwright/issues/41808.');
 
   await page.setContent(`
     <input id="input-1">
@@ -91,21 +91,18 @@ it('should traverse only form elements', async function({ page, browserName, pla
   await page.keyboard.press('Tab');
   expect(await page.evaluate(() => document.activeElement.id)).toBe('input-1');
   await page.keyboard.press('Tab');
+  expect(await page.evaluate(() => document.activeElement.id)).toBe('button');
+  await page.keyboard.press('Tab');
   expect(await page.evaluate(() => document.activeElement.id)).toBe('input-2');
   await page.keyboard.press('Shift+Tab');
+  expect(await page.evaluate(() => document.activeElement.id)).toBe('button');
+  await page.keyboard.press('Shift+Tab');
   expect(await page.evaluate(() => document.activeElement.id)).toBe('input-1');
+  // Links are only reachable with Option+Tab (macOS full keyboard access semantics).
   await page.keyboard.press('Alt+Tab');
   expect(await page.evaluate(() => document.activeElement.id)).toBe('button');
   await page.keyboard.press('Alt+Tab');
   expect(await page.evaluate(() => document.activeElement.id)).toBe('link');
-  await page.keyboard.press('Alt+Tab');
-  expect(await page.evaluate(() => document.activeElement.id)).toBe('input-2');
-  await page.keyboard.press('Alt+Shift+Tab');
-  expect(await page.evaluate(() => document.activeElement.id)).toBe('link');
-  await page.keyboard.press('Alt+Shift+Tab');
-  expect(await page.evaluate(() => document.activeElement.id)).toBe('button');
-  await page.keyboard.press('Alt+Shift+Tab');
-  expect(await page.evaluate(() => document.activeElement.id)).toBe('input-1');
 });
 
 it('clicking checkbox should activate it', async ({ page, browserName, headless, platform }) => {
