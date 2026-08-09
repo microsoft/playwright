@@ -454,7 +454,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (typeof maybeResult === 'string')
       return maybeResult;
     const point = roundPoint(maybeResult.point);
-    await progress.race(this.instrumentation.onBeforeInputAction(this, progress.metadata, point, maybeResult.box));
+    await this.instrumentation.onBeforeInputAction(progress, this, point, maybeResult.box);
 
     let hitTargetInterceptionHandle: js.JSHandle<HitTargetInterceptionResult> | undefined;
     if (force) {
@@ -577,7 +577,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[] | 'error:notconnected'> {
     let resultingOptions: string[] = [];
     const result = await this._retryAction(progress, 'select option', async progress => {
-      await progress.race(this.instrumentation.onBeforeInputAction(this, progress.metadata));
+      await this.instrumentation.onBeforeInputAction(progress, this);
       if (!options.force)
         progress.log(`  waiting for element to be visible and enabled`);
       const optionsToSelect = [...elements, ...values];
@@ -610,7 +610,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _fill(progress: Progress, value: string, options: types.CommonActionOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`  fill("${value}")`);
     return await this._retryAction(progress, 'fill', async progress => {
-      await progress.race(this.instrumentation.onBeforeInputAction(this, progress.metadata));
+      await this.instrumentation.onBeforeInputAction(progress, this);
       if (!options.force)
         progress.log('  waiting for element to be visible, enabled and editable');
       const result = await progress.race(this.evaluateInUtility(async ([injected, node, { value, force }]) => {
@@ -744,7 +744,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (result === 'error:notconnected' || !result.asElement())
       return 'error:notconnected';
     const retargeted = result.asElement() as ElementHandle<HTMLInputElement>;
-    await progress.race(this.instrumentation.onBeforeInputAction(this, progress.metadata));
+    await this.instrumentation.onBeforeInputAction(progress, this);
     if (localPaths || localDirectory) {
       const localPathsOrDirectory = localDirectory ? [localDirectory] : localPaths!;
       await progress.race(Promise.all((localPathsOrDirectory).map(localPath => (
@@ -785,7 +785,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _type(progress: Progress, text: string, options: { delay?: number } & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.type("${text}")`);
-    await progress.race(this.instrumentation.onBeforeInputAction(this, progress.metadata));
+    await this.instrumentation.onBeforeInputAction(progress, this);
     const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
     if (result !== 'done')
       return result;
@@ -801,7 +801,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _press(progress: Progress, key: string, options: { delay?: number, noWaitAfter?: boolean } & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.press("${key}")`);
-    await progress.race(this.instrumentation.onBeforeInputAction(this, progress.metadata));
+    await this.instrumentation.onBeforeInputAction(progress, this);
     return this._page.frameManager.waitForSignalsCreatedBy(progress, !options.noWaitAfter, async progress => {
       const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
       if (result !== 'done')
