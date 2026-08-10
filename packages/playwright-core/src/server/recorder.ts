@@ -46,7 +46,7 @@ import type { RegisteredListener } from '@utils/eventsHelper';
 const recorderSymbol = Symbol('recorderSymbol');
 
 type BindingSource = { frame: Frame, page: Page };
-type RecorderParams = channels.BrowserContextEnableRecorderParams & { hideToolbar?: boolean, __testHookFrameSelectorTimeout?: number };
+type RecorderParams = channels.BrowserContextEnableRecorderParams & { hideToolbar?: boolean };
 
 export const RecorderEvent = {
   PausedStateChanged: 'pausedStateChanged',
@@ -194,7 +194,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       });
 
       await this._context.exposeBinding(progress, '__pw_recorderElementPicked', async ({ frame }, elementInfo: ElementInfo) => {
-        const selector = await buildFullSelectorForFrame(progress, frame, elementInfo.selector, this._params.__testHookFrameSelectorTimeout);
+        const selector = await buildFullSelectorForFrame(progress, frame, elementInfo.selector);
         this.emit(RecorderEvent.ElementPicked, { selector, ariaSnapshot: elementInfo.ariaSnapshot }, true);
       });
 
@@ -540,15 +540,15 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   private async _performAction(progress: Progress, frame: Frame, action: actions.PerformableAction) {
-    const selector = await buildFullSelectorForFrame(progress, frame, action.selector, this._params.__testHookFrameSelectorTimeout);
+    const selector = await buildFullSelectorForFrame(progress, frame, action.selector);
     await performAction(progress, frame._page.mainFrame(), { ...action, selector });
   }
 
   private async _recordAction(progress: Progress, frame: Frame, action: actions.Action, preconditionSelector?: string) {
     if (preconditionSelector)
-      this._signalProcessor.signal(frame, { name: 'expect', selector: await buildFullSelectorForFrame(progress, frame, preconditionSelector, this._params.__testHookFrameSelectorTimeout) });
+      this._signalProcessor.signal(frame, { name: 'expect', selector: await buildFullSelectorForFrame(progress, frame, preconditionSelector) });
     if ('selector' in action)
-      action.selector = await buildFullSelectorForFrame(progress, frame, action.selector, this._params.__testHookFrameSelectorTimeout);
+      action.selector = await buildFullSelectorForFrame(progress, frame, action.selector);
     const actionInContext: actions.ActionInContext = {
       pageGuid: frame._page.guid,
       action,

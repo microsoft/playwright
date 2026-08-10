@@ -18,6 +18,7 @@ import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { monotonicTime } from '@isomorphic/time';
 import { quoteCSSAttributeValue } from '@isomorphic/stringUtils';
+import { isUnderTest } from '@utils/debug';
 import { Frame } from '../frames';
 
 import type { CallMetadata } from '../instrumentation';
@@ -28,7 +29,7 @@ function buildFullSelector(framePath: string[], selector: string) {
   return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
 }
 
-export async function buildFullSelectorForFrame(progress: Progress, frame: Frame, selector: string, timeout = 2000): Promise<string> {
+export async function buildFullSelectorForFrame(progress: Progress, frame: Frame, selector: string, timeout = isUnderTest() ? 10000 : 2000): Promise<string> {
   const framePath = await generateFrameSelector(progress, frame, timeout);
   if (!frame._page.browserContext._options.pierceFrames || !framePath.length)
     return buildFullSelector(framePath, selector);
