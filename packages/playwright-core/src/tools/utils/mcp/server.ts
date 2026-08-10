@@ -71,6 +71,7 @@ export function createServer(name: string, version: string, factory: ServerBacke
   });
 
   let backendPromise: Promise<ServerBackend> | undefined;
+  let heartbeatStarted = false;
 
   const onClose = () => backendPromise?.then(b => b.dispose?.()).catch(serverDebug);
   addServerListener(server, 'close', onClose);
@@ -80,12 +81,16 @@ export function createServer(name: string, version: string, factory: ServerBacke
 
     try {
       if (!backendPromise) {
-        const promise = initializeServer(server, factory, transportInitialized, runHeartbeat).then(backend => {
+        const promise = initializeServer(server, factory, transportInitialized).then(backend => {
           backend.once('disconnected', () => {
             if (backendPromise === promise)
               backendPromise = undefined;
             void backend.dispose?.().catch(serverDebug);
           });
+          if (runHeartbeat && !heartbeatStarted) {
+            heartbeatStarted = true;
+            void transportInitialized.then(() => startHeartbeat(server));
+          }
           return backend;
         }).catch(e => {
           if (backendPromise === promise)
@@ -110,11 +115,11 @@ export function createServer(name: string, version: string, factory: ServerBacke
   return server;
 }
 
-const initializeServer = async (server: ServerType, factory: ServerBackendFactory, transportInitialized: Promise<void>, runHeartbeat: boolean): Promise<ServerBackend> => {
+const initializeServer = async (server: ServerType, factory: ServerBackendFactory, transportInitialized: Promise<void>): Promise<ServerBackend> => {
   const capabilities = server.getClientCapabilities();
   let clientRoots: Root[] = [];
   if (capabilities?.roots) {
-    await transportInitialized;
+    await Promise.race([transportInitialized, new Promise<void>(f => setTimeout(f, 5000))]);
     const { roots } = await server.listRoots().catch(e => {
       serverDebug(e);
       return { roots: [] };
@@ -129,8 +134,6 @@ const initializeServer = async (server: ServerType, factory: ServerBackendFactor
 
   const backend = await factory.create(clientInfo);
   await backend.initialize?.(clientInfo);
-  if (runHeartbeat)
-    startHeartbeat(server);
   return backend;
 };
 
