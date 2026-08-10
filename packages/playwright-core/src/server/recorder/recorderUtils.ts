@@ -18,6 +18,7 @@ import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { monotonicTime } from '@isomorphic/time';
 import { quoteCSSAttributeValue } from '@isomorphic/stringUtils';
+import { isUnderTest } from '@utils/debug';
 import { Frame } from '../frames';
 
 import type { CallMetadata } from '../instrumentation';
@@ -28,8 +29,8 @@ function buildFullSelector(framePath: string[], selector: string) {
   return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
 }
 
-export async function buildFullSelectorForFrame(progress: Progress, frame: Frame, selector: string): Promise<string> {
-  const framePath = await generateFrameSelector(progress, frame);
+export async function buildFullSelectorForFrame(progress: Progress, frame: Frame, selector: string, timeout = isUnderTest() ? 10000 : 2000): Promise<string> {
+  const framePath = await generateFrameSelector(progress, frame, timeout);
   if (!frame._page.browserContext._options.pierceFrames || !framePath.length)
     return buildFullSelector(framePath, selector);
 
@@ -40,7 +41,7 @@ export async function buildFullSelectorForFrame(progress: Progress, frame: Frame
       if (await resolvesToFrame(progress, candidate, frame))
         return candidate;
     }
-  }, monotonicTime() + 2000));
+  }, monotonicTime() + timeout));
   if (!result.timedOut && result.result)
     return result.result;
 
@@ -83,14 +84,14 @@ export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus)
 }
 
 
-async function generateFrameSelector(progress: Progress, frame: Frame): Promise<string[]> {
+async function generateFrameSelector(progress: Progress, frame: Frame, timeout: number): Promise<string[]> {
   const selectorPromises: Promise<string>[] = [];
   progress.setAllowConcurrentOrNestedRaces(true);
   while (frame) {
     const parent = frame.parentFrame();
     if (!parent)
       break;
-    selectorPromises.push(generateFrameSelectorInParent(progress, parent, frame));
+    selectorPromises.push(generateFrameSelectorInParent(progress, parent, frame, timeout));
     frame = parent;
   }
   const result = await Promise.all(selectorPromises);
@@ -98,7 +99,7 @@ async function generateFrameSelector(progress: Progress, frame: Frame): Promise<
   return result.reverse();
 }
 
-async function generateFrameSelectorInParent(prgoress: Progress, parent: Frame, frame: Frame): Promise<string> {
+async function generateFrameSelectorInParent(prgoress: Progress, parent: Frame, frame: Frame, timeout: number): Promise<string> {
   const result = await raceAgainstDeadline(async () => {
     try {
       const frameElement = await frame.frameElement(prgoress);
@@ -112,7 +113,7 @@ async function generateFrameSelectorInParent(prgoress: Progress, parent: Frame, 
       return selector;
     } catch (e) {
     }
-  }, monotonicTime() + 2000);
+  }, monotonicTime() + timeout);
   if (!result.timedOut && result.result)
     return result.result;
 
