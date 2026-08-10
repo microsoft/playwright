@@ -87,9 +87,6 @@ export function createServer(name: string, version: string, factory: ServerBacke
               backendPromise = undefined;
             void backend.dispose?.().catch(serverDebug);
           });
-          // Heartbeat pings are server -> client requests and are undeliverable
-          // until the transport is bidirectionally ready, e.g. an HTTP client that
-          // never opens its GET event stream could never answer them.
           if (runHeartbeat && !heartbeatStarted) {
             heartbeatStarted = true;
             void transportInitialized.then(() => startHeartbeat(server));
@@ -122,7 +119,6 @@ const initializeServer = async (server: ServerType, factory: ServerBackendFactor
   const capabilities = server.getClientCapabilities();
   let clientRoots: Root[] = [];
   if (capabilities?.roots) {
-    // Roots are best-effort, only give the client 5 seconds to open the event stream.
     await Promise.race([transportInitialized, new Promise<void>(f => setTimeout(f, 5000))]);
     const { roots } = await server.listRoots().catch(e => {
       serverDebug(e);
