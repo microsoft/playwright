@@ -1016,7 +1016,24 @@ declare function takesIsoDate(date: IsoDate): void;
   const browserType = {} as playwright.BrowserType<playwright.Browser & {foo: 'string'}>;
   const browser = await browserType.launch();
   await browser.close();
-})
+})();
+
+// APIRequestContext / APIResponse generics
+(async () => {
+  const request = {} as playwright.APIRequestContext;
+  interface User { id: string; name: string }
+
+  const typed = await request.get<User>('/api/users/42');
+  const user = await typed.json();
+  const name: string = user.name;
+
+  const posted = await request.post<User>('/api/users', { data: { name: 'x' } });
+  const created: User = await posted.json();
+
+  const untyped = await request.get('/api/users/42');
+  const body = await untyped.json();
+  console.log(body, name, created);
+})();
 
 // exported types
 import {
