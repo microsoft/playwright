@@ -324,6 +324,21 @@ test(`fails when extension is missing in custom userDataDir`, async ({ startClie
   });
 });
 
+test(`navigate with extension via --user-data-dir`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42163' },
+}, async ({ browserWithExtension, startClient, server }) => {
+  const browserContext = await browserWithExtension.launch();
+
+  const { client } = await startClient({
+    args: [`--extension`, `--user-data-dir=${browserWithExtension.userDataDir}`],
+  });
+
+  const response = await connectAndNavigate(browserContext, client, server.HELLO_WORLD);
+  expect(response).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
+  });
+});
+
 test(`--browser <channel> selects channel-specific userDataDir`, {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1589' },
 }, async ({ startClient, server }) => {
