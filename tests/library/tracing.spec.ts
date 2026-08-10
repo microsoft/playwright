@@ -398,6 +398,8 @@ test('should record network failures', async ({ context, page, server }, testInf
   const { events } = await parseTraceRaw(testInfo.outputPath('trace1.zip'));
   const requestEvent = events.find(e => e.type === 'resource-snapshot' && !!e.snapshot.response._failureText);
   expect(requestEvent).toBeTruthy();
+  expect(requestEvent.snapshot._monotonicTime).toBeGreaterThan(0);
+  expect(requestEvent.snapshot.time).toBeGreaterThanOrEqual(0);
 });
 
 test('should not crash when browser closes mid-trace', async ({ browserType, server }, testInfo) => {
