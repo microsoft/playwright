@@ -153,9 +153,7 @@ async function handleStreamable(serverBackendFactory: ServerBackendFactory, req:
       sessionIdGenerator: () => crypto.randomUUID(),
       onsessioninitialized: async sessionId => {
         testDebug(`create http session`);
-        const sessionInfo = { transport, transportInitialized: new ManualPromise() };
-        // Only give the client 5 seconds to reach for the event stream.
-        setTimeout(() => sessionInfo.transportInitialized.resolve(), 5000);
+        const sessionInfo = { transport, transportInitialized: new ManualPromise<void>() };
         sessions.set(sessionId, sessionInfo);
         await mcpServer.connect(serverBackendFactory, sessionInfo.transport, sessionInfo.transportInitialized, true);
       }

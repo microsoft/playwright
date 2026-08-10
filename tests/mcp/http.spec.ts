@@ -490,6 +490,44 @@ test('should close session when heartbeat ping is not answered', async ({ server
   await expect.poll(() => formatLog(stderr())['delete http session']).toBe(1);
 });
 
+test('should not reap session of a client without the event stream', async ({ serverEndpoint, server }) => {
+  const { url, stderr } = await serverEndpoint({ env: { PLAYWRIGHT_MCP_PING_TIMEOUT_MS: '500' } });
+
+  // A POST-only client that never opens the GET event stream (optional per spec),
+  // so server-initiated pings cannot be delivered to it.
+  // https://github.com/microsoft/playwright-mcp/issues/1710
+  const endpoint = new URL('/mcp', url);
+  let lastId = 0;
+  const post = async (body: object, sessionId?: string) => {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'accept': 'application/json, text/event-stream',
+        ...(sessionId ? { 'mcp-session-id': sessionId } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    return { status: response.status, sessionId: response.headers.get('mcp-session-id'), text: await response.text() };
+  };
+
+  const init = await post({ jsonrpc: '2.0', id: ++lastId, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'post-only', version: '1.0.0' } } });
+  expect(init.status).toBe(200);
+  const sessionId = init.sessionId!;
+  await post({ jsonrpc: '2.0', method: 'notifications/initialized' }, sessionId);
+
+  const navigate = await post({ jsonrpc: '2.0', id: ++lastId, method: 'tools/call', params: { name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } } }, sessionId);
+  expect(navigate.status).toBe(200);
+
+  // Wait long past the ping timeout, the heartbeat must not kick in.
+  await new Promise(f => setTimeout(f, 1000));
+
+  const snapshot = await post({ jsonrpc: '2.0', id: ++lastId, method: 'tools/call', params: { name: 'browser_snapshot', arguments: {} } }, sessionId);
+  expect(snapshot.status).toBe(200);
+  expect(snapshot.text).toContain('Hello, world!');
+  expect(formatLog(stderr())['delete http session']).toBeUndefined();
+});
+
 test('should not run heartbeat when timeout is non-positive', async ({ serverEndpoint, server }) => {
   const { url, stderr } = await serverEndpoint({ env: { PLAYWRIGHT_MCP_PING_TIMEOUT_MS: '0' } });
 
