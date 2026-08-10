@@ -102,3 +102,10 @@ test('open with very long session name (issue 40878)', async ({ cli, server }) =
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain('Page URL');
 });
+
+test('open with long multi-byte session name (issue 42153)', async ({ cli, server }) => {
+  const result = await cli('-s=セッション名がとても長い場合の動作を確認するためのテスト', 'open', server.PREFIX);
+  expect(result.error).toBe('');
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('Page URL');
+});
