@@ -126,12 +126,11 @@ export function makeSocketPath(domain: string, name: string): string {
   }
   const baseDir = process.env.PWTEST_SOCKETS_DIR || path.join(os.tmpdir(), `pw-${userNameHash}`);
   const dir = path.join(baseDir, domain);
-  const suffix = '.sock';
-  const maxNameLength = UNIX_SOCKET_PATH_MAX - dir.length - path.sep.length - suffix.length;
-  if (maxNameLength < 1)
-    throw new Error(`Socket directory path is too long (${dir.length} chars); set PWTEST_SOCKETS_DIR to a shorter location.`);
-  const fsFriendlyName = trimLongString(sanitizeForFilePath(name), maxNameLength);
-  const result = path.join(dir, `${fsFriendlyName}${suffix}`);
+  let result = path.join(dir, sanitizeForFilePath(name) + '.sock');
+  if (Buffer.byteLength(result) > UNIX_SOCKET_PATH_MAX)
+    result = path.join(dir, calculateSha1(name).slice(0, 16) + '.sock');
+  if (Buffer.byteLength(result) > UNIX_SOCKET_PATH_MAX)
+    throw new Error(`Socket directory path is too long (${Buffer.byteLength(dir)} bytes); set PWTEST_SOCKETS_DIR to a shorter location.`);
   fs.mkdirSync(dir, { recursive: true });
   return result;
 }
