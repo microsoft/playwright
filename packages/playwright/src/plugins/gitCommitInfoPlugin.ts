@@ -154,7 +154,10 @@ async function gitDiff(gitDir: string, ci?: CIInfo): Promise<string | undefined>
   const diffLimit = 100_000;
   if (ci?.prBaseHash) {
     // https://git-scm.com/docs/git-fetch
-    await runGit(['fetch', 'origin', ci.prBaseHash, '--depth=1', '--no-auto-maintenance', '--no-auto-gc', '--no-tags', '--no-recurse-submodules'], gitDir);
+    // --depth=1 turns a complete checkout into a shallow one, so only pass it when already shallow.
+    const isShallow = await runGit(['rev-parse', '--is-shallow-repository'], gitDir) === 'true';
+    const depthArgs = isShallow ? ['--depth=1'] : [];
+    await runGit(['fetch', 'origin', ci.prBaseHash, ...depthArgs, '--no-auto-maintenance', '--no-auto-gc', '--no-tags', '--no-recurse-submodules'], gitDir);
     const diff = await runGit(['diff', ci.prBaseHash, 'HEAD'], gitDir);
     if (diff)
       return diff.substring(0, diffLimit);

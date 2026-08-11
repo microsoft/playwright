@@ -1556,6 +1556,29 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       `);
     });
 
+    test('should not shallow the repository when capturing the diff', async ({ runInlineTest, writeFiles }) => {
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42203' });
+      const files = {
+        'playwright.config.ts': `export default {}`,
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('sample', async ({}) => { expect(2).toBe(2); });
+        `,
+      };
+      const baseDir = await writeFiles(files);
+      await initGitRepo(baseDir);
+      await execGit(baseDir, ['remote', 'add', 'origin', baseDir]);
+
+      const result = await runInlineTest(files, { reporter: 'dot,html' }, {
+        PLAYWRIGHT_HTML_OPEN: 'never',
+        ...(await ghaPullRequestEnv(baseDir))
+      });
+
+      expect(result.exitCode).toBe(0);
+      const { stdout } = await spawnAsync('git', ['rev-parse', '--is-shallow-repository'], { stdio: 'pipe', cwd: baseDir });
+      expect(stdout.trim()).toBe('false');
+    });
+
     test('should not include git metadata w/o CI', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
