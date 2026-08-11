@@ -728,7 +728,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
 
       const { resources } = await parseTraceRaw(testInfo.outputPath('trace1.zip'));
-      const sourceNames = Array.from(resources.keys()).filter(k => k.endsWith('.txt'));
+      const sourceNames = Array.from(resources.keys()).filter(k => k.startsWith('src/'));
       expect(sourceNames.length).toBe(1);
       const sourceFile = resources.get(sourceNames[0]);
       const thisFile = await fs.promises.readFile(__filename);

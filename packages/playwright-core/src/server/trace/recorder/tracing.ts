@@ -73,10 +73,9 @@ type RecordingState = {
   networkFile: string,
   traceFile: string,
   tracesDir: string,
-  resourcesDir: string,
   chunkOrdinal: number,
-  networkSha1s: Set<string>,
-  traceSha1s: Set<string>,
+  networkFiles: Set<string>,
+  traceFiles: Set<string>,
   recording: boolean;
   callsInProgress: Set<string>;
   groupStack: string[];
@@ -107,7 +106,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._precreatedTracesDir = tracesDir;
     this._harTracer = new HarTracer(context, null, this, {
       content: 'attach',
-      includeTraceInfo: true,
       recordRequestOverrides: false,
       waitForContentOnStop: false,
     });
@@ -169,15 +167,20 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       tracesDir,
       traceFile: path.join(tracesDir, traceName + '.trace'),
       networkFile: path.join(tracesDir, traceName + '.network'),
-      resourcesDir: path.join(tracesDir, 'resources'),
       chunkOrdinal: 0,
-      traceSha1s: new Set(),
-      networkSha1s: new Set(),
+      traceFiles: new Set(),
+      networkFiles: new Set(),
       recording: false,
       callsInProgress: new Set(),
       groupStack: [],
     };
-    this._fs.mkdir(this._state.resourcesDir);
+    this._fs.mkdir(path.join(tracesDir, 'resources'));
+    if (options.screencast)
+      this._fs.mkdir(path.join(tracesDir, 'screencast'));
+    if (options.snapshotScreen)
+      this._fs.mkdir(path.join(tracesDir, 'screenshots'));
+    if (options.snapshotAria)
+      this._fs.mkdir(path.join(tracesDir, 'aria'));
     this._fs.writeFile(this._state.networkFile, '');
     // Tracing is 10x bigger if we include scripts in every trace.
     if (options.snapshotDom)
@@ -415,11 +418,11 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const entries: NameValue[] = [];
     entries.push({ name: 'trace.trace', value: this._state.traceFile });
     entries.push({ name: 'trace.network', value: newNetworkFile });
-    for (const sha1 of new Set([...this._state.traceSha1s, ...this._state.networkSha1s]))
-      entries.push({ name: path.join('resources', sha1), value: path.join(this._state.resourcesDir, sha1) });
+    for (const file of new Set([...this._state.traceFiles, ...this._state.networkFiles]))
+      entries.push({ name: file, value: path.join(this._state.tracesDir, file) });
 
-    // Only reset trace sha1s, network resources are preserved between chunks.
-    this._state.traceSha1s = new Set();
+    // Only reset trace files, network resources are preserved between chunks.
+    this._state.traceFiles = new Set();
 
     if (params.mode === 'discard') {
       this._isStopping = false;
@@ -507,9 +510,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const buffer = await page.screenshot(progress, { type: 'png' }).catch(() => undefined);
     if (!buffer || !this._state?.recording)
       return;
-    const sha1 = calculateSha1(buffer) + '.png';
-    this._appendResource(sha1, buffer);
-    this._appendTraceEvent({ type: 'screenshot', callId: progress.metadata.id, phase, sha1 });
+    const file = `screenshots/${calculateSha1(buffer)}.png`;
+    this._state.traceFiles.add(file);
+    this._appendResource(file, buffer);
+    this._appendTraceEvent({ type: 'screenshot', callId: progress.metadata.id, phase, file });
   }
 
   private async _captureAriaSnapshot(progress: Progress, page: Page, phase: trace.ActionPhase): Promise<void> {
@@ -517,9 +521,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (!snapshot || !this._state?.recording)
       return;
     const buffer = Buffer.from(JSON.stringify(snapshot), 'utf8');
-    const sha1 = calculateSha1(buffer) + '.json';
-    this._appendResource(sha1, buffer);
-    this._appendTraceEvent({ type: 'aria-snapshot', callId: progress.metadata.id, phase, sha1 });
+    const file = `aria/${calculateSha1(buffer)}.json`;
+    this._state.traceFiles.add(file);
+    this._appendResource(file, buffer);
+    this._appendTraceEvent({ type: 'aria-snapshot', callId: progress.metadata.id, phase, file });
   }
 
   onBeforeCall(progress: Progress, sdkObject: SdkObject, parentId?: string) {
@@ -586,7 +591,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   onEntryFinished(entry: har.Entry) {
     this._pendingHarEntries.delete(entry);
     const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
-    const visited = visitTraceEvent(event, this._state!.networkSha1s);
+    const visited = visitTraceEvent(event);
     this._fs.appendFile(this._state!.networkFile, JSON.stringify(visited) + '\n', true /* flush */);
   }
 
@@ -594,7 +599,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const harLines: string[] = [];
     for (const entry of this._pendingHarEntries) {
       const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
-      const visited = visitTraceEvent(event, this._state!.networkSha1s);
+      const visited = visitTraceEvent(event);
       harLines.push(JSON.stringify(visited));
     }
     this._pendingHarEntries.clear();
@@ -602,18 +607,27 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._fs.appendFile(this._state!.networkFile, harLines.join('\n') + '\n', true /* flush */);
   }
 
-  onContentBlob(sha1: string, buffer: Buffer) {
-    this._appendResource(sha1, buffer);
+  onContentBlob(shortName: string, buffer: Buffer) {
+    const file = `resources/${shortName}`;
+    this._state!.networkFiles.add(file);
+    this._appendResource(file, buffer);
+    return file;
   }
 
-  onContentBlobAppend(sha1: string, text: string) {
-    if (!this._allResources.has(sha1))
-      this._allResources.add(sha1);
-    this._fs.appendFile(path.join(this._state!.resourcesDir, sha1), text, this._state!.options.live /* flush */);
+  onContentBlobAppend(shortName: string, text: string) {
+    const file = `resources/${shortName}`;
+    this._state!.networkFiles.add(file);
+    if (!this._allResources.has(file))
+      this._allResources.add(file);
+    this._fs.appendFile(path.join(this._state!.tracesDir, file), text, this._state!.options.live /* flush */);
+    return file;
   }
 
-  onSnapshotterBlob(blob: SnapshotterBlob): void {
-    this._appendResource(blob.sha1, blob.buffer);
+  onSnapshotterBlob(blob: SnapshotterBlob): string {
+    const file = `resources/${blob.sha1}`;
+    this._state!.traceFiles.add(file);
+    this._appendResource(file, blob.buffer);
+    return file;
   }
 
   onFrameSnapshot(snapshot: FrameSnapshot): void {
@@ -714,42 +728,43 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const prefix = page.guid;
     const onFrame = (params: types.ScreencastFrame) => {
       const suffix = Date.now();
-      const sha1 = `${prefix}-${suffix}.jpeg`;
+      const file = `screencast/${prefix}-${suffix}.jpeg`;
       const event: trace.ScreencastFrameTraceEvent = {
         type: 'screencast-frame',
         pageId: page.guid,
-        sha1,
+        file,
         width: params.viewportWidth,
         height: params.viewportHeight,
         timestamp: monotonicTime(),
         frameSwapWallTime: params.frameSwapWallTime,
       };
       // Make sure to write the screencast frame before adding a reference to it.
-      this._appendResource(sha1, params.buffer);
+      this._state!.traceFiles.add(file);
+      this._appendResource(file, params.buffer);
       this._appendTraceEvent(event);
     };
     this._pageTracingRecorders.set(page, new ScreencastTracingRecorder(page.screencast, onFrame));
   }
 
   private _appendTraceEvent(event: trace.TraceEvent) {
-    const visited = visitTraceEvent(event, this._state!.traceSha1s);
+    const visited = visitTraceEvent(event);
     // Do not flush (console) events, they are too noisy, unless we are in ui mode (live).
     const flush = this._state!.options.live || (event.type !== 'event' && event.type !== 'console' && event.type !== 'log');
     this._fs.appendFile(this._state!.traceFile, JSON.stringify(visited) + '\n', flush);
   }
 
-  private _appendResource(sha1: string, buffer: Buffer) {
-    if (this._allResources.has(sha1))
+  private _appendResource(file: string, buffer: Buffer) {
+    if (this._allResources.has(file))
       return;
-    this._allResources.add(sha1);
-    const resourcePath = path.join(this._state!.resourcesDir, sha1);
+    this._allResources.add(file);
+    const resourcePath = path.join(this._state!.tracesDir, file);
     this._fs.writeFile(resourcePath, buffer, true /* skipIfExists */);
   }
 }
 
-function visitTraceEvent(object: any, sha1s: Set<string>): any {
+function visitTraceEvent(object: any): any {
   if (Array.isArray(object))
-    return object.map(o => visitTraceEvent(o, sha1s));
+    return object.map(o => visitTraceEvent(o));
   if (object instanceof Dispatcher)
     return `<${(object as Dispatcher<any, any, any>)._type}>`;
   if (object instanceof Buffer)
@@ -758,14 +773,8 @@ function visitTraceEvent(object: any, sha1s: Set<string>): any {
     return object;
   if (typeof object === 'object') {
     const result: any = {};
-    for (const key in object) {
-      if (key === 'sha1' || key === '_sha1' || key.endsWith('Sha1')) {
-        const sha1 = object[key];
-        if (sha1)
-          sha1s.add(sha1);
-      }
-      result[key] = visitTraceEvent(object[key], sha1s);
-    }
+    for (const key in object)
+      result[key] = visitTraceEvent(object[key]);
     return result;
   }
   return object;

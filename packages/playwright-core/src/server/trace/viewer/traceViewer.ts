@@ -334,10 +334,12 @@ function traceDescriptor(traceDir: string, tracePrefix: string | undefined) {
       result.entries.push({ name, path: toFilePathUrl(path.join(traceDir, name)) });
   }
 
-  const resourcesDir = path.join(traceDir, 'resources');
-  if (fs.existsSync(resourcesDir)) {
-    for (const name of fs.readdirSync(resourcesDir))
-      result.entries.push({ name: 'resources/' + name, path: toFilePathUrl(path.join(resourcesDir, name)) });
+  for (const dir of ['resources', 'screencast', 'screenshots', 'aria', 'attachments', 'src']) {
+    const dirPath = path.join(traceDir, dir);
+    if (fs.existsSync(dirPath)) {
+      for (const name of fs.readdirSync(dirPath))
+        result.entries.push({ name: dir + '/' + name, path: toFilePathUrl(path.join(dirPath, name)) });
+    }
   }
   return result;
 }

@@ -21,10 +21,10 @@ import type { ResourceSnapshot } from '@trace/snapshot';
 
 export class SnapshotServer {
   private _snapshotStorage: SnapshotStorage;
-  private _resourceLoader: (sha1: string) => Promise<Blob | undefined>;
+  private _resourceLoader: (file: string) => Promise<Blob | undefined>;
   private _snapshotIds = new Map<string, SnapshotRenderer>();
 
-  constructor(snapshotStorage: SnapshotStorage, resourceLoader: (sha1: string) => Promise<Blob | undefined>) {
+  constructor(snapshotStorage: SnapshotStorage, resourceLoader: (file: string) => Promise<Blob | undefined>) {
     this._snapshotStorage = snapshotStorage;
     this._resourceLoader = resourceLoader;
   }
@@ -41,10 +41,10 @@ export class SnapshotServer {
 
   async serveClosestScreenshot(pageOrFrameId: string, searchParams: URLSearchParams): Promise<Response> {
     const snapshot = this._snapshot(pageOrFrameId, searchParams);
-    const sha1 = snapshot?.closestScreenshot();
-    if (!sha1)
+    const file = snapshot?.closestScreenshot();
+    if (!file)
       return new Response(null, { status: 404 });
-    return new Response(await this._resourceLoader(sha1));
+    return new Response(await this._resourceLoader(file));
   }
 
   serveSnapshotInfo(pageOrFrameId: string, searchParams: URLSearchParams): Response {
@@ -85,8 +85,8 @@ export class SnapshotServer {
     if (!resource)
       return new Response(null, { status: 404 });
 
-    const sha1 = resource.response.content._sha1;
-    const content = sha1 ? await this._resourceLoader(sha1) || new Blob([]) : new Blob([]);
+    const file = resource.response.content._file;
+    const content = file ? await this._resourceLoader(file) || new Blob([]) : new Blob([]);
 
     let contentType = resource.response.content.mimeType;
     const isTextEncoding = /^text\/|^application\/(javascript|json)/.test(contentType);

@@ -200,7 +200,46 @@ export class TraceModernizer {
     let events = [event];
     for (; version < latestVersion; ++version)
       events = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, events);
+    for (const e of events)
+      this._normalizeResourceReferences(e);
     return events;
+  }
+
+  // Traces recorded before trace-relative paths referenced blobs by bare sha1-style names:
+  // `_sha1` in har entry content, `sha1` in snapshot resource overrides, screencast frames
+  // and attachments.
+  private _normalizeResourceReferences(event: any) {
+    if (event.type === 'resource-snapshot') {
+      const { request, response } = event.snapshot;
+      if (request?.postData?._sha1) {
+        request.postData._file = 'resources/' + request.postData._sha1;
+        delete request.postData._sha1;
+      }
+      if (response?.content?._sha1) {
+        response.content._file = 'resources/' + response.content._sha1;
+        delete response.content._sha1;
+      }
+    }
+    if (event.type === 'frame-snapshot') {
+      for (const override of event.snapshot.resourceOverrides || []) {
+        if (override.sha1) {
+          override.file = 'resources/' + override.sha1;
+          delete override.sha1;
+        }
+      }
+    }
+    if (event.type === 'screencast-frame' && event.sha1) {
+      event.file = 'resources/' + event.sha1;
+      delete event.sha1;
+    }
+    if (event.type === 'after' || event.type === 'action') {
+      for (const attachment of event.attachments || []) {
+        if (attachment.sha1) {
+          attachment.file = 'resources/' + attachment.sha1;
+          delete attachment.sha1;
+        }
+      }
+    }
   }
 
   _modernize_0_to_1(events: any[]): any[] {

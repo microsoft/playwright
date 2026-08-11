@@ -77,7 +77,7 @@ export const FilmStrip: React.FunctionComponent<{
         left: Math.min(previewPoint!.x, measure.width - (previewSize ? previewSize.width : 0) - 10),
       }}>
         {previewImage && previewSize && <div style={{ width: previewSize.width, height: previewSize.height }}>
-          <img src={model.createRelativeUrl(`sha1/${previewImage.sha1}`)} width={previewSize.width} height={previewSize.height} />
+          <img src={model.createRelativeUrl(`file/${previewImage.file}`)} width={previewSize.width} height={previewSize.height} />
         </div>}
         {previewPoint.action && <div className='film-strip-hover-title'>{renderAction(previewPoint.action, previewPoint)}</div>}
       </div>
@@ -115,7 +115,7 @@ const FilmStripLane: React.FunctionComponent<{
     frames.push(<div className='film-strip-frame' key={i} style={{
       width: frameSize.width,
       height: frameSize.height,
-      backgroundImage: `url(${model?.createRelativeUrl('sha1/' + screencastFrames[index].sha1)})`,
+      backgroundImage: `url(${model?.createRelativeUrl('file/' + screencastFrames[index].file)})`,
       backgroundSize: `${frameSize.width}px ${frameSize.height}px`,
       margin: frameMargin,
       marginRight: frameMargin,
@@ -125,7 +125,7 @@ const FilmStripLane: React.FunctionComponent<{
   frames.push(<div className='film-strip-frame' key={frames.length} style={{
     width: frameSize.width,
     height: frameSize.height,
-    backgroundImage: `url(${model?.createRelativeUrl('sha1/' + screencastFrames[screencastFrames.length - 1].sha1)})`,
+    backgroundImage: `url(${model?.createRelativeUrl('file/' + screencastFrames[screencastFrames.length - 1].file)})`,
     backgroundSize: `${frameSize.width}px ${frameSize.height}px`,
     margin: frameMargin,
     marginRight: frameMargin,

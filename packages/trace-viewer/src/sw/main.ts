@@ -128,7 +128,7 @@ async function innerLoadTrace(traceUri: string, progress: Progress): Promise<Loa
 
     throw new Error(message);
   }
-  const snapshotServer = new SnapshotServer(traceLoader.storage(), sha1 => traceLoader.resourceForSha1(sha1));
+  const snapshotServer = new SnapshotServer(traceLoader.storage(), file => traceLoader.resourceEntry(file));
   return { traceLoader, snapshotServer };
 }
 
@@ -155,8 +155,8 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   const isNavigation = !!event.resultingClientId;
   const client = event.clientId ? await self.clients.get(event.clientId) : undefined;
 
-  if (isNavigation && !relativePath?.startsWith('/sha1/')) {
-    // Navigation request. Download is a /sha1/ navigation, ignore them here.
+  if (isNavigation && !relativePath?.startsWith('/file/')) {
+    // Navigation request. Download is a /file/ navigation, ignore them here.
 
     // Snapshot iframe navigation request.
     if (relativePath?.startsWith('/snapshot/')) {
@@ -196,7 +196,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   }
 
   // These commands all require a loaded trace.
-  if (relativePath === '/contexts' || relativePath.startsWith('/snapshotInfo/') || relativePath.startsWith('/closest-screenshot/') || relativePath.startsWith('/sha1/')) {
+  if (relativePath === '/contexts' || relativePath.startsWith('/snapshotInfo/') || relativePath.startsWith('/closest-screenshot/') || relativePath.startsWith('/file/')) {
     if (!client)
       return new Response('Sub-resource without a client', { status: 500 });
 
@@ -221,8 +221,8 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       return loadedTrace!.snapshotServer.serveClosestScreenshot(pageOrFrameId, url.searchParams);
     }
 
-    if (relativePath.startsWith('/sha1/')) {
-      const blob = await loadedTrace!.traceLoader.resourceForSha1(relativePath.slice('/sha1/'.length));
+    if (relativePath.startsWith('/file/')) {
+      const blob = await loadedTrace!.traceLoader.resourceEntry(relativePath.slice('/file/'.length));
       if (blob)
         return new Response(blob, { status: 200, headers: downloadHeaders(url.searchParams) });
       return new Response(null, { status: 404 });

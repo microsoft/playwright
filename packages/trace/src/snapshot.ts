@@ -33,7 +33,7 @@ export type NodeSnapshot =
 
 export type ResourceOverride = {
   url: string,
-  sha1?: string,
+  file?: string,
   ref?: number
 };
 

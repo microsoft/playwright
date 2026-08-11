@@ -116,9 +116,9 @@ export async function traceRequest(requestId: string) {
   // Request body
   if (r.request.postData) {
     console.log('\n  Request body');
-    const resource = r.request.postData._sha1 ?? r.request.postData._file;
+    const resource = r.request.postData._file;
     if (resource) {
-      console.log(`    ${path.relative(process.cwd(), path.join(trace.model.traceUri, 'resources', resource))}`);
+      console.log(`    ${path.relative(process.cwd(), path.join(trace.model.traceUri, resource))}`);
     } else {
       const text = r.request.postData.text.length > 2000
         ? r.request.postData.text.substring(0, 2000) + '...'
@@ -136,10 +136,10 @@ export async function traceRequest(requestId: string) {
 
   // Response body
   if (r.response.bodySize > 0) {
-    const resource = r.response.content._sha1 ?? r.response.content._file;
+    const resource = r.response.content._file;
     if (resource) {
       console.log('\n  Response body');
-      console.log(`    ${path.relative(process.cwd(), path.join(trace.model.traceUri, 'resources', resource))}`);
+      console.log(`    ${path.relative(process.cwd(), path.join(trace.model.traceUri, resource))}`);
     } else if (r.response.content.text) {
       const text = r.response.content.text.length > 2000
         ? r.response.content.text.substring(0, 2000) + '...'

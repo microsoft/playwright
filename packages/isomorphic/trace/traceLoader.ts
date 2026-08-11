@@ -48,7 +48,7 @@ export class TraceLoader {
       const match = entryName.match(/(.+)\.trace$/);
       if (match && (!prefix || prefix  === match[1]))
         prefixes.push(match[1] || '');
-      if (entryName.includes('src@'))
+      if (entryName.startsWith('src/') || entryName.includes('src@'))
         hasSource = true;
     }
     if (!prefixes.length)
@@ -97,10 +97,10 @@ export class TraceLoader {
       unzipProgress?.(++done, total);
 
       for (const resource of contextEntry.resources) {
-        if (resource.request.postData?._sha1)
-          this._resourceToContentType.set(resource.request.postData._sha1, stripEncodingFromContentType(resource.request.postData.mimeType));
-        if (resource.response.content?._sha1)
-          this._resourceToContentType.set(resource.response.content._sha1, stripEncodingFromContentType(resource.response.content.mimeType));
+        if (resource.request.postData?._file)
+          this._resourceToContentType.set(resource.request.postData._file, stripEncodingFromContentType(resource.request.postData.mimeType));
+        if (resource.response.content?._file)
+          this._resourceToContentType.set(resource.response.content._file, stripEncodingFromContentType(resource.response.content.mimeType));
       }
 
       this.contextEntries.push(contextEntry);
@@ -113,9 +113,9 @@ export class TraceLoader {
     return this._backend.hasEntry(filename);
   }
 
-  async resourceForSha1(sha1: string): Promise<Blob | undefined> {
-    const blob = await this._backend.readBlob('resources/' + sha1);
-    const contentType = this._resourceToContentType.get(sha1);
+  async resourceEntry(file: string): Promise<Blob | undefined> {
+    const blob = await this._backend.readBlob(file);
+    const contentType = this._resourceToContentType.get(file);
     // "x-unknown" in the har means "no content type".
     if (!blob || contentType === undefined || contentType === 'x-unknown')
       return blob;

@@ -84,7 +84,7 @@ export async function traceSnapshot(actionId: string, options: { name?: string, 
 }
 
 async function serveTraceSnapshot(storage: SnapshotStorage, loader: TraceLoader, pageId: string, snapshotKey: string): Promise<{ url: string, stop: () => Promise<void> }> {
-  const snapshotServer = new SnapshotServer(storage, sha1 => loader.resourceForSha1(sha1));
+  const snapshotServer = new SnapshotServer(storage, file => loader.resourceEntry(file));
   const httpServer = new HttpServer();
 
   httpServer.routePrefix('/snapshot/', (request: any, response: any) => {

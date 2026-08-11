@@ -761,7 +761,7 @@ it.describe('screencast', () => {
 
     const { events, resources } = await parseTraceRaw(traceFile);
     const frame = events.filter(e => e.type === 'screencast-frame').pop();
-    const buffer = resources.get('resources/' + frame.sha1);
+    const buffer = resources.get(frame.file);
     const image = jpegjs.decode(buffer);
     expect(image.width).toBe(size.width);
     expect(image.height).toBe(size.height);

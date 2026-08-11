@@ -140,7 +140,6 @@ export type PostData = {
   params: Param[];
   text: string;
   comment?: string;
-  _sha1?: string;
   _file?: string;
 };
 
@@ -159,7 +158,6 @@ export type Content = {
   text?: string;
   encoding?: string;
   comment?: string;
-  _sha1?: string;
   _file?: string;
 };
 

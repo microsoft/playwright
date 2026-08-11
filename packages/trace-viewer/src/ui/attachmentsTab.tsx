@@ -41,7 +41,7 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
   const ref = React.useRef<HTMLSpanElement>(null);
 
   const isTextAttachment = isTextualMimeType(attachment.contentType);
-  const hasContent = !!attachment.sha1 || !!attachment.path;
+  const hasContent = !!attachment.file || !!attachment.path;
 
   React.useEffect(() => {
     if (reveal) {
@@ -102,7 +102,7 @@ export const AttachmentsTab: React.FunctionComponent<{
     const diffMap = new Map<string, { expected: Attachment | undefined, actual: Attachment | undefined, diff: Attachment | undefined }>();
 
     for (const attachment of attachments) {
-      if (!attachment.path && !attachment.sha1)
+      if (!attachment.path && !attachment.file)
         continue;
       const match = attachment.name.match(/^(.*)-(expected|actual|diff)\.png$/);
       if (match) {
@@ -156,8 +156,8 @@ export const AttachmentsTab: React.FunctionComponent<{
 };
 
 export function attachmentURL(model: TraceModel | undefined, attachment: Attachment) {
-  if (model && attachment.sha1)
-    return model.createRelativeUrl(`sha1/${attachment.sha1}`) ;
+  if (model && attachment.file)
+    return model.createRelativeUrl(`file/${attachment.file}`) ;
   return `file?path=${encodeURIComponent(attachment.path!)}`;
 }
 
@@ -169,5 +169,5 @@ function downloadURL(model: TraceModel | undefined, attachment: Attachment) {
 }
 
 function attachmentKey(attachment: Attachment, index: number) {
-  return index + '-' + (attachment.sha1 ? `sha1-` + attachment.sha1 : `path-` + attachment.path);
+  return index + '-' + (attachment.file ? `file-` + attachment.file : `path-` + attachment.path);
 }

@@ -37,7 +37,7 @@ export type SnapshotterBlob = {
 };
 
 export interface SnapshotterDelegate {
-  onSnapshotterBlob(blob: SnapshotterBlob): void;
+  onSnapshotterBlob(blob: SnapshotterBlob): string;
   onFrameSnapshot(snapshot: FrameSnapshot): void;
 }
 
@@ -147,8 +147,8 @@ export class Snapshotter {
         if (typeof content === 'string') {
           const buffer = Buffer.from(content);
           const sha1 = calculateSha1(buffer) + '.' + (mime.getExtension(contentType) || 'dat');
-          this._delegate.onSnapshotterBlob({ sha1, buffer });
-          snapshot.resourceOverrides.push({ url, sha1 });
+          const file = this._delegate.onSnapshotterBlob({ sha1, buffer });
+          snapshot.resourceOverrides.push({ url, file });
         } else {
           snapshot.resourceOverrides.push({ url, ref: content });
         }
