@@ -35,12 +35,14 @@ class StreamSdkObject extends SdkObject {
 export class StreamDispatcher extends Dispatcher<StreamSdkObject, channels.StreamChannel, ArtifactDispatcher> implements channels.StreamChannel {
   _type_Stream = true;
   private _ended: boolean = false;
+  private _onClose: (() => void) | undefined;
 
-  constructor(scope: ArtifactDispatcher, stream: stream.Readable) {
+  constructor(scope: ArtifactDispatcher, stream: stream.Readable, options: { onClose?: () => void } = {}) {
     super(scope, new StreamSdkObject(scope._object, stream), 'Stream', {});
     // In Node v12.9.0+ we can use readableEnded.
     stream.once('end', () => this._ended =  true);
     stream.once('error', () => this._ended =  true);
+    this._onClose = options.onClose;
   }
 
   async read(params: channels.StreamReadParams, progress: Progress): Promise<channels.StreamReadResult> {
@@ -71,5 +73,6 @@ export class StreamDispatcher extends Dispatcher<StreamSdkObject, channels.Strea
 
   async close(params: channels.StreamCloseParams, progress: Progress): Promise<void> {
     this._object.stream.destroy();
+    this._onClose?.();
   }
 }

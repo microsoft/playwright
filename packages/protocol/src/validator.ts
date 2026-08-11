@@ -358,9 +358,12 @@ scheme.ArtifactPathAfterFinishedResult = tObject({
 });
 scheme.ArtifactSaveAsParams = tObject({
   path: tString,
+  dispose: tOptional(tBoolean),
 });
 scheme.ArtifactSaveAsResult = tOptional(tObject({}));
-scheme.ArtifactSaveAsStreamParams = tOptional(tObject({}));
+scheme.ArtifactSaveAsStreamParams = tObject({
+  dispose: tOptional(tBoolean),
+});
 scheme.ArtifactSaveAsStreamResult = tObject({
   stream: tChannel(['Stream']),
 });

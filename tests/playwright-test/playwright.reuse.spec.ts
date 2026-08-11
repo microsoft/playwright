@@ -63,7 +63,7 @@ test('should reuse context', async ({ runInlineTest }) => {
   expect(result.passed).toBe(5);
 });
 
-test('should not reuse context with video if mode=when-possible', async ({ runInlineTest }, testInfo) => {
+test('should reuse context with video if mode=when-possible', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest(withReuseContext({
     'playwright.config.ts': `
       export default {
@@ -74,20 +74,22 @@ test('should not reuse context with video if mode=when-possible', async ({ runIn
       import { test, expect } from '@playwright/test';
       let lastContextGuid;
 
-      test('one', async ({ context }) => {
+      test('one', async ({ page, context }) => {
         lastContextGuid = context._guid;
+        await page.setContent('<div>ONE</div>');
       });
 
-      test('two', async ({ context }) => {
-        expect(context._guid).not.toBe(lastContextGuid);
+      test('two', async ({ page, context }) => {
+        expect(context._guid).toBe(lastContextGuid);
+        await page.setContent('<div>TWO</div>');
       });
     `,
   }), { workers: 1 });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-one', 'video.webm'))).toBeFalsy();
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-two', 'video.webm'))).toBeFalsy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'src-reuse-one', 'video.webm'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'src-reuse-two', 'video.webm'))).toBeTruthy();
 });
 
 test('should reuse context with trace if mode=when-possible', async ({ runInlineTest }, testInfo) => {

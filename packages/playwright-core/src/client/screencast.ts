@@ -16,6 +16,7 @@
 
 import { Artifact } from './artifact';
 import { DisposableStub } from './disposable';
+import { isTargetClosedError } from './errors';
 import { kNoTimeout } from './timeoutSettings';
 
 import type * as api from '../../types/types';
@@ -58,15 +59,27 @@ export class Screencast implements api.Screencast {
     return new DisposableStub(() => this.stop());
   }
 
-  async stop(): Promise<void> {
+  async stop(options: { discard?: boolean } = {}): Promise<void> {
     await this._page._wrapApiCall(async () => {
       this._started = false;
       this._onFrame = null;
-      await this._page._channel.screencastStop({}, kNoTimeout);
-      if (this._savePath)
-        await this._artifact?.saveAs(this._savePath);
+      const artifact = this._artifact;
+      const savePath = this._savePath;
       this._artifact = undefined;
       this._savePath = undefined;
+      try {
+        await this._page._channel.screencastStop({}, kNoTimeout);
+      } catch (e) {
+        // Closing the page stops the screencast server-side, and the video can still be saved.
+        if (!isTargetClosedError(e))
+          throw e;
+      }
+      if (!artifact || !savePath)
+        return;
+      if (options.discard)
+        await artifact.delete();
+      else
+        await artifact.saveAs(savePath, { dispose: true });
     });
   }
 
