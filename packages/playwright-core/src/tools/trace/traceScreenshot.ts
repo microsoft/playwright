@@ -38,21 +38,21 @@ export async function traceScreenshot(actionId: string, options: { output?: stri
   const callId = action.callId;
   const storage = trace.loader.storage();
   const snapshotNames = ['input', 'before', 'after'];
-  let sha1: string | undefined;
+  let file: string | undefined;
   for (const name of snapshotNames) {
     const renderer = storage.snapshotByName(pageId, `${name}@${callId}`);
-    sha1 = renderer?.closestScreenshot();
-    if (sha1)
+    file = renderer?.closestScreenshot();
+    if (file)
       break;
   }
 
-  if (!sha1) {
+  if (!file) {
     console.error(`No screenshot found for action '${actionId}'.`);
     process.exitCode = 1;
     return;
   }
 
-  const blob = await trace.loader.resourceForSha1(sha1);
+  const blob = await trace.loader.resourceEntry(file);
   if (!blob) {
     console.error(`Screenshot resource not found.`);
     process.exitCode = 1;

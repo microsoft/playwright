@@ -33,6 +33,7 @@ export class HarRecorder implements HarTracerDelegate {
   private _fs = new SerializedFS();
   private _harFilePath: string;
   private _resourcesDir: string;
+  private _relativeResourcesDir: string;
   private _isFlushed: boolean = false;
   private _tracer: HarTracer;
   private _entries: har.Entry[] = [];
@@ -42,18 +43,23 @@ export class HarRecorder implements HarTracerDelegate {
     this._context = context;
     const isServer = !!context.attribution.playwright.options.isServer;
     this._harFilePath = !isServer && options.harPath ? options.harPath : path.join(fallbackDir, `${harId}.har`);
-    if (!isServer && options.resourcesDir)
+    const harFileDir = path.dirname(this._harFilePath);
+    if (!isServer && options.resourcesDir) {
       this._resourcesDir = options.resourcesDir;
-    else if (!isServer && options.harPath)
-      this._resourcesDir = path.dirname(options.harPath);
-    else
+      this._relativeResourcesDir = path.relative(harFileDir, this._resourcesDir).split(path.sep).join('/');
+    } else if (!isServer && options.harPath) {
+      this._resourcesDir = harFileDir;
+      this._relativeResourcesDir = '';
+    } else {
+      // Staging layout for the zip archive, where resources end up next to har.har.
       this._resourcesDir = path.join(fallbackDir, `${harId}-resources`);
+      this._relativeResourcesDir = '';
+    }
     const urlFilterRe = options.urlRegexSource !== undefined && options.urlRegexFlags !== undefined ? new RegExp(options.urlRegexSource, options.urlRegexFlags) : undefined;
     const content = options.content || 'embed';
     this._tracer = new HarTracer(context, page, this, {
       content,
       slimMode: options.mode === 'minimal',
-      includeTraceInfo: false,
       recordRequestOverrides: true,
       waitForContentOnStop: true,
       urlFilter: urlFilterRe ?? options.urlGlob,
@@ -69,20 +75,28 @@ export class HarRecorder implements HarTracerDelegate {
   onEntryFinished(entry: har.Entry) {
   }
 
-  onContentBlob(sha1: string, buffer: Buffer) {
-    if (this._writtenContentEntries.has(sha1))
-      return;
+  onContentBlob(shortName: string, buffer: Buffer): string {
+    const fullName = this._harRelativePath(shortName);
+    if (this._writtenContentEntries.has(shortName))
+      return fullName;
     if (!this._writtenContentEntries.size)
       this._fs.mkdir(this._resourcesDir);
-    this._writtenContentEntries.add(sha1);
-    this._fs.writeFile(path.join(this._resourcesDir, sha1), buffer, true /* skipIfExists */);
+    this._writtenContentEntries.add(shortName);
+    this._fs.writeFile(path.join(this._resourcesDir, shortName), buffer, true /* skipIfExists */);
+    return fullName;
   }
 
-  onContentBlobAppend(sha1: string, text: string) {
+  onContentBlobAppend(shortName: string, text: string) {
+    const fullName = this._harRelativePath(shortName);
     if (!this._writtenContentEntries.size)
       this._fs.mkdir(this._resourcesDir);
-    this._writtenContentEntries.add(sha1);
-    this._fs.appendFile(path.join(this._resourcesDir, sha1), text);
+    this._writtenContentEntries.add(shortName);
+    this._fs.appendFile(path.join(this._resourcesDir, shortName), text);
+    return fullName;
+  }
+
+  private _harRelativePath(shortName: string): string {
+    return this._relativeResourcesDir ? this._relativeResourcesDir + '/' + shortName : shortName;
   }
 
   private async _flush() {

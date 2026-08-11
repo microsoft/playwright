@@ -54,8 +54,8 @@ export const NetworkResourceDetails: React.FunctionComponent<{
     if (model && resource.request.postData) {
       const requestContentTypeHeader = resource.request.headers.find(q => q.name.toLowerCase() === 'content-type');
       const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
-      if (resource.request.postData._sha1) {
-        const response = await fetch(model.createRelativeUrl(`sha1/${resource.request.postData._sha1}`));
+      if (resource.request.postData._file) {
+        const response = await fetch(model.createRelativeUrl(`file/${resource.request.postData._file}`));
         return { text: await response.text(), mimeType: requestContentType };
       } else {
         return { text: resource.request.postData.text, mimeType: requestContentType };
@@ -216,10 +216,10 @@ const ResponseTab: React.FunctionComponent<{
 
   React.useEffect(() => {
     const readResources = async  () => {
-      if (model && resource.response.content._sha1) {
+      if (model && resource.response.content._file) {
         const useBase64 = resource.response.content.mimeType.includes('image');
         const isFont = resource.response.content.mimeType.includes('font');
-        const response = await fetch(model.createRelativeUrl(`sha1/${resource.response.content._sha1}`));
+        const response = await fetch(model.createRelativeUrl(`file/${resource.response.content._file}`));
         if (useBase64) {
           const blob = await response.blob();
           const reader = new FileReader();
@@ -244,7 +244,7 @@ const ResponseTab: React.FunctionComponent<{
   const formatResult = useFormattedBody(responseBody, showFormattedResponse);
 
   return <div className='vbox network-request-details-tab'>
-    {!resource.response.content._sha1 && <div>Response body is not available for this request.</div>}
+    {!resource.response.content._file && <div>Response body is not available for this request.</div>}
     {responseBody && responseBody.font && <FontPreview font={responseBody.font} />}
     {responseBody && responseBody.dataUrl && <div><img draggable='false' src={responseBody.dataUrl} /></div>}
     {responseBody && responseBody.text !== undefined && <div className='vbox network-response-body'>
@@ -326,9 +326,9 @@ const WebSocketMessagesTab: React.FunctionComponent<{
   const indexedMessages = useAsyncMemo<IndexedWebSocketMessage[] | undefined>(async () => {
     if (resource._webSocketMessages)
       return resource._webSocketMessages.map((m, index) => ({ ...m, index, byteLength: messageByteLength(m) }));
-    if (model && resource.response.content._sha1) {
+    if (model && resource.response.content._file) {
       try {
-        const response = await fetch(model.createRelativeUrl(`sha1/${resource.response.content._sha1}`));
+        const response = await fetch(model.createRelativeUrl(`file/${resource.response.content._file}`));
         if (!response.ok)
           return [];
         const text = await response.text();

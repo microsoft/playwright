@@ -44,13 +44,12 @@ const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 export interface HarTracerDelegate {
   onEntryStarted(entry: har.Entry): void;
   onEntryFinished(entry: har.Entry): void;
-  onContentBlob(sha1: string, buffer: Buffer): void;
-  onContentBlobAppend(sha1: string, text: string): void;
+  onContentBlob(shortName: string, buffer: Buffer): string;
+  onContentBlobAppend(shortName: string, text: string): string;
 }
 
 type HarTracerOptions = {
   content: 'omit' | 'attach' | 'embed';
-  includeTraceInfo: boolean;
   recordRequestOverrides: boolean;
   waitForContentOnStop: boolean;
   urlFilter?: string | RegExp;
@@ -448,7 +447,7 @@ export class HarTracer {
     const harEntry = createHarEntry(pageEntry?.id, method, url, page.mainFrame().guid, this._options, webSocket.wallTimeMs());
     harEntry._resourceType = 'websocket';
 
-    let sha1: string | undefined = undefined;
+    const shortName = createGuid() + '.jsonl';
     const recordMessage = (type: 'send' | 'receive', opcode: number, data: string, wallTimeMs: number) => {
       if (this._omitWebSocketFrames)
         return;
@@ -457,16 +456,9 @@ export class HarTracer {
         harEntry._webSocketMessages ??= [];
         harEntry._webSocketMessages.push(message);
       } else if (this._options.content === 'attach') {
-        if (!sha1) {
-          sha1 = createGuid() + '.jsonl';
-          if (this._options.includeTraceInfo)
-            harEntry.response.content._sha1 = sha1;
-          else
-            harEntry.response.content._file = sha1;
-        }
 
         if (this._started)
-          this._delegate.onContentBlobAppend(sha1, JSON.stringify(message) + '\n');
+          harEntry.response.content._file = this._delegate.onContentBlobAppend(shortName, JSON.stringify(message) + '\n');
       }
     };
 
@@ -563,13 +555,9 @@ export class HarTracer {
         content.encoding = 'base64';
       }
     } else if (this._options.content === 'attach') {
-      const sha1 = calculateSha1(buffer) + '.' + (mime.getExtension(content.mimeType) || 'dat');
-      if (this._options.includeTraceInfo)
-        content._sha1 = sha1;
-      else
-        content._file = sha1;
+      const shortName = calculateSha1(buffer) + '.' + (mime.getExtension(content.mimeType) || 'dat');
       if (this._started)
-        this._delegate.onContentBlob(sha1, buffer);
+        content._file = this._delegate.onContentBlob(shortName, buffer);
     }
   }
 
@@ -724,12 +712,8 @@ export class HarTracer {
       result.text = postData.toString();
 
     if (content === 'attach') {
-      const sha1 = calculateSha1(postData) + '.' + (mime.getExtension(contentType) || 'dat');
-      if (this._options.includeTraceInfo)
-        result._sha1 = sha1;
-      else
-        result._file = sha1;
-      this._delegate.onContentBlob(sha1, postData);
+      const shortName = calculateSha1(postData) + '.' + (mime.getExtension(contentType) || 'dat');
+      result._file = this._delegate.onContentBlob(shortName, postData);
     }
 
     if (contentType === 'application/x-www-form-urlencoded') {
@@ -780,8 +764,8 @@ function createHarEntry(pageRef: string | undefined, method: string, url: URL, f
       wait: -1,
       receive: -1
     },
-    _frameref: options.includeTraceInfo ? frameref : undefined,
-    _monotonicTime: options.includeTraceInfo ? monotonicTime() : undefined,
+    _frameref: frameref,
+    _monotonicTime: monotonicTime(),
   };
   return harEntry;
 }

@@ -262,7 +262,7 @@ test('should save sources when requested', async ({ runInlineTest }, testInfo) =
   }, { workers: 1 });
   expect(result.exitCode).toEqual(0);
   const { resources } = await parseTraceRaw(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
-  expect([...resources.keys()].filter(name => name.startsWith('resources/src@'))).toHaveLength(1);
+  expect([...resources.keys()].filter(name => name.startsWith('src/'))).toHaveLength(1);
 });
 
 test('should not save sources when not requested', async ({ runInlineTest }, testInfo) => {
@@ -286,7 +286,7 @@ test('should not save sources when not requested', async ({ runInlineTest }, tes
   }, { workers: 1 });
   expect(result.exitCode).toEqual(0);
   const { resources } = await parseTraceRaw(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
-  expect([...resources.keys()].filter(name => name.startsWith('resources/src@'))).toHaveLength(0);
+  expect([...resources.keys()].filter(name => name.startsWith('src/'))).toHaveLength(0);
 });
 
 test('should work in serial mode', async ({ runInlineTest }, testInfo) => {
@@ -558,10 +558,10 @@ test('should include attachments by default', async ({ runInlineTest, server }, 
   expect(trace.model.actions[1].attachments).toEqual([{
     name: 'foo',
     contentType: 'text/plain',
-    sha1: expect.any(String),
+    file: expect.any(String),
   }]);
   const { resources } = await parseTraceRaw(tracePath);
-  expect([...resources.keys()]).toContain(`resources/${trace.model.actions[1].attachments[0].sha1}`);
+  expect([...resources.keys()]).toContain(trace.model.actions[1].attachments[0].file);
 });
 
 test('should opt out of attachments', async ({ runInlineTest, server }, testInfo) => {
@@ -589,7 +589,7 @@ test('should opt out of attachments', async ({ runInlineTest, server }, testInfo
   ]);
   expect(trace.model.actions[1].attachments).toEqual(undefined);
   const { resources } = await parseTraceRaw(tracePath);
-  expect([...resources.keys()].filter(f => f.startsWith('resources/') && !f.startsWith('resources/src@'))).toHaveLength(0);
+  expect([...resources.keys()].filter(f => f.startsWith('attachments/') || f.startsWith('resources/'))).toHaveLength(0);
 });
 
 test('should record with custom page fixture', async ({ runInlineTest }, testInfo) => {

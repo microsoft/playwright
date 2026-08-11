@@ -75,7 +75,7 @@ export async function zip(progress: Progress, stackSessions: Map<string, StackSe
         sourceFiles.add(file);
     }
     for (const sourceFile of sourceFiles)
-      addFile(sourceFile, 'resources/src@' + calculateSha1(sourceFile) + '.txt');
+      addFile(sourceFile, 'src/' + calculateSha1(sourceFile) + path.extname(sourceFile));
   }
 
   if (params.mode === 'write') {

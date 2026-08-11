@@ -49,8 +49,8 @@ export async function traceAttachment(attachmentId: string, options: { output?: 
   }
 
   let content: Buffer | undefined;
-  if (attachment.sha1) {
-    const blob = await trace.loader.resourceForSha1(attachment.sha1);
+  if (attachment.file) {
+    const blob = await trace.loader.resourceEntry(attachment.file);
     if (blob)
       content = Buffer.from(await blob.arrayBuffer());
   } else if (attachment.base64) {

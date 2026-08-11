@@ -1185,9 +1185,11 @@ it.describe('tracing.startHar', () => {
 
     const log = JSON.parse(fs.readFileSync(harPath).toString()).log as Log;
     const styleEntry = log.entries.find(e => e.request.url.endsWith('/one-style.css'))!;
-    const sha1 = (styleEntry.response.content as any)._file as string;
-    expect(sha1).toBeTruthy();
-    const resourcePath = path.join(resourcesDir, sha1);
+    const file = (styleEntry.response.content as any)._file as string;
+    expect(file).toBeTruthy();
+    // _file is relative to the har file directory.
+    const resourcePath = path.join(path.dirname(harPath), file);
+    expect(resourcePath.startsWith(resourcesDir + path.sep)).toBe(true);
     expect(fs.existsSync(resourcePath)).toBe(true);
     expect(fs.readFileSync(resourcePath).toString()).toContain('pink');
   });

@@ -58,10 +58,10 @@ test('should collect trace with resources, but no js', async ({ context, page, s
   expect(events.some(e => e.type === 'screencast-frame')).toBeTruthy();
   const style = events.find(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'));
   expect(style).toBeTruthy();
-  expect(style.snapshot.response.content._sha1).toBeTruthy();
+  expect(style.snapshot.response.content._file).toBeTruthy();
   const script = events.find(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('script.js'));
   expect(script).toBeTruthy();
-  expect(script.snapshot.response.content._sha1).toBe(undefined);
+  expect(script.snapshot.response.content._file).toBe(undefined);
 });
 
 test('should use the correct title for event driven callbacks', async ({ context, page, server }, testInfo) => {
@@ -130,7 +130,8 @@ test('should collect action screenshots', async ({ context, page, server }, test
   const screenshots = events.filter(e => e.type === 'screenshot' && e.callId === clickCallId);
   expect(screenshots.map(e => e.phase)).toEqual(['before', 'action', 'after']);
   for (const screenshot of screenshots) {
-    const buffer = resources.get('resources/' + screenshot.sha1);
+    expect(screenshot.file).toMatch(/^screenshots\/[0-9a-f]{40}\.png$/);
+    const buffer = resources.get(screenshot.file);
     expect(PNG.sync.read(buffer).width).toBeGreaterThan(0);
   }
 });
@@ -147,8 +148,8 @@ test('should collect aria snapshots', async ({ context, page, server }, testInfo
   expect(ariaSnapshots.map(e => e.phase)).toEqual(['before', 'action', 'after']);
   const hasButton = nodes => nodes.some(node => typeof node === 'object' && (node.role === 'button' && node.name === 'Click target' || hasButton(node.children ?? [])));
   for (const ariaSnapshot of ariaSnapshots) {
-    expect(ariaSnapshot.sha1).toMatch(/\.json$/);
-    const snapshot = JSON.parse(resources.get('resources/' + ariaSnapshot.sha1).toString());
+    expect(ariaSnapshot.file).toMatch(/^aria\/[0-9a-f]{40}\.json$/);
+    const snapshot = JSON.parse(resources.get(ariaSnapshot.file).toString());
     expect(hasButton(snapshot)).toBe(true);
   }
 });
@@ -351,7 +352,7 @@ test('should not include trace resources from the previous chunks', async ({ con
     expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
     jpegs = names.filter(n => n.endsWith('.jpeg'));
     // 1 source file for the test.
-    expect(names.filter(n => n.endsWith('.txt')).length).toBe(1);
+    expect(names.filter(n => n.startsWith('src/')).length).toBe(1);
   }
 
   {
@@ -362,7 +363,7 @@ test('should not include trace resources from the previous chunks', async ({ con
     // screenshots from the previous chunk should not be preserved.
     expect(names.filter(n => jpegs.includes(n)).length).toBe(0);
     // 0 source files for the second test.
-    expect(names.filter(n => n.endsWith('.txt')).length).toBe(0);
+    expect(names.filter(n => n.startsWith('src/')).length).toBe(0);
   }
 });
 
@@ -397,8 +398,9 @@ test('should collect sources', async ({ context, page, server }, testInfo) => {
   await context.tracing.stop({ path: testInfo.outputPath('trace1.zip') });
 
   const { resources } = await parseTraceRaw(testInfo.outputPath('trace1.zip'));
-  const sourceNames = Array.from(resources.keys()).filter(k => k.endsWith('.txt'));
+  const sourceNames = Array.from(resources.keys()).filter(k => k.startsWith('src/'));
   expect(sourceNames.length).toBe(1);
+  expect(sourceNames[0]).toMatch(/^src\/[0-9a-f]{40}\.ts$/);
   const sourceFile = resources.get(sourceNames[0]);
   const thisFile = await fs.promises.readFile(__filename);
   expect(sourceFile).toEqual(thisFile);
@@ -517,14 +519,14 @@ for (const params of [
     for (const frame of frames) {
       expect.soft(frame.width).toBe(params.width);
       expect.soft(frame.height).toBe(params.height);
-      const buffer = resources.get('resources/' + frame.sha1);
+      const buffer = resources.get(frame.file);
       const image = jpegjs.decode(buffer);
       expect.soft(image.width).toBe(previewWidth);
       expect.soft(image.height).toBe(previewHeight);
     }
 
     const frame = frames[frames.length - 1]; // pick last frame.
-    const buffer = resources.get('resources/' + frame.sha1);
+    const buffer = resources.get(frame.file);
     const image = jpegjs.decode(buffer);
     expect(image.data.byteLength).toBe(previewWidth * previewHeight * 4);
     expectRed(image.data, previewWidth * previewHeight * 4 / 2 + previewWidth * 4 / 2); // center is red
@@ -766,7 +768,7 @@ test('should store postData for global request', async ({ request, server }, tes
   const actions = trace.events.filter(e => e.type === 'resource-snapshot');
   expect(actions).toHaveLength(1);
   const req = actions[0].snapshot.request;
-  expect(req.postData?._sha1).toBeTruthy();
+  expect(req.postData?._file).toBeTruthy();
   expect(req).toEqual(expect.objectContaining({
     method: 'POST',
     url

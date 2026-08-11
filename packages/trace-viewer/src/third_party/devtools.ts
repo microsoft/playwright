@@ -290,7 +290,7 @@ export async function generateFetchCall(model: TraceModel | undefined, resource:
 }
 
 async function fetchRequestPostData(model: TraceModel | undefined, resource: Entry) {
-  return (model && resource.request.postData?._sha1) ?
-    await fetch(model.createRelativeUrl(`sha1/${resource.request.postData._sha1}`)).then(r => r.text())
+  return (model && resource.request.postData?._file) ?
+    await fetch(model.createRelativeUrl(`file/${resource.request.postData._file}`)).then(r => r.text())
     : resource.request.postData?.text;
 }

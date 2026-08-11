@@ -100,7 +100,7 @@ export type ContextCreatedTraceEvent = {
 export type ScreencastFrameTraceEvent = {
   type: 'screencast-frame',
   pageId: string,
-  sha1: string,
+  file: string,
   width: number,
   height: number,
   timestamp: number,
@@ -113,14 +113,14 @@ export type ScreenshotTraceEvent = {
   type: 'screenshot',
   callId: string,
   phase: ActionPhase,
-  sha1: string,
+  file: string,
 };
 
 export type AriaSnapshotTraceEvent = {
   type: 'aria-snapshot',
   callId: string,
   phase: ActionPhase,
-  sha1: string,
+  file: string,
 };
 
 export type BeforeActionTraceEvent = {
@@ -150,7 +150,7 @@ export type AfterActionTraceEventAttachment = {
   name: string;
   contentType: string;
   path?: string;
-  sha1?: string;
+  file?: string;
   base64?: string;
 };
 

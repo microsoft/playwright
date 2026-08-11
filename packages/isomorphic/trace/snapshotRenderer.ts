@@ -71,7 +71,7 @@ export class SnapshotRenderer {
     const closestFrame = (wallTime && this._screencastFrames[0]?.frameSwapWallTime)
       ? findClosest(this._screencastFrames, frame => frame.frameSwapWallTime!, wallTime)
       : findClosest(this._screencastFrames, frame => frame.timestamp, timestamp);
-    return closestFrame?.sha1;
+    return closestFrame?.file;
   }
 
   render(): RenderedFrameSnapshot {
@@ -234,14 +234,14 @@ export class SnapshotRenderer {
         if (index >= 0 && index < this._snapshots.length)
           override = this._snapshots[index].resourceOverrides.find(o => o.url === url);
       }
-      if (override?.sha1) {
+      if (override?.file) {
         result = {
           ...result,
           response: {
             ...result.response,
             content: {
               ...result.response.content,
-              _sha1: override.sha1,
+              _file: override.file,
             }
           },
         };
