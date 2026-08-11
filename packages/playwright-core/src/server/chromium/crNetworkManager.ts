@@ -557,10 +557,10 @@ export class CRNetworkManager {
   }
 }
 
-// Sec-Fetch-Dest values of static subresources that are safe to fetch again.
-const kRefetchSafeDestinations = new Set([
-  'audio', 'audioworklet', 'font', 'image', 'manifest', 'paintworklet', 'script',
-  'serviceworker', 'sharedworker', 'style', 'track', 'video', 'worker', 'xslt',
+// Resource types of static subresources that are safe to fetch again. Unlike
+// Sec-Fetch-Dest, resource type is reported for plain http origins as well.
+const kRefetchSafeResourceTypes = new Set<network.ResourceType>([
+  'font', 'image', 'manifest', 'media', 'script', 'stylesheet', 'texttrack',
 ]);
 
 const kInterceptableRequest = Symbol('InterceptableRequest');
@@ -609,12 +609,12 @@ class InterceptableRequest {
       // do it for GETs of static subresources and prefetch requests.
       if (request.method() !== 'GET')
         return Buffer.from('');
-      const rawHeaders = await request.internalRawRequestHeaders();
-      const rawHeaderValue = (name: string) => rawHeaders.find(h => h.name.toLowerCase() === name)?.value;
-      const isPrefetch = !!rawHeaderValue('sec-purpose')?.startsWith('prefetch');
-      const secFetchDest = rawHeaderValue('sec-fetch-dest');
-      if (!isPrefetch && (!secFetchDest || !kRefetchSafeDestinations.has(secFetchDest)))
-        return Buffer.from('');
+      if (!kRefetchSafeResourceTypes.has(request.resourceType())) {
+        const rawHeaders = await request.internalRawRequestHeaders();
+        const isPrefetch = rawHeaders.some(h => h.name.toLowerCase() === 'sec-purpose' && h.value.startsWith('prefetch'));
+        if (!isPrefetch)
+          return Buffer.from('');
+      }
 
       const resource = await session.send('Network.loadNetworkResource', { url: request.url(), frameId: request.serviceWorker() ? undefined : request.frame()!._id, options: { disableCache: false, includeCredentials: true } });
       const chunks: Buffer[] = [];
