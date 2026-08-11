@@ -344,8 +344,9 @@ it('should report if request was fromServiceWorker', async ({ page, server, isAn
   }
 });
 
-it('should return body for prefetch script', async ({ page, server, browserName }) => {
+it('should return body for prefetch script', async ({ page, server, browserName, browserMajorVersion }) => {
   it.skip(browserName === 'webkit', 'No prefetch in WebKit: https://caniuse.com/link-rel-prefetch');
+  it.skip(browserName === 'chromium' && browserMajorVersion < 138, 'Requires Sec-Purpose header, shipped in Chrome 138');
   const [response] = await Promise.all([
     page.waitForResponse('**/prefetch.js'),
     page.goto(server.PREFIX + '/prefetch.html')
