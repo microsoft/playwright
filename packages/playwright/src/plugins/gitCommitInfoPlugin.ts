@@ -153,8 +153,23 @@ async function gitCommitInfo(gitDir: string): Promise<GitCommitInfo | undefined>
 async function gitDiff(gitDir: string, ci?: CIInfo): Promise<string | undefined> {
   const diffLimit = 100_000;
   if (ci?.prBaseHash) {
-    // https://git-scm.com/docs/git-fetch
-    await runGit(['fetch', 'origin', ci.prBaseHash, '--depth=1', '--no-auto-maintenance', '--no-auto-gc', '--no-tags', '--no-recurse-submodules'], gitDir);
+    // Diff against the PR base commit. Whether it is present locally depends on the checkout:
+    // - fetch-depth: 0 (complete clone): the base is reachable from the base branch, no fetch
+    //   is needed. Fetching with `--depth=1` here would write `.git/shallow` and turn the
+    //   user's complete clone shallow for the rest of the CI job.
+    // - fetch-depth: 1 (default on GHA): only the PR merge commit exists, the base must be
+    //   fetched, and `--depth=1` keeps that fetch minimal in the already-shallow clone.
+    // - fetch-depth: N: the base is present iff it is within N commits of the merge commit.
+    // - Base branch force-pushed after the PR was created: the base may be missing even from
+    //   a complete clone; fetch without `--depth` so that the clone stays complete.
+    const hasBaseCommit = await runGit(['cat-file', '-e', `${ci.prBaseHash}^{commit}`], gitDir) !== undefined;
+    if (!hasBaseCommit) {
+      const isShallow = await runGit(['rev-parse', '--is-shallow-repository'], gitDir) === 'true';
+      const fetchArgs = ['fetch', 'origin', ci.prBaseHash, '--no-auto-maintenance', '--no-auto-gc', '--no-tags', '--no-recurse-submodules'];
+      if (isShallow)
+        fetchArgs.push('--depth=1');
+      await runGit(fetchArgs, gitDir);
+    }
     const diff = await runGit(['diff', ci.prBaseHash, 'HEAD'], gitDir);
     if (diff)
       return diff.substring(0, diffLimit);

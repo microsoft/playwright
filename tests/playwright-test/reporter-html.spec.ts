@@ -3192,6 +3192,68 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(prompt, 'contains diff').toContain(`+            expect(2).toBe(3);`);
     });
 
+    test('should not turn complete clone shallow when capturing diff', async ({ runInlineTest, writeFiles }, testInfo) => {
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42203' });
+      const files = {
+        'playwright.config.ts': `export default {}`,
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('sample', async ({}) => { expect(2).toBe(2); });
+        `,
+      };
+      const baseDir = await writeFiles(files);
+      await initGitRepo(baseDir);
+      const originDir = testInfo.outputPath('origin.git');
+      await execGit(baseDir, ['clone', '--bare', baseDir, originDir]);
+      await execGit(originDir, ['config', 'uploadpack.allowAnySHA1InWant', 'true']);
+      await execGit(baseDir, ['remote', 'add', 'origin', originDir]);
+      const { stdout: baseSha } = await spawnAsync('git', ['rev-parse', 'HEAD~1'], { stdio: 'pipe', cwd: baseDir });
+
+      const result = await runInlineTest({}, { reporter: 'dot' }, {
+        PLAYWRIGHT_HTML_OPEN: 'never',
+        ...(await ghaPullRequestEnv(baseDir, baseSha.trim())),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.report.config.metadata.gitDiff).toContain('example.spec.ts');
+      const { stdout: isShallow } = await spawnAsync('git', ['rev-parse', '--is-shallow-repository'], { stdio: 'pipe', cwd: baseDir });
+      expect(isShallow.trim()).toBe('false');
+    });
+
+    test('should fetch missing pull request base commit when capturing diff', async ({ runInlineTest, writeFiles }, testInfo) => {
+      const files = {
+        'playwright.config.ts': `export default {}`,
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('sample', async ({}) => { expect(2).toBe(2); });
+        `,
+      };
+      const baseDir = await writeFiles(files);
+      await initGitRepo(baseDir);
+      const originDir = testInfo.outputPath('origin.git');
+      await execGit(baseDir, ['clone', '--bare', baseDir, originDir]);
+      await execGit(originDir, ['config', 'uploadpack.allowAnySHA1InWant', 'true']);
+      await execGit(baseDir, ['remote', 'add', 'origin', originDir]);
+
+      const otherDir = testInfo.outputPath('other');
+      await execGit(baseDir, ['clone', originDir, otherDir]);
+      await fs.promises.writeFile(path.join(otherDir, 'baseline.txt'), 'baseline');
+      await execGit(otherDir, ['add', 'baseline.txt']);
+      await execGit(otherDir, ['-c', 'user.email=shakespeare@example.local', '-c', 'user.name=William', 'commit', '-m', 'baseline']);
+      const { stdout: baseSha } = await spawnAsync('git', ['rev-parse', 'HEAD'], { stdio: 'pipe', cwd: otherDir });
+      await execGit(otherDir, ['push', 'origin', 'HEAD:refs/heads/baseline']);
+
+      const result = await runInlineTest({}, { reporter: 'dot' }, {
+        PLAYWRIGHT_HTML_OPEN: 'never',
+        ...(await ghaPullRequestEnv(baseDir, baseSha.trim())),
+      });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.report.config.metadata.gitDiff).toContain('baseline.txt');
+      const { stdout: isShallow } = await spawnAsync('git', ['rev-parse', '--is-shallow-repository'], { stdio: 'pipe', cwd: baseDir });
+      expect(isShallow.trim()).toBe('false');
+    });
+
     test('should include snapshot when page wasnt closed', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'example.spec.ts': `
@@ -3660,13 +3722,13 @@ function ghaCommitEnv() {
   };
 }
 
-async function ghaPullRequestEnv(baseDir: string) {
+async function ghaPullRequestEnv(baseDir: string, baseSha: string = 'main') {
   const eventPath = path.join(baseDir, 'event.json');
   await fs.promises.writeFile(eventPath, JSON.stringify({
     pull_request: {
       title: 'My PR',
       number: 42,
-      base: { sha: 'main' },
+      base: { sha: baseSha },
     },
   }));
   return {
