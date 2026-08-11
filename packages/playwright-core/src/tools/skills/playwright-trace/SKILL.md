@@ -60,9 +60,7 @@ The `action` command displays available snapshot phases (before, input, after) a
 ### Requests
 
 ```bash
-# All network requests: start time, method, status, URL, duration, size
-# Start times share the clock of the `trace actions` Time column, so comparing
-# the two answers "was this request still in flight when that action ran?"
+# All network requests: start time (on the `trace actions` clock), method, status, URL, duration, size
 npx playwright trace requests
 
 # Filter by URL pattern

@@ -65,8 +65,7 @@ export async function traceRequests(options: { grep?: string, method?: string, s
     const status = r.response.status > 0 ? String(r.response.status) : 'ERR';
     const size = r.response._transferSize! > 0 ? r.response._transferSize! : r.response.bodySize;
     const route = formatRouteStatus(r);
-    // Same clock and format as the Time column of `trace actions`, so the two can be correlated.
-    const start = r._monotonicTime !== undefined ? formatTimestamp(r._monotonicTime, model.startTime) : '-';
+    const start = r._monotonicTime ? formatTimestamp(r._monotonicTime, model.startTime) : '-';
     console.log(`  ${(ordinal + '.').padStart(4)} ${start.padEnd(9)} ${r.request.method.padEnd(8)} ${status.padEnd(8)} ${name.padEnd(45)} ${msToString(r.time).padStart(10)} ${bytesToString(size).padStart(8)} ${route.padEnd(10)}`);
   }
 }
@@ -96,7 +95,7 @@ export async function traceRequest(requestId: string) {
   // General
   console.log('  General');
   console.log(`    status:    ${status}`);
-  if (r._monotonicTime !== undefined)
+  if (r._monotonicTime)
     console.log(`    start:     ${formatTimestamp(r._monotonicTime, model.startTime)}`);
   console.log(`    duration:  ${msToString(r.time)}`);
   console.log(`    size:      ${bytesToString(size)}`);

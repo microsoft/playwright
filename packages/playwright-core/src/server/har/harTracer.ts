@@ -409,10 +409,7 @@ export class HarTracer {
 
     if (request._failureText !== null)
       harEntry.response._failureText = request._failureText;
-    // Failure is the only finish path that computes no timings, leaving `time` at -1.
-    // Derive the duration from the entry's monotonic start so that traces record when
-    // failed and aborted requests ended; user-exported HARs keep the spec value.
-    if (harEntry._monotonicTime !== undefined && harEntry.time === -1)
+    if (harEntry._monotonicTime && harEntry.time === -1)
       harEntry.time = monotonicTime() - harEntry._monotonicTime;
     this._recordRequestOverrides(harEntry, request);
     if (this._started)
