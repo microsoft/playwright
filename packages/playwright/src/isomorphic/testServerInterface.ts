@@ -28,7 +28,6 @@ export interface TestServerInterface {
     closeOnDisconnect?: boolean,
     interceptStdio?: boolean,
     watchTestDirs?: boolean,
-    populateDependenciesOnList?: boolean,
   }): Promise<void>;
 
   ping(params: {}): Promise<void>;

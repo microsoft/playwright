@@ -34,7 +34,6 @@ export type SerializedCompilationCache = {
   sourceMaps: [string, string][],
   memoryCache: [string, MemoryCache][],
   fileDependencies: [string, string[]][],
-  externalDependencies: [string, string[]][],
 };
 
 // Assumptions for the compilation cache:
@@ -64,8 +63,6 @@ const sourceMaps: Map<string, string> = new Map();
 const memoryCache = new Map<string, MemoryCache>();
 // Dependencies resolved by the loader.
 const fileDependencies = new Map<string, Set<string>>();
-// Dependencies resolved by the external bundler.
-const externalDependencies = new Map<string, Set<string>>();
 
 export function installSourceMapSupport() {
   Error.stackTraceLimit = 200;
@@ -174,7 +171,6 @@ export function serializeCompilationCache(): SerializedCompilationCache {
     sourceMaps: [...sourceMaps.entries()],
     memoryCache: [...memoryCache.entries()],
     fileDependencies: [...fileDependencies.entries()].map(([filename, deps]) => ([filename, [...deps]])),
-    externalDependencies: [...externalDependencies.entries()].map(([filename, deps]) => ([filename, [...deps]])),
   };
 }
 
@@ -186,10 +182,6 @@ export function addToCompilationCache(payload: SerializedCompilationCache) {
   for (const entry of payload.fileDependencies) {
     const existing = fileDependencies.get(entry[0]) || [];
     fileDependencies.set(entry[0], new Set([...entry[1], ...existing]));
-  }
-  for (const entry of payload.externalDependencies) {
-    const existing = externalDependencies.get(entry[0]) || [];
-    externalDependencies.set(entry[0], new Set([...entry[1], ...existing]));
   }
 }
 
@@ -237,11 +229,6 @@ export function currentFileDepsCollector(): Set<string> | undefined {
   return depsCollector;
 }
 
-export function setExternalDependencies(filename: string, deps: string[]) {
-  const depsSet = new Set(deps.filter(dep => !belongsToNodeModules(dep) && dep !== filename));
-  externalDependencies.set(filename, depsSet);
-}
-
 export function fileDependenciesForTest() {
   return Object.fromEntries([...fileDependencies.entries()].map(entry => (
     [path.basename(entry[0]), [...entry[1]].map(f => path.basename(f)).sort()]
@@ -258,18 +245,6 @@ export function collectAffectedTestFiles(changedFile: string, testFileCollector:
     if (deps.has(changedFile))
       testFileCollector.add(testFile);
   }
-
-  for (const [importingFile, depsOfImportingFile] of externalDependencies) {
-    if (depsOfImportingFile.has(changedFile)) {
-      if (isTestFile(importingFile))
-        testFileCollector.add(importingFile);
-
-      for (const [testFile, depsOfTestFile] of fileDependencies) {
-        if (depsOfTestFile.has(importingFile))
-          testFileCollector.add(testFile);
-      }
-    }
-  }
 }
 
 export function affectedTestFiles(changes: string[]): string[] {
@@ -284,15 +259,7 @@ export function internalDependenciesForTestFile(filename: string): Set<string> |
 }
 
 export function dependenciesForTestFile(filename: string): Set<string> {
-  const result = new Set<string>();
-  for (const testDependency of fileDependencies.get(filename) || []) {
-    result.add(testDependency);
-    for (const externalDependency of externalDependencies.get(testDependency) || [])
-      result.add(externalDependency);
-  }
-  for (const dep of externalDependencies.get(filename) || [])
-    result.add(dep);
-  return result;
+  return fileDependencies.get(filename) || new Set();
 }
 
 // This is only used in the dev mode, specifically excluding

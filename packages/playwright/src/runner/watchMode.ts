@@ -135,7 +135,6 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   await testServerConnection.initialize({
     interceptStdio: false,
     watchTestDirs: true,
-    populateDependenciesOnList: true,
   });
   await testServerConnection.runGlobalSetup({});
 
