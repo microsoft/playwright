@@ -23,7 +23,7 @@ import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { resolveWithinRoot } from '@utils/fileUtils';
 import { DirTraceLoaderBackend, extractTrace } from './traceParser';
 
-import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
+import type { ActionEntry } from '@isomorphic/trace/entries';
 
 const traceDir = path.join('.playwright-cli', 'trace');
 const cliOutputDir = '.playwright-cli';
@@ -41,7 +41,7 @@ export class LoadedTrace {
     this.callIdToOrdinal = ordinals.callIdToOrdinal;
   }
 
-  resolveActionId(actionId: string): ActionTraceEventInContext | undefined {
+  resolveActionId(actionId: string): ActionEntry | undefined {
     const ordinal = parseInt(actionId, 10);
     if (!isNaN(ordinal)) {
       const callId = this.ordinalToCallId.get(ordinal);
@@ -105,7 +105,7 @@ export function formatTimestamp(ms: number, base: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}.${millis.toString().padStart(3, '0')}`;
 }
 
-export function actionTitle(action: ActionTraceEventInContext): string {
+export function actionTitle(action: ActionEntry): string {
   return renderTitleForCall({ ...action, type: action.class }) || `${action.class}.${action.method}`;
 }
 

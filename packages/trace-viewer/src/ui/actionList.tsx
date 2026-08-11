@@ -19,11 +19,13 @@ import { clsx } from '@web/uiUtils';
 import { msToString } from '@isomorphic/formatUtils';
 import * as React from 'react';
 import './actionList.css';
-import { stats, buildActionTree } from '@isomorphic/trace/traceModel';
+import { buildActionTree } from '@isomorphic/trace/traceModel';
 import { asLocatorDescription, type Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
-import type { ActionTraceEventInContext, ActionTreeItem } from '@isomorphic/trace/traceModel';
+import type { ActionTreeItem, TraceModel } from '@isomorphic/trace/traceModel';
+import type { ActionEntry } from '@isomorphic/trace/entries';
+import { useTraceModel } from './traceModelContext';
 import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { testStatusIcon } from './testUtils';
@@ -31,15 +33,15 @@ import { getMetainfo } from '@isomorphic/protocolMetainfo';
 import { formatProtocolParam } from '@isomorphic/protocolFormatter';
 
 export interface ActionListProps {
-  actions: ActionTraceEventInContext[],
-  selectedAction: ActionTraceEventInContext | undefined,
+  actions: ActionEntry[],
+  selectedAction: ActionEntry | undefined,
   selectedTime: Boundaries | undefined,
   setSelectedTime: (time: Boundaries | undefined) => void,
   treeState: TreeState,
   setTreeState: React.Dispatch<React.SetStateAction<TreeState>>,
   sdkLanguage: Language | undefined;
-  onSelected?: (action: ActionTraceEventInContext) => void,
-  onHighlighted?: (action: ActionTraceEventInContext | undefined) => void,
+  onSelected?: (action: ActionEntry) => void,
+  onHighlighted?: (action: ActionEntry | undefined) => void,
   revealConsole?: () => void,
   revealActionAttachment?(callId: string): void,
   isLive?: boolean,
@@ -63,6 +65,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   isLive,
   actionFilterText,
 }) => {
+  const model = useTraceModel();
   const { rootItem, itemMap } = React.useMemo(() => buildActionTree(actions), [actions]);
 
   const { selectedItem } = React.useMemo(() => {
@@ -80,8 +83,8 @@ export const ActionList: React.FC<ActionListProps> = ({
 
   const render = React.useCallback((item: ActionTreeItem) => {
     const showAttachments = !!revealActionAttachment && !!item.action.attachments?.length;
-    return renderAction(item.action, { sdkLanguage, revealConsole, revealActionAttachment: () => revealActionAttachment?.(item.action.callId), isLive, showDuration: true, showBadges: true, showAttachments });
-  }, [isLive, revealConsole, revealActionAttachment, sdkLanguage]);
+    return renderAction(item.action, { model, sdkLanguage, revealConsole, revealActionAttachment: () => revealActionAttachment?.(item.action.callId), isLive, showDuration: true, showBadges: true, showAttachments });
+  }, [model, isLive, revealConsole, revealActionAttachment, sdkLanguage]);
 
   const isVisible = React.useCallback((item: ActionTreeItem) => {
     const timeVisible = !selectedTime || !item.action || (item.action.startTime <= selectedTime.maximum && item.action.endTime >= selectedTime.minimum);
@@ -129,8 +132,9 @@ export const ActionList: React.FC<ActionListProps> = ({
 };
 
 export const renderAction = (
-  action: ActionTraceEvent,
+  action: ActionEntry,
   options: {
+    model?: TraceModel,
     sdkLanguage?: Language,
     revealConsole?: () => void,
     revealActionAttachment?(): void,
@@ -139,8 +143,8 @@ export const renderAction = (
     showBadges?: boolean,
     showAttachments?: boolean,
   }) => {
-  const { sdkLanguage, revealConsole, revealActionAttachment, isLive, showDuration, showBadges, showAttachments } = options;
-  const { errors, warnings } = stats(action);
+  const { model, sdkLanguage, revealConsole, revealActionAttachment, isLive, showDuration, showBadges, showAttachments } = options;
+  const { errors, warnings } = model?.stats(action) ?? { errors: 0, warnings: 0 };
 
   const locator = action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
 

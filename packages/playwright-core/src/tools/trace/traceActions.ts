@@ -21,7 +21,7 @@ import { asLocatorDescription } from '@isomorphic/locatorGenerators';
 import { msToString } from '@isomorphic/formatUtils';
 import { loadTrace, formatTimestamp, actionTitle } from './traceUtils';
 
-import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
+import type { ActionEntry } from '@isomorphic/trace/entries';
 import type { Language } from '@isomorphic/locatorGenerators';
 
 export async function traceActions(options: { grep?: string, errorsOnly?: boolean }) {
@@ -37,8 +37,8 @@ export async function traceActions(options: { grep?: string, errorsOnly?: boolea
     const ordinal = trace.callIdToOrdinal.get(action.callId) ?? '?';
     const ts = formatTimestamp(action.startTime, trace.model.startTime);
     const duration = action.endTime ? msToString(action.endTime - action.startTime) : 'running';
-    const title = actionTitle(action as ActionTraceEventInContext);
-    const locator = actionLocator(action as ActionTraceEventInContext);
+    const title = actionTitle(action);
+    const locator = actionLocator(action);
     const error = action.error ? '  ✗' : '';
     const prefix = `  ${(ordinal + '.').padStart(4)} ${ts}  ${indent}`;
     console.log(`${prefix}${title.padEnd(Math.max(1, 55 - indent.length))} ${duration.padStart(8)}${error}`);
@@ -51,7 +51,7 @@ export async function traceActions(options: { grep?: string, errorsOnly?: boolea
     visit(child, '');
 }
 
-function filterActions(actions: ActionTraceEventInContext[], options: { grep?: string, errorsOnly?: boolean }): ActionTraceEventInContext[] {
+function filterActions(actions: ActionEntry[], options: { grep?: string, errorsOnly?: boolean }): ActionEntry[] {
   let result = actions.filter(a => a.group !== 'configuration');
   if (options.grep) {
     const pattern = new RegExp(options.grep, 'i');
@@ -62,7 +62,7 @@ function filterActions(actions: ActionTraceEventInContext[], options: { grep?: s
   return result;
 }
 
-function actionLocator(action: ActionTraceEventInContext, sdkLanguage?: Language): string | undefined {
+function actionLocator(action: ActionEntry, sdkLanguage?: Language): string | undefined {
   return action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
 }
 

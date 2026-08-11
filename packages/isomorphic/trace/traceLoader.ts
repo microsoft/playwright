@@ -139,6 +139,7 @@ function createEmptyContext(): ContextEntry {
     origin: 'testRunner',
     startTime: Number.MAX_SAFE_INTEGER,
     wallTime: Number.MAX_SAFE_INTEGER,
+    monotonicTime: 0,
     endTime: 0,
     browserName: '',
     options: {
@@ -153,6 +154,5 @@ function createEmptyContext(): ContextEntry {
     errors: [],
     stdio: [],
     hasSource: false,
-    contextId: '',
   };
 }

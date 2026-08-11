@@ -21,7 +21,8 @@ import { CallTab } from './callTab';
 import { LogTab } from './logTab';
 import { ErrorsTab, useErrorsTabModel } from './errorsTab';
 import { ConsoleTab, useConsoleTabModel } from './consoleTab';
-import type { TraceModel, SourceLocation, ActionTraceEventInContext, SourceModel } from '@isomorphic/trace/traceModel';
+import type { TraceModel, SourceLocation, SourceModel } from '@isomorphic/trace/traceModel';
+import type { ActionEntry } from '@isomorphic/trace/entries';
 import { NetworkTab, useNetworkTabModel } from './networkTab';
 import { SnapshotTabsView } from './snapshotTab';
 import { SourceTab } from './sourceTab';
@@ -99,7 +100,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
   const [isInspecting, setIsInspectingState] = React.useState(false);
   const [highlightedTime, setHighlightedTime] = React.useState<Boundaries | undefined>(undefined);
 
-  const setSelectedAction = React.useCallback((action: ActionTraceEventInContext | undefined) => {
+  const setSelectedAction = React.useCallback((action: ActionEntry | undefined) => {
     setSelectedCallId(action?.callId);
     setRevealedErrorKey(undefined);
   }, [setSelectedCallId, setRevealedErrorKey]);
@@ -111,7 +112,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
     return actions?.find(a => a.callId === highlightedCallId);
   }, [actions, highlightedCallId]);
 
-  const setHighlightedAction = React.useCallback((highlightedAction: ActionTraceEventInContext | undefined) => {
+  const setHighlightedAction = React.useCallback((highlightedAction: ActionEntry | undefined) => {
     setHighlightedCallId(highlightedAction?.callId);
   }, [setHighlightedCallId]);
 
@@ -150,7 +151,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
     return highlightedAction || selectedAction;
   }, [selectedAction, highlightedAction]);
 
-  const onActionSelected = React.useCallback((action: ActionTraceEventInContext) => {
+  const onActionSelected = React.useCallback((action: ActionEntry) => {
     setSelectedAction(action);
     setHighlightedAction(undefined);
   }, [setSelectedAction, setHighlightedAction]);

@@ -93,11 +93,11 @@ export class TraceModernizer {
         contextEntry.platform = event.platform;
         contextEntry.playwrightVersion = event.playwrightVersion;
         contextEntry.wallTime = event.wallTime;
+        contextEntry.monotonicTime = event.monotonicTime;
         contextEntry.startTime = event.monotonicTime;
         contextEntry.sdkLanguage = event.sdkLanguage;
         contextEntry.options = event.options;
         contextEntry.testIdAttributeName = event.testIdAttributeName;
-        contextEntry.contextId = event.contextId ?? '';
         contextEntry.testTimeout = event.testTimeout;
         contextEntry.annotations = event.annotations;
         break;
@@ -164,11 +164,11 @@ export class TraceModernizer {
         break;
       }
       case 'resource-snapshot':
-        this._snapshotStorage.addResource(this._contextEntry.contextId, event.snapshot);
+        this._snapshotStorage.addResource(event.snapshot);
         contextEntry.resources.push(event.snapshot);
         break;
       case 'frame-snapshot':
-        this._snapshotStorage.addFrameSnapshot(this._contextEntry.contextId, event.snapshot, this._pageEntry(event.snapshot.pageId).screencastFrames);
+        this._snapshotStorage.addFrameSnapshot(event.snapshot, this._pageEntry(event.snapshot.pageId).screencastFrames);
         break;
     }
     // Make sure there is a page entry for each page, even without screencast frames,
@@ -446,9 +446,10 @@ export class TraceModernizer {
         continue;
       }
       if (event.type === 'before' || event.type === 'action') {
-        // Take wall and monotonic time from the first event.
-        if (!this._contextEntry.wallTime)
+        if (!this._contextEntry.monotonicTime) {
+          this._contextEntry.monotonicTime = (event as traceV6.BeforeActionTraceEvent).startTime;
           this._contextEntry.wallTime = event.wallTime;
+        }
         const eventAsV6 = event as traceV6.BeforeActionTraceEvent;
         const eventAsV7 = event as traceV7.BeforeActionTraceEvent;
         eventAsV7.stepId = `${eventAsV6.apiName}@${eventAsV6.wallTime}`;
