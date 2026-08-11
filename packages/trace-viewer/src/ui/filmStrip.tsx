@@ -18,8 +18,7 @@ import './filmStrip.css';
 import type { Boundaries, Size } from './geometry';
 import * as React from 'react';
 import { useMeasure, upperBound } from '@web/uiUtils';
-import type { PageEntry } from '@isomorphic/trace/entries';
-import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
+import type { ActionEntry, PageEntry } from '@isomorphic/trace/entries';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { useTraceModel } from './traceModelContext';
@@ -27,7 +26,7 @@ import { useTraceModel } from './traceModelContext';
 export type FilmStripPreviewPoint = {
   x: number;
   clientY: number;
-  action?: ActionTraceEventInContext;
+  action?: ActionEntry;
   sdkLanguage: Language;
 };
 

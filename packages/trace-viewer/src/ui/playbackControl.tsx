@@ -16,7 +16,7 @@
 
 import { ToolbarButton } from '@web/components/toolbarButton';
 import * as React from 'react';
-import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
+import type { ActionEntry } from '@isomorphic/trace/entries';
 import type { Boundaries } from './geometry';
 import './playbackControl.css';
 
@@ -43,9 +43,9 @@ export type PlaybackState = {
 };
 
 export function usePlayback(
-  actions: ActionTraceEventInContext[],
-  selectedAction: ActionTraceEventInContext | undefined,
-  onActionSelected: (action: ActionTraceEventInContext) => void,
+  actions: ActionEntry[],
+  selectedAction: ActionEntry | undefined,
+  onActionSelected: (action: ActionEntry) => void,
   timeWindow: Boundaries | undefined,
   boundaries: Boundaries,
 ): PlaybackState {

@@ -20,7 +20,6 @@ import './networkTab.css';
 import { NetworkResourceDetails, WebSocketResourceDetails } from './networkResourceDetails';
 import { bytesToString, msToString } from '@isomorphic/formatUtils';
 import { PlaceholderPanel } from './placeholderPanel';
-import { context } from '@isomorphic/trace/traceModel';
 import type { ResourceEntry, TraceModel } from '@isomorphic/trace/traceModel';
 import { GridView, type RenderedGridCell } from '@web/components/gridView';
 import { SplitView } from '@web/components/splitView';
@@ -221,10 +220,8 @@ function resourceContextId(model: TraceModel | undefined, resource: ResourceEntr
     return '';
   if (resource.pageref)
     return model.pagerefToTitle.get(resource.pageref) || '';
-  if (resource._apiRequest) {
-    const contextEntry = context(resource);
-    return (contextEntry && model.contextToTitle.get(contextEntry)) || '';
-  }
+  if (resource._apiRequest)
+    return resource.contextTitle;
   return '';
 }
 

@@ -27,15 +27,15 @@ export class SnapshotStorage {
     renderers: SnapshotRenderer[],
   }>();
   private _cache = new LRUCache<SnapshotRenderer, string>(100_000_000);  // 100MB per each trace
-  private _contextToResources = new Map<string, ResourceSnapshot[]>();
+  private _resources: ResourceSnapshot[] = [];
   private _resourceUrlsWithOverrides = new Set<string>();
 
-  addResource(contextId: string, resource: ResourceSnapshot): void {
+  addResource(resource: ResourceSnapshot): void {
     resource.request.url = rewriteURLForCustomProtocol(resource.request.url);
-    this._ensureResourcesForContext(contextId).push(resource);
+    this._resources.push(resource);
   }
 
-  addFrameSnapshot(contextId: string, snapshot: FrameSnapshot, screencastFrames: PageEntry['screencastFrames']) {
+  addFrameSnapshot(snapshot: FrameSnapshot, screencastFrames: PageEntry['screencastFrames']) {
     for (const override of snapshot.resourceOverrides)
       override.url = rewriteURLForCustomProtocol(override.url);
     let frameSnapshots = this._frameSnapshots.get(snapshot.frameId);
@@ -49,8 +49,7 @@ export class SnapshotStorage {
         this._frameSnapshots.set(snapshot.pageId, frameSnapshots);
     }
     frameSnapshots.raw.push(snapshot);
-    const resources = this._ensureResourcesForContext(contextId);
-    const renderer = new SnapshotRenderer(this._cache, resources, frameSnapshots.raw, screencastFrames, frameSnapshots.raw.length - 1);
+    const renderer = new SnapshotRenderer(this._cache, this._resources, frameSnapshots.raw, screencastFrames, frameSnapshots.raw.length - 1);
     frameSnapshots.renderers.push(renderer);
     return renderer;
   }
@@ -66,8 +65,7 @@ export class SnapshotStorage {
 
   finalize() {
     // Resources are not necessarily sorted in the trace file, so sort them now.
-    for (const resources of this._contextToResources.values())
-      resources.sort((a, b) => (a._monotonicTime || 0) - (b._monotonicTime || 0));
+    this._resources.sort((a, b) => (a._monotonicTime || 0) - (b._monotonicTime || 0));
     // Resources that have overrides should not be cached, otherwise we might get stale content
     // while serving snapshots with different override values.
     for (const frameSnapshots of this._frameSnapshots.values()) {
@@ -80,14 +78,5 @@ export class SnapshotStorage {
 
   hasResourceOverride(url: string) {
     return this._resourceUrlsWithOverrides.has(url);
-  }
-
-  private _ensureResourcesForContext(contextId: string): ResourceSnapshot[] {
-    let resources = this._contextToResources.get(contextId);
-    if (!resources) {
-      resources = [];
-      this._contextToResources.set(contextId, resources);
-    }
-    return resources;
   }
 }

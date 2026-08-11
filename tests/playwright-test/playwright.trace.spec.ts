@@ -214,19 +214,14 @@ test('should not mixup network files between contexts', async ({ runInlineTest, 
     prefix: name.slice(0, -'.trace'.length),
     contextOptions: JSON.parse(content.toString().split('\n')[0]),
   })).filter(entry => entry.contextOptions.origin === 'library');
-  const traceEntriesByContextId = new Map<string, typeof traceEntries>();
-  for (const entry of traceEntries) {
-    const entries = traceEntriesByContextId.get(entry.contextOptions.contextId) || [];
-    entries.push(entry);
-    traceEntriesByContextId.set(entry.contextOptions.contextId, entries);
-  }
-  const contextTraces = [...traceEntriesByContextId.values()];
-  const browserTraces = contextTraces.filter(entries => entries[0].contextOptions.browserName);
-  const apiTraces = contextTraces.filter(entries => !entries[0].contextOptions.browserName);
-  expect(browserTraces).toHaveLength(3);
-  expect(apiTraces).toHaveLength(3);
-  for (const entries of browserTraces) {
-    const network = entries.map(entry => resources.get(entry.prefix + '.network')!.toString()).join('\n');
+  // Each of the 3 browser contexts and 3 api request contexts produces
+  // a trace chunk per test phase it was recording during.
+  const browserTraces = traceEntries.filter(entry => entry.contextOptions.browserName);
+  const apiTraces = traceEntries.filter(entry => !entry.contextOptions.browserName);
+  expect(browserTraces.length).toBeGreaterThanOrEqual(3);
+  expect(apiTraces.length).toBeGreaterThanOrEqual(3);
+  for (const entry of browserTraces) {
+    const network = resources.get(entry.prefix + '.network')!.toString();
     expect(network).not.toContain('?context=');
   }
   const apiURLs = [
@@ -234,11 +229,13 @@ test('should not mixup network files between contexts', async ({ runInlineTest, 
     server.PREFIX + '/simple.json?context=2',
     server.PREFIX + '/simple.json?context=3',
   ];
-  const apiURLsByTrace = apiTraces.map(entries => {
-    const network = entries.map(entry => resources.get(entry.prefix + '.network')!.toString()).join('\n');
+  // Api request context network files are chunk-specific, so each of the requests
+  // must show up in exactly one network file.
+  const apiURLsByTrace = apiTraces.map(entry => {
+    const network = resources.get(entry.prefix + '.network')!.toString();
     return apiURLs.filter(url => network.includes(url));
   });
-  expect(apiURLsByTrace.map(urls => urls.length)).toEqual([1, 1, 1]);
+  expect(apiURLsByTrace.every(urls => urls.length <= 1)).toBe(true);
   expect(apiURLsByTrace.flat().sort()).toEqual(apiURLs);
   const trace = await parseTrace(tracePath);
   expect(trace.model.resources.filter(resource => resource._apiRequest).map(resource => resource.request.url).sort()).toEqual(apiURLs);

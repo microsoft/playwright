@@ -122,7 +122,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       monotonicTime: 0,
       sdkLanguage: this._sdkLanguage(),
       testIdAttributeName,
-      contextId: context.guid,
     };
     if (context instanceof BrowserContext) {
       this._snapshotter = new Snapshotter(context, this);

@@ -29,6 +29,7 @@ export type ContextEntry = {
   platform?: string;
   playwrightVersion?: string;
   wallTime: number;
+  monotonicTime: number;
   sdkLanguage?: Language;
   testIdAttributeName?: string;
   title?: string;
@@ -40,7 +41,6 @@ export type ContextEntry = {
   stdio: trace.StdioTraceEvent[];
   errors: trace.ErrorTraceEvent[];
   hasSource: boolean;
-  contextId: string;
   testTimeout?: number;
   annotations?: trace.TraceEventAnnotation[];
 };

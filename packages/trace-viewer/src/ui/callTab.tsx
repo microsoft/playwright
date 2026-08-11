@@ -23,11 +23,11 @@ import { CopyToClipboard } from './copyToClipboard';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { PlaceholderPanel } from './placeholderPanel';
-import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
+import type { ActionEntry } from '@isomorphic/trace/entries';
 import { renderTitleForCall } from './actionList';
 
 export const CallTab: React.FunctionComponent<{
-  action: ActionTraceEventInContext | undefined,
+  action: ActionEntry | undefined,
   startTimeOffset: number,
   sdkLanguage: Language | undefined,
 }> = ({ action, startTimeOffset, sdkLanguage }) => {
@@ -73,7 +73,7 @@ type Property = {
   text: string;
 };
 
-function renderDuration(action: ActionTraceEventInContext): string {
+function renderDuration(action: ActionEntry): string {
   if (action.endTime)
     return msToString(action.endTime - action.startTime);
   else if (!!action.error)

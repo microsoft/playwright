@@ -92,7 +92,6 @@ export type ContextCreatedTraceEvent = {
   options: BrowserContextEventOptions,
   sdkLanguage?: Language,
   testIdAttributeName?: string,
-  contextId?: string,
   testTimeout?: number,
   annotations?: TraceEventAnnotation[],
 };

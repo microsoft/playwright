@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
+import type { ActionEntry } from '@isomorphic/trace/entries';
 import * as React from 'react';
 import { ListView } from '@web/components/listView';
 import { PlaceholderPanel } from './placeholderPanel';
 import { msToString } from '@isomorphic/formatUtils';
+import { useTraceModel } from './traceModelContext';
 import './logTab.css';
 
 const LogList = ListView<{ message: string, time: string }>;
 
 export const LogTab: React.FunctionComponent<{
-  action: ActionTraceEventInContext | undefined,
+  action: ActionEntry | undefined,
   isLive: boolean | undefined,
 }> = ({ action, isLive }) => {
+  const model = useTraceModel();
   const entries = React.useMemo(() => {
     if (!action || !action.log.length)
       return [];
     const log = action.log;
-    const wallTimeOffset = action.context.wallTime - action.context.startTime;
+    const wallTimeOffset = model ? (model.wallTime ?? 0) - model.startTime : 0;
     const entries: { message: string, time: string }[] = [];
     for (let i = 0; i < log.length; ++i) {
       let time = '';
@@ -52,7 +54,7 @@ export const LogTab: React.FunctionComponent<{
       });
     }
     return entries;
-  }, [action, isLive]);
+  }, [model, action, isLive]);
   if (!entries.length)
     return <PlaceholderPanel text='No log entries' />;
 
