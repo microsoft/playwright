@@ -280,7 +280,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           RUNNER: ${{ needs.triage.outputs.runner }}
-          REVIEW_OVERRIDE: skn0tt
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -289,12 +288,11 @@ jobs:
           git checkout -b "$branch"
           git am handoff/fix.patch
           git push origin "$branch"
-          suggested=$(git log -1 --format='%(trailers:key=Suggested-reviewer,valueonly)' | head -n1 | tr -d '[:space:]@')
-          reviewer="${REVIEW_OVERRIDE:-$suggested}"
+          reviewer=$(git log -1 --format='%(trailers:key=Suggested-reviewer,valueonly)' | head -n1 | tr -d '[:space:]@')
           args=(--repo "${{ github.repository }}" --base main --head "$branch" --fill)
           if [ -n "$reviewer" ]; then
             args+=(--reviewer "$reviewer")
           else
-            echo "::warning::No reviewer (empty override and no Suggested-reviewer trailer)."
+            echo "::warning::No Suggested-reviewer trailer on the fix commit."
           fi
           gh pr create "${args[@]}"
