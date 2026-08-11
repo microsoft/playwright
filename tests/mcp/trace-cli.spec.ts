@@ -93,6 +93,18 @@ test('trace requests shows requests with ordinals', async ({ runTraceCli }) => {
   expect(stdout).toMatch(/\d+\./);
 });
 
+test('trace requests shows start times and aborted request durations', async ({ runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['requests']);
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain('Start');
+  // Every request row carries a start timestamp in the `trace actions` Time format.
+  expect(stdout).toMatch(/\d+\.\s+\d+:\d{2}\.\d{3}\s/);
+  // The aborted request has a recorded duration rather than '-'.
+  const abortedRow = stdout.split('\n').find(line => line.includes('aborted'))!;
+  expect(abortedRow).toContain('blocked');
+  expect(abortedRow).toMatch(/\s\d+(\.\d+)?m?s\s/);
+});
+
 test('trace requests --method filters', async ({ runTraceCli }) => {
   const { stdout, exitCode } = await runTraceCli(['requests', '--method', 'GET']);
   expect(exitCode).toBe(0);
@@ -105,6 +117,7 @@ test('trace request shows details', async ({ runTraceCli }) => {
   expect(exitCode).toBe(0);
   expect(stdout).toContain('General');
   expect(stdout).toContain('status:');
+  expect(stdout).toMatch(/start:\s+\d+:\d{2}\.\d{3}/);
   expect(stdout).toContain('Request headers');
   expect(stdout).toContain('Response headers');
 });

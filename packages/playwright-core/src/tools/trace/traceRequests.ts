@@ -18,7 +18,7 @@
 
 import path from 'path';
 import { msToString } from '@isomorphic/formatUtils';
-import { loadTrace } from './traceUtils';
+import { loadTrace, formatTimestamp } from './traceUtils';
 
 export async function traceRequests(options: { grep?: string, method?: string, status?: string, failed?: boolean }) {
   const trace = await loadTrace();
@@ -44,8 +44,8 @@ export async function traceRequests(options: { grep?: string, method?: string, s
     console.log('  No network requests');
     return;
   }
-  console.log(`  ${'#'.padStart(4)} ${'Method'.padEnd(8)} ${'Status'.padEnd(8)} ${'Name'.padEnd(45)} ${'Duration'.padStart(10)} ${'Size'.padStart(8)} ${'Route'.padEnd(10)}`);
-  console.log(`  ${'─'.repeat(4)} ${'─'.repeat(8)} ${'─'.repeat(8)} ${'─'.repeat(45)} ${'─'.repeat(10)} ${'─'.repeat(8)} ${'─'.repeat(10)}`);
+  console.log(`  ${'#'.padStart(4)} ${'Start'.padEnd(9)} ${'Method'.padEnd(8)} ${'Status'.padEnd(8)} ${'Name'.padEnd(45)} ${'Duration'.padStart(10)} ${'Size'.padStart(8)} ${'Route'.padEnd(10)}`);
+  console.log(`  ${'─'.repeat(4)} ${'─'.repeat(9)} ${'─'.repeat(8)} ${'─'.repeat(8)} ${'─'.repeat(45)} ${'─'.repeat(10)} ${'─'.repeat(8)} ${'─'.repeat(10)}`);
 
   for (const { resource: r, ordinal } of indexed) {
     let name: string;
@@ -65,7 +65,8 @@ export async function traceRequests(options: { grep?: string, method?: string, s
     const status = r.response.status > 0 ? String(r.response.status) : 'ERR';
     const size = r.response._transferSize! > 0 ? r.response._transferSize! : r.response.bodySize;
     const route = formatRouteStatus(r);
-    console.log(`  ${(ordinal + '.').padStart(4)} ${r.request.method.padEnd(8)} ${status.padEnd(8)} ${name.padEnd(45)} ${msToString(r.time).padStart(10)} ${bytesToString(size).padStart(8)} ${route.padEnd(10)}`);
+    const start = r._monotonicTime ? formatTimestamp(r._monotonicTime, model.startTime) : '-';
+    console.log(`  ${(ordinal + '.').padStart(4)} ${start.padEnd(9)} ${r.request.method.padEnd(8)} ${status.padEnd(8)} ${name.padEnd(45)} ${msToString(r.time).padStart(10)} ${bytesToString(size).padStart(8)} ${route.padEnd(10)}`);
   }
 }
 
@@ -94,6 +95,8 @@ export async function traceRequest(requestId: string) {
   // General
   console.log('  General');
   console.log(`    status:    ${status}`);
+  if (r._monotonicTime)
+    console.log(`    start:     ${formatTimestamp(r._monotonicTime, model.startTime)}`);
   console.log(`    duration:  ${msToString(r.time)}`);
   console.log(`    size:      ${bytesToString(size)}`);
   if (r.response.content.mimeType)

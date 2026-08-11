@@ -410,6 +410,8 @@ export class HarTracer {
 
     if (request._failureText !== null)
       harEntry.response._failureText = request._failureText;
+    if (harEntry._monotonicTime && harEntry.time === -1)
+      harEntry.time = monotonicTime() - harEntry._monotonicTime;
     this._recordRequestOverrides(harEntry, request);
     if (this._started)
       this._delegate.onEntryFinished(harEntry);

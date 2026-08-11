@@ -108,6 +108,10 @@ export const test = baseTest
         // Fetch
         await page.evaluate(() => fetch('/feedback', { method: 'POST', body: 'What a great product!' }).then(res => res.text()));
 
+        // Aborted fetch
+        await page.route('**/blocked', route => route.abort());
+        await page.evaluate(() => fetch('/blocked').catch(() => {}));
+
         // Navigate to another page
         await page.locator('a').click();
 
