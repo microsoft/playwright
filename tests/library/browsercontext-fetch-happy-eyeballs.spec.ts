@@ -15,7 +15,11 @@
  */
 
 import type { LookupAddress } from 'dns';
+import https from 'https';
+import net from 'net';
+
 import { contextTest as it, expect } from '../config/browserTest';
+import { TestServer } from '../config/testserver';
 
 it.skip(({ mode }) => mode !== 'default');
 
@@ -66,6 +70,39 @@ it('https post should work with ignoreHTTPSErrors option', async ({ context, htt
   expect(interceptedHostnameLookup).toBe('localhost');
 });
 
+
+it('should fall back to another address when tls handshake stalls', async ({ context }) => {
+  it.skip(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
+  // https://github.com/microsoft/playwright/issues/42193
+  const httpsServer = https.createServer(await TestServer.certOptions(), (req, res) => res.end('Hello'));
+  const port = await new Promise<number>(resolve => httpsServer.listen(0, '127.0.0.1', () => resolve((httpsServer.address() as net.AddressInfo).port)));
+  const stalledSockets = new Set<net.Socket>();
+  const stallServer = net.createServer(socket => {
+    stalledSockets.add(socket);
+    socket.on('close', () => stalledSockets.delete(socket));
+  });
+  await new Promise<void>((resolve, reject) => {
+    stallServer.on('error', reject);
+    stallServer.listen(port, '::1', resolve);
+  });
+  try {
+    const response = await context.request.get(`https://localhost:${port}/`, {
+      ignoreHTTPSErrors: true,
+      timeout: 5000,
+      __testHookLookup: (): LookupAddress[] => [
+        { address: '::1', family: 6 },
+        { address: '127.0.0.1', family: 4 },
+      ],
+    } as any);
+    expect(response.status()).toBe(200);
+    expect(await response.text()).toBe('Hello');
+  } finally {
+    for (const socket of stalledSockets)
+      socket.destroy();
+    await new Promise(resolve => stallServer.close(resolve));
+    await new Promise(resolve => httpsServer.close(resolve));
+  }
+});
 
 it('should work with ip6 and port as the host', async ({ request, server }) => {
   it.skip(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');

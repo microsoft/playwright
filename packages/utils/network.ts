@@ -53,6 +53,10 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   };
   if (params.rejectUnauthorized !== undefined)
     options.rejectUnauthorized = params.rejectUnauthorized;
+  // Bound each connection attempt, including the tls handshake, so that
+  // a single stalled address cannot hang the request without a socket.
+  if (params.socketTimeout !== undefined)
+    options.timeout = params.socketTimeout;
 
   const proxyURL = getProxyForUrl(params.url);
   if (proxyURL) {

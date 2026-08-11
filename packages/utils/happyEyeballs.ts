@@ -33,6 +33,7 @@ const connectionAttemptDelayMs = 300;
 
 const kDNSLookupAt = Symbol('kDNSLookupAt');
 const kTCPConnectionAt = Symbol('kTCPConnectionAt');
+const kTLSHandshakeAt = Symbol('kTLSHandshakeAt');
 
 class HttpHappyEyeballsAgent extends http.Agent {
   override createConnection(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket: stream.Duplex) => void): stream.Duplex | undefined {
@@ -86,10 +87,8 @@ export async function createTLSSocket(options: tls.ConnectionOptions): Promise<t
       createConnectionAsync(options, (err, socket) => {
         if (err)
           reject(err);
-        if (socket) {
-          socket.on('secureConnect', () => resolve(socket));
-          socket.on('error', error => reject(error));
-        }
+        if (socket)
+          resolve(socket);
       }, true).catch(err => reject(err));
     }
   });
@@ -142,17 +141,26 @@ export async function createConnectionAsync(
         host: address });
 
     (socket as any)[kDNSLookupAt] = dnsLookupAt;
+    // tls.connect() ignores the timeout option, so set it on the socket directly.
+    if (options.timeout !== undefined)
+      socket.setTimeout(options.timeout);
 
-    // Each socket may fire only one of 'connect', 'timeout' or 'error' events.
-    // None of these events are fired after socket.destroy() is called.
     socket.on('connect', () => {
       (socket as any)[kTCPConnectionAt] = monotonicTime();
-
+    });
+    // For tls, wait for the handshake instead of committing upon tcp connection.
+    // Otherwise, a route where tcp connects but tls stalls would starve
+    // working alternatives. A tls socket may fire 'error' or 'timeout' after
+    // 'connect', which counts as a failed attempt for this address.
+    socket.on(useTLS ? 'secureConnect' : 'connect', () => {
+      if (!sockets.delete(socket))
+        return;
+      if (useTLS)
+        (socket as any)[kTLSHandshakeAt] = monotonicTime();
       connected.resolve();
       oncreate?.(null, socket);
       // TODO: Cache the result?
       // Close other outstanding sockets.
-      sockets.delete(socket);
       for (const s of sockets)
         s.destroy();
       sockets.clear();
@@ -213,5 +221,6 @@ export function timingForSocket(socket: net.Socket | tls.TLSSocket) {
   return {
     dnsLookupAt: (socket as any)[kDNSLookupAt] as number | undefined,
     tcpConnectionAt: (socket as any)[kTCPConnectionAt] as number | undefined,
+    tlsHandshakeAt: (socket as any)[kTLSHandshakeAt] as number | undefined,
   };
 }

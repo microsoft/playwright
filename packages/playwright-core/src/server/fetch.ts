@@ -617,6 +617,10 @@ export abstract class APIRequestContext extends SdkObject {
         const happyEyeBallsTimings = timingForSocket(socket);
         dnsLookupAt = happyEyeBallsTimings.dnsLookupAt;
         tcpConnectionAt = happyEyeBallsTimings.tcpConnectionAt;
+        // happy eyeballs hand off tls sockets after the handshake, so 'secureConnect' will not fire
+        tlsHandshakeAt = happyEyeBallsTimings.tlsHandshakeAt;
+        if (tlsHandshakeAt !== undefined)
+          captureSecurityDetails(socket);
 
         // non-happy-eyeballs sockets
         listeners.push(
