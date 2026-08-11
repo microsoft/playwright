@@ -226,13 +226,20 @@ class SocksConnection {
     }
   }
 
-  socketConnected(host: string, port: number) {
+  socketConnected(_host: string, _port: number) {
+    // Per RFC 1928 §6, the BND.ADDR/BND.PORT fields in the CONNECT reply are the bound address of
+    // the proxy's outgoing connection and are ignored by the client (Chromium does not use them).
+    // Encoding the socket's real local address here is both an information leak and a crash source:
+    // ipToSocksAddress() throws for any value that is not a clean IPv4/IPv6 address (e.g. what
+    // socket.localAddress may return on some platforms/Node versions), which drops the whole SOCKS
+    // connection and produces net::ERR_CONNECTION_CLOSED in the browser. Always send the unspecified
+    // address instead.
     this._writeBytes(Buffer.from([
       0x05,
       SocksReply.Succeeded,
       0x00, // RSV
-      ...ipToSocksAddress(host), // ATYP, Address
-      port >> 8, port & 0xFF // Port
+      ...ipToSocksAddress('0.0.0.0'), // ATYP, Address
+      0, 0 // Port
     ]));
     this._socket.on('data', data => this._client.onSocketData({ uid: this._uid, data }));
   }
