@@ -93,8 +93,9 @@ it('should have the correct responseBodySize for chunked request', async ({ page
   const sizes = await response.request().sizes();
   // The actual file size is 5100 bytes. The extra 75 bytes are coming from the chunked encoding headers and end bytes.
   if (browserName === 'webkit')
-    // It should be 5175 there. On the actual network response, the body has a size of 5175.
-    expect(sizes.responseBodySize).toBe(5173);
+    // WebKit on macOS reports 5173 with the legacy CFNetwork loader (builds <= 2346) and the
+    // correct 5175 with NWLoader. TODO: expect 5175 once the NWLoader-based build ships.
+    expect([5173, 5175]).toContain(sizes.responseBodySize);
   else
     expect(sizes.responseBodySize).toBe(5175);
 });
