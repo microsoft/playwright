@@ -513,6 +513,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._browser?._browserType._playwright.selectors._contextsForSelectors.delete(this);
     this._disposeHarRouters();
     this.tracing._resetStackCounter();
+    this.request.tracing._resetStackCounter();
     this.emit(Events.BrowserContext.Close, this);
   }
 

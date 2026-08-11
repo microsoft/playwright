@@ -761,6 +761,7 @@ class ArtifactsRecorder {
 
   async didCreateBrowserContext(context: BrowserContextImpl) {
     await this._startTraceChunkOnContextCreation(context, context.tracing);
+    await this._startTraceChunkOnContextCreation(context.request, context.request.tracing);
   }
 
   async willCloseBrowserContext(context: BrowserContextImpl) {
@@ -812,6 +813,7 @@ class ArtifactsRecorder {
 
     // Collect traces/screenshots for remaining contexts.
     await Promise.all(leftoverContexts.map(async context => {
+      await this._stopTracing(context.request, context.request.tracing);
       await this._stopTracing(context, context.tracing);
     }).concat(leftoverApiRequests.map(async context => {
       await this._stopTracing(context, context.tracing);
