@@ -100,7 +100,6 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   private _globalSetup: { cleanup: () => Promise<any> } | undefined;
   private _plugins: TestRunnerPluginRegistration[] | undefined;
   private _watchTestDirs = false;
-  private _populateDependenciesOnList = false;
   private _startingEnv: NodeJS.ProcessEnv = {};
   private _lastLoadedConfig: FullConfigInternal | undefined;
 
@@ -117,11 +116,9 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
 
   async initialize(params: {
     watchTestDirs?: boolean;
-    populateDependenciesOnList?: boolean;
   }) {
     setPlaywrightTestProcessEnv();
     this._watchTestDirs = !!params.watchTestDirs;
-    this._populateDependenciesOnList = !!params.populateDependenciesOnList;
     this._startingEnv = { ...process.env };
   }
 
@@ -195,7 +192,6 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     if (!config)
       return { status: 'failed' };
     const status = await runTasks(new TestRun(config, reporter), [
-      ...createPluginSetupTasks(config),
       createClearCacheTask(config),
     ]);
     return { status };
@@ -251,7 +247,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     };
 
     const status = await runTasks(new TestRun(config, reporter, options), [
-      createLoadTask('out-of-process', { failOnLoadErrors: false, filterOnly: false, populateDependencies: this._populateDependenciesOnList }),
+      createLoadTask('out-of-process', { failOnLoadErrors: false, filterOnly: false }),
       createReportBeginTask(),
     ]);
     return { config, status };
@@ -360,7 +356,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       return { errors: errorReporter.errors(), testFiles: [] };
     const status = await runTasks(new TestRun(config, reporter), [
       ...createPluginSetupTasks(config),
-      createLoadTask('out-of-process', { failOnLoadErrors: true, filterOnly: false, populateDependencies: true }),
+      createLoadTask('out-of-process', { failOnLoadErrors: true, filterOnly: false }),
     ]);
     if (status !== 'passed')
       return { errors: errorReporter.errors(), testFiles: [] };
