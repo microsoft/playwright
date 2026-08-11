@@ -130,7 +130,7 @@ test('should collect action screenshots', async ({ context, page, server }, test
   const screenshots = events.filter(e => e.type === 'screenshot' && e.callId === clickCallId);
   expect(screenshots.map(e => e.phase)).toEqual(['before', 'action', 'after']);
   for (const screenshot of screenshots) {
-    expect(screenshot.file).toMatch(/^screenshots\/[0-9a-f]{40}\.png$/);
+    expect(screenshot.file).toBe(`screenshots/${clickCallId}-${screenshot.phase}.png`);
     const buffer = resources.get(screenshot.file);
     expect(PNG.sync.read(buffer).width).toBeGreaterThan(0);
   }
@@ -148,7 +148,7 @@ test('should collect aria snapshots', async ({ context, page, server }, testInfo
   expect(ariaSnapshots.map(e => e.phase)).toEqual(['before', 'action', 'after']);
   const hasButton = nodes => nodes.some(node => typeof node === 'object' && (node.role === 'button' && node.name === 'Click target' || hasButton(node.children ?? [])));
   for (const ariaSnapshot of ariaSnapshots) {
-    expect(ariaSnapshot.file).toMatch(/^aria\/[0-9a-f]{40}\.json$/);
+    expect(ariaSnapshot.file).toBe(`aria/${clickCallId}-${ariaSnapshot.phase}.json`);
     const snapshot = JSON.parse(resources.get(ariaSnapshot.file).toString());
     expect(hasButton(snapshot)).toBe(true);
   }

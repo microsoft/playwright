@@ -23,7 +23,7 @@ import { assert } from '@isomorphic/assert';
 import { monotonicTime } from '@isomorphic/time';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper  } from '@utils/eventsHelper';
-import { calculateSha1, createGuid  } from '@utils/crypto';
+import { createGuid } from '@utils/crypto';
 import { removeFolders  } from '@utils/fileUtils';
 import { SerializedFS  } from '@utils/serializedFS';
 import { getPlaywrightVersion } from '../../userAgent';
@@ -74,8 +74,11 @@ type RecordingState = {
   traceFile: string,
   tracesDir: string,
   chunkOrdinal: number,
-  networkFiles: Set<string>,
-  traceFiles: Set<string>,
+  // Blobs referenced by the network stream. The network file is preserved between
+  // chunks (for browser contexts), so these are included in every chunk's archive.
+  crossChunkFiles: Set<string>,
+  // Blobs referenced by the current chunk's trace stream, reset on every stopChunk.
+  chunkFiles: Set<string>,
   recording: boolean;
   callsInProgress: Set<string>;
   groupStack: string[];
@@ -168,8 +171,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       traceFile: path.join(tracesDir, traceName + '.trace'),
       networkFile: path.join(tracesDir, traceName + '.network'),
       chunkOrdinal: 0,
-      traceFiles: new Set(),
-      networkFiles: new Set(),
+      chunkFiles: new Set(),
+      crossChunkFiles: new Set(),
       recording: false,
       callsInProgress: new Set(),
       groupStack: [],
@@ -208,8 +211,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._changeTraceName(this._state, options.name, preserveNetworkResources);
     else
       this._allocateNewTraceFile(this._state);
-    if (!preserveNetworkResources)
+    if (!preserveNetworkResources) {
+      this._state.crossChunkFiles = new Set();
       this._fs.writeFile(this._state.networkFile, '');
+    }
 
     this._fs.mkdir(path.dirname(this._state.traceFile));
     const event: trace.TraceEvent = {
@@ -418,11 +423,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const entries: NameValue[] = [];
     entries.push({ name: 'trace.trace', value: this._state.traceFile });
     entries.push({ name: 'trace.network', value: newNetworkFile });
-    for (const file of new Set([...this._state.traceFiles, ...this._state.networkFiles]))
+    for (const file of new Set([...this._state.chunkFiles, ...this._state.crossChunkFiles]))
       entries.push({ name: file, value: path.join(this._state.tracesDir, file) });
 
-    // Only reset trace files, network resources are preserved between chunks.
-    this._state.traceFiles = new Set();
+    this._state.chunkFiles = new Set();
 
     if (params.mode === 'discard') {
       this._isStopping = false;
@@ -510,8 +514,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const buffer = await page.screenshot(progress, { type: 'png' }).catch(() => undefined);
     if (!buffer || !this._state?.recording)
       return;
-    const file = `screenshots/${calculateSha1(buffer)}.png`;
-    this._state.traceFiles.add(file);
+    const file = `screenshots/${progress.metadata.id}-${phase}.png`;
+    this._state.chunkFiles.add(file);
     this._appendResource(file, buffer);
     this._appendTraceEvent({ type: 'screenshot', callId: progress.metadata.id, phase, file });
   }
@@ -521,8 +525,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (!snapshot || !this._state?.recording)
       return;
     const buffer = Buffer.from(JSON.stringify(snapshot), 'utf8');
-    const file = `aria/${calculateSha1(buffer)}.json`;
-    this._state.traceFiles.add(file);
+    const file = `aria/${progress.metadata.id}-${phase}.json`;
+    this._state.chunkFiles.add(file);
     this._appendResource(file, buffer);
     this._appendTraceEvent({ type: 'aria-snapshot', callId: progress.metadata.id, phase, file });
   }
@@ -609,14 +613,14 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   onContentBlob(shortName: string, buffer: Buffer) {
     const file = `resources/${shortName}`;
-    this._state!.networkFiles.add(file);
+    this._state!.crossChunkFiles.add(file);
     this._appendResource(file, buffer);
     return file;
   }
 
   onContentBlobAppend(shortName: string, text: string) {
     const file = `resources/${shortName}`;
-    this._state!.networkFiles.add(file);
+    this._state!.crossChunkFiles.add(file);
     if (!this._allResources.has(file))
       this._allResources.add(file);
     this._fs.appendFile(path.join(this._state!.tracesDir, file), text, this._state!.options.live /* flush */);
@@ -625,7 +629,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   onSnapshotterBlob(blob: SnapshotterBlob): string {
     const file = `resources/${blob.sha1}`;
-    this._state!.traceFiles.add(file);
+    this._state!.chunkFiles.add(file);
     this._appendResource(file, blob.buffer);
     return file;
   }
@@ -739,7 +743,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
         frameSwapWallTime: params.frameSwapWallTime,
       };
       // Make sure to write the screencast frame before adding a reference to it.
-      this._state!.traceFiles.add(file);
+      this._state!.chunkFiles.add(file);
       this._appendResource(file, params.buffer);
       this._appendTraceEvent(event);
     };
