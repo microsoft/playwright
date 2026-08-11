@@ -34,7 +34,7 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { WSServer } from '@utils/wsServer';
 import { registry } from '../../server/registry/index';
 
-import { findPlaywrightExtensionProfile, playwrightExtensionId } from '../utils/extension';
+import { playwrightExtensionId } from '../utils/extension';
 import { logUnhandledError } from './log';
 import { ExtensionProtocolV2 } from './cdpRelayV2';
 import * as protocol from './protocol';
@@ -61,7 +61,8 @@ export class CDPRelayServer {
   private _wsHost!: string;
   private _browserChannel: string;
   private _executablePath?: string;
-  private _userDataDir?: string;
+  private _customUserDataDir?: string;
+  private _profileDirectory?: string;
   private _cdpPath: string;
   private _extensionPath: string;
   private _cdpConnection: WebSocket | null = null;
@@ -70,10 +71,11 @@ export class CDPRelayServer {
   private _handler: ExtensionProtocolV2;
   private _extensionConnectionPromise = new ManualPromise<void>();
 
-  constructor(browserChannel: string, executablePath?: string, userDataDir?: string) {
+  constructor(browserChannel: string, executablePath?: string, customUserDataDir?: string, profileDirectory?: string) {
     this._browserChannel = browserChannel;
     this._executablePath = executablePath;
-    this._userDataDir = userDataDir;
+    this._customUserDataDir = customUserDataDir;
+    this._profileDirectory = profileDirectory;
     this._protocolVersion = parseInt(process.env.PLAYWRIGHT_EXTENSION_PROTOCOL ?? protocol.VERSION.toString(), 10);
 
     const sendCommand = (method: string, params: any): Promise<any> => {
@@ -156,13 +158,11 @@ export class CDPRelayServer {
     }
 
     const args: string[] = [];
-    const testUserDataDir = process.env.PWTEST_EXTENSION_USER_DATA_DIR;
-    if (testUserDataDir)
-      args.push(`--user-data-dir=${testUserDataDir}`);
-    const userDataDir = testUserDataDir ?? this._userDataDir;
-    const profileDirectory = userDataDir ? await findPlaywrightExtensionProfile(userDataDir) : undefined;
-    if (profileDirectory)
-      args.push(`--profile-directory=${profileDirectory}`);
+    // The default profile dir is not passed explicitly, the browser resolves it on its own.
+    if (this._customUserDataDir)
+      args.push(`--user-data-dir=${this._customUserDataDir}`);
+    if (this._profileDirectory)
+      args.push(`--profile-directory=${this._profileDirectory}`);
     if (os.platform() === 'linux' && channel === 'chromium')
       args.push('--no-sandbox');
     args.push(href);
