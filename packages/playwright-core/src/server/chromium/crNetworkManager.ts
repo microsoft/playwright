@@ -557,12 +557,6 @@ export class CRNetworkManager {
   }
 }
 
-// Sec-Fetch-Dest values of static subresources that are safe to fetch again.
-const kRefetchSafeDestinations = new Set([
-  'audio', 'audioworklet', 'font', 'image', 'manifest', 'paintworklet', 'script',
-  'serviceworker', 'sharedworker', 'style', 'track', 'video', 'worker', 'xslt',
-]);
-
 // Resource types of static subresources that are safe to fetch again. Unlike
 // Sec-Fetch-Dest, resource type is reported for plain http origins as well.
 const kRefetchSafeResourceTypes = new Set<network.ResourceType>([
@@ -617,10 +611,8 @@ class InterceptableRequest {
         return Buffer.from('');
       if (!kRefetchSafeResourceTypes.has(request.resourceType())) {
         const rawHeaders = await request.internalRawRequestHeaders();
-        const rawHeaderValue = (name: string) => rawHeaders.find(h => h.name.toLowerCase() === name)?.value;
-        const isPrefetch = !!rawHeaderValue('sec-purpose')?.startsWith('prefetch');
-        const secFetchDest = rawHeaderValue('sec-fetch-dest');
-        if (!isPrefetch && (!secFetchDest || !kRefetchSafeDestinations.has(secFetchDest)))
+        const isPrefetch = rawHeaders.some(h => h.name.toLowerCase() === 'sec-purpose' && h.value.startsWith('prefetch'));
+        if (!isPrefetch)
           return Buffer.from('');
       }
 
