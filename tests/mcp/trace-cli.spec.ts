@@ -161,6 +161,14 @@ test('trace console --errors-only', async ({ runTraceCli }) => {
   expect(stdout).not.toContain('info message');
 });
 
+test('trace console --grep filters by message text', async ({ runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['console', '--grep', 'warning']);
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain('warning message');
+  expect(stdout).not.toContain('info message');
+  expect(stdout).not.toContain('error message');
+});
+
 test('trace errors', async ({ runTraceCli }) => {
   const { stdout, exitCode } = await runTraceCli(['errors']);
   expect(exitCode).toBe(0);
