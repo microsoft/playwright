@@ -44,6 +44,7 @@ export type CLIOptions = {
   cdpHeader?: Record<string, string>;
   cdpTimeout?: number;
   codegen?: 'typescript' | 'python' | 'java' | 'csharp' | 'none';
+  colorScheme?: 'light' | 'dark';
   config?: string;
   consoleLevel?: 'error' | 'warning' | 'info' | 'debug';
   device?: string;
@@ -337,6 +338,9 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
   if (cliOptions.viewportSize)
     contextOptions.viewport = cliOptions.viewportSize;
 
+  if (cliOptions.colorScheme)
+    contextOptions.colorScheme = cliOptions.colorScheme;
+
   if (cliOptions.ignoreHttpsErrors)
     contextOptions.ignoreHTTPSErrors = true;
 
@@ -414,6 +418,8 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.cdpTimeout = numberParser(e.PLAYWRIGHT_MCP_CDP_TIMEOUT);
   if (e.PLAYWRIGHT_MCP_CODEGEN)
     options.codegen = enumParser<'typescript' | 'python' | 'java' | 'csharp' | 'none'>('--codegen', ['none', 'typescript', 'python', 'java', 'csharp'], e.PLAYWRIGHT_MCP_CODEGEN);
+  if (e.PLAYWRIGHT_MCP_COLOR_SCHEME)
+    options.colorScheme = enumParser<'light' | 'dark'>('--color-scheme', ['light', 'dark'], e.PLAYWRIGHT_MCP_COLOR_SCHEME);
   options.config = envToString(e.PLAYWRIGHT_MCP_CONFIG);
   if (e.PLAYWRIGHT_MCP_CONSOLE_LEVEL)
     options.consoleLevel = enumParser<'error' | 'warning' | 'info' | 'debug'>('--console-level', ['error', 'warning', 'info', 'debug'], e.PLAYWRIGHT_MCP_CONSOLE_LEVEL);

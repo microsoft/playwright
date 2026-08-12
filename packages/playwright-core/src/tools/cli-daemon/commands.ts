@@ -474,6 +474,21 @@ const resize = declareCommand({
   toolParams: ({ w: width, h: height }) => ({ width, height }),
 });
 
+const emulateMedia = declareCommand({
+  name: 'emulate-media',
+  description: 'Emulate CSS media features, for example the light or dark color scheme',
+  category: 'core',
+  options: z.object({
+    colorScheme: z.enum(['light', 'dark']).optional().describe('Emulates the prefers-color-scheme media feature'),
+    reducedMotion: z.enum(['reduce', 'no-preference']).optional().describe('Emulates the prefers-reduced-motion media feature'),
+    forcedColors: z.enum(['active', 'none']).optional().describe('Emulates the forced-colors media feature'),
+    contrast: z.enum(['more', 'no-preference']).optional().describe('Emulates the prefers-contrast media feature'),
+    media: z.enum(['screen', 'print']).optional().describe('Changes the CSS media type of the page'),
+  }),
+  toolName: 'browser_emulate_media',
+  toolParams: ({ colorScheme, reducedMotion, forcedColors, contrast, media }) => ({ colorScheme, reducedMotion, forcedColors, contrast, media }),
+});
+
 const runCode = declareCommand({
   name: 'run-code',
   description: 'Run Playwright code snippet',
@@ -1173,6 +1188,7 @@ const commandsArray: AnyCommandSchema[] = [
   dialogAccept,
   dialogDismiss,
   resize,
+  emulateMedia,
   runCode,
   deleteData,
 

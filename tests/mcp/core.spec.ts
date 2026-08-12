@@ -227,6 +227,74 @@ test('browser_resize', async ({ client, server }) => {
   });
 });
 
+test('browser_emulate_media', async ({ client, server }) => {
+  server.setContent('/', `
+    <title>Media Test</title>
+    <body>
+      <div id="scheme"></div>
+      <script>
+        const query = matchMedia('(prefers-color-scheme: dark)');
+        const update = () => document.getElementById('scheme').textContent = \`Color scheme: \${query.matches ? 'dark' : 'light'}\`;
+        query.addEventListener('change', update);
+        update();
+      </script>
+    </body>
+  `, 'text/html');
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_emulate_media',
+    arguments: { colorScheme: 'dark' },
+  })).toHaveResponse({
+    code: `await page.emulateMedia({ colorScheme: 'dark' });`,
+  });
+  await expect.poll(() => client.callTool({ name: 'browser_snapshot' })).toHaveResponse({
+    inlineSnapshot: expect.stringContaining(`Color scheme: dark`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_emulate_media',
+    arguments: { colorScheme: 'light' },
+  })).toHaveResponse({
+    code: `await page.emulateMedia({ colorScheme: 'light' });`,
+  });
+  await expect.poll(() => client.callTool({ name: 'browser_snapshot' })).toHaveResponse({
+    inlineSnapshot: expect.stringContaining(`Color scheme: light`),
+  });
+});
+
+test('browser_emulate_media multiple features', async ({ client, server }) => {
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_emulate_media',
+    arguments: { colorScheme: 'dark', media: 'print', reducedMotion: 'reduce' },
+  })).toHaveResponse({
+    code: `await page.emulateMedia({ colorScheme: 'dark', media: 'print', reducedMotion: 'reduce' });`,
+  });
+});
+
+test('browser_emulate_media without parameters', async ({ client, server }) => {
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_emulate_media',
+    arguments: {},
+  })).toHaveResponse({
+    error: expect.stringContaining('Specify at least one media feature to emulate.'),
+    isError: true,
+  });
+});
+
 test('old locator error message', async ({ client, server }) => {
   server.setContent('/', `
     <button>Button 1</button>

@@ -46,6 +46,31 @@ test('--device should work', async ({ startClient, server }) => {
   });
 });
 
+test('--color-scheme starts the session in dark mode', async ({ startClient, server }) => {
+  const { client } = await startClient({
+    args: ['--color-scheme', 'dark'],
+  });
+
+  server.setRoute('/', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+      <body></body>
+      <script>
+        document.body.textContent = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      </script>
+    `);
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.PREFIX,
+    },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`dark`),
+  });
+});
+
 test('--mobile emulates a mobile viewport', async ({ startClient, server, mcpBrowser }) => {
   test.skip(mcpBrowser === 'firefox', '--mobile is not supported with Firefox.');
 
