@@ -21,6 +21,7 @@ import type { AriaNodeJSON, AriaSnapshotJSON } from './ariaSnapshot';
 
 export type AriaSnapshotYamlOptions = {
   convertStringsToRegex?: boolean;
+  lineToNode?: Map<number, AriaNodeJSON>;
 };
 
 export function renderAriaSnapshotAsYaml(snapshot: AriaSnapshotJSON, options: AriaSnapshotYamlOptions = {}): string {
@@ -82,6 +83,7 @@ export function renderAriaSnapshotAsYaml(snapshot: AriaSnapshotJSON, options: Ar
       return;
     }
 
+    options.lineToNode?.set(lines.length, node);
     const escapedKey = indent(depth) + '- ' + yamlEscapeKeyIfNeeded(createKey(node));
     const props: [string, string][] = [];
     if (node.url !== undefined)

@@ -150,6 +150,8 @@ function createEmptyContext(): ContextEntry {
     pages: [],
     resources: [],
     actions: [],
+    screenshots: [],
+    ariaSnapshots: [],
     events: [],
     errors: [],
     stdio: [],

@@ -106,6 +106,14 @@ export class TraceModernizer {
         this._pageEntry(event.pageId).screencastFrames.push(event);
         break;
       }
+      case 'screenshot': {
+        contextEntry.screenshots.push(event);
+        break;
+      }
+      case 'aria-snapshot': {
+        contextEntry.ariaSnapshots.push(event);
+        break;
+      }
       case 'before': {
         this._actionMap.set(event.callId, { ...event, type: 'action', endTime: 0, log: [] });
         break;

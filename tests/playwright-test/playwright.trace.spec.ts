@@ -262,6 +262,61 @@ test('should save sources when requested', async ({ runInlineTest }, testInfo) =
   expect([...resources.keys()].filter(name => name.startsWith('src/'))).toHaveLength(1);
 });
 
+test('should expand snapshots object in trace option', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          trace: { mode: 'on', snapshots: { dom: true, aria: true, screen: true } },
+        }
+      };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<button>Click me</button>');
+        await page.locator('button').click();
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toEqual(0);
+  expect(result.passed).toBe(1);
+
+  const { model } = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  const click = model.actions.find(a => a.method === 'click')!;
+  expect(click.afterSnapshot).toBeTruthy();
+  expect(model.screenshotForCall(click.callId, 'after')).toBeTruthy();
+  expect(model.ariaSnapshotForCall(click.callId, 'after')).toBeTruthy();
+});
+
+test('should keep trace config options when forcing mode with --trace', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          trace: { mode: 'on-first-retry', snapshots: { dom: true, aria: true, screen: true } },
+        }
+      };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<button>Click me</button>');
+        await page.locator('button').click();
+      });
+    `,
+  }, { workers: 1, trace: 'on' });
+  expect(result.exitCode).toEqual(0);
+  expect(result.passed).toBe(1);
+
+  // The 'on' mode is forced, while the snapshots configuration is preserved.
+  const { model } = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  const click = model.actions.find(a => a.method === 'click')!;
+  expect(click.afterSnapshot).toBeTruthy();
+  expect(model.screenshotForCall(click.callId, 'after')).toBeTruthy();
+  expect(model.ariaSnapshotForCall(click.callId, 'after')).toBeTruthy();
+});
+
 test('should not save sources when not requested', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

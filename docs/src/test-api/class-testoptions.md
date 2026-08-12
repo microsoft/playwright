@@ -684,7 +684,10 @@ export default defineConfig({
   - `mode` <[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries">> Trace recording mode.
   - `attachments` ?<[boolean]> Whether to include test attachments. Defaults to true. Optional.
   - `screenshots` ?<[boolean]> Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview. Defaults to true. Optional.
-  - `snapshots` ?<[boolean]> Whether to capture DOM snapshot on every action. Defaults to true. Optional.
+  - `snapshots` ?<[boolean]|[Object]> Which snapshots to capture on every action. Passing `true` is a shortcut for `{ dom: true }`. Defaults to true. Optional.
+    - `dom` ?<[boolean]> Capture DOM snapshot on every action and record network activity. Optional.
+    - `aria` ?<[boolean]> Capture aria snapshot of the page on every action. Optional.
+    - `screen` ?<[boolean]> Capture a screenshot of the page on every action. Optional.
   - `sources` ?<[boolean]> Whether to include source files for trace actions. Defaults to true. Optional.
 
 Whether to record trace for each test. Defaults to `'off'`. The initial run of a test is the "first run"; subsequent runs caused by [retries](../test-retries.md) are "retries".

@@ -510,7 +510,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   private async _captureScreenshot(progress: Progress, page: Page, phase: trace.ActionPhase): Promise<void> {
-    const buffer = await page.screenshot(progress, { type: 'png' }).catch(() => undefined);
+    const buffer = await page.screenshot(progress, { type: 'png', scale: 'css' }).catch(() => undefined);
     if (!buffer || !this._state?.recording)
       return;
     const file = `screenshots/${progress.metadata.id}-${phase}.png`;
@@ -520,7 +520,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   private async _captureAriaSnapshot(progress: Progress, page: Page, phase: trace.ActionPhase): Promise<void> {
-    const snapshot = await ariaSnapshotJSONForFrame(progress, page.mainFrame(), undefined, { mode: 'default' }).catch(() => null);
+    const snapshot = await ariaSnapshotJSONForFrame(progress, page.mainFrame(), undefined, { mode: 'default', boxes: true }).catch(() => null);
     if (!snapshot || !this._state?.recording)
       return;
     const buffer = Buffer.from(JSON.stringify(snapshot), 'utf8');
