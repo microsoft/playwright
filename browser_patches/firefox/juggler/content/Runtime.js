@@ -56,6 +56,10 @@ const disallowedMessageCategories = new Set([
 class Runtime {
   constructor(isWorker = false) {
     this._debugger = new Debugger();
+    // Juggler does not implement WASM debugging, so allow WASM to use the
+    // optimizing Cranelift tier even though we have a Debugger attached.
+    // Without this, addDebuggee() forces WASM into debug mode (baseline-only).
+    this._debugger.allowUnobservedWasm = true;
     this._pendingPromises = new Map();
     this._executionContexts = new Map();
     this._windowToExecutionContext = new Map();
