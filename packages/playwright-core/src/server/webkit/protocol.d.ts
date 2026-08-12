@@ -1108,8 +1108,8 @@ export namespace Protocol {
     /**
      * The type of rendering context backing the canvas element.
      */
-    export type ContextType = "canvas-2d"|"offscreen-canvas-2d"|"bitmaprenderer"|"offscreen-bitmaprenderer"|"webgl"|"offscreen-webgl"|"webgl2"|"offscreen-webgl2";
-    export type ProgramType = "compute"|"render";
+    export type ContextType = "canvas-2d"|"offscreen-canvas-2d"|"bitmaprenderer"|"offscreen-bitmaprenderer"|"webgl"|"offscreen-webgl"|"webgl2"|"offscreen-webgl2"|"webgpu";
+    export type ProgramType = "compute"|"render"|"vertex";
     export type ShaderType = "compute"|"fragment"|"vertex";
     /**
      * Drawing surface attributes.
@@ -1172,26 +1172,23 @@ export namespace Protocol {
        * The type of rendering context backing the canvas.
        */
       contextType: ContextType;
-      /**
-       * Width of the canvas in pixels.
-       */
-      width: number;
-      /**
-       * Height of the canvas in pixels.
-       */
-      height: number;
+      sizes?: GenericTypes.Size[];
       /**
        * The corresponding DOM node id.
        */
       nodeId?: DOM.NodeId;
       /**
-       * The CSS canvas identifier, for canvases created with <code>document.getCSSCanvasContext</code>.
+       * The CSS canvas identifiers, for canvases created with <code>document.getCSSCanvasContext</code>.
        */
-      cssCanvasName?: string;
+      cssCanvasNames?: string[];
       /**
        * Context attributes for rendering contexts.
        */
       contextAttributes?: ContextAttributes;
+      /**
+       * Enabled WebGPU device features.
+       */
+      features?: string[];
       /**
        * Memory usage of the canvas in bytes.
        */
@@ -1200,14 +1197,20 @@ export namespace Protocol {
        * Backtrace that was captured when this canvas context was created.
        */
       stackTrace?: Console.StackTrace;
+      name?: string;
     }
     /**
-     * Information about a WebGL/WebGL2 shader program.
+     * Information about a WebGL/WebGL2 shader program or WebGPU shader pipeline.
      */
     export interface ShaderProgram {
       programId: ProgramId;
       programType: ProgramType;
       canvasId: CanvasId;
+      /**
+       * Indicates whether the vertex and fragment shader modules are the same object for a WebGPU render pipeline.
+       */
+      sharesVertexFragmentShader?: boolean;
+      name?: string;
     }
     
     export type canvasAddedPayload = {
@@ -1227,14 +1230,7 @@ export namespace Protocol {
        * Identifier of canvas that changed.
        */
       canvasId: CanvasId;
-      /**
-       * Width of the canvas in pixels.
-       */
-      width: number;
-      /**
-       * Height of the canvas in pixels.
-       */
-      height: number;
+      sizes?: GenericTypes.Size[];
     }
     export type canvasMemoryChangedPayload = {
       /**
@@ -1334,6 +1330,10 @@ export namespace Protocol {
     }
     export type requestClientNodesReturnValue = {
       clientNodeIds: DOM.NodeId[];
+      /**
+       * The CSS canvas identifiers, for canvases created with <code>document.getCSSCanvasContext</code>.
+       */
+      cssCanvasNames: string[];
     }
     /**
      * Resolves JavaScript canvas/device context object for given canvasId.
@@ -4480,6 +4480,13 @@ might return multiple quads for inline nodes.
        * Line with match content.
        */
       lineContent: string;
+    }
+    /**
+     * A two-dimensional size.
+     */
+    export interface Size {
+      width: number;
+      height: number;
     }
     
     
@@ -7640,7 +7647,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     /**
      * The type of the recording.
      */
-    export type Type = "canvas-2d"|"offscreen-canvas-2d"|"canvas-bitmaprenderer"|"offscreen-canvas-bitmaprenderer"|"canvas-webgl"|"offscreen-canvas-webgl"|"canvas-webgl2"|"offscreen-canvas-webgl2";
+    export type Type = "canvas-2d"|"offscreen-canvas-2d"|"canvas-bitmaprenderer"|"offscreen-canvas-bitmaprenderer"|"canvas-webgl"|"offscreen-canvas-webgl"|"canvas-webgl2"|"offscreen-canvas-webgl2"|"canvas-webgpu";
     export type Initiator = "frontend"|"console"|"auto-capture";
     /**
      * Information about the initial state of the recorded object.
@@ -7668,7 +7675,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export interface Frame {
       /**
-       * Information about an action made to the recorded object. Follows the structure [name, parameters, swizzleTypes, stackTrace, snapshot], where name is a string, parameters is an array, swizzleTypes is an array, stackTrace is a Console.StackTrace, and snapshot is a data URL image of the current contents after this action.
+       * Information about an action made to the recorded object. Follows the structure [name, parameters, swizzleTypes, stackTrace, receiver, snapshot], where name is a string, parameters is an array, swizzleTypes is an array, stackTrace is a Console.StackTrace, receiver follows the structure [identifier, swizzleType] for the object that received the action, and snapshot is a data URL image of the current contents after this action.
        */
       actions: any[];
       /**
