@@ -220,6 +220,7 @@ npx playwright install --with-deps
 | `--dry-run` | Don't perform installation, just print information |
 | `--only-shell` | Only install chromium-headless-shell instead of full Chromium |
 | `--no-shell` | Don't install chromium-headless-shell |
+| `--no-remove` | Don't remove unused browsers |
 
 #### Install Deps Options
 
