@@ -1,0 +1,79 @@
+# Temporary: delete before/when merging the triage permission change.
+name: Triage permission smoke
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Optional PR number (uses gh pr view author, same as create_test_report)
+        required: false
+        type: string
+  pull_request:
+    paths:
+      - '.github/workflows/triage-permission-smoke.yml'
+      - '.github/workflows/create_test_report.yml'
+
+permissions: {}
+
+jobs:
+  smoke:
+    # Match create_test_report merge-reports permissions so GITHUB_TOKEN behaves the same.
+    permissions:
+      pull-requests: write
+      checks: write
+      statuses: write
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe triage allow logic
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+
+          resolve_allowed() {
+            local AUTHOR="$1"
+            local TRIAGE_ALLOWED=false
+            case "$AUTHOR" in
+              app/github-actions|app/microsoft-playwright-automation)
+                TRIAGE_ALLOWED=true
+                ;;
+              *)
+                if [ -n "$AUTHOR" ]; then
+                  local PERM
+                  PERM=$(gh api "repos/$REPO/collaborators/$AUTHOR/permission" --jq .permission 2>/dev/null || echo none)
+                  case "$PERM" in write|admin) TRIAGE_ALLOWED=true ;; esac
+                  printf '%s\tperm=%s\tallowed=%s\n' "$AUTHOR" "$PERM" "$TRIAGE_ALLOWED"
+                  return
+                fi
+                ;;
+            esac
+            printf '%s\tperm=special-case\tallowed=%s\n' "$AUTHOR" "$TRIAGE_ALLOWED"
+          }
+
+          echo "## fixed samples"
+          for u in \
+            Skn0tt \
+            pavelfeldman \
+            octocat \
+            app/github-actions \
+            app/microsoft-playwright-automation \
+            'github-actions[bot]' \
+            'microsoft-playwright-automation[bot]'
+          do
+            resolve_allowed "$u"
+          done
+
+          if [ -n "${PR_NUMBER:-}" ]; then
+            echo
+            echo "## PR #$PR_NUMBER"
+            AUTHOR=$(gh pr view --repo "$REPO" "$PR_NUMBER" --json author --jq '.author.login' 2>/dev/null || true)
+            echo "gh pr view author.login=$AUTHOR"
+            echo "pull_request.user.login=${{ github.event.pull_request.user.login || 'n/a' }}"
+            resolve_allowed "$AUTHOR"
+          else
+            echo
+            echo "## no PR number; actor=${{ github.actor }}"
+            resolve_allowed "${{ github.actor }}"
+          fi

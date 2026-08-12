@@ -74,11 +74,18 @@ jobs:
         echo "number=$NUMBER" >> "$GITHUB_OUTPUT"
 
         AUTHOR=$(gh pr view --repo "${{ github.repository }}" "$HEAD_REF" --json author --jq '.author.login' 2>/dev/null || true)
-        ALLOWED="github-actions[bot] pavelfeldman yury-s dgozman Skn0tt dcrousso"
         TRIAGE_ALLOWED=false
-        for a in $ALLOWED; do
-          if [ "$a" = "$AUTHOR" ]; then TRIAGE_ALLOWED=true; break; fi
-        done
+        case "$AUTHOR" in
+          app/github-actions|app/microsoft-playwright-automation)
+            TRIAGE_ALLOWED=true
+            ;;
+          *)
+            if [ -n "$AUTHOR" ]; then
+              PERM=$(gh api "repos/${{ github.repository }}/collaborators/$AUTHOR/permission" --jq .permission 2>/dev/null || echo none)
+              case "$PERM" in write|admin) TRIAGE_ALLOWED=true ;; esac
+            fi
+            ;;
+        esac
         echo "triage_allowed=$TRIAGE_ALLOWED" >> "$GITHUB_OUTPUT"
 
     - name: Post report comment to PR
