@@ -125,8 +125,8 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
   // eslint-disable-next-line no-restricted-syntax
   const remoteHeaders = (config.browser as any).remoteHeaders as Record<string, string> | undefined;
   const remoteOptions = typeof remote === 'string'
-    ? { endpoint: remote, headers: remoteHeaders }
-    : { ...remote, headers: { ...remoteHeaders, ...remote.headers } };
+    ? { endpoint: remote, headers: remoteHeaders, browserName: config.browser.browserName }
+    : { ...remote, browserName: config.browser.browserName, headers: { ...remoteHeaders, ...remote.headers } };
 
   const descriptor = await serverRegistry.find(remoteOptions.endpoint);
   if (descriptor) {
