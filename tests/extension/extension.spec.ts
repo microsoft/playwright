@@ -307,6 +307,42 @@ test(`launches the profile that has the extension`, {
   }).toPass();
 });
 
+test(`ignores orphaned preferences entries of an uninstalled extension`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1712' },
+}, async ({ startClient, server }, testInfo) => {
+  // Default has orphaned entries of an uninstalled extension; they must not win over the
+  // actual installation in Profile 1.
+  const userDataDir = testInfo.outputPath('multi-profile');
+  await fs.mkdir(path.join(userDataDir, 'Default'), { recursive: true });
+  await fs.writeFile(path.join(userDataDir, 'Default', 'Preferences'), JSON.stringify({
+    extensions: { settings: { [extensionId]: {} } },
+    protection: { macs: { extensions: { settings: { [extensionId]: 'DEADBEEF' } } } },
+    updateclientdata: { apps: { [extensionId]: { pv: '0.3.0' } } },
+  }));
+  await fs.mkdir(path.join(userDataDir, 'Profile 1'), { recursive: true });
+  await fs.writeFile(path.join(userDataDir, 'Profile 1', 'Preferences'), JSON.stringify({
+    extensions: { settings: { [extensionId]: { path: '/tmp/extension', location: 4 } } },
+  }));
+  // Make the profile with the orphaned entries the preferred, last used one.
+  await fs.writeFile(path.join(userDataDir, 'Local State'), JSON.stringify({
+    profile: { last_used: 'Default' },
+  }));
+
+  const executablePath = testInfo.outputPath('echo.sh');
+  await fs.writeFile(executablePath, '#!/bin/bash\necho "Custom exec args: $@" > "$(dirname "$0")/output.txt"', { mode: 0o755 });
+
+  const { client } = await startClient({
+    args: [`--extension`, `--executable-path=${executablePath}`],
+    env: { PWTEST_EXTENSION_USER_DATA_DIR: userDataDir },
+  });
+
+  client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } }).catch(() => {});
+  await expect(async () => {
+    const output = await fs.readFile(testInfo.outputPath('output.txt'), 'utf8');
+    expect(output).toContain(`--profile-directory=Profile 1`);
+  }).toPass();
+});
+
 test(`fails when extension is missing in custom userDataDir`, async ({ startClient, server }) => {
   const userDataDir = test.info().outputPath('empty-profile');
 
