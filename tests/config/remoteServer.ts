@@ -165,13 +165,8 @@ export class RemoteServer implements PlaywrightServer {
       await this._browser.close();
       this._browser = undefined;
     }
-    // The launchServer child forwards SIGINT to gracefully close the browser and
-    // then exit. A headed browser can intermittently fail to terminate on SIGINT
-    // (observed on macOS chromium), which leaves the child alive and hangs
-    // teardown until the test timeout. Give graceful shutdown a chance, then
-    // escalate to SIGKILL so teardown stays bounded.
     void this._process.kill('SIGINT');
-    const killTimer = setTimeout(() => void this._process.kill('SIGKILL'), 10000);
+    const killTimer = setTimeout(() => void this._process.kill('SIGINT'), 30000);
     try {
       await this.childExitCode();
     } finally {
