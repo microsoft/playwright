@@ -165,7 +165,12 @@ export class RemoteServer implements PlaywrightServer {
       await this._browser.close();
       this._browser = undefined;
     }
-    await this._process.kill('SIGINT');
-    await this.childExitCode();
+    void this._process.kill('SIGINT');
+    const killTimer = setTimeout(() => void this._process.kill('SIGINT'), 30000);
+    try {
+      await this.childExitCode();
+    } finally {
+      clearTimeout(killTimer);
+    }
   }
 }
