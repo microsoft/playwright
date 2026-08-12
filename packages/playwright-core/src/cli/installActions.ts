@@ -87,7 +87,7 @@ export async function markDockerImage(dockerImageNameTemplate: string) {
   await writeDockerVersion(dockerImageNameTemplate);
 }
 
-export async function installBrowsers(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean, progress?: boolean }) {
+export async function installBrowsers(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean, progress?: boolean, remove?: boolean }) {
   if (options.progress === false)
     process.env.PLAYWRIGHT_DOWNLOAD_NO_PROGRESS = '1';
   if (isLikelyNpxGlobal()) {
@@ -134,7 +134,7 @@ export async function installBrowsers(args: string[], options: { withDeps?: bool
     const browsers = await registry.listInstalledBrowsers();
     printGroupedByPlaywrightVersion(browsers);
   } else {
-    await registry.install(executables, { force: options.force });
+    await registry.install(executables, { force: options.force, gc: options.remove });
     await registry.validateHostRequirementsForExecutablesIfNeeded(executables, process.env.PW_LANG_NAME || 'javascript').catch((e: Error) => {
       e.name = 'Playwright Host validation warning';
       console.error(e);

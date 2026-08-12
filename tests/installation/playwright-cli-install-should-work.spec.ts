@@ -15,6 +15,7 @@
  */
 import { test, expect } from './npmTest';
 import { chromium } from '@playwright/test';
+import fs from 'fs';
 import path from 'path';
 import http from 'http';
 import https from 'https';
@@ -162,6 +163,20 @@ test('install command should work with HTTPS proxy for HTTP downloads', async ({
   });
   expect(requestCount).toBeGreaterThan(0);
   httpsProxyServer.close();
+});
+
+test('install --no-remove should keep unused browsers', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42214' } }, async ({ exec, _browsersPath }) => {
+  await exec('npm i playwright');
+  const staleDirectory = path.join(_browsersPath, 'webkit-1000');
+  await fs.promises.mkdir(staleDirectory, { recursive: true });
+
+  const result = await exec('npx playwright install ffmpeg --no-remove');
+  expect(result).not.toContain('Removing unused browser');
+  expect(fs.existsSync(staleDirectory)).toBe(true);
+
+  const result2 = await exec('npx playwright install ffmpeg');
+  expect(result2).toContain('Removing unused browser');
+  expect(fs.existsSync(staleDirectory)).toBe(false);
 });
 
 test('should be able to remove browsers', async ({ exec, checkInstalledSoftwareOnDisk }) => {
