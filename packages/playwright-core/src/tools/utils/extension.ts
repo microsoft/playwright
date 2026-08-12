@@ -67,15 +67,30 @@ export async function isPlaywrightExtensionInstalled(userDataDir: string): Promi
 
 async function isExtensionInstalledInProfile(profileDir: string): Promise<boolean> {
   // Covers two install shapes: web store drops the extension into <profile>/Extensions/<id>;
-  // `--load-extension` does not, and only shows up as the id inside <profile>/Preferences.
+  // `--load-extension` does not, and only shows up as a settings record in the preferences.
   if (await pathExists(path.join(profileDir, 'Extensions', playwrightExtensionId)))
     return true;
+  // Depending on the platform, `extensions.settings` lives in either Preferences or
+  // Secure Preferences.
+  for (const fileName of ['Preferences', 'Secure Preferences']) {
+    if (await hasExtensionSettingsRecord(path.join(profileDir, fileName)))
+      return true;
+  }
+  return false;
+}
+
+async function hasExtensionSettingsRecord(prefsPath: string): Promise<boolean> {
+  let prefs: any;
   try {
-    const prefs = await fs.promises.readFile(path.join(profileDir, 'Preferences'), 'utf-8');
-    return prefs.includes(`"${playwrightExtensionId}"`);
+    prefs = JSON.parse(await fs.promises.readFile(prefsPath, 'utf-8'));
   } catch {
     return false;
   }
+  // Uninstalling leaves orphaned entries behind: an empty `extensions.settings.<id>` record,
+  // `protection.macs.extensions.settings.<id>` and `updateclientdata.apps.<id>`. Only a
+  // populated settings record indicates an actual installation.
+  const record = prefs?.extensions?.settings?.[playwrightExtensionId];
+  return !!record && typeof record === 'object' && Object.keys(record).length > 0;
 }
 
 async function pathExists(p: string): Promise<boolean> {
