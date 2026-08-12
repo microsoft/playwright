@@ -53,6 +53,7 @@ class TraceViewerPage {
   settingsDialog: Locator;
   themeSetting: Locator;
   displayCanvasContentSetting: Locator;
+  displayAriaSetting: Locator;
 
   constructor(public page: Page, public process: TestChildProcess) {
     this.actionTitles = page.locator('.action-title');
@@ -72,6 +73,7 @@ class TraceViewerPage {
     this.settingsDialog = page.getByTestId('settings-toolbar-dialog');
     this.themeSetting = this.settingsDialog.getByRole('combobox', { name: 'Theme' });
     this.displayCanvasContentSetting = page.locator('.setting').getByText('Display canvas content');
+    this.displayAriaSetting = page.locator('.setting').getByText('Display Aria');
   }
 
   @step

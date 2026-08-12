@@ -35,6 +35,7 @@ import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
 import yaml from 'yaml';
 import { PlaybackButtons } from './playbackControl';
 import type { PlaybackState } from './playbackControl';
+import { AriaModeView, collectAriaModeTargets } from './ariaModeView';
 
 export type HighlightedElement = {
   locator?: string,
@@ -56,10 +57,19 @@ export const SnapshotTabsView: React.FunctionComponent<{
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
   const [shouldPopulateCanvasFromScreenshot] = useSetting('shouldPopulateCanvasFromScreenshot', false);
+  const [displayAriaMode] = useSetting('displayAriaMode', false);
 
   const snapshots = React.useMemo(() => {
     return collectSnapshots(action);
   }, [action]);
+  const ariaModeTargets = React.useMemo(() => {
+    return model && displayAriaMode ? collectAriaModeTargets(model, action) : {};
+  }, [model, action, displayAriaMode]);
+
+  React.useEffect(() => {
+    if (displayAriaMode && isInspecting)
+      setIsInspecting(false);
+  }, [displayAriaMode, isInspecting, setIsInspecting]);
   const { snapshotInfoUrl, snapshotUrl, popoutUrl } = React.useMemo(() => {
     const snapshot = snapshots[snapshotTab];
     return model && snapshot ? extendSnapshot(model.traceUri, snapshot, shouldPopulateCanvasFromScreenshot) : { snapshotInfoUrl: undefined, snapshotUrl: undefined, popoutUrl: undefined };
@@ -69,7 +79,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
 
   return <div className='snapshot-tab vbox'>
     <Toolbar>
-      <ToolbarButton className='pick-locator' title='Pick locator' icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} />
+      <ToolbarButton className='pick-locator' title='Pick locator' icon='target' disabled={displayAriaMode} toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} />
       <div className='hbox' style={{ height: '100%' }} role='tablist'>
         {(['action', 'before', 'after'] as const).map(tab => {
           return <TabbedPaneTab
@@ -83,7 +93,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
       </div>
       <div style={{ flex: 'auto' }}></div>
       <PlaybackButtons playback={playback} />
-      <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!snapshotUrls?.popoutUrl} onClick={() => {
+      <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={displayAriaMode || !snapshotUrls?.popoutUrl} onClick={() => {
         const win = window.open(snapshotUrls?.popoutUrl || '', '_blank');
         win?.addEventListener('DOMContentLoaded', () => {
           const injectedScript = new InjectedScript(win as any, { isUnderTest, frameSeq: 0, sdkLanguage, testIdAttributeName, stableRafCount: 1, browserName: 'chromium', customEngines: [] });
@@ -91,7 +101,11 @@ export const SnapshotTabsView: React.FunctionComponent<{
         });
       }} />
     </Toolbar>
-    <SnapshotView
+    {displayAriaMode && <AriaModeView
+      model={model}
+      target={ariaModeTargets[snapshotTab]}
+    />}
+    {!displayAriaMode && <SnapshotView
       snapshotUrls={snapshotUrls}
       sdkLanguage={sdkLanguage}
       testIdAttributeName={testIdAttributeName}
@@ -99,7 +113,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
       setIsInspecting={setIsInspecting}
       highlightedElement={highlightedElement}
       setHighlightedElement={setHighlightedElement}
-    />
+    />}
   </div>;
 };
 

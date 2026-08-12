@@ -2107,6 +2107,42 @@ test('should toggle canvas rendering', async ({ runAndTrace, page }) => {
   expect(snapshotRequest.url()).toContain('shouldPopulateCanvasFromScreenshot');
 });
 
+test('should display aria mode', async ({ runAndTrace, page }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent('<!DOCTYPE html><button>Click me</button>');
+    await page.locator('button').click();
+  }, { snapshots: { dom: true, aria: true, screen: true } });
+
+  await traceViewer.showSettings();
+  await expect(traceViewer.displayAriaSetting).toBeChecked({ checked: false });
+  await traceViewer.displayAriaSetting.click();
+  await expect(traceViewer.displayAriaSetting).toBeChecked({ checked: true });
+
+  await traceViewer.selectAction('Click');
+  const ariaModeView = traceViewer.page.locator('.aria-mode-view');
+  await expect(ariaModeView.locator('img')).toBeVisible();
+  await expect(ariaModeView).toContainText('button "Click me"');
+
+  // Hovering an aria node highlights its box on the screenshot.
+  const highlight = ariaModeView.locator('.aria-mode-highlight');
+  await expect(highlight).not.toBeVisible();
+  await ariaModeView.locator('.aria-mode-line', { hasText: 'button "Click me"' }).hover();
+  await expect(highlight).toBeVisible();
+  await ariaModeView.locator('img').hover();
+  await expect(highlight).not.toBeVisible();
+
+  // The "Before" tab shows the state before the click.
+  await traceViewer.selectSnapshot('Before');
+  await expect(ariaModeView.locator('img')).toBeVisible();
+  await expect(ariaModeView).toContainText('button "Click me"');
+
+  // Toggling the setting off restores the DOM snapshot.
+  await traceViewer.showSettings();
+  await traceViewer.displayAriaSetting.click();
+  await expect(ariaModeView).not.toBeVisible();
+  await expect(traceViewer.snapshotContainer).toBeVisible();
+});
+
 test('should render blob trace received from message', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(undefined, { host: 'localhost' });
 

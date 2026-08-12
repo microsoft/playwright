@@ -85,6 +85,8 @@ export class TraceModel {
   readonly annotations?: trace.TraceEventAnnotation[];
   readonly pagerefToTitle = new Map<string, string>();
   private _eventsForAction = new Map<ActionEntry, (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[]>();
+  private _screenshots = new Map<string, trace.ScreenshotTraceEvent>();
+  private _ariaSnapshots = new Map<string, trace.AriaSnapshotTraceEvent>();
 
   constructor(traceUri: string, contexts: ContextEntry[]) {
     const libraryContext = contexts.find(context => context.origin === 'library');
@@ -119,6 +121,12 @@ export class TraceModel {
       for (const entry of context.resources)
         this.resources.push({ ...entry, id: `${entry.pageref ?? lastApiContextId}-${entry.startedDateTime}-${entry.request.url}`, contextTitle });
     }
+    for (const context of contexts) {
+      for (const event of context.screenshots || [])
+        this._screenshots.set(`${event.callId}/${event.phase}`, event);
+      for (const event of context.ariaSnapshots || [])
+        this._ariaSnapshots.set(`${event.callId}/${event.phase}`, event);
+    }
     this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, callId: action.callId, traceUri })) ?? []);
     this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
 
@@ -146,6 +154,14 @@ export class TraceModel {
   failedAction() {
     // This find innermost action for nested ones.
     return this.actions.findLast(a => a.error);
+  }
+
+  screenshotForCall(callId: string, phase: trace.ActionPhase): trace.ScreenshotTraceEvent | undefined {
+    return this._screenshots.get(`${callId}/${phase}`);
+  }
+
+  ariaSnapshotForCall(callId: string, phase: trace.ActionPhase): trace.AriaSnapshotTraceEvent | undefined {
+    return this._ariaSnapshots.get(`${callId}/${phase}`);
   }
 
   eventsForAction(action: ActionEntry): (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[] {

@@ -29,6 +29,7 @@ export const DefaultSettingsView: React.FC<{
     shouldPopulateCanvasFromScreenshot,
     setShouldPopulateCanvasFromScreenshot,
   ] = useSetting('shouldPopulateCanvasFromScreenshot', false);
+  const [displayAriaMode, setDisplayAriaMode] = useSetting('displayAriaMode', false);
   const [theme, setTheme] = useThemeSetting();
   const [mergeFiles, setMergeFiles] = useSetting('mergeFiles', false);
 
@@ -54,6 +55,13 @@ export const DefaultSettingsView: React.FC<{
           set: setShouldPopulateCanvasFromScreenshot,
           name: 'Display canvas content',
           title: 'Attempt to display the captured canvas appearance in the snapshot preview. May not be accurate.',
+        },
+        {
+          type: 'check',
+          value: displayAriaMode,
+          set: setDisplayAriaMode,
+          name: 'Display Aria',
+          title: 'Display the action screenshot and aria snapshot instead of the DOM snapshot. Requires a trace recorded with screen and aria snapshots.',
         },
       ]}
     />
