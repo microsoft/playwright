@@ -86,11 +86,12 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
   traceCommand
       .command('console')
       .description('show console messages')
+      .option('--grep <pattern>', 'filter by message text pattern')
       .option('--errors-only', 'only show errors')
       .option('--warnings', 'show errors and warnings')
       .option('--browser', 'only browser console messages')
       .option('--stdio', 'only stdout/stderr')
-      .action(async (options: { errorsOnly?: boolean, warnings?: boolean, browser?: boolean, stdio?: boolean }) => {
+      .action(async (options: { grep?: string, errorsOnly?: boolean, warnings?: boolean, browser?: boolean, stdio?: boolean }) => {
         traceConsole(options).catch(logErrorAndExit);
       });
 

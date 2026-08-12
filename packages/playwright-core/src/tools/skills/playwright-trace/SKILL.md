@@ -94,6 +94,9 @@ npx playwright trace console --browser
 
 # Only stdout/stderr (no browser console)
 npx playwright trace console --stdio
+
+# Filter by message text pattern
+npx playwright trace console --grep "failed to fetch"
 ```
 
 ### Errors

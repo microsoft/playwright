@@ -18,7 +18,7 @@
 
 import { loadTrace, formatTimestamp } from './traceUtils';
 
-export async function traceConsole(options: { errorsOnly?: boolean, warnings?: boolean, browser?: boolean, stdio?: boolean }) {
+export async function traceConsole(options: { grep?: string, errorsOnly?: boolean, warnings?: boolean, browser?: boolean, stdio?: boolean }) {
   const trace = await loadTrace();
   const model = trace.model;
 
@@ -88,12 +88,18 @@ export async function traceConsole(options: { errorsOnly?: boolean, warnings?: b
 
   items.sort((a, b) => a.timestamp - b.timestamp);
 
-  if (!items.length) {
+  let filtered = items;
+  if (options.grep) {
+    const pattern = new RegExp(options.grep, 'i');
+    filtered = filtered.filter(item => pattern.test(item.text));
+  }
+
+  if (!filtered.length) {
     console.log('  No console entries');
     return;
   }
 
-  for (const item of items) {
+  for (const item of filtered) {
     const ts = formatTimestamp(item.timestamp, model.startTime);
     const source = item.type === 'browser' ? '[browser]' : `[${item.type}]`;
     const level = item.level.padEnd(8);
