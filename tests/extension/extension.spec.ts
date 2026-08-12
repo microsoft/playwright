@@ -310,9 +310,8 @@ test(`launches the profile that has the extension`, {
 test(`ignores orphaned preferences entries of an uninstalled extension`, {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1712' },
 }, async ({ startClient, server }, testInfo) => {
-  // Uninstalling the extension leaves orphaned entries in the profile's Preferences (an empty
-  // `extensions.settings.<id>` record, `protection.macs.*` and `updateclientdata.apps.*`). Those
-  // must not be mistaken for an installation, otherwise the wrong profile is launched.
+  // Default has orphaned entries of an uninstalled extension; they must not win over the
+  // actual installation in Profile 1.
   const userDataDir = testInfo.outputPath('multi-profile');
   await fs.mkdir(path.join(userDataDir, 'Default'), { recursive: true });
   await fs.writeFile(path.join(userDataDir, 'Default', 'Preferences'), JSON.stringify({
@@ -320,13 +319,11 @@ test(`ignores orphaned preferences entries of an uninstalled extension`, {
     protection: { macs: { extensions: { settings: { [extensionId]: 'DEADBEEF' } } } },
     updateclientdata: { apps: { [extensionId]: { pv: '0.3.0' } } },
   }));
-  // The extension is actually installed in Profile 1 via `--load-extension`, which only writes a
-  // populated settings record into Preferences.
   await fs.mkdir(path.join(userDataDir, 'Profile 1'), { recursive: true });
   await fs.writeFile(path.join(userDataDir, 'Profile 1', 'Preferences'), JSON.stringify({
     extensions: { settings: { [extensionId]: { path: '/tmp/extension', location: 4 } } },
   }));
-  // Ordering prefers the last used profile; make it the one with the orphaned entries.
+  // Make the profile with the orphaned entries the preferred, last used one.
   await fs.writeFile(path.join(userDataDir, 'Local State'), JSON.stringify({
     profile: { last_used: 'Default' },
   }));
