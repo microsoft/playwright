@@ -325,6 +325,7 @@ scheme.APIRequestContextFetchLogResult = tObject({
 });
 scheme.APIRequestContextStorageStateParams = tObject({
   indexedDB: tOptional(tBoolean),
+  opfs: tOptional(tBoolean),
 });
 scheme.APIRequestContextStorageStateResult = tObject({
   cookies: tArray(tType('NetworkCookie')),
@@ -822,6 +823,7 @@ scheme.BrowserContextSetOfflineParams = tObject({
 scheme.BrowserContextSetOfflineResult = tOptional(tObject({}));
 scheme.BrowserContextStorageStateParams = tObject({
   indexedDB: tOptional(tBoolean),
+  opfs: tOptional(tBoolean),
   credentials: tOptional(tBoolean),
 });
 scheme.BrowserContextStorageStateResult = tObject({
@@ -2852,15 +2854,22 @@ scheme.IndexedDBDatabase = tObject({
     })),
   })),
 });
+scheme.OPFSEntry = tObject({
+  path: tString,
+  type: tEnum(['file', 'directory']),
+  base64: tOptional(tString),
+});
 scheme.SetOriginStorage = tObject({
   origin: tString,
   localStorage: tArray(tType('NameValue')),
   indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
+  opfs: tOptional(tArray(tType('OPFSEntry'))),
 });
 scheme.OriginStorage = tObject({
   origin: tString,
   localStorage: tArray(tType('NameValue')),
   indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
+  opfs: tOptional(tArray(tType('OPFSEntry'))),
 });
 scheme.RecordHarOptions = tObject({
   content: tOptional(tEnum(['embed', 'attach', 'omit'])),

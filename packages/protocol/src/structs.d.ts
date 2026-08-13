@@ -242,16 +242,24 @@ export type IndexedDBDatabase = {
   }[],
 };
 
+export type OPFSEntry = {
+  path: string,
+  type: 'file' | 'directory',
+  base64?: string,
+};
+
 export type SetOriginStorage = {
   origin: string,
   localStorage: NameValue[],
   indexedDB?: IndexedDBDatabase[],
+  opfs?: OPFSEntry[],
 };
 
 export type OriginStorage = {
   origin: string,
   localStorage: NameValue[],
   indexedDB?: IndexedDBDatabase[],
+  opfs?: OPFSEntry[],
 };
 
 export type RecordHarOptions = {

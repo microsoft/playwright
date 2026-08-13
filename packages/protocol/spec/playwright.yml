@@ -329,6 +329,17 @@ IndexedDBDatabase:
                 multiEntry: boolean
                 unique: boolean
 
+OPFSEntry:
+  type: object
+  properties:
+    path: string
+    type:
+      type: enum
+      literals:
+      - file
+      - directory
+    base64: string?
+
 SetOriginStorage:
   type: object
   properties:
@@ -339,6 +350,9 @@ SetOriginStorage:
     indexedDB:
       type: array?
       items: IndexedDBDatabase
+    opfs:
+      type: array?
+      items: OPFSEntry
 
 OriginStorage:
   type: object
@@ -350,6 +364,9 @@ OriginStorage:
     indexedDB:
       type: array?
       items: IndexedDBDatabase
+    opfs:
+      type: array?
+      items: OPFSEntry
 
 RecordHarOptions:
   type: object

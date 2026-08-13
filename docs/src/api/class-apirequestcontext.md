@@ -898,6 +898,10 @@ context cookies from the response. The method will automatically follow redirect
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
+    - `opfs` ?<[Array]<[Object]>> Entries in the origin private file system.
+      - `path` <[string]> Path relative to the origin private file system root.
+      - `type` <[string]<"file"|"directory">>
+      - `base64` ?<[string]> Base64-encoded file contents. Present when `type` is `"file"`.
 
 Returns storage state for this request context, contains current cookies and local storage snapshot if it was passed to the constructor.
 
@@ -914,6 +918,12 @@ Returns storage state for this request context, contains current cookies and loc
 - `indexedDB` ?<boolean>
 
 Set to `true` to include IndexedDB in the storage state snapshot.
+
+### option: APIRequestContext.storageState.opfs
+* since: v1.63
+- `opfs` ?<boolean>
+
+Set to `true` to include the origin private file system in the storage state snapshot.
 
 ## property: APIRequestContext.tracing
 * since: v1.60

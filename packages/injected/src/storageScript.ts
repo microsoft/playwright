@@ -16,16 +16,18 @@
 
 import { parseEvaluationResultValue, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
 
-import type { IndexedDBDatabase, OriginStorage, SetOriginStorage } from '@protocol/structs';
+import type { IndexedDBDatabase, OPFSEntry, OriginStorage, SetOriginStorage } from '@protocol/structs';
 
 export type SerializedStorage = Omit<OriginStorage, 'origin'>;
 
 export class StorageScript {
   private _isFirefox: boolean;
+  private _isWebKit: boolean;
   private _global;
 
-  constructor(isFirefox: boolean) {
-    this._isFirefox = isFirefox;
+  constructor(browserName: string) {
+    this._isFirefox = browserName === 'firefox';
+    this._isWebKit = browserName === 'webkit';
     // eslint-disable-next-line no-restricted-globals
     this._global = globalThis;
   }
@@ -35,6 +37,17 @@ export class StorageScript {
       request.addEventListener('success', () => resolve(request.result));
       request.addEventListener('error', () => reject(request.error));
     });
+  }
+
+  private async _directoryEntries(directory: FileSystemDirectoryHandle): Promise<[string, FileSystemHandle][]> {
+    const result: [string, FileSystemHandle][] = [];
+    const iterator = directory.entries();
+    while (true) {
+      const entry = await iterator.next();
+      if (entry.done)
+        return result;
+      result.push(entry.value);
+    }
   }
 
   private _isPlainObject(v: any) {
@@ -133,17 +146,52 @@ export class StorageScript {
     };
   }
 
-  async collect(recordIndexedDB: boolean): Promise<SerializedStorage> {
+  private async _collectOPFS(root: FileSystemDirectoryHandle): Promise<OPFSEntry[]> {
+    const result: OPFSEntry[] = [];
+    const collect = async (directory: FileSystemDirectoryHandle, parentPath: string) => {
+      const entries = await this._directoryEntries(directory);
+      entries.sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
+
+      for (const [name, handle] of entries) {
+        const path = parentPath ? `${parentPath}/${name}` : name;
+        if (handle.kind === 'directory') {
+          result.push({ path, type: 'directory' });
+          await collect(handle as FileSystemDirectoryHandle, path);
+        } else {
+          const file = await (handle as FileSystemFileHandle).getFile();
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve((reader.result as string).split(',', 2)[1]);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+          });
+          result.push({ path, type: 'file', base64 });
+        }
+      }
+    };
+    await collect(root, '');
+    return result;
+  }
+
+  async collect(record: { indexedDB: boolean, opfs: boolean }): Promise<SerializedStorage> {
     const localStorage = Object.keys(this._global.localStorage).map(name => ({ name, value: this._global.localStorage.getItem(name)! }));
-    if (!recordIndexedDB)
-      return { localStorage };
-    try {
-      const databases = await this._global.indexedDB.databases();
-      const indexedDB = await Promise.all(databases.map(db => this._collectDB(db)));
-      return { localStorage, indexedDB };
-    } catch (e) {
-      throw new Error('Unable to serialize IndexedDB: ' + e.message);
+    const result: SerializedStorage = { localStorage };
+    if (record.indexedDB) {
+      try {
+        const databases = await this._global.indexedDB.databases();
+        result.indexedDB = await Promise.all(databases.map(db => this._collectDB(db)));
+      } catch (e) {
+        throw new Error('Unable to serialize IndexedDB: ' + e.message);
+      }
     }
+    if (record.opfs) {
+      try {
+        result.opfs = await this._collectOPFS(await this._global.navigator.storage.getDirectory());
+      } catch (e) {
+        throw new Error('Unable to serialize OPFS: ' + e.message);
+      }
+    }
+    return result;
   }
 
   private async _restoreDB(dbInfo: IndexedDBDatabase) {
@@ -176,6 +224,84 @@ export class StorageScript {
     }));
   }
 
+  private async _restoreOPFS(root: FileSystemDirectoryHandle, entries: OPFSEntry[]) {
+    for (const entry of entries) {
+      const parts = entry.path.split('/');
+      if (!entry.path || parts.some(part => !part || part === '.' || part === '..'))
+        throw new Error(`Invalid OPFS path: ${entry.path}`);
+      if (entry.type === 'file' && entry.base64 === undefined)
+        throw new Error(`OPFS file is missing base64 data: ${entry.path}`);
+    }
+
+    if (this._isFirefox) {
+      const source = `
+        onmessage = async event => {
+          try {
+            const entries = JSON.parse(event.data);
+            const root = await navigator.storage.getDirectory();
+            for (const entry of entries) {
+              const parts = entry.path.split('/');
+              let directory = root;
+              for (const part of parts.slice(0, -1))
+                directory = await directory.getDirectoryHandle(part, { create: true });
+              const name = parts[parts.length - 1];
+              if (entry.type === 'directory') {
+                await directory.getDirectoryHandle(name, { create: true });
+                continue;
+              }
+              const binary = atob(entry.base64);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; ++i)
+                bytes[i] = binary.charCodeAt(i);
+              const handle = await directory.getFileHandle(name, { create: true });
+              const writable = await handle.createWritable();
+              await writable.write(bytes);
+              await writable.close();
+            }
+            postMessage({});
+          } catch (error) {
+            postMessage({ error: error instanceof Error ? error.message : String(error) });
+          }
+        };
+      `;
+      const url = this._global.URL.createObjectURL(new this._global.Blob([source], { type: 'text/javascript' }));
+      let worker: Worker | undefined;
+      try {
+        worker = new this._global.Worker(url);
+        await new Promise<void>((resolve, reject) => {
+          worker!.onmessage = event => event.data.error ? reject(new Error(event.data.error)) : resolve();
+          worker!.onerror = event => reject(new Error(event.message));
+          worker!.postMessage(JSON.stringify(entries));
+        });
+      } finally {
+        worker?.terminate();
+        this._global.URL.revokeObjectURL(url);
+      }
+      return;
+    }
+
+    for (const entry of entries) {
+      const parts = entry.path.split('/');
+      let directory = root;
+      for (const part of parts.slice(0, -1))
+        directory = await directory.getDirectoryHandle(part, { create: true });
+
+      const name = parts[parts.length - 1];
+      if (entry.type === 'directory') {
+        await directory.getDirectoryHandle(name, { create: true });
+        continue;
+      }
+      const binary = this._global.atob(entry.base64!);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; ++i)
+        bytes[i] = binary.charCodeAt(i);
+      const handle = await directory.getFileHandle(name, { create: true });
+      const writable = await handle.createWritable();
+      await writable.write(bytes);
+      await writable.close();
+    }
+  }
+
   async restore(originState: SetOriginStorage | undefined) {
     // Clean Service Workers.
     const registrations = this._global.navigator.serviceWorker ? await this._global.navigator.serviceWorker.getRegistrations() : [];
@@ -206,5 +332,21 @@ export class StorageScript {
     this._global.localStorage.clear();
     for (const { name, value } of (originState?.localStorage || []))
       this._global.localStorage.setItem(name, value);
+
+    try {
+      let root: FileSystemDirectoryHandle;
+      try {
+        root = await this._global.navigator.storage.getDirectory();
+      } catch (e) {
+        if (this._isWebKit && originState?.opfs === undefined && e.name === 'UnknownError' && e.message.includes('unknown transient reason'))
+          return;
+        throw e;
+      }
+      for (const [name] of await this._directoryEntries(root))
+        await root.removeEntry(name, { recursive: true });
+      await this._restoreOPFS(root, originState?.opfs ?? []);
+    } catch (e) {
+      throw new Error('Unable to restore OPFS: ' + e.message);
+    }
   }
 }

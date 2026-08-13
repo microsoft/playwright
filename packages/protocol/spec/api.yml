@@ -69,6 +69,7 @@ APIRequestContext:
       group: configuration
       parameters:
         indexedDB: boolean?
+        opfs: boolean?
       returns:
         cookies:
           type: array
