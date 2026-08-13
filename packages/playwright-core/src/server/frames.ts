@@ -1202,7 +1202,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     progress: Progress,
     selector: string,
     options: { strict?: boolean, noAutoWaiting?: boolean, force?: boolean, performActionPreChecks?: boolean },
-    action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
+    action: (progress: Progress, handle: dom.ElementHandle<Element>, box?: types.Rect) => Promise<R | 'error:notconnected'>): Promise<R> {
     progress.log(`waiting for ${this._asLocator(selector)}`);
     const noAutoWaiting = (options as any).__testHookNoAutoWaiting ?? options.noAutoWaiting;
     const performActionPreChecks = (options.performActionPreChecks ?? !options.force) && !noAutoWaiting;
@@ -1217,7 +1217,8 @@ export class Frame extends SdkObject<FrameEventMap> {
           log = `  locator resolved to ${elements.length} elements. Proceeding with the first one: ${injected.previewNode(elements[0])}`;
         else if (element)
           log = `  locator resolved to ${injected.previewNode(element)}`;
-        return { log, success: !!element, element };
+        const rect = element?.getBoundingClientRect();
+        return { log, success: !!element, element, box: rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : undefined };
       }, {}));
       if (!resolved) {
         if (noAutoWaiting)
@@ -1225,7 +1226,7 @@ export class Frame extends SdkObject<FrameEventMap> {
         return continuePolling;
       }
       const result = resolved.result;
-      const { log, success } = await progress.race(result.evaluate(r => ({ log: r.log, success: r.success })));
+      const { log, success, box } = await progress.race(result.evaluate(r => ({ log: r.log, success: r.success, box: r.box })));
       if (log)
         progress.log(log);
       if (!success) {
@@ -1237,7 +1238,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       const element = await progress.race(result.evaluateHandle(r => r.element)) as dom.ElementHandle<Element>;
       result.dispose();
       try {
-        const result = await action(progress, element);
+        const result = await action(progress, element, box);
         if (result === 'error:notconnected') {
           if (noAutoWaiting)
             throw new dom.NonRecoverableDOMError('Element is not attached to the DOM');
@@ -1297,7 +1298,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async fill(progress: Progress, selector: string, value: string, options: types.CommonActionOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._fill(progress, value, options)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle, box) => handle._fill(progress, value, options, box)));
   }
 
   async focus(progress: Progress, selector: string, options: types.StrictOptions & { noAutoWaiting?: boolean }) {
@@ -1446,12 +1447,12 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async selectOption(progress: Progress, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[]> {
-    return await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._selectOption(progress, elements, values, options));
+    return await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle, box) => handle._selectOption(progress, elements, values, options, box));
   }
 
   async setInputFiles(progress: Progress, selector: string, params: Omit<channels.FrameSetInputFilesParams, 'timeout'> & { noAutoWaiting?: boolean }): Promise<channels.FrameSetInputFilesResult> {
     const inputFileItems = await progress.race(prepareFilesForUpload(this, params));
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, params, (progress, handle) => handle._setInputFiles(progress, inputFileItems)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, params, (progress, handle, box) => handle._setInputFiles(progress, inputFileItems, box)));
   }
 
   async drop(progress: Progress, selector: string, params: Omit<channels.FrameDropParams, 'timeout' | 'selector'>, options: types.PointerActionWaitOptions): Promise<void> {
@@ -1465,11 +1466,11 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async type(progress: Progress, selector: string, text: string, options: { delay?: number, noAutoWaiting?: boolean } & types.StrictOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._type(progress, text, options)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle, box) => handle._type(progress, text, options, box)));
   }
 
   async press(progress: Progress, selector: string, key: string, options: { delay?: number, noWaitAfter?: boolean, noAutoWaiting?: boolean } & types.StrictOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._press(progress, key, options)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle, box) => handle._press(progress, key, options, box)));
   }
 
   async check(progress: Progress, selector: string, options: types.PointerActionWaitOptions) {

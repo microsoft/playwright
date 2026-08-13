@@ -16,7 +16,7 @@
 
 import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { Point } from '@isomorphic/types';
+import type { Point, Rect } from '@isomorphic/types';
 
 export type Size = { width: number, height: number };
 
@@ -143,6 +143,7 @@ export type InputActionTraceEvent = {
   callId: string;
   inputSnapshot?: string;
   point?: Point;
+  box?: Rect;
 };
 
 export type AfterActionTraceEventAttachment = {
