@@ -343,7 +343,12 @@ export abstract class APIRequestContext extends SdkObject {
         = (url.protocol === 'https:' ? https : http).request;
       // If we have a proxy agent already, do not override it.
       const agent = options.agent || (url.protocol === 'https:' ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent);
-      const requestOptions = { ...options, agent };
+      const requestOptions: SendRequestOptions = { ...options, agent };
+      // Happy eyeballs sockets are not attached to the request until the tls handshake,
+      // so request.destroy() cannot reach them. Bound each connection attempt with the
+      // remaining time budget so that stalled attempts do not outlive the request.
+      if (progress.deadline)
+        requestOptions.timeout = Math.max(1, progress.deadline - monotonicTime());
 
       const startAt = monotonicTime();
       const startAtWallTime = Date.now();

@@ -115,7 +115,7 @@ export async function createConnectionAsync(
   const hostname = clientRequestArgsToHostName(options);
   const addresses = await lookup(hostname);
   const dnsLookupAt = monotonicTime();
-  const sockets = new Set<net.Socket>();
+  const sockets = new Map<net.Socket, net.Socket>();
   let firstError;
   let errorCount = 0;
   const handleError = (socket: net.Socket, err: Error) => {
@@ -126,52 +126,73 @@ export async function createConnectionAsync(
     if (errorCount === addresses.length)
       oncreate?.(firstError);
   };
+  const abortAttempt = (socket: net.Socket, transport: net.Socket) => {
+    // Destroying a tls socket during the handshake does not close the underlying
+    // tcp connection, and neither does destroying the transport once it has been
+    // wrapped. Resetting the transport before touching the tls socket does.
+    transport.resetAndDestroy();
+    socket.destroy();
+  };
 
   const connected = new ManualPromise();
   for (const { address } of addresses) {
+    // Own the tcp transport instead of letting tls.connect() create it,
+    // so that a stalled attempt can be closed via abortAttempt().
+    const transport = net.createConnection({
+      ...options,
+      port: options.port as number,
+      host: address });
     const socket = useTLS ?
       tls.connect({
         ...(options as tls.ConnectionOptions),
-        port: options.port as number,
-        host: address,
+        socket: transport,
         servername: hostname }) :
-      net.createConnection({
-        ...options,
-        port: options.port as number,
-        host: address });
+      transport;
 
     (socket as any)[kDNSLookupAt] = dnsLookupAt;
-    // tls.connect() ignores the timeout option, so set it on the socket directly.
+    // tls.connect() ignores the timeout option, so set it on the transport directly.
+    // It bounds this connection attempt; the winner's timer is reset upon commitment.
     if (options.timeout !== undefined)
-      socket.setTimeout(options.timeout);
+      transport.setTimeout(options.timeout);
 
-    socket.on('connect', () => {
+    transport.on('connect', () => {
       (socket as any)[kTCPConnectionAt] = monotonicTime();
     });
     // For tls, wait for the handshake instead of committing upon tcp connection.
     // Otherwise, a route where tcp connects but tls stalls would starve
-    // working alternatives. A tls socket may fire 'error' or 'timeout' after
+    // working alternatives. A socket may fire 'error' or 'timeout' after
     // 'connect', which counts as a failed attempt for this address.
     socket.on(useTLS ? 'secureConnect' : 'connect', () => {
       if (!sockets.delete(socket))
         return;
       if (useTLS)
         (socket as any)[kTLSHandshakeAt] = monotonicTime();
+      transport.setTimeout(0);
       connected.resolve();
       oncreate?.(null, socket);
       // TODO: Cache the result?
       // Close other outstanding sockets.
-      for (const s of sockets)
-        s.destroy();
+      for (const [s, t] of sockets)
+        abortAttempt(s, t);
       sockets.clear();
     });
-    socket.on('timeout', () => {
+    transport.on('timeout', () => {
       // Timeout is not an error, so we have to manually close the socket.
-      socket.destroy();
+      abortAttempt(socket, transport);
       handleError(socket, new Error('Connection timeout'));
     });
-    socket.on('error', e => handleError(socket, e));
-    sockets.add(socket);
+    socket.on('error', e => {
+      if (socket !== transport)
+        transport.resetAndDestroy();
+      handleError(socket, e);
+    });
+    if (socket !== transport) {
+      transport.on('error', e => {
+        socket.destroy();
+        handleError(socket, e);
+      });
+    }
+    sockets.set(socket, transport);
     await Promise.race([
       connected,
       new Promise(f => setTimeout(f, connectionAttemptDelayMs))

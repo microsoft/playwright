@@ -79,6 +79,7 @@ it('should fall back to another address when tls handshake stalls', async ({ con
   const stalledSockets = new Set<net.Socket>();
   const stallServer = net.createServer(socket => {
     stalledSockets.add(socket);
+    socket.on('error', () => {});
     socket.on('close', () => stalledSockets.delete(socket));
   });
   await new Promise<void>((resolve, reject) => {
@@ -96,11 +97,49 @@ it('should fall back to another address when tls handshake stalls', async ({ con
     } as any);
     expect(response.status()).toBe(200);
     expect(await response.text()).toBe('Hello');
+    await expect.poll(() => stalledSockets.size).toBe(0);
   } finally {
     for (const socket of stalledSockets)
       socket.destroy();
     await new Promise(resolve => stallServer.close(resolve));
     await new Promise(resolve => httpsServer.close(resolve));
+  }
+});
+
+it('should close stalled sockets when the request times out', async ({ context }) => {
+  it.skip(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
+  const stalledSockets = new Set<net.Socket>();
+  let socketsSeen = 0;
+  const trackSocket = (socket: net.Socket) => {
+    ++socketsSeen;
+    stalledSockets.add(socket);
+    socket.on('error', () => {});
+    socket.on('close', () => stalledSockets.delete(socket));
+  };
+  const stallServer6 = net.createServer(trackSocket);
+  const port = await new Promise<number>(resolve => stallServer6.listen(0, '::1', () => resolve((stallServer6.address() as net.AddressInfo).port)));
+  const stallServer4 = net.createServer(trackSocket);
+  await new Promise<void>((resolve, reject) => {
+    stallServer4.on('error', reject);
+    stallServer4.listen(port, '127.0.0.1', resolve);
+  });
+  try {
+    const error = await context.request.get(`https://localhost:${port}/`, {
+      ignoreHTTPSErrors: true,
+      timeout: 1000,
+      __testHookLookup: (): LookupAddress[] => [
+        { address: '::1', family: 6 },
+        { address: '127.0.0.1', family: 4 },
+      ],
+    } as any).catch(e => e);
+    expect(error.message).toContain('Timeout 1000ms exceeded');
+    expect(socketsSeen).toBe(2);
+    await expect.poll(() => stalledSockets.size).toBe(0);
+  } finally {
+    for (const socket of stalledSockets)
+      socket.destroy();
+    await new Promise(resolve => stallServer4.close(resolve));
+    await new Promise(resolve => stallServer6.close(resolve));
   }
 });
 
