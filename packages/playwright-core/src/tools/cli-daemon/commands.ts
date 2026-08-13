@@ -1113,7 +1113,7 @@ const install = declareCommand({
   category: 'install',
   args: z.object({}),
   options: z.object({
-    skills: z.string().optional().describe('Install skills, possible values: claude (default), agents.'),
+    skills: z.string().optional().describe('Install skills, possible values: claude (default), agents, cursor.'),
     global: z.boolean().optional().describe('Install skills into the home directory instead of the workspace (alias: -g). Requires --skills.'),
   }),
   toolName: '',

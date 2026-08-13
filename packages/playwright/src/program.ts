@@ -26,7 +26,7 @@ import { builtInReporters, config, configLoader } from './common';
 import { runTests, clearCache, runTestServerAction } from './cli/testActions';
 import { showReport, mergeReports } from './cli/reportActions';
 import { TestServerBackend, testServerBackendTools } from './mcp/test/testBackend';
-import { ClaudeGenerator, CodexGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
+import { ClaudeGenerator, CodexGenerator, CursorGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
 import { packageRoot, packageJSON } from './package';
 
 export { program };
@@ -162,7 +162,7 @@ function addInitAgentsCommand(program: Command) {
   const command = program.command('init-agents');
   command.description('Initialize repository agents');
   const option = command.createOption('--loop <loop>', 'Agentic loop provider');
-  option.choices(['claude', 'codex', 'copilot', 'opencode', 'vscode', 'vscode-legacy']);
+  option.choices(['claude', 'codex', 'copilot', 'cursor', 'opencode', 'vscode', 'vscode-legacy']);
   command.addOption(option);
   command.option('-c, --config <file>', `Configuration file to find a project to use for seed test`);
   command.option('--project <project>', 'Project to use for seed test');
@@ -177,6 +177,8 @@ function addInitAgentsCommand(program: Command) {
       await ClaudeGenerator.init(loadedConfig, opts.project, opts.prompts);
     } else if (opts.loop === 'codex') {
       await CodexGenerator.init(loadedConfig, opts.project, opts.prompts);
+    } else if (opts.loop === 'cursor') {
+      await CursorGenerator.init(loadedConfig, opts.project, opts.prompts);
     } else {
       await CopilotGenerator.init(loadedConfig, opts.project, opts.prompts);
       return;
@@ -188,7 +190,7 @@ function addInitSkillsCommand(program: Command) {
   const command = program.command('init-skills');
   command.description('Install Playwright agent skills');
   const option = command.createOption('--loop <loop>', 'Agentic loop provider');
-  option.choices(['claude', 'agents']);
+  option.choices(['claude', 'agents', 'cursor']);
   option.default('claude');
   command.addOption(option);
   command.action(async opts => {

@@ -122,6 +122,86 @@ test('codex generates agent toml files', async ({  }) => {
   expect(healerToml).toMatch(/enabled_tools = \[[^\]]*"test_debug"[^\]]*\]/);
 });
 
+test('cursor generates agent files and mcp config', async ({  }) => {
+  const baseDir = await writeFiles({
+    'playwright.config.ts': `module.exports = {};`,
+  });
+
+  await runInitAgents({ cwd: baseDir, args: ['--loop', 'cursor'] });
+
+  const agentsDir = path.join(baseDir, '.cursor', 'agents');
+  for (const name of ['playwright-test-planner', 'playwright-test-generator', 'playwright-test-healer']) {
+    const filePath = path.join(agentsDir, `${name}.md`);
+    expect(fs.existsSync(filePath)).toBe(true);
+    const content = fs.readFileSync(filePath, 'utf-8');
+    expect(content).toContain(`name: ${name}`);
+    expect(content).toContain('model: inherit');
+    expect(content).not.toContain('tools:');
+    expect(content.trim().split('\n').length).toBeGreaterThan(3);
+  }
+
+  const mcpJson = JSON.parse(fs.readFileSync(path.join(baseDir, '.cursor', 'mcp.json'), 'utf-8'));
+  expect(mcpJson.mcpServers['playwright-test'].type).toBe('stdio');
+  if (process.platform === 'win32') {
+    expect(mcpJson.mcpServers['playwright-test'].command).toBe('cmd');
+    expect(mcpJson.mcpServers['playwright-test'].args).toEqual(['/c', 'npx', 'playwright', 'run-test-mcp-server']);
+  } else {
+    expect(mcpJson.mcpServers['playwright-test'].command).toBe('npx');
+    expect(mcpJson.mcpServers['playwright-test'].args).toEqual(['playwright', 'run-test-mcp-server']);
+  }
+});
+
+test('cursor preserves existing mcp servers', async ({  }) => {
+  const baseDir = await writeFiles({
+    'playwright.config.ts': `module.exports = {};`,
+    '.cursor/mcp.json': JSON.stringify({
+      mcpServers: {
+        'existing': { type: 'stdio', command: 'existing-server', args: [] },
+      },
+    }),
+  });
+
+  await runInitAgents({ cwd: baseDir, args: ['--loop', 'cursor'] });
+
+  const mcpJson = JSON.parse(fs.readFileSync(path.join(baseDir, '.cursor', 'mcp.json'), 'utf-8'));
+  expect(mcpJson.mcpServers['existing'].command).toBe('existing-server');
+  expect(mcpJson.mcpServers['playwright-test']).toBeTruthy();
+});
+
+test('cursor generates prompts with --prompts', async ({  }) => {
+  const baseDir = await writeFiles({
+    'playwright.config.ts': `module.exports = {};`,
+  });
+
+  await runInitAgents({ cwd: baseDir, args: ['--loop', 'cursor', '--prompts'] });
+
+  const commandsDir = path.join(baseDir, '.cursor', 'commands');
+  expect(fs.existsSync(commandsDir)).toBe(true);
+  expect(fs.readdirSync(commandsDir).length).toBeGreaterThan(0);
+});
+
+test('cursor does not generate commands without --prompts', async ({  }) => {
+  const baseDir = await writeFiles({
+    'playwright.config.ts': `module.exports = {};`,
+  });
+
+  await runInitAgents({ cwd: baseDir, args: ['--loop', 'cursor'] });
+
+  expect(fs.existsSync(path.join(baseDir, '.cursor', 'commands'))).toBe(false);
+});
+
+test('cursor generation is idempotent', async ({  }) => {
+  const baseDir = await writeFiles({
+    'playwright.config.ts': `module.exports = {};`,
+  });
+
+  await runInitAgents({ cwd: baseDir, args: ['--loop', 'cursor'] });
+  await runInitAgents({ cwd: baseDir, args: ['--loop', 'cursor'] });
+
+  const mcpJson = JSON.parse(fs.readFileSync(path.join(baseDir, '.cursor', 'mcp.json'), 'utf-8'));
+  expect(Object.keys(mcpJson.mcpServers)).toEqual(['playwright-test']);
+});
+
 test('init-skills installs all skills', async ({  }) => {
   const baseDir = await writeFiles({});
 
@@ -139,4 +219,14 @@ test('init-skills installs into .agents with --loop agents', async ({  }) => {
 
   for (const skill of ['playwright-cli', 'playwright-component-testing', 'playwright-trace'])
     expect(fs.existsSync(path.join(baseDir, '.agents', 'skills', skill, 'SKILL.md'))).toBe(true);
+});
+
+test('init-skills installs into .cursor with --loop cursor', async ({  }) => {
+  const baseDir = await writeFiles({});
+
+  await spawnAsync('npx', ['playwright', 'init-skills', '--loop', 'cursor'], { cwd: baseDir, shell: true });
+
+  for (const skill of ['playwright-cli', 'playwright-component-testing', 'playwright-trace'])
+    expect(fs.existsSync(path.join(baseDir, '.cursor', 'skills', skill, 'SKILL.md'))).toBe(true);
+  expect(fs.existsSync(path.join(baseDir, '.cursor', 'skills', 'playwright-cli', 'references', 'tracing.md'))).toBe(true);
 });
