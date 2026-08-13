@@ -44,14 +44,15 @@ export class ProgressController {
   readonly metadata: CallMetadata;
   private _controller: AbortController;
 
-  constructor(metadata?: CallMetadata, onCallLog?: (message: string) => void) {
+  constructor(metadata?: CallMetadata, onCallLog?: (message: string) => void, pendingAbortError?: Error) {
     this.metadata = metadata || { id: '', startTime: 0, endTime: 0, type: 'Internal', method: '', params: {}, log: [], internal: true };
     this._onCallLog = onCallLog;
+    this._pendingAbortError = pendingAbortError;
     this._forceAbortPromise.catch(e => null);  // Prevent unhandled promise rejection.
     this._controller = new AbortController();
   }
 
-  static createForSdkObject(sdkObject: SdkObject, callMetadata: CallMetadata) {
+  static createForSdkObject(sdkObject: SdkObject, callMetadata: CallMetadata, pendingAbortError?: Error) {
     const logName = sdkObject.logName || 'api';
     return new ProgressController(callMetadata, message => {
       // Note: "attribution.playwright" is undefined in DebugController. Unfortunate!
@@ -59,7 +60,7 @@ export class ProgressController {
         return;
       debugLogger.log(logName, message);
       sdkObject.instrumentation.onCallLog(sdkObject, callMetadata, logName, message);
-    });
+    }, pendingAbortError);
   }
 
   async abort(error: Error) {
