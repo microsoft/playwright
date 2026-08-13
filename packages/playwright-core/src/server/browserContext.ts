@@ -554,6 +554,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   }
 
   async close(progress: Progress, options: { reason?: string }) {
+    let flushError: Error | undefined;
     if (this._closedStatus === 'open') {
       if (options.reason)
         this._closeReason = options.reason;
@@ -561,8 +562,8 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       this._closedStatus = 'closing';
 
       await progress.race(Promise.all([
-        this.tracing.flush(),
-        this.fetchRequest.tracing().flush(),
+        this.tracing.flush().catch(e => flushError = flushError ?? e),
+        this.fetchRequest.tracing().flush().catch(e => flushError = flushError ?? e),
       ]));
       await progress.race(Promise.all(this.pages().map(page => page.screencast.handlePageOrContextClose())));
 
@@ -587,6 +588,8 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         this._didCloseInternal();
     }
     await this._closePromise;
+    if (flushError)
+      throw flushError;
   }
 
   async newPage(progress: Progress, forStorageState?: boolean): Promise<Page> {

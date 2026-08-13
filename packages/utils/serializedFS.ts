@@ -86,11 +86,15 @@ export class SerializedFS {
     this._appendOperation({ op: 'copyFile', from, to });
   }
 
-  async syncAndGetError() {
+  async sync() {
     for (const file of this._buffers.keys())
       this._flushFile(file);
     await this._operationsDone;
-    return this._error;
+    if (this._error) {
+      const e = this._error;
+      this._error = undefined;
+      throw e;
+    }
   }
 
   zip(entries: NameValue[], zipFileName: string) {

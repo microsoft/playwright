@@ -940,6 +940,19 @@ it('should not hang on slow chunked response', async ({ browserName, browser, co
   expect(log.browser!.version).toBe(browser.version());
 });
 
+it('should close the context when saving the har fails', async ({ contextFactory, server }, testInfo) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42231' });
+  const filePath = testInfo.outputPath('not-a-directory');
+  fs.writeFileSync(filePath, 'data');
+  const context = await contextFactory({ recordHar: { path: path.join(filePath, 'test.har') } });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  const closed = new Promise(f => context.on('close', f));
+  await expect(context.close()).rejects.toThrow(/ENOTDIR|ENOENT|EEXIST/);
+  await closed;
+  await context.close();
+});
+
 it('should support HAR larger than 512MB', async ({ contextFactory, server, browserName }, testInfo) => {
   it.skip(browserName !== 'chromium', 'serializer is browser-agnostic; one browser is enough');
   it.slow();

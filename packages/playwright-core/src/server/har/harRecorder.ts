@@ -141,9 +141,7 @@ export class HarRecorder implements HarTracerDelegate {
 
   async flush() {
     await this._flush();
-    const error = await this._fs.syncAndGetError();
-    if (error)
-      throw error;
+    await this._fs.sync();
   }
 
   async export(mode: 'archive' | 'entries'): Promise<{ entries?: NameValue[], artifact?: Artifact }> {
@@ -154,9 +152,7 @@ export class HarRecorder implements HarTracerDelegate {
     const zipPath = this._harFilePath + '.zip';
     if (mode === 'archive')
       this._fs.zip(entries, zipPath);
-    const error = await this._fs.syncAndGetError();
-    if (error)
-      throw error;
+    await this._fs.sync();
     if (mode === 'entries')
       return { entries };
     const artifact = new Artifact(this._context, zipPath);

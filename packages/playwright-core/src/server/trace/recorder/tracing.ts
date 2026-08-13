@@ -337,7 +337,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._closeAllGroups();
     this._harTracer.stop();
     this.flushHarEntries();
-    await this._fs.syncAndGetError().finally(() => {
+    await this._fs.sync().finally(() => {
       this._state = undefined;
     });
   }
@@ -363,7 +363,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this.abort();
     for (const harRecorder of this.harRecorders.values())
       await harRecorder.flush();
-    await this._fs.syncAndGetError();
+    await this._fs.sync();
   }
 
   harStart(page: Page | null, options: RecordHarOptions): string {
@@ -442,7 +442,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     // Make sure all file operations complete.
     let error: Error | undefined;
     try {
-      await progress.race(this._fs.syncAndGetError());
+      await progress.race(this._fs.sync());
     } catch (e) {
       error = e as Error;
     }
