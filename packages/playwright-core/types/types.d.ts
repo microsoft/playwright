@@ -18761,11 +18761,6 @@ export interface Screencast {
       height: number;
     };
     quality?: number;
-    annotate?: {
-      duration?: number;
-      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right';
-      fontSize?: number;
-    };
   }): Promise<Disposable>;
   /**
    * Removes action decorations.

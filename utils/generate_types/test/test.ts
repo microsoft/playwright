@@ -19,6 +19,10 @@ import * as playwright from 'playwright';
 type AssertType<T, S> = S extends T ? AssertNotAny<S> : false;
 type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;
 
+declare const page: playwright.Page;
+// @ts-expect-error annotate is not a Screencast.start option.
+page.screencast.start({ annotate: { position: 'top-left' } });
+
 // Examples taken from README
 (async () => {
   const browser = await playwright.chromium.launch();
