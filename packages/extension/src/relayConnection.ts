@@ -54,6 +54,10 @@ const CHROME_EVENT_METHODS = [
   'chrome.tabs.onRemoved',
 ];
 
+const REATTACH_DELAY_MS = 150;
+const REATTACH_VERIFY_MS = 2500;
+const REATTACH_COOLDOWN_MS = 3000;
+
 export class RelayConnection {
   private _ws: WebSocket;
   // Tabs whose debugger we have explicitly attached for this connection.
@@ -62,6 +66,8 @@ export class RelayConnection {
   private _hasEverAttached = false;
   private _eventListeners: Array<{ remove: () => void }> = [];
   private _closed = false;
+  private _pendingReattach = new Set<number>();
+  private _recentReattach = new Set<number>();
 
   onclose?: () => void;
   ontabattached?: (tabId: number) => void;
@@ -125,6 +131,7 @@ export class RelayConnection {
   private _notifyTabAttached(tabId: number): void {
     this._attachedTabs.add(tabId);
     this._hasEverAttached = true;
+    this._pendingReattach.delete(tabId);
     this.ontabattached?.(tabId);
   }
 
@@ -148,6 +155,8 @@ export class RelayConnection {
     if (this._closed)
       return;
     this._closed = true;
+    this._pendingReattach.clear();
+    this._recentReattach.clear();
     for (const l of this._eventListeners)
       l.remove();
     this._eventListeners = [];
@@ -159,7 +168,7 @@ export class RelayConnection {
   }
 
   private _checkLastTabDetached(): void {
-    if (this._hasEverAttached && this._attachedTabs.size === 0)
+    if (this._hasEverAttached && this._attachedTabs.size === 0 && this._pendingReattach.size === 0)
       this.close('All controlled tabs detached');
   }
 
@@ -172,9 +181,57 @@ export class RelayConnection {
     this._sendMessage({ method: fullMethod, params: args });
     // chrome.debugger.onDetach is the single source of truth for detach bookkeeping.
     if (fullMethod === 'chrome.debugger.onDetach') {
+      const reason = args[1] as string | undefined;
       this._notifyTabDetached(tabId);
+      if (reason === 'target_closed' && this._maybeScheduleReattach(tabId))
+        return;
       this._checkLastTabDetached();
     }
+  }
+
+  private _maybeScheduleReattach(tabId: number): boolean {
+    if (this._closed)
+      return false;
+    if (this._recentReattach.has(tabId)) {
+      debugLog(`Not re-attaching tab ${tabId}: re-detached within ${REATTACH_COOLDOWN_MS}ms`);
+      return false;
+    }
+    this._recentReattach.add(tabId);
+    setTimeout(() => this._recentReattach.delete(tabId), REATTACH_COOLDOWN_MS);
+    this._pendingReattach.add(tabId);
+    setTimeout(() => void this._tryReattach(tabId), REATTACH_DELAY_MS);
+    return true;
+  }
+
+  private _reattachAborted(tabId: number): boolean {
+    return this._closed || !this._pendingReattach.has(tabId);
+  }
+
+  private async _tryReattach(tabId: number): Promise<void> {
+    if (this._reattachAborted(tabId))
+      return;
+    let tab: chrome.tabs.Tab | undefined;
+    try {
+      tab = await chrome.tabs.get(tabId);
+    } catch {
+      this._pendingReattach.delete(tabId);
+      this._checkLastTabDetached();
+      return;
+    }
+    if (this._reattachAborted(tabId))
+      return;
+    if (this._attachedTabs.has(tabId)) {
+      this._pendingReattach.delete(tabId);
+      return;
+    }
+    this.attachTab(tab);
+    setTimeout(() => {
+      if (this._reattachAborted(tabId))
+        return;
+      this._pendingReattach.delete(tabId);
+      if (!this._attachedTabs.has(tabId))
+        this._checkLastTabDetached();
+    }, REATTACH_VERIFY_MS);
   }
 
   // Returns the tabId an event refers to, for filtering by _attachedTabs.

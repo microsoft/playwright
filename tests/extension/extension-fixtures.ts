@@ -206,6 +206,19 @@ export async function readExtensionToken(browserContext: BrowserContext): Promis
   return value;
 }
 
+export async function connectWithToken(browserContext: BrowserContext, startClient: StartClient, userDataDir: string): Promise<{ client: Client, stderr: () => string }> {
+  const token = await readExtensionToken(browserContext);
+  const { client, stderr } = await startClient({
+    args: ['--extension'],
+    env: {
+      DEBUG: 'pw:mcp:backend',
+      PLAYWRIGHT_MCP_EXTENSION_TOKEN: token,
+      PWTEST_EXTENSION_USER_DATA_DIR: userDataDir,
+    },
+  });
+  return { client, stderr };
+}
+
 // The connect page closes itself once a different tab is selected, which races
 // with the click — the request reaches the background while the page is being
 // torn down. Swallow the resulting "Target closed" error.
