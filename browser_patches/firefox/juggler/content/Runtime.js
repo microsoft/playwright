@@ -56,6 +56,10 @@ const disallowedMessageCategories = new Set([
 class Runtime {
   constructor(isWorker = false) {
     this._debugger = new Debugger();
+    // A debuggee global with these flags unset is pinned to the debuggable wasm/asm.js
+    // baseline tier, with the optimizing compiler disabled entirely.
+    this._debugger.allowUnobservedWasm = true;
+    this._debugger.allowUnobservedAsmJS = true;
     this._pendingPromises = new Map();
     this._executionContexts = new Map();
     this._windowToExecutionContext = new Map();
