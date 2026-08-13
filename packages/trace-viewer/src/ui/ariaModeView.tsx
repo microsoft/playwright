@@ -73,6 +73,7 @@ export function collectAriaModeTargets(model: TraceModel, action: ActionTraceEve
   return { action: actionTarget, before, after };
 }
 
+type Point = { x: number, y: number };
 type Box = { x: number, y: number, width: number, height: number };
 
 type AriaSnapshotLine = {
@@ -133,7 +134,9 @@ function renderLineTokens(text: string): React.ReactNode[] {
 export const AriaModeView: React.FunctionComponent<{
   model: TraceModel | undefined,
   target: AriaModeTarget | undefined,
-}> = ({ model, target }) => {
+  point?: Point,
+  box?: Box,
+}> = ({ model, target, point, box }) => {
   const screenshot = model && target ? model.screenshotForCall(target.callId, target.phase) : undefined;
   const ariaSnapshot = model && target ? model.ariaSnapshotForCall(target.callId, target.phase) : undefined;
   const [lines, setLines] = React.useState<AriaSnapshotLine[]>([]);
@@ -165,7 +168,7 @@ export const AriaModeView: React.FunctionComponent<{
     return <PlaceholderPanel text='No aria snapshot' />;
 
   return <div className='aria-mode-view hbox'>
-    <AriaModeScreenshot model={model!} screenshot={screenshot} highlightedBox={highlightedBox} />
+    <AriaModeScreenshot model={model!} screenshot={screenshot} highlightedBox={highlightedBox} point={point} box={box} />
     <div className='aria-mode-snapshot vbox'>
       {ariaSnapshot && <div className='aria-mode-lines' onMouseLeave={() => setHighlightedBox(undefined)}>
         {lines.map((line, index) => <div
@@ -183,23 +186,40 @@ const AriaModeScreenshot: React.FunctionComponent<{
   model: TraceModel,
   screenshot: ScreenshotTraceEvent | undefined,
   highlightedBox: Box | undefined,
-}> = ({ model, screenshot, highlightedBox }) => {
+  point: Point | undefined,
+  box: Box | undefined,
+}> = ({ model, screenshot, highlightedBox, point, box }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [naturalSize, setNaturalSize] = React.useState<{ width: number, height: number } | undefined>();
 
-  // Trace screenshots are taken with css scale, so image pixels match the aria box viewport coordinates.
-  let highlightStyle: React.CSSProperties | undefined;
-  if (highlightedBox && naturalSize && measure.width) {
+  // Trace screenshots are taken with css scale, so image pixels match the aria box viewport
+  // coordinates. The image is scaled to fit into the available area, scale the boxes and
+  // the action point to match the rendered image.
+  let overlays: React.ReactNode;
+  if (screenshot && naturalSize && measure.width) {
     const padding = 10;
     const availableWidth = measure.width - 2 * padding;
     const availableHeight = measure.height - 2 * padding;
     const scale = Math.min(availableWidth / naturalSize.width, availableHeight / naturalSize.height, 1);
-    highlightStyle = {
-      left: padding + (availableWidth - naturalSize.width * scale) / 2 + highlightedBox.x * scale + 'px',
-      top: padding + (availableHeight - naturalSize.height * scale) / 2 + highlightedBox.y * scale + 'px',
-      width: highlightedBox.width * scale + 'px',
-      height: highlightedBox.height * scale + 'px',
-    };
+    const offsetX = padding + (availableWidth - naturalSize.width * scale) / 2;
+    const offsetY = padding + (availableHeight - naturalSize.height * scale) / 2;
+    const boxStyle = (b: Box): React.CSSProperties => ({
+      left: offsetX + b.x * scale + 'px',
+      top: offsetY + b.y * scale + 'px',
+      width: b.width * scale + 'px',
+      height: b.height * scale + 'px',
+    });
+    const pointStyle = (p: Point): React.CSSProperties => ({
+      left: offsetX + p.x * scale + 'px',
+      top: offsetY + p.y * scale + 'px',
+      width: 20 * scale + 'px',
+      height: 20 * scale + 'px',
+    });
+    overlays = <>
+      {box && <div className='aria-mode-action-highlight' style={boxStyle(box)} />}
+      {point && <div className='aria-mode-action-point' style={pointStyle(point)} />}
+      {highlightedBox && <div className='aria-mode-highlight' style={boxStyle(highlightedBox)} />}
+    </>;
   }
 
   return <div ref={ref} className='aria-mode-screenshot'>
@@ -210,6 +230,6 @@ const AriaModeScreenshot: React.FunctionComponent<{
       onLoad={event => setNaturalSize({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })}
     />}
     {!screenshot && <PlaceholderPanel text='No screenshot' />}
-    {screenshot && highlightStyle && <div className='aria-mode-highlight' style={highlightStyle} />}
+    {overlays}
   </div>;
 };

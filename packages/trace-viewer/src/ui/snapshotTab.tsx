@@ -104,6 +104,8 @@ export const SnapshotTabsView: React.FunctionComponent<{
     {displayAriaMode && <AriaModeView
       model={model}
       target={ariaModeTargets[snapshotTab]}
+      point={snapshotTab === 'action' ? action?.point : undefined}
+      box={snapshotTab === 'action' ? action?.box : undefined}
     />}
     {!displayAriaMode && <SnapshotView
       snapshotUrls={snapshotUrls}

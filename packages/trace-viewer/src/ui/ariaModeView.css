@@ -42,6 +42,21 @@
   outline: 1px solid #6fa8dc;
 }
 
+.aria-mode-action-highlight {
+  position: absolute;
+  pointer-events: none;
+  background-color: #f443361f;
+  outline: 1px solid #f44336;
+}
+
+.aria-mode-action-point {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background-color: #f44336;
+}
+
 .aria-mode-snapshot {
   flex: 1 1 0;
   border-left: 1px solid var(--vscode-panel-border);

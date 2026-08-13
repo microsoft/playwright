@@ -2108,9 +2108,12 @@ test('should toggle canvas rendering', async ({ runAndTrace, page }) => {
 });
 
 test('should display aria mode', async ({ runAndTrace, page }) => {
+  let buttonBox: { x: number, y: number, width: number, height: number };
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<!DOCTYPE html><button>Click me</button>');
+    buttonBox = (await page.locator('button').boundingBox())!;
     await page.locator('button').click();
+    await page.locator('button').press('Enter');
   }, { snapshots: { dom: true, aria: true, screen: true } });
 
   await traceViewer.showSettings();
@@ -2123,18 +2126,65 @@ test('should display aria mode', async ({ runAndTrace, page }) => {
   await expect(ariaModeView.locator('img')).toBeVisible();
   await expect(ariaModeView).toContainText('button "Click me"');
 
-  // Hovering an aria node highlights its box on the screenshot.
+  // The screenshot is scaled to fit into the available area.
+  const imgBox = (await ariaModeView.locator('img').boundingBox())!;
+  const scale = imgBox.width / page.viewportSize()!.width;
+  const toImage = (point: { x: number, y: number }) => ({ x: imgBox.x + point.x * scale, y: imgBox.y + point.y * scale });
+
+  // Hovering an aria node highlights its box on the screenshot, scaled to match the image.
   const highlight = ariaModeView.locator('.aria-mode-highlight');
   await expect(highlight).not.toBeVisible();
   await ariaModeView.locator('.aria-mode-line', { hasText: 'button "Click me"' }).hover();
   await expect(highlight).toBeVisible();
+  {
+    const highlightBox = (await highlight.boundingBox())!;
+    const expected = toImage(buttonBox!);
+    expect(Math.abs(highlightBox.x - expected.x)).toBeLessThan(2);
+    expect(Math.abs(highlightBox.y - expected.y)).toBeLessThan(2);
+    expect(Math.abs(highlightBox.width - buttonBox!.width * scale)).toBeLessThan(2);
+    expect(Math.abs(highlightBox.height - buttonBox!.height * scale)).toBeLessThan(2);
+  }
   await ariaModeView.locator('img').hover();
   await expect(highlight).not.toBeVisible();
 
-  // The "Before" tab shows the state before the click.
+  // The action point and the target box are rendered on the "Action" screenshot.
+  const actionPoint = ariaModeView.locator('.aria-mode-action-point');
+  const actionHighlight = ariaModeView.locator('.aria-mode-action-highlight');
+  await expect(actionPoint).toBeVisible();
+  await expect(actionHighlight).toBeVisible();
+  {
+    const pointBox = (await actionPoint.boundingBox())!;
+    const expected = toImage({ x: buttonBox!.x + buttonBox!.width / 2, y: buttonBox!.y + buttonBox!.height / 2 });
+    expect(Math.abs(pointBox.x + pointBox.width / 2 - expected.x)).toBeLessThan(2);
+    expect(Math.abs(pointBox.y + pointBox.height / 2 - expected.y)).toBeLessThan(2);
+    const actionHighlightBox = (await actionHighlight.boundingBox())!;
+    const expectedBox = toImage(buttonBox!);
+    expect(Math.abs(actionHighlightBox.x - expectedBox.x)).toBeLessThan(2);
+    expect(Math.abs(actionHighlightBox.y - expectedBox.y)).toBeLessThan(2);
+    expect(Math.abs(actionHighlightBox.width - buttonBox!.width * scale)).toBeLessThan(2);
+    expect(Math.abs(actionHighlightBox.height - buttonBox!.height * scale)).toBeLessThan(2);
+  }
+
+  // Keyboard actions have no point, but still highlight the target box.
+  await traceViewer.selectAction('Press');
+  await expect(actionHighlight).toBeVisible();
+  await expect(actionPoint).not.toBeVisible();
+  {
+    const actionHighlightBox = (await actionHighlight.boundingBox())!;
+    const expectedBox = toImage(buttonBox!);
+    expect(Math.abs(actionHighlightBox.x - expectedBox.x)).toBeLessThan(2);
+    expect(Math.abs(actionHighlightBox.y - expectedBox.y)).toBeLessThan(2);
+    expect(Math.abs(actionHighlightBox.width - buttonBox!.width * scale)).toBeLessThan(2);
+    expect(Math.abs(actionHighlightBox.height - buttonBox!.height * scale)).toBeLessThan(2);
+  }
+  await traceViewer.selectAction('Click');
+
+  // The "Before" tab shows the state before the click, without the action point.
   await traceViewer.selectSnapshot('Before');
   await expect(ariaModeView.locator('img')).toBeVisible();
   await expect(ariaModeView).toContainText('button "Click me"');
+  await expect(actionPoint).not.toBeVisible();
+  await expect(actionHighlight).not.toBeVisible();
 
   // Toggling the setting off restores the DOM snapshot.
   await traceViewer.showSettings();

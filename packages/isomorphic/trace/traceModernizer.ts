@@ -122,6 +122,7 @@ export class TraceModernizer {
         const existing = this._actionMap.get(event.callId);
         existing!.inputSnapshot = event.inputSnapshot;
         existing!.point = event.point;
+        existing!.box = event.box;
         break;
       }
       case 'log': {
