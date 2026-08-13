@@ -23,6 +23,7 @@ import chokidar from 'chokidar';
 
 import { packageJSON, packageRoot } from './package';
 
+import type { FSWatcher } from 'chokidar';
 // Only client depenencies with backward compatibility guarantees should be imported here.
 import type { LaunchOptions } from '../types/types';
 
@@ -58,7 +59,7 @@ export interface ServerRegistryEvents {
 
 class ServerRegistry extends EventEmitter {
   private _descriptors = new Map<string, BrowserDescriptor>();
-  private _watcher: chokidar.FSWatcher | undefined;
+  private _watcher: FSWatcher | undefined;
   private _watcherRefs = 0;
   private _ready: Promise<void> | undefined;
 

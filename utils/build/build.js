@@ -22,6 +22,7 @@ const chokidar = require('chokidar');
 const fs = require('fs');
 const { workspace } = require('../workspace');
 const { build, context } = require('esbuild');
+const { minimatch } = require('minimatch');
 
 /**
  * @typedef {{
@@ -77,6 +78,43 @@ const ROOT = path.join(__dirname, '..', '..');
  */
 function filePath(relative) {
   return path.join(ROOT, ...relative.split('/'));
+}
+
+/**
+ * @param {string} p
+ * @returns {string}
+ */
+function toPosixPath(p) {
+  return p.split(path.sep).join('/');
+}
+
+/**
+ * Chokidar v4 dropped glob support: watch the static directory prefix of a
+ * glob instead, and filter emitted paths with `pathMatcher`.
+ * @param {string} pattern
+ * @returns {string}
+ */
+function globBase(pattern) {
+  const magicIndex = pattern.search(/[*?{[]/);
+  if (magicIndex === -1)
+    return pattern;
+  return pattern.slice(0, pattern.lastIndexOf(path.sep, magicIndex));
+}
+
+/**
+ * @param {string[]} patterns absolute files, directories or globs
+ * @returns {(file: string) => boolean}
+ */
+function pathMatcher(patterns) {
+  const posixPatterns = patterns.map(toPosixPath);
+  return file => {
+    const posixFile = toPosixPath(file);
+    return posixPatterns.some(pattern => {
+      if (pattern.search(/[*?{[]/) === -1)
+        return posixFile === pattern || posixFile.startsWith(pattern + '/');
+      return minimatch(posixFile, pattern, { dot: true });
+    });
+  };
 }
 
 /**
@@ -185,14 +223,15 @@ async function runWatch() {
         clearTimeout(timeout);
       timeout = setTimeout(callback, 500);
     };
-    chokidar.watch([...paths, ...mustExist, onChange.script].filter(Boolean).map(filePath)).on('all', reschedule);
+    chokidar.watch([...paths, ...mustExist, onChange.script].filter(Boolean).map(filePath).map(globBase)).on('all', reschedule);
     callback();
   }
 
   for (const { files, from, to, ignored } of copyFiles) {
-    const watcher = chokidar.watch([filePath(files)], { ignored });
+    const matches = pathMatcher([filePath(files)]);
+    const watcher = chokidar.watch(globBase(filePath(files)), { ignored: pathMatcher(ignored || []) });
     watcher.on('all', (event, file) => {
-      if (event === 'add' || event === 'change')
+      if ((event === 'add' || event === 'change') && matches(file))
         copyFile(file, from, to);
     });
   }
@@ -212,11 +251,11 @@ async function runWatch() {
 
 async function runBuild() {
   for (const { files, from, to, ignored } of copyFiles) {
-    const watcher = chokidar.watch([filePath(files)], {
-      ignored
-    });
+    const matches = pathMatcher([filePath(files)]);
+    const watcher = chokidar.watch(globBase(filePath(files)), { ignored: pathMatcher(ignored || []) });
     watcher.on('add', file => {
-      copyFile(file, from, to);
+      if (matches(file))
+        copyFile(file, from, to);
     });
     await new Promise(x => watcher.once('ready', x));
     watcher.close();
@@ -330,9 +369,14 @@ class EsbuildStep extends Step {
     this._context = await context(this._options);
     disposables.push(() => this._context?.dispose());
 
-    const watcher = chokidar.watch([...this._options.entryPoints, ...(this._watchPaths || [])]);
+    const watchPaths = [...this._options.entryPoints, ...(this._watchPaths || [])];
+    const matches = pathMatcher(watchPaths);
+    const watcher = chokidar.watch([...new Set(watchPaths.map(globBase))]);
     await new Promise(x => watcher.once('ready', x));
-    watcher.on('all', () => this._rebuild());
+    watcher.on('all', (event, file) => {
+      if (matches(file))
+        this._rebuild();
+    });
 
     await this._rebuild();
     console.log('==== Esbuild watching:', this._relativeEntryPoints().join(', '), `(started in ${Date.now() - start}ms)`);
@@ -623,7 +667,6 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright-core/src/serverRegistry.js')],
   outfile: filePath('packages/playwright-core/lib/serverRegistry.js'),
-  external: ['fsevents'],
 }, [filePath('packages/playwright-core/src/*')]));
 
 const playwrightCoreSrc = filePath('packages/playwright-core/src');
@@ -634,7 +677,7 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright-core/src/utilsBundle.ts')],
   outfile: filePath('packages/playwright-core/lib/utilsBundle.js'),
-  external: ['fsevents', 'express', '@anthropic-ai/sdk'],
+  external: ['express', '@anthropic-ai/sdk'],
   alias: {
     'raw-body': filePath('utils/build/raw-body.ts'),
   },

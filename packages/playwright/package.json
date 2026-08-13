@@ -51,8 +51,5 @@
   "license": "Apache-2.0",
   "dependencies": {
     "playwright-core": "1.63.0-next"
-  },
-  "optionalDependencies": {
-    "fsevents": "2.3.2"
   }
 }
