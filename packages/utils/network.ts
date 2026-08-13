@@ -15,17 +15,17 @@
  */
 
 
+import dns from 'dns';
 import http from 'http';
 import http2 from 'http2';
 import https from 'https';
+import net from 'net';
 
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { getProxyForUrl } from 'proxy-from-env';
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happyEyeballs';
-
-import type net from 'net';
+import { rewriteErrorMessage } from './stackTrace';
 
 export type ProxySettings = {
   server: string,
@@ -50,6 +50,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   const options: https.RequestOptions = {
     method: params.method || 'GET',
     headers: params.headers,
+    lookup: dualStackLookup,
   };
   if (params.rejectUnauthorized !== undefined)
     options.rejectUnauthorized = params.rejectUnauthorized;
@@ -69,8 +70,6 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
     }
   }
 
-  options.agent ??= url.protocol === 'https:' ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent;
-
   let cancelRequest: (e: Error | undefined) => void;
   const requestCallback = (res: http.IncomingMessage) => {
     const statusCode = res.statusCode || 0;
@@ -86,7 +85,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   const request = url.protocol === 'https:' ?
     https.request(url, options, requestCallback) :
     http.request(url, options, requestCallback);
-  request.on('error', onError);
+  request.on('error', error => onError(flattenAggregateError(error)));
   if (params.socketTimeout !== undefined) {
     request.setTimeout(params.socketTimeout, () =>  {
       onError(new Error(`Request to ${params.url} timed out after ${params.socketTimeout}ms`));
@@ -154,6 +153,52 @@ export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
 
   // TODO: This branch should be different from above. We should use HttpProxyAgent conditional on proxyURL.protocol instead of always using CONNECT method.
   return new HttpsProxyAgent(proxyURL);
+}
+
+// Node.js family-agnostic lookup passes AI_ADDRCONFIG to getaddrinfo(), which can filter out
+// addresses of a family that has no non-loopback interface, and "localhost" may miss addresses
+// of a family that is not listed in /etc/hosts — e.g. resolving to only 127.0.0.1 even though
+// ::1 is served. Separate family: 4 and family: 6 lookups do not have these problems. Native
+// Happy Eyeballs (autoSelectFamily) then races connection attempts across the families.
+export const dualStackLookup: net.LookupFunction = (hostname, options, callback) => {
+  const families = options.family === 4 || options.family === 6 ? [options.family] : [6, 4];
+  void Promise.allSettled(families.map(family => dns.promises.lookup(hostname, { all: true, family }))).then(results => {
+    const perFamily = results.map(result => result.status === 'fulfilled' ? result.value : []);
+    const addresses: dns.LookupAddress[] = [];
+    // Alternate IPv6 and IPv4 addresses per RFC 8305 (prefer IPv6 first).
+    for (let i = 0; i < Math.max(...perFamily.map(list => list.length)); i++) {
+      for (const list of perFamily) {
+        if (list[i])
+          addresses.push(list[i]);
+      }
+    }
+    if (!addresses.length) {
+      const firstError = results.map(result => result.status === 'rejected' ? result.reason : undefined).find(Boolean);
+      callback(firstError ?? new Error(`Cannot resolve address for ${hostname}`), '');
+      return;
+    }
+    if (options.all)
+      callback(null, addresses);
+    else
+      callback(null, addresses[0].address, addresses[0].family);
+  });
+};
+
+// When every raced connection attempt fails, Node.js reports an AggregateError with an
+// empty message and the individual failures in the `errors` property. Surface those instead.
+export function flattenAggregateError(error: Error): Error {
+  const errors = (error as any).errors as Error[] | undefined;
+  if (error.name === 'AggregateError' && !error.message && errors?.length)
+    return rewriteErrorMessage(error, errors.map(e => e.message).join('\n'));
+  return error;
+}
+
+export async function createSocket(host: string, port: number): Promise<net.Socket> {
+  return new Promise((resolve, reject) => {
+    const socket = net.createConnection({ host, port, lookup: dualStackLookup });
+    socket.on('connect', () => resolve(socket));
+    socket.on('error', error => reject(flattenAggregateError(error)));
+  });
 }
 
 export function createHttpServer(requestListener?: (req: http.IncomingMessage, res: http.ServerResponse) => void): http.Server;
