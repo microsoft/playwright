@@ -528,9 +528,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._closingStatus = 'closing';
     await this.request.dispose(options);
     await this._instrumentation.runBeforeCloseBrowserContext(this);
-    await this.tracing._exportAllHars();
+    const harError = await this.tracing._exportAllHars().catch(e => e);
     await this._channel.close(options, kNoTimeout);
     await this._closedPromise;
+    if (harError)
+      throw harError;
   }
 
   async _enableRecorder(params: channels.BrowserContextEnableRecorderParams, eventSink?: RecorderEventSink) {

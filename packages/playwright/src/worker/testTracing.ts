@@ -177,9 +177,7 @@ export class TestTracing {
     if (!this._options)
       return;
 
-    const error = await this._liveTraceFile?.fs.syncAndGetError();
-    if (error)
-      throw error;
+    await this._liveTraceFile?.fs.sync();
 
     if (this._shouldAbandonTrace()) {
       for (const file of this._temporaryTraceFiles)
