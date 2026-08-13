@@ -198,9 +198,10 @@ export class DispatcherConnection {
   async abortControllersForGuids(guids: Set<string>, error: Error) {
     const controllers: ProgressController[] = [];
     for (const entry of this._activeProgressControllers.values()) {
-      entry.abortError = error;
-      if (entry.controller?.metadata.objectId && guids.has(entry.controller.metadata.objectId))
+      if (entry.controller?.metadata.objectId && guids.has(entry.controller.metadata.objectId)) {
+        entry.abortError = error;
         controllers.push(entry.controller);
+      }
     }
     await Promise.all(controllers.map(controller => controller.abort(error)));
   }
