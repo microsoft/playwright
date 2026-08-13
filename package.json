@@ -115,7 +115,7 @@
     "@vitejs/plugin-basic-ssl": "2.3.0",
     "@vitejs/plugin-react": "6.0.3",
     "@zip.js/zip.js": "2.7.73",
-    "chokidar": "3.6.0",
+    "chokidar": "4.0.3",
     "chromium-bidi": "12.1.0",
     "colors": "1.4.0",
     "commander": "15.0.0",

@@ -24,8 +24,8 @@ import { test, expect } from './npmTest';
 // summary and is only checked for presence.
 const EXPECTED: Record<string, Record<string, number>> = {
   'playwright-core': {
-    'lib/serverRegistry.js.LICENSE': 10,
-    'lib/utilsBundle.js.LICENSE': 80,
+    'lib/serverRegistry.js.LICENSE': 2,
+    'lib/utilsBundle.js.LICENSE': 75,
     // Vendored WebP codec (libwebp compiled to WASM), not a bundle sidecar.
     'lib/webp_codec.LICENSE': 0,
   },

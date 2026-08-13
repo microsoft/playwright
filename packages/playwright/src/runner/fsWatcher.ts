@@ -49,15 +49,23 @@ export class FSWatcher {
     if (!this._watchedPaths.length)
       return;
 
-    const ignored = [...this._ignoredFolders, '**/node_modules/**'];
+    // Chokidar calls the matcher with paths normalized to forward slashes.
+    const ignoredPrefixes = this._ignoredFolders.map(folder => folder.replace(/\\/g, '/') + '/');
+    const ignored = (file: string) => {
+      if (file.split('/').includes('node_modules'))
+        return true;
+      return ignoredPrefixes.some(prefix => (file + '/').startsWith(prefix));
+    };
     this._fsWatcher = chokidar.watch(watchedPaths, { ignoreInitial: true, ignored }).on('all', async (event, file) => {
+      if (event !== 'add' && event !== 'addDir' && event !== 'change' && event !== 'unlink' && event !== 'unlinkDir')
+        return;
       if (this._throttleTimer)
         clearTimeout(this._throttleTimer);
       this._collector.push({ event, file });
       this._throttleTimer = setTimeout(() => this._reportEventsIfAny(), 250);
     });
 
-    await new Promise((resolve, reject) => this._fsWatcher!.once('ready', resolve).once('error', reject));
+    await new Promise<void>((resolve, reject) => this._fsWatcher!.once('ready', () => resolve()).once('error', reject));
   }
 
   async close() {
