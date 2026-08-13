@@ -11,7 +11,6 @@
     "baseUrl": "..",
     "paths": {
       "@dashboard/*": ["packages/dashboard/src/*"],
-      "@dvtools/*": ["packages/devtools/src/*"],
       "@injected/*": ["packages/injected/src/*"],
       "@isomorphic/*": ["packages/isomorphic/*"],
       "@utils/*": ["packages/utils/*"],
