@@ -152,7 +152,7 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
   // created, so create one when attaching to such a server.
   if (!browser.contexts().length)
     await browser.newContext(config.browser.contextOptions);
-  return { browser, browserInfo: browserInfo(browser, config), canBind: false, ownership: 'attached' };
+  return { browser, browserInfo: { ...browserInfo(browser, config), browserName: browser._browserName }, canBind: false, ownership: 'attached' };
 }
 
 async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {

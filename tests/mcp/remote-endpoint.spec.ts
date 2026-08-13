@@ -16,6 +16,10 @@
 
 import { test, expect } from './fixtures';
 
+import { tools } from '../../packages/playwright-core/lib/coreBundle';
+
+const { resolveCLIConfigForMCP, createBrowserWithInfo } = tools;
+
 test.skip(({ mcpBrowser }) => mcpBrowser !== 'chromium', 'Run only on the chromium project; the remote server connection is browser-agnostic.');
 
 test('connect without headers fails on run-server endpoint', async ({ startClient, server, runServerEndpoint }) => {
@@ -58,6 +62,18 @@ test('remoteEndpoint accepts ConnectOptions object with headers', async ({ start
   expect(response).toHaveResponse({
     page: expect.stringContaining('Page Title: Title'),
   });
+});
+
+test('browserInfo reports the browser running on the remote endpoint, not the configured one', async ({ wsEndpoint }, testInfo) => {
+  // Empty env to isolate the test from the host environment.
+  const config = await resolveCLIConfigForMCP({ browser: 'firefox', endpoint: wsEndpoint }, {});
+  const { browser, browserInfo } = await createBrowserWithInfo(config, { clientName: 'test-client', cwd: testInfo.outputPath() }, {});
+  try {
+    expect(config.browser.browserName).toBe('firefox');
+    expect(browserInfo.browserName).toBe('chromium');
+  } finally {
+    await browser.close();
+  }
 });
 
 test('back-compat: remoteHeaders config still selects the browser on run-server endpoint', async ({ startClient, server, runServerEndpoint }) => {

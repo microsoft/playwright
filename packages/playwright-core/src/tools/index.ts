@@ -25,7 +25,7 @@ export { createConnection } from './mcp/index';
 export { resolveCLIConfigForCLI, resolveCLIConfigForMCP } from './mcp/config';
 export { outputDir } from './backend/context';
 export { isSystemDirectory } from '@utils/fileUtils';
-export { isProfileLocked } from './mcp/browserFactory';
+export { createBrowserWithInfo, isProfileLocked } from './mcp/browserFactory';
 export { compareSemver } from './utils/socketConnection';
 export { extractTrace, DirTraceLoaderBackend } from './trace/traceParser';
 export { decorateMCPCommand } from './mcp/program';
