@@ -114,6 +114,6 @@ test('@playwright/test should work', async ({ exec, checkInstalledSoftwareOnDisk
   expect(result3).toContain('3 passed');
 
   const result4 = await exec('npx playwright test -c . failing.spec.js', { expectToExitWithError: true, env: { DEBUG: 'pw:api' } });
-  expect(result4).toContain('expect.toHaveText started');
+  expect(result4).toContain('Expect "toHaveText" started');
   expect(result4).toContain('failing.spec.js:5:38');
 });

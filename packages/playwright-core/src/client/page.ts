@@ -84,6 +84,7 @@ export type ExpectScreenshotOptions = Omit<channels.PageExpectScreenshotOptions,
   signal?: AbortSignal,
   isNot: boolean,
   mask?: api.Locator[],
+  title?: string,
 };
 
 export class Page extends ChannelOwner<channels.PageChannel> implements api.Page {
@@ -650,31 +651,33 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async _expectScreenshot(options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[], timedOut?: boolean}> {
-    const { timeout, signal, ...optionsWithoutTimeout } = options;
-    const mask = options?.mask ? options?.mask.map(locator => ({
-      frame: (locator as Locator)._frame._channel,
-      selector: (locator as Locator)._selector,
-    })) : undefined;
-    const locator = options.locator ? {
-      frame: (options.locator as Locator)._frame._channel,
-      selector: (options.locator as Locator)._selector,
-    } : undefined;
-    try {
-      const result = await this._channel.expectScreenshot({
-        ...optionsWithoutTimeout,
-        isNot: !!options.isNot,
-        locator,
-        mask,
-      }, { timeout, signal });
-      return { actual: result.actual };
-    } catch (e) {
-      if (e instanceof AbortError)
-        return { errorMessage: 'Error: ' + assertionAbortedMessage(e.cause) };
-      if (!(e instanceof PlaywrightError))
-        throw e;
-      const details = e.details as channels.PageExpectScreenshotErrorDetails;
-      return { ...details, errorMessage: details.customErrorMessage };
-    }
+    const { timeout, signal, title, ...optionsWithoutTimeout } = options;
+    return await this._wrapApiCall(async () => {
+      const mask = options?.mask ? options?.mask.map(locator => ({
+        frame: (locator as Locator)._frame._channel,
+        selector: (locator as Locator)._selector,
+      })) : undefined;
+      const locator = options.locator ? {
+        frame: (options.locator as Locator)._frame._channel,
+        selector: (options.locator as Locator)._selector,
+      } : undefined;
+      try {
+        const result = await this._channel.expectScreenshot({
+          ...optionsWithoutTimeout,
+          isNot: !!options.isNot,
+          locator,
+          mask,
+        }, { timeout, signal });
+        return { actual: result.actual };
+      } catch (e) {
+        if (e instanceof AbortError)
+          return { errorMessage: 'Error: ' + assertionAbortedMessage(e.cause) };
+        if (!(e instanceof PlaywrightError))
+          throw e;
+        const details = e.details as channels.PageExpectScreenshotErrorDetails;
+        return { ...details, errorMessage: details.customErrorMessage };
+      }
+    }, { title });
   }
 
   async title(): Promise<string> {

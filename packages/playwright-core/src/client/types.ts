@@ -149,4 +149,4 @@ export type AnnotateOptions = { duration?: number, position?: AnnotatePosition, 
 export type RemoteAddr = channels.RemoteAddr;
 export type SecurityDetails = channels.SecurityDetails;
 
-export type FrameExpectParams = Omit<channels.FrameExpectParams, 'selector'|'expression'|'expectedValue'> & { expectedValue?: any, timeout: number, signal?: AbortSignal };
+export type FrameExpectParams = Omit<channels.FrameExpectParams, 'selector'|'expression'|'expectedValue'> & { expectedValue?: any, timeout: number, signal?: AbortSignal, title?: string };

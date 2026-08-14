@@ -101,7 +101,6 @@ interface ExpectStep {
 export interface ExpectTestInfo {
   _addStep(data: {
     category: 'expect';
-    apiName: string;
     title: string;
     shortTitle: string;
     params?: Record<string, any>;
@@ -333,14 +332,12 @@ function callMatcherAsStep(matcherName: string, info: ExpectMetaInfo, actual: un
   const defaultTitle = `${info.poll ? 'poll ' : ''}${info.isSoft ? 'soft ' : ''}${info.isNot ? 'not ' : ''}${matcherName}${suffixes.short || ''}`;
   const shortTitle = customMessage || `Expect ${escapeWithQuotes(defaultTitle, '"')}`;
   const longTitle = shortTitle + (suffixes.long || '');
-  const apiName = `expect${info.poll ? '.poll ' : ''}${info.isSoft ? '.soft ' : ''}${info.isNot ? '.not' : ''}.${matcherName}${suffixes.short || ''}`;
 
   // This looks like it is unnecessary, but it isn't - we need to filter
   // out all the frames that belong to the test runner from caught runtime errors.
   const stackFrames = expectConfig().filteredStackTrace(captureRawStack());
   const stepData = {
     category: 'expect' as const,
-    apiName,
     title: longTitle,
     shortTitle,
     location: stackFrames[0],
@@ -370,7 +367,7 @@ function callMatcherAsStep(matcherName: string, info: ExpectMetaInfo, actual: un
   try {
     const invoke = () => info.poll
       ? invokePollMatcher(matcherName, info, matcher, actual, args, promise)
-      : invokeMatcher(matcherName, info, matcher, actual, args, promise);
+      : invokeMatcher(matcherName, info, matcher, actual, args, promise, shortTitle);
     const result = step ? currentZone().with('stepZone', step).run(invoke) : invoke();
     if (result instanceof Promise)
       return result.then(finalizer, handleError);
@@ -387,6 +384,7 @@ function invokeMatcher(
   actual: unknown,
   args: any[],
   promise: 'resolves' | 'rejects' | undefined,
+  title: string,
 ): MatcherResult | Promise<MatcherResult> {
   const isNot = !!info.isNot;
   const timeout = info.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
@@ -396,6 +394,7 @@ function invokeMatcher(
     promise: promise ?? '',
     utils,
     timeout,
+    title,
     equals: throwUnsupportedExpectMatcherError as any,
   };
 

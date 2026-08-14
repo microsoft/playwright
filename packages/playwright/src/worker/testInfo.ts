@@ -44,7 +44,6 @@ interface TestStepData {
   shortTitle?: string;
   category: TestStepCategory;
   location?: Location;
-  apiName?: string;
   params?: Record<string, any>;
   box?: boolean;
   // steps with any defined group are hidden from the report
