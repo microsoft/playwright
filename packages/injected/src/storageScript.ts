@@ -22,12 +22,10 @@ export type SerializedStorage = Omit<OriginStorage, 'origin'>;
 
 export class StorageScript {
   private _isFirefox: boolean;
-  private _isWebKit: boolean;
   private _global;
 
   constructor(browserName: string) {
     this._isFirefox = browserName === 'firefox';
-    this._isWebKit = browserName === 'webkit';
     // eslint-disable-next-line no-restricted-globals
     this._global = globalThis;
   }
@@ -216,7 +214,10 @@ export class StorageScript {
     try {
       root = await this._global.navigator.storage.getDirectory();
     } catch (e) {
-      if (this._isWebKit && originState?.opfs === undefined && e.name === 'UnknownError' && e.message.includes('unknown transient reason'))
+      // OPFS may be unavailable, e.g. on insecure origins or in WebKit contexts
+      // that fail with 'unknown transient reason'. There is nothing to clear then,
+      // so only fail when there are entries to restore.
+      if (originState?.opfs === undefined)
         return;
       throw e;
     }
