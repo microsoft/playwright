@@ -139,6 +139,23 @@ it('should not leak listeners during navigation of 20 pages', async ({ contextFa
   expect(warning).toBe(null);
 });
 
+it('should close page while a reload is committing', async ({ context, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42068' });
+  it.info().annotations.push({ type: 'issue', description: 'https://issues.chromium.org/issues/536385539' });
+  it.fixme(browserName === 'chromium', 'Chromium loses the close when the reload commits into a new RenderFrameHost; fix is not rolled yet');
+  // The evaluate never settles on its own, so it only rejects once the reload
+  // commits. Closing right after that races the commit. Repeat a few times,
+  // since whether the close or the commit wins is timing-dependent.
+  for (let i = 0; i < 10; i++) {
+    const page = await context.newPage();
+    await expect(page.evaluate(() => {
+      location.reload();
+      return new Promise(() => {});
+    })).rejects.toThrow(/navigation/);
+    await page.close();
+  }
+});
+
 it('should keep selection in multiple pages', async ({ context }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27475' });
   const page1 = await context.newPage();
