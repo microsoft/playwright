@@ -16,7 +16,7 @@
  */
 
 import ws from 'ws';
-import { dualStackLookup, flattenAggregateError } from '@utils/network';
+import { flattenAggregateError, happyEyeballsOptions } from '@utils/network';
 import { makeWaitForNextTask } from '@utils/task';
 import type { WebSocket } from 'ws';
 import type { Progress } from './progress';
@@ -138,7 +138,7 @@ export class WebSocketTransport implements ConnectionTransport {
       maxPayload: 256 * 1024 * 1024, // 256Mb,
       headers: options.headers,
       followRedirects: options.followRedirects,
-      lookup: dualStackLookup,
+      ...happyEyeballsOptions,
       perMessageDeflate,
     });
     this._ws.on('upgrade', response => {

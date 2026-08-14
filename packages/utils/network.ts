@@ -50,7 +50,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   const options: https.RequestOptions = {
     method: params.method || 'GET',
     headers: params.headers,
-    lookup: dualStackLookup,
+    ...happyEyeballsOptions,
   };
   if (params.rejectUnauthorized !== undefined)
     options.rejectUnauthorized = params.rejectUnauthorized;
@@ -160,7 +160,7 @@ export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
 // of a family that is not listed in /etc/hosts — e.g. resolving to only 127.0.0.1 even though
 // ::1 is served. Separate family: 4 and family: 6 lookups do not have these problems. Native
 // Happy Eyeballs (autoSelectFamily) then races connection attempts across the families.
-export const dualStackLookup: net.LookupFunction = (hostname, options, callback) => {
+const dualStackLookup: net.LookupFunction = (hostname, options, callback) => {
   const families = options.family === 4 || options.family === 6 ? [options.family] : [6, 4];
   void Promise.allSettled(families.map(family => dns.promises.lookup(hostname, { all: true, family }))).then(results => {
     const perFamily = results.map(result => result.status === 'fulfilled' ? result.value : []);
@@ -184,6 +184,17 @@ export const dualStackLookup: net.LookupFunction = (hostname, options, callback)
   });
 };
 
+// Node.js aborts every connection attempt but the last one after autoSelectFamilyAttemptTimeout,
+// and its 250ms default is too short for a TCP handshake over a slow network, failing connections
+// that would have succeeded: https://github.com/nodejs/node/issues/54359. Floor it at 5s to
+// survive two SYN retransmits, honoring a higher process-wide default when the user set one.
+// Revisit when attempts run in parallel: https://github.com/nodejs/node/issues/48145.
+export const happyEyeballsOptions = {
+  lookup: dualStackLookup,
+  autoSelectFamily: true,
+  autoSelectFamilyAttemptTimeout: Math.max(5000, net.getDefaultAutoSelectFamilyAttemptTimeout()),
+};
+
 // When every raced connection attempt fails, Node.js reports an AggregateError with an
 // empty message and the individual failures in the `errors` property. Surface those instead.
 export function flattenAggregateError(error: Error): Error {
@@ -195,7 +206,7 @@ export function flattenAggregateError(error: Error): Error {
 
 export async function createSocket(host: string, port: number): Promise<net.Socket> {
   return new Promise((resolve, reject) => {
-    const socket = net.createConnection({ host, port, lookup: dualStackLookup });
+    const socket = net.createConnection({ host, port, ...happyEyeballsOptions });
     socket.on('connect', () => resolve(socket));
     socket.on('error', error => reject(flattenAggregateError(error)));
   });
