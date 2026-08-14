@@ -985,6 +985,32 @@ it('should support async handler w/ times', async ({ page, server }) => {
   await expect(page.locator('body')).not.toHaveText('intercepted');
 });
 
+it('route abort with times: 1 should not affect second sequential fetch', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41802' });
+  it.fixme(browserName === 'chromium', 'Chromium drops a request that is intercepted while Fetch.disable is being processed; fix is not rolled yet');
+
+  server.setRoute('/data', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('ok');
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  await page.route('**/data', route => route.abort('timedout'), { times: 1 });
+
+  const results = await page.evaluate(async () => {
+    async function fetchOrHung(url: string) {
+      const timeout = new Promise<string>(resolve => setTimeout(() => resolve('hung'), 3000));
+      const request = fetch(url).then(r => String(r.status)).catch(() => 'aborted');
+      return Promise.race([request, timeout]);
+    }
+    const first = await fetchOrHung('/data');
+    const second = await fetchOrHung('/data');
+    return [first, second];
+  });
+
+  expect(results).toEqual(['aborted', '200']);
+});
+
 it('should contain raw request header', async ({ page, server }) => {
   let headers: any;
   await page.route('**/*', async route => {
