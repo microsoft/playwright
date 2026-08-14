@@ -77,7 +77,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   private _params: RecorderParams;
   private _mode: Mode;
   private _highlightedSelector: string | undefined;
-  private _highlightedAriaTemplate: AriaTemplateNode | undefined;
   private _overlayState: OverlayState = { offsetX: 0 };
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _actionPoints = new Map<string, Point>();
@@ -180,7 +179,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
         const uiState: UIState = {
           mode,
           actionPoint,
-          ariaTemplate: this._highlightedAriaTemplate,
           language: this._currentLanguage,
           testIdAttributeName: this._testIdAttributeName(),
           overlay: this._overlayState,
@@ -249,7 +247,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   async setMode(mode: Mode) {
     if (this._mode === mode)
       return;
-    this._highlightedAriaTemplate = undefined;
     this._updateHighlightedSelector(undefined).catch(() => {});
     this._mode = mode;
     this.emit(RecorderEvent.ModeChanged, this._mode);
@@ -307,15 +304,11 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
 
   async setHighlightedSelector(selector: string) {
     const converted = locatorOrSelectorAsSelector(this._currentLanguage, selector, this._context.selectors().testIdAttributeName());
-    this._highlightedAriaTemplate = undefined;
     await this._updateHighlightedSelector(converted || undefined);
-    await this._refreshOverlay();
   }
 
   async setHighlightedAriaTemplate(ariaTemplate: AriaTemplateNode) {
-    this._highlightedAriaTemplate = ariaTemplate;
-    await this._updateHighlightedSelector(undefined);
-    await this._refreshOverlay();
+    await this._updateHighlightedSelector('aria-template=' + JSON.stringify(ariaTemplate));
   }
 
   step() {
@@ -345,9 +338,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   async hideHighlightedSelector() {
-    this._highlightedAriaTemplate = undefined;
     await this._updateHighlightedSelector(undefined);
-    await this._refreshOverlay();
   }
 
   pausedSourceId() {
@@ -395,12 +386,10 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._updateUserSources();
     this._updateCallLog([metadata]);
-    if (isScreenshotCommand(metadata)) {
+    if (isScreenshotCommand(metadata))
       this.hideHighlightedSelector();
-    } else if (!metadata.internal && metadata.params && metadata.params.selector) {
-      this._highlightedAriaTemplate = undefined;
+    else if (!metadata.internal && metadata.params && metadata.params.selector)
       this._updateHighlightedSelector(metadata.params.selector).catch(() => {});
-    }
   }
 
   async onAfterCall(progress: Progress) {

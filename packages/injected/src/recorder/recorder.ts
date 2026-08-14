@@ -20,7 +20,7 @@ import clipPaths from './clipPaths';
 
 import type { Point } from '@isomorphic/types';
 import type { AriaSnapshot } from '../ariaSnapshot';
-import type { Highlight, HighlightEntry } from '../highlight';
+import type { Highlight } from '../highlight';
 import type { InjectedScript } from '../injectedScript';
 import type { ElementText } from '../selectorUtils';
 import type * as actions from '@isomorphic/codegen/actions';
@@ -1276,7 +1276,6 @@ export class Recorder {
   private _listeners: (() => void)[] = [];
   private _currentTool: RecorderTool;
   private _tools: Record<Mode, RecorderTool>;
-  private _lastHighlightedAriaTemplateJSON: string = 'undefined';
   private _lastActionAutoexpectSnapshot: AriaSnapshot | undefined;
   readonly highlight: Highlight;
   readonly overlay: Overlay | undefined;
@@ -1392,25 +1391,6 @@ export class Recorder {
     this.highlight.setLanguage(state.language);
     this._switchCurrentTool();
     this.overlay?.setUIState(state);
-
-    let highlight: HighlightEntry[] | 'clear' | 'noop' = 'noop';
-    const ariaTemplateJSON = JSON.stringify(state.ariaTemplate);
-    if (this._lastHighlightedAriaTemplateJSON !== ariaTemplateJSON) {
-      const elements = state.ariaTemplate ? this.injectedScript.getAllElementsMatchingExpectAriaTemplate(this.document, state.ariaTemplate) : [];
-      if (elements.length) {
-        const color = elements.length > 1 ? HighlightColors.multiple : HighlightColors.single;
-        highlight = elements.map(element => ({ element, color }));
-        this._lastHighlightedAriaTemplateJSON = ariaTemplateJSON;
-      } else {
-        highlight = 'clear';
-        this._lastHighlightedAriaTemplateJSON = 'undefined';
-      }
-    }
-
-    if (highlight === 'clear')
-      this.highlight.clearHighlight();
-    else if (highlight !== 'noop')
-      this.highlight.updateHighlight(highlight);
   }
 
   clearHighlight() {
@@ -1526,7 +1506,6 @@ export class Recorder {
   private _onScroll(event: Event) {
     if (!event.isTrusted)
       return;
-    this._lastHighlightedAriaTemplateJSON = 'undefined';
     this.highlight.hideActionPoint();
     this._currentTool.onScroll?.(event);
   }
@@ -1554,7 +1533,6 @@ export class Recorder {
   }
 
   updateHighlight(model: HighlightModel | null, userGesture: boolean) {
-    this._lastHighlightedAriaTemplateJSON = 'undefined';
     this._updateHighlight(model, userGesture);
   }
 

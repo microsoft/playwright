@@ -159,11 +159,12 @@ export class Highlight {
         }
         // Do not accidentally match our own highlight.
         elements = elements.filter(element => !glassPanes.some(pane => this._injectedScript.utils.isInsideScope(pane, element)));
-        const locator = asLocator(this._language, stringifySelector(selector));
+        // There is no locator representation for the aria template, skip the tooltip.
+        const locator = selector.parts.some(part => part.name === 'aria-template') ? undefined : asLocator(this._language, stringifySelector(selector));
         const color = elements.length > 1 ? '#f6b26b7f' : '#6fa8dc7f';
         for (let i = 0; i < elements.length; ++i) {
           const suffix = elements.length > 1 ? ` [${i + 1} of ${elements.length}]` : '';
-          entries.push({ element: elements[i], color, tooltipText: locator + suffix, cssStyle });
+          entries.push({ element: elements[i], color, tooltipText: locator === undefined ? undefined : locator + suffix, cssStyle });
         }
       }
       this.updateHighlight(entries);

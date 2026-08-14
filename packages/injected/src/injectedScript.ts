@@ -243,6 +243,7 @@ export class InjectedScript {
     this._engines.set('internal:role', createRoleEngine(true));
     this._engines.set('internal:describe', this._createDescribeEngine());
     this._engines.set('aria-ref', this._createAriaRefEngine());
+    this._engines.set('aria-template', this._createAriaTemplateEngine());
 
     for (const { name, source } of options.customEngines)
       this._engines.set(name, this.eval(source));
@@ -737,6 +738,17 @@ export class InjectedScript {
     const queryAll = (root: SelectorRoot, selector: string): Element[] => {
       const result = this._lastAriaSnapshotForQuery?.info?.get(selector);
       return result && result.element.isConnected ? [result.element] : [];
+    };
+    return { queryAll };
+  }
+
+  _createAriaTemplateEngine() {
+    const queryAll = (root: SelectorRoot, body: string): Element[] => {
+      const template = JSON.parse(body) as AriaTemplateNode;
+      const rootElement = root.nodeType === 9 /* Node.DOCUMENT_NODE */ ? (root as Document).documentElement : root as Element;
+      if (!rootElement)
+        return [];
+      return getAllElementsMatchingExpectAriaTemplate(rootElement, template);
     };
     return { queryAll };
   }
