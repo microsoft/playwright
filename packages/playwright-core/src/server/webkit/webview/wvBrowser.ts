@@ -21,7 +21,7 @@ import path from 'path';
 import ws from 'ws';
 import { debugLogger, RecentLogsCollector } from '@utils/debugLogger';
 import { removeFolders } from '@utils/fileUtils';
-import { dualStackLookup } from '@utils/network';
+import { happyEyeballsOptions } from '@utils/network';
 import { headersArrayToObject } from '@isomorphic/headers';
 import { Browser } from '../../browser';
 import { helper } from '../../helper';
@@ -96,7 +96,7 @@ class DeferredWebSocketTransport implements ConnectOverCDPTransport {
       maxPayload: 256 * 1024 * 1024,
       headers: this._headers,
       followRedirects: true,
-      lookup: dualStackLookup,
+      ...happyEyeballsOptions,
       perMessageDeflate,
       allowSynchronousEvents: false,
     });

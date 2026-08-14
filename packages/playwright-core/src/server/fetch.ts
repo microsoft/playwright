@@ -25,7 +25,7 @@ import { assert } from '@isomorphic/assert';
 import { constructURLBasedOnBaseURL } from '@isomorphic/urlMatch';
 import { eventsHelper } from '@utils/eventsHelper';
 import { monotonicTime } from '@isomorphic/time';
-import { createProxyAgent, dualStackLookup, flattenAggregateError } from '@utils/network';
+import { createProxyAgent, flattenAggregateError, happyEyeballsOptions } from '@utils/network';
 import { getUserAgent } from './userAgent';
 import { BrowserContext, findMatchingHttpCredentials, verifyClientCertificates } from './browserContext';
 import { Cookie, CookieStore, domainMatches, parseRawCookie } from './cookieStore';
@@ -343,8 +343,9 @@ export abstract class APIRequestContext extends SdkObject {
         = (url.protocol === 'https:' ? https : http).request;
       // Without an explicit proxy agent, the default global agent is used, which
       // has keep-alive enabled and connects with Happy Eyeballs (autoSelectFamily).
-      const requestOptions = { ...options };
-      requestOptions.lookup = options.__testHookLookup ? lookupWithTestHook(options.__testHookLookup) : dualStackLookup;
+      const requestOptions = { ...options, ...happyEyeballsOptions };
+      if (options.__testHookLookup)
+        requestOptions.lookup = lookupWithTestHook(options.__testHookLookup);
 
       const startAt = monotonicTime();
       const startAtWallTime = Date.now();
