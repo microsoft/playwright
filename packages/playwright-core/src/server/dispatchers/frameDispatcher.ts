@@ -272,11 +272,11 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async highlight(params: channels.FrameHighlightParams, progress: Progress): Promise<void> {
-    return await this._frame.addHighlight(progress, params.selector, params.style);
+    return await progress.race(this._frame.addHighlight(params.selector, params.style));
   }
 
   async hideHighlight(params: channels.FrameHideHighlightParams, progress: Progress): Promise<void> {
-    return await this._frame.removeHighlight(progress, params.selector);
+    return await progress.race(this._frame.removeHighlight(params.selector));
   }
 
   async expect(params: channels.FrameExpectParams, progress: Progress): Promise<channels.FrameExpectResult> {

@@ -567,7 +567,10 @@ it.describe('pause', () => {
 
     const box1Promise = waitForTestLog<BoundingBox>(page, 'Highlight box for test: ');
     await recorderPage.click('[title="Step over (F10)"]');
-    const box2 = roundBox((await page.locator('#target').boundingBox())!);
+    // Use an internal call to avoid pausing on it instead of the stepped-over click.
+    const box2 = await (page as any)._wrapApiCall(async () => {
+      return roundBox((await page.locator('#target').boundingBox())!);
+    }, { internal: true });
     const box1 = roundBox(await box1Promise);
     expect(box1).toEqual(box2);
 

@@ -54,7 +54,7 @@ export class Highlight {
   private _glassPaneElement: HTMLElement;
   private _glassPaneShadow: ShadowRoot;
   private _renderedEntries: RenderedHighlightEntry[] = [];
-  private _actionPointElement: HTMLElement;
+  private _actionPointElement: HTMLElement | undefined;
   private _actionCursorElement: HTMLElement;
   private _titleElement: HTMLElement;
   private _userOverlayContainer: HTMLElement;
@@ -84,8 +84,6 @@ export class Highlight {
     this._glassPaneElement.style.pointerEvents = 'none';
     this._glassPaneElement.style.display = 'flex';
     this._glassPaneElement.style.backgroundColor = 'transparent';
-    this._actionPointElement = document.createElement('x-pw-action-point');
-    this._actionPointElement.setAttribute('hidden', 'true');
     this._actionCursorElement = document.createElement('x-pw-action-cursor');
     this._actionCursorElement.style.visibility = 'hidden';
     this._actionCursorElement.appendChild(this._createCursorSvg(document));
@@ -105,7 +103,6 @@ export class Highlight {
       styleElement.textContent = highlightCSS;
       this._glassPaneShadow.appendChild(styleElement);
     }
-    this._glassPaneShadow.appendChild(this._actionPointElement);
     this._glassPaneShadow.appendChild(this._actionCursorElement);
     this._glassPaneShadow.appendChild(this._titleElement);
     this._glassPaneShadow.appendChild(this._userOverlayContainer);
@@ -153,8 +150,15 @@ export class Highlight {
       return;
     const tick = () => {
       const entries: HighlightEntry[] = [];
+      const glassPanes = [...this._injectedScript.document.querySelectorAll('x-pw-glass')];
       for (const { selector, cssStyle } of this._elementHighlightSelectors.values()) {
-        const elements = this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement);
+        let elements: Element[] = [];
+        try {
+          elements = this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement);
+        } catch {
+        }
+        // Do not accidentally match our own highlight.
+        elements = elements.filter(element => !glassPanes.some(pane => this._injectedScript.utils.isInsideScope(pane, element)));
         const locator = asLocator(this._language, stringifySelector(selector));
         const color = elements.length > 1 ? '#f6b26b7f' : '#6fa8dc7f';
         for (let i = 0; i < elements.length; ++i) {
@@ -178,6 +182,10 @@ export class Highlight {
   }
 
   showActionPoint(x: number, y: number, fadeDuration?: number) {
+    if (!this._actionPointElement) {
+      this._actionPointElement = this._injectedScript.document.createElement('x-pw-action-point');
+      this._glassPaneShadow.appendChild(this._actionPointElement);
+    }
     this._actionPointElement.style.top = y + 'px';
     this._actionPointElement.style.left = x + 'px';
     this._actionPointElement.hidden = false;
@@ -188,7 +196,8 @@ export class Highlight {
   }
 
   hideActionPoint() {
-    this._actionPointElement.hidden = true;
+    if (this._actionPointElement)
+      this._actionPointElement.hidden = true;
   }
 
   moveActionCursor(x: number, y: number, fadeDuration?: number) {

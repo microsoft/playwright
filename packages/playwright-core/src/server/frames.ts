@@ -1372,16 +1372,16 @@ export class Frame extends SdkObject<FrameEventMap> {
     return result;
   }
 
-  async addHighlight(progress: Progress, selector: string, style?: string) {
-    await progress.race(this.selectors.callOnSelector(selector, { strict: false, callWithoutMatches: true }, ({ injected, info }, style) => {
+  async addHighlight(selector: string, style?: string) {
+    await this.selectors.callOnSelector(selector, { strict: false, callWithoutMatches: true }, ({ injected, info }, style) => {
       return injected.addHighlight(info.parsed, style);
-    }, style));
+    }, style);
   }
 
-  async removeHighlight(progress: Progress, selector: string) {
-    await progress.race(this.selectors.callOnSelector(selector, { strict: false, callWithoutMatches: true }, ({ injected, info }) => {
+  async removeHighlight(selector: string) {
+    await this.selectors.callOnSelector(selector, { strict: false, callWithoutMatches: true }, ({ injected, info }) => {
       return injected.removeHighlight(info.parsed);
-    }, {}));
+    }, {});
   }
 
   async hideHighlight() {
