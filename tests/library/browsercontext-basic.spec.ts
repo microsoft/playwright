@@ -366,6 +366,38 @@ it('should emulate navigator.onLine', async ({ browser, server }) => {
   await context.close();
 });
 
+it('should emulate navigator.onLine across navigations', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42174' },
+    { type: 'issue', description: 'https://issues.chromium.org/issues/544795254' },
+  ],
+}, async ({ browser, server, browserName }) => {
+  it.fixme(browserName === 'chromium', 'does not survive cross-process navgiation');
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
+  await context.setOffline(true);
+  expect(await page.evaluate(() => window.navigator.onLine)).toBe(false);
+
+  await page.goto('about:blank');
+  expect(await page.evaluate(() => window.navigator.onLine)).toBe(false);
+  await page.goto('data:text/html,<title>offline</title>');
+  expect(await page.evaluate(() => window.navigator.onLine)).toBe(false);
+
+  if (browserName === 'chromium') {
+    // Try a cross-process navigation in Chromium, which allows routing while offline.
+    await page.route('**/*', route => route.fulfill({ contentType: 'text/html', body: '<html></html>' }));
+    await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+    expect(await page.evaluate(() => window.navigator.onLine)).toBe(false);
+  }
+
+  await context.setOffline(false);
+  expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
+  await context.close();
+});
+
 it('should emulate offline event', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37295' } }, async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
