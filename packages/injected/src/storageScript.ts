@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { parseEvaluationResultValue, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
+import { parseEvaluationResultValue, serializeAsCallArgument, typedArrayToBase64 } from '@isomorphic/utilityScriptSerializers';
 
 import type { IndexedDBDatabase, OPFSEntry, OriginStorage, SetOriginStorage } from '@protocol/structs';
 
@@ -41,13 +41,9 @@ export class StorageScript {
 
   private async _directoryEntries(directory: FileSystemDirectoryHandle): Promise<[string, FileSystemHandle][]> {
     const result: [string, FileSystemHandle][] = [];
-    const iterator = directory.entries();
-    while (true) {
-      const entry = await iterator.next();
-      if (entry.done)
-        return result;
-      result.push(entry.value);
-    }
+    for await (const entry of directory.entries())
+      result.push(entry);
+    return result;
   }
 
   private _isPlainObject(v: any) {
@@ -147,30 +143,21 @@ export class StorageScript {
   }
 
   private async _collectOPFS(root: FileSystemDirectoryHandle): Promise<OPFSEntry[]> {
-    const result: OPFSEntry[] = [];
-    const collect = async (directory: FileSystemDirectoryHandle, parentPath: string) => {
+    const collect = async (directory: FileSystemDirectoryHandle, parentPath: string): Promise<OPFSEntry[]> => {
       const entries = await this._directoryEntries(directory);
       entries.sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
 
-      for (const [name, handle] of entries) {
+      const results = await Promise.all(entries.map(async ([name, handle]): Promise<OPFSEntry[]> => {
         const path = parentPath ? `${parentPath}/${name}` : name;
-        if (handle.kind === 'directory') {
-          result.push({ path, type: 'directory' });
-          await collect(handle as FileSystemDirectoryHandle, path);
-        } else {
-          const file = await (handle as FileSystemFileHandle).getFile();
-          const base64 = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve((reader.result as string).split(',', 2)[1]);
-            reader.onerror = () => reject(reader.error);
-            reader.readAsDataURL(file);
-          });
-          result.push({ path, type: 'file', base64 });
-        }
-      }
+        if (handle.kind === 'directory')
+          return [{ path, type: 'directory' }, ...await collect(handle as FileSystemDirectoryHandle, path)];
+        const file = await (handle as FileSystemFileHandle).getFile();
+        const base64 = typedArrayToBase64(new Uint8Array(await file.arrayBuffer()));
+        return [{ path, type: 'file', base64 }];
+      }));
+      return results.flat();
     };
-    await collect(root, '');
-    return result;
+    return collect(root, '');
   }
 
   async collect(record: { indexedDB: boolean, opfs: boolean }): Promise<SerializedStorage> {
@@ -224,7 +211,19 @@ export class StorageScript {
     }));
   }
 
-  private async _restoreOPFS(root: FileSystemDirectoryHandle, entries: OPFSEntry[]) {
+  private async _restoreOPFS(originState: SetOriginStorage | undefined) {
+    let root: FileSystemDirectoryHandle;
+    try {
+      root = await this._global.navigator.storage.getDirectory();
+    } catch (e) {
+      if (this._isWebKit && originState?.opfs === undefined && e.name === 'UnknownError' && e.message.includes('unknown transient reason'))
+        return;
+      throw e;
+    }
+
+    await Promise.all((await this._directoryEntries(root)).map(([name]) => root.removeEntry(name, { recursive: true })));
+
+    const entries = originState?.opfs ?? [];
     for (const entry of entries) {
       const parts = entry.path.split('/');
       if (!entry.path || parts.some(part => !part || part === '.' || part === '..'))
@@ -232,32 +231,15 @@ export class StorageScript {
       if (entry.type === 'file' && entry.base64 === undefined)
         throw new Error(`OPFS file is missing base64 data: ${entry.path}`);
     }
+    if (!entries.length)
+      return;
 
     if (this._isFirefox) {
       const source = `
+        const writeEntries = ${writeOPFSEntries.toString()};
         onmessage = async event => {
           try {
-            const entries = JSON.parse(event.data);
-            const root = await navigator.storage.getDirectory();
-            for (const entry of entries) {
-              const parts = entry.path.split('/');
-              let directory = root;
-              for (const part of parts.slice(0, -1))
-                directory = await directory.getDirectoryHandle(part, { create: true });
-              const name = parts[parts.length - 1];
-              if (entry.type === 'directory') {
-                await directory.getDirectoryHandle(name, { create: true });
-                continue;
-              }
-              const binary = atob(entry.base64);
-              const bytes = new Uint8Array(binary.length);
-              for (let i = 0; i < binary.length; ++i)
-                bytes[i] = binary.charCodeAt(i);
-              const handle = await directory.getFileHandle(name, { create: true });
-              const writable = await handle.createWritable();
-              await writable.write(bytes);
-              await writable.close();
-            }
+            await writeEntries(await navigator.storage.getDirectory(), event.data);
             postMessage({});
           } catch (error) {
             postMessage({ error: error instanceof Error ? error.message : String(error) });
@@ -271,7 +253,7 @@ export class StorageScript {
         await new Promise<void>((resolve, reject) => {
           worker!.onmessage = event => event.data.error ? reject(new Error(event.data.error)) : resolve();
           worker!.onerror = event => reject(new Error(event.message));
-          worker!.postMessage(JSON.stringify(entries));
+          worker!.postMessage(entries);
         });
       } finally {
         worker?.terminate();
@@ -280,26 +262,7 @@ export class StorageScript {
       return;
     }
 
-    for (const entry of entries) {
-      const parts = entry.path.split('/');
-      let directory = root;
-      for (const part of parts.slice(0, -1))
-        directory = await directory.getDirectoryHandle(part, { create: true });
-
-      const name = parts[parts.length - 1];
-      if (entry.type === 'directory') {
-        await directory.getDirectoryHandle(name, { create: true });
-        continue;
-      }
-      const binary = this._global.atob(entry.base64!);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; ++i)
-        bytes[i] = binary.charCodeAt(i);
-      const handle = await directory.getFileHandle(name, { create: true });
-      const writable = await handle.createWritable();
-      await writable.write(bytes);
-      await writable.close();
-    }
+    await writeOPFSEntries(root, entries);
   }
 
   async restore(originState: SetOriginStorage | undefined) {
@@ -334,19 +297,34 @@ export class StorageScript {
       this._global.localStorage.setItem(name, value);
 
     try {
-      let root: FileSystemDirectoryHandle;
-      try {
-        root = await this._global.navigator.storage.getDirectory();
-      } catch (e) {
-        if (this._isWebKit && originState?.opfs === undefined && e.name === 'UnknownError' && e.message.includes('unknown transient reason'))
-          return;
-        throw e;
-      }
-      for (const [name] of await this._directoryEntries(root))
-        await root.removeEntry(name, { recursive: true });
-      await this._restoreOPFS(root, originState?.opfs ?? []);
+      await this._restoreOPFS(originState);
     } catch (e) {
       throw new Error('Unable to restore OPFS: ' + e.message);
     }
+  }
+}
+
+// This function is serialized into the Firefox worker source via toString(),
+// so it must not reference anything from the enclosing module scope.
+async function writeOPFSEntries(root: FileSystemDirectoryHandle, entries: OPFSEntry[]) {
+  for (const entry of entries) {
+    const parts = entry.path.split('/');
+    let directory = root;
+    for (const part of parts.slice(0, -1))
+      directory = await directory.getDirectoryHandle(part, { create: true });
+
+    const name = parts[parts.length - 1];
+    if (entry.type === 'directory') {
+      await directory.getDirectoryHandle(name, { create: true });
+      continue;
+    }
+    const binary = atob(entry.base64!);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; ++i)
+      bytes[i] = binary.charCodeAt(i);
+    const handle = await directory.getFileHandle(name, { create: true });
+    const writable = await handle.createWritable();
+    await writable.write(bytes);
+    await writable.close();
   }
 }

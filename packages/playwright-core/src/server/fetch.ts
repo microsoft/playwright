@@ -774,10 +774,10 @@ export class GlobalAPIRequestContext extends APIRequestContext {
   override async storageState(progress: Progress, { indexedDB = false, opfs = false }: { indexedDB?: boolean, opfs?: boolean }): Promise<channels.APIRequestContextStorageStateResult> {
     return {
       cookies: this._cookieStore.allCookies(),
-      origins: (this._origins || []).map(({ indexedDB: originIndexedDB, opfs: originOPFS, ...origin }) => ({
+      origins: (this._origins || []).map(origin => ({
         ...origin,
-        indexedDB: indexedDB ? originIndexedDB : [],
-        ...(opfs ? { opfs: originOPFS || [] } : {}),
+        indexedDB: indexedDB ? origin.indexedDB : [],
+        opfs: opfs ? origin.opfs : undefined,
       })),
     };
   }

@@ -624,6 +624,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     if (credentials)
       result.credentials = await progress.race(this.credentials.get());
     const originsToSave = new Set(this._origins);
+    const hasStorage = (storage: SerializedStorage) => !!(storage.localStorage.length || storage.indexedDB?.length || storage.opfs?.length);
 
     const collectScript = `(() => {
       const module = {};
@@ -639,8 +640,8 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         continue;
       try {
         const storage: SerializedStorage = await progress.race(page.mainFrame().nonStallingEvaluateInExistingContext(collectScript, 'utility'));
-        if (storage.localStorage.length || storage.indexedDB?.length || storage.opfs?.length)
-          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB, opfs: storage.opfs });
+        if (hasStorage(storage))
+          result.origins.push({ origin, ...storage });
         originsToSave.delete(origin);
       } catch {
         // When failed on the live page, we'll retry on the blank page below.
@@ -658,8 +659,8 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
           const frame = page.mainFrame();
           await frame.gotoImpl(progress, origin, {});
           const storage: SerializedStorage = await frame.evaluateExpression(progress, collectScript, { world: 'utility' });
-          if (storage.localStorage.length || storage.indexedDB?.length || storage.opfs?.length)
-            result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB, opfs: storage.opfs });
+          if (hasStorage(storage))
+            result.origins.push({ origin, ...storage });
         }
       } finally {
         await page.close(progress);
