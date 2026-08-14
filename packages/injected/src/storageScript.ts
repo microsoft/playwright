@@ -38,9 +38,9 @@ export class StorageScript {
   }
 
   private async _directoryEntries(directory: FileSystemDirectoryHandle): Promise<[string, FileSystemHandle][]> {
-    // Firefox Xray wrappers in the utility world do not expose Symbol.asyncIterator
-    // on the returned iterator ('directory.entries() is not iterable'), so drive
-    // the iterator manually instead of `for await`.
+    // Firefox Xray wrappers expose only string-named WebIDL members, so the async
+    // iterator has no Symbol.asyncIterator here ('directory.entries() is not
+    // iterable') and `for await` cannot be used. Drive the iterator manually.
     const result: [string, FileSystemHandle][] = [];
     const iterator = directory.entries();
     while (true) {
@@ -235,38 +235,32 @@ export class StorageScript {
     if (!entries.length)
       return;
 
-    // In Firefox, OPFS writes from the utility world sandbox fail with Xray
-    // security errors ('Permission denied to access property ...'), so restore
-    // inside a worker where the File System API works normally.
-    if (this._isFirefox) {
-      const source = `
-        const writeEntries = ${writeOPFSEntries.toString()};
-        onmessage = async event => {
-          try {
-            await writeEntries(await navigator.storage.getDirectory(), event.data);
-            postMessage({});
-          } catch (error) {
-            postMessage({ error: error instanceof Error ? error.message : String(error) });
-          }
-        };
-      `;
-      const url = this._global.URL.createObjectURL(new this._global.Blob([source], { type: 'text/javascript' }));
-      let worker: Worker | undefined;
-      try {
-        worker = new this._global.Worker(url);
-        await new Promise<void>((resolve, reject) => {
-          worker!.onmessage = event => event.data.error ? reject(new Error(event.data.error)) : resolve();
-          worker!.onerror = event => reject(new Error(event.message));
-          worker!.postMessage(entries);
-        });
-      } finally {
-        worker?.terminate();
-        this._global.URL.revokeObjectURL(url);
-      }
-      return;
-    }
+    for (const entry of entries) {
+      const parts = entry.path.split('/');
+      let directory = root;
+      for (const part of parts.slice(0, -1))
+        directory = await directory.getDirectoryHandle(part, { create: true });
 
-    await writeOPFSEntries(root, entries);
+      const name = parts[parts.length - 1];
+      if (entry.type === 'directory') {
+        await directory.getDirectoryHandle(name, { create: true });
+        continue;
+      }
+      const blob = await this._blobFromBase64(entry.base64!);
+      const handle = await directory.getFileHandle(name, { create: true });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+    }
+  }
+
+  // Decode through the page's own fetch so that the resulting blob belongs to the page.
+  // The Firefox utility world is a sandbox with an extended principal, so the page is
+  // denied access to objects allocated here and writing a Uint8Array built in this world
+  // fails with 'Permission denied to access property "data"'.
+  private async _blobFromBase64(base64: string): Promise<Blob> {
+    const response = await this._global.fetch(`data:application/octet-stream;base64,${base64}`);
+    return response.blob();
   }
 
   async restore(originState: SetOriginStorage | undefined) {
@@ -305,30 +299,5 @@ export class StorageScript {
     } catch (e) {
       throw new Error('Unable to restore OPFS: ' + e.message);
     }
-  }
-}
-
-// This function is serialized into the Firefox worker source via toString(),
-// so it must not reference anything from the enclosing module scope.
-async function writeOPFSEntries(root: FileSystemDirectoryHandle, entries: OPFSEntry[]) {
-  for (const entry of entries) {
-    const parts = entry.path.split('/');
-    let directory = root;
-    for (const part of parts.slice(0, -1))
-      directory = await directory.getDirectoryHandle(part, { create: true });
-
-    const name = parts[parts.length - 1];
-    if (entry.type === 'directory') {
-      await directory.getDirectoryHandle(name, { create: true });
-      continue;
-    }
-    const binary = atob(entry.base64!);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; ++i)
-      bytes[i] = binary.charCodeAt(i);
-    const handle = await directory.getFileHandle(name, { create: true });
-    const writable = await handle.createWritable();
-    await writable.write(bytes);
-    await writable.close();
   }
 }
