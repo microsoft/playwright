@@ -20,7 +20,7 @@ import net from 'net';
 import { assert } from '@isomorphic/assert';
 import { createGuid } from './crypto';
 import { debugLogger } from './debugLogger';
-import { createSocket } from './happyEyeballs';
+import { createSocket } from './network';
 
 import type { AddressInfo } from 'net';
 

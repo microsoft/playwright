@@ -21,12 +21,11 @@ import { TLSSocket } from 'tls';
 import * as zlib from 'zlib';
 
 import { createGuid } from '@utils/crypto';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent, timingForSocket } from '@utils/happyEyeballs';
 import { assert } from '@isomorphic/assert';
 import { constructURLBasedOnBaseURL } from '@isomorphic/urlMatch';
 import { eventsHelper } from '@utils/eventsHelper';
 import { monotonicTime } from '@isomorphic/time';
-import { createProxyAgent } from '@utils/network';
+import { createProxyAgent, dualStackLookup, flattenAggregateError } from '@utils/network';
 import { getUserAgent } from './userAgent';
 import { BrowserContext, findMatchingHttpCredentials, verifyClientCertificates } from './browserContext';
 import { Cookie, CookieStore, domainMatches, parseRawCookie } from './cookieStore';
@@ -342,9 +341,10 @@ export abstract class APIRequestContext extends SdkObject {
     const resultPromise = new Promise<SendRequestResult>((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
-      // If we have a proxy agent already, do not override it.
-      const agent = options.agent || (url.protocol === 'https:' ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent);
-      const requestOptions = { ...options, agent };
+      // Without an explicit proxy agent, the default global agent is used, which
+      // has keep-alive enabled and connects with Happy Eyeballs (autoSelectFamily).
+      const requestOptions = { ...options };
+      requestOptions.lookup = options.__testHookLookup ? lookupWithTestHook(options.__testHookLookup) : dualStackLookup;
 
       const startAt = monotonicTime();
       const startAtWallTime = Date.now();
@@ -366,7 +366,7 @@ export abstract class APIRequestContext extends SdkObject {
         // https://github.com/nodejs/undici/blob/01a912e49a50c48009ed2639d2a457a6ec26752a/lib/dispatcher/client-h1.js#L735
         if (responseReceived && isNetworkConnectionError(error))
           return;
-        reject(error);
+        reject(flattenAggregateError(error));
       };
 
       const request = requestConstructor(url, requestOptions as any, async response => {
@@ -614,15 +614,13 @@ export abstract class APIRequestContext extends SdkObject {
           return;
         }
 
-        // happy eyeballs don't emit lookup and connect events, so we use our custom ones
-        const happyEyeBallsTimings = timingForSocket(socket);
-        dnsLookupAt = happyEyeBallsTimings.dnsLookupAt;
-        tcpConnectionAt = happyEyeBallsTimings.tcpConnectionAt;
-
-        // non-happy-eyeballs sockets
         listeners.push(
             eventsHelper.addEventListener(socket, 'lookup', () => { dnsLookupAt = monotonicTime(); }),
-            eventsHelper.addEventListener(socket, 'connect', () => { tcpConnectionAt = monotonicTime(); }),
+            eventsHelper.addEventListener(socket, 'connect', () => {
+              tcpConnectionAt = monotonicTime();
+              serverIPAddress = socket.remoteAddress;
+              serverPort = socket.remotePort;
+            }),
             eventsHelper.addEventListener(socket, 'secureConnect', () => {
               tlsHandshakeAt = monotonicTime();
               captureSecurityDetails(socket);
@@ -864,4 +862,22 @@ function setBasicAuthorizationHeader(headers: { [name: string]: string }, creden
   const { username, password } = credentials;
   const encoded = Buffer.from(`${username || ''}:${password || ''}`).toString('base64');
   setHeader(headers, 'authorization', `Basic ${encoded}`);
+}
+
+function lookupWithTestHook(testHookLookup: (hostname: string) => LookupAddress[]): net.LookupFunction {
+  return (hostname, options, callback) => {
+    setImmediate(() => {
+      let addresses: LookupAddress[];
+      try {
+        addresses = testHookLookup(hostname);
+      } catch (error) {
+        callback(error as NodeJS.ErrnoException, '');
+        return;
+      }
+      if (options.all)
+        callback(null, addresses);
+      else
+        callback(null, addresses[0].address, addresses[0].family);
+    });
+  };
 }

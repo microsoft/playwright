@@ -16,7 +16,7 @@
  */
 
 import ws from 'ws';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '@utils/happyEyeballs';
+import { dualStackLookup, flattenAggregateError } from '@utils/network';
 import { makeWaitForNextTask } from '@utils/task';
 import type { WebSocket } from 'ws';
 import type { Progress } from './progress';
@@ -89,8 +89,9 @@ export class WebSocketTransport implements ConnectionTransport {
         fulfill({});
       });
       transport._ws.on('error', event => {
-        progress?.log(`<ws connect error> ${logUrl} ${event.message}`);
-        reject(new Error('WebSocket error: ' + event.message));
+        const message = flattenAggregateError(event).message;
+        progress?.log(`<ws connect error> ${logUrl} ${message}`);
+        reject(new Error('WebSocket error: ' + message));
         transport._ws.close();
       });
       transport._ws.on('unexpected-response', (request: ClientRequest, response: IncomingMessage) => {
@@ -137,7 +138,7 @@ export class WebSocketTransport implements ConnectionTransport {
       maxPayload: 256 * 1024 * 1024, // 256Mb,
       headers: options.headers,
       followRedirects: options.followRedirects,
-      agent: (/^(https|wss):\/\//.test(url)) ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,
+      lookup: dualStackLookup,
       perMessageDeflate,
     });
     this._ws.on('upgrade', response => {
