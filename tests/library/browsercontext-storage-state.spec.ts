@@ -540,6 +540,41 @@ it('should support empty indexedDB', { annotation: { type: 'issue', description:
   expect(await context.storageState({ indexedDB: true })).toEqual(storageState);
 });
 
+it('should not leave IndexedDB connections open', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42258' } }, async ({ contextFactory, server }) => {
+  const context = await contextFactory();
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(async () => {
+    const openRequest = indexedDB.open('db', 1);
+    openRequest.onupgradeneeded = () => openRequest.result.createObjectStore('store');
+    await new Promise<void>((resolve, reject) => {
+      openRequest.onsuccess = () => {
+        const db = openRequest.result;
+        const transaction = db.transaction('store', 'readwrite');
+        transaction.objectStore('store').put('value', 'key');
+        transaction.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        transaction.onerror = () => reject(transaction.error);
+      };
+      openRequest.onerror = () => reject(openRequest.error);
+    });
+  });
+
+  const state = await context.storageState({ indexedDB: true });
+
+  await page.evaluate(() => new Promise<void>((resolve, reject) => {
+    const request = indexedDB.deleteDatabase('db');
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new Error('deleteDatabase was blocked'));
+  }));
+
+  await context.setStorageState(state);
+  expect(await context.storageState({ indexedDB: true })).toEqual(state);
+});
+
 it('should round-trip WebAuthn credentials with storageState', async ({ contextFactory, server }) => {
   const context = await contextFactory();
   const credential = await context.credentials.create(server.HOSTNAME);
