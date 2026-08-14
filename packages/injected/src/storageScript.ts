@@ -38,10 +38,17 @@ export class StorageScript {
   }
 
   private async _directoryEntries(directory: FileSystemDirectoryHandle): Promise<[string, FileSystemHandle][]> {
+    // Firefox Xray wrappers in the utility world do not expose Symbol.asyncIterator
+    // on the returned iterator ('directory.entries() is not iterable'), so drive
+    // the iterator manually instead of `for await`.
     const result: [string, FileSystemHandle][] = [];
-    for await (const entry of directory.entries())
-      result.push(entry);
-    return result;
+    const iterator = directory.entries();
+    while (true) {
+      const entry = await iterator.next();
+      if (entry.done)
+        return result;
+      result.push(entry.value);
+    }
   }
 
   private _isPlainObject(v: any) {
@@ -225,16 +232,12 @@ export class StorageScript {
     await Promise.all((await this._directoryEntries(root)).map(([name]) => root.removeEntry(name, { recursive: true })));
 
     const entries = originState?.opfs ?? [];
-    for (const entry of entries) {
-      const parts = entry.path.split('/');
-      if (!entry.path || parts.some(part => !part || part === '.' || part === '..'))
-        throw new Error(`Invalid OPFS path: ${entry.path}`);
-      if (entry.type === 'file' && entry.base64 === undefined)
-        throw new Error(`OPFS file is missing base64 data: ${entry.path}`);
-    }
     if (!entries.length)
       return;
 
+    // In Firefox, OPFS writes from the utility world sandbox fail with Xray
+    // security errors ('Permission denied to access property ...'), so restore
+    // inside a worker where the File System API works normally.
     if (this._isFirefox) {
       const source = `
         const writeEntries = ${writeOPFSEntries.toString()};
