@@ -29,6 +29,11 @@ export class PendingConnections {
     this._map.set(selectorTabId, mcpRelayUrl);
   }
 
+  // A connect page awaiting approval; no connection may claim its tab.
+  has(selectorTabId: number): boolean {
+    return this._map.has(selectorTabId);
+  }
+
   async take(selectorTabId: number): Promise<RelayConnection | undefined> {
     const mcpRelayUrl = this._map.get(selectorTabId);
     if (mcpRelayUrl === undefined)

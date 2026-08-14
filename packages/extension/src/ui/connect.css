@@ -140,6 +140,13 @@ body {
   border-color: #c73836;
 }
 
+/* Connections */
+.connection + .connection {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #d1d9e0;
+}
+
 /* Connection header */
 .connection-header {
   display: flex;

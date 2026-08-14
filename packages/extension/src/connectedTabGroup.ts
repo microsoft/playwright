@@ -17,7 +17,9 @@
 import { RelayConnection, debugLog } from './relayConnection';
 
 const PLAYWRIGHT_GROUP_TITLE = 'Playwright';
-const PLAYWRIGHT_GROUP_COLOR = 'green';
+const PLAYWRIGHT_GROUP_TITLE_PREFIX = `${PLAYWRIGHT_GROUP_TITLE} · `;
+// Green first, so a lone connection keeps the familiar look.
+const PLAYWRIGHT_GROUP_COLORS: GroupColor[] = ['green', 'blue', 'purple', 'orange', 'pink', 'cyan', 'yellow', 'red'];
 const NON_DEBUGGABLE_SCHEMES = ['chrome:', 'edge:', 'devtools:'];
 const CONNECTED_BADGE = { text: '✓', color: '#4CAF50', title: 'Connected to Playwright client' };
 
@@ -25,14 +27,35 @@ export function isNonDebuggableUrl(url: string | undefined): boolean {
   return !!url && NON_DEBUGGABLE_SCHEMES.some(s => url.startsWith(s));
 }
 
+type GroupColor = `${chrome.tabGroups.Color}`;
+
+export type GroupStyle = {
+  title: string;
+  color: GroupColor;
+};
+
+export function uniqueGroupStyle(clientName: string | undefined, taken: readonly GroupStyle[]): GroupStyle {
+  const titles = new Set(taken.map(style => style.title));
+  const base = PLAYWRIGHT_GROUP_TITLE_PREFIX + (clientName || 'unknown');
+  let title = base;
+  for (let i = 2; titles.has(title); i++)
+    title = `${base} (${i})`;
+
+  const colors = new Set(taken.map(style => style.color));
+  const color = PLAYWRIGHT_GROUP_COLORS.find(candidate => !colors.has(candidate)) ?? PLAYWRIGHT_GROUP_COLORS[0];
+  return { title, color };
+}
+
 // Ungroups any Playwright-titled groups left behind by a prior service worker.
 export async function cleanupStalePlaywrightGroups(): Promise<void> {
   try {
-    const groups = await chrome.tabGroups.query({ title: PLAYWRIGHT_GROUP_TITLE });
-    const tabsPerGroup = await Promise.all(groups.map(g => chrome.tabs.query({ groupId: g.id })));
+    const groups = await chrome.tabGroups.query({});
+    // The bare title comes from versions that predate per-client groups.
+    const stale = groups.filter(g => g.title === PLAYWRIGHT_GROUP_TITLE || g.title?.startsWith(PLAYWRIGHT_GROUP_TITLE_PREFIX));
+    const tabsPerGroup = await Promise.all(stale.map(g => chrome.tabs.query({ groupId: g.id })));
     const tabIds = tabsPerGroup.flat().map(t => t.id).filter((id): id is number => id !== undefined);
     if (tabIds.length)
-      await chrome.tabs.ungroup(tabIds);
+      await ungroupTabs(tabIds);
   } catch (error: any) {
     debugLog('Error cleaning up stale groups:', error);
   }
@@ -47,7 +70,10 @@ export async function cleanupStalePlaywrightGroups(): Promise<void> {
 // `_groupTabIds` caches group membership from Chrome events so hot-path checks
 // in `_onTabUpdated` stay synchronous.
 export class ConnectedTabGroup {
+  readonly clientName: string | undefined;
+  readonly groupStyle: GroupStyle;
   private _connection: RelayConnection;
+  private _isTabReserved: (tabId: number) => boolean;
   private _groupId: number | null = null;
   private _groupTabIds: Set<number> = new Set();
   private _onTabUpdatedListener: (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => void;
@@ -55,7 +81,10 @@ export class ConnectedTabGroup {
 
   onclose?: () => void;
 
-  constructor(connection: RelayConnection, selectedTab: chrome.tabs.Tab) {
+  constructor(connection: RelayConnection, selectedTab: chrome.tabs.Tab, clientName: string | undefined, groupStyle: GroupStyle, isTabReserved: (tabId: number) => boolean) {
+    this.clientName = clientName;
+    this.groupStyle = groupStyle;
+    this._isTabReserved = isTabReserved;
     this._connection = connection;
     this._connection.onclose = () => this._onConnectionClose();
     this._connection.ontabattached = (tabId: number) => this._onTabAttached(tabId);
@@ -80,6 +109,13 @@ export class ConnectedTabGroup {
     this._connection.close(reason);
   }
 
+  releaseTab(tabId: number): void {
+    if (!this._groupTabIds.has(tabId))
+      return;
+    this._groupTabIds.delete(tabId);
+    this._connection.detachTab(tabId);
+  }
+
   private _onTabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): void {
     if (changeInfo.groupId !== undefined)
       this._onTabGroupChanged(tabId, tab);
@@ -102,6 +138,12 @@ export class ConnectedTabGroup {
     if (inOurGroup === wasInGroup)
       return;
     if (inOurGroup) {
+      // Chrome may drop the connect page of a client that is still connecting
+      // into our group; that tab is spoken for.
+      if (this._isTabReserved(tabId)) {
+        void ungroupTabs([tabId]);
+        return;
+      }
       this._groupTabIds.add(tabId);
       if (!isNonDebuggableUrl(tab.url))
         this._connection.attachTab(tab);
@@ -133,11 +175,8 @@ export class ConnectedTabGroup {
     chrome.tabs.onRemoved.removeListener(this._onTabRemovedListener);
     const groupTabs = [...this._groupTabIds];
     this._groupTabIds.clear();
-    if (groupTabs.length) {
-      this._retryOnDrag(() => chrome.tabs.ungroup(groupTabs)).catch(error => {
-        debugLog('Error ungrouping tabs on close:', error);
-      });
-    }
+    if (groupTabs.length)
+      void ungroupTabs(groupTabs);
     this.onclose?.();
   }
 
@@ -161,10 +200,10 @@ export class ConnectedTabGroup {
     if (this._groupTabIds.has(tabId))
       return;
     try {
-      await this._retryOnDrag(async () => {
+      await retryOnDrag(async () => {
         if (this._groupId === null) {
           this._groupId = await chrome.tabs.group({ tabIds: [tabId] });
-          await chrome.tabGroups.update(this._groupId, { color: PLAYWRIGHT_GROUP_COLOR, title: PLAYWRIGHT_GROUP_TITLE });
+          await chrome.tabGroups.update(this._groupId, this.groupStyle);
         } else {
           await chrome.tabs.group({ groupId: this._groupId, tabIds: [tabId] });
         }
@@ -175,23 +214,32 @@ export class ConnectedTabGroup {
     }
   }
 
-  // Chrome throws "user may be dragging a tab" while a drag is in progress.
-  // Retry with backoff until it clears (or we give up).
-  private async _retryOnDrag(fn: () => Promise<void>): Promise<void> {
-    const delays = [0, 100, 200, 400, 800];
-    let lastError: unknown;
-    for (const delay of delays) {
-      if (delay)
-        await new Promise(resolve => setTimeout(resolve, delay));
-      try {
-        await fn();
-        return;
-      } catch (error: any) {
-        if (!error?.message?.includes('user may be dragging a tab'))
-          throw error;
-        lastError = error;
-      }
-    }
-    throw lastError;
+}
+
+export async function ungroupTabs(tabIds: number[]): Promise<void> {
+  try {
+    await retryOnDrag(() => chrome.tabs.ungroup(tabIds));
+  } catch (error: any) {
+    debugLog('Error ungrouping tabs:', error);
   }
+}
+
+// Chrome throws "user may be dragging a tab" while a drag is in progress.
+// Retry with backoff until it clears (or we give up).
+async function retryOnDrag(fn: () => Promise<void>): Promise<void> {
+  const delays = [0, 100, 200, 400, 800];
+  let lastError: unknown;
+  for (const delay of delays) {
+    if (delay)
+      await new Promise(resolve => setTimeout(resolve, delay));
+    try {
+      await fn();
+      return;
+    } catch (error: any) {
+      if (!error?.message?.includes('user may be dragging a tab'))
+        throw error;
+      lastError = error;
+    }
+  }
+  throw lastError;
 }
