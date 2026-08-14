@@ -97,18 +97,16 @@ const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
     const csiListener: ClientInstrumentationListener = {
       onApiCallBegin: (data, channel) => {
         const testInfo = globals.currentTestInfo();
-        // Some special calls do not get into steps.
-        if (!testInfo || data.apiName.includes('setTestIdAttribute') || data.apiName === 'tracing.groupEnd')
+        if (!testInfo)
           return;
+        if (channel.type === 'Tracing' && channel.method === 'tracingGroupEnd') {
+          // The "tracing.group" step ends together with the "tracing.groupEnd" call.
+          data.userData = (error?: Error) => tracingGroupSteps.pop()?.complete({ error });
+          return;
+        }
         const zone = currentZone().data<TestStepInternal>('stepZone');
-        const isExpectCall = data.apiName === 'locator._expect' || data.apiName === 'frame._expect' || data.apiName === 'page._expectScreenshot';
+        const isExpectCall = (channel.type === 'Frame' && channel.method === 'expect') || (channel.type === 'Page' && channel.method === 'expectScreenshot');
         if (zone && zone.category === 'expect' && isExpectCall) {
-          // Display the internal locator._expect call under the name of the enclosing expect call,
-          // and connect it to the existing expect step.
-          if (zone.apiName)
-            data.apiName = zone.apiName;
-          if (zone.shortTitle || zone.title)
-            data.title = zone.shortTitle ?? zone.title;
           data.stepId = zone.stepId;
           return;
         }
@@ -118,27 +116,20 @@ const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
           location: data.frames[0],
           category: 'pw:api',
           title: renderTitle(channel.type, channel.method, channel.params, data.title),
-          apiName: data.apiName,
           params: channel.params,
           group: getActionGroup({ type: channel.type, method: channel.method }),
         }, tracingGroupSteps[tracingGroupSteps.length - 1]);
-        data.userData = step;
         data.stepId = step.stepId;
-        if (data.apiName === 'tracing.group')
+        if (channel.type === 'Tracing' && channel.method === 'tracingGroup') {
+          // The step will end later, when the corresponding "tracing.groupEnd" call finishes.
           tracingGroupSteps.push(step);
+        } else {
+          data.userData = (error?: Error) => step.complete({ error });
+        }
       },
       onApiCallEnd: data => {
-
-        // "tracing.group" step will end later, when "tracing.groupEnd" finishes.
-        if (data.apiName === 'tracing.group')
-          return;
-        if (data.apiName === 'tracing.groupEnd') {
-          const step = tracingGroupSteps.pop();
-          step?.complete({ error: data.error });
-          return;
-        }
-        const step = data.userData;
-        step?.complete({ error: data.error });
+        const completeStep = data.userData as ((error?: Error) => void) | undefined;
+        completeStep?.(data.error);
       },
       onWillPause: ({ keepTestTimeout }) => {
         if (!keepTestTimeout)

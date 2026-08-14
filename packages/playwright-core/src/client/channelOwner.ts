@@ -193,7 +193,10 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       return await func(existingApiZone);
 
     const stackTrace = captureLibraryStackTrace();
-    const apiZone: ApiZone = { title: options?.title, apiName: stackTrace.apiName, frames: stackTrace.frames, internal: options?.internal ?? false, reported: false, userData: undefined, stepId: undefined };
+    let apiName = stackTrace.apiName;
+    if (apiName.startsWith('_') || apiName.includes('._'))
+      apiName = options?.title ?? apiName;
+    const apiZone: ApiZone = { title: options?.title, apiName, frames: stackTrace.frames, internal: options?.internal ?? false, reported: false, userData: undefined, stepId: undefined };
 
     try {
       const result = await currentZone().with('apiZone', apiZone).run(async () => await func(apiZone));

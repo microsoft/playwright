@@ -365,6 +365,7 @@ export async function toHaveScreenshot(
     isNot: !!this.isNot,
     timeout,
     signal: helper.options.signal,
+    title: this.title,
     type: screenshotType,
     comparator: helper.options.comparator,
     maxDiffPixels: helper.options.maxDiffPixels,
