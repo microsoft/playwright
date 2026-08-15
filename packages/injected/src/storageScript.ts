@@ -76,61 +76,65 @@ export class StorageScript {
       throw new Error('Database version is unset');
 
     const db = await this._idbRequestToPromise(indexedDB.open(dbInfo.name));
-    if (db.objectStoreNames.length === 0)
-      return { name: dbInfo.name, version: dbInfo.version, stores: [] };
+    try {
+      if (db.objectStoreNames.length === 0)
+        return { name: dbInfo.name, version: dbInfo.version, stores: [] };
 
-    const transaction = db.transaction(db.objectStoreNames, 'readonly');
-    const stores = await Promise.all([...db.objectStoreNames].map(async storeName => {
-      const objectStore = transaction.objectStore(storeName);
+      const transaction = db.transaction(db.objectStoreNames, 'readonly');
+      const stores = await Promise.all([...db.objectStoreNames].map(async storeName => {
+        const objectStore = transaction.objectStore(storeName);
 
-      const keys = await this._idbRequestToPromise(objectStore.getAllKeys());
-      const records = await Promise.all(keys.map(async key => {
-        const record: IndexedDBDatabase['stores'][0]['records'][0] = {};
+        const keys = await this._idbRequestToPromise(objectStore.getAllKeys());
+        const records = await Promise.all(keys.map(async key => {
+          const record: IndexedDBDatabase['stores'][0]['records'][0] = {};
 
-        if (objectStore.keyPath === null) {
-          const { encoded, trivial } = this._trySerialize(key);
+          if (objectStore.keyPath === null) {
+            const { encoded, trivial } = this._trySerialize(key);
+            if (trivial)
+              record.key = trivial;
+            else
+              record.keyEncoded = encoded;
+          }
+
+          const value = await this._idbRequestToPromise(objectStore.get(key));
+          const { encoded, trivial } = this._trySerialize(value);
           if (trivial)
-            record.key = trivial;
+            record.value = trivial;
           else
-            record.keyEncoded = encoded;
-        }
+            record.valueEncoded = encoded;
 
-        const value = await this._idbRequestToPromise(objectStore.get(key));
-        const { encoded, trivial } = this._trySerialize(value);
-        if (trivial)
-          record.value = trivial;
-        else
-          record.valueEncoded = encoded;
+          return record;
+        }));
 
-        return record;
+        const indexes = [...objectStore.indexNames].map(indexName => {
+          const index = objectStore.index(indexName);
+          return {
+            name: index.name,
+            keyPath: typeof index.keyPath === 'string' ? index.keyPath : undefined,
+            keyPathArray: Array.isArray(index.keyPath) ? index.keyPath : undefined,
+            multiEntry: index.multiEntry,
+            unique: index.unique,
+          };
+        });
+
+        return {
+          name: storeName,
+          records: records,
+          indexes,
+          autoIncrement: objectStore.autoIncrement,
+          keyPath: typeof objectStore.keyPath === 'string' ? objectStore.keyPath : undefined,
+          keyPathArray: Array.isArray(objectStore.keyPath) ? objectStore.keyPath : undefined,
+        };
       }));
 
-      const indexes = [...objectStore.indexNames].map(indexName => {
-        const index = objectStore.index(indexName);
-        return {
-          name: index.name,
-          keyPath: typeof index.keyPath === 'string' ? index.keyPath : undefined,
-          keyPathArray: Array.isArray(index.keyPath) ? index.keyPath : undefined,
-          multiEntry: index.multiEntry,
-          unique: index.unique,
-        };
-      });
-
       return {
-        name: storeName,
-        records: records,
-        indexes,
-        autoIncrement: objectStore.autoIncrement,
-        keyPath: typeof objectStore.keyPath === 'string' ? objectStore.keyPath : undefined,
-        keyPathArray: Array.isArray(objectStore.keyPath) ? objectStore.keyPath : undefined,
+        name: dbInfo.name,
+        version: dbInfo.version,
+        stores,
       };
-    }));
-
-    return {
-      name: dbInfo.name,
-      version: dbInfo.version,
-      stores,
-    };
+    } finally {
+      db.close();
+    }
   }
 
   async collect(recordIndexedDB: boolean): Promise<SerializedStorage> {
@@ -159,21 +163,24 @@ export class StorageScript {
 
     // after `upgradeneeded` finishes, `success` event is fired.
     const db = await this._idbRequestToPromise(openRequest);
-
-    if (db.objectStoreNames.length === 0)
-      return;
-    const transaction = db.transaction(db.objectStoreNames, 'readwrite');
-    await Promise.all(dbInfo.stores.map(async store => {
-      const objectStore = transaction.objectStore(store.name);
-      await Promise.all(store.records.map(async record => {
-        await this._idbRequestToPromise(
-            objectStore.add(
-                record.value ?? parseEvaluationResultValue(record.valueEncoded),
-                record.key ?? parseEvaluationResultValue(record.keyEncoded),
-            )
-        );
+    try {
+      if (db.objectStoreNames.length === 0)
+        return;
+      const transaction = db.transaction(db.objectStoreNames, 'readwrite');
+      await Promise.all(dbInfo.stores.map(async store => {
+        const objectStore = transaction.objectStore(store.name);
+        await Promise.all(store.records.map(async record => {
+          await this._idbRequestToPromise(
+              objectStore.add(
+                  record.value ?? parseEvaluationResultValue(record.valueEncoded),
+                  record.key ?? parseEvaluationResultValue(record.keyEncoded),
+              )
+          );
+        }));
       }));
-    }));
+    } finally {
+      db.close();
+    }
   }
 
   async restore(originState: SetOriginStorage | undefined) {
