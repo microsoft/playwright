@@ -20,11 +20,14 @@ import { clsx } from '../uiUtils';
 
 export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
   title: React.JSX.Element | string,
+  // Rendered next to the title, outside of the toggle. Use it for links and buttons,
+  // which cannot be nested inside the toggle button.
+  titleChildren?: React.ReactNode,
   setExpanded: (expanded: boolean) => void,
   expanded: boolean,
   expandOnTitleClick?: boolean,
   className?: string;
-}>> = ({ title, children, setExpanded, expanded, expandOnTitleClick, className }) => {
+}>> = ({ title, titleChildren, children, setExpanded, expanded, expandOnTitleClick, className }) => {
   const titleId = React.useId();
   const regionId = React.useId();
 
@@ -36,21 +39,24 @@ export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
     onClick={!expandOnTitleClick ? onClick : undefined} />;
 
   return <div className={clsx('expandable', expanded && 'expanded', className)}>
-    {expandOnTitleClick ?
-      <div
-        id={titleId}
-        role='button'
-        aria-expanded={expanded}
-        aria-controls={regionId}
-        className='expandable-title'
-        onClick={onClick}>
-        {chevron}
-        {title}
-      </div> :
-      <div className='expandable-title'>
-        {chevron}
-        {title}
-      </div>}
+    <div className='expandable-title'>
+      {expandOnTitleClick ?
+        <button
+          id={titleId}
+          type='button'
+          aria-expanded={expanded}
+          aria-controls={regionId}
+          className='expandable-toggle'
+          onClick={onClick}>
+          {chevron}
+          {title}
+        </button> :
+        <>
+          {chevron}
+          {title}
+        </>}
+      {titleChildren}
+    </div>
     {expanded && <div id={regionId} aria-labelledby={titleId} role='region' className='expandable-content'>{children}</div>}
   </div>;
 };

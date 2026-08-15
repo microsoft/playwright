@@ -38,3 +38,12 @@ export const StatefulTitleClick = () => {
     <form hidden><input data-testid='expanded' readOnly value={String(expanded)} /></form>
   </>;
 };
+
+// Network details and the attachments tab both render a control next to the title.
+export const StatefulTitleClickWithControl = () => {
+  const [expanded, setExpanded] = React.useState(false);
+  return <>
+    <Expandable expanded={expanded} setExpanded={setExpanded} expandOnTitleClick title='Title' titleChildren={<a href='#download'>download</a>}>Details text</Expandable>
+    <form hidden><input data-testid='expanded' readOnly value={String(expanded)} /></form>
+  </>;
+};

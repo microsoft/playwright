@@ -16,7 +16,7 @@
 
 import { expect, test } from '@playwright/test';
 
-import type { Collapsed, Expanded, Stateful, StatefulTitleClick } from './expandable.story';
+import type { Collapsed, Expanded, Stateful, StatefulTitleClick, StatefulTitleClickWithControl } from './expandable.story';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
@@ -45,6 +45,24 @@ test('title click should expand when enabled', async ({ mount }) => {
   const component = await mount<typeof StatefulTitleClick>('components/expandable/StatefulTitleClick');
   await component.getByText('Title').click();
   await expect(component.getByTestId('expanded')).toHaveValue('true');
+});
+
+test('title should expand with the keyboard when title click is enabled', async ({ mount, page }) => {
+  const component = await mount<typeof StatefulTitleClick>('components/expandable/StatefulTitleClick');
+  const title = component.getByRole('button', { name: 'Title' });
+  await title.focus();
+  await expect(title).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(component.getByTestId('expanded')).toHaveValue('true');
+  await page.keyboard.press('Space');
+  await expect(component.getByTestId('expanded')).toHaveValue('false');
+});
+
+test('titleChildren should render next to the toggle, not inside it', async ({ mount }) => {
+  const component = await mount<typeof StatefulTitleClickWithControl>('components/expandable/StatefulTitleClickWithControl');
+  const download = component.getByRole('link', { name: 'download' });
+  await expect(download).toBeVisible();
+  await expect(component.getByRole('button', { name: 'Title' }).getByRole('link')).toHaveCount(0);
 });
 
 test('title click should not expand by default', async ({ mount }) => {

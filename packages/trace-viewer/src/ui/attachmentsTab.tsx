@@ -69,14 +69,14 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
 
   const title = <span style={{ marginLeft: 5 }} ref={ref} aria-label={attachment.name}>
     <span>{linkifyText(attachment.name)}</span>
-    {hasContent && <a style={{ marginLeft: 5 }} href={downloadURL(model, attachment)}>download</a>}
   </span>;
+  const download = hasContent && <a style={{ marginLeft: 5 }} href={downloadURL(model, attachment)}>download</a>;
 
   if (!isTextAttachment || !hasContent)
-    return <div style={{ marginLeft: 20 }}>{title}</div>;
+    return <div style={{ marginLeft: 20 }}>{title}{download}</div>;
 
   return <div className={clsx(flash && 'yellow-flash')}>
-    <Expandable title={title} expanded={expanded} setExpanded={setExpanded} expandOnTitleClick={true}>
+    <Expandable title={title} titleChildren={download} expanded={expanded} setExpanded={setExpanded} expandOnTitleClick={true}>
       {placeholder && <i>{placeholder}</i>}
     </Expandable>
     {expanded && attachmentText !== null && <div className='vbox' style={{ height: snippetHeight }}>
