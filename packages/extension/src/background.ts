@@ -16,7 +16,7 @@
 
 import { debugLog } from './relayConnection';
 import { PendingConnections } from './pendingConnection';
-import { ConnectedTabGroup, cleanupStalePlaywrightGroups, isNonDebuggableUrl } from './connectedTabGroup';
+import { ConnectedTabGroup, cleanupStalePlaywrightGroups, isNonDebuggableUrl, ungroupTabs, uniqueGroupStyle } from './connectedTabGroup';
 
 type PageMessage = {
   type: 'connectionRequested';
@@ -33,13 +33,14 @@ type PageMessage = {
   type: 'getConnectionStatus';
 } | {
   type: 'disconnect';
+  connectionId: number;
 } | {
   type: 'keepalive';
 };
 
 class PlaywrightExtension {
-  private _activeGroup: ConnectedTabGroup | undefined;
-  private _activeClientName: string | undefined;
+  private _connections = new Map<number, ConnectedTabGroup>();
+  private _lastConnectionId = 0;
   private _pendingConnections = new PendingConnections();
   // Service worker restarts lose all connection state, so any existing
   // Playwright groups are stale. Connections wait on this before reconciling.
@@ -54,12 +55,16 @@ class PlaywrightExtension {
   // Promise-based message handling is not supported in Chrome: https://issues.chromium.org/issues/40753031
   private _onMessage(message: PageMessage, sender: chrome.runtime.MessageSender, sendResponse: (response: any) => void) {
     switch (message.type) {
-      case 'connectionRequested':
-        this._pendingConnections.create(sender.tab!.id!, message.mcpRelayUrl);
-        sendResponse({ success: true });
-        return false;
+      case 'connectionRequested': {
+        const selectorTabId = sender.tab!.id!;
+        this._releaseConnectPage(selectorTabId).then(() => {
+          this._pendingConnections.create(selectorTabId, message.mcpRelayUrl);
+          sendResponse({ success: true });
+        });
+        return true;
+      }
       case 'getTabs':
-        this._getTabs().then(
+        this._getTabs(sender.tab?.id).then(
             tabs => sendResponse({ success: true, tabs, currentTabId: sender.tab?.id }),
             (error: any) => sendResponse({ success: false, error: error.message }));
         return true;
@@ -76,18 +81,17 @@ class PlaywrightExtension {
       }
       case 'getConnectionStatus':
         sendResponse({
-          connectedTabIds: this._activeGroup?.connectedTabIds() ?? [],
-          clientName: this._activeClientName,
+          connections: [...this._connections].map(([id, group]) => ({
+            id,
+            clientName: group.clientName,
+            connectedTabIds: group.connectedTabIds(),
+          })),
         });
         return false;
       case 'disconnect':
-        try {
-          this._disconnect('User disconnected');
-          sendResponse({ success: true });
-        } catch (error: any) {
-          sendResponse({ success: false, error: error.message });
-        }
-        return true;
+        this._connections.get(message.connectionId)?.close('User disconnected');
+        sendResponse({ success: true });
+        return false;
       case 'keepalive':
         // Connect page pings us every ~20s so receiving this message resets
         // the MV3 service worker idle timer and keeps the relay WebSocket alive.
@@ -98,21 +102,19 @@ class PlaywrightExtension {
   private async _connectTab(selectorTabId: number, tab: chrome.tabs.Tab & { id: number }, clientName: string | undefined): Promise<void> {
     try {
       await this._cleanupPromise;
-      this._disconnect('Another connection is requested');
+      this._releaseTab(selectorTabId);
+      if (tab.id !== selectorTabId && this._connectedTabIds().has(tab.id))
+        throw new Error('This tab is already connected to another client');
 
       const connection = await this._pendingConnections.take(selectorTabId);
       if (!connection)
         throw new Error('Pending client connection closed');
 
-      const group = new ConnectedTabGroup(connection, tab);
-      group.onclose = () => {
-        if (this._activeGroup === group) {
-          this._activeGroup = undefined;
-          this._activeClientName = undefined;
-        }
-      };
-      this._activeGroup = group;
-      this._activeClientName = clientName;
+      const id = ++this._lastConnectionId;
+      const taken = [...this._connections.values()].map(group => group.groupStyle);
+      const group = new ConnectedTabGroup(connection, tab, clientName, uniqueGroupStyle(clientName, taken), tabId => this._pendingConnections.has(tabId));
+      group.onclose = () => this._connections.delete(id);
+      this._connections.set(id, group);
 
       await Promise.all([
         chrome.tabs.update(tab.id, { active: true }),
@@ -127,9 +129,25 @@ class PlaywrightExtension {
     }
   }
 
-  private async _getTabs(): Promise<chrome.tabs.Tab[]> {
+  // Chrome may create the connect page inside the active client's group.
+  private async _releaseConnectPage(tabId: number): Promise<void> {
+    this._releaseTab(tabId);
+    await ungroupTabs([tabId]);
+  }
+
+  private _releaseTab(tabId: number): void {
+    for (const group of this._connections.values())
+      group.releaseTab(tabId);
+  }
+
+  private async _getTabs(selectorTabId: number | undefined): Promise<chrome.tabs.Tab[]> {
     const tabs = await chrome.tabs.query({});
-    return tabs.filter(tab => !isNonDebuggableUrl(tab.url));
+    const connectedTabIds = this._connectedTabIds();
+    return tabs.filter(tab => !isNonDebuggableUrl(tab.url) && (tab.id === selectorTabId || !connectedTabIds.has(tab.id!)));
+  }
+
+  private _connectedTabIds(): Set<number> {
+    return new Set([...this._connections.values()].flatMap(group => group.connectedTabIds()));
   }
 
   private async _onActionClicked(): Promise<void> {
@@ -137,14 +155,6 @@ class PlaywrightExtension {
       url: chrome.runtime.getURL('status.html'),
       active: true
     });
-  }
-
-  // Closes the active group's connection if any. ConnectedTabGroup's onclose
-  // handles state cleanup (connectedTabIds, badges, reconcile).
-  private _disconnect(reason: string) {
-    this._activeGroup?.close(reason);
-    this._activeGroup = undefined;
-    this._activeClientName = undefined;
   }
 }
 

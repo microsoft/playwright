@@ -38,6 +38,10 @@ Configure Playwright MCP server to connect to the browser using the extension by
 
 When the LLM interacts with the browser for the first time, it will load a page where you can select which browser tab the LLM will connect to. This allows you to control which specific page the AI assistant will interact with during the session.
 
+### Multiple Clients
+
+Several clients can be connected at the same time. Each one gets its own tab group, named after the client and colored apart from the other groups, and only sees the tabs in that group — a tab can belong to a single client at a time. Drag tabs in and out of a group to change what a client can reach, and use the extension's status page to see every connection and disconnect them individually.
+
 ### Bypassing the Connection Approval Dialog
 
 By default, you'll need to approve each connection when the MCP server tries to connect to your browser. To bypass this approval dialog and allow automatic connections, you can use an authentication token.
