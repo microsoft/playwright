@@ -15,7 +15,8 @@
 */
 
 import * as React from 'react';
-import { useMeasure } from '../uiUtils';
+import './imageDiffView.css';
+import { clsx, useMeasure } from '../uiUtils';
 import { ResizeView } from './resizeView';
 
 type TestAttachment = {
@@ -90,20 +91,23 @@ export const ImageDiffView: React.FC<{
   const fitWidth = imageWidth * scale;
   const fitHeight = imageHeight * scale;
 
-  const modeStyle: React.CSSProperties = {
-    flex: 'none',
-    margin: '0 10px',
-    cursor: 'pointer',
-    userSelect: 'none',
-  };
+  const modeTab = (value: typeof mode, label: React.ReactNode) => <button
+    type='button'
+    role='tab'
+    aria-selected={mode === value}
+    className={clsx('image-diff-tab', mode === value && 'selected')}
+    onClick={() => setMode(value)}>
+    {label}
+  </button>;
+
   return <div data-testid='test-result-image-mismatch' style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 'auto' }} ref={ref}>
     {isLoaded && <>
-      <div data-testid='test-result-image-mismatch-tabs' style={{ display: 'flex', margin: '10px 0 20px' }}>
-        {diff.diff && <div style={{ ...modeStyle, fontWeight: mode === 'diff' ? 600 : 'initial' }} onClick={() => setMode('diff')}>Diff</div>}
-        <div style={{ ...modeStyle, fontWeight: mode === 'actual' ? 600 : 'initial' }} onClick={() => setMode('actual')}>Actual</div>
-        <div style={{ ...modeStyle, fontWeight: mode === 'expected' ? 600 : 'initial' }} onClick={() => setMode('expected')}>{expectedImageTitle}</div>
-        <div style={{ ...modeStyle, fontWeight: mode === 'sxs' ? 600 : 'initial' }} onClick={() => setMode('sxs')}>Side by side</div>
-        <div style={{ ...modeStyle, fontWeight: mode === 'slider' ? 600 : 'initial' }} onClick={() => setMode('slider')}>Slider</div>
+      <div data-testid='test-result-image-mismatch-tabs' role='tablist' style={{ display: 'flex', margin: '10px 0 20px' }}>
+        {diff.diff && modeTab('diff', 'Diff')}
+        {modeTab('actual', 'Actual')}
+        {modeTab('expected', expectedImageTitle)}
+        {modeTab('sxs', 'Side by side')}
+        {modeTab('slider', 'Slider')}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', flex: 'auto', minHeight: fitHeight + 60 }}>
         {diff.diff && mode === 'diff' && <ImageWithSize image={diffImage} alt='Diff' hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}

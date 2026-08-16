@@ -182,7 +182,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('text=Image mismatch')).toBeVisible();
       await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
 
-      await expect(page.getByTestId('test-screenshot-error-view').getByTestId('test-result-image-mismatch-tabs').locator('div')).toHaveText([
+      await expect(page.getByTestId('test-screenshot-error-view').getByTestId('test-result-image-mismatch-tabs').getByRole('tab')).toHaveText([
         'Diff',
         'Actual',
         'Expected',

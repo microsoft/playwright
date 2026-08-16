@@ -29,6 +29,16 @@ test('should render links', async ({ mount }) => {
   ]);
 });
 
+test('should switch mode with the keyboard', async ({ mount, page }) => {
+  const component = await mount<typeof Default>('shared/imageDiffView/Default');
+  const sxs = component.getByRole('tab', { name: 'Side by side' });
+  await sxs.focus();
+  await expect(sxs).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(sxs).toHaveAttribute('aria-selected', 'true');
+  await expect(component.locator('img')).toHaveCount(2);
+});
+
 test('should show diff by default', async ({ mount }) => {
   const component = await mount<typeof Default>('shared/imageDiffView/Default');
   const image = component.locator('img');
