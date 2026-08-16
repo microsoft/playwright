@@ -119,6 +119,7 @@ function overridesFromOptions(options: { [key: string]: any }): ipc.ConfigCLIOve
     forbidOnly: options.forbidOnly ? true : undefined,
     fullyParallel: options.fullyParallel ? true : undefined,
     globalTimeout: options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined,
+    ignoreProjectDependencies: options.deps === false ? true : undefined,
     maxFailures: options.x ? 1 : (options.maxFailures ? parseInt(options.maxFailures, 10) : undefined),
     outputDir: options.output ? path.resolve(process.cwd(), options.output) : undefined,
     pause: !!process.env.PWPAUSE,

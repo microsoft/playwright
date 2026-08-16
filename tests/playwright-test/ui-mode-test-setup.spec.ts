@@ -310,6 +310,31 @@ test('should run part of the setup only', async ({ runUITest }) => {
   `);
 });
 
+test('should honor --no-deps in UI mode', async ({ runUITest }) => {
+  const { page } = await runUITest(testsWithSetup, undefined, { additionalArgs: ['--no-deps'] });
+  await page.getByText('Status:').click();
+  await page.getByRole('checkbox', { name: 'setup' }).setChecked(true);
+  await page.getByRole('checkbox', { name: 'teardown' }).setChecked(true);
+  await page.getByRole('checkbox', { name: 'test' }).setChecked(true);
+
+  await page.getByText('test.ts').hover();
+  await page.getByRole('treeitem', { name: 'test.ts' }).getByRole('button', { name: 'Run' }).click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ setup.ts
+        ◯ setup
+    ▼ ◯ teardown.ts
+        ◯ teardown
+    ▼ ✅ test.ts <=
+        ✅ test
+  `);
+
+  await page.getByTitle('Toggle output').click();
+  await expect(page.getByTestId('output')).toContainText(`from-test`);
+  await expect(page.getByTestId('output')).not.toContainText(`from-setup`);
+  await expect(page.getByTestId('output')).not.toContainText(`from-teardown`);
+});
+
 for (const useWeb of [true, false]) {
   test.describe(`web-mode: ${useWeb}`, () => {
     test('should run teardown with SIGINT', async ({ runUITest, nodeVersion }) => {

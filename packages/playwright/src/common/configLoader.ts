@@ -108,7 +108,7 @@ export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLI
   validateConfig(location.resolvedConfigFile || '<default config>', userConfig);
   const fullConfig = new FullConfigInternal(location, userConfig, overrides || {}, metadata);
   fullConfig.defineConfigWasUsed = !!(userConfig as any)[kDefineConfigWasUsed];
-  if (ignoreProjectDependencies) {
+  if (ignoreProjectDependencies || overrides?.ignoreProjectDependencies) {
     for (const project of fullConfig.projects) {
       project.deps = [];
       project.teardown = undefined;

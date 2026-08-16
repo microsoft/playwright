@@ -130,7 +130,7 @@ teardown('delete database', async ({ }) => {
 
 All test filtering options, such as `--grep`/`--grep-invert`, `--shard`, filtering directly by location in the command line, or using [`test.only()`](./api/class-test.md#test-only), directly select the primary tests to be run. If those tests belong to a project with dependencies, all tests from those dependencies will also run.
 
-You can pass `--no-deps` command line option to ignore all dependencies and teardowns. Only your directly selected projects will run.
+You can pass `--no-deps` command line option to ignore all dependencies and teardowns. Only your directly selected projects will run. This also applies in [UI Mode](./test-ui-mode.md) (`--ui`).
 
 ### More examples
 

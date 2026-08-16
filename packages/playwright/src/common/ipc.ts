@@ -29,6 +29,7 @@ export type ConfigCLIOverrides = {
   forbidOnly?: boolean;
   fullyParallel?: boolean;
   globalTimeout?: number;
+  ignoreProjectDependencies?: boolean;
   maxFailures?: number;
   outputDir?: string;
   pause?: boolean;

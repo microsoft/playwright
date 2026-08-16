@@ -95,7 +95,7 @@ npx playwright test --ui
 | `--last-failed-file <file>` | Override the default last-run JSON path for `--last-failed` (default: `<outputDir>/.last-run.json`). Same as `PLAYWRIGHT_LAST_RUN_OUTPUT_FILE` environment variable. |
 | `--list` | Collect all the tests and report them, but do not run. |
 | `--max-failures <N>` or `-x` | Stop after the first `N` failures. Passing `-x` stops after the first failure. |
-| `--no-deps` | Do not run project dependencies. |
+| `--no-deps` | Do not run project dependencies. Also applies in UI Mode (`--ui`). |
 | `--output <dir>` | Folder for output artifacts (default: "test-results"). |
 | `--only-changed [ref]` | Only run test files that have been changed between 'HEAD' and 'ref'. Defaults to running all uncommitted changes. Only supports Git. |
 | `--pass-with-no-tests` | Makes test run succeed even if no tests were found. |
