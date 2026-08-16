@@ -135,6 +135,8 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
     }
 
     const childAriaNode = visible ? toAriaNode(element, options, nameSourceElements) : null;
+    if (childAriaNode && element.getAttribute('aria-hidden')?.toLowerCase() === 'true')
+      childAriaNode.props['aria-hidden'] = 'true';
     let elementInfo: { element: Element, nameFromContentRefs: string[] } | undefined;
     if (childAriaNode) {
       if (childAriaNode.ref) {
@@ -502,6 +504,8 @@ export function renderAriaTreeAsJSON(ariaSnapshot: AriaSnapshot, publicOptions: 
       node.url = ariaNode.props.url;
     if (ariaNode.props.placeholder !== undefined)
       node.placeholder = ariaNode.props.placeholder;
+    if (ariaNode.props['aria-hidden'] !== undefined)
+      node.ariaHidden = true;
 
     const singleTextChild = ariaNode.children.length === 1 && typeof ariaNode.children[0] === 'string' ? ariaNode.children[0] : undefined;
     const isAtDepthLimit = !!publicOptions.depth && depth === publicOptions.depth;

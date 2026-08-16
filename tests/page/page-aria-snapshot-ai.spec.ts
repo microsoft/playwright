@@ -931,3 +931,43 @@ it('should limit depth', async ({ page }) => {
       - listitem [ref=e8]
   `);
 });
+
+it('should annotate aria-hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42223' } }, async ({ page }) => {
+  await page.setContent(`
+    <h2>Visible heading</h2>
+    <div aria-hidden="true">
+      <h1>Hidden heading</h1>
+      <p>Hidden content</p>
+    </div>
+    <h2>After hidden</h2>
+  `);
+
+  expect(await snapshotForAI(page)).toContainYaml(`
+    - generic [active] [ref=e1]:
+      - heading "Visible heading" [level=2] [ref=e2]
+      - generic [aria-hidden] [ref=e3]:
+        - heading [level=1] [ref=e4]: Hidden heading
+        - paragraph [ref=e5]: Hidden content
+      - heading "After hidden" [level=2] [ref=e6]
+  `);
+
+  // Default snapshot excludes aria-hidden elements entirely.
+  const defaultSnapshot = await page.locator('body').ariaSnapshot();
+  expect(defaultSnapshot).not.toContain('Hidden content');
+});
+
+it('should only annotate the top element in a hidden subtree', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42223' } }, async ({ page }) => {
+  await page.setContent(`
+    <div aria-hidden="true">
+      <h1>Heading</h1>
+      <p>Paragraph</p>
+    </div>
+  `);
+
+  // Only the element with aria-hidden="true" gets the annotation, not its descendants.
+  expect(await snapshotForAI(page)).toContainYaml(`
+    - generic [aria-hidden] [ref=e2]:
+      - heading [level=1] [ref=e3]: Heading
+      - paragraph [ref=e4]: Paragraph
+  `);
+});

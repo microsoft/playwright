@@ -66,6 +66,7 @@ export type AriaNodeJSON = {
   level?: number;
   pressed?: true | 'mixed';
   selected?: true;
+  ariaHidden?: true;
   ref?: string;
   cursor?: 'pointer';
   box?: { x: number, y: number, width: number, height: number };
