@@ -43,7 +43,13 @@ export default defineConfig({
   },
   projects: [{
     name: 'chromium',
-    use: { ...devices['Desktop Chrome'] },
+    use: {
+      ...devices['Desktop Chrome'],
+      channel: process.env.PWTEST_CHANNEL as any,
+      launchOptions: {
+        executablePath: process.env.CRPATH,
+      }
+    },
   }],
   webServer: {
     command: 'npx vite --config playwright/vite.config.ts',
