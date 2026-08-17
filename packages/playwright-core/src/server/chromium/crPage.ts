@@ -580,6 +580,8 @@ class FrameSession {
     this._firstNonInitialNavigationCommittedReject(new TargetClosedError(this._page.closeReason()));
     for (const childSession of this._childSessions)
       childSession.dispose();
+    for (const sessionId of this._workerSessions.keys())
+      this._removeWorkerSession(sessionId);
     if (this._parentSession)
       this._parentSession._childSessions.delete(this);
     eventsHelper.removeEventListeners(this._eventListeners);
@@ -780,16 +782,21 @@ class FrameSession {
     session.on('Runtime.exceptionThrown', exception => this._page.addPageError(exceptionToError(exception.exceptionDetails), stackTraceToLocation(exception.exceptionDetails.stackTrace)));
   }
 
+  private _removeWorkerSession(sessionId: string): boolean {
+    const workerSession = this._workerSessions.get(sessionId);
+    if (!workerSession)
+      return false;
+    this._workerSessions.delete(sessionId);
+    this._crPage._networkManager.removeSession(workerSession);
+    workerSession.dispose();
+    this._page.removeWorker(sessionId);
+    return true;
+  }
+
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
     // This might be a worker...
-    const workerSession = this._workerSessions.get(event.sessionId);
-    if (workerSession) {
-      this._workerSessions.delete(event.sessionId);
-      this._crPage._networkManager.removeSession(workerSession);
-      workerSession.dispose();
-      this._page.removeWorker(event.sessionId);
+    if (this._removeWorkerSession(event.sessionId))
       return;
-    }
 
     // ... or an oopif.
     const childFrameSession = this._crPage._sessions.get(event.targetId!);
