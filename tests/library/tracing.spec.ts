@@ -539,6 +539,28 @@ for (const params of [
   });
 }
 
+browserTest('should produce screencast frames of the requested size', async ({ video, contextFactory, browserName, headless }, testInfo) => {
+  browserTest.skip(video === 'on', 'Same screencast resolution conflicts');
+  browserTest.fixme(browserName === 'firefox' && !headless, 'Image size is different');
+
+  // Without an explicit size this viewport would be captured at 800x600.
+  const size = { width: 1000, height: 750 };
+  const context = await contextFactory({ viewport: { width: 1600, height: 1200 } });
+  await context.tracing.start({ screenshots: { size } });
+  const page = await context.newPage();
+  await page.setContent(`<body style="margin: 0; background: red"></body>`);
+  for (let i = 0; i < 10; ++i)
+    await rafraf(page);
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+
+  const { events, resources } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  const frames = events.filter(e => e.type === 'screencast-frame');
+  expect(frames.length).toBeGreaterThan(0);
+  const image = jpegjs.decode(resources.get(frames[frames.length - 1].file));
+  expect(image.width).toBe(size.width);
+  expect(image.height).toBe(size.height);
+});
+
 test('should include interrupted actions', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);

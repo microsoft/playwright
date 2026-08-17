@@ -26,6 +26,11 @@ Tracing:
         snapshotAria: boolean?
         snapshotScreen: boolean?
         screencast: boolean?
+        screencastSize:
+          type: object?
+          properties:
+            width: int
+            height: int
         live: boolean?
 
     tracingStartChunk:

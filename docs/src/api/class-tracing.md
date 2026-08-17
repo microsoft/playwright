@@ -141,6 +141,24 @@ To specify the final trace zip file name, you need to pass `path` option to
 
 ### option: Tracing.start.screenshots
 * since: v1.12
+* langs: js
+- `screenshots` <[boolean]|[Object]>
+  - `size` ?<[Object]> Dimensions of the captured screenshots. Each screenshot is scaled down to preserve the page's
+    aspect ratio and may be smaller than these bounds. If not specified the size will be equal to `viewport` scaled
+    down to fit into 800x800. Optional.
+    - `width` <[int]> Max screenshot width in pixels.
+    - `height` <[int]> Max screenshot height in pixels.
+
+Whether to capture screenshots during tracing. Screenshots are used to build
+a timeline preview. Passing `true` is a shortcut for `{}`.
+
+A page is captured only once, and tracing shares that capture with [`method: Screencast.start`] and video recording.
+The trace viewer renders the timeline preview at a fixed size, so `size` only matters to those other consumers: set
+it to keep tracing from capping the size they receive.
+
+### option: Tracing.start.screenshots
+* since: v1.12
+* langs: java, python, csharp
 - `screenshots` <[boolean]>
 
 Whether to capture screenshots during tracing. Screenshots are used to build

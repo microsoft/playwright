@@ -683,7 +683,10 @@ export default defineConfig({
 - type: <[Object]|[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"retain-on-first-failure"|"retain-on-failure-and-retries">>
   - `mode` <[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries">> Trace recording mode.
   - `attachments` ?<[boolean]> Whether to include test attachments. Defaults to true. Optional.
-  - `screenshots` ?<[boolean]> Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview. Defaults to true. Optional.
+  - `screenshots` ?<[boolean]|[Object]> Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview. Passing `true` is a shortcut for `{}`. Defaults to true. Optional.
+    - `size` ?<[Object]> Dimensions of the captured screenshots. Each screenshot is scaled down to preserve the page's aspect ratio and may be smaller than these bounds. If not specified the size will be equal to `viewport` scaled down to fit into 800x800. Optional.
+      - `width` <[int]> Max screenshot width in pixels.
+      - `height` <[int]> Max screenshot height in pixels.
   - `snapshots` ?<[boolean]|[Object]> Which snapshots to capture on every action. Passing `true` is a shortcut for `{ dom: true }`. Defaults to true. Optional.
     - `dom` ?<[boolean]> Capture DOM snapshot on every action and record network activity. Optional.
     - `aria` ?<[boolean]> Capture aria snapshot of the page on every action. Optional.
