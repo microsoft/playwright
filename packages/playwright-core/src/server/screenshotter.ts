@@ -273,9 +273,9 @@ export class Screenshotter {
     if (!options.mask || !options.mask.length)
       return () => Promise.resolve();
 
-    const cleanup = () => this._page.hideHighlight();
+    const cleanup = () => this._page.highlightController.hideHighlights();
     try {
-      await progress.race(this._page.hideHighlight());
+      await progress.race(this._page.highlightController.hideHighlights());
       await progress.race(Promise.all((options.mask || []).map(async ({ frame, selector }) => {
         await frame.selectors.callOnSelector(selector, { strict: false }, ({ injected, elements }, color) => {
           injected.addMaskedElements(elements, color);

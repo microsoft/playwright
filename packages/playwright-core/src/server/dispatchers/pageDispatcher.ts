@@ -366,7 +366,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async hideHighlight(params: channels.PageHideHighlightParams, progress: Progress): Promise<void> {
-    await progress.race(this._page.hideHighlight());
+    await progress.race(this._page.highlightController.hideHighlights());
   }
 
   async screencastShowOverlay(params: channels.PageScreencastShowOverlayParams): Promise<channels.PageScreencastShowOverlayResult> {

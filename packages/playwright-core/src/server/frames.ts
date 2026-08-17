@@ -1373,26 +1373,6 @@ export class Frame extends SdkObject<FrameEventMap> {
     return result;
   }
 
-  async addHighlight(selector: string, style?: string) {
-    await this.selectors.callOnSelector(selector, { strict: false, callWithoutMatches: true }, ({ injected, info }, style) => {
-      return injected.addHighlight(info.parsed, style);
-    }, style);
-  }
-
-  async removeHighlight(selector: string) {
-    await this.selectors.callOnSelector(selector, { strict: false, callWithoutMatches: true }, ({ injected, info }) => {
-      return injected.removeHighlight(info.parsed);
-    }, {});
-  }
-
-  async hideHighlight() {
-    return this.raceAgainstEvaluationStallingEvents(async () => {
-      const context = this._contextData.get('utility')?.context;
-      const injectedScript = await context?.injectedScript();
-      await injectedScript?.evaluate(injected => injected.hideHighlight());
-    });
-  }
-
   private async _elementState(progress: Progress, selector: string, state: ElementStateWithoutStable, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<boolean> {
     const { result } = await this._waitForFunctionOnSelector(progress, selector, (injected, element, data) => {
       return { result: injected.elementState(element, data.state) };
@@ -1568,7 +1548,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     let missingReceived = false;
 
     // Non-array expectations are strict (callOnSelector throws on multiple); array ones are not.
-    const resolved = await progress.race(this.selectors.callOnSelector(effectiveSelector, { strict: !isArray, mainWorld, markTargets: 'all', noDefaultPierce: !selector }, async ({ injected, elements }, options) => {
+    const resolved = await progress.race(this.selectors.callOnSelector(effectiveSelector, { strict: !isArray, mainWorld, markTargets: 'all', pierce: selector ? 'default' : 'no-pierce' }, async ({ injected, elements }, options) => {
       const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
       const log = isArray
         ? `  locator resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`

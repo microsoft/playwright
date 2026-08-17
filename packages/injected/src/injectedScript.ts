@@ -1344,14 +1344,11 @@ export class InjectedScript {
     return this._highlight;
   }
 
-  addHighlight(selector: ParsedSelector, style?: string) {
+  setHighlights(highlights: { selector: ParsedSelector, cssStyle?: string }[]) {
+    if (!highlights.length && !this._highlight)
+      return;
     const highlight = this._ensureHighlight();
-    highlight.addElementHighlight(selector, style);
-  }
-
-  removeHighlight(selector: ParsedSelector) {
-    const highlight = this._ensureHighlight();
-    highlight.removeElementHighlight(selector);
+    highlight.setElementHighlights(highlights);
   }
 
   setScreencastAnnotation(annotation: { point?: Point, box?: Rect, actionTitle?: string, duration?: number, position?: string, fontSize?: number, cursor?: 'none' | 'pointer' } | null) {
