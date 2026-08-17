@@ -42,6 +42,9 @@ export type ConnectionEventMap = {
 // should ignore.
 export const kBrowserCloseMessageId = -9999;
 
+// Error code returned by the browser for a message addressed to a closed or unknown session.
+const kSessionNotFoundErrorCode = -32001;
+
 export class CRConnection extends SdkObject {
   private _lastId = 0;
   private readonly _transport: ConnectionTransport;
@@ -79,9 +82,13 @@ export class CRConnection extends SdkObject {
     this._protocolLogger('receive', message);
     if (message.id === kBrowserCloseMessageId)
       return;
-    const session = this._sessions.get(message.sessionId || '');
-    if (session)
-      session._onMessage(message);
+    // Unknown session error has no sessionId, so route it by the message id.
+    const session = message.error?.code === kSessionNotFoundErrorCode ? this._sessionWithCallback(message.id) : this._sessions.get(message.sessionId || '');
+    session?._onMessage(message);
+  }
+
+  private _sessionWithCallback(id: number | undefined): CRSession | undefined {
+    return [...this._sessions.values()].find(session => session._hasCallback(id));
   }
 
   _onClose(reason?: string) {
@@ -151,18 +158,22 @@ export class CRSession extends SdkObject<Protocol.EventMap & ConnectionEventMap>
     return this.send(method, params).catch((error: ProtocolError) => debugLogger.log('error', error));
   }
 
+  _hasCallback(id: number | undefined): boolean {
+    return id !== undefined && this._callbacks.has(id);
+  }
+
   _onMessage(object: ProtocolResponse) {
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
       if (object.error) {
+        if (object.error.code === kSessionNotFoundErrorCode)
+          callback.error.type = 'closed';
         callback.error.setMessage(object.error.message);
         callback.reject(callback.error);
       } else {
         callback.resolve(object.result);
       }
-    } else if (object.id && object.error?.code === -32001) {
-      // Message to a closed session, just ignore it.
     } else {
       assert(!object.id, object?.error?.message || undefined);
       Promise.resolve().then(() => {
