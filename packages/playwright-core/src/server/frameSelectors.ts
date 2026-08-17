@@ -120,8 +120,8 @@ export class FrameSelectors {
     return jumptToFrame;
   }
 
-  private async _resolveFramesForSelector(selector: string, options: types.StrictOptions & { noDefaultPierce?: boolean } = {}, scope?: ElementHandle): Promise<SelectorInFrame[]> {
-    const pierceByDefault = !!this.frame._page.browserContext._options.pierceFrames && !options.noDefaultPierce;
+  async resolveFramesForSelector(selector: string, options: types.StrictOptions & { pierce?: 'default' | 'pierce' | 'no-pierce' } = {}, scope?: ElementHandle): Promise<SelectorInFrame[]> {
+    const pierceByDefault = options.pierce === 'pierce' || (options.pierce !== 'no-pierce' && !!this.frame._page.browserContext._options.pierceFrames);
     const { pierce, chunks } = splitSelectorByFrame(selector, pierceByDefault);
     for (const chunk of chunks) {
       visitAllSelectorParts(chunk, (part, nested) => {
@@ -280,12 +280,12 @@ export class FrameSelectors {
 
   private async _callOnSelectorInternal<Arg, R>(
     selector: string,
-    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none', noDefaultPierce?: boolean },
+    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none', pierce?: 'default' | 'pierce' | 'no-pierce' },
     pageFunction: MatchedElementsCallback<Arg, R>,
     arg: Arg,
     returnByValue: boolean,
   ): Promise<{ frame: Frame, info: SelectorInfo, result: R | SmartHandle<R> } | null> {
-    const resolved = await this._resolveFramesForSelector(selector, options, options.scope);
+    const resolved = await this.resolveFramesForSelector(selector, options, options.scope);
     let aggregatedResult: { frame: Frame, info: SelectorInfo, result: R | SmartHandle<R> } | null = null;
     const noStall = resolved.length > 1;
     for (const { frame, info, scope } of resolved) {
@@ -336,7 +336,7 @@ export class FrameSelectors {
 
   async callOnSelector<Arg, R>(
     selector: string,
-    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none', noDefaultPierce?: boolean },
+    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none', pierce?: 'default' | 'pierce' | 'no-pierce' },
     pageFunction: MatchedElementsCallback<Arg, R>,
     arg: Arg,
   ): Promise<{ frame: Frame, info: SelectorInfo, result: R } | null> {

@@ -133,7 +133,7 @@ export class DebugController extends SdkObject {
     for (const recorder of await progress.race(this._allRecorders()))
       promises.push(recorder.hideHighlightedSelector());
     // Hide all locator.highlight highlights.
-    promises.push(...this._playwright.allPages().map(p => p.hideHighlight().catch(() => {})));
+    promises.push(...this._playwright.allPages().map(p => p.highlightController.hideHighlights().catch(() => {})));
     await progress.race(Promise.all(promises));
   }
 

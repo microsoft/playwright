@@ -35,6 +35,7 @@ import * as input from './input';
 import { SdkObject } from './instrumentation';
 import * as js from './javascript';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
+import { HighlightController } from './highlightController';
 import { compressCallLog } from './callLog';
 import * as rawBindingsControllerSource from '../generated/bindingsControllerSource';
 import { Overlay } from './overlay';
@@ -186,6 +187,7 @@ export class Page extends SdkObject<PageEventMap> {
   private readonly _pageBindings = new Map<string, PageBinding>();
   initScripts: InitScript[] = [];
   readonly screenshotter: Screenshotter;
+  readonly highlightController: HighlightController;
   readonly frameManager: frames.FrameManager;
   private _workers = new Map<string, Worker>();
   readonly pdf: ((options: channels.PagePdfParams) => Promise<Buffer>) | undefined;
@@ -213,6 +215,7 @@ export class Page extends SdkObject<PageEventMap> {
     this.mouse = new input.Mouse(delegate.rawMouse, this);
     this.touchscreen = new input.Touchscreen(delegate.rawTouchscreen, this);
     this.screenshotter = new Screenshotter(this);
+    this.highlightController = new HighlightController(this);
     this.frameManager = new frames.FrameManager(this);
     this.overlay = new Overlay(this);
     this.screencast = new Screencast(this);
@@ -300,6 +303,7 @@ export class Page extends SdkObject<PageEventMap> {
     this.frameManager.dispose(error);
     this.screencast.dispose();
     this.overlay.dispose();
+    this.highlightController.dispose();
     this.openScope.close(error);
   }
 
@@ -935,10 +939,6 @@ export class Page extends SdkObject<PageEventMap> {
     }));
   }
 
-  async hideHighlight() {
-    await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
-  }
-
   async setDockTile(image: Buffer) {
     await this.delegate.setDockTile(image);
   }
@@ -1112,13 +1112,13 @@ export class InitScript extends DisposableObject {
   }
 }
 
-export async function ariaSnapshotJSONForFrame(progress: Progress, frame: frames.Frame, selector: string | undefined, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, depth?: number, boxes?: boolean, strict?: boolean, noDefaultPierce?: boolean } = {}): Promise<AriaSnapshotJSON> {
+export async function ariaSnapshotJSONForFrame(progress: Progress, frame: frames.Frame, selector: string | undefined, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, depth?: number, boxes?: boolean, strict?: boolean, pierce?: 'default' | 'pierce' | 'no-pierce' } = {}): Promise<AriaSnapshotJSON> {
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async (progress, continuePolling) => {
     try {
       // Note: the resolved frame might differ from the original |frame|.
       // See https://developer.mozilla.org/en-US/docs/Web/API/Document/body for body/frameset explanation.
       // Non-strict, because pages with nested framesets have multiple "frameset" elements.
-      const resolved = await progress.race(frame.selectors.callOnSelector(selector || 'body,frameset', { strict: options.strict ?? !!selector, noDefaultPierce: !selector || options.noDefaultPierce }, ({ injected, elements }, ariaOptions) => {
+      const resolved = await progress.race(frame.selectors.callOnSelector(selector || 'body,frameset', { strict: options.strict ?? !!selector, pierce: selector ? options.pierce : 'no-pierce' }, ({ injected, elements }, ariaOptions) => {
         return injected.ariaSnapshotJSON(elements[0], ariaOptions);
       }, {
         mode: options.mode ?? 'default',
@@ -1148,7 +1148,7 @@ export async function ariaSnapshotJSONForFrame(progress: Progress, frame: frames
     // Non-strict, because child frameset documents have multiple "frameset" elements.
     const frameRootSelector = `aria-ref=${ref} >> internal:control=enter-frame >> body,frameset`;
     try {
-      return await ariaSnapshotJSONForFrame(progress, snapshot.resolvedFrame, frameRootSelector, { ...options, depth: childDepth, strict: false, noDefaultPierce: true });
+      return await ariaSnapshotJSONForFrame(progress, snapshot.resolvedFrame, frameRootSelector, { ...options, depth: childDepth, strict: false, pierce: 'no-pierce' });
     } catch {
       return [];
     }

@@ -64,7 +64,7 @@ export class Highlight {
   private _injectedScript: InjectedScript;
   private _rafRequest: number | undefined;
   private _language: Language = 'javascript';
-  private _elementHighlightSelectors = new Map<string, { selector: ParsedSelector, cssStyle?: string }>();
+  private _elementHighlights: { selector: ParsedSelector, cssStyle?: string }[] = [];
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
@@ -126,17 +126,12 @@ export class Highlight {
     this._language = language;
   }
 
-  addElementHighlight(selector: ParsedSelector, cssStyle?: string) {
-    const key = stringifySelector(selector);
-    this._elementHighlightSelectors.set(key, { selector, cssStyle });
-    this._ensureElementHighlightRaf();
-  }
-
-  removeElementHighlight(selector: ParsedSelector) {
-    const key = stringifySelector(selector);
-    if (!this._elementHighlightSelectors.delete(key))
-      return;
-    if (this._elementHighlightSelectors.size === 0) {
+  setElementHighlights(highlights: { selector: ParsedSelector, cssStyle?: string }[]) {
+    const hadHighlights = this._elementHighlights.length > 0;
+    this._elementHighlights = highlights;
+    if (this._elementHighlights.length) {
+      this._ensureElementHighlightRaf();
+    } else if (hadHighlights) {
       if (this._rafRequest) {
         this._injectedScript.utils.builtins.cancelAnimationFrame(this._rafRequest);
         this._rafRequest = undefined;
@@ -151,7 +146,7 @@ export class Highlight {
     const tick = () => {
       const entries: HighlightEntry[] = [];
       const glassPanes = [...this._injectedScript.document.querySelectorAll('x-pw-glass')];
-      for (const { selector, cssStyle } of this._elementHighlightSelectors.values()) {
+      for (const { selector, cssStyle } of this._elementHighlights) {
         let elements: Element[] = [];
         try {
           elements = this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement);
@@ -178,7 +173,7 @@ export class Highlight {
       this._injectedScript.utils.builtins.cancelAnimationFrame(this._rafRequest);
       this._rafRequest = undefined;
     }
-    this._elementHighlightSelectors.clear();
+    this._elementHighlights = [];
     this._glassPaneElement.remove();
   }
 

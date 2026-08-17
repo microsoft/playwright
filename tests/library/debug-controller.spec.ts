@@ -318,8 +318,7 @@ test('should highlight inside iframe', async ({ backend, connectedBrowser }, tes
   await expect(highlight).toHaveCount(0);
 
   await backend.highlight({ selector: `getByText('bar')` }, undefined);
-  // TODO: highlight inside the iframe as well when piercing frames is supported.
-  await expect(highlight).toHaveCount(0);
+  await expect(highlight).toHaveCount(1);
   await expect(page.locator('x-pw-highlight')).toHaveCount(1);
 });
 
