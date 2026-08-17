@@ -318,6 +318,7 @@ npx playwright merge-reports ./reports
 | :--- | :--- |
 | `-c, --config <file>` | Configuration file. Can be used to specify additional configuration for the output report |
 | `--reporter <reporter>` | Reporter to use, comma-separated, can be "list", "line", "dot", "json", "junit", "null", "github", "html", "blob" (default: "list") |
+| `--merge-strategy <strategy>` | How to reconcile tests with the same id found in multiple blobs: "separate", "overwrite", or "as-retry" (default: "separate") |
 
 ### Clear Cache
 

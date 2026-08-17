@@ -46,7 +46,9 @@ type ReportData = {
 
 export type MergeResult = 'passed' | 'failed';
 
-export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], rootDirOverride: string | undefined): Promise<MergeResult> {
+export type MergeStrategy = 'separate' | 'overwrite' | 'as-retry';
+
+export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], rootDirOverride: string | undefined, mergeStrategy: MergeStrategy = 'separate'): Promise<MergeResult> {
   const reporters = await createReporters(config, 'merge', reporterDescriptions);
   const multiplexer = new Multiplexer(reporters);
   const stringPool = new StringInternPool();
@@ -60,7 +62,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   const shardFiles = await sortedShardFiles(dir);
   if (shardFiles.length === 0)
     throw new Error(`No report files found in ${dir}`);
-  const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus, rootDirOverride);
+  const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus, rootDirOverride, mergeStrategy);
   // If explicit config is provided, use platform path separator, otherwise use the one from the report (if any).
   const pathSeparator = rootDirOverride ? path.sep : (eventData.pathSeparatorFromMetadata ?? path.sep);
   const pathPackage = pathSeparator === '/' ? path.posix : path.win32;
@@ -198,7 +200,7 @@ function findMetadata(events: JsonEvent[], file: string): BlobReportMetadata {
   return metadata;
 }
 
-async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: StringInternPool, printStatus: StatusCallback, rootDirOverride: string | undefined): Promise<{
+async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: StringInternPool, printStatus: StatusCallback, rootDirOverride: string | undefined, mergeStrategy: MergeStrategy): Promise<{
   prologue: JsonEvent[];
   reports: ReportData[];
   epilogue: JsonEvent[];
@@ -227,10 +229,25 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
     return a.zipFile.localeCompare(b.zipFile);
   });
 
+  if (mergeStrategy !== 'separate') {
+    // "overwrite"/"as-retry" need to know which colliding blob actually ran later, so
+    // reconcile them by each blob's own recorded run time instead of by report name/file
+    // name order (which may not reflect chronological order at all, e.g. shard/file naming).
+    const startTimeByBlob = new Map<typeof blobs[number], number>();
+    for (const blob of blobs) {
+      const onEnd = blob.parsedEvents.find(event => event.method === 'onEnd') as JsonOnEndEvent | undefined;
+      startTimeByBlob.set(blob, onEnd?.params.result.startTime ?? 0);
+    }
+    blobs.sort((a, b) => startTimeByBlob.get(a)! - startTimeByBlob.get(b)!);
+  }
+
   printStatus(`merging events`);
 
   const reports: ReportData[] = [];
   const globalTestIdSet = new Set<string>();
+  // Shared across all blobs so that "as-retry" keeps numbering retries
+  // consecutively for a given test id, instead of each blob restarting at 0.
+  const retryOffsets = new Map<string, number>();
 
   for (let i = 0; i < blobs.length; ++i) {
     // Generate unique salt for each blob.
@@ -241,6 +258,8 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
         metadata.name,
         String(i),
         globalTestIdSet,
+        mergeStrategy,
+        retryOffsets,
     ));
     // Only patch path separators if we are merging reports with explicit config.
     if (rootDirOverride)
@@ -415,18 +434,36 @@ class IdsPatcher {
   private _salt: string;
   private _testIdsMap: Map<string, string>;
   private _globalTestIdSet: Set<string>;
+  private _mergeStrategy: MergeStrategy;
+  private _retryOffsets: Map<string, number>;
+  // Test ids that collided with an earlier blob (populated while patching this blob's
+  // "onProject" event, which always precedes its test-run events). Only these ids get the
+  // "overwrite"/"as-retry" special-casing below -- a test that only exists in this blob must
+  // pass through onTestBegin untouched, retries and all.
+  private _collidingTestIds = new Set<string>();
+  // Ensures a colliding test's previous results are discarded exactly once per blob (on its
+  // first onTestBegin), not on every one of this blob's own retries of that same test.
+  private _discardedResultsForTestIds = new Set<string>();
+  // Caches the retry offset chosen for a colliding test id so every retry within this blob is
+  // shifted by the same fixed amount, instead of re-reading (and further inflating) the shared
+  // running offset on every onTestBegin.
+  private _retryOffsetForTestId = new Map<string, number>();
 
   constructor(
     stringPool: StringInternPool,
     botName: string | undefined,
     salt: string,
     globalTestIdSet: Set<string>,
+    mergeStrategy: MergeStrategy,
+    retryOffsets: Map<string, number>,
   ) {
     this._stringPool = stringPool;
     this._botName = botName;
     this._salt = salt;
     this._testIdsMap = new Map();
     this._globalTestIdSet = globalTestIdSet;
+    this._mergeStrategy = mergeStrategy;
+    this._retryOffsets = retryOffsets;
   }
 
   patchEvent(event: JsonEvent) {
@@ -435,8 +472,21 @@ class IdsPatcher {
       case 'onProject':
         this._onProject(params.project);
         return;
+      case 'onTestBegin': {
+        params.testId = this._mapTestId(params.testId);
+        const isCollision = this._collidingTestIds.has(params.testId);
+        if (isCollision && this._mergeStrategy === 'overwrite' && !this._discardedResultsForTestIds.has(params.testId)) {
+          params.result.discardPreviousResults = true;
+          this._discardedResultsForTestIds.add(params.testId);
+        }
+        if (this._mergeStrategy === 'as-retry') {
+          if (isCollision)
+            this._offsetRetry(params.testId, params.result);
+          this._trackRetryIndex(params.testId, params.result.retry);
+        }
+        return;
+      }
       case 'onAttach':
-      case 'onTestBegin':
       case 'onStepBegin':
       case 'onStepEnd':
       case 'onStdIO':
@@ -448,26 +498,56 @@ class IdsPatcher {
     }
   }
 
+  // For "as-retry" merges, a colliding rerun's own retry numbering (0, 1, ...) would otherwise
+  // collide with retry indices the original blob already used for the same test id.
+  // Shift incoming retries to continue after the highest retry claimed so far, using one fixed
+  // offset for all of this blob's own retries of that test.
+  private _offsetRetry(testId: string, result: { retry: number }) {
+    let offset = this._retryOffsetForTestId.get(testId);
+    if (offset === undefined) {
+      offset = this._retryOffsets.get(testId) ?? 0;
+      this._retryOffsetForTestId.set(testId, offset);
+    }
+    result.retry += offset;
+  }
+
+  // Keeps the shared "highest retry index used so far" up to date for every test, colliding or
+  // not, so that a later colliding blob knows where to continue from.
+  private _trackRetryIndex(testId: string, retry: number) {
+    const highest = this._retryOffsets.get(testId) ?? 0;
+    this._retryOffsets.set(testId, Math.max(highest, retry + 1));
+  }
+
   private _onProject(project: JsonProject) {
     project.metadata ??= {};
     project.suites.forEach(suite => this._updateTestIds(suite));
   }
 
   private _updateTestIds(suite: JsonSuite) {
-    suite.entries.forEach(entry => {
+    // In "overwrite"/"as-retry" mode, a colliding test reuses the id of the test case
+    // already registered from an earlier blob (see _mapTestId below). The receiver would
+    // otherwise create a second, unlinked test case for that same id (it only dedupes
+    // suite entries by title, not by id), so we drop the incoming duplicate suite entry
+    // here and let the test's later onTestBegin/onTestEnd events attach to the original
+    // test case instead.
+    suite.entries = suite.entries.filter(entry => {
       if ('testId' in entry)
-        this._updateTestId(entry);
-      else
-        this._updateTestIds(entry);
+        return this._updateTestId(entry);
+      this._updateTestIds(entry);
+      return true;
     });
   }
 
-  private _updateTestId(test: JsonTestCase) {
+  private _updateTestId(test: JsonTestCase): boolean {
+    const isDuplicate = this._mergeStrategy !== 'separate' && this._globalTestIdSet.has(this._stringPool.internString(test.testId));
     test.testId = this._mapTestId(test.testId);
+    if (isDuplicate)
+      this._collidingTestIds.add(test.testId);
     if (this._botName) {
       test.tags = test.tags || [];
       test.tags.unshift('@' + this._botName);
     }
+    return !isDuplicate;
   }
 
   private _mapTestId(testId: string): string {
@@ -476,6 +556,13 @@ class IdsPatcher {
       // already mapped
       return this._testIdsMap.get(t1)!;
     if (this._globalTestIdSet.has(t1)) {
+      if (this._mergeStrategy !== 'separate') {
+        // "overwrite" and "as-retry" intentionally reuse the id from the earlier blob
+        // instead of salting, so this test's results land on the same test case rather
+        // than becoming a distinct entry.
+        this._testIdsMap.set(t1, t1);
+        return t1;
+      }
       // test id is used in another blob, so we need to salt it.
       const t2 = this._stringPool.internString(testId + this._salt);
       this._globalTestIdSet.add(t2);
