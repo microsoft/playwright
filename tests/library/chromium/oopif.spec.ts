@@ -44,12 +44,13 @@ it('should handle oopif detach', async function({ page, browser, server }) {
   expect(detachedFrame).toBe(frame);
 });
 
-it('should remove workers of a detached oopif', async function({ page, server }) {
+it('should remove workers of a detached oopif', async function({ page, browser, server }) {
   await page.goto(server.EMPTY_PAGE);
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),
     attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/worker/worker.html'),
   ]);
+  await assertOOPIFCount(browser, 1);
   expect(page.workers().length).toBe(1);
   await Promise.all([
     worker.waitForEvent('close'),
@@ -58,7 +59,7 @@ it('should remove workers of a detached oopif', async function({ page, server })
   expect(page.workers().length).toBe(0);
 });
 
-it('should not hang in unrouteAll when oopif worker is gone', async function({ page, context, server }) {
+it('should not hang in unrouteAll when oopif worker is gone', async function({ page, context, browser, server }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42278' });
   await context.route('**/*', route => route.continue());
   await page.goto(server.EMPTY_PAGE);
@@ -66,6 +67,7 @@ it('should not hang in unrouteAll when oopif worker is gone', async function({ p
     page.waitForEvent('worker'),
     attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/worker/worker.html'),
   ]);
+  await assertOOPIFCount(browser, 1);
   await page.goto(server.CROSS_PROCESS_PREFIX + '/title.html');
   await context.unrouteAll();
 });

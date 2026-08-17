@@ -580,7 +580,7 @@ class FrameSession {
     this._firstNonInitialNavigationCommittedReject(new TargetClosedError(this._page.closeReason()));
     for (const childSession of this._childSessions)
       childSession.dispose();
-    for (const sessionId of [...this._workerSessions.keys()])
+    for (const sessionId of this._workerSessions.keys())
       this._removeWorkerSession(sessionId);
     if (this._parentSession)
       this._parentSession._childSessions.delete(this);

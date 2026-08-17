@@ -83,12 +83,16 @@ export class CRConnection extends SdkObject {
     if (message.id === kBrowserCloseMessageId)
       return;
     // Unknown session error has no sessionId, so route it by the message id.
-    const session = message.error?.code === kSessionNotFoundErrorCode ? this._sessionWithCallback(message.id) : this._sessions.get(message.sessionId || '');
+    const session = message.id && message.error?.code === kSessionNotFoundErrorCode ?
+      this._sessionWithCallback(message.id) : this._sessions.get(message.sessionId || '');
     session?._onMessage(message);
   }
 
-  private _sessionWithCallback(id: number | undefined): CRSession | undefined {
-    return [...this._sessions.values()].find(session => session._hasCallback(id));
+  private _sessionWithCallback(id: number): CRSession | undefined {
+    for (const session of this._sessions.values()) {
+      if (session._hasCallback(id))
+        return session;
+    }
   }
 
   _onClose(reason?: string) {
@@ -158,8 +162,8 @@ export class CRSession extends SdkObject<Protocol.EventMap & ConnectionEventMap>
     return this.send(method, params).catch((error: ProtocolError) => debugLogger.log('error', error));
   }
 
-  _hasCallback(id: number | undefined): boolean {
-    return id !== undefined && this._callbacks.has(id);
+  _hasCallback(id: number): boolean {
+    return this._callbacks.has(id);
   }
 
   _onMessage(object: ProtocolResponse) {
