@@ -546,7 +546,7 @@ browserTest('should produce screencast frames of the requested size', async ({ v
   // Without an explicit size this viewport would be captured at 800x600.
   const size = { width: 1000, height: 750 };
   const context = await contextFactory({ viewport: { width: 1600, height: 1200 } });
-  await context.tracing.start({ screenshots: { size } });
+  await context.tracing.start({ screencast: { size } });
   const page = await context.newPage();
   await page.setContent(`<body style="margin: 0; background: red"></body>`);
   for (let i = 0; i < 10; ++i)
@@ -559,6 +559,32 @@ browserTest('should produce screencast frames of the requested size', async ({ v
   const image = jpegjs.decode(resources.get(frames[frames.length - 1].file));
   expect(image.width).toBe(size.width);
   expect(image.height).toBe(size.height);
+});
+
+browserTest('should respect screencast quality', async ({ video, contextFactory, browserName }, testInfo) => {
+  browserTest.skip(video === 'on', 'Same screencast resolution conflicts');
+  browserTest.skip(browserName === 'webkit', 'WebKit ignores the screencast quality');
+
+  const content = `<body style="margin:0">${Array.from({ length: 400 }, (_, i) =>
+    `<div style="display:inline-block;width:40px;height:40px;background:hsl(${i * 7 % 360},80%,${30 + i % 50}%)"></div>`).join('')}</body>`;
+
+  const lastFrameSize = async (quality: number) => {
+    const context = await contextFactory({ viewport: { width: 800, height: 600 } });
+    await context.tracing.start({ screencast: { quality } });
+    const page = await context.newPage();
+    await page.setContent(content);
+    for (let i = 0; i < 10; ++i)
+      await rafraf(page);
+    const file = testInfo.outputPath(`trace-${quality}.zip`);
+    await context.tracing.stop({ path: file });
+    await context.close();
+    const { events, resources } = await parseTraceRaw(file);
+    const frames = events.filter(e => e.type === 'screencast-frame');
+    expect(frames.length).toBeGreaterThan(0);
+    return resources.get(frames[frames.length - 1].file).byteLength;
+  };
+
+  expect(await lastFrameSize(5) * 2).toBeLessThan(await lastFrameSize(95));
 });
 
 test('should include interrupted actions', async ({ context, page, server }, testInfo) => {

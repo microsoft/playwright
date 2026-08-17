@@ -3045,6 +3045,7 @@ scheme.TracingTracingStartParams = tObject({
     width: tInt,
     height: tInt,
   })),
+  screencastQuality: tOptional(tInt),
   live: tOptional(tBoolean),
 });
 scheme.TracingTracingStartResult = tOptional(tObject({}));

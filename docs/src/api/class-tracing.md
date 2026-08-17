@@ -139,26 +139,26 @@ given name prefix inside the [`option: BrowserType.launch.tracesDir`] directory 
 To specify the final trace zip file name, you need to pass `path` option to
 [`method: Tracing.stop`] instead.
 
-### option: Tracing.start.screenshots
-* since: v1.12
+### option: Tracing.start.screencast
+* since: v1.63
 * langs: js
-- `screenshots` <[boolean]|[Object]>
+- `screencast` <[boolean]|[Object]>
   - `size` ?<[Object]> Dimensions of the captured screenshots. Each screenshot is scaled down to preserve the page's
     aspect ratio and may be smaller than these bounds. If not specified the size will be equal to `viewport` scaled
     down to fit into 800x800. Optional.
     - `width` <[int]> Max screenshot width in pixels.
     - `height` <[int]> Max screenshot height in pixels.
+  - `quality` ?<[int]> The quality of the screenshots, between 0-100. Defaults to 90. Optional.
 
-Whether to capture screenshots during tracing. Screenshots are used to build
-a timeline preview. Passing `true` is a shortcut for `{}`.
+Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview.
+Passing `true` is a shortcut for `{}`. Takes precedence over [`option: Tracing.start.screenshots`].
 
 A page is captured only once, and tracing shares that capture with [`method: Screencast.start`] and video recording.
-The trace viewer renders the timeline preview at a fixed size, so `size` only matters to those other consumers: set
-it to keep tracing from capping the size they receive.
+The trace viewer renders the timeline preview at a fixed size, so these settings only matter to those other
+consumers: raise them to keep tracing from capping what the others receive.
 
 ### option: Tracing.start.screenshots
 * since: v1.12
-* langs: java, python, csharp
 - `screenshots` <[boolean]>
 
 Whether to capture screenshots during tracing. Screenshots are used to build

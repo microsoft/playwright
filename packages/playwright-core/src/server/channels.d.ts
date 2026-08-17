@@ -5056,6 +5056,7 @@ export type TracingTracingStartParams = {
     width: number,
     height: number,
   },
+  screencastQuality?: number,
   live?: boolean,
 };
 export type TracingTracingStartOptions = {
@@ -5068,6 +5069,7 @@ export type TracingTracingStartOptions = {
     width: number,
     height: number,
   },
+  screencastQuality?: number,
   live?: boolean,
 };
 export type TracingTracingStartResult = void;

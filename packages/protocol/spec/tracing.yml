@@ -31,6 +31,7 @@ Tracing:
           properties:
             width: int
             height: int
+        screencastQuality: int?
         live: boolean?
 
     tracingStartChunk:

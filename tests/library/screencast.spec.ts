@@ -307,7 +307,7 @@ test('tracing screenshots size sets the shared capture size', async ({ browser, 
   // Sizing the tracing screencast is the way to lift the cap it would otherwise put on the capture.
   const size = { width: 1000, height: 750 };
   const context = await browser.newContext({ viewport: { width: 1600, height: 1200 } });
-  await context.tracing.start({ screenshots: { size } });
+  await context.tracing.start({ screencast: { size } });
   const page = await context.newPage();
 
   const videoPath = testInfo.outputPath('video.webm');
