@@ -16,7 +16,8 @@
 
 import { debugLog } from './relayConnection';
 import { PendingConnections } from './pendingConnection';
-import { ConnectedTabGroup, cleanupStalePlaywrightGroups, isNonDebuggableUrl, ungroupTabs, uniqueGroupStyle } from './connectedTabGroup';
+import { ConnectedTabGroup, isNonDebuggableUrl, ungroupTabs, uniqueGroupStyle } from './connectedTabGroup';
+import { BackgroundWorkspace, clearBackgroundWorkspace, initializeBackgroundWorkspaceCleanup, persistBackgroundWorkspace, provisionBackgroundWorkspace } from './backgroundWorkspace';
 
 type PageMessage = {
   type: 'connectionRequested';
@@ -44,12 +45,12 @@ class PlaywrightExtension {
   private _pendingConnections = new PendingConnections();
   // Service worker restarts lose all connection state, so any existing
   // Playwright groups are stale. Connections wait on this before reconciling.
-  private _cleanupPromise: Promise<void>;
+  private _cleanupPromise: Promise<string>;
 
   constructor() {
     chrome.runtime.onMessage.addListener(this._onMessage.bind(this));
     chrome.action.onClicked.addListener(this._onActionClicked.bind(this));
-    this._cleanupPromise = cleanupStalePlaywrightGroups();
+    this._cleanupPromise = initializeBackgroundWorkspaceCleanup();
   }
 
   // Promise-based message handling is not supported in Chrome: https://issues.chromium.org/issues/40753031
@@ -69,11 +70,7 @@ class PlaywrightExtension {
             (error: any) => sendResponse({ success: false, error: error.message }));
         return true;
       case 'connectToTab': {
-        // Token-bypass (no specific pick) falls back to the connect page itself
-        // so `ConnectedTabGroup` always has a concrete tab to start from. Both
-        // sender.tab and UI-supplied tabs come from chrome.tabs.query / runtime
-        // message sender, where `id` is always defined.
-        const selectedTab = (message.tab ?? sender.tab!) as chrome.tabs.Tab & { id: number };
+        const selectedTab = message.tab as (chrome.tabs.Tab & { id: number }) | undefined;
         this._connectTab(sender.tab!.id!, selectedTab, message.clientName).then(
             () => sendResponse({ success: true }),
             (error: any) => sendResponse({ success: false, error: error.message }));
@@ -99,32 +96,48 @@ class PlaywrightExtension {
     }
   }
 
-  private async _connectTab(selectorTabId: number, tab: chrome.tabs.Tab & { id: number }, clientName: string | undefined): Promise<void> {
+  private async _connectTab(selectorTabId: number, tab: (chrome.tabs.Tab & { id: number }) | undefined, clientName: string | undefined): Promise<void> {
     try {
-      await this._cleanupPromise;
+      const sessionId = await this._cleanupPromise;
       this._releaseTab(selectorTabId);
-      if (tab.id !== selectorTabId && this._connectedTabIds().has(tab.id))
+      if (tab && tab.id !== selectorTabId && this._connectedTabIds().has(tab.id))
         throw new Error('This tab is already connected to another client');
 
       const connection = await this._pendingConnections.take(selectorTabId);
       if (!connection)
         throw new Error('Pending client connection closed');
 
+      const createdWorkspace = tab ? undefined : await provisionBackgroundWorkspace();
+      const workspace: BackgroundWorkspace | undefined = createdWorkspace;
+      const selectedTab = tab ?? createdWorkspace!.tab;
       const id = ++this._lastConnectionId;
       const taken = [...this._connections.values()].map(group => group.groupStyle);
-      const group = new ConnectedTabGroup(connection, tab, clientName, uniqueGroupStyle(clientName, taken), tabId => this._pendingConnections.has(tabId));
-      group.onclose = () => this._connections.delete(id);
+      const group = new ConnectedTabGroup(connection, selectedTab, clientName, uniqueGroupStyle(clientName, taken), tabId => this._pendingConnections.has(tabId), workspace?.windowId);
+      if (workspace) {
+        connection.setWorkspaceWindow(workspace.windowId);
+        connection.markOwnedTab(selectedTab.id);
+        connection.markOwnedTab(workspace.anchorTabId);
+        await persistBackgroundWorkspace(sessionId, workspace, [...connection.ownedTabIds]);
+        connection.onownershipchange = ownedTabIds => void persistBackgroundWorkspace(sessionId, workspace!, ownedTabIds);
+      }
+      group.onclose = () => {
+        this._connections.delete(id);
+        connection.onownershipchange = undefined;
+        if (workspace)
+          void clearBackgroundWorkspace();
+      };
       this._connections.set(id, group);
-
-      await Promise.all([
-        chrome.tabs.update(tab.id, { active: true }),
-        chrome.windows.update(tab.windowId, { focused: true }),
-      ]).catch(() => {});
-
-      if (tab.id !== selectorTabId)
+      await group.initialize(selectedTab);
+      if (!workspace) {
+        await Promise.all([
+          chrome.tabs.update(selectedTab.id, { active: true }),
+          chrome.windows.update(selectedTab.windowId, { focused: true }),
+        ]).catch(() => {});
+      }
+      if (!workspace && selectedTab.id !== selectorTabId)
         await chrome.tabs.remove(selectorTabId).catch(() => {});
     } catch (error: any) {
-      debugLog(`Failed to connect tab ${tab.id}:`, error.message);
+      debugLog(`Failed to connect from selector tab ${selectorTabId}:`, error.message);
       throw error;
     }
   }

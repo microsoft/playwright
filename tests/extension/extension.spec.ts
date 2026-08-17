@@ -444,12 +444,18 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
   });
 
   expect(await navigateResponse).toHaveResponse({
-    snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
+    snapshot: expect.stringContaining(`Hello, world!`),
   });
 
-  const page = await browserContext.newPage();
-  await page.goto(`chrome-extension://${extensionId}/status.html`);
-  await expect(page.locator('.client-info')).toContainText(`Connected to "${clientName}"`);
+  const statusPage = await browserContext.newPage();
+  await statusPage.goto(`chrome-extension://${extensionId}/status.html`);
+  const workspace = await statusPage.evaluate(async () => {
+    const windows = await chrome.windows.getAll({ populate: true });
+    return windows.find(window => window.tabs?.some(tab => tab.url?.includes('/hello-world')));
+  });
+  expect(workspace).toMatchObject({ state: 'minimized', focused: false });
+
+  await expect(statusPage.locator('.client-info')).toContainText(`Connected to "${clientName}"`);
 });
 
 test(`reconnects after the extension connection drops`, {

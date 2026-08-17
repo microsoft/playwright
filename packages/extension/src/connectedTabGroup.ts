@@ -76,17 +76,19 @@ export class ConnectedTabGroup {
   private _isTabReserved: (tabId: number) => boolean;
   private _groupId: number | null = null;
   private _groupTabIds: Set<number> = new Set();
-  private _onTabUpdatedListener: (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => void;
+  private _onTabUpdatedListener: (tabId: number, changeInfo: chrome.tabs.OnUpdatedInfo, tab: chrome.tabs.Tab) => void;
   private _onTabRemovedListener: (tabId: number) => void;
+  private _workspaceWindowId: number | undefined;
 
   onclose?: () => void;
 
-  constructor(connection: RelayConnection, selectedTab: chrome.tabs.Tab, clientName: string | undefined, groupStyle: GroupStyle, isTabReserved: (tabId: number) => boolean) {
+  constructor(connection: RelayConnection, selectedTab: chrome.tabs.Tab, clientName: string | undefined, groupStyle: GroupStyle, isTabReserved: (tabId: number) => boolean, workspaceWindowId?: number) {
     this.clientName = clientName;
     this.groupStyle = groupStyle;
     this._isTabReserved = isTabReserved;
     this._connection = connection;
-    this._connection.onclose = () => this._onConnectionClose();
+    this._workspaceWindowId = workspaceWindowId;
+    this._connection.onclose = () => void this._onConnectionClose();
     this._connection.ontabattached = (tabId: number) => this._onTabAttached(tabId);
     this._connection.ontabdetached = (tabId: number) => this._onTabDetached(tabId);
     this._onTabUpdatedListener = this._onTabUpdated.bind(this);
@@ -97,8 +99,17 @@ export class ConnectedTabGroup {
     // handshake. The relay holds Playwright-side CDP traffic until
     // `didInitialize` arrives, so it sees a fully populated tab model by the
     // time it handles `Target.setAutoAttach`.
-    this._connection.attachTab(selectedTab);
-    this._connection.didInitialize();
+  }
+
+  async initialize(selectedTab: chrome.tabs.Tab): Promise<void> {
+    try {
+      await this._addTabToGroup(selectedTab.id!);
+      this._connection.attachTab(selectedTab);
+      this._connection.didInitialize();
+    } catch (error) {
+      this._connection.close('Background workspace initialization failed');
+      throw error;
+    }
   }
 
   connectedTabIds(): number[] {
@@ -113,10 +124,11 @@ export class ConnectedTabGroup {
     if (!this._groupTabIds.has(tabId))
       return;
     this._groupTabIds.delete(tabId);
+    this._connection.markTabReclaimed(tabId);
     this._connection.detachTab(tabId);
   }
 
-  private _onTabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): void {
+  private _onTabUpdated(tabId: number, changeInfo: chrome.tabs.OnUpdatedInfo, tab: chrome.tabs.Tab): void {
     if (changeInfo.groupId !== undefined)
       this._onTabGroupChanged(tabId, tab);
     if (changeInfo.url === undefined)
@@ -149,6 +161,7 @@ export class ConnectedTabGroup {
         this._connection.attachTab(tab);
     } else {
       this._groupTabIds.delete(tabId);
+      this._connection.markTabReclaimed(tabId);
       if (this._connection.attachedTabs.has(tabId))
         this._connection.detachTab(tabId);
     }
@@ -158,9 +171,9 @@ export class ConnectedTabGroup {
     this._groupTabIds.delete(tabId);
   }
 
-  private _onTabAttached(tabId: number): void {
+  private async _onTabAttached(tabId: number): Promise<void> {
     void this._updateBadge(tabId, CONNECTED_BADGE);
-    void this._addTabToGroup(tabId);
+    await this._addTabToGroup(tabId);
   }
 
   // The debugger detached (drag-out, tab close, or external action). Clear the
@@ -170,13 +183,25 @@ export class ConnectedTabGroup {
     void this._updateBadge(tabId, { text: '' });
   }
 
-  private _onConnectionClose(): void {
+  private async _onConnectionClose(): Promise<void> {
     chrome.tabs.onUpdated.removeListener(this._onTabUpdatedListener);
     chrome.tabs.onRemoved.removeListener(this._onTabRemovedListener);
     const groupTabs = [...this._groupTabIds];
     this._groupTabIds.clear();
-    if (groupTabs.length)
+    if (this._workspaceWindowId !== undefined) {
+      try {
+        const tabs = await chrome.tabs.query({ windowId: this._workspaceWindowId });
+        const preserved = tabs.filter(tab => tab.id !== undefined && !this._connection.ownedTabIds.has(tab.id));
+        if (preserved.length)
+          await chrome.tabs.remove(tabs.map(tab => tab.id).filter((id): id is number => id !== undefined && !preserved.some(tab => tab.id === id)));
+        else
+          await chrome.windows.remove(this._workspaceWindowId);
+      } catch (error: any) {
+        debugLog('Error cleaning up background workspace:', error);
+      }
+    } else if (groupTabs.length) {
       void ungroupTabs(groupTabs);
+    }
     this.onclose?.();
   }
 
@@ -200,14 +225,24 @@ export class ConnectedTabGroup {
     if (this._groupTabIds.has(tabId))
       return;
     try {
+      if (this._workspaceWindowId !== undefined && this._connection.ownedTabIds.has(tabId)) {
+        const tab = await chrome.tabs.get(tabId);
+        if (tab.windowId !== this._workspaceWindowId)
+          await chrome.tabs.move(tabId, { windowId: this._workspaceWindowId, index: -1 });
+      }
       await retryOnDrag(async () => {
         if (this._groupId === null) {
-          this._groupId = await chrome.tabs.group({ tabIds: [tabId] });
+          this._groupId = await chrome.tabs.group({
+            tabIds: [tabId],
+            ...(this._workspaceWindowId === undefined ? {} : { createProperties: { windowId: this._workspaceWindowId } }),
+          });
           await chrome.tabGroups.update(this._groupId, this.groupStyle);
         } else {
           await chrome.tabs.group({ groupId: this._groupId, tabIds: [tabId] });
         }
       });
+      if (this._workspaceWindowId !== undefined)
+        await chrome.windows.update(this._workspaceWindowId, { state: 'minimized' });
       this._groupTabIds.add(tabId);
     } catch (error: any) {
       debugLog('Error adding tab to group:', error);
@@ -218,7 +253,7 @@ export class ConnectedTabGroup {
 
 export async function ungroupTabs(tabIds: number[]): Promise<void> {
   try {
-    await retryOnDrag(() => chrome.tabs.ungroup(tabIds));
+    await retryOnDrag(() => chrome.tabs.ungroup(tabIds as [number, ...number[]]));
   } catch (error: any) {
     debugLog('Error ungrouping tabs:', error);
   }

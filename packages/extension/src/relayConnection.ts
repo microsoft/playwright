@@ -68,13 +68,38 @@ export class RelayConnection {
   private _closed = false;
   private _pendingReattach = new Set<number>();
   private _recentReattach = new Set<number>();
+  private _workspaceWindowId: number | undefined;
+  private _ownedTabIds = new Set<number>();
 
   onclose?: () => void;
-  ontabattached?: (tabId: number) => void;
+  onownershipchange?: (ownedTabIds: number[]) => void;
+  ontabattached?: (tabId: number) => void | Promise<void>;
   ontabdetached?: (tabId: number) => void;
 
   get attachedTabs(): ReadonlySet<number> {
     return this._attachedTabs;
+  }
+
+  setWorkspaceWindow(windowId: number): void {
+    this._workspaceWindowId = windowId;
+  }
+
+  get ownedTabIds(): ReadonlySet<number> {
+    return this._ownedTabIds;
+  }
+
+  markOwnedTab(tabId: number): void {
+    this._ownedTabIds.add(tabId);
+    this._notifyOwnershipChanged();
+  }
+
+  markTabReclaimed(tabId: number): void {
+    if (this._ownedTabIds.delete(tabId))
+      this._notifyOwnershipChanged();
+  }
+
+  private _notifyOwnershipChanged(): void {
+    this.onownershipchange?.([...this._ownedTabIds]);
   }
 
   constructor(ws: WebSocket) {
@@ -128,11 +153,11 @@ export class RelayConnection {
     this._checkLastTabDetached();
   }
 
-  private _notifyTabAttached(tabId: number): void {
+  private async _notifyTabAttached(tabId: number): Promise<void> {
     this._attachedTabs.add(tabId);
     this._hasEverAttached = true;
     this._pendingReattach.delete(tabId);
-    this.ontabattached?.(tabId);
+    await this.ontabattached?.(tabId);
   }
 
   private _notifyTabDetached(tabId: number): void {
@@ -175,6 +200,15 @@ export class RelayConnection {
   // Forwards chrome.* events concerning attached tabs to the relay, then runs
   // shared detach bookkeeping.
   private _onChromeEvent(fullMethod: string, args: any[]): void {
+    if (fullMethod === 'chrome.tabs.onRemoved' && this._ownedTabIds.delete(args[0] as number))
+      this._notifyOwnershipChanged();
+    if (fullMethod === 'chrome.tabs.onCreated') {
+      const tab = args[0] as chrome.tabs.Tab;
+      if (tab.id !== undefined && tab.openerTabId !== undefined && this._ownedTabIds.has(tab.openerTabId)) {
+        this.markOwnedTab(tab.id);
+        void chrome.tabs.update(tab.id, { autoDiscardable: false }).catch(() => {});
+      }
+    }
     const tabId = this._tabIdForEventArgs(fullMethod, args);
     if (tabId === undefined || !this._attachedTabs.has(tabId))
       return;
@@ -281,13 +315,30 @@ export class RelayConnection {
   private async _handleCommand(message: ProtocolCommand): Promise<any> {
     if (!ALLOWED_CHROME_COMMANDS.has(message.method))
       throw new Error(`Unknown method: ${message.method}`);
-    const args = (message.params ?? []) as any[];
+    const args = [...(message.params ?? [])] as any[];
+    if (message.method === 'chrome.debugger.sendCommand' && this._workspaceWindowId !== undefined &&
+        (args[1] === 'Page.bringToFront' || args[1] === 'Target.activateTarget'))
+      return {};
+    if (message.method === 'chrome.tabs.create' && this._workspaceWindowId !== undefined) {
+      const workspace = await chrome.windows.get(this._workspaceWindowId).catch(() => undefined);
+      if (!workspace || workspace.state !== 'minimized' || workspace.focused)
+        throw new Error('Background workspace is unavailable');
+      args[0] = { ...(args[0] ?? {}), windowId: this._workspaceWindowId, active: true };
+    }
     const result = await invokeChromeMethod(message.method, args);
+    if (message.method === 'chrome.tabs.create' && result?.id !== undefined) {
+      if (this._workspaceWindowId !== undefined && result.windowId !== this._workspaceWindowId) {
+        await chrome.tabs.remove(result.id).catch(() => {});
+        throw new Error('Chrome created the tab outside the background workspace');
+      }
+      this.markOwnedTab(result.id);
+      await chrome.tabs.update(result.id, { autoDiscardable: false });
+    }
     // Attach bookkeeping; detach flows through the chrome.debugger.onDetach event.
     if (message.method === 'chrome.debugger.attach') {
       const target = args[0] as chrome.debugger.Debuggee | undefined;
       if (target?.tabId !== undefined)
-        this._notifyTabAttached(target.tabId);
+        await this._notifyTabAttached(target.tabId);
     }
     return result ?? {};
   }
