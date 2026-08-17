@@ -173,3 +173,40 @@ test('browser_get_config returns merged config from file, env and cli', async ({
   // From CLI arg (--isolated).
   expect(config.browser.isolated).toBe(true);
 });
+
+test.describe('chromiumSandbox', () => {
+  test.skip(({ mcpBrowser }) => mcpBrowser !== 'chrome', 'Channel-agnostic tests.');
+
+  test('config file value is respected', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1716' } }, async ({ startClient }) => {
+    const { client } = await startClient({
+      config: {
+        capabilities: ['config'],
+        browser: { launchOptions: { chromiumSandbox: true } },
+      },
+    });
+    const config = JSON.parse(parseResponse(await client.callTool({ name: 'browser_get_config' })).result);
+    expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
+  });
+
+  test('--no-sandbox overrides config file value', async ({ startClient }) => {
+    const { client } = await startClient({
+      config: {
+        capabilities: ['config'],
+        browser: { launchOptions: { chromiumSandbox: true } },
+      },
+      args: ['--no-sandbox'],
+    });
+    const config = JSON.parse(parseResponse(await client.callTool({ name: 'browser_get_config' })).result);
+    expect(config.browser.launchOptions.chromiumSandbox).toBe(false);
+  });
+
+  test('--sandbox enables the sandbox', async ({ startClient }) => {
+    const { client } = await startClient({
+      config: { capabilities: ['config'] },
+      args: ['--browser=chromium', '--sandbox'],
+    });
+    const config = JSON.parse(parseResponse(await client.callTool({ name: 'browser_get_config' })).result);
+    expect(config.browser.launchOptions.channel).toBe('chrome-for-testing');
+    expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
+  });
+});
