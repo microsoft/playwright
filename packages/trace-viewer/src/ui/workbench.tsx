@@ -369,7 +369,6 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
       model={model}
       boundaries={boundaries}
       onSelected={onActionSelected}
-      sdkLanguage={sdkLanguage}
       selectedTime={selectedTime}
       setSelectedTime={setSelectedTime}
       highlightedTime={highlightedTime}

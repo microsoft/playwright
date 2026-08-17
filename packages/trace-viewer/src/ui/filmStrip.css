@@ -52,11 +52,3 @@
   z-index: 200;
   pointer-events: none;
 }
-
-.film-strip-hover-title {
-  padding: 2px 4px;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  line-height: 28px;
-}

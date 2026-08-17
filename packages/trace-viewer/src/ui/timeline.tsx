@@ -24,7 +24,6 @@ import type { FilmStripPreviewPoint } from './filmStrip';
 import type { TraceModel } from '@isomorphic/trace/traceModel';
 import type { ActionEntry } from '@isomorphic/trace/entries';
 import './timeline.css';
-import type { Language } from '@isomorphic/locatorGenerators';
 import type { ActionGroup } from '@isomorphic/protocolFormatter';
 
 export const Timeline: React.FunctionComponent<{
@@ -34,9 +33,8 @@ export const Timeline: React.FunctionComponent<{
   selectedTime: Boundaries | undefined,
   setSelectedTime: (time: Boundaries | undefined) => void,
   highlightedTime?: Boundaries,
-  sdkLanguage: Language,
   scrubber?: React.ReactNode,
-}> = ({ model, boundaries, onSelected, selectedTime, setSelectedTime, highlightedTime, sdkLanguage, scrubber }) => {
+}> = ({ model, boundaries, onSelected, selectedTime, setSelectedTime, highlightedTime, scrubber }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [dragWindow, setDragWindow] = React.useState<{ startX: number, endX: number, pivot?: number, type: 'resize' | 'move' } | undefined>();
   const [previewPoint, setPreviewPoint] = React.useState<FilmStripPreviewPoint | undefined>();
@@ -156,10 +154,8 @@ export const Timeline: React.FunctionComponent<{
     if (!ref.current)
       return;
     const x = event.clientX - ref.current.getBoundingClientRect().left;
-    const time = positionToTime(measure.width, boundaries, x);
-    const action = actions?.findLast(action => action.startTime <= time);
-    setPreviewPoint({ x, clientY: event.clientY, action, sdkLanguage });
-  }, [boundaries, measure, actions, ref, sdkLanguage]);
+    setPreviewPoint({ x, clientY: event.clientY });
+  }, [ref]);
 
   const onMouseLeave = React.useCallback(() => {
     setPreviewPoint(undefined);
