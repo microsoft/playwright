@@ -53,3 +53,34 @@ test('title click should not expand by default', async ({ mount }) => {
   await expect(component.locator('.codicon-chevron-right')).toBeVisible();
   await expect(component.getByTestId('expanded')).toHaveValue('false');
 });
+
+test('expand collapse with keyboard', async ({ mount, page }) => {
+  const component = await mount<typeof StatefulTitleClick>('components/expandable/StatefulTitleClick');
+  const header = component.getByRole('button', { name: 'Title' });
+  await header.focus();
+  await expect(header).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(component.getByTestId('expanded')).toHaveValue('true');
+  await expect(component.locator('text=Details')).toBeVisible();
+  await page.keyboard.press('Space');
+  await expect(component.getByTestId('expanded')).toHaveValue('false');
+  await expect(component.locator('text=Details')).toBeHidden();
+});
+
+test('expand collapse with space key', async ({ mount, page }) => {
+  const component = await mount<typeof StatefulTitleClick>('components/expandable/StatefulTitleClick');
+  const header = component.getByRole('button', { name: 'Title' });
+  await header.focus();
+  await expect(header).toBeFocused();
+  await page.keyboard.press('Space');
+  await expect(component.getByTestId('expanded')).toHaveValue('true');
+  await expect(component.locator('text=Details')).toBeVisible();
+  await page.keyboard.press('Enter');
+  await expect(component.getByTestId('expanded')).toHaveValue('false');
+  await expect(component.locator('text=Details')).toBeHidden();
+});
+
+test('title is not a button when title click is disabled', async ({ mount }) => {
+  const component = await mount<typeof Stateful>('components/expandable/Stateful');
+  await expect(component.getByRole('button')).toHaveCount(0);
+});

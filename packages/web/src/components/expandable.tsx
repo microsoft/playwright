@@ -40,10 +40,19 @@ export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
       <div
         id={titleId}
         role='button'
+        tabIndex={0}
         aria-expanded={expanded}
         aria-controls={regionId}
         className='expandable-title'
-        onClick={onClick}>
+        onClick={onClick}
+        onKeyDown={e => {
+          if (e.target !== e.currentTarget)
+            return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+          }
+        }}>
         {chevron}
         {title}
       </div> :
