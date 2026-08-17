@@ -15,8 +15,9 @@
 */
 
 import * as React from 'react';
-import { useMeasure } from '../uiUtils';
+import { clsx, useMeasure } from '../uiUtils';
 import { ResizeView } from './resizeView';
+import './imageDiffView.css';
 
 type TestAttachment = {
   name: string;
@@ -90,20 +91,14 @@ export const ImageDiffView: React.FC<{
   const fitWidth = imageWidth * scale;
   const fitHeight = imageHeight * scale;
 
-  const modeStyle: React.CSSProperties = {
-    flex: 'none',
-    margin: '0 10px',
-    cursor: 'pointer',
-    userSelect: 'none',
-  };
   return <div data-testid='test-result-image-mismatch' style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 'auto' }} ref={ref}>
     {isLoaded && <>
-      <div data-testid='test-result-image-mismatch-tabs' style={{ display: 'flex', margin: '10px 0 20px' }}>
-        {diff.diff && <div style={{ ...modeStyle, fontWeight: mode === 'diff' ? 600 : 'initial' }} onClick={() => setMode('diff')}>Diff</div>}
-        <div style={{ ...modeStyle, fontWeight: mode === 'actual' ? 600 : 'initial' }} onClick={() => setMode('actual')}>Actual</div>
-        <div style={{ ...modeStyle, fontWeight: mode === 'expected' ? 600 : 'initial' }} onClick={() => setMode('expected')}>{expectedImageTitle}</div>
-        <div style={{ ...modeStyle, fontWeight: mode === 'sxs' ? 600 : 'initial' }} onClick={() => setMode('sxs')}>Side by side</div>
-        <div style={{ ...modeStyle, fontWeight: mode === 'slider' ? 600 : 'initial' }} onClick={() => setMode('slider')}>Slider</div>
+      <div role='tablist' data-testid='test-result-image-mismatch-tabs' style={{ display: 'flex', margin: '10px 0 20px' }}>
+        {diff.diff && <button type='button' role='tab' aria-selected={mode === 'diff'} className={clsx('image-diff-tab', mode === 'diff' && 'selected')} onClick={() => setMode('diff')}>Diff</button>}
+        <button type='button' role='tab' aria-selected={mode === 'actual'} className={clsx('image-diff-tab', mode === 'actual' && 'selected')} onClick={() => setMode('actual')}>Actual</button>
+        <button type='button' role='tab' aria-selected={mode === 'expected'} className={clsx('image-diff-tab', mode === 'expected' && 'selected')} onClick={() => setMode('expected')}>{expectedImageTitle}</button>
+        <button type='button' role='tab' aria-selected={mode === 'sxs'} className={clsx('image-diff-tab', mode === 'sxs' && 'selected')} onClick={() => setMode('sxs')}>Side by side</button>
+        <button type='button' role='tab' aria-selected={mode === 'slider'} className={clsx('image-diff-tab', mode === 'slider' && 'selected')} onClick={() => setMode('slider')}>Slider</button>
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', flex: 'auto', minHeight: fitHeight + 60 }}>
         {diff.diff && mode === 'diff' && <ImageWithSize image={diffImage} alt='Diff' hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}

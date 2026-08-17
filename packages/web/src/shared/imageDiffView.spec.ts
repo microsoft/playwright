@@ -35,3 +35,63 @@ test('should show diff by default', async ({ mount }) => {
   const box = await image.boundingBox();
   expect(box).toEqual(expect.objectContaining({ width: 48, height: 48 }));
 });
+
+test('should render mode switcher tabs with role="tab"', async ({ mount }) => {
+  const component = await mount<typeof Default>('shared/imageDiffView/Default');
+  const tablist = component.getByRole('tablist');
+  await expect(tablist).toBeVisible();
+
+  const tabs = component.getByRole('tab');
+  await expect(tabs).toHaveText(['Diff', 'Actual', 'Expected', 'Side by side', 'Slider']);
+  await expect(component.getByRole('tab', { name: 'Diff' })).toHaveAttribute('aria-selected', 'true');
+  await expect(component.getByRole('tab', { name: 'Actual' })).toHaveAttribute('aria-selected', 'false');
+  await expect(component.getByRole('tab', { name: 'Expected' })).toHaveAttribute('aria-selected', 'false');
+  await expect(component.getByRole('tab', { name: 'Side by side' })).toHaveAttribute('aria-selected', 'false');
+  await expect(component.getByRole('tab', { name: 'Slider' })).toHaveAttribute('aria-selected', 'false');
+});
+
+test('can focus mode switcher tab and activate via keyboard', async ({ mount, page }) => {
+  const component = await mount<typeof Default>('shared/imageDiffView/Default');
+  const diffTab = component.getByRole('tab', { name: 'Diff' });
+  const actualTab = component.getByRole('tab', { name: 'Actual' });
+  const expectedTab = component.getByRole('tab', { name: 'Expected' });
+  const sxsTab = component.getByRole('tab', { name: 'Side by side' });
+  const sliderTab = component.getByRole('tab', { name: 'Slider' });
+
+  await expect(diffTab).toHaveAttribute('aria-selected', 'true');
+
+  await actualTab.focus();
+  await expect(actualTab).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(actualTab).toHaveAttribute('aria-selected', 'true');
+  await expect(diffTab).toHaveAttribute('aria-selected', 'false');
+
+  await expectedTab.focus();
+  await expect(expectedTab).toBeFocused();
+  await page.keyboard.press('Space');
+  await expect(expectedTab).toHaveAttribute('aria-selected', 'true');
+  await expect(actualTab).toHaveAttribute('aria-selected', 'false');
+
+  await sxsTab.focus();
+  await expect(sxsTab).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(sxsTab).toHaveAttribute('aria-selected', 'true');
+  await expect(expectedTab).toHaveAttribute('aria-selected', 'false');
+
+  await sliderTab.focus();
+  await expect(sliderTab).toBeFocused();
+  await page.keyboard.press('Space');
+  await expect(sliderTab).toHaveAttribute('aria-selected', 'true');
+  await expect(sxsTab).toHaveAttribute('aria-selected', 'false');
+});
+
+test('clicking mode switcher tab changes mode and updates aria-selected', async ({ mount }) => {
+  const component = await mount<typeof Default>('shared/imageDiffView/Default');
+  const diffTab = component.getByRole('tab', { name: 'Diff' });
+  const actualTab = component.getByRole('tab', { name: 'Actual' });
+
+  await expect(diffTab).toHaveAttribute('aria-selected', 'true');
+  await actualTab.click();
+  await expect(actualTab).toHaveAttribute('aria-selected', 'true');
+  await expect(diffTab).toHaveAttribute('aria-selected', 'false');
+});
