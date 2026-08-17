@@ -54,10 +54,13 @@ await page.getByRole('button', { name: 'Submit' }).click();
 \`\`\``);
 });
 
-test('click link', async ({ cli, server }) => {
+// Firefox can complete the click action that triggers navigation after the
+// default 5s action timeout (seen especially on Windows), so the click times
+// out mid-navigation. Keep the action budget open longer, as with the dialog tests.
+test('click link', async ({ cli, server, mcpBrowser }) => {
   server.setContent('/', `<a href="/hello-world">Hello, world!</a>`, 'text/html');
 
-  const { snapshot } = await cli('open', server.PREFIX);
+  const { snapshot } = await cli('open', server.PREFIX, { env: { PLAYWRIGHT_MCP_TIMEOUT_ACTION: mcpBrowser === 'firefox' ? '30000' : '' } });
   expect(snapshot).toContain(`- link \"Hello, world!\" [ref=e2]`);
 
   const { output: clickOutput, snapshot: clickSnapshot } = await cli('click', 'e2');
