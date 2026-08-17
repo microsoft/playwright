@@ -20,12 +20,11 @@ import clipPaths from './clipPaths';
 
 import type { Point } from '@isomorphic/types';
 import type { AriaSnapshot } from '../ariaSnapshot';
-import type { Highlight, HighlightEntry } from '../highlight';
+import type { Highlight } from '../highlight';
 import type { InjectedScript } from '../injectedScript';
 import type { ElementText } from '../selectorUtils';
 import type * as actions from '@isomorphic/codegen/actions';
 import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
-import type { Language } from '@isomorphic/locatorGenerators';
 
 const HighlightColors = {
   multiple: '#f6b26b7f',
@@ -1277,8 +1276,6 @@ export class Recorder {
   private _listeners: (() => void)[] = [];
   private _currentTool: RecorderTool;
   private _tools: Record<Mode, RecorderTool>;
-  private _lastHighlightedSelector: string | undefined = undefined;
-  private _lastHighlightedAriaTemplateJSON: string = 'undefined';
   private _lastActionAutoexpectSnapshot: AriaSnapshot | undefined;
   readonly highlight: Highlight;
   readonly overlay: Overlay | undefined;
@@ -1394,32 +1391,6 @@ export class Recorder {
     this.highlight.setLanguage(state.language);
     this._switchCurrentTool();
     this.overlay?.setUIState(state);
-
-    let highlight: HighlightEntry[] | 'clear' | 'noop' = 'noop';
-    if (state.actionSelector !== this._lastHighlightedSelector) {
-      const entries = state.actionSelector ? entriesForSelectorHighlight(this.injectedScript, state.language, state.actionSelector, this.document) : null;
-      highlight = entries?.length ? entries : 'clear';
-      this._lastHighlightedSelector = entries?.length ? state.actionSelector : undefined;
-    }
-
-    const ariaTemplateJSON = JSON.stringify(state.ariaTemplate);
-    if (this._lastHighlightedAriaTemplateJSON !== ariaTemplateJSON) {
-      const elements = state.ariaTemplate ? this.injectedScript.getAllElementsMatchingExpectAriaTemplate(this.document, state.ariaTemplate) : [];
-      if (elements.length) {
-        const color = elements.length > 1 ? HighlightColors.multiple : HighlightColors.single;
-        highlight = elements.map(element => ({ element, color }));
-        this._lastHighlightedAriaTemplateJSON = ariaTemplateJSON;
-      } else {
-        if (!this._lastHighlightedSelector)
-          highlight = 'clear';
-        this._lastHighlightedAriaTemplateJSON = 'undefined';
-      }
-    }
-
-    if (highlight === 'clear')
-      this.highlight.clearHighlight();
-    else if (highlight !== 'noop')
-      this.highlight.updateHighlight(highlight);
   }
 
   clearHighlight() {
@@ -1535,8 +1506,6 @@ export class Recorder {
   private _onScroll(event: Event) {
     if (!event.isTrusted)
       return;
-    this._lastHighlightedSelector = undefined;
-    this._lastHighlightedAriaTemplateJSON = 'undefined';
     this.highlight.hideActionPoint();
     this._currentTool.onScroll?.(event);
   }
@@ -1564,8 +1533,6 @@ export class Recorder {
   }
 
   updateHighlight(model: HighlightModel | null, userGesture: boolean) {
-    this._lastHighlightedSelector = undefined;
-    this._lastHighlightedAriaTemplateJSON = 'undefined';
     this._updateHighlight(model, userGesture);
   }
 
@@ -1818,21 +1785,6 @@ function removeEventListeners(listeners: (() => void)[]) {
   for (const listener of listeners)
     listener();
   listeners.splice(0, listeners.length);
-}
-
-function entriesForSelectorHighlight(injectedScript: InjectedScript, language: Language, selector: string, ownerDocument: Document): HighlightEntry[] {
-  try {
-    const parsedSelector = injectedScript.parseSelector(selector);
-    const elements = injectedScript.querySelectorAll(parsedSelector, ownerDocument);
-    const color = elements.length > 1 ? HighlightColors.multiple : HighlightColors.single;
-    const locator = injectedScript.utils.asLocator(language, selector);
-    return elements.map((element, index) => {
-      const suffix = elements.length > 1 ? ` [${index + 1} of ${elements.length}]` : '';
-      return { element, color, tooltipText: locator + suffix };
-    });
-  } catch (e) {
-    return [];
-  }
 }
 
 export type SvgJson = {

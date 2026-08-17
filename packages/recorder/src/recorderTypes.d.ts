@@ -54,8 +54,6 @@ export type OverlayState = {
 export type UIState = {
   mode: Mode;
   actionPoint?: Point;
-  actionSelector?: string;
-  ariaTemplate?: AriaTemplateNode;
   language: Language;
   testIdAttributeName: string;
   overlay: OverlayState;

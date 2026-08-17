@@ -44,7 +44,7 @@ export class Selectors {
       'internal:and', 'internal:or', 'internal:chain',
       'role', 'internal:attr', 'internal:label', 'internal:text',
       'internal:role', 'internal:testid', 'internal:describe',
-      'aria-ref'
+      'aria-ref', 'aria-template'
     ]);
     this._builtinEnginesInMainWorld = new Set([
       '_react', '_vue',
