@@ -278,6 +278,27 @@ test('start dispose stops recording', async ({ browser }, testInfo) => {
   await context.close();
 });
 
+test('start size is ignored while tracing is active', async ({ browser, trace }, testInfo) => {
+  test.skip(trace === 'on', 'the test starts its own tracing');
+  test.slow();
+
+  const context = await browser.newContext({ viewport: { width: 1600, height: 1200 } });
+  await context.tracing.start({ screenshots: true });
+  const page = await context.newPage();
+
+  const videoPath = testInfo.outputPath('video.webm');
+  // Tracing already captures at the viewport scaled down to 800x600, so this size is ignored.
+  await page.screencast.start({ path: videoPath, size: { width: 1000, height: 750 } });
+  await page.evaluate(() => document.body.style.backgroundColor = 'red');
+  await ensureSomeFrames(page);
+  await page.screencast.stop();
+
+  await context.tracing.stop();
+  await context.close();
+  // The video must fill its frame rather than pad the smaller capture with gray.
+  expectRedFrames(videoPath, { width: 800, height: 600 });
+});
+
 type Pixel = { r: number, g: number, b: number, alpha: number };
 type PixelPredicate = (pixel: Pixel) => boolean;
 

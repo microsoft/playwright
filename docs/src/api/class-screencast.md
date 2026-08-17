@@ -62,8 +62,11 @@ The quality of the image, between 0-100.
   - `height` <[int]> Max frame height in pixels.
 
 Specifies the dimensions of screencast frames. The actual frame is scaled to preserve the page's aspect ratio and may be smaller than these bounds.
-If a screencast is already active (e.g. started by tracing or video recording), the existing configuration takes precedence and the frame size may exceed these bounds or this option may be ignored.
 If not specified the size will be equal to page viewport scaled down to fit into 800×800.
+
+A page is captured only once, and all consumers share that single capture. Tracing captures screenshots
+this way as well, so with tracing or the `recordVideo` context option already active this option is
+ignored, and both the frames and any recorded video use the size of the running capture.
 
 ## async method: Screencast.stop
 * since: v1.59
