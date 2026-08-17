@@ -662,9 +662,23 @@ class InterceptableRequest {
     if (entries && entries.length)
       postDataBuffer = Buffer.concat(entries.map(entry => Buffer.from(entry.bytes!, 'base64')));
 
-    this.request = new network.Request(context, frame, serviceWorker, redirectedFrom?.request || null, documentId, url, toResourceType(requestWillBeSentEvent.type || 'Other'), method, postDataBuffer,  headersOverride || headersObjectToArray(headers), requestWillBeSentEvent.wallTime * 1000);
+    this.request = new network.Request(context, frame, serviceWorker, redirectedFrom?.request || null, documentId, url, toResourceType(requestWillBeSentEvent.type || 'Other'), method, postDataBuffer,  headersOverride || dedupeHeaders(headersObjectToArray(headers)), requestWillBeSentEvent.wallTime * 1000);
     (this.request as any)[kInterceptableRequest] = this;
   }
+}
+
+// Chromium reports a navigation's Referer under two different casings when the same header also
+// comes from Network.setExtraHTTPHeaders, even though a single one is sent on the wire.
+// Header names are case-insensitive, so collapse entries that only differ by case.
+function dedupeHeaders(headers: types.HeadersArray): types.HeadersArray {
+  const seen = new Set<string>();
+  return headers.filter(header => {
+    const key = header.name.toLowerCase() + ':' + header.value;
+    if (seen.has(key))
+      return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 class RouteImpl implements network.RouteDelegate {

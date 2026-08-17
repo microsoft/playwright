@@ -62,7 +62,6 @@ it('should throw for non-string header values', async ({ page }) => {
 });
 
 it('should not duplicate referer header', async ({ page, server, browserName }) => {
-  it.fail(browserName === 'chromium', 'Request has referer and Referer');
   await page.setExtraHTTPHeaders({ 'referer': server.EMPTY_PAGE });
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.ok()).toBe(true);
