@@ -81,10 +81,6 @@ export function decorateMCPCommand(command: Command) {
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, '--viewport-size'))
       .addOption(new ProgramOption('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
       .action(async options => {
-
-        // normalize the --no-sandbox option: sandbox = true => nothing was passed, sandbox = false => --no-sandbox was passed.
-        options.sandbox = options.sandbox === true ? undefined : false;
-
         setupExitWatchdog();
 
         if (options.vision) {
