@@ -115,11 +115,22 @@ export function createServer(name: string, version: string, factory: ServerBacke
   return server;
 }
 
+const waitForTransportInitialized = async (transportInitialized: Promise<void>): Promise<boolean> => {
+  let timer: NodeJS.Timeout;
+  const timedOut = new Promise<boolean>(f => {
+    timer = setTimeout(() => f(false), 5000);
+  });
+  try {
+    return await Promise.race([transportInitialized.then(() => true), timedOut]);
+  } finally {
+    clearTimeout(timer!);
+  }
+};
+
 const initializeServer = async (server: ServerType, factory: ServerBackendFactory, transportInitialized: Promise<void>): Promise<ServerBackend> => {
   const capabilities = server.getClientCapabilities();
   let clientRoots: Root[] = [];
-  if (capabilities?.roots) {
-    await Promise.race([transportInitialized, new Promise<void>(f => setTimeout(f, 5000))]);
+  if (capabilities?.roots && await waitForTransportInitialized(transportInitialized)) {
     const { roots } = await server.listRoots().catch(e => {
       serverDebug(e);
       return { roots: [] };

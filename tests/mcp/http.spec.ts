@@ -528,6 +528,36 @@ test('should not reap session of a client without the event stream', async ({ se
   expect(formatLog(stderr())['delete http session']).toBeUndefined();
 });
 
+test('should not stall the first tool call of a roots-capable client without the event stream', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42256' } }, async ({ serverEndpoint, server }) => {
+  const { url } = await serverEndpoint();
+
+  // A POST-only client that advertises roots but never opens the GET event stream. The server
+  // cannot deliver roots/list to it, so it must not wait for a response.
+  const endpoint = new URL('/mcp', url);
+  let lastId = 0;
+  const post = async (body: object, sessionId?: string) => {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'accept': 'application/json, text/event-stream',
+        ...(sessionId ? { 'mcp-session-id': sessionId } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    return { status: response.status, sessionId: response.headers.get('mcp-session-id'), text: await response.text() };
+  };
+
+  const init = await post({ jsonrpc: '2.0', id: ++lastId, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: { roots: {} }, clientInfo: { name: 'post-only', version: '1.0.0' } } });
+  expect(init.status).toBe(200);
+  const sessionId = init.sessionId!;
+  await post({ jsonrpc: '2.0', method: 'notifications/initialized' }, sessionId);
+
+  const navigate = await post({ jsonrpc: '2.0', id: ++lastId, method: 'tools/call', params: { name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } } }, sessionId);
+  expect(navigate.status).toBe(200);
+  expect(navigate.text).toContain('Page URL: ' + server.HELLO_WORLD);
+});
+
 test('should not run heartbeat when timeout is non-positive', async ({ serverEndpoint, server }) => {
   const { url, stderr } = await serverEndpoint({ env: { PLAYWRIGHT_MCP_PING_TIMEOUT_MS: '0' } });
 
