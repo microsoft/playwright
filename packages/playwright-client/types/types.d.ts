@@ -23684,6 +23684,40 @@ export interface Tracing {
     name?: string;
 
     /**
+     * Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview. Passing `true` is
+     * a shortcut for `{}`. Takes precedence over
+     * [`screenshots`](https://playwright.dev/docs/api/class-tracing#tracing-start-option-screenshots).
+     *
+     * A page is captured only once, and tracing shares that capture with
+     * [screencast.start([options])](https://playwright.dev/docs/api/class-screencast#screencast-start) and video
+     * recording. The trace viewer renders the timeline preview at a fixed size, so these settings only matter to those
+     * other consumers: raise them to keep tracing from capping what the others receive.
+     */
+    screencast?: boolean|{
+      /**
+       * Dimensions of the captured screenshots. Each screenshot is scaled down to preserve the page's aspect ratio and may
+       * be smaller than these bounds. If not specified the size will be equal to `viewport` scaled down to fit into
+       * 800x800. Optional.
+       */
+      size?: {
+        /**
+         * Max screenshot width in pixels.
+         */
+        width: number;
+
+        /**
+         * Max screenshot height in pixels.
+         */
+        height: number;
+      };
+
+      /**
+       * The quality of the screenshots, between 0-100. Defaults to 90. Optional.
+       */
+      quality?: number;
+    };
+
+    /**
      * Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview.
      */
     screenshots?: boolean;

@@ -42,17 +42,21 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     super(parent, type, guid, initializer);
   }
 
-  async start(options: { name?: string, title?: string, snapshots?: boolean | { dom?: boolean, aria?: boolean, screen?: boolean }, screenshots?: boolean, sources?: boolean, live?: boolean } = {}) {
+  async start(options: { name?: string, title?: string, snapshots?: boolean | { dom?: boolean, aria?: boolean, screen?: boolean }, screencast?: boolean | { size?: { width: number, height: number }, quality?: number }, screenshots?: boolean, sources?: boolean, live?: boolean } = {}) {
     await this._wrapApiCall(async () => {
       this._includeSources = !!options.sources;
       this._isLive = !!options.live;
       const snapshots = typeof options.snapshots === 'object' ? options.snapshots : { dom: options.snapshots };
+      const screencastOption = options.screencast ?? options.screenshots;
+      const screencast = typeof screencastOption === 'object' ? screencastOption : {};
       await this._channel.tracingStart({
         name: options.name,
         snapshotDom: snapshots.dom,
         snapshotAria: snapshots.aria,
         snapshotScreen: snapshots.screen,
-        screencast: options.screenshots,
+        screencast: !!screencastOption,
+        screencastSize: screencast.size,
+        screencastQuality: screencast.quality,
         live: options.live,
       }, kNoTimeout);
       const { traceName } = await this._channel.tracingStartChunk({ name: options.name, title: options.title }, kNoTimeout);
