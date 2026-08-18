@@ -72,6 +72,7 @@ export class DashboardConnection implements Transport {
   private _onclose: () => void;
   private _onconnected?: () => void;
   private _pushTabsScheduled = false;
+  private _pushTabsRunning = false;
   private _visible = true;
   private _pendingReveal: { sessionName?: string; workspaceDir?: string; pageId?: string } | undefined;
   private _pendingAnnotate: { resolve: (result: AnnotateResult) => void; dispose: () => void } | undefined;
@@ -344,17 +345,28 @@ export class DashboardConnection implements Transport {
   }
 
   _pushTabs() {
-    if (this._pushTabsScheduled)
-      return;
+    // Coalesce requests, but never let two aggregations run concurrently: each
+    // _aggregateTabs() snapshots the active page and then awaits per-page titles,
+    // so overlapping runs can emit out of order and strand the client on a stale
+    // selection. Serialize and re-run once more if anything changed meanwhile.
     this._pushTabsScheduled = true;
-    queueMicrotask(async () => {
-      this._pushTabsScheduled = false;
+    if (this._pushTabsRunning)
+      return;
+    this._pushTabsRunning = true;
+    void (async () => {
       try {
-        this.emitTabs(await this._aggregateTabs());
-      } catch {
-        // best-effort
+        while (this._pushTabsScheduled) {
+          this._pushTabsScheduled = false;
+          try {
+            this.emitTabs(await this._aggregateTabs());
+          } catch {
+            // best-effort
+          }
+        }
+      } finally {
+        this._pushTabsRunning = false;
       }
-    });
+    })();
   }
 
   private _pushSessions() {
