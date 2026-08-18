@@ -227,3 +227,22 @@ it('should fail with correct credentials and mismatching port', async ({ browser
     expect(responseOrError.status()).toBe(401);
   await context.close();
 });
+
+it('should not override Authorization header set by the page', async ({ browser, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  server.setRoute('/echo-auth', (req, res) => {
+    res.end(req.headers['authorization'] || '<none>');
+  });
+  const context = await browser.newContext({
+    httpCredentials: { username: 'user', password: 'pass' }
+  });
+  const page = await context.newPage();
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(response!.status()).toBe(200);
+  const received = await page.evaluate(async () => {
+    const response = await fetch('/echo-auth', { headers: { 'Authorization': 'Bearer my-own-app-token' } });
+    return await response.text();
+  });
+  expect(received).toBe('Bearer my-own-app-token');
+  await context.close();
+});
