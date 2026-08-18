@@ -714,6 +714,45 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.source-line-running')).toContainText('request.get');
     });
 
+    test('should show a thumbnail for every trace attachment', async ({ runInlineTest, page, server, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({ browser }, testInfo) => {
+            for (const index of [1, 2]) {
+              const context = await browser.newContext();
+              await context.tracing.start({ screenshots: true, snapshots: true });
+              const page = await context.newPage();
+              await page.goto('${server.EMPTY_PAGE}');
+              const tracePath = testInfo.outputPath('trace' + index + '.zip');
+              await context.tracing.stop({ path: tracePath });
+              await testInfo.attach('trace', { path: tracePath, contentType: 'application/zip' });
+              await context.close();
+            }
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByRole('link', { name: 'passes' }).click();
+
+      const traces = page.locator('.chip').filter({ hasText: 'Traces' });
+      await expect(traces.locator('img')).toHaveCount(2);
+      await expect(traces.getByRole('link', { name: 'trace-1', exact: true })).toBeVisible();
+      await expect(traces.getByRole('link', { name: 'trace-2', exact: true })).toBeVisible();
+
+      const hrefs = await traces.locator('a').filter({ has: page.locator('img') }).evaluateAll(links => links.map(link => link.getAttribute('href')));
+      expect(hrefs).toHaveLength(2);
+      for (const href of hrefs)
+        expect(href!.match(/trace=/g)).toHaveLength(1);
+      expect(hrefs[0]).not.toBe(hrefs[1]);
+
+      await traces.locator('img').first().click();
+      await expect(page.locator('.action-title').first()).toBeVisible();
+    });
+
     test('trace should not hang when showing parallel api requests', async ({ runInlineTest, page, server, showReport }) => {
       const result = await runInlineTest({
         'playwright.config.js': `

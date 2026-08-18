@@ -164,12 +164,12 @@ export const TestResultView: React.FC<{
     </AutoChip>}
 
     {!!traces.length && <Anchor id='attachment-trace'><AutoChip header='Traces' revealOnAnchorId='attachment-trace'>
-      {<div>
-        <a href={formatUrl(generateTraceUrl(traces))}>
+      {traces.map((a, i) => <div key={`trace-${i}`}>
+        <a href={formatUrl(generateTraceUrl([a]))}>
           <img className='screenshot' src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
         </a>
-        {traces.map((a, i) => <AttachmentLink key={`trace-${i}`} attachment={a} result={result} linkName={traces.length === 1 ? 'trace' : `trace-${i + 1}`}></AttachmentLink>)}
-      </div>}
+        <AttachmentLink attachment={a} result={result} linkName={traces.length === 1 ? 'trace' : `trace-${i + 1}`}></AttachmentLink>
+      </div>)}
     </AutoChip></Anchor>}
 
     {!!videos.length && <Anchor id='attachment-video'><AutoChip header='Videos' revealOnAnchorId='attachment-video'>
