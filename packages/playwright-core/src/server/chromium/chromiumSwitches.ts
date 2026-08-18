@@ -20,8 +20,6 @@
 const disabledFeatures = [
   // See https://github.com/microsoft/playwright/issues/14047
   'AvoidUnnecessaryBeforeUnloadCheckSync',
-  // See https://github.com/microsoft/playwright/issues/38568
-  'BoundaryEventDispatchTracksNodeRemoval',
   'DestroyProfileOnBrowserClose',
   // See https://github.com/microsoft/playwright/pull/13854
   'DialMediaRouteProvider',
