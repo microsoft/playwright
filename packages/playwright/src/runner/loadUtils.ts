@@ -371,11 +371,12 @@ export async function loadTestList(config: FullConfigInternal, filePath: string)
     });
     const testFilter = (test: testNs.TestCase) => descriptions.some(d => {
       // Note: there is no root yet at the time of filtering.
-      const [projectName, , ...titles] = test.titlePath();
+      const [projectName, fileTitle, ...titles] = test.titlePath();
       if (d.project !== undefined && d.project !== projectName)
         return false;
-      const relativeFile = toPosixPath(path.relative(config.config.rootDir, test.location.file));
-      if (relativeFile !== d.file)
+      // A test can be declared in a file imported by the test file, so match either of them.
+      const declarationFile = toPosixPath(path.relative(config.config.rootDir, test.location.file));
+      if (declarationFile !== d.file && toPosixPath(fileTitle) !== d.file)
         return false;
       return d.titlePath.length <= titles.length && d.titlePath.every((_, index) => titles[index] === d.titlePath[index]);
     });

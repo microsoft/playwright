@@ -246,3 +246,41 @@ test('--test-list should not load files not in the list', async ({ runInlineTest
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('--test-list should match tests declared in an imported file by test file path', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42298' });
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { testDir: 'tests' };
+    `,
+    'test.list': `
+      # Entries reference the test file, not the file where the test is declared.
+      a.spec.ts
+      b.spec.ts › declared in helper
+    `,
+    'tests/helper.ts': `
+      import { test } from '@playwright/test';
+      export function defineTests() {
+        test('declared in helper', async () => { console.log('\\n%%' + test.info().titlePath[0]); });
+      }
+    `,
+    'tests/a.spec.ts': `
+      import { defineTests } from './helper';
+      defineTests();
+    `,
+    'tests/b.spec.ts': `
+      import { defineTests } from './helper';
+      defineTests();
+    `,
+    'tests/c.spec.ts': `
+      import { defineTests } from './helper';
+      defineTests();
+    `,
+  }, { 'workers': 1, 'test-list': 'test.list' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.outputLines).toEqual([
+    'a.spec.ts',
+    'b.spec.ts',
+  ]);
+});

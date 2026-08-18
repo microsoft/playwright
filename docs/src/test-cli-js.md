@@ -153,6 +153,8 @@ example.spec.ts:15 › example test
 example.spec.ts:42:42 › example test
 ```
 
+File paths in the entries should point to the test files, relative to the root test directory. For a test declared in a file imported by the test file, `--list` prints the file where the test is declared — use the test file path instead when composing a test list.
+
 ### Show Report
 
 Display HTML report from previous test run. [Read more about the HTML reporter](./test-reporters#html-reporter).
