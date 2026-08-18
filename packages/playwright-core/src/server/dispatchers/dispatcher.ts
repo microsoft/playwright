@@ -102,8 +102,8 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
     this.connection.sendAdopt(this, child);
   }
 
-  createProgressController(callMetadata: CallMetadata): ProgressController {
-    return ProgressController.createForSdkObject(this._object, callMetadata);
+  createProgressController(callMetadata: CallMetadata, pendingAbortError?: Error): ProgressController {
+    return ProgressController.createForSdkObject(this._object, callMetadata, pendingAbortError);
   }
 
   _dispatchEvent<T extends keyof channels.EventsTraits<ChannelType>>(method: T, params?: channels.EventsTraits<ChannelType>[T]) {
@@ -188,7 +188,7 @@ export class DispatcherConnection {
   readonly _dispatchersByBucket = new Map<string, Set<string>>();
   onmessage = (message: object) => {};
   private _waitOperations = new Map<string, CallMetadata>();
-  private _activeProgressControllers = new Map<string, ProgressController>();
+  private _activeProgressControllers = new Map<string, { controller?: ProgressController, abortError?: Error }>();
   private _isInProcess: boolean;
 
   constructor(isInProcess?: boolean) {
@@ -197,9 +197,11 @@ export class DispatcherConnection {
 
   async abortControllersForGuids(guids: Set<string>, error: Error) {
     const controllers: ProgressController[] = [];
-    for (const controller of this._activeProgressControllers.values()) {
-      if (controller.metadata.objectId && guids.has(controller.metadata.objectId))
-        controllers.push(controller);
+    for (const entry of this._activeProgressControllers.values()) {
+      if (entry.controller?.metadata.objectId && guids.has(entry.controller.metadata.objectId)) {
+        entry.abortError = error;
+        controllers.push(entry.controller);
+      }
     }
     await Promise.all(controllers.map(controller => controller.abort(error)));
   }
@@ -304,7 +306,12 @@ export class DispatcherConnection {
       return;
     }
     if (method === '__abort__') {
-      await this._activeProgressControllers.get(`call@${params.id}`)?.abort(new AbortError(params.reason));
+      const entry = this._activeProgressControllers.get(`call@${params.id}`);
+      if (!entry)
+        return;
+      entry.abortError = new AbortError(params.reason);
+      const controller = entry.controller;
+      await controller?.abort(entry.abortError);
       return;
     }
     if (!dispatcher) {
@@ -352,21 +359,25 @@ export class DispatcherConnection {
       log: [],
     };
 
-    const beforeController = dispatcher.createProgressController(callMetadata);
-    this._activeProgressControllers.set(callMetadata.id, beforeController);
+    const abortControllerEntry: { controller?: ProgressController, abortError?: Error } = {};
+    this._activeProgressControllers.set(callMetadata.id, abortControllerEntry);
+    const swapProgressController = () => {
+      const controller = dispatcher.createProgressController(callMetadata, abortControllerEntry.abortError);
+      abortControllerEntry.controller = controller;
+      return controller;
+    };
+
+    const beforeController = swapProgressController();
     // Be generous with the tracing timeout in case it wants to capture a screenshot, fail silently.
     await beforeController.run(progress => sdkObject.instrumentation.onBeforeCall(progress, sdkObject), 3000).catch(() => {});
-    this._activeProgressControllers.delete(callMetadata.id);
 
     const response: any = { id };
     try {
       // If the dispatcher has been disposed while running the instrumentation call, error out.
       if (this._dispatcherByGuid.get(guid) !== dispatcher)
         throw new TargetClosedError(sdkObject.closeReason());
-      const controller = dispatcher.createProgressController(callMetadata);
-      this._activeProgressControllers.set(callMetadata.id, controller);
+      const controller = swapProgressController();
       const result = await controller.run(progress => (dispatcher as any)[method](validParams, progress), validMetadata.timeout);
-      this._activeProgressControllers.delete(callMetadata.id);
       const validator = findValidator(dispatcher._type, method, 'Result');
       response.result = validator(result, '', this._validatorToWireContext());
       callMetadata.result = result;
@@ -389,8 +400,7 @@ export class DispatcherConnection {
       callMetadata.error = response.error;
     } finally {
       callMetadata.endTime = monotonicTime();
-      const afterController = dispatcher.createProgressController(callMetadata);
-      this._activeProgressControllers.set(callMetadata.id, afterController);
+      const afterController = swapProgressController();
       // Be generous with the tracing timeout in case it wants to capture a screenshot, fail silently.
       await afterController.run(progress => sdkObject.instrumentation.onAfterCall(progress, sdkObject), 3000).catch(() => {});
       if (metainfo?.slowMo)
