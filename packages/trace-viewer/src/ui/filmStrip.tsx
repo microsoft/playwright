@@ -18,16 +18,12 @@ import './filmStrip.css';
 import type { Boundaries, Size } from './geometry';
 import * as React from 'react';
 import { useMeasure, upperBound } from '@web/uiUtils';
-import type { ActionEntry, PageEntry } from '@isomorphic/trace/entries';
-import { renderAction } from './actionList';
-import type { Language } from '@isomorphic/locatorGenerators';
+import type { PageEntry } from '@isomorphic/trace/entries';
 import { useTraceModel } from './traceModelContext';
 
 export type FilmStripPreviewPoint = {
   x: number;
   clientY: number;
-  action?: ActionEntry;
-  sdkLanguage: Language;
 };
 
 const tileSize = { width: 200, height: 45 };
@@ -70,15 +66,14 @@ export const FilmStrip: React.FunctionComponent<{
         key={index}
       /> : null)
     }</div>
-    {model && previewPoint?.x !== undefined &&
+    {model && previewPoint && previewImage && previewSize &&
       <div className='film-strip-hover' style={{
         top: measure.bottom + 5,
-        left: Math.min(previewPoint!.x, measure.width - (previewSize ? previewSize.width : 0) - 10),
+        left: Math.min(previewPoint.x, measure.width - previewSize.width - 10),
+        width: previewSize.width,
+        height: previewSize.height,
       }}>
-        {previewImage && previewSize && <div style={{ width: previewSize.width, height: previewSize.height }}>
-          <img src={model.createRelativeUrl(`file/${previewImage.file}`)} width={previewSize.width} height={previewSize.height} />
-        </div>}
-        {previewPoint.action && <div className='film-strip-hover-title'>{renderAction(previewPoint.action, previewPoint)}</div>}
+        <img src={model.createRelativeUrl(`file/${previewImage.file}`)} width={previewSize.width} height={previewSize.height} />
       </div>
     }
   </div>;
