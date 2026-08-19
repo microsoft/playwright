@@ -199,3 +199,7 @@ On Windows Python 3.7, Playwright sets the default event loop to `ProactorEventL
 ### Threading
 
 Playwright's API is not thread-safe. If you are using Playwright in a multi-threaded environment, you should create a playwright instance per thread. See [threading issue](https://github.com/microsoft/playwright-python/issues/623) for more details.
+
+### Cancelling `asyncio` tasks
+
+Cancelling a task that is running a Playwright call is not supported and results in undefined behavior. If an operation has to outlive its caller, run it in a separate task and protect it with [`asyncio.shield()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.shield).
