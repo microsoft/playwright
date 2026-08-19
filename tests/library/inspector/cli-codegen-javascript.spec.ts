@@ -48,6 +48,26 @@ test('should print the correct context options for custom settings', async ({ br
 });
 
 
+test('should work with --http-credentials', async ({ browserName, channel, runCLI, server }) => {
+  server.setAuth('/empty.html', 'user', 'pass');
+  const cli = runCLI(['--http-credentials=user:pass', '--target=javascript', server.EMPTY_PAGE]);
+  const expectedResult = `const { ${browserName} } = require('playwright');
+
+(async () => {
+  const browser = await ${browserName}.launch({
+    ${launchOptions(channel)}
+  });
+  const context = await browser.newContext({
+    httpCredentials: {
+      password: 'pass',
+      username: 'user'
+    }
+  });
+  const page = await context.newPage();
+  await page.goto('${server.EMPTY_PAGE}');`;
+  await cli.waitFor(expectedResult);
+});
+
 test('should print the correct context options when using a device', async ({ browserName, channel, runCLI, server }) => {
   test.skip(browserName !== 'chromium');
 

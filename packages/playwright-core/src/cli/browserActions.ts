@@ -38,6 +38,7 @@ export type Options = {
   colorScheme?: string;
   device?: string;
   geolocation?: string;
+  httpCredentials?: string;
   ignoreHttpsErrors?: boolean;
   lang?: string;
   loadStorage?: string;
@@ -123,6 +124,18 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
       throw new Error('Invalid geolocation format, should be "lat,long". For example --geolocation="37.819722,-122.478611"');
     }
     contextOptions.permissions = ['geolocation'];
+  }
+
+  // HTTP credentials
+
+  if (options.httpCredentials) {
+    const separator = options.httpCredentials.indexOf(':');
+    if (separator === -1)
+      throw new Error('Invalid http credentials format: use "username:password", for example --http-credentials="admin:secret"');
+    contextOptions.httpCredentials = {
+      username: options.httpCredentials.substring(0, separator),
+      password: options.httpCredentials.substring(separator + 1),
+    };
   }
 
   // User agent

@@ -438,6 +438,26 @@ playwright codegen --user-data-dir=/path/to/your/browser/data/ github.com/micros
 pwsh bin/Debug/netX/playwright.ps1 codegen --user-data-dir=/path/to/your/browser/data/ github.com/microsoft/playwright
 ```
 
+#### Authenticate with HTTP credentials
+
+Run `codegen` with `--http-credentials` to authenticate with [HTTP Basic Authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Authentication). Unlike credentials embedded in the URL, they are sent to any origin that requests them during the recording session and are included in the generated code.
+
+```bash js
+npx playwright codegen --http-credentials="username:password" example.com
+```
+
+```bash java
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args='codegen --http-credentials="username:password" example.com'
+```
+
+```bash python
+playwright codegen --http-credentials="username:password" example.com
+```
+
+```bash csharp
+pwsh bin/Debug/netX/playwright.ps1 codegen --http-credentials="username:password" example.com
+```
+
 ## Record using custom setup
 
 If you would like to use codegen in some non-standard setup (for example, use [`method: BrowserContext.route`]), it is possible to call [`method: Page.pause`] that will open a separate window with codegen controls.
