@@ -140,13 +140,11 @@ const ExpandableSection: React.FC<{
     setExpanded={setExpanded}
     expandOnTitleClick
     title={
-      <>
-        <span className='network-request-details-header'>{title}
-          {showCount && <span className='network-request-details-header-count'> × {data?.length ?? 0}</span>}
-        </span>
-        { titleChildren }
-      </>
+      <span className='network-request-details-header'>{title}
+        {showCount && <span className='network-request-details-header-count'> × {data?.length ?? 0}</span>}
+      </span>
     }
+    titleSuffix={titleChildren}
     className={className}
   >
     {data && <table className='network-request-details-table'>

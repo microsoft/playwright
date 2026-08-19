@@ -429,6 +429,35 @@ test('should toggle sections inside network details', async ({ runUITest, server
   await expect(headersPanel.getByRole('region', { name: 'General' })).toContainText(/Start.+Duration\d+ms/);
 });
 
+test('should toggle sections inside network details with keyboard', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42263' },
+}, async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'network-tab.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('network tab test', async ({ page }) => {
+        await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
+      });
+    `,
+  });
+
+  await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
+  await page.getByRole('tab', { name: 'Network' }).click();
+  await page.getByRole('option').filter({ hasText: 'post-data-1' }).click();
+  const headersPanel = page.getByRole('tabpanel', { name: 'Headers' });
+
+  const header = headersPanel.getByRole('button', { name: 'Request Headers × 16' });
+  await header.focus();
+  await expect(header).toBeFocused();
+  await header.press('Enter');
+  await expect(headersPanel.getByRole('region', { name: 'Request Headers × 16' })).toBeHidden();
+  await header.press(' ');
+  await expect(headersPanel.getByRole('region', { name: 'Request Headers × 16' })).toBeVisible();
+});
+
 test('should copy network request', async ({ runUITest, server }) => {
   const { page } = await runUITest({
     'network-tab.test.ts': `

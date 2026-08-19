@@ -26,7 +26,7 @@ export const Expanded = () =>
 export const Stateful = () => {
   const [expanded, setExpanded] = React.useState(false);
   return <>
-    <Expandable expanded={expanded} setExpanded={setExpanded} title='Title'>Details text</Expandable>
+    <Expandable expanded={expanded} setExpanded={setExpanded} title={<span>Title</span>}>Details text</Expandable>
     <form hidden><input data-testid='expanded' readOnly value={String(expanded)} /></form>
   </>;
 };
@@ -35,6 +35,14 @@ export const StatefulTitleClick = () => {
   const [expanded, setExpanded] = React.useState(false);
   return <>
     <Expandable expanded={expanded} setExpanded={setExpanded} expandOnTitleClick title='Title'>Details text</Expandable>
+    <form hidden><input data-testid='expanded' readOnly value={String(expanded)} /></form>
+  </>;
+};
+
+export const StatefulTitleSuffix = () => {
+  const [expanded, setExpanded] = React.useState(false);
+  return <>
+    <Expandable expanded={expanded} setExpanded={setExpanded} expandOnTitleClick title='Title' titleSuffix={<a href='#suffix'>download</a>}>Details text</Expandable>
     <form hidden><input data-testid='expanded' readOnly value={String(expanded)} /></form>
   </>;
 };

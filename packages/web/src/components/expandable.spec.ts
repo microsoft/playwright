@@ -16,7 +16,7 @@
 
 import { expect, test } from '@playwright/test';
 
-import type { Collapsed, Expanded, Stateful, StatefulTitleClick } from './expandable.story';
+import type { Collapsed, Expanded, Stateful, StatefulTitleClick, StatefulTitleSuffix } from './expandable.story';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
@@ -52,4 +52,32 @@ test('title click should not expand by default', async ({ mount }) => {
   await component.getByText('Title').click();
   await expect(component.locator('.codicon-chevron-right')).toBeVisible();
   await expect(component.getByTestId('expanded')).toHaveValue('false');
+});
+
+test('keyboard should toggle when title click is enabled', async ({ mount }) => {
+  const component = await mount<typeof StatefulTitleClick>('components/expandable/StatefulTitleClick');
+  const button = component.getByRole('button', { name: 'Title' });
+  await button.focus();
+  await expect(button).toBeFocused();
+  await button.press('Enter');
+  await expect(component.getByTestId('expanded')).toHaveValue('true');
+  await button.press(' ');
+  await expect(component.getByTestId('expanded')).toHaveValue('false');
+});
+
+test('keyboard should toggle via chevron button by default', async ({ mount }) => {
+  const component = await mount<typeof Stateful>('components/expandable/Stateful');
+  const button = component.getByRole('button', { name: 'Expand' });
+  await button.focus();
+  await button.press('Enter');
+  await expect(component.getByTestId('expanded')).toHaveValue('true');
+  await expect(component.getByRole('button', { name: 'Collapse' })).toBeVisible();
+});
+
+test('title suffix should render outside the toggle button', async ({ mount }) => {
+  const component = await mount<typeof StatefulTitleSuffix>('components/expandable/StatefulTitleSuffix');
+  await component.getByRole('link', { name: 'download' }).click();
+  await expect(component.getByTestId('expanded')).toHaveValue('false');
+  await component.getByRole('button', { name: 'Title' }).click();
+  await expect(component.getByTestId('expanded')).toHaveValue('true');
 });
