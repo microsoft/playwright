@@ -35,3 +35,19 @@ test('should show diff by default', async ({ mount }) => {
   const box = await image.boundingBox();
   expect(box).toEqual(expect.objectContaining({ width: 48, height: 48 }));
 });
+
+test('should switch mode with keyboard', async ({ mount }) => {
+  const component = await mount<typeof Default>('shared/imageDiffView/Default');
+  const sxs = component.getByRole('tab', { name: 'Side by side' });
+  await sxs.focus();
+  await expect(sxs).toBeFocused();
+  await sxs.press('Enter');
+  await expect(sxs).toHaveAttribute('aria-selected', 'true');
+  await expect(component.locator('img')).toHaveCount(2);
+
+  const diffTab = component.getByRole('tab', { name: 'Diff' });
+  await diffTab.focus();
+  await diffTab.press(' ');
+  await expect(diffTab).toHaveAttribute('aria-selected', 'true');
+  await expect(component.locator('img')).toHaveCount(1);
+});
