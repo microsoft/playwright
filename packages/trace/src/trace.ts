@@ -106,6 +106,14 @@ export type ScreencastFrameTraceEvent = {
   frameSwapWallTime?: number,
 };
 
+export type VideoTraceEvent = {
+  type: 'video',
+  file: string,
+  width: number,
+  height: number,
+  timestampOrigin: number,
+};
+
 export type ActionPhase = 'before' | 'action' | 'after';
 
 export type ScreenshotTraceEvent = {
@@ -233,6 +241,7 @@ export type ErrorTraceEvent = {
 export type TraceEvent =
     ContextCreatedTraceEvent |
     ScreencastFrameTraceEvent |
+    VideoTraceEvent |
     ScreenshotTraceEvent |
     AriaSnapshotTraceEvent |
     ActionTraceEvent |

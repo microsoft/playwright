@@ -66,6 +66,7 @@ export class TraceModel {
   readonly title?: string;
   readonly options: trace.BrowserContextEventOptions;
   readonly pages: PageEntry[];
+  readonly videos: trace.VideoTraceEvent[];
   readonly actions: ActionEntry[];
   readonly attachments: Attachment[];
   readonly visibleAttachments: Attachment[];
@@ -105,6 +106,7 @@ export class TraceModel {
     // Next call updates all timestamps for all events in library contexts, so it must be done first.
     this.actions = mergeActionsAndUpdateTiming(contexts);
     this.pages = ([] as PageEntry[]).concat(...contexts.map(c => c.pages));
+    this.videos = [];
     this.wallTime = contexts.map(c => c.wallTime).reduce((prev, cur) => Math.min(prev || Number.MAX_VALUE, cur!), Number.MAX_VALUE);
     this.startTime = contexts.map(c => c.startTime).reduce((prev, cur) => Math.min(prev, cur), Number.MAX_VALUE);
     this.endTime = contexts.map(c => c.endTime).reduce((prev, cur) => Math.max(prev, cur), Number.MIN_VALUE);
@@ -126,6 +128,7 @@ export class TraceModel {
         this._screenshots.set(`${event.callId}/${event.phase}`, event);
       for (const event of context.ariaSnapshots || [])
         this._ariaSnapshots.set(`${event.callId}/${event.phase}`, event);
+      this.videos.push(...(context.videos || []));
     }
     this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, callId: action.callId, traceUri })) ?? []);
     this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
@@ -344,6 +347,8 @@ function adjustMonotonicTime(context: ContextEntry, monotonicTimeDelta: number) 
     for (const frame of page.screencastFrames)
       frame.timestamp += monotonicTimeDelta;
   }
+  for (const video of context.videos || [])
+    video.timestampOrigin += monotonicTimeDelta;
   for (const resource of context.resources) {
     if (resource._monotonicTime)
       resource._monotonicTime += monotonicTimeDelta;
