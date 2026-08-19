@@ -30,16 +30,12 @@
 }
 
 .expandable-title-button {
+  all: unset;
   display: flex;
   align-items: center;
-  background: none;
-  border: none;
-  padding: 0 8px 0 0;
+  padding-right: 8px;
   border-radius: 4px;
-  color: inherit;
-  font: inherit;
   cursor: pointer;
-  outline: none;
 }
 
 .expandable-title > a {
