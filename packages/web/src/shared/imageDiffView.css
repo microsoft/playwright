@@ -1,0 +1,30 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.image-diff-mode {
+  all: unset;
+  flex: none;
+  margin: 0 10px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px;
+}
+
+/* The trace viewer defines the vscode theme variables, the html reporter the color ones. */
+.image-diff-mode:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, var(--color-accent-fg));
+  outline-offset: 2px;
+}
