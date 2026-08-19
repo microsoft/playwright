@@ -662,7 +662,7 @@ class InterceptableRequest {
     if (entries && entries.length)
       postDataBuffer = Buffer.concat(entries.map(entry => Buffer.from(entry.bytes!, 'base64')));
 
-    this.request = new network.Request(context, frame, serviceWorker, redirectedFrom?.request || null, documentId, url, toResourceType(requestWillBeSentEvent.type || 'Other'), method, postDataBuffer,  headersOverride || headersObjectToArray(headers), requestWillBeSentEvent.wallTime * 1000);
+    this.request = new network.Request(context, frame, serviceWorker, redirectedFrom?.request || null, documentId, url, toResourceType(requestWillBeSentEvent.type || 'Other'), method, postDataBuffer,  headersOverride || headersObjectToArray(headersArrayToObject(headersObjectToArray(headers), true)), requestWillBeSentEvent.wallTime * 1000);
     (this.request as any)[kInterceptableRequest] = this;
   }
 }
