@@ -202,4 +202,4 @@ Playwright's API is not thread-safe. If you are using Playwright in a multi-thre
 
 ### Cancelling `asyncio` tasks
 
-Cancelling a task that is running a Playwright call is not supported. Playwright forwards the cancellation to the driver on a best-effort basis, but it does not guarantee that the connection is left in a usable state afterwards. Cancelling a task while `async_playwright()` is still starting up can leave the driver process running. If an operation has to outlive its caller, run it in a separate task and protect it with [`asyncio.shield()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.shield).
+Cancelling a task that is running a Playwright call is not supported and results in undefined behavior. If an operation has to outlive its caller, run it in a separate task and protect it with [`asyncio.shield()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.shield).
