@@ -93,6 +93,7 @@ export async function initWorkspace(initSkills: string | undefined, initSkillsGl
     const playwrightDir = path.join(cwd, '.playwright');
     await fs.promises.mkdir(playwrightDir, { recursive: true });
     console.log(`✅ Workspace initialized at \`${cwd}\`.`);
+    await patchGitIgnore(cwd);
   }
 
   const skills = initSkillsGlobal ?? initSkills;
@@ -109,6 +110,22 @@ export async function initWorkspace(initSkills: string | undefined, initSkillsGl
 
   if (!globalSkills)
     await ensureConfiguredBrowserInstalled();
+}
+
+async function patchGitIgnore(cwd: string) {
+  if (!fs.existsSync(path.join(cwd, '.git')))
+    return;
+  try {
+    const gitIgnorePath = path.join(cwd, '.gitignore');
+    const existing = await fs.promises.readFile(gitIgnorePath, 'utf8').catch(() => '');
+    if (existing.split('\n').some(line => line.trim() === '.playwright-cli/'))
+      return;
+    const separator = existing && !existing.endsWith('\n') ? '\n' : '';
+    await fs.promises.appendFile(gitIgnorePath, separator + '# Playwright CLI output (may contain credentials)\n.playwright-cli/\n');
+    console.log('✅ Added `.playwright-cli/` to `.gitignore`.');
+  } catch (error) {
+    console.log(`⚠️ Failed to update \`.gitignore\`: ${error instanceof Error ? error.message : error}`);
+  }
 }
 
 async function ensureConfiguredBrowserInstalled() {
