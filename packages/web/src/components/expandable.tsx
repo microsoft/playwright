@@ -23,8 +23,9 @@ export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
   setExpanded: (expanded: boolean) => void,
   expanded: boolean,
   expandOnTitleClick?: boolean,
+  titleSuffix?: React.ReactNode,
   className?: string;
-}>> = ({ title, children, setExpanded, expanded, expandOnTitleClick, className }) => {
+}>> = ({ title, children, setExpanded, expanded, expandOnTitleClick, titleSuffix, className }) => {
   const titleId = React.useId();
   const regionId = React.useId();
 
@@ -32,25 +33,33 @@ export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
 
   const chevron = <div
     className={clsx('codicon', expanded ? 'codicon-chevron-down' : 'codicon-chevron-right')}
-    style={{ cursor: 'pointer', color: 'var(--vscode-foreground)', marginLeft: '5px' }}
-    onClick={!expandOnTitleClick ? onClick : undefined} />;
+    style={{ color: 'var(--vscode-foreground)', marginLeft: '5px' }} />;
 
   return <div className={clsx('expandable', expanded && 'expanded', className)}>
-    {expandOnTitleClick ?
-      <div
-        id={titleId}
-        role='button'
-        aria-expanded={expanded}
-        aria-controls={regionId}
-        className='expandable-title'
-        onClick={onClick}>
-        {chevron}
-        {title}
-      </div> :
-      <div className='expandable-title'>
-        {chevron}
-        {title}
-      </div>}
+    <div className='expandable-title' id={expandOnTitleClick ? undefined : titleId}>
+      {expandOnTitleClick ?
+        <button
+          id={titleId}
+          aria-expanded={expanded}
+          aria-controls={regionId}
+          className='expandable-title-button'
+          onClick={onClick}>
+          {chevron}
+          {title}
+        </button> :
+        <>
+          <button
+            aria-expanded={expanded}
+            aria-controls={regionId}
+            aria-label={expanded ? 'Collapse' : 'Expand'}
+            className='expandable-title-button'
+            onClick={onClick}>
+            {chevron}
+          </button>
+          {title}
+        </>}
+      {titleSuffix}
+    </div>
     {expanded && <div id={regionId} aria-labelledby={titleId} role='region' className='expandable-content'>{children}</div>}
   </div>;
 };

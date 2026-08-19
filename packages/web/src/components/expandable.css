@@ -27,7 +27,28 @@
   align-items: center;
   white-space: nowrap;
   user-select: none;
+}
+
+.expandable-title-button {
+  all: unset;
+  display: flex;
+  align-items: center;
+  padding-right: 8px;
+  border-radius: 4px;
   cursor: pointer;
+}
+
+.expandable-title > a {
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+/* Links are flex items here, as tall as the row; the inset ring keeps the
+   content below from covering it. */
+.expandable-title-button:focus-visible,
+.expandable-title > a:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
 }
 
 .expandable-content {

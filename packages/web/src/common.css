@@ -55,6 +55,12 @@ a {
   color: var(--vscode-textLink-foreground);
 }
 
+a:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
 dialog {
   border: none;
   padding: 0;
