@@ -40,6 +40,23 @@ test('install workspace', async ({ cli }, testInfo) => {
   expect(fs.existsSync(playwrightDir)).toBe(true);
 });
 
+test('install adds .playwright-cli/ to .gitignore', async ({ cli }, testInfo) => {
+  const outsideGitRepo = await cli('install');
+  expect(outsideGitRepo.output).not.toContain('.gitignore');
+  expect(fs.existsSync(testInfo.outputPath('.gitignore'))).toBe(false);
+
+  await fs.promises.mkdir(testInfo.outputPath('.git'), { recursive: true });
+  await fs.promises.writeFile(testInfo.outputPath('.gitignore'), 'node_modules/');
+  const insideGitRepo = await cli('install');
+  expect(insideGitRepo.output).toContain('Added `.playwright-cli/` to `.gitignore`.');
+  const expectedContent = 'node_modules/\n# Playwright CLI output (may contain credentials)\n.playwright-cli/\n';
+  expect(await fs.promises.readFile(testInfo.outputPath('.gitignore'), 'utf8')).toBe(expectedContent);
+
+  const secondRun = await cli('install');
+  expect(secondRun.output).not.toContain('.gitignore');
+  expect(await fs.promises.readFile(testInfo.outputPath('.gitignore'), 'utf8')).toBe(expectedContent);
+});
+
 test('install workspace w/skills', async ({ cli }, testInfo) => {
   const { output } = await cli('install', '--skills');
   expect(output).toContain(`Skill installed to \`.claude${path.sep}skills${path.sep}playwright-cli\`.`);
