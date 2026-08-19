@@ -40,6 +40,26 @@ test('install workspace', async ({ cli }, testInfo) => {
   expect(fs.existsSync(playwrightDir)).toBe(true);
 });
 
+test('install workspace gitignores CLI output dir', async ({ cli }, testInfo) => {
+  const { output } = await cli('install');
+  expect(output).toContain('Added `.playwright-cli/` to `.gitignore`.');
+  const gitignore = await fs.promises.readFile(testInfo.outputPath('.gitignore'), 'utf8');
+  expect(gitignore).toContain('.playwright-cli/');
+
+  const second = await cli('install');
+  expect(second.output).not.toContain('Added `.playwright-cli/` to `.gitignore`.');
+  const gitignoreAfter = await fs.promises.readFile(testInfo.outputPath('.gitignore'), 'utf8');
+  expect(gitignoreAfter.split('.playwright-cli/').length - 1).toBe(1);
+});
+
+test('install workspace appends CLI output dir to an existing gitignore', async ({ cli }, testInfo) => {
+  await fs.promises.writeFile(testInfo.outputPath('.gitignore'), 'node_modules/\n');
+  await cli('install');
+  const gitignore = await fs.promises.readFile(testInfo.outputPath('.gitignore'), 'utf8');
+  expect(gitignore).toMatch(/^node_modules\/\n/);
+  expect(gitignore).toContain('.playwright-cli/');
+});
+
 test('install workspace w/skills', async ({ cli }, testInfo) => {
   const { output } = await cli('install', '--skills');
   expect(output).toContain(`Skill installed to \`.claude${path.sep}skills${path.sep}playwright-cli\`.`);
@@ -66,6 +86,8 @@ test('install w/--skills -g installs into the home directory', async ({ cli }, t
   const { output } = await cli('install', '--skills', '-g', { env: { HOME: fakeHome, USERPROFILE: fakeHome } });
   expect(output).toContain('Skill installed to');
   expect(output).not.toContain('Workspace initialized');
+  expect(output).not.toContain('.gitignore');
+  expect(fs.existsSync(testInfo.outputPath('.gitignore'))).toBe(false);
 
   const skillFile = path.join(fakeHome, '.claude', 'skills', 'playwright-cli', 'SKILL.md');
   expect(fs.existsSync(skillFile)).toBe(true);

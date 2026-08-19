@@ -86,6 +86,28 @@ function globalConfigFile(): string {
   return path.join(process.env['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
 }
 
+const cliOutputGitignoreEntries = ['.playwright-cli/'];
+
+async function ensureGitignore(cwd: string, entries: string[]) {
+  const gitignorePath = path.join(cwd, '.gitignore');
+  let existing = '';
+  try {
+    existing = await fs.promises.readFile(gitignorePath, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT')
+      throw error;
+  }
+  const existingLines = new Set(existing.split(/\r?\n/).map(line => line.trim()));
+  const missing = entries.filter(entry => !existingLines.has(entry));
+  if (!missing.length)
+    return;
+  const needsNewline = existing.length > 0 && !existing.endsWith('\n');
+  const header = '# Playwright CLI traces and snapshots (may contain credentials)\n';
+  const chunk = `${needsNewline ? '\n' : ''}${header}${missing.join('\n')}\n`;
+  await fs.promises.appendFile(gitignorePath, chunk);
+  console.log(`✅ Added ${missing.map(entry => `\`${entry}\``).join(', ')} to \`.gitignore\`.`);
+}
+
 export async function initWorkspace(initSkills: string | undefined, initSkillsGlobal?: string) {
   const globalSkills = !!initSkillsGlobal;
   if (!globalSkills) {
@@ -93,6 +115,7 @@ export async function initWorkspace(initSkills: string | undefined, initSkillsGl
     const playwrightDir = path.join(cwd, '.playwright');
     await fs.promises.mkdir(playwrightDir, { recursive: true });
     console.log(`✅ Workspace initialized at \`${cwd}\`.`);
+    await ensureGitignore(cwd, cliOutputGitignoreEntries);
   }
 
   const skills = initSkillsGlobal ?? initSkills;
