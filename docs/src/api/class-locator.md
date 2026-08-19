@@ -2021,7 +2021,7 @@ Locator banana = page.getByRole(AriaRole.LISTITEM).last();
 ```
 
 ```csharp
-var banana = await page.GetByRole(AriaRole.Listitem).Last(1);
+var banana = page.GetByRole(AriaRole.Listitem).Last;
 ```
 
 ## method: Locator.locator
