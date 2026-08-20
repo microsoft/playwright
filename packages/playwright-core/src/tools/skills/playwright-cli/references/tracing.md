@@ -19,7 +19,9 @@ playwright-cli tracing-stop
 
 ## Trace Output Files
 
-When you start tracing, Playwright creates a `traces/` directory with several files:
+When you start tracing, Playwright creates a `.playwright-cli/traces/` directory with several files.
+Do not confuse this with `.playwright-cli/trace/` (singular), which is used by `playwright-cli trace open`
+when inspecting a trace file.
 
 ### `trace-{timestamp}.trace`
 
@@ -125,11 +127,20 @@ playwright-cli tracing-stop
 
 ### 2. Clean Up Old Traces
 
-Traces can consume significant disk space:
+Traces can consume significant disk space. Recorded traces live under
+`.playwright-cli/traces/` (from `tracing-start` / `tracing-stop`), not under
+`.playwright-cli/trace/` (used by `trace open`).
 
 ```bash
-# Remove traces older than 7 days
+# Unix: remove trace files older than 7 days
 find .playwright-cli/traces -mtime +7 -delete
+```
+
+```powershell
+# Windows: remove trace files older than 7 days
+Get-ChildItem .playwright-cli\traces -Recurse -File |
+  Where-Object LastWriteTime -lt (Get-Date).AddDays(-7) |
+  Remove-Item -Force
 ```
 
 ## Limitations
