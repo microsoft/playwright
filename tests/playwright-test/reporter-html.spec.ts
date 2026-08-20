@@ -1595,6 +1595,41 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       `);
     });
 
+    test('should toggle metadata with keyboard', async ({ runInlineTest, writeFiles, showReport, page }) => {
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42323' });
+      const files = {
+        'playwright.config.ts': `
+          export default {
+            captureGitInfo: { commit: true },
+          };
+        `,
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('sample', async ({}) => { expect(2).toBe(2); });
+        `,
+      };
+      const baseDir = await writeFiles(files);
+      await initGitRepo(baseDir);
+
+      const result = await runInlineTest(files, { reporter: 'dot,html' }, {
+        PLAYWRIGHT_HTML_OPEN: 'never',
+      });
+
+      await showReport();
+
+      expect(result.exitCode).toBe(0);
+      const toggle = page.getByRole('button', { name: 'Metadata' });
+      await toggle.focus();
+      await expect(toggle).toBeFocused();
+      await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      await toggle.press('Enter');
+      await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      await expect(page.locator('.metadata-view')).toBeVisible();
+      await toggle.press(' ');
+      await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      await expect(page.locator('.metadata-view')).toBeHidden();
+    });
+
     test('should not include git metadata w/o CI', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `

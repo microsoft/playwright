@@ -15,9 +15,19 @@
 */
 
 .metadata-toggle {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
   cursor: pointer;
   user-select: none;
   color: var(--color-fg-default);
+}
+
+.metadata-toggle:focus-visible {
+  outline: 1px solid var(--color-accent-fg);
+  outline-offset: 2px;
 }
 
 .metadata-toggle-second-line {

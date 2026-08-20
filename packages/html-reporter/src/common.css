@@ -211,8 +211,20 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   user-select: none;
 }
 
+button.subnav-item {
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
 .subnav-item:hover {
   background-color: var(--color-canvas-subtle);
+}
+
+.subnav-item:focus-visible {
+  outline: 1px solid var(--color-accent-fg);
+  outline-offset: -1px;
 }
 
 .subnav-item[aria-selected="true"] {

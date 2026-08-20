@@ -37,6 +37,19 @@ test('should render counters', async ({ mount }) => {
   `);
 });
 
+test('should open settings with keyboard', async ({ mount }) => {
+  const component = await mount<typeof Default>('headerView/Default');
+  const settings = component.getByRole('button', { name: 'Settings' });
+  const dialog = component.getByTestId('settings-dialog');
+  await settings.focus();
+  await expect(settings).toBeFocused();
+  await expect(dialog).toBeHidden();
+  await settings.press('Enter');
+  await expect(dialog).toBeVisible();
+  await settings.press(' ');
+  await expect(dialog).toBeHidden();
+});
+
 test('should toggle filters', async ({ page, mount }) => {
   const component = await mount<typeof Default>('headerView/Default');
   const filterText = component.getByTestId('filter-text');

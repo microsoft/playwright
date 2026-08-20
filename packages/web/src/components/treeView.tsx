@@ -141,7 +141,8 @@ export function TreeView<T extends TreeItem>({
       role={treeItems.size > 0 ? 'tree' : undefined}
       tabIndex={0}
       onKeyDown={event => {
-        if (selectedItem && event.key === 'Enter') {
+        // Enter is handled by the focused button inside the row, if any.
+        if (selectedItem && event.key === 'Enter' && event.target === event.currentTarget) {
           onAccepted?.(selectedItem);
           return;
         }
