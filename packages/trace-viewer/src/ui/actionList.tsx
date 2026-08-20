@@ -112,7 +112,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   }, [setSelectedTime]);
 
   return <div className='vbox action-list-container'>
-    {selectedTime && <div className='action-list-show-all' onClick={onShowAll}><span className='codicon codicon-triangle-left'></span>Show all</div>}
+    {selectedTime && <ToolbarButton className='action-list-show-all' icon='triangle-left' onClick={onShowAll}>Show all</ToolbarButton>}
     <ActionTreeView
       name='actions'
       rootItem={rootItem}
@@ -145,6 +145,7 @@ export const renderAction = (
   }) => {
   const { model, sdkLanguage, revealConsole, revealActionAttachment, isLive, showDuration, showBadges, showAttachments } = options;
   const { errors, warnings } = model?.stats(action) ?? { errors: 0, warnings: 0 };
+  const badgeLabel = [pluralize(errors, 'error'), pluralize(warnings, 'warning')].filter(Boolean).join(', ');
 
   const locator = action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
 
@@ -164,10 +165,14 @@ export const renderAction = (
       {showAttachments && <ToolbarButton icon='attach' title='Open Attachment' onClick={() => revealActionAttachment?.()} />}
       {showDuration && !isSkipped && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
       {isSkipped && <span className={clsx('action-skipped', 'codicon', testStatusIcon('skipped'))} title='skipped'></span>}
-      {showBadges && <div className='action-icons' onClick={() => revealConsole?.()}>
-        {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className='action-icon-value'>{errors}</span></div>}
-        {!!warnings && <div className='action-icon'><span className='codicon codicon-warning'></span><span className='action-icon-value'>{warnings}</span></div>}
-      </div>}
+      {showBadges && !!badgeLabel && <ToolbarButton
+        className='action-icons'
+        title='Reveal console'
+        ariaLabel={`Reveal console, ${badgeLabel}`}
+        onClick={() => revealConsole?.()}>
+        {!!errors && <span className='action-icon'><span className='codicon codicon-error'></span><span className='action-icon-value'>{errors}</span></span>}
+        {!!warnings && <span className='action-icon'><span className='codicon codicon-warning'></span><span className='action-icon-value'>{warnings}</span></span>}
+      </ToolbarButton>}
     </div>
     {locator && <div className='action-title-selector' title={locator}>{locator}</div>}
   </div>;
@@ -216,4 +221,10 @@ export function renderTitleForCall(action: ActionTraceEvent, sdkLanguage?: Langu
     title.push(locator);
   }
   return { elements, title: title.join('') };
+}
+
+function pluralize(count: number, noun: string): string {
+  if (!count)
+    return '';
+  return `${count} ${noun}${count === 1 ? '' : 's'}`;
 }
