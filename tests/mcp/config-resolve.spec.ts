@@ -18,12 +18,24 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { Command } from 'commander';
+
 import { test, expect } from './fixtures';
 
 import { tools } from '../../packages/playwright-core/lib/coreBundle';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
 
-const { resolveCLIConfigForCLI, resolveCLIConfigForMCP, isSystemDirectory, outputDir } = tools;
+const { decorateMCPCommand, resolveCLIConfigForCLI, resolveCLIConfigForMCP, isSystemDirectory, outputDir } = tools;
+
+// Parses the command line the same way the mcp server entry point does, without starting the server.
+async function parseCLIOptions(argv: string[]): Promise<any> {
+  const command = new Command();
+  decorateMCPCommand(command);
+  let options: any;
+  command.action(o => { options = o; });
+  await command.parseAsync(argv, { from: 'user' });
+  return options;
+}
 
 // Empty env to isolate tests from the host environment.
 const emptyEnv = {};
@@ -158,6 +170,22 @@ test.describe('sandbox', () => {
   test('explicit --no-sandbox overrides default', async () => {
     const config = await resolveCLIConfigForMCP({ browser: 'chrome', sandbox: false }, emptyEnv);
     expect(config.browser.launchOptions.chromiumSandbox).toBe(false);
+  });
+
+  test('--sandbox on the command line enables the sandbox', async () => {
+    const config = await resolveCLIConfigForMCP(await parseCLIOptions(['--browser=chromium', '--sandbox']), emptyEnv);
+    expect(config.browser.launchOptions.channel).toBe('chrome-for-testing');
+    expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
+  });
+
+  test('--no-sandbox on the command line disables the sandbox', async () => {
+    const config = await resolveCLIConfigForMCP(await parseCLIOptions(['--browser=chrome', '--no-sandbox']), emptyEnv);
+    expect(config.browser.launchOptions.chromiumSandbox).toBe(false);
+  });
+
+  test('no sandbox flag on the command line leaves the value unset', async () => {
+    const options = await parseCLIOptions(['--browser=chrome']);
+    expect(options.sandbox).toBeUndefined();
   });
 });
 
