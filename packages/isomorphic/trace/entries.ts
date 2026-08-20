@@ -39,6 +39,7 @@ export type ContextEntry = {
   actions: ActionEntry[];
   screenshots: trace.ScreenshotTraceEvent[];
   ariaSnapshots: trace.AriaSnapshotTraceEvent[];
+  videos: trace.VideoTraceEvent[];
   events: (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[];
   stdio: trace.StdioTraceEvent[];
   errors: trace.ErrorTraceEvent[];

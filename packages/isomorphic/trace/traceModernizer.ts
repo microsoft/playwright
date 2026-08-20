@@ -110,6 +110,10 @@ export class TraceModernizer {
         contextEntry.screenshots.push(event);
         break;
       }
+      case 'video': {
+        contextEntry.videos.push(event);
+        break;
+      }
       case 'aria-snapshot': {
         contextEntry.ariaSnapshots.push(event);
         break;

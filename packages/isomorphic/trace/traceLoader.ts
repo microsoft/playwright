@@ -152,6 +152,7 @@ function createEmptyContext(): ContextEntry {
     actions: [],
     screenshots: [],
     ariaSnapshots: [],
+    videos: [],
     events: [],
     errors: [],
     stdio: [],
