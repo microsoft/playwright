@@ -2179,6 +2179,14 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(searchInput).toHaveValue('');
         await expect(page).not.toHaveURL(url => getFilter(url) === '@smoke');
 
+        // The chip is a real button, so it filters from the keyboard too.
+        await smokeLabelButton.focus();
+        await expect(smokeLabelButton).toBeFocused();
+        await page.keyboard.press('Enter');
+        await expect(page).toHaveURL(url => getFilter(url) === '@smoke');
+        await searchInput.clear();
+        await page.keyboard.press('Enter');
+
         const regressionLabelButton = page.locator('.test-file-test', { has: page.getByText('@regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
         await regressionLabelButton.click();
         await expect(page).toHaveURL(url => getFilter(url) === '@regression');

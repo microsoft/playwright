@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import { clsx } from '@web/uiUtils';
-import { formatUrl, hashStringToInt } from './utils';
+import { hashStringToInt } from './utils';
 import { navigate, ProjectLink, useSearchParams } from './links';
 import { filterWithQuery } from './filter';
 import './labels.css';
@@ -24,17 +24,14 @@ import './labels.css';
 export const Label: React.FC<{
   label: string,
   trimAtSymbolPrefix?: boolean,
-  href?: string,
   onClick?: (e: React.MouseEvent, label: string) => void,
   colorIndex?: number,
-}> = ({ label, href, onClick, colorIndex, trimAtSymbolPrefix }) => {
-  const baseLabel = <span className={clsx('label', 'label-color-' + (colorIndex !== undefined ? colorIndex : hashStringToInt(label)))} onClick={onClick ? e => onClick(e, label) : undefined}>
-    {trimAtSymbolPrefix && label.startsWith('@') ? label.slice(1) : label}
-  </span>;
-
-  return href
-    ? <a className='label-anchor' href={formatUrl(href)}>{baseLabel}</a>
-    : baseLabel;
+}> = ({ label, onClick, colorIndex, trimAtSymbolPrefix }) => {
+  const className = clsx('label', 'label-color-' + (colorIndex !== undefined ? colorIndex : hashStringToInt(label)));
+  const text = trimAtSymbolPrefix && label.startsWith('@') ? label.slice(1) : label;
+  if (!onClick)
+    return <span className={className}>{text}</span>;
+  return <button type='button' className={className} onClick={e => onClick(e, label)}>{text}</button>;
 };
 
 export const ProjectAndTagLabelsView: React.FC<{

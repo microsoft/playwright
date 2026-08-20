@@ -30,9 +30,13 @@
   cursor: pointer;
 }
 
-.label-anchor {
-  text-decoration: none;
-  color: var(--color-fg-default);
+button.label {
+  font-family: inherit;
+}
+
+.label:focus-visible {
+  outline: 1px solid var(--color-accent-fg);
+  outline-offset: 1px;
 }
 
 :root.light-mode {
