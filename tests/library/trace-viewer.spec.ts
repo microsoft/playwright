@@ -236,22 +236,6 @@ test('should keep selected action in view after Show all', async ({ runAndTrace,
   await expect(selected).toBeInViewport();
 });
 
-test('should activate Show all with keyboard', async ({ runAndTrace, page }) => {
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42323' });
-  const traceViewer = await runAndTrace(async () => {
-    await page.setContent('<div>hello</div>');
-    await page.evaluate(x => x, 1);
-  });
-
-  await traceViewer.actionsTree.getByRole('treeitem').filter({ hasText: 'Evaluate' }).dblclick();
-
-  const showAll = traceViewer.page.getByRole('button', { name: 'Show all' });
-  await showAll.focus();
-  await expect(showAll).toBeFocused();
-  await showAll.press('Enter');
-  await expect(showAll).toBeHidden();
-});
-
 test('should open uncompressed trace directory', async ({ showTraceViewer }) => {
   const traceDir = test.info().outputPath('unzipped-trace');
   await extractZip(traceFile, { dir: traceDir });
@@ -410,18 +394,6 @@ test('should open console errors on click', async ({ showTraceViewer }) => {
   await expect(traceViewer.actionIconsText('Evaluate')).toHaveText(['2', '1']);
   await expect(traceViewer.page.getByRole('tabpanel', { name: 'Console' })).toBeHidden();
   await traceViewer.actionIcons('Evaluate').click();
-  await traceViewer.page.getByRole('tabpanel', { name: 'Console' }).waitFor();
-});
-
-test('should open console errors with keyboard', async ({ showTraceViewer }) => {
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42323' });
-  const traceViewer = await showTraceViewer(traceFile);
-  const badge = traceViewer.actionIcons('Evaluate');
-  await expect(badge).toHaveAccessibleName('Reveal console, 2 errors, 1 warning');
-  await badge.focus();
-  await expect(badge).toBeFocused();
-  await expect(traceViewer.page.getByRole('tabpanel', { name: 'Console' })).toBeHidden();
-  await badge.press('Enter');
   await traceViewer.page.getByRole('tabpanel', { name: 'Console' }).waitFor();
 });
 

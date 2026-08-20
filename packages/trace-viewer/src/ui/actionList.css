@@ -75,8 +75,6 @@
 }
 
 .action-icons {
-  all: unset;
-  box-sizing: border-box;
   flex: none;
   display: flex;
   flex-direction: row;
@@ -89,11 +87,6 @@
 
 .action-icons:hover {
   border-bottom: 1px solid var(--vscode-sideBarTitle-foreground);
-}
-
-.action-icons:focus-visible {
-  outline: 1px solid var(--vscode-focusBorder);
-  outline-offset: 1px;
 }
 
 .action-error {
@@ -125,19 +118,10 @@
 }
 
 .action-list-show-all {
-  all: unset;
-  box-sizing: border-box;
   display: flex;
   cursor: pointer;
   height: 28px;
   align-items: center;
-  align-self: flex-start;
-  border-radius: 4px;
-}
-
-.action-list-show-all:focus-visible {
-  outline: 1px solid var(--vscode-focusBorder);
-  outline-offset: -1px;
 }
 
 .action-list-container {
