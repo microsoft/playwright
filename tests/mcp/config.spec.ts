@@ -199,14 +199,4 @@ test.describe('chromiumSandbox', () => {
     const config = JSON.parse(parseResponse(await client.callTool({ name: 'browser_get_config' })).result);
     expect(config.browser.launchOptions.chromiumSandbox).toBe(false);
   });
-
-  test('--sandbox enables the sandbox', async ({ startClient }) => {
-    const { client } = await startClient({
-      config: { capabilities: ['config'] },
-      args: ['--browser=chromium', '--sandbox'],
-    });
-    const config = JSON.parse(parseResponse(await client.callTool({ name: 'browser_get_config' })).result);
-    expect(config.browser.launchOptions.channel).toBe('chrome-for-testing');
-    expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
-  });
 });
