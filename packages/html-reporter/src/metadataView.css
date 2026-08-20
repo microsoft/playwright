@@ -18,6 +18,15 @@
   cursor: pointer;
   user-select: none;
   color: var(--color-fg-default);
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+}
+
+.metadata-toggle:focus-visible {
+  outline: 1px solid var(--color-accent-fg);
+  outline-offset: 1px;
 }
 
 .metadata-toggle-second-line {

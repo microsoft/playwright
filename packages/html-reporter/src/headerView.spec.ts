@@ -57,3 +57,13 @@ test('should toggle filters', async ({ page, mount }) => {
   await component.getByRole('textbox').fill('annot:annotation type=annotation description');
   await expect(filterText).toHaveValue('annot:annotation type=annotation description');
 });
+
+test('settings button should open with the keyboard', async ({ mount, page }) => {
+  const component = await mount<typeof Default>('headerView/Default');
+  const settings = component.getByRole('button', { name: 'Settings' });
+  await settings.focus();
+  await expect(settings).toBeFocused();
+  await expect(settings).toHaveAttribute('aria-expanded', 'false');
+  await page.keyboard.press('Enter');
+  await expect(settings).toHaveAttribute('aria-expanded', 'true');
+});

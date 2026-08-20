@@ -112,7 +112,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   }, [setSelectedTime]);
 
   return <div className='vbox action-list-container'>
-    {selectedTime && <div className='action-list-show-all' onClick={onShowAll}><span className='codicon codicon-triangle-left'></span>Show all</div>}
+    {selectedTime && <button type='button' className='action-list-show-all' onClick={onShowAll}><span className='codicon codicon-triangle-left'></span>Show all</button>}
     <ActionTreeView
       name='actions'
       rootItem={rootItem}

@@ -85,6 +85,20 @@
   border-bottom: 1px solid transparent;
 }
 
+button.action-list-show-all {
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.action-list-show-all:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
 .action-icons:hover {
   border-bottom: 1px solid var(--vscode-sideBarTitle-foreground);
 }
