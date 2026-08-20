@@ -73,16 +73,11 @@ test('wrong argument type', async ({ cli, server }) => {
   expect(press.exitCode).toBe(0);
 });
 
-test('should accept negative number arguments', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42321' } }, async ({ cli, server }) => {
+test('negative number argument', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42321' } }, async ({ cli, server }) => {
   server.setContent('/', eventsPage, 'text/html');
   await cli('open', server.PREFIX);
-  await cli('mousemove', '50', '50');
-  await cli('mousedown');
-  await cli('mouseup');
-
   const { exitCode } = await cli('mousewheel', '0', '-100');
   expect(exitCode).toBe(0);
-
   await expect.poll(() => cli('snapshot').then(result => result.inlineSnapshot)).toContain('wheel 0 -100');
 });
 

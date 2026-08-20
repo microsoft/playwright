@@ -90,6 +90,7 @@ playwright-cli mousedown right
 playwright-cli mouseup
 playwright-cli mouseup right
 playwright-cli mousewheel 0 100
+playwright-cli mousewheel 0 -100
 ```
 
 ### Save as
