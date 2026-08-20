@@ -165,15 +165,14 @@ export const renderAction = (
       {showAttachments && <ToolbarButton icon='attach' title='Open Attachment' onClick={() => revealActionAttachment?.()} />}
       {showDuration && !isSkipped && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
       {isSkipped && <span className={clsx('action-skipped', 'codicon', testStatusIcon('skipped'))} title='skipped'></span>}
-      {showBadges && !!badgeLabel && <button
-        type='button'
+      {showBadges && !!badgeLabel && <ToolbarButton
         className='action-icons'
         title='Reveal console'
-        aria-label={`Reveal console, ${badgeLabel}`}
+        ariaLabel={`Reveal console, ${badgeLabel}`}
         onClick={() => revealConsole?.()}>
-        {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className='action-icon-value'>{errors}</span></div>}
-        {!!warnings && <div className='action-icon'><span className='codicon codicon-warning'></span><span className='action-icon-value'>{warnings}</span></div>}
-      </button>}
+        {!!errors && <span className='action-icon'><span className='codicon codicon-error'></span><span className='action-icon-value'>{errors}</span></span>}
+        {!!warnings && <span className='action-icon'><span className='codicon codicon-warning'></span><span className='action-icon-value'>{warnings}</span></span>}
+      </ToolbarButton>}
     </div>
     {locator && <div className='action-title-selector' title={locator}>{locator}</div>}
   </div>;

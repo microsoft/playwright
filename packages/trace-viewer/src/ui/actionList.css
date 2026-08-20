@@ -74,28 +74,6 @@
   padding-right: 3px;
 }
 
-.action-icons {
-  all: unset;
-  box-sizing: border-box;
-  flex: none;
-  display: flex;
-  flex-direction: row;
-  cursor: pointer;
-  height: 20px;
-  position: relative;
-  top: 1px;
-  border-bottom: 1px solid transparent;
-}
-
-.action-icons:hover {
-  border-bottom: 1px solid var(--vscode-sideBarTitle-foreground);
-}
-
-.action-icons:focus-visible {
-  outline: 1px solid var(--vscode-focusBorder);
-  outline-offset: 1px;
-}
-
 .action-error {
   color: var(--vscode-errorForeground);
   position: relative;
