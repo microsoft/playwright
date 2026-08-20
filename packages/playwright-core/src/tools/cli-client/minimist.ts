@@ -94,7 +94,7 @@ export function minimist(args: string[], opts?: MinimistOptions): MinimistArgs {
       } else {
         setArg(key, strings[key] ? '' : true);
       }
-    } else if ((/^-[^-]+/).test(arg)) {
+    } else if ((/^-[^-]+/).test(arg) && !(/^-\d/).test(arg)) {
       const letters = arg.slice(1, -1).split('');
 
       let broken = false;
