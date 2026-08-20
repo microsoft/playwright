@@ -67,6 +67,8 @@ export function renderAriaSnapshotAsYaml(snapshot: AriaSnapshotJSON, options: Ar
       key += ` [pressed]`;
     if (node.selected === true)
       key += ` [selected]`;
+    if (node.ariaHidden)
+      key += ` [aria-hidden]`;
     if (node.ref) {
       key += ` [ref=${node.ref}]`;
       if (node.cursor === 'pointer')
