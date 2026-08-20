@@ -490,6 +490,21 @@ test('should have network requests', async ({ showTraceViewer }) => {
   await expect(traceViewer.networkRequests.filter({ hasText: '404GET404text' })).toHaveCSS('background-color', 'rgb(242, 222, 222)');
 });
 
+test('should attribute network requests to service workers', async ({ runAndTrace, page, context, server, browserName }) => {
+  test.skip(browserName !== 'chromium', 'Service worker requests are only reported in Chromium');
+  const traceViewer = await runAndTrace(async () => {
+    const [worker] = await Promise.all([
+      context.waitForEvent('serviceworker'),
+      page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html'),
+    ]);
+    await page.evaluate(() => window['activationPromise']);
+    await worker.evaluate(() => fetch('/one-style.css'));
+  });
+  await traceViewer.showNetworkTab();
+  await expect(traceViewer.networkRequests.filter({ hasText: 'sw.html' })).toContainText(['page#1']);
+  await expect(traceViewer.networkRequests.filter({ hasText: 'one-style.css' })).toContainText(['service-worker#1']);
+});
+
 test('should highlight network request on timeline on hover', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Navigate');

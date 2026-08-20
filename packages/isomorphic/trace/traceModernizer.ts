@@ -33,7 +33,11 @@ export class TraceVersionError extends Error {
 
 // 6 => 10/2023 ~1.40
 // 7 => 05/2024 ~1.45
-const latestVersion: trace.VERSION = 8;
+// 9 => 08/2026 ~1.63
+const latestVersion: trace.VERSION = 9;
+
+// Ensures distinct api request refs across contexts of the same trace.
+let lastApiRequestRefOrdinal = 0;
 
 export class TraceModernizer {
   private _contextEntry: ContextEntry;
@@ -43,6 +47,7 @@ export class TraceModernizer {
   private _pageEntries = new Map<string, PageEntry>();
   private _jsHandles = new Map<string, { preview: string }>();
   private _consoleObjects = new Map<string, { type: string, text: string, location: { url: string, lineNumber: number, columnNumber: number }, args?: { preview: string, value: string }[] }>();
+  private _apiRequestRef: string | undefined;
 
   constructor(contextEntry: ContextEntry, snapshotStorage: SnapshotStorage) {
     this._contextEntry = contextEntry;
@@ -487,5 +492,22 @@ export class TraceModernizer {
       }
     }
     return result;
+  }
+
+  _modernize_8_to_9(events: traceV8.TraceEvent[]): trace.TraceEvent[] {
+    for (const event of events) {
+      if (event.type !== 'resource-snapshot')
+        continue;
+      const snapshot = event.snapshot;
+      // Older traces marked api requests with a boolean instead of referencing
+      // their api request context.
+      if ((snapshot as any)._apiRequest) {
+        if (!this._apiRequestRef)
+          this._apiRequestRef = 'api-request-context@' + (++lastApiRequestRefOrdinal);
+        snapshot._apiRequestRef = this._apiRequestRef;
+        delete (snapshot as any)._apiRequest;
+      }
+    }
+    return events as trace.TraceEvent[];
   }
 }

@@ -224,7 +224,7 @@ test('should record context API request trace independently', async ({ context, 
   const browserTrace = await parseTraceRaw(browserTracePath);
   expect(browserTrace.actions).toContain('Navigate to "/one-style.html"');
   expect(browserTrace.actions).not.toContain('POST "/simple.json"');
-  expect(browserTrace.events.some(event => event.type === 'resource-snapshot' && event.snapshot._apiRequest)).toBe(false);
+  expect(browserTrace.events.some(event => event.type === 'resource-snapshot' && event.snapshot.request.url.endsWith('/simple.json'))).toBe(false);
   expect(browserTrace.events.some(event => event.type === 'resource-snapshot' && event.snapshot.request.url.endsWith('/one-style.html'))).toBe(true);
 
   const apiTrace = await parseTraceRaw(apiTracePath);
@@ -233,6 +233,7 @@ test('should record context API request trace independently', async ({ context, 
   const apiAction = apiTrace.actionObjects.find(action => action.class === 'APIRequestContext' && action.method === 'fetch')!;
   expect(relativeStack(apiAction, apiTrace.stacks)).toEqual(['tracing.spec.ts']);
   expect(apiTrace.events.filter(event => event.type === 'resource-snapshot').map(event => event.snapshot.request.url)).toEqual([apiURL]);
+  expect(apiTrace.events.filter(event => event.type === 'resource-snapshot').map(event => event.snapshot._apiRequestRef)).toEqual([expect.stringMatching(/^request-context@/)]);
 });
 
 test('should collect two traces', async ({ context, page, server }, testInfo) => {

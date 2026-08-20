@@ -183,14 +183,14 @@ function bytesToString(bytes: number): string {
   return gb.toFixed(1) + 'G';
 }
 
-function formatRouteStatus(r: { _wasAborted?: boolean, _wasContinued?: boolean, _wasFulfilled?: boolean, _apiRequest?: boolean }): string {
+function formatRouteStatus(r: { _wasAborted?: boolean, _wasContinued?: boolean, _wasFulfilled?: boolean, _apiRequestRef?: string }): string {
   if (r._wasAborted)
     return 'aborted';
   if (r._wasContinued)
     return 'continued';
   if (r._wasFulfilled)
     return 'fulfilled';
-  if (r._apiRequest)
+  if (r._apiRequestRef)
     return 'api';
   return '';
 }
