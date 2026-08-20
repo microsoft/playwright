@@ -224,8 +224,7 @@ button.subnav-item {
 
 /* Items overlap by 1px, lift the focused one so that the ring is not clipped by the next one. */
 .subnav-item:focus-visible {
-  outline: 2px solid var(--color-accent-fg);
-  outline-offset: -2px;
+  outline-color: var(--color-accent-fg);
   z-index: 1;
 }
 
