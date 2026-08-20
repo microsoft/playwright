@@ -83,7 +83,7 @@ export function minimist(args: string[], opts?: MinimistOptions): MinimistArgs {
       next = args[i + 1];
       if (
         next !== undefined
-        && !(/^(-|--)[^-]/).test(next)
+        && !isFlag(next)
         && !bools[key]
       ) {
         setArg(key, next);
@@ -135,7 +135,7 @@ export function minimist(args: string[], opts?: MinimistOptions): MinimistArgs {
       if (!broken && key !== '-') {
         if (
           args[i + 1]
-          && !(/^(-|--)[^-]/).test(args[i + 1])
+          && !isFlag(args[i + 1])
           && !bools[key]
         ) {
           setArg(key, args[i + 1]);
@@ -162,4 +162,9 @@ function toArray(value: string | string[] | undefined): string[] {
   if (!value)
     return [];
   return Array.isArray(value) ? value : [value];
+}
+
+// Short flags are letters, so negative numbers like '-100' or '-.5' are not flags.
+function isFlag(token: string): boolean {
+  return (/^--.+/).test(token) || (/^-[A-Za-z]/).test(token);
 }
