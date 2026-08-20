@@ -94,7 +94,8 @@ export function minimist(args: string[], opts?: MinimistOptions): MinimistArgs {
       } else {
         setArg(key, strings[key] ? '' : true);
       }
-    } else if ((/^-[^-]+/).test(arg)) {
+    } else if ((/^-[A-Za-z]/).test(arg)) {
+      // Short flags are letters, so '-100' and '-.5' are arguments, not flags.
       const letters = arg.slice(1, -1).split('');
 
       let broken = false;
