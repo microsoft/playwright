@@ -300,6 +300,18 @@ it('should return security details from response', async ({ playwright, httpsSer
   await request.dispose();
 });
 
+it('should return security details for a resumed TLS session', async ({ playwright, httpsServer }) => {
+  const expected = { issuer: 'playwright-test', protocol: 'TLSv1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 };
+  const request = await playwright.request.newContext({ ignoreHTTPSErrors: true });
+  // 'Connection: close' drops the socket, so the next request opens a new one and resumes
+  // the cached TLS session. A resumed session does not carry the server certificate.
+  const first = await request.get(httpsServer.EMPTY_PAGE, { headers: { connection: 'close' } });
+  expect(await first.securityDetails()).toEqual(expected);
+  const second = await request.get(httpsServer.EMPTY_PAGE);
+  expect(await second.securityDetails()).toEqual(expected);
+  await request.dispose();
+});
+
 it('should return null security details for http response', async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
   const response = await request.get(server.EMPTY_PAGE);
