@@ -222,9 +222,11 @@ button.subnav-item {
   background-color: var(--color-canvas-subtle);
 }
 
+/* Items overlap by 1px, lift the focused one so that the ring is not clipped by the next one. */
 .subnav-item:focus-visible {
-  outline: 1px solid var(--color-accent-fg);
-  outline-offset: -1px;
+  outline: 2px solid var(--color-accent-fg);
+  outline-offset: -2px;
+  z-index: 1;
 }
 
 .subnav-item[aria-selected="true"] {
