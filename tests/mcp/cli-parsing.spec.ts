@@ -76,12 +76,13 @@ test('wrong argument type', async ({ cli, server }) => {
 test('negative number arguments', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42321' } }, async ({ cli, server }) => {
   server.setContent('/', eventsPage, 'text/html');
   await cli('open', server.PREFIX);
+  await cli('mousemove', '50', '50');
 
   expect((await cli('mousewheel', '0', '-100')).exitCode).toBe(0);
   await expect.poll(() => cli('snapshot').then(result => result.inlineSnapshot)).toContain('wheel 0 -100');
 
-  expect((await cli('mousewheel', '-1.5', '-.5')).exitCode).toBe(0);
-  await expect.poll(() => cli('snapshot').then(result => result.inlineSnapshot)).toContain('wheel -1.5 -0.5');
+  const { error } = await cli('mousewheel', '-.5');
+  expect(error).toContain(`error: 'dy' argument: expected number, received 'undefined'`);
 });
 
 test('should preserve leading zeros in string arguments', async ({ cli, server }) => {
