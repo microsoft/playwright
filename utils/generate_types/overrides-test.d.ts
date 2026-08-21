@@ -24,6 +24,7 @@ export type ListReporterOptions = { printSteps?: boolean, printFailuresInline?: 
 export type GitHubReporterOptions = { omitTags?: boolean };
 export type JUnitReporterOptions = { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean, includeRetries?: boolean, omitTags?: boolean };
 export type JsonReporterOptions = { outputFile?: string };
+export type ChromeTraceReporterOptions = { outputFile?: string };
 export type HtmlReporterOptions = {
   outputFolder?: string;
   open?: 'always' | 'never' | 'on-failure';
@@ -45,6 +46,7 @@ export type ReporterDescription = Readonly<
   ['github'] | ['github', GitHubReporterOptions] |
   ['junit'] | ['junit', JUnitReporterOptions] |
   ['json'] | ['json', JsonReporterOptions] |
+  ['chrome-trace'] | ['chrome-trace', ChromeTraceReporterOptions] |
   ['html'] | ['html', HtmlReporterOptions] |
   ['null'] |
   [string] | [string, any]
@@ -67,7 +69,7 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   projects?: Project<TestArgs, WorkerArgs>[];
-  reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
+  reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html'|'chrome-trace', string> | ReporterDescription[];
   use?: UseOptions<TestArgs, WorkerArgs>;
   webServer?: TestConfigWebServer | TestConfigWebServer[];
 }

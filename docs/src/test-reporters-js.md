@@ -431,6 +431,32 @@ JUnit report supports following configuration options and environment variables:
 | `PLAYWRIGHT_JUNIT_SUITE_ID` |  | Value of the `id` attribute on the root `<testsuites/>` report entry. | Empty string.
 | `PLAYWRIGHT_JUNIT_SUITE_NAME` |  | Value of the `name` attribute on the root `<testsuites/>` report entry. | Empty string.
 
+### Chrome tracing reporter
+
+Chrome tracing reporter produces a [Trace Event Format](https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview) json file that can be opened in [`chrome://tracing`](chrome://tracing) or in the [Perfetto UI](https://ui.perfetto.dev). It renders the test run as a timeline with a lane per worker, where every test is a slice containing its before/after hooks, fixtures and steps as nested slices. Every slice carries the details of the test or step in its trace event arguments, including source locations, tags, annotations, errors, stdio and paths to the attachment files.
+
+```bash
+npx playwright test --reporter=chrome-trace
+```
+
+By default the report is written to `test-results/chrome-trace.json`.
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [['chrome-trace', { outputFile: 'chrome-trace.json' }]],
+});
+```
+
+Chrome tracing report supports following configuration options and environment variables:
+
+| Environment Variable Name | Reporter Config Option| Description | Default
+|---|---|---|---|
+| `PLAYWRIGHT_CHROME_TRACE_OUTPUT_DIR` | | Directory to save the output file. Ignored if output file is specified. | `test-results`
+| `PLAYWRIGHT_CHROME_TRACE_OUTPUT_NAME` | | Base file name for the output, relative to the output dir. | `chrome-trace.json`
+| `PLAYWRIGHT_CHROME_TRACE_OUTPUT_FILE` | `outputFile` | Full path to the output file. If defined, `PLAYWRIGHT_CHROME_TRACE_OUTPUT_DIR` and `PLAYWRIGHT_CHROME_TRACE_OUTPUT_NAME` will be ignored. | `undefined`
+
 ### GitHub Actions annotations
 
 You can use the built in `github` reporter to get automatic failure annotations when running in GitHub actions.
