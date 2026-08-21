@@ -90,9 +90,6 @@ export type JsonTestResultStart = {
   workerIndex: number;
   parallelIndex: number;
   startTime: number;
-  // Set by report merging to discard previously-merged results for this test id
-  // right before this result is added, without affecting every onTestBegin globally
-  // (see clearPreviousResultsWhenTestBegins, which applies to all of them).
   discardPreviousResults?: boolean;
 };
 
