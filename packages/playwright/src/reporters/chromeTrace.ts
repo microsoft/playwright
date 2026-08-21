@@ -16,6 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import zlib from 'zlib';
 
 import { toPosixPath } from '@utils/fileUtils';
 import { getPlaywrightVersion } from 'playwright-core/lib/coreBundle';
@@ -24,6 +25,7 @@ import { formatError, nonTerminalScreen, resolveOutputFile, CommonReporterOption
 import { stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
+import type { Writable } from 'stream';
 import type { ChromeTraceReporterOptions } from '../../types/test';
 import type { FullConfig, FullResult, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 
@@ -209,6 +211,8 @@ class ChromeTraceReporter implements ReporterV2 {
 
   private _stepArgs(step: TestStep): Record<string, any> | undefined {
     const args: Record<string, any> = {};
+    if (step.params)
+      args.params = step.params;
     if (step.location)
       args.location = this._formatLocation(step.location);
     if (step.annotations.length)
@@ -243,13 +247,13 @@ class ChromeTraceReporter implements ReporterV2 {
     for (const event of this._events)
       timeOrigin = Math.min(timeOrigin, event.ts);
 
-    const traceEvents: TraceEvent[] = [
+    const metadataEvents: TraceEvent[] = [
       { name: 'process_name', cat: '__metadata', ph: 'M', ts: 0, pid: kProcessId, tid: kRunThreadId, args: { name: 'Playwright Test' } },
       { name: 'process_sort_index', cat: '__metadata', ph: 'M', ts: 0, pid: kProcessId, tid: kRunThreadId, args: { sort_index: 0 } },
     ];
     for (const lane of [...this._laneEndTime.keys()].sort((a, b) => a - b)) {
-      traceEvents.push({ name: 'thread_name', cat: '__metadata', ph: 'M', ts: 0, pid: kProcessId, tid: lane + 1, args: { name: `Worker ${lane}` } });
-      traceEvents.push({ name: 'thread_sort_index', cat: '__metadata', ph: 'M', ts: 0, pid: kProcessId, tid: lane + 1, args: { sort_index: lane + 1 } });
+      metadataEvents.push({ name: 'thread_name', cat: '__metadata', ph: 'M', ts: 0, pid: kProcessId, tid: lane + 1, args: { name: `Worker ${lane}` } });
+      metadataEvents.push({ name: 'thread_sort_index', cat: '__metadata', ph: 'M', ts: 0, pid: kProcessId, tid: lane + 1, args: { sort_index: lane + 1 } });
     }
 
     // Sort is stable, so parent slices stay ahead of their children on ties.
@@ -258,22 +262,61 @@ class ChromeTraceReporter implements ReporterV2 {
       event.ts = Math.round((event.ts - timeOrigin) * 1000);
       if (event.dur !== undefined)
         event.dur = Math.round(event.dur * 1000);
-      traceEvents.push(event);
     }
 
-    const report = {
-      traceEvents,
-      displayTimeUnit: 'ms',
-      metadata: {
-        'playwright-version': getPlaywrightVersion(),
-        'start-time': result.startTime.toISOString(),
-        'duration': result.duration,
-        'status': result.status,
-      },
+    const metadata = {
+      'playwright-version': getPlaywrightVersion(),
+      'start-time': result.startTime.toISOString(),
+      'duration': result.duration,
+      'status': result.status,
     };
 
+    // Serialize event by event, the whole report does not have to fit into memory twice.
     await fs.promises.mkdir(path.dirname(this._resolvedOutputFile), { recursive: true });
-    await fs.promises.writeFile(this._resolvedOutputFile, JSON.stringify(report));
+    const writer = new ChunkWriter(this._resolvedOutputFile);
+    await writer.write('{"traceEvents":[');
+    let separator = '';
+    for (const events of [metadataEvents, this._events]) {
+      for (const event of events) {
+        await writer.write(separator + JSON.stringify(event));
+        separator = ',';
+      }
+    }
+    await writer.write(`],"displayTimeUnit":"ms","metadata":${JSON.stringify(metadata)}}`);
+    await writer.close();
+  }
+}
+
+// Writes into a ".gz" file through a gzip stream, into a plain file otherwise.
+class ChunkWriter {
+  private _stream: Writable;
+  private _closed: Promise<void>;
+  private _error: Error | undefined;
+
+  constructor(file: string) {
+    const fileStream = fs.createWriteStream(file);
+    const gzip = file.endsWith('.gz') ? zlib.createGzip() : undefined;
+    gzip?.pipe(fileStream);
+    this._stream = gzip ?? fileStream;
+    // The file is only complete once the destination closes, which is later than
+    // the gzip stream ending.
+    this._closed = new Promise(resolve => fileStream.on('close', resolve));
+    for (const stream of new Set<Writable>([this._stream, fileStream]))
+      stream.on('error', error => this._error ??= error);
+  }
+
+  async write(chunk: string) {
+    if (this._error)
+      throw this._error;
+    if (!this._stream.write(chunk))
+      await new Promise<void>(resolve => this._stream.once('drain', () => resolve()));
+  }
+
+  async close() {
+    this._stream.end();
+    await this._closed;
+    if (this._error)
+      throw this._error;
   }
 }
 

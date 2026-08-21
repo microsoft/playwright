@@ -1897,3 +1897,82 @@ test('should report step params', async ({ runInlineTest }) => {
     `test.step | my step | {"foo":"bar","count":7}`,
   ]);
 });
+
+test('should report input step params', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      import type { Reporter, TestCase, TestResult, TestStep } from '@playwright/test/reporter';
+      export default class MyReporter implements Reporter {
+        onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+          if (step.location?.file.endsWith('a.test.ts'))
+            console.log('%%' + step.title + ' | ' + JSON.stringify(step.params));
+        }
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = { reporter: './reporter' };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<input id=i><button>Click me</button><select><option value=a>a</option><option value=b>b</option></select>');
+        await page.locator('#i').fill('value');
+        await page.locator('#i').press('Enter');
+        await page.keyboard.type('typed');
+        await page.getByRole('button').click({ button: 'right', clickCount: 2, modifiers: ['Shift'], position: { x: 3, y: 4 } });
+        await page.mouse.move(10, 20);
+        await page.mouse.wheel(0, 100);
+        await page.locator('select').selectOption('b');
+        await page.dispatchEvent('#i', 'focus');
+        await page.locator('#i').waitFor({ state: 'visible' });
+        await page.setViewportSize({ width: 800, height: 600 });
+        await page.dragAndDrop('#i', 'select');
+        await page.evaluate(() => 1);
+      });
+    `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    `Set content | undefined`,
+    `Fill "value" locator('#i') | {"locator":"locator('#i')","value":"value"}`,
+    `Press "Enter" locator('#i') | {"locator":"locator('#i')","key":"Enter"}`,
+    `Type "typed" | {"text":"typed"}`,
+    `Click getByRole('button') | {"locator":"getByRole('button')","button":"right","clickCount":2,"modifiers":["Shift"],"position":{"x":3,"y":4}}`,
+    `Mouse move | {"x":10,"y":20}`,
+    `Mouse wheel | {"deltaX":0,"deltaY":100}`,
+    `Select option locator('select') | {"locator":"locator('select')","options":[{"valueOrLabel":"b"}]}`,
+    `Dispatch "focus" locator('#i') | {"locator":"locator('#i')","type":"focus"}`,
+    `Wait for selector locator('#i') | {"locator":"locator('#i')","state":"visible"}`,
+    `Set viewport size | {"width":800,"height":600}`,
+    `Drag and drop | {"source":"locator('#i')","target":"locator('select')"}`,
+    `Evaluate | undefined`,
+  ]);
+});
+
+test('should truncate long step params', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      import type { Reporter, TestCase, TestResult, TestStep } from '@playwright/test/reporter';
+      export default class MyReporter implements Reporter {
+        onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+          if (step.params?.value)
+            console.log('%%' + step.params.value);
+        }
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = { reporter: './reporter' };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<input id=i>');
+        await page.locator('#i').fill('x'.repeat(1000));
+      });
+    `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual(['x'.repeat(200) + '\u2026']);
+});

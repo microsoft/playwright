@@ -433,19 +433,20 @@ JUnit report supports following configuration options and environment variables:
 
 ### Chrome tracing reporter
 
-Chrome tracing reporter produces a [Trace Event Format](https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview) json file that can be opened in [`chrome://tracing`](chrome://tracing) or in the [Perfetto UI](https://ui.perfetto.dev). It renders the test run as a timeline with a lane per worker, where every test is a slice containing its before/after hooks, fixtures and steps as nested slices. Every slice carries the details of the test or step in its trace event arguments, including source locations, tags, annotations, errors, stdio and paths to the attachment files.
+Chrome tracing reporter produces a [Trace Event Format](https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview) json file that can be opened in [`chrome://tracing`](chrome://tracing) or in the [Perfetto UI](https://ui.perfetto.dev). It renders the test run as a timeline with a lane per worker, where every test is a slice containing its before/after hooks, fixtures and steps as nested slices. Every slice carries the details of the test or step in its trace event arguments, including source locations, [`property: TestStep.params`], tags, annotations, errors, stdio and paths to the attachment files.
 
 ```bash
 npx playwright test --reporter=chrome-trace
 ```
 
-By default the report is written to `test-results/chrome-trace.json`.
+By default the report is written to `test-results/chrome-trace.json`. When the output file name ends with `.gz`, the
+report is gzipped on the fly, which both viewers accept and which is worth it for large test runs.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  reporter: [['chrome-trace', { outputFile: 'chrome-trace.json' }]],
+  reporter: [['chrome-trace', { outputFile: 'chrome-trace.json.gz' }]],
 });
 ```
 
