@@ -532,6 +532,17 @@ const tabSelect = declareCommand({
   toolParams: ({ index }) => ({ action: 'select', index }),
 });
 
+const tabGroupLabel = declareCommand({
+  name: 'tab-group-label',
+  description: 'Label this session\'s tab group (extension mode only)',
+  category: 'tabs',
+  args: z.object({
+    label: z.string().describe('Short label describing the current task, e.g. "checkout flow bug"'),
+  }),
+  toolName: 'browser_set_group_label',
+  toolParams: ({ label }) => ({ label }),
+});
+
 // Storage
 
 const stateLoad = declareCommand({
@@ -1201,6 +1212,7 @@ const commandsArray: AnyCommandSchema[] = [
   tabNew,
   tabClose,
   tabSelect,
+  tabGroupLabel,
 
   // storage category
   stateLoad,

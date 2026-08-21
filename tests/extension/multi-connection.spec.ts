@@ -14,26 +14,12 @@
  * limitations under the License.
  */
 
-import { test, expect, extensionId, clickAllowAndSelect, readExtensionToken, startWithExtensionFlag } from './extension-fixtures';
+import { test, expect, extensionId, clickAllowAndSelect, connectWithName, playwrightGroups, readExtensionToken, startWithExtensionFlag } from './extension-fixtures';
 
 import type { BrowserWithExtension } from './extension-fixtures';
 import type { StartClient } from '../mcp/fixtures';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { BrowserContext } from 'playwright';
-
-// Connects without the approval dialog, so a test can start several clients
-// and tell them apart by name.
-async function connectWithName(browserWithExtension: BrowserWithExtension, startClient: StartClient, token: string, clientName: string): Promise<Client> {
-  const { client } = await startClient({
-    clientName,
-    args: ['--extension'],
-    env: {
-      PLAYWRIGHT_MCP_EXTENSION_TOKEN: token,
-      PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
-    },
-  });
-  return client;
-}
 
 // Starts a client and hands back its connect page, before any tab is picked.
 async function beginConnect(browserContext: BrowserContext, browserWithExtension: BrowserWithExtension, startClient: StartClient, url: string) {
@@ -44,17 +30,6 @@ async function beginConnect(browserContext: BrowserContext, browserWithExtension
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url } });
   const connectPage = await connectPagePromise;
   return { client, connectPage, navigatePromise };
-}
-
-async function playwrightGroups(browserContext: BrowserContext): Promise<{ title: string, color: string }[]> {
-  const [sw] = browserContext.serviceWorkers();
-  const groups = await sw.evaluate(async () => {
-    const chrome = (globalThis as any).chrome;
-    return await chrome.tabGroups.query({});
-  });
-  return groups
-      .map((group: any) => ({ title: group.title, color: group.color }))
-      .sort((a: any, b: any) => a.title.localeCompare(b.title));
 }
 
 async function tabList(client: Client): Promise<string> {

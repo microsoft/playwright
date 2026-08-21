@@ -197,6 +197,31 @@ export async function startWithExtensionFlag(browserWithExtension: BrowserWithEx
   return client;
 }
 
+// Connects without the approval dialog, so a test can start several clients
+// and tell them apart by name.
+export async function connectWithName(browserWithExtension: BrowserWithExtension, startClient: StartClient, token: string, clientName: string): Promise<Client> {
+  const { client } = await startClient({
+    clientName,
+    args: ['--extension'],
+    env: {
+      PLAYWRIGHT_MCP_EXTENSION_TOKEN: token,
+      PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
+    },
+  });
+  return client;
+}
+
+export async function playwrightGroups(browserContext: BrowserContext): Promise<{ title: string, color: string }[]> {
+  const [sw] = browserContext.serviceWorkers();
+  const groups = await sw.evaluate(async () => {
+    const chrome = (globalThis as any).chrome;
+    return await chrome.tabGroups.query({});
+  });
+  return groups
+      .map((group: any) => ({ title: group.title, color: group.color }))
+      .sort((a: any, b: any) => a.title.localeCompare(b.title));
+}
+
 export async function readExtensionToken(browserContext: BrowserContext): Promise<string> {
   const page = await browserContext.newPage();
   await page.goto(`chrome-extension://${extensionId}/status.html`);

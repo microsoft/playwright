@@ -18,6 +18,8 @@ import { debugLog } from './relayConnection';
 import { PendingConnections } from './pendingConnection';
 import { ConnectedTabGroup, cleanupStalePlaywrightGroups, isNonDebuggableUrl, ungroupTabs, uniqueGroupStyle } from './connectedTabGroup';
 
+import type { GroupStyle } from './connectedTabGroup';
+
 type PageMessage = {
   type: 'connectionRequested';
   mcpRelayUrl: string;
@@ -111,9 +113,11 @@ class PlaywrightExtension {
         throw new Error('Pending client connection closed');
 
       const id = ++this._lastConnectionId;
-      const taken = [...this._connections.values()].map(group => group.groupStyle);
-      const group = new ConnectedTabGroup(connection, tab, clientName, uniqueGroupStyle(clientName, taken), tabId => this._pendingConnections.has(tabId));
+      const group = new ConnectedTabGroup(connection, tab, clientName, uniqueGroupStyle(clientName, this._takenGroupStyles()), tabId => this._pendingConnections.has(tabId));
       group.onclose = () => this._connections.delete(id);
+      // The command arrives over this connection's own socket, so a client can
+      // only ever relabel its own group.
+      connection.onsetgrouplabel = label => group.setGroupLabel(label, this._takenGroupStyles(group));
       this._connections.set(id, group);
 
       await Promise.all([
@@ -127,6 +131,10 @@ class PlaywrightExtension {
       debugLog(`Failed to connect tab ${tab.id}:`, error.message);
       throw error;
     }
+  }
+
+  private _takenGroupStyles(exclude?: ConnectedTabGroup): GroupStyle[] {
+    return [...this._connections.values()].filter(group => group !== exclude).map(group => group.groupStyle);
   }
 
   // Chrome may create the connect page inside the active client's group.

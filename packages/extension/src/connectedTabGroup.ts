@@ -34,13 +34,17 @@ export type GroupStyle = {
   color: GroupColor;
 };
 
-export function uniqueGroupStyle(clientName: string | undefined, taken: readonly GroupStyle[]): GroupStyle {
+function uniqueGroupTitle(name: string, taken: readonly GroupStyle[]): string {
   const titles = new Set(taken.map(style => style.title));
-  const base = PLAYWRIGHT_GROUP_TITLE_PREFIX + (clientName || 'unknown');
+  const base = PLAYWRIGHT_GROUP_TITLE_PREFIX + name;
   let title = base;
   for (let i = 2; titles.has(title); i++)
     title = `${base} (${i})`;
+  return title;
+}
 
+export function uniqueGroupStyle(clientName: string | undefined, taken: readonly GroupStyle[]): GroupStyle {
+  const title = uniqueGroupTitle(clientName || 'unknown', taken);
   const colors = new Set(taken.map(style => style.color));
   const color = PLAYWRIGHT_GROUP_COLORS.find(candidate => !colors.has(candidate)) ?? PLAYWRIGHT_GROUP_COLORS[0];
   return { title, color };
@@ -103,6 +107,18 @@ export class ConnectedTabGroup {
 
   connectedTabIds(): number[] {
     return [...this._groupTabIds];
+  }
+
+  // Applies a client-chosen label to the group title, deduplicated against
+  // the other connections' groups. Returns the final title. If the Chrome
+  // group does not exist yet, the title is applied upon its creation.
+  async setGroupLabel(label: string, taken: readonly GroupStyle[]): Promise<string> {
+    const title = uniqueGroupTitle(label, taken);
+    this.groupStyle.title = title;
+    const groupId = this._groupId;
+    if (groupId !== null)
+      await retryOnDrag(() => chrome.tabGroups.update(groupId, { title }));
+    return title;
   }
 
   close(reason: string): void {
@@ -226,7 +242,7 @@ export async function ungroupTabs(tabIds: number[]): Promise<void> {
 
 // Chrome throws "user may be dragging a tab" while a drag is in progress.
 // Retry with backoff until it clears (or we give up).
-async function retryOnDrag(fn: () => Promise<void>): Promise<void> {
+async function retryOnDrag(fn: () => Promise<unknown>): Promise<void> {
   const delays = [0, 100, 200, 400, 800];
   let lastError: unknown;
   for (const delay of delays) {

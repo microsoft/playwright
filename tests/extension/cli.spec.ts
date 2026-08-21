@@ -55,3 +55,14 @@ test('attach <url> --extension', async ({ startAttach, cli, server }) => {
     expect(output).toContain(`- Page Title: Title`);
   }
 });
+
+test('tab-group-label --extension', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41840' },
+}, async ({ startAttach, cli }) => {
+  const { confirmationPage, cliPromise } = await startAttach();
+  await clickAllowAndSelect(confirmationPage, 'Welcome');
+  await cliPromise;
+
+  const { output } = await cli(['-s=chromium', 'tab-group-label', 'checkout flow bug']);
+  expect(output).toContain('Tab group renamed to "Playwright · checkout flow bug"');
+});
