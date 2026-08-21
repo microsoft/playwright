@@ -71,7 +71,8 @@ export type Entry = {
   _wasAborted?: boolean;
   _wasFulfilled?: boolean;
   _wasContinued?: boolean;
-  _apiRequest?: boolean;
+  _serviceWorkerRef?: string;
+  _apiRequestRef?: string;
   _resourceType?: string;
   _webSocketMessages?: WebSocketMessage[];
 };

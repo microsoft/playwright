@@ -212,7 +212,7 @@ export class HarTracer {
     if (!this._shouldIncludeEntryWithUrl(event.url.toString()))
       return;
     const harEntry = createHarEntry(undefined, event.method, event.url, undefined, this._options);
-    harEntry._apiRequest = true;
+    harEntry._apiRequestRef = this._context.guid;
     if (!this._options.omitCookies)
       harEntry.request.cookies = event.cookies;
     harEntry.request.headers = Object.entries(event.headers).map(([name, value]) => ({ name, value }));
@@ -285,6 +285,9 @@ export class HarTracer {
 
     const pageEntry = this._createPageEntryIfNeeded(page);
     const harEntry = createHarEntry(pageEntry?.id, request.method(), url, request.frame()?.guid, this._options, request.wallTimeMs());
+    const serviceWorker = request.serviceWorker();
+    if (serviceWorker)
+      harEntry._serviceWorkerRef = serviceWorker.guid;
     harEntry._resourceType = request.resourceType();
     this._recordRequestHeadersAndCookies(harEntry, request.headers());
     harEntry.request.postData = this._postDataForRequest(request, this._options.content);

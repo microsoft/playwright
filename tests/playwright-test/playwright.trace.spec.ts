@@ -238,7 +238,7 @@ test('should not mixup network files between contexts', async ({ runInlineTest, 
   expect(apiURLsByTrace.every(urls => urls.length <= 1)).toBe(true);
   expect(apiURLsByTrace.flat().sort()).toEqual(apiURLs);
   const trace = await parseTrace(tracePath);
-  expect(trace.model.resources.filter(resource => resource._apiRequest).map(resource => resource.request.url).sort()).toEqual(apiURLs);
+  expect(trace.model.resources.filter(resource => resource._apiRequestRef).map(resource => resource.request.url).sort()).toEqual(apiURLs);
 });
 
 test('should save sources when requested', async ({ runInlineTest }, testInfo) => {

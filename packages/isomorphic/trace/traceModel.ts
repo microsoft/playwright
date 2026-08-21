@@ -38,7 +38,11 @@ export type SourceModel = {
   content: string | undefined;
 };
 
-export type ResourceEntry = ResourceSnapshot & { id: string, contextTitle: string };
+export type ResourceEntry = ResourceSnapshot & { id: string };
+
+export function resourceOwnerRef(resource: ResourceSnapshot): string | undefined {
+  return resource.pageref ?? resource._serviceWorkerRef ?? resource._apiRequestRef;
+}
 
 export type ActionTreeItem = {
   id: string;
@@ -84,7 +88,7 @@ export class TraceModel {
   readonly traceUri: string;
   readonly testTimeout?: number;
   readonly annotations?: trace.TraceEventAnnotation[];
-  readonly pagerefToTitle = new Map<string, string>();
+  readonly resourceOwnerRefToTitle = new Map<string, string>();
   private _eventsForAction = new Map<ActionEntry, (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[]>();
   private _screenshots = new Map<string, trace.ScreenshotTraceEvent>();
   private _ariaSnapshots = new Map<string, trace.AriaSnapshotTraceEvent>();
@@ -116,12 +120,9 @@ export class TraceModel {
     this.hasSource = contexts.some(c => c.hasSource);
     this.hasStepData = contexts.some(context => context.origin === 'testRunner');
     this.resources = [];
-    let lastApiContextId = 0;
-    let lastBrowserContextId = 0;
-    for (const context of contexts) {
-      const contextTitle = context.resources.some(resource => resource._apiRequest) ? 'api#' + (++lastApiContextId) : 'browser#' + (++lastBrowserContextId);
-      for (const entry of context.resources)
-        this.resources.push({ ...entry, id: `${entry.pageref ?? lastApiContextId}-${entry.startedDateTime}-${entry.request.url}`, contextTitle });
+    for (let i = 0; i < contexts.length; ++i) {
+      for (const entry of contexts[i].resources)
+        this.resources.push({ ...entry, id: `${resourceOwnerRef(entry) ?? i}-${entry.startedDateTime}-${entry.request.url}` });
     }
     for (const context of contexts) {
       for (const event of context.screenshots || [])
@@ -133,10 +134,19 @@ export class TraceModel {
     this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, callId: action.callId, traceUri })) ?? []);
     this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
 
-    this.pages.forEach((page, index) => this.pagerefToTitle.set(page.pageId, 'page#' + (index + 1)));
+    this.pages.forEach((page, index) => this.resourceOwnerRefToTitle.set(page.pageId, 'page#' + (index + 1)));
 
     this.events.sort((a1, a2) => a1.time - a2.time);
     this.resources.sort((a1, a2) => a1._monotonicTime! - a2._monotonicTime!);
+
+    let serviceWorkerCount = 0;
+    let apiRequestCount = 0;
+    for (const resource of this.resources) {
+      if (resource._serviceWorkerRef && !this.resourceOwnerRefToTitle.has(resource._serviceWorkerRef))
+        this.resourceOwnerRefToTitle.set(resource._serviceWorkerRef, `service-worker#${++serviceWorkerCount}`);
+      if (resource._apiRequestRef && !this.resourceOwnerRefToTitle.has(resource._apiRequestRef))
+        this.resourceOwnerRefToTitle.set(resource._apiRequestRef, `api#${++apiRequestCount}`);
+    }
     this.errorDescriptors = this.hasStepData ? this._errorDescriptorsFromTestRunner() : this._errorDescriptorsFromActions();
     this.sources = collectSources(this.actions, this.errorDescriptors);
 
