@@ -278,7 +278,7 @@ export class WorkerMain extends ProcessRunner {
     try {
       if (this._currentTest?.testId !== payload.testId)
         throw new Error('Test has already stopped');
-      const response = await this._currentTest._onCustomMessageCallback?.(payload.request);
+      const response = await this._currentTest._callbacks.onCustomMessage?.(payload.request);
       return { response };
     } catch (error) {
       return { response: {}, error: ipc.toTestInfoErrorPayload(testInfoError(error)) };

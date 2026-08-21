@@ -31,8 +31,8 @@ import { config, testType } from './common';
 import * as globals from './globals';
 import { createCustomMessageHandler, runDaemonForContext } from './mcp/test/browserBackend';
 
-import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
-import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
+import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode, _TestInfoEx } from '../types/test';
+import type { TestStepInternal } from './worker/testInfo';
 import type { ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import type { Playwright as PlaywrightImpl } from '../../playwright-core/src/client/playwright';
 import type { Browser as BrowserImpl } from '../../playwright-core/src/client/browser';
@@ -83,14 +83,15 @@ const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
   trace: ['off', { scope: 'worker', option: true, box: true }],
   testIdAttribute: ['data-testid', { option: true, box: true }],
   _combinedContextOptions: [{}, { box: true }],
-  _setupArtifacts: [async ({ playwright, screenshot, _combinedContextOptions }, use, testInfo) => {
+  _setupArtifacts: [async ({ playwright, screenshot, _combinedContextOptions }, use, _testInfo) => {
+    const testInfo = _testInfo as _TestInfoEx;
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
-    await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, testInfo._artifactsDir(), screenshot);
+    await artifactsRecorder.willStartTest(testInfo);
 
     const tracingGroupSteps: TestStepInternal[] = [];
     const pausedContexts = new Set<BrowserContextImpl>();
@@ -152,18 +153,18 @@ const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
           const paused = !!context.debugger.pausedDetails();
           if (pausedContexts.has(context) && !paused) {
             pausedContexts.delete(context);
-            (testInfo as TestInfoImpl)._setIgnoreTimeouts(false);
+            testInfo._setIgnoreTimeouts(false);
           } else if (!pausedContexts.has(context) && paused) {
             pausedContexts.add(context);
-            (testInfo as TestInfoImpl)._setIgnoreTimeouts(true);
+            testInfo._setIgnoreTimeouts(true);
           }
         });
 
         await artifactsRecorder.didCreateBrowserContext(context);
-        const currentTestInfo = globals.currentTestInfo() as TestInfoImpl | undefined;
+        const currentTestInfo = globals.currentTestInfo();
         if (currentTestInfo) {
           attachConnectedHeaderIfNeeded(currentTestInfo, context.browser());
-          currentTestInfo._onCustomMessageCallback = createCustomMessageHandler(currentTestInfo, context);
+          currentTestInfo._callbacks.onCustomMessage = createCustomMessageHandler(currentTestInfo, context);
           await runDaemonForContext(currentTestInfo, context);
         }
       },
@@ -190,7 +191,7 @@ const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
   request: async ({ playwright }, use) => {
     const request = await playwright.request.newContext();
     await use(request);
-    const hook = (test.info() as TestInfoImpl)._currentHookType();
+    const hook = (test.info() as _TestInfoEx)._currentHookType();
     if (hook === 'beforeAll') {
       await request.dispose({ reason: [
         `Fixture { request } from beforeAll cannot be reused in a test.`,
@@ -221,8 +222,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     const options: LaunchOptions = {
       handleSIGINT: false,
       ...launchOptions,
-      tracesDir: tracing().tracesDir(),
-      artifactsDir: tracing().artifactsDir(),
+      tracesDir: (test.info() as _TestInfoEx)._tracesDir(),
+      artifactsDir: (test.info() as _TestInfoEx)._artifactsDir(),
     };
     if (headless !== undefined)
       options.headless = headless;
@@ -381,13 +382,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
   }, { scope: 'test', box: true }],
 
   _setupContextOptions: [async ({ playwright, actionTimeout, navigationTimeout, testIdAttribute }, use, _testInfo) => {
-    const testInfo = _testInfo as TestInfoImpl;
+    const testInfo = _testInfo as _TestInfoEx;
     if (testIdAttribute)
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = process.platform;
-    testInfo._onCustomMessageCallback = () => Promise.reject(new Error('Only tests that use default Playwright context or page fixture support test_debug'));
+    testInfo._callbacks.onCustomMessage = () => Promise.reject(new Error('Only tests that use default Playwright context or page fixture support test_debug'));
     if (debugMode() === 'inspector')
-      (testInfo as TestInfoImpl)._setIgnoreTimeouts(true);
+      testInfo._setIgnoreTimeouts(true);
 
     playwright._defaultContextTimeout = actionTimeout || 0;
     playwright._defaultContextNavigationTimeout = navigationTimeout || 0;
@@ -397,14 +398,14 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
   _contextFactory: [async ({ browser, video, _reuseContext, _combinedContextOptions /** mitigate dep-via-auto lack of traceability */ }, use, testInfo) => {
-    const testInfoImpl = testInfo as TestInfoImpl;
+    const testInfoEx = testInfo as _TestInfoEx;
     const videoMode = normalizeVideoMode(video);
     const captureVideo = shouldCaptureVideo(videoMode, testInfo) && !_reuseContext;
     const contexts = new Map<BrowserContext, { close: () => Promise<void>, pagesWithVideo: Page[] }>();
     let counter = 0;
 
     await use(async options => {
-      const hook = testInfoImpl._currentHookType();
+      const hook = testInfoEx._currentHookType();
       if (hook === 'beforeAll' || hook === 'afterAll') {
         throw new Error([
           `"context" and "page" fixtures are not supported in "${hook}" since they are created on a per-test basis.`,
@@ -415,7 +416,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
       const show = typeof video === 'string' ? undefined : video.show;
       const videoOptions: BrowserContextOptions = captureVideo ? {
         recordVideo: {
-          dir: tracing().artifactsDir(),
+          dir: testInfoEx._artifactsDir(),
           size: typeof video === 'string' ? undefined : video.size,
           showActions: show?.actions,
         }
@@ -471,7 +472,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
 
   context: async ({ browser, video, _reuseContext, _contextFactory }, use, testInfoPublic) => {
     const browserImpl = browser as BrowserImpl;
-    const testInfo = testInfoPublic as TestInfoImpl;
+    const testInfo = testInfoPublic as _TestInfoEx;
     const show = typeof video === 'string' ? undefined : video.show;
     attachConnectedHeaderIfNeeded(testInfo, browserImpl);
     if (!_reuseContext) {
@@ -611,6 +612,7 @@ function resolveClientCerticates(clientCertificates: ClientCertificates): Client
 }
 
 const kTracingStarted = Symbol('kTracingStarted');
+let traceOrdinal = 0;
 
 function connectOptionsFromEnv() {
   const wsEndpoint = process.env.PW_TEST_CONNECT_WS_ENDPOINT;
@@ -625,6 +627,13 @@ function connectOptionsFromEnv() {
 }
 
 type SnapshotRecorderMode = 'on' | 'off' | 'only-on-failure' | 'on-first-failure';
+
+function isFailure(testInfo: TestInfo) {
+  return testInfo.status !== 'skipped' && testInfo.status !== testInfo.expectedStatus;
+}
+
+// Stamped on the page, holding the TestInfo the page was last snapshotted for.
+const kSnapshottedForTestInfo = Symbol('snapshottedForTestInfo');
 
 class SnapshotRecorder {
   private _ordinal = 0;
@@ -647,8 +656,8 @@ class SnapshotRecorder {
 
   private shouldCaptureUponFinish() {
     return this._mode === 'on' ||
-        (this._mode === 'only-on-failure' && this.testInfo._isFailure()) ||
-        (this._mode === 'on-first-failure' && this.testInfo._isFailure() && this.testInfo.retry === 0);
+        (this._mode === 'only-on-failure' && isFailure(this.testInfo)) ||
+        (this._mode === 'on-first-failure' && isFailure(this.testInfo) && this.testInfo.retry === 0);
   }
 
   async maybeCapture() {
@@ -681,7 +690,7 @@ class SnapshotRecorder {
   }
 
   private _createAttachmentPath() {
-    const testFailed = this.testInfo._isFailure();
+    const testFailed = isFailure(this.testInfo);
     const index = this._ordinal + 1;
     ++this._ordinal;
     const path = this.testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${index}${this._extension}`);
@@ -695,10 +704,11 @@ class SnapshotRecorder {
 
   private async _snapshotPage(page: PageImpl, temporary: boolean) {
     // Make sure we do not snapshot the same page twice for a single TestInfo,
-    // which is reused between beforeAll(s), test and afterAll(s).
-    if ((page as any)[this.testInfo._uniqueSymbol])
+    // which is reused between beforeAll(s), test and afterAll(s),
+    // each having their own ArtifactsRecorder.
+    if ((page as any)[kSnapshottedForTestInfo] === this.testInfo)
       return;
-    (page as any)[this.testInfo._uniqueSymbol] = true;
+    (page as any)[kSnapshottedForTestInfo] = this.testInfo;
     try {
       const path = temporary ? this._createTemporaryArtifact(createGuid() + this._extension) : this._createAttachmentPath();
       await this._doSnapshot(page, path);
@@ -711,13 +721,13 @@ class SnapshotRecorder {
     }
   }
 
-  private get testInfo(): TestInfoImpl {
+  private get testInfo(): _TestInfoEx {
     return this._artifactsRecorder._testInfo;
   }
 }
 
 class ArtifactsRecorder {
-  _testInfo!: TestInfoImpl;
+  _testInfo!: _TestInfoEx;
   _playwright: PlaywrightImpl;
   _artifactsDir: string;
   private _startedCollectingArtifacts: symbol;
@@ -738,9 +748,9 @@ class ArtifactsRecorder {
     });
   }
 
-  async willStartTest(testInfo: TestInfoImpl) {
+  async willStartTest(testInfo: _TestInfoEx) {
     this._testInfo = testInfo;
-    testInfo._onDidFinishTestFunctionCallbacks.add(() => this.didFinishTestFunction());
+    testInfo._callbacks.onDidFinishTestFunction = () => this.didFinishTestFunction();
 
     this._screenshotRecorder.fixOrdinal();
 
@@ -827,21 +837,21 @@ class ArtifactsRecorder {
       if (errorContextContent) {
         const filePath = this._testInfo.outputPath('error-context.md');
         await fs.promises.writeFile(filePath, errorContextContent, 'utf8');
-        this._testInfo._attach({
+        this._testInfo.attachments.push({
           name: 'error-context',
           contentType: 'text/markdown',
           path: filePath,
-        }, undefined);
+        });
       }
     }
   }
 
   private async _startTraceChunkOnContextCreation(channelOwner: ChannelOwner, tracing: Tracing) {
     await channelOwner._wrapApiCall(async () => {
-      const options = this._testInfo._tracing.traceOptions();
+      const options = this._testInfo._traceOptions();
       if (options) {
-        const title = this._testInfo._tracing.traceTitle();
-        const name = this._testInfo._tracing.generateNextTraceRecordingName();
+        const title = this._testInfo._traceTitle();
+        const name = this._generateNextTraceRecordingName();
         if (!(tracing as any)[kTracingStarted]) {
           await tracing.start({ ...options, title, name });
           (tracing as any)[kTracingStarted] = true;
@@ -857,18 +867,30 @@ class ArtifactsRecorder {
     }, { internal: true });
   }
 
+  private _generateNextTraceRecordingName() {
+    const ordinalSuffix = traceOrdinal ? `-recording${traceOrdinal}` : '';
+    ++traceOrdinal;
+    const retrySuffix = this._testInfo.retry ? `-retry${this._testInfo.retry}` : '';
+    // Note that trace name must start with testId for live tracing to work.
+    return `${this._testInfo.testId}${retrySuffix}${ordinalSuffix}`;
+  }
+
   private async _stopTracing(channelOwner: ChannelOwner, tracing: Tracing) {
     await channelOwner._wrapApiCall(async () => {
       if ((tracing as any)[this._startedCollectingArtifacts])
         return;
       (tracing as any)[this._startedCollectingArtifacts] = true;
-      if (this._testInfo._tracing.traceOptions() && (tracing as any)[kTracingStarted])
-        await tracing.stopChunk({ path: this._testInfo._tracing.maybeGenerateNextTraceRecordingPath() });
+      if (this._testInfo._traceOptions() && (tracing as any)[kTracingStarted]) {
+        const file = this._testInfo._shouldKeepTrace() ? path.join(this._artifactsDir, createGuid() + '.zip') : undefined;
+        await tracing.stopChunk({ path: file });
+        if (file)
+          this._testInfo._appendTraceFile(file);
+      }
     }, { internal: true });
   }
 }
 
-async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: BrowserContext, testAnnotate?: { level?: 'file' | 'title' | 'step', position?: string, fontSize?: number }) {
+async function installScreencastTitleUpdater(testInfo: _TestInfoEx, context: BrowserContext, testAnnotate?: { level?: 'file' | 'title' | 'step', position?: string, fontSize?: number }) {
   if (!testAnnotate)
     return;
 
@@ -889,11 +911,11 @@ async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: Br
       overlays.set(page, disposable);
     }
   };
-  testInfo._onUserStepBegin = async title => {
+  testInfo._callbacks.onUserStepBegin = async title => {
     stepStack.push(title);
     await updateOverlay();
   };
-  testInfo._onUserStepEnd = async () => {
+  testInfo._callbacks.onUserStepEnd = async () => {
     stepStack.pop();
     await updateOverlay();
   };
@@ -925,10 +947,6 @@ function renderTitle(type: string, method: string, params: Record<string, string
   if (params?.['selector'] && typeof params.selector === 'string')
     selector = asLocatorDescription('javascript', params.selector);
   return prefix + (selector ? ` ${selector}` : '');
-}
-
-function tracing() {
-  return (test.info() as TestInfoImpl)._tracing;
 }
 
 export const test = _utilityTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);

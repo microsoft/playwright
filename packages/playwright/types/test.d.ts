@@ -8963,6 +8963,23 @@ export default test;
 export const _baseTest: TestType<{}, {}>;
 export const expect: Expect<{}>;
 
+export interface _TestInfoEx extends TestInfo {
+  readonly _callbacks: {
+    onDidFinishTestFunction?: () => Promise<void>;
+    onCustomMessage?: (data: any) => Promise<any>;
+    onUserStepBegin?: (title: string) => Promise<void>;
+    onUserStepEnd?: () => Promise<void>;
+  };
+  _setIgnoreTimeouts(ignoreTimeouts: boolean): void;
+  _currentHookType(): 'beforeAll' | 'afterAll' | 'beforeEach' | 'afterEach' | undefined;
+  _artifactsDir(): string;
+  _tracesDir(): string;
+  _traceOptions(): (Exclude<PlaywrightWorkerOptions['trace'], string> & { live: boolean }) | undefined;
+  _traceTitle(): string;
+  _shouldKeepTrace(): boolean;
+  _appendTraceFile(file: string): void;
+}
+
 /**
  * Defines Playwright config
  */
