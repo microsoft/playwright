@@ -939,7 +939,7 @@ CORS RFC1918 enforcement.
     export type SharedDictionaryError = "UseErrorCrossOriginNoCorsRequest"|"UseErrorDictionaryLoadFailure"|"UseErrorMatchingDictionaryNotUsed"|"UseErrorUnexpectedContentDictionaryHeader"|"WriteErrorCossOriginNoCorsRequest"|"WriteErrorDisallowedBySettings"|"WriteErrorExpiredResponse"|"WriteErrorFeatureDisabled"|"WriteErrorInsufficientResources"|"WriteErrorInvalidMatchField"|"WriteErrorInvalidStructuredHeader"|"WriteErrorInvalidTTLField"|"WriteErrorNavigationRequest"|"WriteErrorNoMatchField"|"WriteErrorNonIntegerTTLField"|"WriteErrorNonListMatchDestField"|"WriteErrorNonSecureContext"|"WriteErrorNonStringIdField"|"WriteErrorNonStringInMatchDestList"|"WriteErrorInvalidMatchDestList"|"WriteErrorNonStringMatchField"|"WriteErrorNonTokenTypeField"|"WriteErrorRequestAborted"|"WriteErrorShuttingDown"|"WriteErrorTooLongIdField"|"WriteErrorUnsupportedType";
     export type SRIMessageSignatureError = "MissingSignatureHeader"|"MissingSignatureInputHeader"|"InvalidSignatureHeader"|"InvalidSignatureInputHeader"|"SignatureHeaderValueIsNotByteSequence"|"SignatureHeaderValueIsParameterized"|"SignatureHeaderValueIsIncorrectLength"|"SignatureInputHeaderMissingLabel"|"SignatureInputHeaderValueNotInnerList"|"SignatureInputHeaderValueMissingComponents"|"SignatureInputHeaderInvalidComponentType"|"SignatureInputHeaderInvalidComponentName"|"SignatureInputHeaderInvalidHeaderComponentParameter"|"SignatureInputHeaderInvalidDerivedComponentParameter"|"SignatureInputHeaderKeyIdLength"|"SignatureInputHeaderInvalidParameter"|"SignatureInputHeaderMissingRequiredParameters"|"ValidationFailedSignatureExpired"|"ValidationFailedInvalidLength"|"ValidationFailedSignatureMismatch"|"ValidationFailedIntegrityMismatch"|"SignatureBaseUnknownDerivedComponent"|"SignatureBaseMissingHeader"|"SignatureBaseInvalidUnencodedDigest"|"SignatureBaseUnsupportedComponent";
     export type UnencodedDigestError = "MalformedDictionary"|"UnknownAlgorithm"|"IncorrectDigestType"|"IncorrectDigestLength";
-    export type ConnectionAllowlistError = "InvalidHeader"|"MoreThanOneList"|"ItemNotInnerList"|"InvalidAllowlistItemType"|"ReportingEndpointNotToken"|"InvalidUrlPattern";
+    export type ConnectionAllowlistError = "InvalidHeader"|"MoreThanOneList"|"ItemNotInnerList"|"InvalidAllowlistItemType"|"ReportingEndpointNotToken"|"InvalidUrlPattern"|"IFrameAttributeLoosensEmbeddingRequirement"|"InvalidAllowConnectionAllowlistFrom"|"EmbeddingRequirementNotSatisfied";
     /**
      * Details for issues about documents in Quirks Mode
 or Limited Quirks Mode that affects page layouting.
@@ -1036,7 +1036,7 @@ Should be updated alongside RequestIdTokenStatus in
 third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
 all cases except for success.
      */
-    export type FederatedAuthRequestIssueReason = "ShouldEmbargo"|"TooManyRequests"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"ConfigNotInWellKnown"|"WellKnownTooBig"|"ConfigHttpNotFound"|"ConfigNoResponse"|"ConfigInvalidResponse"|"ConfigInvalidContentType"|"IdpNotPotentiallyTrustworthy"|"DisabledInSettings"|"DisabledInFlags"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"AccountsListEmpty"|"AccountsInvalidContentType"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenInvalidResponse"|"IdTokenIdpErrorResponse"|"IdTokenCrossSiteIdpErrorResponse"|"IdTokenInvalidRequest"|"IdTokenInvalidContentType"|"ErrorIdToken"|"Canceled"|"RpPageNotVisible"|"SilentMediationFailure"|"NotSignedInWithIdp"|"MissingTransientUserActivation"|"ReplacedByActiveMode"|"RelyingPartyOriginIsOpaque"|"TypeNotMatching"|"UiDismissedNoEmbargo"|"CorsError"|"SuppressedBySegmentationPlatform";
+    export type FederatedAuthRequestIssueReason = "ShouldEmbargo"|"TooManyRequests"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownBlockedByConnectionAllowlist"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"ConfigNotInWellKnown"|"WellKnownTooBig"|"ConfigHttpNotFound"|"ConfigNoResponse"|"ConfigBlockedByConnectionAllowlist"|"ConfigInvalidResponse"|"ConfigInvalidContentType"|"IdpNotPotentiallyTrustworthy"|"DisabledInSettings"|"DisabledInFlags"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsBlockedByConnectionAllowlist"|"AccountsInvalidResponse"|"AccountsListEmpty"|"AccountsInvalidContentType"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenBlockedByConnectionAllowlist"|"IdTokenInvalidResponse"|"IdTokenIdpErrorResponse"|"IdTokenCrossSiteIdpErrorResponse"|"IdTokenInvalidRequest"|"IdTokenInvalidContentType"|"ErrorIdToken"|"Canceled"|"RpPageNotVisible"|"SilentMediationFailure"|"NotSignedInWithIdp"|"MissingTransientUserActivation"|"ReplacedByActiveMode"|"RelyingPartyOriginIsOpaque"|"TypeNotMatching"|"UiDismissedNoEmbargo"|"CorsError"|"SuppressedBySegmentationPlatform";
     export interface FederatedAuthUserInfoRequestIssueDetails {
       federatedAuthUserInfoRequestIssueReason: FederatedAuthUserInfoRequestIssueReason;
     }
@@ -5843,6 +5843,22 @@ if there are multiple invokers, this is just an estimate.
        */
       nodeIds: NodeId[];
     }
+    /**
+     * When enabling, this API forces an element to gain interest in its target,
+keeping interest active until disabled.
+     */
+    export type forceShowInterestParameters = {
+      /**
+       * Id of the interest invoker HTMLElement.
+       */
+      nodeId: NodeId;
+      /**
+       * If true, opens and holds interest. If false, releases forced interest.
+       */
+      enable: boolean;
+    }
+    export type forceShowInterestReturnValue = {
+    }
   }
   
   /**
@@ -7159,6 +7175,19 @@ respective variables to be undefined, even if previously overridden.
     export type setSafeAreaInsetsOverrideReturnValue = {
     }
     /**
+     * Overrides virtual keyboard geometry in CSS pixels, relative to the top-level viewport. The
+provided rect is used for navigator.virtualKeyboard.boundingRect, geometrychange events, and
+env(keyboard-inset-*) values on the inspected frame. The override applies independently of
+navigator.virtualKeyboard.overlaysContent so clients can preview overlay geometry without
+mutating page state. Values are rounded to the nearest CSS pixel. Omitting the rect clears the
+override.
+     */
+    export type setVirtualKeyboardGeometryOverrideParameters = {
+      keyboardRect?: DOM.Rect;
+    }
+    export type setVirtualKeyboardGeometryOverrideReturnValue = {
+    }
+    /**
      * Overrides the values of device screen dimensions (window.screen.width, window.screen.height,
 window.innerWidth, window.innerHeight, and "device-width"/"device-height"-related CSS media
 query results).
@@ -7597,6 +7626,17 @@ on Android.
       hardwareConcurrency: number;
     }
     export type setHardwareConcurrencyOverrideReturnValue = {
+    }
+    /**
+     * Overrides the value of navigator.cpuPerformance
+     */
+    export type setCPUPerformanceOverrideParameters = {
+      /**
+       * Override value. Omitting the parameter disables the override.
+       */
+      performanceTier?: "unknown"|"low"|"mid"|"high"|"ultra";
+    }
+    export type setCPUPerformanceOverrideReturnValue = {
     }
     /**
      * Allows overriding user agent with the given string.
@@ -10345,10 +10385,6 @@ a network request.
      */
     export type RequestId = string;
     /**
-     * Unique intercepted request identifier.
-     */
-    export type InterceptionId = string;
-    /**
      * Network level fetch failure reason.
      */
     export type ErrorReason = "Failed"|"Aborted"|"TimedOut"|"AccessDenied"|"ConnectionClosed"|"ConnectionReset"|"ConnectionRefused"|"ConnectionAborted"|"ConnectionFailed"|"NameNotResolved"|"InternetDisconnected"|"AddressUnreachable"|"BlockedByClient"|"BlockedByResponse";
@@ -11203,29 +11239,6 @@ ProvideCredentials.
       password?: string;
     }
     /**
-     * Stages of the interception to begin intercepting. Request will intercept before the request is
-sent. Response will intercept after the response is received.
-     */
-    export type InterceptionStage = "Request"|"HeadersReceived";
-    /**
-     * Request pattern for interception.
-     */
-    export interface RequestPattern {
-      /**
-       * Wildcards (`'*'` -> zero or more, `'?'` -> exactly one) are allowed. Escape character is
-backslash. Omitting is equivalent to `"*"`.
-       */
-      urlPattern?: string;
-      /**
-       * If set, only requests for matching resource types will be intercepted.
-       */
-      resourceType?: ResourceType;
-      /**
-       * Stage at which to begin intercepting requests. Default is Request.
-       */
-      interceptionStage?: InterceptionStage;
-    }
-    /**
      * Information about a signed exchange signature.
 https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-impl.html#rfc.section.3.1
      */
@@ -11340,10 +11353,6 @@ extra headers.
        */
       errors?: SignedExchangeError[];
     }
-    /**
-     * List of content encodings supported by the backend.
-     */
-    export type ContentEncoding = "deflate"|"gzip"|"br"|"zstd";
     export interface NetworkConditions {
       /**
        * Only matching requests will be affected by these conditions. Patterns use the URLPattern constructor string
@@ -11730,7 +11739,7 @@ details; this boolean is true if that value is populated.
      * A fetch result for a device bound session creation or refresh.
 LINT.IfChange(DeviceBoundSessionFetchResult)
      */
-    export type DeviceBoundSessionFetchResult = "Success"|"SigningKeyGenerationError"|"AttestationKeyGenerationError"|"SigningError"|"TransientSigningError"|"ServerRequestedTermination"|"InvalidSessionId"|"InvalidChallenge"|"TooManyChallenges"|"InvalidFetcherUrl"|"InvalidRefreshUrl"|"TransientHttpError"|"ScopeOriginSameSiteMismatch"|"RefreshUrlSameSiteMismatch"|"MismatchedSessionId"|"MissingScope"|"NoCredentials"|"SubdomainRegistrationWellKnownUnavailable"|"SubdomainRegistrationUnauthorized"|"SubdomainRegistrationWellKnownMalformed"|"SessionProviderWellKnownUnavailable"|"RelyingPartyWellKnownUnavailable"|"FederatedKeyThumbprintMismatch"|"InvalidFederatedSessionUrl"|"InvalidFederatedKey"|"TooManyRelyingOriginLabels"|"BoundCookieSetForbidden"|"NetError"|"ProxyError"|"EmptySessionConfig"|"InvalidCredentialsConfig"|"InvalidCredentialsType"|"InvalidCredentialsEmptyName"|"InvalidCredentialsCookie"|"PersistentHttpError"|"RegistrationAttemptedChallenge"|"InvalidScopeOrigin"|"ScopeOriginContainsPath"|"RefreshInitiatorNotString"|"RefreshInitiatorInvalidHostPattern"|"InvalidScopeSpecification"|"MissingScopeSpecificationType"|"EmptyScopeSpecificationDomain"|"EmptyScopeSpecificationPath"|"InvalidScopeSpecificationType"|"InvalidScopeIncludeSite"|"MissingScopeIncludeSite"|"FederatedNotAuthorizedByProvider"|"FederatedNotAuthorizedByRelyingParty"|"SessionProviderWellKnownMalformed"|"SessionProviderWellKnownHasProviderOrigin"|"RelyingPartyWellKnownMalformed"|"RelyingPartyWellKnownHasRelyingOrigins"|"InvalidFederatedSessionProviderSessionMissing"|"InvalidFederatedSessionWrongProviderOrigin"|"InvalidCredentialsCookieCreationTime"|"InvalidCredentialsCookieName"|"InvalidCredentialsCookieParsing"|"InvalidCredentialsCookieUnpermittedAttribute"|"InvalidCredentialsCookieInvalidDomain"|"InvalidCredentialsCookiePrefix"|"InvalidScopeRulePath"|"InvalidScopeRuleHostPattern"|"ScopeRuleOriginScopedHostPatternMismatch"|"ScopeRuleSiteScopedHostPatternMismatch"|"SigningQuotaExceeded"|"InvalidConfigJson"|"InvalidFederatedSessionProviderFailedToRestoreKey"|"FailedToUnwrapKey"|"SessionDeletedDuringRefresh"|"CrossOriginRegistrationSiteNotIncluded"|"InvalidPreProvisionedKeyInitiatorMissing"|"PreProvisionedKeyAccessNotGranted"|"PreProvisionedKeyNotFound";
+    export type DeviceBoundSessionFetchResult = "Success"|"SigningKeyGenerationError"|"AttestationKeyGenerationError"|"SigningError"|"TransientSigningError"|"ServerRequestedTermination"|"InvalidSessionId"|"InvalidChallenge"|"TooManyChallenges"|"InvalidFetcherUrl"|"InvalidRefreshUrl"|"TransientHttpError"|"ScopeOriginSameSiteMismatch"|"RefreshUrlSameSiteMismatch"|"MismatchedSessionId"|"MissingScope"|"NoCredentials"|"SubdomainRegistrationWellKnownUnavailable"|"SubdomainRegistrationUnauthorized"|"SubdomainRegistrationWellKnownMalformed"|"SessionProviderWellKnownUnavailable"|"RelyingPartyWellKnownUnavailable"|"FederatedKeyThumbprintMismatch"|"InvalidFederatedSessionUrl"|"InvalidFederatedKey"|"TooManyRelyingOriginLabels"|"BoundCookieSetForbidden"|"NetError"|"ProxyError"|"EmptySessionConfig"|"InvalidCredentialsConfig"|"InvalidCredentialsType"|"InvalidCredentialsEmptyName"|"InvalidCredentialsCookie"|"PersistentHttpError"|"RegistrationAttemptedChallenge"|"InvalidScopeOrigin"|"ScopeOriginContainsPath"|"RefreshInitiatorNotString"|"RefreshInitiatorInvalidHostPattern"|"InvalidScopeSpecification"|"MissingScopeSpecificationType"|"EmptyScopeSpecificationDomain"|"EmptyScopeSpecificationPath"|"InvalidScopeSpecificationType"|"InvalidScopeIncludeSite"|"MissingScopeIncludeSite"|"FederatedNotAuthorizedByProvider"|"FederatedNotAuthorizedByRelyingParty"|"SessionProviderWellKnownMalformed"|"SessionProviderWellKnownHasProviderOrigin"|"RelyingPartyWellKnownMalformed"|"RelyingPartyWellKnownHasRelyingOrigins"|"InvalidFederatedSessionProviderSessionMissing"|"InvalidFederatedSessionWrongProviderOrigin"|"InvalidCredentialsCookieCreationTime"|"InvalidCredentialsCookieName"|"InvalidCredentialsCookieParsing"|"InvalidCredentialsCookieUnpermittedAttribute"|"InvalidCredentialsCookieInvalidDomain"|"InvalidCredentialsCookiePrefix"|"InvalidScopeRulePath"|"InvalidScopeRuleHostPattern"|"ScopeRuleOriginScopedHostPatternMismatch"|"ScopeRuleSiteScopedHostPatternMismatch"|"SigningQuotaExceeded"|"InvalidConfigJson"|"InvalidFederatedSessionProviderFailedToRestoreKey"|"FailedToUnwrapKey"|"SessionDeletedDuringRefresh"|"CrossOriginRegistrationSiteNotIncluded"|"InvalidPreProvisionedKeyInitiatorMissing"|"PreProvisionedKeyAccessNotGranted"|"PreProvisionedKeyNotFound"|"AttestationCertificationError"|"AttestationSigningError";
     /**
      * Details about a failed device bound session network request.
      */
@@ -11779,10 +11788,12 @@ one.
     export interface RefreshEventDetails {
       /**
        * The result of a refresh.
+LINT.IfChange(DeviceBoundSessionRefreshResult)
        */
-      refreshResult: "Refreshed"|"InitializedService"|"Unreachable"|"ServerError"|"FatalError"|"SigningQuotaExceeded"|"RefreshedAsWaiter"|"TransientSigningError";
+      refreshResult: "Refreshed"|"InitializedService"|"Unreachable"|"ServerError"|"FatalError"|"SigningQuotaExceeded"|"RefreshedAsWaiter"|"TransientSigningError"|"InScopeRefreshNotYetNeeded";
       /**
-       * If there was a fetch attempt, the result of that.
+       * LINT.ThenChange(//net/device_bound_sessions/refresh_result.h:DeviceBoundSessionRefreshResult,//content/browser/devtools/protocol/network_handler.cc:DeviceBoundSessionRefreshResult)
+If there was a fetch attempt, the result of that.
        */
       fetchResult?: DeviceBoundSessionFetchResult;
       /**
@@ -11950,66 +11961,6 @@ CORB and streaming.
        * Total number of bytes received for this request.
        */
       encodedDataLength: number;
-    }
-    /**
-     * Details of an intercepted HTTP request, which must be either allowed, blocked, modified or
-mocked.
-Deprecated, use Fetch.requestPaused instead.
-     */
-    export type requestInterceptedPayload = {
-      /**
-       * Each request the page makes will have a unique id, however if any redirects are encountered
-while processing that fetch, they will be reported with the same id as the original fetch.
-Likewise if HTTP authentication is needed then the same fetch id will be used.
-       */
-      interceptionId: InterceptionId;
-      request: Request;
-      /**
-       * The id of the frame that initiated the request.
-       */
-      frameId: Page.FrameId;
-      /**
-       * How the requested resource will be used.
-       */
-      resourceType: ResourceType;
-      /**
-       * Whether this is a navigation request, which can abort the navigation completely.
-       */
-      isNavigationRequest: boolean;
-      /**
-       * Set if the request is a navigation that will result in a download.
-Only present after response is received from the server (i.e. HeadersReceived stage).
-       */
-      isDownload?: boolean;
-      /**
-       * Redirect location, only sent if a redirect was intercepted.
-       */
-      redirectUrl?: string;
-      /**
-       * Details of the Authorization Challenge encountered. If this is set then
-continueInterceptedRequest must contain an authChallengeResponse.
-       */
-      authChallenge?: AuthChallenge;
-      /**
-       * Response error if intercepted at response stage or if redirect occurred while intercepting
-request.
-       */
-      responseErrorReason?: ErrorReason;
-      /**
-       * Response code if intercepted at response stage or if redirect occurred while intercepting
-request or auth retry occurred.
-       */
-      responseStatusCode?: number;
-      /**
-       * Response headers if intercepted at the response stage or if redirect occurred while
-intercepting request or auth retry occurred.
-       */
-      responseHeaders?: Headers;
-      /**
-       * If the intercepted request had a corresponding requestWillBeSent event fired for it, then
-this requestId will be the same as the requestId present in the requestWillBeSent event.
-       */
-      requestId?: RequestId;
     }
     /**
      * Fired if request ended up loading from cache.
@@ -12345,7 +12296,7 @@ or were emitted for this request.
      */
     export type directTCPSocketAbortedPayload = {
       identifier: RequestId;
-      errorMessage: string;
+      errorMessage: ErrorReason;
       timestamp: MonotonicTime;
     }
     /**
@@ -12410,7 +12361,7 @@ or were emitted for this request.
      */
     export type directUDPSocketAbortedPayload = {
       identifier: RequestId;
-      errorMessage: string;
+      errorMessage: ErrorReason;
       timestamp: MonotonicTime;
     }
     /**
@@ -12640,24 +12591,6 @@ failed events.
     }
     
     /**
-     * Sets a list of content encodings that will be accepted. Empty list means no encoding is accepted.
-     */
-    export type setAcceptedEncodingsParameters = {
-      /**
-       * List of accepted content encodings.
-       */
-      encodings: ContentEncoding[];
-    }
-    export type setAcceptedEncodingsReturnValue = {
-    }
-    /**
-     * Clears accepted encodings set by setAcceptedEncodings
-     */
-    export type clearAcceptedEncodingsOverrideParameters = {
-    }
-    export type clearAcceptedEncodingsOverrideReturnValue = {
-    }
-    /**
      * Tells whether clearing browser cache is supported.
      */
     export type canClearBrowserCacheParameters = {
@@ -12703,52 +12636,6 @@ failed events.
     export type clearBrowserCookiesParameters = {
     }
     export type clearBrowserCookiesReturnValue = {
-    }
-    /**
-     * Response to Network.requestIntercepted which either modifies the request to continue with any
-modifications, or blocks it, or completes it with the provided response bytes. If a network
-fetch occurs as a result which encounters a redirect an additional Network.requestIntercepted
-event will be sent with the same InterceptionId.
-Deprecated, use Fetch.continueRequest, Fetch.fulfillRequest and Fetch.failRequest instead.
-     */
-    export type continueInterceptedRequestParameters = {
-      interceptionId: InterceptionId;
-      /**
-       * If set this causes the request to fail with the given reason. Passing `Aborted` for requests
-marked with `isNavigationRequest` also cancels the navigation. Must not be set in response
-to an authChallenge.
-       */
-      errorReason?: ErrorReason;
-      /**
-       * If set the requests completes using with the provided base64 encoded raw response, including
-HTTP status line and headers etc... Must not be set in response to an authChallenge.
-       */
-      rawResponse?: binary;
-      /**
-       * If set the request url will be modified in a way that's not observable by page. Must not be
-set in response to an authChallenge.
-       */
-      url?: string;
-      /**
-       * If set this allows the request method to be overridden. Must not be set in response to an
-authChallenge.
-       */
-      method?: string;
-      /**
-       * If set this allows postData to be set. Must not be set in response to an authChallenge.
-       */
-      postData?: string;
-      /**
-       * If set this allows the request headers to be changed. Must not be set in response to an
-authChallenge.
-       */
-      headers?: Headers;
-      /**
-       * Response to a requestIntercepted with an authChallenge. Must not be set otherwise.
-       */
-      authChallengeResponse?: AuthChallengeResponse;
-    }
-    export type continueInterceptedRequestReturnValue = {
     }
     /**
      * Deletes browser cookies with matching name and url or domain/path/partitionKey pair.
@@ -13014,37 +12901,6 @@ the URLs of the page and all of its subframes.
       base64Encoded: boolean;
     }
     /**
-     * Returns content served for the given currently intercepted request.
-     */
-    export type getResponseBodyForInterceptionParameters = {
-      /**
-       * Identifier for the intercepted request to get body for.
-       */
-      interceptionId: InterceptionId;
-    }
-    export type getResponseBodyForInterceptionReturnValue = {
-      /**
-       * Response body.
-       */
-      body: string;
-      /**
-       * True, if content was sent as base64.
-       */
-      base64Encoded: boolean;
-    }
-    /**
-     * Returns a handle to the stream representing the response body. Note that after this command,
-the intercepted request can't be continued as is -- you either need to cancel it or to provide
-the response body. The stream only supports sequential read, IO.read will fail if the position
-is specified.
-     */
-    export type takeResponseBodyForInterceptionAsStreamParameters = {
-      interceptionId: InterceptionId;
-    }
-    export type takeResponseBodyForInterceptionAsStreamReturnValue = {
-      stream: IO.StreamHandle;
-    }
-    /**
      * This method sends a new XMLHttpRequest which is identical to the original one. The following
 parameters should be identical: method, url, async, request body, extra headers, withCredentials
 attribute, user, password.
@@ -13220,19 +13076,6 @@ This is a temporary ability and it will be removed in the future.
       enabled: boolean;
     }
     export type setAttachDebugStackReturnValue = {
-    }
-    /**
-     * Sets the requests to intercept that match the provided patterns and optionally resource types.
-Deprecated, please use Fetch.enable instead.
-     */
-    export type setRequestInterceptionParameters = {
-      /**
-       * Requests matching any of these patterns will be forwarded and wait for the corresponding
-continueInterceptedRequest call.
-       */
-      patterns: RequestPattern[];
-    }
-    export type setRequestInterceptionReturnValue = {
     }
     /**
      * Allows overriding user agent with the given string.
@@ -14489,7 +14332,7 @@ supported yet.
 in services/network/public/cpp/permissions_policy/permissions_policy_features.json5.
 LINT.IfChange(PermissionsPolicyFeature)
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"record-ad-auction-events"|"rewriter"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"tools"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"webnn"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"rewriter"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"tools"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"webnn"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -14969,7 +14812,6 @@ Example URLs: http://www.google.com/file.html -> "google.com"
     export interface FileHandler {
       action: string;
       name: string;
-      icons?: ImageResource[];
       /**
        * Mimic a map, name is the key, accepts is the value.
        */
@@ -15088,7 +14930,7 @@ https://github.com/WICG/manifest-incubations/blob/gh-pages/scope_extensions-expl
     /**
      * List of not restored reasons for back-forward cache.
      */
-    export type BackForwardCacheNotRestoredReason = "NotPrimaryMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"ForwardCacheDisabled"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"NoResponseHead"|"Unknown"|"ActivationNavigationsDisallowedForBug1234857"|"ErrorDocument"|"FencedFramesEmbedder"|"CookieDisabled"|"HTTPAuthRequired"|"CookieFlushed"|"BroadcastChannelOnMessage"|"WebViewSettingsChanged"|"WebViewJavaScriptObjectChanged"|"WebViewMessageListenerInjected"|"WebViewSafeBrowsingAllowlistChanged"|"WebViewDocumentStartJavascriptChanged"|"WebSocket"|"WebTransport"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"OutstandingNetworkRequestOthers"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"WebXR"|"SharedWorker"|"SharedWorkerMessage"|"SharedWorkerWithNoActiveClient"|"WebLocks"|"WebLocksContention"|"WebHID"|"WebBluetooth"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"InjectedJavascript"|"InjectedStyleSheet"|"KeepaliveRequest"|"IndexedDBEvent"|"Dummy"|"JsNetworkRequestReceivedCacheControlNoStoreResource"|"WebRTCUsedWithCCNS"|"WebTransportUsedWithCCNS"|"WebSocketUsedWithCCNS"|"SmartCard"|"LiveMediaStreamTrack"|"UnloadHandler"|"ParserAborted"|"ContentSecurityHandler"|"ContentWebAuthenticationAPI"|"ContentFileChooser"|"ContentSerial"|"ContentFileSystemAccess"|"ContentMediaDevicesDispatcherHost"|"ContentWebBluetooth"|"ContentWebUSB"|"ContentMediaSessionService"|"ContentScreenReader"|"ContentDiscarded"|"EmbedderPopupBlockerTabHelper"|"EmbedderSafeBrowsingTriggeredPopupBlocker"|"EmbedderSafeBrowsingThreatDetails"|"EmbedderAppBannerManager"|"EmbedderDomDistillerViewerSource"|"EmbedderDomDistillerSelfDeletingRequestDelegate"|"EmbedderOomInterventionTabHelper"|"EmbedderOfflinePage"|"EmbedderChromePasswordManagerClientBindCredentialManager"|"EmbedderPermissionRequestManager"|"EmbedderModalDialog"|"EmbedderExtensions"|"EmbedderExtensionMessaging"|"EmbedderExtensionMessagingForOpenPort"|"EmbedderExtensionSentMessageToCachedFrame"|"EmbedderExtensionFrame"|"RequestedByWebViewClient"|"PostMessageByWebViewClient"|"CacheControlNoStoreDeviceBoundSessionTerminated"|"CacheLimitPrunedOnModerateMemoryPressure"|"CacheLimitPrunedOnCriticalMemoryPressure";
+    export type BackForwardCacheNotRestoredReason = "NotPrimaryMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"ForwardCacheDisabled"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"NoResponseHead"|"Unknown"|"ActivationNavigationsDisallowedForBug1234857"|"ErrorDocument"|"FencedFramesEmbedder"|"CookieDisabled"|"HTTPAuthRequired"|"CookieFlushed"|"BroadcastChannelOnMessage"|"WebViewSettingsChanged"|"WebViewJavaScriptObjectChanged"|"WebViewMessageListenerInjected"|"WebViewSafeBrowsingAllowlistChanged"|"WebViewDocumentStartJavascriptChanged"|"WebSocket"|"WebTransport"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"OutstandingNetworkRequestOthers"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"WebXR"|"SharedWorker"|"SharedWorkerMessage"|"SharedWorkerWithNoActiveClient"|"WebLocks"|"WebLocksContention"|"WebHID"|"WebBluetooth"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"InjectedJavascript"|"InjectedStyleSheet"|"KeepaliveRequest"|"IndexedDBEvent"|"Dummy"|"JsNetworkRequestReceivedCacheControlNoStoreResource"|"WebRTCUsedWithCCNS"|"WebTransportUsedWithCCNS"|"WebSocketUsedWithCCNS"|"SmartCard"|"LiveMediaStreamTrack"|"UnloadHandler"|"ParserAborted"|"ContentSecurityHandler"|"ContentWebAuthenticationAPI"|"ContentFileChooser"|"ContentSerial"|"ContentFileSystemAccess"|"ContentMediaDevicesDispatcherHost"|"ContentWebBluetooth"|"ContentWebUSB"|"ContentMediaSessionService"|"ContentScreenReader"|"ContentDiscarded"|"EmbedderPopupBlockerTabHelper"|"EmbedderSafeBrowsingTriggeredPopupBlocker"|"EmbedderSafeBrowsingThreatDetails"|"EmbedderAppBannerManager"|"EmbedderDomDistillerViewerSource"|"EmbedderDomDistillerSelfDeletingRequestDelegate"|"EmbedderOomInterventionTabHelper"|"EmbedderOfflinePage"|"EmbedderChromePasswordManagerClientBindCredentialManager"|"EmbedderPermissionRequestManager"|"EmbedderModalDialog"|"EmbedderExtensions"|"EmbedderExtensionMessaging"|"EmbedderExtensionMessagingForOpenPort"|"EmbedderExtensionSentMessageToCachedFrame"|"EmbedderExtensionFrame"|"EmbedderPrivilegedWebContents"|"RequestedByWebViewClient"|"PostMessageByWebViewClient"|"CacheControlNoStoreDeviceBoundSessionTerminated"|"CacheLimitPrunedOnModerateMemoryPressure"|"CacheLimitPrunedOnCriticalMemoryPressure";
     /**
      * Types of not restored reasons for back-forward cache.
      */
@@ -16389,6 +16231,41 @@ unavailable.
     export type startScreencastReturnValue = {
     }
     /**
+     * Starts screencast video recording.
+     */
+    export type startScreenRecordingParameters = {
+      audio?: boolean;
+      /**
+       * Maximum frame width in pixels.
+       */
+      maxWidth?: number;
+      /**
+       * Maximum frame height in pixels.
+       */
+      maxHeight?: number;
+      /**
+       * Maximum frame rate in frames per second.
+       */
+      frameRate?: number;
+    }
+    export type startScreenRecordingReturnValue = {
+      /**
+       * A handle of the stream that holds resulting screencast data.
+       */
+      stream: IO.StreamHandle;
+    }
+    /**
+     * Stops screencast video recording.
+     */
+    export type stopScreenRecordingParameters = {
+    }
+    export type stopScreenRecordingReturnValue = {
+      /**
+       * A handle of the stream that holds resulting screencast data.
+       */
+      stream: IO.StreamHandle;
+    }
+    /**
      * Force the page stop all navigations and pending resource fetches.
      */
     export type stopLoadingParameters = {
@@ -16834,7 +16711,7 @@ status is shared by prefetchStatusUpdated and prerenderStatusUpdated.
      * TODO(https://crbug.com/1384419): revisit the list of PrefetchStatus and
 filter out the ones that aren't necessary to the developers.
      */
-    export type PrefetchStatus = "PrefetchAllowed"|"PrefetchFailedIneligibleRedirect"|"PrefetchFailedInvalidRedirect"|"PrefetchFailedMIMENotSupported"|"PrefetchFailedNetError"|"PrefetchFailedNon2XX"|"PrefetchEvictedAfterBrowsingDataRemoved"|"PrefetchEvictedAfterCandidateRemoved"|"PrefetchEvictedForNewerPrefetch"|"PrefetchHeldback"|"PrefetchIneligibleRetryAfter"|"PrefetchIsPrivacyDecoy"|"PrefetchIsStale"|"PrefetchNotEligibleBlockedByConnectionAllowlist"|"PrefetchNotEligibleBrowserContextOffTheRecord"|"PrefetchNotEligibleDataSaverEnabled"|"PrefetchNotEligibleExistingProxy"|"PrefetchNotEligibleHostIsNonUnique"|"PrefetchNotEligibleNonDefaultStoragePartition"|"PrefetchNotEligibleSameSiteCrossOriginPrefetchRequiredProxy"|"PrefetchNotEligibleSchemeIsNotHttps"|"PrefetchNotEligibleUserHasCookies"|"PrefetchNotEligibleUserHasServiceWorker"|"PrefetchNotEligibleUserHasServiceWorkerNoFetchHandler"|"PrefetchNotEligibleRedirectFromServiceWorker"|"PrefetchNotEligibleRedirectToServiceWorker"|"PrefetchNotEligibleBatterySaverEnabled"|"PrefetchNotEligiblePreloadingDisabled"|"PrefetchNotFinishedInTime"|"PrefetchNotStarted"|"PrefetchNotUsedCookiesChanged"|"PrefetchProxyNotAvailable"|"PrefetchResponseUsed"|"PrefetchSuccessfulButNotUsed"|"PrefetchNotUsedProbeFailed"|"PrefetchCancelledOnUserNavigation";
+    export type PrefetchStatus = "PrefetchAllowed"|"PrefetchFailedIneligibleRedirect"|"PrefetchFailedInvalidRedirect"|"PrefetchFailedMIMENotSupported"|"PrefetchFailedNetError"|"PrefetchFailedNon2XX"|"PrefetchEvictedAfterBrowsingDataRemoved"|"PrefetchEvictedAfterCandidateRemoved"|"PrefetchEvictedForNewerPrefetch"|"PrefetchHeldback"|"PrefetchIneligibleRetryAfter"|"PrefetchIsPrivacyDecoy"|"PrefetchIsStale"|"PrefetchNotEligibleBlockedByConnectionAllowlist"|"PrefetchNotEligibleBrowserContextOffTheRecord"|"PrefetchNotEligibleCrossOrigin"|"PrefetchNotEligibleDataSaverEnabled"|"PrefetchNotEligibleExistingProxy"|"PrefetchNotEligibleHostIsNonUnique"|"PrefetchNotEligibleNonDefaultStoragePartition"|"PrefetchNotEligibleSameSiteCrossOriginPrefetchRequiredProxy"|"PrefetchNotEligibleSchemeIsNotHttps"|"PrefetchNotEligibleUserHasCookies"|"PrefetchNotEligibleUserHasServiceWorker"|"PrefetchNotEligibleUserHasServiceWorkerNoFetchHandler"|"PrefetchNotEligibleRedirectFromServiceWorker"|"PrefetchNotEligibleRedirectToServiceWorker"|"PrefetchNotEligibleBatterySaverEnabled"|"PrefetchNotEligiblePreloadingDisabled"|"PrefetchNotFinishedInTime"|"PrefetchNotStarted"|"PrefetchNotUsedCookiesChanged"|"PrefetchProxyNotAvailable"|"PrefetchResponseUsed"|"PrefetchSuccessfulButNotUsed"|"PrefetchNotUsedProbeFailed"|"PrefetchCancelledOnUserNavigation";
     /**
      * Information of headers to be displayed when the header mismatch occurred.
      */
@@ -19593,6 +19470,7 @@ capacity and glitch may occur.
        * Context sample rate.
        */
       sampleRate: number;
+      renderQuantumSize: number;
     }
     /**
      * Protocol object for AudioListener
@@ -19758,7 +19636,10 @@ API.
     export type AuthenticatorId = string;
     export type AuthenticatorProtocol = "u2f"|"ctap2";
     export type Ctap2Version = "ctap2_0"|"ctap2_1"|"ctap2_2";
-    export type AuthenticatorTransport = "usb"|"nfc"|"ble"|"cable"|"internal";
+    /**
+     * LINT.IfChange(AuthenticatorTransport)
+     */
+    export type AuthenticatorTransport = "usb"|"nfc"|"ble"|"cable"|"hybrid"|"smart-card"|"internal";
     export interface VirtualAuthenticatorOptions {
       protocol: AuthenticatorProtocol;
       /**
@@ -19863,7 +19744,7 @@ If -1, the credential won't have an associated signature counter, and
 every assertion operation will report a value of 0.
 See https://w3c.github.io/webauthn/#signature-counter
        */
-      signCount?: number;
+      signCount: number;
       /**
        * The large blob associated with the credential.
 See https://w3c.github.io/webauthn/#sctn-large-blob-extension
@@ -20824,6 +20705,10 @@ execution. Overrides `setPauseOnException` state.
        * Terminate execution after timing out (number of milliseconds).
        */
       timeout?: Runtime.TimeDelta;
+      /**
+       * Specifies the scope number to evaluate the expression in (default: 0, innermost scope).
+       */
+      scopeNumber?: number;
     }
     export type evaluateOnCallFrameReturnValue = {
       /**
@@ -21246,13 +21131,7 @@ or caught exceptions, no exceptions. Initial pause on exceptions state is `none`
     export type setReturnValueReturnValue = {
     }
     /**
-     * Edits JavaScript source live.
-
-In general, functions that are currently on the stack can not be edited with
-a single exception: If the edited function is the top-most stack frame and
-that is the only activation of that function on the stack. In this case
-the live edit will be successful and a `Debugger.restartFrame` for the
-top-most function is automatically triggered.
+     * Live edit is no longer supported and this command always fails with a "no longer available" error.
      */
     export type setScriptSourceParameters = {
       /**
@@ -23032,7 +22911,6 @@ Error was thrown.
     "Network.eventSourceMessageReceived": Network.eventSourceMessageReceivedPayload;
     "Network.loadingFailed": Network.loadingFailedPayload;
     "Network.loadingFinished": Network.loadingFinishedPayload;
-    "Network.requestIntercepted": Network.requestInterceptedPayload;
     "Network.requestServedFromCache": Network.requestServedFromCachePayload;
     "Network.requestWillBeSent": Network.requestWillBeSentPayload;
     "Network.resourceChangedPriority": Network.resourceChangedPriorityPayload;
@@ -23268,7 +23146,6 @@ Error was thrown.
     ["Network.eventSourceMessageReceived"]: [Network.eventSourceMessageReceivedPayload];
     ["Network.loadingFailed"]: [Network.loadingFailedPayload];
     ["Network.loadingFinished"]: [Network.loadingFinishedPayload];
-    ["Network.requestIntercepted"]: [Network.requestInterceptedPayload];
     ["Network.requestServedFromCache"]: [Network.requestServedFromCachePayload];
     ["Network.requestWillBeSent"]: [Network.requestWillBeSentPayload];
     ["Network.resourceChangedPriority"]: [Network.resourceChangedPriorityPayload];
@@ -23603,6 +23480,7 @@ Error was thrown.
     "DOM.getQueryingDescendantsForContainer": DOM.getQueryingDescendantsForContainerParameters;
     "DOM.getAnchorElement": DOM.getAnchorElementParameters;
     "DOM.forceShowPopover": DOM.forceShowPopoverParameters;
+    "DOM.forceShowInterest": DOM.forceShowInterestParameters;
     "DOMDebugger.getEventListeners": DOMDebugger.getEventListenersParameters;
     "DOMDebugger.removeDOMBreakpoint": DOMDebugger.removeDOMBreakpointParameters;
     "DOMDebugger.removeEventListenerBreakpoint": DOMDebugger.removeEventListenerBreakpointParameters;
@@ -23639,6 +23517,7 @@ Error was thrown.
     "Emulation.setCPUThrottlingRate": Emulation.setCPUThrottlingRateParameters;
     "Emulation.setDefaultBackgroundColorOverride": Emulation.setDefaultBackgroundColorOverrideParameters;
     "Emulation.setSafeAreaInsetsOverride": Emulation.setSafeAreaInsetsOverrideParameters;
+    "Emulation.setVirtualKeyboardGeometryOverride": Emulation.setVirtualKeyboardGeometryOverrideParameters;
     "Emulation.setDeviceMetricsOverride": Emulation.setDeviceMetricsOverrideParameters;
     "Emulation.setDevicePostureOverride": Emulation.setDevicePostureOverrideParameters;
     "Emulation.clearDevicePostureOverride": Emulation.clearDevicePostureOverrideParameters;
@@ -23669,6 +23548,7 @@ Error was thrown.
     "Emulation.setDisabledImageTypes": Emulation.setDisabledImageTypesParameters;
     "Emulation.setDataSaverOverride": Emulation.setDataSaverOverrideParameters;
     "Emulation.setHardwareConcurrencyOverride": Emulation.setHardwareConcurrencyOverrideParameters;
+    "Emulation.setCPUPerformanceOverride": Emulation.setCPUPerformanceOverrideParameters;
     "Emulation.setUserAgentOverride": Emulation.setUserAgentOverrideParameters;
     "Emulation.setAutomationOverride": Emulation.setAutomationOverrideParameters;
     "Emulation.setSmallViewportHeightDifferenceOverride": Emulation.setSmallViewportHeightDifferenceOverrideParameters;
@@ -23762,14 +23642,11 @@ Error was thrown.
     "Memory.getAllTimeSamplingProfile": Memory.getAllTimeSamplingProfileParameters;
     "Memory.getBrowserSamplingProfile": Memory.getBrowserSamplingProfileParameters;
     "Memory.getSamplingProfile": Memory.getSamplingProfileParameters;
-    "Network.setAcceptedEncodings": Network.setAcceptedEncodingsParameters;
-    "Network.clearAcceptedEncodingsOverride": Network.clearAcceptedEncodingsOverrideParameters;
     "Network.canClearBrowserCache": Network.canClearBrowserCacheParameters;
     "Network.canClearBrowserCookies": Network.canClearBrowserCookiesParameters;
     "Network.canEmulateNetworkConditions": Network.canEmulateNetworkConditionsParameters;
     "Network.clearBrowserCache": Network.clearBrowserCacheParameters;
     "Network.clearBrowserCookies": Network.clearBrowserCookiesParameters;
-    "Network.continueInterceptedRequest": Network.continueInterceptedRequestParameters;
     "Network.deleteCookies": Network.deleteCookiesParameters;
     "Network.disable": Network.disableParameters;
     "Network.emulateNetworkConditions": Network.emulateNetworkConditionsParameters;
@@ -23782,8 +23659,6 @@ Error was thrown.
     "Network.getCookies": Network.getCookiesParameters;
     "Network.getResponseBody": Network.getResponseBodyParameters;
     "Network.getRequestPostData": Network.getRequestPostDataParameters;
-    "Network.getResponseBodyForInterception": Network.getResponseBodyForInterceptionParameters;
-    "Network.takeResponseBodyForInterceptionAsStream": Network.takeResponseBodyForInterceptionAsStreamParameters;
     "Network.replayXHR": Network.replayXHRParameters;
     "Network.searchInResponseBody": Network.searchInResponseBodyParameters;
     "Network.setBlockedURLs": Network.setBlockedURLsParameters;
@@ -23793,7 +23668,6 @@ Error was thrown.
     "Network.setCookies": Network.setCookiesParameters;
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersParameters;
     "Network.setAttachDebugStack": Network.setAttachDebugStackParameters;
-    "Network.setRequestInterception": Network.setRequestInterceptionParameters;
     "Network.setUserAgentOverride": Network.setUserAgentOverrideParameters;
     "Network.streamResourceContent": Network.streamResourceContentParameters;
     "Network.getSecurityIsolationStatus": Network.getSecurityIsolationStatusParameters;
@@ -23887,6 +23761,8 @@ Error was thrown.
     "Page.setLifecycleEventsEnabled": Page.setLifecycleEventsEnabledParameters;
     "Page.setTouchEmulationEnabled": Page.setTouchEmulationEnabledParameters;
     "Page.startScreencast": Page.startScreencastParameters;
+    "Page.startScreenRecording": Page.startScreenRecordingParameters;
+    "Page.stopScreenRecording": Page.stopScreenRecordingParameters;
     "Page.stopLoading": Page.stopLoadingParameters;
     "Page.crash": Page.crashParameters;
     "Page.close": Page.closeParameters;
@@ -24270,6 +24146,7 @@ Error was thrown.
     "DOM.getQueryingDescendantsForContainer": DOM.getQueryingDescendantsForContainerReturnValue;
     "DOM.getAnchorElement": DOM.getAnchorElementReturnValue;
     "DOM.forceShowPopover": DOM.forceShowPopoverReturnValue;
+    "DOM.forceShowInterest": DOM.forceShowInterestReturnValue;
     "DOMDebugger.getEventListeners": DOMDebugger.getEventListenersReturnValue;
     "DOMDebugger.removeDOMBreakpoint": DOMDebugger.removeDOMBreakpointReturnValue;
     "DOMDebugger.removeEventListenerBreakpoint": DOMDebugger.removeEventListenerBreakpointReturnValue;
@@ -24306,6 +24183,7 @@ Error was thrown.
     "Emulation.setCPUThrottlingRate": Emulation.setCPUThrottlingRateReturnValue;
     "Emulation.setDefaultBackgroundColorOverride": Emulation.setDefaultBackgroundColorOverrideReturnValue;
     "Emulation.setSafeAreaInsetsOverride": Emulation.setSafeAreaInsetsOverrideReturnValue;
+    "Emulation.setVirtualKeyboardGeometryOverride": Emulation.setVirtualKeyboardGeometryOverrideReturnValue;
     "Emulation.setDeviceMetricsOverride": Emulation.setDeviceMetricsOverrideReturnValue;
     "Emulation.setDevicePostureOverride": Emulation.setDevicePostureOverrideReturnValue;
     "Emulation.clearDevicePostureOverride": Emulation.clearDevicePostureOverrideReturnValue;
@@ -24336,6 +24214,7 @@ Error was thrown.
     "Emulation.setDisabledImageTypes": Emulation.setDisabledImageTypesReturnValue;
     "Emulation.setDataSaverOverride": Emulation.setDataSaverOverrideReturnValue;
     "Emulation.setHardwareConcurrencyOverride": Emulation.setHardwareConcurrencyOverrideReturnValue;
+    "Emulation.setCPUPerformanceOverride": Emulation.setCPUPerformanceOverrideReturnValue;
     "Emulation.setUserAgentOverride": Emulation.setUserAgentOverrideReturnValue;
     "Emulation.setAutomationOverride": Emulation.setAutomationOverrideReturnValue;
     "Emulation.setSmallViewportHeightDifferenceOverride": Emulation.setSmallViewportHeightDifferenceOverrideReturnValue;
@@ -24429,14 +24308,11 @@ Error was thrown.
     "Memory.getAllTimeSamplingProfile": Memory.getAllTimeSamplingProfileReturnValue;
     "Memory.getBrowserSamplingProfile": Memory.getBrowserSamplingProfileReturnValue;
     "Memory.getSamplingProfile": Memory.getSamplingProfileReturnValue;
-    "Network.setAcceptedEncodings": Network.setAcceptedEncodingsReturnValue;
-    "Network.clearAcceptedEncodingsOverride": Network.clearAcceptedEncodingsOverrideReturnValue;
     "Network.canClearBrowserCache": Network.canClearBrowserCacheReturnValue;
     "Network.canClearBrowserCookies": Network.canClearBrowserCookiesReturnValue;
     "Network.canEmulateNetworkConditions": Network.canEmulateNetworkConditionsReturnValue;
     "Network.clearBrowserCache": Network.clearBrowserCacheReturnValue;
     "Network.clearBrowserCookies": Network.clearBrowserCookiesReturnValue;
-    "Network.continueInterceptedRequest": Network.continueInterceptedRequestReturnValue;
     "Network.deleteCookies": Network.deleteCookiesReturnValue;
     "Network.disable": Network.disableReturnValue;
     "Network.emulateNetworkConditions": Network.emulateNetworkConditionsReturnValue;
@@ -24449,8 +24325,6 @@ Error was thrown.
     "Network.getCookies": Network.getCookiesReturnValue;
     "Network.getResponseBody": Network.getResponseBodyReturnValue;
     "Network.getRequestPostData": Network.getRequestPostDataReturnValue;
-    "Network.getResponseBodyForInterception": Network.getResponseBodyForInterceptionReturnValue;
-    "Network.takeResponseBodyForInterceptionAsStream": Network.takeResponseBodyForInterceptionAsStreamReturnValue;
     "Network.replayXHR": Network.replayXHRReturnValue;
     "Network.searchInResponseBody": Network.searchInResponseBodyReturnValue;
     "Network.setBlockedURLs": Network.setBlockedURLsReturnValue;
@@ -24460,7 +24334,6 @@ Error was thrown.
     "Network.setCookies": Network.setCookiesReturnValue;
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersReturnValue;
     "Network.setAttachDebugStack": Network.setAttachDebugStackReturnValue;
-    "Network.setRequestInterception": Network.setRequestInterceptionReturnValue;
     "Network.setUserAgentOverride": Network.setUserAgentOverrideReturnValue;
     "Network.streamResourceContent": Network.streamResourceContentReturnValue;
     "Network.getSecurityIsolationStatus": Network.getSecurityIsolationStatusReturnValue;
@@ -24554,6 +24427,8 @@ Error was thrown.
     "Page.setLifecycleEventsEnabled": Page.setLifecycleEventsEnabledReturnValue;
     "Page.setTouchEmulationEnabled": Page.setTouchEmulationEnabledReturnValue;
     "Page.startScreencast": Page.startScreencastReturnValue;
+    "Page.startScreenRecording": Page.startScreenRecordingReturnValue;
+    "Page.stopScreenRecording": Page.stopScreenRecordingReturnValue;
     "Page.stopLoading": Page.stopLoadingReturnValue;
     "Page.crash": Page.crashReturnValue;
     "Page.close": Page.closeReturnValue;
