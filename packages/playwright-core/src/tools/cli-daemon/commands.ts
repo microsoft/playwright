@@ -932,6 +932,22 @@ const networkResponseBody = declareCommand({
   toolParams: ({ index, filename }) => ({ index, part: 'response-body', filename }),
 });
 
+const recordingStart = declareCommand({
+  name: 'recording-start',
+  description: 'Start recording user actions',
+  category: 'core',
+  toolName: 'browser_start_recording',
+  toolParams: () => ({}),
+});
+
+const recordingStop = declareCommand({
+  name: 'recording-stop',
+  description: 'Stop recording user actions and print them as Playwright code',
+  category: 'core',
+  toolName: 'browser_stop_recording',
+  toolParams: () => ({}),
+});
+
 const tracingStart = declareCommand({
   name: 'tracing-start',
   description: 'Start trace recording',
@@ -1174,6 +1190,8 @@ const commandsArray: AnyCommandSchema[] = [
   dialogDismiss,
   resize,
   runCode,
+  recordingStart,
+  recordingStop,
   deleteData,
 
   // navigation category

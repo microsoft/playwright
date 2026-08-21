@@ -61,6 +61,9 @@ playwright-cli dialog-accept
 playwright-cli dialog-accept "confirmation text"
 playwright-cli dialog-dismiss
 playwright-cli resize 1920 1080
+# record user actions in the browser, print them as Playwright code on stop
+playwright-cli recording-start
+playwright-cli recording-stop
 playwright-cli close
 ```
 

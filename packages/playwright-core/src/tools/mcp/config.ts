@@ -112,6 +112,7 @@ export type MergedConfig = Config & {
 export type FullConfig = MergedConfig & {
   browser: MergedConfig['browser'] & {
     browserName: 'chromium' | 'firefox' | 'webkit';
+    headless: boolean;
   },
   skillMode?: boolean;
   configFile?: string;
@@ -119,7 +120,7 @@ export type FullConfig = MergedConfig & {
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {
   const merged = mergeConfig(defaultConfig, config);
-  const browser = await validateBrowserConfig(merged.browser);
+  const browser = await validateBrowserConfig(merged.browser, merged.extension);
   return { ...merged, browser };
 }
 
@@ -135,7 +136,7 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJ
   result = mergeConfig(result, resolveConfigPaths(envOverrides, process.cwd()));
   result = mergeConfig(result, resolveConfigPaths(cliOverrides, process.cwd()));
 
-  const browser = await validateBrowserConfig(result.browser);
+  const browser = await validateBrowserConfig(result.browser, result.extension);
   if (browser.launchOptions.headless === undefined)
     browser.launchOptions.headless = os.platform() === 'linux' && !process.env.DISPLAY;
 
@@ -194,7 +195,7 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   if (result.browser.launchOptions.headless === undefined)
     result.browser.launchOptions.headless = true;
 
-  const browser = await validateBrowserConfig(result.browser);
+  const browser = await validateBrowserConfig(result.browser, result.extension);
 
   validateOutputDir(result.outputDir);
 
@@ -215,7 +216,7 @@ export function resolveExtensionOptions(cliOptions: CLIOptions): { channel: stri
   return { channel: channel ?? 'chrome', executablePath };
 }
 
-async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<FullConfig['browser']> {
+async function validateBrowserConfig(browser: MergedConfig['browser'], extension: boolean | undefined): Promise<FullConfig['browser']> {
   let browserName = browser.browserName;
   if (!browserName) {
     browserName = 'chromium';
@@ -259,7 +260,9 @@ async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<
       browser.launchOptions.args.push(`--disable-blink-features=AutomationControlled`);
   }
 
-  return { ...browser, browserName };
+  // Attached browsers (cdp, remote, extension) are assumed to be headed.
+  const headless = !!browser.launchOptions.headless && !browser.cdpEndpoint && !browser.remoteEndpoint && !extension;
+  return { ...browser, browserName, headless };
 }
 
 function resolveBrowserParam(browserOption: string | undefined): { browserName?: 'chromium' | 'firefox' | 'webkit', channel?: string } {

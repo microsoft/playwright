@@ -179,12 +179,16 @@ export class RecorderApp {
     if (process.env.PW_CODEGEN_NO_INSPECTOR)
       return;
     const recorder = await Recorder.forContext(context, params);
-    if (params.recorderMode === 'api') {
-      const browserName = context._browser.options.name;
-      await ProgrammaticRecorderApp.run(context, recorder, browserName, params);
-      return;
+    if (!(context as any)[recorderAppSymbol]) {
+      (context as any)[recorderAppSymbol] = true;
+      if (params.recorderMode === 'api')
+        await ProgrammaticRecorderApp.run(context, recorder, context._browser.options.name, params);
+      else
+        await RecorderApp._show(recorder, context, params);
     }
-    await RecorderApp._show(recorder, context, params);
+    // Recorder.forContext ignores params of an existing recorder, apply the mode explicitly.
+    if (params.mode)
+      await recorder.setMode(params.mode);
   }
 
   async close() {
@@ -192,15 +196,10 @@ export class RecorderApp {
   }
 
   static showInspectorNoReply(context: BrowserContext) {
-    if (process.env.PW_CODEGEN_NO_INSPECTOR)
-      return;
-    void Recorder.forContext(context, {}).then(recorder => RecorderApp._show(recorder, context, {})).catch(() => {});
+    void RecorderApp.show(context, {}).catch(() => {});
   }
 
   private static async _show(recorder: Recorder, inspectedContext: BrowserContext, params: channels.BrowserContextEnableRecorderParams) {
-    if ((inspectedContext as any)[recorderAppSymbol])
-      return;
-    (inspectedContext as any)[recorderAppSymbol] = true;
     const sdkLanguage = inspectedContext._browser.sdkLanguage();
     const isChromium = inspectedContext._browser.options.browserType === 'chromium';
     const headed = !!inspectedContext._browser.options.headful;

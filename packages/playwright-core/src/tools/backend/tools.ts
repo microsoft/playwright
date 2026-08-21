@@ -30,6 +30,7 @@ import mouse from './mouse';
 import navigate from './navigate';
 import network from './network';
 import pdf from './pdf';
+import recorder from './recorder';
 import route from './route';
 import runCode from './runCode';
 import snapshot from './snapshot';
@@ -61,6 +62,7 @@ export const browserTools: Tool<any>[] = [
   ...navigate,
   ...network,
   ...pdf,
+  ...recorder,
   ...route,
   ...runCode,
   ...screenshot,
