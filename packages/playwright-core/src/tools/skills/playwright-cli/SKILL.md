@@ -61,6 +61,9 @@ playwright-cli dialog-accept
 playwright-cli dialog-accept "confirmation text"
 playwright-cli dialog-dismiss
 playwright-cli resize 1920 1080
+# emulate CSS media features, for example to check a UI in dark mode
+playwright-cli emulate-media --colorScheme=dark
+playwright-cli emulate-media --colorScheme=light --reducedMotion=reduce
 playwright-cli close
 ```
 

@@ -283,6 +283,38 @@ test.describe('mobile', () => {
   });
 });
 
+test.describe('color scheme', () => {
+  test('unset by default', async () => {
+    const config = await resolveCLIConfigForMCP({}, emptyEnv);
+    expect(config.browser.contextOptions.colorScheme).toBeUndefined();
+  });
+
+  test('--color-scheme sets the context option', async () => {
+    const config = await resolveCLIConfigForMCP({ colorScheme: 'dark' }, emptyEnv);
+    expect(config.browser.contextOptions.colorScheme).toBe('dark');
+  });
+
+  test('--color-scheme via env var', async () => {
+    const config = await resolveCLIConfigForMCP({}, { PLAYWRIGHT_MCP_COLOR_SCHEME: 'dark' });
+    expect(config.browser.contextOptions.colorScheme).toBe('dark');
+  });
+
+  test('--color-scheme rejects an unknown value', async () => {
+    await expect(resolveCLIConfigForMCP({}, { PLAYWRIGHT_MCP_COLOR_SCHEME: 'sepia' }))
+        .rejects.toThrow('--color-scheme');
+  });
+
+  test('cli overrides config file', async ({}, testInfo) => {
+    const configFile = testInfo.outputPath('config.json');
+    const fileConfig: Config = {
+      browser: { contextOptions: { colorScheme: 'light' } },
+    };
+    await fs.promises.writeFile(configFile, JSON.stringify(fileConfig));
+    const config = await resolveCLIConfigForMCP({ config: configFile, colorScheme: 'dark' }, emptyEnv);
+    expect(config.browser.contextOptions.colorScheme).toBe('dark');
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Shared behavior — merge order and config file
 // ---------------------------------------------------------------------------

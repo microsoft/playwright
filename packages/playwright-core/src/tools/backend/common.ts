@@ -15,6 +15,8 @@
  */
 
 import * as z from 'zod';
+import { formatObject } from '@isomorphic/stringUtils';
+
 import { defineTabTool, defineTool } from './tool';
 import { renderTabsMarkdown } from './response';
 
@@ -56,7 +58,48 @@ const resize = defineTabTool({
   },
 });
 
+const emulateMedia = defineTabTool({
+  capability: 'core',
+  schema: {
+    name: 'browser_emulate_media',
+    title: 'Emulate media features',
+    description: 'Emulate CSS media features for the page, for example switch between the light and dark color scheme. Omitted parameters are left unchanged.',
+    inputSchema: z.object({
+      colorScheme: z.enum(['light', 'dark']).optional().describe('Emulates the prefers-color-scheme media feature'),
+      reducedMotion: z.enum(['reduce', 'no-preference']).optional().describe('Emulates the prefers-reduced-motion media feature'),
+      forcedColors: z.enum(['active', 'none']).optional().describe('Emulates the forced-colors media feature'),
+      contrast: z.enum(['more', 'no-preference']).optional().describe('Emulates the prefers-contrast media feature'),
+      media: z.enum(['screen', 'print']).optional().describe('Changes the CSS media type of the page'),
+    }),
+    type: 'action',
+  },
+
+  handle: async (tab, params, response) => {
+    const requested = {
+      colorScheme: params.colorScheme,
+      contrast: params.contrast,
+      forcedColors: params.forcedColors,
+      media: params.media,
+      reducedMotion: params.reducedMotion,
+    };
+    // Only pass through the features that were specified, so that the omitted
+    // ones keep their current emulation state.
+    const options = Object.fromEntries(
+        Object.entries(requested).filter(([, value]) => value !== undefined)
+    ) as typeof requested;
+
+    if (!Object.keys(options).length) {
+      response.addError('Error: Specify at least one media feature to emulate.');
+      return;
+    }
+
+    response.addCode(`await page.emulateMedia(${formatObject(options, '  ', 'oneline')});`);
+    await tab.page.emulateMedia(options);
+  },
+});
+
 export default [
   close,
-  resize
+  resize,
+  emulateMedia
 ];
