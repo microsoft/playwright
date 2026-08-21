@@ -17,6 +17,7 @@
 import debug from 'debug';
 import { defaultUserDataDirForChannel } from '@utils/chromiumChannels';
 import { playwright } from '../../inprocess';
+import { registerExtensionSession } from '../backend/extensionSession';
 import { findPlaywrightExtensionProfile, playwrightExtensionInstallUrl } from '../utils/extension';
 import { CDPRelayServer } from './cdpRelay';
 
@@ -40,6 +41,9 @@ export async function createExtensionBrowser(channel: string, executablePath: st
     await relay.establishExtensionConnection(clientName);
     const browser = await playwright.chromium.connectOverCDP(relay.cdpEndpoint(), { isLocal: true, timeout: 0, noDefaults: true });
     browser.on('disconnected', () => relay.stop());
+    registerExtensionSession(browser, {
+      setGroupLabel: label => relay.setGroupLabel(label),
+    });
     return browser;
   } catch (error) {
     relay.stop();

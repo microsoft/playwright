@@ -78,12 +78,7 @@ export class CDPRelayServer {
     this._profileDirectory = profileDirectory;
     this._protocolVersion = parseInt(process.env.PLAYWRIGHT_EXTENSION_PROTOCOL ?? protocol.VERSION.toString(), 10);
 
-    const sendCommand = (method: string, params: any): Promise<any> => {
-      if (!this._extensionConnection)
-        throw new Error('Extension not connected');
-      return this._extensionConnection.send(method as keyof ExtensionCommandV2, params);
-    };
-    this._handler = new ExtensionProtocolV2(sendCommand);
+    this._handler = new ExtensionProtocolV2((method, params) => this._sendToExtension(method as keyof ExtensionCommandV2, params));
 
     const uuid = crypto.randomUUID();
     this._cdpPath = `/cdp/${uuid}`;
@@ -119,6 +114,23 @@ export class CDPRelayServer {
 
   extensionEndpoint() {
     return `${this._wsHost}${this._extensionPath}`;
+  }
+
+  async setGroupLabel(label: string): Promise<{ title: string }> {
+    try {
+      return await this._sendToExtension('extension.setGroupLabel', [label]);
+    } catch (error: any) {
+      // Extensions predating this command reject it as unknown.
+      if (String(error?.message).includes('Unknown method'))
+        throw new Error('The installed Playwright Extension version does not support tab group labels. Please update the extension.');
+      throw error;
+    }
+  }
+
+  private _sendToExtension(method: keyof ExtensionCommandV2, params: any): Promise<any> {
+    if (!this._extensionConnection)
+      throw new Error('Extension not connected');
+    return this._extensionConnection.send(method, params);
   }
 
   async establishExtensionConnection(clientName: string) {

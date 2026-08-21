@@ -65,6 +65,8 @@ export type ContextConfig = {
     initPage?: string[];
   };
   skillMode?: boolean;
+  // Connected to a running browser via the Playwright Extension.
+  extension?: boolean;
 };
 
 type ContextOptions = {
