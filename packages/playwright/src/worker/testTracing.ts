@@ -35,10 +35,9 @@ import type EventEmitter from 'events';
 export type Attachment = TestInfo['attachments'][0];
 export const testTraceEntryName = 'test.trace';
 const version: trace.VERSION = 9;
-let traceOrdinal = 0;
 
 type TraceFixtureValue =  PlaywrightWorkerOptions['trace'] | undefined;
-type TraceOptions = { screencast?: boolean | { size?: { width: number, height: number }, quality?: number }, screenshots: boolean, snapshots: boolean | { dom?: boolean, aria?: boolean, screen?: boolean }, sources: boolean, attachments: boolean, live: boolean, mode: TraceMode };
+type TraceOptions = Exclude<TraceFixtureValue, string | undefined> & { live: boolean };
 
 export class TestTracing {
   private _testInfo: TestInfoImpl;
@@ -134,14 +133,6 @@ export class TestTracing {
     return [path.relative(this._testInfo.project.testDir, this._testInfo.file) + ':' + this._testInfo.line, ...this._testInfo.titlePath.slice(1)].join(' › ');
   }
 
-  generateNextTraceRecordingName() {
-    const ordinalSuffix = traceOrdinal ? `-recording${traceOrdinal}` : '';
-    ++traceOrdinal;
-    const retrySuffix = this._testInfo.retry ? `-retry${this._testInfo.retry}` : '';
-    // Note that trace name must start with testId for live tracing to work.
-    return `${this._testInfo.testId}${retrySuffix}${ordinalSuffix}`;
-  }
-
   private _generateNextTraceRecordingPath() {
     const file = path.join(this._artifactsDir, createGuid() + '.zip');
     this._temporaryTraceFiles.push(file);
@@ -152,13 +143,15 @@ export class TestTracing {
     return this._options;
   }
 
-  maybeGenerateNextTraceRecordingPath() {
+  shouldKeepTrace() {
     // Forget about traces that should be saved on failure, when no failure happened
     // during the test and beforeEach/afterEach hooks.
     // This avoids downloading traces over the wire when not really needed.
-    if (this._didFinishTestFunctionAndAfterEachHooks && this._shouldAbandonTrace())
-      return;
-    return this._generateNextTraceRecordingPath();
+    return !(this._didFinishTestFunctionAndAfterEachHooks && this._shouldAbandonTrace());
+  }
+
+  appendTraceFile(file: string) {
+    this._temporaryTraceFiles.push(file);
   }
 
   private _shouldAbandonTrace() {
@@ -173,9 +166,6 @@ export class TestTracing {
   async stopIfNeeded() {
     this._contextCreatedEvent.testTimeout = this._testInfo.timeout;
     this._contextCreatedEvent.annotations = this._testInfo.annotations.map(({ type, description }) => ({ type, description }));
-
-    if (!this._options)
-      return;
 
     await this._liveTraceFile?.fs.sync();
 

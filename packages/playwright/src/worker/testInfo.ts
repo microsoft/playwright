@@ -32,7 +32,7 @@ import { testInfoError } from './util';
 import { ipc, transform } from '../common';
 
 import type { RunnableDescription } from './timeoutManager';
-import type { FullProject, TestInfo, TestInfoError, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
+import type { FullProject, TestInfo, TestInfoError, TestStatus, TestStepInfo, TestAnnotation, _TestInfoEx } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
 import type { config as commonConfig, FullConfigInternal, test as testNs } from '../common';
 import type { StackFrame } from '@utils/stackTrace';
@@ -82,15 +82,14 @@ export const emtpyTestInfoCallbacks: TestInfoCallbacks = {
   onTestPaused: () => Promise.reject(new Error('TestInfoImpl not initialized')),
 };
 
-export class TestInfoImpl implements TestInfo {
-  private _callbacks: TestInfoCallbacks;
+export class TestInfoImpl implements _TestInfoEx {
+  private _ipcCallbacks: TestInfoCallbacks;
   private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   private _ariaSnapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   readonly _timeoutManager: TimeoutManager;
   readonly _startTime: number;
   readonly _startWallTime: number;
   readonly _tracing: TestTracing;
-  readonly _uniqueSymbol;
 
   private _interruptedPromise = new ManualPromise<void>();
   _lastStepId = 0;
@@ -99,10 +98,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _configInternal: FullConfigInternal;
   private readonly _steps: TestStepInternal[] = [];
   private readonly _stepMap = new Map<string, TestStepInternal>();
-  _onDidFinishTestFunctionCallbacks = new Set<() => Promise<void>>();
-  _onCustomMessageCallback?: (data: any) => Promise<any>;
-  _onUserStepBegin?: (title: string) => Promise<void>;
-  _onUserStepEnd?: () => Promise<void>;
+  readonly _callbacks: _TestInfoEx['_callbacks'] = {};
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
   _allowSkips = false;
@@ -172,11 +168,10 @@ export class TestInfoImpl implements TestInfo {
     callbacks: TestInfoCallbacks
   ) {
     this.testId = test?.id ?? '';
-    this._callbacks = callbacks;
+    this._ipcCallbacks = callbacks;
     this._startTime = monotonicTime();
     this._startWallTime = Date.now();
     this._requireFile = test?._requireFile ?? '';
-    this._uniqueSymbol = Symbol('testInfoUniqueSymbol');
     this._workerParams = workerParams;
 
     this.repeatEachIndex = workerParams.repeatEachIndex;
@@ -357,7 +352,7 @@ export class TestInfoImpl implements TestInfo {
             suggestedRebaseline: result.suggestedRebaseline,
             annotations: step.info.annotations,
           };
-          this._callbacks.onStepEnd(payload);
+          this._ipcCallbacks.onStepEnd(payload);
         }
         if (step.group !== 'internal') {
           const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
@@ -380,7 +375,7 @@ export class TestInfoImpl implements TestInfo {
         wallTime: Date.now(),
         location: step.location,
       };
-      this._callbacks.onStepBegin(payload);
+      this._ipcCallbacks.onStepBegin(payload);
     }
     if (step.group !== 'internal') {
       this._tracing.appendBeforeActionForStep({
@@ -478,7 +473,7 @@ export class TestInfoImpl implements TestInfo {
 
   _currentHookType() {
     const type = this._timeoutManager.currentSlotType();
-    return ['beforeAll', 'afterAll', 'beforeEach', 'afterEach'].includes(type) ? type : undefined;
+    return (['beforeAll', 'afterAll', 'beforeEach', 'afterEach'] as const).find(t => t === type);
   }
 
   _setIgnoreTimeouts(ignoreTimeouts: boolean) {
@@ -490,12 +485,11 @@ export class TestInfoImpl implements TestInfo {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
     if (shouldPause) {
       await Promise.race([
-        this._callbacks.onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors.map(ipc.toTestInfoErrorPayload) : [], status: this.status }),
+        this._ipcCallbacks.onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors.map(ipc.toTestInfoErrorPayload) : [], status: this.status }),
         this._interruptedPromise,
       ]);
     }
-    for (const cb of this._onDidFinishTestFunctionCallbacks)
-      await cb();
+    await this._callbacks.onDidFinishTestFunction?.();
   }
 
   // ------------ TestInfo methods ------------
@@ -527,7 +521,7 @@ export class TestInfoImpl implements TestInfo {
       this._tracing.appendAfterActionForStep(stepId, undefined, [attachment]);
     }
 
-    this._callbacks.onAttach({
+    this._ipcCallbacks.onAttach({
       testId: this.testId,
       name: attachment.name,
       contentType: attachment.contentType,
@@ -664,8 +658,28 @@ export class TestInfoImpl implements TestInfo {
     this._timeoutManager.setTimeout(timeout);
   }
 
-  artifactsDir(): string {
+  _artifactsDir(): string {
     return this._workerParams.artifactsDir;
+  }
+
+  _tracesDir(): string {
+    return this._tracing.tracesDir();
+  }
+
+  _traceOptions() {
+    return this._tracing.traceOptions();
+  }
+
+  _traceTitle(): string {
+    return this._tracing.traceTitle();
+  }
+
+  _shouldKeepTrace(): boolean {
+    return this._tracing.shouldKeepTrace();
+  }
+
+  _appendTraceFile(file: string) {
+    this._tracing.appendTraceFile(file);
   }
 }
 
