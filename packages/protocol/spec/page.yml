@@ -518,6 +518,18 @@ Page:
     bringToFront:
       title: Bring to front
 
+    tabInfo:
+      title: Get tab info
+      returns:
+        tabInfo:
+          type: object?
+          properties:
+            active: boolean
+            index: int
+            pinned: boolean
+            groupId: string?
+            windowId: int
+
     pickLocator:
       title: Pick locator
       group: configuration

@@ -72,7 +72,7 @@ test.describe('crash recovery', () => {
       name: 'browser_tabs',
       arguments: { action: 'list' },
     })).toHaveResponse({
-      result: `- 0: (current) [](about:blank)`,
+      result: `- 0: (current) (visible to user) [](about:blank)`,
     });
   });
 
@@ -94,7 +94,7 @@ test.describe('crash recovery', () => {
       name: 'browser_tabs',
       arguments: { action: 'list' },
     })).toHaveResponse({
-      result: `- 0: (current) [Title](${server.HELLO_WORLD})\n- 1: [](about:blank) [crashed]`,
+      result: `- 0: (current) [Title](${server.HELLO_WORLD})\n- 1: (visible to user) [](about:blank) [crashed]`,
     });
   });
 });

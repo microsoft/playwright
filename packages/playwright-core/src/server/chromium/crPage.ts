@@ -41,7 +41,7 @@ import { nullProgress } from '../progress';
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
 import type { RegisteredListener } from '@utils/eventsHelper';
-import type { InitScript, PageDelegate } from '../page';
+import type { InitScript, PageDelegate, TabInfo } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
 import type * as channels from '../channels';
@@ -206,6 +206,10 @@ export class CRPage implements PageDelegate {
 
   async bringToFront(): Promise<void> {
     await this._mainFrameSession._client.send('Page.bringToFront');
+  }
+
+  async tabInfo(): Promise<TabInfo | undefined> {
+    return await this._browserContext._browser._tabInfoForPage(this);
   }
 
   async updateEmulateMedia(): Promise<void> {

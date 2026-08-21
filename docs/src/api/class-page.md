@@ -4477,6 +4477,37 @@ When `true`, includes each element's bounding box as a `box` property with `x`, 
 relative to the viewport, in CSS pixels, as returned by [`Element.getBoundingClientRect()`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
 Defaults to `false`.
 
+## async method: Page.tabInfo
+* since: v1.63
+- returns: <[null]|[Object]>
+  - `active` <[boolean]> Whether the tab is selected in its browser window. Note that this does not imply that the
+    browser window itself is focused at the OS level.
+  - `index` <[int]> Zero-based position of the tab in the tab strip of its browser window.
+  - `pinned` <[boolean]> Whether the tab is pinned.
+  - `groupId` <[null]|[string]> Id of the tab group this tab belongs to, if any.
+  - `windowId` <[int]> Id of the browser window containing the tab, matching the window id in the Chrome DevTools
+    Protocol.
+
+Returns a snapshot of the browser tab state for this page, as reflected in the browser tab strip. Unlike renderer-level
+signals such as `document.visibilityState`, this reports the real browser UI state, which is useful when a human and
+automation share the same headed browser.
+
+Returns `null` when the information is not available: in browsers other than Chromium, in Chromium versions
+below 150, in the Chromium headless shell which has no tab strip, and for pages that are not part of a tab strip.
+
+**Usage**
+
+```js
+const tabInfo = await page.tabInfo();
+if (tabInfo?.active)
+  console.log('The user is currently looking at this page');
+```
+
+:::note
+This API always returns an up-to-date snapshot and does not emit events when the tab state changes. Call it again to
+observe changes.
+:::
+
 ## async method: Page.tap
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.tap`] instead. Read more about [locators](../locators.md).

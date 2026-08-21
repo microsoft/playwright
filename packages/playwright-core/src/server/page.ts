@@ -56,6 +56,8 @@ import type * as channels from './channels';
 import type { BindingPayload } from '@injected/bindingsController';
 import type { AriaNodeJSON, AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
 
+export type TabInfo = NonNullable<channels.PageTabInfoResult['tabInfo']>;
+
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
   readonly rawKeyboard: input.RawKeyboard;
@@ -95,6 +97,7 @@ export interface PageDelegate {
   pdf?: (options: channels.PagePdfParams) => Promise<Buffer>;
   coverage?: () => any;
   noUtilityWorld?: () => boolean;
+  tabInfo?: () => Promise<TabInfo | undefined>;
 
   // Work around WebKit's raf issues on Windows.
   rafCountForStablePosition(): number;
@@ -669,6 +672,12 @@ export class Page extends SdkObject<PageEventMap> {
 
   async bringToFront(progress: Progress): Promise<void> {
     await progress.race(this.delegate.bringToFront());
+  }
+
+  async tabInfo(progress: Progress): Promise<TabInfo | undefined> {
+    if (!this.delegate.tabInfo)
+      return undefined;
+    return await progress.race(this.delegate.tabInfo());
   }
 
   async addInitScript(progress: Progress, source: string) {

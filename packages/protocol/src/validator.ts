@@ -2553,6 +2553,16 @@ scheme.PageStopCSSCoverageResult = tObject({
 });
 scheme.PageBringToFrontParams = tOptional(tObject({}));
 scheme.PageBringToFrontResult = tOptional(tObject({}));
+scheme.PageTabInfoParams = tOptional(tObject({}));
+scheme.PageTabInfoResult = tObject({
+  tabInfo: tOptional(tObject({
+    active: tBoolean,
+    index: tInt,
+    pinned: tBoolean,
+    groupId: tOptional(tString),
+    windowId: tInt,
+  })),
+});
 scheme.PagePickLocatorParams = tOptional(tObject({}));
 scheme.PagePickLocatorResult = tObject({
   selector: tString,

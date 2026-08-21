@@ -688,6 +688,13 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.bringToFront({}, kNoTimeout);
   }
 
+  async tabInfo(): Promise<{ active: boolean, index: number, pinned: boolean, groupId: string | null, windowId: number } | null> {
+    const { tabInfo } = await this._channel.tabInfo({}, kNoTimeout);
+    if (!tabInfo)
+      return null;
+    return { ...tabInfo, groupId: tabInfo.groupId ?? null };
+  }
+
   async [Symbol.asyncDispose]() {
     await this.close();
   }

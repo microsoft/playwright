@@ -353,6 +353,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await this._page.bringToFront(progress);
   }
 
+  async tabInfo(params: channels.PageTabInfoParams, progress: Progress): Promise<channels.PageTabInfoResult> {
+    return { tabInfo: await this._page.tabInfo(progress) };
+  }
+
   async pickLocator(params: channels.PagePickLocatorParams, progress: Progress): Promise<channels.PagePickLocatorResult> {
     const recorder = await progress.race(Recorder.forContext(this._page.browserContext, { omitCallTracking: true, hideToolbar: true }));
     const selector = await recorder.pickLocator(progress, this._page);

@@ -40,7 +40,7 @@ test('list initial tabs', async ({ client }) => {
       action: 'list',
     },
   })).toHaveResponse({
-    result: `- 0: (current) [](about:blank)`,
+    result: `- 0: (current) (visible to user) [](about:blank)`,
   });
 });
 
@@ -53,7 +53,7 @@ test('list first tab', async ({ client }) => {
     },
   })).toHaveResponse({
     result: `- 0: [](about:blank)
-- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
+- 1: (current) (visible to user) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
   });
 });
 
@@ -87,7 +87,7 @@ test('create new tab with url', async ({ client }) => {
     },
   })).toHaveResponse({
     result: `- 0: [](about:blank)
-- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
+- 1: (current) (visible to user) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
   });
 });
 
@@ -103,7 +103,7 @@ test('select tab', async ({ client }) => {
     },
   })).toHaveResponse({
     result: `- 0: [](about:blank)
-- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)
+- 1: (current) (visible to user) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)
 - 2: [Tab two](data:text/html,<title>Tab two</title><body>Body two</body>)`,
   });
 
@@ -114,7 +114,7 @@ test('select tab', async ({ client }) => {
       index: 0,
     },
   })).toHaveResponse({
-    result: `- 0: (current) [](about:blank)
+    result: `- 0: (current) (visible to user) [](about:blank)
 - 1: [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)
 - 2: [Tab two](data:text/html,<title>Tab two</title><body>Body two</body>)`,
   });
@@ -132,7 +132,7 @@ test('close tab', async ({ client }) => {
     },
   })).toHaveResponse({
     result: `- 0: [](about:blank)
-- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
+- 1: (current) (visible to user) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
   });
 });
 

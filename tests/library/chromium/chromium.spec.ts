@@ -811,3 +811,57 @@ test('should fire dialogclosed event when dialog is closed out of band', async (
   expect(await closedPromise).toBe(dialog);
   await evaluatePromise;
 });
+
+playwrightTest('page.tabInfo should report tab strip state', async ({ browserType, browserMajorVersion, channel }) => {
+  playwrightTest.skip(browserMajorVersion < 150, 'embedderData on tab targets requires Chromium 150+');
+  // Headless shell has no tab strip, opt into the full Chromium build.
+  const browser = await browserType.launch({ channel: channel || 'chromium' });
+  try {
+    const context = await browser.newContext();
+    const page1 = await context.newPage();
+    const info1 = (await page1.tabInfo())!;
+    expect(info1).toBeTruthy();
+    expect(info1.pinned).toBe(false);
+    expect(info1.groupId).toBe(null);
+
+    const page2 = await context.newPage();
+    const info2 = (await page2.tabInfo())!;
+    expect(info2).toBeTruthy();
+    expect(info2.active).toBe(true);
+
+    await page1.bringToFront();
+    await expect.poll(async () => (await page1.tabInfo())!.active).toBe(true);
+    if (info1.windowId === info2.windowId) {
+      expect((await page2.tabInfo())!.active).toBe(false);
+      expect(info1.index).not.toBe(info2.index);
+    }
+  } finally {
+    await browser.close();
+  }
+});
+
+playwrightTest('page.tabInfo should serve concurrent calls from all pages', async ({ browserType, browserMajorVersion, channel }) => {
+  playwrightTest.skip(browserMajorVersion < 150, 'embedderData on tab targets requires Chromium 150+');
+  const browser = await browserType.launch({ channel: channel || 'chromium' });
+  try {
+    const context = await browser.newContext();
+    const pages = [];
+    for (let i = 0; i < 5; i++)
+      pages.push(await context.newPage());
+
+    // Concurrent calls share a single browser-wide query, each page must still get its own tab.
+    const infos = await Promise.all(pages.map(page => page.tabInfo()));
+    expect(infos.every(info => !!info)).toBe(true);
+    expect(infos.filter(info => info!.active).length).toBe(1);
+    expect(infos.map(info => info!.index)).toEqual([0, 1, 2, 3, 4]);
+
+    // A subsequent round must observe the new state instead of reusing the shared snapshot.
+    await pages[0].bringToFront();
+    await expect.poll(async () => {
+      const updated = await Promise.all(pages.map(page => page.tabInfo()));
+      return updated.findIndex(info => info!.active);
+    }).toBe(0);
+  } finally {
+    await browser.close();
+  }
+});

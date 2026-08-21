@@ -3873,6 +3873,7 @@ export interface PageChannel extends PageEventTarget, Channel {
   startCSSCoverage(params: PageStartCSSCoverageParams, progress: Progress): Promise<PageStartCSSCoverageResult>;
   stopCSSCoverage(params: PageStopCSSCoverageParams, progress: Progress): Promise<PageStopCSSCoverageResult>;
   bringToFront(params: PageBringToFrontParams, progress: Progress): Promise<PageBringToFrontResult>;
+  tabInfo(params: PageTabInfoParams, progress: Progress): Promise<PageTabInfoResult>;
   pickLocator(params: PagePickLocatorParams, progress: Progress): Promise<PagePickLocatorResult>;
   cancelPickLocator(params: PageCancelPickLocatorParams, progress: Progress): Promise<PageCancelPickLocatorResult>;
   hideHighlight(params: PageHideHighlightParams, progress: Progress): Promise<PageHideHighlightResult>;
@@ -4402,6 +4403,17 @@ export type PageStopCSSCoverageResult = {
 export type PageBringToFrontParams = {};
 export type PageBringToFrontOptions = {};
 export type PageBringToFrontResult = void;
+export type PageTabInfoParams = {};
+export type PageTabInfoOptions = {};
+export type PageTabInfoResult = {
+  tabInfo?: {
+    active: boolean,
+    index: number,
+    pinned: boolean,
+    groupId?: string,
+    windowId: number,
+  },
+};
 export type PagePickLocatorParams = {};
 export type PagePickLocatorOptions = {};
 export type PagePickLocatorResult = {

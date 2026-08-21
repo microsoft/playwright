@@ -5018,6 +5018,54 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * Returns a snapshot of the browser tab state for this page, as reflected in the browser tab strip. Unlike
+   * renderer-level signals such as `document.visibilityState`, this reports the real browser UI state, which is useful
+   * when a human and automation share the same headed browser.
+   *
+   * Returns `null` when the information is not available: in browsers other than Chromium, in Chromium versions below
+   * 150, in the Chromium headless shell which has no tab strip, and for pages that are not part of a tab strip.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const tabInfo = await page.tabInfo();
+   * if (tabInfo?.active)
+   *   console.log('The user is currently looking at this page');
+   * ```
+   *
+   * **NOTE** This API always returns an up-to-date snapshot and does not emit events when the tab state changes. Call
+   * it again to observe changes.
+   *
+   */
+  tabInfo(): Promise<null|{
+    /**
+     * Whether the tab is selected in its browser window. Note that this does not imply that the browser window itself is
+     * focused at the OS level.
+     */
+    active: boolean;
+
+    /**
+     * Zero-based position of the tab in the tab strip of its browser window.
+     */
+    index: number;
+
+    /**
+     * Whether the tab is pinned.
+     */
+    pinned: boolean;
+
+    /**
+     * Id of the tab group this tab belongs to, if any.
+     */
+    groupId: null|string;
+
+    /**
+     * Id of the browser window containing the tab, matching the window id in the Chrome DevTools Protocol.
+     */
+    windowId: number;
+  }>;
+
+  /**
    * **NOTE** Use locator-based [locator.tap([options])](https://playwright.dev/docs/api/class-locator#locator-tap) instead. Read
    * more about [locators](https://playwright.dev/docs/locators).
    *

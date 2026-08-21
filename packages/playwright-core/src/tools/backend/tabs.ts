@@ -59,7 +59,13 @@ const browserTabs = defineTool({
         break;
       }
     }
-    const tabHeaders = await Promise.all(context.tabs().map(tab => tab.headerSnapshot()));
+    const tabHeaders = await Promise.all(context.tabs().map(async tab => {
+      const [header, tabInfo] = await Promise.all([
+        tab.headerSnapshot(),
+        tab.page.tabInfo().catch(() => null),
+      ]);
+      return { ...header, foreground: tabInfo?.active };
+    }));
     const result = renderTabsMarkdown(tabHeaders);
     response.addTextResult(result.join('\n'));
   },

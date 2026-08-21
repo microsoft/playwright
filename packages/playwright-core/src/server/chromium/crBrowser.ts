@@ -30,7 +30,7 @@ import { CRPage } from './crPage';
 import { saveProtocolStream } from './crProtocolHelper';
 import { CRServiceWorker } from './crServiceWorker';
 
-import type { InitScript } from '../page';
+import type { InitScript, TabInfo } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type { HttpCredentials } from '@protocol/structs';
@@ -56,6 +56,8 @@ export class CRBrowser extends Browser {
   private _tracingRecording = false;
   private _tracingClient: CRSession | undefined;
   private _userAgent: string = '';
+  private _tabInfoSnapshotPromise: Promise<Map<string, TabInfo>> | undefined;
+  private _tabInfoBrowserSessionPromise: Promise<CRSession> | undefined;
 
   static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
     // Make a copy in case we need to update `headful` property below.
@@ -274,6 +276,76 @@ export class CRBrowser extends Browser {
 
   async _closePage(crPage: CRPage) {
     await this._session.send('Target.closeTarget', { targetId: crPage._targetId });
+  }
+
+  async _tabInfoForPage(crPage: CRPage): Promise<TabInfo | undefined> {
+    // Tab targets expose embedderData since Chromium 150.
+    if (this._majorVersion && this._majorVersion < 150)
+      return undefined;
+    // A single query covers the whole browser, so pages asking concurrently share one
+    // round of protocol traffic. The promise is cleared once it settles, so that each
+    // new call still observes an up-to-date tab strip.
+    if (!this._tabInfoSnapshotPromise)
+      this._tabInfoSnapshotPromise = this._queryTabInfos().finally(() => this._tabInfoSnapshotPromise = undefined);
+    const tabInfos = await this._tabInfoSnapshotPromise;
+    return tabInfos.get(crPage._targetId);
+  }
+
+  private async _queryTabInfos(): Promise<Map<string, TabInfo>> {
+    const tabInfoByPageTargetId = new Map<string, TabInfo>();
+    const { targetInfos } = await this._session.send('Target.getTargets', { filter: [{ type: 'tab', exclude: false }, { exclude: true }] });
+    // Headless shell has no tab strip and embedders may not populate embedderData.
+    const tabTargets = targetInfos.filter(targetInfo => !!targetInfo.embedderData);
+    if (!tabTargets.length)
+      return tabInfoByPageTargetId;
+    const browserSession = await this._tabInfoBrowserSession();
+    await Promise.all(tabTargets.map(async targetInfo => {
+      const [pageTargetIds, { windowId }] = await Promise.all([
+        this._collectTabPageTargets(browserSession, targetInfo.targetId),
+        browserSession.send('Browser.getWindowForTarget', { targetId: targetInfo.targetId }),
+      ]);
+      // The protocol declares string values, but Chromium sends native booleans and numbers.
+      const embedderData = targetInfo.embedderData as unknown as { tabActive: boolean, tabStripIndex: number, tabPinned: boolean, tabGroupId?: string };
+      const tabInfo = {
+        active: embedderData.tabActive,
+        index: embedderData.tabStripIndex,
+        pinned: embedderData.tabPinned,
+        groupId: embedderData.tabGroupId,
+        windowId,
+      };
+      // A tab may own several page targets, e.g. a prerendered page.
+      for (const pageTargetId of pageTargetIds)
+        tabInfoByPageTargetId.set(pageTargetId, tabInfo);
+    }));
+    return tabInfoByPageTargetId;
+  }
+
+  // Use a separate browser session, so that Target.attachedToTarget events triggered
+  // by the tab attach do not interfere with the root session auto-attach handling.
+  private async _tabInfoBrowserSession(): Promise<CRSession> {
+    if (!this._tabInfoBrowserSessionPromise) {
+      this._tabInfoBrowserSessionPromise = this._session.send('Target.attachToBrowserTarget').then(
+          ({ sessionId }) => this._session.createChildSession(sessionId));
+      this._tabInfoBrowserSessionPromise.catch(() => this._tabInfoBrowserSessionPromise = undefined);
+    }
+    return this._tabInfoBrowserSessionPromise;
+  }
+
+  private async _collectTabPageTargets(browserSession: CRSession, tabTargetId: string): Promise<string[]> {
+    const { sessionId } = await browserSession.send('Target.attachToTarget', { targetId: tabTargetId, flatten: true });
+    const tabSession = browserSession.createChildSession(sessionId);
+    const pageTargetIds: string[] = [];
+    tabSession.on('Target.attachedToTarget', (event: Protocol.Target.attachedToTargetPayload) => {
+      pageTargetIds.push(event.targetInfo.targetId);
+    });
+    try {
+      // Existing related page targets are reported before the command acknowledgment.
+      await tabSession.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: false, flatten: true, filter: [{ type: 'page', exclude: false }, { exclude: true }] });
+    } finally {
+      browserSession.send('Target.detachFromTarget', { sessionId }).catch(() => {});
+      tabSession.dispose();
+    }
+    return pageTargetIds;
   }
 
   async newBrowserCDPSession(): Promise<CDPSession> {

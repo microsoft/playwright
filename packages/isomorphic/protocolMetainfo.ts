@@ -287,6 +287,7 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Page.startCSSCoverage', { title: 'Start CSS coverage', group: 'configuration', }],
   ['Page.stopCSSCoverage', { title: 'Stop CSS coverage', group: 'configuration', }],
   ['Page.bringToFront', { title: 'Bring to front', }],
+  ['Page.tabInfo', { title: 'Get tab info', }],
   ['Page.pickLocator', { title: 'Pick locator', group: 'configuration', }],
   ['Page.cancelPickLocator', { title: 'Cancel pick locator', group: 'configuration', }],
   ['Page.hideHighlight', { title: 'Hide all element highlights', group: 'configuration', }],

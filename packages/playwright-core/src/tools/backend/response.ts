@@ -357,7 +357,8 @@ export function renderTabMarkdown(tab: TabHeader): string[] {
   return lines;
 }
 
-export function renderTabsMarkdown(tabs: TabHeader[]): string[] {
+// `foreground` marks the tab selected in the real browser tab strip, browser_tabs tool only.
+export function renderTabsMarkdown(tabs: (TabHeader & { foreground?: boolean })[]): string[] {
   if (!tabs.length)
     return ['No open tabs. Navigate to a URL to create one.'];
 
@@ -365,8 +366,9 @@ export function renderTabsMarkdown(tabs: TabHeader[]): string[] {
   for (let i = 0; i < tabs.length; i++) {
     const tab = tabs[i];
     const current = tab.current ? ' (current)' : '';
+    const foreground = tab.foreground ? ' (visible to user)' : '';
     const crashed = tab.crashed ? ' [crashed]' : '';
-    lines.push(`- ${i}:${current} [${tab.title}](${tab.url})${crashed}`);
+    lines.push(`- ${i}:${current}${foreground} [${tab.title}](${tab.url})${crashed}`);
   }
   return lines;
 }
