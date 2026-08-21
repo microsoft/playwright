@@ -626,8 +626,6 @@ function connectOptionsFromEnv() {
   };
 }
 
-type SnapshotRecorderMode = 'on' | 'off' | 'only-on-failure' | 'on-first-failure';
-
 function isFailure(testInfo: TestInfo) {
   return testInfo.status !== 'skipped' && testInfo.status !== testInfo.expectedStatus;
 }
@@ -635,124 +633,33 @@ function isFailure(testInfo: TestInfo) {
 // Stamped on the page, holding the TestInfo the page was last snapshotted for.
 const kSnapshottedForTestInfo = Symbol('snapshottedForTestInfo');
 
-class SnapshotRecorder {
-  private _ordinal = 0;
-  private _temporary: string[] = [];
-
-  constructor(
-    private _artifactsRecorder: ArtifactsRecorder,
-    private _mode: SnapshotRecorderMode,
-    private _name: string,
-    private _contentType: string,
-    private _extension: string,
-    private _doSnapshot: (page: PageImpl, path: string) => Promise<void>) {
-  }
-
-  fixOrdinal() {
-    // Since beforeAll(s), test and afterAll(s) reuse the same TestInfo, make sure we do not
-    // overwrite previous screenshots.
-    this._ordinal = this.testInfo.attachments.filter(a => a.name === this._name).length;
-  }
-
-  private shouldCaptureUponFinish() {
-    return this._mode === 'on' ||
-        (this._mode === 'only-on-failure' && isFailure(this.testInfo)) ||
-        (this._mode === 'on-first-failure' && isFailure(this.testInfo) && this.testInfo.retry === 0);
-  }
-
-  async maybeCapture() {
-    if (!this.shouldCaptureUponFinish())
-      return;
-
-    await Promise.all(this._artifactsRecorder._playwright._allPages().map(page => this._snapshotPage(page, false)));
-  }
-
-  async persistTemporary() {
-    if (this.shouldCaptureUponFinish()) {
-      await Promise.all(this._temporary.map(async file => {
-        try {
-          const path = this._createAttachmentPath();
-          await fs.promises.rename(file, path);
-          this._attach(path);
-        } catch {
-        }
-      }));
-    }
-  }
-
-  async captureTemporary(context: BrowserContextImpl) {
-    if (this._mode === 'on' || this._mode === 'only-on-failure' || (this._mode === 'on-first-failure' && this.testInfo.retry === 0))
-      await Promise.all(context.pages().map(page => this._snapshotPage(page, true)));
-  }
-
-  private _attach(screenshotPath: string) {
-    this.testInfo.attachments.push({ name: this._name, path: screenshotPath, contentType: this._contentType });
-  }
-
-  private _createAttachmentPath() {
-    const testFailed = isFailure(this.testInfo);
-    const index = this._ordinal + 1;
-    ++this._ordinal;
-    const path = this.testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${index}${this._extension}`);
-    return path;
-  }
-
-  private _createTemporaryArtifact(...name: string[]) {
-    const file = path.join(this._artifactsRecorder._artifactsDir, ...name);
-    return file;
-  }
-
-  private async _snapshotPage(page: PageImpl, temporary: boolean) {
-    // Make sure we do not snapshot the same page twice for a single TestInfo,
-    // which is reused between beforeAll(s), test and afterAll(s),
-    // each having their own ArtifactsRecorder.
-    if ((page as any)[kSnapshottedForTestInfo] === this.testInfo)
-      return;
-    (page as any)[kSnapshottedForTestInfo] = this.testInfo;
-    try {
-      const path = temporary ? this._createTemporaryArtifact(createGuid() + this._extension) : this._createAttachmentPath();
-      await this._doSnapshot(page, path);
-      if (temporary)
-        this._temporary.push(path);
-      else
-        this._attach(path);
-    } catch {
-      // snapshot may fail, just ignore.
-    }
-  }
-
-  private get testInfo(): _TestInfoEx {
-    return this._artifactsRecorder._testInfo;
-  }
-}
-
 class ArtifactsRecorder {
   _testInfo!: _TestInfoEx;
   _playwright: PlaywrightImpl;
   _artifactsDir: string;
   private _startedCollectingArtifacts: symbol;
 
-  private _screenshotRecorder: SnapshotRecorder;
+  private _screenshotMode: ScreenshotMode;
+  private _screenshotOptions: Exclude<ScreenshotOption, string>;
+  private _screenshotOrdinal = 0;
+  private _temporaryScreenshots: string[] = [];
   private _pageSnapshot: string | undefined;
 
   constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
-    const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
+    this._screenshotMode = normalizeScreenshotMode(screenshot);
+    this._screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
-
-    this._screenshotRecorder = new SnapshotRecorder(this, normalizeScreenshotMode(screenshot), 'screenshot', 'image/png', '.png', async (page, path) => {
-      await page._wrapApiCall(async () => {
-        await page.screenshot({ ...screenshotOptions, timeout: 5000, path, caret: 'initial' });
-      }, { internal: true });
-    });
   }
 
   async willStartTest(testInfo: _TestInfoEx) {
     this._testInfo = testInfo;
     testInfo._callbacks.onDidFinishTestFunction = () => this.didFinishTestFunction();
 
-    this._screenshotRecorder.fixOrdinal();
+    // Since beforeAll(s), test and afterAll(s) reuse the same TestInfo, make sure we do not
+    // overwrite previous screenshots.
+    this._screenshotOrdinal = testInfo.attachments.filter(a => a.name === 'screenshot').length;
 
     // Process existing contexts.
     await Promise.all(this._playwright._allContexts().map(context => this.didCreateBrowserContext(context)));
@@ -767,7 +674,8 @@ class ArtifactsRecorder {
 
   async willCloseBrowserContext(context: BrowserContextImpl) {
     await this._stopTracing(context, context.tracing);
-    await this._screenshotRecorder.captureTemporary(context);
+    if (this._screenshotMode === 'on' || this._screenshotMode === 'only-on-failure' || (this._screenshotMode === 'on-first-failure' && this._testInfo.retry === 0))
+      await Promise.all(context.pages().map(page => this._screenshotPage(page, true)));
     await this._takePageSnapshot(context);
   }
 
@@ -803,7 +711,8 @@ class ArtifactsRecorder {
   }
 
   async didFinishTestFunction() {
-    await this._screenshotRecorder.maybeCapture();
+    if (this._shouldCaptureScreenshotUponFinish())
+      await Promise.all(this._playwright._allPages().map(page => this._screenshotPage(page, false)));
   }
 
   async didFinishTest() {
@@ -820,7 +729,7 @@ class ArtifactsRecorder {
       await this._stopTracing(context, context.tracing);
     })));
 
-    await this._screenshotRecorder.persistTemporary();
+    await this._persistTemporaryScreenshots();
 
     const context = leftoverContexts[0];
     if (context)
@@ -844,6 +753,53 @@ class ArtifactsRecorder {
         });
       }
     }
+  }
+
+  private _shouldCaptureScreenshotUponFinish() {
+    return this._screenshotMode === 'on' ||
+        (this._screenshotMode === 'only-on-failure' && isFailure(this._testInfo)) ||
+        (this._screenshotMode === 'on-first-failure' && isFailure(this._testInfo) && this._testInfo.retry === 0);
+  }
+
+  private async _screenshotPage(page: PageImpl, temporary: boolean) {
+    // Make sure we do not screenshot the same page twice for a single TestInfo,
+    // which is reused between beforeAll(s), test and afterAll(s),
+    // each having their own ArtifactsRecorder.
+    if ((page as any)[kSnapshottedForTestInfo] === this._testInfo)
+      return;
+    (page as any)[kSnapshottedForTestInfo] = this._testInfo;
+    try {
+      const file = temporary ? path.join(this._artifactsDir, createGuid() + '.png') : this._createScreenshotAttachmentPath();
+      await page._wrapApiCall(async () => {
+        await page.screenshot({ ...this._screenshotOptions, timeout: 5000, path: file, caret: 'initial' });
+      }, { internal: true });
+      if (temporary)
+        this._temporaryScreenshots.push(file);
+      else
+        this._testInfo.attachments.push({ name: 'screenshot', path: file, contentType: 'image/png' });
+    } catch {
+      // Screenshot may fail, just ignore.
+    }
+  }
+
+  private async _persistTemporaryScreenshots() {
+    if (!this._shouldCaptureScreenshotUponFinish())
+      return;
+    await Promise.all(this._temporaryScreenshots.map(async file => {
+      try {
+        const screenshotPath = this._createScreenshotAttachmentPath();
+        await fs.promises.rename(file, screenshotPath);
+        this._testInfo.attachments.push({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
+      } catch {
+      }
+    }));
+  }
+
+  private _createScreenshotAttachmentPath() {
+    const testFailed = isFailure(this._testInfo);
+    const index = this._screenshotOrdinal + 1;
+    ++this._screenshotOrdinal;
+    return this._testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${index}.png`);
   }
 
   private async _startTraceChunkOnContextCreation(channelOwner: ChannelOwner, tracing: Tracing) {
