@@ -5,14 +5,24 @@ Playwright. WebMCP is experimental, Chromium-only, and accessed through CDP.
 
 ## Workflow
 
-1. Open the target in a fresh, isolated Chromium with WebMCP enabled.
-2. Run the discovery helper to check support and list root-frame tools.
-3. Inspect the selected tool's description, schema, annotations, and frame ID.
-4. Confirm any action the user has not already authorized.
-5. Run the invocation helper with schema-valid input.
-6. Close the managed browser.
+1. Choose a Chromium-family browser, honoring the user's preference.
+2. Open the target in a fresh, isolated browser with WebMCP enabled.
+3. Run the discovery helper to check support and list root-frame tools.
+4. Inspect the selected tool's description, schema, annotations, and frame ID.
+5. Confirm any action the user has not already authorized.
+6. Run the invocation helper with schema-valid input.
+7. Close the managed browser.
 
 All commands use one named session. The examples below use `webmcp`.
+
+Supported browser choices are:
+
+- `chromium`: Playwright-managed Chrome for Testing. Use this by default.
+- `chrome`: Installed Google Chrome.
+- `msedge`: Installed Microsoft Edge.
+
+Chrome and Edge channel variants such as `chrome-canary` and `msedge-dev` are
+also supported. Firefox and WebKit cannot use the WebMCP CDP domain.
 
 ## Commands
 
@@ -26,7 +36,6 @@ Write this temporary config outside version control:
     "browserName": "chromium",
     "isolated": true,
     "launchOptions": {
-      "channel": "chrome-for-testing",
       "headless": false,
       "args": ["--enable-features=WebMCP"]
     }
@@ -35,11 +44,12 @@ Write this temporary config outside version control:
 ```
 
 ```bash
-# Open the target in an ephemeral profile with WebMCP enabled
-playwright-cli --config=<temporary-config> -s=webmcp open <url> --browser=chromium
+# Open the target in an ephemeral profile with WebMCP enabled.
+# Replace <browser> with chromium, chrome, msedge, or a supported channel.
+playwright-cli --config=<temporary-config> -s=webmcp open <url> --browser=<browser>
 
-# Install the matching browser when the executable is missing
-npx playwright install chromium
+# Install Playwright's default Chromium when its executable is missing
+playwright-cli install-browser chrome-for-testing
 ```
 
 No manual browser flag is needed for this managed path. The ephemeral profile
@@ -168,13 +178,13 @@ the response as:
 Attach only when the user needs an authenticated session. Explain that this
 exposes signed-in browser state and confirm first.
 
-The browser must already have an origin-trial token or
-`chrome://flags/#enable-webmcp-testing` enabled, followed by a relaunch. Enable
-remote debugging at `chrome://inspect/#remote-debugging`.
+The browser must already have an origin-trial token or the WebMCP testing flag
+enabled. Open `about:flags`, search for `WebMCP`, enable **WebMCP for testing**,
+and relaunch. Then enable remote debugging from the browser's inspect page.
 
 ```bash
-# Attach by browser channel
-playwright-cli -s=webmcp attach --cdp=chrome
+# Attach by browser channel, for example chrome, chrome-canary, or msedge
+playwright-cli -s=webmcp attach --cdp=<channel>
 
 # Or attach to an explicit endpoint
 playwright-cli -s=webmcp attach --cdp=http://127.0.0.1:9222
@@ -210,7 +220,7 @@ Delete only the temporary files created by this workflow.
 
 | Symptom | Action |
 |---|---|
-| Browser executable is missing | Run `npx playwright install chromium` |
+| Chrome for Testing is missing | Run `playwright-cli install-browser chrome-for-testing` |
 | `newCDPSession` fails | Reopen with Chromium |
 | `WebMCP.enable` is missing | Report the version and use Chromium 150+ |
 | `modelContext` is false | Check the flag or origin trial and page requirements |
@@ -228,8 +238,8 @@ Node.js `require` or timers. Use `page.waitForTimeout` and return JSON data.
 ## Typical session
 
 ```bash
-# 1. Open a managed WebMCP browser
-playwright-cli --config=<temporary-config> -s=webmcp open <url> --browser=chromium
+# 1. Open the requested browser, defaulting to chromium
+playwright-cli --config=<temporary-config> -s=webmcp open <url> --browser=<browser>
 
 # 2. Discover tools and inspect their schemas
 playwright-cli --raw -s=webmcp run-code --filename=<discover-file>
