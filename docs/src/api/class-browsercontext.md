@@ -1560,8 +1560,12 @@ Whether to emulate network being offline for the browser context.
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
+    - `opfs` ?<[Array]<[Object]>> Entries in the origin private file system.
+      - `path` <[string]> Path relative to the origin private file system root.
+      - `type` <[string]<"file"|"directory">>
+      - `base64` ?<[string]> Base64-encoded file contents. Present when `type` is `"file"`.
 
-Returns storage state for this browser context, contains current cookies, local storage snapshot, IndexedDB snapshot and virtual WebAuthn credentials.
+Returns storage state for this browser context, contains current cookies, local storage snapshot, IndexedDB snapshot, origin private file system snapshot and virtual WebAuthn credentials.
 
 ## async method: BrowserContext.storageState
 * since: v1.8
@@ -1578,6 +1582,13 @@ Returns storage state for this browser context, contains current cookies, local 
 Set to `true` to include [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) in the storage state snapshot.
 If your application uses IndexedDB to store authentication tokens, like Firebase Authentication, enable this.
 
+### option: BrowserContext.storageState.opfs
+* since: v1.63
+- `opfs` ?<boolean>
+
+Set to `true` to include the [origin private file system](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system)
+in the storage state snapshot.
+
 ### option: BrowserContext.storageState.credentials
 * since: v1.61
 - `credentials` ?<boolean>
@@ -1590,7 +1601,7 @@ Note that restoring the storage state that contains credentials will automatical
 ## async method: BrowserContext.setStorageState
 * since: v1.59
 
-Clears the existing cookies, local storage, IndexedDB entries and virtual WebAuthn credentials, and sets the new storage
+Clears the existing cookies, local storage, IndexedDB entries, origin private file system entries and virtual WebAuthn credentials, and sets the new storage
 state. When the storage state contains credentials, the virtual WebAuthn authenticator is installed (equivalent to
 [`method: Credentials.install`]), preventing all real authenticators from working in this context.
 

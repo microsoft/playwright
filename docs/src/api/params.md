@@ -305,6 +305,10 @@ Specify environment variables that will be visible to the browser. Defaults to `
     - `localStorage` <[Array]<[Object]>> localStorage to set for context
       - `name` <[string]>
       - `value` <[string]>
+    - `opfs` ?<[Array]<[Object]>> Entries to set in the origin private file system.
+      - `path` <[string]> Path relative to the origin private file system root.
+      - `type` <[string]<"file"|"directory">>
+      - `base64` ?<[string]> Base64-encoded file contents. Required when `type` is `"file"`.
 
 Learn more about [storage state and auth](../auth.md).
 

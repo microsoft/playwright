@@ -177,6 +177,7 @@ BrowserContext:
       group: configuration
       parameters:
         indexedDB: boolean?
+        opfs: boolean?
         credentials: boolean?
       returns:
         cookies:
