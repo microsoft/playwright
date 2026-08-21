@@ -467,8 +467,12 @@ test('control embedded in a target element', async ({ page }) => {
     <h1>
       <input type="text" value="Foo bar">
     </h1>
+    <h2>
+      <input type="search" value="Baz qux">
+    </h2>
   `);
   expect.soft(await getNameAndRole(page, 'h1')).toEqual({ role: 'heading', name: 'Foo bar' });
+  expect.soft(await getNameAndRole(page, 'h2')).toEqual({ role: 'heading', name: 'Baz qux' });
 });
 
 test('svg role=presentation', async ({ page, server }) => {

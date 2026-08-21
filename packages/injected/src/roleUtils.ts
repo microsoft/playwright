@@ -746,7 +746,8 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     const isOwnLabel = [...(element as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)).labels || []].includes(element as any);
     const isOwnLabelledBy = (labelledBy || []).includes(element);
     if (!isOwnLabel && !isOwnLabelledBy) {
-      if (role === 'textbox') {
+      // https://w3c.github.io/aria/#searchbox is a subclass of textbox.
+      if (role === 'textbox' || role === 'searchbox') {
         options.visitedElements.add(element);
         if (tagName === 'INPUT' || tagName === 'TEXTAREA')
           return compositeString((element as HTMLInputElement | HTMLTextAreaElement).value, element, options.collectElements);
