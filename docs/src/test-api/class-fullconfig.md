@@ -101,7 +101,7 @@ See [`property: TestConfig.quiet`].
 
 ## property: FullConfig.reporter
 * since: v1.10
-- type: <[string]|[Array]<[Object]>|[BuiltInReporter]<"list"|"dot"|"line"|"github"|"json"|"junit"|"null"|"html">>
+- type: <[string]|[Array]<[Object]>|[BuiltInReporter]<"list"|"dot"|"line"|"github"|"json"|"junit"|"null"|"html"|"chrome-trace">>
   - `0` <[string]> Reporter name or module or file path
   - `1` <[Object]> An object with reporter options if any
 

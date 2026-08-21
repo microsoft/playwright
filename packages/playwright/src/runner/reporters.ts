@@ -19,6 +19,7 @@ import { calculateSha1 } from '@utils/crypto';
 import { loadReporter } from './loadUtils';
 import { formatError } from '../reporters/base';
 import { BlobReporter } from '../reporters/blob';
+import ChromeTraceReporter from '../reporters/chromeTrace';
 import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
 import GitHubReporter from '../reporters/github';
@@ -39,15 +40,16 @@ import type { TestRunOptions } from './tasks';
 
 export async function createReporters(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', descriptions?: ReporterDescription[], runOptions?: TestRunOptions): Promise<ReporterV2[]> {
   const defaultReporters: { [key in commonConfig.BuiltInReporter]: new(arg: any) => ReporterV2 } = {
-    blob: BlobReporter,
-    dot: mode === 'list' ? ListModeReporter : DotReporter,
-    line: mode === 'list' ? ListModeReporter : LineReporter,
-    list: mode === 'list' ? ListModeReporter : ListReporter,
-    github: GitHubReporter,
-    json: JSONReporter,
-    junit: JUnitReporter,
-    null: EmptyReporter,
-    html: HtmlReporter,
+    'blob': BlobReporter,
+    'chrome-trace': ChromeTraceReporter,
+    'dot': mode === 'list' ? ListModeReporter : DotReporter,
+    'line': mode === 'list' ? ListModeReporter : LineReporter,
+    'list': mode === 'list' ? ListModeReporter : ListReporter,
+    'github': GitHubReporter,
+    'json': JSONReporter,
+    'junit': JUnitReporter,
+    'null': EmptyReporter,
+    'html': HtmlReporter,
   };
   const reporters: ReporterV2[] = [];
   descriptions ??= config.config.reporter;
