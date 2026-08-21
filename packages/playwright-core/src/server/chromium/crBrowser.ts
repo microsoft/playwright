@@ -282,9 +282,6 @@ export class CRBrowser extends Browser {
     // Tab targets expose embedderData since Chromium 150.
     if (this._majorVersion && this._majorVersion < 150)
       return undefined;
-    // A single query covers the whole browser, so pages asking concurrently share one
-    // round of protocol traffic. The promise is cleared once it settles, so that each
-    // new call still observes an up-to-date tab strip.
     if (!this._tabInfoSnapshotPromise)
       this._tabInfoSnapshotPromise = this._queryTabInfos().finally(() => this._tabInfoSnapshotPromise = undefined);
     const tabInfos = await this._tabInfoSnapshotPromise;
@@ -294,7 +291,6 @@ export class CRBrowser extends Browser {
   private async _queryTabInfos(): Promise<Map<string, TabInfo>> {
     const tabInfoByPageTargetId = new Map<string, TabInfo>();
     const { targetInfos } = await this._session.send('Target.getTargets', { filter: [{ type: 'tab', exclude: false }, { exclude: true }] });
-    // Headless shell has no tab strip and embedders may not populate embedderData.
     const tabTargets = targetInfos.filter(targetInfo => !!targetInfo.embedderData);
     if (!tabTargets.length)
       return tabInfoByPageTargetId;
@@ -304,7 +300,7 @@ export class CRBrowser extends Browser {
         this._collectTabPageTargets(browserSession, targetInfo.targetId),
         browserSession.send('Browser.getWindowForTarget', { targetId: targetInfo.targetId }),
       ]);
-      // The protocol declares string values, but Chromium sends native booleans and numbers.
+      // Protocol declares string values, but Chromium sends booleans and numbers.
       const embedderData = targetInfo.embedderData as unknown as { tabActive: boolean, tabStripIndex: number, tabPinned: boolean, tabGroupId?: string };
       const tabInfo = {
         active: embedderData.tabActive,
@@ -313,15 +309,13 @@ export class CRBrowser extends Browser {
         groupId: embedderData.tabGroupId,
         windowId,
       };
-      // A tab may own several page targets, e.g. a prerendered page.
       for (const pageTargetId of pageTargetIds)
         tabInfoByPageTargetId.set(pageTargetId, tabInfo);
     }));
     return tabInfoByPageTargetId;
   }
 
-  // Use a separate browser session, so that Target.attachedToTarget events triggered
-  // by the tab attach do not interfere with the root session auto-attach handling.
+  // Separate session, so that tab attach events do not interfere with the root session auto-attach handling.
   private async _tabInfoBrowserSession(): Promise<CRSession> {
     if (!this._tabInfoBrowserSessionPromise) {
       this._tabInfoBrowserSessionPromise = this._session.send('Target.attachToBrowserTarget').then(

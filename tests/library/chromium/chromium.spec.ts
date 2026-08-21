@@ -849,13 +849,11 @@ playwrightTest('page.tabInfo should serve concurrent calls from all pages', asyn
     for (let i = 0; i < 5; i++)
       pages.push(await context.newPage());
 
-    // Concurrent calls share a single browser-wide query, each page must still get its own tab.
     const infos = await Promise.all(pages.map(page => page.tabInfo()));
     expect(infos.every(info => !!info)).toBe(true);
     expect(infos.filter(info => info!.active).length).toBe(1);
     expect(infos.map(info => info!.index)).toEqual([0, 1, 2, 3, 4]);
 
-    // A subsequent round must observe the new state instead of reusing the shared snapshot.
     await pages[0].bringToFront();
     await expect.poll(async () => {
       const updated = await Promise.all(pages.map(page => page.tabInfo()));

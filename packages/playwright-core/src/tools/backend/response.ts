@@ -357,7 +357,6 @@ export function renderTabMarkdown(tab: TabHeader): string[] {
   return lines;
 }
 
-// `foreground` marks the tab selected in the real browser tab strip, browser_tabs tool only.
 export function renderTabsMarkdown(tabs: (TabHeader & { foreground?: boolean })[]): string[] {
   if (!tabs.length)
     return ['No open tabs. Navigate to a URL to create one.'];
