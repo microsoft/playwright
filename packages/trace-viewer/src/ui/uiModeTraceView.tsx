@@ -20,6 +20,8 @@ import '@web/common.css';
 import '@web/third_party/vscode/codicon.css';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import React from 'react';
+import { createEmptyContext } from '@isomorphic/trace/entries';
+
 import type { ContextEntry } from '@isomorphic/trace/entries';
 import type { SourceLocation } from '@isomorphic/trace/traceModel';
 import { TraceModel } from '@isomorphic/trace/traceModel';
@@ -75,7 +77,7 @@ export const TraceView: React.FC<{
         const model = await loadSingleTraceFile(traceLocation, Date.now());
         setModel({ model, isLive: true });
       } catch {
-        const model = new TraceModel('', []);
+        const model = new TraceModel('', createEmptyContext());
         model.errorDescriptors.push(...result.errors.flatMap(error => !!error.message ? [{ message: error.message }] : []));
         setModel({ model, isLive: false });
       } finally {
@@ -115,6 +117,6 @@ async function loadSingleTraceFile(absolutePath: string, timestamp: number): Pro
   const params = new URLSearchParams();
   params.set('trace', traceUri);
   const response = await fetch(`contexts?${params.toString()}`);
-  const contextEntries = await response.json() as ContextEntry[];
-  return new TraceModel(traceUri, contextEntries);
+  const contextEntry = await response.json() as ContextEntry;
+  return new TraceModel(traceUri, contextEntry);
 }

@@ -330,6 +330,10 @@ function traceDescriptor(traceDir: string, tracePrefix: string | undefined) {
   };
 
   for (const name of fs.readdirSync(traceDir)) {
+    // Skip per-chunk copies of the network file made for zipping,
+    // they duplicate the main network file.
+    if (/-pwnetcopy-\d+\.network$/.test(name))
+      continue;
     if (!tracePrefix || name.startsWith(tracePrefix))
       result.entries.push({ name, path: toFilePathUrl(path.join(traceDir, name)) });
   }

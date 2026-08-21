@@ -93,44 +93,34 @@ export class TraceModel {
   private _screenshots = new Map<string, trace.ScreenshotTraceEvent>();
   private _ariaSnapshots = new Map<string, trace.AriaSnapshotTraceEvent>();
 
-  constructor(traceUri: string, contexts: ContextEntry[]) {
-    const libraryContext = contexts.find(context => context.origin === 'library');
-
+  constructor(traceUri: string, contextEntry: ContextEntry) {
     this.traceUri = traceUri;
-    this.browserName = libraryContext?.browserName || '';
-    this.sdkLanguage = libraryContext?.sdkLanguage;
-    this.channel = libraryContext?.channel;
-    this.testIdAttributeName = libraryContext?.testIdAttributeName;
-    this.platform = libraryContext?.platform || '';
-    this.playwrightVersion = contexts.find(c => c.playwrightVersion)?.playwrightVersion;
-    this.title = libraryContext?.title || '';
-    this.options = libraryContext?.options || {};
-    this.testTimeout = contexts.find(c => c.origin === 'testRunner')?.testTimeout;
-    this.annotations = contexts.find(c => c.origin === 'testRunner')?.annotations;
-    // Next call updates all timestamps for all events in library contexts, so it must be done first.
-    this.actions = mergeActionsAndUpdateTiming(contexts);
-    this.pages = ([] as PageEntry[]).concat(...contexts.map(c => c.pages));
-    this.videos = [];
-    this.wallTime = contexts.map(c => c.wallTime).reduce((prev, cur) => Math.min(prev || Number.MAX_VALUE, cur!), Number.MAX_VALUE);
-    this.startTime = contexts.map(c => c.startTime).reduce((prev, cur) => Math.min(prev, cur), Number.MAX_VALUE);
-    this.endTime = contexts.map(c => c.endTime).reduce((prev, cur) => Math.max(prev, cur), Number.MIN_VALUE);
-    this.events = ([] as (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[]).concat(...contexts.map(c => c.events));
-    this.stdio = ([] as trace.StdioTraceEvent[]).concat(...contexts.map(c => c.stdio));
-    this.errors = ([] as trace.ErrorTraceEvent[]).concat(...contexts.map(c => c.errors));
-    this.hasSource = contexts.some(c => c.hasSource);
-    this.hasStepData = contexts.some(context => context.origin === 'testRunner');
-    this.resources = [];
-    for (let i = 0; i < contexts.length; ++i) {
-      for (const entry of contexts[i].resources)
-        this.resources.push({ ...entry, id: `${resourceOwnerRef(entry) ?? i}-${entry.startedDateTime}-${entry.request.url}` });
-    }
-    for (const context of contexts) {
-      for (const event of context.screenshots || [])
-        this._screenshots.set(`${event.callId}/${event.phase}`, event);
-      for (const event of context.ariaSnapshots || [])
-        this._ariaSnapshots.set(`${event.callId}/${event.phase}`, event);
-      this.videos.push(...(context.videos || []));
-    }
+    this.browserName = contextEntry.browserName;
+    this.sdkLanguage = contextEntry.sdkLanguage;
+    this.channel = contextEntry.channel;
+    this.testIdAttributeName = contextEntry.testIdAttributeName;
+    this.platform = contextEntry.platform || '';
+    this.playwrightVersion = contextEntry.playwrightVersion;
+    this.title = contextEntry.title || '';
+    this.options = contextEntry.options;
+    this.testTimeout = contextEntry.testTimeout;
+    this.annotations = contextEntry.annotations;
+    this.actions = sortAndLinkActions(contextEntry.actions);
+    this.pages = contextEntry.pages;
+    this.videos = contextEntry.videos;
+    this.wallTime = contextEntry.wallTime;
+    this.startTime = contextEntry.startTime;
+    this.endTime = contextEntry.endTime;
+    this.events = contextEntry.events;
+    this.stdio = contextEntry.stdio;
+    this.errors = contextEntry.errors;
+    this.hasSource = contextEntry.hasSource;
+    this.hasStepData = contextEntry.hasStepData;
+    this.resources = contextEntry.resources.map((entry, index) => ({ ...entry, id: `${resourceOwnerRef(entry) ?? index}-${entry.startedDateTime}-${entry.request.url}` }));
+    for (const event of contextEntry.screenshots)
+      this._screenshots.set(`${event.callId}/${event.phase}`, event);
+    for (const event of contextEntry.ariaSnapshots)
+      this._ariaSnapshots.set(`${event.callId}/${event.phase}`, event);
     this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, callId: action.callId, traceUri })) ?? []);
     this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
 
@@ -250,8 +240,8 @@ export class TraceModel {
   }
 }
 
-function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
-  const result = mergeActionsAndUpdateTimingSameTrace(contexts);
+function sortAndLinkActions(actions: ActionEntry[]) {
+  const result = actions.slice();
 
   result.sort((a1, a2) => {
     if (a2.parentId === a1.callId)
@@ -276,93 +266,6 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
     (result[i] as any)[nextByStartTimeSymbol] = result[i + 1];
 
   return result;
-}
-
-let lastTmpStepId = 0;
-
-function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionEntry[] {
-  const map = new Map<string, ActionEntry>();
-
-  const libraryContexts = contexts.filter(context => context.origin === 'library');
-  const testRunnerContexts = contexts.filter(context => context.origin === 'testRunner');
-
-  // With library-only or test-runner-only traces there is nothing to match.
-  if (!testRunnerContexts.length || !libraryContexts.length) {
-    return contexts.map(context => {
-      return context.actions.map(action => ({ ...action }));
-    }).flat();
-  }
-
-  const timeOrigin = (context: ContextEntry) => context.wallTime - context.monotonicTime;
-  const runnerContext = testRunnerContexts.find(context => context.monotonicTime);
-  for (const context of libraryContexts) {
-    if (runnerContext && context.monotonicTime)
-      adjustMonotonicTime(context, timeOrigin(context) - timeOrigin(runnerContext));
-  }
-
-  for (const context of libraryContexts) {
-    for (const action of context.actions) {
-      // Never merge stepless events.
-      map.set(action.stepId || `tmp-step@${++lastTmpStepId}`, { ...action });
-    }
-  }
-
-  const nonPrimaryIdToPrimaryId = new Map<string, string>();
-  for (const context of testRunnerContexts) {
-    for (const action of context.actions) {
-      const existing = action.stepId && map.get(action.stepId);
-      if (existing) {
-        nonPrimaryIdToPrimaryId.set(action.callId, existing.callId);
-        if (action.error)
-          existing.error = action.error;
-        if (action.attachments)
-          existing.attachments = action.attachments;
-        if (action.annotations)
-          existing.annotations = action.annotations;
-        if (action.parentId)
-          existing.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
-        if (action.group)
-          existing.group = action.group;
-        // For the events that are present in the test runner context, always take
-        // their time from the test runner context to preserve client side order.
-        existing.startTime = action.startTime;
-        existing.endTime = action.endTime;
-        continue;
-      }
-      if (action.parentId)
-        action.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
-      map.set(action.stepId || `tmp-step@${++lastTmpStepId}`, { ...action });
-    }
-  }
-  return [...map.values()];
-}
-
-function adjustMonotonicTime(context: ContextEntry, monotonicTimeDelta: number) {
-  if (!monotonicTimeDelta)
-    return;
-  context.startTime += monotonicTimeDelta;
-  context.endTime += monotonicTimeDelta;
-  context.monotonicTime += monotonicTimeDelta;
-  for (const action of context.actions) {
-    if (action.startTime)
-      action.startTime += monotonicTimeDelta;
-    if (action.endTime)
-      action.endTime += monotonicTimeDelta;
-  }
-  for (const event of context.events)
-    event.time += monotonicTimeDelta;
-  for (const event of context.stdio)
-    event.timestamp += monotonicTimeDelta;
-  for (const page of context.pages) {
-    for (const frame of page.screencastFrames)
-      frame.timestamp += monotonicTimeDelta;
-  }
-  for (const video of context.videos || [])
-    video.timestampOrigin += monotonicTimeDelta;
-  for (const resource of context.resources) {
-    if (resource._monotonicTime)
-      resource._monotonicTime += monotonicTimeDelta;
-  }
 }
 
 export function buildActionTree(actions: ActionEntry[]): { rootItem: ActionTreeItem, itemMap: Map<string, ActionTreeItem> } {
