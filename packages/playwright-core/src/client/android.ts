@@ -335,7 +335,8 @@ export class AndroidInput implements api.AndroidInput {
   }
 
   async swipe(from: types.Point, segments: types.Point[], steps: number) {
-    await this._device._channel.inputSwipe({ segments, steps }, kNoTimeout);
+    // `from` is the first point of the gesture, `segments` are the points following it.
+    await this._device._channel.inputSwipe({ segments: [from, ...segments], steps }, kNoTimeout);
   }
 
   async drag(from: types.Point, to: types.Point, steps: number) {
