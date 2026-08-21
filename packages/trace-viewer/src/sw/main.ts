@@ -205,7 +205,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       return errorResponse;
 
     if (relativePath === '/contexts') {
-      return new Response(JSON.stringify(loadedTrace!.traceLoader.contextEntries), {
+      return new Response(JSON.stringify(loadedTrace!.traceLoader.contextEntry), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });

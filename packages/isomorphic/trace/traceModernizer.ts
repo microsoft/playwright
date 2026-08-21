@@ -49,14 +49,19 @@ export class TraceModernizer {
   private _consoleObjects = new Map<string, { type: string, text: string, location: { url: string, lineNumber: number, columnNumber: number }, args?: { preview: string, value: string }[] }>();
   private _apiRequestRef: string | undefined;
 
-  constructor(contextEntry: ContextEntry, snapshotStorage: SnapshotStorage) {
+  constructor(contextEntry: ContextEntry, snapshotStorage: SnapshotStorage, version?: number) {
     this._contextEntry = contextEntry;
     this._snapshotStorage = snapshotStorage;
+    this._version = version;
   }
 
   appendTrace(trace: string) {
     for (const line of trace.split('\n'))
       this._appendEvent(line);
+  }
+
+  version(): number | undefined {
+    return this._version;
   }
 
   actions(): ActionEntry[] {

@@ -15,6 +15,7 @@
 */
 
 import * as React from 'react';
+import { createEmptyContext } from '@isomorphic/trace/entries';
 import { TraceModel } from '@isomorphic/trace/traceModel';
 import './workbenchLoader.css';
 import { Workbench } from './workbench';
@@ -134,8 +135,8 @@ export const WorkbenchLoader: React.FunctionComponent<{
       setProcessingErrorMessage(error);
       return error;
     }
-    const contextEntries = await response.json();
-    const model = new TraceModel(traceURL, contextEntries);
+    const contextEntry = await response.json();
+    const model = new TraceModel(traceURL, contextEntry);
     setProgress({ done: 0, total: 0 });
     setProcessingErrorMessage(null);
     setModel(model);
@@ -245,4 +246,4 @@ export const WorkbenchLoader: React.FunctionComponent<{
   </div>;
 };
 
-export const emptyModel = new TraceModel('', []);
+export const emptyModel = new TraceModel('', createEmptyContext());

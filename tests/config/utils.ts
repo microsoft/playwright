@@ -171,7 +171,7 @@ export async function parseTrace(file: string): Promise<{ snapshots: SnapshotSto
   const backend = new tools.DirTraceLoaderBackend(dir);
   const loader = new TraceLoader();
   await loader.load(backend);
-  return { model: new TraceModel(dir, loader.contextEntries), snapshots: loader.storage() };
+  return { model: new TraceModel(dir, loader.contextEntry), snapshots: loader.storage() };
 }
 
 export async function parseHar(file: string): Promise<Map<string, Buffer>> {
