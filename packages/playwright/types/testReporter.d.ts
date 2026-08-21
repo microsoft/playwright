@@ -876,6 +876,28 @@ export interface TestStep {
   location?: Location;
 
   /**
+   * Step-dependent parameters, when available. For example, steps produced by the Playwright API calls contain the
+   * target `locator` and the call arguments such as `url`, while
+   * [test.step(title, body[, options])](https://playwright.dev/docs/api/class-test#test-step) steps contain the
+   * parameters passed by the test author.
+   *
+   * ```js
+   * // { locator: 'getByRole(\'button\')' }
+   * await page.getByRole('button').click();
+   *
+   * // { url: 'https://example.com' }
+   * await page.goto('https://example.com');
+   *
+   * // { orderId: 42 }
+   * await test.step('checkout', async () => {
+   *   // ...
+   * }, { params: { orderId: 42 } });
+   * ```
+   *
+   */
+  params?: { [key: string]: any; };
+
+  /**
    * Parent step, if any.
    */
   parent?: TestStep;

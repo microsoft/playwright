@@ -1861,3 +1861,39 @@ fixture   |  Fixture "context"
 pw:api    |    Close context
 `);
 });
+
+test('should report step params', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      import type { Reporter, TestCase, TestResult, TestStep } from '@playwright/test/reporter';
+      export default class MyReporter implements Reporter {
+        onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+          if (step.location?.file.endsWith('a.test.ts'))
+            console.log('%%' + step.category + ' | ' + step.title + ' | ' + JSON.stringify(step.params));
+        }
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = { reporter: './reporter' };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.goto('about:blank');
+        await page.setContent('<button>Click me</button>');
+        await page.getByRole('button').click();
+        await expect(page.getByRole('button')).toBeVisible();
+        await test.step('my step', async () => {}, { params: { foo: 'bar', count: 7 } });
+      });
+    `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    `pw:api | Navigate to "about:blank" | {"url":"about:blank"}`,
+    `pw:api | Set content | undefined`,
+    `pw:api | Click getByRole('button') | {"locator":"getByRole('button')"}`,
+    `expect | Expect "toBeVisible" getByRole('button') | {"locator":"getByRole('button')"}`,
+    `test.step | my step | {"foo":"bar","count":7}`,
+  ]);
+});

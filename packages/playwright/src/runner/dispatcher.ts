@@ -405,6 +405,7 @@ class JobDispatcher {
       },
       parent: parentStep,
       category: params.category,
+      params: params.params,
       startTime: new Date(params.wallTime),
       duration: -1,
       steps: [],

@@ -41,6 +41,27 @@ Error thrown during the step execution, if any.
 
 Parent step, if any.
 
+## property: TestStep.params
+* since: v1.63
+- type: ?<[Object]<[string], [any]>>
+
+Step-dependent parameters, when available. For example, steps produced by the Playwright API calls contain the target
+`locator` and the call arguments such as `url`, while [`method: Test.step`] steps contain the parameters passed by the
+test author.
+
+```js
+// { locator: 'getByRole(\'button\')' }
+await page.getByRole('button').click();
+
+// { url: 'https://example.com' }
+await page.goto('https://example.com');
+
+// { orderId: 42 }
+await test.step('checkout', async () => {
+  // ...
+}, { params: { orderId: 42 } });
+```
+
 ## property: TestStep.startTime
 * since: v1.10
 - type: <[Date]>

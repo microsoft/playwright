@@ -6727,7 +6727,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      * @param body Step body.
      * @param options
      */
-    <T>(title: string, body: (step: TestStepInfo) => T | Promise<T>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<T>;
+    <T>(title: string, body: (step: TestStepInfo) => T | Promise<T>, options?: { box?: boolean, location?: Location, timeout?: number, params?: { [key: string]: any } }): Promise<T>;
     /**
      * Mark a test step as "skip" to temporarily disable its execution, useful for steps that are currently failing and
      * planned for a near-term fix. Playwright will not run the step. See also
@@ -6755,7 +6755,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      * @param body Step body.
      * @param options
      */
-    skip(title: string, body: (step: TestStepInfo) => any | Promise<any>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<void>;
+    skip(title: string, body: (step: TestStepInfo) => any | Promise<any>, options?: { box?: boolean, location?: Location, timeout?: number, params?: { [key: string]: any } }): Promise<void>;
   }
   /**
    * `expect` function can be used to create test assertions. Read more about [test assertions](https://playwright.dev/docs/test-assertions).

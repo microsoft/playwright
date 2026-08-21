@@ -377,6 +377,7 @@ export class TestInfoImpl implements TestInfo {
         parentStepId: parentStep ? parentStep.stepId : undefined,
         title: step.title,
         category: step.category,
+        params: toReportedParams(step.params),
         wallTime: Date.now(),
         location: step.location,
       };
@@ -729,3 +730,13 @@ export class StepSkipError extends Error {
 }
 
 const stepSymbol = Symbol('step');
+
+function toReportedParams(params: Record<string, any> | undefined): Record<string, any> | undefined {
+  if (!params)
+    return undefined;
+  try {
+    return JSON.parse(JSON.stringify(params));
+  } catch {
+    return undefined;
+  }
+}

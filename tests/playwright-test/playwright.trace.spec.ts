@@ -1540,3 +1540,22 @@ test('should record test annotations in trace', async ({ runInlineTest }, testIn
     { type: 'note3' },
   ]);
 });
+
+test('should record step params in trace', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}) => {
+        expect(1).toBe(1);
+        await test.step('my step', async () => {}, { params: { foo: 'bar' } });
+      });
+    `,
+  }, { trace: 'on' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  const actionByTitle = (title: string) => trace.model.actions.find(a => a.title === title)!;
+  expect(actionByTitle('my step').params).toEqual({ foo: 'bar' });
+  expect(actionByTitle('Expect "toBe"').params).toEqual({ expected: '1' });
+});

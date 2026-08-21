@@ -317,6 +317,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       parentStepId: (step.parent as any)?.[this._idSymbol],
       title: step.title,
       category: step.category,
+      params: step.params,
       startTime: +step.startTime,
       location: this._relativeLocation(step.location),
     };

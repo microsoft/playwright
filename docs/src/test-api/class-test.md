@@ -1844,6 +1844,12 @@ Whether to box the step in the report. Defaults to `false`. When the step is box
 
 Specifies a custom location for the step to be shown in test reports and trace viewer. By default, location of the [`method: Test.step`] call is shown.
 
+### option: Test.step.params
+* since: v1.63
+- `params` <[Object]<[string], [any]>>
+
+Arbitrary serializable parameters describing the step. They are reported to the reporters as `testStep.params` and are shown in the trace viewer.
+
 ## async method: Test.step.skip
 * since: v1.50
 - returns: <[void]>
@@ -1890,6 +1896,12 @@ Whether to box the step in the report. Defaults to `false`. When the step is box
 - `location` <[Location]>
 
 Specifies a custom location for the step to be shown in test reports and trace viewer. By default, location of the [`method: Test.step`] call is shown.
+
+### option: Test.step.skip.params
+* since: v1.63
+- `params` <[Object]<[string], [any]>>
+
+Arbitrary serializable parameters describing the step. They are reported to the reporters as `testStep.params` and are shown in the trace viewer.
 
 ### option: Test.step.skip.timeout
 * since: v1.50
