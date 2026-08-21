@@ -112,6 +112,12 @@ export abstract class APIRequestContext extends SdkObject {
   protected static allInstances: Set<APIRequestContext> = new Set();
   _closeReason: string | undefined;
   private _disposed = false;
+  // Certificate details observed during a full TLS handshake are cached by endpoint, so that
+  // future requests that use a resumed TLS session can report security details.
+  private _certificateDetails = new Map<string, har.SecurityDetails>();
+  // Custom https agent ensures that we have our own TLS connection, and not reuse an existing
+  // one from the global Node.js agent.
+  private _agentForProtocol = new Map<string, http.Agent>();
 
   static findResponseBody(guid: string): Buffer | undefined {
     for (const request of APIRequestContext.allInstances) {
@@ -155,7 +161,22 @@ export abstract class APIRequestContext extends SdkObject {
     APIRequestContext.allInstances.delete(this);
     this.fetchResponses.clear();
     this.fetchLog.clear();
+    for (const agent of this._agentForProtocol.values())
+      agent.destroy();
+    this._agentForProtocol.clear();
+    this._certificateDetails.clear();
     this.emit(APIRequestContext.Events.Dispose);
+  }
+
+  private _ensureAgent(protocol: string): http.Agent {
+    let agent = this._agentForProtocol.get(protocol);
+    if (!agent) {
+      // Aligned with the default Node.js global agent options. Connection options such as
+      // `lookup` stay per-request, since agent options take precedence over request ones.
+      agent = protocol === 'https:' ? new https.Agent({ keepAlive: true }) : new http.Agent({ keepAlive: true });
+      this._agentForProtocol.set(protocol, agent);
+    }
+    return agent;
   }
 
   _disposeResponse(fetchUid: string) {
@@ -341,9 +362,11 @@ export abstract class APIRequestContext extends SdkObject {
     const resultPromise = new Promise<SendRequestResult>((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
-      // Without an explicit proxy agent, the default global agent is used, which
-      // has keep-alive enabled and connects with Happy Eyeballs (autoSelectFamily).
+      // Without an explicit proxy agent, use this context's own agent, which has
+      // keep-alive enabled and connects with Happy Eyeballs (autoSelectFamily).
+      // Resolved per request so that a cross-protocol redirect picks the right agent.
       const requestOptions = { ...options, ...happyEyeballsOptions };
+      requestOptions.agent = options.agent ?? this._ensureAgent(url.protocol);
       if (options.__testHookLookup)
         requestOptions.lookup = lookupWithTestHook(options.__testHookLookup);
 
@@ -358,6 +381,7 @@ export abstract class APIRequestContext extends SdkObject {
       let serverPort: number | undefined;
 
       let securityDetails: har.SecurityDetails | undefined;
+      const certificateCacheKey = `${url.host}:${(options as https.RequestOptions).servername ?? ''}`;
       let responseReceived = false;
 
       const listeners: RegisteredListener[] = [];
@@ -585,16 +609,23 @@ export abstract class APIRequestContext extends SdkObject {
       const captureSecurityDetails = (socket: net.Socket) => {
         if (!(socket instanceof TLSSocket))
           return;
+        const protocol = socket.getProtocol() ?? undefined;
         const peerCertificate = socket.getPeerCertificate();
+        if (!peerCertificate.valid_from) {
+          // A resumed TLS session returns an empty getPeerCertificate(), and we use the cached data.
+          securityDetails = { ...this._certificateDetails.get(certificateCacheKey), protocol };
+          return;
+        }
         // Multi-value RDNs are reported as string arrays, take the first common name.
         const commonName = (field: string | string[] | undefined) => Array.isArray(field) ? field[0] : field;
         securityDetails = {
-          protocol: socket.getProtocol() ?? undefined,
+          protocol,
           subjectName: commonName(peerCertificate.subject?.CN),
           validFrom: new Date(peerCertificate.valid_from).getTime() / 1000,
           validTo: new Date(peerCertificate.valid_to).getTime() / 1000,
           issuer: commonName(peerCertificate.issuer?.CN)
         };
+        this._certificateDetails.set(certificateCacheKey, securityDetails);
       };
 
       request.on('socket', socket => {
