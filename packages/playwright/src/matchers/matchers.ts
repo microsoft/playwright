@@ -529,14 +529,15 @@ export async function toPass(
   return { pass: !this.isNot, message: () => '' };
 }
 
-export function computeMatcherTitleSuffix(matcherName: string, receiver: any, args: any[]): { short?: string, long?: string } {
+export function computeMatcherTitleSuffix(matcherName: string, receiver: any, args: any[]): { short?: string, long?: string, params?: Record<string, any> } {
   if (matcherName === 'toHaveScreenshot') {
     const title = toHaveScreenshotStepTitle(...args);
     return { short: title ? `(${title})` : '' };
   }
   if (receiver && typeof receiver === 'object' && (receiver as any)._apiName === 'Locator') {
     try {
-      return { long: ' ' + asLocatorDescription('javascript', (receiver as LocatorEx)._selector) };
+      const locator = asLocatorDescription('javascript', (receiver as LocatorEx)._selector);
+      return { long: ' ' + locator, params: { locator } };
     } catch {
     }
   }

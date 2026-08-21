@@ -1256,6 +1256,40 @@ test('preserve steps in html report', async ({ runInlineTest, mergeReports, show
   await expect(page.getByText('Expect "toBe"')).toBeVisible();
 });
 
+test('preserve step params', async ({ runInlineTest, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'params-reporter.js': `
+      class ParamsReporter {
+        onStepEnd(test, result, step) {
+          if (step.category === 'test.step' || step.title.startsWith('Navigate'))
+            console.log('%%' + step.title + ' | ' + JSON.stringify(step.params));
+        }
+      }
+      module.exports = ParamsReporter;
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob']]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test 1', async ({ page }) => {
+        await page.goto('about:blank');
+        await test.step('my step', async () => {}, { params: { foo: 'bar', count: 7 } });
+      });
+    `,
+  };
+  await runInlineTest(files);
+  const { exitCode, outputLines } = await mergeReports(reportDir, undefined, { additionalArgs: ['--reporter', './params-reporter.js'] });
+  expect(exitCode).toBe(0);
+  expect(outputLines).toEqual([
+    `Navigate to "about:blank" | {"url":"about:blank"}`,
+    `my step | {"foo":"bar","count":7}`,
+  ]);
+});
+
 test('support fileName option', async ({ runInlineTest, mergeReports }) => {
   const files = (fileSuffix: string) => ({
     'playwright.config.ts': `

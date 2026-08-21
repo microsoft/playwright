@@ -112,11 +112,12 @@ const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
         }
 
         // In the general case, create a step for each api call and connect them through the stepId.
+        const params = renderParams(channel.params);
         const step = testInfo._addStep({
           location: data.frames[0],
           category: 'pw:api',
-          title: renderTitle(channel.type, channel.method, channel.params, data.title),
-          params: channel.params,
+          title: renderTitle(channel.type, channel.method, channel.params, data.title, params?.locator),
+          params,
           group: getActionGroup({ type: channel.type, method: channel.method }),
         }, tracingGroupSteps[tracingGroupSteps.length - 1]);
         data.stepId = step.stepId;
@@ -919,12 +920,26 @@ function createTestOverlay(parts: string[], position: string, fontSize: number) 
   </div>`;
 }
 
-function renderTitle(type: string, method: string, params: Record<string, string> | undefined, title?: string) {
+function renderTitle(type: string, method: string, params: Record<string, string> | undefined, title: string | undefined, locator: string | undefined) {
   const prefix = renderTitleForCall({ title, type, method, params });
-  let selector;
-  if (params?.['selector'] && typeof params.selector === 'string')
-    selector = asLocatorDescription('javascript', params.selector);
-  return prefix + (selector ? ` ${selector}` : '');
+  return prefix + (locator ? ` ${locator}` : '');
+}
+
+const kIncludedParams = new Set(['url', 'selector']);
+
+function renderParams(params: Record<string, any> | undefined): Record<string, any> | undefined {
+  if (!params)
+    return undefined;
+  const result: Record<string, any> = {};
+  for (const [name, value] of Object.entries(params)) {
+    if (!kIncludedParams.has(name))
+      continue;
+    if (name === 'selector' && typeof value === 'string')
+      result.locator = asLocatorDescription('javascript', value);
+    else if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+      result[name] = value;
+  }
+  return Object.keys(result).length ? result : undefined;
 }
 
 function tracing() {

@@ -336,12 +336,15 @@ function callMatcherAsStep(matcherName: string, info: ExpectMetaInfo, actual: un
   // This looks like it is unnecessary, but it isn't - we need to filter
   // out all the frames that belong to the test runner from caught runtime errors.
   const stackFrames = expectConfig().filteredStackTrace(captureRawStack());
+  const params: Record<string, any> = { ...suffixes.params };
+  if (args[0])
+    params.expected = args[0];
   const stepData = {
     category: 'expect' as const,
     title: longTitle,
     shortTitle,
     location: stackFrames[0],
-    params: args[0] ? { expected: args[0] } : undefined,
+    params: Object.keys(params).length ? params : undefined,
   };
   const step = testInfo?._addStep(stepData);
 
