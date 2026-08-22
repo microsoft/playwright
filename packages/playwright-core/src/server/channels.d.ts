@@ -384,6 +384,7 @@ export type AndroidDeviceLaunchBrowserParams = {
     width: number,
     height: number,
   },
+  windowState?: 'normal' | 'minimized' | 'maximized' | 'fullscreen',
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
     origin: string,
@@ -452,6 +453,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
     width: number,
     height: number,
   },
+  windowState?: 'normal' | 'minimized' | 'maximized' | 'fullscreen',
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
     origin: string,
@@ -833,6 +835,7 @@ export type BrowserNewContextParams = {
     width: number,
     height: number,
   },
+  windowState?: 'normal' | 'minimized' | 'maximized' | 'fullscreen',
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
     origin: string,
@@ -904,6 +907,7 @@ export type BrowserNewContextOptions = {
     width: number,
     height: number,
   },
+  windowState?: 'normal' | 'minimized' | 'maximized' | 'fullscreen',
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
     origin: string,
@@ -978,6 +982,7 @@ export type BrowserNewContextForReuseParams = {
     width: number,
     height: number,
   },
+  windowState?: 'normal' | 'minimized' | 'maximized' | 'fullscreen',
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
     origin: string,
@@ -1049,6 +1054,7 @@ export type BrowserNewContextForReuseOptions = {
     width: number,
     height: number,
   },
+  windowState?: 'normal' | 'minimized' | 'maximized' | 'fullscreen',
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
     origin: string,
@@ -1162,6 +1168,7 @@ export type BrowserContextInitializer = {
       width: number,
       height: number,
     },
+    windowState?: 'normal' | 'minimized' | 'maximized' | 'fullscreen',
     ignoreHTTPSErrors?: boolean,
     clientCertificates?: {
       origin: string,
@@ -1806,6 +1813,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     width: number,
     height: number,
   },
+  windowState?: 'normal' | 'minimized' | 'maximized' | 'fullscreen',
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
     origin: string,
@@ -1890,6 +1898,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     width: number,
     height: number,
   },
+  windowState?: 'normal' | 'minimized' | 'maximized' | 'fullscreen',
   ignoreHTTPSErrors?: boolean,
   clientCertificates?: {
     origin: string,

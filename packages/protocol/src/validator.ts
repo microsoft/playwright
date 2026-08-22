@@ -151,6 +151,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
     width: tInt,
     height: tInt,
   })),
+  windowState: tOptional(tEnum(['normal', 'minimized', 'maximized', 'fullscreen'])),
   ignoreHTTPSErrors: tOptional(tBoolean),
   clientCertificates: tOptional(tArray(tObject({
     origin: tString,
@@ -433,6 +434,7 @@ scheme.BrowserNewContextParams = tObject({
     width: tInt,
     height: tInt,
   })),
+  windowState: tOptional(tEnum(['normal', 'minimized', 'maximized', 'fullscreen'])),
   ignoreHTTPSErrors: tOptional(tBoolean),
   clientCertificates: tOptional(tArray(tObject({
     origin: tString,
@@ -507,6 +509,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
     width: tInt,
     height: tInt,
   })),
+  windowState: tOptional(tEnum(['normal', 'minimized', 'maximized', 'fullscreen'])),
   ignoreHTTPSErrors: tOptional(tBoolean),
   clientCertificates: tOptional(tArray(tObject({
     origin: tString,
@@ -603,6 +606,7 @@ scheme.BrowserContextInitializer = tObject({
       width: tInt,
       height: tInt,
     })),
+    windowState: tOptional(tEnum(['normal', 'minimized', 'maximized', 'fullscreen'])),
     ignoreHTTPSErrors: tOptional(tBoolean),
     clientCertificates: tOptional(tArray(tObject({
       origin: tString,
@@ -1000,6 +1004,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
     width: tInt,
     height: tInt,
   })),
+  windowState: tOptional(tEnum(['normal', 'minimized', 'maximized', 'fullscreen'])),
   ignoreHTTPSErrors: tOptional(tBoolean),
   clientCertificates: tOptional(tArray(tObject({
     origin: tString,

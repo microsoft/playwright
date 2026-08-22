@@ -763,6 +763,8 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
   if (options.noDefaultViewport && !!options.isMobile)
     throw new Error(`"isMobile" option is not supported with null "viewport"`);
+  if (options.windowState && !supportsWindowState(browserOptions))
+    throw new Error(`"windowState" option is not supported for this browser`);
   if (options.acceptDownloads === undefined && browserOptions.name !== 'electron')
     options.acceptDownloads = 'accept';
   // Electron requires explicit acceptDownloads: true since we wait for
@@ -775,6 +777,14 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   if (options.proxy)
     options.proxy = normalizeProxySettings(options.proxy);
   verifyGeolocation(options.geolocation);
+}
+
+function supportsWindowState(browserOptions: BrowserOptions) {
+  if (browserOptions.name === 'chromium')
+    return !browserOptions.channel?.startsWith('bidi-');
+  if (browserOptions.name === 'firefox')
+    return !browserOptions.channel?.startsWith('moz-');
+  return browserOptions.name === 'webkit';
 }
 
 export function findMatchingHttpCredentials(credentials: HttpCredentials[] | undefined, url: string): HttpCredentials | undefined {

@@ -120,6 +120,13 @@ ContextOptions:
       properties:
         width: int
         height: int
+    windowState:
+      type: enum?
+      literals:
+      - normal
+      - minimized
+      - maximized
+      - fullscreen
     ignoreHTTPSErrors: boolean?
     clientCertificates:
       type: array?
