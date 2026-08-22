@@ -542,8 +542,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async _disableRecorder() {
-    this._onRecorderEventSink = undefined;
-    await this._channel.disableRecorder({}, kNoTimeout);
+    try {
+      // Disabling flushes buffered actions, keep the event sink until they arrive.
+      await this._channel.disableRecorder({}, kNoTimeout);
+    } finally {
+      this._onRecorderEventSink = undefined;
+    }
   }
 
   async _exposeConsoleApi() {

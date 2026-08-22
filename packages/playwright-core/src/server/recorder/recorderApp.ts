@@ -179,12 +179,16 @@ export class RecorderApp {
     if (process.env.PW_CODEGEN_NO_INSPECTOR)
       return;
     const recorder = await Recorder.forContext(context, params);
-    if (params.recorderMode === 'api') {
-      const browserName = context._browser.options.name;
-      await ProgrammaticRecorderApp.run(context, recorder, browserName, params);
-      return;
+    if (!(context as any)[recorderAppSymbol]) {
+      (context as any)[recorderAppSymbol] = true;
+      if (params.recorderMode === 'api')
+        await ProgrammaticRecorderApp.run(context, recorder, context._browser.options.name, params);
+      else
+        await RecorderApp._show(recorder, context, params);
     }
-    await RecorderApp._show(recorder, context, params);
+    // Recorder.forContext ignores params of an existing recorder, apply the mode explicitly.
+    if (params.mode)
+      await recorder.setMode(params.mode);
   }
 
   async close() {
@@ -192,15 +196,10 @@ export class RecorderApp {
   }
 
   static showInspectorNoReply(context: BrowserContext) {
-    if (process.env.PW_CODEGEN_NO_INSPECTOR)
-      return;
-    void Recorder.forContext(context, {}).then(recorder => RecorderApp._show(recorder, context, {})).catch(() => {});
+    void RecorderApp.show(context, {}).catch(() => {});
   }
 
   private static async _show(recorder: Recorder, inspectedContext: BrowserContext, params: channels.BrowserContextEnableRecorderParams) {
-    if ((inspectedContext as any)[recorderAppSymbol])
-      return;
-    (inspectedContext as any)[recorderAppSymbol] = true;
     const sdkLanguage = inspectedContext._browser.sdkLanguage();
     const isChromium = inspectedContext._browser.options.browserType === 'chromium';
     const headed = !!inspectedContext._browser.options.headful;
@@ -355,6 +354,7 @@ function determinePrimaryGeneratorId(sdkLanguage: Language): string {
 export class ProgrammaticRecorderApp {
   static async run(inspectedContext: BrowserContext, recorder: Recorder, browserName: string, params: channels.BrowserContextEnableRecorderParams) {
     let lastAction: actions.ActionInContext | undefined;
+    let lastActionPage: Page | undefined;
     const languages = [...languageSet()];
 
     const languageGeneratorOptions = {
@@ -371,6 +371,7 @@ export class ProgrammaticRecorderApp {
       if (!page)
         return;
       lastAction = actionInContext;
+      lastActionPage = page;
       const code = languageGenerator.generateAction(actionInContext, languageGeneratorOptions);
       inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: actionInContext.action, page, code });
     });
@@ -378,10 +379,14 @@ export class ProgrammaticRecorderApp {
       const page = findPageByGuid(inspectedContext, signalInContext.pageGuid);
       if (!page)
         return;
-      // The signal belongs to the last action, so re-generate its code with the signal
-      // included (e.g. a popup or download wait around the action).
-      lastAction?.signals.push(signalInContext.signal);
-      const code = lastAction ? languageGenerator.generateAction(lastAction, languageGeneratorOptions) : '';
+      // The signal amends the last action, re-generate its code with the signal included
+      // (e.g. a popup or download wait around the action). A signal from another page
+      // cannot be attributed to the last action.
+      let code = '';
+      if (lastAction && page === lastActionPage) {
+        lastAction.signals.push(signalInContext.signal);
+        code = languageGenerator.generateAction(lastAction, languageGeneratorOptions);
+      }
       inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signalInContext.signal, page, code });
     });
   }
