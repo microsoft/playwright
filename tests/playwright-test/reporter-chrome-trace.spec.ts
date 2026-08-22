@@ -16,6 +16,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as zlib from 'zlib';
 import { test, expect } from './playwright-test-fixtures';
 
 type TraceEvent = {
@@ -31,7 +32,9 @@ type TraceEvent = {
 };
 
 function readTrace(baseDir: string, fileName: string = 'test-results/chrome-trace.json') {
-  return JSON.parse(fs.readFileSync(path.join(baseDir, fileName), 'utf8')) as {
+  const file = path.join(baseDir, fileName);
+  const content = fileName.endsWith('.gz') ? zlib.gunzipSync(fs.readFileSync(file)).toString('utf8') : fs.readFileSync(file, 'utf8');
+  return JSON.parse(content) as {
     traceEvents: TraceEvent[],
     displayTimeUnit: string,
     metadata: any,
@@ -189,6 +192,29 @@ test('should report attachment files', async ({ runInlineTest }, testInfo) => {
   expect(one.args.attachments).toEqual(['inline', expect.stringMatching(/^test-results\/a-one\/attachments\/file-.*\.txt$/)]);
 });
 
+test('should report step params', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('one', async ({ page }) => {
+        await page.goto('about:blank');
+        await page.setContent('<button>Click me</button>');
+        await page.getByRole('button').click();
+        await expect(page.getByRole('button')).toBeVisible();
+        await test.step('my step', async () => {}, { params: { foo: 'bar', count: 7 } });
+      });
+    `,
+  }, { reporter: 'chrome-trace' });
+  expect(result.exitCode).toBe(0);
+
+  const events = slices(readTrace(testInfo.outputPath()).traceEvents);
+  expect(findSlice(events, 'Navigate to "about:blank"')!.args.params).toEqual({ url: 'about:blank' });
+  expect(findSlice(events, 'Set content')!.args.params).toBe(undefined);
+  expect(findSlice(events, `Click getByRole('button')`)!.args.params).toEqual({ locator: `getByRole('button')` });
+  expect(findSlice(events, `Expect "toBeVisible" getByRole('button')`)!.args.params).toEqual({ locator: `getByRole('button')` });
+  expect(findSlice(events, 'my step')!.args.params).toEqual({ foo: 'bar', count: 7 });
+});
+
 test('should respect outputFile option', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
@@ -201,6 +227,23 @@ test('should respect outputFile option', async ({ runInlineTest }, testInfo) => 
   });
   expect(result.exitCode).toBe(0);
   expect(findSlice(readTrace(testInfo.outputPath(), 'reports/my-trace.json').traceEvents, 'one')).toBeTruthy();
+});
+
+test('should gzip the report when output file ends with .gz', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { reporter: [['chrome-trace', { outputFile: 'chrome-trace.json.gz' }]] };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('one', async ({}) => {});
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+
+  const gzipped = fs.readFileSync(testInfo.outputPath('chrome-trace.json.gz'));
+  expect(gzipped.subarray(0, 2)).toEqual(Buffer.from([0x1f, 0x8b]));
+  expect(findSlice(readTrace(testInfo.outputPath(), 'chrome-trace.json.gz').traceEvents, 'one')).toBeTruthy();
 });
 
 test('should respect PLAYWRIGHT_CHROME_TRACE_OUTPUT_FILE', async ({ runInlineTest }, testInfo) => {

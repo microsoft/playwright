@@ -56,11 +56,18 @@ await page.getByRole('button').click();
 // { url: 'https://example.com' }
 await page.goto('https://example.com');
 
+// { locator: 'getByLabel(\'Password\')', value: 'secret' }
+await page.getByLabel('Password').fill('secret');
+
 // { orderId: 42 }
 await test.step('checkout', async () => {
   // ...
 }, { params: { orderId: 42 } });
 ```
+
+To keep the reports small, Playwright API calls only report a curated set of arguments per call, and long string values
+are truncated. Unbounded arguments such as the page content, evaluated expressions or request bodies are never
+reported.
 
 ## property: TestStep.startTime
 * since: v1.10

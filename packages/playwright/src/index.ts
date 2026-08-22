@@ -112,7 +112,7 @@ const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
         }
 
         // In the general case, create a step for each api call and connect them through the stepId.
-        const params = renderParams(channel.params);
+        const params = renderParams(channel.type, channel.method, channel.params);
         const step = testInfo._addStep({
           location: data.frames[0],
           category: 'pw:api',
@@ -925,21 +925,118 @@ function renderTitle(type: string, method: string, params: Record<string, string
   return prefix + (locator ? ` ${locator}` : '');
 }
 
-const kIncludedParams = new Set(['url', 'selector']);
+const kMaxParamLength = 200;
 
-function renderParams(params: Record<string, any> | undefined): Record<string, any> | undefined {
+// Curated per-call parameters, keyed the same way as the protocol metainfo. Only the
+// arguments that say what the call actually did are reported, and only when they are
+// bounded in size: page content, evaluated expressions, request bodies and the like are
+// never reported, and neither are options that repeat their default on every call.
+function renderCallParams(type: string, method: string, params: Record<string, any>): Record<string, any> | undefined {
+  switch (`${type}.${method}`) {
+    case 'APIRequestContext.fetch':
+      return { url: params.url, method: params.method };
+    case 'Frame.goto':
+    case 'Frame.addScriptTag':
+    case 'Frame.addStyleTag':
+      return { url: params.url };
+
+    case 'Frame.click':
+    case 'Frame.dblclick':
+    case 'ElementHandle.click':
+    case 'ElementHandle.dblclick':
+      return { button: params.button, clickCount: params.clickCount, modifiers: params.modifiers, position: params.position };
+    case 'Frame.hover':
+    case 'Frame.tap':
+    case 'ElementHandle.hover':
+    case 'ElementHandle.tap':
+      return { modifiers: params.modifiers, position: params.position };
+    case 'Frame.check':
+    case 'Frame.uncheck':
+    case 'ElementHandle.check':
+    case 'ElementHandle.uncheck':
+      return { position: params.position };
+    case 'Frame.dragAndDrop':
+      return { source: renderLocator(params.source), target: renderLocator(params.target) };
+    case 'Frame.fill':
+    case 'ElementHandle.fill':
+      return { value: params.value };
+    case 'Frame.press':
+    case 'ElementHandle.press':
+    case 'Page.keyboardDown':
+    case 'Page.keyboardUp':
+    case 'Page.keyboardPress':
+      return { key: params.key };
+    case 'Frame.type':
+    case 'ElementHandle.type':
+    case 'Page.keyboardType':
+    case 'Page.keyboardInsertText':
+      return { text: params.text };
+    case 'Frame.dispatchEvent':
+    case 'ElementHandle.dispatchEvent':
+      return { type: params.type };
+    case 'Frame.selectOption':
+    case 'ElementHandle.selectOption':
+      return { options: params.options };
+    case 'Frame.setInputFiles':
+    case 'ElementHandle.setInputFiles':
+      return { files: params.localPaths };
+
+    case 'Page.mouseClick':
+      return { x: params.x, y: params.y, button: params.button, clickCount: params.clickCount };
+    case 'Page.mouseMove':
+    case 'Page.touchscreenTap':
+      return { x: params.x, y: params.y };
+    case 'Page.mouseDown':
+    case 'Page.mouseUp':
+      return { button: params.button, clickCount: params.clickCount };
+    case 'Page.mouseWheel':
+      return { deltaX: params.deltaX, deltaY: params.deltaY };
+
+    case 'Frame.waitForSelector':
+    case 'ElementHandle.waitForSelector':
+    case 'ElementHandle.waitForElementState':
+      return { state: params.state };
+    case 'Frame.waitForTimeout':
+      return { timeout: params.waitTimeout };
+
+    case 'Page.emulateMedia':
+      return { media: params.media, colorScheme: params.colorScheme, reducedMotion: params.reducedMotion, forcedColors: params.forcedColors, contrast: params.contrast };
+    case 'Page.setViewportSize':
+      return params.viewportSize;
+    case 'Page.screenshot':
+    case 'ElementHandle.screenshot':
+      return { type: params.type, fullPage: params.fullPage };
+    case 'BrowserContext.setOffline':
+      return { offline: params.offline };
+    case 'Dialog.accept':
+      return { promptText: params.promptText };
+    case 'Tracing.tracingGroup':
+      return { name: params.name };
+  }
+}
+
+function renderParams(type: string, method: string, params: Record<string, any> | undefined): Record<string, any> | undefined {
   if (!params)
     return undefined;
   const result: Record<string, any> = {};
-  for (const [name, value] of Object.entries(params)) {
-    if (!kIncludedParams.has(name))
-      continue;
-    if (name === 'selector' && typeof value === 'string')
-      result.locator = asLocatorDescription('javascript', value);
-    else if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
-      result[name] = value;
+  const locator = renderLocator(params.selector);
+  if (locator !== undefined)
+    result.locator = locator;
+  for (const [name, value] of Object.entries(renderCallParams(type, method, params) ?? {})) {
+    if (value !== undefined)
+      result[name] = typeof value === 'string' ? truncateParam(value) : value;
   }
   return Object.keys(result).length ? result : undefined;
+}
+
+function renderLocator(selector: any): string | undefined {
+  if (typeof selector !== 'string')
+    return undefined;
+  return truncateParam(asLocatorDescription('javascript', selector));
+}
+
+function truncateParam(value: string): string {
+  return value.length > kMaxParamLength ? value.substring(0, kMaxParamLength) + '\u2026' : value;
 }
 
 function tracing() {
