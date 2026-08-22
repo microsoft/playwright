@@ -71,6 +71,12 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implement
     this._disposed = true;
     await this._context?.dispose().catch(e => debug('pw:tools:error')(e));
     await this._disposeCallback?.().catch(e => debug('pw:tools:error')(e));
+    // The browser may outlive this backend, e.g. when other clients share it,
+    // so tell the server to stop handing out the disposed backend.
+    if (!this._disconnected) {
+      this._disconnected = true;
+      this.emit('disconnected');
+    }
   }
 
   async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> } = {}, signal?: AbortSignal): Promise<mcpServer.CallToolResult> {
