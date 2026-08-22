@@ -273,7 +273,42 @@ export class CRBrowser extends Browser {
   }
 
   async _closePage(crPage: CRPage) {
-    await this._session.send('Target.closeTarget', { targetId: crPage._targetId });
+    // Chromium can acknowledge Target.closeTarget with success:true without
+    // actually closing the target: when the close races a navigation commit
+    // that swaps the main RenderFrameHost, the pending close request dies with
+    // the old frame host and the target never detaches, so the page would
+    // never report closed and page.close() would hang. Re-issuing the close
+    // reliably destroys such a target.
+    // See https://issues.chromium.org/issues/536385539.
+    const page = crPage._page;
+    for (let attempt = 0; attempt < 3; ++attempt) {
+      try {
+        await this._session.send('Target.closeTarget', { targetId: crPage._targetId });
+      } catch (error) {
+        // A previous attempt may have closed the target after its timeout.
+        if (attempt)
+          break;
+        throw error;
+      }
+      const closed = await new Promise<boolean>(resolve => {
+        const timer = setTimeout(() => {
+          page.off(Page.Events.Close, onClose);
+          resolve(false);
+        }, 1000);
+        const onClose = () => {
+          clearTimeout(timer);
+          resolve(true);
+        };
+        page.once(Page.Events.Close, onClose);
+        if (page.isClosed()) {
+          clearTimeout(timer);
+          page.off(Page.Events.Close, onClose);
+          resolve(true);
+        }
+      });
+      if (closed)
+        return;
+    }
   }
 
   async newBrowserCDPSession(): Promise<CDPSession> {
