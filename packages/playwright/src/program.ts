@@ -129,12 +129,14 @@ function addMergeReportsCommand(program: Command) {
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
   command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${config.defaultReporter}")`);
+  command.option('--merge-strategy <strategy>', `How to reconcile tests with the same id found in multiple blobs: "separate", "overwrite", or "as-retry" (default: "separate")`);
   command.addHelpText('afterAll', `
 Arguments [dir]:
   Directory containing blob reports.
 
 Examples:
-  $ npx playwright merge-reports playwright-report`);
+  $ npx playwright merge-reports playwright-report
+  $ npx playwright merge-reports --merge-strategy as-retry playwright-report`);
 }
 
 function addTestMCPServerCommand(program: Command) {

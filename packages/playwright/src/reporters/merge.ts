@@ -46,7 +46,9 @@ type ReportData = {
 
 export type MergeResult = 'passed' | 'failed';
 
-export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], rootDirOverride: string | undefined): Promise<MergeResult> {
+export type MergeStrategy = 'separate' | 'overwrite' | 'as-retry';
+
+export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], rootDirOverride: string | undefined, mergeStrategy: MergeStrategy = 'separate'): Promise<MergeResult> {
   const reporters = await createReporters(config, 'merge', reporterDescriptions);
   const multiplexer = new Multiplexer(reporters);
   const stringPool = new StringInternPool();
@@ -60,7 +62,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   const shardFiles = await sortedShardFiles(dir);
   if (shardFiles.length === 0)
     throw new Error(`No report files found in ${dir}`);
-  const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus, rootDirOverride);
+  const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus, rootDirOverride, mergeStrategy);
   // If explicit config is provided, use platform path separator, otherwise use the one from the report (if any).
   const pathSeparator = rootDirOverride ? path.sep : (eventData.pathSeparatorFromMetadata ?? path.sep);
   const pathPackage = pathSeparator === '/' ? path.posix : path.win32;
@@ -198,7 +200,7 @@ function findMetadata(events: JsonEvent[], file: string): BlobReportMetadata {
   return metadata;
 }
 
-async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: StringInternPool, printStatus: StatusCallback, rootDirOverride: string | undefined): Promise<{
+async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: StringInternPool, printStatus: StatusCallback, rootDirOverride: string | undefined, mergeStrategy: MergeStrategy): Promise<{
   prologue: JsonEvent[];
   reports: ReportData[];
   epilogue: JsonEvent[];
@@ -227,10 +229,23 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
     return a.zipFile.localeCompare(b.zipFile);
   });
 
+  if (mergeStrategy !== 'separate') {
+    // "overwrite"/"as-retry" need to know which colliding blob actually ran later, so
+    // reconcile them by each blob's own recorded run time instead of by report name/file
+    // name order (which may not reflect chronological order at all, e.g. shard/file naming).
+    const startTimeByBlob = new Map<typeof blobs[number], number>();
+    for (const blob of blobs) {
+      const onEnd = blob.parsedEvents.find(event => event.method === 'onEnd') as JsonOnEndEvent | undefined;
+      startTimeByBlob.set(blob, onEnd?.params.result.startTime ?? 0);
+    }
+    blobs.sort((a, b) => startTimeByBlob.get(a)! - startTimeByBlob.get(b)!);
+  }
+
   printStatus(`merging events`);
 
   const reports: ReportData[] = [];
   const globalTestIdSet = new Set<string>();
+  const retryIndexByTestId = new Map<string, number>();
 
   for (let i = 0; i < blobs.length; ++i) {
     // Generate unique salt for each blob.
@@ -241,7 +256,10 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
         metadata.name,
         String(i),
         globalTestIdSet,
+        mergeStrategy,
     ));
+    if (mergeStrategy !== 'separate')
+      eventPatchers.patchers.push(new MergeStrategyPatcher(mergeStrategy, retryIndexByTestId));
     // Only patch path separators if we are merging reports with explicit config.
     if (rootDirOverride)
       eventPatchers.patchers.push(new PathSeparatorPatcher(metadata.pathSeparator));
@@ -415,18 +433,21 @@ class IdsPatcher {
   private _salt: string;
   private _testIdsMap: Map<string, string>;
   private _globalTestIdSet: Set<string>;
+  private _mergeStrategy: MergeStrategy;
 
   constructor(
     stringPool: StringInternPool,
     botName: string | undefined,
     salt: string,
     globalTestIdSet: Set<string>,
+    mergeStrategy: MergeStrategy,
   ) {
     this._stringPool = stringPool;
     this._botName = botName;
     this._salt = salt;
     this._testIdsMap = new Map();
     this._globalTestIdSet = globalTestIdSet;
+    this._mergeStrategy = mergeStrategy;
   }
 
   patchEvent(event: JsonEvent) {
@@ -435,8 +456,10 @@ class IdsPatcher {
       case 'onProject':
         this._onProject(params.project);
         return;
-      case 'onAttach':
       case 'onTestBegin':
+        params.testId = this._mapTestId(params.testId);
+        return;
+      case 'onAttach':
       case 'onStepBegin':
       case 'onStepEnd':
       case 'onStdIO':
@@ -454,20 +477,23 @@ class IdsPatcher {
   }
 
   private _updateTestIds(suite: JsonSuite) {
-    suite.entries.forEach(entry => {
+    // Drop duplicate suite entries for colliding test ids; the receiver only dedupes by title, not id.
+    suite.entries = suite.entries.filter(entry => {
       if ('testId' in entry)
-        this._updateTestId(entry);
-      else
-        this._updateTestIds(entry);
+        return this._updateTestId(entry);
+      this._updateTestIds(entry);
+      return true;
     });
   }
 
-  private _updateTestId(test: JsonTestCase) {
+  private _updateTestId(test: JsonTestCase): boolean {
+    const isDuplicate = this._mergeStrategy !== 'separate' && this._globalTestIdSet.has(this._stringPool.internString(test.testId));
     test.testId = this._mapTestId(test.testId);
     if (this._botName) {
       test.tags = test.tags || [];
       test.tags.unshift('@' + this._botName);
     }
+    return !isDuplicate;
   }
 
   private _mapTestId(testId: string): string {
@@ -476,6 +502,11 @@ class IdsPatcher {
       // already mapped
       return this._testIdsMap.get(t1)!;
     if (this._globalTestIdSet.has(t1)) {
+      if (this._mergeStrategy !== 'separate') {
+        // Reuse the earlier blob's id instead of salting, so results land on the same test case.
+        this._testIdsMap.set(t1, t1);
+        return t1;
+      }
       // test id is used in another blob, so we need to salt it.
       const t2 = this._stringPool.internString(testId + this._salt);
       this._globalTestIdSet.add(t2);
@@ -485,6 +516,29 @@ class IdsPatcher {
     this._globalTestIdSet.add(t1);
     this._testIdsMap.set(t1, t1);
     return t1;
+  }
+}
+
+// Applied after IdsPatcher, so testId is already the final (collision-resolved) id.
+class MergeStrategyPatcher {
+  constructor(
+    private _mergeStrategy: MergeStrategy,
+    private _retryIndexByTestId: Map<string, number>,
+  ) {
+  }
+
+  patchEvent(event: JsonEvent) {
+    if (event.method !== 'onTestBegin')
+      return;
+    const { testId, result } = event.params;
+    if (this._mergeStrategy === 'overwrite') {
+      if (result.retry === 0)
+        result.discardPreviousResults = true;
+    } else if (this._mergeStrategy === 'as-retry') {
+      const retry = this._retryIndexByTestId.get(testId) ?? 0;
+      this._retryIndexByTestId.set(testId, retry + 1);
+      result.retry = retry;
+    }
   }
 }
 
