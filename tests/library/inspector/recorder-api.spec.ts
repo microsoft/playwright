@@ -128,6 +128,23 @@ test('should send updated code with the signal', async ({ context, server }) => 
   expect(normalizeCode(code)).toContain(`const page1 = await page1Promise;`);
 });
 
+test('should not amend the last action with a signal from another page', async ({ context }) => {
+  const recorder = await startRecording(context);
+  const page1 = await context.newPage();
+  await page1.setContent(`<button onclick="console.log('click')">Submit</button>`);
+  const page2 = await context.newPage();
+  await page2.setContent(`<div>Second page</div>`);
+
+  await page1.getByRole('button', { name: 'Submit' }).click();
+  await expect.poll(() => recorder.action('click').length).toBe(1);
+
+  // Auto-dismissed dialog on the other page produces a signal that must not
+  // attach to the click on page1, so no amended code is sent with it.
+  void page2.evaluate(() => alert('hello')).catch(() => {});
+  await expect.poll(() => recorder.signals().map(s => s.signal.name)).toContain('dialog');
+  expect(recorder.signals().find(s => s.signal.name === 'dialog')!.code).toBe('');
+});
+
 test('should type', async ({ context }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
