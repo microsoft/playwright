@@ -35,6 +35,14 @@ async function loadAgentSpecs(): Promise<AgentSpec[]> {
   return Promise.all(files.filter(file => file.endsWith('.agent.md')).map(file => parseAgentSpec(path.join(__dirname, file))));
 }
 
+// On Windows, npx resolves to npx.cmd which cannot be executed without shell: true.
+// See: https://code.claude.com/docs/en/mcp#dynamic-tool-updates
+function playwrightTestMcpServer(): { command: string, args: string[] } {
+  return process.platform === 'win32'
+    ? { command: 'cmd', args: ['/c', 'npx', 'playwright', 'run-test-mcp-server'] }
+    : { command: 'npx', args: ['playwright', 'run-test-mcp-server'] };
+}
+
 export class ClaudeGenerator {
   static async init(fullConfig: FullConfigInternal, projectName: string, prompts: boolean) {
     await initRepo(fullConfig, projectName, {
@@ -47,11 +55,7 @@ export class ClaudeGenerator {
     for (const agent of agents)
       await writeFile(`.claude/agents/${agent.name}.md`, ClaudeGenerator.agentSpec(agent), '🤖', 'agent definition');
 
-    // On Windows, npx resolves to npx.cmd which cannot be executed without shell: true.
-    // See: https://code.claude.com/docs/en/mcp#dynamic-tool-updates
-    const mcpServer = process.platform === 'win32'
-      ? { command: 'cmd', args: ['/c', 'npx', 'playwright', 'run-test-mcp-server'] }
-      : { command: 'npx', args: ['playwright', 'run-test-mcp-server'] };
+    const mcpServer = playwrightTestMcpServer();
     await writeFile('.mcp.json', JSON.stringify({
       mcpServers: {
         'playwright-test': mcpServer,
@@ -125,9 +129,7 @@ export class CodexGenerator {
     }
 
     const sandboxMode = agent.tools.includes('edit') ? 'workspace-write' : 'read-only';
-    const mcpServer = process.platform === 'win32'
-      ? { command: 'cmd', args: ['/c', 'npx', 'playwright', 'run-test-mcp-server'] }
-      : { command: 'npx', args: ['playwright', 'run-test-mcp-server'] };
+    const mcpServer = playwrightTestMcpServer();
 
     const examples = agent.examples.length
       ? ` Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}`
@@ -145,6 +147,62 @@ export class CodexGenerator {
     if (enabledTools.length)
       lines.push(`enabled_tools = ${tomlArray(enabledTools)}`);
     lines.push('');
+    return lines.join('\n');
+  }
+}
+
+export class CursorGenerator {
+  static async init(fullConfig: FullConfigInternal, projectName: string, prompts: boolean) {
+    await initRepo(fullConfig, projectName, {
+      promptsFolder: prompts ? '.cursor/commands' : undefined,
+    });
+
+    const agents = await loadAgentSpecs();
+
+    await fs.promises.mkdir('.cursor/agents', { recursive: true });
+    for (const agent of agents)
+      await writeFile(`.cursor/agents/${agent.name}.md`, CursorGenerator.agentSpec(agent), '🤖', 'agent definition');
+
+    await CursorGenerator.appendToMCPJson();
+
+    initRepoDone();
+  }
+
+  static async appendToMCPJson() {
+    await fs.promises.mkdir('.cursor', { recursive: true });
+
+    const mcpJsonPath = '.cursor/mcp.json';
+    let mcpJson: any = { mcpServers: {} };
+    try {
+      mcpJson = JSON.parse(fs.readFileSync(mcpJsonPath, 'utf8'));
+    } catch {
+    }
+
+    if (!mcpJson.mcpServers)
+      mcpJson.mcpServers = {};
+
+    mcpJson.mcpServers['playwright-test'] = {
+      type: 'stdio',
+      ...playwrightTestMcpServer(),
+    };
+    await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2), '🔧', 'mcp configuration');
+  }
+
+  // Cursor subagents do not support a documented per-agent MCP tool allowlist
+  // (unlike Claude/Codex/VSCode), so no `tools:` field is emitted here. See
+  // https://docs.cursor.com for the current state of subagent frontmatter.
+  static agentSpec(agent: AgentSpec): string {
+    const examples = agent.examples.length ? ` Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}` : '';
+    const header = {
+      name: agent.name,
+      description: agent.description + examples,
+      model: 'inherit',
+    };
+    const lines: string[] = [];
+    lines.push(`---`);
+    lines.push(yaml.stringify(header, { lineWidth: 100000 }) + `---`);
+    lines.push('');
+    lines.push(agent.instructions);
     return lines.join('\n');
   }
 }

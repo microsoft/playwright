@@ -77,6 +77,14 @@ test('install workspace w/--skills=agents', async ({ cli }, testInfo) => {
   expect(fs.existsSync(skillFile)).toBe(true);
 });
 
+test('install workspace w/--skills=cursor', async ({ cli }, testInfo) => {
+  const { output } = await cli('install', '--skills=cursor');
+  expect(output).toContain(`Skill installed to \`.cursor${path.sep}skills${path.sep}playwright-cli\`.`);
+
+  const skillFile = testInfo.outputPath('.cursor', 'skills', 'playwright-cli', 'SKILL.md');
+  expect(fs.existsSync(skillFile)).toBe(true);
+});
+
 test('install w/--skills -g installs into the home directory', async ({ cli }, testInfo) => {
   const fakeHome = testInfo.outputPath('fake-home');
   await fs.promises.mkdir(fakeHome, { recursive: true });

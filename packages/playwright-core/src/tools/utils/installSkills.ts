@@ -23,9 +23,16 @@ import path from 'path';
 import { libPath } from '../../package';
 
 export const allSkills = ['playwright-cli', 'playwright-component-testing', 'playwright-trace'] as const;
+export const skillTargets = ['claude', 'agents', 'cursor'] as const;
 
 export type SkillName = typeof allSkills[number];
-export type SkillTarget = 'claude' | 'agents';
+export type SkillTarget = typeof skillTargets[number];
+
+export function resolveSkillTarget(value: string | undefined): SkillTarget {
+  if (value === 'agents' || value === 'cursor')
+    return value;
+  return 'claude';
+}
 
 export async function installSkills(skills: readonly SkillName[], target: SkillTarget = 'claude', options?: { global?: boolean }) {
   const cwd = process.cwd();

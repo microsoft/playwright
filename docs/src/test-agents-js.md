@@ -47,8 +47,19 @@ npx playwright init-agents --loop=codex
 npx playwright init-agents --loop=opencode
 ```
 
+```bash tab=bash-cursor
+npx playwright init-agents --loop=cursor
+```
+
 :::note
 VS Code v1.105 (released October 9, 2025) is needed for the agentic experience to function properly in VS Code.
+:::
+
+:::note
+Cursor's native subagents inherit whatever MCP tools are available to the parent agent rather than
+supporting a documented per-agent tool allowlist. As a result, the generated **🎭 planner**, **🎭
+generator** and **🎭 healer** subagents can all see the full Playwright Test MCP tool set in Cursor,
+and rely on their instructions to stay within their intended workflow.
 :::
 
 Once the agents have been generated, you can use your AI tool of choice to command these agents to build Playwright Tests. 

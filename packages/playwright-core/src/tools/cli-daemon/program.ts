@@ -27,7 +27,7 @@ import { setupExitWatchdog } from '../mcp/watchdog';
 import { createBrowserWithInfo } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
 import { createClientInfo } from '../cli-client/registry';
-import { installSkills } from '../utils/installSkills';
+import { installSkills, resolveSkillTarget } from '../utils/installSkills';
 import { registry as browserRegistry } from '../../server/registry/index';
 import type { Command } from 'commander';
 
@@ -44,8 +44,8 @@ export function decorateProgram(program: Command) {
       .option('--cdp <url>', 'connect to an existing browser via CDP endpoint URL')
       .option('--endpoint <endpoint>', 'attach to a running Playwright browser endpoint')
       .option('--init-workspace', 'initialize workspace')
-      .option('--init-skills <value>', 'install skills for the given agent type ("claude" or "agents")')
-      .option('--init-skills-global <value>', 'install skills for the given agent type ("claude" or "agents") into the home directory')
+      .option('--init-skills <value>', 'install skills for the given agent type ("claude", "agents", or "cursor")')
+      .option('--init-skills-global <value>', 'install skills for the given agent type ("claude", "agents", or "cursor") into the home directory')
 
       .action(async (sessionName: string, options: any) => {
         if (options.initWorkspace) {
@@ -98,7 +98,7 @@ export async function initWorkspace(initSkills: string | undefined, initSkillsGl
 
   const skills = initSkillsGlobal ?? initSkills;
   if (skills) {
-    const target = skills === 'agents' ? 'agents' : 'claude';
+    const target = resolveSkillTarget(skills);
     try {
       await installSkills(['playwright-cli'], target, { global: globalSkills });
     } catch (error) {

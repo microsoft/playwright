@@ -41,13 +41,17 @@ When using a bundled entry point, replace `playwright-cli` with `npx playwright 
 
 ### Installing skills
 
-Coding agents like Claude Code and GitHub Copilot can use locally installed skills for richer context about available commands:
+Coding agents like Claude Code, Cursor, and GitHub Copilot can use locally installed skills for richer context about available commands:
 
 ```bash
 playwright-cli install --skills
 ```
 
-To share the skills across all your projects, add the `-g` flag to install them into your home directory (`~/.claude/skills` or, with `--skills=agents`, `~/.agents/skills`):
+To share the skills across all your projects, add the `-g` flag to install them into your home directory:
+
+- Default: `~/.claude/skills`
+- `--skills=agents`: `~/.agents/skills`
+- `--skills=cursor`: `~/.cursor/skills`
 
 ```bash
 playwright-cli install --skills -g
