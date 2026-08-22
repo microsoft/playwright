@@ -20,6 +20,11 @@ test('androidInput.swipe should start from the given point', async ({ androidDev
   const context = await androidDevice.launchBrowser();
   const [page] = context.pages();
   await page.setContent(`<div style="height: 3000px">${'line<br>'.repeat(200)}</div>`);
+  // androidDevice.input.swipe() injects a raw touch event straight into the OS input
+  // pipeline, independent of the CDP connection used by setContent() above. Wait for
+  // the new content to actually be composited and presented on the device screen,
+  // otherwise the swipe can land on the previous (blank) frame and never scroll anything.
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   await androidDevice.input.swipe({ x: 250, y: 1500 }, [{ x: 250, y: 500 }], 30);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
   await context.close();
