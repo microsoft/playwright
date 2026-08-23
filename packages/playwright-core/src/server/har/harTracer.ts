@@ -265,9 +265,13 @@ export class HarTracer {
     const contentType = event.headers['content-type'];
     if (contentType)
       content.mimeType = contentType;
-    this._storeResponseContent(event.body, content, 'other');
-    if (!this._options.omitSizes)
-      harEntry.response.bodySize = event.body?.length ?? 0;
+    // Redirect and auth-retry hops are destroyed before their body is read, so the
+    // sizes stay at the -1 "not available" sentinel instead of claiming zero bytes.
+    if (event.body) {
+      this._storeResponseContent(event.body, content, 'other');
+      if (!this._options.omitSizes)
+        harEntry.response.bodySize = event.body.length;
+    }
 
     if (this._started)
       this._delegate.onEntryFinished(harEntry);
@@ -541,12 +545,7 @@ export class HarTracer {
       this._delegate.onEntryStarted(harEntry);
   }
 
-  private _storeResponseContent(buffer: Buffer | undefined, content: har.Content, resourceType: string) {
-    if (!buffer) {
-      content.size = 0;
-      return;
-    }
-
+  private _storeResponseContent(buffer: Buffer, content: har.Content, resourceType: string) {
     if (!this._options.omitSizes)
       content.size = buffer.length;
 

@@ -883,6 +883,10 @@ it('should include redirects from API request', async ({ contextFactory, server 
 
   expect(redirect.timings).toBeDefined();
   expect(json.timings).toBeDefined();
+
+  // The redirect body is never read, so its sizes stay unknown rather than claiming zero.
+  expect(redirect.response.bodySize).toBe(-1);
+  expect(redirect.response.content.size).toBe(-1);
 });
 
 it('should not hang on resources served from cache', async ({ contextFactory, server, browserName, isBidi }, testInfo) => {
