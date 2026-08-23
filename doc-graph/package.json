@@ -1,0 +1,27 @@
+{
+  "name": "doc-graph",
+  "version": "0.1.0",
+  "description": "Model-independent documentation graph indexer and retrieval service.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "doc-graph": "./bin/doc-graph.mjs",
+    "doc-graph-mcp": "./bin/doc-graph-mcp.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs",
+    "./mcp": "./src/mcp.mjs",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\""
+  }
+}

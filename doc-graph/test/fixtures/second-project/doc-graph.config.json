@@ -1,0 +1,6 @@
+{
+  "project": "acme-docs",
+  "documents": ["docs/**/*.md"],
+  "examples": ["snippets/**/*.py"],
+  "output": "graph.json"
+}

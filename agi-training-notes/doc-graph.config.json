@@ -1,0 +1,6 @@
+{
+  "project": "playwright",
+  "documents": ["NOTES.md", "API_REFERENCE.md"],
+  "examples": ["examples/*.js"],
+  "output": "DOC_GRAPH.json"
+}

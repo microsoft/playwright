@@ -1,0 +1,10 @@
+export { SCHEMA_VERSION } from './schema.mjs';
+export { DocGraphError } from './errors.mjs';
+export { glob, hasMagic } from './glob.mjs';
+export { DEFAULT_CONFIG, loadConfig, resolveConfig, findConfigFile, mergeConfig } from './config.mjs';
+export { extractProvenance, readDocument } from './provenance.mjs';
+export { buildGraph, loadGraph, expandGlobs } from './indexer.mjs';
+export { search, retrieveContext, matchTopics } from './query.mjs';
+export { createServer } from './server.mjs';
+export { MCP_TOOLS, createMcpHandler, runMcpServer } from './mcp.mjs';
+export { runCli } from './cli.mjs';
