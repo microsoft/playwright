@@ -134,6 +134,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     });
 
     context.on(BrowserContext.Events.BeforeClose, () => {
+      this._signalProcessor.flush();
       this.emit(RecorderEvent.ContextClosed);
     });
     this._listeners.push(eventsHelper.addEventListener(process, 'exit', () => {
@@ -472,6 +473,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   private _setEnabled(enabled: boolean) {
+    if (this._enabled && !enabled)
+      this._signalProcessor.flush();
     this._enabled = enabled;
   }
 

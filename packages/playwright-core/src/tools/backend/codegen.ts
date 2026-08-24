@@ -47,6 +47,14 @@ export function renderCode(items: CodeItem[], language: CodegenLanguage): string
   return lines;
 }
 
+export function languageGeneratorId(language: CodegenLanguage): string {
+  return createGenerator(language).id;
+}
+
+export function codeframeForLanguage(language: CodegenLanguage): 'js' | 'python' | 'java' | 'csharp' {
+  return language === 'typescript' ? 'js' : language;
+}
+
 export function secretCode(language: CodegenLanguage, secretName: string): string {
   switch (language) {
     case 'typescript': return `process.env['${secretName}']`;
@@ -78,7 +86,7 @@ function createGenerator(language: CodegenLanguage): LanguageGenerator {
   }
 }
 
-function dedent(text: string): string {
+export function dedent(text: string): string {
   const lines = text.split('\n');
   const indents = lines.filter(line => line.trim()).map(line => line.length - line.trimStart().length);
   const indent = indents.length ? Math.min(...indents) : 0;

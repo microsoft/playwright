@@ -362,6 +362,7 @@ export class ProgrammaticRecorderApp {
 
   constructor(inspectedContext: BrowserContext, recorder: Recorder, params: channels.BrowserContextEnableRecorderParams) {
     let lastAction: actions.ActionInContext | undefined;
+    let lastActionPage: Page | undefined;
     const languages = [...languageSet()];
 
     const languageGeneratorOptions = {
@@ -379,6 +380,7 @@ export class ProgrammaticRecorderApp {
         if (!page)
           return;
         lastAction = actionInContext;
+        lastActionPage = page;
         const code = languageGenerator.generateAction(actionInContext, languageGeneratorOptions);
         inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: actionInContext.action, page, code });
       }),
@@ -386,10 +388,13 @@ export class ProgrammaticRecorderApp {
         const page = findPageByGuid(inspectedContext, signalInContext.pageGuid);
         if (!page)
           return;
+        let code = '';
         // The signal belongs to the last action, so re-generate its code with the signal
         // included (e.g. a popup or download wait around the action).
-        lastAction?.signals.push(signalInContext.signal);
-        const code = lastAction ? languageGenerator.generateAction(lastAction, languageGeneratorOptions) : '';
+        if (lastAction && page === lastActionPage) {
+          lastAction.signals.push(signalInContext.signal);
+          code = languageGenerator.generateAction(lastAction, languageGeneratorOptions);
+        }
         inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signalInContext.signal, page, code });
       }),
     ];

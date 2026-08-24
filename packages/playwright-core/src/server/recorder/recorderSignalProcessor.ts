@@ -51,7 +51,7 @@ export class RecorderSignalProcessor {
         this._resetPendingTimeout();
         return;
       }
-      this._flushPendingAction();
+      this.flush();
     }
 
     if (this._shouldBuffer(actionInContext)) {
@@ -59,7 +59,7 @@ export class RecorderSignalProcessor {
         actionInContext,
         receivedAt: timestamp,
         signals: [],
-        timeout: setTimeout(() => this._flushPendingAction(), kActionBufferTimeout),
+        timeout: setTimeout(() => this.flush(), kActionBufferTimeout),
       };
       return;
     }
@@ -107,7 +107,7 @@ export class RecorderSignalProcessor {
     if (!this._pendingAction)
       return;
     clearTimeout(this._pendingAction.timeout);
-    this._pendingAction.timeout = setTimeout(() => this._flushPendingAction(), kActionBufferTimeout);
+    this._pendingAction.timeout = setTimeout(() => this.flush(), kActionBufferTimeout);
   }
 
   private _emitAction(actionInContext: actions.ActionInContext, timestamp: number) {
@@ -116,7 +116,7 @@ export class RecorderSignalProcessor {
     this._delegate.addAction(actionInContext);
   }
 
-  private _flushPendingAction() {
+  flush() {
     const pending = this._pendingAction;
     if (!pending)
       return;

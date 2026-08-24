@@ -196,6 +196,25 @@ function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+test('recording-start-stop', async ({ cli, server }) => {
+  server.setContent('/', `<title>Title</title><button>Submit</button>`, 'text/html');
+
+  const { snapshot } = await cli('open', server.PREFIX);
+  expect(snapshot).toContain(`- button "Submit" [ref=e2]`);
+
+  const { output } = await cli('recording-start');
+  expect(output).toContain('Recording started');
+
+  await cli('click', 'e2');
+
+  const { output: stopOutput } = await cli('recording-stop');
+  expect(stopOutput).toContain(`Recording stopped. Recorded actions:
+
+\`\`\`js
+await page.getByRole('button', { name: 'Submit' }).click();
+\`\`\``);
+});
+
 test('tracing-start-stop', async ({ cli, server }, testInfo) => {
   await cli('open', server.HELLO_WORLD);
   const { output } = await cli('tracing-start');

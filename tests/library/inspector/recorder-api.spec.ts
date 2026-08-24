@@ -18,6 +18,7 @@ import { test, expect } from './inspectorTest';
 
 import type { Page } from '@playwright/test';
 import type * as actions from '@isomorphic/codegen/actions';
+import type { BrowserContextInternalApi } from '../../../packages/playwright-core/src/tools/backend/browserContextEx';
 
 class RecorderLog {
   actions: { action: actions.Action, code: string }[] = [];
@@ -47,6 +48,16 @@ async function startRecording(context) {
 function normalizeCode(code: string): string {
   return code.replace(/\s+/g, ' ').trim();
 }
+
+test('context should implement the internal api used by the tools', async ({ context }) => {
+  // Listing a method here is enforced by the type, so adding one to the interface breaks compilation until it is covered.
+  const methods: Record<keyof BrowserContextInternalApi, true> = {
+    _enableRecorder: true,
+    _disableRecorder: true,
+  };
+  for (const method of Object.keys(methods))
+    expect(typeof context[method], method).toBe('function');
+});
 
 test('should click', async ({ context, browserName, platform, channel }) => {
   const log = await startRecording(context);
@@ -126,6 +137,22 @@ test('should send updated code with the signal', async ({ context, server }) => 
   expect(normalizeCode(code)).toContain(`const page1Promise = page.waitForEvent('popup');`);
   expect(normalizeCode(code)).toContain(`await page.getByRole('link', { name: 'link' }).click();`);
   expect(normalizeCode(code)).toContain(`const page1 = await page1Promise;`);
+});
+
+test('should not amend the last action with a signal from another page', async ({ context }) => {
+  const recorder = await startRecording(context);
+  const page1 = await context.newPage();
+  await page1.setContent(`<button onclick="console.log('click')">Submit</button>`);
+  const page2 = await context.newPage();
+  await page2.setContent(`<div>Second page</div>`);
+
+  await page1.getByRole('button', { name: 'Submit' }).click();
+  await expect.poll(() => recorder.action('click').length).toBe(1);
+
+  // Dialog on page2 must not attach to the click on page1.
+  void page2.evaluate(() => alert('hello')).catch(() => {});
+  await expect.poll(() => recorder.signals().map(s => s.signal.name)).toContain('dialog');
+  expect(recorder.signals().find(s => s.signal.name === 'dialog')!.code).toBe('');
 });
 
 test('should type', async ({ context }) => {
