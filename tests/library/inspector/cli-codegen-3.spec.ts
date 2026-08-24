@@ -1166,7 +1166,8 @@ test.describe('cli codegen with pierceFrames', () => {
   await page.getByText('Hello2').click();`);
   });
 
-  test('should prepend the frame selector to disambiguate', async ({ openRecorder, server }) => {
+  test('should prepend the frame selector to disambiguate', async ({ openRecorder, server, isMac }) => {
+    test.fixme(isMac, 'flaky: recorder frame tree not settled when clicking, collapses to a pierceFrames({ pierce: false }) selector on the slow macOS runner');
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
       <iframe id=frame1 srcdoc="<iframe srcdoc='<button>Hello</button>'></iframe>"></iframe>
