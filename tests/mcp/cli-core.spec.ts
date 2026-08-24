@@ -54,25 +54,6 @@ await page.getByRole('button', { name: 'Submit' }).click();
 \`\`\``);
 });
 
-test('recording-start-stop', async ({ cli, server }) => {
-  server.setContent('/', `<title>Title</title><button>Submit</button>`, 'text/html');
-
-  const { snapshot } = await cli('open', server.PREFIX);
-  expect(snapshot).toContain(`- button "Submit" [ref=e2]`);
-
-  const { output } = await cli('recording-start');
-  expect(output).toContain('Recording started');
-
-  await cli('click', 'e2');
-
-  const { output: stopOutput } = await cli('recording-stop');
-  expect(stopOutput).toContain(`Recording stopped. Recorded actions:
-
-\`\`\`js
-await page.getByRole('button', { name: 'Submit' }).click();
-\`\`\``);
-});
-
 test('click link', async ({ cli, server, mcpBrowser }) => {
   server.setContent('/', `<a href="/hello-world">Hello, world!</a>`, 'text/html');
 

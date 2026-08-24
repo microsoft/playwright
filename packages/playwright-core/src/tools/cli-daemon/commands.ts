@@ -935,7 +935,7 @@ const networkResponseBody = declareCommand({
 const recordingStart = declareCommand({
   name: 'recording-start',
   description: 'Start recording user actions',
-  category: 'core',
+  category: 'devtools',
   toolName: 'browser_start_recording',
   toolParams: () => ({}),
 });
@@ -943,7 +943,7 @@ const recordingStart = declareCommand({
 const recordingStop = declareCommand({
   name: 'recording-stop',
   description: 'Stop recording user actions and print them as Playwright code',
-  category: 'core',
+  category: 'devtools',
   toolName: 'browser_stop_recording',
   toolParams: () => ({}),
 });
@@ -1190,8 +1190,6 @@ const commandsArray: AnyCommandSchema[] = [
   dialogDismiss,
   resize,
   runCode,
-  recordingStart,
-  recordingStop,
   deleteData,
 
   // navigation category
@@ -1259,6 +1257,8 @@ const commandsArray: AnyCommandSchema[] = [
   installBrowser,
 
   // devtools category
+  recordingStart,
+  recordingStop,
   tracingStart,
   tracingStop,
   videoStart,

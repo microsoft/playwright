@@ -19,6 +19,8 @@ import { test, expect } from './fixtures';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { TestServer } from '../config/testserver';
 
+test.use({ mcpCaps: ['devtools'] });
+
 async function navigateToForm(client: Client, server: TestServer) {
   server.setContent('/', `
     <title>Title</title>

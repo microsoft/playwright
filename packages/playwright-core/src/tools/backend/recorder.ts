@@ -19,7 +19,7 @@ import { codeframeForLanguage } from './codegen';
 import { defineTool } from './tool';
 
 const startRecording = defineTool({
-  capability: 'core',
+  capability: 'devtools',
 
   schema: {
     name: 'browser_start_recording',
@@ -38,7 +38,7 @@ const startRecording = defineTool({
 });
 
 const stopRecording = defineTool({
-  capability: 'core',
+  capability: 'devtools',
 
   schema: {
     name: 'browser_stop_recording',

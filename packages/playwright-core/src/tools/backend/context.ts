@@ -28,6 +28,7 @@ import { playwright } from '../../inprocess';
 import { dedent, languageGeneratorId, secretCode } from './codegen';
 import { Tab } from './tab';
 
+import type { BrowserContextEx } from './browserContextEx';
 import type { CodegenLanguage } from './codegen';
 import type * as playwrightTypes from '../../..';
 import type { SessionLog } from './sessionLog';
@@ -239,19 +240,18 @@ export class Context {
   async startRecording() {
     if (this._recordedActions)
       throw new Error('Recording is already in progress.');
-    const browserContext = await this.ensureBrowserContext();
+    const browserContext = await this.ensureBrowserContext() as BrowserContextEx;
     const recordedActions: string[] = [];
-    // eslint-disable-next-line no-restricted-syntax -- internal api, not in public types.
-    await (browserContext as any)._enableRecorder({
+    await browserContext._enableRecorder({
       mode: 'recording',
       recorderMode: 'api',
       omitCallTracking: true,
       language: languageGeneratorId(this.codegenLanguage()),
     }, {
-      actionAdded: (page: playwrightTypes.Page, action: unknown, code: string) => {
+      actionAdded: (page, action, code) => {
         recordedActions.push(code);
       },
-      signalAdded: (page: playwrightTypes.Page, signal: unknown, code: string) => {
+      signalAdded: (page, signal, code) => {
         if (recordedActions.length && code)
           recordedActions[recordedActions.length - 1] = code;
       },
@@ -264,8 +264,7 @@ export class Context {
     if (!recordedActions)
       return undefined;
     this._recordedActions = undefined;
-    // eslint-disable-next-line no-restricted-syntax -- internal api, not in public types.
-    await (this._rawBrowserContext as any)._disableRecorder().catch(() => {});
+    await (this._rawBrowserContext as BrowserContextEx)._disableRecorder();
     return recordedActions.filter(code => code.trim()).map(dedent);
   }
 

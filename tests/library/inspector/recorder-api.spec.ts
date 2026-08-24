@@ -18,6 +18,7 @@ import { test, expect } from './inspectorTest';
 
 import type { Page } from '@playwright/test';
 import type * as actions from '@isomorphic/codegen/actions';
+import type { BrowserContextInternalApi } from '../../../packages/playwright-core/src/tools/backend/browserContextEx';
 
 class RecorderLog {
   actions: { action: actions.Action, code: string }[] = [];
@@ -47,6 +48,16 @@ async function startRecording(context) {
 function normalizeCode(code: string): string {
   return code.replace(/\s+/g, ' ').trim();
 }
+
+test('context should implement the internal api used by the tools', async ({ context }) => {
+  // Listing a method here is enforced by the type, so adding one to the interface breaks compilation until it is covered.
+  const methods: Record<keyof BrowserContextInternalApi, true> = {
+    _enableRecorder: true,
+    _disableRecorder: true,
+  };
+  for (const method of Object.keys(methods))
+    expect(typeof context[method], method).toBe('function');
+});
 
 test('should click', async ({ context, browserName, platform, channel }) => {
   const log = await startRecording(context);
