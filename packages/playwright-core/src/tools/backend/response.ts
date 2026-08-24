@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import debug from 'debug';
-import { actionInContext, renderCode, substituteSecrets } from './codegen';
+import { actionInContext, codeframeForLanguage, renderCode, substituteSecrets } from './codegen';
 import { renderModalStates } from './tab';
 import { scaleImageToFitMessage } from './screenshot';
 
@@ -285,7 +285,7 @@ export class Response {
     const codegen = this._context.config.codegen ?? 'typescript';
     if (codegen !== 'none' && this._code.length) {
       const code = substituteSecrets(renderCode(this._code, codegen), codegen, Object.keys(this._context.config.secrets ?? {}));
-      addSection('Ran Playwright code', code, codegen === 'typescript' ? 'js' : codegen);
+      addSection('Ran Playwright code', code, codeframeForLanguage(codegen));
     }
 
     // Render tab titles upon changes or when more than one tab.
