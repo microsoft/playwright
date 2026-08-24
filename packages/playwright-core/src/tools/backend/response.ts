@@ -20,7 +20,6 @@ import path from 'path';
 import debug from 'debug';
 import { actionInContext, renderCode, substituteSecrets } from './codegen';
 import { renderModalStates } from './tab';
-import { scaleImageToFitMessage } from './screenshot';
 
 import { outputDir as resolveOutputDir } from './context';
 
@@ -223,10 +222,8 @@ export class Response {
 
     // Image attachments.
     if (this._context.config.imageResponses !== 'omit') {
-      for (const imageResult of this._imageResults) {
-        const scaledData = scaleImageToFitMessage(imageResult.data, imageResult.imageType);
-        content.push({ type: 'image', data: scaledData.toString('base64'), mimeType: `image/${imageResult.imageType}` });
-      }
+      for (const imageResult of this._imageResults)
+        content.push({ type: 'image', data: imageResult.data.toString('base64'), mimeType: `image/${imageResult.imageType}` });
     }
 
     return {
