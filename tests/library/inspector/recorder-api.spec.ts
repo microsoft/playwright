@@ -163,6 +163,35 @@ test('should disable recorder', async ({ context }) => {
   expect(log.action('click')).toHaveLength(2);
 });
 
+test('should record again after disable', async ({ context }) => {
+  const log = await startRecording(context);
+  const page = await context.newPage();
+  await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await expect.poll(() => log.action('click').length).toBe(1);
+  await (context as any)._disableRecorder();
+
+  const log2 = await startRecording(context);
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await expect.poll(() => log2.action('click').length).toBe(1);
+  // Give it some time to produce duplicate actions - there should be none.
+  await page.waitForTimeout(1000);
+  expect(log2.action('click')).toHaveLength(1);
+});
+
+test('disable should close the inspector window', async ({ context, openRecorder }) => {
+  const { recorder } = await openRecorder();
+  await (context as any)._disableRecorder();
+  await expect.poll(() => recorder.recorderPage.isClosed()).toBe(true);
+
+  // With the window closed, programmatic recording can start on the same context.
+  const log = await startRecording(context);
+  const page = await context.newPage();
+  await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await expect.poll(() => log.action('click').length).toBe(1);
+});
+
 test('page.pickLocator should return locator for picked element', async ({ page }) => {
   await page.setContent(`<button>Submit</button>`);
 
