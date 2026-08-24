@@ -393,9 +393,12 @@ public class TestGitHubAPI {
       RequestOptions.create().setData(data));
     assertTrue(newIssue.ok());
 
-    page.navigate("https://github.com/" + USER + "/" + REPO + "/issues");
-    Locator firstIssue = page.locator("a[data-hovercard-type='issue']").first();
-    assertThat(firstIssue).hasText("[Feature] request 1");
+    try (Browser browser = playwright.chromium().launch()) {
+      Page page = browser.newPage();
+      page.navigate("https://github.com/" + USER + "/" + REPO + "/issues");
+      Locator firstIssue = page.locator("a[data-hovercard-type='issue']").first();
+      assertThat(firstIssue).hasText("[Feature] request 1");
+    }
   }
 }
 ```
@@ -409,16 +412,19 @@ it was created:
 public class TestGitHubAPI {
   @Test
   void lastCreatedIssueShouldBeOnTheServer() {
-    page.navigate("https://github.com/" + USER + "/" + REPO + "/issues");
-    page.locator("text=New Issue").click();
-    page.locator("[aria-label='Title']").fill("Bug report 1");
-    page.locator("[aria-label='Comment body']").fill("Bug description");
-    page.locator("text=Submit new issue").click();
-    String issueId = page.url().substring(page.url().lastIndexOf('/'));
+    try (Browser browser = playwright.chromium().launch()) {
+      Page page = browser.newPage();
+      page.navigate("https://github.com/" + USER + "/" + REPO + "/issues");
+      page.locator("text=New Issue").click();
+      page.locator("[aria-label='Title']").fill("Bug report 1");
+      page.locator("[aria-label='Comment body']").fill("Bug description");
+      page.locator("text=Submit new issue").click();
+      String issueId = page.url().substring(page.url().lastIndexOf('/'));
 
-    APIResponse newIssue = request.get("https://github.com/" + USER + "/" + REPO + "/issues/" + issueId);
-    assertThat(newIssue).isOK();
-    assertTrue(newIssue.text().contains("Bug report 1"));
+      APIResponse newIssue = request.get("https://github.com/" + USER + "/" + REPO + "/issues/" + issueId);
+      assertThat(newIssue).isOK();
+      assertTrue(newIssue.text().contains("Bug report 1"));
+    }
   }
 }
 ```
