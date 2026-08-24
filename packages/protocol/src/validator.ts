@@ -2597,6 +2597,7 @@ scheme.PageScreencastStartParams = tObject({
     height: tInt,
   })),
   quality: tOptional(tInt),
+  bitrate: tOptional(tInt),
   sendFrames: tOptional(tBoolean),
   record: tOptional(tBoolean),
 });

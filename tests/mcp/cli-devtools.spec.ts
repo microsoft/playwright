@@ -235,7 +235,7 @@ test('tracing-start-stop', async ({ cli, server }, testInfo) => {
 
 test('video-start-stop', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
-  const { output: videoStartOutput } = await cli('video-start', 'recordings/video.webm', '--size=400x300');
+  const { output: videoStartOutput } = await cli('video-start', 'recordings/video.webm', '--bitrate=8000000', '--size=400x300');
   expect(videoStartOutput).toContain('Video recording started.');
   const { output: tabNewOutput } = await cli('tab-new');
   expect(tabNewOutput).toContain('1: (current) [](about:blank)');

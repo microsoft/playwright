@@ -974,12 +974,13 @@ const videoStart = declareCommand({
     filename: z.string().optional().describe('Filename to save the video.'),
   }),
   options: z.object({
+    bitrate: numberArg.pipe(z.number().int().min(1)).optional().describe('Video bitrate in bits per second. Defaults to 1000000.'),
     size: z.string().optional().describe('Video frame size, e.g. "800x600". If not specified, the size of the recorded video will fit 800x800.'),
   }),
   toolName: 'browser_start_video',
-  toolParams: ({ filename, size }) => {
+  toolParams: ({ bitrate, filename, size }) => {
     const parsedSize = size ? size.split('x').map(Number) : undefined;
-    return { filename, size: parsedSize ? { width: parsedSize[0], height: parsedSize[1] } : undefined };
+    return { bitrate, filename, size: parsedSize ? { width: parsedSize[0], height: parsedSize[1] } : undefined };
   }
 });
 

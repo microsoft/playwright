@@ -170,7 +170,7 @@ playwright-cli tracing-stop
 playwright-cli recording-start
 playwright-cli recording-stop
 
-playwright-cli video-start video.webm
+playwright-cli video-start video.webm --bitrate=8000000
 playwright-cli video-chapter "Chapter Title" --description="Details" --duration=2000
 playwright-cli video-stop
 

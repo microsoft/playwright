@@ -31,6 +31,12 @@ await page.screencast.start({
 await page.screencast.stop();
 ```
 
+### option: Screencast.start.bitrate
+* since: v1.63
+- `bitrate` <[int]>
+
+Video bitrate in bits per second. Defaults to `1_000_000`. Only applies when [`option: Screencast.start.path`] is provided.
+
 ### option: Screencast.start.onFrame
 * since: v1.59
 - `onFrame` <[function]\([Object]\): [Promise]>

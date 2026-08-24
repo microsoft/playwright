@@ -4468,6 +4468,7 @@ export type PageScreencastStartParams = {
     height: number,
   },
   quality?: number,
+  bitrate?: number,
   sendFrames?: boolean,
   record?: boolean,
 };
@@ -4477,6 +4478,7 @@ export type PageScreencastStartOptions = {
     height: number,
   },
   quality?: number,
+  bitrate?: number,
   sendFrames?: boolean,
   record?: boolean,
 };

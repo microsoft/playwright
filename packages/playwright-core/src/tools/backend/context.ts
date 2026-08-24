@@ -92,7 +92,7 @@ export type FilenameTemplate = {
   date?: Date;
 };
 
-type VideoParams = { size?: { width: number; height: number } };
+type VideoParams = { bitrate?: number; size?: { width: number; height: number } };
 
 export class Context {
   readonly config: ContextConfig;

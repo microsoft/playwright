@@ -33,6 +33,7 @@ import type { Screencast, ScreencastClient } from './screencast';
 import type { Page, PageDelegate } from './page';
 
 const fps = 25;
+const defaultVideoBitrate = 1_000_000;
 
 export class VideoRecorder {
   private _screencast: Screencast;
@@ -44,8 +45,9 @@ export class VideoRecorder {
     this._screencast = screencast;
   }
 
-  start(options: { fileName?: string, size?: { width: number, height: number } }) {
+  start(options: { bitrate?: number, fileName?: string, size?: { width: number, height: number } }) {
     assert(!this._artifact);
+    assert(options.bitrate === undefined || (Number.isInteger(options.bitrate) && options.bitrate > 0), 'Expected options.bitrate to be a positive integer.');
     // Do this first, it likes to throw.
     const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._screencast.page.browserContext._browser.sdkLanguage());
     const outputFile = options.fileName ?? path.join(this._screencast.page.browserContext._browser.options.artifactsDir, createGuid() + '.webm');
@@ -61,7 +63,7 @@ export class VideoRecorder {
     // another client (e.g. tracing) started the screencast first, and padding a smaller frame
     // into the requested size would leave gray borders.
     const { size } = this._screencast.addClient(this._client);
-    this._videoRecorder = new FfmpegVideoRecorder(ffmpegPath, size, outputFile, this._screencast.page.delegate);
+    this._videoRecorder = new FfmpegVideoRecorder(ffmpegPath, size, outputFile, options.bitrate || defaultVideoBitrate, this._screencast.page.delegate);
     this._artifact = new Artifact(this._screencast.page.browserContext, outputFile);
     return this._artifact;
   }
@@ -98,6 +100,7 @@ export function startAutomaticVideoRecording(page: Page) {
 }
 
 class FfmpegVideoRecorder {
+  private _bitrate: number;
   private _size: types.Size;
   private _process: ChildProcess | null = null;
   private _gracefullyClose: (() => Promise<void>) | null = null;
@@ -109,12 +112,13 @@ class FfmpegVideoRecorder {
   private _launchPromise: Promise<Error | null>;
   private _outputFile: string;
 
-  constructor(ffmpegPath: string, size: types.Size, outputFile: string, page: PageDelegate) {
+  constructor(ffmpegPath: string, size: types.Size, outputFile: string, bitrate: number, page: PageDelegate) {
     if (!outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
     this._outputFile = outputFile;
     this._ffmpegPath = ffmpegPath;
     this._size = size;
+    this._bitrate = bitrate;
     this._launchPromise = this._launch(page).catch(e => e);
   }
 
@@ -138,8 +142,8 @@ class FfmpegVideoRecorder {
     //     Suggested here: https://trac.ffmpeg.org/wiki/Encode/VP8
     //   "-crf 8" - constant quality mode, 4-63, lower means better quality.
     //   "-deadline realtime -speed 8" - do not use too much cpu to keep up with incoming frames.
-    //   "-b:v 1M" - video bitrate. Default value is too low for vp8
-    //     Suggested here: https://trac.ffmpeg.org/wiki/Encode/VP8
+    //   "-b:v <bitrate>" - target video bitrate. Defaults to 1 Mbps because the VP8
+    //     encoder default is too low. Suggested here: https://trac.ffmpeg.org/wiki/Encode/VP8
     //   Note that we can switch to "-qmin 20 -qmax 50 -crf 30" for smaller video size but worse quality.
     //
     // We use "pad" and "crop" video filters (-vf option) to resize incoming frames
@@ -165,7 +169,7 @@ class FfmpegVideoRecorder {
     const w = this._size.width;
     const h = this._size.height;
     const videoFilterArgs = page.getFFmpegVideoFilterArgs?.({ width: w, height: h }) ?? `pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`;
-    const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf ${videoFilterArgs}`.split(' ');
+    const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v ${this._bitrate} -threads 1 -vf ${videoFilterArgs}`.split(' ');
     args.push(this._outputFile);
 
     const { launchedProcess, gracefullyClose } = await launchProcess({

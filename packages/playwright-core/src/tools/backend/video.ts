@@ -25,6 +25,7 @@ const videoStart = defineTool({
     title: 'Start video',
     description: 'Start video recording',
     inputSchema: z.object({
+      bitrate: z.number().int().min(1).optional().describe('Video bitrate in bits per second. Defaults to 1000000.'),
       filename: z.string().optional().describe('Filename to save the video.'),
       size: z.object({
         width: z.number().describe('Video width'),
@@ -36,7 +37,7 @@ const videoStart = defineTool({
 
   handle: async (context, params, response) => {
     const resolvedFile = await response.resolveClientFile({ prefix: 'video', ext: 'webm', suggestedFilename: params.filename }, 'Video');
-    await context.startVideoRecording(resolvedFile.fileName, { size: params.size });
+    await context.startVideoRecording(resolvedFile.fileName, { bitrate: params.bitrate, size: params.size });
     response.addTextResult('Video recording started.');
   },
 });

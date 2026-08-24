@@ -184,7 +184,7 @@ test('start/stop twice without path creates two files in artifactsDir', async ({
   const context = await browser.newContext({ viewport: size });
   const page = await context.newPage();
 
-  await page.screencast.start({ path: testInfo.outputPath('video1.webm'), size });
+  await page.screencast.start({ path: testInfo.outputPath('video1.webm'), size, bitrate: 2_000_000 });
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
   await ensureSomeFrames(page);
   await page.screencast.stop();
@@ -199,6 +199,18 @@ test('start/stop twice without path creates two files in artifactsDir', async ({
 
   await context.close();
   await browser.close();
+});
+
+test('start validates bitrate', async ({ browser }, testInfo) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await expect(page.screencast.start({
+    bitrate: 0,
+    path: testInfo.outputPath('video.webm'),
+  })).rejects.toThrow('Expected options.bitrate to be a positive integer.');
+
+  await context.close();
 });
 
 test('start should work when recordVideo is set', async ({ browser }, testInfo) => {
