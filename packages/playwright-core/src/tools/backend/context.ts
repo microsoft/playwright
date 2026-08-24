@@ -241,6 +241,8 @@ export class Context {
     if (this._recordedActions)
       throw new Error('Recording is already in progress.');
     const browserContext = await this.ensureBrowserContext() as BrowserContextEx;
+    if (typeof browserContext._enableRecorder !== 'function')
+      throw new Error('Recording requires a newer version of Playwright, please upgrade.');
     const recordedActions: string[] = [];
     await browserContext._enableRecorder({
       mode: 'recording',
