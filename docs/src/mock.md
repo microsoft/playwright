@@ -81,7 +81,7 @@ await Expect(page.GetByTextAsync("Strawberry")).ToBeVisibleAsync();
 
 ```java
 // Intercept the route to the fruit API
-page.route("https://fruit.ceo/api/breeds/image/random", route -> {
+page.route("*/**/api/v1/fruits", route -> {
     List<Dictionary<String, Object>> data = new ArrayList<Dictionary<String, Object>>();
     Hashtable<String, Object> dict = new Hashtable<String, Object>();
     dict.put("name", "Strawberry");
