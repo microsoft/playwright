@@ -19,6 +19,7 @@ import path from 'path';
 
 import mime from 'mime';
 import { isUnderTest } from '@utils/debug';
+import { eventsHelper } from '@utils/eventsHelper';
 import { languageSet } from '@isomorphic/codegen/languages';
 import { generateCode } from '@isomorphic/codegen/language';
 import { libPath } from '../../package';
@@ -36,6 +37,7 @@ import type { Language, LanguageGeneratorOptions } from '@isomorphic/codegen/typ
 import type * as channels from '../channels';
 import type { Progress } from '../progress';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
+import type { RegisteredListener } from '@utils/eventsHelper';
 
 export type RecorderAppParams = channels.BrowserContextEnableRecorderParams & {
   browserName: string;
@@ -175,32 +177,34 @@ export class RecorderApp {
     });
   }
 
-  static async show(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams) {
+  static async enable(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams) {
     if (process.env.PW_CODEGEN_NO_INSPECTOR)
       return;
     const recorder = await Recorder.forContext(context, params);
-    if (params.recorderMode === 'api') {
-      const browserName = context._browser.options.name;
-      await ProgrammaticRecorderApp.run(context, recorder, browserName, params);
-      return;
+    if (!(context as any)[recorderAppSymbol]) {
+      const app = params.recorderMode === 'api'
+        ? new ProgrammaticRecorderApp(context, recorder, params)
+        : await RecorderApp._show(recorder, context, params);
+      (context as any)[recorderAppSymbol] = app;
     }
-    await RecorderApp._show(recorder, context, params);
+    if (params.mode)
+      await recorder.setMode(params.mode);
+  }
+
+  static async disable(context: BrowserContext) {
+    const recorder = await Recorder.existingForContext(context);
+    if (recorder)
+      await recorder.setMode('none');
+    const app = (context as any)[recorderAppSymbol] as RecorderApp | ProgrammaticRecorderApp | undefined;
+    delete (context as any)[recorderAppSymbol];
+    await app?.close();
   }
 
   async close() {
     await this._page.close(nullProgress);
   }
 
-  static showInspectorNoReply(context: BrowserContext) {
-    if (process.env.PW_CODEGEN_NO_INSPECTOR)
-      return;
-    void Recorder.forContext(context, {}).then(recorder => RecorderApp._show(recorder, context, {})).catch(() => {});
-  }
-
-  private static async _show(recorder: Recorder, inspectedContext: BrowserContext, params: channels.BrowserContextEnableRecorderParams) {
-    if ((inspectedContext as any)[recorderAppSymbol])
-      return;
-    (inspectedContext as any)[recorderAppSymbol] = true;
+  private static async _show(recorder: Recorder, inspectedContext: BrowserContext, params: channels.BrowserContextEnableRecorderParams): Promise<RecorderApp> {
     const sdkLanguage = inspectedContext._browser.sdkLanguage();
     const isChromium = inspectedContext._browser.options.browserType === 'chromium';
     const headed = !!inspectedContext._browser.options.headful;
@@ -238,6 +242,7 @@ export class RecorderApp {
     const recorderApp = new RecorderApp(recorder, appParams, page, appContext._browser.options.wsEndpoint);
     await recorderApp._init(inspectedContext);
     (inspectedContext as any).recorderAppForTest = recorderApp;
+    return recorderApp;
   }
 
   private _wireListeners(recorder: Recorder) {
@@ -353,12 +358,14 @@ function determinePrimaryGeneratorId(sdkLanguage: Language): string {
 }
 
 export class ProgrammaticRecorderApp {
-  static async run(inspectedContext: BrowserContext, recorder: Recorder, browserName: string, params: channels.BrowserContextEnableRecorderParams) {
+  private _listeners: RegisteredListener[];
+
+  constructor(inspectedContext: BrowserContext, recorder: Recorder, params: channels.BrowserContextEnableRecorderParams) {
     let lastAction: actions.ActionInContext | undefined;
     const languages = [...languageSet()];
 
     const languageGeneratorOptions = {
-      browserName: browserName,
+      browserName: inspectedContext._browser.options.name,
       launchOptions: { headless: false, ...params.launchOptions, tracesDir: undefined },
       contextOptions: { ...params.contextOptions },
       deviceName: params.device,
@@ -366,24 +373,30 @@ export class ProgrammaticRecorderApp {
     };
     const languageGenerator = languages.find(l => l.id === params.language) ?? languages.find(l => l.id === 'playwright-test')!;
 
-    recorder.on(RecorderEvent.ActionAdded, actionInContext => {
-      const page = findPageByGuid(inspectedContext, actionInContext.pageGuid);
-      if (!page)
-        return;
-      lastAction = actionInContext;
-      const code = languageGenerator.generateAction(actionInContext, languageGeneratorOptions);
-      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: actionInContext.action, page, code });
-    });
-    recorder.on(RecorderEvent.SignalAdded, signalInContext => {
-      const page = findPageByGuid(inspectedContext, signalInContext.pageGuid);
-      if (!page)
-        return;
-      // The signal belongs to the last action, so re-generate its code with the signal
-      // included (e.g. a popup or download wait around the action).
-      lastAction?.signals.push(signalInContext.signal);
-      const code = lastAction ? languageGenerator.generateAction(lastAction, languageGeneratorOptions) : '';
-      inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signalInContext.signal, page, code });
-    });
+    this._listeners = [
+      eventsHelper.addEventListener(recorder, RecorderEvent.ActionAdded, actionInContext => {
+        const page = findPageByGuid(inspectedContext, actionInContext.pageGuid);
+        if (!page)
+          return;
+        lastAction = actionInContext;
+        const code = languageGenerator.generateAction(actionInContext, languageGeneratorOptions);
+        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: actionInContext.action, page, code });
+      }),
+      eventsHelper.addEventListener(recorder, RecorderEvent.SignalAdded, signalInContext => {
+        const page = findPageByGuid(inspectedContext, signalInContext.pageGuid);
+        if (!page)
+          return;
+        // The signal belongs to the last action, so re-generate its code with the signal
+        // included (e.g. a popup or download wait around the action).
+        lastAction?.signals.push(signalInContext.signal);
+        const code = lastAction ? languageGenerator.generateAction(lastAction, languageGeneratorOptions) : '';
+        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signalInContext.signal, page, code });
+      }),
+    ];
+  }
+
+  close() {
+    eventsHelper.removeEventListeners(this._listeners);
   }
 }
 
