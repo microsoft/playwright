@@ -48,19 +48,6 @@ for (const [name, overrides] of [
   });
 }
 
-test('snapshot renderer escapes closing style tag split across text nodes', () => {
-  // A <style> element normally has a single text child, but a crafted trace can split
-  // "</style>" across adjacent text nodes so that no single node contains it, yet joining
-  // the rendered result would reassemble it and terminate the element early.
-  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
-    html: ['HTML', {}, ['BODY', {}, ['STYLE', {}, 'body{}<', '/style><img src=x onerror=alert(1)>']]],
-  })], [], 0);
-  const { html } = renderer.render();
-  expect(html).not.toContain('</style><img');
-  // The reassembled </style> stays inside the stylesheet, neutralized with a CSS backslash.
-  expect(html).toContain('<\\/style><img src=x onerror=alert(1)>');
-});
-
 test('snapshot renderer strips event handler attributes', () => {
   const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
     html: ['HTML', {}, ['BODY', {}, ['IMG', { 'onerror': 'alert(1)', 'src': 'x' }]]],

@@ -168,9 +168,7 @@ export class SnapshotRenderer {
         for (const child of children)
           visit(child, snapshotIndex, nodeName, attrs);
         if (styleContentStart !== -1) {
-          // Escape the fully serialized <style> text as one unit. A crafted trace can split
-          // "</style>" across adjacent text nodes so no single node contains it, yet joining
-          // the result would reassemble it and terminate the element early.
+          // Escape the joined text - "</style>" can be split across adjacent text nodes.
           const styleContent = result.splice(styleContentStart).join('');
           result.push(escapeClosingStyleTag(styleContent));
         }
@@ -688,9 +686,7 @@ function escapeURLsInStyleSheet(text: string): string {
   return text.replace(urlToEscapeRegex1, replacer).replace(urlToEscapeRegex2, replacer);
 }
 
-// A literal "</style" closes the element, so the rest gets parsed as live markup.
-// Break the sequence with a CSS backslash escape ("\/" is still "/" in CSS).
-// HTML entities can't be used: they aren't decoded inside a <style> element.
+// A literal "</style" would close the element; "\/" is still "/" in CSS.
 function escapeClosingStyleTag(text: string): string {
   return text.replace(/<\//g, '<\\/');
 }
