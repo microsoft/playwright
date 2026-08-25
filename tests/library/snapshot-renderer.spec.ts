@@ -48,6 +48,18 @@ for (const [name, overrides] of [
   });
 }
 
+test('snapshot renderer escapes closing style tag in style text', () => {
+  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
+    html: ['HTML', {}, ['BODY', {}, ['STYLE', {}, 'body::after{content:"</style><img src=x onerror=alert(1)>"}']]],
+  })], [], 0);
+  const { html } = renderer.render();
+  // The literal </style> must not survive - it would terminate the element and
+  // let the trailing markup be parsed as live HTML on the trace viewer origin.
+  expect(html).not.toContain('</style><img');
+  // It stays inside the stylesheet, neutralized with a CSS backslash escape.
+  expect(html).toContain('<\\/style><img src=x onerror=alert(1)>');
+});
+
 test('snapshot renderer strips event handler attributes', () => {
   const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
     html: ['HTML', {}, ['BODY', {}, ['IMG', { 'onerror': 'alert(1)', 'src': 'x' }]]],

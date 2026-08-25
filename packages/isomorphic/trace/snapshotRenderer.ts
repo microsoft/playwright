@@ -82,7 +82,7 @@ export class SnapshotRenderer {
         // Best-effort Electron support: rewrite custom protocol in url() links in stylesheets.
         // Old snapshotter was sending lower-case.
         if (parentTag === 'STYLE' || parentTag === 'style')
-          result.push(escapeURLsInStyleSheet(rewriteURLsInStyleSheetForCustomProtocol(n)));
+          result.push(escapeClosingStyleTag(escapeURLsInStyleSheet(rewriteURLsInStyleSheetForCustomProtocol(n))));
         else
           result.push(escapeHTML(n));
         return;
@@ -678,6 +678,13 @@ function escapeURLsInStyleSheet(text: string): string {
     return match;
   };
   return text.replace(urlToEscapeRegex1, replacer).replace(urlToEscapeRegex2, replacer);
+}
+
+// A literal "</style" closes the element, so the rest gets parsed as live markup.
+// Break the sequence with a CSS backslash escape ("\/" is still "/" in CSS).
+// HTML entities can't be used: they aren't decoded inside a <style> element.
+function escapeClosingStyleTag(text: string): string {
+  return text.replace(/<\//g, '<\\/');
 }
 
 export const blankSnapshotUrl = 'data:text/html;base64,' + btoa(`<body></body><style>body { color-scheme: light dark; background: light-dark(white, #333) }</style>`);
