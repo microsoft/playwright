@@ -57,11 +57,10 @@ export class VideoRecorder {
       size: options.size,
     };
 
-    // Encode into the size of the running capture: it may differ from the requested one when
-    // another client (e.g. tracing) started the screencast first, and padding a smaller frame
-    // into the requested size would leave gray borders.
     const { size } = this._screencast.addClient(this._client);
-    this._videoRecorder = new FfmpegVideoRecorder(ffmpegPath, size, outputFile, this._screencast.page.delegate);
+    // For video files only, prioritize encoding into the given size, regardless of the actual pixel data.
+    const videoSize = options.size ?? size;
+    this._videoRecorder = new FfmpegVideoRecorder(ffmpegPath, videoSize, outputFile, this._screencast.page.delegate);
     this._artifact = new Artifact(this._screencast.page.browserContext, outputFile);
     return this._artifact;
   }
