@@ -90,11 +90,18 @@ async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo)
   testDebug('create browser (isolated)');
   const browserType = playwright[config.browser.browserName];
   const tracesDir = await computeTracesDir(config, clientInfo);
+  const configIgnoreDefaultArgs = config.browser.launchOptions?.ignoreDefaultArgs;
   const browser = await browserType.launch({
     tracesDir,
     ...config.browser.launchOptions,
     handleSIGINT: false,
     handleSIGTERM: false,
+    ignoreDefaultArgs: configIgnoreDefaultArgs === true
+      ? true
+      : [
+        '--enable-automation',
+        ...Array.isArray(configIgnoreDefaultArgs) ? configIgnoreDefaultArgs : [],
+      ],
   }).catch(error => {
     throwIfExecutableMissing(error, config);
     throw error;
@@ -175,6 +182,7 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
       ? true
       : [
         '--disable-extensions',
+        '--enable-automation',
         ...Array.isArray(configIgnoreDefaultArgs) ? configIgnoreDefaultArgs : [],
       ],
   };
