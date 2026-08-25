@@ -19,7 +19,6 @@ import fs from 'fs';
 
 import { assertionAbortedMessage } from '@isomorphic/abortSignal';
 import { assert } from '@isomorphic/assert';
-import { resolveBy } from '@isomorphic/by';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '@isomorphic/locatorUtils';
 import { urlMatches } from '@isomorphic/urlMatch';
 import { EventEmitter } from './eventEmitter';
@@ -41,7 +40,6 @@ import type { Page } from './page';
 import type { DropPayload, FilePayload, LifecycleEvent, SelectOption, SelectOptionOptions, StrictOptions, TimeoutOptions, WaitForFunctionOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { By } from '@isomorphic/by';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
 import type { URLMatch } from '@isomorphic/urlMatch';
 import type * as channels from './channels';
@@ -365,10 +363,6 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   locator(selector: string, options?: LocatorOptions): Locator {
     return new Locator(this, selector, options);
-  }
-
-  get(by: By): Locator {
-    return this.locator(resolveBy(by, testIdAttributeName()));
   }
 
   getByTestId(testId: string | RegExp): Locator {

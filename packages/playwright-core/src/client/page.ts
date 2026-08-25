@@ -60,7 +60,6 @@ import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOp
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
-import type { By } from '@isomorphic/by';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
 import type { URLMatch } from '@isomorphic/urlMatch';
 import type * as channels from './channels';
@@ -754,10 +753,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   locator(selector: string, options?: LocatorOptions): Locator {
     return this.mainFrame().locator(selector, options);
-  }
-
-  get(by: By): Locator {
-    return this.mainFrame().get(by);
   }
 
   getByTestId(testId: string | RegExp): Locator {

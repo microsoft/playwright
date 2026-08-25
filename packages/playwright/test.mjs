@@ -16,7 +16,6 @@
 
 import playwright from './test.js';
 
-export const by = playwright.by;
 export const chromium = playwright.chromium;
 export const firefox = playwright.firefox;
 export const webkit = playwright.webkit;
