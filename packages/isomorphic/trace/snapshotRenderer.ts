@@ -82,7 +82,7 @@ export class SnapshotRenderer {
         // Best-effort Electron support: rewrite custom protocol in url() links in stylesheets.
         // Old snapshotter was sending lower-case.
         if (parentTag === 'STYLE' || parentTag === 'style')
-          result.push(escapeClosingStyleTag(escapeURLsInStyleSheet(rewriteURLsInStyleSheetForCustomProtocol(n))));
+          result.push(escapeURLsInStyleSheet(rewriteURLsInStyleSheetForCustomProtocol(n)));
         else
           result.push(escapeHTML(n));
         return;
@@ -164,8 +164,16 @@ export class SnapshotRenderer {
           result.push(' ', attrName, '="', escapeHTMLAttribute(attrValue), '"');
         }
         result.push('>');
+        const styleContentStart = upperName === 'STYLE' ? result.length : -1;
         for (const child of children)
           visit(child, snapshotIndex, nodeName, attrs);
+        if (styleContentStart !== -1) {
+          // Escape the fully serialized <style> text as one unit. A crafted trace can split
+          // "</style>" across adjacent text nodes so no single node contains it, yet joining
+          // the result would reassemble it and terminate the element early.
+          const styleContent = result.splice(styleContentStart).join('');
+          result.push(escapeClosingStyleTag(styleContent));
+        }
         if (!autoClosing.has(nodeName))
           result.push('</', nodeName, '>');
         return;
