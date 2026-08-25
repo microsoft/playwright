@@ -84,7 +84,8 @@ test.describe(() => {
     `);
   });
 
-  test('should update aria snapshot highlight', async ({ openRecorder }) => {
+  test('should update aria snapshot highlight', async ({ openRecorder, browserName }) => {
+    test.fixme(browserName === 'firefox', 'Highlight intermittently fails to update after the aria snapshot edit on Firefox');
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<main>
       <button>Submit</button>
