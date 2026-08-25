@@ -2095,6 +2095,25 @@ export interface Page {
   }): Promise<ElementHandle>;
 
   /**
+   * When working with iframes, you can create a frame locator that will start the search in any frame on the page - the
+   * main frame or any of the iframes - so that you don't need to locate each iframe first.
+   *
+   * Note that the rest of the locator is resolved inside a single frame, just like any other locator. If it matches
+   * elements inside multiple frames, an error is thrown.
+   *
+   * **Usage**
+   *
+   * Following snippet locates a button, either in the main frame or in one of the iframes:
+   *
+   * ```js
+   * const locator = page.anyFrame().getByRole('button');
+   * await locator.click();
+   * ```
+   *
+   */
+  anyFrame(): FrameLocator;
+
+  /**
    * Captures the aria snapshot of the page. Read more about [aria snapshots](https://playwright.dev/docs/aria-snapshots).
    * @param options
    */
@@ -4218,34 +4237,6 @@ export interface Page {
    *
    */
   pickLocator(): Promise<Locator>;
-
-  /**
-   * When working with iframes, you can create a frame locator that will search for elements in the main frame and in
-   * all iframes on the page, so that you don't need to locate each iframe first.
-   *
-   * Note that all elements matching the locator must belong to a single frame. For example, if the page contains two
-   * iframes, each with a `Submit` button, piercing frames and locating a button will throw an error because it matches
-   * elements from multiple frames.
-   *
-   * **Usage**
-   *
-   * Following snippet locates a button, either in the main frame or in one of the iframes:
-   *
-   * ```js
-   * const locator = page.pierceFrames().getByRole('button');
-   * await locator.click();
-   * ```
-   *
-   * @param options
-   */
-  pierceFrames(options?: {
-    /**
-     * Whether to pierce frames. Pass `false` to opt out of frame piercing enabled by the
-     * [`pierceFrames`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-pierce-frames) context
-     * option. Defaults to `true`.
-     */
-    pierce?: boolean;
-  }): FrameLocator;
 
   /**
    * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
@@ -6746,6 +6737,25 @@ export interface Frame {
   }): Promise<ElementHandle>;
 
   /**
+   * When working with iframes, you can create a frame locator that will start the search in this frame or in any of the
+   * iframes inside it, so that you don't need to locate each iframe first.
+   *
+   * Note that the rest of the locator is resolved inside a single frame, just like any other locator. If it matches
+   * elements inside multiple frames, an error is thrown.
+   *
+   * **Usage**
+   *
+   * Following snippet locates a button, either in the frame or in one of the iframes inside it:
+   *
+   * ```js
+   * const locator = frame.anyFrame().getByRole('button');
+   * await locator.click();
+   * ```
+   *
+   */
+  anyFrame(): FrameLocator;
+
+  /**
    * **NOTE** Use locator-based [locator.check([options])](https://playwright.dev/docs/api/class-locator#locator-check) instead.
    * Read more about [locators](https://playwright.dev/docs/locators).
    *
@@ -8267,34 +8277,6 @@ export interface Frame {
    * Parent frame, if any. Detached frames and main frames return `null`.
    */
   parentFrame(): null|Frame;
-
-  /**
-   * When working with iframes, you can create a frame locator that will search for elements in this frame and in all
-   * iframes inside it, so that you don't need to locate each iframe first.
-   *
-   * Note that all elements matching the locator must belong to a single frame. For example, if the frame contains two
-   * iframes, each with a `Submit` button, piercing frames and locating a button will throw an error because it matches
-   * elements from multiple frames.
-   *
-   * **Usage**
-   *
-   * Following snippet locates a button, either in the frame or in one of the iframes inside it:
-   *
-   * ```js
-   * const locator = frame.pierceFrames().getByRole('button');
-   * await locator.click();
-   * ```
-   *
-   * @param options
-   */
-  pierceFrames(options?: {
-    /**
-     * Whether to pierce frames. Pass `false` to opt out of frame piercing enabled by the
-     * [`pierceFrames`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-pierce-frames) context
-     * option. Defaults to `true`.
-     */
-    pierce?: boolean;
-  }): FrameLocator;
 
   /**
    * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
@@ -11491,13 +11473,6 @@ export interface Browser {
      * for more details. Defaults to none.
      */
     permissions?: Array<string>;
-
-    /**
-     * If set to true, all selectors in this context will pierce frames by default, as if every locator was created
-     * through [page.pierceFrames([options])](https://playwright.dev/docs/api/class-page#page-pierce-frames). Defaults to
-     * `false`.
-     */
-    pierceFrames?: boolean;
 
     /**
      * Network proxy settings to use with this context. Defaults to none.
@@ -17815,13 +17790,6 @@ export interface BrowserType<Unused = {}> {
      * for more details. Defaults to none.
      */
     permissions?: Array<string>;
-
-    /**
-     * If set to true, all selectors in this context will pierce frames by default, as if every locator was created
-     * through [page.pierceFrames([options])](https://playwright.dev/docs/api/class-page#page-pierce-frames). Defaults to
-     * `false`.
-     */
-    pierceFrames?: boolean;
 
     /**
      * Network proxy settings.
@@ -24665,13 +24633,6 @@ export interface AndroidDevice {
     permissions?: Array<string>;
 
     /**
-     * If set to true, all selectors in this context will pierce frames by default, as if every locator was created
-     * through [page.pierceFrames([options])](https://playwright.dev/docs/api/class-page#page-pierce-frames). Defaults to
-     * `false`.
-     */
-    pierceFrames?: boolean;
-
-    /**
      * Optional package name to launch instead of default Chrome for Android.
      */
     pkg?: string;
@@ -25887,13 +25848,6 @@ export interface BrowserContextOptions {
    * for more details. Defaults to none.
    */
   permissions?: Array<string>;
-
-  /**
-   * If set to true, all selectors in this context will pierce frames by default, as if every locator was created
-   * through [page.pierceFrames([options])](https://playwright.dev/docs/api/class-page#page-pierce-frames). Defaults to
-   * `false`.
-   */
-  pierceFrames?: boolean;
 
   /**
    * Network proxy settings to use with this context. Defaults to none.

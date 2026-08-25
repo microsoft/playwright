@@ -1074,21 +1074,3 @@ test('should pause test timeout while on pause', async ({ runInlineTest }) => {
   }, { timeout: 3000 });
   expect(result.exitCode).toBe(0);
 });
-
-test('should support pierceFrames option', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { use: { pierceFrames: true } };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('pierces frames by default', async ({ page }) => {
-        await page.setContent('<iframe srcdoc="<button>inside</button>"></iframe>');
-        await expect(page.locator('button')).toHaveText('inside');
-        await expect(page.pierceFrames({ pierce: false }).locator('button')).toHaveCount(0);
-      });
-    `,
-  });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-});

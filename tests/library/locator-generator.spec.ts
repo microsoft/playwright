@@ -442,20 +442,20 @@ it('reverse engineer frameLocator', async ({ page }) => {
   expect.soft(asLocator('javascript', selector)).toBe(`locator('div').locator('iframe').contentFrame().locator('span')`);
 });
 
-it('reverse engineer pierceFrames', async ({ page }) => {
-  expect.soft(generate(page.pierceFrames().getByText('foo').locator('span'))).toEqual({
-    csharp: `PierceFrames.GetByText("foo").Locator("span")`,
-    java: `pierceFrames().getByText("foo").locator("span")`,
-    javascript: `pierceFrames().getByText('foo').locator('span')`,
-    python: `pierce_frames.get_by_text("foo").locator("span")`,
+it('reverse engineer anyFrame', async ({ page }) => {
+  expect.soft(generate(page.anyFrame().getByText('foo').locator('span'))).toEqual({
+    csharp: `AnyFrame.GetByText("foo").Locator("span")`,
+    java: `anyFrame().getByText("foo").locator("span")`,
+    javascript: `anyFrame().getByText('foo').locator('span')`,
+    python: `any_frame.get_by_text("foo").locator("span")`,
   });
 
-  // Note that bare `pierce_frames` and `PierceFrames` are not restored back,
+  // Note that bare `any_frame` and `AnyFrame` are not restored back,
   // because they are indistinguishable from a css selector.
-  expect.soft(asLocator('javascript', 'internal:control=pierce-frames')).toBe(`pierceFrames()`);
-  expect.soft(asLocator('python', 'internal:control=pierce-frames')).toBe(`pierce_frames`);
-  expect.soft(asLocator('java', 'internal:control=pierce-frames')).toBe(`pierceFrames()`);
-  expect.soft(asLocator('csharp', 'internal:control=pierce-frames')).toBe(`PierceFrames`);
+  expect.soft(asLocator('javascript', 'internal:control=any-frame')).toBe(`anyFrame()`);
+  expect.soft(asLocator('python', 'internal:control=any-frame')).toBe(`any_frame`);
+  expect.soft(asLocator('java', 'internal:control=any-frame')).toBe(`anyFrame()`);
+  expect.soft(asLocator('csharp', 'internal:control=any-frame')).toBe(`AnyFrame`);
 });
 
 it('generate multiple locators', async ({ page }) => {
