@@ -15,6 +15,15 @@ test('basic test', async ({ page, browserName }) => {
 });
 ```
 
+## property: TestStepInfo.annotations
+* since: v1.58
+- type: <[Array]<[Object]>>
+  - `type` <[string]> Annotation type, for example `'skip'`.
+  - `description` ?<[string]> Optional description.
+  - `location` ?<[Location]> Optional location in the source where the annotation is added.
+
+The list of annotations applicable to the current test step.
+
 ## async method: TestStepInfo.attach
 * since: v1.51
 

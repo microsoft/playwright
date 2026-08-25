@@ -10811,6 +10811,26 @@ export interface TestStepInfo {
   skip(condition: boolean, description?: string): void;
 
   /**
+   * The list of annotations applicable to the current test step.
+   */
+  annotations: Array<{
+    /**
+     * Annotation type, for example `'skip'`.
+     */
+    type: string;
+
+    /**
+     * Optional description.
+     */
+    description?: string;
+
+    /**
+     * Optional location in the source where the annotation is added.
+     */
+    location?: Location;
+  }>;
+
+  /**
    * The full title path starting with the test file name, including the step titles. See also
    * [testInfo.titlePath](https://playwright.dev/docs/api/class-testinfo#test-info-title-path).
    */
