@@ -85,19 +85,21 @@ test('createConnection closes the browser it launched when the backend is dispos
   });
 
   // Nothing else holds this browser, so disposing the backend has to close it.
-  // If it is left running it keeps the profile, and the relaunch below fails
-  // with "Browser is already in use for <dir>".
-  await client.callTool({ name: 'browser_close', arguments: {} });
-
-  expect(await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  })).toHaveResponse({
-    page: expect.stringContaining(`Page URL: ${server.HELLO_WORLD}`),
-  });
-
+  // A leaked browser keeps the profile, and nothing else can open it. Claiming
+  // the profile from the test rather than through another tool call keeps this
+  // about the browser process and not about how the server rebuilds a backend.
   await client.callTool({ name: 'browser_close', arguments: {} });
   await client.close();
+
+  await expect.poll(async () => {
+    try {
+      const context = await playwright[browserName].launchPersistentContext(userDataDir, { channel, headless: mcpHeadless });
+      await context.close();
+      return 'free';
+    } catch (e: any) {
+      return String(e.message);
+    }
+  }, { timeout: 15000 }).toBe('free');
 });
 
 function browserForProject(mcpBrowser: string | undefined): { browserName: 'chromium' | 'firefox' | 'webkit', channel: string | undefined } {
