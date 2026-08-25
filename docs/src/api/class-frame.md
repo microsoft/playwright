@@ -1002,19 +1002,6 @@ await locator.ClickAsync();
 ### param: Frame.frameLocator.selector = %%-find-selector-%%
 * since: v1.17
 
-## method: Frame.get
-* since: v1.63
-* langs: js
-- returns: <[Locator]>
-
-%%-template-locator-get-%%
-
-### param: Frame.get.by
-* since: v1.63
-- `by` <[By]>
-
-Page-free locator built with [`property: Playwright.by`].
-
 ## async method: Frame.getAttribute
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.getAttribute`] instead. Read more about [locators](../locators.md).
