@@ -24,7 +24,7 @@ import { tools } from '../../packages/playwright-core/lib/coreBundle';
 
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
-const { createConnection, isProfileLocked } = tools;
+const { createConnection } = tools;
 
 test('library can be used from CommonJS', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/456' } }, async ({}, testInfo) => {
   const file = testInfo.outputPath('main.cjs');
@@ -77,12 +77,17 @@ test('createConnection closes the browser it launched when the backend is dispos
     outputDir: testInfo.outputPath('output'),
   }));
 
-  await client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
-  expect(isProfileLocked(userDataDir)).toBe(true);
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    page: expect.stringContaining(`Page URL: ${server.HELLO_WORLD}`),
+  });
 
   // Nothing else holds this browser, so disposing the backend has to close it.
+  // If it is left running it keeps the profile, and the relaunch below fails
+  // with "Browser is already in use for <dir>".
   await client.callTool({ name: 'browser_close', arguments: {} });
-  await expect.poll(() => isProfileLocked(userDataDir)).toBe(false);
 
   expect(await client.callTool({
     name: 'browser_navigate',
