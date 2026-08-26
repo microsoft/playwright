@@ -16,6 +16,7 @@
  */
 
 import type { Route } from 'playwright-core';
+import { chromiumVersionLessThan } from '../config/utils';
 import { test as it, expect } from './pageTest';
 
 it('should intercept @smoke', async ({ page, server }) => {
@@ -273,11 +274,11 @@ it('should pause intercepted fetch request until continue', async ({ page, serve
   expect(status).toBe(200);
 });
 
-it('should work with custom referer headers', async ({ page, server, browserName }) => {
+it('should work with custom referer headers', async ({ page, server, browserName, browserVersion }) => {
   await page.setExtraHTTPHeaders({ 'referer': server.EMPTY_PAGE });
   await page.route('**/*', route => {
     // See https://github.com/microsoft/playwright/issues/8999
-    if (browserName === 'chromium')
+    if (browserName === 'chromium' && chromiumVersionLessThan(browserVersion, '154.0.8014.0'))
       expect(route.request().headers()['referer']).toBe(server.EMPTY_PAGE + ', ' + server.EMPTY_PAGE);
     else
       expect(route.request().headers()['referer']).toBe(server.EMPTY_PAGE);
