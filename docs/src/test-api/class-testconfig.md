@@ -448,7 +448,7 @@ export default defineConfig({
 
 ## property: TestConfig.reporter
 * since: v1.10
-- type: ?<[string]|[Array]<[Object]>|[BuiltInReporter]<"list"|"dot"|"line"|"github"|"json"|"junit"|"null"|"html"|"chrome-trace">>
+- type: ?<[string]|[Array]<[Object]>|[BuiltInReporter]<"list"|"dot"|"line"|"github"|"json"|"junit"|"null"|"html"|"perfetto">>
   - `0` <[string]> Reporter name or module or file path
   - `1` <[Object]> An object with reporter options if any
 
