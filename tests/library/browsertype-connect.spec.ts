@@ -1162,6 +1162,43 @@ test('should refuse connecting when versions do not match', async ({ connect, ch
   expect(error.message).toContain('client version: v' + getPlaywrightVersion(true));
 });
 
+test('should filter local paths from unsafe launch options', async ({ connect, childProcess, server }, testInfo) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42394' });
+  server.setRoute('/download', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', 'attachment');
+    res.end('Hello world');
+  });
+  const artifactsDir = testInfo.outputPath('artifacts');
+  const downloadsPath = testInfo.outputPath('downloads');
+  fs.writeFileSync(artifactsDir, 'not a directory');
+  fs.writeFileSync(downloadsPath, 'not a directory');
+  const remoteServer = new RunServer();
+  await remoteServer.start(childProcess, { unsafe: true, env: { PWTEST_UNDER_TEST: undefined } });
+  const browser = await connect(remoteServer.wsEndpoint(), {
+    headers: {
+      'x-playwright-launch-options': JSON.stringify({ artifactsDir, downloadsPath }),
+    },
+  });
+  const context = await browser.newContext();
+  await context.tracing.start({ snapshots: true });
+  const page = await context.newPage();
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a'),
+  ]);
+  expect(await download.failure()).toBeNull();
+  const tracePath = testInfo.outputPath('trace.zip');
+  await context.tracing.stop({ path: tracePath });
+  await context.close();
+  await browser.close();
+  await remoteServer.close();
+
+  const { actions } = await parseTraceRaw(tracePath);
+  expect(actions).toContain('Set content');
+});
+
 test('should timeout after redirect when connecting over http', async ({ connect, server }) => {
   server.setRedirect('/connect/json', '/connect/slow');
   let aborted = false;
