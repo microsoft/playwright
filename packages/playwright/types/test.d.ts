@@ -25,7 +25,7 @@ export type ListReporterOptions = { printSteps?: boolean, printFailuresInline?: 
 export type GitHubReporterOptions = { omitTags?: boolean };
 export type JUnitReporterOptions = { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean, includeRetries?: boolean, omitTags?: boolean };
 export type JsonReporterOptions = { outputFile?: string };
-export type ChromeTraceReporterOptions = { outputFile?: string };
+export type PerfettoReporterOptions = { outputFile?: string };
 export type HtmlReporterOptions = {
   outputFolder?: string;
   open?: 'always' | 'never' | 'on-failure';
@@ -47,7 +47,7 @@ export type ReporterDescription = Readonly<
   ['github'] | ['github', GitHubReporterOptions] |
   ['junit'] | ['junit', JUnitReporterOptions] |
   ['json'] | ['json', JsonReporterOptions] |
-  ['chrome-trace'] | ['chrome-trace', ChromeTraceReporterOptions] |
+  ['perfetto'] | ['perfetto', PerfettoReporterOptions] |
   ['html'] | ['html', HtmlReporterOptions] |
   ['null'] |
   [string] | [string, any]
@@ -919,7 +919,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * ```
    *
    */
-  reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html'|'chrome-trace', string> | ReporterDescription[];
+  reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html'|'perfetto', string> | ReporterDescription[];
   /**
    * Global options for all tests, for example
    * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more

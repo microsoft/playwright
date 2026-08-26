@@ -431,32 +431,32 @@ JUnit report supports following configuration options and environment variables:
 | `PLAYWRIGHT_JUNIT_SUITE_ID` |  | Value of the `id` attribute on the root `<testsuites/>` report entry. | Empty string.
 | `PLAYWRIGHT_JUNIT_SUITE_NAME` |  | Value of the `name` attribute on the root `<testsuites/>` report entry. | Empty string.
 
-### Chrome tracing reporter
+### Perfetto reporter
 
-Chrome tracing reporter produces a [Trace Event Format](https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview) json file that can be opened in [`chrome://tracing`](chrome://tracing) or in the [Perfetto UI](https://ui.perfetto.dev). It renders the test run as a timeline with a lane per worker, where every test is a slice containing its before/after hooks, fixtures and steps as nested slices. Every slice carries the details of the test or step in its trace event arguments, including source locations, [`property: TestStep.params`], tags, annotations, errors, stdio and paths to the attachment files.
+Perfetto reporter produces a [Trace Event Format](https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview) json file that can be opened in the [Perfetto UI](https://ui.perfetto.dev) or in `chrome://tracing`. It renders the test run as a timeline with a lane per worker, where every test is a slice containing its before/after hooks, fixtures and steps as nested slices. Every slice carries the details of the test or step in its trace event arguments, including source locations, [`property: TestStep.params`], tags, annotations, errors, stdio and paths to the attachment files.
 
 ```bash
-npx playwright test --reporter=chrome-trace
+npx playwright test --reporter=perfetto
 ```
 
-By default the report is written to `test-results/chrome-trace.json`. When the output file name ends with `.gz`, the
+By default the report is written to `test-results/perfetto.json`. When the output file name ends with `.gz`, the
 report is gzipped on the fly, which both viewers accept and which is worth it for large test runs.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  reporter: [['chrome-trace', { outputFile: 'chrome-trace.json.gz' }]],
+  reporter: [['perfetto', { outputFile: 'perfetto.json.gz' }]],
 });
 ```
 
-Chrome tracing report supports following configuration options and environment variables:
+Perfetto report supports following configuration options and environment variables:
 
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
-| `PLAYWRIGHT_CHROME_TRACE_OUTPUT_DIR` | | Directory to save the output file. Ignored if output file is specified. | `test-results`
-| `PLAYWRIGHT_CHROME_TRACE_OUTPUT_NAME` | | Base file name for the output, relative to the output dir. | `chrome-trace.json`
-| `PLAYWRIGHT_CHROME_TRACE_OUTPUT_FILE` | `outputFile` | Full path to the output file. If defined, `PLAYWRIGHT_CHROME_TRACE_OUTPUT_DIR` and `PLAYWRIGHT_CHROME_TRACE_OUTPUT_NAME` will be ignored. | `undefined`
+| `PLAYWRIGHT_PERFETTO_OUTPUT_DIR` | | Directory to save the output file. Ignored if output file is specified. | `test-results`
+| `PLAYWRIGHT_PERFETTO_OUTPUT_NAME` | | Base file name for the output, relative to the output dir. | `perfetto.json`
+| `PLAYWRIGHT_PERFETTO_OUTPUT_FILE` | `outputFile` | Full path to the output file. If defined, `PLAYWRIGHT_PERFETTO_OUTPUT_DIR` and `PLAYWRIGHT_PERFETTO_OUTPUT_NAME` will be ignored. | `undefined`
 
 ### GitHub Actions annotations
 
