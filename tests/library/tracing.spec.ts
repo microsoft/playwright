@@ -421,6 +421,25 @@ test('should record network failures', async ({ context, page, server }, testInf
   expect(requestEvent.snapshot.time).toBeGreaterThanOrEqual(0);
 });
 
+test('should recover tracing after a failed stop', async ({ context, page, server }, testInfo) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42423' });
+  await context.tracing.start();
+  // Saving fails: a parent of the destination is a file, not a directory.
+  const blocker = testInfo.outputPath('blocker');
+  await fs.promises.writeFile(blocker, '');
+  await expect(context.tracing.stop({ path: path.join(blocker, 'trace1.zip') })).rejects.toThrow(/ENOTDIR|ENOENT|EEXIST/);
+
+  // The failed stop must not wedge tracing for the rest of the context lifetime.
+  await context.tracing.start();
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.click('button');
+  await context.tracing.stop({ path: testInfo.outputPath('trace2.zip') });
+
+  const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace2.zip'));
+  expect(events[0].type).toBe('context-options');
+  expect(actions).toContain('Click');
+});
+
 test('should not crash when browser closes mid-trace', async ({ browserType, server }, testInfo) => {
   const browser = await browserType.launch();
   const page = await browser.newPage();

@@ -95,8 +95,12 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
   async stop(options: { path?: string } = {}) {
     await this._wrapApiCall(async () => {
-      await this._doStopChunk(options.path);
-      await this._channel.tracingStop({}, kNoTimeout);
+      // Stop tracing even when saving the trace failed, otherwise tracing can
+      // never be started again on this context.
+      let error: Error | undefined = await this._doStopChunk(options.path).catch(e => e);
+      await this._channel.tracingStop({}, kNoTimeout).catch(e => error ??= e);
+      if (error)
+        throw error;
     });
   }
 
