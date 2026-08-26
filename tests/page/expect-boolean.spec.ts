@@ -61,7 +61,7 @@ Locator:  locator('input')
 Expected: checked
 Received: unchecked
 Timeout:  1000ms`);
-    expect(stripAnsi(error.message)).toContain(`- Expect "toBeChecked" with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toBeChecked" locator('input') with timeout 1000ms`);
   });
 
   test('with not', async ({ page }) => {
@@ -86,7 +86,7 @@ Locator:  locator('input')
 Expected: not checked
 Received: checked
 Timeout:  1000ms`);
-    expect(stripAnsi(error.message)).toContain(`- Expect "not toBeChecked" with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "not toBeChecked" locator('input') with timeout 1000ms`);
     expect(stripAnsi(error.message)).toContain(`locator resolved to <input checked type="checkbox"/>`);
   });
 
@@ -100,7 +100,7 @@ Locator:  locator('input')
 Expected: unchecked
 Received: checked
 Timeout:  1000ms`);
-    expect(stripAnsi(error.message)).toContain(`- Expect "toBeChecked" with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toBeChecked" locator('input') with timeout 1000ms`);
     expect(stripAnsi(error.message)).toContain(`locator resolved to <input checked type="checkbox"/>`);
   });
 
@@ -114,7 +114,7 @@ Locator:  locator('input')
 Expected: indeterminate
 Received: unchecked
 Timeout:  1000ms`);
-    expect(stripAnsi(error.message)).toContain(`- Expect "toBeChecked" with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "toBeChecked" locator('input') with timeout 1000ms`);
   });
 
   test('fail missing', async ({ page }) => {
@@ -129,7 +129,7 @@ Timeout: 1000ms
 Error: element(s) not found
 
 Call log:
-  - Expect "not toBeChecked" with timeout 1000ms
+  - Expect "not toBeChecked" locator('input2') with timeout 1000ms
   - waiting for locator('input2')
 `);
   });
@@ -475,7 +475,7 @@ Timeout: 1000ms
 Error: element(s) not found
 
 Call log:
-  - Expect "not toBeHidden" with timeout 1000ms
+  - Expect "not toBeHidden" locator('button') with timeout 1000ms
 `);
   });
 

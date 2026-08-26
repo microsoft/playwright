@@ -20,7 +20,7 @@ import { msToString } from '@isomorphic/formatUtils';
 import * as React from 'react';
 import './actionList.css';
 import { buildActionTree } from '@isomorphic/trace/traceModel';
-import { asLocatorDescription, type Language } from '@isomorphic/locatorGenerators';
+import { type Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
 import type { ActionTreeItem, TraceModel } from '@isomorphic/trace/traceModel';
@@ -30,7 +30,7 @@ import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { testStatusIcon } from './testUtils';
 import { getMetainfo } from '@isomorphic/protocolMetainfo';
-import { formatProtocolParam } from '@isomorphic/protocolFormatter';
+import { formatProtocolParam, renderSubtitleForCall } from '@isomorphic/protocolFormatter';
 
 export interface ActionListProps {
   actions: ActionEntry[],
@@ -90,12 +90,13 @@ export const ActionList: React.FC<ActionListProps> = ({
     const timeVisible = !selectedTime || !item.action || (item.action.startTime <= selectedTime.maximum && item.action.endTime >= selectedTime.minimum);
     if (!timeVisible)
       return false;
-    const title = renderTitleForCall(item.action).title;
     if (!actionFilterText)
       return true;
-    const isIncluded = title.toLowerCase().includes(actionFilterText.toLowerCase());
+    const { title, subtitle } = renderTitleForCall(item.action, sdkLanguage);
+    const text = subtitle ? `${title} ${subtitle}` : title;
+    const isIncluded = text.toLowerCase().includes(actionFilterText.toLowerCase());
     return isIncluded ? true : 'if-needed';
-  }, [selectedTime, actionFilterText]);
+  }, [selectedTime, actionFilterText, sdkLanguage]);
 
   const onSelectedAction = React.useCallback((item: ActionTreeItem) => {
     onSelected?.(item.action);
@@ -147,8 +148,6 @@ export const renderAction = (
   const { errors, warnings } = model?.stats(action) ?? { errors: 0, warnings: 0 };
   const badgeLabel = [pluralize(errors, 'error'), pluralize(warnings, 'warning')].filter(Boolean).join(', ');
 
-  const locator = action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
-
   const isSkipped = action.class === 'Test' && action.method === 'test.step' && action.annotations?.some(a => a.type === 'skip');
   let time: string = '';
   if (action.endTime)
@@ -157,7 +156,7 @@ export const renderAction = (
     time = 'Timed out';
   else if (!isLive)
     time = '-';
-  const { elements, title } = renderTitleForCall(action);
+  const { elements, title, subtitle } = renderTitleForCall(action, sdkLanguage);
   return <div className='action-title vbox'>
     <div className='hbox'>
       <span className='action-title-method' title={title}>{elements}</span>
@@ -174,11 +173,11 @@ export const renderAction = (
         {!!warnings && <span className='action-icon'><span className='codicon codicon-warning'></span><span className='action-icon-value'>{warnings}</span></span>}
       </ToolbarButton>}
     </div>
-    {locator && <div className='action-title-selector' title={locator}>{locator}</div>}
+    {subtitle && <div className='action-title-subtitle' title={subtitle}>{subtitle}</div>}
   </div>;
 };
 
-export function renderTitleForCall(action: ActionTraceEvent, sdkLanguage?: Language): { elements: React.ReactNode[], title: string } {
+export function renderTitleForCall(action: ActionTraceEvent, sdkLanguage?: Language): { elements: React.ReactNode[], title: string, subtitle?: string } {
   let titleFormat = action.title ?? getMetainfo({ type: action.class, method: action.method })?.title ?? action.method;
   titleFormat = titleFormat.replace(/\n/g, ' ');
 
@@ -195,7 +194,7 @@ export function renderTitleForCall(action: ActionTraceEvent, sdkLanguage?: Langu
     elements.push(chunk);
     title.push(chunk);
 
-    const param = formatProtocolParam(action.params, quotedText);
+    const param = formatProtocolParam(action.params, quotedText, sdkLanguage);
     if (param === undefined) {
       elements.push(fullMatch);
       title.push(fullMatch);
@@ -215,12 +214,8 @@ export function renderTitleForCall(action: ActionTraceEvent, sdkLanguage?: Langu
     title.push(chunk);
   }
 
-  const locator = action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
-  if (locator) {
-    title.push(' ');
-    title.push(locator);
-  }
-  return { elements, title: title.join('') };
+  const subtitle = renderSubtitleForCall({ type: action.class, method: action.method, params: action.params, subtitle: action.subtitle }, sdkLanguage);
+  return { elements, title: title.join(''), subtitle };
 }
 
 function pluralize(count: number, noun: string): string {

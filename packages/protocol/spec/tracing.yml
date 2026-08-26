@@ -39,6 +39,8 @@ Tracing:
 
     tracingGroup:
       title: Trace "{name}"
+      renderParams:
+      - name
       parameters:
         name: string
         location:

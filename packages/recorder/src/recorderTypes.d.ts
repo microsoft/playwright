@@ -64,15 +64,12 @@ export type CallLogStatus = 'in-progress' | 'done' | 'error' | 'paused';
 export type CallLog = {
   id: string;
   title: string;
+  subtitle?: string;
   messages: string[];
   status: CallLogStatus;
   error?: string;
   reveal?: boolean;
   duration?: number;
-  params: {
-    url?: string;
-    selector?: string;
-  };
 };
 
 export type SourceHighlight = {

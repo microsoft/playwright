@@ -222,11 +222,27 @@ function pickDiffForError(error: string, diffs: ImageDiff[]): ImageDiff | undefi
 }
 
 function stepMatchesFilter(step: TestStep, filterText: string): boolean {
-  return step.title.toLowerCase().includes(filterText.toLowerCase());
+  const text = step.subtitle ? `${step.title} ${step.subtitle}` : step.title;
+  return text.toLowerCase().includes(filterText.toLowerCase());
 }
 
 function stepChildrenMatchFilter(step: TestStep, filterText: string): boolean {
   return step.steps.some(s => stepMatchesFilter(s, filterText) || stepChildrenMatchFilter(s, filterText));
+}
+
+function highlightFilterText(text: string, filterText: string): React.ReactNode[] {
+  const unmatched = text.toLowerCase().split(filterText.toLowerCase());
+  const parts: React.ReactNode[] = [];
+  let index = 0;
+  for (let i = 0; i < unmatched.length; i++) {
+    if (i) {
+      parts.push(<span key={`highlight-${i}`} className='step-title-highlight'>{text.substring(index, index + filterText.length)}</span>);
+      index += filterText.length;
+    }
+    parts.push(text.substring(index, index + unmatched[i].length));
+    index += unmatched[i].length;
+  }
+  return parts;
 }
 
 function stepHasDescendantAttachments(step: TestStep): boolean {
@@ -252,6 +268,7 @@ const StepTreeItem: React.FC<{
 
   let expandByDefault = false;
   let title: React.ReactNode = <span>{step.title}</span>;
+  let subtitle: React.ReactNode = step.subtitle;
 
   if (filterText) {
     const matchesFilter = !!filterText && stepMatchesFilter(step, filterText);
@@ -260,25 +277,17 @@ const StepTreeItem: React.FC<{
       return null;
     expandByDefault = childrenMatchFilter;
     if (matchesFilter) {
-      const unmatched = step.title.toLowerCase().split(filterText.toLowerCase());
-      const parts: React.ReactNode[] = [];
-      let index = 0;
-      for (let i = 0; i < unmatched.length; i++) {
-        if (i) {
-          parts.push(<span key={i} className='step-title-highlight'>{step.title.substring(index, index + filterText.length)}</span>);
-          index += filterText.length;
-        }
-        parts.push(unmatched[i]);
-        index += unmatched[i].length;
-      }
-      title = parts;
+      title = highlightFilterText(step.title, filterText);
+      if (step.subtitle)
+        subtitle = highlightFilterText(step.subtitle, filterText);
     }
   }
 
-  return <TreeItem title={<div aria-label={step.title} className='step-title-container'>
+  return <TreeItem title={<div aria-label={step.subtitle ? `${step.title} ${step.subtitle}` : step.title} className='step-title-container'>
     {statusIcon(step.error || step.duration === -1 ? 'failed' : (step.skipped ? 'skipped' : 'passed'))}
     <span className='step-title-text'>
       {title}
+      {step.subtitle && <span className='step-subtitle'> {subtitle}</span>}
       {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
       {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
     </span>

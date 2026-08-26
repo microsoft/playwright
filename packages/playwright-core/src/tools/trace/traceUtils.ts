@@ -19,7 +19,7 @@ import path from 'path';
 
 import { TraceModel, buildActionTree } from '@isomorphic/trace/traceModel';
 import { TraceLoader } from '@isomorphic/trace/traceLoader';
-import { renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { renderFullTitleForCall, renderSubtitleForCall, renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { resolveWithinRoot } from '@utils/fileUtils';
 import { DirTraceLoaderBackend, extractTrace } from './traceParser';
 
@@ -107,6 +107,14 @@ export function formatTimestamp(ms: number, base: number): string {
 
 export function actionTitle(action: ActionEntry): string {
   return renderTitleForCall({ ...action, type: action.class }) || `${action.class}.${action.method}`;
+}
+
+export function actionSubtitle(action: ActionEntry): string | undefined {
+  return renderSubtitleForCall({ ...action, type: action.class });
+}
+
+export function actionFullTitle(action: ActionEntry): string {
+  return renderFullTitleForCall({ ...action, type: action.class }) || `${action.class}.${action.method}`;
 }
 
 export async function saveOutputFile(fileName: string, content: string | Buffer, explicitOutput?: string): Promise<string> {

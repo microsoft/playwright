@@ -256,7 +256,7 @@ export const Recorder: React.FC = ({}) => {
           {
             id: 'log',
             title: 'Log',
-            render: () => <CallLogView language={source.language} log={Array.from(log.values())} />
+            render: () => <CallLogView log={Array.from(log.values())} />
           },
           {
             id: 'aria',

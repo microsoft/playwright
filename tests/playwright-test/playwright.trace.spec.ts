@@ -97,8 +97,8 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     '    Create context',
     '  Fixture "page"',
     '    Create page',
-    'Navigate to "about:blank"',
-    'GET "/empty.html"',
+    'Navigate about:blank',
+    'GET /empty.html',
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
@@ -109,7 +109,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
   expect(trace2.model.renderActionTree()).toEqual([
     'Before Hooks',
     'Create request context',
-    'GET "/empty.html"',
+    'GET /empty.html',
     'After Hooks',
   ]);
   const trace3 = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
@@ -121,8 +121,8 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     '    Create context',
     '  Fixture "page"',
     '    Create page',
-    'Navigate to "about:blank"',
-    'GET "/empty.html"',
+    'Navigate about:blank',
+    'GET /empty.html',
     'Expect "toBe"',
     'After Hooks',
     '  Fixture "page"',
@@ -412,7 +412,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     '    Create context',
     '  Fixture "page"',
     '    Create page',
-    'Navigate to "about:blank"',
+    'Navigate about:blank',
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
@@ -420,7 +420,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     '  afterAll hook',
     '    Fixture "request"',
     '      Create request context',
-    '    GET "/empty.html"',
+    '    GET /empty.html',
     '    Fixture "request"',
     'Worker Cleanup',
     '  Fixture "browser"',
@@ -538,7 +538,7 @@ test(`trace:retain-on-failure should create trace if context is closed before fa
   }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.model.renderActionTree()).toContain('Navigate to "about:blank"');
+  expect(trace.model.renderActionTree()).toContain('Navigate about:blank');
   expect(result.failed).toBe(1);
 });
 
@@ -560,7 +560,7 @@ test(`trace:retain-on-failure should create trace if context is closed before fa
   }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.model.renderActionTree()).toContain('    Navigate to "about:blank"');
+  expect(trace.model.renderActionTree()).toContain('    Navigate about:blank');
   expect(result.failed).toBe(1);
 });
 
@@ -580,7 +580,7 @@ test(`trace:retain-on-failure should create trace if request context is disposed
   }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.model.renderActionTree()).toContain('GET "/empty.html"');
+  expect(trace.model.renderActionTree()).toContain('GET /empty.html');
   expect(result.failed).toBe(1);
 });
 
@@ -702,11 +702,11 @@ test('should expand expect.toPass', async ({ runInlineTest }, testInfo) => {
     '  Fixture "page"',
     '    Create page',
     'Expect "toPass"',
-    '  Navigate to "data:"',
+    '  Navigate data:',
     '  Expect "toBe"',
-    '  Navigate to "data:"',
+    '  Navigate data:',
     '  Expect "toBe"',
-    '  Navigate to "data:"',
+    '  Navigate data:',
     '  Expect "toBe"',
     'After Hooks',
     '  Fixture "page"',
@@ -871,7 +871,7 @@ test('should use custom expect message in trace', async ({ runInlineTest }, test
     '    Create context',
     '  Fixture "page"',
     '    Create page',
-    'expect to have text: find a hotel',
+    `expect to have text: find a hotel getByRole('button', { name: 'Find a hotel' })`,
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
@@ -1187,7 +1187,7 @@ test('trace:retain-on-first-failure should create trace but only on first failur
 
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.model.renderActionTree()).toContain('Navigate to "about:blank"');
+  expect(trace.model.renderActionTree()).toContain('Navigate about:blank');
   expect(result.failed).toBe(1);
 });
 
@@ -1204,7 +1204,7 @@ test('trace:retain-on-first-failure should create trace if context is closed bef
   }, { trace: 'retain-on-first-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.model.renderActionTree()).toContain('Navigate to "about:blank"');
+  expect(trace.model.renderActionTree()).toContain('Navigate about:blank');
   expect(result.failed).toBe(1);
 });
 
@@ -1223,7 +1223,7 @@ test('trace:retain-on-first-failure should create trace if context is closed bef
   }, { trace: 'retain-on-first-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.model.renderActionTree()).toContain('    Navigate to "about:blank"');
+  expect(trace.model.renderActionTree()).toContain('    Navigate about:blank');
   expect(result.failed).toBe(1);
 });
 
@@ -1240,7 +1240,7 @@ test('trace:retain-on-first-failure should create trace if request context is di
   }, { trace: 'retain-on-first-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.model.renderActionTree()).toContain('GET "/empty.html"');
+  expect(trace.model.renderActionTree()).toContain('GET /empty.html');
   expect(result.failed).toBe(1);
 });
 
@@ -1387,9 +1387,9 @@ test('should not nest top level expect into unfinished api calls ', {
     '    Create context',
     '  Fixture "page"',
     '    Create page',
-    'Navigate to "/index"',
-    'GET "/hang"',
-    'Expect "toBeVisible"',
+    'Navigate /index',
+    'GET /hang',
+    `Expect "toBeVisible" getByText('Hello!')`,
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
@@ -1464,9 +1464,9 @@ test('should record trace snapshot for more obscure commands', async ({ runInlin
     '    Launch browser',
     'Create page',
     'Set content',
-    'Query count',
+    `Query count locator('div')`,
     'Expect "toBe"',
-    'Bounding box',
+    `Bounding box locator('div')`,
     'After Hooks',
   ]);
 

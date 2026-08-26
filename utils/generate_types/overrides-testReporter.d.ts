@@ -132,6 +132,7 @@ export interface JSONReportTestResult {
 
 export interface JSONReportTestStep {
   title: string;
+  subtitle?: string;
   duration: number;
   error: TestError | undefined;
   steps?: JSONReportTestStep[];

@@ -41,11 +41,11 @@ export const CallTab: React.FunctionComponent<{
   const startTimeMillis = action.startTime - startTimeOffset;
   const startTime = msToString(startTimeMillis);
 
-  const { title } = renderTitleForCall(action);
+  const { title, subtitle } = renderTitleForCall(action, sdkLanguage);
 
   return (
     <div className='call-tab'>
-      <div className='call-line'>{title}</div>
+      <div className='call-line'>{subtitle ? `${title} ${subtitle}` : title}</div>
       <div className='call-section'>Time</div>
       {renderProperty({ name: 'start', type: 'literal', text: startTime })}
       {renderProperty({ name: 'duration', type: 'literal', text: renderDuration(action) })}

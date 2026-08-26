@@ -19,16 +19,12 @@ import * as React from 'react';
 import type { CallLog } from './recorderTypes';
 import { clsx } from '@web/uiUtils';
 import { msToString } from '@isomorphic/formatUtils';
-import { asLocator } from '@isomorphic/locatorGenerators';
-import type { Language } from '@isomorphic/locatorGenerators';
 
 export type CallLogProps = {
-  language: Language;
   log: CallLog[];
 };
 
 export const CallLogView: React.FC<CallLogProps> = ({
-  language,
   log,
 }) => {
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
@@ -41,19 +37,6 @@ export const CallLogView: React.FC<CallLogProps> = ({
     {log.map(callLog => {
       const expandOverride = expandOverrides.get(callLog.id);
       const isExpanded = typeof expandOverride === 'boolean' ? expandOverride : callLog.status !== 'done';
-      const locator = callLog.params.selector ? asLocator(language, callLog.params.selector) : null;
-      let titlePrefix = callLog.title;
-      let titleSuffix = '';
-      if (callLog.title.startsWith('expect.to') || callLog.title.startsWith('expect.not.to')) {
-        titlePrefix = 'expect(';
-        titleSuffix = `).${callLog.title.substring('expect.'.length)}()`;
-      } else if (callLog.title.startsWith('locator.')) {
-        titlePrefix = '';
-        titleSuffix = `.${callLog.title.substring('locator.'.length)}()`;
-      } else if (locator || callLog.params.url) {
-        titlePrefix = callLog.title + '(';
-        titleSuffix = ')';
-      }
       return <div className={clsx('call-log-call', callLog.status)} key={callLog.id}>
         <div className='call-log-call-header'>
           <span className={clsx('codicon', `codicon-chevron-${isExpanded ? 'down' : 'right'}`)} style={{ cursor: 'pointer' }}onClick={() => {
@@ -61,10 +44,8 @@ export const CallLogView: React.FC<CallLogProps> = ({
             newOverrides.set(callLog.id, !isExpanded);
             setExpandOverrides(newOverrides);
           }}></span>
-          { titlePrefix }
-          { callLog.params.url ? <span className='call-log-details'><span className='call-log-url' title={callLog.params.url}>{callLog.params.url}</span></span> : undefined }
-          { locator ? <span className='call-log-details'><span className='call-log-selector' title={`page.${locator}`}>{`page.${locator}`}</span></span> : undefined }
-          { titleSuffix }
+          { callLog.subtitle ? callLog.title + ' ' : callLog.title }
+          { callLog.subtitle ? <span className='call-log-details'><span className='call-log-subtitle' title={callLog.subtitle}>{callLog.subtitle}</span></span> : undefined }
           <span className={clsx('codicon', iconClass(callLog))}></span>
           { typeof callLog.duration === 'number' ? <span className='call-log-time'>— {msToString(callLog.duration)}</span> : undefined}
         </div>

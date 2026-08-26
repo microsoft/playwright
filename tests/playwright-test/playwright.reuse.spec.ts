@@ -139,7 +139,7 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
     '  Fixture "page"',
     '    Create page',
     'Set content',
-    'Click',
+    `Click locator('button')`,
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
@@ -154,8 +154,8 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
     '  Fixture "page"',
     'Expect "toBe"',
     'Set content',
-    'Fill "value"',
-    'Click',
+    `Fill "value" locator('input')`,
+    `Click locator('input')`,
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
@@ -485,15 +485,15 @@ test('should reset tracing', async ({ runInlineTest }, testInfo) => {
   const trace1 = await parseTrace(traceFile1);
   expect(trace1.model.renderActionTree()).toEqual([
     'Set content',
-    'Click',
+    `Click locator('button')`,
   ]);
   expect(trace1.snapshots.snapshotsForTest().length).toBeGreaterThan(0);
 
   const trace2 = await parseTrace(traceFile2);
   expect(trace2.model.renderActionTree()).toEqual([
     'Set content',
-    'Fill "value"',
-    'Click',
+    `Fill "value" locator('input')`,
+    `Click locator('input')`,
   ]);
   expect(trace1.snapshots.snapshotsForTest().length).toBeGreaterThan(0);
 });

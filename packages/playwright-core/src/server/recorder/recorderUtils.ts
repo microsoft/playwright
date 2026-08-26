@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { renderSubtitleForCall, renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { monotonicTime } from '@isomorphic/time';
 import { quoteCSSAttributeValue } from '@isomorphic/stringUtils';
@@ -24,6 +24,7 @@ import { Frame } from '../frames';
 import type { CallMetadata } from '../instrumentation';
 import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
 import type { Progress } from '../progress';
+import type { Language } from '@isomorphic/locatorGenerators';
 
 function buildFullSelector(framePath: string[], selector: string) {
   return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
@@ -58,14 +59,11 @@ async function resolvesToFrame(progress: Progress, selector: string, frame: Fram
   }
 }
 
-export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
-  const title = renderTitleForCall(metadata);
+export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus, sdkLanguage: Language): CallLog {
+  const title = renderTitleForCall(metadata, sdkLanguage);
+  const subtitle = renderSubtitleForCall(metadata, sdkLanguage);
   if (metadata.error)
     status = 'error';
-  const params = {
-    url: metadata.params?.url,
-    selector: metadata.params?.selector,
-  };
   let duration = metadata.endTime ? metadata.endTime - metadata.startTime : undefined;
   if (typeof duration === 'number' && metadata.pauseStartTime && metadata.pauseEndTime) {
     duration -= (metadata.pauseEndTime - metadata.pauseStartTime);
@@ -75,9 +73,9 @@ export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus)
     id: metadata.id,
     messages: metadata.log,
     title: title ?? '',
+    subtitle,
     status,
     error: metadata.error?.error?.message,
-    params,
     duration,
   };
   return callLog;

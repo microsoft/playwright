@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getActionGroup, renderTitleForCall } from '../protocolFormatter';
+import { getActionGroup, renderFullTitleForCall } from '../protocolFormatter';
 
 import type { Language } from '../locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
@@ -219,7 +219,7 @@ export class TraceModel {
     const { rootItem } = buildActionTree(actions);
     const actionTree: string[] = [];
     const visit = (actionItem: ActionTreeItem, indent: string) => {
-      const title = renderTitleForCall({ ...actionItem.action, type: actionItem.action.class });
+      const title = renderFullTitleForCall({ ...actionItem.action, type: actionItem.action.class });
       actionTree.push(`${indent}${title || actionItem.id}`);
       for (const child of actionItem.children)
         visit(child, indent + '  ');

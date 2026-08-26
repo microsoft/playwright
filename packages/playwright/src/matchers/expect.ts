@@ -102,7 +102,7 @@ export interface ExpectTestInfo {
   _addStep(data: {
     category: 'expect';
     title: string;
-    shortTitle: string;
+    subtitle?: string;
     params?: Record<string, any>;
   }): ExpectStep;
   _deadline(): { deadline: number; timeout: number };
@@ -329,9 +329,8 @@ function callMatcherAsStep(matcherName: string, info: ExpectMetaInfo, actual: un
   const testInfo = expectConfig().testInfo;
   const customMessage = info.message || '';
   const suffixes = computeMatcherTitleSuffix(matcherName, actual, args);
-  const defaultTitle = `${info.poll ? 'poll ' : ''}${info.isSoft ? 'soft ' : ''}${info.isNot ? 'not ' : ''}${matcherName}${suffixes.short || ''}`;
-  const shortTitle = customMessage || `Expect ${escapeWithQuotes(defaultTitle, '"')}`;
-  const longTitle = shortTitle + (suffixes.long || '');
+  const defaultTitle = `${info.poll ? 'poll ' : ''}${info.isSoft ? 'soft ' : ''}${info.isNot ? 'not ' : ''}${matcherName}${suffixes.titleSuffix || ''}`;
+  const title = customMessage || `Expect ${escapeWithQuotes(defaultTitle, '"')}`;
 
   // This looks like it is unnecessary, but it isn't - we need to filter
   // out all the frames that belong to the test runner from caught runtime errors.
@@ -341,8 +340,8 @@ function callMatcherAsStep(matcherName: string, info: ExpectMetaInfo, actual: un
     params.expected = args[0];
   const stepData = {
     category: 'expect' as const,
-    title: longTitle,
-    shortTitle,
+    title,
+    subtitle: suffixes.subtitle,
     location: stackFrames[0],
     params: Object.keys(params).length ? params : undefined,
   };
@@ -370,7 +369,7 @@ function callMatcherAsStep(matcherName: string, info: ExpectMetaInfo, actual: un
   try {
     const invoke = () => info.poll
       ? invokePollMatcher(matcherName, info, matcher, actual, args, promise)
-      : invokeMatcher(matcherName, info, matcher, actual, args, promise, shortTitle);
+      : invokeMatcher(matcherName, info, matcher, actual, args, promise, title);
     const result = step ? currentZone().with('stepZone', step).run(invoke) : invoke();
     if (result instanceof Promise)
       return result.then(finalizer, handleError);

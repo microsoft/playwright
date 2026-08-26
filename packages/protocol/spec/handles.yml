@@ -88,6 +88,7 @@ ElementHandle:
 
     evalOnSelector:
       title: Evaluate
+      subtitle: '{selector}'
       parameters:
         selector: string
         strict: boolean?
@@ -102,6 +103,7 @@ ElementHandle:
 
     evalOnSelectorAll:
       title: Evaluate
+      subtitle: '{selector}'
       parameters:
         selector: string
         expression: string
@@ -123,6 +125,8 @@ ElementHandle:
 
     check:
       title: Check
+      renderParams:
+      - position
       parameters:
         force: boolean?
         scroll:
@@ -141,6 +145,11 @@ ElementHandle:
 
     click:
       title: Click
+      renderParams:
+      - button
+      - clickCount
+      - modifiers
+      - position
       parameters:
         force: boolean?
         scroll:
@@ -185,6 +194,10 @@ ElementHandle:
 
     dblclick:
       title: Double click
+      renderParams:
+      - button
+      - modifiers
+      - position
       parameters:
         force: boolean?
         scroll:
@@ -221,6 +234,8 @@ ElementHandle:
 
     dispatchEvent:
       title: Dispatch event
+      renderParams:
+      - type
       parameters:
         type: string
         eventInit: SerializedArgument
@@ -231,6 +246,8 @@ ElementHandle:
 
     fill:
       title: Fill "{value}"
+      renderParams:
+      - value
       parameters:
         value: string
         force: boolean?
@@ -261,6 +278,9 @@ ElementHandle:
 
     hover:
       title: Hover
+      renderParams:
+      - modifiers
+      - position
       parameters:
         force: boolean?
         scroll:
@@ -376,6 +396,8 @@ ElementHandle:
 
     press:
       title: Press "{key}"
+      renderParams:
+      - key
       parameters:
         key: string
         delay: float?
@@ -389,6 +411,7 @@ ElementHandle:
 
     querySelector:
       title: Query selector
+      subtitle: '{selector}'
       parameters:
         selector: string
         strict: boolean?
@@ -399,6 +422,7 @@ ElementHandle:
 
     querySelectorAll:
       title: Query selector all
+      subtitle: '{selector}'
       parameters:
         selector: string
       returns:
@@ -410,6 +434,8 @@ ElementHandle:
 
     screenshot:
       title: Screenshot
+      renderParams:
+      - type
       parameters:
         type:
           type: enum?
@@ -434,6 +460,8 @@ ElementHandle:
 
     selectOption:
       title: Select option
+      renderParams:
+      - options
       parameters:
         elements:
           type: array?
@@ -470,6 +498,8 @@ ElementHandle:
 
     setInputFiles:
       title: Set input files
+      renderParams:
+      - files=localPaths
       parameters:
         # Only one of payloads, localPaths and streams should be present.
         payloads:
@@ -497,6 +527,9 @@ ElementHandle:
 
     tap:
       title: Tap
+      renderParams:
+      - modifiers
+      - position
       parameters:
         force: boolean?
         scroll:
@@ -534,6 +567,8 @@ ElementHandle:
 
     type:
       title: Type
+      renderParams:
+      - text
       parameters:
         text: string
         delay: float?
@@ -546,6 +581,8 @@ ElementHandle:
 
     uncheck:
       title: Uncheck
+      renderParams:
+      - position
       parameters:
         force: boolean?
         scroll:
@@ -564,6 +601,8 @@ ElementHandle:
 
     waitForElementState:
       title: Wait for state
+      renderParams:
+      - state
       parameters:
         state:
           type: enum
@@ -580,6 +619,9 @@ ElementHandle:
 
     waitForSelector:
       title: Wait for selector
+      subtitle: '{selector}'
+      renderParams:
+      - state
       parameters:
         selector: string
         strict: boolean?

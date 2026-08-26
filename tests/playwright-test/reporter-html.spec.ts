@@ -779,10 +779,12 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'View Trace' }).click();
 
       // Trace viewer should not hang here when displaying parallal requests.
-      await expect(page.getByTestId('actions-tree')).toContainText('GET');
-      await page.getByText('GET "/empty.html"').nth(2).click();
-      await page.getByText('GET "/empty.html"').nth(1).click();
-      await page.getByText('GET "/empty.html"').nth(0).click();
+      const getActions = page.getByTestId('actions-tree').getByRole('treeitem', { name: /GET/ });
+      await expect(getActions).toHaveCount(4);
+      await expect(getActions.first()).toContainText('/empty.html');
+      await getActions.nth(2).click();
+      await getActions.nth(1).click();
+      await getActions.nth(0).click();
     });
 
     test('should warn user when viewing via file:// protocol', async ({ runInlineTest, page, showReport }, testInfo) => {
@@ -932,6 +934,30 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       // children are collapsed again after clearing the filter
       await expect(page.locator('.tree-item-title', { hasText: 'fill username' })).toBeHidden();
       await expect(page.locator('.tree-item-title', { hasText: 'fill password' })).toBeHidden();
+    });
+
+    test('should highlight filter matches in step title and subtitle', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('has steps', async ({ page }) => {
+            await page.setContent('<button id=target>Click me</button>');
+            await page.click('#target');
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByRole('link', { name: 'has steps' }).click();
+
+      const filterInput = page.getByLabel('Filter steps');
+      await filterInput.fill('click');
+      await expect(page.locator('.step-title-highlight')).toHaveText(['Click']);
+
+      await filterInput.fill('#target');
+      await expect(page.locator('.step-subtitle .step-title-highlight')).toHaveText(['#target']);
     });
 
     test('should show step snippets from non-root', async ({ runInlineTest, page, showReport }) => {

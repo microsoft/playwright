@@ -72,11 +72,7 @@
   text-overflow: ellipsis;
 }
 
-.call-log-url {
-  color: var(--vscode-charts-blue);
-}
-
-.call-log-selector {
+.call-log-subtitle {
   color: var(--vscode-charts-orange);
   white-space: nowrap;
 }

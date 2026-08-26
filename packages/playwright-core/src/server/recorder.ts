@@ -454,7 +454,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
         status = 'in-progress';
       if (this._debugger.isPaused(metadata))
         status = 'paused';
-      logs.push(metadataToCallLog(metadata, status));
+      logs.push(metadataToCallLog(metadata, status, this._currentLanguage));
     }
     this._callLogs = logs;
     this.emit(RecorderEvent.CallLogsUpdated, logs);

@@ -327,15 +327,33 @@ function generateChannels(target) {
             throw new Error(`Method "${className}.${methodName}" must should not specify "group" because it is "internal" in protocol.yml`);
           if (method.group && !['getter', 'configuration', 'route', 'default'].includes(method.group))
             throw new Error(`Unknown group "${method.group}" for method "${className}.${methodName}" in protocol.yml`);
+          if (method.subtitle && method.internal)
+            throw new Error(`Method "${className}.${methodName}" should not specify "subtitle" because it is "internal" in protocol.yml`);
+          if (!method.subtitle && !method.internal && (method.parameters || {}).selector)
+            throw new Error(`Method "${className}.${methodName}" has a "selector" parameter, so it must have an explicit "subtitle" in protocol.yml`);
+          if (method.renderParams) {
+            if (method.internal)
+              throw new Error(`Method "${className}.${methodName}" should not specify "renderParams" because it is "internal" in protocol.yml`);
+            if (!Array.isArray(method.renderParams) || method.renderParams.some(entry => typeof entry !== 'string'))
+              throw new Error(`Method "${className}.${methodName}" must specify "renderParams" as a list of strings in protocol.yml`);
+            for (const entry of method.renderParams) {
+              // Each entry is "[key=]path[:selector]", path root must be a parameter.
+              const paramName = entry.split(':')[0].split('=').pop().split('.')[0];
+              if (!(method.parameters || {})[paramName])
+                throw new Error(`Method "${className}.${methodName}" renderParams entry "${entry}" does not match any parameter in protocol.yml`);
+            }
+          }
           const internalProp = method.internal ? ` internal: ${method.internal},` : '';
           const titleProp = method.title ? ` title: '${method.title}',` : '';
+          const subtitleProp = method.subtitle ? ` subtitle: '${method.subtitle}',` : '';
+          const renderParamsProp = method.renderParams ? ` renderParams: [${method.renderParams.map(entry => `'${entry}'`).join(', ')}],` : '';
           const groupProp = method.group ? ` group: '${method.group}',` : '';
           const slowMoProp = method.flags?.slowMo ? ` slowMo: ${method.flags.slowMo},` : '';
           const snapshotProp = method.flags?.snapshot ? ` snapshot: ${method.flags.snapshot},` : '';
           const pauseProp = method.flags?.pause ? ` pause: ${method.flags.pause},` : '';
           const inputProp = method.flags?.input ? ` input: ${method.flags.input},` : '';
           const isAutoWaitingProp = method.flags?.isAutoWaiting ? ` isAutoWaiting: ${method.flags.isAutoWaiting},` : '';
-          methodMetainfo.push(`['${className + '.' + methodName}', {${internalProp}${titleProp}${slowMoProp}${snapshotProp}${pauseProp}${inputProp}${isAutoWaitingProp}${groupProp} }]`);
+          methodMetainfo.push(`['${className + '.' + methodName}', {${internalProp}${titleProp}${subtitleProp}${renderParamsProp}${slowMoProp}${snapshotProp}${pauseProp}${inputProp}${isAutoWaitingProp}${groupProp} }]`);
         }
 
         const parameters = objectType(method.parameters || {}, '');
@@ -432,7 +450,7 @@ const structs_ts = generateStructs();
 
 const client_channels_ts = generateChannels('Channel');
 
-metainfo_ts.push(`export type MethodMetainfo = { internal?: boolean, title?: string, slowMo?: boolean, snapshot?: boolean, pause?: boolean, isAutoWaiting?: boolean, input?: boolean, group?: string };
+metainfo_ts.push(`export type MethodMetainfo = { internal?: boolean, title?: string, subtitle?: string, renderParams?: string[], slowMo?: boolean, snapshot?: boolean, pause?: boolean, isAutoWaiting?: boolean, input?: boolean, group?: string };
 
 export const methodMetainfo = new Map<string, MethodMetainfo>([
   ${methodMetainfo.join(`,\n  `)}

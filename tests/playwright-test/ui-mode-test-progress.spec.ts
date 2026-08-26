@@ -55,13 +55,13 @@ test('should update trace live', async ({ runUITest, server }) => {
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /Navigate to "\/one.html"/,
+    /Navigate.*\/one.html/,
   ]);
 
   await expect(
       listItem.locator(':scope[aria-selected="true"]'),
       'last action to be selected'
-  ).toHaveText(/Navigate to/);
+  ).toHaveText(/Navigate/);
   await expect(
       listItem.locator(':scope[aria-selected="true"] .codicon.codicon-loading'),
       'spinner'
@@ -81,13 +81,13 @@ test('should update trace live', async ({ runUITest, server }) => {
   ).toHaveText('One');
   await expect(listItem).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /Navigate to "\/one.html"/,
-    /Navigate to "\/two.html"/
+    /Navigate.*\/one.html/,
+    /Navigate.*\/two.html/
   ]);
   await expect(
       listItem.locator(':scope[aria-selected="true"]'),
       'last action to be selected'
-  ).toHaveText(/Navigate to/);
+  ).toHaveText(/Navigate/);
   await expect(
       listItem.locator(':scope[aria-selected="true"] .codicon.codicon-loading'),
       'spinner'
@@ -108,8 +108,8 @@ test('should update trace live', async ({ runUITest, server }) => {
 
   await expect(listItem).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /Navigate to "\/one.html"/,
-    /Navigate to "\/two.html"/,
+    /Navigate.*\/one.html/,
+    /Navigate.*\/two.html/,
     /After Hooks[\d.]+m?s/,
   ]);
 });
@@ -140,12 +140,12 @@ test('should preserve action list selection upon live trace update', async ({ ru
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /Navigate to "about:blank"/,
+    /Navigate.*about:blank/,
     /Set content/,
   ]);
 
   // Manually select page.goto.
-  await page.getByTestId('actions-tree').getByText('Navigate to').click();
+  await page.getByTestId('actions-tree').getByText('Navigate').click();
 
   // Generate more actions and check that we are still on the page.goto action.
   latch.open();
@@ -154,14 +154,14 @@ test('should preserve action list selection upon live trace update', async ({ ru
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /Navigate to "about:blank"/,
+    /Navigate.*about:blank/,
     /Set content/,
     /Set content/,
   ]);
   await expect(
       listItem.locator(':scope[aria-selected="true"]'),
       'selected action stays the same'
-  ).toHaveText(/Navigate to/);
+  ).toHaveText(/Navigate/);
 });
 
 test('should update tracing network live', async ({ runUITest, server }) => {
@@ -201,7 +201,7 @@ test('should update tracing network live', async ({ runUITest, server }) => {
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /Navigate to "\/one.html"/,
+    /Navigate.*\/one.html/,
     /Set content/,
   ]);
 
@@ -241,7 +241,7 @@ test('should show trace w/ multiple contexts', async ({ runUITest, server, creat
       'action list'
   ).toHaveText([
     /Before Hooks[\d.]+m?s/,
-    /Navigate to "about:blank"/,
+    /Navigate.*about:blank/,
   ]);
 
   latch.open();

@@ -104,11 +104,14 @@ test('should produce correct test steps', async ({ runInlineTest, runServer }) =
   const result = await runInlineTest({
     'reporter.ts': `
       class Reporter {
+        stepTitle(step) {
+          return step.subtitle ? step.title + ' ' + step.subtitle : step.title;
+        }
         onStepBegin(test, result, step) {
-          console.log('%% onStepBegin [' + step.category + '] ' + step.title);
+          console.log('%% onStepBegin [' + step.category + '] ' + this.stepTitle(step));
         }
         onStepEnd(test, result, step) {
-            console.log('%% onStepEnd [' + step.category + '] ' + step.title);
+            console.log('%% onStepEnd [' + step.category + '] ' + this.stepTitle(step));
         }
       }
       module.exports = Reporter;
@@ -137,8 +140,8 @@ test('should produce correct test steps', async ({ runInlineTest, runServer }) =
     'onStepEnd [pw:api] Create page',
     'onStepEnd [fixture] Fixture "page"',
     'onStepEnd [hook] Before Hooks',
-    'onStepBegin [pw:api] Navigate to "about:blank"',
-    'onStepEnd [pw:api] Navigate to "about:blank"',
+    'onStepBegin [pw:api] Navigate about:blank',
+    'onStepEnd [pw:api] Navigate about:blank',
     'onStepBegin [pw:api] Evaluate',
     'onStepEnd [pw:api] Evaluate',
     'onStepBegin [hook] After Hooks',

@@ -259,7 +259,7 @@ test.describe('toHaveText with array', () => {
     const error = await expect(locator).not.toHaveText([], { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`expect(locator).not.toHaveText(expected)`);
     expect(stripAnsi(error.message)).toContain(`Timeout:  1000ms`);
-    expect(stripAnsi(error.message)).toContain(`- Expect "not toHaveText" with timeout 1000ms`);
+    expect(stripAnsi(error.message)).toContain(`- Expect "not toHaveText" locator('p') with timeout 1000ms`);
   });
 
   test('pass eventually empty', async ({ page }) => {
@@ -289,7 +289,7 @@ Timeout: 1000ms
   ]
 
 Call log:
-  - Expect \"toHaveText\" with timeout 1000ms
+  - Expect \"toHaveText\" locator('div') with timeout 1000ms
   - waiting for locator('div')
 `);
     expect(stripAnsi(error.message)).toContain('locator resolved to 2 elements');

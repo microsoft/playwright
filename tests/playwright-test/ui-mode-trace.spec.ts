@@ -314,7 +314,7 @@ test('should not fail on internal page logs', async ({ runUITest, server }) => {
     /Before Hooks/,
     /Create context/,
     /Create page/,
-    /Navigate to "\/empty.html"/,
+    /Navigate.*\/empty.html/,
     /After Hooks/,
   ]);
 });
@@ -492,12 +492,12 @@ test('should filter actions tab on double-click', async ({ runUITest, server }) 
   const actionsTree = page.getByTestId('actions-tree');
   await expect(actionsTree.getByRole('treeitem')).toHaveText([
     /Before Hooks/,
-    /Navigate to "\/empty.html"/,
+    /Navigate.*\/empty.html/,
     /After Hooks/,
   ]);
-  await actionsTree.getByRole('treeitem', { name: 'Navigate to "\/empty.html"' }).dblclick();
+  await actionsTree.getByRole('treeitem', { name: 'Navigate' }).dblclick();
   await expect(actionsTree.getByRole('treeitem')).toHaveText([
-    /Navigate to "\/empty.html"/,
+    /Navigate.*\/empty.html/,
   ]);
 });
 

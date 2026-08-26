@@ -351,6 +351,7 @@ export interface JSONReportTestResult {
 
 export interface JSONReportTestStep {
   title: string;
+  subtitle?: string;
   duration: number;
   error: TestError | undefined;
   steps?: JSONReportTestStep[];
@@ -919,7 +920,23 @@ export interface TestStep {
   steps: Array<TestStep>;
 
   /**
-   * User-friendly test step title.
+   * User-friendly test step subtitle that complements the title, when available. For Playwright API calls, it is the
+   * target locator or the navigation url. For example, a `Click` step has the clicked locator as a subtitle. User
+   * interfaces typically render the subtitle next to the title or on a separate line.
+   *
+   * ```js
+   * // title `Click`, subtitle `getByRole('button')`
+   * await page.getByRole('button').click();
+   *
+   * // title `Navigate`, subtitle `/index.html`
+   * await page.goto('https://example.com/index.html');
+   * ```
+   *
+   */
+  subtitle?: string;
+
+  /**
+   * User-friendly test step title, for example `Click` or `Navigate`.
    */
   title: string;
 }

@@ -24,7 +24,7 @@
   text-overflow: ellipsis;
 }
 
-.action-title-selector {
+.action-title-subtitle {
   text-overflow: ellipsis;
   overflow: hidden;
   color: var(--vscode-tab-inactiveForeground);

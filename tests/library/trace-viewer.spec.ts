@@ -178,7 +178,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await expect(traceViewer.actionTitles).toHaveText([
     /Create page/,
-    /Navigate to "data:"/,
+    /Navigate.*data:/,
     /^Expect "toHaveTitle"[\d]+ms$/,
     /^Expect "toHaveURL"[\d]+ms$/,
     /Set content/,
@@ -191,7 +191,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /Wait for navigation/,
     /Wait for event "response"/,
     /Wait for timeout/,
-    /Navigate to "\/frames\/frame.html"/,
+    /Navigate.*\/frames\/frame.html/,
     /Set viewport size/,
     /Hover/,
     /Close page/,
@@ -258,7 +258,7 @@ test('should open uncompressed trace directory', async ({ showTraceViewer }) => 
   const traceViewer = await showTraceViewer(traceDir);
   await expect(traceViewer.actionTitles).toHaveText([
     /Create page/,
-    /Navigate to "data:"/,
+    /Navigate.*data:/,
     /^Expect "toHaveTitle"[\d]+ms$/,
     /^Expect "toHaveURL"[\d]+ms$/,
     /Set content/,
@@ -271,7 +271,7 @@ test('should open uncompressed trace directory', async ({ showTraceViewer }) => 
     /Wait for navigation/,
     /Wait for event "response"/,
     /Wait for timeout/,
-    /Navigate to "\/frames\/frame.html"/,
+    /Navigate.*\/frames\/frame.html/,
     /Set viewport size/,
     /Hover/,
     /Close page/,
@@ -1855,7 +1855,7 @@ test('should not record route actions', {
   });
 
   await expect(traceViewer.actionTitles).toHaveText([
-    /Navigate to "\/empty.html"/,
+    /Navigate.*\/empty.html/,
   ]);
 });
 
@@ -2256,7 +2256,7 @@ test('should render blob trace received from message', async ({ showTraceViewer 
   await expect(traceViewer.page.locator('.drop-target')).not.toBeVisible();
   await expect(traceViewer.actionTitles).toHaveText([
     /Create page/,
-    /Navigate to "data:"/,
+    /Navigate.*data:/,
     /toHaveTitle/,
     /toHaveURL/,
     /Set content/,
@@ -2269,7 +2269,7 @@ test('should render blob trace received from message', async ({ showTraceViewer 
     /Wait for navigation/,
     /Wait for event "response"/,
     /Wait for timeout/,
-    /Navigate to "\/frames\/frame.html"/,
+    /Navigate.*\/frames\/frame.html/,
     /Set viewport size/,
     /Hover/,
     /Close page/,
@@ -2378,7 +2378,7 @@ test('should filter actions', async ({ runAndTrace, page }) => {
   });
 
   await expect(traceViewer.actionTitles).toHaveText([
-    /Navigate to/,
+    /Navigate/,
     /Expect "toBeChecked"/,
   ]);
   await expect(traceViewer.page.getByText('3 hidden', { exact: true })).toBeVisible();
@@ -2393,7 +2393,7 @@ test('should filter actions', async ({ runAndTrace, page }) => {
 
   await traceViewer.page.locator('.setting').getByText('Getters').click();
   await expect(traceViewer.actionTitles).toHaveText([
-    /Navigate to/,
+    /Navigate/,
     /Get attribute "checked"/,
     /Expect "toBeChecked"/,
   ]);
@@ -2402,7 +2402,7 @@ test('should filter actions', async ({ runAndTrace, page }) => {
   await traceViewer.page.locator('.setting').getByText('Network routes').click();
   await expect(traceViewer.actionTitles).toHaveText([
     /Route requests/,
-    /Navigate to/,
+    /Navigate/,
     /Fulfill request/,
     /Get attribute "checked"/,
     /Expect "toBeChecked"/,
