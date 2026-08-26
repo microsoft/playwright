@@ -10602,7 +10602,11 @@ export interface BrowserContext {
   }): Promise<void>;
 
   /**
-   * @deprecated Browsers may cache credentials after successful authentication. Create a new browser context instead.
+   * Sets the credentials for HTTP authentication for this browser context.
+   *
+   * **NOTE** Browsers may cache credentials per origin after a successful authentication, so changing credentials for
+   * an origin that has already been authenticated may have no effect.
+   *
    * @param httpCredentials Pass an array to use different credentials for different origins. The first entry that matches the request origin
    * is used, and entries with no origin match any request.
    */
