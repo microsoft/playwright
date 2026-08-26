@@ -7193,7 +7193,7 @@ export interface PlaywrightWorkerOptions {
    *
    * Learn more about [recording trace](https://playwright.dev/docs/test-use-options#recording-options).
    */
-  trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean | { dom?: boolean, aria?: boolean, screen?: boolean }, screencast?: boolean | { size?: { width: number, height: number }, quality?: number }, screenshots?: boolean, sources?: boolean, attachments?: boolean };
+  trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean | { dom?: boolean, aria?: boolean, screen?: boolean }, screenshots?: boolean, sources?: boolean, attachments?: boolean };
   /**
    * Whether to record video for each test. Defaults to `'off'`. The initial run of a test is the "first run";
    * subsequent runs caused by [retries](https://playwright.dev/docs/test-retries) are "retries".

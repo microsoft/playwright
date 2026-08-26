@@ -272,7 +272,7 @@ export interface PlaywrightWorkerOptions {
   connectOptions: ConnectOptions | undefined;
   reuseContext: boolean;
   screenshot: ScreenshotMode | { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'>;
-  trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean | { dom?: boolean, aria?: boolean, screen?: boolean }, screencast?: boolean | { size?: { width: number, height: number }, quality?: number }, screenshots?: boolean, sources?: boolean, attachments?: boolean };
+  trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean | { dom?: boolean, aria?: boolean, screen?: boolean }, screenshots?: boolean, sources?: boolean, attachments?: boolean };
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize, show?: { actions?: { duration?: number, position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right', fontSize?: number, cursor?: 'none' | 'pointer' }, test?: { level?: 'file' | 'title' | 'step', position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right', fontSize?: number } } };
 }
 
