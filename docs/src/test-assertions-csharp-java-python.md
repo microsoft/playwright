@@ -3,7 +3,29 @@ id: test-assertions
 title: "Assertions"
 ---
 
-## List of assertions
+## Introduction
+
+Playwright includes web-specific assertions that automatically retry until the expected condition is met.  Consider the following example:
+
+```python
+expect(page.get_by_test_id("status")).to_have_text("Submitted")
+```
+
+```java
+assertThat(page.getByTestId("status")).hasText("Submitted");
+```
+
+```csharp
+await Expect(Page.GetByTestId("status")).ToHaveTextAsync("Submitted");
+```
+
+Playwright will re-test the element with the test ID of `status` until it has the `"Submitted"` text.  It will re-fetch the element and check it repeatedly until the condition is met or the timeout is reached.
+
+By default, the timeout for assertions is 5 seconds.
+
+## Auto-retrying assertions
+
+The following assertions will retry until the assertion passes or the assertion timeout is reached.
 
 | Assertion | Description |
 | :- | :- |
@@ -96,7 +118,7 @@ Call log:
 ```
 
 ## Setting a custom timeout
-* langs: python, csharp
+* langs: python, java, csharp
 
 You can specify a custom timeout for assertions either globally or per assertion. The default timeout is 5 seconds.
 
@@ -107,6 +129,15 @@ You can specify a custom timeout for assertions either globally or per assertion
 from playwright.sync_api import expect
 
 expect.set_options(timeout=10_000)
+```
+
+### Global timeout
+* langs: java
+
+```java
+import com.microsoft.playwright.assertions.PlaywrightAssertions;
+
+PlaywrightAssertions.setDefaultAssertionTimeout(10_000);
 ```
 
 ### Global timeout
@@ -212,6 +243,15 @@ from playwright.sync_api import expect
 
 def test_foobar(page: Page) -> None:
     expect(page.get_by_text("Name")).to_be_visible(timeout=10_000)
+```
+
+```java
+import com.microsoft.playwright.assertions.LocatorAssertions;
+
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+assertThat(page.getByText("Name")).isVisible(
+    new LocatorAssertions.IsVisibleOptions().setTimeout(10_000));
 ```
 
 ```csharp title="UnitTest1.cs"

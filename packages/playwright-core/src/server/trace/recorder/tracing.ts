@@ -64,8 +64,6 @@ export type TracerOptions = {
   snapshotAria?: boolean;
   snapshotScreen?: boolean;
   screencast?: boolean;
-  screencastSize?: types.Size;
-  screencastQuality?: number;
   live?: boolean;
 };
 
@@ -748,7 +746,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._appendResource(file, params.buffer);
       this._appendTraceEvent(event);
     };
-    this._pageTracingRecorders.set(page, new ScreencastTracingRecorder(page.screencast, onFrame, this._state!.options.screencastSize, this._state!.options.screencastQuality));
+    this._pageTracingRecorders.set(page, new ScreencastTracingRecorder(page.screencast, onFrame));
   }
 
   private _appendTraceEvent(event: trace.TraceEvent) {
@@ -848,11 +846,9 @@ class ScreencastTracingRecorder {
   private _pendingAck: ManualPromise<void> | undefined;
   private _timer: NodeJS.Timeout | undefined;
 
-  constructor(screencast: Screencast, onFrame: (frame: types.ScreencastFrame) => void, size: types.Size | undefined, quality: number | undefined) {
+  constructor(screencast: Screencast, onFrame: (frame: types.ScreencastFrame) => void) {
     this._screencast = screencast;
     this._client = {
-      size,
-      quality,
       onFrame: (frame: types.ScreencastFrame) => {
         const time = monotonicTime();
 

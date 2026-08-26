@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { by } from '@isomorphic/by';
 import { Android } from './android';
 import { Browser } from './browser';
 import { BrowserType } from './browserType';
@@ -25,13 +24,11 @@ import { APIRequest } from './fetch';
 import { Selectors } from './selectors';
 
 import type * as channels from './channels';
-import type { By } from '@isomorphic/by';
 import type { LaunchOptions } from 'playwright-core';
 
 export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly _android: Android;
   readonly _electron: Electron;
-  readonly by: By;
   readonly chromium: BrowserType;
   readonly firefox: BrowserType;
   readonly webkit: BrowserType;
@@ -47,7 +44,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
     super(parent, type, guid, initializer);
-    this.by = by;
     this.request = new APIRequest(this);
     this.chromium = BrowserType.from(initializer.chromium);
     this.chromium._playwright = this;

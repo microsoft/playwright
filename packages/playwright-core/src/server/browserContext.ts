@@ -159,14 +159,14 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       this._debugger.setPauseAt();
       this._debugger.on(Debugger.Events.PausedStateChanged, () => {
         if (this._debugger.isPaused())
-          RecorderApp.showInspectorNoReply(this);
+          RecorderApp.enable(this, {}).catch(() => {});
       });
     }
 
     // When PWDEBUG=1, show inspector for each context.
     if (debugMode() === 'inspector') {
       this._debugger.setPauseAt({ next: true });
-      await RecorderApp.show(this, { pauseOnNextStatement: true });
+      await RecorderApp.enable(this, { pauseOnNextStatement: true });
     }
 
     if (debugMode() === 'console')

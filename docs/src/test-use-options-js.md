@@ -261,7 +261,7 @@ However, most common ones like `headless` or `viewport` are available directly i
 
 ### Explicit Context Creation and Option Inheritance
 
-If using the built-in `browser` fixture, calling [`method: Browser.newContext`] will create a context with options inherited from the config:
+While a test or hook runs, every browser context created through the Playwright instance used by the test runner inherits context options from the `use` section.  This includes contexts created with the built-in `browser` fixture, a separately launched browser, [`method: BrowserType.launchPersistentContext`], or a direct `playwright-core` import that resolves to the same instance.  Explicit context options take precedence:
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';

@@ -98,19 +98,6 @@ in that iframe.
 ### param: FrameLocator.frameLocator.selector = %%-find-selector-%%
 * since: v1.17
 
-## method: FrameLocator.get
-* since: v1.63
-* langs: js
-- returns: <[Locator]>
-
-%%-template-locator-get-%%
-
-### param: FrameLocator.get.by
-* since: v1.63
-- `by` <[By]>
-
-Page-free locator built with [`property: Playwright.by`].
-
 ## method: FrameLocator.getByAltText
 * since: v1.27
 - returns: <[Locator]>

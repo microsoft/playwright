@@ -25,9 +25,11 @@ import { eventsHelper } from '@utils/eventsHelper';
 import { isPathInside, isSystemDirectory, isWritable } from '@utils/fileUtils';
 import { playwright } from '../../inprocess';
 
-import { secretCode } from './codegen';
+import { dedent, languageGeneratorId, secretCode } from './codegen';
 import { Tab } from './tab';
 
+import type { BrowserContextEx } from './browserContextEx';
+import type { CodegenLanguage } from './codegen';
 import type * as playwrightTypes from '../../..';
 import type { SessionLog } from './sessionLog';
 import type { Disposable } from '@isomorphic/disposable';
@@ -106,6 +108,7 @@ export class Context {
     fileNames: string[];
     fileName: string;
   } | undefined;
+  private _recordedActions: string[] | undefined;
   private _disposables: Disposable[] = [];
 
   private _runningToolName: string | undefined;
@@ -128,6 +131,7 @@ export class Context {
 
   async dispose() {
     process.off('unhandledRejection', this._onUnhandledRejection);
+    await this.stopRecording();
     await disposeAll(this._disposables);
     for (const tab of this._tabs)
       await tab.dispose();
@@ -231,6 +235,44 @@ export class Context {
       await page.screencast.stop();
     this._video = undefined;
     return [...video.fileNames];
+  }
+
+  async startRecording() {
+    if (this._recordedActions)
+      throw new Error('Recording is already in progress.');
+    const browserContext = await this.ensureBrowserContext() as BrowserContextEx;
+    if (typeof browserContext._enableRecorder !== 'function')
+      throw new Error('Recording requires a newer version of Playwright, please upgrade.');
+    const recordedActions: string[] = [];
+    await browserContext._enableRecorder({
+      mode: 'recording',
+      recorderMode: 'api',
+      omitCallTracking: true,
+      language: languageGeneratorId(this.codegenLanguage()),
+    }, {
+      actionAdded: (page, action, code) => {
+        recordedActions.push(code);
+      },
+      signalAdded: (page, signal, code) => {
+        if (recordedActions.length && code)
+          recordedActions[recordedActions.length - 1] = code;
+      },
+    });
+    this._recordedActions = recordedActions;
+  }
+
+  async stopRecording(): Promise<string[] | undefined> {
+    const recordedActions = this._recordedActions;
+    if (!recordedActions)
+      return undefined;
+    this._recordedActions = undefined;
+    await (this._rawBrowserContext as BrowserContextEx)._disableRecorder();
+    return recordedActions.filter(code => code.trim()).map(dedent);
+  }
+
+  codegenLanguage(): CodegenLanguage {
+    const codegen = this.config.codegen ?? 'typescript';
+    return codegen === 'none' ? 'typescript' : codegen;
   }
 
   private async _startPageVideo(page: playwrightTypes.Page) {
@@ -352,10 +394,9 @@ export class Context {
   lookupSecret(secretName: string): { value: string, code: string, isSecret: boolean } {
     if (!this.config.secrets?.[secretName])
       return { value: secretName, code: escapeWithQuotes(secretName, '\''), isSecret: false };
-    const codegen = this.config.codegen ?? 'typescript';
     return {
       value: this.config.secrets[secretName]!,
-      code: secretCode(codegen === 'none' ? 'typescript' : codegen, secretName),
+      code: secretCode(this.codegenLanguage(), secretName),
       isSecret: true,
     };
   }

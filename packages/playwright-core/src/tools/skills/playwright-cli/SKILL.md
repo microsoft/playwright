@@ -1,7 +1,7 @@
 ---
 name: playwright-cli
 description: Automate browser interactions, test web pages and work with Playwright tests.
-allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*) Bash(pytest:*) Bash(python:*) Bash(python3:*)
+allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)
 ---
 
 # Browser Automation with playwright-cli
@@ -165,6 +165,11 @@ playwright-cli run-code "async page => await page.context().grantPermissions(['g
 playwright-cli run-code --filename=script.js
 playwright-cli tracing-start
 playwright-cli tracing-stop
+
+# record user actions in the browser, print them as Playwright code on stop
+playwright-cli recording-start
+playwright-cli recording-stop
+
 playwright-cli video-start video.webm
 playwright-cli video-chapter "Chapter Title" --description="Details" --duration=2000
 playwright-cli video-stop
@@ -342,14 +347,13 @@ playwright-cli kill-all
 
 ## Installation
 
-If global `playwright-cli` command is not available, try a local version via `npx playwright cli` or `python -m playwright cli`:
+If global `playwright-cli` command is not available, try a local version via `npx playwright cli`:
 
 ```bash
 npx --no-install playwright --version
-python -m playwright --version
 ```
 
-When a local version is available, use `npx playwright cli` / `python -m playwright cli` in all commands. Otherwise, install `playwright-cli` as a global command:
+When local version is available, use `npx playwright cli` in all commands. Otherwise, install `playwright-cli` as a global command:
 
 ```bash
 npm install -g @playwright/cli@latest

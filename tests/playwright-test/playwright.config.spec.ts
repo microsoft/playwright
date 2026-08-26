@@ -216,33 +216,6 @@ test('should respect testIdAttribute', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('should respect testIdAttribute in a module-scope by locator', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = {
-        use: {
-          testIdAttribute: 'data-pw',
-        }
-      };
-    `,
-    'page-object.ts': `
-      import { by } from '@playwright/test';
-      export const myId = by.testId('myid');
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      import { myId } from './page-object';
-      test('pass', async ({ page }) => {
-        await page.setContent('<div data-pw="myid">Hi</div>');
-        await expect(page.get(myId)).toHaveText('Hi');
-      });
-    `,
-  }, { workers: 1 });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-});
-
 test('should respect testIdAttribute with multiple comma-separated names', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
