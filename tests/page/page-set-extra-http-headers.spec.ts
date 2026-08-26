@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { chromiumVersionLessThan } from '../config/utils';
 import { test as it, expect } from './pageTest';
 
 it('should work @smoke', async ({ page, server }) => {
@@ -61,8 +62,8 @@ it('should throw for non-string header values', async ({ page }) => {
   expect(error2.message).toContain('Expected value of header "foo" to be String, but "boolean" is found.');
 });
 
-it('should not duplicate referer header', async ({ page, server, browserName }) => {
-  it.fail(browserName === 'chromium', 'Request has referer and Referer');
+it('should not duplicate referer header', async ({ page, server, browserName, browserVersion }) => {
+  it.fail(browserName === 'chromium' && chromiumVersionLessThan(browserVersion, '154.0.8014.0'), 'Request has referer and Referer');
   await page.setExtraHTTPHeaders({ 'referer': server.EMPTY_PAGE });
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.ok()).toBe(true);
