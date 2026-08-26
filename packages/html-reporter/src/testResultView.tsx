@@ -95,6 +95,19 @@ export const TestResultView: React.FC<{
   const [stepFilterText, setStepFilterText] = React.useState('');
   React.useEffect(() => setStepFilterText(''), [result]);
 
+  const waterfall = React.useMemo(() => {
+    let startTime = Infinity;
+    let endTime = -Infinity;
+    const visit = (step: TestStep) => {
+      const start = new Date(step.startTime).valueOf();
+      startTime = Math.min(startTime, start);
+      endTime = Math.max(endTime, start + Math.max(0, step.duration));
+      step.steps.forEach(visit);
+    };
+    result.steps.forEach(visit);
+    return { startTime, duration: Math.max(1, endTime - startTime) };
+  }, [result]);
+
   const prompt = useAsyncMemo(async () => {
     if (report.json().options?.noCopyPrompt)
       return undefined;
@@ -141,7 +154,7 @@ export const TestResultView: React.FC<{
         {icons.search()}
         <input className='form-control subnav-search-input input-contrast width-full' type='search' spellCheck={false} placeholder='Filter steps' aria-label='Filter steps' value={stepFilterText} onChange={e => setStepFilterText(e.target.value)} />
       </form>
-      {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} result={result} test={test} depth={0} filterText={stepFilterText}/>)}
+      {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} result={result} test={test} depth={0} filterText={stepFilterText} waterfall={waterfall}/>)}
     </AutoChip>}
 
     {diffs.map((diff, index) =>
@@ -220,13 +233,21 @@ function stepHasDescendantAttachments(step: TestStep): boolean {
   return step.steps.some(s => s.attachments.length > 0 || stepHasDescendantAttachments(s));
 }
 
+function waterfallBlockStyle(step: TestStep, waterfall: { startTime: number, duration: number }): React.CSSProperties {
+  const startOffset = new Date(step.startTime).valueOf() - waterfall.startTime;
+  const left = Math.min(100, Math.max(0, startOffset / waterfall.duration * 100));
+  const width = Math.min(100 - left, Math.max(0, step.duration) / waterfall.duration * 100);
+  return { left: `${left}%`, width: `${width}%` };
+}
+
 const StepTreeItem: React.FC<{
   test: TestCase;
   result: TestResult;
   step: TestStep;
   depth: number,
   filterText?: string,
-}> = ({ test, step, result, depth, filterText }) => {
+  waterfall: { startTime: number, duration: number },
+}> = ({ test, step, result, depth, filterText, waterfall }) => {
   const searchParams = useSearchParams();
 
   let expandByDefault = false;
@@ -275,10 +296,13 @@ const StepTreeItem: React.FC<{
       aria-label='contains attachment'>
       {icons.indirectAttachment()}
     </span>}
-    <span className='step-duration'>{msToString(step.duration)}</span>
+    <span className='step-duration'>
+      <span className='step-waterfall-block' style={waterfallBlockStyle(step, waterfall)}></span>
+      <span className='step-duration-text'>{msToString(step.duration)}</span>
+    </span>
   </div>} loadChildren={step.steps.length || step.snippet ? () => {
     const snippet = step.snippet ? [<CodeSnippet testId='test-snippet' key='line' code={step.snippet} />] : [];
-    const steps = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} filterText={filterText} />);
+    const steps = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} filterText={filterText} waterfall={waterfall} />);
     return snippet.concat(steps);
   } : undefined} depth={depth} expandByDefault={expandByDefault}/>;
 };

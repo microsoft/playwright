@@ -103,6 +103,27 @@
   flex: none;
   white-space: nowrap;
   margin-left: 4px;
+  position: relative;
+  width: 80px;
+  height: 20px;
+  line-height: 20px;
+  text-align: right;
+  padding: 0 4px;
+  border-radius: 4px;
+  background-color: var(--color-canvas-subtle);
+  overflow: hidden;
+}
+
+.step-waterfall-block {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 2px;
+  background-color: var(--color-severe-muted);
+}
+
+.step-duration-text {
+  position: relative;
 }
 
 :root.light-mode {
