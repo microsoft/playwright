@@ -433,6 +433,48 @@ it('should render anyFrame in the locator description', async ({ page }) => {
   expect(String(page.anyFrame().locator('section').frameLocator('iframe').getByText('foo'))).toBe(`anyFrame().locator('section').locator('iframe').contentFrame().getByText('foo')`);
 });
 
+it('should not allow anyFrame inside a composite locator', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<button>main</button><iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<a href="#">link</a>`);
+  await page.goto(server.EMPTY_PAGE);
+  await waitForAllFrames(page, 2, 'a');
+
+  const error = await page.locator('button').or(page.anyFrame().locator('a')).count().catch(e => e);
+  expect(error.message).toContain(`anyFrame() is not allowed inside composite locators, while querying "locator('button').or(anyFrame().locator('a'))"`);
+
+  const error2 = await page.locator('button').filter({ has: page.anyFrame().locator('a') }).count().catch(e => e);
+  expect(error2.message).toContain(`anyFrame() is not allowed inside composite locators`);
+
+  // Repeating anyFrame() in the operand is not allowed either, even though the outer locator has it.
+  const error3 = await page.anyFrame().locator('button').or(page.anyFrame().locator('a')).count().catch(e => e);
+  expect(error3.message).toContain(`anyFrame() is not allowed inside composite locators, while querying "anyFrame().locator('button').or(anyFrame().locator('a'))"`);
+
+  // Repeating anyFrame() is not allowed even when the rest of the frame chain matches.
+  const error4 = await page.anyFrame().frameLocator('#f').locator('a').or(page.anyFrame().frameLocator('#f').locator('button')).count().catch(e => e);
+  expect(error4.message).toContain(`anyFrame() is not allowed inside composite locators`);
+
+  // With anyFrame() first, the token applies to the whole locator, so both operands are searched in every frame.
+  const error5 = await page.anyFrame().locator('a').or(page.locator('button')).count().catch(e => e);
+  expect(error5.message).toContain(`anyFrame() matched elements in multiple frames`);
+});
+
+it('should support a composite locator under anyFrame', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<div class="classname">first</div><button>second</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await waitForAllFrames(page, 2, 'button');
+  await expect(page.anyFrame().locator('.classname').or(page.getByRole('button'))).toHaveText(['first', 'second']);
+});
+
+it('should support a composite locator under anyFrame and a frame locator', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<iframe id="f" src="b.html"></iframe>`);
+  await routePage(page, 'b.html', `<div class="classname">first</div><button>second</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect.poll(() => page.frames().length).toBe(3);
+  await expect(page.anyFrame().frameLocator('#f').locator('.classname').or(page.frameLocator('#f').getByRole('button'))).toHaveText(['first', 'second']);
+});
+
 it('should not allow first/last/nth on anyFrame', async ({ page }) => {
   expect(() => page.anyFrame().first()).toThrow('Selecting the nth frame is not allowed on anyFrame()');
   expect(() => page.anyFrame().last()).toThrow('Selecting the nth frame is not allowed on anyFrame()');

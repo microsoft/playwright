@@ -128,6 +128,10 @@ export class FrameSelectors {
           const locator = asLocator(this.frame._page.browserContext._browser.sdkLanguage(), selector);
           throw new InvalidSelectorError(`Frame locators are not allowed inside composite locators, while querying "${locator}"`);
         }
+        if (nested && part.name === 'internal:control' && part.body === 'any-frame') {
+          const locator = asLocator(this.frame._page.browserContext._browser.sdkLanguage(), selector);
+          throw new InvalidSelectorError(`anyFrame() is not allowed inside composite locators, while querying "${locator}"`);
+        }
       });
     }
 

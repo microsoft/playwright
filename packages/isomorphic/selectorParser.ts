@@ -75,8 +75,10 @@ export function parseSelector(selector: string): ParsedSelector {
       const nested = { name: part.name, source: part.body, body: { parsed: parseSelector(innerSelector), distance } };
       const lastFrame = [...nested.body.parsed.parts].reverse().find(part => part.name === 'internal:control' && part.body === 'enter-frame');
       const lastFrameIndex = lastFrame ? nested.body.parsed.parts.indexOf(lastFrame) : -1;
+      // The "any-frame" token applies to the whole selector, so nested selectors must not repeat it.
+      const outerParts = parts[0]?.name === 'internal:control' && parts[0].body === 'any-frame' ? parts.slice(1) : parts;
       // Allow nested selectors to start with the same frame selector.
-      if (lastFrameIndex !== -1 && selectorPartsEqual(nested.body.parsed.parts.slice(0, lastFrameIndex + 1), parts.slice(0, lastFrameIndex + 1)))
+      if (lastFrameIndex !== -1 && selectorPartsEqual(nested.body.parsed.parts.slice(0, lastFrameIndex + 1), outerParts.slice(0, lastFrameIndex + 1)))
         nested.body.parsed.parts.splice(0, lastFrameIndex + 1);
       parts.push(nested);
       continue;
