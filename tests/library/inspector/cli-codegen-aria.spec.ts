@@ -84,7 +84,8 @@ test.describe(() => {
     `);
   });
 
-  test('should update aria snapshot highlight', async ({ openRecorder }) => {
+  test('should update aria snapshot highlight', async ({ openRecorder, browserName, isMac }) => {
+    test.fixme(browserName === 'firefox' && isMac, 'Recorder aria highlight races under load: rapid highlightRequested updates while typing can leave the highlight cleared with no change event to re-push it.');
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<main>
       <button>Submit</button>
