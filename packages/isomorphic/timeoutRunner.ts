@@ -32,7 +32,7 @@ export async function raceAgainstDeadline<T>(cb: () => Promise<T>, deadline: num
     new Promise<{ timedOut: true }>(resolve => {
       if (!deadline)
         return;
-      timer = setTimeout(() => resolve({ timedOut: true }), deadline - monotonicTime());
+      timer = setTimeout(() => resolve({ timedOut: true }), Math.max(0, deadline - monotonicTime()));
     }),
   ]).finally(() => {
     clearTimeout(timer);
