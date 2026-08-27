@@ -15,10 +15,20 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { test, expect, daemonFolder } from './cli-fixtures';
 import { killProcessGroup } from '../config/commonFixtures';
 import playwright from '../../packages/playwright-core';
+
+function isProcessAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 test('list', async ({ cli, server }) => {
   const { output: emptyOutput } = await cli('list');
@@ -108,6 +118,30 @@ test('session stops when browser exits', async ({ cli, server }) => {
   await cli('close');
   const { output: listAfter } = await cli('list');
   expect(listAfter).toContain('(no browsers)');
+});
+
+test('session stops when temporary socket directory disappears', async ({ cli, server }) => {
+  test.skip(process.platform === 'win32');
+
+  // Keep this short because macOS limits Unix socket paths to 103 bytes.
+  const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'p-'));
+  const removedTempDir = tempDir + '.removed';
+  try {
+    const { daemonPid } = await cli('open', server.HELLO_WORLD, {
+      env: {
+        PWTEST_SOCKETS_DIR: '',
+        TMPDIR: tempDir,
+      },
+    });
+    expect(daemonPid).toBeDefined();
+    expect(isProcessAlive(daemonPid)).toBe(true);
+
+    await fs.promises.rename(tempDir, removedTempDir);
+    await expect.poll(() => isProcessAlive(daemonPid)).toBe(false);
+  } finally {
+    await fs.promises.rm(tempDir, { force: true, recursive: true });
+    await fs.promises.rm(removedTempDir, { force: true, recursive: true });
+  }
 });
 
 test('session reopen with different config', async ({ cli, server }, testInfo) => {
