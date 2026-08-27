@@ -82,6 +82,9 @@ export const emtpyTestInfoCallbacks: TestInfoCallbacks = {
   onTestPaused: () => Promise.reject(new Error('TestInfoImpl not initialized')),
 };
 
+// Keep step ids globally unique, to avoid cross-test callId collisions on the same playwright instance.
+let lastStepId = 0;
+
 export class TestInfoImpl implements TestInfo {
   private _callbacks: TestInfoCallbacks;
   private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
@@ -93,7 +96,6 @@ export class TestInfoImpl implements TestInfo {
   readonly _uniqueSymbol;
 
   private _interruptedPromise = new ManualPromise<void>();
-  _lastStepId = 0;
   private readonly _requireFile: string;
   readonly _projectInternal: commonConfig.FullProjectInternal;
   readonly _configInternal: FullConfigInternal;
@@ -284,7 +286,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _addStep(data: Readonly<TestStepData>, parentStep?: TestStepInternal): TestStepInternal {
-    const stepId = `${data.category}@${++this._lastStepId}`;
+    const stepId = `${data.category}@${++lastStepId}`;
 
     if (data.category === 'hook' || data.category === 'fixture') {
       // Predefined steps form a fixed hierarchy - use the current one as parent.
