@@ -55,7 +55,7 @@ npx playwright trace actions --errors-only
 npx playwright trace action <action-id>
 ```
 
-The `action` command displays available snapshot phases (before, input, after) and the exact command to extract them.
+The `action` command displays available snapshot phases (before, action, after) and the exact command to extract them.
 
 ### Requests
 
@@ -115,7 +115,7 @@ The `snapshot` command loads the DOM snapshot for an action into a headless brow
 npx playwright trace snapshot <action-id>
 
 # Use a specific phase
-npx playwright trace snapshot <action-id> --name before
+npx playwright trace snapshot <action-id> --phase before
 
 # Run eval to query the DOM
 npx playwright trace snapshot <action-id> -- eval "document.title"

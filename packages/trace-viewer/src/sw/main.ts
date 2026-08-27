@@ -164,8 +164,8 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       const { errorResponse, loadedTrace } = await loadTraceOrError(event.resultingClientId!, url, noopProgress);
       if (errorResponse)
         return errorResponse;
-      const snapshotName = decodeURIComponent(relativePath.substring('/snapshot/'.length));
-      const response = loadedTrace!.snapshotServer.serveSnapshot(snapshotName, url.searchParams, url.href);
+      const callId = decodeURIComponent(relativePath.substring('/snapshot/'.length));
+      const response = loadedTrace!.snapshotServer.serveSnapshot(callId, url.searchParams, url.href);
       if (isDeployedAsHttps)
         response.headers.set('Content-Security-Policy', 'upgrade-insecure-requests');
       return response;
@@ -212,13 +212,13 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     }
 
     if (relativePath.startsWith('/snapshotInfo/')) {
-      const snapshotName = decodeURIComponent(relativePath.substring('/snapshotInfo/'.length));
-      return loadedTrace!.snapshotServer.serveSnapshotInfo(snapshotName, url.searchParams);
+      const callId = decodeURIComponent(relativePath.substring('/snapshotInfo/'.length));
+      return loadedTrace!.snapshotServer.serveSnapshotInfo(callId, url.searchParams);
     }
 
     if (relativePath.startsWith('/closest-screenshot/')) {
-      const snapshotName = decodeURIComponent(relativePath.substring('/closest-screenshot/'.length));
-      return loadedTrace!.snapshotServer.serveClosestScreenshot(snapshotName, url.searchParams);
+      const callId = decodeURIComponent(relativePath.substring('/closest-screenshot/'.length));
+      return loadedTrace!.snapshotServer.serveClosestScreenshot(callId, url.searchParams);
     }
 
     if (relativePath.startsWith('/file/')) {

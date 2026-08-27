@@ -94,6 +94,7 @@ export class TraceModel {
   private _eventsForAction = new Map<ActionEntry, (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[]>();
   private _screenshots = new Map<string, trace.ScreenshotTraceEvent>();
   private _ariaSnapshots = new Map<string, trace.AriaSnapshotTraceEvent>();
+  private _domSnapshots = new Set<string>();
 
   constructor(traceUri: string, contexts: ContextEntry[]) {
     const libraryContext = contexts.find(context => context.origin === 'library');
@@ -131,6 +132,8 @@ export class TraceModel {
         this._screenshots.set(`${event.callId}/${event.phase}`, event);
       for (const event of context.ariaSnapshots || [])
         this._ariaSnapshots.set(`${event.callId}/${event.phase}`, event);
+      for (const entry of context.domSnapshots || [])
+        this._domSnapshots.add(`${entry.callId}/${entry.phase}`);
       this.videos.push(...(context.videos || []));
     }
     this.hasDomSnapshots = this.actions.some(action => !!action.beforeSnapshot || !!action.afterSnapshot || !!action.inputSnapshot);
@@ -175,6 +178,10 @@ export class TraceModel {
 
   screenshotForCall(callId: string, phase: trace.ActionPhase): trace.ScreenshotTraceEvent | undefined {
     return this._screenshots.get(`${callId}/${phase}`);
+  }
+
+  hasDomSnapshotForCall(callId: string, phase: trace.ActionPhase): boolean {
+    return this._domSnapshots.has(`${callId}/${phase}`);
   }
 
   ariaSnapshotForCall(callId: string, phase: trace.ActionPhase): trace.AriaSnapshotTraceEvent | undefined {

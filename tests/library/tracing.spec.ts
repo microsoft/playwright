@@ -181,10 +181,11 @@ test('should not include buffers in the trace', async ({ context, page, server }
   await page.goto(server.PREFIX + '/empty.html');
   await page.screenshot();
   await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
-  const { actionObjects } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  const { events, actionObjects } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
   const screenshotEvent = actionObjects.find(a => a.method === 'screenshot');
-  expect(screenshotEvent.beforeSnapshot).toBeTruthy();
-  expect(screenshotEvent.afterSnapshot).toBeTruthy();
+  const phases = events.filter(e => e.type === 'frame-snapshot' && e.snapshot.callId === screenshotEvent.callId).map(e => e.snapshot.phase);
+  expect(phases).toContain('before');
+  expect(phases).toContain('after');
   expect(screenshotEvent.result).toEqual({
     'binary': '<Buffer>',
   });

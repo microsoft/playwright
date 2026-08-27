@@ -284,7 +284,7 @@ test('should expand snapshots object in trace option', async ({ runInlineTest },
 
   const { model } = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
   const click = model.actions.find(a => a.method === 'click')!;
-  expect(click.afterSnapshot).toBeTruthy();
+  expect(model.hasDomSnapshotForCall(click.callId, 'after')).toBeTruthy();
   expect(model.screenshotForCall(click.callId, 'after')).toBeTruthy();
   expect(model.ariaSnapshotForCall(click.callId, 'after')).toBeTruthy();
 });
@@ -312,7 +312,7 @@ test('should keep trace config options when forcing mode with --trace', async ({
   // The 'on' mode is forced, while the snapshots configuration is preserved.
   const { model } = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
   const click = model.actions.find(a => a.method === 'click')!;
-  expect(click.afterSnapshot).toBeTruthy();
+  expect(model.hasDomSnapshotForCall(click.callId, 'after')).toBeTruthy();
   expect(model.screenshotForCall(click.callId, 'after')).toBeTruthy();
   expect(model.ariaSnapshotForCall(click.callId, 'after')).toBeTruthy();
 });
@@ -1471,16 +1471,12 @@ test('should record trace snapshot for more obscure commands', async ({ runInlin
   ]);
 
   const countAction = trace.model.actions.find(a => a.method === 'queryCount');
-  expect(countAction.beforeSnapshot).toBeTruthy();
-  expect(countAction.afterSnapshot).toBeTruthy();
-  expect(trace.snapshots.snapshotByName(countAction.beforeSnapshot)).toBeTruthy();
-  expect(trace.snapshots.snapshotByName(countAction.afterSnapshot)).toBeTruthy();
+  expect(trace.snapshots.snapshotForCall(countAction.callId, 'before')).toBeTruthy();
+  expect(trace.snapshots.snapshotForCall(countAction.callId, 'after')).toBeTruthy();
 
   const boundingBoxAction = trace.model.actions.find(a => a.title === 'Bounding box');
-  expect(boundingBoxAction.beforeSnapshot).toBeTruthy();
-  expect(boundingBoxAction.afterSnapshot).toBeTruthy();
-  expect(trace.snapshots.snapshotByName(boundingBoxAction.beforeSnapshot)).toBeTruthy();
-  expect(trace.snapshots.snapshotByName(boundingBoxAction.afterSnapshot)).toBeTruthy();
+  expect(trace.snapshots.snapshotForCall(boundingBoxAction.callId, 'before')).toBeTruthy();
+  expect(trace.snapshots.snapshotForCall(boundingBoxAction.callId, 'after')).toBeTruthy();
 });
 
 test('should record default test timeout in trace', async ({ runInlineTest }, testInfo) => {

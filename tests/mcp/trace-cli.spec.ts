@@ -186,12 +186,12 @@ test('trace snapshot runs command on snapshot', async ({ runTraceCli }) => {
   expect(stdout).toBeTruthy();
 });
 
-test('trace snapshot --name before', async ({ runTraceCli }) => {
+test('trace snapshot --phase before', async ({ runTraceCli }) => {
   const { stdout: listOutput } = await runTraceCli(['actions', '--grep', 'Click']);
   const match = listOutput.match(/^\s+(\d+)\.\s/m);
   expect(match).toBeTruthy();
 
-  const { stdout, exitCode } = await runTraceCli(['snapshot', '--name', 'before', match![1]]);
+  const { stdout, exitCode } = await runTraceCli(['snapshot', '--phase', 'before', match![1]]);
   expect(exitCode).toBe(0);
   expect(stdout).toBeTruthy();
 });
@@ -202,7 +202,7 @@ test('trace snapshot resolves inner frames', async ({ runTraceCli }) => {
   expect(ordinals.length).toBeGreaterThanOrEqual(2);
   const anchorClickOrdinal = ordinals[ordinals.length - 1];
 
-  const { stdout } = await runTraceCli(['snapshot', '--name', 'after', anchorClickOrdinal]);
+  const { stdout } = await runTraceCli(['snapshot', '--phase', 'after', anchorClickOrdinal]);
   expect(stdout).toContain('Innermost');
 });
 
@@ -213,7 +213,7 @@ test('trace snapshot replays sub-resource stylesheets from the archive', async (
   const ordinal = match![1];
 
   const { stdout, exitCode } = await runTraceCli([
-    'snapshot', '--name', 'before', ordinal,
+    'snapshot', '--phase', 'before', ordinal,
     '--', 'eval', 'el => getComputedStyle(el).color', '#styled',
   ]);
   expect(exitCode).toBe(0);

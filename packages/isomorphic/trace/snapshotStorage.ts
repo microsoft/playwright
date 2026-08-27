@@ -18,12 +18,13 @@ import { rewriteURLForCustomProtocol, SnapshotRenderer } from './snapshotRendere
 import { LRUCache } from '../lruCache';
 
 import type { FrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
+import type { ActionPhase } from '@trace/trace';
 import type { PageEntry } from './entries';
 
 
 export class SnapshotStorage {
   private _snapshotsByFrameId = new Map<string, FrameSnapshot[]>();
-  private _renderersBySnapshotName = new Map<string, SnapshotRenderer[]>();
+  private _renderersByCallIdAndPhase = new Map<string, SnapshotRenderer[]>();
   private _cache = new LRUCache<SnapshotRenderer, string>(100_000_000);  // 100MB per each trace
   private _resources: ResourceSnapshot[] = [];
   private _resourceUrlsWithOverrides = new Set<string>();
@@ -43,24 +44,25 @@ export class SnapshotStorage {
     }
     frameSnapshots.push(snapshot);
     const renderer = new SnapshotRenderer(this._cache, this._resources, frameSnapshots, screencastFrames, frameSnapshots.length - 1);
-    if (snapshot.snapshotName) {
-      let renderers = this._renderersBySnapshotName.get(snapshot.snapshotName);
+    if (snapshot.phase) {
+      const key = callIdAndPhase(snapshot.callId, snapshot.phase);
+      let renderers = this._renderersByCallIdAndPhase.get(key);
       if (!renderers) {
         renderers = [];
-        this._renderersBySnapshotName.set(snapshot.snapshotName, renderers);
+        this._renderersByCallIdAndPhase.set(key, renderers);
       }
       renderers.push(renderer);
     }
     return renderer;
   }
 
-  snapshotByName(snapshotName: string, frameId?: string): SnapshotRenderer | undefined {
-    const renderers = this._renderersBySnapshotName.get(snapshotName) || [];
+  snapshotForCall(callId: string, phase: ActionPhase, frameId?: string): SnapshotRenderer | undefined {
+    const renderers = this._renderersByCallIdAndPhase.get(callIdAndPhase(callId, phase)) || [];
     return renderers.find(r => frameId ? r.snapshot().frameId === frameId : r.snapshot().isMainFrame);
   }
 
   snapshotsForTest() {
-    return [...this._renderersBySnapshotName.keys()];
+    return [...this._renderersByCallIdAndPhase.keys()];
   }
 
   finalize() {
@@ -79,4 +81,8 @@ export class SnapshotStorage {
   hasResourceOverride(url: string) {
     return this._resourceUrlsWithOverrides.has(url);
   }
+}
+
+function callIdAndPhase(callId: string, phase: ActionPhase): string {
+  return `${callId}/${phase}`;
 }

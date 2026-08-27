@@ -473,32 +473,24 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return { artifact };
   }
 
-  private async _captureSnapshot(progress: Progress, sdkObject: SdkObject, phase: trace.ActionPhase, domSnapshotName: string | undefined): Promise<void> {
+  private async _captureSnapshot(progress: Progress, sdkObject: SdkObject, phase: trace.ActionPhase): Promise<void> {
     const page = sdkObject.attribution.page;
     if (!page)
       return;
+    if (!this._shouldCaptureAtPhase(progress.metadata, phase))
+      return;
 
-    if (domSnapshotName) {
+    if (this._snapshotter?.started()) {
       // Node references are only reset by the first snapshot of the action.
       const resetTargets = phase === 'before';
-      await this._snapshotter?.captureSnapshot(page, progress.metadata.id, domSnapshotName, resetTargets).catch(() => {});
+      await this._snapshotter?.captureSnapshot(page, progress.metadata.id, phase, resetTargets).catch(() => {});
     }
 
     const options = this._state?.options;
-    if (!options?.snapshotScreen && !options?.snapshotAria)
-      return;
-    if (!this._shouldCaptureAtPhase(progress.metadata, phase))
-      return;
-    if (options.snapshotScreen)
+    if (options?.snapshotScreen)
       await this._captureScreenshot(progress, page, phase);
-    if (options.snapshotAria)
+    if (options?.snapshotAria)
       await this._captureAriaSnapshot(progress, page, phase);
-  }
-
-  private _shouldCaptureDOMSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: trace.ActionPhase) {
-    if (!sdkObject.attribution.page || !this._snapshotter?.started())
-      return false;
-    return this._shouldCaptureAtPhase(metadata, phase);
   }
 
   private _shouldCaptureAtPhase(metadata: CallMetadata, phase: trace.ActionPhase) {
@@ -541,11 +533,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (!event)
       return Promise.resolve();
     this._temporarilyDisableThrottling(sdkObject.attribution.page);
-    if (this._shouldCaptureDOMSnapshot(sdkObject, metadata, 'before'))
-      event.beforeSnapshot = `before@${metadata.id}`;
     this._state?.callsInProgress.add(metadata.id);
     this._appendTraceEvent(event);
-    return this._captureSnapshot(progress, sdkObject, 'before', event.beforeSnapshot);
+    return this._captureSnapshot(progress, sdkObject, 'before');
   }
 
   onBeforeInputAction(progress: Progress, sdkObject: SdkObject, point?: types.Point, box?: types.Rect) {
@@ -557,10 +547,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (!event)
       return Promise.resolve();
     this._temporarilyDisableThrottling(sdkObject.attribution.page);
-    if (this._shouldCaptureDOMSnapshot(sdkObject, metadata, 'action'))
-      event.inputSnapshot = `input@${metadata.id}`;
     this._appendTraceEvent(event);
-    return this._captureSnapshot(progress, sdkObject, 'action', event.inputSnapshot);
+    return this._captureSnapshot(progress, sdkObject, 'action');
   }
 
   onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string) {
@@ -585,10 +573,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (!event)
       return Promise.resolve();
     this._temporarilyDisableThrottling(sdkObject.attribution.page);
-    if (this._shouldCaptureDOMSnapshot(sdkObject, metadata, 'after'))
-      event.afterSnapshot = `after@${metadata.id}`;
     this._appendTraceEvent(event);
-    return this._captureSnapshot(progress, sdkObject, 'after', event.afterSnapshot);
+    return this._captureSnapshot(progress, sdkObject, 'after');
   }
 
   onEntryStarted(entry: har.Entry) {

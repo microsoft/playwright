@@ -15,6 +15,7 @@
  */
 
 import type { Entry as HAREntry } from './har';
+import type { ActionPhase } from './trace';
 
 export type ResourceSnapshot = HAREntry;
 
@@ -38,7 +39,8 @@ export type ResourceOverride = {
 };
 
 export type FrameSnapshot = {
-  snapshotName?: string,
+  phase?: ActionPhase,
+  snapshotName?: string, // Legacy, only present in traces recorded before phase was introduced.
   callId: string,
   pageId: string,
   frameId: string,

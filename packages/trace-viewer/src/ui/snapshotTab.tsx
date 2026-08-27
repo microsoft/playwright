@@ -16,7 +16,7 @@
 
 import './snapshotTab.css';
 import * as React from 'react';
-import type { ActionTraceEvent } from '@trace/trace';
+import type { ActionPhase, ActionTraceEvent } from '@trace/trace';
 import { nextActionByStartTime, previousActionByEndTime } from '@isomorphic/trace/traceModel';
 import type { TraceModel } from '@isomorphic/trace/traceModel';
 import { Toolbar } from '@web/components/toolbar';
@@ -61,8 +61,8 @@ export const SnapshotTabsView: React.FunctionComponent<{
   const displayAriaMode = shouldDisplayAriaMode(model, displayAriaModeSetting);
 
   const snapshots = React.useMemo(() => {
-    return collectSnapshots(action);
-  }, [action]);
+    return collectSnapshots(model, action);
+  }, [model, action]);
   const ariaModeTargets = React.useMemo(() => {
     return model && displayAriaMode ? collectAriaModeTargets(model, action) : {};
   }, [model, action, displayAriaMode]);
@@ -356,22 +356,16 @@ function createRecorders(recorders: { recorder: Recorder, frameSelector: string 
 
 export type Snapshot = {
   action: ActionTraceEvent;
-  snapshotName: string;
+  phase: ActionPhase;
   point?: { x: number, y: number };
 };
 
-const createSnapshot = (action: ActionTraceEvent, snapshotNameKey: 'beforeSnapshot' | 'afterSnapshot' | 'inputSnapshot'): Snapshot | undefined => {
-  if (!action)
+const createSnapshot = (model: TraceModel, action: ActionTraceEvent | undefined, phase: ActionPhase): Snapshot | undefined => {
+  if (!action || !model.hasDomSnapshotForCall(action.callId, phase))
     return undefined;
-
-  const snapshotName = action[snapshotNameKey];
-
-  if (!snapshotName)
-    return undefined;
-
   return {
     action,
-    snapshotName,
+    phase,
     point: action.point,
   };
 };
@@ -395,22 +389,24 @@ export type SnapshotUrls = {
   popoutUrl: string;
 };
 
-export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshots {
-  if (!action)
+export function collectSnapshots(model: TraceModel | undefined, action: ActionTraceEvent | undefined): Snapshots {
+  if (!model || !action)
     return {};
 
-  let beforeSnapshot = createSnapshot(action, 'beforeSnapshot');
+  const hasSnapshot = (callId: string, phase: ActionPhase) => model.hasDomSnapshotForCall(callId, phase);
+
+  let beforeSnapshot = createSnapshot(model, action, 'before');
   if (!beforeSnapshot) {
-    // If the action has no beforeSnapshot, use the last available afterSnapshot.
+    // If the action has no "before" snapshot, use the last available "after" one.
     for (let a = previousActionByEndTime(action); a; a = previousActionByEndTime(a)) {
-      if (a.endTime <= action.startTime && a.afterSnapshot) {
-        beforeSnapshot = createSnapshot(a, 'afterSnapshot');
+      if (a.endTime <= action.startTime && hasSnapshot(a.callId, 'after')) {
+        beforeSnapshot = createSnapshot(model, a, 'after');
         break;
       }
     }
   }
 
-  let afterSnapshot = createSnapshot(action, 'afterSnapshot');
+  let afterSnapshot = createSnapshot(model, action, 'after');
   if (!afterSnapshot) {
     let last: ActionTraceEvent | undefined;
     // - For test.step, we want to use the snapshot of the last nested action.
@@ -418,22 +414,22 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
     //   as a best effort.
     // - If there are no "nested" actions, use the beforeSnapshot which works best
     //   for simple `expect(a).toBe(b);` case. Also if the action doesn't have
-    //   afterSnapshot, it likely doesn't have its own beforeSnapshot either,
+    //   an "after" snapshot, it likely doesn't have its own "before" one either,
     //   and we calculated it above from a previous action.
     for (let a = nextActionByStartTime(action); a && a.startTime <= action.endTime; a = nextActionByStartTime(a)) {
-      if (a.endTime > action.endTime || !a.afterSnapshot)
+      if (a.endTime > action.endTime || !hasSnapshot(a.callId, 'after'))
         continue;
       if (last && last.endTime > a.endTime)
         continue;
       last = a;
     }
     if (last)
-      afterSnapshot = createSnapshot(last, 'afterSnapshot');
+      afterSnapshot = createSnapshot(model, last, 'after');
     else
       afterSnapshot = beforeSnapshot;
   }
 
-  const actionSnapshot = createSnapshot(action, 'inputSnapshot') ?? afterSnapshot;
+  const actionSnapshot = createSnapshot(model, action, 'action') ?? afterSnapshot;
   if (actionSnapshot)
     actionSnapshot.point = action.point;
   return { action: actionSnapshot, before: beforeSnapshot, after: afterSnapshot };
@@ -453,9 +449,11 @@ export function extendSnapshot(traceUri: string, snapshot: Snapshot, shouldPopul
   if (shouldPopulateCanvasFromScreenshot)
     params.set('shouldPopulateCanvasFromScreenshot', '1');
 
-  const name = encodeURIComponent(snapshot.snapshotName);
-  const snapshotUrl = new URL(`snapshot/${name}?${params.toString()}`, window.location.href).toString();
-  const snapshotInfoUrl = new URL(`snapshotInfo/${name}?${params.toString()}`, window.location.href).toString();
+  params.set('phase', snapshot.phase);
+
+  const callId = encodeURIComponent(snapshot.action.callId);
+  const snapshotUrl = new URL(`snapshot/${callId}?${params.toString()}`, window.location.href).toString();
+  const snapshotInfoUrl = new URL(`snapshotInfo/${callId}?${params.toString()}`, window.location.href).toString();
 
   const popoutParams = new URLSearchParams();
   popoutParams.set('r', snapshotUrl);
