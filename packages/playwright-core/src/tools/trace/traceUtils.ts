@@ -90,7 +90,7 @@ export async function loadTrace(): Promise<LoadedTrace> {
   const backend = new DirTraceLoaderBackend(traceDir);
   const loader = new TraceLoader();
   await loader.load(backend, traceFile);
-  const model = new TraceModel(traceDir, loader.contextEntries);
+  const model = new TraceModel(traceDir, loader.contextEntry);
   return new LoadedTrace(model, loader, buildOrdinalMap(model));
 }
 

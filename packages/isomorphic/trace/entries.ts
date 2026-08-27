@@ -44,9 +44,37 @@ export type ContextEntry = {
   stdio: trace.StdioTraceEvent[];
   errors: trace.ErrorTraceEvent[];
   hasSource: boolean;
+  hasStepData: boolean;
   testTimeout?: number;
   annotations?: trace.TraceEventAnnotation[];
 };
+
+export function createEmptyContext(): ContextEntry {
+  return {
+    origin: 'testRunner',
+    startTime: Number.MAX_SAFE_INTEGER,
+    wallTime: Number.MAX_SAFE_INTEGER,
+    monotonicTime: 0,
+    endTime: 0,
+    browserName: '',
+    options: {
+      deviceScaleFactor: 1,
+      isMobile: false,
+      viewport: { width: 1280, height: 800 },
+    },
+    pages: [],
+    resources: [],
+    actions: [],
+    screenshots: [],
+    ariaSnapshots: [],
+    videos: [],
+    events: [],
+    errors: [],
+    stdio: [],
+    hasSource: false,
+    hasStepData: false,
+  };
+}
 
 export type PageEntry = {
   pageId: string,
