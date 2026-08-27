@@ -746,7 +746,8 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     const isOwnLabel = [...(element as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)).labels || []].includes(element as any);
     const isOwnLabelledBy = (labelledBy || []).includes(element);
     if (!isOwnLabel && !isOwnLabelledBy) {
-      if (role === 'textbox') {
+      // Searchbox is a subclass of textbox, so it is handled the same way.
+      if (role === 'textbox' || role === 'searchbox') {
         options.visitedElements.add(element);
         if (tagName === 'INPUT' || tagName === 'TEXTAREA')
           return compositeString((element as HTMLInputElement | HTMLTextAreaElement).value, element, options.collectElements);
