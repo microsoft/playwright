@@ -161,7 +161,8 @@ export class SnapshotRenderer {
         if (upperName === 'STYLE') {
           // Style has always exactly one child which is a text node.
           const styleContent = typeof children[0] === 'string' ? children[0] : '';
-          result.push(' __playwright_style_content__="', escapeHTMLAttribute(rewriteURLsInStyleSheetForCustomProtocol(styleContent)), '"></', nodeName, '>');
+          result.push(' ', '__playwright_style_content__', '="', escapeHTMLAttribute(rewriteURLsInStyleSheetForCustomProtocol(styleContent)), '"');
+          result.push('></', nodeName, '>');
           return;
         }
         result.push('>');
