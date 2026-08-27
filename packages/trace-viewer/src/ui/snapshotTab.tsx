@@ -357,7 +357,6 @@ function createRecorders(recorders: { recorder: Recorder, frameSelector: string 
 export type Snapshot = {
   action: ActionTraceEvent;
   snapshotName: string;
-  pageId: string;
   point?: { x: number, y: number };
 };
 
@@ -370,16 +369,9 @@ const createSnapshot = (action: ActionTraceEvent, snapshotNameKey: 'beforeSnapsh
   if (!snapshotName)
     return undefined;
 
-  if (!action.pageId) {
-    // eslint-disable-next-line no-console
-    console.error('snapshot action must have a pageId');
-    return undefined;
-  }
-
   return {
     action,
     snapshotName,
-    pageId: action.pageId,
     point: action.point,
   };
 };
@@ -452,7 +444,6 @@ const isUnderTest = new URLSearchParams(window.location.search).has('isUnderTest
 export function extendSnapshot(traceUri: string, snapshot: Snapshot, shouldPopulateCanvasFromScreenshot: boolean): SnapshotUrls {
   const params = new URLSearchParams();
   params.set('trace', traceUri);
-  params.set('name', snapshot.snapshotName);
   if (isUnderTest)
     params.set('isUnderTest', 'true');
   if (snapshot.point) {
@@ -462,8 +453,9 @@ export function extendSnapshot(traceUri: string, snapshot: Snapshot, shouldPopul
   if (shouldPopulateCanvasFromScreenshot)
     params.set('shouldPopulateCanvasFromScreenshot', '1');
 
-  const snapshotUrl = new URL(`snapshot/${snapshot.pageId}?${params.toString()}`, window.location.href).toString();
-  const snapshotInfoUrl = new URL(`snapshotInfo/${snapshot.pageId}?${params.toString()}`, window.location.href).toString();
+  const name = encodeURIComponent(snapshot.snapshotName);
+  const snapshotUrl = new URL(`snapshot/${name}?${params.toString()}`, window.location.href).toString();
+  const snapshotInfoUrl = new URL(`snapshotInfo/${name}?${params.toString()}`, window.location.href).toString();
 
   const popoutParams = new URLSearchParams();
   popoutParams.set('r', snapshotUrl);

@@ -1470,19 +1470,17 @@ test('should record trace snapshot for more obscure commands', async ({ runInlin
     'After Hooks',
   ]);
 
-  const snapshotFrameOrPageId = trace.snapshots.snapshotsForTest()[0];
-
   const countAction = trace.model.actions.find(a => a.method === 'queryCount');
   expect(countAction.beforeSnapshot).toBeTruthy();
   expect(countAction.afterSnapshot).toBeTruthy();
-  expect(trace.snapshots.snapshotByName(snapshotFrameOrPageId, countAction.beforeSnapshot)).toBeTruthy();
-  expect(trace.snapshots.snapshotByName(snapshotFrameOrPageId, countAction.afterSnapshot)).toBeTruthy();
+  expect(trace.snapshots.snapshotByName(countAction.beforeSnapshot)).toBeTruthy();
+  expect(trace.snapshots.snapshotByName(countAction.afterSnapshot)).toBeTruthy();
 
   const boundingBoxAction = trace.model.actions.find(a => a.title === 'Bounding box');
   expect(boundingBoxAction.beforeSnapshot).toBeTruthy();
   expect(boundingBoxAction.afterSnapshot).toBeTruthy();
-  expect(trace.snapshots.snapshotByName(snapshotFrameOrPageId, boundingBoxAction.beforeSnapshot)).toBeTruthy();
-  expect(trace.snapshots.snapshotByName(snapshotFrameOrPageId, boundingBoxAction.afterSnapshot)).toBeTruthy();
+  expect(trace.snapshots.snapshotByName(boundingBoxAction.beforeSnapshot)).toBeTruthy();
+  expect(trace.snapshots.snapshotByName(boundingBoxAction.afterSnapshot)).toBeTruthy();
 });
 
 test('should record default test timeout in trace', async ({ runInlineTest }, testInfo) => {

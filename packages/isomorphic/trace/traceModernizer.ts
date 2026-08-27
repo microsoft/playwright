@@ -162,6 +162,9 @@ export class TraceModernizer {
         break;
       }
       case 'event': {
+        // Make sure there is a page entry for each page.
+        if ((event.method === 'page' || event.method === 'pageClosed') && event.params?.pageId)
+          this._pageEntry(event.params.pageId);
         contextEntry.events.push(event);
         break;
       }

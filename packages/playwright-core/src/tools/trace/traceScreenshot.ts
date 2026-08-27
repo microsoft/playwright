@@ -28,19 +28,12 @@ export async function traceScreenshot(actionId: string, options: { output?: stri
     return;
   }
 
-  const pageId = action.pageId;
-  if (!pageId) {
-    console.error(`Action '${actionId}' has no associated page.`);
-    process.exitCode = 1;
-    return;
-  }
-
   const callId = action.callId;
   const storage = trace.loader.storage();
   const snapshotNames = ['input', 'before', 'after'];
   let file: string | undefined;
   for (const name of snapshotNames) {
-    const renderer = storage.snapshotByName(pageId, `${name}@${callId}`);
+    const renderer = storage.snapshotByName(`${name}@${callId}`);
     file = renderer?.closestScreenshot();
     if (file)
       break;

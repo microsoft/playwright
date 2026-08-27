@@ -29,8 +29,8 @@ export class SnapshotServer {
     this._resourceLoader = resourceLoader;
   }
 
-  serveSnapshot(pageOrFrameId: string, searchParams: URLSearchParams, snapshotUrl: string): Response {
-    const snapshot = this._snapshot(pageOrFrameId, searchParams);
+  serveSnapshot(snapshotName: string, searchParams: URLSearchParams, snapshotUrl: string): Response {
+    const snapshot = this._snapshot(snapshotName, searchParams);
     if (!snapshot)
       return new Response(null, { status: 404 });
 
@@ -39,16 +39,16 @@ export class SnapshotServer {
     return new Response(renderedSnapshot.html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
 
-  async serveClosestScreenshot(pageOrFrameId: string, searchParams: URLSearchParams): Promise<Response> {
-    const snapshot = this._snapshot(pageOrFrameId, searchParams);
+  async serveClosestScreenshot(snapshotName: string, searchParams: URLSearchParams): Promise<Response> {
+    const snapshot = this._snapshot(snapshotName, searchParams);
     const file = snapshot?.closestScreenshot();
     if (!file)
       return new Response(null, { status: 404 });
     return new Response(await this._resourceLoader(file));
   }
 
-  serveSnapshotInfo(pageOrFrameId: string, searchParams: URLSearchParams): Response {
-    const snapshot = this._snapshot(pageOrFrameId, searchParams);
+  serveSnapshotInfo(snapshotName: string, searchParams: URLSearchParams): Response {
+    const snapshot = this._snapshot(snapshotName, searchParams);
     return this._respondWithJson(snapshot ? {
       viewport: snapshot.viewport(),
       url: snapshot.snapshot().frameUrl,
@@ -59,9 +59,8 @@ export class SnapshotServer {
     });
   }
 
-  private _snapshot(pageOrFrameId: string, params: URLSearchParams) {
-    const name = params.get('name')!;
-    return this._snapshotStorage.snapshotByName(pageOrFrameId, name);
+  private _snapshot(snapshotName: string, params: URLSearchParams) {
+    return this._snapshotStorage.snapshotByName(snapshotName, params.get('frameId') || undefined);
   }
 
   private _respondWithJson(object: any): Response {

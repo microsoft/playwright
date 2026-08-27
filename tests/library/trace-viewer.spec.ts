@@ -1011,7 +1011,7 @@ test('empty adopted style sheets should not prevent node refs', async ({ page })
   const trace = await parseTrace(traceFile);
   const secondEvaluate = trace.model.actions.findLast(a => a.method === 'evaluateExpression');
   expect(secondEvaluate.beforeSnapshot).toBeTruthy();
-  const snapshot = trace.snapshots.snapshotByName(trace.snapshots.snapshotsForTest()[0], secondEvaluate.beforeSnapshot);
+  const snapshot = trace.snapshots.snapshotByName(secondEvaluate.beforeSnapshot);
   // Second snapshot should be just a copy of the first one.
   expect(snapshot.snapshot().html).toEqual([[1, 9]]);
 });

@@ -229,6 +229,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
         eventsHelper.addEventListener(this._context, BrowserContext.Events.Console, this._onConsoleMessage.bind(this)),
         eventsHelper.addEventListener(this._context, BrowserContext.Events.PageError, this._onPageError.bind(this)),
     );
+    if (this._context instanceof BrowserContext) {
+      for (const page of this._context.pages())
+        this.onPageOpen(page);
+    }
     if (this._state.options.screencast)
       this._startScreencast();
     this._harTracer.setOmitWebSocketFrames(!!process.env.PLAYWRIGHT_TRACING_NO_WEBSOCKET_FRAMES);
@@ -795,7 +799,6 @@ function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string)
     method: metadata.method,
     params: metadata.timeout ? { ...metadata.params, timeout: metadata.timeout } : metadata.params,
     stepId: metadata.stepId,
-    pageId: metadata.pageId,
   };
   if (parentId)
     event.parentId = parentId;

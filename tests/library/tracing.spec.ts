@@ -201,7 +201,7 @@ test('should exclude internal pages', async ({ browserName, context, page, serve
   const trace = await parseTraceRaw(testInfo.outputPath('trace.zip'));
   const pageIds = new Set();
   trace.events.forEach(e => {
-    const pageId = e.pageId;
+    const pageId = e.pageId ?? e.params?.pageId;
     if (pageId)
       pageIds.add(pageId);
   });

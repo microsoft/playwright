@@ -40,13 +40,6 @@ export async function traceSnapshot(actionId: string, options: { name?: string, 
     return;
   }
 
-  const pageId = action.pageId;
-  if (!pageId) {
-    console.error(`Action '${actionId}' has no associated page.`);
-    process.exitCode = 1;
-    return;
-  }
-
   const callId = action.callId;
   const storage = trace.loader.storage();
 
@@ -54,10 +47,10 @@ export async function traceSnapshot(actionId: string, options: { name?: string, 
   let renderer;
   if (options.name) {
     snapshotName = options.name;
-    renderer = storage.snapshotByName(pageId, `${snapshotName}@${callId}`);
+    renderer = storage.snapshotByName(`${snapshotName}@${callId}`);
   } else {
     for (const candidate of ['input', 'before', 'after']) {
-      renderer = storage.snapshotByName(pageId, `${candidate}@${callId}`);
+      renderer = storage.snapshotByName(`${candidate}@${callId}`);
       if (renderer) {
         snapshotName = candidate;
         break;
@@ -72,7 +65,7 @@ export async function traceSnapshot(actionId: string, options: { name?: string, 
   }
 
   const snapshotKey = `${snapshotName}@${callId}`;
-  const server = await serveTraceSnapshot(storage, trace.loader, pageId, snapshotKey);
+  const server = await serveTraceSnapshot(storage, trace.loader, snapshotKey);
 
   if (options.serve) {
     console.log(`Serving snapshot at ${server.url}`);
@@ -83,16 +76,14 @@ export async function traceSnapshot(actionId: string, options: { name?: string, 
   await runCommandOnSnapshot(server, options.browserArgs || []);
 }
 
-async function serveTraceSnapshot(storage: SnapshotStorage, loader: TraceLoader, pageId: string, snapshotKey: string): Promise<{ url: string, stop: () => Promise<void> }> {
+async function serveTraceSnapshot(storage: SnapshotStorage, loader: TraceLoader, snapshotKey: string): Promise<{ url: string, stop: () => Promise<void> }> {
   const snapshotServer = new SnapshotServer(storage, file => loader.resourceEntry(file));
   const httpServer = new HttpServer();
 
   httpServer.routePrefix('/snapshot/', (request: any, response: any) => {
     const url = new URL('http://localhost' + request.url!);
-    const pageOrFrameId = url.pathname.substring('/snapshot/'.length);
-    const searchParams = url.searchParams;
-    searchParams.set('name', snapshotKey);
-    const snapshotResponse = snapshotServer.serveSnapshot(pageOrFrameId, searchParams, url.href);
+    const snapshotName = decodeURIComponent(url.pathname.substring('/snapshot/'.length));
+    const snapshotResponse = snapshotServer.serveSnapshot(snapshotName, url.searchParams, url.href);
     response.statusCode = snapshotResponse.status;
     snapshotResponse.headers.forEach((value: string, key: string) => response.setHeader(key, value));
     snapshotResponse.text().then((text: string) => response.end(text));
@@ -125,7 +116,7 @@ async function serveTraceSnapshot(storage: SnapshotStorage, loader: TraceLoader,
   });
 
   const startTime = Date.now();
-  const snapshotUrl = `/snapshot/${pageId}?name=${encodeURIComponent(snapshotKey)}`;
+  const snapshotUrl = `/snapshot/${encodeURIComponent(snapshotKey)}`;
   httpServer.routePrefix('/', (_request: any, response: any) => {
     response.statusCode = 200;
     response.setHeader('Content-Type', 'text/html; charset=utf-8');

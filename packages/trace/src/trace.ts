@@ -142,7 +142,6 @@ export type BeforeActionTraceEvent = {
   stepId?: string;
   beforeSnapshot?: string;
   stack?: StackFrame[];
-  pageId?: string;
   parentId?: string;
   group?: string;
 };

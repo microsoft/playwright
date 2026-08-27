@@ -103,8 +103,6 @@ export type CallMetadata = {
   error?: SerializedError;
   result?: any;
   objectId?: string;
-  pageId?: string;
-  frameId?: string;
 };
 
 export interface Instrumentation {
