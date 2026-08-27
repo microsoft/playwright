@@ -28,6 +28,9 @@ test('basics should work', async ({ runTSC }) => {
         test('my test', async({}, testInfo) => {
           expect(testInfo.title).toBe('my test');
           testInfo.annotations[0].type;
+          await test.step('step', async stepInfo => {
+            stepInfo.annotations.push({ type: 'expected-result', description: 'step passes' });
+          });
           test.setTimeout(123);
           testInfo.snapshotPath('a', 'b');
           testInfo.snapshotPath();

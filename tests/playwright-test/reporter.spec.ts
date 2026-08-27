@@ -795,6 +795,31 @@ test('step attachments are referentially equal to result attachments', async ({ 
   ]);
 });
 
+test('step annotations are reported in onStepEnd', async ({ runInlineTest }) => {
+  class TestReporter implements Reporter {
+    onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+      if (step.category === 'test.step')
+        console.log('%%%', JSON.stringify(step.annotations));
+    }
+  }
+  const result = await runInlineTest({
+    'reporter.ts': `module.exports = ${TestReporter.toString()}`,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test('test', async () => {
+        await test.step('step', async stepInfo => {
+          stepInfo.annotations.push({ type: 'expected-result', description: 'step passes' });
+        });
+      });
+    `,
+  }, { 'reporter': '', 'workers': 1 });
+
+  expect(result.outputLines).toEqual([
+    JSON.stringify([{ type: 'expected-result', description: 'step passes' }]),
+  ]);
+});
+
 test('step.attach attachments are reported on right steps', async ({ runInlineTest }) => {
   class TestReporter implements Reporter {
     onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
