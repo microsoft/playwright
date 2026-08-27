@@ -471,6 +471,22 @@ test('control embedded in a target element', async ({ page }) => {
   expect.soft(await getNameAndRole(page, 'h1')).toEqual({ role: 'heading', name: 'Foo bar' });
 });
 
+test('searchbox embedded control should contribute its value', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42341' });
+
+  await page.setContent(`
+    <button id="b1" aria-labelledby="l1"></button><div id="l1" hidden><input type="text" value="Query"></div>
+    <button id="b2" aria-labelledby="l2"></button><div id="l2" hidden><input type="search" value="Query"></div>
+    <label for="c1">Flash the screen <input type="search" value="5"> times.</label>
+    <input type="checkbox" id="c1">
+    <h1><input type="search" value="Foo bar"></h1>
+  `);
+  expect.soft(await getNameAndRole(page, '#b1')).toEqual({ role: 'button', name: 'Query' });
+  expect.soft(await getNameAndRole(page, '#b2')).toEqual({ role: 'button', name: 'Query' });
+  expect.soft(await getNameAndRole(page, '#c1')).toEqual({ role: 'checkbox', name: 'Flash the screen 5 times.' });
+  expect.soft(await getNameAndRole(page, 'h1')).toEqual({ role: 'heading', name: 'Foo bar' });
+});
+
 test('svg role=presentation', async ({ page, server }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26809' });
 
