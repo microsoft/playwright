@@ -196,12 +196,26 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
     const additionalSources = [...this._additionalSources];
     this._additionalSources.clear();
+    const stacksId = this._stacksId;
+    this._stacksId = undefined;
 
+    try {
+      await this._saveChunk(filePath, stacksId, additionalSources);
+    } catch (error) {
+      // The stack session is owned by the chunk being stopped. Release it even when
+      // saving failed, otherwise later traces keep appending calls to it.
+      if (stacksId)
+        await this._connection.localUtils()?.traceDiscarded({ stacksId }).catch(() => {});
+      throw error;
+    }
+  }
+
+  private async _saveChunk(filePath: string | undefined, stacksId: string | undefined, additionalSources: string[]) {
     if (!filePath) {
       // Not interested in artifacts.
       await this._channel.tracingStopChunk({ mode: 'discard' }, kNoTimeout);
-      if (this._stacksId)
-        await this._connection.localUtils()!.traceDiscarded({ stacksId: this._stacksId });
+      if (stacksId)
+        await this._connection.localUtils()!.traceDiscarded({ stacksId });
       return;
     }
 
@@ -213,7 +227,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
     if (isLocal) {
       const result = await this._channel.tracingStopChunk({ mode: 'entries' }, kNoTimeout);
-      await localUtils.zip({ zipFile: filePath, entries: result.entries!, mode: 'write', stacksId: this._stacksId, includeSources: this._includeSources, additionalSources });
+      await localUtils.zip({ zipFile: filePath, entries: result.entries!, mode: 'write', stacksId, includeSources: this._includeSources, additionalSources });
       return;
     }
 
@@ -221,17 +235,20 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
     // The artifact may be missing if the browser closed while stopping tracing.
     if (!result.artifact) {
-      if (this._stacksId)
-        await localUtils.traceDiscarded({ stacksId: this._stacksId });
+      if (stacksId)
+        await localUtils.traceDiscarded({ stacksId });
       return;
     }
 
     // Save trace to the final local file.
     const artifact = Artifact.from(result.artifact);
-    await artifact.saveAs(filePath);
-    await artifact.delete();
+    try {
+      await artifact.saveAs(filePath);
+    } finally {
+      await artifact.delete();
+    }
 
-    await localUtils.zip({ zipFile: filePath, entries: [], mode: 'append', stacksId: this._stacksId, includeSources: this._includeSources, additionalSources });
+    await localUtils.zip({ zipFile: filePath, entries: [], mode: 'append', stacksId, includeSources: this._includeSources, additionalSources });
   }
 
   _resetStackCounter() {

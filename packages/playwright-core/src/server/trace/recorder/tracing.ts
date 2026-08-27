@@ -327,6 +327,11 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   async stop(progress: Progress) {
+    // The client stops the chunk before stopping tracing, but that may fail, e.g. when
+    // saving the trace hits a disk error. Discard the chunk so that tracing is always
+    // stopped and can be started again.
+    if (this._state?.recording)
+      await this.stopChunk(progress, { mode: 'discard' }).catch(() => {});
     await progress.race(this._stop());
   }
 
@@ -392,9 +397,19 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
-
-    if (!this._state || !this._state.recording) {
+    try {
+      return await this._stopChunk(progress, params);
+    } finally {
+      // Always release the recording state, so that tracing can be stopped and started
+      // again even when saving the chunk failed.
       this._isStopping = false;
+      if (this._state)
+        this._state.recording = false;
+    }
+  }
+
+  private async _stopChunk(progress: Progress, params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[] }> {
+    if (!this._state || !this._state.recording) {
       if (params.mode !== 'discard')
         throw new Error(`Must start tracing before stopping`);
       return {};
@@ -430,11 +445,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
     this._state.chunkFiles = new Set();
 
-    if (params.mode === 'discard') {
-      this._isStopping = false;
-      this._state.recording = false;
+    if (params.mode === 'discard')
       return {};
-    }
 
     this._fs.copyFile(this._state.networkFile, newNetworkFile);
 
@@ -443,20 +455,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._fs.zip(entries, zipFileName);
 
     // Make sure all file operations complete.
-    let error: Error | undefined;
     try {
       await progress.race(this._fs.sync());
-    } catch (e) {
-      error = e as Error;
-    }
-
-    this._isStopping = false;
-    if (this._state)
-      this._state.recording = false;
-
-    // IMPORTANT: no awaits after this point, to make sure recording state is correct.
-
-    if (error) {
+    } catch (error) {
       // This check is here because closing the browser removes the tracesDir and tracing
       // cannot access removed files. Clients are ready for the missing artifact.
       if (!isAbortError(error) && this._context.attribution.browser && !this._context.attribution.browser.isConnected())
