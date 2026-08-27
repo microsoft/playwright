@@ -210,6 +210,8 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     }
   }
 
+  // Note: a body-of-_doStopChunk helper carved out to be guarded by the catch above,
+  // not a reusable operation.
   private async _saveChunk(filePath: string | undefined, stacksId: string | undefined, additionalSources: string[]) {
     if (!filePath) {
       // Not interested in artifacts.
@@ -244,9 +246,12 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     const artifact = Artifact.from(result.artifact);
     try {
       await artifact.saveAs(filePath);
-    } finally {
-      await artifact.delete();
+    } catch (error) {
+      // Delete the artifact best-effort, the save error is the one to surface.
+      await artifact.delete().catch(() => {});
+      throw error;
     }
+    await artifact.delete();
 
     await localUtils.zip({ zipFile: filePath, entries: [], mode: 'append', stacksId, includeSources: this._includeSources, additionalSources });
   }

@@ -456,15 +456,14 @@ test('should stop tracing when the chunk was not stopped', async ({ context, pag
   expect(actions).toContain('Click');
 });
 
-test('should release the stack session when saving the trace fails', async ({ browserType, server }, testInfo) => {
+test('should release the stack session when saving the trace fails', async ({ browserType }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42423' });
-  // Without tracesDir the stack session owns a temporary directory of its own.
+  // Explicit undefined overrides the tracesDir the test runner passes; without
+  // one the stack session owns a temporary directory of its own.
   const browser = await browserType.launch({ tracesDir: undefined });
   try {
-    const page = await browser.newPage();
-    const context = page.context();
+    const context = await browser.newContext();
     await context.tracing.start();
-    await page.goto(server.PREFIX + '/input/button.html');
     const stacksDir = path.dirname((context.tracing as any)._stacksId);
     expect(fs.existsSync(stacksDir)).toBe(true);
 
