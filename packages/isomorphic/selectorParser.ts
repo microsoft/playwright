@@ -78,8 +78,15 @@ export function parseSelector(selector: string): ParsedSelector {
       // The "any-frame" token applies to the whole selector, so nested selectors must not repeat it.
       const outerParts = parts[0]?.name === 'internal:control' && parts[0].body === 'any-frame' ? parts.slice(1) : parts;
       // Allow nested selectors to start with the same frame selector.
-      if (lastFrameIndex !== -1 && selectorPartsEqual(nested.body.parsed.parts.slice(0, lastFrameIndex + 1), outerParts.slice(0, lastFrameIndex + 1)))
+      if (lastFrameIndex !== -1 && selectorPartsEqual(nested.body.parsed.parts.slice(0, lastFrameIndex + 1), outerParts.slice(0, lastFrameIndex + 1))) {
         nested.body.parsed.parts.splice(0, lastFrameIndex + 1);
+        if (nested.body.parsed.capture !== undefined) {
+          if (nested.body.parsed.capture <= lastFrameIndex)
+            throw new InvalidSelectorError(`Can not capture the selector before diving into the frame. Only use * after the last frame has been selected`);
+          // The capture refers to a part index, so it shifts along with the removed prefix.
+          nested.body.parsed.capture -= lastFrameIndex + 1;
+        }
+      }
       parts.push(nested);
       continue;
     }
