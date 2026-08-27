@@ -79,10 +79,9 @@ export class SnapshotRenderer {
     const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined, parentAttrs: [string, string][] | undefined) => {
       // Text node.
       if (typeof n === 'string') {
-        // Best-effort Electron support: rewrite custom protocol in url() links in stylesheets.
-        // Old snapshotter was sending lower-case.
-        if (parentTag === 'STYLE' || parentTag === 'style')
-          result.push(escapeURLsInStyleSheet(rewriteURLsInStyleSheetForCustomProtocol(n)));
+        // Style text is hoisted into an attribute below, so emit it verbatim.
+        if (parentTag?.toUpperCase() === 'STYLE')
+          result.push(n);
         else
           result.push(escapeHTML(n));
         return;
@@ -163,15 +162,17 @@ export class SnapshotRenderer {
             attrValue = rewriteURLForCustomProtocol(value);
           result.push(' ', attrName, '="', escapeHTMLAttribute(attrValue), '"');
         }
+        if (upperName === 'STYLE') {
+          const contentStart = result.length;
+          for (const child of children)
+            visit(child, snapshotIndex, nodeName, attrs);
+          const styleContent = rewriteURLsInStyleSheetForCustomProtocol(result.splice(contentStart).join(''));
+          result.push(' __playwright_style_content__="', escapeHTMLAttribute(styleContent), '"></', nodeName, '>');
+          return;
+        }
         result.push('>');
-        const styleContentStart = upperName === 'STYLE' ? result.length : -1;
         for (const child of children)
           visit(child, snapshotIndex, nodeName, attrs);
-        if (styleContentStart !== -1) {
-          // Escape the joined text - "</style>" can be split across adjacent text nodes.
-          const styleContent = result.splice(styleContentStart).join('');
-          result.push(escapeClosingStyleTag(styleContent));
-        }
         if (!autoClosing.has(nodeName))
           result.push('</', nodeName, '>');
         return;
@@ -339,6 +340,11 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         scrollTops.push(e);
       for (const e of root.querySelectorAll(`[__playwright_scroll_left_]`))
         scrollLefts.push(e);
+
+      for (const element of root.querySelectorAll(`style[__playwright_style_content__]`)) {
+        element.textContent = element.getAttribute('__playwright_style_content__');
+        element.removeAttribute('__playwright_style_content__');
+      }
 
       for (const element of root.querySelectorAll(`[__playwright_value_]`)) {
         const inputElement = element as HTMLInputElement | HTMLTextAreaElement;
@@ -669,26 +675,6 @@ function rewriteURLsInStyleSheetForCustomProtocol(text: string): string {
       return match;
     return match.replace(protocol + '//', `https://pw-${protocol.slice(0, -1)}--`);
   });
-}
-
-// url() inside a <style> tag can mess up with html parsing, so we encode some of them.
-// As an example, the following url will close the </style> tag:
-// url('data:image/svg+xml,<svg><defs><style>.a{fill:none}</style></defs><g class="a"></g></svg>')
-const urlToEscapeRegex1 = /url\(\s*'([^']*)'\s*\)/ig;
-const urlToEscapeRegex2 = /url\(\s*"([^"]*)"\s*\)/ig;
-function escapeURLsInStyleSheet(text: string): string {
-  const replacer = (match: string, url: string) => {
-    // Conservatively encode only urls with a closing tag.
-    if (url.includes('</'))
-      return match.replace(url, encodeURI(url));
-    return match;
-  };
-  return text.replace(urlToEscapeRegex1, replacer).replace(urlToEscapeRegex2, replacer);
-}
-
-// A literal "</style" would close the element; "\/" is still "/" in CSS.
-function escapeClosingStyleTag(text: string): string {
-  return text.replace(/<\//g, '<\\/');
 }
 
 export const blankSnapshotUrl = 'data:text/html;base64,' + btoa(`<body></body><style>body { color-scheme: light dark; background: light-dark(white, #333) }</style>`);

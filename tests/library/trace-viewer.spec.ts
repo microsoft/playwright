@@ -874,8 +874,8 @@ test('should not let style text break out of the style element', async ({ page, 
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => {
       const style = document.createElement('style');
-      style.textContent = 'body{}</style><img src=x onerror="window.__pwned = true">';
-      document.body.appendChild(style);
+      style.textContent = 'div{color:rgb(1, 2, 3)}</style><img src=x onerror="window.__pwned = true">';
+      document.body.append(style, document.createElement('div'));
     });
     await page.locator('body').click();
   });
@@ -883,8 +883,8 @@ test('should not let style text break out of the style element', async ({ page, 
   const frame = await traceViewer.snapshotFrame('Click');
   // If the "</style>" broke out of the element, this <img> would be a real node.
   await expect(frame.locator('img')).toHaveCount(0);
-  // The stylesheet text is preserved verbatim, not dropped.
-  await expect(frame.locator('body style')).toHaveCount(1);
+  // The stylesheet is preserved verbatim and still applies.
+  await expect(frame.locator('div')).toHaveCSS('color', 'rgb(1, 2, 3)');
   expect(await frame.locator('body style').evaluate(el => el.textContent)).toContain('onerror=');
 });
 
