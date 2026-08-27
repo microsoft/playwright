@@ -33,7 +33,7 @@ function buildFullSelector(framePath: string[], selector: string) {
 export async function buildFullSelectorForFrame(progress: Progress, frame: Frame, selector: string, timeout = isUnderTest() ? 10000 : 2000): Promise<string> {
   const framePath = await generateFrameSelector(progress, frame, timeout);
   const fullSelector = buildFullSelector(framePath, selector);
-  // Starting from anyFrame() is only worth it when it saves at least two frameLocator() calls.
+  // Starting from frameLocator() is only worth it when it saves at least two frameLocator(selector) calls.
   if (framePath.length < 2)
     return fullSelector;
 

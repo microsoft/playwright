@@ -130,7 +130,7 @@ export class FrameSelectors {
         }
         if (nested && part.name === 'internal:control' && part.body === 'any-frame') {
           const locator = asLocator(this.frame._page.browserContext._browser.sdkLanguage(), selector);
-          throw new InvalidSelectorError(`anyFrame() is not allowed inside composite locators, while querying "${locator}"`);
+          throw new InvalidSelectorError(`frameLocator() is not allowed inside composite locators, while querying "${locator}"`);
         }
       });
     }
@@ -275,7 +275,7 @@ export class FrameSelectors {
       if (!maybeResult)
         continue;
       if (aggregatedResult)
-        throw new NonRecoverableDOMError(`anyFrame() matched elements in multiple frames.`);
+        throw new NonRecoverableDOMError(`frameLocator() matched elements in multiple frames.`);
       aggregatedResult = { frame, info, result: maybeResult.result };
     }
     return aggregatedResult;

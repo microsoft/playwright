@@ -394,12 +394,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return this.locator(getByRoleSelector(role, options));
   }
 
-  frameLocator(selector: string): FrameLocator {
-    return new FrameLocator(this, selector);
-  }
-
-  anyFrame(): FrameLocator {
-    return new FrameLocator(this, kAnyFrameSelector);
+  frameLocator(selector?: string): FrameLocator {
+    return new FrameLocator(this, selector === undefined ? kAnyFrameSelector : selector);
   }
 
   async focus(selector: string, options: channels.FrameFocusOptions & TimeoutOptions = {}) {

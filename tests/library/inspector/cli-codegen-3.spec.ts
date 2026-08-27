@@ -154,21 +154,21 @@ await page.Locator("#frame1").ContentFrame.GetByText("Hello1").ClickAsync();`);
       frameHello2.click('text=Hello2'),
     ]);
 
-    // "Hello2" is unique across frames, so anyFrame() replaces two frameLocator() calls.
+    // "Hello2" is unique across frames, so a bare frameLocator() replaces two frameLocator(selector) calls.
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.anyFrame().getByText('Hello2').click();`);
+  await page.frameLocator().getByText('Hello2').click();`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.anyFrame().getByText("Hello2").click();`);
+      page.frameLocator().getByText("Hello2").click();`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.any_frame.get_by_text("Hello2").click()`);
+    page.frame_locator().get_by_text("Hello2").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.any_frame.get_by_text("Hello2").click()`);
+    await page.frame_locator().get_by_text("Hello2").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-await page.AnyFrame.GetByText("Hello2").ClickAsync();`);
+await page.FrameLocator().GetByText("Hello2").ClickAsync();`);
 
     const clickAction = sources.get('JSON')!.actions.map(l => JSON.parse(l)).find(a => a.name === 'click');
     expect.soft(clickAction).toEqual({
@@ -196,19 +196,19 @@ await page.AnyFrame.GetByText("Hello2").ClickAsync();`);
     ]);
 
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.anyFrame().getByText('HelloNameAnonymous').click();`);
+  await page.frameLocator().getByText('HelloNameAnonymous').click();`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.anyFrame().getByText("HelloNameAnonymous").click();`);
+      page.frameLocator().getByText("HelloNameAnonymous").click();`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.any_frame.get_by_text("HelloNameAnonymous").click()`);
+    page.frame_locator().get_by_text("HelloNameAnonymous").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.any_frame.get_by_text("HelloNameAnonymous").click()`);
+    await page.frame_locator().get_by_text("HelloNameAnonymous").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-await page.AnyFrame.GetByText("HelloNameAnonymous").ClickAsync();`);
+await page.FrameLocator().GetByText("HelloNameAnonymous").ClickAsync();`);
 
     const clickAction = sources.get('JSON')!.actions.map(l => JSON.parse(l)).find(a => a.name === 'click');
     expect.soft(clickAction).toEqual({
@@ -274,21 +274,21 @@ await page.Locator("#frame1").ContentFrame.GetByText("Hello1").ClickAsync();`);
       frameHello2.click('text=Hello2'),
     ]);
 
-    // "Hello2" is unique across frames, so anyFrame() replaces two frameLocator() calls.
+    // "Hello2" is unique across frames, so a bare frameLocator() replaces two frameLocator(selector) calls.
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.anyFrame().getByText('Hello2').click();`);
+  await page.frameLocator().getByText('Hello2').click();`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.anyFrame().getByText("Hello2").click();`);
+      page.frameLocator().getByText("Hello2").click();`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.any_frame.get_by_text("Hello2").click()`);
+    page.frame_locator().get_by_text("Hello2").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.any_frame.get_by_text("Hello2").click()`);
+    await page.frame_locator().get_by_text("Hello2").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-await page.AnyFrame.GetByText("Hello2").ClickAsync();`);
+await page.FrameLocator().GetByText("Hello2").ClickAsync();`);
 
     [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'HelloNameAnonymous'),
@@ -296,19 +296,19 @@ await page.AnyFrame.GetByText("Hello2").ClickAsync();`);
     ]);
 
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.anyFrame().getByText('HelloNameAnonymous').click();`);
+  await page.frameLocator().getByText('HelloNameAnonymous').click();`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.anyFrame().getByText("HelloNameAnonymous").click();`);
+      page.frameLocator().getByText("HelloNameAnonymous").click();`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.any_frame.get_by_text("HelloNameAnonymous").click()`);
+    page.frame_locator().get_by_text("HelloNameAnonymous").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.any_frame.get_by_text("HelloNameAnonymous").click()`);
+    await page.frame_locator().get_by_text("HelloNameAnonymous").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-await page.AnyFrame.GetByText("HelloNameAnonymous").ClickAsync();`);
+await page.FrameLocator().GetByText("HelloNameAnonymous").ClickAsync();`);
   });
 
   test('should generate frame locators with special characters in name attribute', async ({ openRecorder, server }) => {
@@ -1121,7 +1121,7 @@ await page.GetByTestId("testid").HoverAsync();`);
   });
 });
 
-test.describe('cli codegen with anyFrame', () => {
+test.describe('cli codegen with frameLocator()', () => {
   test('should prepend the frame selector to disambiguate', async ({ openRecorder, server }) => {
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
@@ -1129,7 +1129,7 @@ test.describe('cli codegen with anyFrame', () => {
       <iframe id=frame2 srcdoc="<iframe srcdoc='<button>Hello</button>'></iframe>"></iframe>
     `, server.EMPTY_PAGE, 5);
 
-    // The bare selector is ambiguous across frames, so anyFrame() cannot pinpoint
+    // The bare selector is ambiguous across frames, so a bare frameLocator() cannot pinpoint
     // the target frame and the full frame chain is used instead.
     const frame = page.mainFrame().childFrames()[0].childFrames()[0];
     const [sources] = await Promise.all([
@@ -1144,14 +1144,14 @@ test.describe('cli codegen with anyFrame', () => {
     expect.soft(clickAction.selector).toBe('#frame1 >> internal:control=enter-frame >> iframe >> internal:control=enter-frame >> internal:role=button[name="Hello"i]');
   });
 
-  test('should not use anyFrame when it saves a single frameLocator', async ({ openRecorder, server }) => {
+  test('should not use frameLocator() when it saves a single frameLocator(selector)', async ({ openRecorder, server }) => {
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
       <iframe id=frame1 srcdoc="<button>Hello</button>"></iframe>
     `, server.EMPTY_PAGE, 2);
 
-    // "Hello" is unique across frames, but anyFrame() would only replace a single
-    // frameLocator() call, so the plain frame chain is not any longer.
+    // "Hello" is unique across frames, but a bare frameLocator() would only replace a single
+    // frameLocator(selector) call, so the plain frame chain is not any longer.
     const frame = page.mainFrame().childFrames()[0];
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),

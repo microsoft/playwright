@@ -489,7 +489,7 @@ export class FrameLocator implements api.FrameLocator {
 
   private _nthSelector(nth: string): string {
     if (this._frameSelector === kAnyFrameSelector)
-      throw new Error(`Selecting the nth frame is not allowed on anyFrame().`);
+      throw new Error(`Selecting the nth frame is not allowed on frameLocator().`);
     return this._frameSelector + ` >> nth=${nth}`;
   }
 

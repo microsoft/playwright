@@ -138,7 +138,7 @@ export function splitSelectorByFrame(selectorText: string): { anyFrame: boolean,
   }
   if (!chunk.parts.length) {
     if (anyFrame && !chunks.length)
-      throw new InvalidSelectorError(`Selector cannot be empty after anyFrame(), while parsing selector ${selectorText}`);
+      throw new InvalidSelectorError(`Selector cannot be empty after frameLocator(), while parsing selector ${selectorText}`);
     throw new InvalidSelectorError(`Selector cannot end with entering frame, while parsing selector ${selectorText}`);
   }
   const lastPart = chunk.parts[chunk.parts.length - 1];

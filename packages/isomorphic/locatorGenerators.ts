@@ -321,7 +321,7 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
       case 'frame':
         return `contentFrame()`;
       case 'any-frame':
-        return `anyFrame()`;
+        return `frameLocator()`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -422,7 +422,7 @@ export class PythonLocatorFactory implements LocatorFactory {
       case 'frame':
         return `content_frame`;
       case 'any-frame':
-        return `any_frame`;
+        return `frame_locator()`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -536,7 +536,7 @@ export class JavaLocatorFactory implements LocatorFactory {
       case 'frame':
         return `contentFrame()`;
       case 'any-frame':
-        return `anyFrame()`;
+        return `frameLocator()`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -640,7 +640,7 @@ export class CSharpLocatorFactory implements LocatorFactory {
       case 'frame':
         return `ContentFrame`;
       case 'any-frame':
-        return `AnyFrame`;
+        return `FrameLocator()`;
       case 'nth':
         return `Nth(${body})`;
       case 'first':

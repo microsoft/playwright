@@ -78,7 +78,6 @@ function parseLocator(locator: string, testIdAttributeName: string): { selector:
       .replace(/has_not/g, 'hasnot')
       .replace(/frame_locator/g, 'framelocator')
       .replace(/content_frame/g, 'contentframe')
-      .replace(/any_frame/g, 'anyframe')
       .replace(/[{}\s]/g, '')
       .replace(/new\(\)/g, '')
       .replace(/new[\w]+\.[\w]+options\(\)/g, '')
@@ -158,9 +157,9 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
   // Transform to selector engines.
   template = template
       .replace(/\,set([\w]+)\(([^)]+)\)/g, (_, group1, group2) => ',' + group1.toLowerCase() + '=' + group2.toLowerCase())
+      .replace(/framelocator\(\)/g, 'internal:control=any-frame')
       .replace(/framelocator\(([^)]+)\)/g, '$1.internal:control=enter-frame')
       .replace(/contentframe(\(\))?/g, 'internal:control=enter-frame')
-      .replace(/anyframe(\(\))?/g, 'internal:control=any-frame')
       .replace(/locator\(([^)]+),hastext=([^),]+)\)/g, 'locator($1).internal:has-text=$2')
       .replace(/locator\(([^)]+),hasnottext=([^),]+)\)/g, 'locator($1).internal:has-not-text=$2')
       .replace(/locator\(([^)]+),hastext=([^),]+)\)/g, 'locator($1).internal:has-text=$2')

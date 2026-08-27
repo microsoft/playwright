@@ -442,20 +442,18 @@ it('reverse engineer frameLocator', async ({ page }) => {
   expect.soft(asLocator('javascript', selector)).toBe(`locator('div').locator('iframe').contentFrame().locator('span')`);
 });
 
-it('reverse engineer anyFrame', async ({ page }) => {
-  expect.soft(generate(page.anyFrame().getByText('foo').locator('span'))).toEqual({
-    csharp: `AnyFrame.GetByText("foo").Locator("span")`,
-    java: `anyFrame().getByText("foo").locator("span")`,
-    javascript: `anyFrame().getByText('foo').locator('span')`,
-    python: `any_frame.get_by_text("foo").locator("span")`,
+it('reverse engineer frameLocator without a selector', async ({ page }) => {
+  expect.soft(generate(page.frameLocator().getByText('foo').locator('span'))).toEqual({
+    csharp: `FrameLocator().GetByText("foo").Locator("span")`,
+    java: `frameLocator().getByText("foo").locator("span")`,
+    javascript: `frameLocator().getByText('foo').locator('span')`,
+    python: `frame_locator().get_by_text("foo").locator("span")`,
   });
 
-  // Note that bare `any_frame` and `AnyFrame` are not restored back,
-  // because they are indistinguishable from a css selector.
-  expect.soft(asLocator('javascript', 'internal:control=any-frame')).toBe(`anyFrame()`);
-  expect.soft(asLocator('python', 'internal:control=any-frame')).toBe(`any_frame`);
-  expect.soft(asLocator('java', 'internal:control=any-frame')).toBe(`anyFrame()`);
-  expect.soft(asLocator('csharp', 'internal:control=any-frame')).toBe(`AnyFrame`);
+  expect.soft(asLocator('javascript', 'internal:control=any-frame')).toBe(`frameLocator()`);
+  expect.soft(asLocator('python', 'internal:control=any-frame')).toBe(`frame_locator()`);
+  expect.soft(asLocator('java', 'internal:control=any-frame')).toBe(`frameLocator()`);
+  expect.soft(asLocator('csharp', 'internal:control=any-frame')).toBe(`FrameLocator()`);
 });
 
 it('generate multiple locators', async ({ page }) => {

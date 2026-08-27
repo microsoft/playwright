@@ -185,44 +185,6 @@ current working directory.
 
 Raw CSS content to be injected into frame.
 
-## method: Frame.anyFrame
-* since: v1.63
-- returns: <[FrameLocator]>
-
-When working with iframes, you can create a frame locator that will start the search in this frame
-or in any of the iframes inside it, so that you don't need to locate each iframe first.
-
-Note that the rest of the locator is resolved inside a single frame, just like any other locator. If it matches elements inside multiple frames, an error is thrown.
-
-**Usage**
-
-Following snippet locates a button, either in the frame or in one of the iframes inside it:
-
-```js
-const locator = frame.anyFrame().getByRole('button');
-await locator.click();
-```
-
-```java
-Locator locator = frame.anyFrame().getByRole(AriaRole.BUTTON);
-locator.click();
-```
-
-```python async
-locator = frame.any_frame.get_by_role("button")
-await locator.click()
-```
-
-```python sync
-locator = frame.any_frame.get_by_role("button")
-locator.click()
-```
-
-```csharp
-var locator = frame.AnyFrame.GetByRole(AriaRole.Button);
-await locator.ClickAsync();
-```
-
 ## async method: Frame.check
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.check`] instead. Read more about [locators](../locators.md).
@@ -1008,6 +970,10 @@ Console.WriteLine(frame == contentFrame); // -> True
 When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements
 in that iframe.
 
+When called without [`param: selector`], the search starts in this frame or in any of the iframes inside it,
+so that you don't need to locate each iframe first. Note that the rest of the locator is resolved inside a single
+frame, just like any other locator. If it matches elements inside multiple frames, an error is thrown.
+
 **Usage**
 
 Following snippet locates element with text "Submit" in the iframe with id `my-frame`, like `<iframe id="my-frame">`:
@@ -1037,8 +1003,38 @@ var locator = frame.FrameLocator("#my-iframe").GetByText("Submit");
 await locator.ClickAsync();
 ```
 
-### param: Frame.frameLocator.selector = %%-find-selector-%%
+Following snippet locates a button, either in the frame or in one of the iframes inside it:
+
+```js
+const locator = frame.frameLocator().getByRole('button');
+await locator.click();
+```
+
+```java
+Locator locator = frame.frameLocator().getByRole(AriaRole.BUTTON);
+locator.click();
+```
+
+```python async
+locator = frame.frame_locator().get_by_role("button")
+await locator.click()
+```
+
+```python sync
+locator = frame.frame_locator().get_by_role("button")
+locator.click()
+```
+
+```csharp
+var locator = frame.FrameLocator().GetByRole(AriaRole.Button);
+await locator.ClickAsync();
+```
+
+### param: Frame.frameLocator.selector
 * since: v1.17
+- `selector` ?<[string]>
+
+A selector that matches the frame element. When not specified, locator is matched in this frame or in any of the iframes inside it.
 
 ## async method: Frame.getAttribute
 * since: v1.8

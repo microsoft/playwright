@@ -72,6 +72,58 @@ await page.Locator(".result-frame").ContentFrame.GetByRole(AriaRole.Button).Clic
 await page.Locator(".result-frame").First.ContentFrame.getByRole(AriaRole.Button).ClickAsync();
 ```
 
+**Any frame**
+
+Calling [`method: Page.frameLocator`] or [`method: Frame.frameLocator`] without a selector creates a frame locator that
+starts the search in any frame of the subtree - so that you don't
+need to locate the iframe first.
+
+```js
+// Finds the button in any frame on the page:
+await page.frameLocator().getByRole('button').click();
+
+// Finds the iframe with id "my-frame" anywhere on the page, and clicks the button inside it:
+await page.frameLocator().locator('#my-frame').contentFrame().getByRole('button').click();
+```
+
+```java
+// Finds the button in any frame on the page:
+page.frameLocator().getByRole(AriaRole.BUTTON).click();
+
+// Finds the iframe with id "my-frame" anywhere on the page, and clicks the button inside it:
+page.frameLocator().locator("#my-frame").contentFrame().getByRole(AriaRole.BUTTON).click();
+```
+
+```python async
+# Finds the button in any frame on the page:
+await page.frame_locator().get_by_role("button").click()
+
+# Finds the iframe with id "my-frame" anywhere on the page, and clicks the button inside it:
+await page.frame_locator().locator("#my-frame").content_frame.get_by_role("button").click()
+```
+
+```python sync
+# Finds the button in any frame on the page:
+page.frame_locator().get_by_role("button").click()
+
+# Finds the iframe with id "my-frame" anywhere on the page, and clicks the button inside it:
+page.frame_locator().locator("#my-frame").content_frame.get_by_role("button").click()
+```
+
+```csharp
+// Finds the button in any frame on the page:
+await page.FrameLocator().GetByRole(AriaRole.Button).ClickAsync();
+
+// Finds the iframe with id "my-frame" anywhere on the page, and clicks the button inside it:
+await page.FrameLocator().Locator("#my-frame").ContentFrame.GetByRole(AriaRole.Button).ClickAsync();
+```
+
+Only the start of the search is affected - the rest of the locator is resolved inside a single frame, just like any
+other locator. Following the strictness rules above, an error is thrown when elements are matched in multiple frames.
+
+Such a frame locator does not point to a particular `iframe`, so [`method: FrameLocator.owner`],
+[`method: FrameLocator.first`], [`method: FrameLocator.last`] and [`method: FrameLocator.nth`] are not supported on it.
+
 **Converting Locator to FrameLocator**
 
 If you have a [Locator] object pointing to an `iframe` it can be converted to [FrameLocator] using [`method: Locator.contentFrame`].

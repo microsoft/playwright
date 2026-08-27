@@ -376,7 +376,7 @@ it('should throw when matching elements in multiple frames', async ({ page, serv
   }
 
   const error = await page.locator('internal:control=any-frame >> div').innerHTML().catch(e => e);
-  expect(error.message).toContain('anyFrame() matched elements in multiple frames');
+  expect(error.message).toContain('frameLocator() matched elements in multiple frames');
 });
 
 it('should not allow any-frame in the middle of a selector', async ({ page, server }) => {
