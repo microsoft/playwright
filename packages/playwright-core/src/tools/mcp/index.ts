@@ -42,15 +42,16 @@ export async function createConnection(userConfig: Config = {}, contextGetter?: 
         return new BrowserBackend(config, context, tools);
       }
 
-      const { browser, ownership } = await createBrowserWithInfo(config, clientInfo, {});
+      const { browser } = await createBrowserWithInfo(config, clientInfo, {});
       const context = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
-      // Only a browser this factory launched goes away with the backend. An
-      // attached one (a CDP or remote endpoint, or the extension) belongs to
-      // whoever we connected to, and the next call re attaches to it.
+      // Close the browser in both ownership modes. A browser this factory
+      // launched shuts down here. For an attached one (a CDP or remote
+      // endpoint, or the extension) close() only drops the connection this
+      // factory made while the external browser keeps running, so skipping it
+      // would leak that connection. The next call attaches again.
       return new BrowserBackend(config, context, tools, async () => {
         await context.close().catch(() => {});
-        if (ownership === 'own')
-          await browser.close().catch(() => {});
+        await browser.close().catch(() => {});
       });
     },
   };

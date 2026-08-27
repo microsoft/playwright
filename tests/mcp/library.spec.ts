@@ -15,6 +15,7 @@
  */
 import child_process from 'child_process';
 import fs from 'fs/promises';
+import net from 'net';
 
 import * as playwright from 'playwright';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -100,6 +101,62 @@ test('createConnection closes the browser it launched when the backend is dispos
       return String(e.message);
     }
   }, { timeout: 15000 }).toBe('free');
+});
+
+test('createConnection drops its connection to an attached browser when the backend is disposed', async ({ mcpBrowser, mcpHeadless, server }, testInfo) => {
+  const { browserName, channel } = browserForProject(mcpBrowser);
+  const browserServer = await playwright[browserName].launchServer({ channel, headless: mcpHeadless });
+  const wsUrl = new URL(browserServer.wsEndpoint());
+  // URL keeps the brackets around an IPv6 host, net.connect does not take them.
+  const wsHost = wsUrl.hostname.replace(/^\[|\]$/g, '');
+
+  // A counting TCP proxy in front of the browser server makes the connection
+  // the factory holds observable from the outside.
+  let openConnections = 0;
+  const proxy = net.createServer(socket => {
+    openConnections++;
+    const upstream = net.connect(Number(wsUrl.port), wsHost);
+    socket.pipe(upstream);
+    upstream.pipe(socket);
+    socket.once('close', () => {
+      openConnections--;
+      upstream.destroy();
+    });
+    upstream.once('close', () => socket.destroy());
+    socket.on('error', () => socket.destroy());
+    upstream.on('error', () => upstream.destroy());
+  });
+  await new Promise<void>(resolve => proxy.listen(0, '127.0.0.1', resolve));
+  const proxyPort = (proxy.address() as net.AddressInfo).port;
+
+  const client = await connectClient(await createConnection({
+    browser: { remoteEndpoint: `ws://127.0.0.1:${proxyPort}${wsUrl.pathname}` },
+    outputDir: testInfo.outputPath('output'),
+  }));
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    page: expect.stringContaining(`Page URL: ${server.HELLO_WORLD}`),
+  });
+  expect(openConnections).toBe(1);
+
+  // The factory attached to this browser instead of launching it, so closing
+  // the browser on dispose only drops the connection the factory made while
+  // the browser server keeps running. Skipping the close would leak that
+  // connection for as long as the server stays up.
+  await client.callTool({ name: 'browser_close', arguments: {} });
+  await expect.poll(() => openConnections).toBe(0);
+
+  // The external browser survived the disconnect.
+  const probe = await playwright[browserName].connect(browserServer.wsEndpoint());
+  expect(probe.isConnected()).toBe(true);
+  await probe.close();
+
+  await client.close();
+  await new Promise<void>(resolve => proxy.close(() => resolve()));
+  await browserServer.close();
 });
 
 function browserForProject(mcpBrowser: string | undefined): { browserName: 'chromium' | 'firefox' | 'webkit', channel: string | undefined } {
