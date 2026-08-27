@@ -148,7 +148,6 @@ export type BeforeActionTraceEvent = {
   class: string;
   method: string;
   params: Record<string, any>;
-  stepId?: string;
   stack?: StackFrame[];
   parentId?: string;
   group?: string;

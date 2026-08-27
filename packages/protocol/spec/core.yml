@@ -23,14 +23,12 @@ Metadata:
         column: int?
     title: string?
     internal: boolean?
-    # Test runner step id.
-    stepId: string?
     timeout: float?
 
 ClientSideCallMetadata:
   type: object
   properties:
-    id: int
+    id: string
     stack:
       type: array?
       items: StackFrame
