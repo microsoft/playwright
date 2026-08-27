@@ -22,7 +22,7 @@ import { TeleSuiteUpdater, type TeleSuiteUpdaterProgress, type TeleSuiteUpdaterT
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import { SplitView } from '@web/components/splitView';
-import type { SourceLocation } from '@isomorphic/trace/traceModel';
+import type { SourceLocation, TraceModel } from '@isomorphic/trace/traceModel';
 import './uiModeView.css';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
@@ -125,6 +125,7 @@ export const UIModeView: React.FC<{}> = ({
   const [settingsVisible, setSettingsVisible] = React.useState(false);
   const [testingOptionsVisible, setTestingOptionsVisible] = React.useState(false);
   const [revealSource, setRevealSource] = React.useState(false);
+  const [traceModel, setTraceModel] = React.useState<TraceModel | undefined>();
   const onRevealSource = React.useCallback(() => setRevealSource(true), [setRevealSource]);
 
   const [singleWorker, setSingleWorker] = useSetting<boolean>('single-worker', false);
@@ -479,6 +480,7 @@ export const UIModeView: React.FC<{}> = ({
           <TraceView
             pathSeparator={queryParams.pathSeparator}
             item={selectedItem}
+            onModelChange={setTraceModel}
             rootDir={testModel?.config?.rootDir}
             revealSource={revealSource}
             onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
@@ -565,7 +567,7 @@ export const UIModeView: React.FC<{}> = ({
           />
           <div className='section-title'>Settings</div>
         </Toolbar>
-        {settingsVisible && <DefaultSettingsView location='ui-mode' />}
+        {settingsVisible && <DefaultSettingsView location='ui-mode' model={traceModel} />}
       </div>
       }
     />

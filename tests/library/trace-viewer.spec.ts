@@ -2236,6 +2236,34 @@ test('should display aria mode', async ({ runAndTrace, page }) => {
   await expect(traceViewer.snapshotContainer).toBeVisible();
 });
 
+test('should disable aria setting when there are no aria snapshots', async ({ runAndTrace, page }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent('<!DOCTYPE html><button>Click me</button>');
+    await page.locator('button').click();
+  }, { snapshots: { dom: true } });
+
+  await traceViewer.selectAction('Click');
+  await expect(traceViewer.snapshotContainer).toBeVisible();
+
+  await traceViewer.showSettings();
+  await expect(traceViewer.displayAriaSetting).toBeDisabled();
+  await expect(traceViewer.displayAriaSetting).toBeChecked({ checked: false });
+});
+
+test('should force aria mode when there are no dom snapshots', async ({ runAndTrace, page }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent('<!DOCTYPE html><button>Click me</button>');
+    await page.locator('button').click();
+  }, { snapshots: { aria: true, screen: true } });
+
+  await traceViewer.selectAction('Click');
+  await expect(traceViewer.page.locator('.aria-mode-view')).toContainText('button "Click me"');
+
+  await traceViewer.showSettings();
+  await expect(traceViewer.displayAriaSetting).toBeDisabled();
+  await expect(traceViewer.displayAriaSetting).toBeChecked({ checked: true });
+});
+
 test('should render blob trace received from message', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(undefined, { host: 'localhost' });
 

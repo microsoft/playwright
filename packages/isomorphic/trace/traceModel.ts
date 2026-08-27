@@ -80,6 +80,8 @@ export class TraceModel {
   readonly errorDescriptors: ErrorDescription[];
   readonly hasSource: boolean;
   readonly hasStepData: boolean;
+  readonly hasDomSnapshots: boolean;
+  readonly hasAriaSnapshots: boolean;
   readonly sdkLanguage: Language | undefined;
   readonly testIdAttributeName: string | undefined;
   readonly sources: Map<string, SourceModel>;
@@ -131,6 +133,8 @@ export class TraceModel {
         this._ariaSnapshots.set(`${event.callId}/${event.phase}`, event);
       this.videos.push(...(context.videos || []));
     }
+    this.hasDomSnapshots = this.actions.some(action => !!action.beforeSnapshot || !!action.afterSnapshot || !!action.inputSnapshot);
+    this.hasAriaSnapshots = !!this._screenshots.size || !!this._ariaSnapshots.size;
     this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, callId: action.callId, traceUri })) ?? []);
     this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
 
