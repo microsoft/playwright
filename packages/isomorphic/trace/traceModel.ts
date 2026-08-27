@@ -288,8 +288,6 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
   return result;
 }
 
-let lastTmpStepId = 0;
-
 function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionEntry[] {
   const map = new Map<string, ActionEntry>();
 
@@ -311,37 +309,31 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionE
   }
 
   for (const context of libraryContexts) {
-    for (const action of context.actions) {
-      // Never merge stepless events.
-      map.set(action.stepId || `tmp-step@${++lastTmpStepId}`, { ...action });
-    }
+    for (const action of context.actions)
+      map.set(action.callId, { ...action });
   }
 
-  const nonPrimaryIdToPrimaryId = new Map<string, string>();
   for (const context of testRunnerContexts) {
     for (const action of context.actions) {
-      const existing = action.stepId && map.get(action.stepId);
-      if (existing) {
-        nonPrimaryIdToPrimaryId.set(action.callId, existing.callId);
-        if (action.error)
-          existing.error = action.error;
-        if (action.attachments)
-          existing.attachments = action.attachments;
-        if (action.annotations)
-          existing.annotations = action.annotations;
-        if (action.parentId)
-          existing.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
-        if (action.group)
-          existing.group = action.group;
-        // For the events that are present in the test runner context, always take
-        // their time from the test runner context to preserve client side order.
-        existing.startTime = action.startTime;
-        existing.endTime = action.endTime;
+      const existing = map.get(action.callId);
+      if (!existing) {
+        map.set(action.callId, { ...action });
         continue;
       }
+      if (action.error)
+        existing.error = action.error;
+      if (action.attachments)
+        existing.attachments = action.attachments;
+      if (action.annotations)
+        existing.annotations = action.annotations;
       if (action.parentId)
-        action.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
-      map.set(action.stepId || `tmp-step@${++lastTmpStepId}`, { ...action });
+        existing.parentId = action.parentId;
+      if (action.group)
+        existing.group = action.group;
+      // For the events that are present in the test runner context, always take
+      // their time from the test runner context to preserve client side order.
+      existing.startTime = action.startTime;
+      existing.endTime = action.endTime;
     }
   }
   return [...map.values()];

@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import { defaultCallId, parseClientSideCallMetadata } from './traceUtils';
+
+import type { SerializedStack } from './traceUtils';
 import type * as trace from './trace';
 import type * as traceV3 from './versions/traceV3';
 import type * as traceV4 from './versions/traceV4';
@@ -46,6 +49,7 @@ export class TraceModernizer {
   private _consoleObjects = new Map<string, { type: string, text: string, location: { url: string, lineNumber: number, columnNumber: number }, args?: { preview: string, value: string }[] }>();
   private _apiRequestRef: string | undefined;
   private _snapshotPhases = new Map<string, trace.ActionPhase>();
+  private _legacyCallIdToStepId = new Map<string, string>();
 
   constructor(contextEntry: ContextEntry, snapshotStorage: SnapshotStorage) {
     this._contextEntry = contextEntry;
@@ -55,6 +59,18 @@ export class TraceModernizer {
   appendTrace(trace: string) {
     for (const line of trace.split('\n'))
       this._appendEvent(line);
+  }
+
+  appendStacks(stacks: string) {
+    const data = JSON.parse(stacks);
+    const normalized: SerializedStack[] = data.stacks.map(([id, ...rest]: any) => {
+      // Transform legacy numeric call ids into string ids.
+      const callId = typeof id === 'number' ? defaultCallId(id) : id;
+      return [this._legacyCallIdToStepId.get(callId) ?? callId, ...rest];
+    });
+    const callMetadata = parseClientSideCallMetadata({ files: data.files, stacks: normalized });
+    for (const action of this._actionMap.values())
+      action.stack = action.stack || callMetadata.get(action.callId);
   }
 
   actions(): ActionEntry[] {
@@ -469,6 +485,21 @@ export class TraceModernizer {
 
   _modernize_8_to_9(events: traceV8.TraceEvent[]): trace.TraceEvent[] {
     for (const event of events) {
+      // The library and the test runner used to mint their own id for the same call and reconcile
+      // them through a `stepId` side-channel. Now they share a single id - adopt the step id as the
+      // call id, remembering the mapping for the ids that `appendStacks` will see.
+      if (event.type === 'before' || event.type === 'action') {
+        if (event.stepId && event.stepId !== event.callId)
+          this._legacyCallIdToStepId.set(event.callId, event.stepId);
+        delete event.stepId;
+        if (event.parentId)
+          event.parentId = this._legacyCallIdToStepId.get(event.parentId) ?? event.parentId;
+      }
+      if (event.type === 'before' || event.type === 'input' || event.type === 'after' || event.type === 'action' || event.type === 'log')
+        event.callId = this._legacyCallIdToStepId.get(event.callId) ?? event.callId;
+      if (event.type === 'frame-snapshot')
+        event.snapshot.callId = this._legacyCallIdToStepId.get(event.snapshot.callId) ?? event.snapshot.callId;
+
       // Actions used to point at their snapshots by name, now snapshots know their own phase.
       if (event.type === 'before' || event.type === 'input' || event.type === 'after' || event.type === 'action') {
         const action = event as traceV8.ActionTraceEvent;

@@ -20,6 +20,7 @@ import { isUnderTest } from '@utils/debug';
 import { debugLogger } from '@utils/debugLogger';
 import { emptyZone } from '@utils/zones';
 import { ValidationError, findValidator, maybeFindValidator } from '@protocol/validator';
+import { defaultCallId } from '@isomorphic/trace/traceUtils';
 import { EventEmitter } from './eventEmitter';
 import { Android, AndroidDevice, AndroidSocket } from './android';
 import { Artifact } from './artifact';
@@ -73,8 +74,8 @@ export type ChannelOwnerFactory = (parent: ChannelOwner, type: string, guid: str
 export class Connection extends EventEmitter {
   readonly _objects = new Map<string, ChannelOwner>();
   onmessage = (message: object): void => {};
-  private _lastId = 0;
-  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, signal: AbortSignal | undefined, title: string | undefined, type: string, method: string }>();
+  private _lastOrdinal = 0;
+  private _callbacks = new Map<string, { resolve: (a: any) => void, reject: (a: Error) => void, signal: AbortSignal | undefined, title: string | undefined, type: string, method: string }>();
   private _rootObject: Root;
   private _closedError: Error | undefined;
   private _isRemote = false;
@@ -175,7 +176,7 @@ export class Connection extends EventEmitter {
       this._tracingCount--;
   }
 
-  async sendMessageToServer(object: ChannelOwner, method: string, params: any, options: { apiName?: string, title?: string, internal?: boolean, frames?: channels.StackFrame[], stepId?: string, signal?: AbortSignal, timeout: number }): Promise<any> {
+  async sendMessageToServer(object: ChannelOwner, method: string, params: any, options: { apiName?: string, title?: string, internal?: boolean, frames?: channels.StackFrame[], callId?: string, signal?: AbortSignal, timeout: number }): Promise<any> {
     // Fire-and-forget: server intentionally never replies to __waitInfo__,
     // so silently drop it after the connection is closed or the object was collected.
     if (method === '__waitInfo__' && (this._closedError || object._wasCollected))
@@ -191,14 +192,14 @@ export class Connection extends EventEmitter {
 
     const guid = object._guid;
     const type = object._type;
-    const id = ++this._lastId;
+    const id = options.callId ?? defaultCallId(++this._lastOrdinal);
     const message = { id, guid, method, params };
     if (debugLogger.isEnabled('channel')) {
       // Do not include metadata in debug logs to avoid noise.
       debugLogger.log('channel', 'SEND> ' + JSON.stringify(message));
     }
     const location = options.frames?.[0] ? { file: options.frames[0].file, line: options.frames[0].line, column: options.frames[0].column } : undefined;
-    const metadata: channels.Metadata = { title: options.title, location, internal: options.internal, stepId: options.stepId, timeout: options.timeout };
+    const metadata: channels.Metadata = { title: options.title, location, internal: options.internal, timeout: options.timeout };
     if (this._tracingCount && options.frames && type !== 'LocalUtils')
       this._localUtils?.addStackToTracingNoReply({ callData: { stack: options.frames ?? [], id } }).catch(() => {});
     // We need to exit zones before calling into the server, otherwise
