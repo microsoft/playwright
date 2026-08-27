@@ -296,10 +296,10 @@ const StepTreeItem: React.FC<{
       aria-label='contains attachment'>
       {icons.indirectAttachment()}
     </span>}
-    <span className='step-duration'>
+    <span className='step-waterfall'>
       <span className='step-waterfall-block' style={waterfallBlockStyle(step, waterfall)}></span>
-      <span className='step-duration-text'>{msToString(step.duration)}</span>
     </span>
+    <span className='step-duration'>{msToString(step.duration)}</span>
   </div>} loadChildren={step.steps.length || step.snippet ? () => {
     const snippet = step.snippet ? [<CodeSnippet testId='test-snippet' key='line' code={step.snippet} />] : [];
     const steps = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} filterText={filterText} waterfall={waterfall} />);
