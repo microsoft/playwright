@@ -26,7 +26,7 @@ import { stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
 import type { Writable } from 'stream';
-import type { ChromeTraceReporterOptions } from '../../types/test';
+import type { PerfettoReporterOptions } from '../../types/test';
 import type { FullConfig, FullResult, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 
 type TraceEvent = {
@@ -57,7 +57,7 @@ const kStatusColors: Record<string, string> = {
 const kProcessId = 1;
 const kRunThreadId = 0;
 
-class ChromeTraceReporter implements ReporterV2 {
+class PerfettoReporter implements ReporterV2 {
   private _config!: FullConfig;
   private _suite!: Suite;
   private _resolvedOutputFile: string;
@@ -65,11 +65,11 @@ class ChromeTraceReporter implements ReporterV2 {
   private _laneEndTime = new Map<number, number>();
   private _globalErrors: { error: TestError, timestamp: number }[] = [];
 
-  constructor(options: ChromeTraceReporterOptions & CommonReporterOptions) {
-    this._resolvedOutputFile = resolveOutputFile('CHROME_TRACE', {
+  constructor(options: PerfettoReporterOptions & CommonReporterOptions) {
+    this._resolvedOutputFile = resolveOutputFile('PERFETTO', {
       ...options,
       default: {
-        fileName: 'chrome-trace.json',
+        fileName: 'perfetto.json',
         outputDir: 'test-results',
       },
     })!.outputFile;
@@ -339,4 +339,4 @@ function concatChunks(chunks: (string | Buffer)[]): string {
   return chunks.map(chunk => typeof chunk === 'string' ? chunk : chunk.toString('utf8')).join('');
 }
 
-export default ChromeTraceReporter;
+export default PerfettoReporter;

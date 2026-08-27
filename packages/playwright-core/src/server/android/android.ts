@@ -467,7 +467,7 @@ export class AndroidDevice extends SdkObject {
     const procs = (await this._backend.runCommand(`shell:ps -A | grep ${pid}`)).toString().split('\n');
     for (const proc of procs) {
       const match = proc.match(/[^\s]+\s+(\d+).*$/);
-      if (!match)
+      if (!match || Number(match[1]) !== pid)
         continue;
       pkg = proc.substring(proc.lastIndexOf(' ') + 1);
     }

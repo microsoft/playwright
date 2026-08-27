@@ -31,7 +31,7 @@ type TraceEvent = {
   args?: any;
 };
 
-function readTrace(baseDir: string, fileName: string = 'test-results/chrome-trace.json') {
+function readTrace(baseDir: string, fileName: string = 'test-results/perfetto.json') {
   const file = path.join(baseDir, fileName);
   const content = fileName.endsWith('.gz') ? zlib.gunzipSync(fs.readFileSync(file)).toString('utf8') : fs.readFileSync(file, 'utf8');
   return JSON.parse(content) as {
@@ -74,8 +74,8 @@ const testFiles = {
   `,
 };
 
-test('should write a chrome tracing report', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest(testFiles, { reporter: 'chrome-trace' });
+test('should write a perfetto report', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest(testFiles, { reporter: 'perfetto' });
   expect(result.exitCode).toBe(1);
 
   const report = readTrace(testInfo.outputPath());
@@ -121,7 +121,7 @@ test('should write a chrome tracing report', async ({ runInlineTest }, testInfo)
 });
 
 test('should nest steps within the test slice', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest(testFiles, { reporter: 'chrome-trace' });
+  const result = await runInlineTest(testFiles, { reporter: 'perfetto' });
   expect(result.exitCode).toBe(1);
 
   const events = slices(readTrace(testInfo.outputPath()).traceEvents);
@@ -165,7 +165,7 @@ test('should use a lane per worker', async ({ runInlineTest }, testInfo) => {
       import { test, expect } from '@playwright/test';
       test('two', async ({}) => { await new Promise(f => setTimeout(f, 500)); });
     `,
-  }, { reporter: 'chrome-trace', workers: 2 });
+  }, { reporter: 'perfetto', workers: 2 });
   expect(result.exitCode).toBe(0);
 
   const events = readTrace(testInfo.outputPath()).traceEvents;
@@ -185,7 +185,7 @@ test('should report attachment files', async ({ runInlineTest }, testInfo) => {
         await test.info().attach('file', { path: file });
       });
     `,
-  }, { reporter: 'chrome-trace' });
+  }, { reporter: 'perfetto' });
   expect(result.exitCode).toBe(0);
 
   const one = findSlice(readTrace(testInfo.outputPath()).traceEvents, 'one')!;
@@ -204,7 +204,7 @@ test('should report step params', async ({ runInlineTest }, testInfo) => {
         await test.step('my step', async () => {}, { params: { foo: 'bar', count: 7 } });
       });
     `,
-  }, { reporter: 'chrome-trace' });
+  }, { reporter: 'perfetto' });
   expect(result.exitCode).toBe(0);
 
   const events = slices(readTrace(testInfo.outputPath()).traceEvents);
@@ -218,7 +218,7 @@ test('should report step params', async ({ runInlineTest }, testInfo) => {
 test('should respect outputFile option', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { reporter: [['chrome-trace', { outputFile: 'reports/my-trace.json' }]] };
+      module.exports = { reporter: [['perfetto', { outputFile: 'reports/my-trace.json' }]] };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -232,7 +232,7 @@ test('should respect outputFile option', async ({ runInlineTest }, testInfo) => 
 test('should gzip the report when output file ends with .gz', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { reporter: [['chrome-trace', { outputFile: 'chrome-trace.json.gz' }]] };
+      module.exports = { reporter: [['perfetto', { outputFile: 'perfetto.json.gz' }]] };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -241,18 +241,18 @@ test('should gzip the report when output file ends with .gz', async ({ runInline
   });
   expect(result.exitCode).toBe(0);
 
-  const gzipped = fs.readFileSync(testInfo.outputPath('chrome-trace.json.gz'));
+  const gzipped = fs.readFileSync(testInfo.outputPath('perfetto.json.gz'));
   expect(gzipped.subarray(0, 2)).toEqual(Buffer.from([0x1f, 0x8b]));
-  expect(findSlice(readTrace(testInfo.outputPath(), 'chrome-trace.json.gz').traceEvents, 'one')).toBeTruthy();
+  expect(findSlice(readTrace(testInfo.outputPath(), 'perfetto.json.gz').traceEvents, 'one')).toBeTruthy();
 });
 
-test('should respect PLAYWRIGHT_CHROME_TRACE_OUTPUT_FILE', async ({ runInlineTest }, testInfo) => {
+test('should respect PLAYWRIGHT_PERFETTO_OUTPUT_FILE', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('one', async ({}) => {});
     `,
-  }, { reporter: 'chrome-trace' }, { PLAYWRIGHT_CHROME_TRACE_OUTPUT_FILE: testInfo.outputPath('env-trace.json') });
+  }, { reporter: 'perfetto' }, { PLAYWRIGHT_PERFETTO_OUTPUT_FILE: testInfo.outputPath('env-trace.json') });
   expect(result.exitCode).toBe(0);
   expect(findSlice(readTrace(testInfo.outputPath(), 'env-trace.json').traceEvents, 'one')).toBeTruthy();
 });
@@ -265,7 +265,7 @@ test('should report retries as separate slices', async ({ runInlineTest }, testI
         expect(testInfo.retry).toBe(1);
       });
     `,
-  }, { reporter: 'chrome-trace', retries: 1 });
+  }, { reporter: 'perfetto', retries: 1 });
   expect(result.exitCode).toBe(0);
 
   const flaky = slices(readTrace(testInfo.outputPath()).traceEvents).filter(e => e.name === 'flaky');
@@ -283,7 +283,7 @@ test('should report global errors as instant events', async ({ runInlineTest }, 
     'b.test.ts': `
       throw new Error('Oh my!');
     `,
-  }, { reporter: 'chrome-trace' });
+  }, { reporter: 'perfetto' });
   expect(result.exitCode).toBe(1);
 
   const errors = readTrace(testInfo.outputPath()).traceEvents.filter(e => e.ph === 'i');
