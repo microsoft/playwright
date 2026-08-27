@@ -875,7 +875,9 @@ test('should not let style text break out of the style element', async ({ page, 
     await page.evaluate(() => {
       const style = document.createElement('style');
       style.textContent = 'div{color:rgb(1, 2, 3)}</style><img src=x onerror="window.__pwned = true">';
-      document.body.append(style, document.createElement('div'));
+      const div = document.createElement('div');
+      div.textContent = 'hello';
+      document.body.append(style, div);
     });
     await page.locator('body').click();
   });
