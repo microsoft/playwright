@@ -159,7 +159,7 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
   return {
     events,
     resources,
-    actions: actionObjects.map(a => iso.renderTitleForCall({ ...a, type: a.class })),
+    actions: actionObjects.map(a => iso.renderFullTitleForCall({ ...a, type: a.class })),
     actionObjects,
     stacks,
   };

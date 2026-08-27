@@ -507,6 +507,8 @@ Dialog:
 
     accept:
       title: Accept dialog
+      renderParams:
+      - promptText
       parameters:
         promptText: string?
 

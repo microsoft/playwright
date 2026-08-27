@@ -208,7 +208,7 @@ test('should report step params', async ({ runInlineTest }, testInfo) => {
   expect(result.exitCode).toBe(0);
 
   const events = slices(readTrace(testInfo.outputPath()).traceEvents);
-  expect(findSlice(events, 'Navigate to "about:blank"')!.args.params).toEqual({ url: 'about:blank' });
+  expect(findSlice(events, 'Navigate about:blank')!.args.params).toEqual({ url: 'about:blank' });
   expect(findSlice(events, 'Set content')!.args.params).toBe(undefined);
   expect(findSlice(events, `Click getByRole('button')`)!.args.params).toEqual({ locator: `getByRole('button')` });
   expect(findSlice(events, `Expect "toBeVisible" getByRole('button')`)!.args.params).toEqual({ locator: `getByRole('button')` });

@@ -160,7 +160,7 @@ class PerfettoReporter implements ReporterV2 {
     const startMs = clamp(stepStart, parentStart, parentEnd);
     const endMs = clamp(step.duration >= 0 ? stepStart + step.duration : parentEnd, startMs, parentEnd);
     this._events.push({
-      name: step.title,
+      name: step.subtitle ? `${step.title} ${step.subtitle}` : step.title,
       cat: step.category,
       ph: 'X',
       ts: startMs,

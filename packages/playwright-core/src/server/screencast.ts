@@ -15,7 +15,7 @@
  */
 
 import { LongStandingScope } from '@isomorphic/manualPromise';
-import { renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { renderFullTitleForCall } from '@isomorphic/protocolFormatter';
 import { debugLogger } from '@utils/debugLogger';
 import { Page } from './page';
 import { nullProgress } from './progress';
@@ -169,7 +169,7 @@ export class Screencast implements InstrumentationListener {
     if (!box && (sdkObject instanceof ElementHandle))
       box = await sdkObject.boundingBox(nullProgress) || undefined;
 
-    const actionTitle = renderTitleForCall(progress.metadata);
+    const actionTitle = renderFullTitleForCall(progress.metadata, this.page.browserContext._browser.sdkLanguage());
     const utility = await progress.race(page.mainFrame().utilityContext());
 
     // Run this outside of the progress timer.

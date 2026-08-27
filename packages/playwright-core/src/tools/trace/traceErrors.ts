@@ -16,7 +16,7 @@
 
 /* eslint-disable no-console */
 
-import { loadTrace, actionTitle } from './traceUtils';
+import { loadTrace, actionFullTitle } from './traceUtils';
 
 export async function traceErrors() {
   const trace = await loadTrace();
@@ -29,7 +29,7 @@ export async function traceErrors() {
 
   for (const error of model.errorDescriptors) {
     if (error.action) {
-      const title = actionTitle(error.action);
+      const title = actionFullTitle(error.action);
       console.log(`\n  ✗ ${title}`);
     } else {
       console.log(`\n  ✗ Error`);

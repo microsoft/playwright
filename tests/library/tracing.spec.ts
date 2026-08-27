@@ -42,14 +42,14 @@ test('should collect trace with resources, but no js', async ({ context, page, s
   const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
   expect(events[0].type).toBe('context-options');
   expect(actions).toEqual([
-    'Navigate to "/frames/frame.html"',
+    'Navigate /frames/frame.html',
     'Set content',
-    'Click',
+    `Click locator('text="Click"')`,
     'Mouse move',
     'Double click',
     'Insert "abc"',
-    'Navigate to "/input/fileupload.html"',
-    'Set input files',
+    'Navigate /input/fileupload.html',
+    `Set input files locator('input[type="file"]')`,
     'Wait for timeout',
     'Close page',
   ]);
@@ -85,9 +85,9 @@ test('should use the correct title for event driven callbacks', async ({ context
   expect(events[0].type).toBe('context-options');
   expect(actions).toEqual([
     'Route requests',
-    'Navigate to "/empty.html"',
+    'Navigate /empty.html',
     'Continue request',
-    'Navigate to "/grid.html"',
+    'Navigate /grid.html',
     'Evaluate',
     'Reload',
     'Evaluate',
@@ -222,14 +222,14 @@ test('should record context API request trace independently', async ({ context, 
   await context.request.tracing.stop({ path: apiTracePath });
 
   const browserTrace = await parseTraceRaw(browserTracePath);
-  expect(browserTrace.actions).toContain('Navigate to "/one-style.html"');
-  expect(browserTrace.actions).not.toContain('POST "/simple.json"');
+  expect(browserTrace.actions).toContain('Navigate /one-style.html');
+  expect(browserTrace.actions).not.toContain('POST /simple.json');
   expect(browserTrace.events.some(event => event.type === 'resource-snapshot' && event.snapshot.request.url.endsWith('/simple.json'))).toBe(false);
   expect(browserTrace.events.some(event => event.type === 'resource-snapshot' && event.snapshot.request.url.endsWith('/one-style.html'))).toBe(true);
 
   const apiTrace = await parseTraceRaw(apiTracePath);
-  expect(apiTrace.actions).toContain('POST "/simple.json"');
-  expect(apiTrace.actions).not.toContain('Navigate to "/one-style.html"');
+  expect(apiTrace.actions).toContain('POST /simple.json');
+  expect(apiTrace.actions).not.toContain('Navigate /one-style.html');
   const apiAction = apiTrace.actionObjects.find(action => action.class === 'APIRequestContext' && action.method === 'fetch')!;
   expect(relativeStack(apiAction, apiTrace.stacks)).toEqual(['tracing.spec.ts']);
   expect(apiTrace.events.filter(event => event.type === 'resource-snapshot').map(event => event.snapshot.request.url)).toEqual([apiURL]);
@@ -252,9 +252,9 @@ test('should collect two traces', async ({ context, page, server }, testInfo) =>
     const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace1.zip'));
     expect(events[0].type).toBe('context-options');
     expect(actions).toEqual([
-      'Navigate to "/empty.html"',
+      'Navigate /empty.html',
       'Set content',
-      'Click',
+      `Click locator('text="Click"')`,
     ]);
   }
 
@@ -262,7 +262,7 @@ test('should collect two traces', async ({ context, page, server }, testInfo) =>
     const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace2.zip'));
     expect(events[0].type).toBe('context-options');
     expect(actions).toEqual([
-      'Double click',
+      `Double click locator('text="Click"')`,
       'Close page',
     ]);
   }
@@ -296,7 +296,7 @@ test('should respect tracesDir and name', async ({ browserType, server, mode }, 
 
   {
     const { resources, actions } = await parseTraceRaw(testInfo.outputPath('trace1.zip'));
-    expect(actions).toEqual(['Navigate to "/one-style.html"']);
+    expect(actions).toEqual(['Navigate /one-style.html']);
     expect(resourceNames(resources)).toEqual([
       'resources/XXX.css',
       'resources/XXX.html',
@@ -308,7 +308,7 @@ test('should respect tracesDir and name', async ({ browserType, server, mode }, 
 
   {
     const { resources, actions } = await parseTraceRaw(testInfo.outputPath('trace2.zip'));
-    expect(actions).toEqual(['Navigate to "/har.html"']);
+    expect(actions).toEqual(['Navigate /har.html']);
     expect(resourceNames(resources)).toEqual([
       'resources/XXX.css',
       'resources/XXX.html',
@@ -549,7 +549,7 @@ test('should include interrupted actions', async ({ context, page, server }, tes
   await context.close();
 
   const { actions } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
-  expect(actions).toContain('Click');
+  expect(actions).toContain(`Click locator('text="ClickNoButton"')`);
 });
 
 test('should throw when starting with different options', async ({ context }) => {
@@ -590,8 +590,8 @@ test('should work with multiple chunks', async ({ context, page, server }, testI
   expect(trace1.events[0].type).toBe('context-options');
   expect(trace1.actions).toEqual([
     'Set content',
-    'Click',
-    'Click',
+    `Click locator('text="Click"')`,
+    `Click locator('text="ClickNoButton"')`,
     'Evaluate',
   ]);
   expect(trace1.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
@@ -600,7 +600,7 @@ test('should work with multiple chunks', async ({ context, page, server }, testI
   const trace2 = await parseTraceRaw(testInfo.outputPath('trace2.zip'));
   expect(trace2.events[0].type).toBe('context-options');
   expect(trace2.actions).toEqual([
-    'Hover',
+    `Hover locator('text="Click"')`,
   ]);
   expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
   expect(trace2.events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'))).toBeTruthy();
@@ -648,7 +648,7 @@ test('should ignore iframes in head', async ({ context, page, server }, testInfo
   await context.tracing.stopChunk({ path: testInfo.outputPath('trace.zip') });
 
   const trace = await parseTraceRaw(testInfo.outputPath('trace.zip'));
-  expect(trace.actions).toEqual(['Click']);
+  expect(trace.actions).toEqual([`Click locator('button')`]);
   expect(trace.events.find(e => e.type === 'frame-snapshot')).toBeTruthy();
   expect(trace.events.find(e => e.type === 'frame-snapshot' && JSON.stringify(e.snapshot.html).includes('IFRAME'))).toBeFalsy();
 });

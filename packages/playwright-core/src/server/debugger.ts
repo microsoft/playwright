@@ -15,7 +15,7 @@
  */
 
 import { getMetainfo } from '@isomorphic/protocolMetainfo';
-import { renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { renderFullTitleForCall } from '@isomorphic/protocolFormatter';
 import { monotonicTime } from '@isomorphic/time';
 import { SdkObject } from './instrumentation';
 import { BrowserContext } from './browserContext';
@@ -201,7 +201,7 @@ export class Debugger extends SdkObject<DebuggerEventMap> implements Instrumenta
         continue;
       updates.push({
         id: call.metadata.id,
-        title: renderTitleForCall(call.metadata) ?? '',
+        title: renderFullTitleForCall(call.metadata, this._context._browser.sdkLanguage()) ?? '',
         location: call.metadata.location,
         newLogEntries: call.metadata.log.slice(call.sentLogCount),
         actionPoint: call.actionPoint,

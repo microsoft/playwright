@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { renderFullTitleForCall } from '@isomorphic/protocolFormatter';
 import { Dispatcher } from './dispatcher';
 import { Debugger } from '../debugger';
 
@@ -46,14 +46,14 @@ export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerCh
     const details = this._object.pausedDetails();
     if (!details)
       return undefined;
-    const { metadata } = details;
+    const { metadata, sdkObject } = details;
     return {
       location: {
         file: metadata.location?.file ?? '<unknown>',
         line: metadata.location?.line,
         column: metadata.location?.column,
       },
-      title: renderTitleForCall(metadata),
+      title: renderFullTitleForCall(metadata, sdkObject.attribution.playwright.options.sdkLanguage),
     };
   }
 

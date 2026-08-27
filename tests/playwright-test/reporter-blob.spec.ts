@@ -1263,7 +1263,7 @@ test('preserve step params', async ({ runInlineTest, mergeReports }) => {
       class ParamsReporter {
         onStepEnd(test, result, step) {
           if (step.category === 'test.step' || step.title.startsWith('Navigate'))
-            console.log('%%' + step.title + ' | ' + JSON.stringify(step.params));
+            console.log('%%' + (step.subtitle ? step.title + ' ' + step.subtitle : step.title) + ' | ' + JSON.stringify(step.params));
         }
       }
       module.exports = ParamsReporter;
@@ -1285,7 +1285,7 @@ test('preserve step params', async ({ runInlineTest, mergeReports }) => {
   const { exitCode, outputLines } = await mergeReports(reportDir, undefined, { additionalArgs: ['--reporter', './params-reporter.js'] });
   expect(exitCode).toBe(0);
   expect(outputLines).toEqual([
-    `Navigate to "about:blank" | {"url":"about:blank"}`,
+    `Navigate about:blank | {"url":"about:blank"}`,
     `my step | {"foo":"bar","count":7}`,
   ]);
 });

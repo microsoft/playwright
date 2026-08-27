@@ -536,7 +536,9 @@ function relativeTestPath(screen: Screen, config: FullConfig, test: TestCase): s
 }
 
 export function stepSuffix(step: TestStep | undefined) {
-  const stepTitles = step ? step.titlePath() : [];
+  const stepTitles: string[] = [];
+  for (let current = step; current; current = current.parent)
+    stepTitles.unshift(current.subtitle ? `${current.title} ${current.subtitle}` : current.title);
   return stepTitles.map(t => t.split('\n')[0]).map(t => ' › ' + t).join('');
 }
 

@@ -136,7 +136,7 @@ Expected: visible
 Error: element(s) not found
 
 Call log:
-  - Expect "toBeVisible" with timeout 5000ms
+  - Expect "toBeVisible" locator('span') with timeout 5000ms
   - waiting for locator('span')
   - operation was aborted: stop it`);
 });

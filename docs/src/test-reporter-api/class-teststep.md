@@ -104,7 +104,24 @@ The list of files or buffers attached in the step execution through [`method: Te
 * since: v1.10
 - type: <[string]>
 
-User-friendly test step title.
+User-friendly test step title, for example `Click` or `Navigate`.
+
+## property: TestStep.subtitle
+* since: v1.63
+- type: ?<[string]>
+
+User-friendly test step subtitle that complements the title, when available. For Playwright API
+calls, it is the target locator or the navigation url. For example, a `Click` step has the clicked
+locator as a subtitle. User interfaces typically render the subtitle next to the title or on a
+separate line.
+
+```js
+// title `Click`, subtitle `getByRole('button')`
+await page.getByRole('button').click();
+
+// title `Navigate`, subtitle `/index.html`
+await page.goto('https://example.com/index.html');
+```
 
 ## method: TestStep.titlePath
 * since: v1.10

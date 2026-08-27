@@ -17,12 +17,10 @@
 /* eslint-disable no-console */
 
 import { buildActionTree } from '@isomorphic/trace/traceModel';
-import { asLocatorDescription } from '@isomorphic/locatorGenerators';
 import { msToString } from '@isomorphic/formatUtils';
-import { loadTrace, formatTimestamp, actionTitle } from './traceUtils';
+import { loadTrace, formatTimestamp, actionFullTitle, actionSubtitle, actionTitle } from './traceUtils';
 
 import type { ActionEntry } from '@isomorphic/trace/entries';
-import type { Language } from '@isomorphic/locatorGenerators';
 
 export async function traceActions(options: { grep?: string, errorsOnly?: boolean }) {
   const trace = await loadTrace();
@@ -38,12 +36,12 @@ export async function traceActions(options: { grep?: string, errorsOnly?: boolea
     const ts = formatTimestamp(action.startTime, trace.model.startTime);
     const duration = action.endTime ? msToString(action.endTime - action.startTime) : 'running';
     const title = actionTitle(action);
-    const locator = actionLocator(action);
+    const subtitle = actionSubtitle(action);
     const error = action.error ? '  ✗' : '';
     const prefix = `  ${(ordinal + '.').padStart(4)} ${ts}  ${indent}`;
     console.log(`${prefix}${title.padEnd(Math.max(1, 55 - indent.length))} ${duration.padStart(8)}${error}`);
-    if (locator)
-      console.log(`${' '.repeat(prefix.length)}${locator}`);
+    if (subtitle)
+      console.log(`${' '.repeat(prefix.length)}${subtitle}`);
     for (const child of item.children)
       visit(child, indent + '  ');
   };
@@ -55,15 +53,11 @@ function filterActions(actions: ActionEntry[], options: { grep?: string, errorsO
   let result = actions.filter(a => a.group !== 'configuration');
   if (options.grep) {
     const pattern = new RegExp(options.grep, 'i');
-    result = result.filter(a => pattern.test(actionTitle(a)) || pattern.test(actionLocator(a) || ''));
+    result = result.filter(a => pattern.test(actionFullTitle(a)));
   }
   if (options.errorsOnly)
     result = result.filter(a => !!a.error);
   return result;
-}
-
-function actionLocator(action: ActionEntry, sdkLanguage?: Language): string | undefined {
-  return action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
 }
 
 export async function traceAction(actionId: string) {
@@ -75,7 +69,7 @@ export async function traceAction(actionId: string) {
     return;
   }
 
-  const title = actionTitle(action);
+  const title = actionFullTitle(action);
   console.log(`\n  ${title}\n`);
 
   // Time

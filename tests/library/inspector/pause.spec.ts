@@ -276,7 +276,7 @@ it.describe('pause', () => {
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause({ __testHookKeepTestTimeout: true });  // 2")');
     expect(await sanitizeLog(recorderPage)).toEqual([
       'Pause- XXms',
-      'Click(page.locator(\'button\'))- XXms',
+      'Click locator(\'button\')- XXms',
       'Pause',
     ]);
     await recorderPage.click('[title="Resume (F8)"]');
@@ -324,8 +324,8 @@ it.describe('pause', () => {
     await recorderPage.waitForSelector('.source-line-paused:has-text("page.pause({ __testHookKeepTestTimeout: true });  // 2")');
     expect(await sanitizeLog(recorderPage)).toEqual([
       'Pause- XXms',
-      'Expect "toHaveText"(page.locator(\'button\'))- XXms',
-      'Expect "not toHaveText"(page.locator(\'button\'))- XXms',
+      'Expect "toHaveText" locator(\'button\')- XXms',
+      'Expect "not toHaveText" locator(\'button\')- XXms',
       'Pause',
     ]);
     await recorderPage.click('[title="Resume (F8)"]');
@@ -368,7 +368,7 @@ it.describe('pause', () => {
     expect(await sanitizeLog(recorderPage)).toEqual([
       'Pause- XXms',
       'Wait for event "console"- XXms',
-      'Click(page.getByRole(\'button\', { name: \'Submit\' }))- XXms',
+      'Click getByRole(\'button\', { name: \'Submit\' })- XXms',
       'Pause',
     ]);
     await recorderPage.click('[title="Resume (F8)"]');
@@ -387,7 +387,7 @@ it.describe('pause', () => {
     await recorderPage.waitForSelector('.source-line-error-underline');
     expect(await sanitizeLog(recorderPage)).toEqual([
       'Pause- XXms',
-      'Is checked(page.getByRole(\'button\'))- XXms',
+      'Is checked getByRole(\'button\')- XXms',
       'waiting for getByRole(\'button\')',
       'error: Error: Not a checkbox or radio button',
     ]);
@@ -407,8 +407,8 @@ it.describe('pause', () => {
     await recorderPage.waitForSelector('.source-line-error-underline');
     expect(await sanitizeLog(recorderPage)).toEqual([
       'Pause- XXms',
-      'Expect "toHaveText"(page.getByRole(\'button\'))- XXms',
-      'Expect "toHaveText" with timeout 1ms',
+      'Expect "toHaveText" getByRole(\'button\')- XXms',
+      'Expect "toHaveText" getByRole(\'button\') with timeout 1ms',
       'waiting for getByRole(\'button\')',
       'error: Expect failed',
     ]);

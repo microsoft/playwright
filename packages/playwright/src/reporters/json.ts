@@ -231,6 +231,7 @@ class JSONReporter implements ReporterV2 {
     const steps = step.steps.filter(s => s.category === 'test.step');
     return {
       title: step.title,
+      subtitle: step.subtitle,
       duration: step.duration,
       error: step.error,
       steps: steps.length ? steps.map(s => this._serializeTestStep(s)) : undefined,

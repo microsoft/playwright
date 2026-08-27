@@ -135,6 +135,7 @@ export type BeforeActionTraceEvent = {
   callId: string;
   startTime: number;
   title?: string;
+  subtitle?: string;
   class: string;
   method: string;
   params: Record<string, any>;

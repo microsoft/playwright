@@ -77,7 +77,8 @@ export default class MyReporter implements Reporter {
       location = formatLocation(step.location);
     const skip = step.annotations?.find(a => a.type === 'skip');
     const skipped = skip?.description ? ' (skipped: ' + skip.description + ')' : skip ? ' (skipped)' : '';
-    console.log(formatPrefix(step.category) + indent + step.title + location + skipped);
+    const title = step.subtitle ? step.title + ' ' + step.subtitle : step.title;
+    console.log(formatPrefix(step.category) + indent + title + location + skipped);
     if (step.error) {
       const errorLocation = this.printErrorLocation ? formatLocation(step.error.location) : '';
       console.log(formatPrefix(step.category) + indent + '↪ error: ' + this.trimError(step.error.message!) + errorLocation);
@@ -1001,12 +1002,12 @@ pw:api    |    Create context
 fixture   |  Fixture "page"
 pw:api    |    Create page
 expect    |Expect "toPass" @ a.test.ts:11
-pw:api    |  Navigate to "about:blank" @ a.test.ts:6
+pw:api    |  Navigate about:blank @ a.test.ts:6
 test.step |  inner step attempt: 0 @ a.test.ts:7
 test.step |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 expect    |    Expect "toBe" @ a.test.ts:9
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-pw:api    |  Navigate to "about:blank" @ a.test.ts:6
+pw:api    |  Navigate about:blank @ a.test.ts:6
 test.step |  inner step attempt: 1 @ a.test.ts:7
 expect    |    Expect "toBe" @ a.test.ts:9
 hook      |After Hooks
@@ -1053,12 +1054,12 @@ pw:api    |    Create context
 fixture   |  Fixture "page"
 pw:api    |    Create page
 expect    |Expect "poll toHaveLength" @ a.test.ts:14
-pw:api    |  Navigate to "about:blank" @ a.test.ts:7
+pw:api    |  Navigate about:blank @ a.test.ts:7
 test.step |  inner step attempt: 0 @ a.test.ts:8
 expect    |    Expect "toBe" @ a.test.ts:10
 expect    |  Expect "toHaveLength" @ a.test.ts:6
 expect    |  ↪ error: Error: expect(received).toHaveLength(expected)
-pw:api    |  Navigate to "about:blank" @ a.test.ts:7
+pw:api    |  Navigate about:blank @ a.test.ts:7
 test.step |  inner step attempt: 1 @ a.test.ts:8
 expect    |    Expect "toBe" @ a.test.ts:10
 expect    |  Expect "toHaveLength" @ a.test.ts:6
@@ -1246,12 +1247,12 @@ pw:api    |    Create page
 fixture   |  Fixture "request"
 pw:api    |    Create request context
 pw:api    |Wait for navigation @ a.test.ts:5
-pw:api    |Navigate to "data:" @ a.test.ts:6
+pw:api    |Navigate data: @ a.test.ts:6
 pw:api    |Click locator('button') @ a.test.ts:8
 pw:api    |Click getByRole('button') @ a.test.ts:9
-pw:api    |GET "/empty.html" @ a.test.ts:10
+pw:api    |GET /empty.html @ a.test.ts:10
 pw:api    |↪ error: <error message>
-pw:api    |GET "/empty.html" @ a.test.ts:11
+pw:api    |GET /empty.html @ a.test.ts:11
 pw:api    |↪ error: <error message>
 hook      |After Hooks
 fixture   |  Fixture "request"
@@ -1463,7 +1464,7 @@ fixture   |  Fixture "context"
 pw:api    |    Create context
 fixture   |  Fixture "page"
 pw:api    |    Create page
-pw:api    |Navigate to "/empty.html" @ a.test.ts:4
+pw:api    |Navigate /empty.html @ a.test.ts:4
 pw:api    |Set content @ a.test.ts:5
 test.step |custom step @ a.test.ts:6
 pw:api    |  Wait for event "response" @ a.test.ts:7
@@ -1510,7 +1511,7 @@ fixture   |  Fixture "page"
 pw:api    |    Create page
 pw:api    |Wait for event "request" @ a.test.ts:5
 pw:api    |Wait for event "response" @ a.test.ts:6
-pw:api    |Navigate to "/empty.html" @ a.test.ts:7
+pw:api    |Navigate /empty.html @ a.test.ts:7
 hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
@@ -1553,8 +1554,8 @@ pw:api    |    Create context
 fixture   |  Fixture "page"
 pw:api    |    Create page
 test.step |custom step @ a.test.ts:4
-pw:api    |  Navigate to "/empty.html" @ a.test.ts:12
-pw:api    |  GET "/empty.html" @ a.test.ts:6
+pw:api    |  Navigate /empty.html @ a.test.ts:12
+pw:api    |  GET /empty.html @ a.test.ts:6
 expect    |  Expect "toBe" @ a.test.ts:8
 hook      |After Hooks
 fixture   |  Fixture "page"
@@ -1844,10 +1845,10 @@ pw:api    |    Create page
 fixture   |  Fixture "bar" @ a.test.ts:4
 pw:api    |    Set content @ a.test.ts:14
 test.step |    inner step @ a.test.ts:15
-pw:api    |      Navigate to "data:" @ a.test.ts:16
+pw:api    |      Navigate data: @ a.test.ts:16
 pw:api    |  Set content @ a.test.ts:22
 test.step |  inner step @ a.test.ts:23
-pw:api    |    Navigate to "data:" @ a.test.ts:24
+pw:api    |    Navigate data: @ a.test.ts:24
 expect    |Expect "toBeVisible" locator('body') @ a.test.ts:32
 expect    |Expect "toBe" @ a.test.ts:33
 expect    |Expect "toBe" @ a.test.ts:34
@@ -1869,7 +1870,7 @@ test('should report step params', async ({ runInlineTest }) => {
       export default class MyReporter implements Reporter {
         onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
           if (step.location?.file.endsWith('a.test.ts'))
-            console.log('%%' + step.category + ' | ' + step.title + ' | ' + JSON.stringify(step.params));
+            console.log('%%' + step.category + ' | ' + step.title + ' | ' + step.subtitle + ' | ' + JSON.stringify(step.params));
         }
       }
     `,
@@ -1890,11 +1891,11 @@ test('should report step params', async ({ runInlineTest }) => {
 
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual([
-    `pw:api | Navigate to "about:blank" | {"url":"about:blank"}`,
-    `pw:api | Set content | undefined`,
-    `pw:api | Click getByRole('button') | {"locator":"getByRole('button')"}`,
-    `expect | Expect "toBeVisible" getByRole('button') | {"locator":"getByRole('button')"}`,
-    `test.step | my step | {"foo":"bar","count":7}`,
+    `pw:api | Navigate | about:blank | {"url":"about:blank"}`,
+    `pw:api | Set content | undefined | undefined`,
+    `pw:api | Click | getByRole('button') | {"locator":"getByRole('button')"}`,
+    `expect | Expect "toBeVisible" | getByRole('button') | {"locator":"getByRole('button')"}`,
+    `test.step | my step | undefined | {"foo":"bar","count":7}`,
   ]);
 });
 
@@ -1905,7 +1906,7 @@ test('should report input step params', async ({ runInlineTest }) => {
       export default class MyReporter implements Reporter {
         onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
           if (step.location?.file.endsWith('a.test.ts'))
-            console.log('%%' + step.title + ' | ' + JSON.stringify(step.params));
+            console.log('%%' + (step.subtitle ? step.title + ' ' + step.subtitle : step.title) + ' | ' + JSON.stringify(step.params));
         }
       }
     `,

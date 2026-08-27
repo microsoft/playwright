@@ -64,7 +64,7 @@ Timeout: 1000ms
 Error: element(s) not found
 
 Call log:
-  - Expect "toBeVisible" with timeout 1000ms
+  - Expect "toBeVisible" getByRole('button', { name: 'Missing' }) with timeout 1000ms
   - waiting for getByRole('button', { name: 'Missing' })
 
 
@@ -183,7 +183,7 @@ Timeout: 1000ms
 Error: element(s) not found
 
 Call log:
-  - Expect "toBeVisible" with timeout 1000ms
+  - Expect "toBeVisible" getByRole('button', { name: 'Missing' }) with timeout 1000ms
   - waiting for getByRole('button', { name: 'Missing' })
 
 

@@ -66,6 +66,12 @@ Page:
 
     emulateMedia:
       title: Emulate media
+      renderParams:
+      - media
+      - colorScheme
+      - reducedMotion
+      - forcedColors
+      - contrast
       parameters:
         media:
           type: enum?
@@ -139,6 +145,7 @@ Page:
 
     registerLocatorHandler:
       title: Register locator handler
+      subtitle: '{selector}'
       parameters:
         selector: string
         noWaitAfter: boolean?
@@ -169,6 +176,7 @@ Page:
 
     expectScreenshot:
       title: Expect screenshot
+      subtitle: '{locator.selector}'
       parameters:
         expected: binary?
         isNot: boolean
@@ -206,6 +214,9 @@ Page:
 
     screenshot:
       title: Screenshot
+      renderParams:
+      - type
+      - fullPage
       parameters:
         type:
           type: enum?
@@ -261,6 +272,9 @@ Page:
 
     setViewportSize:
       title: Set viewport size
+      renderParams:
+      - viewportSize.width
+      - viewportSize.height
       parameters:
         viewportSize:
           type: object
@@ -273,6 +287,8 @@ Page:
 
     keyboardDown:
       title: Key down "{key}"
+      renderParams:
+      - key
       parameters:
         key: string
       flags:
@@ -283,6 +299,8 @@ Page:
 
     keyboardUp:
       title: Key up "{key}"
+      renderParams:
+      - key
       parameters:
         key: string
       flags:
@@ -293,6 +311,8 @@ Page:
 
     keyboardInsertText:
       title: Insert "{text}"
+      renderParams:
+      - text
       parameters:
         text: string
       flags:
@@ -303,6 +323,8 @@ Page:
 
     keyboardType:
       title: Type "{text}"
+      renderParams:
+      - text
       parameters:
         text: string
         delay: float?
@@ -314,6 +336,8 @@ Page:
 
     keyboardPress:
       title: Press "{key}"
+      renderParams:
+      - key
       parameters:
         key: string
         delay: float?
@@ -325,6 +349,9 @@ Page:
 
     mouseMove:
       title: Mouse move
+      renderParams:
+      - x
+      - y
       parameters:
         x: float
         y: float
@@ -337,6 +364,9 @@ Page:
 
     mouseDown:
       title: Mouse down
+      renderParams:
+      - button
+      - clickCount
       parameters:
         button:
           type: enum?
@@ -353,6 +383,9 @@ Page:
 
     mouseUp:
       title: Mouse up
+      renderParams:
+      - button
+      - clickCount
       parameters:
         button:
           type: enum?
@@ -369,6 +402,11 @@ Page:
 
     mouseClick:
       title: Click
+      renderParams:
+      - x
+      - y
+      - button
+      - clickCount
       parameters:
         x: float
         y: float
@@ -388,6 +426,9 @@ Page:
 
     mouseWheel:
       title: Mouse wheel
+      renderParams:
+      - deltaX
+      - deltaY
       parameters:
         deltaX: float
         deltaY: float
@@ -399,6 +440,9 @@ Page:
 
     touchscreenTap:
       title: Tap
+      renderParams:
+      - x
+      - y
       parameters:
         x: float
         y: float

@@ -273,7 +273,7 @@ export class TestTracing {
     });
   }
 
-  appendBeforeActionForStep(options: { stepId: string, parentId?: string, title: string, category: TestStepCategory, params?: Record<string, any>, stack: StackFrame[], group?: string }) {
+  appendBeforeActionForStep(options: { stepId: string, parentId?: string, title: string, subtitle?: string, category: TestStepCategory, params?: Record<string, any>, stack: StackFrame[], group?: string }) {
     this._appendTraceEvent({
       type: 'before',
       callId: options.stepId,
@@ -283,6 +283,7 @@ export class TestTracing {
       class: 'Test',
       method: options.category,
       title: options.title,
+      subtitle: options.subtitle,
       params: Object.fromEntries(Object.entries(options.params || {}).map(([name, value]) => [name, generatePreview(value)])),
       stack: options.stack,
       group: options.group,

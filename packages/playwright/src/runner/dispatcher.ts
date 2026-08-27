@@ -399,6 +399,7 @@ class JobDispatcher {
     const parentStep = params.parentStepId ? steps.get(params.parentStepId) : undefined;
     const step: TestStep = {
       title: params.title,
+      subtitle: params.subtitle,
       titlePath: () => {
         const parentPath = parentStep?.titlePath() || [];
         return [...parentPath, params.title];

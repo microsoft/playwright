@@ -15,12 +15,24 @@
  */
 
 import { getMetainfo } from './protocolMetainfo';
+import { asLocatorDescription } from './locatorGenerators';
 
-export function formatProtocolParam(params: Record<string, string> | undefined, alternatives: string): string | undefined {
-  return _formatProtocolParam(params, alternatives)?.replaceAll('\n', '\\n');
+import type { Language } from './locatorGenerators';
+
+export type CallMetainfo = {
+  type: string;
+  method: string;
+  params?: Record<string, any>;
+  // Pre-rendered overrides, take precedence over the protocol templates.
+  title?: string;
+  subtitle?: string;
+};
+
+export function formatProtocolParam(params: Record<string, any> | undefined, alternatives: string, sdkLanguage?: Language): string | undefined {
+  return _formatProtocolParam(params, alternatives, sdkLanguage)?.replaceAll('\n', '\\n');
 }
 
-function _formatProtocolParam(params: Record<string, string> | undefined, alternatives: string): string | undefined {
+function _formatProtocolParam(params: Record<string, any> | undefined, alternatives: string, sdkLanguage?: Language): string | undefined {
   if (!params)
     return undefined;
 
@@ -44,8 +56,11 @@ function _formatProtocolParam(params: Record<string, string> | undefined, altern
     }
 
     const value = deepParam(params, name);
-    if (value !== undefined)
-      return value;
+    if (value === undefined)
+      continue;
+    if (name === 'selector' || name.endsWith('.selector'))
+      return asLocatorDescription(sdkLanguage ?? 'javascript', value);
+    return value;
   }
 }
 
@@ -62,15 +77,91 @@ function deepParam(params: Record<string, any>, name: string): string | undefine
   return String(current);
 }
 
-export function renderTitleForCall(metadata: { title?: string, type: string, method: string, params: Record<string, string> | undefined }) {
+export function renderTitleForCall(metadata: CallMetainfo, sdkLanguage?: Language): string {
   const titleFormat = metadata.title ?? getMetainfo(metadata)?.title ?? metadata.method;
   return titleFormat.replace(/\{([^}]+)\}/g, (fullMatch, p1) => {
-    return formatProtocolParam(metadata.params, p1) ?? fullMatch;
+    return formatProtocolParam(metadata.params, p1, sdkLanguage) ?? fullMatch;
   });
+}
+
+export function renderSubtitleForCall(metadata: CallMetainfo, sdkLanguage?: Language): string | undefined {
+  const subtitleFormat = metadata.subtitle ?? getMetainfo(metadata)?.subtitle;
+  if (subtitleFormat === undefined)
+    return undefined;
+  let allParamsResolved = true;
+  const subtitle = subtitleFormat.replace(/\{([^}]+)\}/g, (fullMatch, p1) => {
+    const param = formatProtocolParam(metadata.params, p1, sdkLanguage);
+    if (param === undefined)
+      allParamsResolved = false;
+    return param ?? fullMatch;
+  });
+  return allParamsResolved ? subtitle : undefined;
+}
+
+export function renderFullTitleForCall(metadata: CallMetainfo, sdkLanguage?: Language): string {
+  const title = renderTitleForCall(metadata, sdkLanguage);
+  const subtitle = renderSubtitleForCall(metadata, sdkLanguage);
+  return subtitle ? `${title} ${subtitle}` : title;
 }
 
 export type ActionGroup = 'configuration' | 'route' | 'getter';
 
 export function getActionGroup(metadata: { type: string, method: string }) {
   return getMetainfo(metadata)?.group as undefined | ActionGroup;
+}
+
+const kMaxParamLength = 200;
+
+// Curated per-call parameters, defined by the "renderParams" lists in protocol.yml. Only the
+// arguments that say what the call actually did are reported, and only when they are
+// bounded in size: page content, evaluated expressions, request bodies and the like are
+// never reported, and neither are options that repeat their default on every call.
+export function renderParamsForCall(metadata: CallMetainfo, sdkLanguage?: Language): Record<string, any> | undefined {
+  if (!metadata.params)
+    return undefined;
+  const result: Record<string, any> = {};
+  const locator = renderLocator(metadata.params.selector, sdkLanguage);
+  if (locator !== undefined)
+    result.locator = locator;
+  for (const entry of getMetainfo(metadata)?.renderParams ?? []) {
+    const { key, value } = renderParamEntry(metadata.params, entry, sdkLanguage);
+    if (value !== undefined)
+      result[key] = value;
+  }
+  return Object.keys(result).length ? result : undefined;
+}
+
+// Each entry is "[key=]path[:selector]": a dotted path into the call params, reported
+// under the last path segment unless an explicit key is given, with selector values
+// rendered as locators.
+function renderParamEntry(params: Record<string, any>, entry: string, sdkLanguage?: Language): { key: string, value: any } {
+  const [spec, format] = entry.split(':');
+  const eqIndex = spec.indexOf('=');
+  const path = eqIndex === -1 ? spec : spec.slice(eqIndex + 1);
+  const key = eqIndex === -1 ? path.split('.').pop()! : spec.slice(0, eqIndex);
+  let value: any = params;
+  for (const token of path.split('.')) {
+    if (typeof value !== 'object' || value === null) {
+      value = undefined;
+      break;
+    }
+    value = value[token];
+  }
+  if (value === undefined)
+    return { key, value };
+  if (format === 'selector')
+    return { key, value: renderLocator(value, sdkLanguage) };
+  if (typeof value === 'string')
+    return { key, value: truncateParam(value) };
+  return { key, value };
+}
+
+function renderLocator(selector: any, sdkLanguage?: Language): string | undefined {
+  if (typeof selector !== 'string')
+    return undefined;
+  return truncateParam(asLocatorDescription(sdkLanguage ?? 'javascript', selector));
+}
+
+export function truncateParam(value: string): string {
+  return value.length > kMaxParamLength ? value.substring(0, kMaxParamLength) + '…' : value;
 }

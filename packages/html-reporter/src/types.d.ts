@@ -119,6 +119,7 @@ export type TestResult = {
 
 export type TestStep = {
   title: string;
+  subtitle?: string;
   startTime: string;
   duration: number;
   location?: Location;

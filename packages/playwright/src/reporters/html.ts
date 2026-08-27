@@ -669,6 +669,7 @@ class HtmlBuilder {
       title = `${title} (skipped${skipped.description ? ': ' + skipped.description : ''})`;
     const testStep: TestStep = {
       title,
+      subtitle: step.subtitle,
       startTime: step.startTime.toISOString(),
       duration,
       steps: dedupeSteps(step.steps).map(s => this._createTestStep(s, result)),
@@ -774,7 +775,7 @@ function dedupeSteps(steps: api.TestStep[]) {
   for (const step of steps) {
     const canDedupe = !step.error && step.duration >= 0 && step.location?.file && !step.steps.length;
     const lastStep = lastResult?.step;
-    if (canDedupe && lastResult && lastStep && step.category === lastStep.category && step.title === lastStep.title && step.location?.file === lastStep.location?.file && step.location?.line === lastStep.location?.line && step.location?.column === lastStep.location?.column) {
+    if (canDedupe && lastResult && lastStep && step.category === lastStep.category && step.title === lastStep.title && step.subtitle === lastStep.subtitle && step.location?.file === lastStep.location?.file && step.location?.line === lastStep.location?.line && step.location?.column === lastStep.location?.column) {
       ++lastResult.count;
       lastResult.duration += step.duration;
       continue;

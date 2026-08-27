@@ -69,6 +69,10 @@
   background: var(--color-attention-subtle);
 }
 
+.step-subtitle {
+  color: var(--color-fg-muted);
+}
+
 .step-spacer {
   flex: auto;
 }

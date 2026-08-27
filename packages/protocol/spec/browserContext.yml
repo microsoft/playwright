@@ -169,6 +169,8 @@ BrowserContext:
 
     setOffline:
       title: Set offline mode
+      renderParams:
+      - offline
       parameters:
         offline: boolean
 
