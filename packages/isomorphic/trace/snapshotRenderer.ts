@@ -79,11 +79,7 @@ export class SnapshotRenderer {
     const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined, parentAttrs: [string, string][] | undefined) => {
       // Text node.
       if (typeof n === 'string') {
-        // Style text is hoisted into an attribute below, so emit it verbatim.
-        if (parentTag?.toUpperCase() === 'STYLE')
-          result.push(n);
-        else
-          result.push(escapeHTML(n));
+        result.push(escapeHTML(n));
         return;
       }
 
@@ -163,11 +159,9 @@ export class SnapshotRenderer {
           result.push(' ', attrName, '="', escapeHTMLAttribute(attrValue), '"');
         }
         if (upperName === 'STYLE') {
-          const contentStart = result.length;
-          for (const child of children)
-            visit(child, snapshotIndex, nodeName, attrs);
-          const styleContent = rewriteURLsInStyleSheetForCustomProtocol(result.splice(contentStart).join(''));
-          result.push(' __playwright_style_content__="', escapeHTMLAttribute(styleContent), '"></', nodeName, '>');
+          // Style has always exactly one child which is a text node.
+          const styleContent = typeof children[0] === 'string' ? children[0] : '';
+          result.push(' __playwright_style_content__="', escapeHTMLAttribute(rewriteURLsInStyleSheetForCustomProtocol(styleContent)), '"></', nodeName, '>');
           return;
         }
         result.push('>');
