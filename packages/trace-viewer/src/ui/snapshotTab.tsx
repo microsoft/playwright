@@ -35,7 +35,7 @@ import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
 import yaml from 'yaml';
 import { PlaybackButtons } from './playbackControl';
 import type { PlaybackState } from './playbackControl';
-import { AriaModeView, collectAriaModeTargets } from './ariaModeView';
+import { AriaModeView, collectAriaModeTargets, shouldDisplayAriaMode } from './ariaModeView';
 
 export type HighlightedElement = {
   locator?: string,
@@ -57,7 +57,8 @@ export const SnapshotTabsView: React.FunctionComponent<{
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
   const [shouldPopulateCanvasFromScreenshot] = useSetting('shouldPopulateCanvasFromScreenshot', false);
-  const [displayAriaMode] = useSetting('displayAriaMode', false);
+  const [displayAriaModeSetting] = useSetting('displayAriaMode', false);
+  const displayAriaMode = shouldDisplayAriaMode(model, displayAriaModeSetting);
 
   const snapshots = React.useMemo(() => {
     return collectSnapshots(action);

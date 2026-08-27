@@ -36,6 +36,14 @@ export type AriaModeTargets = {
   after?: AriaModeTarget;
 };
 
+export function canToggleAriaMode(model: TraceModel | undefined): boolean {
+  return !!model?.hasDomSnapshots && !!model?.hasAriaSnapshots;
+}
+
+export function shouldDisplayAriaMode(model: TraceModel | undefined, setting: boolean): boolean {
+  return canToggleAriaMode(model) ? setting : !!model?.hasAriaSnapshots;
+}
+
 // Mirrors the fallback logic in collectSnapshots(), but for screenshot / aria-snapshot events.
 export function collectAriaModeTargets(model: TraceModel, action: ActionTraceEvent | undefined): AriaModeTargets {
   if (!action)

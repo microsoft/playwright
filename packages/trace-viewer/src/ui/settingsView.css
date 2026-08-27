@@ -64,3 +64,11 @@
   align-items: center;
   justify-content: center;
 }
+
+.settings-view .setting-disabled {
+  opacity: 0.5;
+}
+
+.settings-view .setting-disabled label {
+  cursor: default;
+}

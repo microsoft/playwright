@@ -15,12 +15,14 @@
  */
 
 import * as React from 'react';
+import { clsx } from '@web/uiUtils';
 import './settingsView.css';
 
 export type Setting<Value extends string = string> = {
   name: string;
   title?: string;
   count?: number;
+  disabled?: boolean;
 } & ({
   type: 'check',
   value: boolean;
@@ -41,7 +43,7 @@ export const SettingsView = <Value extends string>(
         const labelId = `setting-${setting.name.replaceAll(/\s+/g, '-')}`;
 
         return (
-          <div key={setting.name} className={`setting setting-${setting.type}`} title={setting.title}>
+          <div key={setting.name} className={clsx('setting', `setting-${setting.type}`, setting.disabled && 'setting-disabled')} title={setting.title}>
             {renderSetting(setting, labelId)}
           </div>
         );
@@ -59,6 +61,7 @@ const renderSetting = <Value extends string>(setting: Setting<Value>, labelId: s
             type='checkbox'
             id={labelId}
             checked={setting.value}
+            disabled={setting.disabled}
             onChange={() => setting.set(!setting.value)}
           />
           <label htmlFor={labelId}>{setting.name}{!!setting.count && <span className='setting-counter'>{setting.count}</span>}</label>
@@ -68,7 +71,7 @@ const renderSetting = <Value extends string>(setting: Setting<Value>, labelId: s
       return (
         <>
           <label htmlFor={labelId}>{setting.name}:{!!setting.count && <span className='setting-counter'>{setting.count}</span>}</label>
-          <select id={labelId} value={setting.value} onChange={e => setting.set(e.target.value as Value)}>
+          <select id={labelId} value={setting.value} disabled={setting.disabled} onChange={e => setting.set(e.target.value as Value)}>
             {setting.options.map(option => (
               <option key={option.value} value={option.value}>
                 {option.label}
