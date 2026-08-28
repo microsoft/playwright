@@ -26,6 +26,8 @@ import { TestServer } from '../config/testserver';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 const { createHttp2Server } = utils;
 
+const kLoopbackAddress = /^(127\.0\.0\.1|\[::1\]|::1)$/;
+
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string } & Partial<Pick<BrowserContextOptions['recordHar'], 'content' | 'omitContent' | 'mode'>> = {}) {
   const harPath = testInfo.outputPath(options.outputPath || 'test.har');
   const context = await contextFactory({ recordHar: { path: harPath, ...options }, ignoreHTTPSErrors: true });
@@ -631,7 +633,7 @@ it('should have connection details', async ({ contextFactory, server, browserNam
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
   const { serverIPAddress, _serverPort: port, _securityDetails: securityDetails } = log.entries[0];
-  expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
+  expect(serverIPAddress).toMatch(kLoopbackAddress);
   expect(port).toBe(server.PORT);
   expect(securityDetails).toEqual({});
 });
@@ -649,7 +651,7 @@ it('should have security details', async ({ contextFactory, httpsServer, browser
   const log = await getLog();
   expect(log.entries).toHaveLength(1);
   const { serverIPAddress, _serverPort: port, _securityDetails: securityDetails } = log.entries[0];
-  expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
+  expect(serverIPAddress).toMatch(kLoopbackAddress);
   expect(port).toBe(httpsServer.PORT);
   if (browserName === 'webkit')
     expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
@@ -674,12 +676,12 @@ it('should have connection details for redirects', async ({ contextFactory, serv
     expect(detailsFoo.serverIPAddress).toBeUndefined();
     expect(detailsFoo._serverPort).toBeUndefined();
   } else {
-    expect(detailsFoo.serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
+    expect(detailsFoo.serverIPAddress).toMatch(kLoopbackAddress);
     expect(detailsFoo._serverPort).toBe(server.PORT);
   }
 
   const detailsEmpty = log.entries[1];
-  expect(detailsEmpty.serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
+  expect(detailsEmpty.serverIPAddress).toMatch(kLoopbackAddress);
   expect(detailsEmpty._serverPort).toBe(server.PORT);
 });
 
@@ -692,14 +694,14 @@ it('should have connection details for failed requests', async ({ contextFactory
   await page.goto(server.PREFIX + '/one-style.html');
   const log = await getLog();
   const { serverIPAddress, _serverPort: port } = log.entries[0];
-  expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
+  expect(serverIPAddress).toMatch(kLoopbackAddress);
   expect(port).toBe(server.PORT);
 });
 
 it('should return server address directly from response', async ({ page, server, mode }) => {
   const response = await page.goto(server.EMPTY_PAGE);
   const { ipAddress, port } = (await response!.serverAddr())!;
-  expect(ipAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
+  expect(ipAddress).toMatch(kLoopbackAddress);
   expect(port).toBe(server.PORT);
 });
 
