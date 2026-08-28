@@ -112,10 +112,11 @@ export type ScreencastFrameTraceEvent = {
 
 export type VideoTraceEvent = {
   type: 'video',
+  pageId: string,
   file: string,
   width: number,
   height: number,
-  timestampOrigin: number,
+  timestamp: number,
 };
 
 export type ActionPhase = 'before' | 'action' | 'after';
@@ -124,6 +125,8 @@ export type ScreenshotTraceEvent = {
   type: 'screenshot',
   callId: string,
   phase: ActionPhase,
+  pageId: string,
+  timestamp: number,
   file: string,
 };
 
@@ -131,6 +134,8 @@ export type AriaSnapshotTraceEvent = {
   type: 'aria-snapshot',
   callId: string,
   phase: ActionPhase,
+  pageId: string,
+  timestamp: number,
   file: string,
 };
 

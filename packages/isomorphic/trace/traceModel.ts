@@ -368,7 +368,11 @@ function adjustMonotonicTime(context: ContextEntry, monotonicTimeDelta: number) 
       frame.timestamp += monotonicTimeDelta;
   }
   for (const video of context.videos || [])
-    video.timestampOrigin += monotonicTimeDelta;
+    video.timestamp += monotonicTimeDelta;
+  for (const screenshot of context.screenshots || [])
+    screenshot.timestamp += monotonicTimeDelta;
+  for (const ariaSnapshot of context.ariaSnapshots || [])
+    ariaSnapshot.timestamp += monotonicTimeDelta;
   for (const resource of context.resources) {
     if (resource._monotonicTime)
       resource._monotonicTime += monotonicTimeDelta;

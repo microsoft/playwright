@@ -511,7 +511,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const file = `screenshots/${progress.metadata.id}-${phase}.png`;
     this._state.chunkFiles.add(file);
     this._appendResource(file, buffer);
-    this._appendTraceEvent({ type: 'screenshot', callId: progress.metadata.id, phase, file });
+    this._appendTraceEvent({ type: 'screenshot', callId: progress.metadata.id, phase, pageId: page.guid, timestamp: monotonicTime(), file });
   }
 
   private async _captureAriaSnapshot(progress: Progress, page: Page, phase: trace.ActionPhase): Promise<void> {
@@ -522,7 +522,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const file = `aria/${progress.metadata.id}-${phase}.json`;
     this._state.chunkFiles.add(file);
     this._appendResource(file, buffer);
-    this._appendTraceEvent({ type: 'aria-snapshot', callId: progress.metadata.id, phase, file });
+    this._appendTraceEvent({ type: 'aria-snapshot', callId: progress.metadata.id, phase, pageId: page.guid, timestamp: monotonicTime(), file });
   }
 
   onBeforeCall(progress: Progress, sdkObject: SdkObject, parentId?: string) {

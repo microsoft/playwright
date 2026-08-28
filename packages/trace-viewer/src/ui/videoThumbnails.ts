@@ -102,7 +102,7 @@ async function generateThumbnails(entry: CacheEntry, video: trace.VideoTraceEven
       if (!frame)
         continue;
       entry.thumbnails.push({
-        timestamp: video.timestampOrigin + time * 1000,
+        timestamp: video.timestamp + time * 1000,
         url: URL.createObjectURL(frame),
         width,
         height,
