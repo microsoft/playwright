@@ -1062,6 +1062,7 @@ scheme.BrowserTypeConnectOverCDPParams = tObject({
   slowMo: tOptional(tFloat),
   isLocal: tOptional(tBoolean),
   noDefaults: tOptional(tBoolean),
+  isWebView: tOptional(tBoolean),
   artifactsDir: tOptional(tString),
   transport: tOptional(tBinary),
 });

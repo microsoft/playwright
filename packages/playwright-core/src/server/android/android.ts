@@ -329,10 +329,10 @@ export class AndroidDevice extends SdkObject {
     const webView = this._webViews.get(socketName);
     if (!webView)
       throw new Error('WebView has been closed');
-    return await this._connectToBrowser(progress, socketName);
+    return await this._connectToBrowser(progress, socketName, {}, /* isWebView */ true);
   }
 
-  private async _connectToBrowser(progress: Progress, socketName: string, options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
+  private async _connectToBrowser(progress: Progress, socketName: string, options: types.BrowserContextOptions = {}, isWebView?: boolean): Promise<BrowserContext> {
     const socket = await this._waitForLocalAbstract(progress, socketName);
     try {
       const androidBrowser = new AndroidBrowser(this, socket);
@@ -363,6 +363,7 @@ export class AndroidDevice extends SdkObject {
         protocolLogger: helper.debugProtocolLogger(),
         browserLogsCollector: new RecentLogsCollector(),
         originalLaunchOptions: {},
+        isWebView,
       };
       validateBrowserContextOptions(options, browserOptions);
 

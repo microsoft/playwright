@@ -65,6 +65,7 @@ export type BrowserOptions = {
   originalLaunchOptions: types.LaunchOptions;
   userDataDir?: string;
   noDefaults?: boolean;
+  isWebView?: boolean;
 };
 
 export abstract class Browser extends SdkObject {

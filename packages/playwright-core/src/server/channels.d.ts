@@ -1951,6 +1951,7 @@ export type BrowserTypeConnectOverCDPParams = {
   slowMo?: number,
   isLocal?: boolean,
   noDefaults?: boolean,
+  isWebView?: boolean,
   artifactsDir?: string,
   transport?: Binary,
 };
@@ -1960,6 +1961,7 @@ export type BrowserTypeConnectOverCDPOptions = {
   slowMo?: number,
   isLocal?: boolean,
   noDefaults?: boolean,
+  isWebView?: boolean,
   artifactsDir?: string,
   transport?: Binary,
 };
