@@ -26,7 +26,7 @@ import type { HarTracerDelegate } from './harTracer';
 import type { Page } from '../page';
 import type { NameValue } from '@isomorphic/types';
 import type * as channels from '../channels';
-import type * as har from '@trace/har';
+import type * as har from '@isomorphic/trace/versions/har';
 
 export class HarRecorder implements HarTracerDelegate {
   private _context: BrowserContext | APIRequestContext;

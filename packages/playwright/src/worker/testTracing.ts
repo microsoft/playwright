@@ -29,7 +29,7 @@ import { filteredStackTrace } from '@utils/stackTrace';
 import type { TestStepCategory, TestInfoImpl } from './testInfo';
 import type { PlaywrightWorkerOptions, TestInfo, TestInfoError, TraceMode } from '../../types/test';
 import type { StackFrame } from '@utils/stackTrace';
-import type * as trace from '@trace/trace';
+import type * as trace from '@isomorphic/trace/trace';
 import type EventEmitter from 'events';
 
 export type Attachment = TestInfo['attachments'][0];

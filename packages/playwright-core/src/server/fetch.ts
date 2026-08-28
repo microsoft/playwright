@@ -45,7 +45,7 @@ import type { HeadersArray, ProxySettings } from './types';
 import type { HttpCredentials } from '@protocol/structs';
 import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as channels from './channels';
-import type * as har from '@trace/har';
+import type * as har from '@isomorphic/trace/versions/har';
 import type { LookupAddress } from 'dns';
 import type { Readable, TransformCallback } from 'stream';
 

@@ -24,7 +24,7 @@ import { resolveWithinRoot } from '@utils/fileUtils';
 import { DirTraceLoaderBackend, extractTrace } from './traceParser';
 
 import type { ActionEntry } from '@isomorphic/trace/entries';
-import type { ActionPhase } from '@trace/trace';
+import type { ActionPhase } from '@isomorphic/trace/trace';
 
 const traceDir = path.join('.playwright-cli', 'trace');
 const cliOutputDir = '.playwright-cli';

@@ -17,7 +17,7 @@
 
 import { test as base, expect } from './pageTest';
 import fs from 'fs';
-import type * as har from '../../packages/trace/src/har';
+import type * as har from '../../packages/isomorphic/trace/versions/har';
 import type { Route } from 'playwright-core';
 
 const it = base.extend<{

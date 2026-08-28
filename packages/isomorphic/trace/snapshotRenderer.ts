@@ -16,7 +16,7 @@
 
 import { escapeHTMLAttribute, escapeHTML } from '../stringUtils';
 
-import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from '@trace/snapshot';
+import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from './trace';
 import type { PageEntry } from './entries';
 import type { LRUCache } from '../lruCache';
 

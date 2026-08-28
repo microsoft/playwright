@@ -28,8 +28,7 @@ import type { SnapshotData } from './snapshotterInjected';
 import type { RegisteredListener } from '@utils/eventsHelper';
 import type { Frame } from '../../frames';
 import type { InitScript } from '../../page';
-import type { FrameSnapshot } from '@trace/snapshot';
-import type { ActionPhase } from '@trace/trace';
+import type { ActionPhase, FrameSnapshot } from '@isomorphic/trace/trace';
 import type { Progress } from '../../progress';
 
 export type SnapshotterBlob = {

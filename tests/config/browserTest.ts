@@ -24,7 +24,7 @@ import { isBidiChannel, parseHar } from '../config/utils';
 import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 import type { RemoteServerOptions, PlaywrightServer } from './remoteServer';
 import type { BrowserContext, BrowserContextOptions, BrowserType, Page } from 'playwright-core';
-import type { Log } from '../../packages/trace/src/har';
+import type { Log } from '../../packages/isomorphic/trace/versions/har';
 
 const { removeFolders, hostPlatform } = utils;
 

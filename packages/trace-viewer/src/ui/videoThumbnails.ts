@@ -15,7 +15,7 @@
 */
 
 import * as React from 'react';
-import type * as trace from '@trace/trace';
+import type * as trace from '@isomorphic/trace/trace';
 
 export type VideoThumbnail = {
   timestamp: number;

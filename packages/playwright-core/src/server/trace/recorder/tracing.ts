@@ -49,9 +49,8 @@ import type { HarTracerDelegate } from '../../har/harTracer';
 import type { CallMetadata, InstrumentationListener } from '../../instrumentation';
 import type { PageError } from '../../page';
 import type { RecordHarOptions, StackFrame, TracingTracingStopChunkParams } from '../../channels';
-import type * as har from '@trace/har';
-import type { FrameSnapshot } from '@trace/snapshot';
-import type * as trace from '@trace/trace';
+import type * as har from '@isomorphic/trace/versions/har';
+import type * as trace from '@isomorphic/trace/trace';
 import type { Progress } from '../../progress';
 import type * as types from '../../types';
 import type { Screencast, ScreencastClient } from '../../screencast';
@@ -623,7 +622,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return file;
   }
 
-  onFrameSnapshot(snapshot: FrameSnapshot): void {
+  onFrameSnapshot(snapshot: trace.FrameSnapshot): void {
     this._appendTraceEvent({ type: 'frame-snapshot', snapshot });
   }
 

@@ -21,7 +21,7 @@ import { renderAriaSnapshotAsYaml } from '@isomorphic/ariaSnapshotRenderer';
 import { clsx, useMeasure } from '@web/uiUtils';
 import { PlaceholderPanel } from './placeholderPanel';
 
-import type { ActionPhase, ActionTraceEvent, ScreenshotTraceEvent } from '@trace/trace';
+import type { ActionPhase, ActionTraceEvent, ScreenshotTraceEvent } from '@isomorphic/trace/trace';
 import type { AriaNodeJSON, AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
 import type { TraceModel } from '@isomorphic/trace/traceModel';
 

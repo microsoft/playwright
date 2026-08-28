@@ -17,9 +17,8 @@
 import { getActionGroup, renderFullTitleForCall } from '../protocolFormatter';
 
 import type { Language } from '../locatorGenerators';
-import type { ResourceSnapshot } from '@trace/snapshot';
-import type * as trace from '@trace/trace';
-import type { ActionTraceEvent } from '@trace/trace';
+import type * as trace from './trace';
+import type { ActionTraceEvent, ResourceSnapshot } from './trace';
 import type { ActionEntry, ContextEntry, PageEntry } from './entries';
 import type { ActionGroup } from '../protocolFormatter';
 

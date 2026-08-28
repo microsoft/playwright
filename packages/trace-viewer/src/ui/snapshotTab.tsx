@@ -16,7 +16,7 @@
 
 import './snapshotTab.css';
 import * as React from 'react';
-import type { ActionPhase, ActionTraceEvent } from '@trace/trace';
+import type { ActionPhase, ActionTraceEvent } from '@isomorphic/trace/trace';
 import { nextActionByStartTime, previousActionByEndTime } from '@isomorphic/trace/traceModel';
 import type { TraceModel } from '@isomorphic/trace/traceModel';
 import { Toolbar } from '@web/components/toolbar';

@@ -42,7 +42,6 @@ async function checkDeps() {
   await innerCheckDeps(path.join(packagesDir, 'protocol'));
   await innerCheckDeps(path.join(packagesDir, 'recorder'));
   await innerCheckDeps(path.join(packagesDir, 'trace-viewer'));
-  await innerCheckDeps(path.join(packagesDir, 'trace'));
   await innerCheckDeps(path.join(packagesDir, 'web'));
   await innerCheckDeps(path.join(packagesDir, 'injected'));
 
