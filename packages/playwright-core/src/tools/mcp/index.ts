@@ -35,11 +35,24 @@ export async function createConnection(userConfig: Config = {}, contextGetter?: 
     version: packageJSON.version,
     toolSchemas: tools.map(tool => tool.schema),
     create: async (clientInfo: ClientInfo) => {
-      const browser = contextGetter
-        ? new SimpleBrowser(await contextGetter())
-        : (await createBrowserWithInfo(config, clientInfo, {})).browser;
+      if (contextGetter) {
+        const browser = new SimpleBrowser(await contextGetter());
+        const context = config.browser.isolated ? await browser.newContext() : browser.contexts()[0];
+        // The caller owns the context it handed us, so it closes it too.
+        return new BrowserBackend(config, context, tools);
+      }
+
+      const { browser } = await createBrowserWithInfo(config, clientInfo, {});
       const context = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
-      return new BrowserBackend(config, context, tools);
+      // Close the browser in both ownership modes. A browser this factory
+      // launched shuts down here. For an attached one (a CDP or remote
+      // endpoint, or the extension) close() only drops the connection this
+      // factory made while the external browser keeps running, so skipping it
+      // would leak that connection. The next call attaches again.
+      return new BrowserBackend(config, context, tools, async () => {
+        await context.close().catch(() => {});
+        await browser.close().catch(() => {});
+      });
     },
   };
   return createServer('api', packageJSON.version, backendFactory, Promise.resolve(), false);
