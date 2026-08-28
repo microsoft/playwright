@@ -139,9 +139,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   async resetForReuse(progress: Progress) {
-    // Discard previous chunk if any and ignore any errors there.
-    await this.stopChunk(progress, { mode: 'discard' }).catch(() => {});
-    await progress.race(this._stop());
+    await this.stop(progress);
     if (this._snapshotter)
       await progress.race(this._snapshotter.resetForReuse());
   }
@@ -327,6 +325,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   async stop(progress: Progress) {
+    // Discard the chunk if the client failed to stop it, so that tracing can be restarted.
+    await this.stopChunk(progress, { mode: 'discard' }).catch(() => {});
     await progress.race(this._stop());
   }
 
@@ -392,12 +392,41 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
+    try {
+      const result = this._stopChunk(params);
+      if (!result)
+        return {};
 
-    if (!this._state || !this._state.recording) {
+      // Make sure all file operations complete.
+      try {
+        await progress.race(this._fs.sync());
+      } catch (error) {
+        // This check is here because closing the browser removes the tracesDir and tracing
+        // cannot access removed files. Clients are ready for the missing artifact.
+        if (!isAbortError(error) && this._context.attribution.browser && !this._context.attribution.browser.isConnected())
+          return {};
+        throw error;
+      }
+
+      if (params.mode === 'entries')
+        return { entries: result.entries };
+
+      const artifact = new Artifact(this._context, result.zipFileName);
+      artifact.reportFinished();
+      return { artifact };
+    } finally {
+      // Always release the recording state, even when saving the chunk failed.
       this._isStopping = false;
+      if (this._state)
+        this._state.recording = false;
+    }
+  }
+
+  private _stopChunk(params: TracingTracingStopChunkParams): { entries: NameValue[], zipFileName: string } | undefined {
+    if (!this._state || !this._state.recording) {
       if (params.mode !== 'discard')
         throw new Error(`Must start tracing before stopping`);
-      return {};
+      return undefined;
     }
 
     this._closeAllGroups();
@@ -430,11 +459,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
     this._state.chunkFiles = new Set();
 
-    if (params.mode === 'discard') {
-      this._isStopping = false;
-      this._state.recording = false;
-      return {};
-    }
+    if (params.mode === 'discard')
+      return undefined;
 
     this._fs.copyFile(this._state.networkFile, newNetworkFile);
 
@@ -442,34 +468,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (params.mode === 'archive')
       this._fs.zip(entries, zipFileName);
 
-    // Make sure all file operations complete.
-    let error: Error | undefined;
-    try {
-      await progress.race(this._fs.sync());
-    } catch (e) {
-      error = e as Error;
-    }
-
-    this._isStopping = false;
-    if (this._state)
-      this._state.recording = false;
-
-    // IMPORTANT: no awaits after this point, to make sure recording state is correct.
-
-    if (error) {
-      // This check is here because closing the browser removes the tracesDir and tracing
-      // cannot access removed files. Clients are ready for the missing artifact.
-      if (!isAbortError(error) && this._context.attribution.browser && !this._context.attribution.browser.isConnected())
-        return {};
-      throw error;
-    }
-
-    if (params.mode === 'entries')
-      return { entries };
-
-    const artifact = new Artifact(this._context, zipFileName);
-    artifact.reportFinished();
-    return { artifact };
+    return { entries, zipFileName };
   }
 
   private async _captureSnapshot(progress: Progress, sdkObject: SdkObject, phase: trace.ActionPhase): Promise<void> {
