@@ -72,6 +72,25 @@ test('should display native tags and filter by them on click', async ({ runUITes
   `);
 });
 
+test('should toggle filters from the keyboard', async ({ runUITest }) => {
+  const { page } = await runUITest(basicTestTree);
+  const summary = page.locator('.filter-summary');
+
+  await expect(summary).toHaveRole('button');
+  await expect(summary).toHaveAttribute('aria-expanded', 'false');
+
+  await summary.focus();
+  await expect(summary).toBeFocused();
+
+  await summary.press('Enter');
+  await expect(page.getByTestId('status-filters')).toBeVisible();
+  await expect(summary).toHaveAttribute('aria-expanded', 'true');
+
+  await summary.press('Space');
+  await expect(page.getByTestId('status-filters')).toBeHidden();
+  await expect(summary).toHaveAttribute('aria-expanded', 'false');
+});
+
 test('should filter by status', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
 

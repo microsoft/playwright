@@ -35,6 +35,22 @@
   cursor: pointer;
 }
 
+/* the summary is a button, strip the browser chrome so it still reads as text */
+.filter-summary {
+  all: unset;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+}
+
+.filter-summary:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
 .filter-label {
   color: var(--vscode-disabledForeground);
 }
