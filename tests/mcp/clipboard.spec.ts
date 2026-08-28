@@ -37,6 +37,12 @@ test('clipboard write without permission dialog', async ({ startClient, server, 
   expect(writeResult).toHaveResponse({
     result: '"Write successful"',
   });
+  // Chromium 153+ only allows reading the clipboard once the page has been
+  // activated by a real input event, so interact with it first.
+  await client.callTool({
+    name: 'browser_press_key',
+    arguments: { key: 'a' },
+  });
   const readResult = await client.callTool({
     name: 'browser_evaluate',
     arguments: {
