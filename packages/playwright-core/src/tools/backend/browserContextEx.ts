@@ -19,6 +19,7 @@ import type * as playwrightTypes from '../../..';
 
 export type RecorderEventSink = {
   actionAdded?(page: playwrightTypes.Page, action: actions.Action, code: string): void;
+  actionUpdated?(page: playwrightTypes.Page, action: actions.Action, code: string): void;
   signalAdded?(page: playwrightTypes.Page, signal: actions.Signal, code: string): void;
 };
 

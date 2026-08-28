@@ -27,6 +27,7 @@ import { syncLocalStorageWithSettings } from '../launchApp';
 import { launchApp } from '../launchApp';
 import { nullProgress, ProgressController } from '../progress';
 import { ThrottledFile } from './throttledFile';
+import { collapseActions, shouldMergeAction } from './recorderUtils';
 import { Recorder, RecorderEvent } from '../recorder';
 import { BrowserContext } from '../browserContext';
 
@@ -319,9 +320,10 @@ export class RecorderApp {
 
   private _updateActions(reveal?: 'reveal') {
     const recorderSources = [];
+    const actions = collapseActions(this._actions);
     let revealSourceId: string | undefined;
     for (const languageGenerator of languageSet()) {
-      const { header, footer, actionTexts, text } = generateCode(this._actions, languageGenerator, this._languageGeneratorOptions);
+      const { header, footer, actionTexts, text } = generateCode(actions, languageGenerator, this._languageGeneratorOptions);
       const source: Source = {
         isRecorded: true,
         label: languageGenerator.name,
@@ -379,10 +381,16 @@ export class ProgrammaticRecorderApp {
         const page = findPageByGuid(inspectedContext, actionInContext.pageGuid);
         if (!page)
           return;
+        let event: 'actionAdded' | 'actionUpdated' = 'actionAdded';
+        if (shouldMergeAction(actionInContext, lastAction)) {
+          event = 'actionUpdated';
+          // Signals already reported for the superseded action still belong to this one.
+          actionInContext.signals.unshift(...lastAction!.signals);
+        }
         lastAction = actionInContext;
         lastActionPage = page;
         const code = languageGenerator.generateAction(actionInContext, languageGeneratorOptions);
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: actionInContext.action, page, code });
+        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event, data: actionInContext.action, page, code });
       }),
       eventsHelper.addEventListener(recorder, RecorderEvent.SignalAdded, signalInContext => {
         const page = findPageByGuid(inspectedContext, signalInContext.pageGuid);

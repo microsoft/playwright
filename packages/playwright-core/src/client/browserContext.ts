@@ -58,6 +58,7 @@ import type * as actions from '@isomorphic/codegen/actions';
 
 interface RecorderEventSink {
   actionAdded?(page: Page, action: actions.Action, code: string): void;
+  actionUpdated?(page: Page, action: actions.Action, code: string): void;
   signalAdded?(page: Page, signal: actions.Signal, code: string): void;
 }
 
@@ -170,6 +171,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('recorderEvent', ({ event, data, page, code }) => {
       if (event === 'actionAdded')
         this._onRecorderEventSink?.actionAdded?.(Page.from(page), data as actions.Action, code);
+      else if (event === 'actionUpdated')
+        this._onRecorderEventSink?.actionUpdated?.(Page.from(page), data as actions.Action, code);
       else if (event === 'signalAdded')
         this._onRecorderEventSink?.signalAdded?.(Page.from(page), data as actions.Signal, code);
     });

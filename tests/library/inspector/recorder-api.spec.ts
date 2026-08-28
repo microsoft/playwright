@@ -28,6 +28,10 @@ class RecorderLog {
     this.actions.push({ action, code });
   }
 
+  actionUpdated(page: Page, action: actions.Action, code: string): void {
+    this.actions[this.actions.length - 1] = { action, code };
+  }
+
   signalAdded(page: Page, signal: actions.Signal, code: string): void {
     this.signals.push({ signal, code });
   }

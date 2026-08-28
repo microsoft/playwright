@@ -26,6 +26,7 @@ import type { CallMetadata } from '../instrumentation';
 import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
 import type { Progress } from '../progress';
 import type { Language } from '@isomorphic/locatorGenerators';
+import type * as actions from '@isomorphic/codegen/actions';
 
 function buildFullSelector(framePath: string[], selector: string) {
   return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
@@ -84,6 +85,27 @@ export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus,
   return callLog;
 }
 
+export function shouldMergeAction(actionInContext: actions.ActionInContext, lastAction: actions.ActionInContext | undefined): boolean {
+  if (!lastAction)
+    return false;
+  const action = actionInContext.action;
+  const last = lastAction.action;
+  return action.name === 'fill' && last.name === 'fill'
+    && actionInContext.pageGuid === lastAction.pageGuid
+    && action.selector === last.selector;
+}
+
+export function collapseActions(actions: actions.ActionInContext[]): actions.ActionInContext[] {
+  const result: actions.ActionInContext[] = [];
+  for (const action of actions) {
+    const lastAction = result[result.length - 1];
+    if (shouldMergeAction(action, lastAction))
+      result[result.length - 1] = { ...action, signals: [...lastAction.signals, ...action.signals] };
+    else
+      result.push(action);
+  }
+  return result;
+}
 
 async function generateFrameSelector(progress: Progress, frame: Frame, timeout: number): Promise<string[]> {
   const selectorPromises: Promise<string>[] = [];
