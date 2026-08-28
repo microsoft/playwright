@@ -82,7 +82,7 @@ export type BrowserContextEventMap = {
   [BrowserContextEvent.RequestFulfilled]: [request: network.Request];
   [BrowserContextEvent.RequestContinued]: [request: network.Request];
   [BrowserContextEvent.BeforeClose]: [];
-  [BrowserContextEvent.RecorderEvent]: [event: { event: 'actionAdded' | 'signalAdded', data: any, page: Page, code: string }];
+  [BrowserContextEvent.RecorderEvent]: [event: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page, code: string }];
   [BrowserContextEvent.PageClosed]: [page: Page];
   [BrowserContextEvent.InternalFrameNavigatedToNewDocument]: [frame: frames.Frame];
   [BrowserContextEvent.FrameAttached]: [frame: frames.Frame];

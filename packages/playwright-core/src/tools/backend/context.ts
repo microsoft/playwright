@@ -253,6 +253,12 @@ export class Context {
       actionAdded: (page, action, code) => {
         recordedActions.push(code);
       },
+      actionUpdated: (page, action, code) => {
+        if (recordedActions.length)
+          recordedActions[recordedActions.length - 1] = code;
+        else
+          recordedActions.push(code);
+      },
       signalAdded: (page, signal, code) => {
         if (recordedActions.length && code)
           recordedActions[recordedActions.length - 1] = code;

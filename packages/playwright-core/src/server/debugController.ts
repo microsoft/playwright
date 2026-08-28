@@ -23,6 +23,7 @@ import { generateCode } from '@isomorphic/codegen/language';
 import { JavaScriptLanguageGenerator } from '@isomorphic/codegen/javascript';
 import { SdkObject, createInstrumentation } from './instrumentation';
 import { Recorder, RecorderEvent } from './recorder';
+import { collapseActions } from './recorder/recorderUtils';
 
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { BrowserContext } from './browserContext';
@@ -187,7 +188,7 @@ function wireListeners(recorder: Recorder, debugController: DebugController) {
   const languageGenerator = new JavaScriptLanguageGenerator(/* isPlaywrightTest */true);
 
   const actionsChanged = () => {
-    const { header, footer, text, actionTexts } = generateCode(actions, languageGenerator, {
+    const { header, footer, text, actionTexts } = generateCode(collapseActions(actions), languageGenerator, {
       browserName: 'chromium',
       launchOptions: {},
       contextOptions: {},
