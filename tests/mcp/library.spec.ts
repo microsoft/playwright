@@ -74,7 +74,10 @@ test('createConnection closes the browser it launched when the backend is dispos
   const userDataDir = testInfo.outputPath('user-data-dir');
 
   const client = await connectClient(await createConnection({
-    browser: { browserName, userDataDir, launchOptions: { channel, headless: mcpHeadless } },
+    // Match what BrowserType.launch does by default. Resolving this config
+    // turns the sandbox on for a chromium without a channel, and the bundled
+    // build cannot sandbox on a linux runner.
+    browser: { browserName, userDataDir, launchOptions: { channel, chromiumSandbox: false, headless: mcpHeadless } },
     outputDir: testInfo.outputPath('output'),
   }));
 
