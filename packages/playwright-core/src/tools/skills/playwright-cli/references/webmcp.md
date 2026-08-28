@@ -41,11 +41,6 @@ Write this temporary config outside version control:
 playwright-cli --config=<temporary-config> -s=webmcp open <url>
 ```
 
-No manual browser flag is needed for this managed path. Pass
-`--browser=<browser>` only when the user requests a particular Chromium
-channel. The ephemeral profile does not contain the user's cookies or
-credentials.
-
 ### Discover tools
 
 Save this function to a temporary JavaScript file:
