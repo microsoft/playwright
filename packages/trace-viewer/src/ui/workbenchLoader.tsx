@@ -82,8 +82,11 @@ export const WorkbenchLoader: React.FunctionComponent<{
       processTraceFiles(dataTransfer.files);
     };
     window.addEventListener('message', listener);
+    window.opener?.postMessage({ method: 'ready' }, '*');
+    if (window.parent !== window)
+      window.parent.postMessage({ method: 'ready' }, '*');
     return () => window.removeEventListener('message', listener);
-  });
+  }, [processTraceFiles]);
 
   const handleDropEvent = React.useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();

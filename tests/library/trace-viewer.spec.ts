@@ -2284,25 +2284,79 @@ test('should force aria mode when there are no dom snapshots', async ({ runAndTr
   await expect(traceViewer.displayAriaSetting).toBeChecked({ checked: true });
 });
 
-test('should render blob trace received from message', async ({ showTraceViewer }) => {
+test('should notify parent when ready to receive messages', async ({ browser, server, showTraceViewer }) => {
   const traceViewer = await showTraceViewer(undefined, { host: 'localhost' });
+  const traceViewerURL = traceViewer.page.url();
+  await using context = await browser.newContext();
+  const host = await context.newPage();
+  await host.goto(server.EMPTY_PAGE);
 
-  await expect(traceViewer.page.locator('.drop-target')).toBeVisible();
-  await expect(traceViewer.actionTitles).not.toBeVisible();
-
-  await traceViewer.page.evaluate(trace => {
-    const uint8Array = Uint8Array.from(atob(trace), c => c.charCodeAt(0));
-
-    window.postMessage({
-      method: 'load',
-      params: {
-        trace: new Blob([uint8Array], { type: 'application/zip' }),
+  const readyMessage = await host.evaluate(traceViewerURL => {
+    return new Promise(resolve => {
+      const traceViewerOrigin = new URL(traceViewerURL).origin;
+      const iframe = document.createElement('iframe');
+      function onMessage(event: MessageEvent) {
+        if (event.origin !== traceViewerOrigin)
+          return;
+        if (event.source !== iframe.contentWindow)
+          return;
+        if (event.data?.method !== 'ready')
+          return;
+        window.removeEventListener('message', onMessage);
+        iframe.remove();
+        resolve(event.data);
       }
-    }, '*');
-  }, fs.readFileSync(traceFile, 'base64'));
+      window.addEventListener('message', onMessage);
+      iframe.src = traceViewerURL;
+      document.body.appendChild(iframe);
+    });
+  }, traceViewerURL);
 
-  await expect(traceViewer.page.locator('.drop-target')).not.toBeVisible();
-  await expect(traceViewer.actionTitles).toHaveText([
+  expect(readyMessage).toEqual({ method: 'ready' });
+});
+
+test('should render blob trace received from opener', async ({ browser, server, showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(undefined, { host: 'localhost' });
+  const traceViewerURL = traceViewer.page.url();
+  await using context = await browser.newContext();
+  const opener = await context.newPage();
+  await opener.goto(server.EMPTY_PAGE);
+
+  const [popup] = await Promise.all([
+    opener.waitForEvent('popup'),
+    opener.evaluate(({ traceViewerURL, trace }) => {
+      return new Promise<void>(resolve => {
+        const traceViewerOrigin = new URL(traceViewerURL).origin;
+        function onMessage(event: MessageEvent) {
+          if (event.origin !== traceViewerOrigin)
+            return;
+          const target = traceViewerWindow;
+          if (!target || event.source !== target)
+            return;
+          if (event.data?.method !== 'ready')
+            return;
+          window.removeEventListener('message', onMessage);
+          const uint8Array = Uint8Array.from(atob(trace), c => c.charCodeAt(0));
+          target.postMessage({
+            method: 'load',
+            params: {
+              trace: new Blob([uint8Array], { type: 'application/zip' }),
+            }
+          }, traceViewerOrigin);
+          resolve();
+        }
+        window.addEventListener('message', onMessage);
+        const traceViewerWindow = window.open(traceViewerURL);
+        if (!traceViewerWindow) {
+          window.removeEventListener('message', onMessage);
+          throw new Error('Failed to open Trace Viewer');
+        }
+      });
+    }, { traceViewerURL, trace: fs.readFileSync(traceFile, 'base64') }),
+  ]);
+
+  await expect(popup.locator('.drop-target')).not.toBeVisible();
+  await expect(popup.locator('.action-title')).toHaveText([
     /Create page/,
     /Navigate.*data:/,
     /toHaveTitle/,
