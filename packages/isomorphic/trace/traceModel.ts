@@ -136,7 +136,7 @@ export class TraceModel {
         this._domSnapshots.add(`${entry.callId}/${entry.phase}`);
       this.videos.push(...(context.videos || []));
     }
-    this.hasDomSnapshots = this.actions.some(action => !!action.beforeSnapshot || !!action.afterSnapshot || !!action.inputSnapshot);
+    this.hasDomSnapshots = !!this._domSnapshots.size;
     this.hasAriaSnapshots = !!this._screenshots.size || !!this._ariaSnapshots.size;
     this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, callId: action.callId, traceUri })) ?? []);
     this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
