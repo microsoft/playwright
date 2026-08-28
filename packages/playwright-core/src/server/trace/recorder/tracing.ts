@@ -393,7 +393,27 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
     try {
-      return await this._stopChunk(progress, params);
+      const result = this._stopChunk(params);
+      if (!result)
+        return {};
+
+      // Make sure all file operations complete.
+      try {
+        await progress.race(this._fs.sync());
+      } catch (error) {
+        // This check is here because closing the browser removes the tracesDir and tracing
+        // cannot access removed files. Clients are ready for the missing artifact.
+        if (!isAbortError(error) && this._context.attribution.browser && !this._context.attribution.browser.isConnected())
+          return {};
+        throw error;
+      }
+
+      if (params.mode === 'entries')
+        return { entries: result.entries };
+
+      const artifact = new Artifact(this._context, result.zipFileName);
+      artifact.reportFinished();
+      return { artifact };
     } finally {
       // Always release the recording state, even when saving the chunk failed.
       this._isStopping = false;
@@ -402,11 +422,11 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     }
   }
 
-  private async _stopChunk(progress: Progress, params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[] }> {
+  private _stopChunk(params: TracingTracingStopChunkParams): { entries: NameValue[], zipFileName: string } | undefined {
     if (!this._state || !this._state.recording) {
       if (params.mode !== 'discard')
         throw new Error(`Must start tracing before stopping`);
-      return {};
+      return undefined;
     }
 
     this._closeAllGroups();
@@ -440,7 +460,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._state.chunkFiles = new Set();
 
     if (params.mode === 'discard')
-      return {};
+      return undefined;
 
     this._fs.copyFile(this._state.networkFile, newNetworkFile);
 
@@ -448,23 +468,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (params.mode === 'archive')
       this._fs.zip(entries, zipFileName);
 
-    // Make sure all file operations complete.
-    try {
-      await progress.race(this._fs.sync());
-    } catch (error) {
-      // This check is here because closing the browser removes the tracesDir and tracing
-      // cannot access removed files. Clients are ready for the missing artifact.
-      if (!isAbortError(error) && this._context.attribution.browser && !this._context.attribution.browser.isConnected())
-        return {};
-      throw error;
-    }
-
-    if (params.mode === 'entries')
-      return { entries };
-
-    const artifact = new Artifact(this._context, zipFileName);
-    artifact.reportFinished();
-    return { artifact };
+    return { entries, zipFileName };
   }
 
   private async _captureSnapshot(progress: Progress, sdkObject: SdkObject, phase: trace.ActionPhase): Promise<void> {

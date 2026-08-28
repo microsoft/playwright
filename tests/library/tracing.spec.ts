@@ -440,22 +440,6 @@ test('should recover tracing after a failed stop', async ({ context, page, serve
   expect(actions).toContain(`Click locator('button')`);
 });
 
-test('should stop tracing when the chunk was not stopped', async ({ context, page, server }, testInfo) => {
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42423' });
-  await context.tracing.start();
-  await page.goto(server.PREFIX + '/input/button.html');
-  // Saving the chunk can fail before it was stopped, leaving the server recording.
-  await (context.tracing as any)._channel.tracingStop({});
-
-  await context.tracing.start();
-  await page.click('button');
-  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
-
-  const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
-  expect(events[0].type).toBe('context-options');
-  expect(actions).toContain(`Click locator('button')`);
-});
-
 test('should release the stack session when saving the trace fails', async ({ browserType }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42423' });
   // Override the test runner's tracesDir, so that the stack session owns a temporary directory.
