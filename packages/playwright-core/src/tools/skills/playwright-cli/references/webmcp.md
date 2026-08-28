@@ -1,4 +1,4 @@
-# WebMCP with Playwright CLI
+# [Experimental] WebMCP with Playwright CLI
 
 Use Playwright CLI to discover and invoke WebMCP tools without changing
 Playwright. WebMCP is experimental, Chromium-only, and accessed through CDP.
