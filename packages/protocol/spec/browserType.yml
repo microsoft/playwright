@@ -50,6 +50,7 @@ BrowserType:
         slowMo: float?
         isLocal: boolean?
         noDefaults: boolean?
+        isWebView: boolean?
         artifactsDir: string?
         transport: binary?
       returns:

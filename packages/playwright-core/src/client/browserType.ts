@@ -168,6 +168,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       slowMo: params.slowMo,
       isLocal: params.isLocal,
       noDefaults: params.noDefaults,
+      isWebView: (params as any).isWebView,
       artifactsDir: params.artifactsDir,
     }, new TimeoutSettings().timeout(params));
     return await this._browserFromConnectResult(result);
