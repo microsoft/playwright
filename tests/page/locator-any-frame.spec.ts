@@ -24,7 +24,7 @@ function routePage(page: Page, url: string, body: string) {
 }
 
 async function waitForAllFrames(page: Page, frameCount: number, selector: string) {
-  // Wait for all child frames to load their content, so that piercing
+  // Wait for all child frames to load their content, so that the search
   // deterministically sees elements in all of them.
   await expect.poll(() => page.frames().length).toBe(frameCount);
   for (const frame of page.frames()) {
@@ -37,7 +37,7 @@ it('should click a button inside an iframe', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<button onclick="window.__clicked = true">Click me</button>`);
   await page.goto(server.EMPTY_PAGE);
-  await page.pierceFrames().getByRole('button', { name: 'Click me' }).click();
+  await page.frameLocator().getByRole('button', { name: 'Click me' }).click();
   expect(await page.frames()[1].evaluate(() => (window as any).__clicked)).toBe(true);
 });
 
@@ -45,7 +45,7 @@ it('should click a button in the main frame', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><button onclick="window.__clicked = true">Click me</button>`);
   await routePage(page, 'a.html', `<div>No buttons here</div>`);
   await page.goto(server.EMPTY_PAGE);
-  await page.pierceFrames().locator('button').click();
+  await page.frameLocator().locator('button').click();
   expect(await page.evaluate(() => (window as any).__clicked)).toBe(true);
 });
 
@@ -55,9 +55,9 @@ it('should fail click when elements match in multiple frames', async ({ page, se
   await routePage(page, 'b.html', `<button>two</button>`);
   await page.goto(server.EMPTY_PAGE);
   await waitForAllFrames(page, 3, 'button');
-  const error = await page.pierceFrames().locator('button').click({ timeout: 3000 }).catch(e => e);
-  expect(error.message).toContain('Pierce-frame mode matched elements from multiple frames');
-  expect(error.message).toContain(`waiting for pierceFrames().locator('button')`);
+  const error = await page.frameLocator().locator('button').click({ timeout: 3000 }).catch(e => e);
+  expect(error.message).toContain('frameLocator() matched elements in multiple frames');
+  expect(error.message).toContain(`waiting for frameLocator().locator('button')`);
 });
 
 it('should fail click upon strict mode violation inside a single frame', async ({ page, server }) => {
@@ -65,18 +65,18 @@ it('should fail click upon strict mode violation inside a single frame', async (
   await routePage(page, 'a.html', `<button>one</button><button>two</button>`);
   await page.goto(server.EMPTY_PAGE);
   await waitForAllFrames(page, 2, 'button');
-  const error = await page.pierceFrames().locator('button').click({ timeout: 3000 }).catch(e => e);
+  const error = await page.frameLocator().locator('button').click({ timeout: 3000 }).catch(e => e);
   expect(error.message).toContain('strict mode violation');
-  expect(error.message).toContain(`waiting for pierceFrames().locator('button')`);
+  expect(error.message).toContain(`waiting for frameLocator().locator('button')`);
 });
 
 it('should time out on click when there are no matches', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div>Nothing here</div>`);
   await page.goto(server.EMPTY_PAGE);
-  const error = await page.pierceFrames().locator('button').click({ timeout: 1000 }).catch(e => e);
+  const error = await page.frameLocator().locator('button').click({ timeout: 1000 }).catch(e => e);
   expect(error.message).toContain('Timeout 1000ms exceeded');
-  expect(error.message).toContain(`waiting for pierceFrames().locator('button')`);
+  expect(error.message).toContain(`waiting for frameLocator().locator('button')`);
 });
 
 it('should count elements in a single frame', async ({ page, server }) => {
@@ -84,8 +84,8 @@ it('should count elements in a single frame', async ({ page, server }) => {
   await routePage(page, 'a.html', `<div>1</div><div>2</div><div>3</div>`);
   await page.goto(server.EMPTY_PAGE);
   await waitForAllFrames(page, 2, 'div');
-  expect(await page.pierceFrames().locator('div').count()).toBe(3);
-  expect(await page.pierceFrames().locator('button').count()).toBe(0);
+  expect(await page.frameLocator().locator('div').count()).toBe(3);
+  expect(await page.frameLocator().locator('button').count()).toBe(0);
 });
 
 it('should fail count when elements match in multiple frames', async ({ page, server }) => {
@@ -93,16 +93,16 @@ it('should fail count when elements match in multiple frames', async ({ page, se
   await routePage(page, 'a.html', `<div>child</div>`);
   await page.goto(server.EMPTY_PAGE);
   await waitForAllFrames(page, 2, 'div');
-  const error = await page.pierceFrames().locator('div').count().catch(e => e);
-  expect(error.message).toContain('Pierce-frame mode matched elements from multiple frames');
+  const error = await page.frameLocator().locator('div').count().catch(e => e);
+  expect(error.message).toContain('frameLocator() matched elements in multiple frames');
 });
 
 it('should support toHaveCount', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<span>one</span><span>two</span>`);
   await page.goto(server.EMPTY_PAGE);
-  await expect(page.pierceFrames().locator('span')).toHaveCount(2);
-  await expect(page.pierceFrames().locator('button')).toHaveCount(0);
+  await expect(page.frameLocator().locator('span')).toHaveCount(2);
+  await expect(page.frameLocator().locator('button')).toHaveCount(0);
 });
 
 it('should wait for a frame to appear with toHaveCount', async ({ page, server }) => {
@@ -116,7 +116,7 @@ it('should wait for a frame to appear with toHaveCount', async ({ page, server }
       document.body.appendChild(iframe);
     }, 500);
   });
-  await expect(page.pierceFrames().locator('span')).toHaveCount(2);
+  await expect(page.frameLocator().locator('span')).toHaveCount(2);
 });
 
 it('should fail toHaveCount when elements match in multiple frames', async ({ page, server }) => {
@@ -125,23 +125,23 @@ it('should fail toHaveCount when elements match in multiple frames', async ({ pa
   await routePage(page, 'b.html', `<span>two</span>`);
   await page.goto(server.EMPTY_PAGE);
   await waitForAllFrames(page, 3, 'span');
-  const error = await expect(page.pierceFrames().locator('span')).toHaveCount(2, { timeout: 3000 }).catch(e => e);
-  expect(error.message).toContain('Pierce-frame mode matched elements from multiple frames');
-  expect(error.message).toContain(`Locator: pierceFrames().locator('span')`);
+  const error = await expect(page.frameLocator().locator('span')).toHaveCount(2, { timeout: 3000 }).catch(e => e);
+  expect(error.message).toContain('frameLocator() matched elements in multiple frames');
+  expect(error.message).toContain(`Locator: frameLocator().locator('span')`);
 });
 
 it('should support toHaveText', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div>Hello iframe</div>`);
   await page.goto(server.EMPTY_PAGE);
-  await expect(page.pierceFrames().locator('div')).toHaveText('Hello iframe');
+  await expect(page.frameLocator().locator('div')).toHaveText('Hello iframe');
 });
 
 it('should support toHaveText with an array', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<span>one</span><span>two</span>`);
   await page.goto(server.EMPTY_PAGE);
-  await expect(page.pierceFrames().locator('span')).toHaveText(['one', 'two']);
+  await expect(page.frameLocator().locator('span')).toHaveText(['one', 'two']);
 });
 
 it('should fail toHaveText when elements match in multiple frames', async ({ page, server }) => {
@@ -150,9 +150,9 @@ it('should fail toHaveText when elements match in multiple frames', async ({ pag
   await routePage(page, 'b.html', `<div>two</div>`);
   await page.goto(server.EMPTY_PAGE);
   await waitForAllFrames(page, 3, 'div');
-  const error = await expect(page.pierceFrames().locator('div')).toHaveText('one', { timeout: 3000 }).catch(e => e);
-  expect(error.message).toContain('Pierce-frame mode matched elements from multiple frames');
-  expect(error.message).toContain(`Locator: pierceFrames().locator('div')`);
+  const error = await expect(page.frameLocator().locator('div')).toHaveText('one', { timeout: 3000 }).catch(e => e);
+  expect(error.message).toContain('frameLocator() matched elements in multiple frames');
+  expect(error.message).toContain(`Locator: frameLocator().locator('div')`);
 });
 
 it('should fail toHaveText with an array when elements match in multiple frames', async ({ page, server }) => {
@@ -161,8 +161,8 @@ it('should fail toHaveText with an array when elements match in multiple frames'
   await routePage(page, 'b.html', `<span>two</span>`);
   await page.goto(server.EMPTY_PAGE);
   await waitForAllFrames(page, 3, 'span');
-  const error = await expect(page.pierceFrames().locator('span')).toHaveText(['one', 'two'], { timeout: 3000 }).catch(e => e);
-  expect(error.message).toContain('Pierce-frame mode matched elements from multiple frames');
+  const error = await expect(page.frameLocator().locator('span')).toHaveText(['one', 'two'], { timeout: 3000 }).catch(e => e);
+  expect(error.message).toContain('frameLocator() matched elements in multiple frames');
 });
 
 it('should fail toHaveText upon strict mode violation inside a single frame', async ({ page, server }) => {
@@ -170,16 +170,16 @@ it('should fail toHaveText upon strict mode violation inside a single frame', as
   await routePage(page, 'a.html', `<div>one</div><div>two</div>`);
   await page.goto(server.EMPTY_PAGE);
   await waitForAllFrames(page, 2, 'div');
-  const error = await expect(page.pierceFrames().locator('div')).toHaveText('one', { timeout: 3000 }).catch(e => e);
+  const error = await expect(page.frameLocator().locator('div')).toHaveText('one', { timeout: 3000 }).catch(e => e);
   expect(error.message).toContain('strict mode violation');
-  expect(error.message).toContain(`Locator: pierceFrames().locator('div')`);
+  expect(error.message).toContain(`Locator: frameLocator().locator('div')`);
 });
 
 it('should support evaluate', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div data-foo="bar">Hello</div>`);
   await page.goto(server.EMPTY_PAGE);
-  expect(await page.pierceFrames().locator('div').evaluate(e => e.getAttribute('data-foo'))).toBe('bar');
+  expect(await page.frameLocator().locator('div').evaluate(e => e.getAttribute('data-foo'))).toBe('bar');
 });
 
 it('should fail evaluate when elements match in multiple frames', async ({ page, server }) => {
@@ -188,17 +188,17 @@ it('should fail evaluate when elements match in multiple frames', async ({ page,
   await routePage(page, 'b.html', `<div>two</div>`);
   await page.goto(server.EMPTY_PAGE);
   await waitForAllFrames(page, 3, 'div');
-  const error = await page.pierceFrames().locator('div').evaluate(e => e.textContent, undefined, { timeout: 3000 }).catch(e => e);
-  expect(error.message).toContain('Pierce-frame mode matched elements from multiple frames');
+  const error = await page.frameLocator().locator('div').evaluate(e => e.textContent, undefined, { timeout: 3000 }).catch(e => e);
+  expect(error.message).toContain('frameLocator() matched elements in multiple frames');
 });
 
 it('should time out on evaluate when there are no matches', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div>Nothing here</div>`);
   await page.goto(server.EMPTY_PAGE);
-  const error = await page.pierceFrames().locator('button').evaluate(e => e.textContent, undefined, { timeout: 1000 }).catch(e => e);
+  const error = await page.frameLocator().locator('button').evaluate(e => e.textContent, undefined, { timeout: 1000 }).catch(e => e);
   expect(error.message).toContain('Timeout 1000ms exceeded');
-  expect(error.message).toContain(`waiting for pierceFrames().locator('button')`);
+  expect(error.message).toContain(`waiting for frameLocator().locator('button')`);
 });
 
 it('should support evaluateAll', async ({ page, server }) => {
@@ -206,8 +206,8 @@ it('should support evaluateAll', async ({ page, server }) => {
   await routePage(page, 'a.html', `<span>one</span><span>two</span>`);
   await page.goto(server.EMPTY_PAGE);
   await waitForAllFrames(page, 2, 'span');
-  expect(await page.pierceFrames().locator('span').evaluateAll(els => els.map(e => e.textContent))).toEqual(['one', 'two']);
-  expect(await page.pierceFrames().locator('button').evaluateAll(els => els.length)).toBe(0);
+  expect(await page.frameLocator().locator('span').evaluateAll(els => els.map(e => e.textContent))).toEqual(['one', 'two']);
+  expect(await page.frameLocator().locator('button').evaluateAll(els => els.length)).toBe(0);
 });
 
 it('should fail evaluateAll when elements match in multiple frames', async ({ page, server }) => {
@@ -216,39 +216,60 @@ it('should fail evaluateAll when elements match in multiple frames', async ({ pa
   await routePage(page, 'b.html', `<span>two</span>`);
   await page.goto(server.EMPTY_PAGE);
   await waitForAllFrames(page, 3, 'span');
-  const error = await page.pierceFrames().locator('span').evaluateAll(els => els.length).catch(e => e);
-  expect(error.message).toContain('Pierce-frame mode matched elements from multiple frames');
+  const error = await page.frameLocator().locator('span').evaluateAll(els => els.length).catch(e => e);
+  expect(error.message).toContain('frameLocator() matched elements in multiple frames');
 });
 
 it('should support hasText filter', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div>foo</div><div>bar</div>`);
   await page.goto(server.EMPTY_PAGE);
-  await expect(page.pierceFrames().locator('div', { hasText: 'bar' })).toHaveText('bar');
+  await expect(page.frameLocator().locator('div', { hasText: 'bar' })).toHaveText('bar');
 });
 
-it('should support first/last/nth as the last operation', async ({ page, server }) => {
+it('should support first/last/nth', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<span>one</span><span>two</span><span>three</span>`);
   await page.goto(server.EMPTY_PAGE);
   await waitForAllFrames(page, 2, 'span');
-  await expect(page.pierceFrames().locator('span').first()).toHaveText('one');
-  await expect(page.pierceFrames().locator('span').last()).toHaveText('three');
-  await expect(page.pierceFrames().locator('span').nth(1)).toHaveText('two');
+  await expect(page.frameLocator().locator('span').first()).toHaveText('one');
+  await expect(page.frameLocator().locator('span').last()).toHaveText('three');
+  await expect(page.frameLocator().locator('span').nth(1)).toHaveText('two');
 });
 
-it('should pierce a frame inside the scope', async ({ page, server }) => {
+it('should support nth in the middle of the chain', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<div><span>one</span></div><div><span>two</span></div>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.frameLocator().locator('div').nth(1).locator('span')).toHaveText('two');
+});
+
+it('should support composite locators', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<div><span>foo</span></div><div><i>bar</i></div>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.frameLocator().locator('div', { has: page.locator('span') })).toHaveText('foo');
+});
+
+it('should support capture', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<div id="target"><span>hello</span></div>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.frameLocator().locator('*css=div >> span')).toHaveAttribute('id', 'target');
+});
+
+it('should find a frame inside the scope', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<section><iframe src="a.html"></iframe></section><button>outside</button>`);
   await routePage(page, 'a.html', `<button>inside</button>`);
   await page.goto(server.EMPTY_PAGE);
   await waitForAllFrames(page, 2, 'button');
   const scope = (await page.$('section'))!;
-  const buttons = await scope.$$('internal:control=pierce-frames >> button');
+  const buttons = await scope.$$('internal:control=any-frame >> button');
   expect(buttons.length).toBe(1);
   expect(await buttons[0].textContent()).toBe('inside');
 });
 
-it('should pierce a nested frame inside the scope', async ({ page, server }) => {
+it('should find a nested frame inside the scope', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<section><iframe src="a.html"></iframe></section><iframe src="b.html"></iframe>`);
   await routePage(page, 'a.html', `<iframe src="c.html"></iframe>`);
   await routePage(page, 'b.html', `<button>outside</button>`);
@@ -260,9 +281,21 @@ it('should pierce a nested frame inside the scope', async ({ page, server }) => 
       await frame.waitForSelector('button', { state: 'attached' });
   }
   const scope = (await page.$('section'))!;
-  const buttons = await scope.$$('internal:control=pierce-frames >> button');
+  const buttons = await scope.$$('internal:control=any-frame >> button');
   expect(buttons.length).toBe(1);
   expect(await buttons[0].textContent()).toBe('deep');
+});
+
+it('should find a frame inside the scope while another iframe is stalled', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<section><iframe src="a.html"></iframe><iframe src="stall.html"></iframe></section>`);
+  await routePage(page, 'a.html', `<button>inside</button>`);
+  await page.route('**/stall.html', () => {});
+  await page.goto(server.EMPTY_PAGE, { waitUntil: 'domcontentloaded' });
+  await expect.poll(() => page.frames().length).toBe(3);
+  const scope = (await page.$('section'))!;
+  const buttons = await scope.$$('internal:control=any-frame >> button');
+  expect(buttons.length).toBe(1);
+  expect(await buttons[0].textContent()).toBe('inside');
 });
 
 it('should respect the scope without a frame inside the scope', async ({ page, server }) => {
@@ -271,12 +304,12 @@ it('should respect the scope without a frame inside the scope', async ({ page, s
   await page.goto(server.EMPTY_PAGE);
   await waitForAllFrames(page, 2, 'button');
   const scope = (await page.$('section'))!;
-  const buttons = await scope.$$('internal:control=pierce-frames >> button');
+  const buttons = await scope.$$('internal:control=any-frame >> button');
   expect(buttons.length).toBe(1);
   expect(await buttons[0].textContent()).toBe('target');
 });
 
-it('should pierce nested frames below a matching prefix', async ({ page, server }) => {
+it('should not match a chain across a frame boundary', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<section><iframe src="a.html"></iframe></section>`);
   await routePage(page, 'a.html', `<iframe src="b.html"></iframe>`);
   await routePage(page, 'b.html', `<button>deep</button>`);
@@ -284,10 +317,12 @@ it('should pierce nested frames below a matching prefix', async ({ page, server 
   await expect.poll(() => page.frames().length).toBe(3);
   const deepFrame = page.frames().find(f => f.url().includes('b.html'))!;
   await deepFrame.waitForSelector('button', { state: 'attached' });
-  await expect(page.pierceFrames().locator('section').locator('button')).toHaveText('deep');
+  // "section" lives in the main frame, while the button is two frames below it.
+  await expect(page.frameLocator().locator('section').locator('button')).toHaveCount(0);
+  await expect(page.frameLocator().locator('button')).toHaveText('deep');
 });
 
-it('should pierce only frames inside the starting frame', async ({ page, server }) => {
+it('should only search frames inside the starting frame', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><button>main</button>`);
   await routePage(page, 'a.html', `<iframe src="b.html"></iframe>`);
   await routePage(page, 'b.html', `<button>deep</button>`);
@@ -296,7 +331,7 @@ it('should pierce only frames inside the starting frame', async ({ page, server 
   const deepFrame = page.frames().find(f => f.url().includes('b.html'))!;
   await deepFrame.waitForSelector('button', { state: 'attached' });
   const middleFrame = page.frames().find(f => f.url().includes('a.html'))!;
-  await expect(middleFrame.pierceFrames().locator('button')).toHaveText('deep');
+  await expect(middleFrame.frameLocator().locator('button')).toHaveText('deep');
 });
 
 it('should enter a frame found in a nested frame', async ({ page, server }) => {
@@ -304,7 +339,7 @@ it('should enter a frame found in a nested frame', async ({ page, server }) => {
   await routePage(page, 'a.html', `<iframe id="target" src="b.html"></iframe><button>decoy</button>`);
   await routePage(page, 'b.html', `<button>inside</button>`);
   await page.goto(server.EMPTY_PAGE);
-  await expect(page.pierceFrames().frameLocator('#target').locator('button')).toHaveText('inside');
+  await expect(page.frameLocator().frameLocator('#target').locator('button')).toHaveText('inside');
 });
 
 it('should click inside an entered frame', async ({ page, server }) => {
@@ -312,43 +347,45 @@ it('should click inside an entered frame', async ({ page, server }) => {
   await routePage(page, 'a.html', `<iframe id="target" src="b.html"></iframe><button>Click me</button>`);
   await routePage(page, 'b.html', `<button onclick="window.__clicked = true">Click me</button>`);
   await page.goto(server.EMPTY_PAGE);
-  await page.pierceFrames().frameLocator('#target').getByRole('button', { name: 'Click me' }).click();
+  await page.frameLocator().frameLocator('#target').getByRole('button', { name: 'Click me' }).click();
   const frame = page.frames().find(f => f.url().includes('b.html'))!;
   expect(await frame.evaluate(() => (window as any).__clicked)).toBe(true);
 });
 
-it('should pierce frames inside the entered frame', async ({ page, server }) => {
+it('should not search nested frames after entering a frame', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe id="target" src="a.html"></iframe><button>main</button>`);
   await routePage(page, 'a.html', `<iframe src="b.html"></iframe>`);
   await routePage(page, 'b.html', `<button>deep</button>`);
   await page.goto(server.EMPTY_PAGE);
-  await expect(page.pierceFrames().frameLocator('#target').locator('button')).toHaveText('deep');
+  await expect.poll(() => page.frames().length).toBe(3);
+  // The entered frame itself has no button, and we do not look inside its nested frames.
+  await expect(page.frameLocator().frameLocator('#target').locator('button')).toHaveCount(0);
 });
 
-it('should support two frameLocators while piercing', async ({ page, server }) => {
+it('should support two frameLocators', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<iframe id="x" src="b.html"></iframe>`);
   await routePage(page, 'b.html', `<iframe id="y" src="c.html"></iframe><button>decoy</button>`);
   await routePage(page, 'c.html', `<button>bottom</button>`);
   await page.goto(server.EMPTY_PAGE);
-  await expect(page.pierceFrames().frameLocator('#x').frameLocator('#y').locator('button')).toHaveText('bottom');
+  await expect(page.frameLocator().frameLocator('#x').frameLocator('#y').locator('button')).toHaveText('bottom');
 });
 
-it('should support locator before frameLocator while piercing', async ({ page, server }) => {
+it('should support locator before frameLocator', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<section><iframe src="b.html"></iframe></section><iframe src="c.html"></iframe>`);
   await routePage(page, 'b.html', `<button>in-section</button>`);
   await routePage(page, 'c.html', `<button>outside</button>`);
   await page.goto(server.EMPTY_PAGE);
-  await expect(page.pierceFrames().locator('section').frameLocator('iframe').locator('button')).toHaveText('in-section');
+  await expect(page.frameLocator().locator('section').frameLocator('iframe').locator('button')).toHaveText('in-section');
 });
 
-it('should support owner of a frameLocator while piercing', async ({ page, server }) => {
+it('should support owner of a frameLocator', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<iframe id="target" src="b.html"></iframe>`);
   await routePage(page, 'b.html', `<button>inside</button>`);
   await page.goto(server.EMPTY_PAGE);
-  expect(await page.pierceFrames().frameLocator('#target').owner().getAttribute('id')).toBe('target');
+  expect(await page.frameLocator().frameLocator('#target').owner().getAttribute('id')).toBe('target');
 });
 
 it('should wait for the frame to enter to appear', async ({ page, server }) => {
@@ -365,7 +402,7 @@ it('should wait for the frame to enter to appear', async ({ page, server }) => {
       document.body.appendChild(iframe);
     }, 3000);
   });
-  await expect(page.pierceFrames().frameLocator('#late').locator('button')).toHaveText('late');
+  await expect(page.frameLocator().frameLocator('#late').locator('button')).toHaveText('late');
 });
 
 it('should fail when the frame to enter matches in multiple frames', async ({ page, server }) => {
@@ -379,80 +416,86 @@ it('should fail when the frame to enter matches in multiple frames', async ({ pa
     if (frame.url().includes('c.html'))
       await frame.waitForSelector('button', { state: 'attached' });
   }
-  const error = await page.pierceFrames().frameLocator('.inner').locator('button').click({ timeout: 3000 }).catch(e => e);
-  expect(error.message).toContain('Pierce-frame mode matched elements from multiple frames');
+  const error = await page.frameLocator().frameLocator('.inner').locator('button').click({ timeout: 3000 }).catch(e => e);
+  expect(error.message).toContain('frameLocator() matched elements in multiple frames');
 });
 
-it('should support contentFrame while piercing', async ({ page, server }) => {
+it('should support contentFrame', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<iframe id="target" src="b.html"></iframe><button>decoy</button>`);
   await routePage(page, 'b.html', `<button>inside</button>`);
   await page.goto(server.EMPTY_PAGE);
-  await expect(page.pierceFrames().locator('#target').contentFrame().locator('button')).toHaveText('inside');
+  await expect(page.frameLocator().locator('#target').contentFrame().locator('button')).toHaveText('inside');
 });
 
-it('should enter only the frame element when the selector matches other elements too', async ({ page, server }) => {
-  await routePage(page, 'empty.html', `<div class="foo">not a frame</div><iframe class="foo" src="a.html"></iframe>`);
-  await routePage(page, 'a.html', `<iframe src="b.html"></iframe>`);
-  await routePage(page, 'b.html', `<div id="target">found</div>`);
+it('should render frameLocator() in the locator description', async ({ page }) => {
+  expect(String(page.frameLocator().frameLocator('#x').locator('button'))).toBe(`frameLocator().locator('#x').contentFrame().locator('button')`);
+  expect(String(page.frameLocator().locator('section').frameLocator('iframe').getByText('foo'))).toBe(`frameLocator().locator('section').locator('iframe').contentFrame().getByText('foo')`);
+});
+
+it('should not allow frameLocator() inside a composite locator', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<button>main</button><iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<a href="#">link</a>`);
   await page.goto(server.EMPTY_PAGE);
-  await expect(page.pierceFrames().locator('.foo').contentFrame().locator('#target')).toHaveText('found');
+  await waitForAllFrames(page, 2, 'a');
+
+  const error = await page.locator('button').or(page.frameLocator().locator('a')).count().catch(e => e);
+  expect(error.message).toContain(`frameLocator() is not allowed inside composite locators, while querying "locator('button').or(frameLocator().locator('a'))"`);
+
+  const error2 = await page.locator('button').filter({ has: page.frameLocator().locator('a') }).count().catch(e => e);
+  expect(error2.message).toContain(`frameLocator() is not allowed inside composite locators`);
+
+  // Repeating frameLocator() in the operand is not allowed either, even though the outer locator has it.
+  const error3 = await page.frameLocator().locator('button').or(page.frameLocator().locator('a')).count().catch(e => e);
+  expect(error3.message).toContain(`frameLocator() is not allowed inside composite locators, while querying "frameLocator().locator('button').or(frameLocator().locator('a'))"`);
+
+  // Repeating frameLocator() is not allowed even when the rest of the frame chain matches.
+  const error4 = await page.frameLocator().frameLocator('#f').locator('a').or(page.frameLocator().frameLocator('#f').locator('button')).count().catch(e => e);
+  expect(error4.message).toContain(`frameLocator() is not allowed inside composite locators`);
+
+  // With frameLocator() first, the token applies to the whole locator, so both operands are searched in every frame.
+  const error5 = await page.frameLocator().locator('a').or(page.locator('button')).count().catch(e => e);
+  expect(error5.message).toContain(`frameLocator() matched elements in multiple frames`);
 });
 
-it('should render frameLocator while piercing in the locator description', async ({ page }) => {
-  expect(String(page.pierceFrames().frameLocator('#x').locator('button'))).toBe(`pierceFrames().locator('#x').contentFrame().locator('button')`);
-  expect(String(page.pierceFrames().locator('section').frameLocator('iframe').getByText('foo'))).toBe(`pierceFrames().locator('section').locator('iframe').contentFrame().getByText('foo')`);
-});
-
-it('should support the pierce option', async ({ page, server }) => {
-  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><div id="main">main</div>`);
-  await routePage(page, 'a.html', `<div id="inner">inner</div>`);
-  await page.goto(server.EMPTY_PAGE);
-  await expect(page.pierceFrames({ pierce: true }).locator('#inner')).toHaveText('inner');
-  await expect(page.pierceFrames({ pierce: false }).locator('#inner')).toHaveCount(0);
-  await expect(page.pierceFrames({ pierce: false }).locator('#main')).toHaveText('main');
-});
-
-it('should support frameLocator with pierce: false', async ({ page, server }) => {
+it('should support a composite locator under frameLocator()', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<div class="classname">first</div><button>second</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await waitForAllFrames(page, 2, 'button');
+  await expect(page.frameLocator().locator('.classname').or(page.getByRole('button'))).toHaveText(['first', 'second']);
+});
+
+it('should support a composite locator under frameLocator() and a frame locator', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
+  await routePage(page, 'a.html', `<iframe id="f" src="b.html"></iframe>`);
+  await routePage(page, 'b.html', `<div class="classname">first</div><button>second</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  await expect.poll(() => page.frames().length).toBe(3);
+  await expect(page.frameLocator().frameLocator('#f').locator('.classname').or(page.frameLocator('#f').getByRole('button'))).toHaveText(['first', 'second']);
+});
+
+it('should not allow first/last/nth on frameLocator()', async ({ page }) => {
+  expect(() => page.frameLocator().first()).toThrow('Selecting the nth frame is not allowed on frameLocator()');
+  expect(() => page.frameLocator().last()).toThrow('Selecting the nth frame is not allowed on frameLocator()');
+  expect(() => page.frameLocator().nth(1)).toThrow('Selecting the nth frame is not allowed on frameLocator()');
+});
+
+it('should not allow owner on frameLocator()', async ({ page }) => {
+  const error = await page.frameLocator().owner().count().catch(e => e);
+  expect(error.message).toContain('Selector cannot be empty after frameLocator()');
+});
+
+it('should resolve aria-ref selectors', async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<button>main</button><iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<button>inside</button>`);
   await page.goto(server.EMPTY_PAGE);
-  await expect(page.pierceFrames({ pierce: false }).frameLocator('iframe').locator('button')).toHaveText('inside');
-});
-
-it('should render pierce: false in the locator description', async ({ page }) => {
-  expect(String(page.pierceFrames({ pierce: false }).locator('div'))).toBe(`pierceFrames({ pierce: false }).locator('div')`);
-});
-
-it('should not allow first/last/nth after pierceFrames({ pierce: false })', async ({ page }) => {
-  expect(() => page.pierceFrames({ pierce: false }).first()).toThrow('Selecting the nth frame is not allowed on the root frame locator');
-});
-
-it('should not allow nth in the middle', async ({ page }) => {
-  const error = await page.pierceFrames().locator('div').first().locator('span').count().catch(e => e);
-  expect(error.message).toContain(`nth can only be the last locator when piercing frames, while querying "pierceFrames().locator('div').first().locator('span')"`);
-});
-
-it('should not allow first/last/nth after pierceFrames', async ({ page }) => {
-  expect(() => page.pierceFrames().first()).toThrow('Selecting the nth frame is not allowed while piercing frames');
-  expect(() => page.pierceFrames().last()).toThrow('Selecting the nth frame is not allowed while piercing frames');
-  expect(() => page.pierceFrames().nth(1)).toThrow('Selecting the nth frame is not allowed while piercing frames');
-  expect(() => page.pierceFrames().frameLocator('#x').first()).toThrow('Selecting the nth frame is not allowed while piercing frames');
-});
-
-it('should not allow composite locators', async ({ page }) => {
-  const error = await page.pierceFrames().locator('div', { has: page.locator('span') }).count().catch(e => e);
-  expect(error.message).toContain(`Composite locators are not supported with piercing frames, while querying "pierceFrames().locator('div').filter({ has: locator('span') })"`);
-});
-
-it('should not allow owner', async ({ page }) => {
-  const error = await page.pierceFrames().owner().count().catch(e => e);
-  expect(error.message).toContain('Selector cannot be empty when piercing frames');
-});
-
-it('should render pierceFrames in the locator description', async ({ page }) => {
-  expect(String(page.pierceFrames().locator('button'))).toBe(`pierceFrames().locator('button')`);
-  expect(String(page.pierceFrames().getByText('foo'))).toBe(`pierceFrames().getByText('foo')`);
+  await waitForAllFrames(page, 2, 'button');
+  const snapshot = await page.ariaSnapshot({ mode: 'ai' });
+  // Refs are unique across frames, so every starting frame resolves them to the same element.
+  const insideMatch = snapshot.match(/button "inside" \[ref=(.*?)\]/);
+  expect(insideMatch![1]).toMatch(/^f\d+e\d+$/);
+  await expect(page.frameLocator().locator(`aria-ref=${insideMatch![1]}`)).toHaveText('inside');
 });
 
 it('should click while another iframe is stalled', async ({ page, server }) => {
@@ -461,7 +504,7 @@ it('should click while another iframe is stalled', async ({ page, server }) => {
   await page.route('**/stall.html', () => {});
   await page.goto(server.EMPTY_PAGE, { waitUntil: 'domcontentloaded' });
   await expect.poll(() => page.frames().length).toBe(3);
-  await page.pierceFrames().locator('button').click();
+  await page.frameLocator().locator('button').click();
   const frame = page.frames().find(f => f.url().includes('a.html'))!;
   expect(await frame.evaluate(() => (window as any).__clicked)).toBe(true);
 });
@@ -472,7 +515,7 @@ it('should support toBeVisible while another iframe is stalled', async ({ page, 
   await page.route('**/stall.html', () => {});
   await page.goto(server.EMPTY_PAGE, { waitUntil: 'domcontentloaded' });
   await expect.poll(() => page.frames().length).toBe(3);
-  await expect(page.pierceFrames().locator('button')).toBeVisible();
+  await expect(page.frameLocator().locator('button')).toBeVisible();
 });
 
 it('should support toHaveCount while another iframe is stalled', async ({ page, server }) => {
@@ -481,5 +524,5 @@ it('should support toHaveCount while another iframe is stalled', async ({ page, 
   await page.route('**/stall.html', () => {});
   await page.goto(server.EMPTY_PAGE, { waitUntil: 'domcontentloaded' });
   await expect.poll(() => page.frames().length).toBe(3);
-  await expect(page.pierceFrames().locator('button')).toHaveCount(1);
+  await expect(page.frameLocator().locator('button')).toHaveCount(1);
 });

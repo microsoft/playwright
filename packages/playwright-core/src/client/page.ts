@@ -783,12 +783,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this.mainFrame().getByRole(role, options);
   }
 
-  frameLocator(selector: string): FrameLocator {
+  frameLocator(selector?: string): FrameLocator {
     return this.mainFrame().frameLocator(selector);
-  }
-
-  pierceFrames(options?: { pierce?: boolean }): FrameLocator {
-    return this.mainFrame().pierceFrames(options);
   }
 
   async focus(selector: string, options?: channels.FrameFocusOptions & TimeoutOptions) {

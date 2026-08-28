@@ -492,21 +492,6 @@ export default defineConfig({
 });
 ```
 
-## property: TestOptions.pierceFrames = %%-context-option-pierce-frames-%%
-* since: v1.63
-
-**Usage**
-
-```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  use: {
-    pierceFrames: true,
-  }
-});
-```
-
 ## property: TestOptions.proxy = %%-browser-option-proxy-%%
 * since: v1.10
 

@@ -18,6 +18,7 @@ import { inspect } from 'util';
 
 import { asLocatorDescription, locatorCustomDescription } from '@isomorphic/locatorGenerators';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '@isomorphic/locatorUtils';
+import { kAnyFrameSelector } from '@isomorphic/selectorParser';
 import { escapeForTextSelector } from '@isomorphic/stringUtils';
 import { isString } from '@isomorphic/rtti';
 import { monotonicTime } from '@isomorphic/time';
@@ -427,14 +428,6 @@ export class Locator implements api.Locator {
   }
 }
 
-export const kPierceFramesSelector = 'internal:control=pierce-frames';
-
-export const kNoPierceFramesSelector = 'internal:control=no-pierce-frames';
-
-function selectorPiercesFrames(selector: string): boolean {
-  return selector === kPierceFramesSelector || selector.startsWith(kPierceFramesSelector + ' >> ');
-}
-
 export class FrameLocator implements api.FrameLocator {
   private _frame: Frame;
   private _frameSelector: string;
@@ -445,7 +438,7 @@ export class FrameLocator implements api.FrameLocator {
   }
 
   private _childSelector(selector: string): string {
-    if (this._frameSelector === kPierceFramesSelector || this._frameSelector === kNoPierceFramesSelector)
+    if (this._frameSelector === kAnyFrameSelector)
       return this._frameSelector + ' >> ' + selector;
     return this._frameSelector + ' >> internal:control=enter-frame >> ' + selector;
   }
@@ -495,10 +488,8 @@ export class FrameLocator implements api.FrameLocator {
   }
 
   private _nthSelector(nth: string): string {
-    if (selectorPiercesFrames(this._frameSelector))
-      throw new Error(`Selecting the nth frame is not allowed while piercing frames.`);
-    if (this._frameSelector === kNoPierceFramesSelector)
-      throw new Error(`Selecting the nth frame is not allowed on the root frame locator.`);
+    if (this._frameSelector === kAnyFrameSelector)
+      throw new Error(`Selecting the nth frame is not allowed on frameLocator().`);
     return this._frameSelector + ` >> nth=${nth}`;
   }
 

@@ -120,49 +120,95 @@ export class FrameSelectors {
     return jumptToFrame;
   }
 
-  async resolveFramesForSelector(selector: string, options: types.StrictOptions & { pierce?: 'default' | 'pierce' | 'no-pierce' } = {}, scope?: ElementHandle): Promise<SelectorInFrame[]> {
-    const pierceByDefault = options.pierce === 'pierce' || (options.pierce !== 'no-pierce' && !!this.frame._page.browserContext._options.pierceFrames);
-    const { pierce, chunks } = splitSelectorByFrame(selector, pierceByDefault);
+  async resolveFramesForSelector(selector: string, options: types.StrictOptions & { anyFrame?: boolean } = {}, scope?: ElementHandle): Promise<SelectorInFrame[]> {
+    const { anyFrame, chunks } = splitSelectorByFrame(selector);
     for (const chunk of chunks) {
       visitAllSelectorParts(chunk, (part, nested) => {
         if (nested && part.name === 'internal:control' && part.body === 'enter-frame') {
           const locator = asLocator(this.frame._page.browserContext._browser.sdkLanguage(), selector);
           throw new InvalidSelectorError(`Frame locators are not allowed inside composite locators, while querying "${locator}"`);
         }
-        if (nested && pierce) {
+        if (nested && part.name === 'internal:control' && part.body === 'any-frame') {
           const locator = asLocator(this.frame._page.browserContext._browser.sdkLanguage(), selector);
-          throw new InvalidSelectorError(`Composite locators are not supported with piercing frames, while querying "${locator}"`);
+          throw new InvalidSelectorError(`frameLocator() is not allowed inside composite locators, while querying "${locator}"`);
         }
       });
     }
 
-    if (pierce) {
-      const parsed = chunks[0];  // Only one chunk is allowed with pierce, it may contain enter-frame parts.
-      if (parsed.parts.some((part, index) => part.name === 'nth' && index !== parsed.parts.length - 1)) {
-        const locator = asLocator(this.frame._page.browserContext._browser.sdkLanguage(), selector);
-        throw new InvalidSelectorError(`nth can only be the last locator when piercing frames, while querying "${locator}"`);
-      }
-      return await this._resolveFramePiercingSelector(parsed, options, scope);
+    if (!anyFrame && !options.anyFrame) {
+      const result = await this._resolveChainedSelector(this.frame, selector, options, chunks, scope, false /* noStall */);
+      return result ? [result] : [];
     }
 
-    const result = await this._resolveChainedSelector(selector, options, chunks, scope);
-    return result ? [result] : [];
+    const result: SelectorInFrame[] = [];
+    const seenFrames = new Set<Frame>();
+    for (const startFrame of await this._anyFrameCandidates(scope)) {
+      const resolved = await this._resolveChainedSelector(startFrame, selector, options, chunks, startFrame === this.frame ? scope : undefined, startFrame !== this.frame /* noStall */);
+      // Different starting frames may resolve into the same frame, e.g. with an aria-ref selector.
+      if (!resolved || seenFrames.has(resolved.frame))
+        continue;
+      seenFrames.add(resolved.frame);
+      result.push(resolved);
+    }
+    return result;
   }
 
-  private async _resolveChainedSelector(selector: string, options: types.StrictOptions, frameChunks: ParsedSelector[], scope: ElementHandle | undefined): Promise<SelectorInFrame | null> {
-    let frame: Frame = this.frame;
+  // All the frames the selector may start in: the frame subtree, restricted to the scope when given.
+  private async _anyFrameCandidates(scope: ElementHandle | undefined): Promise<Frame[]> {
+    const result: Frame[] = [];
+    const collectSubtree = (frame: Frame) => {
+      result.push(frame);
+      for (const child of frame.childFrames())
+        collectSubtree(child);
+    };
+
+    if (!scope) {
+      collectSubtree(this.frame);
+      return result;
+    }
+
+    result.push(this.frame);
+    await this.frame.raceAgainstEvaluationStallingEvents(async () => {
+      const injected = await scope._context.injectedScript();
+      const frameElements = await injected.evaluateHandle((injected, scope) => {
+        return injected.querySelectorAll(injected.parseSelector('css=frame,iframe'), scope);
+      }, scope);
+      const count = await frameElements.evaluate(elements => elements.length);
+      for (let i = 0; i < count; ++i) {
+        const frameElement = await frameElements.evaluateHandle((elements, i) => elements[i], i) as ElementHandle<Element>;
+        const childFrame = await this.frame._page.delegate.getContentFrame(frameElement);
+        frameElement.dispose();
+        if (childFrame)
+          collectSubtree(childFrame);
+      }
+      frameElements.dispose();
+    }).catch(() => {});
+    return result;
+  }
+
+  private async _resolveChainedSelector(startFrame: Frame, selector: string, options: types.StrictOptions, frameChunks: ParsedSelector[], scope: ElementHandle | undefined, noStall: boolean): Promise<SelectorInFrame | null> {
+    let frame = startFrame;
     for (let i = 0; i < frameChunks.length - 1; ++i) {
       const info = this._parseSelector(frameChunks[i], options);
       frame = this._jumpToAriaRefFrameIfNeeded(selector, info, frame);
-      const context = await frame.context(info.world);
-      const injectedScript = await context.injectedScript();
-      const handle = await injectedScript.evaluateHandle((injected, { info, scope, selectorString }) => {
-        const element = injected.querySelector(info.parsed, scope || document, info.strict);
-        if (element && element.nodeName !== 'IFRAME' && element.nodeName !== 'FRAME')
-          throw injected.createStacklessError(`Selector "${selectorString}" resolved to ${injected.previewNode(element)}, <iframe> was expected`);
-        return element;
-      }, { info, scope: i === 0 ? scope : undefined, selectorString: stringifySelector(info.parsed) });
-      const element = handle.asElement() as ElementHandle<Element> | null;
+      const context = noStall ? frame.existingContext(info.world) : await frame.context(info.world);
+      if (!context)
+        return null;
+      const queryFrameElement = async () => {
+        const injectedScript = await context.injectedScript();
+        return await injectedScript.evaluateHandle((injected, { info, scope, selectorString }) => {
+          const element = injected.querySelector(info.parsed, scope || document, info.strict);
+          if (element && element.nodeName !== 'IFRAME' && element.nodeName !== 'FRAME')
+            throw injected.createStacklessError(`Selector "${selectorString}" resolved to ${injected.previewNode(element)}, <iframe> was expected`);
+          return element;
+        }, { info, scope: i === 0 ? scope : undefined, selectorString: stringifySelector(info.parsed) });
+      };
+      const handle = noStall ? await frame.raceAgainstEvaluationStallingEvents(queryFrameElement).catch(e => {
+        if (e instanceof EvaluationStalledError)
+          return null;
+        throw e;
+      }) : await queryFrameElement();
+      const element = handle?.asElement() as ElementHandle<Element> | null;
       if (!element)
         return null;
       const maybeFrame = await frame._page.delegate.getContentFrame(element);
@@ -172,115 +218,16 @@ export class FrameSelectors {
       frame = maybeFrame;
     }
     // If we end up in the different frame, we should start from the frame root, so throw away the scope.
-    if (frame !== this.frame)
+    if (frame !== startFrame)
       scope = undefined;
     const lastChunk = frame.selectors._parseSelector(frameChunks[frameChunks.length - 1], options);
     frame = this._jumpToAriaRefFrameIfNeeded(selector, lastChunk, frame);
     return { frame, info: lastChunk, scope };
   }
 
-  private async _resolveFramePiercingSelector(parsed: ParsedSelector, options: types.StrictOptions, scope: ElementHandle | undefined) {
-    const candidates = new Map<Frame, Set<number>>();
-    const infos = parsed.parts.map(part => this._parseSelector({ parts: [part] }, options));
-    await this._pierceFramesRecursivelyIfNotSeen(this.frame, infos, scope, 0, candidates);
-    const result: SelectorInFrame[] = [];
-    for (const [frame, startIndexes] of candidates) {
-      for (const startIndex of startIndexes) {
-        const suffix = infos.slice(startIndex);
-        // A leftover "enter-frame" token means we are not going to match anything in this frame.
-        if (suffix.some(info => isEnterFramePart(info.parsed.parts[0])))
-          continue;
-        const partialInfo: SelectorInfo = {
-          parsed: { parts: suffix.map(info => info.parsed.parts[0]) },
-          world: suffix.some(info => info.world === 'main') ? 'main' : 'utility',
-          strict: !!options.strict,
-        };
-        result.push({ frame, info: partialInfo, scope: frame === this.frame && startIndex === 0 ? scope : undefined });
-      }
-    }
-    return result;
-  }
-
-  private async _pierceFramesRecursivelyIfNotSeen(frame: Frame, infos: SelectorInfo[], scope: ElementHandle | undefined, startIndex: number, result: Map<Frame, Set<number>>) {
-    let set = result.get(frame);
-    if (!set) {
-      set = new Set();
-      result.set(frame, set);
-    }
-    if (!set.has(startIndex)) {
-      set.add(startIndex);
-      await this._pierceFramesRecursively(frame, infos, scope, startIndex, result);
-    }
-  }
-
-  private async _pierceFramesRecursively(frame: Frame, infos: SelectorInfo[], scope: ElementHandle | undefined, startIndex: number, result: Map<Frame, Set<number>>) {
-    const doWork = async (context: FrameExecutionContext) => {
-      const injected = await context.injectedScript();
-      const frameCandidatesHandle = await injected.evaluateHandle((injected, { infos, scope, startIndex }) => {
-        const frameElements = injected.querySelectorAll(injected.parseSelector('css=frame,iframe'), scope || document);
-        // Any frame inside the search root may contain the whole selector suffix, so seed with startIndex.
-        const result = frameElements.map(frameElement => ({ frameElement, nextIndexes: [startIndex] }));
-
-        let roots = [scope || document];
-        for (let index = startIndex; index < infos.length; index++) {
-          const next = new Set<Node>();
-          for (const root of roots) {
-            const all = injected.querySelectorAll(infos[index].parsed, root);
-            for (const element of all)
-              next.add(element);
-          }
-          const nextPart = index + 1 < infos.length ? infos[index + 1].parsed.parts[0] : undefined;
-          if (nextPart && nextPart.name === 'internal:control' && nextPart.body === 'enter-frame') {
-            // We must enter the iframe now, so stop matching any further.
-            for (const { frameElement, nextIndexes } of result) {
-              if (next.has(frameElement))
-                nextIndexes.push(index + 2);
-            }
-            break;
-          }
-          roots = [...next];
-          if (nextPart && !['nth', 'visible'].includes(nextPart.name)) {
-            for (const { frameElement, nextIndexes } of result) {
-              if (roots.some(root => injected.utils.isInsideScope(root, frameElement)))
-                nextIndexes.push(index + 1);
-            }
-          }
-        }
-        return result;
-      }, { infos, scope, startIndex });
-
-      const count = await frameCandidatesHandle.evaluate(x => x.length).catch(() => 0);
-      for (let i = 0; i < count; ++i) {
-        try {
-          const frameElement = await frameCandidatesHandle.evaluateHandle((list, i) => list[i].frameElement, i) as ElementHandle<Element>;
-          const childFrame = await frame._page.delegate.getContentFrame(frameElement).catch(() => null);
-          if (childFrame) {
-            const nextIndexes = await frameCandidatesHandle.evaluate((list, i) => list[i].nextIndexes, i) as number[];
-            for (const nextIndex of nextIndexes)
-              await this._pierceFramesRecursivelyIfNotSeen(childFrame, infos, undefined, nextIndex, result);
-          }
-        } catch {
-          // Ignore errors for this frame candidate.
-        }
-      }
-      frameCandidatesHandle.dispose();
-    };
-
-    const noStall = frame !== this.frame;
-    const world = infos.some(info => info.world === 'main') ? 'main' : 'utility';
-    const context = noStall ? frame.existingContext(world) : await frame.context(world);
-    if (!context)
-      return;
-
-    if (noStall)
-      await frame.raceAgainstEvaluationStallingEvents(() => doWork(context)).catch(() => {});
-    else
-      await doWork(context);
-  }
-
   private async _callOnSelectorInternal<Arg, R>(
     selector: string,
-    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none', pierce?: 'default' | 'pierce' | 'no-pierce' },
+    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none' },
     pageFunction: MatchedElementsCallback<Arg, R>,
     arg: Arg,
     returnByValue: boolean,
@@ -328,7 +275,7 @@ export class FrameSelectors {
       if (!maybeResult)
         continue;
       if (aggregatedResult)
-        throw new NonRecoverableDOMError(`Pierce-frame mode matched elements from multiple frames.`);
+        throw new NonRecoverableDOMError(`frameLocator() matched elements in multiple frames.`);
       aggregatedResult = { frame, info, result: maybeResult.result };
     }
     return aggregatedResult;
@@ -336,7 +283,7 @@ export class FrameSelectors {
 
   async callOnSelector<Arg, R>(
     selector: string,
-    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none', pierce?: 'default' | 'pierce' | 'no-pierce' },
+    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none' },
     pageFunction: MatchedElementsCallback<Arg, R>,
     arg: Arg,
   ): Promise<{ frame: Frame, info: SelectorInfo, result: R } | null> {
@@ -353,10 +300,6 @@ export class FrameSelectors {
     const result = await this._callOnSelectorInternal(selector, { ...options, callWithoutMatches: false }, pageFunction, arg, false /* returnByValue */);
     return result as { frame: Frame, info: SelectorInfo, result: SmartHandle<R> } | null;
   }
-}
-
-function isEnterFramePart(part: ParsedSelector['parts'][0]): boolean {
-  return part.name === 'internal:control' && part.body === 'enter-frame';
 }
 
 async function adoptIfNeeded<T extends Node>(handle: ElementHandle<T>, context: FrameExecutionContext): Promise<ElementHandle<T>> {

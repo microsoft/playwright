@@ -20,7 +20,7 @@ import type { ParsedSelector } from '@isomorphic/selectorParser';
 
 export type HighlightOptions = {
   style?: string;
-  pierce?: boolean; // Highlight in all the frames the selector could resolve to, instead of a single one.
+  anyFrame?: boolean; // Highlight in all the frames the selector could resolve to, instead of a single one.
 };
 
 type HighlightEntry = HighlightOptions & {
@@ -80,7 +80,7 @@ export class HighlightController {
 
     const perFrame = new Map<Frame, { selector: ParsedSelector, cssStyle?: string }[]>();
     for (const entry of this._entries.values()) {
-      const results = await this._resolveEntry(entry);
+      const results = await this._page.mainFrame().selectors.resolveFramesForSelector(entry.selector, { strict: false, anyFrame: entry.anyFrame }).catch(() => []);
       for (const { frame, info } of results) {
         let list = perFrame.get(frame);
         if (!list) {
@@ -102,16 +102,5 @@ export class HighlightController {
 
     if (this._entries.size && !this._resolutionTimer && !this._page.isClosed())
       this._resolutionTimer = setTimeout(() => this._resolveNow(), 1000);
-  }
-
-  private async _resolveEntry(entry: HighlightEntry) {
-    try {
-      return await this._page.mainFrame().selectors.resolveFramesForSelector(entry.selector, { strict: false, pierce: entry.pierce ? 'pierce' : 'default' });
-    } catch (error) {
-      if (!entry.pierce)
-        return [];
-      // Some selectors do not support piercing frames, e.g. composite ones - resolve without piercing.
-      return await this._page.mainFrame().selectors.resolveFramesForSelector(entry.selector, { strict: false }).catch(() => []);
-    }
   }
 }

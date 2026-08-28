@@ -18,6 +18,7 @@ import { renderSubtitleForCall, renderTitleForCall } from '@isomorphic/protocolF
 import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { monotonicTime } from '@isomorphic/time';
 import { quoteCSSAttributeValue } from '@isomorphic/stringUtils';
+import { kAnyFrameSelector } from '@isomorphic/selectorParser';
 import { isUnderTest } from '@utils/debug';
 import { Frame } from '../frames';
 
@@ -32,13 +33,15 @@ function buildFullSelector(framePath: string[], selector: string) {
 
 export async function buildFullSelectorForFrame(progress: Progress, frame: Frame, selector: string, timeout = isUnderTest() ? 10000 : 2000): Promise<string> {
   const framePath = await generateFrameSelector(progress, frame, timeout);
-  if (!frame._page.browserContext._options.pierceFrames || !framePath.length)
-    return buildFullSelector(framePath, selector);
+  const fullSelector = buildFullSelector(framePath, selector);
+  // Starting from frameLocator() is only worth it when it saves at least two frameLocator(selector) calls.
+  if (framePath.length < 2)
+    return fullSelector;
 
-  // Prefer the shortest selector that resolves to the target frame.
+  // Prefer the shortest selector that still pinpoints the target frame.
   const result = await progress.race(raceAgainstDeadline(async () => {
-    for (let i = framePath.length; i >= 0; i--) {
-      const candidate = buildFullSelector(framePath.slice(i), selector);
+    for (let i = framePath.length; i >= 2; i--) {
+      const candidate = kAnyFrameSelector + ' >> ' + buildFullSelector(framePath.slice(i), selector);
       if (await resolvesToFrame(progress, candidate, frame))
         return candidate;
     }
@@ -46,7 +49,7 @@ export async function buildFullSelectorForFrame(progress: Progress, frame: Frame
   if (!result.timedOut && result.result)
     return result.result;
 
-  return 'internal:control=no-pierce-frames >> ' + buildFullSelector(framePath, selector);
+  return fullSelector;
 }
 
 async function resolvesToFrame(progress: Progress, selector: string, frame: Frame): Promise<boolean> {

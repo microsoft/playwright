@@ -157,7 +157,7 @@ export class FrameManager {
 
     function collect(frame: Frame) {
       frames.push(frame);
-      for (const subframe of frame._getChildFrames())
+      for (const subframe of frame.childFrames())
         collect(subframe);
     }
   }
@@ -370,7 +370,7 @@ export class FrameManager {
   }
 
   removeChildFramesRecursively(frame: Frame) {
-    for (const child of frame._getChildFrames())
+    for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
   }
 
@@ -1009,7 +1009,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return this._parentFrame;
   }
 
-  _getChildFrames(): Frame[] {
+  childFrames(): Frame[] {
     return Array.from(this._childFrames);
   }
 
@@ -1548,7 +1548,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     let missingReceived = false;
 
     // Non-array expectations are strict (callOnSelector throws on multiple); array ones are not.
-    const resolved = await progress.race(this.selectors.callOnSelector(effectiveSelector, { strict: !isArray, mainWorld, markTargets: 'all', pierce: selector ? 'default' : 'no-pierce' }, async ({ injected, elements }, options) => {
+    const resolved = await progress.race(this.selectors.callOnSelector(effectiveSelector, { strict: !isArray, mainWorld, markTargets: 'all' }, async ({ injected, elements }, options) => {
       const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
       const log = isArray
         ? `  locator resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`

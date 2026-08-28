@@ -311,34 +311,32 @@ it('should non work for non-frame', async ({ page, server }) => {
   expect(error.message).toContain('<iframe> was expected');
 });
 
-it('should pierce frames into a single descendant frame', async ({ page, server }) => {
+it('should match in a descendant frame', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   // The main frame has no <div>; only the iframe.html child frame does.
-  const div = page.locator('internal:control=pierce-frames >> div');
+  const div = page.locator('internal:control=any-frame >> div');
   await div.waitFor();
   await expect(div).toHaveCount(1);
   expect(await div.innerHTML()).toContain('<button>Hello iframe</button>');
 });
 
-it('should pierce through multiple frames', async ({ page, server }) => {
+it('should match in a deeply nested frame', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   // The main frame has no <div>; only the iframe.html child frame does.
-  const button = page.locator('internal:control=pierce-frames >> button[tag="iframe2"]');
+  const button = page.locator('internal:control=any-frame >> button[tag="iframe2"]');
   await button.waitFor();
   await expect(button).toHaveCount(1);
   expect(await button.textContent()).toBe('Hello nested iframe');
 });
 
-it('should pierce multiple times', async ({ page, server }) => {
+it('should not match a chain across frames', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
-  // Main and nested frames have no <div>; only the iframe.html child frame does.
-  const button = page.locator('internal:control=pierce-frames >> div >> button[tag="iframe2"]');
-  await button.waitFor();
-  await expect(button).toHaveCount(1);
-  expect(await button.textContent()).toBe('Hello nested iframe');
+  // The <div> lives in the iframe.html frame, while the button lives in the frame nested below it.
+  await expect(page.locator('internal:control=any-frame >> div >> button[tag="iframe2"]')).toHaveCount(0);
+  await expect(page.locator('internal:control=any-frame >> div >> button')).toHaveText('Hello iframe');
 });
 
 it('should match multiple elements', async ({ page, server }) => {
@@ -353,11 +351,11 @@ it('should match multiple elements', async ({ page, server }) => {
   });
   await page.goto(server.EMPTY_PAGE);
 
-  const texts = await page.$$eval('internal:control=pierce-frames >> span', els => els.map(e => e.textContent));
+  const texts = await page.$$eval('internal:control=any-frame >> span', els => els.map(e => e.textContent));
   expect(texts).toEqual(['two', 'three']);
 });
 
-it('should throw when piercing frames matches multiple frames', async ({ page, server }) => {
+it('should throw when matching elements in multiple frames', async ({ page, server }) => {
   await page.route('**/empty.html', route => {
     route.fulfill({ body: '<iframe src="a.html"></iframe><iframe src="b.html"></iframe>', contentType: 'text/html' }).catch(() => {});
   });
@@ -369,7 +367,7 @@ it('should throw when piercing frames matches multiple frames', async ({ page, s
   });
   await page.goto(server.EMPTY_PAGE);
 
-  // Make sure both child frames have their <div> before piercing, otherwise resolution
+  // Make sure both child frames have their <div> before matching, otherwise resolution
   // may transiently collapse to a single frame.
   await expect.poll(() => page.frames().length).toBe(3);
   for (const frame of page.frames()) {
@@ -377,31 +375,31 @@ it('should throw when piercing frames matches multiple frames', async ({ page, s
       await frame.waitForSelector('div');
   }
 
-  const error = await page.locator('internal:control=pierce-frames >> div').innerHTML().catch(e => e);
-  expect(error.message).toContain('Pierce-frame mode matched elements from multiple frames');
+  const error = await page.locator('internal:control=any-frame >> div').innerHTML().catch(e => e);
+  expect(error.message).toContain('frameLocator() matched elements in multiple frames');
 });
 
-it('should not allow pierce-frames in the middle of a selector', async ({ page, server }) => {
+it('should not allow any-frame in the middle of a selector', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
-  const error = await page.locator('iframe >> internal:control=pierce-frames >> div').waitFor().catch(e => e);
-  expect(error.message).toContain('"pierce-frames" is only allowed as the first selector token');
+  const error = await page.locator('iframe >> internal:control=any-frame >> div').waitFor().catch(e => e);
+  expect(error.message).toContain('"any-frame" is only allowed as the first selector token');
 });
 
-it('should allow entering frames while piercing', async ({ page, server }) => {
+it('should allow entering frames from any frame', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
-  const button = page.locator('internal:control=pierce-frames >> iframe[src="iframe-2.html"] >> internal:control=enter-frame >> button');
+  const button = page.locator('internal:control=any-frame >> iframe[src="iframe-2.html"] >> internal:control=enter-frame >> button');
   await button.waitFor();
   expect(await button.innerText()).toBe('Hello nested iframe');
 });
 
-it('should not allow pierce-frames after entering a frame', async ({ page }) => {
-  const error = await page.locator('iframe >> internal:control=enter-frame >> internal:control=pierce-frames >> button').count().catch(e => e);
-  expect(error.message).toContain('"pierce-frames" is only allowed as the first selector token');
+it('should not allow any-frame after entering a frame', async ({ page }) => {
+  const error = await page.locator('iframe >> internal:control=enter-frame >> internal:control=any-frame >> button').count().catch(e => e);
+  expect(error.message).toContain('"any-frame" is only allowed as the first selector token');
 });
 
-it('should not allow dangling enter-frame while piercing', async ({ page }) => {
-  const error = await page.locator('internal:control=pierce-frames >> iframe >> internal:control=enter-frame').count().catch(e => e);
+it('should not allow dangling enter-frame after any-frame', async ({ page }) => {
+  const error = await page.locator('internal:control=any-frame >> iframe >> internal:control=enter-frame').count().catch(e => e);
   expect(error.message).toContain('Selector cannot end with entering frame');
 });

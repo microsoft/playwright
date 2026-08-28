@@ -970,6 +970,10 @@ Console.WriteLine(frame == contentFrame); // -> True
 When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements
 in that iframe.
 
+When called without [`param: selector`], the search starts in this frame or in any of the iframes inside it,
+so that you don't need to locate each iframe first. Note that the rest of the locator is resolved inside a single
+frame, just like any other locator. If it matches elements inside multiple frames, an error is thrown.
+
 **Usage**
 
 Following snippet locates element with text "Submit" in the iframe with id `my-frame`, like `<iframe id="my-frame">`:
@@ -999,8 +1003,38 @@ var locator = frame.FrameLocator("#my-iframe").GetByText("Submit");
 await locator.ClickAsync();
 ```
 
-### param: Frame.frameLocator.selector = %%-find-selector-%%
+Following snippet locates a button, either in the frame or in one of the iframes inside it:
+
+```js
+const locator = frame.frameLocator().getByRole('button');
+await locator.click();
+```
+
+```java
+Locator locator = frame.frameLocator().getByRole(AriaRole.BUTTON);
+locator.click();
+```
+
+```python async
+locator = frame.frame_locator().get_by_role("button")
+await locator.click()
+```
+
+```python sync
+locator = frame.frame_locator().get_by_role("button")
+locator.click()
+```
+
+```csharp
+var locator = frame.FrameLocator().GetByRole(AriaRole.Button);
+await locator.ClickAsync();
+```
+
+### param: Frame.frameLocator.selector
 * since: v1.17
+- `selector` ?<[string]>
+
+A selector that matches the frame element. When not specified, locator is matched in this frame or in any of the iframes inside it.
 
 ## async method: Frame.getAttribute
 * since: v1.8
@@ -1438,53 +1472,6 @@ Returns the page containing this frame.
 - returns: <[null]|[Frame]>
 
 Parent frame, if any. Detached frames and main frames return `null`.
-
-## method: Frame.pierceFrames
-* since: v1.63
-- returns: <[FrameLocator]>
-
-When working with iframes, you can create a frame locator that will search for elements in this frame
-and in all iframes inside it, so that you don't need to locate each iframe first.
-
-Note that all elements matching the locator must belong to a single frame. For example, if the frame contains
-two iframes, each with a `Submit` button, piercing frames and locating a button will throw an error
-because it matches elements from multiple frames.
-
-**Usage**
-
-Following snippet locates a button, either in the frame or in one of the iframes inside it:
-
-```js
-const locator = frame.pierceFrames().getByRole('button');
-await locator.click();
-```
-
-```java
-Locator locator = frame.pierceFrames().getByRole(AriaRole.BUTTON);
-locator.click();
-```
-
-```python async
-locator = frame.pierce_frames.get_by_role("button")
-await locator.click()
-```
-
-```python sync
-locator = frame.pierce_frames.get_by_role("button")
-locator.click()
-```
-
-```csharp
-var locator = frame.PierceFrames.GetByRole(AriaRole.Button);
-await locator.ClickAsync();
-```
-
-### option: Frame.pierceFrames.pierce
-* since: v1.63
-- `pierce` <[boolean]>
-
-Whether to pierce frames. Pass `false` to opt out of frame piercing enabled
-by the [`option: Browser.newContext.pierceFrames`] context option. Defaults to `true`.
 
 ## async method: Frame.press
 * since: v1.8

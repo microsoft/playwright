@@ -71,7 +71,6 @@ Electron:
               properties:
                 $mixin: ShowActionsOptions
         strictSelectors: boolean?
-        pierceFrames: boolean?
         timezoneId: string?
         tracesDir: string?
         artifactsDir: string?

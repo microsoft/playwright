@@ -297,7 +297,6 @@ export interface PlaywrightTestOptions {
   locale: string | undefined;
   offline: boolean;
   permissions: string[] | undefined;
-  pierceFrames: boolean;
   proxy: Proxy | undefined;
   reducedMotion: ReducedMotion;
   storageState: StorageState | undefined;

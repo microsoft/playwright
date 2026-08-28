@@ -20,6 +20,7 @@ import fs from 'fs';
 import { assertionAbortedMessage } from '@isomorphic/abortSignal';
 import { assert } from '@isomorphic/assert';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '@isomorphic/locatorUtils';
+import { kAnyFrameSelector } from '@isomorphic/selectorParser';
 import { urlMatches } from '@isomorphic/urlMatch';
 import { EventEmitter } from './eventEmitter';
 import { ChannelOwner } from './channelOwner';
@@ -28,7 +29,7 @@ import { ElementHandle, convertInputFiles, convertSelectOptionValues } from './e
 import { AbortError, PlaywrightError } from './errors';
 import { Events } from './events';
 import { JSHandle, assertEvaluateOptions, assertMaxArguments, parseResult, serializeArgument, serializeArgumentWithCallbacks } from './jsHandle';
-import { FrameLocator, kNoPierceFramesSelector, kPierceFramesSelector, Locator, testIdAttributeName } from './locator';
+import { FrameLocator, Locator, testIdAttributeName } from './locator';
 import * as network from './network';
 import { kLifecycleEvents } from './types';
 import { Waiter } from './waiter';
@@ -393,12 +394,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return this.locator(getByRoleSelector(role, options));
   }
 
-  frameLocator(selector: string): FrameLocator {
-    return new FrameLocator(this, selector);
-  }
-
-  pierceFrames(options?: { pierce?: boolean }): FrameLocator {
-    return new FrameLocator(this, options?.pierce === false ? kNoPierceFramesSelector : kPierceFramesSelector);
+  frameLocator(selector?: string): FrameLocator {
+    return new FrameLocator(this, selector === undefined ? kAnyFrameSelector : selector);
   }
 
   async focus(selector: string, options: channels.FrameFocusOptions & TimeoutOptions = {}) {
