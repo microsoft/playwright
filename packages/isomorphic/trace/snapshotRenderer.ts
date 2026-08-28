@@ -326,7 +326,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
     const canvasElements: HTMLCanvasElement[] = [];
 
     let topSnapshotWindow: Window = win;
-    while (topSnapshotWindow !== topSnapshotWindow.parent && !topSnapshotWindow.location.pathname.match(/\/page@[a-z0-9]+$/))
+    while (topSnapshotWindow !== topSnapshotWindow.parent && new URLSearchParams(topSnapshotWindow.location.search).has('frameId'))
       topSnapshotWindow = topSnapshotWindow.parent;
 
     const visit = (root: Document | ShadowRoot) => {
@@ -401,13 +401,12 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         if (!src) {
           iframe.setAttribute('src', blankSnapshotUrl);
         } else {
-          // Retain query parameters to inherit name=, time=, pointX=, pointY= and other values from parent.
+          // The attribute value is recorded as `/snapshot/<frameId>` by the snapshotter.
+          const frameId = src.substring(src.lastIndexOf('/') + 1);
+          // All frames of a page share the snapshot name in the path, so we only swap the frame id.
+          // Retain query parameters to inherit time=, pointX=, pointY= and other values from parent.
           const url = new URL(win.location.href);
-          // We can be loading iframe from within iframe, reset base to be absolute.
-          const index = url.pathname.lastIndexOf('/snapshot/');
-          if (index !== -1)
-            url.pathname = url.pathname.substring(0, index + 1);
-          url.pathname += src.substring(1);
+          url.searchParams.set('frameId', frameId);
           iframe.setAttribute('src', url.toString());
         }
       }

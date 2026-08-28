@@ -105,11 +105,11 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
   traceCommand
       .command('snapshot <action-id>')
       .description('run a playwright-cli command against a DOM snapshot')
-      .option('--name <name>', 'snapshot phase: before, input, or after')
+      .option('--phase <phase>', 'snapshot phase: before, action, or after')
       .option('--serve', 'serve snapshot on localhost and keep running')
       .allowUnknownOption(true)
       .allowExcessArguments(true)
-      .action(async (actionId: string, options: { name?: string, serve?: boolean }, cmd: Command) => {
+      .action(async (actionId: string, options: { phase?: string, serve?: boolean }, cmd: Command) => {
         try {
           // Collect everything after '--' as the browser command.
           const browserArgs = cmd.args.slice(1);

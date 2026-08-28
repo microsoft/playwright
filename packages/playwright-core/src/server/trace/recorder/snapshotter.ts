@@ -29,6 +29,7 @@ import type { RegisteredListener } from '@utils/eventsHelper';
 import type { Frame } from '../../frames';
 import type { InitScript } from '../../page';
 import type { FrameSnapshot } from '@trace/snapshot';
+import type { ActionPhase } from '@trace/trace';
 import type { Progress } from '../../progress';
 
 export type SnapshotterBlob = {
@@ -120,7 +121,7 @@ export class Snapshotter {
     }
   }
 
-  async captureSnapshot(page: Page, callId: string, snapshotName: string, resetTargets: boolean): Promise<void> {
+  async captureSnapshot(page: Page, callId: string, phase: ActionPhase, resetTargets: boolean): Promise<void> {
     // In each frame, in a non-stalling manner, capture the snapshots.
     const snapshots = page.frames().map(async frame => {
       const data = await this._captureFrameSnapshot(frame, resetTargets);
@@ -130,7 +131,7 @@ export class Snapshotter {
 
       const snapshot: FrameSnapshot = {
         callId,
-        snapshotName,
+        phase,
         pageId: page.guid,
         frameId: frame.guid,
         frameUrl: data.url,

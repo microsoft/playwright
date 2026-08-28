@@ -20,6 +20,8 @@ import { buildActionTree } from '@isomorphic/trace/traceModel';
 import { msToString } from '@isomorphic/formatUtils';
 import { loadTrace, formatTimestamp, actionFullTitle, actionSubtitle, actionTitle } from './traceUtils';
 
+import { kActionPhases } from './traceUtils';
+
 import type { ActionEntry } from '@isomorphic/trace/entries';
 
 export async function traceActions(options: { grep?: string, errorsOnly?: boolean }) {
@@ -121,17 +123,11 @@ export async function traceAction(actionId: string) {
   }
 
   // Snapshots
-  const snapshots: string[] = [];
-  if (action.beforeSnapshot)
-    snapshots.push('before');
-  if (action.inputSnapshot)
-    snapshots.push('input');
-  if (action.afterSnapshot)
-    snapshots.push('after');
-  if (snapshots.length) {
+  const phases = kActionPhases.filter(phase => trace.model.hasDomSnapshotForCall(action.callId, phase));
+  if (phases.length) {
     console.log('\n  Snapshots');
-    console.log(`    available: ${snapshots.join(', ')}`);
-    console.log(`    usage:     npx playwright trace snapshot ${actionId} --name <${snapshots.join('|')}>`);
+    console.log(`    available: ${phases.join(', ')}`);
+    console.log(`    usage:     npx playwright trace snapshot ${actionId} --phase <${phases.join('|')}>`);
   }
   console.log('');
 }

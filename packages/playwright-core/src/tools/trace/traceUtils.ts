@@ -24,6 +24,7 @@ import { resolveWithinRoot } from '@utils/fileUtils';
 import { DirTraceLoaderBackend, extractTrace } from './traceParser';
 
 import type { ActionEntry } from '@isomorphic/trace/entries';
+import type { ActionPhase } from '@trace/trace';
 
 const traceDir = path.join('.playwright-cli', 'trace');
 const cliOutputDir = '.playwright-cli';
@@ -132,6 +133,8 @@ export async function saveOutputFile(fileName: string, content: string | Buffer,
   return outFile;
 }
 
+
+export const kActionPhases: ActionPhase[] = ['before', 'action', 'after'];
 
 function buildOrdinalMap(model: TraceModel): { ordinalToCallId: Map<number, string>, callIdToOrdinal: Map<string, number> } {
   const actions = model.actions.filter(a => a.group !== 'configuration');

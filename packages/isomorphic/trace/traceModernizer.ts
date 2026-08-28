@@ -21,6 +21,7 @@ import type * as traceV5 from './versions/traceV5';
 import type * as traceV6 from './versions/traceV6';
 import type * as traceV7 from './versions/traceV7';
 import type * as traceV8 from './versions/traceV8';
+import type { FrameSnapshot } from '@trace/snapshot';
 import type { ActionEntry, ContextEntry, PageEntry } from './entries';
 import type { SnapshotStorage } from './snapshotStorage';
 
@@ -48,6 +49,7 @@ export class TraceModernizer {
   private _jsHandles = new Map<string, { preview: string }>();
   private _consoleObjects = new Map<string, { type: string, text: string, location: { url: string, lineNumber: number, columnNumber: number }, args?: { preview: string, value: string }[] }>();
   private _apiRequestRef: string | undefined;
+  private _snapshotPhases = new Map<string, trace.ActionPhase>();
 
   constructor(contextEntry: ContextEntry, snapshotStorage: SnapshotStorage) {
     this._contextEntry = contextEntry;
@@ -61,6 +63,11 @@ export class TraceModernizer {
 
   actions(): ActionEntry[] {
     return [...this._actionMap.values()];
+  }
+
+  private _collectSnapshotPhase(snapshotName: string | undefined, phase: trace.ActionPhase) {
+    if (snapshotName)
+      this._snapshotPhases.set(snapshotName, phase);
   }
 
   private _pageEntry(pageId: string): PageEntry {
@@ -129,7 +136,6 @@ export class TraceModernizer {
       }
       case 'input': {
         const existing = this._actionMap.get(event.callId);
-        existing!.inputSnapshot = event.inputSnapshot;
         existing!.point = event.point;
         existing!.box = event.box;
         break;
@@ -147,7 +153,6 @@ export class TraceModernizer {
       }
       case 'after': {
         const existing = this._actionMap.get(event.callId);
-        existing!.afterSnapshot = event.afterSnapshot;
         existing!.endTime = event.endTime;
         existing!.result = event.result;
         existing!.error = event.error;
@@ -162,6 +167,9 @@ export class TraceModernizer {
         break;
       }
       case 'event': {
+        // Make sure there is a page entry for each page.
+        if ((event.method === 'page' || event.method === 'pageClosed') && event.params?.pageId)
+          this._pageEntry(event.params.pageId);
         contextEntry.events.push(event);
         break;
       }
@@ -185,9 +193,13 @@ export class TraceModernizer {
         this._snapshotStorage.addResource(event.snapshot);
         contextEntry.resources.push(event.snapshot);
         break;
-      case 'frame-snapshot':
-        this._snapshotStorage.addFrameSnapshot(event.snapshot, this._pageEntry(event.snapshot.pageId).screencastFrames);
+      case 'frame-snapshot': {
+        const snapshot = event.snapshot;
+        this._snapshotStorage.addFrameSnapshot(snapshot, this._pageEntry(snapshot.pageId).screencastFrames);
+        if (snapshot.isMainFrame && snapshot.phase)
+          contextEntry.domSnapshots.push({ callId: snapshot.callId, phase: snapshot.phase });
         break;
+      }
     }
     // Make sure there is a page entry for each page, even without screencast frames,
     // to show in the metadata view.
@@ -500,6 +512,19 @@ export class TraceModernizer {
 
   _modernize_8_to_9(events: traceV8.TraceEvent[]): trace.TraceEvent[] {
     for (const event of events) {
+      // Actions used to point at their snapshots by name, now snapshots know their own phase.
+      if (event.type === 'before' || event.type === 'input' || event.type === 'after' || event.type === 'action') {
+        const action = event as traceV8.ActionTraceEvent;
+        this._collectSnapshotPhase(action.beforeSnapshot, 'before');
+        this._collectSnapshotPhase(action.inputSnapshot, 'action');
+        this._collectSnapshotPhase(action.afterSnapshot, 'after');
+        delete action.beforeSnapshot;
+        delete action.inputSnapshot;
+        delete action.afterSnapshot;
+      }
+      if (event.type === 'frame-snapshot' && event.snapshot.snapshotName)
+        (event.snapshot as FrameSnapshot).phase = this._snapshotPhases.get(event.snapshot.snapshotName);
+
       if (event.type !== 'resource-snapshot')
         continue;
       const snapshot = event.snapshot;

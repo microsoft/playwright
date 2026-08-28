@@ -16,7 +16,7 @@
 
 /* eslint-disable no-console */
 
-import { loadTrace, saveOutputFile } from './traceUtils';
+import { kActionPhases, loadTrace, saveOutputFile } from './traceUtils';
 
 export async function traceScreenshot(actionId: string, options: { output?: string }) {
   const trace = await loadTrace();
@@ -28,19 +28,11 @@ export async function traceScreenshot(actionId: string, options: { output?: stri
     return;
   }
 
-  const pageId = action.pageId;
-  if (!pageId) {
-    console.error(`Action '${actionId}' has no associated page.`);
-    process.exitCode = 1;
-    return;
-  }
-
   const callId = action.callId;
   const storage = trace.loader.storage();
-  const snapshotNames = ['input', 'before', 'after'];
   let file: string | undefined;
-  for (const name of snapshotNames) {
-    const renderer = storage.snapshotByName(pageId, `${name}@${callId}`);
+  for (const phase of kActionPhases) {
+    const renderer = storage.snapshotForCall(callId, phase);
     file = renderer?.closestScreenshot();
     if (file)
       break;

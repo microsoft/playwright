@@ -128,11 +128,9 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
           actionMap.set(event.callId, action);
         } else if (event.type === 'input') {
           const existing = actionMap.get(event.callId);
-          existing.inputSnapshot = event.inputSnapshot;
           existing.point = event.point;
         } else if (event.type === 'after') {
           const existing = actionMap.get(event.callId);
-          existing.afterSnapshot = event.afterSnapshot;
           existing.endTime = event.endTime;
           existing.error = event.error;
           existing.result = event.result;

@@ -140,9 +140,7 @@ export type BeforeActionTraceEvent = {
   method: string;
   params: Record<string, any>;
   stepId?: string;
-  beforeSnapshot?: string;
   stack?: StackFrame[];
-  pageId?: string;
   parentId?: string;
   group?: string;
 };
@@ -150,7 +148,6 @@ export type BeforeActionTraceEvent = {
 export type InputActionTraceEvent = {
   type: 'input',
   callId: string;
-  inputSnapshot?: string;
   point?: Point;
   box?: Rect;
 };
@@ -172,7 +169,6 @@ export type AfterActionTraceEvent = {
   type: 'after',
   callId: string;
   endTime: number;
-  afterSnapshot?: string;
   error?: SerializedError['error'];
   attachments?: AfterActionTraceEventAttachment[];
   annotations?: TraceEventAnnotation[];
