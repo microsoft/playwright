@@ -21,7 +21,7 @@ import fs from 'fs';
 import net from 'net';
 import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
-import type { Entry, Log, WebSocketMessage } from '../../packages/trace/src/har';
+import type { Entry, Log, WebSocketMessage } from '../../packages/isomorphic/trace/versions/har';
 
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string } & Partial<Pick<BrowserContextOptions['recordHar'], 'content' | 'omitContent' | 'mode'>> = {}) {
   const harPath = testInfo.outputPath(options.outputPath || 'test.har');

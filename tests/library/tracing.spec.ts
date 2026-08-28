@@ -19,7 +19,7 @@ import { PNG, jpegjs } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
 import { browserTest, contextTest as test, expect } from '../config/browserTest';
 import { parseTraceRaw } from '../config/utils';
-import type { StackFrame, ActionTraceEvent } from '../../packages/trace/src/trace';
+import type { StackFrame, ActionTraceEvent } from '../../packages/isomorphic/trace/trace';
 import { artifactsFolderName } from '../../packages/playwright/src/isomorphic/folders';
 import { rafraf } from '../page/pageTest';
 

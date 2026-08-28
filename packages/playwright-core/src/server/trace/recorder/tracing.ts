@@ -49,9 +49,8 @@ import type { HarTracerDelegate } from '../../har/harTracer';
 import type { CallMetadata, InstrumentationListener } from '../../instrumentation';
 import type { PageError } from '../../page';
 import type { RecordHarOptions, StackFrame, TracingTracingStopChunkParams } from '../../channels';
-import type * as har from '@trace/har';
-import type { FrameSnapshot } from '@trace/snapshot';
-import type * as trace from '@trace/trace';
+import type * as har from '@isomorphic/trace/versions/har';
+import type * as trace from '@isomorphic/trace/trace';
 import type { Progress } from '../../progress';
 import type * as types from '../../types';
 import type { Screencast, ScreencastClient } from '../../screencast';
@@ -512,7 +511,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const file = `screenshots/${progress.metadata.id}-${phase}.png`;
     this._state.chunkFiles.add(file);
     this._appendResource(file, buffer);
-    this._appendTraceEvent({ type: 'screenshot', callId: progress.metadata.id, phase, file });
+    this._appendTraceEvent({ type: 'screenshot', callId: progress.metadata.id, phase, pageId: page.guid, timestamp: monotonicTime(), file });
   }
 
   private async _captureAriaSnapshot(progress: Progress, page: Page, phase: trace.ActionPhase): Promise<void> {
@@ -523,7 +522,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const file = `aria/${progress.metadata.id}-${phase}.json`;
     this._state.chunkFiles.add(file);
     this._appendResource(file, buffer);
-    this._appendTraceEvent({ type: 'aria-snapshot', callId: progress.metadata.id, phase, file });
+    this._appendTraceEvent({ type: 'aria-snapshot', callId: progress.metadata.id, phase, pageId: page.guid, timestamp: monotonicTime(), file });
   }
 
   onBeforeCall(progress: Progress, sdkObject: SdkObject, parentId?: string) {
@@ -623,7 +622,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return file;
   }
 
-  onFrameSnapshot(snapshot: FrameSnapshot): void {
+  onFrameSnapshot(snapshot: trace.FrameSnapshot): void {
     this._appendTraceEvent({ type: 'frame-snapshot', snapshot });
   }
 

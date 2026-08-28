@@ -17,9 +17,8 @@
 import { getActionGroup, renderFullTitleForCall } from '../protocolFormatter';
 
 import type { Language } from '../locatorGenerators';
-import type { ResourceSnapshot } from '@trace/snapshot';
-import type * as trace from '@trace/trace';
-import type { ActionTraceEvent } from '@trace/trace';
+import type * as trace from './trace';
+import type { ActionTraceEvent, ResourceSnapshot } from './trace';
 import type { ActionEntry, ContextEntry, PageEntry } from './entries';
 import type { ActionGroup } from '../protocolFormatter';
 
@@ -369,7 +368,11 @@ function adjustMonotonicTime(context: ContextEntry, monotonicTimeDelta: number) 
       frame.timestamp += monotonicTimeDelta;
   }
   for (const video of context.videos || [])
-    video.timestampOrigin += monotonicTimeDelta;
+    video.timestamp += monotonicTimeDelta;
+  for (const screenshot of context.screenshots || [])
+    screenshot.timestamp += monotonicTimeDelta;
+  for (const ariaSnapshot of context.ariaSnapshots || [])
+    ariaSnapshot.timestamp += monotonicTimeDelta;
   for (const resource of context.resources) {
     if (resource._monotonicTime)
       resource._monotonicTime += monotonicTimeDelta;

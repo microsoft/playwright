@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { NodeSnapshot } from '@trace/snapshot';
+import type { NodeSnapshot } from '@isomorphic/trace/trace';
 
 export type SnapshotData = {
   doctype?: string,

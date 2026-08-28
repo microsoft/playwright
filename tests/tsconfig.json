@@ -16,7 +16,6 @@
       "@utils/*": ["packages/utils/*"],
       "@testIsomorphic/*": ["packages/playwright/src/isomorphic/*"],
       "@recorder/*": ["packages/recorder/src/*"],
-      "@trace/*": ["packages/trace/src/*"],
       "@web/*": ["packages/web/src/*"],
     },
     "esModuleInterop": true,

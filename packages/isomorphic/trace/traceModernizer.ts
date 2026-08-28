@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-import type * as trace from '@trace/trace';
+import type * as trace from './trace';
 import type * as traceV3 from './versions/traceV3';
 import type * as traceV4 from './versions/traceV4';
 import type * as traceV5 from './versions/traceV5';
 import type * as traceV6 from './versions/traceV6';
 import type * as traceV7 from './versions/traceV7';
 import type * as traceV8 from './versions/traceV8';
-import type { FrameSnapshot } from '@trace/snapshot';
 import type { ActionEntry, ContextEntry, PageEntry } from './entries';
 import type { SnapshotStorage } from './snapshotStorage';
 
@@ -32,9 +31,6 @@ export class TraceVersionError extends Error {
   }
 }
 
-// 6 => 10/2023 ~1.40
-// 7 => 05/2024 ~1.45
-// 9 => 08/2026 ~1.63
 const latestVersion: trace.VERSION = 9;
 
 // Ensures distinct api request refs across contexts of the same trace.
@@ -230,46 +226,7 @@ export class TraceModernizer {
     let events = [event];
     for (; version < latestVersion; ++version)
       events = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, events);
-    for (const e of events)
-      this._normalizeResourceReferences(e);
     return events;
-  }
-
-  // Traces recorded before trace-relative paths referenced blobs by bare sha1-style names:
-  // `_sha1` in har entry content, `sha1` in snapshot resource overrides, screencast frames
-  // and attachments.
-  private _normalizeResourceReferences(event: any) {
-    if (event.type === 'resource-snapshot') {
-      const { request, response } = event.snapshot;
-      if (request?.postData?._sha1) {
-        request.postData._file = 'resources/' + request.postData._sha1;
-        delete request.postData._sha1;
-      }
-      if (response?.content?._sha1) {
-        response.content._file = 'resources/' + response.content._sha1;
-        delete response.content._sha1;
-      }
-    }
-    if (event.type === 'frame-snapshot') {
-      for (const override of event.snapshot.resourceOverrides || []) {
-        if (override.sha1) {
-          override.file = 'resources/' + override.sha1;
-          delete override.sha1;
-        }
-      }
-    }
-    if (event.type === 'screencast-frame' && event.sha1) {
-      event.file = 'resources/' + event.sha1;
-      delete event.sha1;
-    }
-    if (event.type === 'after' || event.type === 'action') {
-      for (const attachment of event.attachments || []) {
-        if (attachment.sha1) {
-          attachment.file = 'resources/' + attachment.sha1;
-          delete attachment.sha1;
-        }
-      }
-    }
   }
 
   _modernize_0_to_1(events: any[]): any[] {
@@ -522,19 +479,50 @@ export class TraceModernizer {
         delete action.inputSnapshot;
         delete action.afterSnapshot;
       }
-      if (event.type === 'frame-snapshot' && event.snapshot.snapshotName)
-        (event.snapshot as FrameSnapshot).phase = this._snapshotPhases.get(event.snapshot.snapshotName);
 
-      if (event.type !== 'resource-snapshot')
-        continue;
-      const snapshot = event.snapshot;
-      // Older traces marked api requests with a boolean instead of referencing
-      // their api request context.
-      if ((snapshot as any)._apiRequest) {
-        if (!this._apiRequestRef)
-          this._apiRequestRef = 'api-request-context@' + (++lastApiRequestRefOrdinal);
-        snapshot._apiRequestRef = this._apiRequestRef;
-        delete (snapshot as any)._apiRequest;
+      // Blobs used to be referenced by a bare sha1-style name, now they use a trace-relative path.
+      if (event.type === 'after' || event.type === 'action') {
+        for (const attachment of event.attachments || []) {
+          if (attachment.sha1) {
+            (attachment as trace.AfterActionTraceEventAttachment).file = 'resources/' + attachment.sha1;
+            delete attachment.sha1;
+          }
+        }
+      }
+      if (event.type === 'screencast-frame' && event.sha1) {
+        (event as any as trace.ScreencastFrameTraceEvent).file = 'resources/' + event.sha1;
+        delete (event as any).sha1;
+      }
+
+      if (event.type === 'frame-snapshot') {
+        if (event.snapshot.snapshotName)
+          (event.snapshot as trace.FrameSnapshot).phase = this._snapshotPhases.get(event.snapshot.snapshotName);
+        for (const override of event.snapshot.resourceOverrides || []) {
+          if (override.sha1) {
+            (override as trace.ResourceOverride).file = 'resources/' + override.sha1;
+            delete override.sha1;
+          }
+        }
+      }
+
+      if (event.type === 'resource-snapshot') {
+        const postData = event.snapshot.request?.postData;
+        if (postData?._sha1) {
+          postData._file = 'resources/' + postData._sha1;
+          delete postData._sha1;
+        }
+        const content = event.snapshot.response?.content;
+        if (content?._sha1) {
+          content._file = 'resources/' + content._sha1;
+          delete content._sha1;
+        }
+        // Older hars marked api requests with a boolean instead of referencing their api request context.
+        if (event.snapshot._apiRequest) {
+          if (!this._apiRequestRef)
+            this._apiRequestRef = 'api-request-context@' + (++lastApiRequestRefOrdinal);
+          (event as trace.ResourceSnapshotTraceEvent).snapshot._apiRequestRef = this._apiRequestRef;
+          delete event.snapshot._apiRequest;
+        }
       }
     }
     return events as trace.TraceEvent[];

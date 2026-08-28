@@ -17,8 +17,7 @@
 import { rewriteURLForCustomProtocol, SnapshotRenderer } from './snapshotRenderer';
 import { LRUCache } from '../lruCache';
 
-import type { FrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
-import type { ActionPhase } from '@trace/trace';
+import type { ActionPhase, FrameSnapshot, ResourceSnapshot } from './trace';
 import type { PageEntry } from './entries';
 
 

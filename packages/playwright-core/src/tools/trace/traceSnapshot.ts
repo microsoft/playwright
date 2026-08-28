@@ -29,7 +29,7 @@ import { commands } from '../cli-daemon/commands';
 import { kActionPhases, loadTrace } from './traceUtils';
 
 import type { SnapshotStorage } from '@isomorphic/trace/snapshotStorage';
-import type { ActionPhase } from '@trace/trace';
+import type { ActionPhase } from '@isomorphic/trace/trace';
 
 export async function traceSnapshot(actionId: string, options: { phase?: string, serve?: boolean, browserArgs?: string[] }): Promise<void> {
   const trace = await loadTrace();

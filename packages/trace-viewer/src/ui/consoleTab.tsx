@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { SerializedError } from '@trace/trace';
+import type { SerializedError } from '@isomorphic/trace/trace';
 import * as React from 'react';
 import './consoleTab.css';
 import type { TraceModel } from '@isomorphic/trace/traceModel';

@@ -37,7 +37,7 @@ import type { RegisteredListener } from '@utils/eventsHelper';
 import type { APIRequestEvent, APIRequestFinishedEvent } from '../fetch';
 import type { Worker } from '../page';
 import type { HeadersArray, LifecycleEvent } from '../types';
-import type * as har from '@trace/har';
+import type * as har from '@isomorphic/trace/versions/har';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 
