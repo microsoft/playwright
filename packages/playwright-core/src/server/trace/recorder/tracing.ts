@@ -139,7 +139,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   async resetForReuse(progress: Progress) {
-    // Discard previous chunk if any and ignore any errors there.
     await this.stop(progress);
     if (this._snapshotter)
       await progress.race(this._snapshotter.resetForReuse());
@@ -326,9 +325,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   async stop(progress: Progress) {
-    // The client stops the chunk before stopping tracing, but that may fail, e.g. when
-    // saving the trace hits a disk error. Discard the chunk so that tracing is always
-    // stopped and can be started again.
+    // Discard the chunk if the client failed to stop it, so that tracing can be restarted.
     await this.stopChunk(progress, { mode: 'discard' }).catch(() => {});
     await progress.race(this._stop());
   }
@@ -398,8 +395,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     try {
       return await this._stopChunk(progress, params);
     } finally {
-      // Always release the recording state, so that tracing can be stopped and started
-      // again even when saving the chunk failed.
+      // Always release the recording state, even when saving the chunk failed.
       this._isStopping = false;
       if (this._state)
         this._state.recording = false;

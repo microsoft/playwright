@@ -95,10 +95,8 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
   async stop(options: { path?: string } = {}) {
     await this._wrapApiCall(async () => {
-      // Stop tracing even when saving the trace failed, otherwise tracing can
-      // never be started again on this context.
-      let error: Error | undefined = await this._doStopChunk(options.path).catch(e => e);
-      await this._channel.tracingStop({}, kNoTimeout).catch(e => error ??= e);
+      const error = await this._doStopChunk(options.path).catch(e => e);
+      await this._channel.tracingStop({}, kNoTimeout);
       if (error)
         throw error;
     });
@@ -202,16 +200,13 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     try {
       await this._saveChunk(filePath, stacksId, additionalSources);
     } catch (error) {
-      // The stack session is owned by the chunk being stopped. Release it even when
-      // saving failed, otherwise later traces keep appending calls to it.
+      // Release the stack session even on failure, otherwise later traces keep appending to it.
       if (stacksId)
         await this._connection.localUtils()?.traceDiscarded({ stacksId }).catch(() => {});
       throw error;
     }
   }
 
-  // Note: a body-of-_doStopChunk helper carved out to be guarded by the catch above,
-  // not a reusable operation.
   private async _saveChunk(filePath: string | undefined, stacksId: string | undefined, additionalSources: string[]) {
     if (!filePath) {
       // Not interested in artifacts.

@@ -458,8 +458,7 @@ test('should stop tracing when the chunk was not stopped', async ({ context, pag
 
 test('should release the stack session when saving the trace fails', async ({ browserType }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42423' });
-  // Explicit undefined overrides the tracesDir the test runner passes; without
-  // one the stack session owns a temporary directory of its own.
+  // Override the test runner's tracesDir, so that the stack session owns a temporary directory.
   const browser = await browserType.launch({ tracesDir: undefined });
   try {
     const context = await browser.newContext();
