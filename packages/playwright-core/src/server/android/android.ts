@@ -24,7 +24,6 @@ import { PipeTransport } from '@utils/pipeTransport';
 import { createGuid } from '@utils/crypto';
 import { isUnderTest } from '@utils/debug';
 import { getPackageManagerExecCommand } from '@utils/env';
-import { makeWaitForNextTask } from '@utils/task';
 import { RecentLogsCollector } from '@utils/debugLogger';
 import { removeFolders } from '@utils/fileUtils';
 import { gracefullyCloseSet } from '@utils/processLauncher';
@@ -479,7 +478,6 @@ class AndroidBrowser extends EventEmitter {
   readonly device: AndroidDevice;
   private _socket: SocketBackend;
   private _receiver: stream.Writable;
-  private _waitForNextTask = makeWaitForNextTask();
   onmessage?: (message: any) => void;
   onclose?: () => void;
 
@@ -489,14 +487,14 @@ class AndroidBrowser extends EventEmitter {
     this.device = device;
     this._socket = socket;
     this._socket.on('close', () => {
-      this._waitForNextTask(() => {
+      setImmediate(() => {
         if (this.onclose)
           this.onclose();
       });
     });
     this._receiver = new wsReceiver() as stream.Writable;
     this._receiver.on('message', message => {
-      this._waitForNextTask(() => {
+      setImmediate(() => {
         if (this.onmessage)
           this.onmessage(JSON.parse(message));
       });

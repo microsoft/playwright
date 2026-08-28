@@ -17,7 +17,6 @@
 
 import ws from 'ws';
 import { flattenAggregateError, happyEyeballsOptions } from '@utils/network';
-import { makeWaitForNextTask } from '@utils/task';
 import type { WebSocket } from 'ws';
 import type { Progress } from './progress';
 import type { HeadersArray } from './types';
@@ -153,7 +152,7 @@ export class WebSocketTransport implements ConnectionTransport {
     // In Web, all IO callbacks (e.g. WebSocket callbacks)
     // are dispatched into separate tasks, so there's no need
     // to do anything extra.
-    const messageWrap: (cb: () => void) => void = makeWaitForNextTask();
+    const messageWrap: (cb: () => void) => void = setImmediate;
 
     this._ws.addEventListener('message', event => {
       messageWrap(() => {
