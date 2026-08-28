@@ -542,6 +542,9 @@ class NetworkRequest {
     try {
       remoteIPAddress = this.httpChannel.remoteAddress;
       remotePort = this.httpChannel.remotePort;
+      // Gecko reports bare IPv6 addresses, bracket them to match Chromium.
+      if (remoteIPAddress && remoteIPAddress.includes(':'))
+        remoteIPAddress = `[${remoteIPAddress}]`;
     } catch (e) {
       // remoteAddress is not defined for cached requests.
     }
