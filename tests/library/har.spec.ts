@@ -18,7 +18,9 @@
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
 import path from 'path';
-import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
+import http from 'http';
+import { WebSocket, WebSocketServer } from 'ws';
+import type { BrowserContext, BrowserContextOptions, BrowserType } from 'playwright-core';
 import type { AddressInfo } from 'net';
 import type { Log } from '../../packages/isomorphic/trace/versions/har';
 import { parseHar } from '../config/utils';
@@ -938,6 +940,128 @@ it('should not hang on slow chunked response', async ({ browserName, browser, co
 
   expect(log.browser!.name).toBe(browserName);
   expect(log.browser!.version).toBe(browser.version());
+});
+
+// Chromium may advertise `hasExtraInfo` on a response and then never deliver the
+// extra info, or stop reporting the request at all after `responseReceived`.
+// To cover this, we connect over a CDP websocket proxy that withholds the
+// corresponding events for a single request identified by url.
+// See https://github.com/microsoft/playwright/issues/42448.
+async function recordHarWithCensoredCdpEvents(
+  browserType: BrowserType,
+  server: TestServer,
+  testInfo: any,
+  censor: 'extraInfo' | 'extraInfoAndFinish'): Promise<Log> {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({ args: ['--remote-debugging-port=' + port] });
+  const json = await new Promise<string>((resolve, reject) => {
+    http.get(`http://127.0.0.1:${port}/json/version/`, resp => {
+      let data = '';
+      resp.on('data', chunk => data += chunk);
+      resp.on('end', () => resolve(data));
+    }).on('error', reject);
+  });
+  const upstreamUrl: string = JSON.parse(json).webSocketDebuggerUrl;
+
+  let targetRequestId: string | undefined;
+  let dropped = 0;
+  const wss = new WebSocketServer({ port: 0, perMessageDeflate: false });
+  wss.on('connection', (client: WebSocket) => {
+    const upstream = new WebSocket(upstreamUrl, { perMessageDeflate: false });
+    const pending: string[] = [];
+    upstream.on('open', () => pending.splice(0).forEach(message => upstream.send(message)));
+    client.on('message', data => {
+      if (upstream.readyState === WebSocket.OPEN)
+        upstream.send(data.toString());
+      else
+        pending.push(data.toString());
+    });
+    upstream.on('message', data => {
+      const text = data.toString();
+      let message: any;
+      try {
+        message = JSON.parse(text);
+      } catch {
+        client.send(text);
+        return;
+      }
+      const params = message.params || {};
+      if (message.method === 'Network.requestWillBeSent' && params.request?.url?.includes('/target.js'))
+        targetRequestId = params.requestId;
+      const isTarget = !!targetRequestId && params.requestId === targetRequestId;
+      if (isTarget && (
+        message.method === 'Network.responseReceivedExtraInfo' ||
+        (censor === 'extraInfoAndFinish' && message.method === 'Network.loadingFinished')
+      )) {
+        dropped++;
+        return;
+      }
+      client.send(text);
+    });
+    const bye = () => {
+      try { client.close(); } catch {}
+      try { upstream.close(); } catch {}
+    };
+    client.on('close', bye);
+    upstream.on('close', bye);
+    client.on('error', bye);
+    upstream.on('error', bye);
+  });
+
+  try {
+    const cdpBrowser = await browserType.connectOverCDP(`ws://127.0.0.1:${(wss.address() as AddressInfo).port}/`);
+    server.setRoute('/target.js', (req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/javascript' });
+      res.end('window.targetLoaded = true;');
+    });
+    const harPath = testInfo.outputPath('test.har');
+    const context = await cdpBrowser.newContext({ recordHar: { path: harPath } });
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(url => {
+      const script = document.createElement('script');
+      script.src = url;
+      document.body.appendChild(script);
+    }, server.PREFIX + '/target.js');
+
+    // Wait for the events to be withheld rather than guessing with a timeout:
+    // closing before the request was issued would pass for the wrong reason.
+    const expectedDropped = censor === 'extraInfoAndFinish' ? 2 : 1;
+    const deadline = Date.now() + 10000;
+    while (dropped < expectedDropped && Date.now() < deadline)
+      await page.waitForTimeout(50);
+    expect(dropped, 'number of withheld CDP events').toBe(expectedDropped);
+
+    // Give the tracer a chance to register its raw header barriers before closing.
+    await page.waitForTimeout(500);
+    await context.close();
+    return JSON.parse(fs.readFileSync(harPath).toString())['log'] as Log;
+  } finally {
+    await browserServer.close();
+    await new Promise(f => wss.close(() => f(null)));
+  }
+}
+
+it('should not hang when response extra info never arrives', async ({ browserName, browserType, server }, testInfo) => {
+  it.skip(browserName !== 'chromium', 'CDP-specific');
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42448' });
+  // `Network.loadingFinished` is delivered, but `Network.responseReceivedExtraInfo` never arrives.
+  const log = await recordHarWithCensoredCdpEvents(browserType, server, testInfo, 'extraInfo');
+  const entry = log.entries.find(e => e.request.url.includes('/target.js'))!;
+  // Provisional response headers are recorded as a fallback for the raw ones.
+  expect(entry.response.status).toBe(200);
+  expect(entry.response.headers.some(h => h.name.toLowerCase() === 'content-type')).toBe(true);
+});
+
+it('should not hang when a response never finishes', async ({ browserName, browserType, server }, testInfo) => {
+  it.skip(browserName !== 'chromium', 'CDP-specific');
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42448' });
+  // Neither `Network.responseReceivedExtraInfo` nor `Network.loadingFinished` ever arrive.
+  const log = await recordHarWithCensoredCdpEvents(browserType, server, testInfo, 'extraInfoAndFinish');
+  const entry = log.entries.find(e => e.request.url.includes('/target.js'))!;
+  // Provisional response headers are recorded as a fallback for the raw ones.
+  expect(entry.response.status).toBe(200);
+  expect(entry.response.headers.some(h => h.name.toLowerCase() === 'content-type')).toBe(true);
 });
 
 it('should close the context when saving the har fails', async ({ contextFactory, server }, testInfo) => {

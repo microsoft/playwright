@@ -898,7 +898,18 @@ class ResponseExtraInfoTracker {
       return;
     }
 
-    // We are not done yet.
+    // The request is over, so no more extra info can arrive for it. Fall back to
+    // the provisional headers for the responses without extra info, in the same
+    // way as for the responses without the extra info flag. Otherwise, waiting for
+    // the raw headers would hang forever, e.g. when saving the HAR.
+    // See https://github.com/microsoft/playwright/issues/42448.
+    for (let i = info.responseReceivedExtraInfo.length; i < info.responses.length; i++) {
+      const response = info.responses[i];
+      response.request().setRawRequestHeaders(null);
+      response.setResponseHeadersSize(null);
+      response.setRawResponseHeaders(null);
+    }
+    this._stopTracking(info.requestId);
   }
 
   private _stopTracking(requestId: string) {

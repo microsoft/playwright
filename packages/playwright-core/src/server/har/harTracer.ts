@@ -66,6 +66,10 @@ type HarTracerOptions = {
 export class HarTracer {
   private _context: BrowserContext | APIRequestContext;
   private _barrierPromises = new Set<Promise<void>>();
+  // Raw header upgrade barriers among the barrier promises. Provisional headers
+  // are recorded as a fallback for them, so they can be dropped when the
+  // recording stops instead of waiting for the extra info that may never arrive.
+  private _headerUpgradeBarriers = new Set<Promise<void>>();
   private _delegate: HarTracerDelegate;
   private _options: HarTracerOptions;
   private _pageEntries: har.Page[] = [];
@@ -198,14 +202,23 @@ export class HarTracer {
     this._addBarrier(page, promise);
   }
 
-  private _addBarrier(target: Page | Worker | null, promise: Promise<void>) {
+  private _addBarrier(target: Page | Worker | null, promise: Promise<void>): Promise<void> | null {
     if (!target)
       return null;
     if (!this._options.waitForContentOnStop)
-      return;
+      return null;
     const race = target.openScope.safeRace(promise);
     this._barrierPromises.add(race);
     race.then(() => this._barrierPromises.delete(race));
+    return race;
+  }
+
+  private _addHeaderUpgradeBarrier(target: Page | Worker | null, promise: Promise<void>) {
+    const race = this._addBarrier(target, promise);
+    if (!race)
+      return;
+    this._headerUpgradeBarriers.add(race);
+    race.then(() => this._headerUpgradeBarriers.delete(race));
   }
 
   private _onAPIRequest(event: APIRequestEvent) {
@@ -619,13 +632,13 @@ export class HarTracer {
     }
 
     this._recordRequestOverrides(harEntry, request);
-    this._addBarrier(page || request.serviceWorker(), request.internalRawRequestHeaders().then(headers => {
+    this._addHeaderUpgradeBarrier(page || request.serviceWorker(), request.internalRawRequestHeaders().then(headers => {
       this._recordRequestHeadersAndCookies(harEntry, headers);
     }));
     // Record available headers including redirect location in case the tracing is stopped before
     // response extra info is received (in Chromium).
     this._recordResponseHeaders(harEntry, response.headers());
-    this._addBarrier(page || request.serviceWorker(), response.internalRawResponseHeaders().then(headers => {
+    this._addHeaderUpgradeBarrier(page || request.serviceWorker(), response.internalRawResponseHeaders().then(headers => {
       this._recordResponseHeaders(harEntry, headers);
     }));
   }
@@ -653,6 +666,13 @@ export class HarTracer {
   }
 
   async flush() {
+    // Drop the pending raw header upgrades: provisional headers are already recorded
+    // for them as a fallback. If the response extra info has not arrived by now,
+    // the request is most likely not going to finish, and waiting for the upgrade
+    // would hang the flush, e.g. when saving the HAR at the context close.
+    // See https://github.com/microsoft/playwright/issues/42448.
+    for (const barrier of this._headerUpgradeBarriers)
+      this._barrierPromises.delete(barrier);
     await Promise.all(this._barrierPromises);
   }
 
@@ -660,6 +680,7 @@ export class HarTracer {
     this._started = false;
     eventsHelper.removeEventListeners(this._eventListeners);
     this._barrierPromises.clear();
+    this._headerUpgradeBarriers.clear();
 
     const context = this._context instanceof BrowserContext ? this._context : undefined;
     const log: har.Log = {
