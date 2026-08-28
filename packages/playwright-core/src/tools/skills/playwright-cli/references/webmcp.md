@@ -15,14 +15,10 @@ Playwright. WebMCP is experimental, Chromium-only, and accessed through CDP.
 
 All commands use one named session. The examples below use `webmcp`.
 
-Supported browser choices are:
-
-- `chromium`: Playwright-managed Chrome for Testing. Use this by default.
-- `chrome`: Installed Google Chrome.
-- `msedge`: Installed Microsoft Edge.
-
-Chrome and Edge channel variants such as `chrome-canary` and `msedge-dev` are
-also supported. Firefox and WebKit cannot use the WebMCP CDP domain.
+All Chromium-family browsers supported by Playwright CLI can use WebMCP. Use
+the browser selected by Playwright CLI unless the user requests another
+Chromium channel. Firefox and WebKit cannot use the Chromium-only WebMCP CDP
+domain.
 
 ## Commands
 
@@ -33,10 +29,7 @@ Write this temporary config outside version control:
 ```json
 {
   "browser": {
-    "browserName": "chromium",
-    "isolated": true,
     "launchOptions": {
-      "headless": false,
       "args": ["--enable-features=WebMCP"]
     }
   }
@@ -44,16 +37,14 @@ Write this temporary config outside version control:
 ```
 
 ```bash
-# Open the target in an ephemeral profile with WebMCP enabled.
-# Replace <browser> with chromium, chrome, msedge, or a supported channel.
-playwright-cli --config=<temporary-config> -s=webmcp open <url> --browser=<browser>
-
-# Install Playwright's default Chromium when its executable is missing
-playwright-cli install-browser chrome-for-testing
+# Open the target in an ephemeral profile with WebMCP enabled
+playwright-cli --config=<temporary-config> -s=webmcp open <url>
 ```
 
-No manual browser flag is needed for this managed path. The ephemeral profile
-does not contain the user's cookies or credentials.
+No manual browser flag is needed for this managed path. Pass
+`--browser=<browser>` only when the user requests a particular Chromium
+channel. The ephemeral profile does not contain the user's cookies or
+credentials.
 
 ### Discover tools
 
@@ -220,7 +211,6 @@ Delete only the temporary files created by this workflow.
 
 | Symptom | Action |
 |---|---|
-| Chrome for Testing is missing | Run `playwright-cli install-browser chrome-for-testing` |
 | `newCDPSession` fails | Reopen with Chromium |
 | `WebMCP.enable` is missing | Report the version and use Chromium 150+ |
 | `modelContext` is false | Check the flag or origin trial and page requirements |
@@ -238,8 +228,8 @@ Node.js `require` or timers. Use `page.waitForTimeout` and return JSON data.
 ## Typical session
 
 ```bash
-# 1. Open the requested browser, defaulting to chromium
-playwright-cli --config=<temporary-config> -s=webmcp open <url> --browser=<browser>
+# 1. Open the target with WebMCP enabled
+playwright-cli --config=<temporary-config> -s=webmcp open <url>
 
 # 2. Discover tools and inspect their schemas
 playwright-cli --raw -s=webmcp run-code --filename=<discover-file>
