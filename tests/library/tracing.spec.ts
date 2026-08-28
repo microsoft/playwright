@@ -437,7 +437,7 @@ test('should recover tracing after a failed stop', async ({ context, page, serve
 
   const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace2.zip'));
   expect(events[0].type).toBe('context-options');
-  expect(actions).toContain('Click');
+  expect(actions).toContain(`Click locator('button')`);
 });
 
 test('should stop tracing when the chunk was not stopped', async ({ context, page, server }, testInfo) => {
@@ -453,7 +453,7 @@ test('should stop tracing when the chunk was not stopped', async ({ context, pag
 
   const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
   expect(events[0].type).toBe('context-options');
-  expect(actions).toContain('Click');
+  expect(actions).toContain(`Click locator('button')`);
 });
 
 test('should release the stack session when saving the trace fails', async ({ browserType }, testInfo) => {
