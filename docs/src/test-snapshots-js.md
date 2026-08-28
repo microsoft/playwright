@@ -59,6 +59,36 @@ await expect(page).toHaveScreenshot('landing.webp');
 > Note that `toHaveScreenshot()` also accepts an array of path segments to the snapshot file such as `expect().toHaveScreenshot(['relative', 'path', 'to', 'snapshot.png'])`.
 > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
 
+Mouse actions such as [`method: Locator.click`] leave the pointer at its last position. If the page changes afterwards, another element can end up under the pointer and appear hovered in the screenshot. To avoid this, move the mouse before taking the screenshot, for example to the viewport origin when no element there responds to hover.
+
+<details>
+<summary>Helper for repeated named screenshots</summary>
+
+```ts title="test-utils.ts"
+import {
+  expect,
+  type Page,
+  type PageAssertionsToHaveScreenshotOptions,
+} from '@playwright/test';
+
+export async function expectPageToHaveScreenshotWithMouseAtOrigin(
+  page: Page,
+  screenshotName: string,
+  options?: PageAssertionsToHaveScreenshotOptions,
+) {
+  await page.mouse.move(0, 0);
+  await expect(page).toHaveScreenshot(screenshotName, options);
+}
+```
+
+```ts title="example.spec.ts"
+await expectPageToHaveScreenshotWithMouseAtOrigin(page, 'landing.png', {
+  fullPage: true,
+});
+```
+
+</details>
+
 ## Updating screenshots
 
 Sometimes you need to update the reference screenshot, for example when the page has changed. Do this with the  `--update-snapshots` flag.
