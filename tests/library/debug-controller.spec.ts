@@ -296,6 +296,38 @@ test('should reset routes before reuse', async ({ server, connectedBrowserFactor
   await browser2.close();
 });
 
+test('should keep pages alive when the test connection drops', async ({ backend, connectedBrowserFactory }, testInfo) => {
+  testInfo.annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37822' });
+
+  const pageCounts: number[] = [];
+  backend.on('stateChanged', params => pageCounts.push(params.pageCount));
+  await backend.setReportStateChanged({ enabled: true }, undefined);
+
+  // Emulates "Debug Test": the test process creates its own context and page.
+  const browser1 = await connectedBrowserFactory();
+  const context1 = await browser1.newContext();
+  const page1 = await context1.newPage();
+  await page1.setContent('<button>Submit</button>');
+  const contextEmpty = await browser1.newContext();
+  expect(contextEmpty.pages()).toHaveLength(0);
+  await expect.poll(() => pageCounts[pageCounts.length - 1]).toBe(1);
+
+  // Emulates the user hitting "Stop" during debugging: the test process is
+  // killed and its connection drops without a graceful close.
+  await browser1.close();
+
+  // The next connection (e.g. "Record at cursor") still sees the page alive:
+  // contexts with pages are kept around for debugging, empty ones are cleaned up.
+  const browser2 = await connectedBrowserFactory();
+  const contexts = browser2.contexts();
+  expect(contexts).toHaveLength(1);
+  const page = contexts[0].pages()[0];
+  await expect(page.getByRole('button', { name: 'Submit' })).toBeVisible();
+
+  // The backend never reported the debugged page as closed.
+  expect(pageCounts).not.toContain(0);
+});
+
 test('should highlight inside iframe', async ({ backend, connectedBrowser }, testInfo) => {
   testInfo.annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33146' });
 

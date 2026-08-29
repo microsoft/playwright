@@ -222,6 +222,10 @@ export class PlaywrightServer {
     return {
       preLaunchedBrowser: browser,
       denyLaunch: true,
+      // The browser is shared between sequential connections, so that
+      // pages created by one connection can be kept alive after it drops
+      // (e.g. to debug or record them) and picked up by the next one.
+      sharedBrowser: true,
       dispose: async () => {
         // Don't close the pages so that user could debug them,
         // but close all the empty contexts to clean up.
