@@ -66,10 +66,11 @@ type HarTracerOptions = {
 export class HarTracer {
   private _context: BrowserContext | APIRequestContext;
   private _barrierPromises = new Set<Promise<void>>();
-  // Raw header upgrade barriers among the barrier promises. Provisional headers
-  // are recorded as a fallback for them, so they can be dropped when the
-  // recording stops instead of waiting for the extra info that may never arrive.
-  private _headerUpgradeBarriers = new Set<Promise<void>>();
+  // Barriers that only upgrade already-recorded provisional data (raw headers,
+  // sizes, compression) and wait for the network "extra info" that may never
+  // arrive, see https://github.com/microsoft/playwright/issues/42448. They can
+  // be dropped when the recording stops instead of hanging the flush.
+  private _upgradeBarriers = new Set<Promise<void>>();
   private _delegate: HarTracerDelegate;
   private _options: HarTracerOptions;
   private _pageEntries: har.Page[] = [];
@@ -213,12 +214,12 @@ export class HarTracer {
     return race;
   }
 
-  private _addHeaderUpgradeBarrier(target: Page | Worker | null, promise: Promise<void>) {
+  private _addUpgradeBarrier(target: Page | Worker | null, promise: Promise<void>) {
     const race = this._addBarrier(target, promise);
     if (!race)
       return;
-    this._headerUpgradeBarriers.add(race);
-    race.then(() => this._headerUpgradeBarriers.delete(race));
+    this._upgradeBarriers.add(race);
+    race.then(() => this._upgradeBarriers.delete(race));
   }
 
   private _onAPIRequest(event: APIRequestEvent) {
@@ -379,7 +380,7 @@ export class HarTracer {
       }
     };
     if (compressionCalculationBarrier)
-      this._addBarrier(page || request.serviceWorker(), compressionCalculationBarrier.barrier);
+      this._addUpgradeBarrier(page || request.serviceWorker(), compressionCalculationBarrier.barrier);
 
     const promise = response.internalBody().then(buffer => {
       if (this._options.omitScripts && request.resourceType() === 'script') {
@@ -409,7 +410,7 @@ export class HarTracer {
     this._computeHarEntryTotalTime(harEntry);
 
     if (!this._options.omitSizes) {
-      this._addBarrier(page || request.serviceWorker(), response.internalSizes().then(sizes => {
+      this._addUpgradeBarrier(page || request.serviceWorker(), response.internalSizes().then(sizes => {
         harEntry.response.bodySize = sizes.responseBodySize;
         harEntry.response.headersSize = sizes.responseHeadersSize;
         harEntry.response._transferSize = sizes.transferSize;
@@ -632,13 +633,13 @@ export class HarTracer {
     }
 
     this._recordRequestOverrides(harEntry, request);
-    this._addHeaderUpgradeBarrier(page || request.serviceWorker(), request.internalRawRequestHeaders().then(headers => {
+    this._addUpgradeBarrier(page || request.serviceWorker(), request.internalRawRequestHeaders().then(headers => {
       this._recordRequestHeadersAndCookies(harEntry, headers);
     }));
     // Record available headers including redirect location in case the tracing is stopped before
     // response extra info is received (in Chromium).
     this._recordResponseHeaders(harEntry, response.headers());
-    this._addHeaderUpgradeBarrier(page || request.serviceWorker(), response.internalRawResponseHeaders().then(headers => {
+    this._addUpgradeBarrier(page || request.serviceWorker(), response.internalRawResponseHeaders().then(headers => {
       this._recordResponseHeaders(harEntry, headers);
     }));
   }
@@ -666,12 +667,13 @@ export class HarTracer {
   }
 
   async flush() {
-    // Drop the pending raw header upgrades: provisional headers are already recorded
-    // for them as a fallback. If the response extra info has not arrived by now,
-    // the request is most likely not going to finish, and waiting for the upgrade
-    // would hang the flush, e.g. when saving the HAR at the context close.
+    // Drop the pending data upgrade barriers: provisional data is already
+    // recorded for them as a fallback. The extra info they wait for can arrive
+    // late (e.g. after loadingFinished), so it is not resolved on the server
+    // side - but once the recording stops, waiting for the upgrade would hang
+    // the flush, e.g. when saving the HAR at the context close.
     // See https://github.com/microsoft/playwright/issues/42448.
-    for (const barrier of this._headerUpgradeBarriers)
+    for (const barrier of this._upgradeBarriers)
       this._barrierPromises.delete(barrier);
     await Promise.all(this._barrierPromises);
   }
@@ -680,7 +682,7 @@ export class HarTracer {
     this._started = false;
     eventsHelper.removeEventListeners(this._eventListeners);
     this._barrierPromises.clear();
-    this._headerUpgradeBarriers.clear();
+    this._upgradeBarriers.clear();
 
     const context = this._context instanceof BrowserContext ? this._context : undefined;
     const log: har.Log = {
