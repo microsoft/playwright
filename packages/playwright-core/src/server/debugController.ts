@@ -211,6 +211,13 @@ function wireListeners(recorder: Recorder, debugController: DebugController) {
     actions.push(action);
     actionsChanged();
   });
+  recorder.on(RecorderEvent.ModeChanged, (mode: Mode) => {
+    // Recording session has ended: drop the accumulated actions, so that the
+    // next session does not leak them into the emitted source (the client
+    // would re-insert the stale last action into the editor).
+    if (mode === 'none')
+      actions.length = 0;
+  });
   recorder.on(RecorderEvent.SignalAdded, (signal: actions.SignalInContext) => {
     const lastAction = actions.findLast(a => a.pageGuid === signal.pageGuid);
     if (lastAction)
