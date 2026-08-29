@@ -76,7 +76,7 @@ export async function expectPageToHaveScreenshotWithMouseAtOrigin(
   screenshotName: string | ReadonlyArray<string>,
   options?: PageAssertionsToHaveScreenshotOptions,
 ) {
-  await page.mouse.move(0, 0);
+  await page.mouse.move(-1, -1);
   await expect(page).toHaveScreenshot(screenshotName, options);
 }
 ```
