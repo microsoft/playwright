@@ -73,7 +73,7 @@ import {
 
 export async function expectPageToHaveScreenshotWithMouseAtOrigin(
   page: Page,
-  screenshotName: string,
+  screenshotName: string | ReadonlyArray<string>,
   options?: PageAssertionsToHaveScreenshotOptions,
 ) {
   await page.mouse.move(0, 0);
