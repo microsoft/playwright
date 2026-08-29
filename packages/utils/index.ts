@@ -34,7 +34,6 @@ export * from './socksProxy';
 export * from './spawnAsync';
 export * from './stackTrace';
 export * from './stringWidth';
-export * from './task';
 export * from './wsServer';
 export * from './zipFile';
 export * from './zones';

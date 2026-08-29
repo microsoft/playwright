@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { makeWaitForNextTask } from './task';
 
 interface WritableStream {
   write(data: Buffer): void;
@@ -32,7 +31,6 @@ interface ClosableStream {
 export class PipeTransport {
   private _pipeWrite: WritableStream;
   private _data = Buffer.from([]);
-  private _waitForNextTask = makeWaitForNextTask();
   private _closed = false;
   private _bytesLeft = 0;
 
@@ -95,7 +93,7 @@ export class PipeTransport {
       const message = this._data.slice(0, this._bytesLeft);
       this._data = this._data.slice(this._bytesLeft);
       this._bytesLeft = 0;
-      this._waitForNextTask(() => {
+      setImmediate(() => {
         if (this.onmessage)
           this.onmessage(message.toString('utf-8'));
       });
