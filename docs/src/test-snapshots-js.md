@@ -71,7 +71,7 @@ import {
   type PageAssertionsToHaveScreenshotOptions,
 } from '@playwright/test';
 
-export async function expectPageToHaveScreenshotWithMouseAtOrigin(
+export async function expectPageToHaveScreenshotWithMouseOutsideViewport(
   page: Page,
   screenshotName: string | ReadonlyArray<string>,
   options?: PageAssertionsToHaveScreenshotOptions,
@@ -82,7 +82,7 @@ export async function expectPageToHaveScreenshotWithMouseAtOrigin(
 ```
 
 ```ts title="example.spec.ts"
-await expectPageToHaveScreenshotWithMouseAtOrigin(page, 'landing.png', {
+await expectPageToHaveScreenshotWithMouseOutsideViewport(page, 'landing.png', {
   fullPage: true,
 });
 ```
