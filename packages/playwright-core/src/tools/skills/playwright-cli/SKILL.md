@@ -359,13 +359,13 @@ When local version is available, use `npx playwright cli` in all commands. Other
 npm install -g @playwright/cli@latest
 ```
 
-Install or update this skill itself:
+Install or update this skill:
 
 ```bash
 # install into the workspace (.claude/skills, or .agents/skills with --skills=agents)
-playwright-cli install --skills=claude
+playwright-cli install --skills
 # install into the home directory to share the skill across all workspaces
-playwright-cli install --skills=claude --global
+playwright-cli install --skills -g
 ```
 
 ## Example: Form submission
