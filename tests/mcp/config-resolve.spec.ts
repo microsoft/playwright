@@ -157,7 +157,9 @@ test.describe('sandbox', () => {
       expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
   });
 
-  test('chromium sandbox for the bundled browser', async ({}, testInfo) => {
+  test('chromium sandbox for the bundled browser', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42452' },
+  }, async ({}, testInfo) => {
     const configFile = testInfo.outputPath('config.json');
     await fs.promises.writeFile(configFile, JSON.stringify({ browser: { browserName: 'chromium' } }));
     const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv);
@@ -166,6 +168,16 @@ test.describe('sandbox', () => {
       expect(config.browser.launchOptions.chromiumSandbox).toBe(false);
     else
       expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
+  });
+
+  test('chromium sandbox for a custom executablePath', async ({}, testInfo) => {
+    const configFile = testInfo.outputPath('config.json');
+    const fileConfig: Config = {
+      browser: { browserName: 'chromium', launchOptions: { executablePath: '/usr/bin/google-chrome' } },
+    };
+    await fs.promises.writeFile(configFile, JSON.stringify(fileConfig));
+    const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv);
+    expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
   });
 
   test('sandbox not set for non-chromium browsers', async () => {
