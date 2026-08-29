@@ -59,7 +59,7 @@ await expect(page).toHaveScreenshot('landing.webp');
 > Note that `toHaveScreenshot()` also accepts an array of path segments to the snapshot file such as `expect().toHaveScreenshot(['relative', 'path', 'to', 'snapshot.png'])`.
 > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
 
-Mouse actions such as [`method: Locator.click`] leave the pointer at its last position. If the page changes afterwards, another element can end up under the pointer and appear hovered in the screenshot. To avoid this, move the mouse before taking the screenshot, for example to the viewport origin when no element there responds to hover.
+Mouse actions such as [`method: Locator.click`] leave the pointer at its last position. If the page changes afterwards, another element can end up under the pointer and appear hovered in the screenshot. To avoid this, move the mouse outside the viewport before taking the screenshot.
 
 <details>
 <summary>Helper for repeated named screenshots</summary>
