@@ -359,6 +359,16 @@ When local version is available, use `npx playwright cli` in all commands. Other
 npm install -g @playwright/cli@latest
 ```
 
+To install or update the agent skill itself, run:
+
+```bash
+# Install globally for all agents:
+playwright-cli install --skills=agents --global
+
+# Install only for Claude Desktop:
+playwright-cli install --skills=claude
+```
+
 ## Example: Form submission
 
 ```bash
