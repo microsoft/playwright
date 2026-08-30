@@ -46,7 +46,7 @@ export const FiltersView: React.FC<{
     <Expandable
       expanded={expanded}
       setExpanded={setExpanded}
-      title={<input ref={inputRef} type='search' placeholder='Filter (e.g. text, @tag)' spellCheck={false} value={filterText}
+      title={<input ref={inputRef} type='search' placeholder='Filter (e.g. text, @tag)' aria-label='Filter tests' spellCheck={false} value={filterText}
         onChange={e => {
           setFilterText(e.target.value);
         }}
