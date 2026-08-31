@@ -100,7 +100,7 @@ class FfmpegVideoRecorder {
   private _size: types.Size;
   private _process: ChildProcess | null = null;
   private _gracefullyClose: (() => Promise<void>) | null = null;
-  private _firstFrameTimestamp: number = 0;
+  private _recordingStartTimestamp: number;
   private _lastFrame: { timestamp: number, frameNumber: number, buffer: Buffer } | null = null;
   private _lastWriteNodeTime: number = 0;
   private _isStopped = false;
@@ -114,6 +114,7 @@ class FfmpegVideoRecorder {
     this._outputFile = outputFile;
     this._ffmpegPath = ffmpegPath;
     this._size = size;
+    this._recordingStartTimestamp = Date.now() / 1000;
     this._launchPromise = this._launch(page).catch(e => e);
   }
 
@@ -153,6 +154,7 @@ class FfmpegVideoRecorder {
     //     while analyzing input fps and other stats.
     //   Note: "-avioflags direct" must NOT be used here - it breaks Matroska header parsing
     //     by disabling the input buffering the demuxer needs.
+    //   "-copyts" preserves the delay between recording start and the first frame.
     //
     // "-y" means overwrite output.
     // "-an" means no audio.
@@ -163,13 +165,32 @@ class FfmpegVideoRecorder {
 
     const w = this._size.width;
     const h = this._size.height;
-    const videoFilterArgs = page.getFFmpegVideoFilterArgs?.({ width: w, height: h }) ?? `pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`;
-    const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf ${videoFilterArgs}`.split(' ');
-    args.push(this._outputFile);
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
       command: this._ffmpegPath,
-      args,
+      args: [
+        '-loglevel', 'error',
+        '-f', 'matroska',
+        '-fpsprobesize', '0',
+        '-probesize', '32',
+        '-analyzeduration', '0',
+        '-copyts',
+        '-i', 'pipe:0',
+        '-y',
+        '-an',
+        '-r', String(fps),
+        '-c:v', 'vp8',
+        '-qmin', '0',
+        '-qmax', '50',
+        '-crf', '8',
+        '-deadline', 'realtime',
+        '-speed', '8',
+        '-b:v', '1M',
+        '-threads', '1',
+        '-vf', page.getFFmpegVideoFilterArgs?.({ width: w, height: h }) ?? `pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`,
+        '-metadata', `creation_time=${new Date(this._recordingStartTimestamp * 1000).toISOString()}`,
+        this._outputFile,
+      ],
       stdio: 'stdin',
       log: (message: string) => debugLogger.log('browser', message),
       tempDirectories: [],
@@ -205,10 +226,7 @@ class FfmpegVideoRecorder {
     if (this._isStopped)
       return;
 
-    if (!this._firstFrameTimestamp)
-      this._firstFrameTimestamp = timestamp;
-
-    const frameNumber = Math.floor((timestamp - this._firstFrameTimestamp) * fps);
+    const frameNumber = Math.floor((timestamp - this._recordingStartTimestamp) * fps);
     if (this._lastFrame && frameNumber !== this._lastFrame.frameNumber)
       this._emitFrame(this._lastFrame.buffer, this._lastFrame.frameNumber);
 
@@ -229,16 +247,14 @@ class FfmpegVideoRecorder {
       throw error;
     if (this._isStopped)
       return;
-    if (!this._lastFrame) {
-      // ffmpeg only creates a file upon some non-empty input.
-      this._writeFrame(createWhiteImage(this._size.width, this._size.height), monotonicTime() / 1000);
-    }
+    if (!this._lastFrame)
+      this._writeFrame(createWhiteImage(this._size.width, this._size.height), Date.now() / 1000);
     // Emit the last received frame at its own slot, then repeat it at the end so it stays visible
     // for at least 1s. This also ensures non-empty videos with 1 frame and gives the output stream
     // a final timestamp.
     this._emitFrame(this._lastFrame!.buffer, this._lastFrame!.frameNumber);
     const addTime = Math.max((monotonicTime() - this._lastWriteNodeTime) / 1000, 1);
-    const endFrameNumber = Math.floor((this._lastFrame!.timestamp + addTime - this._firstFrameTimestamp) * fps);
+    const endFrameNumber = Math.floor((this._lastFrame!.timestamp + addTime - this._recordingStartTimestamp) * fps);
     this._emitFrame(this._lastFrame!.buffer, endFrameNumber);
     this._isStopped = true;
     try {

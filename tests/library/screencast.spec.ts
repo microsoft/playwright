@@ -201,6 +201,24 @@ test('start/stop twice without path creates two files in artifactsDir', async ({
   await browser.close();
 });
 
+test('records start timestamp in video metadata', async ({ browser }, testInfo) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const videoPath = testInfo.outputPath('video.webm');
+  const beforeStart = Date.now();
+  await page.screencast.start({ path: videoPath });
+  const afterStart = Date.now();
+  await page.evaluate(() => document.body.style.backgroundColor = 'red');
+  await ensureSomeFrames(page);
+  await page.screencast.stop();
+
+  const videoPlayer = new VideoPlayer(videoPath);
+  const creationTime = videoPlayer.output.match(/^\s+creation_time\s*:\s*(.+)$/m)?.[1];
+  expect(new Date(creationTime!).getTime()).toBeGreaterThanOrEqual(beforeStart);
+  expect(new Date(creationTime!).getTime()).toBeLessThanOrEqual(afterStart);
+  await context.close();
+});
+
 test('start should work when recordVideo is set', async ({ browser }, testInfo) => {
   test.slow();
 

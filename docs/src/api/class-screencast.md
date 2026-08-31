@@ -47,6 +47,7 @@ Callback that receives JPEG-encoded frame data along with the page viewport size
 - `path` <[path]>
 
 Path where the video should be saved when the screencast is stopped. When provided, video recording is started.
+The recording start timestamp is stored in the WebM `creation_time` metadata as an ISO 8601 string.
 
 ### option: Screencast.start.quality
 * since: v1.59
