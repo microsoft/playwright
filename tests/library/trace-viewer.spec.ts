@@ -518,6 +518,21 @@ test('should have network requests', async ({ showTraceViewer }) => {
   await expect(traceViewer.networkRequests.filter({ hasText: '404GET404text' })).toHaveCSS('background-color', 'rgb(242, 222, 222)');
 });
 
+test('should sort network columns from the keyboard', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  await traceViewer.selectAction('Navigate');
+  await traceViewer.showNetworkTab();
+
+  const nameColumn = traceViewer.page.getByRole('button', { name: 'Name', exact: true });
+  await expect(nameColumn).toBeVisible();
+
+  await nameColumn.focus();
+  await expect(nameColumn).toBeFocused();
+
+  await nameColumn.press('Enter');
+  await expect(traceViewer.networkRequests.first()).toContainText('404');
+});
+
 test('should attribute network requests to service workers', async ({ runAndTrace, page, context, server, browserName }) => {
   test.skip(browserName !== 'chromium', 'Service worker requests are only reported in Chromium');
   const traceViewer = await runAndTrace(async () => {
