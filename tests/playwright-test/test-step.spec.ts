@@ -1767,19 +1767,19 @@ pw:api    |    Create page
 pw:api    |Set content @ a.test.ts:16
 expect    |Expect "toBeInvisible" locator('div') @ a.test.ts:17
 expect    |  Expect "poll toBe" @ a.test.ts:7
-pw:api    |    Query count locator('div').filter({ visible: true }) @ a.test.ts:7
+pw:api    |    Query count locator('div').visible() @ a.test.ts:7
 expect    |    Expect "toBe" @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-pw:api    |    Query count locator('div').filter({ visible: true }) @ a.test.ts:7
+pw:api    |    Query count locator('div').visible() @ a.test.ts:7
 expect    |    Expect "toBe" @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-pw:api    |    Query count locator('div').filter({ visible: true }) @ a.test.ts:7
+pw:api    |    Query count locator('div').visible() @ a.test.ts:7
 expect    |    Expect "toBe" @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-pw:api    |    Query count locator('div').filter({ visible: true }) @ a.test.ts:7
+pw:api    |    Query count locator('div').visible() @ a.test.ts:7
 expect    |    Expect "toBe" @ a.test.ts:7
 expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-pw:api    |    Query count locator('div').filter({ visible: true }) @ a.test.ts:7
+pw:api    |    Query count locator('div').visible() @ a.test.ts:7
 expect    |    Expect "toBe" @ a.test.ts:7
 pw:api    |Wait for timeout @ a.test.ts:18
 pw:api    |Set content @ a.test.ts:19

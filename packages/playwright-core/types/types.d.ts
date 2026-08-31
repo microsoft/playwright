@@ -15532,7 +15532,9 @@ export interface Locator {
     hasText?: string|RegExp;
 
     /**
-     * Only matches visible or invisible elements.
+     * Only matches visible or invisible elements. Prefer the
+     * [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) shortcut when matching only
+     * visible elements.
      */
     visible?: boolean;
   }): Locator;
@@ -17204,6 +17206,34 @@ export interface Locator {
      */
     trial?: boolean;
   }): Promise<void>;
+
+  /**
+   * Returns a locator that matches only [visible](https://playwright.dev/docs/actionability#visible) elements, ignoring the invisible ones.
+   * This is the recommended way to distinguish elements by visibility, as opposed to the `:visible` CSS pseudo-class.
+   *
+   * Note that visibility is checked every time the locator is used, and not at the moment of the
+   * [locator.visible()](https://playwright.dev/docs/api/class-locator#locator-visible) call.
+   *
+   * **Usage**
+   *
+   * Consider a page with two buttons, the first invisible and the second visible.
+   *
+   * ```html
+   * <button style='display: none'>Invisible</button>
+   * <button>Visible</button>
+   * ```
+   *
+   * This will only find the second button, because it is visible, and then click it.
+   *
+   * ```js
+   * await page.locator('button').visible().click();
+   * ```
+   *
+   * To match invisible elements instead, use
+   * [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) with the
+   * [`visible`](https://playwright.dev/docs/api/class-locator#locator-filter-option-visible) option set to `false`.
+   */
+  visible(): Locator;
 
   /**
    * Returns when element specified by locator satisfies the

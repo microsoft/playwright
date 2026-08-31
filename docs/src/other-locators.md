@@ -126,6 +126,10 @@ Input elements of the type `button` and `submit` are matched by their `value` in
 
 Playwright supports the `:visible` pseudo class in CSS selectors. For example, `css=button` matches all the buttons on the page, while `css=button:visible` only matches visible buttons. This is useful to distinguish elements that are very similar but differ in visibility.
 
+:::note
+Prefer the [`method: Locator.visible`] shortcut over the `:visible` pseudo-class.
+:::
+
 Consider a page with two buttons, first invisible and second visible.
 
 ```html

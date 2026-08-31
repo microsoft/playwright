@@ -1285,7 +1285,7 @@ Matches elements that do not contain specified text somewhere inside, possibly i
 ## locator-option-visible
 - `visible` <[boolean]>
 
-Only matches visible or invisible elements.
+Only matches visible or invisible elements. Prefer the [`method: Locator.visible`] shortcut when matching only visible elements.
 
 ## locator-options-list-v1.14
 - %%-locator-option-has-text-%%

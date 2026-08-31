@@ -60,6 +60,7 @@ class Locator {
     self.getByTitle = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByTitleSelector(text, options));
     self.getByRole = (role: string, options: ByRoleOptions = {}): Locator => self.locator(getByRoleSelector(role, options));
     self.filter = (options?: { hasText?: string | RegExp, hasNotText?: string | RegExp, has?: Locator, hasNot?: Locator, visible?: boolean }): Locator => new Locator(injectedScript, selector, options);
+    self.visible = (): Locator => new Locator(injectedScript, selector, { visible: true });
     self.first = (): Locator => self.locator('nth=0');
     self.last = (): Locator => self.locator('nth=-1');
     self.nth = (index: number): Locator => self.locator(`nth=${index}`);
@@ -99,6 +100,7 @@ export class ConsoleAPI {
       ...new Locator(this._injectedScript, ''),
     };
     delete this._injectedScript.window.playwright.filter;
+    delete this._injectedScript.window.playwright.visible;
     delete this._injectedScript.window.playwright.first;
     delete this._injectedScript.window.playwright.last;
     delete this._injectedScript.window.playwright.nth;

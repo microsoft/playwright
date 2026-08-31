@@ -174,6 +174,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
       .replace(/nth\(([^)]+)\)/g, 'nth=$1')
       .replace(/filter\(,?visible=true\)/g, 'visible=true')
       .replace(/filter\(,?visible=false\)/g, 'visible=false')
+      .replace(/\.visible(\(\))?(?!=)/g, '.visible=true')
       .replace(/filter\(,?hastext=([^)]+)\)/g, 'internal:has-text=$1')
       .replace(/filter\(,?hasnottext=([^)]+)\)/g, 'internal:has-not-text=$1')
       .replace(/filter\(,?has2=([^)]+)\)/g, 'internal:has=$1')
