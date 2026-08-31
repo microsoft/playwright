@@ -28,9 +28,14 @@ export const Label: React.FC<{
   onClick?: (e: React.MouseEvent, label: string) => void,
   colorIndex?: number,
 }> = ({ label, href, onClick, colorIndex, trimAtSymbolPrefix }) => {
-  const baseLabel = <span className={clsx('label', 'label-color-' + (colorIndex !== undefined ? colorIndex : hashStringToInt(label)))} onClick={onClick ? e => onClick(e, label) : undefined}>
-    {trimAtSymbolPrefix && label.startsWith('@') ? label.slice(1) : label}
-  </span>;
+  const className = clsx('label', 'label-color-' + (colorIndex !== undefined ? colorIndex : hashStringToInt(label)));
+  const text = trimAtSymbolPrefix && label.startsWith('@') ? label.slice(1) : label;
+
+  // When there is an href the anchor below is already keyboard accessible, so only a
+  // standalone click handler needs a button of its own.
+  const baseLabel = onClick && !href
+    ? <button className={clsx(className, 'label-button')} onClick={e => onClick(e, label)}>{text}</button>
+    : <span className={className} onClick={onClick ? e => onClick(e, label) : undefined}>{text}</span>;
 
   return href
     ? <a className='label-anchor' href={formatUrl(href)}>{baseLabel}</a>

@@ -18,14 +18,21 @@ import { clsx } from '@web/uiUtils';
 import './tag.css';
 
 export const TagView = ({ tag, style, onClick }: { tag: string, style?: React.CSSProperties, onClick?: (e: React.MouseEvent) => void }) => {
-  return <span
-    className={clsx('tag', `tag-color-${tagNameToColor(tag)}`)}
+  const className = clsx('tag', `tag-color-${tagNameToColor(tag)}`);
+  const tagStyle = { margin: '6px 0 0 6px', ...style };
+  const title = `Click to filter by tag: ${tag}`;
+
+  if (!onClick)
+    return <span className={className} style={tagStyle} title={title}>{tag}</span>;
+
+  return <button
+    className={clsx(className, 'tag-button')}
     onClick={onClick}
-    style={{ margin: '6px 0 0 6px', ...style }}
-    title={`Click to filter by tag: ${tag}`}
+    style={tagStyle}
+    title={title}
   >
     {tag}
-  </span>;
+  </button>;
 };
 
 // hash string to integer in range [0, 6] for color index, to get same color for same tag

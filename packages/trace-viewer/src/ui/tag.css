@@ -29,6 +29,16 @@
   font-weight: 600;
 }
 
+.tag-button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.tag-button:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
 .tag-color-0 {
   background-color: #ddf4ff;
   color: #0550ae;
