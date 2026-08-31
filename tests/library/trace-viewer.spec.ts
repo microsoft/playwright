@@ -649,6 +649,8 @@ test('should filter network requests by url', async ({ page, runAndTrace, server
   await traceViewer.selectAction('Navigate');
   await traceViewer.showNetworkTab();
 
+  await expect(traceViewer.page.getByRole('searchbox', { name: 'Filter network' })).toBeVisible();
+
   await traceViewer.page.getByPlaceholder('Filter network').fill('script.');
   await expect(traceViewer.networkRequests).toHaveCount(1);
   await expect(traceViewer.networkRequests.getByText('script.js')).toBeVisible();
@@ -1360,6 +1362,24 @@ test('should highlight expect failure', async ({ page, server, runAndTrace }) =>
   await expect(traceViewer.actionTitles.getByText('EXPECT')).toHaveCSS('color', 'rgb(176, 16, 17)');
   await traceViewer.showErrorsTab();
   await expect(traceViewer.errorMessages.nth(0)).toHaveText('Expect failed');
+});
+
+test('should open error source from the keyboard', async ({ page, server, runAndTrace }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42463' });
+  const traceViewer = await runAndTrace(async () => {
+    try {
+      await page.goto(server.EMPTY_PAGE);
+      await expect(page).toHaveTitle('foo', { timeout: 100 });
+    } catch (e) {
+    }
+  });
+
+  await traceViewer.showErrorsTab();
+  const sourceLink = traceViewer.page.getByRole('button', { name: /Go to source:/ });
+  await expect(sourceLink).toBeVisible();
+  await sourceLink.focus();
+  await sourceLink.press('Enter');
+  await expect(traceViewer.page.getByRole('tab', { name: 'Source', selected: true })).toBeVisible();
 });
 
 test('should show action source', async ({ showTraceViewer }) => {

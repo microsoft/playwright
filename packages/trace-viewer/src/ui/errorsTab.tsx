@@ -73,7 +73,7 @@ function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: s
     }}>
       {error.action && renderAction(error.action, { sdkLanguage })}
       {location && <div className='action-location'>
-        @ <span title={longLocation} onClick={() => revealInSource(error)}>{location}</span>
+        @ <button type='button' title={longLocation} aria-label={`Go to source: ${longLocation}`} onClick={() => revealInSource(error)}>{location}</button>
       </div>}
     </div>
 

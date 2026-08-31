@@ -91,6 +91,12 @@ test('should toggle filters from the keyboard', async ({ runUITest }) => {
   await expect(summary).toHaveAttribute('aria-expanded', 'false');
 });
 
+test('should expose an accessible name for the filter input', async ({ runUITest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42463' });
+  const { page } = await runUITest(basicTestTree);
+  await expect(page.getByRole('searchbox', { name: 'Filter (e.g. text, @tag)' })).toBeVisible();
+});
+
 test('should filter by status', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
 
