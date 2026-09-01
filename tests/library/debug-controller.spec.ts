@@ -293,15 +293,33 @@ test('should not leak actions from the previous recording session', async ({ bac
   await backend.setRecorderMode({ mode: 'none' }, undefined);
 
   // Session 2 on the same page: "Record at cursor" again, record another click.
+  // Avoid navigation here (setContent is recorded as a goto on Firefox),
+  // the assertion below should only contain the click.
   events.length = 0;
   await backend.setRecorderMode({ mode: 'recording' }, undefined);
-  await page.setContent('<button>Other</button>');
+  await page.evaluate(() => {
+    document.body.innerHTML = '<button>Other</button>';
+  });
   await page.getByRole('button', { name: 'Other' }).click();
 
   // New session starts from scratch: previous session's actions must not be
   // re-sent, otherwise the client re-inserts the stale last action into the editor.
   await expect.poll(() => events[events.length - 1]?.actions).toEqual([
     `  await page.getByRole('button', { name: 'Other' }).click();`,
+  ]);
+
+  // Pause via the recorder toolbar's Record toggle ("standby") must also
+  // start a new session. 'standby' is not settable via the protocol, only
+  // through the toolbar UI.
+  await page.click('x-pw-tool-item.record');
+  events.length = 0;
+  await backend.setRecorderMode({ mode: 'recording' }, undefined);
+  await page.evaluate(() => {
+    document.body.innerHTML = '<button>Third</button>';
+  });
+  await page.getByRole('button', { name: 'Third' }).click();
+  await expect.poll(() => events[events.length - 1]?.actions).toEqual([
+    `  await page.getByRole('button', { name: 'Third' }).click();`,
   ]);
 });
 
