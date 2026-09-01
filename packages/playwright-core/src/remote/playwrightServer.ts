@@ -109,7 +109,7 @@ export class PlaywrightServer {
         }
 
         const isExtension = this._options.mode === 'extension';
-        launchOptions = filterLaunchOptions(launchOptions, isExtension || !!this._options.unsafe);
+        launchOptions = filterLaunchOptions(launchOptions, isExtension, !!this._options.unsafe);
 
         // Always override artifacts dir with the one from server options.
         if (this._options.artifactsDir)
@@ -365,7 +365,8 @@ function launchOptionsHash(options: LaunchOptionsWithTimeout) {
   return JSON.stringify(copy);
 }
 
-function filterLaunchOptions(options: LaunchOptionsWithTimeout, allowUnsafe: boolean): LaunchOptionsWithTimeout {
+function filterLaunchOptions(options: LaunchOptionsWithTimeout, isExtension: boolean, unsafe: boolean): LaunchOptionsWithTimeout {
+  const allowUnsafe = isExtension || unsafe;
   return {
     channel: options.channel,
     args: allowUnsafe ? options.args : undefined,
@@ -378,8 +379,8 @@ function filterLaunchOptions(options: LaunchOptionsWithTimeout, allowUnsafe: boo
     firefoxUserPrefs: (isUnderTest() || allowUnsafe) ? options.firefoxUserPrefs : undefined,
     slowMo: options.slowMo,
     executablePath: (isUnderTest() || allowUnsafe) ? options.executablePath : undefined,
-    downloadsPath: allowUnsafe ? options.downloadsPath : undefined,
-    artifactsDir: (isUnderTest() || allowUnsafe) ? options.artifactsDir : undefined,
+    downloadsPath: (isUnderTest() || isExtension) ? options.downloadsPath : undefined,
+    artifactsDir: (isUnderTest() || isExtension) ? options.artifactsDir : undefined,
   };
 }
 
