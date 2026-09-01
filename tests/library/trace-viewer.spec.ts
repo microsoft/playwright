@@ -649,6 +649,8 @@ test('should filter network requests by url', async ({ page, runAndTrace, server
   await traceViewer.selectAction('Navigate');
   await traceViewer.showNetworkTab();
 
+  await expect(traceViewer.page.getByRole('searchbox', { name: 'Filter network' })).toBeVisible();
+
   await traceViewer.page.getByPlaceholder('Filter network').fill('script.');
   await expect(traceViewer.networkRequests).toHaveCount(1);
   await expect(traceViewer.networkRequests.getByText('script.js')).toBeVisible();

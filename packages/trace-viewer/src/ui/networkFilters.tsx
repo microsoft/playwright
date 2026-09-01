@@ -35,6 +35,7 @@ export const NetworkFilters = ({ filterState, onFilterStateChange }: {
       <input
         type='search'
         placeholder='Filter network'
+        aria-label='Filter network'
         spellCheck={false}
         value={filterState.searchValue}
         onChange={e => onFilterStateChange({ ...filterState, searchValue: e.target.value })}

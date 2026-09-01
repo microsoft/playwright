@@ -49,10 +49,20 @@
   color: var(--vscode-foreground);
 }
 
-.action-location > span {
+.action-location > button {
   margin: 0 4px;
   cursor: pointer;
   text-decoration: underline;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+}
+
+.action-location > button:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
 }
 
 .action-duration {
