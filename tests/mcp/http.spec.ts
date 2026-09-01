@@ -438,6 +438,64 @@ test('http transport shared context', async ({ serverEndpoint, server }) => {
   });
 });
 
+test('http transport shared context refuses browser_close', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42363' } }, async ({ serverEndpoint, server }) => {
+  const { url, stderr } = await serverEndpoint({ args: ['--shared-browser-context'] });
+
+  const transport1 = new StreamableHTTPClientTransport(new URL('/mcp', url));
+  const client1 = new Client({ name: 'test1', version: '1.0.0' });
+  await client1.connect(transport1);
+  await client1.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  const transport2 = new StreamableHTTPClientTransport(new URL('/mcp', url));
+  const client2 = new Client({ name: 'test2', version: '1.0.0' });
+  await client2.connect(transport2);
+  await client2.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  // The context is shared with the second client, so closing it is refused.
+  expect(await client1.callTool({
+    name: 'browser_close',
+    arguments: {},
+  })).toHaveResponse({
+    error: 'Error: The browser context is shared between clients and cannot be closed.',
+    isError: true,
+  });
+
+  // The first client keeps working.
+  expect(await client1.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'new', url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
+  });
+
+  // The second client is unaffected.
+  expect(await client2.callTool({
+    name: 'browser_snapshot',
+    arguments: {},
+  })).toHaveResponse({
+    inlineSnapshot: expect.stringContaining(`Hello, world!`),
+  });
+
+  await transport1.terminateSession();
+  await client1.close();
+  await transport2.terminateSession();
+  await client2.close();
+
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create browser (persistent)': 1,
+    'create http session': 2,
+    'delete http session': 2,
+    'create context': 2,
+    'close browser': 1,
+  });
+});
+
 test('http transport (default)', async ({ serverEndpoint }) => {
   const { url } = await serverEndpoint();
   const transport = new StreamableHTTPClientTransport(url);

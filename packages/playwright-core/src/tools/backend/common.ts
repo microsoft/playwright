@@ -30,6 +30,8 @@ const close = defineTool({
   },
 
   handle: async (context, params, response) => {
+    if (context.config.sharedBrowserContext)
+      throw new Error('The browser context is shared between clients and cannot be closed.');
     const result = renderTabsMarkdown([]);
     response.addTextResult(result.join('\n'));
     response.addCode(`await page.close()`);
