@@ -10702,9 +10702,10 @@ export interface BrowserContext {
     /**
      * Set to `true` to include the
      * [origin private file system](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system)
-     * in the storage state snapshot. Note that OPFS is currently not supported in WebKit unless the context is launched
-     * with
-     * [browserType.launchPersistentContext(userDataDir[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context).
+     * in the storage state snapshot.
+     *
+     * **NOTE** OPFS is currently not supported in ephemeral WebKit contexts.
+     *
      */
     opfs?: boolean;
 
