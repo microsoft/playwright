@@ -15,16 +15,7 @@
  */
 import child_process from 'child_process';
 import fs from 'fs/promises';
-
-import * as playwright from 'playwright';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { test, expect } from './fixtures';
-import { tools } from '../../packages/playwright-core/lib/coreBundle';
-
-import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
-
-const { createConnection } = tools;
 
 test('library can be used from CommonJS', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/456' } }, async ({}, testInfo) => {
   const file = testInfo.outputPath('main.cjs');
@@ -35,46 +26,3 @@ test('library can be used from CommonJS', { annotation: { type: 'issue', descrip
  `);
   expect(child_process.execSync(`node ${file}`, { encoding: 'utf-8' })).toContain('OK');
 });
-
-test('createConnection detaches backend listeners from a caller owned context', async ({ mcpBrowser, mcpHeadless, server }, testInfo) => {
-  const channel = mcpBrowser === 'chrome' || mcpBrowser === 'msedge' ? mcpBrowser : undefined;
-  const browserName = (channel ? 'chromium' : mcpBrowser) as 'chromium' | 'firefox' | 'webkit';
-  const browser = await playwright[browserName].launch({ channel, headless: mcpHeadless });
-  const browserContext = await browser.newContext();
-
-  const client = await connectClient(await createConnection({
-    outputDir: testInfo.outputPath('output'),
-  }, async () => browserContext));
-
-  const contextListeners = listenerCount(browserContext, 'close');
-  const browserListeners = listenerCount(browser, 'disconnected');
-
-  // browser_close disposes the backend while the caller keeps the context, so
-  // the next tool call builds another backend over the same two objects.
-  for (let i = 0; i < 3; i++) {
-    await client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
-    // A live backend listens on both objects.
-    expect(listenerCount(browserContext, 'close')).toBe(contextListeners + 1);
-    expect(listenerCount(browser, 'disconnected')).toBe(browserListeners + 1);
-
-    await client.callTool({ name: 'browser_close', arguments: {} });
-    // A disposed one gives both back, so they do not pile up.
-    expect(listenerCount(browserContext, 'close')).toBe(contextListeners);
-    expect(listenerCount(browser, 'disconnected')).toBe(browserListeners);
-  }
-
-  await client.close();
-  await browser.close();
-});
-
-function listenerCount(emitter: object, event: string): number {
-  return (emitter as unknown as { listenerCount(event: string): number }).listenerCount(event);
-}
-
-async function connectClient(server: Server): Promise<Client> {
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  await server.connect(serverTransport);
-  const client = new Client({ name: 'test', version: '1.0.0' });
-  await client.connect(clientTransport);
-  return client;
-}

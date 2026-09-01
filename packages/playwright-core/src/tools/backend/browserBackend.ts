@@ -38,7 +38,6 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implement
   private _disposed = false;
   private _browserContext: playwright.BrowserContext;
   private _disposeCallback: (() => Promise<void>) | undefined;
-  private _markDisconnected: () => void;
 
   constructor(config: ContextConfig, browserContext: playwright.BrowserContext, tools: Tool[], disposeCallback?: () => Promise<void>) {
     super();
@@ -46,15 +45,15 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implement
     this._tools = tools;
     this._browserContext = browserContext;
     this._disposeCallback = disposeCallback;
-    this._markDisconnected = () => {
+    const markDisconnected = () => {
       if (this._disconnected)
         return;
       backendDebug('browser disconnected');
       this._disconnected = true;
       this.emit('disconnected');
     };
-    this._browserContext.once('close', this._markDisconnected);
-    this._browserContext.browser()?.once('disconnected', this._markDisconnected);
+    this._browserContext.once('close', markDisconnected);
+    this._browserContext.browser()?.once('disconnected', markDisconnected);
   }
 
   async initialize(clientInfo: ClientInfo): Promise<void> {
@@ -70,15 +69,8 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implement
     if (this._disposed)
       return;
     this._disposed = true;
-    // Detach, so that disposed backends do not accumulate listeners on a long-lived shared context.
-    this._browserContext.off('close', this._markDisconnected);
-    this._browserContext.browser()?.off('disconnected', this._markDisconnected);
     await this._context?.dispose().catch(e => debug('pw:tools:error')(e));
     await this._disposeCallback?.().catch(e => debug('pw:tools:error')(e));
-  }
-
-  isDisposed(): boolean {
-    return this._disposed;
   }
 
   async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> } = {}, signal?: AbortSignal): Promise<mcpServer.CallToolResult> {
