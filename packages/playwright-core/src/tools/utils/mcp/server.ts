@@ -42,6 +42,7 @@ export interface ServerBackend {
   initialize?(clientInfo: ClientInfo): Promise<void>;
   callTool(name: string, args: CallToolRequest['params']['arguments'], signal: AbortSignal): Promise<CallToolResult>;
   dispose?(): Promise<void>;
+  isDisposed?(): boolean;
   once(event: 'disconnected', listener: () => void): void;
 }
 
@@ -100,8 +101,12 @@ export function createServer(name: string, version: string, factory: ServerBacke
         backendPromise = promise;
       }
 
-      const backend = await backendPromise;
+      const currentPromise = backendPromise;
+      const backend = await currentPromise;
       const toolResult = await backend.callTool(request.params.name, request.params.arguments || {}, extra.signal);
+      // The backend may have disposed itself while handling the call; do not hand it out again.
+      if (backend.isDisposed?.() && backendPromise === currentPromise)
+        backendPromise = undefined;
       const mergedResult = mergeTextParts(toolResult);
       serverDebugResponse('callResult', mergedResult);
       return mergedResult;
