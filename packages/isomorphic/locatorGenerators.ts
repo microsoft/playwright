@@ -21,7 +21,7 @@ import type { NestedSelectorBody } from './selectorParser';
 import type { ParsedSelector } from './selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
-export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'visible' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'frame-locator' | 'any-frame' | 'and' | 'or' | 'chain';
+export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'visible' | 'filter-visible' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'frame-locator' | 'any-frame' | 'and' | 'or' | 'chain';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 export type Quote = '\'' | '"' | '`';
 
@@ -104,7 +104,11 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       continue;
     }
     if (part.name === 'visible') {
-      tokens.push([factory.generateLocator(base, 'visible', part.body as string), factory.generateLocator(base, 'default', `visible=${part.body}`)]);
+      const tokenList: string[] = [];
+      if (part.body === 'true')
+        tokenList.push(factory.generateLocator(base, 'visible', ''));
+      tokenList.push(factory.generateLocator(base, 'filter-visible', part.body as string), factory.generateLocator(base, 'default', `visible=${part.body}`));
+      tokens.push(tokenList);
       continue;
     }
     if (part.name === 'internal:text') {
@@ -329,6 +333,8 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
       case 'last':
         return `last()`;
       case 'visible':
+        return `visible()`;
+      case 'filter-visible':
         return `filter({ visible: ${body === 'true' ? 'true' : 'false'} })`;
       case 'role':
         const attrs: string[] = [];
@@ -430,6 +436,8 @@ export class PythonLocatorFactory implements LocatorFactory {
       case 'last':
         return `last`;
       case 'visible':
+        return `visible`;
+      case 'filter-visible':
         return `filter(visible=${body === 'true' ? 'True' : 'False'})`;
       case 'role':
         const attrs: string[] = [];
@@ -544,6 +552,8 @@ export class JavaLocatorFactory implements LocatorFactory {
       case 'last':
         return `last()`;
       case 'visible':
+        return `visible()`;
+      case 'filter-visible':
         return `filter(new ${clazz}.FilterOptions().setVisible(${body === 'true' ? 'true' : 'false'}))`;
       case 'role':
         const attrs: string[] = [];
@@ -648,6 +658,8 @@ export class CSharpLocatorFactory implements LocatorFactory {
       case 'last':
         return `Last`;
       case 'visible':
+        return `Visible`;
+      case 'filter-visible':
         return `Filter(new() { Visible = ${body === 'true' ? 'true' : 'false'} })`;
       case 'role':
         const attrs: string[] = [];

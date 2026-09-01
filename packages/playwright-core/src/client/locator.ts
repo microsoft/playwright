@@ -216,6 +216,10 @@ export class Locator implements api.Locator {
     return new Locator(this._frame, this._selector, options);
   }
 
+  visible(): Locator {
+    return new Locator(this._frame, this._selector, { visible: true });
+  }
+
   async elementHandle(options?: TimeoutOptions): Promise<ElementHandle<SVGElement | HTMLElement>> {
     return await this._frame.waitForSelector(this._selector, { strict: true, state: 'attached', ...options })!;
   }

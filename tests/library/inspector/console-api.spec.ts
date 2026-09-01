@@ -98,6 +98,7 @@ it('should support playwright.getBy*', async ({ page }) => {
   expect(await page.evaluate(`playwright.locator('span').last().element.innerHTML`)).toContain('World');
   expect(await page.evaluate(`playwright.locator('span').nth(1).element.innerHTML`)).toContain('World');
   expect(await page.evaluate(`playwright.locator('div').filter({ visible: false }).element.innerHTML`)).toContain('two');
+  expect(await page.evaluate(`playwright.locator('div').visible().element.innerHTML`)).toContain('one');
 });
 
 it('expected properties on playwright object', async ({ page }) => {

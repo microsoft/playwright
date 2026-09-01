@@ -1310,20 +1310,22 @@ Consider a page with two buttons, the first invisible and the second [visible](.
 * This will only find a second button, because it is visible, and then click it.
 
   ```js
-  await page.locator('button').filter({ visible: true }).click();
+  await page.locator('button').visible().click();
   ```
   ```java
-  page.locator("button").filter(new Locator.FilterOptions().setVisible(true)).click();
+  page.locator("button").visible().click();
   ```
   ```python async
-  await page.locator("button").filter(visible=True).click()
+  await page.locator("button").visible.click()
   ```
   ```python sync
-  page.locator("button").filter(visible=True).click()
+  page.locator("button").visible.click()
   ```
   ```csharp
-  await page.Locator("button").Filter(new() { Visible = true }).ClickAsync();
+  await page.Locator("button").Visible.ClickAsync();
   ```
+
+To match invisible elements instead, use [`method: Locator.filter`] with the [`option: Locator.filter.visible`] option set to `false`.
 
 ## Lists
 

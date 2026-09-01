@@ -357,11 +357,11 @@ it('reverse engineer hasNotText', async ({ page }) => {
 });
 
 it('reverse engineer visible', async ({ page }) => {
-  expect.soft(generate(page.getByText('Hello').filter({ visible: true }).locator('div'))).toEqual({
-    csharp: `GetByText("Hello").Filter(new() { Visible = true }).Locator("div")`,
-    java: `getByText("Hello").filter(new Locator.FilterOptions().setVisible(true)).locator("div")`,
-    javascript: `getByText('Hello').filter({ visible: true }).locator('div')`,
-    python: `get_by_text("Hello").filter(visible=True).locator("div")`,
+  expect.soft(generate(page.getByText('Hello').visible().locator('div'))).toEqual({
+    csharp: `GetByText("Hello").Visible.Locator("div")`,
+    java: `getByText("Hello").visible().locator("div")`,
+    javascript: `getByText('Hello').visible().locator('div')`,
+    python: `get_by_text("Hello").visible.locator("div")`,
   });
   expect.soft(generate(page.getByText('Hello').filter({ visible: false }).locator('div'))).toEqual({
     csharp: `GetByText("Hello").Filter(new() { Visible = false }).Locator("div")`,
@@ -369,6 +369,11 @@ it('reverse engineer visible', async ({ page }) => {
     javascript: `getByText('Hello').filter({ visible: false }).locator('div')`,
     python: `get_by_text("Hello").filter(visible=False).locator("div")`,
   });
+  const selector = (page.getByText('Hello').visible() as any)._selector;
+  expect.soft(parseLocator('javascript', `getByText('Hello').filter({ visible: true })`, 'data-testid')).toBe(selector);
+  expect.soft(parseLocator('java', `getByText("Hello").filter(new Locator.FilterOptions().setVisible(true))`, 'data-testid')).toBe(selector);
+  expect.soft(parseLocator('python', `get_by_text("Hello").filter(visible=True)`, 'data-testid')).toBe(selector);
+  expect.soft(parseLocator('csharp', `GetByText("Hello").Filter(new() { Visible = true })`, 'data-testid')).toBe(selector);
 });
 
 it('reverse engineer has', async ({ page }) => {
