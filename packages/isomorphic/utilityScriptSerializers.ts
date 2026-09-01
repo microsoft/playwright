@@ -110,7 +110,7 @@ const typedArrayConstructors: Record<TypedArrayKind, Function> = {
   bui64: BigUint64Array,
 };
 
-function typedArrayToBase64(array: any) {
+export function typedArrayToBase64(array: any) {
   /**
    * Firefox does not support iterating over typed arrays, so we use `.toBase64`.
    * Error: 'Accessing TypedArray data over Xrays is slow, and forbidden in order to encourage performant code. To copy TypedArrays across origin boundaries, consider using Components.utils.cloneInto().'

@@ -345,7 +345,7 @@ it('should export cookies to storage state', async ({ request, server }) => {
   });
 });
 
-it('should preserve local storage on import/export of storage state', async ({ playwright, server }) => {
+it('should preserve origin storage on import/export of storage state', async ({ playwright, server }) => {
   const storageState: StorageStateType = {
     cookies: [
       {
@@ -367,6 +367,17 @@ it('should preserve local storage on import/export of storage state', async ({ p
           value: 'value1'
         }],
         ...{
+          opfs: [
+            {
+              path: 'hello.txt',
+              type: 'file',
+              base64: 'SGVsbG8sIHdvcmxkIQ==',
+            },
+            {
+              path: 'empty',
+              type: 'directory',
+            },
+          ],
           indexedDB: [
             {
               name: 'db',
@@ -392,7 +403,7 @@ it('should preserve local storage on import/export of storage state', async ({ p
   };
   const request = await playwright.request.newContext({ storageState });
   await request.get(server.EMPTY_PAGE);
-  const exportedState = await request.storageState({ indexedDB: true });
+  const exportedState = await request.storageState({ indexedDB: true, opfs: true });
   expect(exportedState).toEqual(storageState);
   await request.dispose();
 });

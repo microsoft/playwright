@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { parseEvaluationResultValue, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
+import { parseEvaluationResultValue, serializeAsCallArgument, typedArrayToBase64 } from '@isomorphic/utilityScriptSerializers';
 
-import type { IndexedDBDatabase, OriginStorage, SetOriginStorage } from '@protocol/structs';
+import type { IndexedDBDatabase, OPFSEntry, OriginStorage, SetOriginStorage } from '@protocol/structs';
 
 export type SerializedStorage = Omit<OriginStorage, 'origin'>;
 
@@ -24,8 +24,8 @@ export class StorageScript {
   private _isFirefox: boolean;
   private _global;
 
-  constructor(isFirefox: boolean) {
-    this._isFirefox = isFirefox;
+  constructor(browserName: string) {
+    this._isFirefox = browserName === 'firefox';
     // eslint-disable-next-line no-restricted-globals
     this._global = globalThis;
   }
@@ -35,6 +35,20 @@ export class StorageScript {
       request.addEventListener('success', () => resolve(request.result));
       request.addEventListener('error', () => reject(request.error));
     });
+  }
+
+  private async _directoryEntries(directory: FileSystemDirectoryHandle): Promise<[string, FileSystemHandle][]> {
+    // Firefox Xray wrappers expose only string-named WebIDL members, so the async
+    // iterator has no Symbol.asyncIterator here ('directory.entries() is not
+    // iterable') and `for await` cannot be used. Drive the iterator manually.
+    const result: [string, FileSystemHandle][] = [];
+    const iterator = directory.entries();
+    while (true) {
+      const entry = await iterator.next();
+      if (entry.done)
+        return result;
+      result.push(entry.value);
+    }
   }
 
   private _isPlainObject(v: any) {
@@ -137,17 +151,43 @@ export class StorageScript {
     }
   }
 
-  async collect(recordIndexedDB: boolean): Promise<SerializedStorage> {
+  private async _collectOPFS(root: FileSystemDirectoryHandle): Promise<OPFSEntry[]> {
+    const collect = async (directory: FileSystemDirectoryHandle, parentPath: string): Promise<OPFSEntry[]> => {
+      const entries = await this._directoryEntries(directory);
+      entries.sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
+
+      const results = await Promise.all(entries.map(async ([name, handle]): Promise<OPFSEntry[]> => {
+        const path = parentPath ? `${parentPath}/${name}` : name;
+        if (handle.kind === 'directory')
+          return [{ path, type: 'directory' }, ...await collect(handle as FileSystemDirectoryHandle, path)];
+        const file = await (handle as FileSystemFileHandle).getFile();
+        const base64 = typedArrayToBase64(new Uint8Array(await file.arrayBuffer()));
+        return [{ path, type: 'file', base64 }];
+      }));
+      return results.flat();
+    };
+    return collect(root, '');
+  }
+
+  async collect(record: { indexedDB: boolean, opfs: boolean }): Promise<SerializedStorage> {
     const localStorage = Object.keys(this._global.localStorage).map(name => ({ name, value: this._global.localStorage.getItem(name)! }));
-    if (!recordIndexedDB)
-      return { localStorage };
-    try {
-      const databases = await this._global.indexedDB.databases();
-      const indexedDB = await Promise.all(databases.map(db => this._collectDB(db)));
-      return { localStorage, indexedDB };
-    } catch (e) {
-      throw new Error('Unable to serialize IndexedDB: ' + e.message);
+    const result: SerializedStorage = { localStorage };
+    if (record.indexedDB) {
+      try {
+        const databases = await this._global.indexedDB.databases();
+        result.indexedDB = await Promise.all(databases.map(db => this._collectDB(db)));
+      } catch (e) {
+        throw new Error('Unable to serialize IndexedDB: ' + e.message);
+      }
     }
+    if (record.opfs) {
+      try {
+        result.opfs = await this._collectOPFS(await this._global.navigator.storage.getDirectory());
+      } catch (e) {
+        throw new Error('Unable to serialize OPFS: ' + e.message);
+      }
+    }
+    return result;
   }
 
   private async _restoreDB(dbInfo: IndexedDBDatabase) {
@@ -183,6 +223,53 @@ export class StorageScript {
     }
   }
 
+  private async _restoreOPFS(originState: SetOriginStorage | undefined) {
+    let root: FileSystemDirectoryHandle;
+    try {
+      root = await this._global.navigator.storage.getDirectory();
+    } catch (e) {
+      // OPFS may be unavailable, e.g. on insecure origins or in WebKit contexts
+      // that fail with 'unknown transient reason'. There is nothing to clear then,
+      // so only fail when there are entries to restore.
+      if (originState?.opfs === undefined)
+        return;
+      throw e;
+    }
+
+    await Promise.all((await this._directoryEntries(root)).map(([name]) => root.removeEntry(name, { recursive: true })));
+
+    const entries = originState?.opfs ?? [];
+    if (!entries.length)
+      return;
+
+    for (const entry of entries) {
+      const parts = entry.path.split('/');
+      let directory = root;
+      for (const part of parts.slice(0, -1))
+        directory = await directory.getDirectoryHandle(part, { create: true });
+
+      const name = parts[parts.length - 1];
+      if (entry.type === 'directory') {
+        await directory.getDirectoryHandle(name, { create: true });
+        continue;
+      }
+      const blob = await this._blobFromBase64(entry.base64!);
+      const handle = await directory.getFileHandle(name, { create: true });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+    }
+  }
+
+  // Decode through the page's own fetch so that the resulting blob belongs to the page.
+  // The Firefox utility world is a sandbox with an extended principal, so the page is
+  // denied access to objects allocated here and writing a Uint8Array built in this world
+  // fails with 'Permission denied to access property "data"'.
+  private async _blobFromBase64(base64: string): Promise<Blob> {
+    const response = await this._global.fetch(`data:application/octet-stream;base64,${base64}`);
+    return response.blob();
+  }
+
   async restore(originState: SetOriginStorage | undefined) {
     // Clean Service Workers.
     const registrations = this._global.navigator.serviceWorker ? await this._global.navigator.serviceWorker.getRegistrations() : [];
@@ -213,5 +300,11 @@ export class StorageScript {
     this._global.localStorage.clear();
     for (const { name, value } of (originState?.localStorage || []))
       this._global.localStorage.setItem(name, value);
+
+    try {
+      await this._restoreOPFS(originState);
+    } catch (e) {
+      throw new Error('Unable to restore OPFS: ' + e.message);
+    }
   }
 }
