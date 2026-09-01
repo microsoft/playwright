@@ -51,6 +51,7 @@ export type ContextConfig = {
   outputMaxSize?: number;
   saveSession?: boolean;
   secrets?: Record<string, string>;
+  sharedBrowserContext?: boolean;
   snapshot?: {
     mode?: 'full' | 'none';
     boxes?: boolean;

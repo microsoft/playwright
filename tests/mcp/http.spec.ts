@@ -438,7 +438,7 @@ test('http transport shared context', async ({ serverEndpoint, server }) => {
   });
 });
 
-test('http transport shared context survives browser_close', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42363' } }, async ({ serverEndpoint, server }) => {
+test('http transport shared context refuses browser_close', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42363' } }, async ({ serverEndpoint, server }) => {
   const { url, stderr } = await serverEndpoint({ args: ['--shared-browser-context'] });
 
   const transport1 = new StreamableHTTPClientTransport(new URL('/mcp', url));
@@ -457,14 +457,16 @@ test('http transport shared context survives browser_close', { annotation: { typ
     arguments: { url: server.HELLO_WORLD },
   });
 
-  // The second client keeps the shared browser alive, so closing only
-  // disposes the first client's backend.
-  await client1.callTool({
+  // The context is shared with the second client, so closing it is refused.
+  expect(await client1.callTool({
     name: 'browser_close',
     arguments: {},
+  })).toHaveResponse({
+    error: 'Error: The browser context is shared between clients and cannot be closed.',
+    isError: true,
   });
 
-  // The next call from the first client must get a fresh backend.
+  // The first client keeps working.
   expect(await client1.callTool({
     name: 'browser_tabs',
     arguments: { action: 'new', url: server.HELLO_WORLD },
@@ -489,7 +491,7 @@ test('http transport shared context survives browser_close', { annotation: { typ
     'create browser (persistent)': 1,
     'create http session': 2,
     'delete http session': 2,
-    'create context': 3,
+    'create context': 2,
     'close browser': 1,
   });
 });
