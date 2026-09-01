@@ -20,7 +20,7 @@ import { formatObject } from '@isomorphic/stringUtils';
 import { defineTabTool } from './tool';
 
 const pdfSchema = z.object({
-  filename: z.string().optional().describe('File name to save the pdf to. Defaults to `page-{timestamp}.pdf` if not specified. Prefer relative file names to stay within the output directory.'),
+  filename: z.string().optional().describe('File name to save the pdf to. Defaults to `page-{timestamp}.pdf` in the output directory if not specified. An explicit name is resolved against the working directory, not the output directory.'),
 });
 
 const pdf = defineTabTool({

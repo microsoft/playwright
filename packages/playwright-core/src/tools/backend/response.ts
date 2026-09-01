@@ -87,10 +87,14 @@ export class Response {
 
   async resolveClientFile(template: FilenameTemplate, title: string): Promise<ResolvedFile> {
     let fileName: string;
-    if (template.suggestedFilename)
+    if (template.suggestedFilename) {
       fileName = await this.resolveClientFilename(template.suggestedFilename);
-    else
+      // outputFile() creates the parent directory for auto-named files, do the same
+      // for an explicit one so that "sub/page.png" does not fail with ENOENT.
+      await fs.promises.mkdir(path.dirname(fileName), { recursive: true });
+    } else {
       fileName = await this._context.outputFile(template, { origin: 'llm' });
+    }
     const relativeName = this._computeRelativeTo(fileName);
     const printableLink = `- [${title}](${relativeName})`;
     return { fileName, relativeName, printableLink };
