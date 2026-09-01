@@ -612,6 +612,7 @@ System.getenv().put("SESSION_STORAGE", sessionStorage);
 
 // Set session storage in a new context
 String sessionStorage = System.getenv("SESSION_STORAGE");
+String escapedSessionStorage = sessionStorage.replace("\\", "\\\\").replace("'", "\\'");
 context.addInitScript("(storage => {\n" +
   "  if (window.location.hostname === 'example.com') {\n" +
   "    const entries = JSON.parse(storage);\n" +
@@ -619,7 +620,7 @@ context.addInitScript("(storage => {\n" +
   "      window.sessionStorage.setItem(key, value);\n" +
   "    };\n" +
   "  }\n" +
-  "})('" + sessionStorage + "')");
+  "})('" + escapedSessionStorage + "')");
 ```
 
 ```python async
@@ -630,6 +631,7 @@ os.environ["SESSION_STORAGE"] = session_storage
 
 # Set session storage in a new context
 session_storage = os.environ["SESSION_STORAGE"]
+escaped_session_storage = session_storage.replace("\\", "\\\\").replace("'", "\\'")
 await context.add_init_script("""(storage => {
   if (window.location.hostname === 'example.com') {
     const entries = JSON.parse(storage)
@@ -637,7 +639,7 @@ await context.add_init_script("""(storage => {
       window.sessionStorage.setItem(key, value)
     }
   }
-})('""" + session_storage + "')")
+})('""" + escaped_session_storage + "')")
 ```
 
 ```python sync
@@ -648,6 +650,7 @@ os.environ["SESSION_STORAGE"] = session_storage
 
 # Set session storage in a new context
 session_storage = os.environ["SESSION_STORAGE"]
+escaped_session_storage = session_storage.replace("\\", "\\\\").replace("'", "\\'")
 context.add_init_script("""(storage => {
   if (window.location.hostname === 'example.com') {
     const entries = JSON.parse(storage)
@@ -655,7 +658,7 @@ context.add_init_script("""(storage => {
       window.sessionStorage.setItem(key, value)
     }
   }
-})('""" + session_storage + "')")
+})('""" + escaped_session_storage + "')")
 ```
 
 ```csharp
@@ -665,6 +668,7 @@ Environment.SetEnvironmentVariable("SESSION_STORAGE", sessionStorage);
 
 // Set session storage in a new context
 var loadedSessionStorage = Environment.GetEnvironmentVariable("SESSION_STORAGE");
+var escapedSessionStorage = loadedSessionStorage.Replace("\\", "\\\\").Replace("'", "\\'");
 await context.AddInitScriptAsync(@"(storage => {
     if (window.location.hostname === 'example.com') {
       const entries = JSON.parse(storage);
@@ -672,7 +676,7 @@ await context.AddInitScriptAsync(@"(storage => {
         window.sessionStorage.setItem(key, value);
       }
     }
-  })('" + loadedSessionStorage + "')");
+  })('" + escapedSessionStorage + "')");
 ```
 
 ### Avoid authentication in some tests
