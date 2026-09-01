@@ -200,6 +200,118 @@ it('should round-trip through the file', async ({ contextFactory, channel }, tes
   await context3.close();
 });
 
+it('should round-trip OPFS', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41400' } }, async ({ browserName, contextFactory, page, server }, testInfo) => {
+  it.skip(browserName === 'webkit', 'OPFS is unavailable in non-persistent WebKit contexts');
+
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(async () => {
+    const root = await navigator.storage.getDirectory();
+    const nested = await root.getDirectoryHandle('nested', { create: true });
+    await nested.getDirectoryHandle('empty', { create: true });
+
+    const binary = await nested.getFileHandle('data.bin', { create: true });
+    const binaryWritable = await binary.createWritable();
+    await binaryWritable.write(new Uint8Array([0, 1, 2, 255]));
+    await binaryWritable.close();
+
+    const text = await root.getFileHandle('hello.txt', { create: true });
+    const textWritable = await text.createWritable();
+    await textWritable.write('Hello, world!');
+    await textWritable.close();
+  });
+
+  expect(await page.context().storageState()).toEqual({ cookies: [], origins: [] });
+
+  const path = testInfo.outputPath('storage-state.json');
+  const storageState = await page.context().storageState({ path, opfs: true });
+  expect(storageState.origins).toEqual([{
+    origin: server.PREFIX,
+    localStorage: [],
+    opfs: [
+      { path: 'hello.txt', type: 'file', base64: 'SGVsbG8sIHdvcmxkIQ==' },
+      { path: 'nested', type: 'directory' },
+      { path: 'nested/data.bin', type: 'file', base64: 'AAEC/w==' },
+      { path: 'nested/empty', type: 'directory' },
+    ],
+  }]);
+  expect(JSON.parse(await fs.promises.readFile(path, 'utf8'))).toEqual(storageState);
+  expect(await page.context().request.storageState({ opfs: true })).toEqual(storageState);
+
+  const checkContext = async (context: BrowserContext) => {
+    expect(await context.storageState({ opfs: true })).toEqual(storageState);
+    const checkPage = await context.newPage();
+    await checkPage.goto(server.EMPTY_PAGE);
+    expect(await checkPage.evaluate(async () => {
+      const root = await navigator.storage.getDirectory();
+      const hello = await (await root.getFileHandle('hello.txt')).getFile();
+      const nested = await root.getDirectoryHandle('nested');
+      const data = await (await nested.getFileHandle('data.bin')).getFile();
+      const empty = await nested.getDirectoryHandle('empty');
+      const emptyEntries = [];
+      for await (const name of empty.keys())
+        emptyEntries.push(name);
+      return {
+        text: await hello.text(),
+        bytes: [...new Uint8Array(await data.arrayBuffer())],
+        empty: emptyEntries,
+      };
+    })).toEqual({
+      text: 'Hello, world!',
+      bytes: [0, 1, 2, 255],
+      empty: [],
+    });
+  };
+
+  const context2 = await contextFactory({ storageState: path });
+  await checkContext(context2);
+  await context2.close();
+
+  const context3 = await contextFactory();
+  const page3 = await context3.newPage();
+  await page3.goto(server.EMPTY_PAGE);
+  await page3.evaluate(async () => {
+    const root = await navigator.storage.getDirectory();
+    await root.getFileHandle('stale.txt', { create: true });
+  });
+  await context3.setStorageState(storageState);
+  await checkContext(context3);
+  await context3.close();
+});
+
+it('should round-trip OPFS in a persistent WebKit context', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41400' } }, async ({ browserName, launchPersistent, server }) => {
+  it.skip(browserName !== 'webkit');
+
+  const { context, page } = await launchPersistent();
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(async () => {
+    const root = await navigator.storage.getDirectory();
+    await root.getDirectoryHandle('empty', { create: true });
+    const file = await root.getFileHandle('hello.txt', { create: true });
+    const writable = await file.createWritable();
+    await writable.write('Hello, world!');
+    await writable.close();
+  });
+
+  const storageState = await context.storageState({ opfs: true });
+  expect(storageState.origins).toEqual([{
+    origin: server.PREFIX,
+    localStorage: [],
+    opfs: [
+      { path: 'empty', type: 'directory' },
+      { path: 'hello.txt', type: 'file', base64: 'SGVsbG8sIHdvcmxkIQ==' },
+    ],
+  }]);
+
+  await page.evaluate(async () => {
+    const root = await navigator.storage.getDirectory();
+    await root.removeEntry('empty', { recursive: true });
+    await root.removeEntry('hello.txt');
+    await root.getFileHandle('stale.txt', { create: true });
+  });
+  await context.setStorageState(storageState);
+  expect(await context.storageState({ opfs: true })).toEqual(storageState);
+});
+
 it('should capture cookies', async ({ server, context, page, contextFactory }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=b', 'empty=']);

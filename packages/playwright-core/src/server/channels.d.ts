@@ -18,8 +18,8 @@
 
 import type { Progress } from './progress';
 
-import type { Binary, Channel, AndroidWebView, AndroidSelector, AndroidElementInfo, APIResponse, Metadata, ClientSideCallMetadata, SDKLanguage, WaitInfo, HttpCredentials, SetNetworkCookie, NetworkCookie, ResourceTiming, SecurityDetails, RequestSizes, RemoteAddr, ExpectedTextValue, SelectorEngine, FormField, LifecycleEvent, ConsoleMessagesFilter, RecorderSource, IndexedDBDatabase, SetOriginStorage, OriginStorage, RecordHarOptions, SerializedValue, SerializedArgument, SerializedError, StackFrame, VirtualCredential, Point, Rect, URLPattern, NameValue } from '@protocol/structs';
-export type { Binary, Channel, AndroidWebView, AndroidSelector, AndroidElementInfo, APIResponse, Metadata, ClientSideCallMetadata, SDKLanguage, WaitInfo, HttpCredentials, SetNetworkCookie, NetworkCookie, ResourceTiming, SecurityDetails, RequestSizes, RemoteAddr, ExpectedTextValue, SelectorEngine, FormField, LifecycleEvent, ConsoleMessagesFilter, RecorderSource, IndexedDBDatabase, SetOriginStorage, OriginStorage, RecordHarOptions, SerializedValue, SerializedArgument, SerializedError, StackFrame, VirtualCredential, Point, Rect, URLPattern, NameValue } from '@protocol/structs';
+import type { Binary, Channel, AndroidWebView, AndroidSelector, AndroidElementInfo, APIResponse, Metadata, ClientSideCallMetadata, SDKLanguage, WaitInfo, HttpCredentials, SetNetworkCookie, NetworkCookie, ResourceTiming, SecurityDetails, RequestSizes, RemoteAddr, ExpectedTextValue, SelectorEngine, FormField, LifecycleEvent, ConsoleMessagesFilter, RecorderSource, IndexedDBDatabase, OPFSEntry, SetOriginStorage, OriginStorage, RecordHarOptions, SerializedValue, SerializedArgument, SerializedError, StackFrame, VirtualCredential, Point, Rect, URLPattern, NameValue } from '@protocol/structs';
+export type { Binary, Channel, AndroidWebView, AndroidSelector, AndroidElementInfo, APIResponse, Metadata, ClientSideCallMetadata, SDKLanguage, WaitInfo, HttpCredentials, SetNetworkCookie, NetworkCookie, ResourceTiming, SecurityDetails, RequestSizes, RemoteAddr, ExpectedTextValue, SelectorEngine, FormField, LifecycleEvent, ConsoleMessagesFilter, RecorderSource, IndexedDBDatabase, OPFSEntry, SetOriginStorage, OriginStorage, RecordHarOptions, SerializedValue, SerializedArgument, SerializedError, StackFrame, VirtualCredential, Point, Rect, URLPattern, NameValue } from '@protocol/structs';
 
 // ----------- Initializer Traits -----------
 export type InitializerTraits<T> =
@@ -632,9 +632,11 @@ export type APIRequestContextFetchLogResult = {
 };
 export type APIRequestContextStorageStateParams = {
   indexedDB?: boolean,
+  opfs?: boolean,
 };
 export type APIRequestContextStorageStateOptions = {
   indexedDB?: boolean,
+  opfs?: boolean,
 };
 export type APIRequestContextStorageStateResult = {
   cookies: NetworkCookie[],
@@ -1490,10 +1492,12 @@ export type BrowserContextSetOfflineOptions = {
 export type BrowserContextSetOfflineResult = void;
 export type BrowserContextStorageStateParams = {
   indexedDB?: boolean,
+  opfs?: boolean,
   credentials?: boolean,
 };
 export type BrowserContextStorageStateOptions = {
   indexedDB?: boolean,
+  opfs?: boolean,
   credentials?: boolean,
 };
 export type BrowserContextStorageStateResult = {

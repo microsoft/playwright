@@ -915,6 +915,12 @@ Returns storage state for this request context, contains current cookies and loc
 
 Set to `true` to include IndexedDB in the storage state snapshot.
 
+### option: APIRequestContext.storageState.opfs
+* since: v1.63
+- `opfs` ?<boolean>
+
+Set to `true` to include the origin private file system in the storage state snapshot.
+
 ## property: APIRequestContext.tracing
 * since: v1.60
 - type: <[Tracing]>
