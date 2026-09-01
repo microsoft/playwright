@@ -61,26 +61,20 @@ test('recovers and can screenshot after the debugger is detached', {
   const browserContext = await browserWithExtension.launch();
   const { client } = await connectWithToken(browserContext, startClient, browserWithExtension.userDataDir);
 
-  server.setContent('/signin', `
-    <title>SignIn</title>
-    <div>QR CODE HERE</div>
-    <script>
-      if (!window.__probed) {
-        window.__probed = true;
-        setTimeout(() => {
-          const iframe = document.createElement('iframe');
-          iframe.src = 'customscheme://cc/';
-          document.body.appendChild(iframe);
-        }, 300);
-      }
-    </script>
-  `, 'text/html');
+  server.setContent('/signin', `<title>SignIn</title><div>QR CODE HERE</div>`, 'text/html');
 
   const getDetach = await watchDetach(browserContext);
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX + '/signin' },
   })).toHaveResponse({ snapshot: expect.stringContaining('QR CODE HERE') });
+
+  const page = browserContext.pages().find(p => p.url().endsWith('/signin'))!;
+  await page.evaluate(() => {
+    const iframe = document.createElement('iframe');
+    iframe.src = 'customscheme://cc/';
+    document.body.appendChild(iframe);
+  }).catch(() => {});
 
   await expect.poll(async () => (await getDetach()).length, { timeout: 5000 }).toBeGreaterThan(0);
   expect((await getDetach())[0].reason).toBe('target_closed');
