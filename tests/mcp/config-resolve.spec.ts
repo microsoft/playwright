@@ -157,6 +157,19 @@ test.describe('sandbox', () => {
       expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
   });
 
+  test('chromium sandbox disabled for browserName chromium without channel', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42452' },
+  }, async ({}, testInfo) => {
+    const configFile = testInfo.outputPath('config.json');
+    await fs.promises.writeFile(configFile, JSON.stringify({ browser: { browserName: 'chromium' } }));
+    const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv);
+    expect(config.browser.launchOptions.channel).toBeUndefined();
+    if (process.platform === 'linux')
+      expect(config.browser.launchOptions.chromiumSandbox).toBe(false);
+    else
+      expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
+  });
+
   test('sandbox not set for non-chromium browsers', async () => {
     const config = await resolveCLIConfigForMCP({ browser: 'firefox' }, emptyEnv);
     expect(config.browser.launchOptions.chromiumSandbox).toBeUndefined();
