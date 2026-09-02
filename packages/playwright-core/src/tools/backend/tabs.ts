@@ -16,6 +16,7 @@
 
 import * as z from 'zod';
 import { defineTool } from './tool';
+import { extensionSessionFor } from './extensionSession';
 import { renderTabsMarkdown } from './response';
 
 const browserTabs = defineTool({
@@ -65,6 +66,30 @@ const browserTabs = defineTool({
   },
 });
 
+const browserSetGroupLabel = defineTool({
+  capability: 'core-tabs',
+  extensionOnly: true,
+
+  schema: {
+    name: 'browser_set_group_label',
+    title: 'Label the tab group',
+    description: 'Set a short label on this session\'s browser tab group, shown to the user as "Playwright · <label>". Call it once, early in the task, so the user can tell which tab group belongs to which task, especially when several agents share the browser.',
+    inputSchema: z.object({
+      label: z.string().trim().min(1).max(50).describe('Short label describing the current task, e.g. "checkout flow bug".'),
+    }),
+    type: 'action',
+  },
+
+  handle: async (context, params, response) => {
+    const session = extensionSessionFor((await context.ensureBrowserContext()).browser());
+    if (!session)
+      throw new Error('This tool is only available when connected to a browser via the Playwright Extension.');
+    const { title } = await session.setGroupLabel(params.label);
+    response.addTextResult(`Tab group renamed to "${title}".`);
+  },
+});
+
 export default [
   browserTabs,
+  browserSetGroupLabel,
 ];

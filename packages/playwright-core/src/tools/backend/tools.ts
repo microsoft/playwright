@@ -76,8 +76,8 @@ export const browserTools: Tool<any>[] = [
   ...webstorage,
 ];
 
-export function filteredTools(config: Pick<ContextConfig, 'capabilities'>) {
-  return browserTools.filter(tool => tool.capability.startsWith('core') || config.capabilities?.includes(tool.capability)).filter(tool => !tool.skillOnly).map(tool => ({
+export function filteredTools(config: Pick<ContextConfig, 'capabilities' | 'extension'>) {
+  return browserTools.filter(tool => tool.capability.startsWith('core') || config.capabilities?.includes(tool.capability)).filter(tool => !tool.skillOnly && (!tool.extensionOnly || config.extension)).map(tool => ({
     ...tool,
     schema: {
       ...tool.schema,

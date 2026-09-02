@@ -71,6 +71,13 @@ export type ExtensionCommandV2 = {
     params: [tabIds: number | number[]];
     result: void;
   };
+  // Playwright-specific: applies a user-facing label to the connection's own
+  // tab group. Returns the final title after deduplication against the other
+  // connections' groups.
+  'extension.setGroupLabel': {
+    params: [label: string];
+    result: { title: string };
+  };
 };
 
 // Protocol v2 events mirror chrome.<api>.<event>.addListener callback signatures.

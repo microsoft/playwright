@@ -111,6 +111,8 @@ playwright-cli tab-new https://example.com/page
 playwright-cli tab-close
 playwright-cli tab-close 2
 playwright-cli tab-select 0
+# Extension mode only: label this session's tab group in the browser
+playwright-cli tab-group-label "checkout flow bug"
 ```
 
 ### Storage

@@ -51,6 +51,8 @@ export type ModalState = FileUploadModalState | DialogModalState;
 export type Tool<Input extends z.Schema = z.Schema> = {
   capability: ToolCapability;
   skillOnly?: boolean;
+  // Only listed when connected to a browser via the Playwright Extension.
+  extensionOnly?: boolean;
   schema: ToolSchema<Input>;
   handle: (context: Context, params: z.output<Input>, response: Response, signal?: AbortSignal) => Promise<void>;
 };

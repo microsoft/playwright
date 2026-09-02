@@ -72,6 +72,7 @@ export class RelayConnection {
   onclose?: () => void;
   ontabattached?: (tabId: number) => void;
   ontabdetached?: (tabId: number) => void;
+  onsetgrouplabel?: (label: string) => Promise<string>;
 
   get attachedTabs(): ReadonlySet<number> {
     return this._attachedTabs;
@@ -279,6 +280,8 @@ export class RelayConnection {
   }
 
   private async _handleCommand(message: ProtocolCommand): Promise<any> {
+    if (message.method === 'extension.setGroupLabel')
+      return await this._setGroupLabel((message.params as unknown[])?.[0]);
     if (!ALLOWED_CHROME_COMMANDS.has(message.method))
       throw new Error(`Unknown method: ${message.method}`);
     const args = (message.params ?? []) as any[];
@@ -290,6 +293,17 @@ export class RelayConnection {
         this._notifyTabAttached(target.tabId);
     }
     return result ?? {};
+  }
+
+  // Mirrors the zod limit in the browser_set_group_label tool, re-checked here
+  // because the extension cannot trust the connecting client.
+  private async _setGroupLabel(rawLabel: unknown): Promise<{ title: string }> {
+    const label = String(rawLabel ?? '').trim().slice(0, 50);
+    if (!label)
+      throw new Error('Label must not be empty');
+    if (!this.onsetgrouplabel)
+      throw new Error('No tab group for this connection');
+    return { title: await this.onsetgrouplabel(label) };
   }
 
   private _sendError(code: number, message: string): void {
