@@ -75,7 +75,7 @@ await page.GetByRole(AriaRole.Textbox).FillAsync("Peter");
 await page.GetByLabel("Birth date").FillAsync("2020-02-02");
 
 // Time input
-await page.GetByLabel("Appointment time").FillAsync("13-15");
+await page.GetByLabel("Appointment time").FillAsync("13:15");
 
 // Local datetime input
 await page.GetByLabel("Local time").FillAsync("2020-03-02T05:15");
