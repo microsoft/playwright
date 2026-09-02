@@ -343,10 +343,10 @@ test(`ignores orphaned preferences entries of an uninstalled extension`, {
   }).toPass();
 });
 
-test(`--user-data-dir pointing at a profile selects it`, {
+test(`--profile-dir-name selects the profile`, {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1732' },
 }, async ({ startClient, server }, testInfo) => {
-  // Both profiles have the extension and Default was used last, so only the explicit path selects Profile 1.
+  // Both profiles have the extension and Default was used last, so only the option selects Profile 1.
   const userDataDir = testInfo.outputPath('multi-profile');
   await fs.mkdir(path.join(userDataDir, 'Default', 'Extensions', extensionId), { recursive: true });
   await fs.mkdir(path.join(userDataDir, 'Profile 1', 'Extensions', extensionId), { recursive: true });
@@ -358,32 +358,13 @@ test(`--user-data-dir pointing at a profile selects it`, {
   await fs.writeFile(executablePath, '#!/bin/bash\necho "Custom exec args: $@" > "$(dirname "$0")/output.txt"', { mode: 0o755 });
 
   const { client } = await startClient({
-    args: [`--extension`, `--executable-path=${executablePath}`, `--user-data-dir=${path.join(userDataDir, 'Profile 1')}`],
+    args: [`--extension`, `--executable-path=${executablePath}`, `--user-data-dir=${userDataDir}`, `--profile-dir-name=Profile 1`],
   });
 
   client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } }).catch(() => {});
   await expect(async () => {
     const output = await fs.readFile(testInfo.outputPath('output.txt'), 'utf8');
     expect(output).toContain(`--user-data-dir=${userDataDir} --profile-directory=Profile 1`);
-  }).toPass();
-});
-
-test(`--user-data-dir named like a profile is not split`, async ({ startClient, server }, testInfo) => {
-  // No "Local State" next to it, so this is a user data dir, not a profile inside one.
-  const userDataDir = testInfo.outputPath('Profile 1');
-  await fs.mkdir(path.join(userDataDir, 'Default', 'Extensions', extensionId), { recursive: true });
-
-  const executablePath = testInfo.outputPath('echo.sh');
-  await fs.writeFile(executablePath, '#!/bin/bash\necho "Custom exec args: $@" > "$(dirname "$0")/output.txt"', { mode: 0o755 });
-
-  const { client } = await startClient({
-    args: [`--extension`, `--executable-path=${executablePath}`, `--user-data-dir=${userDataDir}`],
-  });
-
-  client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } }).catch(() => {});
-  await expect(async () => {
-    const output = await fs.readFile(testInfo.outputPath('output.txt'), 'utf8');
-    expect(output).toContain(`--user-data-dir=${userDataDir} --profile-directory=Default`);
   }).toPass();
 });
 
@@ -419,11 +400,15 @@ test(`navigate with extension via --user-data-dir`, {
   });
 });
 
-test(`navigate with extension via --user-data-dir pointing at the profile`, async ({ browserWithExtension, startClient, server }) => {
+test(`navigate with extension via PLAYWRIGHT_MCP_PROFILE_DIR_NAME`, async ({ browserWithExtension, startClient, server }) => {
   const browserContext = await browserWithExtension.launch();
 
   const { client } = await startClient({
-    args: [`--extension`, `--user-data-dir=${path.join(browserWithExtension.userDataDir, 'Default')}`],
+    args: [`--extension`],
+    env: {
+      PLAYWRIGHT_MCP_PROFILE_DIR_NAME: 'Default',
+      PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
+    },
   });
 
   const response = await connectAndNavigate(browserContext, client, server.HELLO_WORLD);

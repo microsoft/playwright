@@ -73,7 +73,7 @@ This token is unique to your browser profile and provides secure authentication 
 
 ### Selecting a Chrome Profile
 
-If the extension is installed in several Chrome profiles, the connection is made to the one you used last. To always connect to a specific profile, pass its path, shown as "Profile Path" at `chrome://version`, via `--user-data-dir`:
+If the extension is installed in several Chrome profiles, the connection is made to the one you used last. To always connect to a specific profile, pass the name of its directory, the last component of "Profile Path" at `chrome://version`, via `--profile-dir-name`:
 
 ```json
 {
@@ -83,13 +83,14 @@ If the extension is installed in several Chrome profiles, the connection is made
       "args": [
         "@playwright/mcp@latest",
         "--extension",
-        "--user-data-dir=/Users/me/Library/Application Support/Google/Chrome/Profile 2"
+        "--profile-dir-name",
+        "Profile 2"
       ]
     }
   }
 }
 ```
 
-The authentication token is specific to the profile, so use the one displayed in that profile.
+The `PLAYWRIGHT_MCP_PROFILE_DIR_NAME` environment variable can be used instead of the option. The authentication token is specific to the profile, so use the one displayed in that profile.
 
 
