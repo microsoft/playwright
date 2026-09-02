@@ -1216,7 +1216,7 @@ Logger sink for Playwright logging.
 ## browser-option-timeout
 - `timeout` <[float]>
 
-Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
+Maximum time in milliseconds to wait for the browser instance to start. Defaults to `180000` (3 minutes). Pass `0` to
 disable timeout.
 
 ## browser-option-artifactsdir
