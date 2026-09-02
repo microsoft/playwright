@@ -98,7 +98,6 @@ it('should only have one websocket entry', async ({ contextFactory, server }, te
 });
 
 it('should include websocket handshake headers and status', async ({ contextFactory, server, browserName, isMac, macVersion }, testInfo) => {
-  it.fixme(browserName === 'webkit' && isMac && macVersion >= 26, 'NWLoader does not reflect the wire handshake headers (Sec-WebSocket-Key, Connection, Upgrade) in NSURLSessionWebSocketTask.currentRequest');
   server.onceWebSocketConnection(ws => {
     ws.on('message', () => ws.close());
   });
