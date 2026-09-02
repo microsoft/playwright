@@ -22,7 +22,8 @@
  * - /extension/guid - Extension connection
  *
  * The protocol version advertised to the extension can be overridden with the
- * PLAYWRIGHT_EXTENSION_PROTOCOL env variable (used in tests).
+ * PWTEST_EXTENSION_PROTOCOL env variable, and the connection timeout with
+ * PWTEST_EXTENSION_CONNECT_TIMEOUT (both used in tests).
  */
 
 import { spawn } from 'child_process';
@@ -31,6 +32,8 @@ import os from 'os';
 import debug from 'debug';
 import ws from 'ws';
 import { ManualPromise } from '@isomorphic/manualPromise';
+import { monotonicTime } from '@isomorphic/time';
+import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { WSServer } from '@utils/wsServer';
 import { registry } from '../../server/registry/index';
 
@@ -46,6 +49,8 @@ import type { WebSocket } from 'ws';
 
 
 const debugLogger = debug('pw:mcp:relay');
+
+const extensionConnectionTimeout = +(process.env.PWTEST_EXTENSION_CONNECT_TIMEOUT ?? 30_000);
 
 type CDPCommand = {
   id: number;
@@ -68,6 +73,7 @@ export class CDPRelayServer {
   private _cdpConnection: WebSocket | null = null;
   private _extensionConnection: ExtensionConnection | null = null;
   private _protocolVersion: number;
+  private _token?: string;
   private _handler: ExtensionProtocolV2;
   private _extensionConnectionPromise = new ManualPromise<void>();
 
@@ -76,7 +82,8 @@ export class CDPRelayServer {
     this._executablePath = executablePath;
     this._customUserDataDir = customUserDataDir;
     this._profileDirectory = profileDirectory;
-    this._protocolVersion = parseInt(process.env.PLAYWRIGHT_EXTENSION_PROTOCOL ?? protocol.VERSION.toString(), 10);
+    this._protocolVersion = parseInt(process.env.PWTEST_EXTENSION_PROTOCOL ?? protocol.VERSION.toString(), 10);
+    this._token = process.env.PLAYWRIGHT_MCP_EXTENSION_TOKEN;
 
     const sendCommand = (method: string, params: any): Promise<any> => {
       if (!this._extensionConnection)
@@ -125,8 +132,16 @@ export class CDPRelayServer {
     debugLogger('Establishing extension connection');
     await this._openConnectPageInBrowser(clientName);
     debugLogger('Waiting for incoming extension connection');
-    await this._extensionConnectionPromise;
-    await this._handler.ready();
+    // Without a token the user has to approve the connection in the browser, which can take arbitrarily long.
+    const deadline = this._token ? monotonicTime() + extensionConnectionTimeout : 0;
+    const { timedOut } = await raceAgainstDeadline(async () => {
+      await this._extensionConnectionPromise;
+      await this._handler.ready();
+    }, deadline);
+    if (timedOut) {
+      const profile = this._profileDirectory ? ` "${this._profileDirectory}"` : '';
+      throw new Error(`Playwright extension did not connect within ${extensionConnectionTimeout / 1000}s after opening the connect page. Make sure the extension is installed in the Chrome profile${profile} and PLAYWRIGHT_MCP_EXTENSION_TOKEN matches its token.`);
+    }
     debugLogger('Extension connection established');
   }
 
@@ -141,9 +156,8 @@ export class CDPRelayServer {
     };
     url.searchParams.set('client', JSON.stringify(client));
     url.searchParams.set('protocolVersion', this._protocolVersion.toString());
-    const token = process.env.PLAYWRIGHT_MCP_EXTENSION_TOKEN;
-    if (token)
-      url.searchParams.set('token', token);
+    if (this._token)
+      url.searchParams.set('token', this._token);
     const href = url.toString();
 
     const channel = registry.isChromiumAlias(this._browserChannel) ? 'chromium' : this._browserChannel;
@@ -357,10 +371,11 @@ class ExtensionConnection {
     }
   }
 
-  private _onClose(event: websocket.CloseEvent) {
-    debugLogger(`<ws closed> code=${event.code} reason=${event.reason}`);
+  private _onClose(code: number, reason: Buffer) {
+    const message = reason.toString();
+    debugLogger(`<ws closed> code=${code} reason=${message}`);
     this._dispose();
-    this.onclose?.(event.reason);
+    this.onclose?.(message);
   }
 
   private _onError(event: websocket.ErrorEvent) {
