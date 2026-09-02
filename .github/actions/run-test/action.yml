@@ -81,7 +81,7 @@ runs:
       env:
         PW_TAG: "@${{ inputs.bot-name }}"
     - name: Azure Login
-      uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+      uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
       if: ${{ !cancelled() && env.PLAYWRIGHT_SETUP_COMPLETE == 'true' && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
       with:
         client-id: ${{ inputs.flakiness-client-id }}
