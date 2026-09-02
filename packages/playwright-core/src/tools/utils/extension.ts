@@ -65,7 +65,7 @@ export async function isPlaywrightExtensionInstalled(userDataDir: string): Promi
   return await findPlaywrightExtensionProfile(userDataDir) !== undefined;
 }
 
-async function isExtensionInstalledInProfile(profileDir: string): Promise<boolean> {
+export async function isExtensionInstalledInProfile(profileDir: string): Promise<boolean> {
   // Web store installs unpack into <profile>/Extensions/<id>; `--load-extension` only
   // leaves a settings record in the preferences.
   if (await pathExists(path.join(profileDir, 'Extensions', playwrightExtensionId)))

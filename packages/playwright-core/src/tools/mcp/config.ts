@@ -63,6 +63,7 @@ export type CLIOptions = {
   outputDir?: string;
   outputMaxSize?: number;
   port?: number;
+  profileDirName?: string;
   proxyBypass?: string;
   proxyServer?: string;
   remoteHeader?: Record<string, string>;
@@ -208,11 +209,12 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   return { ...result, browser, configFile, skillMode: true };
 }
 
-export function resolveExtensionOptions(cliOptions: CLIOptions): { channel: string, executablePath?: string } {
+export function resolveExtensionOptions(cliOptions: CLIOptions): { channel: string, executablePath?: string, profileDirName?: string } {
   const browser = cliOptions.browser ?? envToString(process.env.PLAYWRIGHT_MCP_BROWSER);
   const { channel } = resolveBrowserParam(browser);
   const executablePath = cliOptions.executablePath ?? envToString(process.env.PLAYWRIGHT_MCP_EXECUTABLE_PATH);
-  return { channel: channel ?? 'chrome', executablePath };
+  const profileDirName = cliOptions.profileDirName ?? envToString(process.env.PLAYWRIGHT_MCP_PROFILE_DIR_NAME);
+  return { channel: channel ?? 'chrome', executablePath, profileDirName };
 }
 
 async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<FullConfig['browser']> {

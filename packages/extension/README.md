@@ -71,4 +71,26 @@ By default, you'll need to approve each connection when the MCP server tries to 
 
 This token is unique to your browser profile and provides secure authentication between the MCP server and the extension. Once configured, you won't need to manually approve connections each time.
 
+### Selecting a Chrome Profile
+
+If the extension is installed in several Chrome profiles, the connection is made to the one you used last. To always connect to a specific profile, pass the name of its directory, the last component of "Profile Path" at `chrome://version`, via `--profile-dir-name`:
+
+```json
+{
+  "mcpServers": {
+    "playwright-extension": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest",
+        "--extension",
+        "--profile-dir-name",
+        "Profile 2"
+      ]
+    }
+  }
+}
+```
+
+The `PLAYWRIGHT_MCP_PROFILE_DIR_NAME` environment variable can be used instead of the option. The authentication token is specific to the profile, so use the one displayed in that profile.
+
 
