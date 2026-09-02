@@ -53,6 +53,7 @@ export function useErrorsTabModel(model: TraceModel | undefined): ErrorsTabModel
 }
 
 function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: string, error: ErrorDescription, sdkLanguage: Language, revealInSource: (error: ErrorDescription) => void }) {
+  const model = useTraceModel();
   let location: string | undefined;
   let longLocation: string | undefined;
   const stackFrame = error.stack?.[0];
@@ -71,7 +72,7 @@ function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: s
       color: 'var(--vscode-errorForeground)',
       flex: 0,
     }}>
-      {error.action && renderAction(error.action, { sdkLanguage })}
+      {error.action && renderAction(error.action, { model, sdkLanguage })}
       {location && <div className='action-location'>
         @ <button type='button' title={longLocation} aria-label={`Go to source: ${longLocation}`} onClick={() => revealInSource(error)}>{location}</button>
       </div>}

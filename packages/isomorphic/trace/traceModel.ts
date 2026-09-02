@@ -229,7 +229,7 @@ export class TraceModel {
     const { rootItem } = buildActionTree(actions);
     const actionTree: string[] = [];
     const visit = (actionItem: ActionTreeItem, indent: string) => {
-      const title = renderFullTitleForCall({ ...actionItem.action, type: actionItem.action.class });
+      const title = renderFullTitleForCall({ ...actionItem.action, type: actionItem.action.class }, undefined, this.options.baseURL);
       actionTree.push(`${indent}${title || actionItem.id}`);
       for (const child of actionItem.children)
         visit(child, indent + '  ');

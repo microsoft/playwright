@@ -63,9 +63,9 @@ async function resolvesToFrame(progress: Progress, selector: string, frame: Fram
   }
 }
 
-export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus, sdkLanguage: Language): CallLog {
-  const title = renderTitleForCall(metadata, sdkLanguage);
-  const subtitle = renderSubtitleForCall(metadata, sdkLanguage);
+export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus, sdkLanguage: Language, baseURL: string | undefined): CallLog {
+  const title = renderTitleForCall(metadata, sdkLanguage, baseURL);
+  const subtitle = renderSubtitleForCall(metadata, sdkLanguage, baseURL);
   if (metadata.error)
     status = 'error';
   let duration = metadata.endTime ? metadata.endTime - metadata.startTime : undefined;

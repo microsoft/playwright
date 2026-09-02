@@ -25,12 +25,14 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { ActionEntry } from '@isomorphic/trace/entries';
 import { renderTitleForCall } from './actionList';
+import { useTraceModel } from './traceModelContext';
 
 export const CallTab: React.FunctionComponent<{
   action: ActionEntry | undefined,
   startTimeOffset: number,
   sdkLanguage: Language | undefined,
 }> = ({ action, startTimeOffset, sdkLanguage }) => {
+  const model = useTraceModel();
   // We never need the waitForEventInfo (`info`).
   const paramKeys = React.useMemo(() => Object.keys(action?.params ?? {}).filter(name => name !== 'info'), [action]);
 
@@ -41,7 +43,7 @@ export const CallTab: React.FunctionComponent<{
   const startTimeMillis = action.startTime - startTimeOffset;
   const startTime = msToString(startTimeMillis);
 
-  const { title, subtitle } = renderTitleForCall(action, sdkLanguage);
+  const { title, subtitle } = renderTitleForCall(action, sdkLanguage, model?.options.baseURL);
 
   return (
     <div className='call-tab'>

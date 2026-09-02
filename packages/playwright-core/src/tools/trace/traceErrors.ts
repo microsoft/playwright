@@ -29,7 +29,7 @@ export async function traceErrors() {
 
   for (const error of model.errorDescriptors) {
     if (error.action) {
-      const title = actionFullTitle(error.action);
+      const title = actionFullTitle(error.action, model.options.baseURL);
       console.log(`\n  ✗ ${title}`);
     } else {
       console.log(`\n  ✗ Error`);

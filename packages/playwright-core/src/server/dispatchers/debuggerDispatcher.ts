@@ -53,7 +53,7 @@ export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerCh
         line: metadata.location?.line,
         column: metadata.location?.column,
       },
-      title: renderFullTitleForCall(metadata, sdkObject.attribution.playwright.options.sdkLanguage),
+      title: renderFullTitleForCall(metadata, sdkObject.attribution.playwright.options.sdkLanguage, this.parentScope()._object._options.baseURL),
     };
   }
 

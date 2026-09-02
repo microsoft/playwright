@@ -92,11 +92,11 @@ export const ActionList: React.FC<ActionListProps> = ({
       return false;
     if (!actionFilterText)
       return true;
-    const { title, subtitle } = renderTitleForCall(item.action, sdkLanguage);
+    const { title, subtitle } = renderTitleForCall(item.action, sdkLanguage, model?.options.baseURL);
     const text = subtitle ? `${title} ${subtitle}` : title;
     const isIncluded = text.toLowerCase().includes(actionFilterText.toLowerCase());
     return isIncluded ? true : 'if-needed';
-  }, [selectedTime, actionFilterText, sdkLanguage]);
+  }, [selectedTime, actionFilterText, sdkLanguage, model]);
 
   const onSelectedAction = React.useCallback((item: ActionTreeItem) => {
     onSelected?.(item.action);
@@ -156,7 +156,7 @@ export const renderAction = (
     time = 'Timed out';
   else if (!isLive)
     time = '-';
-  const { elements, title, subtitle } = renderTitleForCall(action, sdkLanguage);
+  const { elements, title, subtitle } = renderTitleForCall(action, sdkLanguage, model?.options.baseURL);
   return <div className='action-title vbox'>
     <div className='hbox'>
       <span className='action-title-method' title={title}>{elements}</span>
@@ -177,7 +177,7 @@ export const renderAction = (
   </div>;
 };
 
-export function renderTitleForCall(action: ActionTraceEvent, sdkLanguage?: Language): { elements: React.ReactNode[], title: string, subtitle?: string } {
+export function renderTitleForCall(action: ActionTraceEvent, sdkLanguage?: Language, baseURL?: string): { elements: React.ReactNode[], title: string, subtitle?: string } {
   let titleFormat = action.title ?? getMetainfo({ type: action.class, method: action.method })?.title ?? action.method;
   titleFormat = titleFormat.replace(/\n/g, ' ');
 
@@ -194,7 +194,7 @@ export function renderTitleForCall(action: ActionTraceEvent, sdkLanguage?: Langu
     elements.push(chunk);
     title.push(chunk);
 
-    const param = formatProtocolParam(action.params, quotedText, sdkLanguage);
+    const param = formatProtocolParam(action.params, quotedText, sdkLanguage, baseURL);
     if (param === undefined) {
       elements.push(fullMatch);
       title.push(fullMatch);
@@ -214,7 +214,7 @@ export function renderTitleForCall(action: ActionTraceEvent, sdkLanguage?: Langu
     title.push(chunk);
   }
 
-  const subtitle = renderSubtitleForCall({ type: action.class, method: action.method, params: action.params, subtitle: action.subtitle }, sdkLanguage);
+  const subtitle = renderSubtitleForCall({ type: action.class, method: action.method, params: action.params, subtitle: action.subtitle }, sdkLanguage, baseURL);
   return { elements, title: title.join(''), subtitle };
 }
 

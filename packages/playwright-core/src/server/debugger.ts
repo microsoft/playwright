@@ -201,7 +201,7 @@ export class Debugger extends SdkObject<DebuggerEventMap> implements Instrumenta
         continue;
       updates.push({
         id: call.metadata.id,
-        title: renderFullTitleForCall(call.metadata, this._context._browser.sdkLanguage()) ?? '',
+        title: renderFullTitleForCall(call.metadata, this._context._browser.sdkLanguage(), this._context._options.baseURL) ?? '',
         location: call.metadata.location,
         newLogEntries: call.metadata.log.slice(call.sentLogCount),
         actionPoint: call.actionPoint,

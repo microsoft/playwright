@@ -28,11 +28,11 @@ export type CallMetainfo = {
   subtitle?: string;
 };
 
-export function formatProtocolParam(params: Record<string, any> | undefined, alternatives: string, sdkLanguage?: Language): string | undefined {
-  return _formatProtocolParam(params, alternatives, sdkLanguage)?.replaceAll('\n', '\\n');
+export function formatProtocolParam(params: Record<string, any> | undefined, alternatives: string, sdkLanguage?: Language, baseURL?: string): string | undefined {
+  return _formatProtocolParam(params, alternatives, sdkLanguage, baseURL)?.replaceAll('\n', '\\n');
 }
 
-function _formatProtocolParam(params: Record<string, any> | undefined, alternatives: string, sdkLanguage?: Language): string | undefined {
+function _formatProtocolParam(params: Record<string, any> | undefined, alternatives: string, sdkLanguage?: Language, baseURL?: string): string | undefined {
   if (!params)
     return undefined;
 
@@ -43,6 +43,8 @@ function _formatProtocolParam(params: Record<string, any> | undefined, alternati
         if (urlObject.protocol === 'data:')
           return urlObject.protocol;
         if (['about:', 'chrome:', 'edge:'].includes(urlObject.protocol))
+          return params[name];
+        if (baseURL !== undefined && !isSameOrigin(urlObject, baseURL))
           return params[name];
         return urlObject.pathname + urlObject.search;
       } catch (error) {
@@ -64,6 +66,14 @@ function _formatProtocolParam(params: Record<string, any> | undefined, alternati
   }
 }
 
+function isSameOrigin(url: URL, baseURL: string): boolean {
+  try {
+    return new URL(baseURL).origin === url.origin;
+  } catch {
+    return true;
+  }
+}
+
 function deepParam(params: Record<string, any>, name: string): string | undefined {
   const tokens = name.split('.');
   let current = params;
@@ -77,20 +87,20 @@ function deepParam(params: Record<string, any>, name: string): string | undefine
   return String(current);
 }
 
-export function renderTitleForCall(metadata: CallMetainfo, sdkLanguage?: Language): string {
+export function renderTitleForCall(metadata: CallMetainfo, sdkLanguage?: Language, baseURL?: string): string {
   const titleFormat = metadata.title ?? getMetainfo(metadata)?.title ?? metadata.method;
   return titleFormat.replace(/\{([^}]+)\}/g, (fullMatch, p1) => {
-    return formatProtocolParam(metadata.params, p1, sdkLanguage) ?? fullMatch;
+    return formatProtocolParam(metadata.params, p1, sdkLanguage, baseURL) ?? fullMatch;
   });
 }
 
-export function renderSubtitleForCall(metadata: CallMetainfo, sdkLanguage?: Language): string | undefined {
+export function renderSubtitleForCall(metadata: CallMetainfo, sdkLanguage?: Language, baseURL?: string): string | undefined {
   const subtitleFormat = metadata.subtitle ?? getMetainfo(metadata)?.subtitle;
   if (subtitleFormat === undefined)
     return undefined;
   let allParamsResolved = true;
   const subtitle = subtitleFormat.replace(/\{([^}]+)\}/g, (fullMatch, p1) => {
-    const param = formatProtocolParam(metadata.params, p1, sdkLanguage);
+    const param = formatProtocolParam(metadata.params, p1, sdkLanguage, baseURL);
     if (param === undefined)
       allParamsResolved = false;
     return param ?? fullMatch;
@@ -98,9 +108,9 @@ export function renderSubtitleForCall(metadata: CallMetainfo, sdkLanguage?: Lang
   return allParamsResolved ? subtitle : undefined;
 }
 
-export function renderFullTitleForCall(metadata: CallMetainfo, sdkLanguage?: Language): string {
-  const title = renderTitleForCall(metadata, sdkLanguage);
-  const subtitle = renderSubtitleForCall(metadata, sdkLanguage);
+export function renderFullTitleForCall(metadata: CallMetainfo, sdkLanguage?: Language, baseURL?: string): string {
+  const title = renderTitleForCall(metadata, sdkLanguage, baseURL);
+  const subtitle = renderSubtitleForCall(metadata, sdkLanguage, baseURL);
   return subtitle ? `${title} ${subtitle}` : title;
 }
 

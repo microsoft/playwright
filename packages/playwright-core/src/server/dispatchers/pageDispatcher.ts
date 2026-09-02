@@ -236,7 +236,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       frame: (params.locator.frame as FrameDispatcher)._object,
       selector: params.locator.selector,
     } : undefined;
-    progress.log(`${renderFullTitleForCall(progress.metadata, this._page.browserContext._browser.sdkLanguage())}${progress.timeout ? ` with timeout ${progress.timeout}ms` : ''}`);
+    progress.log(`${renderFullTitleForCall(progress.metadata, this._page.browserContext._browser.sdkLanguage(), this._page.browserContext._options.baseURL)}${progress.timeout ? ` with timeout ${progress.timeout}ms` : ''}`);
     return await this._page.expectScreenshot(progress, {
       ...params,
       locator,

@@ -26,7 +26,8 @@ import type { ActionEntry } from '@isomorphic/trace/entries';
 
 export async function traceActions(options: { grep?: string, errorsOnly?: boolean }) {
   const trace = await loadTrace();
-  const actions = filterActions(trace.model.actions, options);
+  const baseURL = trace.model.options.baseURL;
+  const actions = filterActions(trace.model.actions, options, baseURL);
 
   // Tree view
   const { rootItem } = buildActionTree(actions);
@@ -37,8 +38,8 @@ export async function traceActions(options: { grep?: string, errorsOnly?: boolea
     const ordinal = trace.callIdToOrdinal.get(action.callId) ?? '?';
     const ts = formatTimestamp(action.startTime, trace.model.startTime);
     const duration = action.endTime ? msToString(action.endTime - action.startTime) : 'running';
-    const title = actionTitle(action);
-    const subtitle = actionSubtitle(action);
+    const title = actionTitle(action, baseURL);
+    const subtitle = actionSubtitle(action, baseURL);
     const error = action.error ? '  ✗' : '';
     const prefix = `  ${(ordinal + '.').padStart(4)} ${ts}  ${indent}`;
     console.log(`${prefix}${title.padEnd(Math.max(1, 55 - indent.length))} ${duration.padStart(8)}${error}`);
@@ -51,11 +52,11 @@ export async function traceActions(options: { grep?: string, errorsOnly?: boolea
     visit(child, '');
 }
 
-function filterActions(actions: ActionEntry[], options: { grep?: string, errorsOnly?: boolean }): ActionEntry[] {
+function filterActions(actions: ActionEntry[], options: { grep?: string, errorsOnly?: boolean }, baseURL?: string): ActionEntry[] {
   let result = actions.filter(a => a.group !== 'configuration');
   if (options.grep) {
     const pattern = new RegExp(options.grep, 'i');
-    result = result.filter(a => pattern.test(actionFullTitle(a)));
+    result = result.filter(a => pattern.test(actionFullTitle(a, baseURL)));
   }
   if (options.errorsOnly)
     result = result.filter(a => !!a.error);
@@ -71,7 +72,7 @@ export async function traceAction(actionId: string) {
     return;
   }
 
-  const title = actionFullTitle(action);
+  const title = actionFullTitle(action, trace.model.options.baseURL);
   console.log(`\n  ${title}\n`);
 
   // Time

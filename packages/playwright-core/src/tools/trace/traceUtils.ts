@@ -106,16 +106,16 @@ export function formatTimestamp(ms: number, base: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}.${millis.toString().padStart(3, '0')}`;
 }
 
-export function actionTitle(action: ActionEntry): string {
-  return renderTitleForCall({ ...action, type: action.class }) || `${action.class}.${action.method}`;
+export function actionTitle(action: ActionEntry, baseURL?: string): string {
+  return renderTitleForCall({ ...action, type: action.class }, undefined, baseURL) || `${action.class}.${action.method}`;
 }
 
-export function actionSubtitle(action: ActionEntry): string | undefined {
-  return renderSubtitleForCall({ ...action, type: action.class });
+export function actionSubtitle(action: ActionEntry, baseURL?: string): string | undefined {
+  return renderSubtitleForCall({ ...action, type: action.class }, undefined, baseURL);
 }
 
-export function actionFullTitle(action: ActionEntry): string {
-  return renderFullTitleForCall({ ...action, type: action.class }) || `${action.class}.${action.method}`;
+export function actionFullTitle(action: ActionEntry, baseURL?: string): string {
+  return renderFullTitleForCall({ ...action, type: action.class }, undefined, baseURL) || `${action.class}.${action.method}`;
 }
 
 export async function saveOutputFile(fileName: string, content: string | Buffer, explicitOutput?: string): Promise<string> {

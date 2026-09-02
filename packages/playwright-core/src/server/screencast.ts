@@ -169,7 +169,7 @@ export class Screencast implements InstrumentationListener {
     if (!box && (sdkObject instanceof ElementHandle))
       box = await sdkObject.boundingBox(nullProgress) || undefined;
 
-    const actionTitle = renderFullTitleForCall(progress.metadata, this.page.browserContext._browser.sdkLanguage());
+    const actionTitle = renderFullTitleForCall(progress.metadata, this.page.browserContext._browser.sdkLanguage(), this.page.browserContext._options.baseURL);
     const utility = await progress.race(page.mainFrame().utilityContext());
 
     // Run this outside of the progress timer.

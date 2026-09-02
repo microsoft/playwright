@@ -174,6 +174,11 @@ test('should show tracing.group in the action list with location', async ({ runA
   await expect(traceViewer.sourceCodeTab.locator('.source-line-running')).toContainText('buddy beaver');
 });
 
+test('should print the whole url when navigating away from the base url', async ({ showTraceViewer, server }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  await expect(traceViewer.actionTitles.filter({ hasText: 'Navigate' }).last()).toContainText(server.PREFIX + '/frames/frame.html');
+});
+
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await expect(traceViewer.actionTitles).toHaveText([
