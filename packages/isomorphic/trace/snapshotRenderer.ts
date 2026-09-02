@@ -16,7 +16,7 @@
 
 import { escapeHTMLAttribute, escapeHTML } from '../stringUtils';
 
-import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from './trace';
+import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from './trace';
 import type { PageEntry } from './entries';
 import type { LRUCache } from '../lruCache';
 
@@ -37,8 +37,18 @@ function isSubtreeReferenceSnapshot(n: NodeSnapshot): n is SubtreeReferenceSnaps
   return Array.isArray(n) && Array.isArray(n[0]);
 }
 
+export type RenderedSnapshotHtml = { html: string, scriptNonce: string };
+
+export type RenderedFrameSnapshot = {
+  html: string;
+  scriptNonce: string;
+  pageId: string;
+  frameId: string;
+  index: number;
+};
+
 export class SnapshotRenderer {
-  private _htmlCache: LRUCache<SnapshotRenderer, string>;
+  private _htmlCache: LRUCache<SnapshotRenderer, RenderedSnapshotHtml>;
   private _snapshots: FrameSnapshot[];
   private _index: number;
   readonly snapshotName: string | undefined;
@@ -47,7 +57,7 @@ export class SnapshotRenderer {
   private _callId: string;
   private _screencastFrames: PageEntry['screencastFrames'];
 
-  constructor(htmlCache: LRUCache<SnapshotRenderer, string>, resources: ResourceSnapshot[], snapshots: FrameSnapshot[], screencastFrames: PageEntry['screencastFrames'], index: number) {
+  constructor(htmlCache: LRUCache<SnapshotRenderer, RenderedSnapshotHtml>, resources: ResourceSnapshot[], snapshots: FrameSnapshot[], screencastFrames: PageEntry['screencastFrames'], index: number) {
     this._htmlCache = htmlCache;
     this._resources = resources;
     this._snapshots = snapshots;
@@ -178,21 +188,24 @@ export class SnapshotRenderer {
     };
 
     const snapshot = this._snapshot;
-    const html = this._htmlCache.getOrCompute(this, () => {
+    const { html, scriptNonce } = this._htmlCache.getOrCompute(this, () => {
       visit(snapshot.html, this._index, undefined, undefined);
       // Sanitize doctype to prevent injection from crafted trace files.
       // Valid doctype names (from document.doctype.name) only contain alphanumeric characters.
       const safeDoctype = snapshot.doctype?.replace(/[^a-zA-Z0-9]/g, '');
       const prefix = safeDoctype ? `<!DOCTYPE ${safeDoctype}>` : '';
+      // The nonce allows our bootstrap script to run under the strict `script-src` policy
+      // that the snapshot is served with. See SnapshotServer.serveSnapshot().
+      const scriptNonce = generateNonce();
       const html = prefix + [
         // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
         '<style>*,*::before,*::after { visibility: hidden }</style>',
-        `<script>${snapshotScript(this.viewport(), this._callId, this.snapshotName)}</script>`
+        `<script nonce="${scriptNonce}">${snapshotScript(this.viewport(), this._callId, this.snapshotName)}</script>`
       ].join('') + result.join('');
-      return { value: html, size: html.length };
+      return { value: { html, scriptNonce }, size: html.length };
     });
 
-    return { html, pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
+    return { html, scriptNonce, pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
   }
 
   resourceByUrl(url: string, method: string): ResourceSnapshot | undefined {
@@ -294,6 +307,12 @@ declare global {
   interface Window {
     __playwright_frame_bounding_rects__: FrameBoundingRectsInfo;
   }
+}
+
+function generateNonce(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
