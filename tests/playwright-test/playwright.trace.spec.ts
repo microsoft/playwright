@@ -98,7 +98,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     '  Fixture "page"',
     '    Create page',
     'Navigate about:blank',
-    'GET /empty.html',
+    `GET ${server.HOST}/empty.html`,
     'After Hooks',
     '  Fixture "page"',
     '  Fixture "context"',
@@ -109,7 +109,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
   expect(trace2.model.renderActionTree()).toEqual([
     'Before Hooks',
     'Create request context',
-    'GET /empty.html',
+    `GET ${server.HOST}/empty.html`,
     'After Hooks',
   ]);
   const trace3 = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
@@ -122,7 +122,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     '  Fixture "page"',
     '    Create page',
     'Navigate about:blank',
-    'GET /empty.html',
+    `GET ${server.HOST}/empty.html`,
     'Expect "toBe"',
     'After Hooks',
     '  Fixture "page"',
@@ -420,7 +420,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     '  afterAll hook',
     '    Fixture "request"',
     '      Create request context',
-    '    GET /empty.html',
+    `    GET ${server.HOST}/empty.html`,
     '    Fixture "request"',
     'Worker Cleanup',
     '  Fixture "browser"',
@@ -580,7 +580,7 @@ test(`trace:retain-on-failure should create trace if request context is disposed
   }, { trace: 'retain-on-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.model.renderActionTree()).toContain('GET /empty.html');
+  expect(trace.model.renderActionTree()).toContain(`GET ${server.HOST}/empty.html`);
   expect(result.failed).toBe(1);
 });
 
@@ -1240,7 +1240,7 @@ test('trace:retain-on-first-failure should create trace if request context is di
   }, { trace: 'retain-on-first-failure' });
   const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
   const trace = await parseTrace(tracePath);
-  expect(trace.model.renderActionTree()).toContain('GET /empty.html');
+  expect(trace.model.renderActionTree()).toContain(`GET ${server.HOST}/empty.html`);
   expect(result.failed).toBe(1);
 });
 
@@ -1387,8 +1387,8 @@ test('should not nest top level expect into unfinished api calls ', {
     '    Create context',
     '  Fixture "page"',
     '    Create page',
-    'Navigate /index',
-    'GET /hang',
+    `Navigate ${server.HOST}/index`,
+    `GET ${server.HOST}/hang`,
     `Expect "toBeVisible" getByText('Hello!')`,
     'After Hooks',
     '  Fixture "page"',

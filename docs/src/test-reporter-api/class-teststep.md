@@ -119,7 +119,7 @@ separate line.
 // title `Click`, subtitle `getByRole('button')`
 await page.getByRole('button').click();
 
-// title `Navigate`, subtitle `/index.html`
+// title `Navigate`, subtitle `example.com/index.html`
 await page.goto('https://example.com/index.html');
 ```
 
