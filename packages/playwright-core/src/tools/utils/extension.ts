@@ -22,6 +22,20 @@ export const playwrightExtensionId = 'mmlmfjhmonkocbjadbfplnigmagldckm';
 
 export const playwrightExtensionInstallUrl = `https://chromewebstore.google.com/detail/playwright-extension/${playwrightExtensionId}`;
 
+// A path to a profile inside the user data dir, as shown at chrome://version, selects that profile explicitly.
+// The parent must be a user data dir, so that a user data dir merely named like a profile is left alone.
+export async function splitProfilePath(dir: string): Promise<{ userDataDir: string, profileDirectory?: string }> {
+  const name = path.basename(dir);
+  const userDataDir = path.dirname(dir);
+  if (isProfileDirectoryName(name) && await pathExists(path.join(userDataDir, 'Local State')))
+    return { userDataDir, profileDirectory: name };
+  return { userDataDir: dir };
+}
+
+function isProfileDirectoryName(name: string): boolean {
+  return name === 'Default' || /^Profile \d+$/.test(name);
+}
+
 export async function findPlaywrightExtensionProfile(userDataDir: string): Promise<string | undefined> {
   const profiles = await listProfileDirectories(userDataDir);
   const lastUsed = await readLastUsedProfile(userDataDir);
@@ -42,7 +56,7 @@ async function listProfileDirectories(userDataDir: string): Promise<string[]> {
   } catch {
     return [];
   }
-  const profiles = entries.filter(entry => entry === 'Default' || /^Profile \d+$/.test(entry));
+  const profiles = entries.filter(isProfileDirectoryName);
   profiles.sort((a, b) => profileRank(a) - profileRank(b));
   return profiles;
 }
@@ -65,7 +79,7 @@ export async function isPlaywrightExtensionInstalled(userDataDir: string): Promi
   return await findPlaywrightExtensionProfile(userDataDir) !== undefined;
 }
 
-async function isExtensionInstalledInProfile(profileDir: string): Promise<boolean> {
+export async function isExtensionInstalledInProfile(profileDir: string): Promise<boolean> {
   // Web store installs unpack into <profile>/Extensions/<id>; `--load-extension` only
   // leaves a settings record in the preferences.
   if (await pathExists(path.join(profileDir, 'Extensions', playwrightExtensionId)))

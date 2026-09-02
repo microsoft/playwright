@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+import path from 'path';
+
 import debug from 'debug';
 import { defaultUserDataDirForChannel } from '@utils/chromiumChannels';
 import { playwright } from '../../inprocess';
-import { findPlaywrightExtensionProfile, playwrightExtensionInstallUrl } from '../utils/extension';
+import { findPlaywrightExtensionProfile, isExtensionInstalledInProfile, playwrightExtensionInstallUrl, splitProfilePath } from '../utils/extension';
 import { CDPRelayServer } from './cdpRelay';
 
 import type * as playwrightTypes from '../../..';
@@ -26,13 +28,14 @@ const debugLogger = debug('pw:mcp:relay');
 
 export async function createExtensionBrowser(channel: string, executablePath: string | undefined, customUserDataDir: string | undefined, clientName: string): Promise<playwrightTypes.Browser> {
   customUserDataDir ??= process.env.PWTEST_EXTENSION_USER_DATA_DIR;
+  const custom = customUserDataDir ? await splitProfilePath(customUserDataDir) : undefined;
   // Custom executablePath may target a browser in a different filesystem (e.g. Windows chrome.exe from WSL2), so the local profile path is not meaningful.
-  const userDataDir = customUserDataDir ?? (executablePath ? undefined : defaultUserDataDirForChannel(channel));
-  const profileDirectory = userDataDir ? await findPlaywrightExtensionProfile(userDataDir) : undefined;
-  if (!executablePath && userDataDir && !profileDirectory)
-    throw new Error(`Playwright Extension not found in "${userDataDir}". Install it from ${playwrightExtensionInstallUrl}, or set the PLAYWRIGHT_MCP_EXECUTABLE_PATH environment variable to use a browser at a custom location.`);
+  const userDataDir = custom?.userDataDir ?? (executablePath ? undefined : defaultUserDataDirForChannel(channel));
+  const profileDirectory = custom?.profileDirectory ?? (userDataDir ? await findPlaywrightExtensionProfile(userDataDir) : undefined);
+  if (userDataDir && !executablePath && (!profileDirectory || !await isExtensionInstalledInProfile(path.join(userDataDir, profileDirectory))))
+    throw new Error(`Playwright Extension not found in "${customUserDataDir ?? userDataDir}". Install it from ${playwrightExtensionInstallUrl}, or set the PLAYWRIGHT_MCP_EXECUTABLE_PATH environment variable to use a browser at a custom location.`);
 
-  const relay = new CDPRelayServer(channel, executablePath, customUserDataDir, profileDirectory);
+  const relay = new CDPRelayServer(channel, executablePath, custom?.userDataDir, profileDirectory);
   await relay.start();
   debugLogger(`CDP relay server started, extension endpoint: ${relay.extensionEndpoint()}.`);
 
