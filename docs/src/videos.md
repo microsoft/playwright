@@ -16,6 +16,9 @@ Playwright Test can record videos for your tests, controlled by the `video` opti
 - `'on'` - Record video for each test.
 - `'retain-on-failure'` - Record video for each test, but remove all videos from successful test runs.
 - `'on-first-retry'` - Record video only when retrying a test for the first time.
+- `'on-all-retries'` - Record video for all test retries.
+- `'retain-on-first-failure'` - Record video only for the first run of a test, not for retries. Keep it only if that run failed.
+- `'retain-on-failure-and-retries'` - Record video for every run, and keep it for any run that failed or that is a retry.
 
 Video files will appear in the test output directory, typically `test-results`. See [`property: TestOptions.video`] for advanced video configuration.
 

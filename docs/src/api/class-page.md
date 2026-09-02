@@ -4056,7 +4056,6 @@ Returns the buffer with the captured screenshot.
 * since: v1.8
 
 ### option: Page.screenshot.maskColor = %%-screenshot-option-mask-color-%%
-* since: v1.34
 
 ### option: Page.screenshot.style = %%-screenshot-option-style-%%
 * since: v1.41

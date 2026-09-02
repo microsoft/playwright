@@ -2058,7 +2058,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   argv: Array<string>;
 
   /**
-   * Path to the configuration file used to run the tests. The value is an empty string if no config file was used.
+   * Path to the configuration file used to run the tests. The value is `undefined` if no config file was used.
    */
   configFile?: string;
 

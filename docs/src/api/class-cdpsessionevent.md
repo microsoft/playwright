@@ -12,6 +12,6 @@ Each object represents a named event and allows handling of the event when it is
 - argument: <[JsonElement?]>
 
 ## property: CDPSessionEvent.eventName
-* since: 1.30
+* since: v1.30
 * langs: csharp
 - returns: <[string]>

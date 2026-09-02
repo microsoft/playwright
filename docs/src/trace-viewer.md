@@ -123,6 +123,8 @@ Available options to record a trace:
 - `'off'` - Do not record a trace.
 - `'on'` - Record a trace for each test. (not recommended as it's performance heavy)
 - `'retain-on-failure'` - Record a trace for each test, but remove it from successful test runs.
+- `'retain-on-first-failure'` - Record a trace only for the first run of a test, not for retries. Keep it only if that run failed.
+- `'retain-on-failure-and-retries'` - Record a trace for every run, and keep it for any run that failed or that is a retry.
 
 
 You can also use `trace: 'retain-on-failure'` if you do not enable retries but still want traces for failed tests.

@@ -317,7 +317,7 @@ npx playwright merge-reports ./reports
 | Option | Description |
 | :--- | :--- |
 | `-c, --config <file>` | Configuration file. Can be used to specify additional configuration for the output report |
-| `--reporter <reporter>` | Reporter to use, comma-separated, can be "list", "line", "dot", "json", "junit", "null", "github", "html", "blob" (default: "list") |
+| `--reporter <reporter>` | Reporter to use, comma-separated, can be "list", "line", "dot", "json", "junit", "null", "github", "html", "blob", "perfetto" (default: "list") |
 
 ### Clear Cache
 

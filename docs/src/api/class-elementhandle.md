@@ -802,7 +802,6 @@ Returns the buffer with the captured screenshot.
 ### option: ElementHandle.screenshot.signal = %%-input-signal-%%
 
 ### option: ElementHandle.screenshot.maskColor = %%-screenshot-option-mask-color-%%
-* since: v1.34
 
 ### option: ElementHandle.screenshot.style = %%-screenshot-option-style-%%
 * since: v1.41
