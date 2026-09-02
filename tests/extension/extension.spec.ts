@@ -227,7 +227,7 @@ testWithOldExtensionVersion(`works with old extension version`, async ({ startEx
 
 test(`extension needs update`, async ({ startExtensionClient, server }) => {
   // Prelaunch the browser, so that it is properly closed after the test.
-  const { browserContext, client } = await startExtensionClient({ PLAYWRIGHT_EXTENSION_PROTOCOL: '1000' });
+  const { browserContext, client } = await startExtensionClient({ PWTEST_EXTENSION_PROTOCOL: '1000' });
 
   const confirmationPagePromise = browserContext.waitForEvent('page', page => {
     return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
@@ -244,7 +244,7 @@ test(`extension needs update`, async ({ startExtensionClient, server }) => {
 });
 
 test(`extension rejects outdated client protocol version`, async ({ startExtensionClient, server }) => {
-  const { browserContext, client } = await startExtensionClient({ PLAYWRIGHT_EXTENSION_PROTOCOL: '1' });
+  const { browserContext, client } = await startExtensionClient({ PWTEST_EXTENSION_PROTOCOL: '1' });
 
   const confirmationPagePromise = browserContext.waitForEvent('page', page => {
     return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
@@ -450,6 +450,35 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
   const page = await browserContext.newPage();
   await page.goto(`chrome-extension://${extensionId}/status.html`);
   await expect(page.locator('.client-info')).toContainText(`Connected to "${clientName}"`);
+});
+
+test(`times out when the extension rejects the token`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1732' },
+}, async ({ startExtensionClient, server }) => {
+  const { browserContext, client } = await startExtensionClient({
+    PLAYWRIGHT_MCP_EXTENSION_TOKEN: 'wrong-token',
+    PWTEST_EXTENSION_CONNECT_TIMEOUT: '500',
+  });
+  const waitForConnectPage = () => browserContext.waitForEvent('page', page => page.url().startsWith(`chrome-extension://${extensionId}/connect.html`));
+
+  const connectPagePromise = waitForConnectPage();
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    error: expect.stringContaining(`Playwright extension did not connect within 0.5s after opening the connect page. Make sure the extension is installed in the Chrome profile "Default" and PLAYWRIGHT_MCP_EXTENSION_TOKEN matches its token.`),
+    isError: true,
+  });
+  await expect((await connectPagePromise).locator('.status-banner')).toContainText('Invalid token provided.');
+
+  // The failed attempt is not cached, the next call opens a new connect page.
+  const retryConnectPagePromise = waitForConnectPage();
+  const retryPromise = client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+  await retryConnectPagePromise;
+  await retryPromise;
 });
 
 test(`reconnects after the extension connection drops`, {
