@@ -168,7 +168,7 @@ int length = (int) page.evaluate("a => a.length", myArrayHandle);
 Map<String, Object> arg = new HashMap<>();
 arg.put("myArray", myArrayHandle);
 arg.put("newElement", 2);
-page.evaluate("arg => arg.myArray.add(arg.newElement)", arg);
+page.evaluate("arg => arg.myArray.push(arg.newElement)", arg);
 
 // Release the object when it is no longer needed.
 myArrayHandle.dispose();
@@ -225,7 +225,7 @@ var myArrayHandle = await page.EvaluateHandleAsync(@"() => {
 var length = await page.EvaluateAsync<int>("a => a.length", myArrayHandle);
 
 // Add one more element to the array using the handle
-await page.EvaluateAsync("arg => arg.myArray.add(arg.newElement)",
+await page.EvaluateAsync("arg => arg.myArray.push(arg.newElement)",
     new { myArray = myArrayHandle, newElement = 2 });
 
 // Release the object when it is no longer needed.

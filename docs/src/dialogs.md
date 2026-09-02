@@ -23,7 +23,7 @@ page.getByRole(AriaRole.BUTTON).click();
 
 ```python async
 page.on("dialog", lambda dialog: dialog.accept())
-await page.get_by_role("button".click())
+await page.get_by_role("button").click()
 ```
 
 ```python sync
@@ -105,7 +105,7 @@ async def handle_dialog(dialog):
     assert dialog.type == 'beforeunload'
     await dialog.dismiss()
 
-page.on('dialog', lambda: handle_dialog)
+page.on('dialog', handle_dialog)
 await page.close(run_before_unload=True)
 ```
 
@@ -114,7 +114,7 @@ def handle_dialog(dialog):
     assert dialog.type == 'beforeunload'
     dialog.dismiss()
 
-page.on('dialog', lambda: handle_dialog)
+page.on('dialog', handle_dialog)
 page.close(run_before_unload=True)
 ```
 
