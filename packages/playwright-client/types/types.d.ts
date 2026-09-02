@@ -17991,7 +17991,7 @@ export interface BrowserType<Unused = {}> {
     strictSelectors?: boolean;
 
     /**
-     * Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0`
+     * Maximum time in milliseconds to wait for the browser instance to start. Defaults to `180000` (3 minutes). Pass `0`
      * to disable timeout.
      */
     timeout?: number;
@@ -18190,7 +18190,7 @@ export interface BrowserType<Unused = {}> {
     };
 
     /**
-     * Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0`
+     * Maximum time in milliseconds to wait for the browser instance to start. Defaults to `180000` (3 minutes). Pass `0`
      * to disable timeout.
      */
     timeout?: number;
@@ -25498,7 +25498,7 @@ export interface LaunchOptions {
   slowMo?: number;
 
   /**
-   * Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0`
+   * Maximum time in milliseconds to wait for the browser instance to start. Defaults to `180000` (3 minutes). Pass `0`
    * to disable timeout.
    */
   timeout?: number;
