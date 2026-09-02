@@ -44,7 +44,7 @@ function _formatProtocolParam(params: Record<string, any> | undefined, alternati
           return urlObject.protocol;
         if (['about:', 'chrome:', 'edge:'].includes(urlObject.protocol))
           return params[name];
-        return urlObject.pathname + urlObject.search;
+        return urlObject.host + urlObject.pathname + urlObject.search;
       } catch (error) {
         if (params[name] !== undefined)
           return params[name];
