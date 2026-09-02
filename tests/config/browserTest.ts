@@ -176,7 +176,7 @@ const test = baseTest.extend<BrowserTestTestFixtures & { _contextFactory: Contex
         server = remoteServer;
       } else {
         const runServer = new RunServer();
-        await runServer.start(childProcess, { artifactsDir: options?.artifactsDir });
+        await runServer.start(childProcess, { artifactsDir: options?.artifactsDir, unsafe: options?.unsafe, env: options?.env });
         server = runServer;
       }
       return server;

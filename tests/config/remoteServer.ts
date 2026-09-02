@@ -71,6 +71,10 @@ export type RemoteServerOptions = {
   startStopAndRunHttp?: boolean;
   sharedBrowser?: boolean;
   artifactsDir?: string;
+  // Only supported by the 'run-server' kind.
+  unsafe?: boolean;
+  // Only supported by the 'run-server' kind.
+  env?: NodeJS.ProcessEnv;
 };
 
 export class RemoteServer implements PlaywrightServer {
