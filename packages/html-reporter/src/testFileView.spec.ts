@@ -16,12 +16,10 @@
 
 import { expect, test } from '@playwright/test';
 
-import type { Default } from './testFileView.story';
-
 test.use({ viewport: { width: 800, height: 600 } });
 
 test('should render project links', async ({ mount, page }) => {
-  const component = await mount<typeof Default>('testFileView/Default');
+  const component = await mount('html-reporter/testFileView/Default');
   await expect(component.locator('.label', { hasText: 'chromium' })).toHaveCount(5);
   await expect(component.locator('.label', { hasText: 'webkit' })).toHaveCount(1);
   const webkitLabel = component.locator('.label', { hasText: 'webkit' });

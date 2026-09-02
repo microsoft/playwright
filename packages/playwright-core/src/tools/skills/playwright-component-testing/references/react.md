@@ -57,6 +57,8 @@ import type { WithTitle } from './Button.story';
 const component = await mount<typeof WithTitle>('components/Button/WithTitle', { title: 'Hello' });
 ```
 
+Alternatively, generate gallery types so the id itself is typed and no type import is needed: `mount('acme-ui/components/Button/WithTitle', { title: 'Hello' })` — see `references/typing.md`.
+
 ## CSS
 
 - Global stylesheets: import them in your gallery entry (`playwright/gallery/main.tsx`, e.g. `import '../../src/index.css'`), mirroring the app's own entry point.

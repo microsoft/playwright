@@ -49,6 +49,7 @@ pinned to Playwright 1.62 and upgrade once the last spec is ported.
 
 - **Story ids are strings.** Renaming or moving a story breaks specs at runtime, not compile time
   — and the suffix-matching resolution can silently match a different story after a rename.
+  Gallery types (`typing.md`) turn registered ids into a compile-time check.
 - **Per-test JSX is gone.** Any test that built a different JSX tree per test (children matrices,
   inline wrappers) becomes one story export per composition.
 

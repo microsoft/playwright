@@ -68,6 +68,8 @@ import type { WithTitle } from './Button.story';
 const component = await mount<typeof WithTitle>('components/Button/WithTitle', { title: 'Hello' });
 ```
 
+Alternatively, generate gallery types so the id itself is typed and no type import is needed: `mount('acme-ui/components/Button/WithTitle', { title: 'Hello' })` — see `references/typing.md`.
+
 Options-API stories (`defineComponent({ props: { ... } })`) infer props the same way. For `.story.vue` SFC stories, prop types are only inferable when the setup generates SFC types (Volar/vue-tsc); otherwise pass the props type directly: `mount<{ title?: string }>('components/Button.primary', { title: 'Hello' })`.
 
 ## CSS

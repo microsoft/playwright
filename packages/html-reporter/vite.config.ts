@@ -17,6 +17,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { bundle } from './bundle';
+import { storyTypes } from './tests/storyTypes';
+import packageJSON from './package.json';
 import path from 'path';
 
 // https://vitejs.dev/config/
@@ -24,7 +26,8 @@ export default defineConfig({
   base: '',
   plugins: [
     react(),
-    bundle()
+    bundle(),
+    storyTypes({ prefix: packageJSON.name, src: path.resolve(__dirname, 'src'), outFile: path.resolve(__dirname, 'tests/stories.d.ts') }),
   ],
   resolve: {
     alias: {

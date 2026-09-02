@@ -38,7 +38,7 @@ export default defineConfig({
   ],
   tag: process.env.PW_TAG,
   use: {
-    baseURL: 'http://localhost:3101/playwright/gallery/index.html',
+    baseURL: 'http://localhost:3101/tests/index.html',
     serviceWorkers: 'block',
     reuseContext: true,
     trace: 'on-first-retry',
@@ -49,7 +49,7 @@ export default defineConfig({
   }],
   webServer: {
     command: 'npx vite --port 3101 --strictPort',
-    url: 'http://localhost:3101/playwright/gallery/index.html',
+    url: 'http://localhost:3101/tests/index.html',
     reuseExistingServer: !process.env.CI,
   },
 });

@@ -38,6 +38,7 @@
     "skipLibCheck": true,
   },
   "compileOnSave": true,
+  "files": ["packages/html-reporter/tests/stories.d.ts"],
   "include": ["packages"],
   "exclude": [
     "packages/*/lib",

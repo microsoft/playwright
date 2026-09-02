@@ -7974,11 +7974,17 @@ export interface PlaywrightWorkerArgs {
   browser: Browser;
 }
 
+export interface Stories {}
+
 type StoryProps<Story> =
   Story extends (props: infer Props) => any ? Props :
   Story extends new (...args: any[]) => { $props: infer Props } ? Props :
   Story extends new (props: infer Props, ...args: any[]) => any ? Props :
   Story;
+type StoryId = keyof Stories | (string & {});
+type StoryPropsFor<Id> = Id extends keyof Stories ? StoryProps<Stories[Id]> : Record<string, any>;
+// Explicit mount<typeof Story>() wins over the id lookup; the indexed access keeps Story from being inferred from props.
+type MountProps<Story, Id> = [Story] extends [never] ? StoryPropsFor<Id> : StoryProps<[Story][Story extends any ? 0 : never]>;
 
 /**
  * Playwright Test is based on the concept of the [test fixtures](https://playwright.dev/docs/test-fixtures). Test fixtures are used to
@@ -8112,7 +8118,7 @@ export interface PlaywrightTestArgs {
    * exported story name, for example `'components/Button/Primary'`.
    * @param props Optional plain, serializable props passed to the story.
    */
-  mount: <Story = Record<string, any>>(storyId: string, props?: StoryProps<Story>) => Promise<Locator & { update(props?: StoryProps<Story>): Promise<void>, unmount(): Promise<void> }>;
+  mount: <Story = never, Id extends StoryId = StoryId>(storyId: Id, props?: MountProps<Story, Id>) => Promise<Locator & { update(props?: MountProps<Story, Id>): Promise<void>, unmount(): Promise<void> }>;
 }
 
 type ExcludeProps<A, B> = {
