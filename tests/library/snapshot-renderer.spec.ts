@@ -43,10 +43,23 @@ for (const [name, overrides] of [
   test(`snapshot renderer escapes attacker-controlled ${name} in script context`, () => {
     const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot(overrides)], [], 0);
     const { html } = renderer.render();
-    expect(html.match(/<script>/g)).toHaveLength(1);
+    expect(html.match(/<script[ >]/g)).toHaveLength(1);
     expect(html.match(/<\/script>/g)).toHaveLength(1);
   });
 }
+
+test('snapshot renderer nonces the bootstrap script', () => {
+  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot()], [], 0);
+  const { html, scriptNonce } = renderer.render();
+  expect(scriptNonce).toMatch(/^[0-9a-f]{32}$/);
+  expect(html).toContain(`<script nonce="${scriptNonce}">`);
+  // The html is cached, so repeated renders must keep returning the nonce that is
+  // baked into it - it is sent back in the Content-Security-Policy header.
+  expect(renderer.render().scriptNonce).toBe(scriptNonce);
+  // A different snapshot gets a different nonce.
+  const other = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot()], [], 0);
+  expect(other.render().scriptNonce).not.toBe(scriptNonce);
+});
 
 test('snapshot renderer strips event handler attributes', () => {
   const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({

@@ -36,7 +36,14 @@ export class SnapshotServer {
 
     const renderedSnapshot = snapshot.render();
     this._snapshotIds.set(snapshotUrl, snapshot);
-    return new Response(renderedSnapshot.html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    return new Response(renderedSnapshot.html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        // Only allow our own bootstrap script.
+        'Content-Security-Policy': `script-src 'nonce-${renderedSnapshot.scriptNonce}'; object-src 'none'`,
+      },
+    });
   }
 
   async serveClosestScreenshot(callId: string, searchParams: URLSearchParams): Promise<Response> {

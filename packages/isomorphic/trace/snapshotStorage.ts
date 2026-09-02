@@ -17,6 +17,7 @@
 import { rewriteURLForCustomProtocol, SnapshotRenderer } from './snapshotRenderer';
 import { LRUCache } from '../lruCache';
 
+import type { RenderedSnapshotHtml } from './snapshotRenderer';
 import type { ActionPhase, FrameSnapshot, ResourceSnapshot } from './trace';
 import type { PageEntry } from './entries';
 
@@ -24,7 +25,7 @@ import type { PageEntry } from './entries';
 export class SnapshotStorage {
   private _snapshotsByFrameId = new Map<string, FrameSnapshot[]>();
   private _renderersByCallIdAndPhase = new Map<string, SnapshotRenderer[]>();
-  private _cache = new LRUCache<SnapshotRenderer, string>(100_000_000);  // 100MB per each trace
+  private _cache = new LRUCache<SnapshotRenderer, RenderedSnapshotHtml>(100_000_000);  // 100MB per each trace
   private _resources: ResourceSnapshot[] = [];
   private _resourceUrlsWithOverrides = new Set<string>();
 

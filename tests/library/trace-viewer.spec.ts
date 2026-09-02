@@ -2717,6 +2717,22 @@ test('should neutralize meta http-equiv refresh during rendering', async ({ runA
   await expect(traceViewer.page).toHaveTitle(/Playwright Trace Viewer/);
 });
 
+test('snapshots should be served with a script-src policy', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<div>hello</div>');
+  });
+  const frame = await traceViewer.snapshotFrame('Set content');
+  await expect(frame.locator('div')).toHaveText('hello');
+  const scripted = await frame.locator('body').evaluate(body => {
+    const script = body.ownerDocument.createElement('script');
+    script.textContent = `document.body.setAttribute('data-scripted', 'yes')`;
+    body.appendChild(script);
+    return body.getAttribute('data-scripted');
+  });
+  expect(scripted).toBe(null);
+});
+
 test('snapshot iframes should be sandboxed', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);

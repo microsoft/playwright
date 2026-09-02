@@ -253,13 +253,6 @@ export type FrameSnapshot = {
   isMainFrame: boolean,
 };
 
-export type RenderedFrameSnapshot = {
-  html: string;
-  pageId: string;
-  frameId: string;
-  index: number;
-};
-
 export type ResourceSnapshotTraceEvent = {
   type: 'resource-snapshot',
   snapshot: ResourceSnapshot,
