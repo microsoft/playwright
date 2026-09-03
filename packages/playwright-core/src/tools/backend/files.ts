@@ -39,15 +39,14 @@ export const uploadFile = defineTabTool({
     if (!modalState)
       throw new Error('No file chooser visible');
 
-    if (params.paths)
-      await Promise.all(params.paths.map(filePath => response.resolveClientFilename(filePath)));
+    const paths = params.paths ? await Promise.all(params.paths.map(filePath => response.resolveClientFilename(filePath))) : undefined;
 
-    response.addCode(`await fileChooser.setFiles(${JSON.stringify(params.paths)})`);
+    response.addCode(`await fileChooser.setFiles(${JSON.stringify(paths)})`);
 
     tab.clearModalState(modalState);
     await tab.waitForCompletion(async () => {
-      if (params.paths)
-        await modalState.fileChooser.setFiles(params.paths);
+      if (paths)
+        await modalState.fileChooser.setFiles(paths);
     });
   },
 
@@ -75,12 +74,11 @@ export const drop = defineTabTool({
     response.setIncludeSnapshot();
     const { locator, resolved } = await tab.targetLocator(params);
 
-    if (params.paths)
-      await Promise.all(params.paths.map(p => response.resolveClientFilename(p)));
+    const paths = params.paths ? await Promise.all(params.paths.map(p => response.resolveClientFilename(p))) : undefined;
 
     const payload: { files?: string | string[], data?: Record<string, string> } = {};
-    if (params.paths?.length)
-      payload.files = params.paths.length === 1 ? params.paths[0] : params.paths;
+    if (paths?.length)
+      payload.files = paths.length === 1 ? paths[0] : paths;
     if (params.data)
       payload.data = params.data;
 

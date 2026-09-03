@@ -246,6 +246,31 @@ test('browser_take_screenshot (filename: "output.png")', async ({ client, server
   expect(files[0]).toMatch(/^output\.png$/);
 });
 
+test('browser_take_screenshot (filename: "sub/dir/output.png")', async ({ client, server }, testInfo) => {
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: {
+      filename: 'sub/dir/output.png',
+    },
+  })).toEqual({
+    content: [
+      {
+        text: expect.stringContaining(`output.png`),
+        type: 'text',
+      },
+    ],
+  });
+
+  expect(fs.existsSync(testInfo.outputPath('sub', 'dir', 'output.png'))).toBeTruthy();
+});
+
 test('browser_take_screenshot (imageResponses=omit)', async ({ startClient, server }, testInfo) => {
   const outputDir = testInfo.outputPath('output');
   const { client } = await startClient({

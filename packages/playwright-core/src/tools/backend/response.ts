@@ -85,12 +85,13 @@ export class Response {
     return rel;
   }
 
-  async resolveClientFile(template: FilenameTemplate, title: string): Promise<ResolvedFile> {
+  async resolveClientOutputFile(template: FilenameTemplate, title: string): Promise<ResolvedFile> {
     let fileName: string;
     if (template.suggestedFilename)
       fileName = await this.resolveClientFilename(template.suggestedFilename);
     else
       fileName = await this._context.outputFile(template, { origin: 'llm' });
+    await fs.promises.mkdir(path.dirname(fileName), { recursive: true });
     const relativeName = this._computeRelativeTo(fileName);
     const printableLink = `- [${title}](${relativeName})`;
     return { fileName, relativeName, printableLink };
@@ -106,7 +107,7 @@ export class Response {
 
   async addResult(title: string, data: Buffer | string, file: FilenameTemplate) {
     if (file.suggestedFilename || typeof data !== 'string') {
-      const resolvedFile = await this.resolveClientFile(file, title);
+      const resolvedFile = await this.resolveClientOutputFile(file, title);
       await this.addFileResult(resolvedFile, data);
     } else {
       this.addTextResult(data);
@@ -304,7 +305,7 @@ export class Response {
     if (tabSnapshot && this._includeSnapshot !== 'none') {
       if (snapshotToFile) {
         const suggestedFilename = this._includeSnapshotFileName === '<auto>' ? undefined : this._includeSnapshotFileName;
-        const resolvedFile = await this.resolveClientFile({ prefix: 'page', ext: 'yml', suggestedFilename }, 'Snapshot');
+        const resolvedFile = await this.resolveClientOutputFile({ prefix: 'page', ext: 'yml', suggestedFilename }, 'Snapshot');
         await this._writeFile(resolvedFile, tabSnapshot.ariaSnapshot);
         addSection('Snapshot', [resolvedFile.printableLink]);
       } else if (tabSnapshot.ariaSnapshotJSON !== undefined) {
