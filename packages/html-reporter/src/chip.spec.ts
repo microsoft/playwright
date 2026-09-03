@@ -16,12 +16,10 @@
 
 import { expect, test } from '@playwright/test';
 
-import type { Auto, AutoCollapsed, NotExpandable, Stateful, WithBody } from './chip.story';
-
 test.use({ viewport: { width: 500, height: 500 } });
 
 test('expand collapse', async ({ mount }) => {
-  const component = await mount<typeof Auto>('chip/Auto');
+  const component = await mount('html-reporter/chip/Auto');
   await expect(component.getByText('Chip body')).toBeVisible();
   await component.getByText('Title').click();
   await expect(component.getByText('Chip body')).not.toBeVisible();
@@ -31,13 +29,13 @@ test('expand collapse', async ({ mount }) => {
 
 test('render long title', async ({ mount }) => {
   const title = 'Extremely long title. '.repeat(10);
-  const component = await mount<typeof Auto>('chip/Auto', { header: title });
+  const component = await mount('html-reporter/chip/Auto', { header: title });
   await expect(component).toContainText('Extremely long title.');
   await expect(component.getByText('Extremely long title.')).toHaveAttribute('title', title);
 });
 
 test('setExpanded is called', async ({ mount }) => {
-  const component = await mount<typeof Stateful>('chip/Stateful');
+  const component = await mount('html-reporter/chip/Stateful');
   await component.getByText('Title').click();
   await expect(component.getByTestId('expanded')).toHaveValue('true');
   await component.getByText('Title').click();
@@ -45,13 +43,13 @@ test('setExpanded is called', async ({ mount }) => {
 });
 
 test('body render prop is rendered', async ({ mount }) => {
-  const component = await mount<typeof WithBody>('chip/WithBody');
+  const component = await mount('html-reporter/chip/WithBody');
   await expect(component.getByText('Body from render prop')).toBeVisible();
   await expect(component.getByText('Chip children')).toBeVisible();
 });
 
 test('chip without setExpanded is a heading', async ({ mount }) => {
-  const component = await mount<typeof NotExpandable>('chip/NotExpandable');
+  const component = await mount('html-reporter/chip/NotExpandable');
   await expect(component.getByRole('button')).toHaveCount(0);
   await expect(component).toMatchAriaSnapshot(`
     - heading "Title" [level=2]
@@ -60,7 +58,7 @@ test('chip without setExpanded is a heading', async ({ mount }) => {
 });
 
 test('expand collapse with the keyboard', async ({ mount, page }) => {
-  const component = await mount<typeof AutoCollapsed>('chip/AutoCollapsed');
+  const component = await mount('html-reporter/chip/AutoCollapsed');
   const header = component.getByRole('button', { name: 'Title' });
   await header.focus();
   await expect(header).toBeFocused();
@@ -71,7 +69,7 @@ test('expand collapse with the keyboard', async ({ mount, page }) => {
 });
 
 test('setExpanded should work', async ({ mount }) => {
-  const component = await mount<typeof AutoCollapsed>('chip/AutoCollapsed');
+  const component = await mount('html-reporter/chip/AutoCollapsed');
   await component.getByText('Title').click();
   await expect(component).toMatchAriaSnapshot(`
     - button "Title" [expanded]

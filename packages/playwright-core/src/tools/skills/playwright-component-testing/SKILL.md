@@ -45,7 +45,7 @@ Everything the component needs must be set up *inside the story* (it runs in the
 
 ## Conventions
 
-- Story id: path under `src/` without the `.story.*` extension, plus the export name — `src/components/Button.story.tsx` export `Primary` → `components/Button/Primary`. Any unique suffix works too: `mount('Button/Primary')`. A `.story.vue` single-file component is one story, addressable by its path alone (its `default` export).
+- Story id: path under `src/` without the `.story.*` extension, plus the export name — `src/components/Button.story.tsx` export `Primary` → `components/Button/Primary`. Any unique suffix works too: `mount('Button/Primary')`. A `.story.vue` single-file component is one story, addressable by its path alone (its `default` export). With gallery types (`references/typing.md`) ids are prefixed with the package name: `acme-ui/components/Button/Primary`.
 - One export per scenario. Prefer a new story export over parameterizing an existing one — stories are greppable, reviewable documentation of component states.
 
 ## Testing patterns
@@ -89,15 +89,7 @@ export const WithTitle = ({ title = 'Default' }: { title?: string }) =>
 const component = await mount('components/Button/WithTitle', { title: 'Hello' });
 ```
 
-`mount` is generic over the story: pass the story type as a template argument to type-check the props (and `update()`):
-
-```ts
-import type { WithTitle } from './Button.story';
-
-const component = await mount<typeof WithTitle>('components/Button/WithTitle', { title: 'Hello' });
-```
-
-This works for React and Vue stories alike; Vue stories must additionally declare the props at runtime — see the `Typed props` sections in `references/react.md` / `references/vue.md`.
+Props are type-checked in two optional ways, see `references/typing.md`: pass the story type as a template argument (`mount<typeof WithTitle>('components/Button/WithTitle', { title: 'Hello' })`, no setup), or generate gallery types with a small Vite plugin so the id itself is typed (`mount('acme-ui/components/Button/WithTitle', { title: 'Hello' })`, with autocomplete and rename safety). Vue stories must additionally declare the props at runtime — see the `Typed props` sections in `references/react.md` / `references/vue.md`.
 
 ### Prop transitions with `update()`
 
@@ -133,11 +125,12 @@ Open your gallery URL (`baseURL`) in a browser and call `await window.mount({ st
 
 ## Decision points
 
-- **Monorepos / non-`src` layouts**: change the glob and the id derivation in your gallery (`references/gallery-spec.md`) to match.
+- **Monorepos / non-`src` layouts**: change the glob and the id derivation in your gallery (`references/gallery-spec.md`) to match, and prefix ids with the package name (`references/typing.md`).
 - **Global providers** (theme, i18n, store, router): create a shared `decorator` helper next to the gallery and wrap components in stories; see `references/react.md` / `references/vue.md`.
 ## References
 
 - `references/gallery-spec.md` — the gallery endpoint contract to implement (**start here**).
+- `references/typing.md` — optional typing for `mount`: explicit story types vs generated gallery types, with the Vite plugin.
 - `references/react.md` — React walkthrough: providers, StrictMode, CSS.
 - `references/vue.md` — Vue walkthrough: `.story.ts` and `.story.vue` stories, plugins.
 - `references/migration.md` — migrating off `@playwright/experimental-ct-react` / `-vue`.

@@ -16,11 +16,12 @@
 
 import { flushSync } from 'react-dom';
 import { createRoot, type Root } from 'react-dom/client';
-import '../../src/theme.css';
-import { SearchParamsProvider } from '../../src/links';
+import '../src/theme.css';
+import { SearchParamsProvider } from '../src/links';
+import packageJSON from '../package.json';
 
-const stories = import.meta.glob('../../src/**/*.story.{tsx,jsx}');
-const storyId = (file: string) => file.replace(/^(\.\.\/)+src\//, '').replace(/\.story\.\w+$/, '');
+const stories = import.meta.glob('../src/**/*.story.{tsx,jsx}');
+const storyId = (file: string) => packageJSON.name + '/' + file.replace(/^(\.\.\/)+src\//, '').replace(/\.story\.\w+$/, '');
 
 async function resolveStory(id: string): Promise<React.ComponentType<any> | undefined> {
   const sep = id.lastIndexOf('/');

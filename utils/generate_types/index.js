@@ -588,6 +588,7 @@ class TypesGenerator {
         'PlaywrightWorkerOptions.defaultBrowserType',
         'PlaywrightWorkerOptions.reuseContext',
         'Project',
+        'Stories',
       ]),
       doNotExportClassNames: assertionClasses,
     });
