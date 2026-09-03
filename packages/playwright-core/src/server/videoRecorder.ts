@@ -51,7 +51,7 @@ export class VideoRecorder {
     const outputFile = options.fileName ?? path.join(this._screencast.page.browserContext._browser.options.artifactsDir, createGuid() + '.webm');
 
     this._client = {
-      onFrame: frame => this._videoRecorder!.writeFrame(frame.buffer, frame.frameSwapWallTime / 1000),
+      onFrame: frame => this._videoRecorder!.writeFrame(frame.buffer, frame.frameSwapWallTime),
       gracefulClose: () => this.stop(),
       dispose: () => this.stop().catch(e => debugLogger.log('error', `Failed to stop video recorder: ${String(e)}`)),
       size: options.size,
@@ -100,8 +100,8 @@ class FfmpegVideoRecorder {
   private _size: types.Size;
   private _process: ChildProcess | null = null;
   private _gracefullyClose: (() => Promise<void>) | null = null;
-  private _firstFrameTimestamp: number = 0;
-  private _lastFrame: { timestamp: number, frameNumber: number, buffer: Buffer } | null = null;
+  private _creationTimeMs: number;
+  private _lastFrame: { timestamp: number, buffer: Buffer } | null = null;
   private _lastWriteNodeTime: number = 0;
   private _isStopped = false;
   private _ffmpegPath: string;
@@ -114,6 +114,7 @@ class FfmpegVideoRecorder {
     this._outputFile = outputFile;
     this._ffmpegPath = ffmpegPath;
     this._size = size;
+    this._creationTimeMs = Date.now();
     this._launchPromise = this._launch(page).catch(e => e);
   }
 
@@ -165,6 +166,7 @@ class FfmpegVideoRecorder {
     const h = this._size.height;
     const videoFilterArgs = page.getFFmpegVideoFilterArgs?.({ width: w, height: h }) ?? `pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`;
     const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf ${videoFilterArgs}`.split(' ');
+    args.push('-metadata', `creation_time=${new Date(this._creationTimeMs).toISOString()}`);
     args.push(this._outputFile);
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
@@ -205,20 +207,13 @@ class FfmpegVideoRecorder {
     if (this._isStopped)
       return;
 
-    if (!this._firstFrameTimestamp)
-      this._firstFrameTimestamp = timestamp;
-
-    const frameNumber = Math.floor((timestamp - this._firstFrameTimestamp) * fps);
-    if (this._lastFrame && frameNumber !== this._lastFrame.frameNumber)
-      this._emitFrame(this._lastFrame.buffer, this._lastFrame.frameNumber);
-
-    this._lastFrame = { buffer: frame, timestamp, frameNumber };
+    this._emitFrame(frame, timestamp - this._creationTimeMs);
+    this._lastFrame = { buffer: frame, timestamp };
     this._lastWriteNodeTime = monotonicTime();
   }
 
-  private _emitFrame(frame: Buffer, frameNumber: number) {
-    const timestampMs = Math.max(0, Math.round(frameNumber * 1000 / fps));
-    this._process!.stdin!.write(writeClusterHeader(timestampMs, frame.length));
+  private _emitFrame(frame: Buffer, timestampMs: number) {
+    this._process!.stdin!.write(writeClusterHeader(Math.max(0, Math.round(timestampMs)), frame.length));
     this._process!.stdin!.write(frame);
   }
 
@@ -231,15 +226,10 @@ class FfmpegVideoRecorder {
       return;
     if (!this._lastFrame) {
       // ffmpeg only creates a file upon some non-empty input.
-      this._writeFrame(createWhiteImage(this._size.width, this._size.height), monotonicTime() / 1000);
+      this._writeFrame(createWhiteImage(this._size.width, this._size.height), Date.now());
     }
-    // Emit the last received frame at its own slot, then repeat it at the end so it stays visible
-    // for at least 1s. This also ensures non-empty videos with 1 frame and gives the output stream
-    // a final timestamp.
-    this._emitFrame(this._lastFrame!.buffer, this._lastFrame!.frameNumber);
-    const addTime = Math.max((monotonicTime() - this._lastWriteNodeTime) / 1000, 1);
-    const endFrameNumber = Math.floor((this._lastFrame!.timestamp + addTime - this._firstFrameTimestamp) * fps);
-    this._emitFrame(this._lastFrame!.buffer, endFrameNumber);
+    const addTimeMs = Math.max(monotonicTime() - this._lastWriteNodeTime, 1000);
+    this._emitFrame(this._lastFrame!.buffer, this._lastFrame!.timestamp + addTimeMs - this._creationTimeMs);
     this._isStopped = true;
     try {
       await this._gracefullyClose!();
