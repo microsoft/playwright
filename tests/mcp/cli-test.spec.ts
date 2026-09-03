@@ -114,3 +114,82 @@ test('debug test with custom fixture using browser.newContext', async ({ cliEnv,
 
   await cli(`--session=${session}`, 'resume');
 });
+
+test('debug test that creates multiple contexts', async ({ cliEnv, cli, childProcess }) => {
+  await writeFiles({
+    'subdir/a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend<{}, { precreatedContext: import('@playwright/test').BrowserContext }>({
+        precreatedContext: [async ({ browser }, use) => {
+          const context = await browser.newContext();
+          await use(context);
+          await context.close();
+        }, { scope: 'worker' }],
+      });
+      test('example test', async ({ page, precreatedContext }) => {
+        await page.setContent('<title>My Page</title><body><button>Submit</button></body>');
+        await expect(page.getByRole('button', { name: 'Submit' })).toBeVisible();
+      });
+    `,
+  });
+
+  const testProcess = childProcess({
+    command: [process.argv[0], testEntrypoint, 'test', '--debug=cli'],
+    cwd: test.info().outputPath('subdir'),
+    env: cliEnv,
+  });
+
+  await testProcess.waitForOutput('playwright-cli attach');
+  const session = testProcess.output.match(/attach ([a-zA-Z0-9-_]+)/)[1];
+
+  const { output: attachOutput } = await cli('attach', session);
+  expect(attachOutput).toContain('### Paused');
+  expect(attachOutput).toContain(`- Set content at subdir${path.sep}a.test.ts:11`);
+
+  const { output: stepOutput } = await cli(`--session=${session}`, 'step-over');
+  expect(stepOutput).toContain('### Paused');
+
+  const snapshotResult = await cli(`--session=${session}`, 'snapshot');
+  expect(snapshotResult.inlineSnapshot).toContain('button "Submit"');
+
+  await cli(`--session=${session}`, 'resume');
+  await testProcess.exited;
+  expect(testProcess.output).toContain('1 passed');
+});
+
+test('debug multiple tests in the same worker', async ({ cliEnv, cli, childProcess }) => {
+  await writeFiles({
+    'subdir/a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test one', async ({ page }) => {
+        await page.setContent('<title>My Page</title><body><button>One</button></body>');
+      });
+      test('test two', async ({ page }) => {
+        await page.setContent('<title>My Page</title><body><button>Two</button></body>');
+      });
+    `,
+  });
+
+  const testProcess = childProcess({
+    command: [process.argv[0], testEntrypoint, 'test', '--debug=cli'],
+    cwd: test.info().outputPath('subdir'),
+    env: cliEnv,
+  });
+
+  await testProcess.waitForOutput('playwright-cli attach');
+  const session = testProcess.output.match(/attach ([a-zA-Z0-9-_]+)/)[1];
+
+  for (const buttonName of ['One', 'Two']) {
+    await expect(async () => {
+      const { output } = await cli('attach', session);
+      expect(output).toContain('### Paused');
+    }).toPass();
+    await cli(`--session=${session}`, 'step-over');
+    const snapshotResult = await cli(`--session=${session}`, 'snapshot');
+    expect(snapshotResult.inlineSnapshot).toContain(`button "${buttonName}"`);
+    await cli(`--session=${session}`, 'resume');
+  }
+
+  await testProcess.exited;
+  expect(testProcess.output).toContain('2 passed');
+});

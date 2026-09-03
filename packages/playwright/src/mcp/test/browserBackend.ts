@@ -117,12 +117,25 @@ async function generatePausedMessage(tools: typeof import('playwright-core/lib/c
   return lines.join('\n');
 }
 
+const kDaemonSymbol = Symbol('daemon');
+const kSessionNameSymbol = Symbol('sessionName');
+
 export async function runDaemonForContext(testInfo: TestInfoImpl, context: playwright.BrowserContext) {
   if (testInfo._configInternal.configCLIOverrides.debug !== 'cli')
     return false;
 
-  const sessionName = `tw-${crypto.randomBytes(3).toString('hex')}`;
-  await context.browser()!.bind(sessionName, { workspaceDir: testInfo.project.testDir });
+  const browser = context.browser()!;
+  let sessionName: string | undefined = (browser as any)[kSessionNameSymbol];
+  if (!sessionName) {
+    sessionName = `tw-${crypto.randomBytes(3).toString('hex')}`;
+    await browser.bind(sessionName, { workspaceDir: testInfo.project.testDir });
+    (browser as any)[kSessionNameSymbol] = sessionName;
+  }
+
+  // Only pause and print debugging instructions once per test.
+  if ((testInfo as any)[kDaemonSymbol])
+    return false;
+  (testInfo as any)[kDaemonSymbol] = true;
 
   /* eslint-disable-next-line no-console */
   console.log([
