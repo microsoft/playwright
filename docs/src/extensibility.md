@@ -155,7 +155,7 @@ button_count = page.locator("tag=button").count()
 ```csharp
 // Register the engine. Selectors will be prefixed with "tag=".
 // The script is evaluated in the page context.
-await playwright.Selectors.Register("tag", new() {
+await playwright.Selectors.RegisterAsync("tag", new() {
   Script = @"
   // Must evaluate to a selector engine instance.
   {

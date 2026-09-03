@@ -147,7 +147,7 @@ page.wait_for_url("**/login")
 
 ```csharp
 await page.GetByText("Click me").ClickAsync();
-await page.WaitForURL("**/login");
+await page.WaitForURLAsync("**/login");
 ```
 
 ## Back/Forward Cache (BFCache)
