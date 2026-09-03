@@ -24,7 +24,7 @@ import { defineTabTool } from './tool';
 
 const codeSchema = z.object({
   code: z.string().optional().describe(`A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction. For example: \`async (page) => { await page.getByRole('button', { name: 'Submit' }).click(); return await page.title(); }\``),
-  filename: z.string().optional().describe('Load code from the specified file. If both code and filename are provided, code will be ignored.'),
+  filename: z.string().optional().describe('Load code from the specified file. Relative file names are resolved against the workspace root. If both code and filename are provided, code will be ignored.'),
 });
 
 const runCode = defineTabTool({

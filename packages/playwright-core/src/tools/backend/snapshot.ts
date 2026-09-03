@@ -40,7 +40,7 @@ const snapshot = defineTabTool({
     description: 'Capture accessibility snapshot of the current page, this is better than screenshot',
     inputSchema: z.object({
       target: z.string().optional().describe(elementTargetDescription),
-      filename: z.string().optional().describe('Save snapshot to markdown file instead of returning it in the response.'),
+      filename: z.string().optional().describe('Save snapshot to a file instead of returning it in the response. Relative file names are resolved against the workspace root.'),
       depth: z.number().optional().describe('Limit the depth of the snapshot tree'),
       boxes: z.boolean().optional().describe('Include each element\'s bounding box as [box=x,y,width,height] in the snapshot. Coordinates are viewport-relative, in CSS pixels (Element.getBoundingClientRect)'),
     }),

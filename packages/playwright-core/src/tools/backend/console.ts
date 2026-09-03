@@ -26,7 +26,7 @@ const console = defineTabTool({
     inputSchema: z.object({
       level: z.enum(['error', 'warning', 'info', 'debug']).default('info').describe('Level of the console messages to return. Each level includes the messages of more severe levels. Defaults to "info".'),
       all: z.boolean().optional().describe('Return all console messages since the beginning of the session, not just since the last navigation. Defaults to false.'),
-      filename: z.string().optional().describe('Filename to save the console messages to. If not provided, messages are returned as text.'),
+      filename: z.string().optional().describe('File name to save the console messages to. Relative file names are resolved against the workspace root. If not provided, messages are returned as text.'),
     }),
     type: 'readOnly',
   },
