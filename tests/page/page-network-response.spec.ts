@@ -83,6 +83,22 @@ it('should return uncompressed text for brotli encoding', {
   expect(await response.text()).toBe(text);
 });
 
+it('should return text for identity encoding', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42501' },
+}, async ({ page, server }) => {
+  const text = '<div>hello</div>';
+  server.setRoute('/identity.html', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Encoding': 'Identity',
+    });
+    res.end(text);
+  });
+  const response = await page.goto(server.PREFIX + '/identity.html');
+  expect(response.headers()['content-encoding']).toBe('Identity');
+  expect(await response.text()).toBe(text);
+});
+
 it('should throw when requesting body of redirected response', async ({ page, server }) => {
   server.setRedirect('/foo.html', '/empty.html');
   const response = await page.goto(server.PREFIX + '/foo.html');
