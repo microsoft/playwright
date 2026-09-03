@@ -25,7 +25,7 @@ const videoStart = defineTool({
     title: 'Start video',
     description: 'Start video recording',
     inputSchema: z.object({
-      filename: z.string().optional().describe('Filename to save the video.'),
+      filename: z.string().optional().describe('File name to save the video to. Relative paths are resolved against the MCP client workspace, not the server output directory. If omitted, the video is saved as `video-{timestamp}.webm` in the output directory.'),
       size: z.object({
         width: z.number().describe('Video width'),
         height: z.number().describe('Video height'),
