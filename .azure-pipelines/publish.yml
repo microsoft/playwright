@@ -1,25 +1,12 @@
-# Publishes all npm packages via ESRP:
-# - @next (alpha with today's date) from main, daily on schedule
-# - @next (alpha with commit timestamp) from main, on manual trigger
-# - @beta (beta with commit timestamp) from release-* branches, on push
-# - @latest from v* release tags (pushed when a GitHub release is published)
-trigger:
-  branches:
-    include:
-    - release-*
-  tags:
-    include:
-    - v*
+# Publishes npm packages via ESRP. Manual trigger only, regular publishing
+# is done from GitHub Actions, see .github/workflows/publish_release.yml.
+# Depending on the selected ref, a manual run publishes:
+# - @next (alpha with commit timestamp) from main
+# - @beta (beta with commit timestamp) from release-* branches
+# - @latest from v* release tags
+trigger: none
 
 pr: none
-
-schedules:
-- cron: '10 5 * * *'
-  displayName: "Daily @next publish"
-  branches:
-    include:
-    - main
-  always: true
 
 resources:
   repositories:
