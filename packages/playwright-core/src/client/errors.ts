@@ -34,6 +34,7 @@ export class TimeoutError extends PlaywrightError {
 export class TargetClosedError extends PlaywrightError {
   constructor(cause?: string) {
     super(cause || 'Target page, context or browser has been closed');
+    this.name = 'TargetClosedError';
   }
 }
 
