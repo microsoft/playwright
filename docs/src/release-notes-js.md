@@ -6,6 +6,146 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.63
+
+### 🔒 Test locks
+
+Tests that access a shared resource — an external service, a global account setting — can now declare a named `lock`.
+Tests that share a lock name never run concurrently, across files, workers and [projects](./test-projects.md), while
+everything else keeps running in parallel:
+
+```js
+test('update user settings', { lock: 'user-settings' }, async ({ page }) => {
+  // never runs at the same time as other tests holding 'user-settings'
+});
+```
+
+A test can hold multiple locks, and [`method: Test.describe`] accepts a `lock` for the whole group.
+Learn more about [test locks](./test-parallel.md#test-locks).
+
+### 🪟 Locate across frames
+
+[`method: Page.frameLocator`] and [`method: Frame.frameLocator`] called without a selector search in any frame of the
+subtree, so you no longer need to locate the iframe first:
+
+```js
+// Finds the button in any frame on the page.
+await page.frameLocator().getByRole('button').click();
+```
+
+The rest of the locator resolves inside a single frame, just like a regular locator, and an error is thrown when it
+matches elements in several frames.
+
+### 👁️ Visible-only locators
+
+New [`method: Locator.visible`] returns a locator that matches only visible elements. It is the recommended
+replacement for the `:visible` CSS pseudo-class:
+
+```js
+await page.locator('button').visible().click();
+```
+
+### 🧾 Step params and subtitles
+
+Steps now carry structured data for reporters. Playwright API steps report the target locator and call arguments,
+and [`method: Test.step`] accepts a `params` option for your own steps:
+
+```js
+await test.step('login', async () => {
+  // ...
+}, { params: { user: 'admin' } });
+```
+
+Reporters receive them via [`property: TestStep.params`], and [`property: TestStep.subtitle`] complements the title
+with the locator or the navigation url — for example, `Click` with subtitle `getByRole('button')`. Both are rendered in
+the trace viewer and the HTML report.
+
+### ⏱️ Perfetto reporter
+
+New built-in `perfetto` reporter writes a Trace Event Format file for the [Perfetto UI](https://ui.perfetto.dev) or
+`chrome://tracing`. The test run is rendered as a timeline with a lane per worker, where each test is a slice containing
+its hooks, fixtures and steps:
+
+```bash
+npx playwright test --reporter=perfetto
+```
+
+See [reporters](./test-reporters.md#perfetto-reporter) for the configuration options.
+
+### 🖼️ Aria and screen snapshots in traces
+
+The `snapshots` option of [`method: Tracing.start`] and the [`property: TestOptions.trace`] fixture option now accept an
+object selecting what to capture on every action:
+
+```js title="playwright.config.ts"
+export default defineConfig({
+  use: {
+    trace: {
+      mode: 'on',
+      snapshots: { dom: true, aria: true, screen: true }
+    },
+  },
+});
+```
+
+With aria and screen snapshots recorded, the new **Display Aria** mode in the trace viewer shows the action screenshot
+side by side with the aria snapshot, and hovering an aria node highlights it on the screenshot.
+
+### New APIs
+
+#### Browser and Context
+
+- [`option: Browser.newContext.httpCredentials`] now also accepts an array of credentials. The first entry matching the request origin is used, and entries without an origin match any request.
+- New option [`option: BrowserContext.storageState.opfs`] includes the [origin private file system](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system) in the storage state, so it can be persisted and restored into later contexts.
+- New events [`event: Page.dialogClosed`] and [`event: BrowserContext.dialogClosed`] are emitted when a JavaScript dialog is accepted, dismissed or closed by the user.
+
+#### Locators
+
+- New [`method: Locator.ariaSnapshotJSON`] and [`method: Page.ariaSnapshotJSON`] return the aria snapshot as a JSON value instead of YAML markup, with `mode`, `depth` and `boxes` options.
+- [`method: APIRequestContext.get`] and other request methods accept a type argument that types the response `json()`:
+
+```js
+const response = await request.get<User>('/api/users/42');
+const user = await response.json(); // typed as User
+```
+
+#### Test runner
+
+- New standalone [`property: TestOptions.reducedMotion`], [`property: TestOptions.forcedColors`] and [`property: TestOptions.contrast`] options.
+- New `--add-reporter` command line option appends a reporter on top of the ones configured in `playwright.config`, instead of replacing them like `--reporter` does.
+- New `omitTags` option for the `list`, `line`, `dot`, `github` and `junit` reporters suppresses the tags that are automatically appended to test titles.
+- [`property: TestStepInfo.annotations`] is now part of the public types.
+- Tests in serial suites carry a `serial` annotation, so that [`method: Reporter.preprocess`] implementations can keep them together when sharding.
+
+#### Command line
+
+- `npx playwright install --no-remove` keeps the browsers of other Playwright installations instead of removing them.
+- `npx playwright codegen --http-credentials` records against pages behind HTTP authentication.
+
+#### Trace viewer & HTML report
+
+- Test annotations are shown in the trace viewer.
+- Requests made through [APIRequestContext] are recorded in a separate network stream in the trace.
+- The HTML report renders a duration waterfall next to test steps.
+
+### Announcements
+
+* ⚠️ The experimental `@playwright/experimental-ct-react`, `@playwright/experimental-ct-react17` and `@playwright/experimental-ct-vue` packages have been removed and are no longer published. Follow the [migration guide](./test-components.md#migration-from-the-experimental-packages) to move to the stories model introduced in 1.62. Story ids passed to [`method: Fixtures.mount`] can now be typed through the generated `Stories` registry.
+* ⚠️ The `firefox-beta` and `chromium-tip-of-tree` browser channels have been removed.
+* ⚠️ Ubuntu 20.04 is not supported anymore.
+* [`method: BrowserContext.setHTTPCredentials`] is no longer deprecated.
+
+### Browser Versions
+
+- Chromium 153.0.8010.12
+- Mozilla Firefox 155.0
+- WebKit 26.6
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 153
+- Microsoft Edge 153
+
 ## Version 1.62
 
 ### 🧱 New component testing model
