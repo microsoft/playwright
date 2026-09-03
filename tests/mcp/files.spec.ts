@@ -290,6 +290,46 @@ test('file upload is restricted to cwd if no roots are configured', async ({ sta
   });
 });
 
+test('file upload resolves relative paths against the root', async ({ startClient, server }, testInfo) => {
+  const rootDir = testInfo.outputPath('workspace');
+  await fs.mkdir(rootDir, { recursive: true });
+  await fs.writeFile(path.join(rootDir, 'inside.txt'), 'Inside root');
+
+  const { client } = await startClient({
+    roots: [
+      {
+        name: 'workspace',
+        uri: `file://${rootDir}`,
+      }
+    ],
+  });
+
+  server.setContent('/', `<input type="file" />`, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Textbox',
+      target: 'e2',
+    },
+  });
+
+  // The file lives in the root, not in the server's cwd.
+  expect(await client.callTool({
+    name: 'browser_file_upload',
+    arguments: {
+      paths: ['inside.txt'],
+    },
+  })).toHaveResponse({
+    code: expect.stringContaining(JSON.stringify(path.join(rootDir, 'inside.txt'))),
+  });
+});
+
 test('file upload unrestricted when flag is set', async ({ startClient, server }, testInfo) => {
   const rootDir = testInfo.outputPath('workspace');
   await fs.mkdir(rootDir, { recursive: true });

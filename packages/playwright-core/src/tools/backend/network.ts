@@ -257,7 +257,7 @@ async function saveResponseBody(request: playwright.Request, response: ToolRespo
   if (!body.length)
     return undefined;
   const ext = getExtensionForMimeType(httpResponse.headers()['content-type']);
-  const resolved = await response.resolveClientFile({ prefix: 'response', ext, suggestedFilename }, 'Response body');
+  const resolved = await response.resolveClientOutputFile({ prefix: 'response', ext, suggestedFilename }, 'Response body');
   await fs.promises.writeFile(resolved.fileName, body);
   return resolved.relativeName;
 }
