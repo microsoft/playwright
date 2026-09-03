@@ -332,9 +332,15 @@ export class ClientCertificatesProxy {
 
     // Step 2. Create secure contexts for each origin.
     for (const [origin, certs] of origin2certs) {
+      const sendNoneCount = certs.filter(cert => cert.sendNone).length;
+      if (sendNoneCount > 0 && sendNoneCount < certs.length)
+        throw new Error(`clientCertificates for origin "${origin}" mix sendNone with a real certificate`);
+      if (sendNoneCount > 0) {
+        this.secureContextMap.set(origin, undefined);
+        continue;
+      }
       try {
-        this.secureContextMap.set(origin, (certs.reduce(
-            (prev, cert) => prev && !!cert.sendNone, true)) ? undefined : tls.createSecureContext(convertClientCertificatesToTLSOptions(certs)));
+        this.secureContextMap.set(origin, tls.createSecureContext(convertClientCertificatesToTLSOptions(certs)));
       } catch (error) {
         error = rewriteOpenSSLErrorIfNeeded(error);
         throw rewriteErrorMessage(error, `Failed to load client certificate: ${error.message}`);
