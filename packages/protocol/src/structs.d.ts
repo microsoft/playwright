@@ -314,6 +314,7 @@ export type SerializedError = {
     message: string,
     name: string,
     stack?: string,
+    code?: string,
   },
   value?: SerializedValue,
 };
