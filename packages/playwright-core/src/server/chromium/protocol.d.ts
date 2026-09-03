@@ -407,6 +407,24 @@ duration of the page.
        */
       removeAdFrames: Page.FrameId[];
     }
+    /**
+     * An ad script.
+Note: when the script is a transitive ad script, we only fill in the
+immediate ancestor script in the provenance's adScriptAncestry field (as its
+first entry), rather than filling in the full ancestry. This saves work for
+the backend, and the frontend can reconstruct the full ancestry if
+necessary.
+     */
+    export interface AdScript {
+      /**
+       * The script ID.
+       */
+      scriptId: Runtime.ScriptId;
+      /**
+       * The ad provenance.
+       */
+      provenance: Network.AdProvenance;
+    }
     
     
     /**
@@ -416,6 +434,16 @@ duration of the page.
     }
     export type getAdMetricsReturnValue = {
       metrics: AdMetrics;
+    }
+    /**
+     * Retrieves ad scripts for the current page. To minimize payload size, this
+only returns the newly tracked ad scripts since the last call to
+getAdScripts (i.e., the delta).
+     */
+    export type getAdScriptsParameters = {
+    }
+    export type getAdScriptsReturnValue = {
+      newScripts: AdScript[];
     }
   }
   
@@ -2220,6 +2248,21 @@ or 'allowAndName'.
       arguments: string[];
     }
     /**
+     * Adds or updates a mock camera in the shared video capture device list for
+test automation. The mock camera is not scoped to a particular page or
+frame and is removed when the DevTools session that created it disconnects.
+     */
+    export type addMockCameraParameters = {
+      /**
+       * Required non-empty identifier for the mock camera. This is mapped to an
+internal virtual-device identifier and is not the MediaDeviceInfo.deviceId
+exposed to the page.
+       */
+      deviceId: string;
+    }
+    export type addMockCameraReturnValue = {
+    }
+    /**
      * Get Chrome histograms.
      */
     export type getHistogramsParameters = {
@@ -2360,6 +2403,25 @@ without the site actually being enrolled. Only supported on page targets.
       url: string;
     }
     export type addPrivacySandboxEnrollmentOverrideReturnValue = {
+    }
+    /**
+     * Gets the current globally-applied privacy control status
+See https://www.w3.org/TR/gpc/#get-global-privacy-control
+     */
+    export type getGlobalPrivacyControlParameters = {
+    }
+    export type getGlobalPrivacyControlReturnValue = {
+      gpc: boolean;
+    }
+    /**
+     * Sets and then gets the current globally-applied privacy control status
+See https://www.w3.org/TR/gpc/#set-global-privacy-control
+     */
+    export type setGlobalPrivacyControlParameters = {
+      gpc: boolean;
+    }
+    export type setGlobalPrivacyControlReturnValue = {
+      gpc: boolean;
     }
   }
   
@@ -11532,6 +11594,9 @@ known to be an ad, but provenance tracking information is unavailable.
       filterlistRule?: string;
       /**
        * The script ancestry that created the ad, if any.
+Note: depending on the context, this may represent the full ancestry up
+to the root script, or it may contain only one script representing the
+immediate ancestor.
        */
       adScriptAncestry?: AdAncestry;
     }
@@ -14332,7 +14397,7 @@ supported yet.
 in services/network/public/cpp/permissions_policy/permissions_policy_features.json5.
 LINT.IfChange(PermissionsPolicyFeature)
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"rewriter"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"tools"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"webnn"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"haptics"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"rewriter"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"tools"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"webnn"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -16224,9 +16289,21 @@ unavailable.
        */
       maxHeight?: number;
       /**
-       * Send every n-th frame.
+       * Send every n-th frame. Must be a positive integer.
        */
       everyNthFrame?: number;
+      /**
+       * Maximum number of frames sent until screencastFrameAck is required.
+Defaults to 3. Must be a positive integer.
+       */
+      maxFramesInFlight?: number;
+      /**
+       * By default, after screencastFrameAck arrives, the next produced frame is sent.
+Passing this flag enables storing the last produced frame in memory, which is
+immediately sent upon screencastFrameAck. This way, overall performance is
+traded for a better latency.
+       */
+      sendLastFrame?: boolean;
     }
     export type startScreencastReturnValue = {
     }
@@ -17106,6 +17183,50 @@ be handled by the DevTools client and should be answered with `handleCertificate
     export type ServiceWorkerVersionRunningStatus = "stopped"|"starting"|"running"|"stopping";
     export type ServiceWorkerVersionStatus = "new"|"installing"|"installed"|"activating"|"activated"|"redundant";
     /**
+     * Mostly corresponds to `RouterCondition` in ServiceWorker spec
+(https://www.w3.org/TR/service-workers/#dictdef-routercondition) while this
+currently lacks support for the nested conditions ("or" and "not").
+TODO(crbug.com/540469610): Support recursive conditions.
+     */
+    export interface ServiceWorkerRouterCondition {
+      /**
+       * Plain text, or JSON serialization of URLPatternInit or URLPattern
+       */
+      urlPattern?: string;
+      requestMethod?: string;
+      requestMode?: string;
+      requestDestination?: string;
+      runningStatus?: ServiceWorkerVersionRunningStatus;
+    }
+    export type ServiceWorkerRouterSourceType = "cache"|"fetchEvent"|"network"|"raceNetworkAndFetchHandler"|"raceNetworkAndCache"|"sourceDict";
+    /**
+     * https://www.w3.org/TR/service-workers/#dictdef-routersourcedict
+     */
+    export interface ServiceWorkerRouterSourceDict {
+      cacheName: string;
+    }
+    /**
+     * Corresponds to `RouterSource` in the spec while the representation is different as follows.
+(https://www.w3.org/TR/service-workers/#typedefdef-routersource)
+- `RouterSourceEnum`: `type` equals `cache`, `sourceDict` is null.
+- `RouterSourceDict`: `type` equals `sourceDict`, `sourceDict` has valid value.
+     */
+    export interface ServiceWorkerRouterSource {
+      type: ServiceWorkerRouterSourceType;
+      /**
+       * Non-empty iff `type` equals "sourceDict".
+       */
+      sourceDict?: ServiceWorkerRouterSourceDict;
+    }
+    export interface ServiceWorkerRouterRule {
+      condition: ServiceWorkerRouterCondition;
+      source: ServiceWorkerRouterSource;
+      /**
+       * Rule ID assigned by the browser. Unique within each ServiceWorkerVersion.
+       */
+      id: number;
+    }
+    /**
      * ServiceWorker version.
      */
     export interface ServiceWorkerVersion {
@@ -17125,7 +17246,13 @@ For cached script it is the last time the cache entry was validated.
       scriptResponseTime?: number;
       controlledClients?: Target.TargetID[];
       targetId?: Target.TargetID;
+      /**
+       * Migration to `typedRouterRules` is in progress. The browser sends either
+`routerRules` or `typedRouterRules`.
+TODO(crbug.com/540469610): Remove `routerRules` after the migration.
+       */
       routerRules?: string;
+      typedRouterRules?: ServiceWorkerRouterRule[];
     }
     /**
      * ServiceWorker error message.
@@ -17621,7 +17748,7 @@ Microsoft: https://learn.microsoft.com/en-us/windows/win32/api/winscard/nf-winsc
     /**
      * Enum of possible storage types.
      */
-    export type StorageType = "cookies"|"file_systems"|"indexeddb"|"local_storage"|"shader_cache"|"websql"|"service_workers"|"cache_storage"|"shared_storage"|"storage_buckets"|"all"|"other";
+    export type StorageType = "cookies"|"file_systems"|"indexeddb"|"local_storage"|"shader_cache"|"websql"|"service_workers"|"cache_storage"|"storage_buckets"|"all"|"other";
     /**
      * Usage for a storage type.
      */
@@ -17642,189 +17769,6 @@ Tokens from that issuer.
     export interface TrustTokens {
       issuerOrigin: string;
       count: number;
-    }
-    /**
-     * Enum of shared storage access scopes.
-     */
-    export type SharedStorageAccessScope = "window"|"sharedStorageWorklet"|"header";
-    /**
-     * Enum of shared storage access methods.
-     */
-    export type SharedStorageAccessMethod = "addModule"|"createWorklet"|"selectURL"|"run"|"batchUpdate"|"set"|"append"|"delete"|"clear"|"get"|"keys"|"values"|"entries"|"length"|"remainingBudget";
-    /**
-     * Struct for a single key-value pair in an origin's shared storage.
-     */
-    export interface SharedStorageEntry {
-      key: string;
-      value: string;
-    }
-    /**
-     * Details for an origin's shared storage.
-     */
-    export interface SharedStorageMetadata {
-      /**
-       * Time when the origin's shared storage was last created.
-       */
-      creationTime: Network.TimeSinceEpoch;
-      /**
-       * Number of key-value pairs stored in origin's shared storage.
-       */
-      length: number;
-      /**
-       * Current amount of bits of entropy remaining in the navigation budget.
-       */
-      remainingBudget: number;
-      /**
-       * Total number of bytes stored as key-value pairs in origin's shared
-storage.
-       */
-      bytesUsed: number;
-    }
-    /**
-     * Represents a dictionary object passed in as privateAggregationConfig to
-run or selectURL.
-     */
-    export interface SharedStoragePrivateAggregationConfig {
-      /**
-       * The chosen aggregation service deployment.
-       */
-      aggregationCoordinatorOrigin?: string;
-      /**
-       * The context ID provided.
-       */
-      contextId?: string;
-      /**
-       * Configures the maximum size allowed for filtering IDs.
-       */
-      filteringIdMaxBytes: number;
-      /**
-       * The limit on the number of contributions in the final report.
-       */
-      maxContributions?: number;
-    }
-    /**
-     * Pair of reporting metadata details for a candidate URL for `selectURL()`.
-     */
-    export interface SharedStorageReportingMetadata {
-      eventType: string;
-      reportingUrl: string;
-    }
-    /**
-     * Bundles a candidate URL with its reporting metadata.
-     */
-    export interface SharedStorageUrlWithMetadata {
-      /**
-       * Spec of candidate URL.
-       */
-      url: string;
-      /**
-       * Any associated reporting metadata.
-       */
-      reportingMetadata: SharedStorageReportingMetadata[];
-    }
-    /**
-     * Bundles the parameters for shared storage access events whose
-presence/absence can vary according to SharedStorageAccessType.
-     */
-    export interface SharedStorageAccessParams {
-      /**
-       * Spec of the module script URL.
-Present only for SharedStorageAccessMethods: addModule and
-createWorklet.
-       */
-      scriptSourceUrl?: string;
-      /**
-       * String denoting "context-origin", "script-origin", or a custom
-origin to be used as the worklet's data origin.
-Present only for SharedStorageAccessMethod: createWorklet.
-       */
-      dataOrigin?: string;
-      /**
-       * Name of the registered operation to be run.
-Present only for SharedStorageAccessMethods: run and selectURL.
-       */
-      operationName?: string;
-      /**
-       * ID of the operation call.
-Present only for SharedStorageAccessMethods: run and selectURL.
-       */
-      operationId?: string;
-      /**
-       * Whether or not to keep the worket alive for future run or selectURL
-calls.
-Present only for SharedStorageAccessMethods: run and selectURL.
-       */
-      keepAlive?: boolean;
-      /**
-       * Configures the private aggregation options.
-Present only for SharedStorageAccessMethods: run and selectURL.
-       */
-      privateAggregationConfig?: SharedStoragePrivateAggregationConfig;
-      /**
-       * The operation's serialized data in bytes (converted to a string).
-Present only for SharedStorageAccessMethods: run and selectURL.
-TODO(crbug.com/401011862): Consider updating this parameter to binary.
-       */
-      serializedData?: string;
-      /**
-       * Array of candidate URLs' specs, along with any associated metadata.
-Present only for SharedStorageAccessMethod: selectURL.
-       */
-      urlsWithMetadata?: SharedStorageUrlWithMetadata[];
-      /**
-       * Spec of the URN:UUID generated for a selectURL call.
-Present only for SharedStorageAccessMethod: selectURL.
-       */
-      urnUuid?: string;
-      /**
-       * Key for a specific entry in an origin's shared storage.
-Present only for SharedStorageAccessMethods: set, append, delete, and
-get.
-       */
-      key?: string;
-      /**
-       * Value for a specific entry in an origin's shared storage.
-Present only for SharedStorageAccessMethods: set and append.
-       */
-      value?: string;
-      /**
-       * Whether or not to set an entry for a key if that key is already present.
-Present only for SharedStorageAccessMethod: set.
-       */
-      ignoreIfPresent?: boolean;
-      /**
-       * A number denoting the (0-based) order of the worklet's
-creation relative to all other shared storage worklets created by
-documents using the current storage partition.
-Present only for SharedStorageAccessMethods: addModule, createWorklet.
-       */
-      workletOrdinal?: number;
-      /**
-       * Hex representation of the DevTools token used as the TargetID for the
-associated shared storage worklet.
-Present only for SharedStorageAccessMethods: addModule, createWorklet,
-run, selectURL, and any other SharedStorageAccessMethod when the
-SharedStorageAccessScope is sharedStorageWorklet.
-       */
-      workletTargetId?: Target.TargetID;
-      /**
-       * Name of the lock to be acquired, if present.
-Optionally present only for SharedStorageAccessMethods: batchUpdate,
-set, append, delete, and clear.
-       */
-      withLock?: string;
-      /**
-       * If the method has been called as part of a batchUpdate, then this
-number identifies the batch to which it belongs.
-Optionally present only for SharedStorageAccessMethods:
-batchUpdate (required), set, append, delete, and clear.
-       */
-      batchUpdateId?: string;
-      /**
-       * Number of modifier methods sent in batch.
-Present only for SharedStorageAccessMethod: batchUpdate.
-       */
-      batchSize?: number;
     }
     export type StorageBucketsDurability = "relaxed"|"strict";
     export interface StorageBucket {
@@ -17942,77 +17886,6 @@ Present only for SharedStorageAccessMethod: batchUpdate.
        * Storage bucket to update.
        */
       bucketId: string;
-    }
-    /**
-     * Shared storage was accessed by the associated page.
-The following parameters are included in all events.
-     */
-    export type sharedStorageAccessedPayload = {
-      /**
-       * Time of the access.
-       */
-      accessTime: Network.TimeSinceEpoch;
-      /**
-       * Enum value indicating the access scope.
-       */
-      scope: SharedStorageAccessScope;
-      /**
-       * Enum value indicating the Shared Storage API method invoked.
-       */
-      method: SharedStorageAccessMethod;
-      /**
-       * DevTools Frame Token for the primary frame tree's root.
-       */
-      mainFrameId: Page.FrameId;
-      /**
-       * Serialization of the origin owning the Shared Storage data.
-       */
-      ownerOrigin: string;
-      /**
-       * Serialization of the site owning the Shared Storage data.
-       */
-      ownerSite: string;
-      /**
-       * The sub-parameters wrapped by `params` are all optional and their
-presence/absence depends on `type`.
-       */
-      params: SharedStorageAccessParams;
-    }
-    /**
-     * A shared storage run or selectURL operation finished its execution.
-The following parameters are included in all events.
-     */
-    export type sharedStorageWorkletOperationExecutionFinishedPayload = {
-      /**
-       * Time that the operation finished.
-       */
-      finishedTime: Network.TimeSinceEpoch;
-      /**
-       * Time, in microseconds, from start of shared storage JS API call until
-end of operation execution in the worklet.
-       */
-      executionTime: number;
-      /**
-       * Enum value indicating the Shared Storage API method invoked.
-       */
-      method: SharedStorageAccessMethod;
-      /**
-       * ID of the operation call.
-       */
-      operationId: string;
-      /**
-       * Hex representation of the DevTools token used as the TargetID for the
-associated shared storage worklet.
-       */
-      workletTargetId: Target.TargetID;
-      /**
-       * DevTools Frame Token for the primary frame tree's root.
-       */
-      mainFrameId: Page.FrameId;
-      /**
-       * Serialization of the origin owning the Shared Storage data.
-       */
-      ownerOrigin: string;
     }
     export type storageBucketCreatedOrUpdatedPayload = {
       bucketInfo: StorageBucketInfo;
@@ -18269,72 +18142,6 @@ Leaves other stored data, including the issuer's Redemption Records, intact.
        * True if any tokens were deleted, false otherwise.
        */
       didDeleteTokens: boolean;
-    }
-    /**
-     * Gets metadata for an origin's shared storage.
-     */
-    export type getSharedStorageMetadataParameters = {
-      ownerOrigin: string;
-    }
-    export type getSharedStorageMetadataReturnValue = {
-      metadata: SharedStorageMetadata;
-    }
-    /**
-     * Gets the entries in an given origin's shared storage.
-     */
-    export type getSharedStorageEntriesParameters = {
-      ownerOrigin: string;
-    }
-    export type getSharedStorageEntriesReturnValue = {
-      entries: SharedStorageEntry[];
-    }
-    /**
-     * Sets entry with `key` and `value` for a given origin's shared storage.
-     */
-    export type setSharedStorageEntryParameters = {
-      ownerOrigin: string;
-      key: string;
-      value: string;
-      /**
-       * If `ignoreIfPresent` is included and true, then only sets the entry if
-`key` doesn't already exist.
-       */
-      ignoreIfPresent?: boolean;
-    }
-    export type setSharedStorageEntryReturnValue = {
-    }
-    /**
-     * Deletes entry for `key` (if it exists) for a given origin's shared storage.
-     */
-    export type deleteSharedStorageEntryParameters = {
-      ownerOrigin: string;
-      key: string;
-    }
-    export type deleteSharedStorageEntryReturnValue = {
-    }
-    /**
-     * Clears all entries for a given origin's shared storage.
-     */
-    export type clearSharedStorageEntriesParameters = {
-      ownerOrigin: string;
-    }
-    export type clearSharedStorageEntriesReturnValue = {
-    }
-    /**
-     * Resets the budget for `ownerOrigin` by clearing all budget withdrawals.
-     */
-    export type resetSharedStorageBudgetParameters = {
-      ownerOrigin: string;
-    }
-    export type resetSharedStorageBudgetReturnValue = {
-    }
-    /**
-     * Enables/disables issuing of sharedStorageAccessed events.
-     */
-    export type setSharedStorageTrackingParameters = {
-      enable: boolean;
-    }
-    export type setSharedStorageTrackingReturnValue = {
     }
     /**
      * Set tracking for a storage key's buckets.
@@ -19983,6 +19790,10 @@ See https://w3c.github.io/webauthn/#signature-counter
        * A hint indicating that the tool output may contain untrusted content, ex: UGC, 3rd party data.
        */
       untrustedContent?: boolean;
+      /**
+       * A hint indicating that executing the tool will result in consequential actions, ex: booking a flight, transferring money.
+       */
+      consequential?: boolean;
       /**
        * If the declarative tool was declared with the autosubmit attribute.
        */
@@ -23016,8 +22827,6 @@ Error was thrown.
     "Storage.cacheStorageListUpdated": Storage.cacheStorageListUpdatedPayload;
     "Storage.indexedDBContentUpdated": Storage.indexedDBContentUpdatedPayload;
     "Storage.indexedDBListUpdated": Storage.indexedDBListUpdatedPayload;
-    "Storage.sharedStorageAccessed": Storage.sharedStorageAccessedPayload;
-    "Storage.sharedStorageWorkletOperationExecutionFinished": Storage.sharedStorageWorkletOperationExecutionFinishedPayload;
     "Storage.storageBucketCreatedOrUpdated": Storage.storageBucketCreatedOrUpdatedPayload;
     "Storage.storageBucketDeleted": Storage.storageBucketDeletedPayload;
     "Target.attachedToTarget": Target.attachedToTargetPayload;
@@ -23251,8 +23060,6 @@ Error was thrown.
     ["Storage.cacheStorageListUpdated"]: [Storage.cacheStorageListUpdatedPayload];
     ["Storage.indexedDBContentUpdated"]: [Storage.indexedDBContentUpdatedPayload];
     ["Storage.indexedDBListUpdated"]: [Storage.indexedDBListUpdatedPayload];
-    ["Storage.sharedStorageAccessed"]: [Storage.sharedStorageAccessedPayload];
-    ["Storage.sharedStorageWorkletOperationExecutionFinished"]: [Storage.sharedStorageWorkletOperationExecutionFinishedPayload];
     ["Storage.storageBucketCreatedOrUpdated"]: [Storage.storageBucketCreatedOrUpdatedPayload];
     ["Storage.storageBucketDeleted"]: [Storage.storageBucketDeletedPayload];
     ["Target.attachedToTarget"]: [Target.attachedToTargetPayload];
@@ -23320,6 +23127,7 @@ Error was thrown.
     "Accessibility.getChildAXNodes": Accessibility.getChildAXNodesParameters;
     "Accessibility.queryAXTree": Accessibility.queryAXTreeParameters;
     "Ads.getAdMetrics": Ads.getAdMetricsParameters;
+    "Ads.getAdScripts": Ads.getAdScriptsParameters;
     "Animation.disable": Animation.disableParameters;
     "Animation.enable": Animation.enableParameters;
     "Animation.getCurrentTime": Animation.getCurrentTimeParameters;
@@ -23367,6 +23175,7 @@ Error was thrown.
     "Browser.crashGpuProcess": Browser.crashGpuProcessParameters;
     "Browser.getVersion": Browser.getVersionParameters;
     "Browser.getBrowserCommandLine": Browser.getBrowserCommandLineParameters;
+    "Browser.addMockCamera": Browser.addMockCameraParameters;
     "Browser.getHistograms": Browser.getHistogramsParameters;
     "Browser.getHistogram": Browser.getHistogramParameters;
     "Browser.getWindowBounds": Browser.getWindowBoundsParameters;
@@ -23376,6 +23185,8 @@ Error was thrown.
     "Browser.setDockTile": Browser.setDockTileParameters;
     "Browser.executeBrowserCommand": Browser.executeBrowserCommandParameters;
     "Browser.addPrivacySandboxEnrollmentOverride": Browser.addPrivacySandboxEnrollmentOverrideParameters;
+    "Browser.getGlobalPrivacyControl": Browser.getGlobalPrivacyControlParameters;
+    "Browser.setGlobalPrivacyControl": Browser.setGlobalPrivacyControlParameters;
     "CSS.addRule": CSS.addRuleParameters;
     "CSS.collectClassNames": CSS.collectClassNamesParameters;
     "CSS.createStyleSheet": CSS.createStyleSheetParameters;
@@ -23833,13 +23644,6 @@ Error was thrown.
     "Storage.untrackIndexedDBForStorageKey": Storage.untrackIndexedDBForStorageKeyParameters;
     "Storage.getTrustTokens": Storage.getTrustTokensParameters;
     "Storage.clearTrustTokens": Storage.clearTrustTokensParameters;
-    "Storage.getSharedStorageMetadata": Storage.getSharedStorageMetadataParameters;
-    "Storage.getSharedStorageEntries": Storage.getSharedStorageEntriesParameters;
-    "Storage.setSharedStorageEntry": Storage.setSharedStorageEntryParameters;
-    "Storage.deleteSharedStorageEntry": Storage.deleteSharedStorageEntryParameters;
-    "Storage.clearSharedStorageEntries": Storage.clearSharedStorageEntriesParameters;
-    "Storage.resetSharedStorageBudget": Storage.resetSharedStorageBudgetParameters;
-    "Storage.setSharedStorageTracking": Storage.setSharedStorageTrackingParameters;
     "Storage.setStorageBucketTracking": Storage.setStorageBucketTrackingParameters;
     "Storage.deleteStorageBucket": Storage.deleteStorageBucketParameters;
     "Storage.runBounceTrackingMitigations": Storage.runBounceTrackingMitigationsParameters;
@@ -23986,6 +23790,7 @@ Error was thrown.
     "Accessibility.getChildAXNodes": Accessibility.getChildAXNodesReturnValue;
     "Accessibility.queryAXTree": Accessibility.queryAXTreeReturnValue;
     "Ads.getAdMetrics": Ads.getAdMetricsReturnValue;
+    "Ads.getAdScripts": Ads.getAdScriptsReturnValue;
     "Animation.disable": Animation.disableReturnValue;
     "Animation.enable": Animation.enableReturnValue;
     "Animation.getCurrentTime": Animation.getCurrentTimeReturnValue;
@@ -24033,6 +23838,7 @@ Error was thrown.
     "Browser.crashGpuProcess": Browser.crashGpuProcessReturnValue;
     "Browser.getVersion": Browser.getVersionReturnValue;
     "Browser.getBrowserCommandLine": Browser.getBrowserCommandLineReturnValue;
+    "Browser.addMockCamera": Browser.addMockCameraReturnValue;
     "Browser.getHistograms": Browser.getHistogramsReturnValue;
     "Browser.getHistogram": Browser.getHistogramReturnValue;
     "Browser.getWindowBounds": Browser.getWindowBoundsReturnValue;
@@ -24042,6 +23848,8 @@ Error was thrown.
     "Browser.setDockTile": Browser.setDockTileReturnValue;
     "Browser.executeBrowserCommand": Browser.executeBrowserCommandReturnValue;
     "Browser.addPrivacySandboxEnrollmentOverride": Browser.addPrivacySandboxEnrollmentOverrideReturnValue;
+    "Browser.getGlobalPrivacyControl": Browser.getGlobalPrivacyControlReturnValue;
+    "Browser.setGlobalPrivacyControl": Browser.setGlobalPrivacyControlReturnValue;
     "CSS.addRule": CSS.addRuleReturnValue;
     "CSS.collectClassNames": CSS.collectClassNamesReturnValue;
     "CSS.createStyleSheet": CSS.createStyleSheetReturnValue;
@@ -24499,13 +24307,6 @@ Error was thrown.
     "Storage.untrackIndexedDBForStorageKey": Storage.untrackIndexedDBForStorageKeyReturnValue;
     "Storage.getTrustTokens": Storage.getTrustTokensReturnValue;
     "Storage.clearTrustTokens": Storage.clearTrustTokensReturnValue;
-    "Storage.getSharedStorageMetadata": Storage.getSharedStorageMetadataReturnValue;
-    "Storage.getSharedStorageEntries": Storage.getSharedStorageEntriesReturnValue;
-    "Storage.setSharedStorageEntry": Storage.setSharedStorageEntryReturnValue;
-    "Storage.deleteSharedStorageEntry": Storage.deleteSharedStorageEntryReturnValue;
-    "Storage.clearSharedStorageEntries": Storage.clearSharedStorageEntriesReturnValue;
-    "Storage.resetSharedStorageBudget": Storage.resetSharedStorageBudgetReturnValue;
-    "Storage.setSharedStorageTracking": Storage.setSharedStorageTrackingReturnValue;
     "Storage.setStorageBucketTracking": Storage.setStorageBucketTrackingReturnValue;
     "Storage.deleteStorageBucket": Storage.deleteStorageBucketReturnValue;
     "Storage.runBounceTrackingMitigations": Storage.runBounceTrackingMitigationsReturnValue;
