@@ -24,7 +24,7 @@ import type { Tab } from './tab';
 
 const evaluateSchema = optionalElementSchema.extend({
   function: z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
-  filename: z.string().optional().describe('Filename to save the result to. If not provided, result is returned as text.'),
+  filename: z.string().optional().describe('File name to save the result to. Relative file names are resolved against the workspace root. If not provided, result is returned as text.'),
 });
 
 const evaluate = defineTabTool({
