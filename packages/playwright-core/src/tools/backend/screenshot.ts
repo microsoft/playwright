@@ -28,7 +28,8 @@ type ImageFormat = 'png' | 'jpeg' | 'webp';
 
 const screenshotSchema = optionalElementSchema.extend({
   type: z.enum(['png', 'jpeg', 'webp']).optional().describe('Image format for the screenshot. If unset, inferred from the filename extension, otherwise png.'),
-  filename: z.string().optional().describe('File name to save the screenshot to. Defaults to `page-{timestamp}.{png|jpeg|webp}` if not specified. Prefer relative file names to stay within the output directory.'),
+  // "Directory provided by the MCP client" covers request cwd and workspace-root resolution; explicit filenames do not use outputDir.
+  filename: z.string().optional().describe('File name to save the screenshot to. Relative paths are resolved against the directory provided by the MCP client, or the server working directory if none is provided; they are not resolved against the configured output directory. If omitted, the screenshot is saved as `page-{timestamp}.{png|jpeg|webp}` in the output directory.'),
   fullPage: z.boolean().optional().describe('When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Cannot be used with element screenshots.'),
   scale: z.enum(['css', 'device']).default('css').describe('Image resolution scale. "css" produces a screenshot sized in CSS pixels (smaller, consistent across devices). "device" produces a high-resolution screenshot using device pixels (larger, accounts for the device pixel ratio). Default is css.'),
 });

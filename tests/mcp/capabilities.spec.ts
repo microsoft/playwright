@@ -66,6 +66,23 @@ test('test capabilities (vision)', async ({ startClient }) => {
   expect(toolNames).toContain('browser_mouse_drag_xy');
 });
 
+test('filename descriptions explain output directory behavior', async ({ startClient }) => {
+  const { client } = await startClient({
+    args: ['--caps=devtools'],
+  });
+  const { tools } = await client.listTools();
+
+  const screenshot = tools.find(tool => tool.name === 'browser_take_screenshot');
+  expect(screenshot?.inputSchema.properties?.filename).toEqual(expect.objectContaining({
+    description: 'File name to save the screenshot to. Relative paths are resolved against the directory provided by the MCP client, or the server working directory if none is provided; they are not resolved against the configured output directory. If omitted, the screenshot is saved as `page-{timestamp}.{png|jpeg|webp}` in the output directory.',
+  }));
+
+  const video = tools.find(tool => tool.name === 'browser_start_video');
+  expect(video?.inputSchema.properties?.filename).toEqual(expect.objectContaining({
+    description: 'File name to save the video to. Relative paths are resolved against the directory provided by the MCP client, or the server working directory if none is provided; they are not resolved against the configured output directory. If omitted, the video is saved as `video-{timestamp}.webm` in the output directory.',
+  }));
+});
+
 test('support for legacy --vision option', async ({ startClient }) => {
   const { client } = await startClient({
     args: ['--vision'],
