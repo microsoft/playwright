@@ -60,18 +60,6 @@ Reporters receive them via [`property: TestStep.params`], and [`property: TestSt
 with the locator or the navigation url — for example, `Click` with subtitle `getByRole('button')`. Both are rendered in
 the trace viewer and the HTML report.
 
-### ⏱️ Perfetto reporter
-
-New built-in `perfetto` reporter writes a Trace Event Format file for the [Perfetto UI](https://ui.perfetto.dev) or
-`chrome://tracing`. The test run is rendered as a timeline with a lane per worker, where each test is a slice containing
-its hooks, fixtures and steps:
-
-```bash
-npx playwright test --reporter=perfetto
-```
-
-See [reporters](./test-reporters.md#perfetto-reporter) for the configuration options.
-
 ### 🖼️ Aria and screen snapshots in traces
 
 The `snapshots` option of [`method: Tracing.start`] and the [`property: TestOptions.trace`] fixture option now accept an
@@ -114,26 +102,21 @@ const user = await response.json(); // typed as User
 - New standalone [`property: TestOptions.reducedMotion`], [`property: TestOptions.forcedColors`] and [`property: TestOptions.contrast`] options.
 - New `--add-reporter` command line option appends a reporter on top of the ones configured in `playwright.config`, instead of replacing them like `--reporter` does.
 - New `omitTags` option for the `list`, `line`, `dot`, `github` and `junit` reporters suppresses the tags that are automatically appended to test titles.
-- [`property: TestStepInfo.annotations`] is now part of the public types.
-- Tests in serial suites carry a `serial` annotation, so that [`method: Reporter.preprocess`] implementations can keep them together when sharding.
 
 #### Command line
 
 - `npx playwright install --no-remove` keeps the browsers of other Playwright installations instead of removing them.
 - `npx playwright codegen --http-credentials` records against pages behind HTTP authentication.
 
-#### Trace viewer & HTML report
+#### Miscellaneous
 
-- Test annotations are shown in the trace viewer.
-- Requests made through [APIRequestContext] are recorded in a separate network stream in the trace.
+- New built-in [`perfetto`](./test-reporters.md#perfetto-reporter) reporter writes a Trace Event Format file for the [Perfetto UI](https://ui.perfetto.dev) or `chrome://tracing`, rendering the test run as a timeline with a lane per worker.
 - The HTML report renders a duration waterfall next to test steps.
 
 ### Announcements
 
-* ⚠️ The experimental `@playwright/experimental-ct-react`, `@playwright/experimental-ct-react17` and `@playwright/experimental-ct-vue` packages have been removed and are no longer published. Follow the [migration guide](./test-components.md#migration-from-the-experimental-packages) to move to the stories model introduced in 1.62. Story ids passed to [`method: Fixtures.mount`] can now be typed through the generated `Stories` registry.
-* ⚠️ The `firefox-beta` and `chromium-tip-of-tree` browser channels have been removed.
+* ⚠️ The experimental `@playwright/experimental-ct-react`, `@playwright/experimental-ct-react17` and `@playwright/experimental-ct-vue` packages will no longer be updated. Follow the [migration guide](./test-components.md#migration-from-the-experimental-packages) to move to the stories model introduced in 1.62. Story ids passed to [`method: Fixtures.mount`] can now be typed through the generated `Stories` registry.
 * ⚠️ Ubuntu 20.04 is not supported anymore.
-* [`method: BrowserContext.setHTTPCredentials`] is no longer deprecated.
 
 ### Browser Versions
 
