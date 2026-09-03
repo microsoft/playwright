@@ -74,12 +74,12 @@ test('filename descriptions explain output directory behavior', async ({ startCl
 
   const screenshot = tools.find(tool => tool.name === 'browser_take_screenshot');
   expect(screenshot?.inputSchema.properties?.filename).toEqual(expect.objectContaining({
-    description: 'File name to save the screenshot to. Relative paths are resolved against the MCP client workspace, not the server output directory. If omitted, the screenshot is saved as `page-{timestamp}.{png|jpeg|webp}` in the output directory.',
+    description: 'File name to save the screenshot to. Relative paths are resolved against the directory provided by the MCP client, or the server working directory if none is provided; they are not resolved against the configured output directory. If omitted, the screenshot is saved as `page-{timestamp}.{png|jpeg|webp}` in the output directory.',
   }));
 
   const video = tools.find(tool => tool.name === 'browser_start_video');
   expect(video?.inputSchema.properties?.filename).toEqual(expect.objectContaining({
-    description: 'File name to save the video to. Relative paths are resolved against the MCP client workspace, not the server output directory. If omitted, the video is saved as `video-{timestamp}.webm` in the output directory.',
+    description: 'File name to save the video to. Relative paths are resolved against the directory provided by the MCP client, or the server working directory if none is provided; they are not resolved against the configured output directory. If omitted, the video is saved as `video-{timestamp}.webm` in the output directory.',
   }));
 });
 
