@@ -631,14 +631,14 @@ pw:api    |      Launch browser
 pw:api    |    Create page @ a.test.ts:6
 pw:api    |Set content @ a.test.ts:15
 pw:api    |Click locator('div') @ a.test.ts:16
-pw:api    |↪ error: Error: page.click: Target page, context or browser has been closed
+pw:api    |↪ error: TargetClosedError: page.click: Target page, context or browser has been closed
 hook      |After Hooks
 hook      |  afterAll hook @ a.test.ts:9
 pw:api    |    Close context @ a.test.ts:10
 hook      |Worker Cleanup
 fixture   |  Fixture "browser"
           |Test timeout of 2000ms exceeded.
-          |Error: page.click: Target page, context or browser has been closed
+          |TargetClosedError: page.click: Target page, context or browser has been closed
 `);
 });
 
