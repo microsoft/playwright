@@ -161,9 +161,21 @@ Which snapshots to capture on every action. Passing `true` is a shortcut for `{ 
 * langs: java, python, csharp
 - `snapshots` <[boolean]>
 
-If this option is true tracing will
-* capture DOM snapshot on every action
-* record network activity
+Whether to capture DOM snapshot and record network activity on every action.
+
+### option: Tracing.start.ariaSnapshots
+* since: v1.63
+* langs: java, python, csharp
+- `ariaSnapshots` <[boolean]>
+
+Whether to capture aria snapshot of the page on every action.
+
+### option: Tracing.start.screenSnapshots
+* since: v1.63
+* langs: java, python, csharp
+- `screenSnapshots` <[boolean]>
+
+Whether to capture a screenshot of the page on every action.
 
 ### option: Tracing.start.sources
 * since: v1.17
