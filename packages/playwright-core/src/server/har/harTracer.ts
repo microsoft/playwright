@@ -265,9 +265,12 @@ export class HarTracer {
     const contentType = event.headers['content-type'];
     if (contentType)
       content.mimeType = contentType;
-    this._storeResponseContent(event.body, content, 'other');
-    if (!this._options.omitSizes)
-      harEntry.response.bodySize = event.body?.length ?? 0;
+    // Keep the size as -1 "not available" when we did not actually read the body.
+    if (event.body) {
+      this._storeResponseContent(event.body, content, 'other');
+      if (!this._options.omitSizes)
+        harEntry.response.bodySize = event.body.length;
+    }
 
     if (this._started)
       this._delegate.onEntryFinished(harEntry);
@@ -541,12 +544,7 @@ export class HarTracer {
       this._delegate.onEntryStarted(harEntry);
   }
 
-  private _storeResponseContent(buffer: Buffer | undefined, content: har.Content, resourceType: string) {
-    if (!buffer) {
-      content.size = 0;
-      return;
-    }
-
+  private _storeResponseContent(buffer: Buffer, content: har.Content, resourceType: string) {
     if (!this._options.omitSizes)
       content.size = buffer.length;
 

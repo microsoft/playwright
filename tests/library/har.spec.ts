@@ -880,7 +880,8 @@ it('should include redirects from API request', async ({ contextFactory, server 
   const [redirect, json] = log.entries;
   expect(redirect.request.url).toBe(server.PREFIX + '/redirect-me');
   expect(json.request.url).toBe(server.PREFIX + '/simple.json');
-
+  expect(redirect.response.bodySize).toBe(-1);
+  expect(redirect.response.content.size).toBe(-1);
   expect(redirect.timings).toBeDefined();
   expect(json.timings).toBeDefined();
 });
