@@ -1851,7 +1851,7 @@ Specifies a custom location for the step to be shown in test reports and trace v
 Arbitrary serializable parameters describing the step. They are reported to the reporters as `testStep.params` and are shown in the trace viewer.
 
 ### option: Test.step.subtitle
-* since: v1.64
+* since: v1.63
 - `subtitle` <[string]>
 
 Step subtitle that complements the title, for example the target of the step. It is reported to the reporters as `testStep.subtitle` and is shown next to the title in test reports and the trace viewer.
@@ -1910,7 +1910,7 @@ Specifies a custom location for the step to be shown in test reports and trace v
 Arbitrary serializable parameters describing the step. They are reported to the reporters as `testStep.params` and are shown in the trace viewer.
 
 ### option: Test.step.skip.subtitle
-* since: v1.64
+* since: v1.63
 - `subtitle` <[string]>
 
 Step subtitle that complements the title, for example the target of the step. It is reported to the reporters as `testStep.subtitle` and is shown next to the title in test reports and the trace viewer.
