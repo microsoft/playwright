@@ -1,11 +1,13 @@
 // Single source of truth for the mapping between idiomatic npm imports and
-// the keys exported from `playwright-core/lib/utilsBundle`.
+// the keys exported from `playwright-core/lib/utilsBundle` (or, for packages
+// that only the MCP server and tools need, `playwright-core/lib/mcpBundle`).
 //
-// Each entry: package specifier → { default?, named?: {srcName: bundleKey}, namespace? }
+// Each entry: package specifier → { default?, named?: {srcName: bundleKey}, namespace?, bundle? }
+// `bundle` defaults to 'utilsBundle'.
 // `lockfile` and `extract` have no clean npm equivalent (they wrap in-tree
 // third_party files) and intentionally remain as direct utilsBundle imports.
 
-/** @type {Record<string, { default?: string, named?: Record<string,string>, namespace?: string }>} */
+/** @type {Record<string, { default?: string, named?: Record<string,string>, namespace?: string, bundle?: 'utilsBundle' | 'mcpBundle' }>} */
 const MAPPING = {
   'colors/safe': { default: 'colors' },
   'debug': { default: 'debug' },
@@ -34,16 +36,16 @@ const MAPPING = {
   'get-east-asian-width': { namespace: 'getEastAsianWidth' },
   'yazl': { namespace: 'yazl' },
   'yauzl': { default: 'yauzl', namespace: 'yauzl' },
-  'zod': { namespace: 'z' },
-  'zod-to-json-schema': { named: { zodToJsonSchema: 'zodToJsonSchema' } },
-  '@modelcontextprotocol/sdk/client/index.js': { named: { Client: 'Client' } },
-  '@modelcontextprotocol/sdk/server/index.js': { named: { Server: 'Server' } },
-  '@modelcontextprotocol/sdk/client/sse.js': { named: { SSEClientTransport: 'SSEClientTransport' } },
-  '@modelcontextprotocol/sdk/server/sse.js': { named: { SSEServerTransport: 'SSEServerTransport' } },
-  '@modelcontextprotocol/sdk/client/stdio.js': { named: { StdioClientTransport: 'StdioClientTransport' } },
-  '@modelcontextprotocol/sdk/server/stdio.js': { named: { StdioServerTransport: 'StdioServerTransport' } },
-  '@modelcontextprotocol/sdk/server/streamableHttp.js': { named: { StreamableHTTPServerTransport: 'StreamableHTTPServerTransport' } },
-  '@modelcontextprotocol/sdk/client/streamableHttp.js': { named: { StreamableHTTPClientTransport: 'StreamableHTTPClientTransport' } },
+  'zod': { namespace: 'z', bundle: 'mcpBundle' },
+  'zod-to-json-schema': { named: { zodToJsonSchema: 'zodToJsonSchema' }, bundle: 'mcpBundle' },
+  '@modelcontextprotocol/sdk/client/index.js': { named: { Client: 'Client' }, bundle: 'mcpBundle' },
+  '@modelcontextprotocol/sdk/server/index.js': { named: { Server: 'Server' }, bundle: 'mcpBundle' },
+  '@modelcontextprotocol/sdk/client/sse.js': { named: { SSEClientTransport: 'SSEClientTransport' }, bundle: 'mcpBundle' },
+  '@modelcontextprotocol/sdk/server/sse.js': { named: { SSEServerTransport: 'SSEServerTransport' }, bundle: 'mcpBundle' },
+  '@modelcontextprotocol/sdk/client/stdio.js': { named: { StdioClientTransport: 'StdioClientTransport' }, bundle: 'mcpBundle' },
+  '@modelcontextprotocol/sdk/server/stdio.js': { named: { StdioServerTransport: 'StdioServerTransport' }, bundle: 'mcpBundle' },
+  '@modelcontextprotocol/sdk/server/streamableHttp.js': { named: { StreamableHTTPServerTransport: 'StreamableHTTPServerTransport' }, bundle: 'mcpBundle' },
+  '@modelcontextprotocol/sdk/client/streamableHttp.js': { named: { StreamableHTTPClientTransport: 'StreamableHTTPClientTransport' }, bundle: 'mcpBundle' },
   '@modelcontextprotocol/sdk/types.js': {
     named: {
       CallToolRequestSchema: 'CallToolRequestSchema',
@@ -52,6 +54,7 @@ const MAPPING = {
       PingRequestSchema: 'PingRequestSchema',
       ProgressNotificationSchema: 'ProgressNotificationSchema',
     },
+    bundle: 'mcpBundle',
   },
   // Transitive deps of in-tree third_party extractZip.ts / lockfile.ts.
   // Callers use `@utils/third_party/*` which routes through coreBundle.utils;
