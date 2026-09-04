@@ -921,8 +921,9 @@ export interface TestStep {
 
   /**
    * User-friendly test step subtitle that complements the title, when available. For Playwright API calls, it is the
-   * target locator or the navigation url. For example, a `Click` step has the clicked locator as a subtitle. User
-   * interfaces typically render the subtitle next to the title or on a separate line.
+   * target locator or the navigation url. For example, a `Click` step has the clicked locator as a subtitle.
+   * [test.step(title, body[, options])](https://playwright.dev/docs/api/class-test#test-step) steps carry the subtitle
+   * passed by the test author. User interfaces typically render the subtitle next to the title or on a separate line.
    *
    * ```js
    * // title `Click`, subtitle `getByRole('button')`
@@ -930,6 +931,11 @@ export interface TestStep {
    *
    * // title `Navigate`, subtitle `example.com/index.html`
    * await page.goto('https://example.com/index.html');
+   *
+   * // title `Add to cart`, subtitle `SKU 42`
+   * await test.step('Add to cart', async () => {
+   *   // ...
+   * }, { subtitle: 'SKU 42' });
    * ```
    *
    */
