@@ -59,6 +59,7 @@ test('should reject all promises when page is closed', async ({ page }) => {
     page.evaluate(() => new Promise(r => {})).catch(e => error = e),
     page.close(),
   ]);
+  expect(error.name).toBe('TargetClosedError');
   expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 
