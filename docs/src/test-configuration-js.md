@@ -30,6 +30,9 @@ export default defineConfig({
   // Opt out of parallel tests on CI.
   workers: process.env.CI ? 1 : undefined,
 
+  // Limit the whole test run, so that it fails with a report instead of hanging.
+  globalTimeout: 60 * 60 * 1000,
+
   // Reporter to use
   reporter: 'html',
 
@@ -60,6 +63,7 @@ export default defineConfig({
 | :- | :- |
 | [`property: TestConfig.forbidOnly`] | Whether to exit with an error if any tests are marked as `test.only`. Useful on CI.|
 | [`property: TestConfig.fullyParallel`] | have all tests in all files to run in parallel. See [Parallelism](./test-parallel) and [Sharding](./test-sharding) for more details. |
+| [`property: TestConfig.globalTimeout`] | Maximum time the whole test run can take. When reached, Playwright stops the run and reporters still produce a report. See [Timeouts](./test-timeouts.md) to learn more. |
 | [`property: TestConfig.projects`] | Run tests in multiple configurations or on multiple browsers |
 | [`property: TestConfig.reporter`] | Reporter to use. See [Test Reporters](/test-reporters.md) to learn more about which reporters are available. |
 | [`property: TestConfig.retries`] | The maximum number of retry attempts per test. See [Test Retries](/test-retries.md) to learn more about retries.|

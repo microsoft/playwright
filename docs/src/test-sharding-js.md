@@ -93,7 +93,6 @@ on:
     branches: [ main, master ]
 jobs:
   playwright-tests:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

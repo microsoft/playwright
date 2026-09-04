@@ -59,6 +59,24 @@ export default defineConfig({
 });
 ```
 
+## Global timeout
+* langs: js
+
+Always set a [global timeout](./test-timeouts.md#global-timeout) in CI. By default a test run has no upper bound, so a suite that hangs, or that slowly grows past the job limit of your CI provider, is killed by the runner mid-run and does not produce the test report.
+
+With [`property: TestConfig.globalTimeout`] set, Playwright stops the run itself.
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  // Fail the run after an hour, so that the reporters still produce a report.
+  globalTimeout: 60 * 60 * 1000,
+});
+```
+
+The examples below therefore do not set a job-level timeout such as `timeout-minutes` in GitHub Actions. If you do add one, keep it comfortably above `globalTimeout`, so that Playwright always stops first.
+
 ## CI configurations
 
 The [Command line tools](./browsers#install-system-dependencies) can be used to install all operating system dependencies in CI.
@@ -79,7 +97,6 @@ on:
     branches: [ main, master ]
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -114,7 +131,6 @@ on:
     branches: [ main, master ]
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -146,7 +162,6 @@ on:
     branches: [ main, master ]
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -171,7 +186,6 @@ on:
     branches: [ main, master ]
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -312,7 +326,6 @@ on:
   deployment_status:
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
@@ -336,7 +349,6 @@ on:
   deployment_status:
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
@@ -363,7 +375,6 @@ on:
   deployment_status:
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
@@ -389,7 +400,6 @@ on:
   deployment_status:
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
@@ -415,7 +425,7 @@ Large test suites can take very long to execute. By executing a preliminary test
 This will give you a faster feedback loop and slightly lower CI consumption while working on Pull Requests.
 To detect test files affected by your changeset, `--only-changed` analyses your suites' dependency graph. This is a heuristic and might miss tests, so it's important that you always run the full test suite after the preliminary test run.
 
-```yml js title=".github/workflows/playwright.yml" {24-26}
+```yml js title=".github/workflows/playwright.yml" {23-25}
 name: Playwright Tests
 on:
   push:
@@ -424,7 +434,6 @@ on:
     branches: [ main, master ]
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
