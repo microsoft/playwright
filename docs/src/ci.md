@@ -100,6 +100,10 @@ jobs:
         retention-days: 30
 ```
 
+:::note
+The `timeout-minutes` above is a hard kill, not a test failure. If your suite outgrows it, the runner stops the process mid-run, the job's conclusion is `cancelled`, and no report is written. Setting [`globalTimeout`](./test-timeouts-js.md) below it lets Playwright stop itself first, so an over-running suite fails with a full report instead.
+:::
+
 #### On push/pull_request
 * langs: python, java, csharp
 
