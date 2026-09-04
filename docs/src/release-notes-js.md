@@ -48,17 +48,17 @@ await page.locator('button').visible().click();
 ### 🧾 Step params and subtitles
 
 Steps now carry structured data for reporters. Playwright API steps report the target locator and call arguments,
-and [`method: Test.step`] accepts a `params` option for your own steps:
+and [`method: Test.step`] accepts `subtitle` and `params` options for your own steps:
 
 ```js
-await test.step('login', async () => {
+await test.step('Login', async () => {
   // ...
-}, { params: { user: 'admin' } });
+}, { subtitle: 'as admin', params: { user: 'admin' } });
 ```
 
-Reporters receive them via [`property: TestStep.params`], and [`property: TestStep.subtitle`] complements the title
-with the locator or the navigation url — for example, `Click` with subtitle `getByRole('button')`. Both are rendered in
-the trace viewer and the HTML report.
+Reporters receive them via [`property: TestStep.subtitle`] and [`property: TestStep.params`]. For Playwright API
+steps, the subtitle is the locator or the navigation url — for example, `Click` with subtitle `getByRole('button')`.
+Both are rendered next to the step title in the trace viewer and the HTML report.
 
 ### 🖼️ Aria and screen snapshots in traces
 
