@@ -15,7 +15,7 @@
  */
 
 import { isError } from '@isomorphic/rtti';
-import { parseSerializedValue, serializeValue } from '@protocol/serializers';
+import { parseSerializedValue, parseSystemErrorFields, serializeSystemErrorFields, serializeValue } from '@protocol/serializers';
 
 import type { SerializedError } from './channels';
 
@@ -50,7 +50,7 @@ export function isTargetClosedError(error: Error) {
 
 export function serializeError(e: any): SerializedError {
   if (isError(e))
-    return { error: { message: e.message, stack: e.stack, name: e.name } };
+    return { error: { message: e.message, stack: e.stack, name: e.name, ...serializeSystemErrorFields(e) } };
   return { value: serializeValue(e, value => ({ fallThrough: value })) };
 }
 
@@ -63,5 +63,6 @@ export function parseError(error: SerializedError): Error {
   const e = new Error(error.error.message);
   e.stack = error.error.stack || '';
   e.name = error.error.name;
+  parseSystemErrorFields(error.error, e);
   return e;
 }
