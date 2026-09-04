@@ -117,6 +117,7 @@ const user = await response.json(); // typed as User
 
 * ⚠️ The experimental `@playwright/experimental-ct-react`, `@playwright/experimental-ct-react17` and `@playwright/experimental-ct-vue` packages will no longer be updated. Follow the [migration guide](./test-components.md#migration-from-the-experimental-packages) to move to the stories model introduced in 1.62. Story ids passed to [`method: Fixtures.mount`] can now be typed through the generated `Stories` registry.
 * ⚠️ Ubuntu 20.04 is not supported anymore.
+* 🐧 On Linux arm64, Playwright now downloads the [Chrome for Testing](https://developer.chrome.com/blog/chrome-for-testing) build of Chromium, the same build used on all other platforms.
 
 ### Browser Versions
 
