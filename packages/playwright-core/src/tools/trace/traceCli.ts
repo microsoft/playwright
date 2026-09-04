@@ -22,7 +22,6 @@ import { traceRequests } from './traceRequests';
 import { traceRequest } from './traceRequests';
 import { traceConsole } from './traceConsole';
 import { traceErrors } from './traceErrors';
-import { traceSnapshot } from './traceSnapshot';
 import { traceScreenshot } from './traceScreenshot';
 import { traceAttachments } from './traceAttachments';
 import { traceAttachment } from './traceAttachments';
@@ -113,6 +112,7 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
         try {
           // Collect everything after '--' as the browser command.
           const browserArgs = cmd.args.slice(1);
+          const { traceSnapshot } = require('./traceSnapshot') as typeof import('./traceSnapshot');
           await traceSnapshot(actionId, { ...options, browserArgs });
         } catch (e) {
           logErrorAndExit(e as Error);

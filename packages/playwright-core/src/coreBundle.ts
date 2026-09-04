@@ -24,5 +24,16 @@ export * as oop from './outofprocess';
 export * as remote from './remote/playwrightServer';
 export * as registry from './server/registry/index';
 export * as server from './server/index';
-export * as tools from './tools';
+import type * as toolsModule from './tools';
+
+// The tools (MCP server, cli client, cli daemon, dashboard) are only needed by their commands; loading them here
+// would initialise all of them for every command and for `run-driver`.
+let toolsInstance: typeof toolsModule | undefined;
+export const tools: typeof toolsModule = new Proxy({} as typeof toolsModule, {
+  get: (_, property) => {
+    if (!toolsInstance)
+      toolsInstance = require('./tools') as typeof toolsModule;
+    return toolsInstance[property as keyof typeof toolsModule];
+  },
+});
 export { getUserAgent, getPlaywrightVersion } from './server/userAgent';

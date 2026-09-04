@@ -28,7 +28,6 @@ import { open, codegen } from './browserActions';
 import { installBrowsers, uninstallBrowsers, installDeps } from './installActions';
 import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/traceViewer';
 import { screenshot, pdf } from './browserActions';
-import { program as cliProgram } from '../tools/cli-client/program';
 import { decorateMCPCommand } from '../tools/mcp/program';
 
 import type { TraceViewerServerOptions } from '../server/trace/viewer/traceViewer';
@@ -245,6 +244,7 @@ export function decorateProgram(program: Command) {
       .helpOption(false)
       .action(async options => {
         process.argv.splice(process.argv.indexOf('cli'), 1);
+        const { program: cliProgram } = require('../tools/cli-client/program') as typeof import('../tools/cli-client/program');
         cliProgram().catch(logErrorAndExit);
       });
 

@@ -23,6 +23,7 @@ import { TestContext } from './testContext';
 import * as testTools from './testTools.js';
 import * as generatorTools from './generatorTools.js';
 import * as plannerTools from './plannerTools.js';
+import type * as toolsTypes from 'playwright-core/lib/tools';
 
 import type { TestTool } from './testTool';
 
@@ -41,7 +42,7 @@ export const testServerBackendTools: TestTool<any>[] = [
   ...tools.browserTools.map(tool => wrapBrowserTool(tool)),
 ];
 
-export class TestServerBackend extends EventEmitter implements tools.ServerBackend {
+export class TestServerBackend extends EventEmitter implements toolsTypes.ServerBackend {
   readonly name = 'Playwright';
   readonly version = '0.0.1';
   private _options: { muteConsole?: boolean, headless?: boolean };
@@ -54,11 +55,11 @@ export class TestServerBackend extends EventEmitter implements tools.ServerBacke
     this._configPath = configPath;
   }
 
-  async initialize(clientInfo: tools.ClientInfo): Promise<void> {
+  async initialize(clientInfo: toolsTypes.ClientInfo): Promise<void> {
     this._context = new TestContext(clientInfo, this._configPath, this._options);
   }
 
-  async callTool(name: string, args: tools.CallToolRequest['params']['arguments'], signal: AbortSignal): Promise<tools.CallToolResult> {
+  async callTool(name: string, args: toolsTypes.CallToolRequest['params']['arguments'], signal: AbortSignal): Promise<toolsTypes.CallToolResult> {
     const tool = testServerBackendTools.find(tool => tool.schema.name === name);
     if (!tool)
       throw new Error(`Tool not found: ${name}. Available tools: ${testServerBackendTools.map(tool => tool.schema.name).join(', ')}`);
@@ -74,7 +75,7 @@ export class TestServerBackend extends EventEmitter implements tools.ServerBacke
   }
 }
 
-function wrapBrowserTool(tool: tools.Tool): TestTool {
+function wrapBrowserTool(tool: toolsTypes.Tool): TestTool {
   const inputSchema = typesWithIntent.includes(tool.schema.type) ? (tool.schema.inputSchema as any).extend({
     intent: zod.string().describe('The intent of the call, for example the test step description plan idea')
   }) : tool.schema.inputSchema;
