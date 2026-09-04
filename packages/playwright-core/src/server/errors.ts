@@ -49,8 +49,12 @@ export function isTargetClosedError(error: Error) {
 }
 
 export function serializeError(e: any): SerializedError {
-  if (isError(e))
-    return { error: { message: e.message, stack: e.stack, name: e.name } };
+  if (isError(e)) {
+    const serialized: SerializedError = { error: { message: e.message, stack: e.stack, name: e.name } };
+    if (e.code)
+      serialized.error!.code = e.code;
+    return serialized;
+  }
   return { value: serializeValue(e, value => ({ fallThrough: value })) };
 }
 
@@ -63,5 +67,7 @@ export function parseError(error: SerializedError): Error {
   const e = new Error(error.error.message);
   e.stack = error.error.stack || '';
   e.name = error.error.name;
+  if (error.error.code)
+    (e as any).code = error.error.code;
   return e;
 }
