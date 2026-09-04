@@ -20,6 +20,7 @@ import * as path from 'path';
 
 import { createImage } from './playwright-test-fixtures';
 import { test, expect, retries } from './ui-mode-fixtures';
+import { iso } from '../../packages/playwright-core/lib/coreBundle';
 
 test.describe.configure({ mode: 'parallel', retries });
 
@@ -242,18 +243,24 @@ test('should show snapshots for steps', {
 });
 
 test('should show image diff', async ({ runUITest }) => {
-  const { page } = await runUITest({
+  const firstExpected = createImage(100, 100, 255, 0, 0);
+  const secondExpected = createImage(100, 100, 0, 255, 0);
+  const { page, testProcess } = await runUITest({
     'playwright.config.js': `
       module.exports = {
-        snapshotPathTemplate: '{arg}{ext}'
+        snapshotPathTemplate: 'snapshots/{testFilePath}/{arg}{ext}'
       };
     `,
-    'snapshot.png': createImage(100, 100, 255, 0, 0),
+    'snapshots/a.test.ts/first.png': firstExpected,
+    'snapshots/a.test.ts/second.png': secondExpected,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('vrt test', async ({ page }) => {
         await page.setViewportSize({ width: 100, height: 100 });
-        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+        await page.setContent('<style>html, body { background: white; }</style>');
+        await expect.soft(page).toHaveScreenshot('first.png', { timeout: 2000 });
+        await page.setContent('<style>html, body { background: black; }</style>');
+        await expect.soft(page).toHaveScreenshot('second.png', { timeout: 2000 });
       });
     `,
   });
@@ -262,10 +269,90 @@ test('should show image diff', async ({ runUITest }) => {
   await expect(page.getByTestId('workbench-run-status')).toContainText('Failed');
 
   await page.getByText(/Attachments/).click();
-  await expect(page.getByText('Diff', { exact: true })).toBeVisible();
-  await expect(page.getByText('Actual', { exact: true })).toBeVisible();
-  await expect(page.getByText('Expected', { exact: true })).toBeVisible();
-  await expect(page.getByTestId('test-result-image-mismatch').locator('img')).toBeVisible();
+  await expect(page.getByText('Diff', { exact: true })).toHaveCount(2);
+  await expect(page.getByText('Actual', { exact: true })).toHaveCount(2);
+  await expect(page.getByText('Expected', { exact: true })).toHaveCount(2);
+  await expect(page.getByTestId('test-result-image-mismatch')).toHaveCount(2);
+
+  const secondActual = await page.getByRole('link', { name: 'second-actual.png' }).evaluate(async link => {
+    const response = await fetch((link as HTMLAnchorElement).href);
+    return [...new Uint8Array(await response.arrayBuffer())];
+  });
+  expect(Buffer.from(secondActual)).not.toEqual(secondExpected);
+
+  const updateSnapshots = page.locator('.attachments-update-snapshot');
+  await expect(updateSnapshots).toHaveCount(2);
+  await expect(updateSnapshots).toHaveText(['Save actual as expected', 'Save actual as expected']);
+  await updateSnapshots.nth(1).click();
+  await expect(updateSnapshots).toHaveText(['Save actual as expected', 'Save actual as expected']);
+  await expect(updateSnapshots.nth(1).locator('.codicon-check')).toBeVisible();
+  await expect(updateSnapshots.nth(1)).toBeEnabled();
+  await expect(updateSnapshots.nth(1).locator('.codicon-check')).toBeHidden();
+
+  const snapshotDir = path.join(testProcess.params.cwd!, 'snapshots', 'a.test.ts');
+  expect(fs.readFileSync(path.join(snapshotDir, 'first.png'))).toEqual(firstExpected);
+  expect(fs.readFileSync(path.join(snapshotDir, 'second.png'))).toEqual(Buffer.from(secondActual));
+});
+
+test('should only save snapshots for the loaded test result', async ({ runUITest }, testInfo) => {
+  const expected = createImage(10, 10, 255, 0, 0);
+  const firstActual = createImage(10, 10, 0, 255, 0);
+  const secondActual = createImage(10, 10, 0, 0, 255);
+  const { page } = await runUITest({
+    'playwright.config.ts': `
+      export default {
+        outputDir: 'output',
+        snapshotPathTemplate: 'snapshots/{testName}/{arg}{ext}',
+      };
+    `,
+    'snapshots/first/shared.png': expected,
+    'snapshots/second/shared.png': expected,
+    'first.png': firstActual,
+    'second.png': secondActual,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      import fs from 'fs';
+      import path from 'path';
+      for (const name of ['first', 'second']) {
+        test(name, () => {
+          expect(fs.readFileSync(path.join(__dirname, name + '.png'))).toMatchSnapshot('shared.png');
+        });
+      }
+    `,
+  });
+
+  const traceRequested = new iso.ManualPromise();
+  const releaseTrace = new iso.ManualPromise();
+  await page.context().route('**/file?*', async route => {
+    if (new URL(route.request().url()).searchParams.get('path') === testInfo.outputPath('output', 'a-second', 'trace.zip')) {
+      traceRequested.resolve();
+      await releaseTrace;
+    }
+    await route.continue();
+  });
+
+  try {
+    await page.getByTitle('Run all').click();
+    await expect(page.getByTestId('status-line')).toContainText('2 failed');
+    await page.getByTestId('test-tree').getByText('first', { exact: true }).click();
+    await page.getByRole('tab', { name: 'Attachments' }).click();
+    const save = page.getByRole('button', { name: 'Save actual as expected' });
+    await expect(save).toBeVisible();
+
+    await page.getByTestId('test-tree').getByText('second', { exact: true }).click();
+    await traceRequested;
+    await expect(save).toHaveCount(0);
+    expect(fs.readFileSync(testInfo.outputPath('snapshots', 'first', 'shared.png'))).toEqual(expected);
+    expect(fs.readFileSync(testInfo.outputPath('snapshots', 'second', 'shared.png'))).toEqual(expected);
+
+    releaseTrace.resolve();
+    await save.click();
+    await expect(save.locator('.codicon-check')).toBeVisible();
+    expect(fs.readFileSync(testInfo.outputPath('snapshots', 'first', 'shared.png'))).toEqual(expected);
+    expect(fs.readFileSync(testInfo.outputPath('snapshots', 'second', 'shared.png'))).toEqual(secondActual);
+  } finally {
+    releaseTrace.resolve();
+  }
 });
 
 test('should show screenshot', async ({ runUITest }) => {
