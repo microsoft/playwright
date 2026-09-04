@@ -104,4 +104,11 @@ SerializedError:
         message: string
         name: string
         stack: string?
+        # See https://nodejs.org/api/errors.html#class-systemerror
+        code: string?
+        errno: int?
+        syscall: string?
+        address: string?
+        port: int?
+        hostname: string?
     value: SerializedValue?
