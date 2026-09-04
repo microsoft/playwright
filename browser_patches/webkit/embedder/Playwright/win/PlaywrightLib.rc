@@ -39,7 +39,7 @@ IDC_PLAYWRIGHT MENU
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "New Window\tCtrl-N"           IDM_NEW_WINDOW
+        MENUITEM "New Window\tCtrl-N",          IDM_NEW_WINDOW
         MENUITEM "Close\tCtrl-W",               IDM_CLOSE_WINDOW
     END
     POPUP "&View"

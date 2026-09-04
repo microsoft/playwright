@@ -22,10 +22,6 @@ const runtime = new Runtime(true /* isWorker */);
   // Create execution context in the runtime only when the script
   // source was actually evaluated in it.
   const dbg = new Debugger(global);
-  // A debuggee global with these flags unset is pinned to the debuggable wasm/asm.js
-  // baseline tier, with the optimizing compiler disabled entirely.
-  dbg.allowUnobservedWasm = true;
-  dbg.allowUnobservedAsmJS = true;
   if (dbg.findScripts({global}).length) {
     runtime.createExecutionContext(null /* domWindow */, global, {});
   } else {
