@@ -1277,7 +1277,7 @@ test('preserve step params', async ({ runInlineTest, mergeReports }) => {
       import { test, expect } from '@playwright/test';
       test('test 1', async ({ page }) => {
         await page.goto('about:blank');
-        await test.step('my step', async () => {}, { params: { foo: 'bar', count: 7 } });
+        await test.step('my step', async () => {}, { subtitle: 'my subtitle', params: { foo: 'bar', count: 7 } });
       });
     `,
   };
@@ -1286,7 +1286,7 @@ test('preserve step params', async ({ runInlineTest, mergeReports }) => {
   expect(exitCode).toBe(0);
   expect(outputLines).toEqual([
     `Navigate about:blank | {"url":"about:blank"}`,
-    `my step | {"foo":"bar","count":7}`,
+    `my step my subtitle | {"foo":"bar","count":7}`,
   ]);
 });
 
