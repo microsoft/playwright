@@ -45,7 +45,6 @@ on:
     branches: [ main, master ]
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -75,6 +74,17 @@ The workflow performs these steps:
 1. Run Playwright tests
 1. Upload HTML report to the GitHub UI
 
+Note that the workflow does not set a job-level `timeout-minutes`. Instead, set [`globalTimeout`](./test-timeouts.md#global-timeout) in your config:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  // Fail the run after an hour, so that the reporters still produce a report.
+  globalTimeout: 60 * 60 * 1000,
+});
+```
+
 To learn more about this, see ["Understanding GitHub Actions"](https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions).
 
 ## Setting up GitHub Actions
@@ -91,7 +101,6 @@ on:
     branches: [ main, master ]
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -123,7 +132,6 @@ on:
     branches: [ main, master ]
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -148,7 +156,6 @@ on:
     branches: [ main, master ]
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
