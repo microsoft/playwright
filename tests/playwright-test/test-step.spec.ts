@@ -1899,6 +1899,38 @@ test('should report step params', async ({ runInlineTest }) => {
   ]);
 });
 
+test('should report step subtitle', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      import type { Reporter, TestCase, TestResult, TestStep } from '@playwright/test/reporter';
+      export default class MyReporter implements Reporter {
+        onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+          if (step.category === 'test.step')
+            console.log('%%' + step.title + ' | ' + step.subtitle);
+        }
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = { reporter: './reporter' };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}) => {
+        await test.step('my step', async () => {}, { subtitle: 'my subtitle' });
+        await test.step.skip('skipped step', async () => {}, { subtitle: 'skipped subtitle' });
+        await test.step('plain step', async () => {});
+      });
+    `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    `my step | my subtitle`,
+    `skipped step | skipped subtitle`,
+    `plain step | undefined`,
+  ]);
+});
+
 test('should report input step params', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
