@@ -960,6 +960,24 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.step-subtitle .step-title-highlight')).toHaveText(['#target']);
     });
 
+    test('should render test.step subtitle', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('has steps', async ({}) => {
+            await test.step('Add to cart', async () => {}, { subtitle: 'SKU 42' });
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByRole('link', { name: 'has steps' }).click();
+      await expect(page.locator('.step-title-container', { hasText: 'Add to cart' })).toHaveAttribute('aria-label', 'Add to cart SKU 42');
+      await expect(page.locator('.step-subtitle')).toHaveText('SKU 42');
+    });
+
     test('should show step snippets from non-root', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'playwright.config.js': `
