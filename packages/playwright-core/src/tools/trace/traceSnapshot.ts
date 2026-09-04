@@ -22,7 +22,7 @@ import { HttpServer } from '@utils/httpServer';
 import { SnapshotServer } from '@isomorphic/trace/snapshotServer';
 import { BrowserBackend } from '../backend/browserBackend';
 import { browserTools } from '../backend/tools';
-import { playwright } from '../../inprocess';
+import { inProcessPlaywright } from '../../inprocess';
 import { parseCommand } from '../cli-daemon/command';
 import { minimist } from '../cli-client/minimist';
 import { commands } from '../cli-daemon/commands';
@@ -170,7 +170,7 @@ async function bootstrapSnapshotPage(swUrl: string, snapshotUrl: string) {
 }
 
 async function runCommandOnSnapshot(server: { url: string, stop: () => Promise<void> }, browserArgs: string[]) {
-  const browser = await playwright.chromium.launch({ headless: true });
+  const browser = await inProcessPlaywright().chromium.launch({ headless: true });
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.url);

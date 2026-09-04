@@ -20,7 +20,7 @@ import os from 'os';
 
 import dotenv from 'dotenv';
 import { isSystemDirectory } from '@utils/fileUtils';
-import { playwright } from '../../inprocess';
+import { inProcessPlaywright } from '../../inprocess';
 import { configFromIniFile } from './configIni';
 
 import type * as playwrightTypes from '../../..';
@@ -321,7 +321,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
     throw new Error('Device emulation is not supported with cdpEndpoint.');
 
   // Context options
-  const contextOptions: playwrightTypes.BrowserContextOptions = device ? playwright.devices[device] : {};
+  const contextOptions: playwrightTypes.BrowserContextOptions = device ? inProcessPlaywright().devices[device] : {};
 
   if (cliOptions.proxyServer) {
     const proxy: playwrightTypes.LaunchOptions['proxy'] = { server: cliOptions.proxyServer };

@@ -18,7 +18,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
-import { playwright } from '../../inprocess';
+import { inProcessPlaywright } from '../../inprocess';
 import { defaultCacheDirectory } from '../../server/registry/index';
 import { testDebug } from './log';
 import { outputDir } from '../backend/context';
@@ -88,7 +88,7 @@ function browserInfo(browser: playwrightTypes.Browser, config: FullConfig): Brow
 
 async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
   testDebug('create browser (isolated)');
-  const browserType = playwright[config.browser.browserName];
+  const browserType = inProcessPlaywright()[config.browser.browserName];
   const tracesDir = await computeTracesDir(config, clientInfo);
   const browser = await browserType.launch({
     tracesDir,
@@ -105,7 +105,7 @@ async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo)
 async function createCDPBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
   testDebug('create browser (cdp)');
   const artifactsDir = await computeTracesDir(config, clientInfo);
-  const browser = await playwright.chromium.connectOverCDP(config.browser.cdpEndpoint!, {
+  const browser = await inProcessPlaywright().chromium.connectOverCDP(config.browser.cdpEndpoint!, {
     headers: config.browser.cdpHeaders,
     timeout: config.browser.cdpTimeout,
     noDefaults: true,
@@ -144,7 +144,7 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
     };
   }
 
-  const playwrightObject = playwright as Playwright;
+  const playwrightObject = inProcessPlaywright() as Playwright;
   // Use connectToBrowser instead of playwright[browserName].connect because we don't have browserName.
   const browser = await connectToBrowser(playwrightObject, remoteOptions);
   browser._connectToBrowserType(playwrightObject[browser._browserName], {}, undefined);
@@ -163,7 +163,7 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
   if (await isProfileLocked5Times(userDataDir))
     throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
 
-  const browserType = playwright[config.browser.browserName];
+  const browserType = inProcessPlaywright()[config.browser.browserName];
   const configIgnoreDefaultArgs = config.browser.launchOptions?.ignoreDefaultArgs;
   const launchOptions: playwrightTypes.LaunchOptions & playwrightTypes.BrowserContextOptions = {
     tracesDir,

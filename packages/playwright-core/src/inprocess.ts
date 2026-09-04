@@ -24,9 +24,10 @@ import { packageRoot } from './package';
 import type { Playwright as PlaywrightAPI } from './client/playwright';
 import type { Language } from '@isomorphic/locatorGenerators';
 
+setCoreDir(packageRoot);
+
 export function createInProcessPlaywright(): PlaywrightAPI {
   const playwright = createPlaywright({ sdkLanguage: (process.env.PW_LANG_NAME as Language | undefined) || 'javascript', isClientCollocatedWithServer: true });
-  setCoreDir(packageRoot);
   const clientConnection = new Connection();
   clientConnection.useRawBuffers();
   const dispatcherConnection = new DispatcherConnection(true /* in process */);
@@ -59,4 +60,10 @@ export function createInProcessPlaywright(): PlaywrightAPI {
   return playwrightAPI;
 }
 
-export const playwright = createInProcessPlaywright();
+let playwrightInstance: PlaywrightAPI | undefined;
+
+export function inProcessPlaywright(): PlaywrightAPI {
+  if (!playwrightInstance)
+    playwrightInstance = createInProcessPlaywright();
+  return playwrightInstance;
+}

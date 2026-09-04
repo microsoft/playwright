@@ -25,7 +25,7 @@ import dotenv from 'dotenv';
 import { program } from 'commander';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { playwright } from '../inprocess';
+import { inProcessPlaywright } from '../inprocess';
 import type { Browser } from '../client/browser';
 import type { BrowserContext } from '../client/browserContext';
 import type { BrowserType } from '../client/browserType';
@@ -72,7 +72,7 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
 
   const contextOptions: BrowserContextOptions =
     // Copy the device descriptor since we have to compare and modify the options.
-    options.device ? { ...playwright.devices[options.device] } : {};
+    options.device ? { ...inProcessPlaywright().devices[options.device] } : {};
 
   // In headful mode, use host device scale factor for things to look nice.
   // In headless, keep things the way it works in Playwright by default.
@@ -351,6 +351,7 @@ export async function pdf(options: Options, captureOptions: CaptureOptions, url:
 }
 
 function lookupBrowserType(options: Options): BrowserType {
+  const playwright = inProcessPlaywright();
   let name = options.browser;
   if (options.device) {
     const device = playwright.devices[options.device];
@@ -371,6 +372,7 @@ function lookupBrowserType(options: Options): BrowserType {
 }
 
 function validateOptions(options: Options) {
+  const playwright = inProcessPlaywright();
   if (options.device && !(options.device in playwright.devices)) {
     const lines = [`Device descriptor not found: '${options.device}', available devices are:`];
     for (const name in playwright.devices)
