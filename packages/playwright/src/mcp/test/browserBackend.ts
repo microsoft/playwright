@@ -18,7 +18,7 @@ import crypto from 'crypto';
 
 import { stripAnsiEscapes } from '@isomorphic/stringUtils';
 
-import type { tools } from 'playwright-core/lib/coreBundle';
+import type * as tools from 'playwright-core/lib/tools';
 import type * as playwright from '../../../index';
 import type { TestInfoImpl } from '../../worker/testInfo';
 

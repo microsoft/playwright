@@ -24,7 +24,7 @@ import { makeSocketPath } from '@utils/fileUtils';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { libPath } from '../../package';
-import { playwright } from '../../inprocess';
+import { inProcessPlaywright } from '../../inprocess';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
 import { minimist } from '../cli-client/minimist';
 import { DashboardConnection } from './dashboardController';
@@ -140,7 +140,7 @@ type AppState = { page?: api.Page; server: DashboardServer };
 
 async function launchApp(appName: string, options?: { onClose?: () => void }) {
   const channel = findChromiumChannelBestEffort('javascript');
-  const context = await playwright.chromium.launchPersistentContext('', {
+  const context = await inProcessPlaywright().chromium.launchPersistentContext('', {
     ignoreDefaultArgs: ['--enable-automation'],
     channel,
     headless: !!process.env.PWTEST_DASHBOARD_APP_BIND_TITLE,

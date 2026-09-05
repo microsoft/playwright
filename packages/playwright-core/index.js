@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 require('./lib/bootstrap');
-module.exports = require('./lib/coreBundle').inprocess.playwright;
+module.exports = require('./lib/coreBundle').inprocess.inProcessPlaywright();

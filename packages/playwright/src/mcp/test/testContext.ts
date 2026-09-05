@@ -30,6 +30,7 @@ import { StringWriteStream } from './streams';
 import { fileExistsAsync } from '../../util';
 import { ensureSeedFile, seedProject } from './seed';
 import { configLoader } from '../../common';
+import type * as toolsTypes from 'playwright-core/lib/tools';
 
 import type { ConfigLocation } from '../../common';
 import type { BrowserMCPRequest, BrowserMCPResponse } from './browserBackend';
@@ -86,7 +87,7 @@ type TestRunnerAndScreen = {
 };
 
 export class TestContext {
-  private _clientInfo: tools.ClientInfo;
+  private _clientInfo: toolsTypes.ClientInfo;
   private _testRunnerAndScreen: TestRunnerAndScreen | undefined;
   private _testOpQueue: Promise<void> = Promise.resolve();
   readonly computedHeaded: boolean;
@@ -94,7 +95,7 @@ export class TestContext {
   readonly rootPath: string;
   generatorJournal: GeneratorJournal | undefined;
 
-  constructor(clientInfo: tools.ClientInfo, configPath: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
+  constructor(clientInfo: toolsTypes.ClientInfo, configPath: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
     this._clientInfo = clientInfo;
 
     this._configLocation = configLoader.resolveConfigLocation(configPath || clientInfo.cwd);

@@ -23,6 +23,9 @@ client/
 @isomorphic/**
 @utils/**
 
+[mcpBundle.ts]
+
+
 [utilsBundle.ts]
 node_modules/chokidar
 node_modules/colors/safe

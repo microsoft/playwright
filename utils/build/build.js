@@ -447,8 +447,8 @@ class CustomCallbackStep extends Step {
 // 3. `import …  from '<vendored-pkg>'` (debug, mime, ws, …) →
 //    `const … = require('playwright-core/lib/utilsBundle').<key>` so that
 //    consumers can write idiomatic npm imports while the runtime still goes
-//    through the vendored utilsBundle. The mapping lives in
-//    utils/build/utilsBundleMapping.js.
+//    through the vendored utilsBundle (or mcpBundle for zod and the MCP SDK).
+//    The mapping lives in utils/build/utilsBundleMapping.js.
 const { MAPPING: VENDORED_MAPPING, VENDORED_PACKAGES } = require('./utilsBundleMapping');
 
 const VENDORED_INVERSE_NAMED = {};
@@ -471,13 +471,13 @@ const VENDORED_PKG_RE = new RegExp(
     'gm'
 );
 
-function _utilsBundleSpecifier(filePath) {
+function _bundleSpecifier(filePath, bundle) {
   const coreSrcMarker = `${path.sep}playwright-core${path.sep}src${path.sep}`;
   const idx = filePath.indexOf(coreSrcMarker);
   if (idx === -1)
-    return "'playwright-core/lib/utilsBundle'";
+    return `'playwright-core/lib/${bundle}'`;
   const coreSrcRoot = filePath.slice(0, idx + coreSrcMarker.length - 1);
-  let rel = path.relative(path.dirname(filePath), path.join(coreSrcRoot, 'utilsBundle'));
+  let rel = path.relative(path.dirname(filePath), path.join(coreSrcRoot, bundle));
   rel = rel.split(path.sep).join('/');
   if (!rel.startsWith('.'))
     rel = './' + rel;
@@ -527,12 +527,12 @@ function _parseNamedList(braced) {
 }
 
 function _rewriteVendoredImports(filePath, contents) {
-  const bundleSpec = _utilsBundleSpecifier(filePath);
   return contents.replace(VENDORED_PKG_RE, (full, clause, pkg) => {
     const def = VENDORED_MAPPING[pkg];
     const parsed = _parseClause(clause);
     if (!parsed)
       return full;
+    const bundleSpec = _bundleSpecifier(filePath, def.bundle || 'utilsBundle');
     /** @type {string[]} */
     const lines = [];
     if (parsed.default && def.default)
@@ -677,11 +677,19 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright-core/src/utilsBundle.ts')],
   outfile: filePath('packages/playwright-core/lib/utilsBundle.js'),
+}, [filePath('packages/playwright-core/src/utilsBundle.ts')]));
+
+// playwright-core/lib/mcpBundle.js — zod and the MCP SDK, loaded on demand by
+// the MCP server and the tools so that everything else does not pay for them.
+steps.push(new EsbuildStep({
+  bundle: true,
+  entryPoints: [filePath('packages/playwright-core/src/mcpBundle.ts')],
+  outfile: filePath('packages/playwright-core/lib/mcpBundle.js'),
   external: ['express', '@anthropic-ai/sdk'],
   alias: {
     'raw-body': filePath('utils/build/raw-body.ts'),
   },
-}, [filePath('packages/playwright-core/src/utilsBundle.ts'), filePath('utils/build/raw-body.ts')]));
+}, [filePath('packages/playwright-core/src/mcpBundle.ts'), filePath('utils/build/raw-body.ts')]));
 
 // Build playwright-core as a single bundle.
 steps.push(new EsbuildStep({
@@ -706,9 +714,9 @@ steps.push(new EsbuildStep({
     __PW_HMR__: String(!!watchMode),
   },
   plugins: [{
-    name: 'externalize-utilsBundle',
-    setup: build => build.onResolve({ filter: /utilsBundle/ },
-        () => ({ path: './utilsBundle', external: true })),
+    name: 'externalize-bundles',
+    setup: build => build.onResolve({ filter: /utilsBundle|mcpBundle/ },
+        args => ({ path: './' + path.basename(args.path, '.js'), external: true })),
   }, dynamicImportToRequirePlugin],
 }, [playwrightCoreSrc, ...commonUtilsSrc, filePath('packages/injected')]));
 

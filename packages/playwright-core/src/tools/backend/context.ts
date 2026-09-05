@@ -23,7 +23,7 @@ import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { disposeAll } from '@isomorphic/disposable';
 import { eventsHelper } from '@utils/eventsHelper';
 import { isPathInside, isSystemDirectory, isWritable } from '@utils/fileUtils';
-import { playwright } from '../../inprocess';
+import { inProcessPlaywright } from '../../inprocess';
 
 import { dedent, languageGeneratorId, secretCode } from './codegen';
 import { Tab } from './tab';
@@ -375,7 +375,7 @@ export class Context {
 
   private async _initializeBrowserContext() {
     if (this.config.testIdAttribute)
-      playwright.selectors.setTestIdAttribute(this.config.testIdAttribute);
+      inProcessPlaywright().selectors.setTestIdAttribute(this.config.testIdAttribute);
     const browserContext = this._rawBrowserContext;
     await this._setupRequestInterception(browserContext);
 

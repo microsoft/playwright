@@ -15,14 +15,11 @@
  */
 
 import { Option as ProgramOption } from 'commander';
-import * as mcpServer from '../utils/mcp/server';
 import { commaSeparatedList, defaultCodegenLanguage, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfigForMCP, semicolonSeparatedList } from './config';
 import { setupExitWatchdog } from './watchdog';
-import { createBrowserWithInfo } from './browserFactory';
-import { BrowserBackend } from '../backend/browserBackend';
-import { filteredTools } from '../backend/tools';
 import { testDebug } from './log';
 import { packageJSON } from '../../package';
+import type * as mcpServer from '../utils/mcp/server';
 
 import type { Command } from 'commander';
 import type { ClientInfo } from '../utils/mcp/server';
@@ -95,6 +92,10 @@ export function decorateMCPCommand(command: Command) {
           options.caps.push('devtools');
 
         const config = await resolveCLIConfigForMCP(options);
+        const { start } = require('../utils/mcp/server') as typeof import('../utils/mcp/server');
+        const { createBrowserWithInfo } = require('./browserFactory') as typeof import('./browserFactory');
+        const { BrowserBackend } = require('../backend/browserBackend') as typeof import('../backend/browserBackend');
+        const { filteredTools } = require('../backend/tools') as typeof import('../backend/tools');
         const tools = filteredTools(config);
         const useSharedBrowser = config.sharedBrowserContext || config.browser.isolated;
         let sharedBrowserPromise: Promise<playwright.Browser> | undefined;
@@ -159,6 +160,6 @@ export function decorateMCPCommand(command: Command) {
             }
           },
         };
-        await mcpServer.start(factory, config.server);
+        await start(factory, config.server);
       });
 }

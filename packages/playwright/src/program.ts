@@ -28,6 +28,7 @@ import { showReport, mergeReports } from './cli/reportActions';
 import { TestServerBackend, testServerBackendTools } from './mcp/test/testBackend';
 import { ClaudeGenerator, CodexGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
 import { packageRoot, packageJSON } from './package';
+import type * as toolsTypes from 'playwright-core/lib/tools';
 
 export { program };
 
@@ -146,7 +147,7 @@ function addTestMCPServerCommand(program: Command) {
   command.option('--port <port>', 'port to listen on for SSE transport.');
   command.action(async options => {
     tools.setupExitWatchdog();
-    const factory: tools.ServerBackendFactory = {
+    const factory: toolsTypes.ServerBackendFactory = {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
       version: packageJSON.version,

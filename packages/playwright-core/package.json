@@ -25,6 +25,7 @@
     "./lib/bootstrap": "./lib/bootstrap.js",
     "./lib/coreBundle": "./lib/coreBundle.js",
     "./lib/utilsBundle": "./lib/utilsBundle.js",
+    "./lib/mcpBundle": "./lib/mcpBundle.js",
     "./lib/tools/cli-client/program": "./lib/tools/cli-client/program.js"
   },
   "bin": {

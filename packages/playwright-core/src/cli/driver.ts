@@ -20,7 +20,7 @@ import fs from 'fs';
 
 import { PipeTransport } from '@utils/pipeTransport';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
-import { playwright } from '../inprocess';
+import { inProcessPlaywright } from '../inprocess';
 import { PlaywrightServer } from '../remote/playwrightServer';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from '../server';
 
@@ -89,7 +89,7 @@ export async function launchBrowserServer(browserName: string, configFile?: stri
   let options: LaunchServerOptions = {};
   if (configFile)
     options = JSON.parse(fs.readFileSync(configFile).toString());
-  const browserType = (playwright as any)[browserName] as BrowserType;
+  const browserType = (inProcessPlaywright() as any)[browserName] as BrowserType;
   const server = await browserType.launchServer(options);
   console.log(server.wsEndpoint());
 }
