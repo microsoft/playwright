@@ -20,12 +20,12 @@ import type { StackFrame } from './channels';
 import type { Page } from './page';
 import type { BrowserContextOptions } from './types';
 
-// Instrumentation can mutate the data, for example change the stepId.
+// Instrumentation can mutate the data, for example assign the callId.
 export interface ApiCallData {
   title?: string;
   frames: StackFrame[];
   userData: any;
-  stepId?: string;
+  callId?: string;
   error?: Error;
 }
 

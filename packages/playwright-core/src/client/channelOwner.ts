@@ -196,7 +196,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     let apiName = stackTrace.apiName;
     if (apiName.startsWith('_') || apiName.includes('._'))
       apiName = options?.title ?? apiName;
-    const apiZone: ApiZone = { title: options?.title, apiName, frames: stackTrace.frames, internal: options?.internal ?? false, reported: false, userData: undefined, stepId: undefined };
+    const apiZone: ApiZone = { title: options?.title, apiName, frames: stackTrace.frames, internal: options?.internal ?? false, reported: false, userData: undefined, callId: undefined };
 
     try {
       const result = await currentZone().with('apiZone', apiZone).run(async () => await func(apiZone));
@@ -254,6 +254,6 @@ type ApiZone = {
   internal?: boolean;
   reported: boolean;
   userData: any;
-  stepId?: string;
+  callId?: string;
   error?: Error;
 };

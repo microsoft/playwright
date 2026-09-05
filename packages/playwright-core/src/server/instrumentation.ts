@@ -96,8 +96,6 @@ export type CallMetadata = {
   // Client is making an internal call that should not show up in
   // the inspector or trace.
   internal?: boolean;
-  // Test runner step id.
-  stepId?: string;
   location?: { file: string, line?: number, column?: number };
   log: string[];
   error?: SerializedError;

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { parseClientSideCallMetadata } from './traceUtils';
-
 import { SnapshotStorage } from './snapshotStorage';
 import { TraceModernizer } from './traceModernizer';
 
@@ -72,6 +70,11 @@ export class TraceLoader {
       modernizer.appendTrace(network);
       unzipProgress?.(++done, total);
 
+      const stacks = await this._backend.readText(prefix + '.stacks');
+      if (stacks)
+        modernizer.appendStacks(stacks);
+      unzipProgress?.(++done, total);
+
       contextEntry.actions = modernizer.actions().sort((a1, a2) => a1.startTime - a2.startTime);
 
       if (!backend.isLive()) {
@@ -87,14 +90,6 @@ export class TraceLoader {
           }
         }
       }
-
-      const stacks = await this._backend.readText(prefix + '.stacks');
-      if (stacks) {
-        const callMetadata = parseClientSideCallMetadata(JSON.parse(stacks));
-        for (const action of contextEntry.actions)
-          action.stack = action.stack || callMetadata.get(action.callId);
-      }
-      unzipProgress?.(++done, total);
 
       for (const resource of contextEntry.resources) {
         if (resource.request.postData?._file)
