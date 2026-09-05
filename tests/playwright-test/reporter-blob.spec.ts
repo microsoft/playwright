@@ -1459,6 +1459,199 @@ test('keep projects with same name different global tag separate', async ({ runI
   await expect(page.getByText('Errors')).not.toBeVisible();
 });
 
+test.describe('merge-strategy', () => {
+  const files = (expectValue: string) => ({
+    'playwright.config.ts': `module.exports = { reporter: 'blob' };`,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test 1', async ({}) => { expect('${expectValue}').toBe('pass'); });
+    `,
+  });
+
+  async function mergeFailThenPassBlobs(runInlineTest, allReportsDir: string) {
+    await runInlineTest(files('fail'));
+    await fs.promises.cp(test.info().outputPath('blob-report', 'report.zip'), path.join(allReportsDir, 'report-1-failed.zip'));
+
+    await runInlineTest(files('pass'));
+    await fs.promises.cp(test.info().outputPath('blob-report', 'report.zip'), path.join(allReportsDir, 'report-2-passed.zip'));
+  }
+
+  test('"separate" (default) keeps a colliding test as two distinct entries', async ({ runInlineTest, mergeReports, showReport, page }) => {
+    const allReportsDir = test.info().outputPath('all-blob-reports');
+    await mergeFailThenPassBlobs(runInlineTest, allReportsDir);
+
+    const { exitCode } = await mergeReports(allReportsDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
+    expect(exitCode).toBe(0);
+    await showReport();
+    await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('2');
+    await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
+    await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('1');
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveText(['test 1', 'test 1']);
+  });
+
+  test('"overwrite" replaces the earlier blob\'s result with the later one', async ({ runInlineTest, mergeReports, showReport, page }) => {
+    const allReportsDir = test.info().outputPath('all-blob-reports');
+    await mergeFailThenPassBlobs(runInlineTest, allReportsDir);
+
+    const { exitCode } = await mergeReports(allReportsDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html', '--merge-strategy', 'overwrite'] });
+    expect(exitCode).toBe(0);
+    await showReport();
+    await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('1');
+    await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
+    await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('0');
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveText(['test 1']);
+  });
+
+  test('"as-retry" treats the later blob\'s result as a retry of the earlier one', async ({ runInlineTest, mergeReports, showReport, page }) => {
+    const allReportsDir = test.info().outputPath('all-blob-reports');
+    await mergeFailThenPassBlobs(runInlineTest, allReportsDir);
+
+    const { exitCode } = await mergeReports(allReportsDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html', '--merge-strategy', 'as-retry'] });
+    expect(exitCode).toBe(0);
+    await showReport();
+    await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('1');
+    await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('0');
+    await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('0');
+    await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('1');
+    await expect(page.locator('.test-file-test .test-file-title')).toHaveText(['test 1']);
+
+    await page.locator('.test-file-test a').first().click();
+    await expect(page.getByText('Retry #1')).toBeVisible();
+  });
+
+  test('invalid --merge-strategy value is rejected', async ({ runInlineTest, mergeReports }) => {
+    const allReportsDir = test.info().outputPath('all-blob-reports');
+    await mergeFailThenPassBlobs(runInlineTest, allReportsDir);
+
+    const { exitCode, output } = await mergeReports(allReportsDir, {}, { additionalArgs: ['--merge-strategy', 'bogus'] });
+    expect(exitCode).toBe(1);
+    expect(output).toContain('Unsupported --merge-strategy');
+  });
+
+  test('"overwrite" does not discard a test\'s own in-blob retries when there is no cross-blob collision', async ({ runInlineTest, mergeReports, showReport, page }) => {
+    const allReportsDir = test.info().outputPath('all-blob-reports');
+    await runInlineTest({
+      'playwright.config.ts': `module.exports = { reporter: 'blob', retries: 2 };`,
+      'a.test.js': `
+        import { test, expect } from '@playwright/test';
+        test('flaky', async ({}, testInfo) => { expect(testInfo.retry).toBe(2); });
+      `,
+    });
+    await fs.promises.cp(test.info().outputPath('blob-report', 'report.zip'), path.join(allReportsDir, 'report-1.zip'));
+
+    const { exitCode } = await mergeReports(allReportsDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html', '--merge-strategy', 'overwrite'] });
+    expect(exitCode).toBe(0);
+    await showReport();
+    // The single blob's own retries (fail, fail, pass) must be preserved, not collapsed to the last attempt only.
+    await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('1');
+  });
+
+  test('"as-retry" numbers retries correctly across multiple colliding blobs that each have their own in-blob retries', async ({ runInlineTest, mergeReports }) => {
+    const allReportsDir = test.info().outputPath('all-blob-reports');
+    // blob1: retries=1, both attempts fail (local retry 0,1).
+    // blob2 (rerun): retries=1, both attempts fail again (local retry 0,1 -> should become 2,3).
+    // blob3 (second rerun): retries=1, first attempt fails, second passes (local retry 0,1 -> should become 4,5).
+    const shouldPassOnRetryValues = [false, false, true];
+    for (let i = 0; i < shouldPassOnRetryValues.length; i++) {
+      await runInlineTest({
+        'playwright.config.ts': `module.exports = { reporter: 'blob', retries: 1 };`,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('t', async ({}, testInfo) => {
+            expect(testInfo.retry === 1 && ${shouldPassOnRetryValues[i]}).toBe(true);
+          });
+        `,
+      });
+      await fs.promises.cp(test.info().outputPath('blob-report', 'report.zip'), path.join(allReportsDir, `report-${i}.zip`));
+    }
+    const { exitCode, output } = await mergeReports(allReportsDir, {}, { additionalArgs: ['--reporter', 'json', '--merge-strategy', 'as-retry'] });
+    expect(exitCode).toBe(0);
+    const json = JSON.parse(output.substring(output.indexOf('{')));
+    const results = json.suites[0].specs[0].tests[0].results;
+    expect(results.map((r: any) => r.retry)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(results.map((r: any) => r.status)).toEqual(['failed', 'failed', 'failed', 'failed', 'failed', 'passed']);
+    expect(json.suites[0].specs[0].tests[0].status).toBe('flaky');
+  });
+
+  test('"as-retry" keeps two independently colliding tests\' retry numbering isolated from each other', async ({ runInlineTest, mergeReports }) => {
+    const allReportsDir = test.info().outputPath('all-blob-reports');
+    await runInlineTest({
+      'playwright.config.ts': `module.exports = { reporter: 'blob', retries: 1 };`,
+      'a.test.js': `
+        import { test, expect } from '@playwright/test';
+        test('testA', async ({}) => { expect(1).toBe(2); });
+        test('testB', async ({}) => { expect(1).toBe(1); });
+      `,
+    });
+    await fs.promises.cp(test.info().outputPath('blob-report', 'report.zip'), path.join(allReportsDir, 'report-1.zip'));
+
+    await runInlineTest({
+      'playwright.config.ts': `module.exports = { reporter: 'blob', retries: 1 };`,
+      'a.test.js': `
+        import { test, expect } from '@playwright/test';
+        test('testA', async ({}, testInfo) => { expect(testInfo.retry).toBe(1); });
+        test('testB', async ({}) => { expect(1).toBe(2); });
+      `,
+    });
+    await fs.promises.cp(test.info().outputPath('blob-report', 'report.zip'), path.join(allReportsDir, 'report-2.zip'));
+
+    const { exitCode, output } = await mergeReports(allReportsDir, {}, { additionalArgs: ['--reporter', 'json', '--merge-strategy', 'as-retry'] });
+    expect(exitCode).toBe(0);
+    const json = JSON.parse(output.substring(output.indexOf('{')));
+    const specs = json.suites[0].specs;
+    const testA = specs.find((s: any) => s.title === 'testA').tests[0];
+    const testB = specs.find((s: any) => s.title === 'testB').tests[0];
+    // testA: blob1 fails twice (0,1), blob2 fails then passes (offset to 2,3).
+    expect(testA.results.map((r: any) => r.retry)).toEqual([0, 1, 2, 3]);
+    // testB: blob1 passes immediately (1 result, no retry needed), blob2 fails twice (offset to 1,2).
+    // testB's own (shorter) offset chain must not be contaminated by testA's unrelated, longer one.
+    expect(testB.results.map((r: any) => r.retry)).toEqual([0, 1, 2]);
+  });
+
+  test('"overwrite"/"as-retry" reconcile blobs by actual run time, not by filename sort order', async ({ runInlineTest, mergeReports, showReport, page }) => {
+    const allReportsDir = test.info().outputPath('all-blob-reports');
+    // Chronologically: report-2 (FAIL) is created first (older), report-10 (PASS) is created second (newer).
+    // Alphabetically "report-10.zip" sorts BEFORE "report-2.zip" -- the opposite of chronological order.
+    await runInlineTest(files('fail'));
+    await fs.promises.cp(test.info().outputPath('blob-report', 'report.zip'), path.join(allReportsDir, 'report-2.zip'));
+
+    await runInlineTest(files('pass'));
+    await fs.promises.cp(test.info().outputPath('blob-report', 'report.zip'), path.join(allReportsDir, 'report-10.zip'));
+
+    const { exitCode } = await mergeReports(allReportsDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html', '--merge-strategy', 'overwrite'] });
+    expect(exitCode).toBe(0);
+    await showReport();
+    await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
+    await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('0');
+  });
+
+  test('same test title under different project names is never treated as a collision', async ({ runInlineTest, mergeReports, showReport, page }) => {
+    const allReportsDir = test.info().outputPath('all-blob-reports');
+    await runInlineTest({
+      'playwright.config.ts': `module.exports = { reporter: 'blob', projects: [{ name: 'projA' }] };`,
+      'a.test.js': `
+        import { test, expect } from '@playwright/test';
+        test('t', async ({}) => { expect(1).toBe(1); });
+      `,
+    });
+    await fs.promises.cp(test.info().outputPath('blob-report', 'report.zip'), path.join(allReportsDir, 'report-1.zip'));
+
+    await runInlineTest({
+      'playwright.config.ts': `module.exports = { reporter: 'blob', projects: [{ name: 'projB' }] };`,
+      'a.test.js': `
+        import { test, expect } from '@playwright/test';
+        test('t', async ({}) => { expect(1).toBe(1); });
+      `,
+    });
+    await fs.promises.cp(test.info().outputPath('blob-report', 'report.zip'), path.join(allReportsDir, 'report-2.zip'));
+
+    const { exitCode } = await mergeReports(allReportsDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html', '--merge-strategy', 'as-retry'] });
+    expect(exitCode).toBe(0);
+    await showReport();
+    await expect(page.locator('.subnav-item:has-text("All") .counter')).toHaveText('2');
+  });
+});
+
 test('no reports error', async ({ runInlineTest, mergeReports }) => {
   const reportDir = test.info().outputPath('blob-report');
   fs.mkdirSync(reportDir, { recursive: true });

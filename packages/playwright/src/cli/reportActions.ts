@@ -21,7 +21,10 @@ import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { builtInReporters, config as commonConfig, configLoader } from '../common';
 import { html, merge } from '../runner';
 
+import type { MergeStrategy } from '../reporters/merge';
 import type { ReporterDescription } from '../../types/test';
+
+const mergeStrategies: MergeStrategy[] = ['separate', 'overwrite', 'as-retry'];
 
 export async function showReport(report: string | undefined, host: string, port: number) {
   await html.showHTMLReport(report, host, port);
@@ -43,7 +46,10 @@ export async function mergeReports(reportDir: string | undefined, opts: { [key: 
   if (!reporterDescriptions)
     reporterDescriptions = [[commonConfig.defaultReporter]];
   const rootDirOverride = configFile ? config.config.rootDir : undefined;
-  const result = await merge.createMergedReport(config, dir, reporterDescriptions!, rootDirOverride);
+  const mergeStrategy: MergeStrategy = opts.mergeStrategy ?? 'separate';
+  if (!mergeStrategies.includes(mergeStrategy))
+    throw new Error(`Unsupported --merge-strategy "${mergeStrategy}", must be one of: ${mergeStrategies.join(', ')}`);
+  const result = await merge.createMergedReport(config, dir, reporterDescriptions!, rootDirOverride, mergeStrategy);
   gracefullyProcessExitDoNotHang(result === 'failed' ? 1 : 0);
 }
 

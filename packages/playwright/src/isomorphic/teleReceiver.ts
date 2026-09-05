@@ -90,6 +90,7 @@ export type JsonTestResultStart = {
   workerIndex: number;
   parallelIndex: number;
   startTime: number;
+  discardPreviousResults?: boolean;
 };
 
 export type JsonAttachment = Omit<reporterTypes.TestResult['attachments'][0], 'body'> & { base64?: string; };
@@ -365,7 +366,7 @@ export class TeleReporterReceiver {
 
   private _onTestBegin(testId: string, payload: JsonTestResultStart) {
     const test = this._tests.get(testId)!;
-    if (this._options.clearPreviousResultsWhenTestBegins)
+    if (this._options.clearPreviousResultsWhenTestBegins || payload.discardPreviousResults)
       test.results = [];
     const testResult = test._createTestResult(payload.id);
     testResult.retry = payload.retry;
