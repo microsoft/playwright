@@ -484,7 +484,7 @@ await page.GotoAsync("https://example.com");
 // Delete header
 await page.route('**/*', async route => {
   const headers = route.request().headers();
-  delete headers['X-Secret'];
+  delete headers['x-secret'];
   await route.continue({ headers });
 });
 
@@ -496,7 +496,7 @@ await page.route('**/*', route => route.continue({ method: 'POST' }));
 // Delete header
 page.route("**/*", route -> {
   Map<String, String> headers = new HashMap<>(route.request().headers());
-  headers.remove("X-Secret");
+  headers.remove("x-secret");
     route.resume(new Route.ResumeOptions().setHeaders(headers));
 });
 
@@ -532,7 +532,7 @@ page.route("**/*", lambda route: route.continue_(method="POST"))
 // Delete header
 await page.RouteAsync("**/*", async route => {
     var headers = new Dictionary<string, string>(route.Request.Headers.ToDictionary(x => x.Key, x => x.Value));
-    headers.Remove("X-Secret");
+    headers.Remove("x-secret");
     await route.ContinueAsync(new() { Headers = headers });
 });
 
