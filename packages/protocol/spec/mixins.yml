@@ -131,6 +131,7 @@ ContextOptions:
           key: binary?
           passphrase: string?
           pfx: binary?
+          sendNone: boolean?
     javaScriptEnabled: boolean?
     bypassCSP: boolean?
     userAgent: string?

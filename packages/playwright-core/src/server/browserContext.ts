@@ -802,6 +802,11 @@ export function verifyClientCertificates(clientCertificates?: types.BrowserConte
   for (const cert of clientCertificates) {
     if (!cert.origin)
       throw new Error(`clientCertificates.origin is required`);
+    if (cert.sendNone) {
+      if (cert.cert || cert.key || cert.passphrase || cert.pfx)
+        throw new Error('sendNone is set together with cert, key, passphrase or pfx');
+      continue;
+    }
     if (!cert.cert && !cert.key && !cert.passphrase && !cert.pfx)
       throw new Error('None of cert, key, passphrase or pfx is specified');
     if (cert.cert && !cert.key)
