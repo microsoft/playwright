@@ -314,6 +314,12 @@ export type SerializedError = {
     message: string,
     name: string,
     stack?: string,
+    code?: string,
+    errno?: number,
+    syscall?: string,
+    address?: string,
+    port?: number,
+    hostname?: string,
   },
   value?: SerializedValue,
 };
