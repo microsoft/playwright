@@ -379,6 +379,7 @@ export type AndroidDeviceLaunchBrowserParams = {
     width: number,
     height: number,
   },
+  viewportMaximized?: boolean,
   screen?: {
     width: number,
     height: number,
@@ -446,6 +447,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
     width: number,
     height: number,
   },
+  viewportMaximized?: boolean,
   screen?: {
     width: number,
     height: number,
@@ -828,6 +830,7 @@ export type BrowserNewContextParams = {
     width: number,
     height: number,
   },
+  viewportMaximized?: boolean,
   screen?: {
     width: number,
     height: number,
@@ -898,6 +901,7 @@ export type BrowserNewContextOptions = {
     width: number,
     height: number,
   },
+  viewportMaximized?: boolean,
   screen?: {
     width: number,
     height: number,
@@ -971,6 +975,7 @@ export type BrowserNewContextForReuseParams = {
     width: number,
     height: number,
   },
+  viewportMaximized?: boolean,
   screen?: {
     width: number,
     height: number,
@@ -1041,6 +1046,7 @@ export type BrowserNewContextForReuseOptions = {
     width: number,
     height: number,
   },
+  viewportMaximized?: boolean,
   screen?: {
     width: number,
     height: number,
@@ -1153,6 +1159,7 @@ export type BrowserContextInitializer = {
       width: number,
       height: number,
     },
+    viewportMaximized?: boolean,
     screen?: {
       width: number,
       height: number,
@@ -1798,6 +1805,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     width: number,
     height: number,
   },
+  viewportMaximized?: boolean,
   screen?: {
     width: number,
     height: number,
@@ -1881,6 +1889,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     width: number,
     height: number,
   },
+  viewportMaximized?: boolean,
   screen?: {
     width: number,
     height: number,

@@ -135,6 +135,11 @@ export class WKPage implements PageDelegate {
     }
     startAutomaticVideoRecording(this._page);
     await Promise.all(promises);
+    if (contextOptions.viewportMaximized) {
+      await this._browserContext._browser._browserSession.send('Playwright.maximizeWindow', {
+        pageProxyId: this._pageProxySession.sessionId,
+      });
+    }
   }
 
   private _setSession(session: WKSession) {
