@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 
 import { test, expect } from './fixtures';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -92,6 +93,28 @@ test('reports missing ffmpeg, not missing browser, when recordVideo is enabled',
   expect.soft(response).toHaveResponse({
     isError: true,
     error: expect.not.stringContaining(`Browser "${mcpBrowser}" is not installed`),
+  });
+});
+
+test.describe('video tools', () => {
+  test.use({ mcpArgs: ['--caps=devtools'] });
+
+  test('browser_stop_video returns the absolute video path', async ({ client, server }, testInfo) => {
+    await navigateToTestPage(client, server);
+
+    expect(await client.callTool({
+      name: 'browser_start_video',
+      arguments: { filename: path.join('recordings', 'video.webm') },
+    })).toHaveResponse({
+      result: 'Video recording started.',
+    });
+
+    expect(await client.callTool({
+      name: 'browser_stop_video',
+      arguments: {},
+    })).toHaveResponse({
+      result: `- [Video](${testInfo.outputPath('recordings', 'video.webm')})`,
+    });
   });
 });
 

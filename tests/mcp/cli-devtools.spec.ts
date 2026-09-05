@@ -233,7 +233,7 @@ test('tracing-start-stop', async ({ cli, server }, testInfo) => {
   expect(fs.existsSync(testInfo.outputPath('.playwright-cli', 'traces', `trace-${timestamp}.network`))).toBeTruthy();
 });
 
-test('video-start-stop', async ({ cli, server }) => {
+test('video-start-stop', async ({ cli, server }, testInfo) => {
   await cli('open', server.HELLO_WORLD);
   const { output: videoStartOutput } = await cli('video-start', 'recordings/video.webm', '--size=400x300');
   expect(videoStartOutput).toContain('Video recording started.');
@@ -244,7 +244,7 @@ test('video-start-stop', async ({ cli, server }) => {
   const { output: tabCloseOutput } = await cli('tab-close');
   expect(tabCloseOutput).toContain(`0: (current) [](${server.EMPTY_PAGE})`);
   const { output: videoStopOutput } = await cli('video-stop');
-  expect(videoStopOutput).toContain(`### Result\n- [Video](recordings${path.sep}video.webm)\n- [Video](recordings${path.sep}video-1.webm)`);
+  expect(videoStopOutput).toContain(`### Result\n- [Video](${testInfo.outputPath('recordings', 'video.webm')})\n- [Video](${testInfo.outputPath('recordings', 'video-1.webm')})`);
 });
 
 test('video-chapter', async ({ cli, server }) => {

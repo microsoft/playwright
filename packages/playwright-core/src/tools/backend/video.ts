@@ -64,7 +64,10 @@ const videoStop = defineTool({
         ext: 'webm',
         suggestedFilename: fileName
       }, 'Video');
-      await response.addFileResult(resolvedFile, null);
+      await response.addFileResult({
+        ...resolvedFile,
+        printableLink: `- [Video](${resolvedFile.fileName})`,
+      }, null);
     }
   },
 });
