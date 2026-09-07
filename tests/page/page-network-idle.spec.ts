@@ -18,10 +18,124 @@
 import { test as it, expect } from './pageTest';
 import type { Frame } from 'playwright-core';
 import type { TestServer } from '../config/testserver';
+import type { ServerResponse } from 'http';
+import type { server as coreServer } from '../../packages/playwright-core/lib/coreBundle';
 
 it('should navigate to empty page with networkidle', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'networkidle' });
   expect(response.status()).toBe(200);
+});
+
+for (const inChildFrame of [false, true]) {
+  it(`should wait for repeated networkidle in the ${inChildFrame ? 'child' : 'main'} frame`, async ({ page, server }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42598' });
+
+    await page.goto(server.EMPTY_PAGE);
+    if (inChildFrame)
+      await page.setContent(`<iframe src="${server.EMPTY_PAGE}"></iframe><iframe src="${server.EMPTY_PAGE}"></iframe>`);
+    await page.waitForLoadState('networkidle');
+    const frame = inChildFrame ? page.frames()[1] : page.mainFrame();
+    let responseA: ServerResponse;
+    let responseB: ServerResponse;
+    server.setRoute('/fetch-a', (req, res) => responseA = res);
+    server.setRoute('/fetch-b', (req, res) => responseB = res);
+
+    for (let i = 0; i < 3; ++i) {
+      await Promise.all([
+        server.waitForRequest('/fetch-a'),
+        server.waitForRequest('/fetch-b'),
+        page.waitForRequest(server.PREFIX + '/fetch-a'),
+        page.waitForRequest(server.PREFIX + '/fetch-b'),
+        frame.evaluate(() => {
+          void fetch('/fetch-a');
+          void fetch('/fetch-b');
+        }),
+      ]);
+      let frameIdle = false;
+      let pageIdle = false;
+      const idlePromise = Promise.all([
+        frame.waitForLoadState('networkidle').then(() => frameIdle = true),
+        page.waitForLoadState('networkidle').then(() => pageIdle = true),
+      ]);
+      // Round trips let an incorrectly resolved wait settle while requests are held.
+      await page.evaluate(() => 1);
+      expect(frameIdle).toBe(false);
+      expect(pageIdle).toBe(false);
+
+      const requestFinished = page.waitForEvent('requestfinished', request => request.url().endsWith('/fetch-a'));
+      responseA.end('a');
+      await requestFinished;
+      await page.evaluate(() => 1);
+      expect(frameIdle).toBe(false);
+      expect(pageIdle).toBe(false);
+
+      let timerTriggered = false;
+      const timer = setTimeout(() => timerTriggered = true, 500);
+      try {
+        responseB.end('b');
+        await idlePromise;
+        expect(timerTriggered).toBe(true);
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+  });
+}
+
+it('should notify networkidle transitions once and recover when a busy frame detaches', async ({ page, server, toImpl }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<iframe src="${server.EMPTY_PAGE}"></iframe>`, { waitUntil: 'networkidle' });
+  const frame = page.frames()[1];
+  const events: string[] = [];
+  for (const [name, target] of [['main', page.mainFrame()], ['child', frame]] as const) {
+    const impl: coreServer.Frame = toImpl(target);
+    impl.on('addlifecycle', event => {
+      if (event === 'networkidle')
+        events.push(`${name}:idle`);
+    });
+    impl.on('removelifecycle', event => {
+      if (event === 'networkidle')
+        events.push(`${name}:busy`);
+    });
+  }
+
+  let responseA: ServerResponse;
+  let responseB: ServerResponse;
+  server.setRoute('/fetch-a', (req, res) => responseA = res);
+  server.setRoute('/fetch-b', (req, res) => responseB = res);
+  await Promise.all([
+    server.waitForRequest('/fetch-a'),
+    server.waitForRequest('/fetch-b'),
+    page.waitForRequest(server.PREFIX + '/fetch-a'),
+    page.waitForRequest(server.PREFIX + '/fetch-b'),
+    frame.evaluate(() => {
+      void fetch('/fetch-a');
+      void fetch('/fetch-b');
+    }),
+  ]);
+  expect(events).toEqual(['child:busy', 'main:busy']);
+
+  const requestFinished = page.waitForEvent('requestfinished', request => request.url().endsWith('/fetch-a'));
+  responseA.end('a');
+  await requestFinished;
+  expect(events).toEqual(['child:busy', 'main:busy']);
+  responseB.end('b');
+  await page.waitForLoadState('networkidle');
+  expect(events).toEqual(['child:busy', 'main:busy', 'child:idle', 'main:idle']);
+  events.length = 0;
+
+  const [request] = await Promise.all([
+    page.waitForRequest(server.PREFIX + '/fetch-a'),
+    frame.evaluate(() => { void fetch('/fetch-a'); }),
+  ]);
+  expect(events).toEqual(['child:busy', 'main:busy']);
+  await Promise.all([
+    page.waitForEvent('requestfailed', failed => failed === request),
+    page.waitForEvent('framedetached', detached => detached === frame),
+    page.evaluate(() => document.querySelector('iframe').remove()),
+  ]);
+  await page.waitForLoadState('networkidle');
+  expect(events).toEqual(['child:busy', 'main:busy', 'main:idle']);
 });
 
 async function networkIdleTest(frame: Frame, server: TestServer, action: () => Promise<any>, isSetContent?: boolean) {

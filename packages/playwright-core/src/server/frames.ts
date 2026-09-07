@@ -397,8 +397,10 @@ export class FrameManager {
     if (this._isExcludedFromNetworkIdle(request) || !frame)
       return;
     frame._inflightRequests.add(request);
-    if (frame._inflightRequests.size === 1)
+    if (frame._inflightRequests.size === 1) {
       frame._stopNetworkIdleTimer();
+      this._page.mainFrame()._recalculateNetworkIdle();
+    }
   }
 
   private _isExcludedFromNetworkIdle(request: network.Request): boolean {
@@ -578,7 +580,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     this._stopNetworkIdleTimer();
     if (this._inflightRequests.size === 0)
       this._startNetworkIdleTimer();
-    this._page.mainFrame()._recalculateNetworkIdle(this);
+    this._page.mainFrame()._recalculateNetworkIdle();
     this.onLifecycleEvent('commit');
   }
 
@@ -635,10 +637,10 @@ export class Frame extends SdkObject<FrameEventMap> {
     });
   }
 
-  _recalculateNetworkIdle(frameThatAllowsRemovingNetworkIdle?: Frame) {
+  _recalculateNetworkIdle() {
     let isNetworkIdle = this._firedNetworkIdleSelf;
     for (const child of this._childFrames) {
-      child._recalculateNetworkIdle(frameThatAllowsRemovingNetworkIdle);
+      child._recalculateNetworkIdle();
       // We require networkidle event to be fired in the whole frame subtree, and then consider it done.
       if (!child._firedLifecycleEvents.has('networkidle'))
         isNetworkIdle = false;
@@ -649,9 +651,8 @@ export class Frame extends SdkObject<FrameEventMap> {
       if (this === this._page.mainFrame() && this._url !== 'about:blank')
         this.apiLog(`  "networkidle" event fired`);
     }
-    if (frameThatAllowsRemovingNetworkIdle !== this && this._firedLifecycleEvents.has('networkidle') && !isNetworkIdle) {
-      // Usually, networkidle is fired once and not removed after that.
-      // However, when we clear them right before a new commit, this is allowed for a particular frame.
+    if (this._firedLifecycleEvents.has('networkidle') && !isNetworkIdle) {
+      // A new busy period invalidates networkidle for the frame and its ancestors.
       this._firedLifecycleEvents.delete('networkidle');
       this.emit(Frame.Events.RemoveLifecycle, 'networkidle');
     }
