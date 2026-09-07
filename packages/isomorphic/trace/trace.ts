@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export type * from './versions/traceV9';
+export type * from './versions/traceV10';

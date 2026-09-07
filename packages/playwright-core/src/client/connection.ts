@@ -20,7 +20,7 @@ import { isUnderTest } from '@utils/debug';
 import { debugLogger } from '@utils/debugLogger';
 import { emptyZone } from '@utils/zones';
 import { ValidationError, findValidator, maybeFindValidator } from '@protocol/validator';
-import { defaultCallId } from '@isomorphic/trace/traceUtils';
+import { createCallIdGenerator } from '@isomorphic/trace/traceUtils';
 import { EventEmitter } from './eventEmitter';
 import { Android, AndroidDevice, AndroidSocket } from './android';
 import { Artifact } from './artifact';
@@ -74,7 +74,7 @@ export type ChannelOwnerFactory = (parent: ChannelOwner, type: string, guid: str
 export class Connection extends EventEmitter {
   readonly _objects = new Map<string, ChannelOwner>();
   onmessage = (message: object): void => {};
-  private _lastOrdinal = 0;
+  private _nextCallId = createCallIdGenerator();
   private _callbacks = new Map<string, { resolve: (a: any) => void, reject: (a: Error) => void, signal: AbortSignal | undefined, title: string | undefined, type: string, method: string }>();
   private _rootObject: Root;
   private _closedError: Error | undefined;
@@ -192,7 +192,7 @@ export class Connection extends EventEmitter {
 
     const guid = object._guid;
     const type = object._type;
-    const id = options.callId ?? defaultCallId(++this._lastOrdinal);
+    const id = options.callId ?? this._nextCallId();
     const message = { id, guid, method, params };
     if (debugLogger.isEnabled('channel')) {
       // Do not include metadata in debug logs to avoid noise.

@@ -55,7 +55,7 @@ import type { Progress } from '../../progress';
 import type * as types from '../../types';
 import type { Screencast, ScreencastClient } from '../../screencast';
 
-const version: trace.VERSION = 9;
+const version: trace.VERSION = 10;
 
 export type TracerOptions = {
   name?: string;

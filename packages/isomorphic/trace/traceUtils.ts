@@ -25,7 +25,19 @@ export type SerializedClientSideCallMetadata = {
   stacks: SerializedStack[];
 };
 
-export function defaultCallId(ordinal: number): string {
+let lastIdOrdinal = 0;
+
+// Use a unique prefix for each client to avoid id clashes in a trace.
+export function createCallIdGenerator(): () => string {
+  const alphabet = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let prefix = '';
+  for (let i = 0; i < 3; i++)
+    prefix += alphabet[Math.floor(Math.random() * alphabet.length)];
+  return () => `${prefix}@${++lastIdOrdinal}`;
+}
+
+export function legacyCallId(ordinal: number): string {
+  // Traces recorded before the call ids became strings used this format.
   return `call@${ordinal}`;
 }
 

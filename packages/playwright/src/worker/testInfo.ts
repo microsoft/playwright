@@ -21,7 +21,7 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { captureRawStack, stringifyStackFrames, filteredStackTrace } from '@utils/stackTrace';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { monotonicTime } from '@isomorphic/time';
-import { createGuid } from '@utils/crypto';
+import { createCallIdGenerator } from '@isomorphic/trace/traceUtils';
 import { sanitizeForFilePath, trimLongString } from '@utils/fileUtils';
 import { currentZone } from '@utils/zones';
 
@@ -83,7 +83,7 @@ export const emtpyTestInfoCallbacks: TestInfoCallbacks = {
 };
 
 // Keep step ids globally unique, to avoid cross-test callId collisions on the same playwright instance.
-let lastStepId = 0;
+const nextStepId = createCallIdGenerator();
 
 export class TestInfoImpl implements TestInfo {
   private _callbacks: TestInfoCallbacks;
@@ -286,7 +286,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _addStep(data: Readonly<TestStepData>, parentStep?: TestStepInternal): TestStepInternal {
-    const stepId = `${data.category}@${++lastStepId}`;
+    const stepId = nextStepId();
 
     if (data.category === 'hook' || data.category === 'fixture') {
       // Predefined steps form a fixed hierarchy - use the current one as parent.
@@ -527,7 +527,7 @@ export class TestInfoImpl implements TestInfo {
     if (step) {
       step.attachmentIndices.push(index);
     } else {
-      const stepId = `attach@${createGuid()}`;
+      const stepId = nextStepId();
       this._tracing.appendBeforeActionForStep({ stepId, title: `Attach ${escapeWithQuotes(attachment.name, '"')}`, category: 'test.attach', stack: [] });
       this._tracing.appendAfterActionForStep(stepId, undefined, [attachment]);
     }
