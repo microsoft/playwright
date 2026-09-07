@@ -279,7 +279,7 @@ function resolveBrowserParam(browserOption: string | undefined): { browserName?:
     case 'msedge-dev':
       return { browserName: 'chromium', channel: browserOption };
     case 'chromium':
-      return { browserName: 'chromium', channel: 'chrome-for-testing' };
+      return { browserName: 'chromium' };
     case 'firefox':
       return { browserName: 'firefox' };
     case 'moz-firefox':

@@ -55,10 +55,10 @@ test.describe('browserName and channel', () => {
     expect(config.browser.launchOptions.channel).toBe('chrome');
   });
 
-  test('--browser=chromium sets chromium with chrome-for-testing channel', async () => {
+  test('--browser=chromium sets chromium without channel', async () => {
     const config = await resolveCLIConfigForMCP({ browser: 'chromium' }, emptyEnv);
     expect(config.browser.browserName).toBe('chromium');
-    expect(config.browser.launchOptions.channel).toBe('chrome-for-testing');
+    expect(config.browser.launchOptions.channel).toBeUndefined();
   });
 
   test('--browser=firefox sets firefox without channel', async () => {
@@ -148,9 +148,9 @@ test.describe('sandbox', () => {
     expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
   });
 
-  test('chromium sandbox for chrome-for-testing channel', async () => {
+  test('chromium sandbox for bundled chromium (no channel)', async () => {
     const config = await resolveCLIConfigForMCP({ browser: 'chromium' }, emptyEnv);
-    expect(config.browser.launchOptions.channel).toBe('chrome-for-testing');
+    expect(config.browser.launchOptions.channel).toBeUndefined();
     if (process.platform === 'linux')
       expect(config.browser.launchOptions.chromiumSandbox).toBe(false);
     else
@@ -187,7 +187,7 @@ test.describe('sandbox', () => {
 
   test('--sandbox on the command line enables the sandbox', async () => {
     const config = await resolveCLIConfigForMCP(await parseCLIOptions(['--browser=chromium', '--sandbox']), emptyEnv);
-    expect(config.browser.launchOptions.channel).toBe('chrome-for-testing');
+    expect(config.browser.launchOptions.channel).toBeUndefined();
     expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
   });
 
