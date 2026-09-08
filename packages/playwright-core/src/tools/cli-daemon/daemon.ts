@@ -45,6 +45,29 @@ async function socketExists(socketPath: string): Promise<boolean> {
   return false;
 }
 
+async function monitorSocketPath(socketPath: string): Promise<void> {
+  if (process.platform === 'win32')
+    return;
+
+  const socketStat = await fs.promises.stat(socketPath);
+
+  async function checkSocketPath() {
+    const currentStat = await fs.promises.stat(socketPath).catch(() => undefined);
+    if (!currentStat || !currentStat.isSocket() || currentStat.dev !== socketStat.dev || currentStat.ino !== socketStat.ino) {
+      gracefullyProcessExitDoNotHang(0);
+      return;
+    }
+    scheduleSocketCheck();
+  }
+
+  function scheduleSocketCheck() {
+    const timer = setTimeout(() => void checkSocketPath(), 1000);
+    timer.unref();
+  }
+
+  scheduleSocketCheck();
+}
+
 export async function startCliDaemonServer(
   sessionName: string,
   browserContext: playwright.BrowserContext,
@@ -118,6 +141,7 @@ export async function startCliDaemonServer(
   });
 
   await saveSessionFile(clientInfo, sessionConfig);
+  await monitorSocketPath(socketPath);
   return socketPath;
 }
 
