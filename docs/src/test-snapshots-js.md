@@ -67,6 +67,15 @@ Sometimes you need to update the reference screenshot, for example when the page
 npx playwright test --update-snapshots
 ```
 
+## Hover effects
+
+Screenshots capture any hover effects present in the page at the moment. To avoid hover effects, move the mouse to a position that does not trigger them, or hover an element that has no effects, before taking the screenshot:
+
+```js
+await page.mouse.move(-1, -1);
+await expect(page).toHaveScreenshot();
+```
+
 ## Options
 
 ### maxDiffPixels
