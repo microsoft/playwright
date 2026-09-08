@@ -294,6 +294,11 @@ export class CRPage implements PageDelegate {
       clip.scale /= deviceScaleFactor;
     }
     const result = await progress.race(this._mainFrameSession._client.send('Page.captureScreenshot', { format, quality, clip, captureBeyondViewport: !fitsViewport }));
+    if (!fitsViewport && this._browserContext._options.hasTouch) {
+      // Capturing beyond viewport resets touch emulation in Chromium, so we re-apply it.
+      // See https://issues.chromium.org/issues/558509412 and https://github.com/microsoft/playwright/issues/42607.
+      await progress.race(this._mainFrameSession._client.send('Emulation.setTouchEmulationEnabled', { enabled: true }));
+    }
     return Buffer.from(result.data, 'base64');
   }
 
