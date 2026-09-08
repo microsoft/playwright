@@ -105,7 +105,7 @@ resources loaded, etc.
 At some point in time, you'll stumble upon a use case where Playwright performs
 an action, but nothing seemingly happens. Or you enter some text into the input
 field and it will disappear. The most probable reason behind that is a poor page
-[hydration](https://en.wikipedia.org/wiki/Hydration_(web_development)).
+[hydration](https://en.wikipedia.org/wiki/Hydration_%28web_development%29).
 
 When page is hydrated, first, a static version of the page is sent to the browser.
 Then the dynamic part is sent and the page becomes "live". As a very fast user,
