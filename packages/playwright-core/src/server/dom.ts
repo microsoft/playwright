@@ -413,7 +413,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (forceScrollOptions) {
         return await progress.race(this.evaluateInUtility(([injected, node, options]) => {
           if (node.nodeType === 1 /* Node.ELEMENT_NODE */)
-            (node as Node as Element).scrollIntoView(options);
+            (node as Node as Element).scrollIntoView({ ...options, behavior: 'instant' });
           return 'done' as const;
         }, forceScrollOptions));
       }

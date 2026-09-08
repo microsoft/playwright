@@ -881,7 +881,7 @@ export class WVPage implements PageDelegate {
         : { left: box.left, top: box.top, right: box.right, bottom: box.bottom };
       const fullyVisible = target.left >= 0 && target.top >= 0 && target.right <= innerW && target.bottom <= innerH;
       if (!fullyVisible)
-        node.scrollIntoView({ block: 'center', inline: 'center' });
+        node.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
       return 'done';
     }, rect ?? null);
     if (result === 'error:notvisible' || result === 'error:notconnected' || result === 'done')

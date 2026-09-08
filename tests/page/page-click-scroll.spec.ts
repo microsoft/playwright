@@ -156,3 +156,33 @@ it('should not scroll on hover when scroll is "none"', async ({ page }) => {
   expect(await page.evaluate('window._hovered')).toBeFalsy();
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 });
+
+it('should scroll instantly on retry when scroll-behavior is smooth', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42625' });
+  // The fixed header covers everything but the bottom strip of the viewport.
+  // The first attempt centers the button under the header, so the click is
+  // retried with a different scroll alignment using the native scrollIntoView().
+  await page.setContent(`
+    <style>
+      html { scroll-behavior: smooth; }
+      body { margin: 0; }
+      .spacer { height: 2000px; }
+      #header { position: fixed; top: 0; left: 0; right: 0; height: calc(100vh - 50px); background: rgba(0, 0, 0, 0.1); }
+      button { height: 30px; }
+    </style>
+    <div id="header"></div>
+    <div class="spacer"></div>
+    <button onclick="window.clicked = true">Target</button>
+    <div class="spacer"></div>
+    <script>
+      window.scrolls = [];
+      addEventListener('scroll', () => window.scrolls.push(window.scrollY));
+    </script>
+  `);
+  await page.click('button');
+  expect(await page.evaluate('window.clicked')).toBe(true);
+  // Every scroll performed by Playwright should be a single instant jump,
+  // and never a smooth animation that fires a scroll event per frame.
+  const scrolls = await page.evaluate(() => window['scrolls']);
+  expect(scrolls.length).toBeLessThanOrEqual(2);
+});
