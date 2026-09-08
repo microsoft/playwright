@@ -69,7 +69,7 @@ await Expect(page).ToMatchAriaSnapshotAsync(@"
       - /url: /docs/intro
     - link ""Star microsoft/playwright on GitHub"":
       - /url: https://github.com/microsoft/playwright
-    - link /[\\d]+k\\+ stargazers on GitHub/
+    - link /[\d]+k\+ stargazers on GitHub/
 ");
 ```
 
@@ -141,7 +141,7 @@ By combining snapshot testing for broad, structural checks and assertion testing
 
 In Playwright, aria snapshots provide a YAML representation of the accessibility tree of a page.
 These snapshots can be stored and compared later to verify if the page structure remains consistent or meets defined
-expectations.
+expectations. A template is a constraint, not necessarily a complete serialization of the accessibility tree.
 
 The YAML format describes the hierarchical structure of accessible elements on the page, detailing **roles**, **attributes**, **values**, and **text content**.
 The structure follows a tree-like syntax, where each node represents an accessible element, and indentation indicates
@@ -156,7 +156,8 @@ Each accessible element in the tree is represented as a YAML node:
 - **role**: Specifies the ARIA or HTML role of the element (e.g., `heading`, `list`, `listitem`, `button`).
 - **"name"**: Accessible name of the element. Quoted strings indicate exact values, `/patterns/` are used for regular expression.
 - **[attribute=value]**: Attributes and values, in square brackets, represent specific ARIA attributes, such
-  as `checked`, `disabled`, `expanded`, `invalid`, `level`, `pressed`, or `selected`.
+  as `checked`, `disabled`, `expanded`, `invalid`, `level`, `pressed`, or `selected`. Attributes can constrain a
+  specific value, such as `[pressed=mixed]`.
 
 These values are derived from ARIA attributes or calculated based on HTML semantics. To inspect the accessibility tree
 structure of a page, use the [Chrome DevTools Accessibility Tab](https://developer.chrome.com/docs/devtools/accessibility/reference#tab).
@@ -210,9 +211,12 @@ When matching, the snapshot template is compared to the current accessibility tr
 
 * If the tree structure matches the template, the test passes; otherwise, it fails, indicating a mismatch between
   expected and actual accessibility states.
-* The comparison is case-sensitive and collapses whitespace, so indentation and line breaks are ignored.
+* The comparison is case-sensitive and normalizes whitespace within names and text values. YAML indentation
+  determines nesting.
 * The comparison is order-sensitive, meaning the order of elements in the snapshot template must match the order in the
   page's accessibility tree.
+* A single-node template can match at any depth within the selected page or locator. Multiple top-level nodes must match
+  under the same parent, in order.
 
 
 ### Partial matching
@@ -260,7 +264,7 @@ Similarly, you can partially match children in lists or groups by omitting speci
 ```
 
 ```yaml title="aria snapshot (partial match)"
-- list
+- list:
   - listitem: Feature B
 ```
 
@@ -280,15 +284,18 @@ By default, a template containing the subset of children will be matched:
 ```
 
 ```yaml title="aria snapshot (partial match)"
-- list
+- list:
   - listitem: Feature B
 ```
 
 
-The `/children` property can be used to control how child elements are matched:
-- `contain` (default): Matches if all specified children are present in order
-- `equal`: Matches if the children exactly match the specified list in order
-- `deep-equal`: Matches if the children exactly match the specified list in order, including nested children
+The `/children` property controls children for the node where it appears:
+- `contain` (default): Matches if all specified children are present in order.
+- `equal`: Matches if direct children exactly match the specified list in order.
+- `deep-equal`: Matches if children and nested children exactly match the specified list in order.
+
+With no expected child entries, `contain` allows any children, while `equal` and `deep-equal` require none. Add
+`/children: contain` to a nested node to override inherited `deep-equal` matching and allow extra children there.
 
 ```html
 <ul>
@@ -301,7 +308,7 @@ The `/children` property can be used to control how child elements are matched:
 Following snapshot will fail due to Feature C not being in the template:
 
 ```yaml title="aria snapshot"
-- list
+- list:
   - /children: equal
   - listitem: Feature A
   - listitem: Feature B
@@ -362,13 +369,17 @@ accessible names to aid snapshot creation and review.
 
 When using the Playwright test runner (`@playwright/test`), you can automatically update snapshots with the `--update-snapshots` flag, `-u` for short.
 
-Running tests with the `--update-snapshots` flag will update snapshots that did not match. Matching snapshots will not be updated.
+Running without the flag uses `missing` mode and generates only absent snapshots. Supplying `-u` uses `changed` mode
+and updates snapshots that do not match. Use `all` to regenerate every snapshot, including matching ones, or `none`
+to prevent snapshot updates.
 
 ```bash
 npx playwright test --update-snapshots
 ```
 
-Updating snapshots is useful when application structure changes require new snapshots as a baseline. Note that Playwright will wait for the maximum expect timeout specified in the test runner configuration to ensure the page is settled before taking the snapshot. It might be necessary to adjust the `--timeout` if the test hits the timeout while generating snapshots.
+Updating snapshots is useful when application structure changes require new snapshots as a baseline. Playwright retries
+the assertion until its expect timeout expires. Adjust `--timeout` if snapshot generation takes longer than the test
+timeout.
 
 #### Empty template for snapshot generation
 
@@ -378,15 +389,12 @@ Passing an empty string as the template in an assertion generates a snapshot on-
 await expect(locator).toMatchAriaSnapshot('');
 ```
 
-Note that Playwright will wait for the maximum expect timeout specified in the test runner configuration to ensure the
-page is settled before taking the snapshot. It might be necessary to adjust the `--timeout` if the test hits the timeout
-while generating snapshots.
+This works without `-u` because the default mode is `missing`.
 
 #### Snapshot patch files
 
-When updating snapshots, Playwright creates patch files that capture differences. These patch files can be reviewed,
-applied, and committed to source control, allowing teams to track structural changes over time and ensure updates are
-consistent with application requirements.
+For inline snapshot templates, Playwright creates patch files that capture differences. These patch files can be
+reviewed and applied. Separate `.aria.yml` snapshots are written directly to their configured snapshot path.
 
 The way source code is updated can be changed using the `--update-source-method` flag. There are several options available:
 
