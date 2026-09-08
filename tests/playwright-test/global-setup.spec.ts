@@ -489,3 +489,38 @@ test('globalSetup and globalTeardown should have PLAYWRIGHT_TEST=1', async ({ ru
     'teardown env=1',
   ]);
 });
+
+test('globalSetup should see filtered projects', async ({ runInlineTest }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        globalSetup: './globalSetup',
+        projects: [{ name: 'p1' }, { name: 'p2' }, { name: 'p3' }],
+      };
+    `,
+    'globalSetup.ts': `
+      module.exports = async (config) => {
+        console.log('\\n%%projects=' + config.projects.map(p => p.name).join(','));
+        console.log('\\n%%filteredProjects=' + config.filteredProjects.map(p => p.name).join(','));
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('should work', async ({}) => {});
+    `,
+  };
+
+  const result = await runInlineTest(files, { project: ['p1', 'p3'] });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    'projects=p1,p2,p3',
+    'filteredProjects=p1,p3',
+  ]);
+
+  const result2 = await runInlineTest(files);
+  expect(result2.exitCode).toBe(0);
+  expect(result2.outputLines).toEqual([
+    'projects=p1,p2,p3',
+    'filteredProjects=p1,p2,p3',
+  ]);
+});

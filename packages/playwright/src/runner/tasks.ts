@@ -99,6 +99,7 @@ export class TestRun {
     this.options = options ?? {};
     this.reporter = reporter;
     this.filteredProjects = filterProjects(config.projects, this.options.projectFilter);
+    config.config.filteredProjects = this.filteredProjects.map(p => p.project);
   }
 
   onTestPaused(params: TestPausedParams) {
