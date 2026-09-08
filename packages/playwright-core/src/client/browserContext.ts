@@ -553,8 +553,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async _disableRecorder(eventSink?: RecorderEventSink) {
+    const count = eventSink ? 1 : Math.max(1, this._recorderEventSinks.size);
     try {
-      await this._channel.disableRecorder({}, kNoTimeout);
+      for (let i = 0; i < count; i++)
+        await this._channel.disableRecorder({}, kNoTimeout);
     } finally {
       if (eventSink)
         this._recorderEventSinks.delete(eventSink);

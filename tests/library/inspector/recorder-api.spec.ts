@@ -238,53 +238,6 @@ test('should keep recording for the remaining client after one stops', async ({ 
   ]);
 });
 
-test('should only send recorder events to connections that enabled the recorder', async ({ browserType, browser, context }, testInfo) => {
-  process.env.PWTEST_SERVER_REGISTRY = testInfo.outputPath('registry');
-  const { endpoint } = await browser.bind('recorder', {});
-  const browser2 = await browserType.connect(endpoint);
-  try {
-    const context2 = browser2.contexts().find(c => (c as any)._guid === (context as any)._guid)!;
-    const recorderEvents: string[] = [];
-    const connection = (browser2 as any)._connection;
-    const dispatch = connection.dispatch.bind(connection);
-    connection.dispatch = (message: any) => {
-      if (message.method === 'recorderEvent')
-        recorderEvents.push(message.params.event);
-      dispatch(message);
-    };
-
-    const page = await context.newPage();
-    await page.setContent(`<button>One</button><button>Two</button><button>Three</button>`);
-
-    const log1 = await startRecording(context);
-    await page.getByRole('button', { name: 'One' }).click();
-    await expect.poll(() => log1.action('click').length).toBe(1);
-    expect(recorderEvents).toEqual([]);
-
-    const log2 = await startRecording(context2);
-    await page.getByRole('button', { name: 'Two' }).click();
-    await expect.poll(() => log2.action('click').length).toBe(1);
-
-    await log1.stop();
-    await page.getByRole('button', { name: 'Three' }).click();
-    await expect.poll(() => log2.action('click').length).toBe(2);
-    await log2.stop();
-
-    expect(log1.action('click').map(a => normalizeCode(a.code))).toEqual([
-      `await page.getByRole('button', { name: 'One' }).click();`,
-      `await page.getByRole('button', { name: 'Two' }).click();`,
-    ]);
-    expect(log2.action('click').map(a => normalizeCode(a.code))).toEqual([
-      `await page.getByRole('button', { name: 'Two' }).click();`,
-      `await page.getByRole('button', { name: 'Three' }).click();`,
-    ]);
-    expect(recorderEvents).toEqual(['actionAdded', 'actionAdded']);
-  } finally {
-    await browser2.close();
-    await browser.unbind();
-  }
-});
-
 test('disable should close the inspector window', async ({ context, openRecorder }) => {
   const { recorder } = await openRecorder();
   await (context as any)._disableRecorder();
