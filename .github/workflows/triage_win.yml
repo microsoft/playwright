@@ -1,0 +1,116 @@
+name: "Issue triage (Windows)"
+
+on:
+  # Opt in by applying the "needs-triage-win" label; re-apply it to trigger another pass.
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: "Issue number to triage"
+        required: true
+
+permissions: {}
+
+jobs:
+  triage:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' && github.event.label.name == 'needs-triage-win')
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      copilot-requests: write
+    outputs:
+      has_draft: ${{ steps.triage.outputs.has_draft }}
+    env:
+      ISSUE: ${{ github.event.issue.number || inputs.issue }}
+    defaults:
+      run:
+        # Windows runners default to pwsh; the steps below use bash syntax.
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: lts/*
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Triage issue with Copilot CLI
+        id: triage
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p output
+          PROMPT=$(cat <<EOF
+          Triage https://github.com/${{ github.repository }}/issues/$ISSUE using the playwright-triage skill.
+
+          You are running on Windows (a GitHub Actions windows-latest runner). The issue was routed here
+          because it is likely Windows-specific, so reproduce it on this platform and say in the report
+          that you tested on Windows.
+
+          The GitHub CLI is not authenticated in this job. Do not run gh; use GitHub MCP tools
+          for all GitHub reads.
+
+          Do not post anything yourself. Write the comment to output/triage.md and a later step posts it.
+          EOF
+          )
+          copilot \
+            --allow-all-tools \
+            --allow-all-paths \
+            --no-ask-user \
+            --enable-all-github-mcp-tools \
+            --share=output/copilot-session.md \
+            --model claude-opus-4.8 \
+            --max-ai-credits 500 \
+            -p "$PROMPT"
+
+          if [ -s output/triage.md ]; then
+            echo "has_draft=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_draft=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Add session transcript to job summary
+        if: always()
+        run: |
+          {
+            echo "## Triage session transcript (issue $ISSUE, Windows)"
+            echo ''
+            cat "output/copilot-session.md" 2>/dev/null || echo "(no transcript)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload output
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: triage-win-${{ github.event.issue.number || inputs.issue }}
+          path: output/triage.md
+          if-no-files-found: warn
+
+  post:
+    needs: triage
+    if: needs.triage.outputs.has_draft == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      ISSUE: ${{ github.event.issue.number || inputs.issue }}
+      GH_TOKEN: ${{ github.token }}
+      WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Download triage output
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: triage-win-${{ github.event.issue.number || inputs.issue }}
+          path: output
+
+      - name: Post triage comment
+        run: |
+          printf '\n\n<sub>Triaged on Windows by the Playwright bot - [agent run](%s)</sub>\n<!-- playwright-ai-triage -->\n' "$WORKFLOW_URL" >> output/triage.md
+          gh issue comment "$ISSUE" --repo "${{ github.repository }}" --body-file output/triage.md

@@ -1,7 +1,7 @@
-name: "Issue triage"
+name: "Issue triage (macOS)"
 
 on:
-  # Opt in by applying the "needs-triage" label; re-apply it to trigger another pass.
+  # Opt in by applying the "needs-triage-mac" label; re-apply it to trigger another pass.
   issues:
     types: [labeled]
   workflow_dispatch:
@@ -16,8 +16,8 @@ jobs:
   triage:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'issues' && github.event.label.name == 'needs-triage')
-    runs-on: ubuntu-latest
+      (github.event_name == 'issues' && github.event.label.name == 'needs-triage-mac')
+    runs-on: macos-latest
     timeout-minutes: 20
     permissions:
       copilot-requests: write
@@ -46,6 +46,10 @@ jobs:
           PROMPT=$(cat <<EOF
           Triage https://github.com/${{ github.repository }}/issues/$ISSUE using the playwright-triage skill.
 
+          You are running on macOS (a GitHub Actions macos-latest runner). The issue was routed here
+          because it is likely macOS-specific, so reproduce it on this platform and say in the report
+          that you tested on macOS.
+
           The GitHub CLI is not authenticated in this job. Do not run gh; use GitHub MCP tools
           for all GitHub reads.
 
@@ -72,7 +76,7 @@ jobs:
         if: always()
         run: |
           {
-            echo "## Triage session transcript (issue $ISSUE)"
+            echo "## Triage session transcript (issue $ISSUE, macOS)"
             echo ''
             cat "output/copilot-session.md" 2>/dev/null || echo "(no transcript)"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -81,7 +85,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: triage-${{ github.event.issue.number || inputs.issue }}
+          name: triage-mac-${{ github.event.issue.number || inputs.issue }}
           path: output/triage.md
           if-no-files-found: warn
 
@@ -99,10 +103,10 @@ jobs:
       - name: Download triage output
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: triage-${{ github.event.issue.number || inputs.issue }}
+          name: triage-mac-${{ github.event.issue.number || inputs.issue }}
           path: output
 
       - name: Post triage comment
         run: |
-          printf '\n\n<sub>Triaged by the Playwright bot - [agent run](%s)</sub>\n<!-- playwright-ai-triage -->\n' "$WORKFLOW_URL" >> output/triage.md
+          printf '\n\n<sub>Triaged on macOS by the Playwright bot - [agent run](%s)</sub>\n<!-- playwright-ai-triage -->\n' "$WORKFLOW_URL" >> output/triage.md
           gh issue comment "$ISSUE" --repo "${{ github.repository }}" --body-file output/triage.md
