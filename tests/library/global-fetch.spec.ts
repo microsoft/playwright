@@ -733,6 +733,18 @@ it('should expose node error fields on network errors', {
   await request.dispose();
 });
 
+it('should append node error code to the message', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42532' }
+}, async ({ playwright, server }) => {
+  // Node reports this one as a plain 'socket hang up' that does not mention the code.
+  server.setRoute('/hangup', req => req.socket.destroy());
+  const request = await playwright.request.newContext();
+  const error = await request.get(server.PREFIX + '/hangup', { maxRetries: 0 }).catch(e => e);
+  expect(error.message).toContain('socket hang up (ECONNRESET)');
+  expect(error.code).toBe('ECONNRESET');
+  await request.dispose();
+});
+
 it('should not crash when server refuses body before reading it', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42074' }
 }, async ({ playwright, server }) => {
