@@ -24,7 +24,8 @@ RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
     apt-get update && \
     apt-get install -y nodejs && \
     # Feature-parity with node.js base images.
-    apt-get install -y --no-install-recommends git openssh-client && \
+    # zstd is used by actions/cache.
+    apt-get install -y --no-install-recommends git openssh-client zstd && \
     npm install -g yarn && \
     # clean apt cache
     rm -rf /var/lib/apt/lists/* && \
