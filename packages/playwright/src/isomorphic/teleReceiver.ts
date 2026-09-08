@@ -825,6 +825,7 @@ export const baseFullConfig: reporterTypes.FullConfig = {
   metadata: {},
   preserveOutput: 'always',
   projects: [],
+  filteredProjects: [],
   reporter: [[process.env.CI ? 'dot' : 'list']],
   reportSlowTests: { max: 5, threshold: 300_000 /* 5 minutes */ },
   configFile: '',

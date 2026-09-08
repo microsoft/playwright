@@ -2069,6 +2069,13 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   failOnFlakyTests: boolean;
 
   /**
+   * List of projects that were selected to run, after applying the `--project` command line filter. When no filter is
+   * specified, this is the same as
+   * [fullConfig.projects](https://playwright.dev/docs/api/class-fullconfig#full-config-projects).
+   */
+  filteredProjects: Array<FullProject>;
+
+  /**
    * See [testConfig.forbidOnly](https://playwright.dev/docs/api/class-testconfig#test-config-forbid-only).
    */
   forbidOnly: boolean;
