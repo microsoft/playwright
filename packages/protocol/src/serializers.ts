@@ -14,7 +14,42 @@
  * limitations under the License.
  */
 
-import type { SerializedValue } from '@protocol/structs';
+import type { SerializedError, SerializedValue } from '@protocol/structs';
+
+type SerializedSystemError = NonNullable<SerializedError['error']>;
+
+// Structured fields of a Node.js system error, see https://nodejs.org/api/errors.html#class-systemerror.
+const systemErrorFields: { [key in keyof SerializedSystemError]?: 'string' | 'number' } = {
+  code: 'string',
+  errno: 'number',
+  syscall: 'string',
+  address: 'string',
+  port: 'number',
+  hostname: 'string',
+};
+
+export function serializeSystemErrorFields(error: any): Partial<SerializedSystemError> {
+  const result: any = {};
+  for (const [field, type] of Object.entries(systemErrorFields)) {
+    if (typeof error[field] === type)
+      result[field] = error[field];
+  }
+  return result;
+}
+
+export function parseSystemErrorFields(error: SerializedSystemError, target: Error) {
+  for (const [field, type] of Object.entries(systemErrorFields)) {
+    if (typeof (error as any)[field] === type)
+      (target as any)[field] = (error as any)[field];
+  }
+}
+
+export function systemErrorMessage(error: any): string {
+  const message = error.message;
+  if (typeof error.code !== 'string' || !/^E[A-Z0-9]+$/.test(error.code) || message.includes(error.code))
+    return message;
+  return `${message} (${error.code})`;
+}
 
 export function parseSerializedValue(value: SerializedValue, handles: any[] | undefined): any {
   return innerParseSerializedValue(value, handles, new Map(), []);

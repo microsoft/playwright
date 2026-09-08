@@ -719,6 +719,32 @@ it('should retry ECONNRESET', {
   await request.dispose();
 });
 
+it('should expose node error fields on network errors', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42532' }
+}, async ({ playwright, server }) => {
+  // Reset the connection so that node reports a system error instead of a plain 'socket hang up'.
+  server.setRoute('/reset', req => req.socket.resetAndDestroy());
+  const request = await playwright.request.newContext();
+  const error = await request.get(server.PREFIX + '/reset', { maxRetries: 0 }).catch(e => e);
+  expect(error.message).toContain('ECONNRESET');
+  expect(error.code).toBe('ECONNRESET');
+  expect(error.syscall).toBe('read');
+  expect(typeof error.errno).toBe('number');
+  await request.dispose();
+});
+
+it('should append node error code to the message', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42532' }
+}, async ({ playwright, server }) => {
+  // Node reports this one as a plain 'socket hang up' that does not mention the code.
+  server.setRoute('/hangup', req => req.socket.destroy());
+  const request = await playwright.request.newContext();
+  const error = await request.get(server.PREFIX + '/hangup', { maxRetries: 0 }).catch(e => e);
+  expect(error.message).toContain('socket hang up (ECONNRESET)');
+  expect(error.code).toBe('ECONNRESET');
+  await request.dispose();
+});
+
 it('should not crash when server refuses body before reading it', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42074' }
 }, async ({ playwright, server }) => {
