@@ -246,6 +246,39 @@ test('browser_take_screenshot (filename: "output.png")', async ({ client, server
   expect(files[0]).toMatch(/^output\.png$/);
 });
 
+test('browser_take_screenshot rejects Windows reserved filenames', async ({ client, server }) => {
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: { filename: 'NUL.png' },
+  })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining(`reserved device name`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: { filename: 'sub/CON.txt' },
+  })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining(`reserved device name`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: { filename: 'output.png ' },
+  })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining(`would not be stored verbatim on Windows`),
+  });
+});
+
 test('browser_take_screenshot (filename: "sub/dir/output.png")', async ({ client, server }, testInfo) => {
   expect(await client.callTool({
     name: 'browser_navigate',

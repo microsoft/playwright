@@ -22,7 +22,7 @@ import debug from 'debug';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { disposeAll } from '@isomorphic/disposable';
 import { eventsHelper } from '@utils/eventsHelper';
-import { isPathInside, isSystemDirectory, isWritable } from '@utils/fileUtils';
+import { isPathInside, isSystemDirectory, isWritable, outputFilenameError } from '@utils/fileUtils';
 import { playwright } from '../../inprocess';
 
 import { dedent, languageGeneratorId, secretCode } from './codegen';
@@ -437,6 +437,9 @@ function originOrHostGlob(originOrHost: string) {
 
 export async function workspaceFile(options: ContextOptions, fileName: string, perCallWorkspaceDir?: string): Promise<string> {
   const workspace = perCallWorkspaceDir ?? options.cwd;
+  const invalid = outputFilenameError(fileName);
+  if (invalid)
+    throw new Error(invalid);
   const resolvedName = path.resolve(workspace, fileName);
   await checkFile(options, resolvedName, { origin: 'llm' });
   return resolvedName;
@@ -452,6 +455,11 @@ export function outputDir(options: ContextOptions): string {
 }
 
 export async function outputFile(options: ContextOptions, fileName: string, flags: { origin: 'code' | 'llm' }): Promise<string> {
+  if (flags.origin === 'llm') {
+    const invalid = outputFilenameError(fileName);
+    if (invalid)
+      throw new Error(invalid);
+  }
   const resolvedFile = path.resolve(outputDir(options), fileName);
   await checkFile(options, resolvedFile, flags);
   await fs.promises.mkdir(path.dirname(resolvedFile), { recursive: true });
@@ -464,7 +472,6 @@ async function checkFile(options: ContextOptions, resolvedFilename: string, flag
   if (flags.origin === 'code' || options.config.allowUnrestrictedFileAccess || options.config.skillMode)
     return;
 
-  // Trust llm to use valid characters in file names.
   const output = outputDir(options);
   const workspace = options.cwd;
   if (!isPathInside(output, resolvedFilename) && !isPathInside(workspace, resolvedFilename))

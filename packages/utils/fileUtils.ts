@@ -78,6 +78,22 @@ export function sanitizeForFilePath(s: string) {
   return s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
 }
 
+// DOS device names, with or without an extension. Windows maps these to devices
+// (NUL.png writes to the NUL device) instead of keeping the path the caller asked for.
+const WINDOWS_RESERVED_DEVICE = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i;
+
+export function outputFilenameError(fileName: string): string | undefined {
+  for (const part of fileName.split(/[\\/]/)) {
+    if (!part || part === '.' || part === '..')
+      continue;
+    if (WINDOWS_RESERVED_DEVICE.test(part))
+      return `Invalid output file name: '${fileName}' uses reserved device name '${part}'`;
+    if (/[. ]$/.test(part))
+      return `Invalid output file name: '${fileName}' would not be stored verbatim on Windows`;
+  }
+  return undefined;
+}
+
 export function trimLongString(s: string, length = 100) {
   if (s.length <= length)
     return s;
