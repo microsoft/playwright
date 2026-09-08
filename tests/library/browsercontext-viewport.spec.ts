@@ -129,6 +129,28 @@ browserTest('should support touch with null viewport', async ({ browser, server 
   await context.close();
 });
 
+browserTest('should keep touch emulation after screenshot beyond viewport', async ({ browser, server }) => {
+  browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42607' });
+  const context = await browser.newContext({ viewport: { width: 393, height: 727 }, hasTouch: true });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<div id="tall" style="height:3000px">tall</div>`);
+  const probe = () => page.evaluate(() => ({
+    ontouchstart: 'ontouchstart' in window,
+    maxTouchPoints: navigator.maxTouchPoints,
+    coarse: matchMedia('(pointer: coarse)').matches,
+  }));
+  const expected = await probe();
+  expect(expected.ontouchstart).toBe(true);
+  await page.screenshot({ fullPage: true });
+  expect(await probe()).toEqual(expected);
+  await page.locator('#tall').screenshot();
+  expect(await probe()).toEqual(expected);
+  await page.goto(server.EMPTY_PAGE);
+  expect(await probe()).toEqual(expected);
+  await context.close();
+});
+
 it('should set both screen and viewport options', async ({ contextFactory, browserName, isBidi }) => {
   const context = await contextFactory({
     screen: { 'width': 1280, 'height': 720 },
