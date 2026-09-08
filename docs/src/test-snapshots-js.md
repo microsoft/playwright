@@ -59,42 +59,21 @@ await expect(page).toHaveScreenshot('landing.webp');
 > Note that `toHaveScreenshot()` also accepts an array of path segments to the snapshot file such as `expect().toHaveScreenshot(['relative', 'path', 'to', 'snapshot.png'])`.
 > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
 
-Mouse actions such as [`method: Locator.click`] leave the pointer at its last position. If the page changes afterwards, another element can end up under the pointer and appear hovered in the screenshot. To avoid this, move the mouse outside the viewport before taking the screenshot.
-
-<details>
-<summary>Helper for repeated named screenshots</summary>
-
-```ts title="test-utils.ts"
-import {
-  expect,
-  type Page,
-  type PageAssertionsToHaveScreenshotOptions,
-} from '@playwright/test';
-
-export async function expectPageToHaveScreenshotWithMouseOutsideViewport(
-  page: Page,
-  screenshotName: string | ReadonlyArray<string>,
-  options?: PageAssertionsToHaveScreenshotOptions,
-) {
-  await page.mouse.move(-1, -1);
-  await expect(page).toHaveScreenshot(screenshotName, options);
-}
-```
-
-```ts title="example.spec.ts"
-await expectPageToHaveScreenshotWithMouseOutsideViewport(page, 'landing.png', {
-  fullPage: true,
-});
-```
-
-</details>
-
 ## Updating screenshots
 
 Sometimes you need to update the reference screenshot, for example when the page has changed. Do this with the  `--update-snapshots` flag.
 
 ```bash
 npx playwright test --update-snapshots
+```
+
+## Hover effects
+
+Screenshots capture any hover effects present in the page at the moment. To avoid hover effects, move the mouse to a position that does not trigger them, or hover an element that has no effects, before taking the screenshot:
+
+```js
+await page.mouse.move(-1, -1);
+await expect(page).toHaveScreenshot();
 ```
 
 ## Options
