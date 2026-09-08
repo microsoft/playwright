@@ -58,6 +58,7 @@ export class Response {
   private _includeSnapshotDepth: number | undefined;
   private _includeSnapshotBoxes: boolean | undefined;
   private _isClose: boolean = false;
+  private _includeWebMCP: boolean = false;
 
   readonly toolName: string;
   readonly toolArgs: Record<string, any>;
@@ -138,6 +139,10 @@ export class Response {
 
   setClose() {
     this._isClose = true;
+  }
+
+  setIncludeWebMCP() {
+    this._includeWebMCP = true;
   }
 
   addError(error: string) {
@@ -289,12 +294,16 @@ export class Response {
     // Render tab titles upon changes or when more than one tab.
     const snapshotToFile = this._includeSnapshot !== 'explicit' || !!this._includeSnapshotFileName;
     const ariaFormat = this._includeSnapshot === 'none' ? 'none' : (this._json && !snapshotToFile ? 'json' : 'text');
-    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotRoot, this._includeSnapshotDepth, this._includeSnapshotBoxes, this._clientWorkspace, ariaFormat) : undefined;
+    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotRoot, this._includeSnapshotDepth, this._includeSnapshotBoxes, this._clientWorkspace, ariaFormat, this._includeWebMCP) : undefined;
     const tabHeaders = await Promise.all(this._context.tabs().map(tab => tab.headerSnapshot()));
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1)
         addSection('Open tabs', renderTabsMarkdown(tabHeaders));
-      addSection('Page', renderTabMarkdown(tabHeaders.find(h => h.current) ?? tabHeaders[0]));
+      const pageLines = renderTabMarkdown(tabHeaders.find(h => h.current) ?? tabHeaders[0]);
+      const webmcpToolCount = tabSnapshot?.webmcpToolCount;
+      if (webmcpToolCount)
+        pageLines.push(`- ${webmcpToolCount} webmcp tool${webmcpToolCount === 1 ? '' : 's'} available on the page`);
+      addSection('Page', pageLines);
     }
 
     // Handle modal states.

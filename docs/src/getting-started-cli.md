@@ -213,6 +213,25 @@ playwright-cli video-chapter <title>    # add chapter marker to video
 playwright-cli video-stop --filename=f  # stop video recording
 ```
 
+### WebMCP
+
+Pages can register their own tools for agents through the experimental [WebMCP](https://webmachinelearning.github.io/webmcp/) API. When a page has them, the page status after a navigation reports how many, and the tools can be listed and called directly instead of driving the UI:
+
+```bash
+playwright-cli webmcp-list                       # list tools registered by the page
+playwright-cli webmcp-call <name> [--params]     # call one, passing a JSON object
+```
+
+Tool names, descriptions, schemas and results are provided by the page, so treat them as untrusted input.
+
+WebMCP is experimental and only available in Chromium and Firefox behind a browser flag, passed through the [configuration file](#configuration-file):
+
+```json
+{
+  "browser": { "launchOptions": { "args": ["--enable-features=WebMCP"] } }
+}
+```
+
 ## Sessions
 
 The CLI keeps the browser profile in memory by default — cookies and storage state are preserved between calls within a session but lost when the browser closes. Use `--persistent` to save the profile to disk.
@@ -308,6 +327,7 @@ This requires the [Playwright Extension](https://github.com/microsoft/playwright
 | **Run headed**            | `playwright-cli open https://example.com --headed`  |
 | **Use Firefox**           | `playwright-cli open --browser=firefox`             |
 | **Monitor sessions**      | `playwright-cli show`                               |
+| **List page WebMCP tools** | `playwright-cli webmcp-list`                       |
 
 ## What's Next
 

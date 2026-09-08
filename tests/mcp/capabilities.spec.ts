@@ -43,6 +43,8 @@ test('test snapshot tool list', async ({ client }) => {
     'browser_tabs',
     'browser_take_screenshot',
     'browser_wait_for',
+    'browser_webmcp_call',
+    'browser_webmcp_list',
   ]));
 });
 

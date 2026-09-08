@@ -85,6 +85,7 @@ const categories: { name: Category, title: string }[] = [
   { name: 'storage', title: 'Storage' },
   { name: 'network', title: 'Network' },
   { name: 'devtools', title: 'DevTools' },
+  { name: 'webmcp', title: 'WebMCP' },
   { name: 'install', title: 'Install' },
   { name: 'config', title: 'Configuration' },
   { name: 'browsers', title: 'Browser sessions' },

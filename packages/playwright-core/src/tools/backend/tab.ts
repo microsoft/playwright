@@ -26,6 +26,7 @@ import { LogFile } from './logFile';
 import { ModalState } from './tool';
 import { handleDialog } from './dialogs';
 import { uploadFile } from './files';
+import { listWebMCPTools } from './webmcp';
 
 import type { AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
 import type { Disposable } from '@isomorphic/disposable';
@@ -88,6 +89,7 @@ type TabSnapshot = {
   modalStates: ModalState[];
   events: EventEntry[];
   consoleLink?: string;
+  webmcpToolCount?: number;
 };
 
 export class Tab extends EventEmitter<TabEventsInterface> {
@@ -413,7 +415,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._requests.length = 0;
   }
 
-  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, boxes: boolean | undefined, relativeTo: string | undefined, ariaFormat: 'none' | 'text' | 'json' = 'text'): Promise<TabSnapshot> {
+  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, boxes: boolean | undefined, relativeTo: string | undefined, ariaFormat: 'none' | 'text' | 'json' = 'text', includeWebMCP: boolean = false): Promise<TabSnapshot> {
     await this._initializedPromise;
     let tabSnapshot: TabSnapshot | undefined;
     let modalStates: ModalState[] = [];
@@ -454,6 +456,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       tabSnapshot.consoleLink = await this._consoleLog.take(relativeTo);
       tabSnapshot.events = this._recentEventEntries;
       this._recentEventEntries = [];
+      if (includeWebMCP)
+        tabSnapshot.webmcpToolCount = (await listWebMCPTools(this)).tools.length;
     }
 
     return tabSnapshot ?? {

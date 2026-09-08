@@ -17,7 +17,7 @@
 import * as z from 'zod';
 import type zodType from 'zod';
 
-export type Category = 'core' | 'navigation' | 'keyboard' | 'mouse' | 'export' | 'storage' | 'tabs' | 'network' | 'devtools' | 'browsers' | 'config' | 'install';
+export type Category = 'core' | 'navigation' | 'keyboard' | 'mouse' | 'export' | 'storage' | 'tabs' | 'network' | 'devtools' | 'browsers' | 'config' | 'install' | 'webmcp';
 
 export type CommandSchema<Args extends zodType.ZodTypeAny, Options extends zodType.ZodTypeAny> = {
   name: string;

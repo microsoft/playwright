@@ -1164,6 +1164,46 @@ const tray = declareCommand({
   toolParams: () => ({}),
 });
 
+// WebMCP
+
+function parseWebMCPParams(params: string | undefined) {
+  if (params === undefined)
+    return undefined;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(params);
+  } catch (e) {
+    throw new Error(`error: '--params' option: expected a JSON object, received '${params}'`);
+  }
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed))
+    throw new Error(`error: '--params' option: expected a JSON object, received '${params}'`);
+  return parsed as Record<string, unknown>;
+}
+
+const webmcpList = declareCommand({
+  name: 'webmcp-list',
+  description: 'List the WebMCP tools registered by the page',
+  category: 'webmcp',
+  args: z.object({}),
+  toolName: 'browser_webmcp_list',
+  toolParams: () => ({}),
+});
+
+const webmcpCall = declareCommand({
+  name: 'webmcp-call',
+  description: 'Call a WebMCP tool registered by the page',
+  category: 'webmcp',
+  args: z.object({
+    name: z.string().describe('Name of the WebMCP tool to call'),
+  }),
+  options: z.object({
+    params: z.string().optional().describe('Tool input parameters as a JSON object, for example \'{"query":"cats"}\''),
+    frame: z.string().optional().describe('Frame that registered the tool, as reported by webmcp-list, when the tool name is ambiguous'),
+  }),
+  toolName: 'browser_webmcp_call',
+  toolParams: ({ name, params, frame }) => ({ name, params: parseWebMCPParams(params), frame }),
+});
+
 const commandsArray: AnyCommandSchema[] = [
   // core category
   open,
@@ -1277,6 +1317,10 @@ const commandsArray: AnyCommandSchema[] = [
   sessionList,
   sessionCloseAll,
   killAll,
+
+  // webmcp category
+  webmcpList,
+  webmcpCall,
 
   // Hidden commands
   tray,
