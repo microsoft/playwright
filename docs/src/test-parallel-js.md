@@ -157,6 +157,37 @@ test('reset the database', { lock: ['database', 'external-api'] }, async () => {
 
 Playwright acquires all the locks of a test before the test starts and releases them when it finishes.
 
+### Lock modes
+
+By default, a lock is held in `'read-write'` mode, which means that the test runs alone. When a test only reads the shared resource, declare the lock with `mode: 'read'`. Any number of tests can hold a lock in `'read'` mode at the same time, but none of them runs while a test holds the same lock in `'read-write'` mode.
+
+```js
+// Runs alone, since the default mode is 'read-write'.
+test('change color scheme', { lock: 'application-settings' }, async ({ page }) => {
+  // ...
+});
+
+// Runs at the same time as other 'read' holders,
+// but never with 'change color scheme' above.
+test('show color scheme', {
+  lock: { name: 'application-settings', mode: 'read' },
+}, async ({ page }) => {
+  // ...
+});
+
+// Modes can be mixed across multiple locks.
+test('sync settings', {
+  lock: [
+    { name: 'application-settings', mode: 'read-write' },
+    { name: 'vendor-api', mode: 'read' },
+  ],
+}, async ({ page }) => {
+  // ...
+});
+```
+
+Once a test is waiting to acquire a lock in `'read-write'` mode, tests declared after it do not acquire the same lock in `'read'` mode, so that a steady stream of readers does not delay the writer indefinitely.
+
 :::note
 In the default and [serial](#serial-mode) modes, all tests in a file run together in order, so a lock declared on any test is held for the duration of the whole file.
 :::

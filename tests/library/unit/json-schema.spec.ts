@@ -69,6 +69,13 @@ it('should validate oneOf', () => {
   expect(validate(123, schema, '$')).toEqual(['$: does not match any of the expected types']);
 });
 
+it('should prefer oneOf variant with matching type when reporting errors', () => {
+  const item: JsonSchema = { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] };
+  const schema: JsonSchema = { oneOf: [{ type: 'string' }, item, { type: 'array', items: { oneOf: [{ type: 'string' }, item] } }] };
+  expect(validate({}, schema, '$')).toEqual(['$.name: required']);
+  expect(validate(['a', {}], schema, '$')).toEqual(['$[1].name: required']);
+});
+
 it('should validate nested objects', () => {
   const schema: JsonSchema = {
     type: 'object',

@@ -58,25 +58,41 @@ export class Dispatcher {
     }
   }
 
-  private _heldLocks(): Set<string> {
-    const heldLocks = new Set<string>();
+  private _heldLocks(): Map<string, testNs.TestLock['mode']> {
+    const heldLocks = new Map<string, testNs.TestLock['mode']>();
     for (const slot of this._workerSlots) {
-      for (const lock of slot.jobDispatcher?.job.locks || [])
-        heldLocks.add(lock);
+      for (const lock of slot.jobDispatcher?.job.locks || []) {
+        if (lock.mode === 'read-write' || !heldLocks.has(lock.name))
+          heldLocks.set(lock.name, lock.mode);
+      }
     }
     return heldLocks;
   }
 
   private _findFirstJobToRun() {
     const heldLocks = this._heldLocks();
+    // Read locks are not granted ahead of an earlier queued job waiting for the same lock in read-write mode.
+    const reservedLocks = new Set<string>();
+    const isLockAvailable = (lock: testNs.TestLock) => {
+      const heldMode = heldLocks.get(lock.name);
+      if (lock.mode === 'read-write')
+        return !heldMode;
+      return heldMode !== 'read-write' && !reservedLocks.has(lock.name);
+    };
     // Always pick the first job that can be run while respecting the project worker limit.
     for (let index = 0; index < this._queue.length; index++) {
       const job = this._queue[index];
       // Isolated retries only run one at a time, after all other jobs have finished.
       if (this._isolatedJobs.has(job) && this._workerSlots.some(w => !!w.jobDispatcher))
         continue;
-      if (job.locks.some(lock => heldLocks.has(lock)))
+      const unavailableLocks = job.locks.filter(lock => !isLockAvailable(lock));
+      if (unavailableLocks.length) {
+        for (const lock of unavailableLocks) {
+          if (lock.mode === 'read-write')
+            reservedLocks.add(lock.name);
+        }
         continue;
+      }
       const projectIdWorkerLimit = this._workerLimitPerProjectId.get(job.projectId);
       if (!projectIdWorkerLimit)
         return index;

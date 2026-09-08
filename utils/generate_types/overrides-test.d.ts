@@ -101,10 +101,15 @@ export type TestAnnotation = TestDetailsAnnotation & {
   location?: Location;
 };
 
+export type TestDetailsLock = {
+  name: string;
+  mode?: 'read' | 'read-write';
+};
+
 export type TestDetails = {
   tag?: string | string[];
   annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
-  lock?: string | string[];
+  lock?: string | TestDetailsLock | (string | TestDetailsLock)[];
 }
 
 type TestBody<TestArgs> = (args: TestArgs, testInfo: TestInfo) => Promise<unknown> | unknown;

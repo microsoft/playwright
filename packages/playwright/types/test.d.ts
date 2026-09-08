@@ -2721,10 +2721,15 @@ export type TestAnnotation = TestDetailsAnnotation & {
   location?: Location;
 };
 
+export type TestDetailsLock = {
+  name: string;
+  mode?: 'read' | 'read-write';
+};
+
 export type TestDetails = {
   tag?: string | string[];
   annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
-  lock?: string | string[];
+  lock?: string | TestDetailsLock | (string | TestDetailsLock)[];
 }
 
 type TestBody<TestArgs> = (args: TestArgs, testInfo: TestInfo) => Promise<unknown> | unknown;
@@ -2835,6 +2840,20 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * });
    * ```
    *
+   * Tests that only read the shared resource can hold the lock in `'read'` mode. Any number of such tests run at the
+   * same time, but never together with a test holding the same lock in the default `'read-write'` mode.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('show user settings', {
+   *   lock: { name: 'user-settings', mode: 'read' },
+   * }, async ({ page }) => {
+   *   // This test runs concurrently with other 'read' holders,
+   *   // but never with 'update user settings' above.
+   * });
+   * ```
+   *
    * Learn more about [test locks](https://playwright.dev/docs/test-parallel#test-locks).
    * @param title Test title.
    * @param details Additional test details.
@@ -2929,6 +2948,20 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * }, async ({ page }) => {
    *   // This test never runs concurrently with other tests
    *   // that declare the 'user-settings' lock.
+   * });
+   * ```
+   *
+   * Tests that only read the shared resource can hold the lock in `'read'` mode. Any number of such tests run at the
+   * same time, but never together with a test holding the same lock in the default `'read-write'` mode.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('show user settings', {
+   *   lock: { name: 'user-settings', mode: 'read' },
+   * }, async ({ page }) => {
+   *   // This test runs concurrently with other 'read' holders,
+   *   // but never with 'update user settings' above.
    * });
    * ```
    *

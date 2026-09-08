@@ -22,7 +22,7 @@ export type TestGroup = {
   repeatEachIndex: number;
   projectId: string;
   tests: test.TestCase[];
-  locks: string[];
+  locks: test.TestLock[];
 };
 
 export function createTestGroups(projectSuite: test.Suite, expectedParallelism: number): TestGroup[] {
@@ -131,12 +131,14 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
   }
 
   for (const group of result) {
-    const locks = new Set<string>();
+    const locks = new Map<string, test.TestLock>();
     for (const test of group.tests) {
-      for (const lock of test._locks)
-        locks.add(lock);
+      for (const lock of test._locks) {
+        if (lock.mode === 'read-write' || !locks.has(lock.name))
+          locks.set(lock.name, lock);
+      }
     }
-    group.locks = [...locks];
+    group.locks = [...locks.values()];
   }
   return result;
 }

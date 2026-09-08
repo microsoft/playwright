@@ -17,7 +17,8 @@
 import { validate } from '@isomorphic/jsonSchema';
 
 import type { JsonSchema } from '@isomorphic/jsonSchema';
-import type { TestDetailsAnnotation } from '../../types/test';
+import type { TestLock } from './test';
+import type { TestDetailsAnnotation, TestDetailsLock } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 
 const testAnnotationSchema: JsonSchema = {
@@ -27,6 +28,15 @@ const testAnnotationSchema: JsonSchema = {
     description: { type: 'string' },
   },
   required: ['type'],
+};
+
+const testLockSchema: JsonSchema = {
+  type: 'object',
+  properties: {
+    name: { type: 'string' },
+    mode: { type: 'string', pattern: '^(read|read-write)$', patternError: "Lock mode must be 'read' or 'read-write'" },
+  },
+  required: ['name'],
 };
 
 const testDetailsSchema: JsonSchema = {
@@ -46,8 +56,9 @@ const testDetailsSchema: JsonSchema = {
     },
     lock: {
       oneOf: [
+        testLockSchema,
         { type: 'string' },
-        { type: 'array', items: { type: 'string' } },
+        { type: 'array', items: { oneOf: [testLockSchema, { type: 'string' }] } },
       ]
     },
   },
@@ -56,7 +67,7 @@ const testDetailsSchema: JsonSchema = {
 type ValidTestDetails = {
   tags: string[];
   annotations: (TestDetailsAnnotation & { location: Location })[];
-  locks: string[];
+  locks: TestLock[];
   location: Location;
 };
 
@@ -72,8 +83,12 @@ export function validateTestDetails(details: unknown, location: Location): Valid
   const annotation = obj.annotation;
   const annotations: TestDetailsAnnotation[] = annotation === undefined ? [] : Array.isArray(annotation) ? annotation : [annotation as TestDetailsAnnotation];
 
-  const lock = obj.lock;
-  const locks: string[] = lock === undefined ? [] : typeof lock === 'string' ? [lock] : lock as string[];
+  const lock = obj.lock as string | TestDetailsLock | (string | TestDetailsLock)[] | undefined;
+  const locks: TestLock[] = (lock === undefined ? [] : Array.isArray(lock) ? lock : [lock]).map(lock => {
+    if (typeof lock === 'string')
+      return { name: lock, mode: 'read-write' };
+    return { name: lock.name, mode: lock.mode ?? 'read-write' };
+  });
 
   return {
     annotations: annotations.map(a => ({ ...a, location })),

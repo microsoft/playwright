@@ -36,7 +36,7 @@ function conflictingOverlaps(lines: string[], conflicts: [string, string][]): [s
   return overlaps;
 }
 
-const lockedTest = (name: string, delay: number, lock?: string | string[]) => `
+const lockedTest = (name: string, delay: number, lock?: unknown) => `
   test('${name}'${lock !== undefined ? `, { lock: ${JSON.stringify(lock)} }` : ''}, async () => {
     console.log('\\n%%begin:${name}');
     await new Promise(f => setTimeout(f, ${delay}));
@@ -235,4 +235,150 @@ test('should validate lock in test details', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('details.lock');
+});
+
+test('should run tests with read locks at the same time', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { fullyParallel: true };
+    `,
+    'helper.ts': `
+      import fs from 'fs';
+      import path from 'path';
+      export async function signalAndWait(signal: string, waitFor: string) {
+        fs.mkdirSync(process.env.SIGNAL_DIR, { recursive: true });
+        fs.writeFileSync(path.join(process.env.SIGNAL_DIR, signal), '');
+        while (!fs.existsSync(path.join(process.env.SIGNAL_DIR, waitFor)))
+          await new Promise(f => setTimeout(f, 100));
+      }
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      import { signalAndWait } from './helper';
+      test('test1', { lock: { name: 'shared', mode: 'read' } }, async () => {
+        await signalAndWait('a.txt', 'b.txt');
+      });
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      import { signalAndWait } from './helper';
+      test('test2', { lock: { name: 'shared', mode: 'read' } }, async () => {
+        await signalAndWait('b.txt', 'a.txt');
+      });
+    `,
+  }, { workers: 2 }, { SIGNAL_DIR: test.info().outputDir });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
+
+test('should not run read and read-write locks at the same time', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { fullyParallel: true };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('test1', 1000, { name: 'shared', mode: 'read' })}
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('test2', 1000, 'shared')}
+    `,
+    'c.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('test3', 1000, { name: 'shared', mode: 'read-write' })}
+    `,
+  }, { workers: 3 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(conflictingOverlaps(result.outputLines, [['test1', 'test2'], ['test1', 'test3'], ['test2', 'test3']])).toEqual([]);
+});
+
+test('should support mixed string and object locks', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { fullyParallel: true };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('test1', 1000, ['lock-a', { name: 'lock-b', mode: 'read' }])}
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('test2', 1000, { name: 'lock-a', mode: 'read' })}
+    `,
+    'c.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('test3', 1000, { name: 'lock-b', mode: 'read' })}
+    `,
+  }, { workers: 3 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(conflictingOverlaps(result.outputLines, [['test1', 'test2']])).toEqual([]);
+  // Both read 'lock-b', so they run together.
+  expect(conflictingOverlaps(result.outputLines, [['test1', 'test3']])).toEqual([['test1', 'test3']]);
+});
+
+test('should not starve a read-write lock behind read locks', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { fullyParallel: true };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('reader1', 500, { name: 'shared', mode: 'read' })}
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('writer', 500, 'shared')}
+    `,
+    'c.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('reader2', 500, { name: 'shared', mode: 'read' })}
+    `,
+    'd.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('other', 100, { name: 'other', mode: 'read' })}
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(4);
+  // reader2 waits for the writer that was queued before it, instead of joining reader1.
+  const lines = result.outputLines.filter(line => !line.endsWith(':other'));
+  expect(lines).toEqual(['begin:reader1', 'end:reader1', 'begin:writer', 'end:writer', 'begin:reader2', 'end:reader2']);
+  // Unrelated locks are not affected by the waiting writer.
+  expect(conflictingOverlaps(result.outputLines, [['reader1', 'other']])).toEqual([['reader1', 'other']]);
+});
+
+test('should hold the lock in read-write mode for the whole file group when any test needs it', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('a1', 500, { name: 'shared', mode: 'read' })}
+      ${lockedTest('a2', 500, 'shared')}
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('b1', 1000, { name: 'shared', mode: 'read' })}
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(conflictingOverlaps(result.outputLines, [['a1', 'b1'], ['a2', 'b1']])).toEqual([]);
+});
+
+test('should validate lock mode in test details', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('test1', { lock: [{ name: 'shared', mode: 'exclusive' }] }, async () => {});
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      test('test2', { lock: { mode: 'read' } }, async () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Lock mode must be 'read' or 'read-write'`);
+  expect(result.output).toContain('details.lock.name: required');
 });

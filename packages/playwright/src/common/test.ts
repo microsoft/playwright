@@ -41,6 +41,11 @@ export type Modifier = {
   description: string | undefined
 };
 
+export type TestLock = {
+  name: string;
+  mode: 'read' | 'read-write';
+};
+
 export class Suite extends Base {
   location?: Location;
   parent?: Suite;
@@ -53,7 +58,7 @@ export class Suite extends Base {
   _staticAnnotations: TestAnnotation[] = [];
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
-  _locks: string[] = [];
+  _locks: TestLock[] = [];
   _modifiers: Modifier[] = [];
   _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
   _fullProject: FullProjectInternal | undefined;
@@ -286,7 +291,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _projectId = '';
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
-  _locks: string[] = [];
+  _locks: TestLock[] = [];
   _planAnnotations: TestAnnotation[] = [];
 
   constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {

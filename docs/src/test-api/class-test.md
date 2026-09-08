@@ -100,6 +100,19 @@ test('update user settings', {
 });
 ```
 
+Tests that only read the shared resource can hold the lock in `'read'` mode. Any number of such tests run at the same time, but never together with a test holding the same lock in the default `'read-write'` mode.
+
+```js
+import { test, expect } from '@playwright/test';
+
+test('show user settings', {
+  lock: { name: 'user-settings', mode: 'read' },
+}, async ({ page }) => {
+  // This test runs concurrently with other 'read' holders,
+  // but never with 'update user settings' above.
+});
+```
+
 Learn more about [test locks](../test-parallel.md#test-locks).
 
 ### param: Test.(call).title
@@ -115,7 +128,9 @@ Test title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]> Annotation type, for example `'issue'`.
     - `description` ?<[string]> Optional annotation description, for example an issue url.
-  - `lock` ?<[string]|[Array]<[string]>>
+  - `lock` ?<[string]|[Object]|[Array]<[string]|[Object]>>
+    - `name` <[string]> Lock name.
+    - `mode` ?<[LockMode]<"read"|"read-write">> Lock mode. Any number of tests can hold the lock in `'read'` mode at the same time, while a test holding it in `'read-write'` mode runs alone. Defaults to `'read-write'`. A lock given as a string is equivalent to `{ name, mode: 'read-write' }`.
 
 Additional test details.
 
@@ -478,7 +493,9 @@ Group title.
   - `annotation` ?<[Object]|[Array]<[Object]>>
     - `type` <[string]>
     - `description` ?<[string]>
-  - `lock` ?<[string]|[Array]<[string]>>
+  - `lock` ?<[string]|[Object]|[Array]<[string]|[Object]>>
+    - `name` <[string]> Lock name.
+    - `mode` ?<[LockMode]<"read"|"read-write">> Lock mode. Any number of tests can hold the lock in `'read'` mode at the same time, while a test holding it in `'read-write'` mode runs alone. Defaults to `'read-write'`. A lock given as a string is equivalent to `{ name, mode: 'read-write' }`.
 
 Additional details for all tests in the group.
 

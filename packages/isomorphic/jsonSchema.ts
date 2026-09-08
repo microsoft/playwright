@@ -30,17 +30,22 @@ export function validate(value: unknown, schema: JsonSchema, path: string): stri
   const errors: string[] = [];
 
   if (schema.oneOf) {
+    const isTypeMismatch = (errors: string[]) => errors.length === 1 && errors[0].startsWith(`${path}: expected `);
     let bestErrors: string[] | undefined;
+    let bestScore = Infinity;
     for (const variant of schema.oneOf) {
       const variantErrors = validate(value, variant, path);
       if (variantErrors.length === 0)
         return [];
-      // Prefer the variant with fewest errors (closest match).
-      if (!bestErrors || variantErrors.length < bestErrors.length)
+      // Prefer the variant with fewest errors (closest match), a top-level type mismatch is the farthest.
+      const score = isTypeMismatch(variantErrors) ? Infinity : variantErrors.length;
+      if (!bestErrors || score < bestScore) {
         bestErrors = variantErrors;
+        bestScore = score;
+      }
     }
     // If the best match has only top-level type mismatches, use a generic message.
-    if (bestErrors!.length === 1 && bestErrors![0].startsWith(`${path}: expected `))
+    if (isTypeMismatch(bestErrors!))
       return [`${path}: does not match any of the expected types`];
     return bestErrors!;
   }
