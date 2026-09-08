@@ -136,6 +136,7 @@ test('http transport browser lifecycle (isolated)', async ({ serverEndpoint, ser
     'create http session': 2,
     'delete http session': 2,
     'create browser \(isolated\)': 2,
+    'connect to shared browser': 2,
     'create context': 2,
     'close browser': 2,
   });
@@ -156,6 +157,7 @@ test('http transport browser sigint', async ({ serverEndpoint, server }) => {
 
   await expect.poll(() => formatLog(stderr())).toEqual({
     'create browser (isolated)': 1,
+    'connect to shared browser': 1,
     'create context': 1,
     'create http session': 1,
     'gracefully closing 1': 1,
@@ -202,6 +204,7 @@ test('http transport browser lifecycle (isolated, multiclient)', { annotation: {
     'delete http session': 3,
     'create context': 3,
     'create browser (isolated)': 1,
+    'connect to shared browser': 3,
     'close context': 2,
     'close browser': 1,
   });
@@ -232,6 +235,7 @@ test('http transport browser lifecycle (isolated, concurrent clients)', { annota
     'delete http session': 3,
     'create context': 3,
     'create browser (isolated)': 1,
+    'connect to shared browser': 3,
     'close context': 2,
     'close browser': 1,
   });
@@ -292,6 +296,7 @@ test('http transport isolated multiclient relaunches a crashed shared browser', 
     'create http session': 2,
     'delete http session': 2,
     'create browser (isolated)': 2,
+    'connect to shared browser': 4,
     'create context': 4,
     'close browser': 2,
     'close context': 2,
@@ -329,6 +334,7 @@ test('http transport isolated closes the browser despite an earlier failed backe
     'create http session': 1,
     'delete http session': 1,
     'create browser (isolated)': 1,
+    'connect to shared browser': 2,
     'create context': 1,
     'close browser': 1,
   });
@@ -431,6 +437,8 @@ test('http transport shared context', async ({ serverEndpoint, server }) => {
 
   await expect.poll(() => formatLog(stderr())).toEqual({
     'create browser (persistent)': 1,
+    'connect to shared browser': 2,
+    'disconnect from shared browser': 1,
     'create http session': 2,
     'delete http session': 2,
     'create context': 2,
@@ -489,6 +497,8 @@ test('http transport shared context refuses browser_close', { annotation: { type
 
   await expect.poll(() => formatLog(stderr())).toEqual({
     'create browser (persistent)': 1,
+    'connect to shared browser': 2,
+    'disconnect from shared browser': 1,
     'create http session': 2,
     'delete http session': 2,
     'create context': 2,

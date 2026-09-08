@@ -111,6 +111,7 @@ test('sse transport browser lifecycle (isolated)', async ({ serverEndpoint, serv
     'delete SSE session': 2,
     'create context': 2,
     'create browser (isolated)': 2,
+    'connect to shared browser': 2,
     'close browser': 2,
   });
 });
@@ -161,6 +162,7 @@ test('sse transport browser lifecycle (isolated, multiclient)', async ({ serverE
     'delete SSE session': 3,
     'create context': 3,
     'create browser (isolated)': 1,
+    'connect to shared browser': 3,
     'close context': 2,
     'close browser': 1,
   });
@@ -271,7 +273,9 @@ test('sse transport shared context', async ({ serverEndpoint, server }) => {
     'create SSE session': 2,
     'delete SSE session': 2,
     'create browser (persistent)': 1,
+    'connect to shared browser': 2,
     'create context': 2,
+    'disconnect from shared browser': 1,
     'close browser': 1,
   });
 });
