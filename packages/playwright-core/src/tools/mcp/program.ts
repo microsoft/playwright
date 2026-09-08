@@ -18,7 +18,7 @@ import { Option as ProgramOption } from 'commander';
 import * as mcpServer from '../utils/mcp/server';
 import { commaSeparatedList, defaultCodegenLanguage, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfigForMCP, semicolonSeparatedList } from './config';
 import { setupExitWatchdog } from './watchdog';
-import { createBrowserWithInfo } from './browserFactory';
+import { connectToBrowserEndpoint, createBrowserWithInfo } from './browserFactory';
 import { BrowserBackend } from '../backend/browserBackend';
 import { filteredTools } from '../backend/tools';
 import { testDebug } from './log';
@@ -26,6 +26,7 @@ import { packageJSON } from '../../package';
 
 import type { Command } from 'commander';
 import type { ClientInfo } from '../utils/mcp/server';
+import type { BrowserWithInfo } from './browserFactory';
 import type * as playwright from '../../..';
 
 const version = packageJSON.version;
@@ -97,7 +98,7 @@ export function decorateMCPCommand(command: Command) {
         const config = await resolveCLIConfigForMCP(options);
         const tools = filteredTools(config);
         const useSharedBrowser = config.sharedBrowserContext || config.browser.isolated;
-        let sharedBrowserPromise: Promise<playwright.Browser> | undefined;
+        let sharedBrowserPromise: Promise<BrowserWithInfo> | undefined;
         let clientCount = 0;
         const clientNameCounters = new Map<string, number>();
 
@@ -108,16 +109,13 @@ export function decorateMCPCommand(command: Command) {
           toolSchemas: tools.map(tool => tool.schema),
           create: async (clientInfo: ClientInfo) => {
             if (useSharedBrowser && !sharedBrowserPromise) {
-              const promise = (async () => {
-                const { browser, canBind } = await createBrowserWithInfo(config, clientInfo, options);
-                if (canBind)
-                  await browser.bind(clientInfo.clientName, { workspaceDir: clientInfo.cwd });
-                browser.once('disconnected', () => {
+              const promise = createBrowserWithInfo(config, clientInfo, options, { title: clientInfo.clientName, workspaceDir: clientInfo.cwd }).then(shared => {
+                shared.browser.once('disconnected', () => {
                   if (sharedBrowserPromise === promise)
                     sharedBrowserPromise = undefined;
                 });
-                return browser;
-              })().catch(error => {
+                return shared;
+              }, error => {
                 if (sharedBrowserPromise === promise)
                   sharedBrowserPromise = undefined;
                 throw error;
@@ -125,38 +123,58 @@ export function decorateMCPCommand(command: Command) {
               sharedBrowserPromise = promise;
             }
             clientCount++;
+            const promise = sharedBrowserPromise;
+            let shared: BrowserWithInfo | undefined;
+            let browser: BrowserWithInfo['browser'];
             try {
-              const promise = sharedBrowserPromise;
-              const { browser, canBind } = promise ? { browser: await promise, canBind: false } : await createBrowserWithInfo(config, clientInfo, options);
-              if (canBind) {
+              shared = await promise;
+              if (shared) {
+                testDebug('connect to shared browser');
+                browser = await connectToBrowserEndpoint(config, shared.browser, shared.endpoint);
+              } else {
                 const count = (clientNameCounters.get(clientInfo.clientName) ?? 0) + 1;
                 clientNameCounters.set(clientInfo.clientName, count);
                 const sessionName = count > 1 ? `${clientInfo.clientName} (${count})` : clientInfo.clientName;
-                await browser.bind(sessionName, { workspaceDir: clientInfo.cwd });
+                browser = (await createBrowserWithInfo(config, clientInfo, options, { title: sessionName, workspaceDir: clientInfo.cwd })).browser;
               }
-              const browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
-              return new BrowserBackend(config, browserContext, tools, async () => {
-                clientCount--;
-
-                if (sharedBrowserPromise && clientCount > 0) {
-                  if (config.browser.isolated) {
-                    testDebug('close context');
-                    await browserContext.close().catch(() => { });
-                  }
-                  return;
-                }
-
-                testDebug('close browser');
-                if (sharedBrowserPromise === promise)
-                  sharedBrowserPromise = undefined;
-                await browserContext.close().catch(() => { });
-                await browser.close().catch(() => { });
-              });
             } catch (error) {
               // The dispose callback never runs for a failed create.
               clientCount--;
               throw error;
             }
+
+            let browserContext: playwright.BrowserContext;
+            try {
+              // A `launchServer` remote isolates contexts per connection, so a fresh connection may see none.
+              browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0] ?? await browser.newContext(config.browser.contextOptions);
+            } catch (error) {
+              clientCount--;
+              await browser.close().catch(() => { });
+              throw error;
+            }
+
+            return new BrowserBackend(config, browserContext, tools, async () => {
+              clientCount--;
+              const last = !shared || !clientCount;
+              if (last && sharedBrowserPromise === promise)
+                sharedBrowserPromise = undefined;
+
+              if (!last) {
+                if (config.browser.isolated) {
+                  testDebug('close context');
+                  await browserContext.close().catch(() => { });
+                } else {
+                  testDebug('disconnect from shared browser');
+                }
+                await browser.close().catch(() => { });
+                return;
+              }
+
+              testDebug('close browser');
+              await browserContext.close().catch(() => { });
+              await browser.close().catch(() => { });
+              await shared?.browser.close().catch(() => { });
+            });
           },
         };
         await mcpServer.start(factory, config.server);

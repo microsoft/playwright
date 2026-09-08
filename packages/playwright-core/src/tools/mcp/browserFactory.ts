@@ -23,7 +23,7 @@ import { defaultCacheDirectory } from '../../server/registry/index';
 import { testDebug } from './log';
 import { outputDir } from '../backend/context';
 import { createExtensionBrowser } from './extensionContextFactory';
-import { connectToBrowserAcrossVersions } from '../utils/connect';
+import { connectToBrowserAcrossVersions, descriptorEndpoint } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
 import { resolveExtensionOptions } from './config';
 // eslint-disable-next-line no-restricted-imports
@@ -36,27 +36,29 @@ import type { Playwright } from '../../client/playwright';
 import type * as playwrightTypes from '../../..';
 import type { BrowserInfo } from '../../serverRegistry';
 
-type BrowserWithInfo = {
+export type BrowserWithInfo = {
   browser: playwrightTypes.Browser,
   browserInfo: BrowserInfo,
-  canBind: boolean,
+  endpoint: string,
   ownership: 'attached' | 'own',
 };
 
-export async function createBrowserWithInfo(config: FullConfig, clientInfo: ClientInfo, cliOptions: CLIOptions): Promise<BrowserWithInfo> {
+export type BindOptions = {
+  title: string,
+  workspaceDir?: string,
+};
+
+export async function createBrowserWithInfo(config: FullConfig, clientInfo: ClientInfo, cliOptions: CLIOptions, bindOptions: BindOptions): Promise<BrowserWithInfo> {
   if (config.browser.remoteEndpoint)
     return await createRemoteBrowser(config);
 
   let browser: playwrightTypes.Browser;
-  let canBind = false;
   let ownership: 'attached' | 'own' = 'own';
   if (config.browser.cdpEndpoint) {
     browser = await createCDPBrowser(config, clientInfo);
-    canBind = true;
     ownership = 'attached';
   } else if (config.browser.isolated) {
     browser = await createIsolatedBrowser(config, clientInfo);
-    canBind = true;
     ownership = 'own';
   } else if (config.extension) {
     const { channel, executablePath, profileDirName } = resolveExtensionOptions(cliOptions);
@@ -64,11 +66,21 @@ export async function createBrowserWithInfo(config: FullConfig, clientInfo: Clie
     ownership = 'attached';
   } else {
     browser = await createPersistentBrowser(config, clientInfo);
-    canBind = true;
     ownership = 'own';
   }
 
-  return { browser, browserInfo: browserInfo(browser, config), canBind, ownership };
+  try {
+    const { endpoint } = await browser.bind(bindOptions.title, { workspaceDir: bindOptions.workspaceDir });
+    return { browser, browserInfo: browserInfo(browser, config), endpoint, ownership };
+  } catch (error) {
+    await browser.close().catch(() => {});
+    throw error;
+  }
+}
+
+export async function connectToBrowserEndpoint(config: FullConfig, browser: playwrightTypes.Browser, endpoint: string): Promise<playwrightTypes.Browser> {
+  const options = config.browser.remoteEndpoint ? remoteConnectOptions(config).options : {};
+  return await browser.browserType().connect(endpoint, options);
 }
 
 export interface BrowserContextFactory {
@@ -114,21 +126,25 @@ async function createCDPBrowser(config: FullConfig, clientInfo: ClientInfo): Pro
   return browser;
 }
 
-async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo> {
-  testDebug('create browser (remote)');
-  // `remoteEndpoint` may be a plain URL string or a ConnectOptions object that
-  // carries additional fields such as `exposeNetwork`, `headers`, `slowMo`, and
-  // `timeout`. Normalize once so the rest of the function deals with a single
-  // shape.
+// `remoteEndpoint` may be a plain URL string or a ConnectOptions object that
+// carries additional fields such as `exposeNetwork`, `headers`, `slowMo`, and
+// `timeout`. Normalize once so every connect deals with a single shape.
+function remoteConnectOptions(config: FullConfig): { endpoint: string, options: playwrightTypes.ConnectOptions } {
   const remote = config.browser.remoteEndpoint!;
   // `remoteHeaders` is for back-compat, `remoteEndpoint.headers` takes precedence.
   // eslint-disable-next-line no-restricted-syntax
   const remoteHeaders = (config.browser as any).remoteHeaders as Record<string, string> | undefined;
-  const remoteOptions = typeof remote === 'string'
-    ? { endpoint: remote, headers: remoteHeaders }
-    : { ...remote, headers: { ...remoteHeaders, ...remote.headers } };
+  if (typeof remote === 'string')
+    return { endpoint: remote, options: { headers: remoteHeaders } };
+  const { endpoint, ...options } = remote;
+  return { endpoint, options: { ...options, headers: { ...remoteHeaders, ...remote.headers } } };
+}
 
-  const descriptor = await serverRegistry.find(remoteOptions.endpoint);
+async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo> {
+  testDebug('create browser (remote)');
+  const { endpoint, options } = remoteConnectOptions(config);
+
+  const descriptor = await serverRegistry.find(endpoint);
   if (descriptor) {
     const browser = await connectToBrowserAcrossVersions(descriptor);
     return {
@@ -139,20 +155,20 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
         launchOptions: descriptor.browser.launchOptions,
         userDataDir: descriptor.browser.userDataDir
       },
-      canBind: false,
+      endpoint: descriptorEndpoint(descriptor),
       ownership: 'attached'
     };
   }
 
   const playwrightObject = playwright as Playwright;
   // Use connectToBrowser instead of playwright[browserName].connect because we don't have browserName.
-  const browser = await connectToBrowser(playwrightObject, remoteOptions);
+  const browser = await connectToBrowser(playwrightObject, { endpoint, ...options });
   browser._connectToBrowserType(playwrightObject[browser._browserName], {}, undefined);
   // A browser started via `launchServer` exposes no contexts until one is
   // created, so create one when attaching to such a server.
   if (!browser.contexts().length)
     await browser.newContext(config.browser.contextOptions);
-  return { browser, browserInfo: { ...browserInfo(browser, config), browserName: browser._browserName }, canBind: false, ownership: 'attached' };
+  return { browser, browserInfo: { ...browserInfo(browser, config), browserName: browser._browserName }, endpoint, ownership: 'attached' };
 }
 
 async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {

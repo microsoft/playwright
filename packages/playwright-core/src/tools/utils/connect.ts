@@ -20,6 +20,10 @@ import type { BrowserDescriptor } from '../../serverRegistry';
 export async function connectToBrowserAcrossVersions(descriptor: BrowserDescriptor): Promise<playwright.Browser> {
   const pw = require(descriptor.playwrightLib);
   const browserType = pw[descriptor.browser.browserName] as playwright.BrowserType;
+  return await browserType.connect(descriptorEndpoint(descriptor));
+}
+
+export function descriptorEndpoint(descriptor: BrowserDescriptor): string {
   // eslint-disable-next-line no-restricted-syntax
-  return await browserType.connect(descriptor.endpoint ?? (descriptor as any).pipeName);
+  return descriptor.endpoint ?? (descriptor as any).pipeName;
 }
