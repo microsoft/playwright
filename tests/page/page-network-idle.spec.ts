@@ -228,6 +228,36 @@ it('should not wait for an open EventSource connection', async ({ page, server }
   expect(response.status()).toBe(200);
 });
 
+it('should reach networkidle again when the last request finishes before domcontentloaded', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42598' });
+
+  // The whole document body is consumed before this script runs, so both the document
+  // and the script are reported as finished and the first networkidle timer starts.
+  // Blocking the parser here lets that networkidle fire while parsing is still in progress.
+  server.setRoute('/blocker.js', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/javascript' });
+    res.end(`
+      const deadline = Date.now() + 900;
+      while (Date.now() < deadline) {}
+      document.write('<script src="/late.js"><\\/script>');
+    `);
+  });
+  // This request starts and finishes before domcontentloaded, which used to leave the
+  // frame with no inflight requests, no networkidle and no timer to ever report it again.
+  server.setRoute('/late.js', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/javascript' });
+    res.end(`window.__late = true;`);
+  });
+  server.setRoute('/idle-before-dcl.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<script src="/blocker.js"></script>`);
+  });
+
+  await page.goto(server.PREFIX + '/idle-before-dcl.html', { waitUntil: 'domcontentloaded' });
+  expect(await page.evaluate(() => window['__late'])).toBe(true);
+  await page.waitForLoadState('networkidle');
+});
+
 it('should not wait for an open EventSource connection in setContent', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37226' });
 
