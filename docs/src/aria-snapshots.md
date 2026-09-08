@@ -211,8 +211,8 @@ When matching, the snapshot template is compared to the current accessibility tr
 
 * If the tree structure matches the template, the test passes; otherwise, it fails, indicating a mismatch between
   expected and actual accessibility states.
-* The comparison is case-sensitive and normalizes whitespace within names and text values. YAML indentation is
-  structural.
+* The comparison is case-sensitive and normalizes whitespace within names and text values. YAML indentation
+  determines nesting.
 * The comparison is order-sensitive, meaning the order of elements in the snapshot template must match the order in the
   page's accessibility tree.
 * A single-node template can match at any depth within the selected page or locator. Multiple top-level nodes must match
