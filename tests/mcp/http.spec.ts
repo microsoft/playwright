@@ -391,6 +391,65 @@ test('http transport browser lifecycle (persistent, multiclient)', async ({ serv
   await client2.close();
 });
 
+test('http transport shared context keeps recordings per client', async ({ serverEndpoint, server }) => {
+  const { url } = await serverEndpoint({ args: ['--shared-browser-context', '--caps=devtools'] });
+  server.setContent('/', `
+    <title>Title</title>
+    <button>One</button>
+    <button>Two</button>
+    <button>Three</button>
+  `, 'text/html');
+
+  const transport1 = new StreamableHTTPClientTransport(new URL('/mcp', url));
+  const client1 = new Client({ name: 'test1', version: '1.0.0' });
+  await client1.connect(transport1);
+  const transport2 = new StreamableHTTPClientTransport(new URL('/mcp', url));
+  const client2 = new Client({ name: 'test2', version: '1.0.0' });
+  await client2.connect(transport2);
+
+  await client1.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+  await client1.callTool({ name: 'browser_start_recording' });
+  await client1.callTool({ name: 'browser_click', arguments: { element: 'One button', target: 'e2' } });
+
+  expect(await client2.callTool({ name: 'browser_stop_recording' })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining('No recording in progress'),
+  });
+
+  await client2.callTool({ name: 'browser_start_recording' });
+  await client2.callTool({ name: 'browser_click', arguments: { element: 'Two button', target: 'e3' } });
+
+  expect(await client1.callTool({ name: 'browser_stop_recording' })).toHaveResponse({
+    result: expect.stringContaining([
+      'Recording stopped. Recorded actions:',
+      '',
+      '```js',
+      `await page.getByRole('button', { name: 'One' }).click();`,
+      `await page.getByRole('button', { name: 'Two' }).click();`,
+      '```',
+    ].join('\n')),
+  });
+
+  await client1.callTool({ name: 'browser_click', arguments: { element: 'Three button', target: 'e4' } });
+
+  expect(await client2.callTool({ name: 'browser_stop_recording' })).toHaveResponse({
+    result: expect.stringContaining([
+      'Recording stopped. Recorded actions:',
+      '',
+      '```js',
+      `await page.getByRole('button', { name: 'Two' }).click();`,
+      `await page.getByRole('button', { name: 'Three' }).click();`,
+      '```',
+    ].join('\n')),
+  });
+
+  await transport1.terminateSession();
+  await client1.close();
+  await transport2.terminateSession();
+  await client2.close();
+});
+
 test('http transport shared context', async ({ serverEndpoint, server }) => {
   const { url, stderr } = await serverEndpoint({ args: ['--shared-browser-context'] });
 

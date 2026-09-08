@@ -61,6 +61,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _requestInterceptor: RouteHandler;
   private _interceptionUrlMatchers: URLMatch[] = [];
   private _routeWebSocketInitScript: InitScript | undefined;
+  private _recorderClients = 0;
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
     const result = parentScope.connection.existingDispatcher<BrowserContextDispatcher>(context);
@@ -198,6 +199,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       });
     });
     this.addObjectListener(BrowserContext.Events.RecorderEvent, ({ event, data, page, code }: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page, code: string }) => {
+      if (!this._recorderClients)
+        return;
       this._dispatchEvent('recorderEvent', { event, data, code, page: PageDispatcher.from(this, page) });
     });
   }
@@ -355,11 +358,23 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async enableRecorder(params: channels.BrowserContextEnableRecorderParams, progress: Progress): Promise<void> {
-    await progress.race(RecorderApp.enable(this._context, params));
+    this._recorderClients++;
+    try {
+      await progress.race(RecorderApp.enable(this._context, params));
+    } catch (error) {
+      this._recorderClients--;
+      throw error;
+    }
   }
 
   async disableRecorder(params: channels.BrowserContextDisableRecorderParams, progress: Progress): Promise<void> {
-    await progress.race(RecorderApp.disable(this._context));
+    if (!this._recorderClients)
+      return;
+    try {
+      await progress.race(RecorderApp.disable(this._context));
+    } finally {
+      this._recorderClients--;
+    }
   }
 
   async exposeConsoleApi(params: channels.BrowserContextExposeConsoleApiParams, progress: Progress): Promise<void> {
@@ -459,5 +474,9 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     if (this._clockPaused)
       this._context.clock.resumeNoReply();
     this._clockPaused = false;
+    while (this._recorderClients > 0) {
+      this._recorderClients--;
+      RecorderApp.disable(this._context).catch(() => {});
+    }
   }
 }

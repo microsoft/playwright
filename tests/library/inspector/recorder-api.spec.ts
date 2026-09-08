@@ -46,6 +46,7 @@ async function startRecording(context) {
   return {
     action: (name: string) => log.actions.filter(a => a.action.name === name),
     signals: () => log.signals,
+    stop: () => (context as any)._disableRecorder(log),
   };
 }
 
@@ -208,6 +209,80 @@ test('should record again after disable', async ({ context }) => {
   // Give it some time to produce duplicate actions - there should be none.
   await page.waitForTimeout(1000);
   expect(log2.action('click')).toHaveLength(1);
+});
+
+test('should keep recording for the remaining client after one stops', async ({ context }) => {
+  const page = await context.newPage();
+  await page.setContent(`<button>One</button><button>Two</button><button>Three</button>`);
+
+  const log1 = await startRecording(context);
+  await page.getByRole('button', { name: 'One' }).click();
+  await expect.poll(() => log1.action('click').length).toBe(1);
+
+  const log2 = await startRecording(context);
+  await page.getByRole('button', { name: 'Two' }).click();
+  await expect.poll(() => log2.action('click').length).toBe(1);
+
+  await log1.stop();
+  await page.getByRole('button', { name: 'Three' }).click();
+  await expect.poll(() => log2.action('click').length).toBe(2);
+  await log2.stop();
+
+  expect(log1.action('click').map(a => normalizeCode(a.code))).toEqual([
+    `await page.getByRole('button', { name: 'One' }).click();`,
+    `await page.getByRole('button', { name: 'Two' }).click();`,
+  ]);
+  expect(log2.action('click').map(a => normalizeCode(a.code))).toEqual([
+    `await page.getByRole('button', { name: 'Two' }).click();`,
+    `await page.getByRole('button', { name: 'Three' }).click();`,
+  ]);
+});
+
+test('should only send recorder events to connections that enabled the recorder', async ({ browserType, browser, context }, testInfo) => {
+  process.env.PWTEST_SERVER_REGISTRY = testInfo.outputPath('registry');
+  const { endpoint } = await browser.bind('recorder', {});
+  const browser2 = await browserType.connect(endpoint);
+  try {
+    const context2 = browser2.contexts().find(c => (c as any)._guid === (context as any)._guid)!;
+    const recorderEvents: string[] = [];
+    const connection = (browser2 as any)._connection;
+    const dispatch = connection.dispatch.bind(connection);
+    connection.dispatch = (message: any) => {
+      if (message.method === 'recorderEvent')
+        recorderEvents.push(message.params.event);
+      dispatch(message);
+    };
+
+    const page = await context.newPage();
+    await page.setContent(`<button>One</button><button>Two</button><button>Three</button>`);
+
+    const log1 = await startRecording(context);
+    await page.getByRole('button', { name: 'One' }).click();
+    await expect.poll(() => log1.action('click').length).toBe(1);
+    expect(recorderEvents).toEqual([]);
+
+    const log2 = await startRecording(context2);
+    await page.getByRole('button', { name: 'Two' }).click();
+    await expect.poll(() => log2.action('click').length).toBe(1);
+
+    await log1.stop();
+    await page.getByRole('button', { name: 'Three' }).click();
+    await expect.poll(() => log2.action('click').length).toBe(2);
+    await log2.stop();
+
+    expect(log1.action('click').map(a => normalizeCode(a.code))).toEqual([
+      `await page.getByRole('button', { name: 'One' }).click();`,
+      `await page.getByRole('button', { name: 'Two' }).click();`,
+    ]);
+    expect(log2.action('click').map(a => normalizeCode(a.code))).toEqual([
+      `await page.getByRole('button', { name: 'Two' }).click();`,
+      `await page.getByRole('button', { name: 'Three' }).click();`,
+    ]);
+    expect(recorderEvents).toEqual(['actionAdded', 'actionAdded']);
+  } finally {
+    await browser2.close();
+    await browser.unbind();
+  }
 });
 
 test('disable should close the inspector window', async ({ context, openRecorder }) => {

@@ -85,7 +85,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   private _closingStatus: 'none' | 'closing' | 'closed' = 'none';
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
-  private _onRecorderEventSink: RecorderEventSink | undefined;
+  private _recorderEventSinks = new Set<RecorderEventSink>();
 
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
@@ -169,12 +169,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('requestFinished', params => this._onRequestFinished(params));
     this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
     this._channel.on('recorderEvent', ({ event, data, page, code }) => {
-      if (event === 'actionAdded')
-        this._onRecorderEventSink?.actionAdded?.(Page.from(page), data as actions.Action, code);
-      else if (event === 'actionUpdated')
-        this._onRecorderEventSink?.actionUpdated?.(Page.from(page), data as actions.Action, code);
-      else if (event === 'signalAdded')
-        this._onRecorderEventSink?.signalAdded?.(Page.from(page), data as actions.Signal, code);
+      for (const sink of this._recorderEventSinks) {
+        if (event === 'actionAdded')
+          sink.actionAdded?.(Page.from(page), data as actions.Action, code);
+        else if (event === 'actionUpdated')
+          sink.actionUpdated?.(Page.from(page), data as actions.Action, code);
+        else if (event === 'signalAdded')
+          sink.signalAdded?.(Page.from(page), data as actions.Signal, code);
+      }
     });
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
 
@@ -540,15 +542,24 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async _enableRecorder(params: channels.BrowserContextEnableRecorderParams, eventSink?: RecorderEventSink) {
     if (eventSink)
-      this._onRecorderEventSink = eventSink;
-    await this._channel.enableRecorder(params, kNoTimeout);
+      this._recorderEventSinks.add(eventSink);
+    try {
+      await this._channel.enableRecorder(params, kNoTimeout);
+    } catch (error) {
+      if (eventSink)
+        this._recorderEventSinks.delete(eventSink);
+      throw error;
+    }
   }
 
-  async _disableRecorder() {
+  async _disableRecorder(eventSink?: RecorderEventSink) {
     try {
       await this._channel.disableRecorder({}, kNoTimeout);
     } finally {
-      this._onRecorderEventSink = undefined;
+      if (eventSink)
+        this._recorderEventSinks.delete(eventSink);
+      else
+        this._recorderEventSinks.clear();
     }
   }
 

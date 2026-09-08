@@ -338,6 +338,10 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this._debugger.resume();
   }
 
+  flush() {
+    this._signalProcessor.flush();
+  }
+
   async hideHighlightedSelector() {
     await this._updateHighlightedSelector(undefined);
   }

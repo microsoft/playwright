@@ -30,7 +30,7 @@ export type BrowserContextInternalApi = {
     recorderMode?: 'default' | 'api',
     omitCallTracking?: boolean,
   }, eventSink?: RecorderEventSink): Promise<void>;
-  _disableRecorder(): Promise<void>;
+  _disableRecorder(eventSink?: RecorderEventSink): Promise<void>;
 };
 
 export type BrowserContextEx = playwrightTypes.BrowserContext & BrowserContextInternalApi;

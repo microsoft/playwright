@@ -182,23 +182,31 @@ export class RecorderApp {
     if (process.env.PW_CODEGEN_NO_INSPECTOR)
       return;
     const recorder = await Recorder.forContext(context, params);
-    if (!(context as any)[recorderAppSymbol]) {
+    let entry = (context as any)[recorderAppSymbol] as RecorderAppEntry | undefined;
+    if (!entry) {
       const app = params.recorderMode === 'api'
         ? new ProgrammaticRecorderApp(context, recorder, params)
         : await RecorderApp._show(recorder, context, params);
-      (context as any)[recorderAppSymbol] = app;
+      entry = { app, clients: 0 };
+      (context as any)[recorderAppSymbol] = entry;
     }
+    entry.clients++;
     if (params.mode)
       await recorder.setMode(params.mode);
   }
 
   static async disable(context: BrowserContext) {
     const recorder = await Recorder.existingForContext(context);
+    const entry = (context as any)[recorderAppSymbol] as RecorderAppEntry | undefined;
+    if (entry && entry.clients > 1) {
+      entry.clients--;
+      recorder?.flush();
+      return;
+    }
     if (recorder)
       await recorder.setMode('none');
-    const app = (context as any)[recorderAppSymbol] as RecorderApp | ProgrammaticRecorderApp | undefined;
     delete (context as any)[recorderAppSymbol];
-    await app?.close();
+    await entry?.app.close();
   }
 
   async close() {
@@ -432,3 +440,5 @@ function createRecorderFrontend(page: Page): RecorderFrontend {
 }
 
 const recorderAppSymbol = Symbol('recorderApp');
+
+type RecorderAppEntry = { app: RecorderApp | ProgrammaticRecorderApp, clients: number };

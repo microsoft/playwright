@@ -28,7 +28,7 @@ import { playwright } from '../../inprocess';
 import { dedent, languageGeneratorId, secretCode } from './codegen';
 import { Tab } from './tab';
 
-import type { BrowserContextEx } from './browserContextEx';
+import type { BrowserContextEx, RecorderEventSink } from './browserContextEx';
 import type { CodegenLanguage } from './codegen';
 import type * as playwrightTypes from '../../..';
 import type { SessionLog } from './sessionLog';
@@ -109,7 +109,7 @@ export class Context {
     fileNames: string[];
     fileName: string;
   } | undefined;
-  private _recordedActions: string[] | undefined;
+  private _recording: { recordedActions: string[], eventSink: RecorderEventSink } | undefined;
   private _disposables: Disposable[] = [];
 
   private _runningToolName: string | undefined;
@@ -239,18 +239,13 @@ export class Context {
   }
 
   async startRecording() {
-    if (this._recordedActions)
+    if (this._recording)
       throw new Error('Recording is already in progress.');
     const browserContext = await this.ensureBrowserContext() as BrowserContextEx;
     if (typeof browserContext._enableRecorder !== 'function')
       throw new Error('Recording requires a newer version of Playwright, please upgrade.');
     const recordedActions: string[] = [];
-    await browserContext._enableRecorder({
-      mode: 'recording',
-      recorderMode: 'api',
-      omitCallTracking: true,
-      language: languageGeneratorId(this.codegenLanguage()),
-    }, {
+    const eventSink: RecorderEventSink = {
       actionAdded: (page, action, code) => {
         recordedActions.push(code);
       },
@@ -264,17 +259,23 @@ export class Context {
         if (recordedActions.length && code)
           recordedActions[recordedActions.length - 1] = code;
       },
-    });
-    this._recordedActions = recordedActions;
+    };
+    await browserContext._enableRecorder({
+      mode: 'recording',
+      recorderMode: 'api',
+      omitCallTracking: true,
+      language: languageGeneratorId(this.codegenLanguage()),
+    }, eventSink);
+    this._recording = { recordedActions, eventSink };
   }
 
   async stopRecording(): Promise<string[] | undefined> {
-    const recordedActions = this._recordedActions;
-    if (!recordedActions)
+    const recording = this._recording;
+    if (!recording)
       return undefined;
-    this._recordedActions = undefined;
-    await (this._rawBrowserContext as BrowserContextEx)._disableRecorder();
-    return recordedActions.filter(code => code.trim()).map(dedent);
+    this._recording = undefined;
+    await (this._rawBrowserContext as BrowserContextEx)._disableRecorder(recording.eventSink);
+    return recording.recordedActions.filter(code => code.trim()).map(dedent);
   }
 
   codegenLanguage(): CodegenLanguage {
