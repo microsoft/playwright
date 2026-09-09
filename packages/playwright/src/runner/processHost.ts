@@ -21,6 +21,7 @@ import debug from 'debug';
 import { assert } from '@isomorphic/assert';
 import { monotonicTime, timeOrigin } from '@isomorphic/time';
 import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
+import { killProcessTree } from '@utils/processLauncher';
 
 import type { ipc, processRunner } from '../common';
 
@@ -193,17 +194,8 @@ export class ProcessHost extends EventEmitter {
   }
 
   private _forceKill() {
-    const pid = this.process?.pid;
-    if (!pid)
-      return;
-    try {
-      if (process.platform === 'win32')
-        child_process.spawnSync(`taskkill /pid ${pid} /T /F`, { shell: true });
-      else
-        process.kill(pid, 'SIGKILL');
-    } catch {
-      // The process may have already exited.
-    }
+    if (this.process?.pid)
+      killProcessTree(this.process.pid);
   }
 
   didSendStop() {

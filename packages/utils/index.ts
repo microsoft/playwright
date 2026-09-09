@@ -31,7 +31,6 @@ export * from './processLauncher';
 export * from './profiler';
 export * from './serializedFS';
 export * from './socksProxy';
-export * from './spawnAsync';
 export * from './stackTrace';
 export * from './stringWidth';
 export * from './wsServer';

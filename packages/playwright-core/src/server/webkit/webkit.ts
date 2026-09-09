@@ -19,7 +19,7 @@ import path from 'path';
 
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { wrapInASCIIBox } from '@utils/ascii';
-import { spawnAsync } from '@utils/spawnAsync';
+import { spawnAsync } from '@utils/processLauncher';
 import { kBrowserCloseMessageId } from './wkConnection';
 import { Browser } from '../browser';
 import { BrowserType, kNoXServerRunningError } from '../browserType';

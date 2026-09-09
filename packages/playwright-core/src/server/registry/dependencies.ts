@@ -21,7 +21,7 @@ import path from 'path';
 
 import { wrapInASCIIBox } from '@utils/ascii';
 import { hostPlatform, isOfficiallySupportedPlatform } from '@utils/hostPlatform';
-import { spawnAsync } from '@utils/spawnAsync';
+import { spawnAsync } from '@utils/processLauncher';
 import { getPlaywrightVersion } from '../userAgent';
 import { deps } from './nativeDeps';
 

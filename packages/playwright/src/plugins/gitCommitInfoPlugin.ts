@@ -16,8 +16,7 @@
 
 import * as fs from 'fs';
 
-import { monotonicTime } from '@isomorphic/time';
-import { spawnAsync } from '@utils/spawnAsync';
+import { spawnAsync } from '@utils/processLauncher';
 
 import type { TestRunnerPlugin } from './';
 import type { FullConfig } from '../../types/testReporter';
@@ -195,13 +194,14 @@ async function gitDiff(gitDir: string, ci?: CIInfo): Promise<string | undefined>
 
 async function runGit(args: string[], cwd: string): Promise<string | undefined> {
   debug(`running "git ${args.join(' ')}"`);
-  const start = monotonicTime();
-  const result = await spawnAsync(
-      'git',
-      args,
-      { stdio: 'pipe', cwd, timeout: GIT_OPERATIONS_TIMEOUT_MS }
-  );
-  if (monotonicTime() - start > GIT_OPERATIONS_TIMEOUT_MS) {
+  // Fail fast instead of blocking in a credential prompt that nobody can answer on CI.
+  const result = await spawnAsync('git', ['-c', 'credential.interactive=false', ...args], {
+    stdio: 'pipe',
+    cwd,
+    timeout: GIT_OPERATIONS_TIMEOUT_MS,
+    env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+  });
+  if (result.timedOut) {
     print(`timeout of ${GIT_OPERATIONS_TIMEOUT_MS}ms exceeded while running "git ${args.join(' ')}"`);
     return;
   }
