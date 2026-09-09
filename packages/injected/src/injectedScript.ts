@@ -1337,10 +1337,10 @@ export class InjectedScript {
   }
 
   private _ensureHighlight() {
-    if (!this._highlight) {
+    if (!this._highlight)
       this._highlight = new Highlight(this);
-      this._highlight.install();
-    }
+
+    this._highlight.install();
     return this._highlight;
   }
 
