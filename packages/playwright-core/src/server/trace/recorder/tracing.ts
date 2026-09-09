@@ -55,7 +55,7 @@ import type { Progress } from '../../progress';
 import type * as types from '../../types';
 import type { Screencast, ScreencastClient } from '../../screencast';
 
-const version: trace.VERSION = 9;
+const version: trace.VERSION = 10;
 
 export type TracerOptions = {
   name?: string;
@@ -263,7 +263,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       class: 'Tracing',
       method: 'tracingGroup',
       params: { },
-      stepId: metadata.stepId,
       stack: stackFrames,
     };
     if (this._currentGroupId())
@@ -782,7 +781,6 @@ function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string)
     class: metadata.type,
     method: metadata.method,
     params: metadata.timeout ? { ...metadata.params, timeout: metadata.timeout } : metadata.params,
-    stepId: metadata.stepId,
   };
   if (parentId)
     event.parentId = parentId;

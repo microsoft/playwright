@@ -21,7 +21,7 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { captureRawStack, stringifyStackFrames, filteredStackTrace } from '@utils/stackTrace';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { monotonicTime } from '@isomorphic/time';
-import { createGuid } from '@utils/crypto';
+import { createCallIdGenerator } from '@isomorphic/trace/traceUtils';
 import { sanitizeForFilePath, trimLongString } from '@utils/fileUtils';
 import { currentZone } from '@utils/zones';
 
@@ -82,6 +82,9 @@ export const emtpyTestInfoCallbacks: TestInfoCallbacks = {
   onTestPaused: () => Promise.reject(new Error('TestInfoImpl not initialized')),
 };
 
+// Keep step ids globally unique, to avoid cross-test callId collisions on the same playwright instance.
+const nextStepId = createCallIdGenerator();
+
 export class TestInfoImpl implements TestInfo {
   private _callbacks: TestInfoCallbacks;
   private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
@@ -93,7 +96,6 @@ export class TestInfoImpl implements TestInfo {
   readonly _uniqueSymbol;
 
   private _interruptedPromise = new ManualPromise<void>();
-  _lastStepId = 0;
   private readonly _requireFile: string;
   readonly _projectInternal: commonConfig.FullProjectInternal;
   readonly _configInternal: FullConfigInternal;
@@ -284,7 +286,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _addStep(data: Readonly<TestStepData>, parentStep?: TestStepInternal): TestStepInternal {
-    const stepId = `${data.category}@${++this._lastStepId}`;
+    const stepId = nextStepId();
 
     if (data.category === 'hook' || data.category === 'fixture') {
       // Predefined steps form a fixed hierarchy - use the current one as parent.
@@ -525,7 +527,7 @@ export class TestInfoImpl implements TestInfo {
     if (step) {
       step.attachmentIndices.push(index);
     } else {
-      const stepId = `attach@${createGuid()}`;
+      const stepId = nextStepId();
       this._tracing.appendBeforeActionForStep({ stepId, title: `Attach ${escapeWithQuotes(attachment.name, '"')}`, category: 'test.attach', stack: [] });
       this._tracing.appendAfterActionForStep(stepId, undefined, [attachment]);
     }

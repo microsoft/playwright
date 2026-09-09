@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import { legacyCallId, parseClientSideCallMetadata } from './traceUtils';
+
+import type { SerializedStack } from './traceUtils';
 import type * as trace from './trace';
 import type * as traceV3 from './versions/traceV3';
 import type * as traceV4 from './versions/traceV4';
@@ -21,6 +24,7 @@ import type * as traceV5 from './versions/traceV5';
 import type * as traceV6 from './versions/traceV6';
 import type * as traceV7 from './versions/traceV7';
 import type * as traceV8 from './versions/traceV8';
+import type * as traceV9 from './versions/traceV9';
 import type { ActionEntry, ContextEntry, PageEntry } from './entries';
 import type { SnapshotStorage } from './snapshotStorage';
 
@@ -31,7 +35,7 @@ export class TraceVersionError extends Error {
   }
 }
 
-const latestVersion: trace.VERSION = 9;
+const latestVersion: trace.VERSION = 10;
 
 // Ensures distinct api request refs across contexts of the same trace.
 let lastApiRequestRefOrdinal = 0;
@@ -46,6 +50,7 @@ export class TraceModernizer {
   private _consoleObjects = new Map<string, { type: string, text: string, location: { url: string, lineNumber: number, columnNumber: number }, args?: { preview: string, value: string }[] }>();
   private _apiRequestRef: string | undefined;
   private _snapshotPhases = new Map<string, trace.ActionPhase>();
+  private _legacyCallIdToStepId = new Map<string, string>();
 
   constructor(contextEntry: ContextEntry, snapshotStorage: SnapshotStorage) {
     this._contextEntry = contextEntry;
@@ -55,6 +60,18 @@ export class TraceModernizer {
   appendTrace(trace: string) {
     for (const line of trace.split('\n'))
       this._appendEvent(line);
+  }
+
+  appendStacks(stacks: string) {
+    const data = JSON.parse(stacks);
+    const normalized: SerializedStack[] = data.stacks.map(([id, ...rest]: any) => {
+      // Transform legacy numeric call ids into string ids.
+      const callId = typeof id === 'number' ? legacyCallId(id) : id;
+      return [this._legacyCallIdToStepId.get(callId) ?? callId, ...rest];
+    });
+    const callMetadata = parseClientSideCallMetadata({ files: data.files, stacks: normalized });
+    for (const action of this._actionMap.values())
+      action.stack = action.stack || callMetadata.get(action.callId);
   }
 
   actions(): ActionEntry[] {
@@ -467,7 +484,7 @@ export class TraceModernizer {
     return result;
   }
 
-  _modernize_8_to_9(events: traceV8.TraceEvent[]): trace.TraceEvent[] {
+  _modernize_8_to_9(events: traceV8.TraceEvent[]): traceV9.TraceEvent[] {
     for (const event of events) {
       // Actions used to point at their snapshots by name, now snapshots know their own phase.
       if (event.type === 'before' || event.type === 'input' || event.type === 'after' || event.type === 'action') {
@@ -484,22 +501,22 @@ export class TraceModernizer {
       if (event.type === 'after' || event.type === 'action') {
         for (const attachment of event.attachments || []) {
           if (attachment.sha1) {
-            (attachment as trace.AfterActionTraceEventAttachment).file = 'resources/' + attachment.sha1;
+            (attachment as traceV9.AfterActionTraceEventAttachment).file = 'resources/' + attachment.sha1;
             delete attachment.sha1;
           }
         }
       }
       if (event.type === 'screencast-frame' && event.sha1) {
-        (event as any as trace.ScreencastFrameTraceEvent).file = 'resources/' + event.sha1;
+        (event as any as traceV9.ScreencastFrameTraceEvent).file = 'resources/' + event.sha1;
         delete (event as any).sha1;
       }
 
       if (event.type === 'frame-snapshot') {
         if (event.snapshot.snapshotName)
-          (event.snapshot as trace.FrameSnapshot).phase = this._snapshotPhases.get(event.snapshot.snapshotName);
+          (event.snapshot as traceV9.FrameSnapshot).phase = this._snapshotPhases.get(event.snapshot.snapshotName);
         for (const override of event.snapshot.resourceOverrides || []) {
           if (override.sha1) {
-            (override as trace.ResourceOverride).file = 'resources/' + override.sha1;
+            (override as traceV9.ResourceOverride).file = 'resources/' + override.sha1;
             delete override.sha1;
           }
         }
@@ -520,10 +537,30 @@ export class TraceModernizer {
         if (event.snapshot._apiRequest) {
           if (!this._apiRequestRef)
             this._apiRequestRef = 'api-request-context@' + (++lastApiRequestRefOrdinal);
-          (event as trace.ResourceSnapshotTraceEvent).snapshot._apiRequestRef = this._apiRequestRef;
+          (event as traceV9.ResourceSnapshotTraceEvent).snapshot._apiRequestRef = this._apiRequestRef;
           delete event.snapshot._apiRequest;
         }
       }
+    }
+    return events as traceV9.TraceEvent[];
+  }
+
+  _modernize_9_to_10(events: traceV9.TraceEvent[]): trace.TraceEvent[] {
+    for (const event of events) {
+      // The library and the test runner used to mint their own id for the same call and reconcile
+      // them through a `stepId` side-channel. Now they share a single id - adopt the step id as the
+      // call id, remembering the mapping for the ids that `appendStacks` will see.
+      if (event.type === 'before' || event.type === 'action') {
+        if (event.stepId && event.stepId !== event.callId)
+          this._legacyCallIdToStepId.set(event.callId, event.stepId);
+        delete event.stepId;
+        if (event.parentId)
+          event.parentId = this._legacyCallIdToStepId.get(event.parentId) ?? event.parentId;
+      }
+      if (event.type === 'before' || event.type === 'input' || event.type === 'after' || event.type === 'action' || event.type === 'log')
+        event.callId = this._legacyCallIdToStepId.get(event.callId) ?? event.callId;
+      if (event.type === 'frame-snapshot')
+        event.snapshot.callId = this._legacyCallIdToStepId.get(event.snapshot.callId) ?? event.snapshot.callId;
     }
     return events as trace.TraceEvent[];
   }

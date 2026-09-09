@@ -18,19 +18,35 @@ import type { StackFrame } from './trace';
 import type { ClientSideCallMetadata } from '@protocol/structs';
 
 export type SerializedStackFrame = [number, number, number, string];
-export type SerializedStack = [number, SerializedStackFrame[]];
+export type SerializedStack = [string, SerializedStackFrame[]];
 
 export type SerializedClientSideCallMetadata = {
   files: string[];
   stacks: SerializedStack[];
 };
 
+let lastIdOrdinal = 0;
+
+// Use a unique prefix for each client to avoid id clashes in a trace.
+export function createCallIdGenerator(): () => string {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+  let prefix = '';
+  for (let i = 0; i < 4; i++)
+    prefix += alphabet[Math.floor(Math.random() * alphabet.length)];
+  return () => `${prefix}@${++lastIdOrdinal}`;
+}
+
+export function legacyCallId(ordinal: number): string {
+  // Traces recorded before the call ids became strings used this format.
+  return `call@${ordinal}`;
+}
+
 export function parseClientSideCallMetadata(data: SerializedClientSideCallMetadata): Map<string, StackFrame[]> {
   const result = new Map<string, StackFrame[]>();
   const { files, stacks } = data;
   for (const s of stacks) {
     const [id, ff] = s;
-    result.set(`call@${id}`, ff.map(f => ({ file: files[f[0]], line: f[1], column: f[2], function: f[3] })));
+    result.set(id, ff.map(f => ({ file: files[f[0]], line: f[1], column: f[2], function: f[3] })));
   }
   return result;
 }

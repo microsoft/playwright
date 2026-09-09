@@ -34,7 +34,7 @@ import type EventEmitter from 'events';
 
 export type Attachment = TestInfo['attachments'][0];
 export const testTraceEntryName = 'test.trace';
-const version: trace.VERSION = 9;
+const version: trace.VERSION = 10;
 let traceOrdinal = 0;
 
 type TraceFixtureValue =  PlaywrightWorkerOptions['trace'] | undefined;
@@ -277,7 +277,6 @@ export class TestTracing {
     this._appendTraceEvent({
       type: 'before',
       callId: options.stepId,
-      stepId: options.stepId,
       parentId: options.parentId,
       startTime: monotonicTime(),
       class: 'Test',

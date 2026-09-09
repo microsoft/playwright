@@ -91,12 +91,11 @@ export type Metadata = {
   },
   title?: string,
   internal?: boolean,
-  stepId?: string,
   timeout?: number,
 };
 
 export type ClientSideCallMetadata = {
-  id: number,
+  id: string,
   stack?: StackFrame[],
 };
 
