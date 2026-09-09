@@ -113,7 +113,7 @@ const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
         // In the general case, create a step for each api call, use it as a callId.
         const params = renderParamsForCall({ type: channel.type, method: channel.method, params: channel.params });
         const step = testInfo._addStep({
-          location: data.frames[0],
+          stack: data.frames,
           category: 'pw:api',
           title: renderTitle(channel.type, channel.method, channel.params, data.title),
           subtitle: renderSubtitle(channel.type, channel.method, channel.params),

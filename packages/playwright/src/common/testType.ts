@@ -279,13 +279,13 @@ export class TestTypeImpl {
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
     await testInfo._onUserStepBegin?.(title);
-    const step = testInfo._addStep({ category: 'test.step', title, subtitle: options.subtitle, location: options.location, box: options.box, params: options.params });
+    const step = testInfo._addStep({ category: 'test.step', title, subtitle: options.subtitle, stack: options.location ? [options.location] : undefined, box: options.box, params: options.params });
     return await currentZone().with('stepZone', step).run(async () => {
       try {
         let result: Awaited<ReturnType<typeof raceAgainstDeadline<T>>> | undefined = undefined;
         result = await raceAgainstDeadline(async () => {
           try {
-            return await step.info._runStepBody(expectation === 'skip', body, step.location);
+            return await step.info._runStepBody(expectation === 'skip', body, step.stack[0]);
           } catch (e) {
             // If the step timed out, the test fixtures will tear down, which in turn
             // will abort unfinished actions in the step body. Record such errors here.

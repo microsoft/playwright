@@ -16,7 +16,9 @@
 
 import { test, expect } from './playwright-test-fixtures';
 import { parseTrace, parseTraceRaw } from '../config/utils';
+
 import fs from 'fs';
+import path from 'path';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -1552,6 +1554,36 @@ test('should record step params in trace', async ({ runInlineTest }, testInfo) =
   const actionByTitle = (title: string) => trace.model.actions.find(a => a.title === title)!;
   expect(actionByTitle('my step').params).toEqual({ foo: 'bar' });
   expect(actionByTitle('Expect "toBe"').params).toEqual({ expected: '1' });
+});
+
+test('should record step stack in trace', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      async function helper(page) {
+        await test.step('my step', async () => {
+          await page.setContent('<title>hello</title>');
+          await expect(page).toHaveTitle('hello');
+        });
+      }
+      test('pass', async ({ page }) => {
+        await helper(page);
+      });
+    `,
+  }, { trace: 'on' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  const stacks = trace.model.actions.filter(a => a.stack?.length).map(a => a.stack!.map(f => `${path.basename(f.file)}:${f.line}:${f.column}`));
+  expect(stacks).toEqual([
+    // test.step
+    ['a.spec.ts:4:9', 'a.spec.ts:10:9'],
+    // page.setContent
+    ['a.spec.ts:5:22', 'a.spec.ts:4:9', 'a.spec.ts:10:9'],
+    // expect
+    ['a.spec.ts:6:30', 'a.spec.ts:4:9', 'a.spec.ts:10:9'],
+  ]);
 });
 
 test('should record step subtitle in trace', async ({ runInlineTest }, testInfo) => {

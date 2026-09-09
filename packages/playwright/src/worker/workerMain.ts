@@ -572,7 +572,7 @@ export class WorkerMain extends ProcessRunner {
     let firstError: Error | undefined;
     for (const hook of this._collectHooksAndModifiers(suite, type, testInfo)) {
       try {
-        await testInfo._runAsStep({ title: hook.title, category: 'hook', location: hook.location }, async () => {
+        await testInfo._runAsStep({ title: hook.title, category: 'hook', stack: [hook.location] }, async () => {
           // Separate time slot for each beforeAll/afterAll hook.
           const timeSlot = { timeout: this._project.project.timeout, elapsed: 0 };
           const runnable = { type: hook.type, slot: timeSlot, location: hook.location };
@@ -625,7 +625,7 @@ export class WorkerMain extends ProcessRunner {
         continue;
       }
       try {
-        await testInfo._runAsStep({ title: hook.title, category: 'hook', location: hook.location }, async () => {
+        await testInfo._runAsStep({ title: hook.title, category: 'hook', stack: [hook.location] }, async () => {
           await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'test', runnable);
         });
       } catch (error) {
