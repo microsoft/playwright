@@ -3372,6 +3372,42 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(isShallow.trim()).toBe('false');
     });
 
+    test('should not hang when git fetch stalls', async ({ runInlineTest, writeFiles, useIntermediateMergeReport }) => {
+      test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42630' });
+      test.skip(useIntermediateMergeReport, 'plugin output is not available in merge report');
+      const files = {
+        'playwright.config.ts': `export default {}`,
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('sample', async ({}) => { expect(2).toBe(2); });
+        `,
+        'hang.js': `
+          require('fs').writeFileSync(__filename + '.pid', String(process.pid));
+          setTimeout(() => {}, 120_000);
+        `,
+      };
+      const baseDir = await writeFiles(files);
+      await initGitRepo(baseDir);
+      await execGit(baseDir, ['remote', 'add', 'origin', 'ssh://example.com/repo.git']);
+      const hangScript = path.join(baseDir, 'hang.js');
+      const sshCommand = [process.execPath, hangScript].map(p => JSON.stringify(p.replace(/\\/g, '/'))).join(' ');
+      await execGit(baseDir, ['config', '--local', 'core.sshCommand', sshCommand]);
+      await execGit(baseDir, ['config', '--local', 'ssh.variant', 'ssh']);
+
+      const result = await runInlineTest({}, { reporter: 'dot' }, {
+        PLAYWRIGHT_HTML_OPEN: 'never',
+        ...(await ghaPullRequestEnv(baseDir, '1'.repeat(40))),
+      });
+      try {
+        process.kill(+await fs.promises.readFile(hangScript + '.pid', 'utf8'), 'SIGKILL');
+      } catch {
+      }
+
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain('timeout of 3000ms exceeded while running "git fetch origin');
+      expect(result.report.config.metadata.gitDiff).toBeUndefined();
+    });
+
     test('should include snapshot when page wasnt closed', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'example.spec.ts': `

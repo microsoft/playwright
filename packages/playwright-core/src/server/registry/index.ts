@@ -24,7 +24,7 @@ import { wrapInASCIIBox } from '@utils/ascii';
 import { debugLogger } from '@utils/debugLogger';
 import { shortPlatform, hostPlatform, isOfficiallySupportedPlatform } from '@utils/hostPlatform';
 import { NET_DEFAULT_TIMEOUT } from '@utils/network';
-import { spawnAsync } from '@utils/spawnAsync';
+import { spawnAsync } from '@utils/processLauncher';
 import { canAccessFile, existsAsync, removeFolders } from '@utils/fileUtils';
 import { calculateSha1 } from '@utils/crypto';
 import { getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand } from '@utils/env';
