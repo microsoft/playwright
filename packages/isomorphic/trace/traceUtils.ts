@@ -29,9 +29,9 @@ let lastIdOrdinal = 0;
 
 // Use a unique prefix for each client to avoid id clashes in a trace.
 export function createCallIdGenerator(): () => string {
-  const alphabet = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz';
   let prefix = '';
-  for (let i = 0; i < 3; i++)
+  for (let i = 0; i < 4; i++)
     prefix += alphabet[Math.floor(Math.random() * alphabet.length)];
   return () => `${prefix}@${++lastIdOrdinal}`;
 }
