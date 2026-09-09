@@ -412,6 +412,17 @@ playwright-cli open https://example.com
 playwright-cli show --annotate
 ```
 
+## Attaching screenshots and videos to pull requests
+
+`gh` 2.99+ uploads local images and videos with the repeatable `--attach` flag on `gh pr create`, `gh pr comment` and `gh issue comment`. Attach a screenshot or a short video when it saves the reviewer a checkout: a UI fix, a before/after pair, a new user-facing flow, or the failure state in a bug report.
+
+```bash
+playwright-cli screenshot --filename=settings-after.png
+gh pr comment 123 --body "Settings page after the fix." --attach ./settings-after.png
+```
+
+See [references/pr-attachments.md](references/pr-attachments.md) for alt text, inline references, size limits and attaching test artifacts from CI.
+
 ## Specific tasks
 
 * **Running and Debugging Playwright tests** [references/playwright-tests.md](references/playwright-tests.md)
@@ -422,4 +433,5 @@ playwright-cli show --annotate
 * **Test generation (plan / generate / heal)** [references/test-generation.md](references/test-generation.md)
 * **Tracing** [references/tracing.md](references/tracing.md)
 * **Video recording** [references/video-recording.md](references/video-recording.md)
+* **Attaching screenshots and videos to pull requests** [references/pr-attachments.md](references/pr-attachments.md)
 * **Inspecting element attributes** [references/element-attributes.md](references/element-attributes.md)
