@@ -60,6 +60,7 @@ export class Highlight {
   private _userOverlayContainer: HTMLElement;
   private _userOverlays = new Map<string, HTMLElement>();
   private _userOverlayHidden = false;
+  private _userOverlayTimer: number | undefined;
   private _isUnderTest: boolean;
   private _injectedScript: InjectedScript;
   private _rafRequest: number | undefined;
@@ -174,6 +175,7 @@ export class Highlight {
       this._rafRequest = undefined;
     }
     this._elementHighlights = [];
+    this._clearUserOverlayTimer();
     this._glassPaneElement.remove();
   }
 
@@ -293,6 +295,7 @@ export class Highlight {
     this._userOverlays.set(id, element);
     this._userOverlayContainer.appendChild(element);
     this._userOverlayContainer.hidden = this._userOverlayHidden;
+    this._ensureUserOverlayTimer();
     return id;
   }
 
@@ -306,8 +309,28 @@ export class Highlight {
       element.remove();
       this._userOverlays.delete(id);
     }
-    if (this._userOverlays.size === 0)
+    if (this._userOverlays.size === 0) {
       this._userOverlayContainer.hidden = true;
+      this._clearUserOverlayTimer();
+    }
+  }
+
+  // Elements that enter the top layer later paint above the glass pane, so keep re-promoting it while overlays are showing.
+  private _ensureUserOverlayTimer() {
+    if (this._userOverlayTimer !== undefined)
+      return;
+    const tick = () => {
+      this.install();
+      this._userOverlayTimer = this._injectedScript.utils.builtins.setTimeout(tick, 500);
+    };
+    this._userOverlayTimer = this._injectedScript.utils.builtins.setTimeout(tick, 500);
+  }
+
+  private _clearUserOverlayTimer() {
+    if (this._userOverlayTimer === undefined)
+      return;
+    this._injectedScript.utils.builtins.clearTimeout(this._userOverlayTimer);
+    this._userOverlayTimer = undefined;
   }
 
   setUserOverlaysVisible(visible: boolean) {
