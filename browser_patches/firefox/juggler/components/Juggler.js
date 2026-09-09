@@ -40,6 +40,7 @@ ActorManagerParent.addJSWindowActors({
       },
     },
     allFrames: true,
+    safeForUntrustedWebProcess: true,
   },
 });
 
@@ -158,4 +159,3 @@ const jugglerInstance = new Juggler();
 export var JugglerFactory = function() {
   return jugglerInstance;
 };
-
