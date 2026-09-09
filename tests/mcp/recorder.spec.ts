@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './fixtures';
+import { test, expect } from './cli-fixtures';
 
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { TestServer } from '../config/testserver';
@@ -194,5 +194,69 @@ test('stop without start is an error', async ({ client }) => {
   })).toHaveResponse({
     isError: true,
     error: expect.stringContaining('No recording in progress'),
+  });
+});
+
+test('clients sharing a context only receive their own recordings', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42608' } }, async ({ boundBrowser, startClient, server }) => {
+  server.setContent('/', `
+    <title>Title</title>
+    <button>Alpha</button>
+    <button>Beta</button>
+    <button>Gamma</button>
+  `, 'text/html');
+  const page = await boundBrowser.newPage();
+  await page.goto(server.PREFIX);
+
+  // Each client connects to the bound browser with its own connection.
+  const { client: client1 } = await startClient({ args: ['--endpoint=default'] });
+  const { client: client2 } = await startClient({ args: ['--endpoint=default'] });
+  await client1.callTool({ name: 'browser_snapshot' });
+  await client2.callTool({ name: 'browser_snapshot' });
+
+  expect(await client2.callTool({
+    name: 'browser_stop_recording',
+  })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining('No recording in progress'),
+  });
+
+  await client1.callTool({ name: 'browser_start_recording' });
+  await client1.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Alpha button', target: 'e2' },
+  });
+
+  await client2.callTool({ name: 'browser_start_recording' });
+  await client1.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Beta button', target: 'e3' },
+  });
+
+  expect(await client1.callTool({
+    name: 'browser_stop_recording',
+  })).toHaveResponse({
+    result: expect.stringContaining([
+      '```js',
+      `await page.getByRole('button', { name: 'Alpha' }).click();`,
+      `await page.getByRole('button', { name: 'Beta' }).click();`,
+      '```',
+    ].join('\n')),
+  });
+
+  // Stopping the first client does not stop the second one, which only sees
+  // what happened after it started recording.
+  await client2.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Gamma button', target: 'e4' },
+  });
+  expect(await client2.callTool({
+    name: 'browser_stop_recording',
+  })).toHaveResponse({
+    result: expect.stringContaining([
+      '```js',
+      `await page.getByRole('button', { name: 'Beta' }).click();`,
+      `await page.getByRole('button', { name: 'Gamma' }).click();`,
+      '```',
+    ].join('\n')),
   });
 });

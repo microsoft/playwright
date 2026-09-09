@@ -1247,8 +1247,9 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, Channe
   storageState(params: BrowserContextStorageStateParams, progress: Progress): Promise<BrowserContextStorageStateResult>;
   setStorageState(params: BrowserContextSetStorageStateParams, progress: Progress): Promise<BrowserContextSetStorageStateResult>;
   pause(params: BrowserContextPauseParams, progress: Progress): Promise<BrowserContextPauseResult>;
-  enableRecorder(params: BrowserContextEnableRecorderParams, progress: Progress): Promise<BrowserContextEnableRecorderResult>;
-  disableRecorder(params: BrowserContextDisableRecorderParams, progress: Progress): Promise<BrowserContextDisableRecorderResult>;
+  showRecorder(params: BrowserContextShowRecorderParams, progress: Progress): Promise<BrowserContextShowRecorderResult>;
+  startRecording(params: BrowserContextStartRecordingParams, progress: Progress): Promise<BrowserContextStartRecordingResult>;
+  stopRecording(params: BrowserContextStopRecordingParams, progress: Progress): Promise<BrowserContextStopRecordingResult>;
   exposeConsoleApi(params: BrowserContextExposeConsoleApiParams, progress: Progress): Promise<BrowserContextExposeConsoleApiResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, progress: Progress): Promise<BrowserContextNewCDPSessionResult>;
   createTempFiles(params: BrowserContextCreateTempFilesParams, progress: Progress): Promise<BrowserContextCreateTempFilesResult>;
@@ -1523,10 +1524,9 @@ export type BrowserContextSetStorageStateResult = void;
 export type BrowserContextPauseParams = {};
 export type BrowserContextPauseOptions = {};
 export type BrowserContextPauseResult = void;
-export type BrowserContextEnableRecorderParams = {
+export type BrowserContextShowRecorderParams = {
   language?: string,
   mode?: 'inspecting' | 'recording',
-  recorderMode?: 'default' | 'api',
   pauseOnNextStatement?: boolean,
   testIdAttributeName?: string,
   launchOptions?: any,
@@ -1537,10 +1537,9 @@ export type BrowserContextEnableRecorderParams = {
   handleSIGINT?: boolean,
   omitCallTracking?: boolean,
 };
-export type BrowserContextEnableRecorderOptions = {
+export type BrowserContextShowRecorderOptions = {
   language?: string,
   mode?: 'inspecting' | 'recording',
-  recorderMode?: 'default' | 'api',
   pauseOnNextStatement?: boolean,
   testIdAttributeName?: string,
   launchOptions?: any,
@@ -1551,10 +1550,17 @@ export type BrowserContextEnableRecorderOptions = {
   handleSIGINT?: boolean,
   omitCallTracking?: boolean,
 };
-export type BrowserContextEnableRecorderResult = void;
-export type BrowserContextDisableRecorderParams = {};
-export type BrowserContextDisableRecorderOptions = {};
-export type BrowserContextDisableRecorderResult = void;
+export type BrowserContextShowRecorderResult = void;
+export type BrowserContextStartRecordingParams = {
+  language?: string,
+};
+export type BrowserContextStartRecordingOptions = {
+  language?: string,
+};
+export type BrowserContextStartRecordingResult = void;
+export type BrowserContextStopRecordingParams = {};
+export type BrowserContextStopRecordingOptions = {};
+export type BrowserContextStopRecordingResult = void;
 export type BrowserContextExposeConsoleApiParams = {};
 export type BrowserContextExposeConsoleApiOptions = {};
 export type BrowserContextExposeConsoleApiResult = void;

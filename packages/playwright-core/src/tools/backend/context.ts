@@ -242,13 +242,10 @@ export class Context {
     if (this._recordedActions)
       throw new Error('Recording is already in progress.');
     const browserContext = await this.ensureBrowserContext() as BrowserContextEx;
-    if (typeof browserContext._enableRecorder !== 'function')
+    if (typeof browserContext._startRecording !== 'function')
       throw new Error('Recording requires a newer version of Playwright, please upgrade.');
     const recordedActions: string[] = [];
-    await browserContext._enableRecorder({
-      mode: 'recording',
-      recorderMode: 'api',
-      omitCallTracking: true,
+    await browserContext._startRecording({
       language: languageGeneratorId(this.codegenLanguage()),
     }, {
       actionAdded: (page, action, code) => {
@@ -273,7 +270,7 @@ export class Context {
     if (!recordedActions)
       return undefined;
     this._recordedActions = undefined;
-    await (this._rawBrowserContext as BrowserContextEx)._disableRecorder();
+    await (this._rawBrowserContext as BrowserContextEx)._stopRecording();
     return recordedActions.filter(code => code.trim()).map(dedent);
   }
 

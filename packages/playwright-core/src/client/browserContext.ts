@@ -538,15 +538,18 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       throw harError;
   }
 
-  async _enableRecorder(params: channels.BrowserContextEnableRecorderParams, eventSink?: RecorderEventSink) {
-    if (eventSink)
-      this._onRecorderEventSink = eventSink;
-    await this._channel.enableRecorder(params, kNoTimeout);
+  async _showRecorder(params: channels.BrowserContextShowRecorderParams) {
+    await this._channel.showRecorder(params, kNoTimeout);
   }
 
-  async _disableRecorder() {
+  async _startRecording(params: channels.BrowserContextStartRecordingParams, eventSink: RecorderEventSink) {
+    this._onRecorderEventSink = eventSink;
+    await this._channel.startRecording(params, kNoTimeout);
+  }
+
+  async _stopRecording() {
     try {
-      await this._channel.disableRecorder({}, kNoTimeout);
+      await this._channel.stopRecording({}, kNoTimeout);
     } finally {
       this._onRecorderEventSink = undefined;
     }

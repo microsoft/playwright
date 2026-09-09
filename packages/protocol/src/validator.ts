@@ -837,10 +837,9 @@ scheme.BrowserContextSetStorageStateParams = tObject({
 scheme.BrowserContextSetStorageStateResult = tOptional(tObject({}));
 scheme.BrowserContextPauseParams = tOptional(tObject({}));
 scheme.BrowserContextPauseResult = tOptional(tObject({}));
-scheme.BrowserContextEnableRecorderParams = tObject({
+scheme.BrowserContextShowRecorderParams = tObject({
   language: tOptional(tString),
   mode: tOptional(tEnum(['inspecting', 'recording'])),
-  recorderMode: tOptional(tEnum(['default', 'api'])),
   pauseOnNextStatement: tOptional(tBoolean),
   testIdAttributeName: tOptional(tString),
   launchOptions: tOptional(tAny),
@@ -851,9 +850,13 @@ scheme.BrowserContextEnableRecorderParams = tObject({
   handleSIGINT: tOptional(tBoolean),
   omitCallTracking: tOptional(tBoolean),
 });
-scheme.BrowserContextEnableRecorderResult = tOptional(tObject({}));
-scheme.BrowserContextDisableRecorderParams = tOptional(tObject({}));
-scheme.BrowserContextDisableRecorderResult = tOptional(tObject({}));
+scheme.BrowserContextShowRecorderResult = tOptional(tObject({}));
+scheme.BrowserContextStartRecordingParams = tObject({
+  language: tOptional(tString),
+});
+scheme.BrowserContextStartRecordingResult = tOptional(tObject({}));
+scheme.BrowserContextStopRecordingParams = tOptional(tObject({}));
+scheme.BrowserContextStopRecordingResult = tOptional(tObject({}));
 scheme.BrowserContextExposeConsoleApiParams = tOptional(tObject({}));
 scheme.BrowserContextExposeConsoleApiResult = tOptional(tObject({}));
 scheme.BrowserContextNewCDPSessionParams = tObject({

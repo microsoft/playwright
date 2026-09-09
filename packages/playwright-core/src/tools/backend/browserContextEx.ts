@@ -24,13 +24,8 @@ export type RecorderEventSink = {
 };
 
 export type BrowserContextInternalApi = {
-  _enableRecorder(params: {
-    language?: string,
-    mode?: 'inspecting' | 'recording',
-    recorderMode?: 'default' | 'api',
-    omitCallTracking?: boolean,
-  }, eventSink?: RecorderEventSink): Promise<void>;
-  _disableRecorder(): Promise<void>;
+  _startRecording(params: { language?: string }, eventSink: RecorderEventSink): Promise<void>;
+  _stopRecording(): Promise<void>;
 };
 
 export type BrowserContextEx = playwrightTypes.BrowserContext & BrowserContextInternalApi;

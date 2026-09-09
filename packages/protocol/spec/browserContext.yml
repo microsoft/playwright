@@ -212,7 +212,8 @@ BrowserContext:
     pause:
       title: Pause
 
-    enableRecorder:
+    # Shows the recorder window. Throws while a programmatic recording is in progress.
+    showRecorder:
       internal: true
       parameters:
         language: string?
@@ -221,11 +222,6 @@ BrowserContext:
           literals:
           - inspecting
           - recording
-        recorderMode:
-          type: enum?
-          literals:
-          - default
-          - api
         pauseOnNextStatement: boolean?
         testIdAttributeName: string?
         launchOptions: json?
@@ -236,7 +232,12 @@ BrowserContext:
         handleSIGINT: boolean?
         omitCallTracking: boolean?
 
-    disableRecorder:
+    startRecording:
+      internal: true
+      parameters:
+        language: string?
+
+    stopRecording:
       internal: true
 
     exposeConsoleApi:

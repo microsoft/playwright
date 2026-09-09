@@ -39,10 +39,7 @@ class RecorderLog {
 
 async function startRecording(context) {
   const log = new RecorderLog();
-  await (context as any)._enableRecorder({
-    mode: 'recording',
-    recorderMode: 'api',
-  }, log);
+  await (context as any)._startRecording({}, log);
   return {
     action: (name: string) => log.actions.filter(a => a.action.name === name),
     signals: () => log.signals,
@@ -56,8 +53,8 @@ function normalizeCode(code: string): string {
 test('context should implement the internal api used by the tools', async ({ context }) => {
   // Listing a method here is enforced by the type, so adding one to the interface breaks compilation until it is covered.
   const methods: Record<keyof BrowserContextInternalApi, true> = {
-    _enableRecorder: true,
-    _disableRecorder: true,
+    _startRecording: true,
+    _stopRecording: true,
   };
   for (const method of Object.keys(methods))
     expect(typeof context[method], method).toBe('function');
@@ -180,27 +177,27 @@ test('should type', async ({ context }) => {
   expect(normalizeCode(log.action('fill')[0].code)).toEqual(`await page.getByRole('textbox').fill('Hello');`);
 });
 
-test('should disable recorder', async ({ context }) => {
+test('should stop recording', async ({ context }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
   await page.getByRole('button', { name: 'Submit' }).click();
   await page.getByRole('button', { name: 'Submit' }).click();
   await expect.poll(() => log.action('click').length).toBe(2);
-  await (context as any)._disableRecorder();
+  await (context as any)._stopRecording();
   await page.getByRole('button', { name: 'Submit' }).click();
   // Give it some time to produce more actions - there should be none.
   await page.waitForTimeout(2000);
   expect(log.action('click')).toHaveLength(2);
 });
 
-test('should record again after disable', async ({ context }) => {
+test('should record again after stop', async ({ context }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
   await page.getByRole('button', { name: 'Submit' }).click();
   await expect.poll(() => log.action('click').length).toBe(1);
-  await (context as any)._disableRecorder();
+  await (context as any)._stopRecording();
 
   const log2 = await startRecording(context);
   await page.getByRole('button', { name: 'Submit' }).click();
@@ -210,17 +207,27 @@ test('should record again after disable', async ({ context }) => {
   expect(log2.action('click')).toHaveLength(1);
 });
 
-test('disable should close the inspector window', async ({ context, openRecorder }) => {
+test('should not start recording while the recorder is shown', async ({ context, openRecorder }) => {
   const { recorder } = await openRecorder();
-  await (context as any)._disableRecorder();
-  await expect.poll(() => recorder.recorderPage.isClosed()).toBe(true);
+  await expect(startRecording(context)).rejects.toThrow('Recorder is shown, close it before starting a recording.');
 
   // With the window closed, programmatic recording can start on the same context.
-  const log = await startRecording(context);
-  const page = await context.newPage();
-  await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
-  await page.getByRole('button', { name: 'Submit' }).click();
-  await expect.poll(() => log.action('click').length).toBe(1);
+  await recorder.recorderPage.close();
+  await expect.poll(() => startRecording(context).then(() => true, () => false)).toBe(true);
+});
+
+test('should not show the recorder while recording', async ({ context }) => {
+  await startRecording(context);
+  await expect((context as any)._showRecorder({ mode: 'recording' })).rejects.toThrow('Recording is in progress, stop it before showing the recorder.');
+
+  // Stopping the recording allows showing the recorder again.
+  await (context as any)._stopRecording();
+  await (context as any)._showRecorder({ mode: 'recording' });
+});
+
+test('should not start recording twice', async ({ context }) => {
+  await startRecording(context);
+  await expect(startRecording(context)).rejects.toThrow('Recording is already in progress.');
 });
 
 test('page.pickLocator should return locator for picked element', async ({ page }) => {

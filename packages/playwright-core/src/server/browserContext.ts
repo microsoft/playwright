@@ -62,7 +62,6 @@ const BrowserContextEvent = {
   RequestFulfilled: 'requestfulfilled',
   RequestContinued: 'requestcontinued',
   BeforeClose: 'beforeclose',
-  RecorderEvent: 'recorderevent',
   PageClosed: 'pageclosed',
   InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
   FrameAttached: 'frameattached',
@@ -82,7 +81,6 @@ export type BrowserContextEventMap = {
   [BrowserContextEvent.RequestFulfilled]: [request: network.Request];
   [BrowserContextEvent.RequestContinued]: [request: network.Request];
   [BrowserContextEvent.BeforeClose]: [];
-  [BrowserContextEvent.RecorderEvent]: [event: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page, code: string }];
   [BrowserContextEvent.PageClosed]: [page: Page];
   [BrowserContextEvent.InternalFrameNavigatedToNewDocument]: [frame: frames.Frame];
   [BrowserContextEvent.FrameAttached]: [frame: frames.Frame];
@@ -159,14 +157,14 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       this._debugger.setPauseAt();
       this._debugger.on(Debugger.Events.PausedStateChanged, () => {
         if (this._debugger.isPaused())
-          RecorderApp.enable(this, {}).catch(() => {});
+          RecorderApp.show(this, {}).catch(() => {});
       });
     }
 
     // When PWDEBUG=1, show inspector for each context.
     if (debugMode() === 'inspector') {
       this._debugger.setPauseAt({ next: true });
-      await RecorderApp.enable(this, { pauseOnNextStatement: true });
+      await RecorderApp.show(this, { pauseOnNextStatement: true });
     }
 
     if (debugMode() === 'console')
