@@ -31,6 +31,7 @@ import { listWebMCPTools } from './webmcp';
 import type { AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
 import type { Disposable } from '@isomorphic/disposable';
 import type { Context, ContextConfig } from './context';
+import type { WebMCPListing } from './webmcp';
 import type * as playwright from '../../..';
 
 const TabEvents = {
@@ -104,6 +105,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _modalStates: ModalState[] = [];
   private _initializedPromise: Promise<void>;
   private _recentEventEntries: EventEntry[] = [];
+  private _webmcpTools: WebMCPListing | undefined;
   private _consoleLog: LogFile;
   private _disposables: Disposable[];
   readonly actionTimeoutOptions: { timeout?: number; };
@@ -234,6 +236,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   private _clearCollectedArtifacts() {
+    this._webmcpTools = undefined;
     this._downloads.length = 0;
     this._requests.length = 0;
     this._mainDocumentStatus = undefined;
@@ -417,6 +420,9 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, boxes: boolean | undefined, relativeTo: string | undefined, ariaFormat: 'none' | 'text' | 'json' = 'text', includeWebMCP: boolean = false): Promise<TabSnapshot> {
     await this._initializedPromise;
+    // Kick the WebMCP refresh off next to the aria snapshot so its latency hides behind
+    // the tree walk. `includeWebMCP` additionally forces it when no snapshot is taken.
+    const webmcpPromise = ariaFormat !== 'none' || includeWebMCP ? this.updateWebMCPTools() : undefined;
     let tabSnapshot: TabSnapshot | undefined;
     let modalStates: ModalState[] = [];
     if (ariaFormat !== 'none') {
@@ -456,15 +462,39 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       tabSnapshot.consoleLink = await this._consoleLog.take(relativeTo);
       tabSnapshot.events = this._recentEventEntries;
       this._recentEventEntries = [];
-      if (includeWebMCP)
-        tabSnapshot.webmcpToolCount = (await listWebMCPTools(this)).tools.length;
     }
 
-    return tabSnapshot ?? {
+    const result = tabSnapshot ?? {
       ariaSnapshot: '',
       modalStates,
       events: [],
     };
+    if (webmcpPromise) {
+      // Do not hold the response on a probe that a dialog has since frozen.
+      await this._raceAgainstModalStates(() => webmcpPromise);
+      if (includeWebMCP)
+        result.webmcpToolCount = this._webmcpTools?.tools.length;
+    }
+    return result;
+  }
+
+  /**
+   * WebMCP tools last collected from the page, or undefined when they have not been
+   * collected yet. Refreshed alongside the snapshot, see `captureSnapshot`.
+   */
+  webmcpTools(): WebMCPListing | undefined {
+    return this._webmcpTools;
+  }
+
+  async updateWebMCPTools(): Promise<void> {
+    // An open dialog freezes JavaScript, every frame would just hit the probe timeout.
+    if (this._javaScriptBlocked())
+      return;
+    const listing = await listWebMCPTools(this);
+    // A dialog that opened while probing produces the same empty listing as a page
+    // with no tools, so keep what we had rather than clobbering the cache with it.
+    if (!this._javaScriptBlocked())
+      this._webmcpTools = listing;
   }
 
   private _javaScriptBlocked(): boolean {

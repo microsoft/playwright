@@ -223,7 +223,12 @@ const webmcpList = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const listing = await listWebMCPTools(tab);
+    // Tools are collected with the page snapshot, this only reports what was collected.
+    const listing = tab.webmcpTools();
+    if (!listing) {
+      response.addTextResult('No WebMCP tools have been collected for the page yet. They are collected with the page snapshot.');
+      return;
+    }
     for (const line of renderListing(listing))
       response.addTextResult(line);
   },
