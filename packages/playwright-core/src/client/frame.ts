@@ -35,7 +35,7 @@ import { kLifecycleEvents } from './types';
 import { Waiter } from './waiter';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 
-import type { EvaluateOptions } from './jsHandle';
+import type { EvaluateOptions, ExposeFunctionsOptions, WorldOptions } from './jsHandle';
 import type { LocatorOptions } from './locator';
 import type { Page } from './page';
 import type { DropPayload, FilePayload, LifecycleEvent, SelectOption, SelectOptionOptions, StrictOptions, TimeoutOptions, WaitForFunctionOptions } from './types';
@@ -207,7 +207,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return ElementHandle.from((await this._channel.frameElement({}, kNoTimeout)).element);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: EvaluateOptions): Promise<structs.SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: ExposeFunctionsOptions): Promise<structs.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 3);
     assertEvaluateOptions(options);
     const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._page, arg) : serializeArgument(arg);
@@ -219,7 +219,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     assertMaxArguments(arguments.length, 3);
     assertEvaluateOptions(options);
     const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._page, arg) : serializeArgument(arg);
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg }, kNoTimeout);
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, world: options?.world }, kNoTimeout);
     return parseResult(result.value);
   }
 
@@ -249,15 +249,17 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     await this._channel.dispatchEvent({ selector, type, eventInit: serializeArgument(eventInit), ...options }, this._timeout(options));
   }
 
-  async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg): Promise<R> {
-    assertMaxArguments(arguments.length, 3);
-    const result = await this._channel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, kNoTimeout);
+  async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg, options?: WorldOptions): Promise<R> {
+    assertMaxArguments(arguments.length, 4);
+    assertEvaluateOptions(options);
+    const result = await this._channel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), world: options?.world }, kNoTimeout);
     return parseResult(result.value);
   }
 
-  async $$eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
-    assertMaxArguments(arguments.length, 3);
-    const result = await this._channel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, kNoTimeout);
+  async $$eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg, options?: WorldOptions): Promise<R> {
+    assertMaxArguments(arguments.length, 4);
+    assertEvaluateOptions(options);
+    const result = await this._channel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), world: options?.world }, kNoTimeout);
     return parseResult(result.value);
   }
 

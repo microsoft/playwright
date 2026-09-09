@@ -1421,6 +1421,9 @@ var html = await page.EvalOnSelectorAsync(".main-container", "(e, suffix) => e.o
 
 Optional argument to pass to [`param: expression`].
 
+### option: Page.evalOnSelector.world = %%-js-evaluate-world-%%
+* since: v1.64
+
 ### option: Page.evalOnSelector.strict = %%-input-strict-%%
 * since: v1.14
 
@@ -1475,6 +1478,9 @@ var divsCount = await page.EvalOnSelectorAllAsync<bool>("div", "(divs, min) => d
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
+
+### option: Page.evalOnSelectorAll.world = %%-js-evaluate-world-%%
+* since: v1.64
 
 ## async method: Page.evaluate
 * since: v1.8
@@ -1598,6 +1604,9 @@ Optional argument to pass to [`param: expression`].
 
 ### option: Page.evaluate.exposeFunctions = %%-js-evaluate-expose-functions-%%
 * since: v1.62
+
+### option: Page.evaluate.world = %%-js-evaluate-world-%%
+* since: v1.64
 
 ## async method: Page.evaluateHandle
 * since: v1.8

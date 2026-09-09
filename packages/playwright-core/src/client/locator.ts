@@ -28,7 +28,7 @@ import { DisposableStub } from './disposable';
 import { kNoTimeout } from './timeoutSettings';
 
 import type { ExpectResult, Frame } from './frame';
-import type { EvaluateOptions } from './jsHandle';
+import type { EvaluateOptions, ExposeFunctionsOptions, WorldOptions } from './jsHandle';
 import type { DropPayload, FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
@@ -138,14 +138,14 @@ export class Locator implements api.Locator {
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions & EvaluateOptions): Promise<R> {
-    return await this._withElement(h => h.evaluate(pageFunction, arg, options), { title: 'Evaluate', timeout: options?.timeout, signal: options?.signal });
+    return await this._withElement(h => h._evaluate(pageFunction, arg, options), { title: 'Evaluate', timeout: options?.timeout, signal: options?.signal });
   }
 
-  async evaluateAll<R, Arg>(pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
-    return await this._frame.$$eval(this._selector, pageFunction, arg);
+  async evaluateAll<R, Arg>(pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg, options?: WorldOptions): Promise<R> {
+    return await this._frame.$$eval(this._selector, pageFunction, arg, options);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<any, Arg, R>, arg?: Arg, options?: TimeoutOptions & EvaluateOptions): Promise<structs.SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<any, Arg, R>, arg?: Arg, options?: TimeoutOptions & ExposeFunctionsOptions): Promise<structs.SmartHandle<R>> {
     return await this._withElement(h => h.evaluateHandle(pageFunction, arg, options), { title: 'Evaluate', timeout: options?.timeout, signal: options?.signal });
   }
 

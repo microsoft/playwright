@@ -52,6 +52,27 @@ it('should work', async ({ playwright, browser }) => {
   await context.close();
 });
 
+it('should support the world option with a main world selector engine', async ({ playwright, browser }) => {
+  // Custom engines without "contentScript" resolve in the main world, but the
+  // evaluated function should still run in the requested world.
+  await playwright.selectors.register('world-tag', `(${createTagSelector.toString()})()`);
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.setContent('<div id=one>one</div><div id=two>two</div>');
+  await page.evaluate(() => (window as any).marker = 'main');
+
+  expect(await page.$eval('world-tag=DIV', e => (window as any).marker)).toBe('main');
+  expect(await page.$eval('world-tag=DIV', e => (window as any).marker, undefined, { world: 'utility' })).toBe(undefined);
+  expect(await page.$eval('world-tag=DIV', e => e.id, undefined, { world: 'utility' })).toBe('one');
+
+  expect(await page.$$eval('world-tag=DIV', ee => (window as any).marker)).toBe('main');
+  expect(await page.$$eval('world-tag=DIV', ee => (window as any).marker, undefined, { world: 'utility' })).toBe(undefined);
+  expect(await page.$$eval('world-tag=DIV', ee => ee.map(e => e.id), undefined, { world: 'utility' })).toEqual(['one', 'two']);
+
+  await context.close();
+});
+
 it('should work when registered on global', async ({ browser, mode }) => {
   it.skip(mode === 'driver', 'We expect registering selectors on the right Playwright instance.');
 

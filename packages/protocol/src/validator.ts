@@ -1211,6 +1211,7 @@ scheme.FrameEvalOnSelectorParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+  world: tOptional(tEnum(['main', 'utility'])),
 });
 scheme.FrameEvalOnSelectorResult = tObject({
   value: tType('SerializedValue'),
@@ -1220,6 +1221,7 @@ scheme.FrameEvalOnSelectorAllParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+  world: tOptional(tEnum(['main', 'utility'])),
 });
 scheme.FrameEvalOnSelectorAllResult = tObject({
   value: tType('SerializedValue'),
@@ -1343,6 +1345,7 @@ scheme.FrameEvaluateExpressionParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+  world: tOptional(tEnum(['main', 'utility'])),
 });
 scheme.FrameEvaluateExpressionResult = tObject({
   value: tType('SerializedValue'),
@@ -1632,6 +1635,7 @@ scheme.JSHandleEvaluateExpressionParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+  world: tOptional(tEnum(['main', 'utility'])),
 });
 scheme.ElementHandleEvaluateExpressionParams = tType('JSHandleEvaluateExpressionParams');
 scheme.JSHandleEvaluateExpressionResult = tObject({
@@ -1680,6 +1684,7 @@ scheme.ElementHandleEvalOnSelectorParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+  world: tOptional(tEnum(['main', 'utility'])),
 });
 scheme.ElementHandleEvalOnSelectorResult = tObject({
   value: tType('SerializedValue'),
@@ -1689,6 +1694,7 @@ scheme.ElementHandleEvalOnSelectorAllParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
+  world: tOptional(tEnum(['main', 'utility'])),
 });
 scheme.ElementHandleEvalOnSelectorAllResult = tObject({
   value: tType('SerializedValue'),
