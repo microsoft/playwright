@@ -45,7 +45,7 @@ import type { RegisteredListener } from '@utils/eventsHelper';
 const recorderSymbol = Symbol('recorderSymbol');
 
 type BindingSource = { frame: Frame, page: Page };
-type RecorderParams = channels.BrowserContextEnableRecorderParams & { hideToolbar?: boolean };
+type RecorderParams = channels.BrowserContextShowRecorderParams & { recorderMode?: 'default' | 'api', hideToolbar?: boolean };
 
 export const RecorderEvent = {
   PausedStateChanged: 'pausedStateChanged',
@@ -243,6 +243,10 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
 
   mode() {
     return this._mode;
+  }
+
+  flushPendingActions() {
+    this._signalProcessor.flush();
   }
 
   async setMode(mode: Mode) {

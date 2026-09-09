@@ -546,7 +546,7 @@ it('generate multiple locators', async ({ page }) => {
 
 it.describe(() => {
   it.beforeEach(async ({ context }) => {
-    await (context as any)._enableRecorder({ language: 'javascript' });
+    await (context as any)._showRecorder({ language: 'javascript' });
   });
 
   it('reverse engineer internal:has-text locators', async ({ page }) => {

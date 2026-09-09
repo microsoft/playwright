@@ -93,7 +93,7 @@ export const test = contextTest.extend<CLITestArgs>({
 
   openRecorder: async ({ context, recorderPageGetter }, use) => {
     await use(async options => {
-      await (context as any)._enableRecorder({
+      await (context as any)._showRecorder({
         mode: 'recording',
         omitCallTracking: true,
         ...options

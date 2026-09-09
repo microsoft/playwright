@@ -40,7 +40,7 @@ import type { Progress } from '../progress';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 import type { RegisteredListener } from '@utils/eventsHelper';
 
-export type RecorderAppParams = channels.BrowserContextEnableRecorderParams & {
+export type RecorderAppParams = channels.BrowserContextShowRecorderParams & {
   browserName: string;
   sdkLanguage: Language;
   headed: boolean;
@@ -178,34 +178,23 @@ export class RecorderApp {
     });
   }
 
-  static async enable(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams) {
+  static async show(context: BrowserContext, params: channels.BrowserContextShowRecorderParams) {
     if (process.env.PW_CODEGEN_NO_INSPECTOR)
       return;
+    if (programmaticRecorderApps(context).size)
+      throw new Error('Recording is in progress, stop it before showing the recorder.');
     const recorder = await Recorder.forContext(context, params);
-    if (!(context as any)[recorderAppSymbol]) {
-      const app = params.recorderMode === 'api'
-        ? new ProgrammaticRecorderApp(context, recorder, params)
-        : await RecorderApp._show(recorder, context, params);
-      (context as any)[recorderAppSymbol] = app;
-    }
+    if (!(context as any)[recorderAppSymbol])
+      (context as any)[recorderAppSymbol] = await RecorderApp._show(recorder, context, params);
     if (params.mode)
       await recorder.setMode(params.mode);
-  }
-
-  static async disable(context: BrowserContext) {
-    const recorder = await Recorder.existingForContext(context);
-    if (recorder)
-      await recorder.setMode('none');
-    const app = (context as any)[recorderAppSymbol] as RecorderApp | ProgrammaticRecorderApp | undefined;
-    delete (context as any)[recorderAppSymbol];
-    await app?.close();
   }
 
   async close() {
     await this._page.close(nullProgress);
   }
 
-  private static async _show(recorder: Recorder, inspectedContext: BrowserContext, params: channels.BrowserContextEnableRecorderParams): Promise<RecorderApp> {
+  private static async _show(recorder: Recorder, inspectedContext: BrowserContext, params: channels.BrowserContextShowRecorderParams): Promise<RecorderApp> {
     const sdkLanguage = inspectedContext._browser.sdkLanguage();
     const isChromium = inspectedContext._browser.options.browserType === 'chromium';
     const headed = !!inspectedContext._browser.options.headful;
@@ -359,28 +348,52 @@ function determinePrimaryGeneratorId(sdkLanguage: Language): string {
   return sdkLanguage;
 }
 
+export type ProgrammaticRecorderEvent = {
+  event: 'actionAdded' | 'actionUpdated' | 'signalAdded';
+  data: any;
+  page: Page;
+  code: string;
+};
+
+// Each client that records through the api gets its own app, so that clients
+// sharing the context only receive events of the recordings they started.
 export class ProgrammaticRecorderApp {
+  private _context: BrowserContext;
+  private _recorder: Recorder;
   private _listeners: RegisteredListener[];
 
-  constructor(inspectedContext: BrowserContext, recorder: Recorder, params: channels.BrowserContextEnableRecorderParams) {
+  static async start(context: BrowserContext, params: channels.BrowserContextStartRecordingParams, onEvent: (event: ProgrammaticRecorderEvent) => void): Promise<ProgrammaticRecorderApp> {
+    if ((context as any)[recorderAppSymbol])
+      throw new Error('Recorder is shown, close it before starting a recording.');
+    const recorder = await Recorder.forContext(context, { language: params.language, mode: 'recording', recorderMode: 'api', omitCallTracking: true });
+    const app = new ProgrammaticRecorderApp(context, recorder, params, onEvent);
+    programmaticRecorderApps(context).add(app);
+    await recorder.setMode('recording');
+    return app;
+  }
+
+  private constructor(inspectedContext: BrowserContext, recorder: Recorder, params: channels.BrowserContextStartRecordingParams, onEvent: (event: ProgrammaticRecorderEvent) => void) {
+    this._context = inspectedContext;
+    this._recorder = recorder;
     let lastAction: actions.ActionInContext | undefined;
     let lastActionPage: Page | undefined;
     const languages = [...languageSet()];
 
+    // Only actions are generated, so the header options do not matter.
     const languageGeneratorOptions = {
       browserName: inspectedContext._browser.options.name,
-      launchOptions: { headless: false, ...params.launchOptions, tracesDir: undefined },
-      contextOptions: { ...params.contextOptions },
-      deviceName: params.device,
-      saveStorage: params.saveStorage,
+      launchOptions: { headless: false },
+      contextOptions: {},
     };
     const languageGenerator = languages.find(l => l.id === params.language) ?? languages.find(l => l.id === 'playwright-test')!;
 
     this._listeners = [
-      eventsHelper.addEventListener(recorder, RecorderEvent.ActionAdded, actionInContext => {
-        const page = findPageByGuid(inspectedContext, actionInContext.pageGuid);
+      eventsHelper.addEventListener(recorder, RecorderEvent.ActionAdded, recordedAction => {
+        const page = findPageByGuid(inspectedContext, recordedAction.pageGuid);
         if (!page)
           return;
+        // Other apps receive the same object, so keep the signals of this app separate.
+        const actionInContext = { ...recordedAction, signals: [...recordedAction.signals] };
         let event: 'actionAdded' | 'actionUpdated' = 'actionAdded';
         if (shouldMergeAction(actionInContext, lastAction)) {
           event = 'actionUpdated';
@@ -390,7 +403,7 @@ export class ProgrammaticRecorderApp {
         lastAction = actionInContext;
         lastActionPage = page;
         const code = languageGenerator.generateAction(actionInContext, languageGeneratorOptions);
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event, data: actionInContext.action, page, code });
+        onEvent({ event, data: actionInContext.action, page, code });
       }),
       eventsHelper.addEventListener(recorder, RecorderEvent.SignalAdded, signalInContext => {
         const page = findPageByGuid(inspectedContext, signalInContext.pageGuid);
@@ -403,14 +416,35 @@ export class ProgrammaticRecorderApp {
           lastAction.signals.push(signalInContext.signal);
           code = languageGenerator.generateAction(lastAction, languageGeneratorOptions);
         }
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signalInContext.signal, page, code });
+        onEvent({ event: 'signalAdded', data: signalInContext.signal, page, code });
       }),
     ];
   }
 
-  close() {
-    eventsHelper.removeEventListeners(this._listeners);
+  async stop() {
+    const apps = programmaticRecorderApps(this._context);
+    apps.delete(this);
+    try {
+      if (this._context.isClosingOrClosed())
+        return;
+      // Deliver the buffered action before detaching. Other clients may still be recording.
+      if (apps.size)
+        this._recorder.flushPendingActions();
+      else
+        await this._recorder.setMode('none');
+    } finally {
+      eventsHelper.removeEventListeners(this._listeners);
+    }
   }
+}
+
+function programmaticRecorderApps(context: BrowserContext): Set<ProgrammaticRecorderApp> {
+  let apps = (context as any)[programmaticRecorderAppsSymbol] as Set<ProgrammaticRecorderApp> | undefined;
+  if (!apps) {
+    apps = new Set();
+    (context as any)[programmaticRecorderAppsSymbol] = apps;
+  }
+  return apps;
 }
 
 function findPageByGuid(context: BrowserContext, guid: string) {
@@ -432,3 +466,4 @@ function createRecorderFrontend(page: Page): RecorderFrontend {
 }
 
 const recorderAppSymbol = Symbol('recorderApp');
+const programmaticRecorderAppsSymbol = Symbol('programmaticRecorderApps');

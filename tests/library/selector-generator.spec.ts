@@ -40,7 +40,7 @@ it.describe('selector generator', () => {
     // we properly wait for `extendInjectedScript` call to finish. Otherwise
     // if the page is created later, there is a race between ConsoleAPI
     // initialization and playwright.selector(e) call in `generate()` function above.
-    await (context as any)._enableRecorder({ language: 'javascript' });
+    await (context as any)._showRecorder({ language: 'javascript' });
   });
 
   it('should prefer button over inner span', async ({ page }) => {

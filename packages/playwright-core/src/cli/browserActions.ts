@@ -258,7 +258,7 @@ export async function codegen(options: Options & { target: string, output?: stri
   const donePromise = new ManualPromise<void>();
   maybeSetupTestHooks(browser, closeBrowser, donePromise);
   dotenv.config({ path: 'playwright.env', quiet: true });
-  await context._enableRecorder({
+  await context._showRecorder({
     language,
     launchOptions,
     contextOptions,
