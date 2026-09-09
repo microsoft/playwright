@@ -21,6 +21,9 @@ import debug from 'debug';
 import { Context } from './context';
 import { Response } from './response';
 import { SessionLog } from './sessionLog';
+import { callWebMCPTool, kDynamicToolPrefix, webmcpDynamicTools } from './webmcp';
+
+import type { DynamicWebMCPTool } from './webmcp';
 import type { ContextConfig } from './context';
 import type * as playwright from '../../..';
 import type { Tool } from './tool';
@@ -38,6 +41,9 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implement
   private _disposed = false;
   private _browserContext: playwright.BrowserContext;
   private _disposeCallback: (() => Promise<void>) | undefined;
+  private _dynamicTools: DynamicWebMCPTool[] = [];
+  private _dynamicToolsSignature = '';
+  private _toolListChangedListeners: (() => void)[] = [];
 
   constructor(config: ContextConfig, browserContext: playwright.BrowserContext, tools: Tool[], disposeCallback?: () => Promise<void>) {
     super();
@@ -65,6 +71,30 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implement
     });
   }
 
+  dynamicTools(): mcpServer.Tool[] {
+    return this._dynamicTools.map(tool => tool.schema);
+  }
+
+  onToolListChanged(listener: () => void) {
+    this._toolListChangedListeners.push(listener);
+  }
+
+  /**
+   * The page's tools are collected with the snapshot, so this runs after a tool call has
+   * produced its response. Switching tabs changes which listing is read, which is how a
+   * tab switch produces a notification too.
+   */
+  private _refreshDynamicTools() {
+    const tools = webmcpDynamicTools(this._context?.currentTab()?.webmcpTools());
+    const signature = JSON.stringify(tools.map(tool => tool.schema));
+    if (signature === this._dynamicToolsSignature)
+      return;
+    this._dynamicToolsSignature = signature;
+    this._dynamicTools = tools;
+    for (const listener of this._toolListChangedListeners)
+      listener();
+  }
+
   async dispose() {
     if (this._disposed)
       return;
@@ -79,6 +109,9 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implement
       content: [{ type: 'text' as const, text: json ? JSON.stringify({ isError: true, error: message }, null, 2) : `### Error\n${message}` }],
       isError: true,
     });
+    if (name.startsWith(kDynamicToolPrefix))
+      return await this._callDynamicTool(name, rawArguments, formatError);
+
     const tool = this._tools.find(tool => tool.schema.name === name)!;
     if (!tool)
       return formatError(`Tool "${name}" not found`);
@@ -108,10 +141,41 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implement
     } finally {
       context.setRunningTool(undefined);
     }
+    this._refreshDynamicTools();
     if (this._disconnected || responseObject.isClose) {
       delete responseObject.isClose;
       await this.dispose();
     }
+    return responseObject;
+  }
+
+  private async _callDynamicTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> }, formatError: (message: string) => mcpServer.CallToolResult): Promise<mcpServer.CallToolResult> {
+    const dynamicTool = this._dynamicTools.find(tool => tool.mcpName === name);
+    if (!dynamicTool)
+      return formatError(`Tool "${name}" is not available. The page no longer registers it, tools registered by a page come and go with the page.`);
+
+    const context = this._context!;
+    const tab = context.currentTab();
+    const frameEntry = tab?.webmcpTools()?.frames.find(entry => entry.frameLabel === dynamicTool.frameLabel);
+    if (!tab || !frameEntry)
+      return formatError(`Tool "${name}" is not available. The frame that registered it is gone.`);
+
+    const { _meta, ...params } = rawArguments;
+    const response = new Response(context, name, params, { relativeTo: _meta?.cwd, raw: !!_meta?.raw, json: !!_meta?.json });
+    context.setRunningTool(name);
+    let responseObject: mcpServer.CallToolResult;
+    try {
+      await callWebMCPTool(tab, frameEntry.frame, dynamicTool.frameLabel, dynamicTool.toolName, params, response);
+      for (const reason of context.drainPendingUnhandledRejections())
+        response.addError(formatRejectionReason(reason));
+      responseObject = await response.serialize();
+      this._sessionLog?.logResponse(name, params, responseObject);
+    } catch (error: any) {
+      responseObject = formatError(String(error));
+    } finally {
+      context.setRunningTool(undefined);
+    }
+    this._refreshDynamicTools();
     return responseObject;
   }
 }

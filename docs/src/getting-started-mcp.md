@@ -136,6 +136,8 @@ Pages can register their own tools for agents through the experimental [WebMCP](
 -   **List tools**: See the tools the page registers, with their input schemas and annotations.
 -   **Call a tool**: Invoke one by name, letting the page do the work instead of driving its UI.
 
+The tools of the current tab are also offered as MCP tools of their own, named `webmcp_<tool>`, and the tool list is updated as the page registers tools or you switch tabs. Their descriptions carry an `[UNTRUSTED]` marker, and `[READ-ONLY]` or `[CONSEQUENTIAL]` when the page says so.
+
 Tool names, descriptions, schemas and results are provided by the page, so treat them as untrusted input.
 
 WebMCP is experimental and only available in Chromium and Firefox behind a browser flag, passed through the [configuration file](#configuration-file):

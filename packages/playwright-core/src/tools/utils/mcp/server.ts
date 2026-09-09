@@ -23,7 +23,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { startMcpHttpServer } from './http';
 import { toMcpTool } from './tool';
 
-import type { CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, CallToolRequest, Root, Tool } from '@modelcontextprotocol/sdk/types.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 export type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 export type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
@@ -41,6 +41,13 @@ export type ClientInfo = {
 export interface ServerBackend {
   initialize?(clientInfo: ClientInfo): Promise<void>;
   callTool(name: string, args: CallToolRequest['params']['arguments'], signal: AbortSignal): Promise<CallToolResult>;
+  /**
+   * Tools that come and go with the page, listed after the static ones. Backends that
+   * only serve a fixed set of tools do not implement this.
+   */
+  dynamicTools?(): Tool[];
+  /** Called when `dynamicTools()` would return a different set. */
+  onToolListChanged?(listener: () => void): void;
   dispose?(): Promise<void>;
   once(event: 'disconnected', listener: () => void): void;
 }
@@ -61,17 +68,22 @@ export async function connect(factory: ServerBackendFactory, transport: Transpor
 export function createServer(name: string, version: string, factory: ServerBackendFactory, transportInitialized: Promise<void>, runHeartbeat: boolean): ServerType {
   const server = new Server({ name, version }, {
     capabilities: {
-      tools: {},
+      tools: { listChanged: true },
     }
-  });
-
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
-    serverDebug('listTools');
-    return { tools: factory.toolSchemas.map(s => toMcpTool(s)) };
   });
 
   let backendPromise: Promise<ServerBackend> | undefined;
   let heartbeatStarted = false;
+
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    serverDebug('listTools');
+    const tools = factory.toolSchemas.map(s => toMcpTool(s));
+    // The backend is created lazily on the first tool call, so an early listTools
+    // legitimately has no page to collect dynamic tools from.
+    const backend = await backendPromise?.catch(() => undefined);
+    tools.push(...backend?.dynamicTools?.() ?? []);
+    return { tools };
+  });
 
   const onClose = () => backendPromise?.then(b => b.dispose?.()).catch(serverDebug);
   addServerListener(server, 'close', onClose);
@@ -82,6 +94,9 @@ export function createServer(name: string, version: string, factory: ServerBacke
     try {
       if (!backendPromise) {
         const promise = initializeServer(server, factory, transportInitialized).then(backend => {
+          backend.onToolListChanged?.(() => {
+            void server.sendToolListChanged().catch(serverDebug);
+          });
           backend.once('disconnected', () => {
             if (backendPromise === promise)
               backendPromise = undefined;
