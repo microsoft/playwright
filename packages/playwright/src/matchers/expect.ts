@@ -342,7 +342,7 @@ function callMatcherAsStep(matcherName: string, info: ExpectMetaInfo, actual: un
     category: 'expect' as const,
     title,
     subtitle: suffixes.subtitle,
-    location: stackFrames[0],
+    stack: stackFrames,
     params: Object.keys(params).length ? params : undefined,
   };
   const step = testInfo?._addStep(stepData);

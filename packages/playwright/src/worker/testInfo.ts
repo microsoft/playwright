@@ -43,7 +43,7 @@ interface TestStepData {
   title: string;
   subtitle?: string;
   category: TestStepCategory;
-  location?: Location;
+  stack?: StackFrame[];
   params?: Record<string, any>;
   box?: boolean;
   // steps with any defined group are hidden from the report
@@ -52,6 +52,7 @@ interface TestStepData {
 }
 
 export interface TestStepInternal extends TestStepData {
+  stack: StackFrame[];
   complete(result: { error?: Error | unknown, softError?: Error | unknown, shouldNotRetryTest?: boolean, suggestedRebaseline?: string, attachments?: TestInfo['attachments'] }): void;
   info: TestStepInfoImpl;
   attachmentIndices: number[];
@@ -295,19 +296,19 @@ export class TestInfoImpl implements TestInfo {
     }
 
     let boxedStack = parentStep?.boxedStack;
-    let location = data.location;
+    let stack = data.stack;
     if (!boxedStack && data.box) {
       boxedStack = filteredStackTrace(captureRawStack()).slice(1);
-      location ??= boxedStack[0];
+      stack ??= boxedStack;
     }
-    location ??= filteredStackTrace(captureRawStack())[0];
+    stack ??= filteredStackTrace(captureRawStack());
 
     const step: TestStepInternal = {
       ...data,
       stepId,
       group: parentStep?.group ?? data.group,
       boxedStack,
-      location,
+      stack,
       steps: [],
       attachmentIndices: [],
       info: new TestStepInfoImpl(this, stepId, data.title, parentStep?.info),
@@ -380,7 +381,7 @@ export class TestInfoImpl implements TestInfo {
         category: step.category,
         params: toReportedParams(step.params),
         wallTime: Date.now(),
-        location: step.location,
+        location: step.stack[0],
       };
       this._callbacks.onStepBegin(payload);
     }
@@ -392,7 +393,7 @@ export class TestInfoImpl implements TestInfo {
         subtitle: step.subtitle,
         category: step.category,
         params: step.params,
-        stack: step.location ? [step.location] : [],
+        stack: step.stack,
         group: step.group,
       });
     }
@@ -433,7 +434,7 @@ export class TestInfoImpl implements TestInfo {
     visit(root);
   }
 
-  async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture', location?: Location, group?: string }, cb: () => Promise<any>) {
+  async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture', stack?: StackFrame[], group?: string }, cb: () => Promise<any>) {
     const step = this._addStep(stepInfo);
     try {
       await cb();
