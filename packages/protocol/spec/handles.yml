@@ -29,6 +29,11 @@ JSHandle:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
+        world:
+          type: enum?
+          literals:
+          - main
+          - utility
       returns:
         value: SerializedValue
       flags:
@@ -95,6 +100,11 @@ ElementHandle:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
+        world:
+          type: enum?
+          literals:
+          - main
+          - utility
       returns:
         value: SerializedValue
       flags:
@@ -109,6 +119,11 @@ ElementHandle:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
+        world:
+          type: enum?
+          literals:
+          - main
+          - utility
       returns:
         value: SerializedValue
       flags:

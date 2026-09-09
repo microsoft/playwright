@@ -22,13 +22,14 @@ import { assert } from '@isomorphic/assert';
 import { isString } from '@isomorphic/rtti';
 import { getMimeTypeForPath } from '@isomorphic/mimeType';
 import { Frame } from './frame';
-import { JSHandle, parseResult, serializeArgument } from './jsHandle';
+import { JSHandle, assertEvaluateOptions, parseResult, serializeArgument } from './jsHandle';
 import { fileUploadSizeLimit, mkdirIfNeeded } from './fileUtils';
 import { WritableStream } from './writableStream';
 import { kNoTimeout } from './timeoutSettings';
 
 import type { BrowserContext } from './browserContext';
 import type { ChannelOwner } from './channelOwner';
+import type { WorldOptions } from './jsHandle';
 import type { Locator } from './locator';
 import type { FilePayload, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import type * as structs from '../../types/structs';
@@ -216,13 +217,15 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     return result.elements.map(h => ElementHandle.from(h) as ElementHandle<SVGElement | HTMLElement>);
   }
 
-  async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg): Promise<R> {
-    const result = await this._elementChannel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, kNoTimeout);
+  async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg, options?: WorldOptions): Promise<R> {
+    assertEvaluateOptions(options);
+    const result = await this._elementChannel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), world: options?.world }, kNoTimeout);
     return parseResult(result.value);
   }
 
-  async $$eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
-    const result = await this._elementChannel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, kNoTimeout);
+  async $$eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg, options?: WorldOptions): Promise<R> {
+    assertEvaluateOptions(options);
+    const result = await this._elementChannel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), world: options?.world }, kNoTimeout);
     return parseResult(result.value);
   }
 

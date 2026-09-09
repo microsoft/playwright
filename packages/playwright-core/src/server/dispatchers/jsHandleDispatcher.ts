@@ -43,6 +43,8 @@ export class JSHandleDispatcher<ParentScope extends JSHandleDispatcherParentScop
   }
 
   async evaluateExpression(params: channels.JSHandleEvaluateExpressionParams, progress: Progress): Promise<channels.JSHandleEvaluateExpressionResult> {
+    if (params.world)
+      throw new Error(`Only element handles can be evaluated in the "${params.world}" world`);
     const jsHandle = await this._object.evaluateExpression(progress, params.expression, { isFunction: params.isFunction }, parseArgument(params.arg));
     return { value: serializeResult(jsHandle) };
   }

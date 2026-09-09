@@ -67,13 +67,25 @@ export class FrameSelectors {
     return adoptIfNeeded(elementHandle, await elementHandle._frame.mainContext());
   }
 
-  async queryArrayInMainWorld(selector: string, scope?: ElementHandle): Promise<JSHandle<Element[]>> {
-    const resolved = await this.callOnSelectorHandle(selector, { mainWorld: true, strict: false, scope }, ({ elements }) => elements, {});
+  async queryArrayInWorld(selector: string, world: types.World, scope?: ElementHandle): Promise<JSHandle<Element[]>> {
+    const resolved = await this.callOnSelectorHandle(selector, { mainWorld: world === 'main', strict: false, scope }, ({ elements }) => elements, {});
     if (!resolved) {
-      const context = await this.frame.context('main');
+      const context = await this.frame.context(world);
       return await context.evaluateHandle(() => []);
     }
-    return resolved.result;
+    // Note that the selector may have been resolved in the main world regardless of the requested
+    // one, e.g. when a custom selector engine requires it. Move the elements over in that case.
+    const context = await resolved.frame.context(world);
+    if (context === resolved.result._context)
+      return resolved.result;
+    const properties = await resolved.result.internalGetProperties();
+    resolved.result.dispose();
+    const elements = [...properties.values()];
+    try {
+      return await context.evaluateExpressionHandle('elements => elements', { isFunction: true }, elements);
+    } finally {
+      elements.map(element => element.dispose());
+    }
   }
 
   async queryCount(selector: string): Promise<number> {
@@ -296,7 +308,7 @@ export class FrameSelectors {
     options: types.StrictOptions & { mainWorld?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none' },
     pageFunction: MatchedElementsCallback<Arg, R>,
     arg: Arg,
-  ): Promise<{ result: SmartHandle<R> } | null> {
+  ): Promise<{ frame: Frame, info: SelectorInfo, result: SmartHandle<R> } | null> {
     const result = await this._callOnSelectorInternal(selector, { ...options, callWithoutMatches: false }, pageFunction, arg, false /* returnByValue */);
     return result as { frame: Frame, info: SelectorInfo, result: SmartHandle<R> } | null;
   }

@@ -1181,6 +1181,9 @@ Optional argument to pass to [`param: expression`].
 ### option: Locator.evaluate.exposeFunctions = %%-js-evaluate-expose-functions-%%
 * since: v1.62
 
+### option: Locator.evaluate.world = %%-js-evaluate-world-%%
+* since: v1.64
+
 ### option: Locator.evaluate.timeout
 * since: v1.14
 * langs: python, java, csharp
@@ -1249,6 +1252,9 @@ var moreThanTen = await locator.EvaluateAllAsync<bool>("(divs, min) => divs.leng
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
+
+### option: Locator.evaluateAll.world = %%-js-evaluate-world-%%
+* since: v1.64
 
 ## async method: Locator.evaluateHandle
 * since: v1.14

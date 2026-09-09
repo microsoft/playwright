@@ -47,7 +47,7 @@ import { Worker } from './worker';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 import { mkdirIfNeeded } from './fileUtils';
 
-import type { EvaluateOptions } from './jsHandle';
+import type { ExposeFunctionsOptions } from './jsHandle';
 import type { BrowserContextOptions, Headers, SetStorageState, StorageState, WaitForEventOptions } from './types';
 import type { HttpCredentials } from '@protocol/structs';
 import type * as structs from '../../types/structs';
@@ -369,7 +369,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.setHTTPCredentials({ httpCredentials: toHttpCredentialsProtocol(httpCredentials || undefined) }, kNoTimeout);
   }
 
-  async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any, options?: EvaluateOptions) {
+  async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any, options?: ExposeFunctionsOptions) {
     assertEvaluateOptions(options);
     if (options?.exposeFunctions)
       return await addInitScriptWithExposedFunctions(this, script, arg);

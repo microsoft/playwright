@@ -34,6 +34,11 @@ Frame:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
+        world:
+          type: enum?
+          literals:
+          - main
+          - utility
       returns:
         value: SerializedValue
       flags:
@@ -48,6 +53,11 @@ Frame:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
+        world:
+          type: enum?
+          literals:
+          - main
+          - utility
       returns:
         value: SerializedValue
       flags:
@@ -327,6 +337,11 @@ Frame:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
+        world:
+          type: enum?
+          literals:
+          - main
+          - utility
       returns:
         value: SerializedValue
       flags:

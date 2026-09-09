@@ -901,26 +901,26 @@ export class Frame extends SdkObject<FrameEventMap> {
     }, { type, eventInit }, { mainWorld: true, ...options }, scope);
   }
 
-  async evalOnSelector(progress: Progress, selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any, scope?: dom.ElementHandle): Promise<any> {
-    return progress.race(this._evalOnSelector(selector, strict, expression, isFunction, arg, scope));
+  async evalOnSelector(progress: Progress, selector: string, strict: boolean, expression: string, options: { isFunction?: boolean, world?: types.World }, arg: any, scope?: dom.ElementHandle): Promise<any> {
+    return progress.race(this._evalOnSelector(selector, strict, expression, options, arg, scope));
   }
 
-  private async _evalOnSelector(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any, scope?: dom.ElementHandle): Promise<any> {
+  private async _evalOnSelector(selector: string, strict: boolean, expression: string, options: { isFunction?: boolean, world?: types.World }, arg: any, scope?: dom.ElementHandle): Promise<any> {
     const handle = await this.selectors.query(selector, { strict }, scope);
     if (!handle)
       throw new Error(`Failed to find element matching selector "${selector}"`);
-    const result = await handle.internalEvaluateExpression(expression, { isFunction }, arg);
+    const result = await handle.internalEvaluateExpression(expression, options, arg);
     handle.dispose();
     return result;
   }
 
-  async evalOnSelectorAll(progress: Progress, selector: string, expression: string, isFunction: boolean | undefined, arg: any, scope?: dom.ElementHandle): Promise<any> {
-    return progress.race(this._evalOnSelectorAll(selector, expression, isFunction, arg, scope));
+  async evalOnSelectorAll(progress: Progress, selector: string, expression: string, options: { isFunction?: boolean, world?: types.World }, arg: any, scope?: dom.ElementHandle): Promise<any> {
+    return progress.race(this._evalOnSelectorAll(selector, expression, options, arg, scope));
   }
 
-  private async _evalOnSelectorAll(selector: string, expression: string, isFunction: boolean | undefined, arg: any, scope?: dom.ElementHandle): Promise<any> {
-    const arrayHandle = await this.selectors.queryArrayInMainWorld(selector, scope);
-    const result = await arrayHandle.internalEvaluateExpression(expression, { isFunction }, arg);
+  private async _evalOnSelectorAll(selector: string, expression: string, options: { isFunction?: boolean, world?: types.World }, arg: any, scope?: dom.ElementHandle): Promise<any> {
+    const arrayHandle = await this.selectors.queryArrayInWorld(selector, options.world ?? 'main', scope);
+    const result = await arrayHandle.internalEvaluateExpression(expression, { isFunction: options.isFunction }, arg);
     arrayHandle.dispose();
     return result;
   }
