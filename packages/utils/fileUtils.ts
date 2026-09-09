@@ -88,12 +88,26 @@ export function trimLongString(s: string, length = 100) {
   return s.substring(0, start) + middle + s.slice(-end);
 }
 
+// Does not follow symlinks, see resolveSymlinks.
 export function isPathInside(root: string, candidate: string): boolean {
   const resolvedRoot = path.resolve(root);
   const resolvedCandidate = path.resolve(candidate);
   if (resolvedCandidate === resolvedRoot)
     return true;
   return resolvedCandidate.startsWith(resolvedRoot + path.sep);
+}
+
+// Like realpath, but tolerates a non-existent tail.
+export async function resolveSymlinks(filePath: string): Promise<string> {
+  const resolved = path.resolve(filePath);
+  try {
+    return await fs.promises.realpath(resolved);
+  } catch (e) {
+    const parent = path.dirname(resolved);
+    if (e.code !== 'ENOENT' || parent === resolved)
+      throw e;
+    return path.join(await resolveSymlinks(parent), path.basename(resolved));
+  }
 }
 
 export function resolveWithinRoot(root: string, fileName: string): string | null {
