@@ -241,7 +241,7 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--ui', { description: `Run tests in interactive UI mode` }],
   ['--ui-host <host>', { description: `Host to serve UI on; specifying this option opens UI in a browser tab` }],
   ['--ui-port <port>', { description: `Port to serve UI on, 0 for any free port; specifying this option opens UI in a browser tab` }],
-  ['-u, --update-snapshots [mode]', { description: `Update snapshots with actual results. Running tests without the flag defaults to "missing"`, choices: ['all', 'changed', 'missing', 'none'], preset: 'changed' }],
+  ['-u, --update-snapshots [mode]', { description: `Update snapshots with actual results. Running tests without the flag defaults to "default"`, choices: ['all', 'changed', 'missing', 'none', 'default'], preset: 'changed' }],
   ['--update-source-method <method>', { description: `Chooses the way source is updated (default: "patch")`, choices: ['overwrite', '3way', 'patch'] }],
   ['-j, --workers <workers>', { description: `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)` }],
   ['-x', { description: `Stop after the first failure` }],

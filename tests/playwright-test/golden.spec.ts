@@ -360,7 +360,7 @@ test('should update snapshot with the update-snapshots flag', async ({ runInline
   expect(data.toString()).toBe(ACTUAL_SNAPSHOT);
 });
 
-for (const updateSnapshots of ['all', 'changed', 'missing', 'none']) {
+for (const updateSnapshots of ['all', 'changed', 'missing', 'none', 'default']) {
   test(`should update snapshot with the update-snapshots=${updateSnapshots} (config)`, async ({ runInlineTest }, testInfo) => {
     const result = await runInlineTest({
       'playwright.config.ts': `export default { updateSnapshots: '${updateSnapshots}' };`,
@@ -448,6 +448,62 @@ test('should silently write missing expectations locally with the update-snapsho
   expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, writing actual`);
   const data = fs.readFileSync(snapshotOutputPath);
   expect(data.toString()).toBe(ACTUAL_SNAPSHOT);
+});
+
+test('should pass when writing missing expectations with the update-snapshots=missing flag', async ({ runInlineTest }, testInfo) => {
+  const ACTUAL_SNAPSHOT = 'Hello world new';
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      const { test, expect } = require('./helper');
+      test('is a test', ({}) => {
+        expect('${ACTUAL_SNAPSHOT}').toMatchSnapshot('snapshot.txt');
+      });
+    `
+  }, { 'update-snapshots': 'missing' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot.txt');
+  expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, writing actual`);
+  expect(fs.readFileSync(snapshotOutputPath, 'utf-8')).toBe(ACTUAL_SNAPSHOT);
+});
+
+test('should fail when writing missing expectations with the update-snapshots=default flag', async ({ runInlineTest }, testInfo) => {
+  const ACTUAL_SNAPSHOT = 'Hello world new';
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      const { test, expect } = require('./helper');
+      test('is a test', ({}) => {
+        expect('${ACTUAL_SNAPSHOT}').toMatchSnapshot('snapshot.txt');
+      });
+    `
+  }, { 'update-snapshots': 'default' });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot.txt');
+  expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, writing actual`);
+  expect(fs.readFileSync(snapshotOutputPath, 'utf-8')).toBe(ACTUAL_SNAPSHOT);
+});
+
+test('should still fail on a mismatching expectation with the update-snapshots=missing flag', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot.txt': 'Hello world',
+    'a.spec.js': `
+      const { test, expect } = require('./helper');
+      test('is a test', ({}) => {
+        expect('Hello world updated').toMatchSnapshot('snapshot.txt');
+      });
+    `
+  }, { 'update-snapshots': 'missing' });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot.txt');
+  expect(fs.readFileSync(snapshotOutputPath, 'utf-8')).toBe('Hello world');
 });
 
 test('should silently write missing expectations locally with the update-snapshots flag for negated matcher', async ({ runInlineTest }, testInfo) => {

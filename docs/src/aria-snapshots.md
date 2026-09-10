@@ -369,9 +369,10 @@ accessible names to aid snapshot creation and review.
 
 When using the Playwright test runner (`@playwright/test`), you can automatically update snapshots with the `--update-snapshots` flag, `-u` for short.
 
-Running without the flag uses `missing` mode and generates only absent snapshots. Supplying `-u` uses `changed` mode
-and updates snapshots that do not match. Use `all` to regenerate every snapshot, including matching ones, or `none`
-to prevent snapshot updates.
+Running without the flag uses `default` mode: absent snapshots are generated, but the tests that generate them fail,
+so that a run with new snapshots does not silently pass. Use `missing` to generate absent snapshots and keep those
+tests passing. Supplying `-u` uses `changed` mode and updates snapshots that do not match. Use `all` to regenerate
+every snapshot, including matching ones, or `none` to prevent snapshot updates.
 
 ```bash
 npx playwright test --update-snapshots
@@ -389,7 +390,7 @@ Passing an empty string as the template in an assertion generates a snapshot on-
 await expect(locator).toMatchAriaSnapshot('');
 ```
 
-This works without `-u` because the default mode is `missing`.
+This works without `-u` because the default mode generates missing snapshots.
 
 #### Snapshot patch files
 

@@ -526,7 +526,7 @@ export class WorkerMain extends ProcessRunner {
 
     this._currentTest = null;
     globals.setCurrentTestInfo(null);
-    setExpectConfig({ testInfo: null, filteredStackTrace, ignoreSnapshots: false, updateSnapshots: 'missing' });
+    setExpectConfig({ testInfo: null, filteredStackTrace, ignoreSnapshots: false, updateSnapshots: 'default' });
     this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
 
     const preserveOutput = this._config.config.preserveOutput === 'always' ||

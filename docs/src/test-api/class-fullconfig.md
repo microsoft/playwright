@@ -143,7 +143,7 @@ Resolved global tags. See [`property: TestConfig.tag`].
 
 ## property: FullConfig.updateSnapshots
 * since: v1.10
-- type: <[UpdateSnapshots]<"all"|"changed"|"missing"|"none">>
+- type: <[UpdateSnapshots]<"all"|"changed"|"missing"|"none"|"default">>
 
 See [`property: TestConfig.updateSnapshots`].
 

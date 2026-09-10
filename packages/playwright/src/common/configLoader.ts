@@ -238,8 +238,8 @@ function validateConfig(file: string, config: Config) {
   }
 
   if ('updateSnapshots' in config && config.updateSnapshots !== undefined) {
-    if (typeof config.updateSnapshots !== 'string' || !['all', 'changed', 'missing', 'none'].includes(config.updateSnapshots))
-      throw errorWithFile(file, `config.updateSnapshots must be one of "all", "changed", "missing" or "none"`);
+    if (typeof config.updateSnapshots !== 'string' || !['all', 'changed', 'missing', 'none', 'default'].includes(config.updateSnapshots))
+      throw errorWithFile(file, `config.updateSnapshots must be one of "all", "changed", "missing", "none" or "default"`);
   }
 
   if ('retryStrategy' in config && config.retryStrategy !== undefined) {
