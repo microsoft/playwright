@@ -34,6 +34,7 @@ import type * as playwrightTypes from '../../..';
 import type { SessionLog } from './sessionLog';
 import type { Disposable } from '@isomorphic/disposable';
 import type { ToolCapability } from './tool';
+import type { WebMCPToolDefinition } from './webmcp';
 
 const testDebug = debug('pw:mcp:test');
 
@@ -75,6 +76,7 @@ type ContextOptions = {
   config: ContextConfig;
   sessionLog?: SessionLog;
   cwd: string;
+  onWebMCPToolsChanged?: () => void;
 };
 
 export type RouteEntry = {
@@ -113,6 +115,9 @@ export class Context {
   private _recordedActions: string[] | undefined;
   private _disposables: Disposable[] = [];
 
+  private _webmcpTools: WebMCPToolDefinition[] = [];
+  private _webmcpToolsSignature = '';
+
   private _runningToolName: string | undefined;
   private _pendingUnhandledRejections: unknown[] = [];
   private _unhandledRejectionListeners = new Set<(reason: unknown) => void>();
@@ -138,7 +143,7 @@ export class Context {
     for (const tab of this._tabs)
       await tab.dispose();
     this._tabs.length = 0;
-    this._currentTab = undefined;
+    this._setCurrentTab(undefined);
     await this.stopVideoRecording();
   }
 
@@ -174,8 +179,8 @@ export class Context {
   async newTab(): Promise<Tab> {
     const browserContext = await this.ensureBrowserContext();
     const page = await browserContext.newPage();
-    this._currentTab = this._tabs.find(t => t.page === page)!;
-    return this._currentTab;
+    this._setCurrentTab(this._tabs.find(t => t.page === page)!);
+    return this._currentTab!;
   }
 
   async selectTab(index: number) {
@@ -183,8 +188,8 @@ export class Context {
     if (!tab)
       throw new Error(`Tab ${index} not found`);
     await tab.page.bringToFront();
-    this._currentTab = tab;
     await tab.updateWebMCPTools();
+    this._setCurrentTab(tab);
     return tab;
   }
 
@@ -193,7 +198,7 @@ export class Context {
     const crashed = this._currentTab?.crashed;
     if (crashed) {
       await this._currentTab!.page.close().catch(() => {});
-      this._currentTab = undefined;
+      this._setCurrentTab(undefined);
     }
     if (!this._currentTab)
       await this.newTab();
@@ -299,7 +304,7 @@ export class Context {
     const tab = new Tab(this, page, tab => this._onPageClosed(tab));
     this._tabs.push(tab);
     if (!this._currentTab)
-      this._currentTab = tab;
+      this._setCurrentTab(tab);
     this._startPageVideo(page).catch(() => {});
   }
 
@@ -310,7 +315,28 @@ export class Context {
     this._tabs.splice(index, 1);
 
     if (this._currentTab === tab)
-      this._currentTab = this._tabs[Math.min(index, this._tabs.length - 1)];
+      this._setCurrentTab(this._tabs[Math.min(index, this._tabs.length - 1)]);
+  }
+
+  currentWebMCPTools(): WebMCPToolDefinition[] {
+    return this._webmcpTools;
+  }
+
+  updateWebMCPTools() {
+    const tools = this._currentTab?.webmcpTools()?.tools.map(tool => tool.mcpTool) ?? [];
+    const signature = JSON.stringify(tools.map(tool => tool.schema));
+    if (signature === this._webmcpToolsSignature)
+      return;
+    this._webmcpToolsSignature = signature;
+    this._webmcpTools = tools;
+    this.options.onWebMCPToolsChanged?.();
+  }
+
+  private _setCurrentTab(tab: Tab | undefined) {
+    if (this._currentTab === tab)
+      return;
+    this._currentTab = tab;
+    this.updateWebMCPTools();
   }
 
   routes(): RouteEntry[] {
