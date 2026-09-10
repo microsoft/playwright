@@ -11720,13 +11720,18 @@ export interface Browser {
 
     /**
      * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
-     * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
+     * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport). Use `"maximized"` to disable
+     * viewport emulation and maximize each native browser window. This is only supported in headed mode and does not
+     * enter fullscreen mode or trigger the web Fullscreen API.
      *
-     * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
-     * by the operating system. It makes the execution of the tests non-deterministic.
+     * Calling [page.setViewportSize(viewportSize)](https://playwright.dev/docs/api/class-page#page-set-viewport-size)
+     * overrides `"maximized"` for that page and resizes its native window.
+     *
+     * **NOTE** The `null` and `"maximized"` values opt out from the default presets and make viewport depend on the host
+     * window size defined by the operating system. It makes the execution of the tests non-deterministic.
      *
      */
-    viewport?: null|{
+    viewport?: null|"maximized"|{
       /**
        * page width in pixels.
        */
@@ -18038,13 +18043,18 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
-     * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
+     * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport). Use `"maximized"` to disable
+     * viewport emulation and maximize each native browser window. This is only supported in headed mode and does not
+     * enter fullscreen mode or trigger the web Fullscreen API.
      *
-     * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
-     * by the operating system. It makes the execution of the tests non-deterministic.
+     * Calling [page.setViewportSize(viewportSize)](https://playwright.dev/docs/api/class-page#page-set-viewport-size)
+     * overrides `"maximized"` for that page and resizes its native window.
+     *
+     * **NOTE** The `null` and `"maximized"` values opt out from the default presets and make viewport depend on the host
+     * window size defined by the operating system. It makes the execution of the tests non-deterministic.
      *
      */
-    viewport?: null|{
+    viewport?: null|"maximized"|{
       /**
        * page width in pixels.
        */
@@ -24898,13 +24908,18 @@ export interface AndroidDevice {
 
     /**
      * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
-     * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
+     * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport). Use `"maximized"` to disable
+     * viewport emulation and maximize each native browser window. This is only supported in headed mode and does not
+     * enter fullscreen mode or trigger the web Fullscreen API.
      *
-     * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
-     * by the operating system. It makes the execution of the tests non-deterministic.
+     * Calling [page.setViewportSize(viewportSize)](https://playwright.dev/docs/api/class-page#page-set-viewport-size)
+     * overrides `"maximized"` for that page and resizes its native window.
+     *
+     * **NOTE** The `null` and `"maximized"` values opt out from the default presets and make viewport depend on the host
+     * window size defined by the operating system. It makes the execution of the tests non-deterministic.
      *
      */
-    viewport?: null|{
+    viewport?: null|"maximized"|{
       /**
        * page width in pixels.
        */
@@ -26165,13 +26180,18 @@ export interface BrowserContextOptions {
 
   /**
    * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
-   * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
+   * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport). Use `"maximized"` to disable
+   * viewport emulation and maximize each native browser window. This is only supported in headed mode and does not
+   * enter fullscreen mode or trigger the web Fullscreen API.
    *
-   * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
-   * by the operating system. It makes the execution of the tests non-deterministic.
+   * Calling [page.setViewportSize(viewportSize)](https://playwright.dev/docs/api/class-page#page-set-viewport-size)
+   * overrides `"maximized"` for that page and resizes its native window.
+   *
+   * **NOTE** The `null` and `"maximized"` values opt out from the default presets and make viewport depend on the host
+   * window size defined by the operating system. It makes the execution of the tests non-deterministic.
    *
    */
-  viewport?: null|ViewportSize;
+  viewport?: null|"maximized"|ViewportSize;
 }
 
 export interface ViewportSize {

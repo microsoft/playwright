@@ -47,7 +47,7 @@ import type * as types from '../types';
 import type * as channels from '../channels';
 
 
-export type WindowBounds = { top?: number, left?: number, width?: number, height?: number };
+export type WindowBounds = { top?: number, left?: number, width?: number, height?: number, windowState?: Protocol.Browser.WindowState };
 
 // Browsers disallow these WebUI hosts in off-the-record profiles and redirect them to the original
 // profile, which crashes when the profile was created over CDP. Edge allows most of them in InPrivate.
@@ -470,9 +470,10 @@ class FrameSession {
 
   async _initialize(hasUIWindow: boolean) {
     const browserOptions = this._crPage._browserContext._browser.options;
+    const options = this._crPage._browserContext._options;
     if (!this._page.isStorageStatePage && hasUIWindow &&
       !this._crPage._browserContext._browser.isClank() &&
-      !this._crPage._browserContext._options.noDefaultViewport) {
+      (!options.noDefaultViewport || options.viewportMaximized)) {
       try {
         const { windowId } = await this._client.send('Browser.getWindowForTarget');
         this._windowId = windowId;
@@ -551,13 +552,14 @@ class FrameSession {
         promises.push(this.exposePlaywrightBinding());
       if (this._isMainFrame() && !skipDefaultOverrides)
         promises.push(this._client.send('Emulation.setFocusEmulationEnabled', { enabled: true }));
-      const options = this._crPage._browserContext._options;
       if (options.bypassCSP)
         promises.push(this._client.send('Page.setBypassCSP', { enabled: true }));
       if (options.ignoreHTTPSErrors || options.internalIgnoreHTTPSErrors)
         promises.push(this._client.send('Security.setIgnoreCertificateErrors', { ignore: true }));
       if (this._isMainFrame())
         promises.push(this._updateViewport());
+      if (this._windowId && options.viewportMaximized)
+        promises.push(this.setWindowBounds({ windowState: 'maximized' }));
       if (options.hasTouch)
         promises.push(this._client.send('Emulation.setTouchEmulationEnabled', { enabled: true }));
       if (options.javaScriptEnabled === false)
@@ -991,6 +993,8 @@ class FrameSession {
       return;
     const promises = [];
     if (!preserveWindowBoundaries && this._windowId) {
+      if (options.viewportMaximized)
+        await this.setWindowBounds({ windowState: 'normal' });
       let insets = { width: 0, height: 0 };
       if (this._crPage._browserContext._browser.options.headful) {
         // TODO: popup windows have their own insets.
