@@ -450,6 +450,58 @@ it('should work when service worker is intefering', async ({ page, context, serv
   expect(storageState.origins[0].localStorage[0]).toEqual({ name: 'foo', value: 'bar' });
 });
 
+it('should work when service worker is intefering and the origin is not open', async ({ page, context, server, isAndroid, isElectron, electronMajorVersion }) => {
+  it.skip(isAndroid);
+  it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42656' });
+
+  server.setRoute('/', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(`
+      <script>
+        window.localStorage.foo = 'bar';
+        window.registrationPromise = navigator.serviceWorker.register('sw.js');
+        window.activationPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
+      </script>
+    `);
+  });
+
+  server.setRoute('/sw.js', (req, res) => {
+    res.writeHead(200, { 'content-type': 'application/javascript' });
+    res.end(`
+      const kHtmlPage = \`
+        <script>
+          window.localStorage.fromServiceWorker = 'yes';
+          window.location.href = 'redirected.html';
+        </script>
+      \`;
+
+      self.addEventListener('fetch', event => {
+        if (new URL(event.request.url).pathname !== '/')
+          return;
+        const blob = new Blob([kHtmlPage], { type: 'text/html' });
+        event.respondWith(new Response(blob, { status: 200, statusText: 'OK' }));
+      });
+
+      self.addEventListener('activate', event => {
+        event.waitUntil(clients.claim());
+      });
+    `);
+  });
+
+  server.setRoute('/redirected.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end('<html></html>');
+  });
+
+  await page.goto(server.PREFIX);
+  await page.evaluate(() => window['activationPromise']);
+  await page.goto('about:blank');
+
+  const storageState = await context.storageState();
+  expect(storageState.origins[0].localStorage).toEqual([{ name: 'foo', value: 'bar' }]);
+});
+
 it('should set local storage in third-party context', async ({ contextFactory, server }) => {
   const context = await contextFactory({
     storageState: {
