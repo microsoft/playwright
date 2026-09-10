@@ -1027,8 +1027,7 @@ it('should click in an iframe with border 2', async ({ page }) => {
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
 
-it('should not retain removed iframe after clicking inside it', async ({ page, browserName }) => {
-  it.skip(browserName !== 'chromium', 'CDP is Chromium only');
+it('should not retain removed iframe after clicking inside it', async ({ page }) => {
   await page.setContent('<iframe srcdoc="<button>Click</button>"></iframe>');
   const button = page.frameLocator('iframe').getByRole('button');
   await button.waitFor();
@@ -1039,18 +1038,9 @@ it('should not retain removed iframe after clicking inside it', async ({ page, b
   await page.evaluate(() => document.querySelector('iframe')!.remove());
   // Move the mouse away to release Chromium's own last-hovered-node retention.
   await page.mouse.move(500, 500);
-  const session = await page.context().newCDPSession(page);
-  try {
-    await session.send('HeapProfiler.collectGarbage');
-    await session.send('HeapProfiler.collectGarbage');
-    const { result } = await session.send('Runtime.evaluate', {
-      expression: 'Boolean(window.iframeRef.deref())',
-      returnByValue: true,
-    });
-    expect(result.value).toBe(false);
-  } finally {
-    await session.detach();
-  }
+  await page.requestGC();
+  const retained = await page.evaluate(() => Boolean((window as any).iframeRef.deref()));
+  expect(retained).toBe(false);
 });
 
 it('should click in a transformed iframe', async ({ page }) => {
