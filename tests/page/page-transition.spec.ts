@@ -16,7 +16,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it.only('should not crash when filter transition completes', async ({ page, browserName }) => {
+it('should not crash when filter transition completes', async ({ page, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42637' });
   it.fixme(browserName === 'webkit', 'Web process crashes on the compositor thread when a filter transitions to none');
 
