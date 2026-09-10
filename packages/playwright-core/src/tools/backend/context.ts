@@ -59,6 +59,7 @@ export type ContextConfig = {
     boxes?: boolean;
   };
   testIdAttribute?: string;
+  webmcp?: boolean;
   timeouts?: {
     action?: number;
     navigation?: number;

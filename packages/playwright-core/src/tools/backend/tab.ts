@@ -479,6 +479,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   async updateWebMCPTools(): Promise<void> {
+    if (this.context.config.webmcp === false)
+      return;
     if (this._javaScriptBlocked())
       return;
     const listing = await listWebMCPTools(this);
