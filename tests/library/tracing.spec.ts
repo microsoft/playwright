@@ -301,6 +301,8 @@ test('should respect tracesDir and name', async ({ browserType, server, mode }, 
     expect(resourceNames(resources)).toEqual([
       'resources/XXX.css',
       'resources/XXX.html',
+      'trace.actions',
+      'trace.meta',
       'trace.network',
       'trace.stacks',
       'trace.trace',
@@ -314,6 +316,8 @@ test('should respect tracesDir and name', async ({ browserType, server, mode }, 
       'resources/XXX.css',
       'resources/XXX.html',
       'resources/XXX.html',
+      'trace.actions',
+      'trace.meta',
       'trace.network',
       'trace.stacks',
       'trace.trace',
@@ -840,13 +844,13 @@ test('should not flush console events', async ({ context, page, mode }, testInfo
 
   const dir = path.join(testInfo.project.outputDir, artifactsFolderName(testInfo.workerIndex), 'traces');
 
-  let content: string;
   await expect(async () => {
-    const traceName = fs.readdirSync(dir).find(name => name.endsWith(testId + '.trace'));
-    content = await fs.promises.readFile(path.join(dir, traceName), 'utf8');
-    expect(content).toContain('31415926');
+    const actionsName = fs.readdirSync(dir).find(name => name.endsWith(testId + '.actions'));
+    const actions = await fs.promises.readFile(path.join(dir, actionsName), 'utf8');
+    expect(actions).toContain('31415926');
   }).toPass();
-  expect(content).not.toContain('hello 0');
+  const traceName = fs.readdirSync(dir).find(name => name.endsWith(testId + '.trace'));
+  expect(await fs.promises.readFile(path.join(dir, traceName), 'utf8')).not.toContain('hello 0');
 
   await page.evaluate(() => 42);
 

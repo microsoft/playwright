@@ -212,8 +212,8 @@ test('should not mixup network files between contexts', async ({ runInlineTest, 
   expect(result.passed).toBe(1);
   const tracePath = testInfo.outputPath('test-results', 'a-example', 'trace.zip');
   const { resources } = await parseTraceRaw(tracePath);
-  const traceEntries = [...resources].filter(([name]) => name.endsWith('.trace')).map(([name, content]) => ({
-    prefix: name.slice(0, -'.trace'.length),
+  const traceEntries = [...resources].filter(([name]) => name.endsWith('.meta')).map(([name, content]) => ({
+    prefix: name.slice(0, -'.meta'.length),
     contextOptions: JSON.parse(content.toString().split('\n')[0]),
   })).filter(entry => entry.contextOptions.origin === 'library');
   // Each of the 3 browser contexts and 3 api request contexts produces

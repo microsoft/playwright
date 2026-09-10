@@ -113,7 +113,8 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
 
   const actionMap = new Map<string, ActionTraceEvent>();
   const events: any[] = [];
-  for (const traceFile of [...resources.keys()].filter(name => name.endsWith('.trace'))) {
+  const traceFiles = ['.meta', '.actions', '.trace'].flatMap(extension => [...resources.keys()].filter(name => name.endsWith(extension)));
+  for (const traceFile of traceFiles) {
     for (const line of resources.get(traceFile)!.toString().split('\n')) {
       if (line) {
         const event = JSON.parse(line) as TraceEvent;
