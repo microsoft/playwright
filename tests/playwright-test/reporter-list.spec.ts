@@ -316,6 +316,63 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(1);
     });
 
+    test('print failures inline with retries', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            reporter: [['list', { printFailuresInline: true }]],
+            retries: 2,
+            workers: 1,
+          };
+        `,
+        'a.test.ts': `
+          import { test, expect } from '@playwright/test';
+          test('fails', async ({}, testInfo) => {
+            throw new Error('attempt ' + testInfo.retry);
+          });
+        `,
+      });
+      const text = result.output;
+      const failureHeader = '1) a.test.ts:3:15 › fails';
+      // Each attempt is printed once, under the same failure index.
+      expect(text.split(failureHeader).length - 1).toBe(3);
+      expect(text).not.toContain('2) a.test.ts:3:15 › fails');
+      for (const attempt of ['attempt 0', 'attempt 1', 'attempt 2'])
+        expect(text.split('Error: ' + attempt).length - 1).toBe(1);
+      expect(text.split('Retry #1').length - 1).toBe(1);
+      expect(text.split('Retry #2').length - 1).toBe(1);
+      // Retry sections come after the corresponding retry attempt.
+      expect(text.indexOf('Retry #1')).toBeGreaterThan(text.indexOf('Error: attempt 0'));
+      expect(text.indexOf('Retry #2')).toBeGreaterThan(text.indexOf('Error: attempt 1'));
+      expect(result.exitCode).toBe(1);
+    });
+
+    test('print failures inline for a flaky test', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            reporter: [['list', { printFailuresInline: true }]],
+            retries: 1,
+            workers: 1,
+          };
+        `,
+        'a.test.ts': `
+          import { test, expect } from '@playwright/test';
+          test('flaky', async ({}, testInfo) => {
+            if (testInfo.retry === 0)
+              throw new Error('attempt ' + testInfo.retry);
+          });
+        `,
+      });
+      const text = result.output;
+      const failureHeader = '1) a.test.ts:3:15 › flaky';
+      expect(text.split(failureHeader).length - 1).toBe(1);
+      expect(text.split('Error: attempt 0').length - 1).toBe(1);
+      expect(text).not.toContain('Retry #1');
+      expect(text).toContain('1 flaky');
+      expect(result.exitCode).toBe(0);
+    });
+
     test('print stdio', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.ts': `

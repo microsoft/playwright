@@ -164,6 +164,7 @@ export type TerminalReporterOptions = {
   omitFailures?: boolean;
   includeTestId?: boolean;
   omitTags?: boolean;
+  lastResult?: boolean;
 };
 
 export class TerminalReporter implements ReporterV2 {
@@ -402,7 +403,8 @@ function formatResultErrors(screen: Screen, test: TestCase, result: TestResult):
 export function formatFailure(screen: Screen, config: FullConfig, test: TestCase, index?: number, options?: TerminalReporterOptions): string {
   const lines: string[] = [];
   let printedHeader = false;
-  for (const result of test.results) {
+  const results = options?.lastResult ? test.results.slice(-1) : test.results;
+  for (const result of results) {
     const resultLines: string[] = [];
     const errors = formatResultFailure(screen, test, result, '    ');
     if (!errors.length)

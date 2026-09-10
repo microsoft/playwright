@@ -39,13 +39,14 @@ class ListReporter extends TerminalReporter {
   private _needNewLine = false;
   private _printSteps: boolean;
   private _printFailuresInline: boolean;
-  private _failureIndex = 0;
+  private _failureIndex = new Map<TestCase, number>();
   private _paused = new Set<TestResult>();
 
   constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
-    super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_LIST_OMIT_TAGS', options?.omitTags) });
+    const printFailuresInline = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_FAILURES_INLINE', options?.printFailuresInline);
+    super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_LIST_OMIT_TAGS', options?.omitTags), lastResult: printFailuresInline });
     this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options?.printSteps);
-    this._printFailuresInline = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_FAILURES_INLINE', options?.printFailuresInline);
+    this._printFailuresInline = printFailuresInline;
   }
 
   override onBegin(suite: Suite) {
@@ -201,7 +202,13 @@ class ListReporter extends TerminalReporter {
 
   private _printFailure(test: TestCase) {
     this._maybeWriteNewLine();
-    const message = '\n' + this.formatFailure(test, ++this._failureIndex) + '\n';
+    // Retries of the same test share one failure index.
+    let index = this._failureIndex.get(test);
+    if (index === undefined) {
+      index = this._failureIndex.size + 1;
+      this._failureIndex.set(test, index);
+    }
+    const message = '\n' + this.formatFailure(test, index) + '\n';
     this._updateLineCountAndNewLineFlagForOutput(message);
     this.screen.stdout.write(message);
   }
