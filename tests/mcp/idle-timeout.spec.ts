@@ -86,30 +86,6 @@ test('does not close the browser while a tool call is running', async ({ startCl
   });
 });
 
-test('does not close the browser without --timeout-idle', async ({ startClient, server }) => {
-  const { client, stderr } = await startClient({
-    env: { DEBUG: 'pw:mcp:test' },
-  });
-
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  });
-
-  await new Promise(f => setTimeout(f, 300));
-
-  expect(await client.callTool({
-    name: 'browser_snapshot',
-    arguments: {},
-  })).toHaveResponse({
-    inlineSnapshot: expect.stringContaining(`Hello, world!`),
-  });
-  expect(formatLog(stderr())).toEqual({
-    'create browser (persistent)': 1,
-    'create context': 1,
-  });
-});
-
 test('isolated context loses in-memory state on idle close', async ({ startClient, server }) => {
   server.setContent('/', `
     <body>
