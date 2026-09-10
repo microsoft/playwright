@@ -1145,7 +1145,7 @@ class FrameSession {
       return null;
     if (frame === this._page.mainFrame())
       return { x: 0, y: 0 };
-    const element = await frame.frameElement(nullProgress);
+    using element = await frame.frameElement(nullProgress);
     const box = await element.boundingBox(nullProgress);
     return box;
   }

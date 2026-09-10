@@ -331,6 +331,7 @@ class EsbuildStep extends Step {
       sourcemap: withSourceMaps ? 'linked' : false,
       platform: 'node',
       format: 'cjs',
+      target: 'node20',
       ...options,
     };
     this._watchPaths = watchPaths;

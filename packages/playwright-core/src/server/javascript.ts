@@ -223,6 +223,10 @@ export class JSHandle<T = any> extends SdkObject {
     }
   }
 
+  [Symbol.dispose]() {
+    this.dispose();
+  }
+
   override toString(): string {
     return this._preview;
   }
