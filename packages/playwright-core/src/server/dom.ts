@@ -936,37 +936,44 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _checkFrameIsHitTarget(progress: Progress, point: types.Point): Promise<{ framePoint: types.Point | undefined } | 'error:notconnected' | { hitTargetDescription: string }> {
     let frame = this._frame;
     const data: { frame: frames.Frame, frameElement: ElementHandle<Element> | null, pointInFrame: types.Point }[] = [];
-    while (frame.parentFrame()) {
-      const frameElement = await frame.frameElement(progress) as ElementHandle<Element>;
-      const box = await frameElement.boundingBox(progress);
-      const style = await progress.race(frameElement.evaluateInUtility(([injected, iframe]) => injected.describeIFrameStyle(iframe), {}).catch(e => 'error:notconnected' as const));
-      if (!box || style === 'error:notconnected')
-        return 'error:notconnected';
-      if (style === 'transformed') {
-        // We cannot translate coordinates when iframe has any transform applied.
-        // The best we can do right now is to skip the hitPoint check,
-        // and solely rely on the event interceptor.
-        return { framePoint: undefined };
+    const temporaryFrameElements: ElementHandle<Element>[] = [];
+    try {
+      while (frame.parentFrame()) {
+        const frameElement = await frame.frameElement(progress) as ElementHandle<Element>;
+        temporaryFrameElements.push(frameElement);
+        const box = await frameElement.boundingBox(progress);
+        const style = await progress.race(frameElement.evaluateInUtility(([injected, iframe]) => injected.describeIFrameStyle(iframe), {}).catch(e => 'error:notconnected' as const));
+        if (!box || style === 'error:notconnected')
+          return 'error:notconnected';
+        if (style === 'transformed') {
+          // We cannot translate coordinates when iframe has any transform applied.
+          // The best we can do right now is to skip the hitPoint check,
+          // and solely rely on the event interceptor.
+          return { framePoint: undefined };
+        }
+        // Translate from viewport coordinates to frame coordinates.
+        const pointInFrame = { x: point.x - box.x - style.left, y: point.y - box.y - style.top };
+        data.push({ frame, frameElement, pointInFrame });
+        frame = frame.parentFrame()!;
       }
-      // Translate from viewport coordinates to frame coordinates.
-      const pointInFrame = { x: point.x - box.x - style.left, y: point.y - box.y - style.top };
-      data.push({ frame, frameElement, pointInFrame });
-      frame = frame.parentFrame()!;
-    }
-    // Add main frame.
-    data.push({ frame, frameElement: null, pointInFrame: point });
+      // Add main frame.
+      data.push({ frame, frameElement: null, pointInFrame: point });
 
-    for (let i = data.length - 1; i > 0; i--) {
-      const element = data[i - 1].frameElement!;
-      const point = data[i].pointInFrame;
-      // Hit target in the parent frame should hit the child frame element.
-      const hitTargetResult = await progress.race(element.evaluateInUtility(([injected, element, hitPoint]) => {
-        return injected.expectHitTarget(hitPoint, element);
-      }, point));
-      if (hitTargetResult !== 'done')
-        return hitTargetResult;
+      for (let i = data.length - 1; i > 0; i--) {
+        const element = data[i - 1].frameElement!;
+        const point = data[i].pointInFrame;
+        // Hit target in the parent frame should hit the child frame element.
+        const hitTargetResult = await progress.race(element.evaluateInUtility(([injected, element, hitPoint]) => {
+          return injected.expectHitTarget(hitPoint, element);
+        }, point));
+        if (hitTargetResult !== 'done')
+          return hitTargetResult;
+      }
+      return { framePoint: data[0].pointInFrame };
+    } finally {
+      for (const frameElement of temporaryFrameElements)
+        frameElement.dispose();
     }
-    return { framePoint: data[0].pointInFrame };
   }
 }
 
