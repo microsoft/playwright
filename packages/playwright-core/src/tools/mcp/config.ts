@@ -75,6 +75,7 @@ export type CLIOptions = {
   storageState?: string;
   testIdAttribute?: string;
   timeoutAction?: number;
+  timeoutIdle?: number;
   timeoutNavigation?: number;
   timeoutSettle?: number;
   userAgent?: string;
@@ -391,6 +392,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
     testIdAttribute: cliOptions.testIdAttribute,
     timeouts: {
       action: cliOptions.timeoutAction,
+      idle: cliOptions.timeoutIdle,
       navigation: cliOptions.timeoutNavigation,
       settle: cliOptions.timeoutSettle,
     },
@@ -450,6 +452,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.storageState = envToString(e.PLAYWRIGHT_MCP_STORAGE_STATE);
   options.testIdAttribute = envToString(e.PLAYWRIGHT_MCP_TEST_ID_ATTRIBUTE);
   options.timeoutAction = numberParser(e.PLAYWRIGHT_MCP_TIMEOUT_ACTION);
+  options.timeoutIdle = numberParser(e.PLAYWRIGHT_MCP_TIMEOUT_IDLE);
   options.timeoutNavigation = numberParser(e.PLAYWRIGHT_MCP_TIMEOUT_NAVIGATION);
   options.timeoutSettle = numberParser(e.PLAYWRIGHT_MCP_TIMEOUT_SETTLE);
   options.userAgent = envToString(e.PLAYWRIGHT_MCP_USER_AGENT);
