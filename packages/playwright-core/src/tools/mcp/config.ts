@@ -79,6 +79,7 @@ export type CLIOptions = {
   timeoutNavigation?: number;
   timeoutSettle?: number;
   userAgent?: string;
+  webmcp?: boolean;
   userDataDir?: string;
   viewportSize?: ViewportSize;
 };
@@ -398,6 +399,10 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
     },
   };
 
+  // Note that cli args parser defaults to "true" when no option is passed, so only honor an explict "false".
+  if (cliOptions.webmcp === false)
+    config.webmcp = false;
+
   // `remoteHeaders` is for back-compat, assign it here so it survives config merging.
   if (cliOptions.remoteHeader)
     // eslint-disable-next-line no-restricted-syntax
@@ -456,6 +461,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.timeoutNavigation = numberParser(e.PLAYWRIGHT_MCP_TIMEOUT_NAVIGATION);
   options.timeoutSettle = numberParser(e.PLAYWRIGHT_MCP_TIMEOUT_SETTLE);
   options.userAgent = envToString(e.PLAYWRIGHT_MCP_USER_AGENT);
+  options.webmcp = envToBoolean(e.PLAYWRIGHT_MCP_WEBMCP);
   options.userDataDir = envToString(e.PLAYWRIGHT_MCP_USER_DATA_DIR);
   options.viewportSize = resolutionParser('--viewport-size', e.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
   return configFromCLIOptions(options);

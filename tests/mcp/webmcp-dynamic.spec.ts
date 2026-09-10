@@ -185,3 +185,19 @@ test('only the current tab contributes tools, switching tabs swaps them', async 
   await client.callTool({ name: 'browser_tabs', arguments: { action: 'select', index: 0 } });
   expect(await names()).toEqual(['webmcp_add']);
 });
+
+test('--no-webmcp opts out of page tools entirely', async ({ startClient, server, mcpBrowser }) => {
+  server.setRoute('/', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<title>WebMCP</title>${registerScript(kAdd)}`);
+  });
+
+  const { client } = await startClient({
+    config: { ...webmcpConfig(mcpBrowser), webmcp: false },
+  });
+  const response = await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+  expect(response).toHaveResponse({
+    page: expect.not.stringContaining('webmcp tool'),
+  });
+  expect((await client.listTools()).tools.map(tool => tool.name)).not.toContain('webmcp_add');
+});
