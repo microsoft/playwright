@@ -52,6 +52,12 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
     headers: params.headers,
     ...happyEyeballsOptions,
   };
+  // Pass the timeout via request options, so that it is applied to the socket
+  // at creation time. `request.setTimeout()` alone only takes effect once the
+  // socket connects, so without this the default agent's 5s timeout would kill
+  // sockets that take longer to connect, ignoring the requested timeout.
+  if (params.socketTimeout !== undefined)
+    options.timeout = params.socketTimeout;
   if (params.rejectUnauthorized !== undefined)
     options.rejectUnauthorized = params.rejectUnauthorized;
 
