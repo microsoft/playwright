@@ -1027,6 +1027,22 @@ it('should click in an iframe with border 2', async ({ page }) => {
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
 
+it('should not retain removed iframe after clicking inside it', async ({ page }) => {
+  await page.setContent('<iframe srcdoc="<button>Click</button>"></iframe>');
+  const button = page.frameLocator('iframe').getByRole('button');
+  await button.waitFor();
+  await page.evaluate(() => {
+    (window as any).iframeRef = new WeakRef(document.querySelector('iframe')!);
+  });
+  await button.click();
+  await page.evaluate(() => document.querySelector('iframe')!.remove());
+  // Move the mouse away to release Chromium's own last-hovered-node retention.
+  await page.mouse.move(500, 500);
+  await page.requestGC();
+  const retained = await page.evaluate(() => Boolean((window as any).iframeRef.deref()));
+  expect(retained).toBe(false);
+});
+
 it('should click in a transformed iframe', async ({ page }) => {
   await page.setContent(`
     <style>
