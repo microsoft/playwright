@@ -180,6 +180,7 @@ const longhandTypes: Record<string, LonghandType> = {
 
   // timeouts
   'timeouts.action': 'number',
+  'timeouts.idle': 'number',
   'timeouts.navigation': 'number',
   'timeouts.settle': 'number',
 

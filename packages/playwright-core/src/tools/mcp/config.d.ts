@@ -217,6 +217,11 @@ export type Config = {
      * How long to wait after each action for triggered work (navigations, requests) to settle before responding. Defaults to 500ms.
      */
     settle?: number;
+
+    /**
+     * Close the browser after this many milliseconds without a tool call, and relaunch it on the next one. Disabled by default.
+     */
+    idle?: number;
   };
 
   /**

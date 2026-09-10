@@ -42,7 +42,8 @@ export interface ServerBackend {
   initialize?(clientInfo: ClientInfo): Promise<void>;
   callTool(name: string, args: CallToolRequest['params']['arguments'], signal: AbortSignal): Promise<CallToolResult>;
   dispose?(): Promise<void>;
-  once(event: 'disconnected', listener: () => void): void;
+  // The notice, if any, is prepended to the next tool response, for example after an idle close.
+  once(event: 'disconnected', listener: (notice?: string) => void): void;
 }
 
 export type ServerBackendFactory = {
@@ -72,20 +73,27 @@ export function createServer(name: string, version: string, factory: ServerBacke
 
   let backendPromise: Promise<ServerBackend> | undefined;
   let heartbeatStarted = false;
+  let disposing: Promise<void> | undefined;
+  let pendingNotice: string | undefined;
 
   const onClose = () => backendPromise?.then(b => b.dispose?.()).catch(serverDebug);
   addServerListener(server, 'close', onClose);
 
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     serverDebug('callTool', request);
+    let notice: string | undefined;
+    let result: CallToolResult;
 
     try {
       if (!backendPromise) {
+        // Let the previous backend finish closing before its replacement launches.
+        await disposing;
         const promise = initializeServer(server, factory, transportInitialized).then(backend => {
-          backend.once('disconnected', () => {
+          backend.once('disconnected', disconnectNotice => {
             if (backendPromise === promise)
               backendPromise = undefined;
-            void backend.dispose?.().catch(serverDebug);
+            pendingNotice ??= disconnectNotice;
+            disposing = backend.dispose?.().catch(serverDebug);
           });
           if (runHeartbeat && !heartbeatStarted) {
             heartbeatStarted = true;
@@ -101,16 +109,19 @@ export function createServer(name: string, version: string, factory: ServerBacke
       }
 
       const backend = await backendPromise;
-      const toolResult = await backend.callTool(request.params.name, request.params.arguments || {}, extra.signal);
-      const mergedResult = mergeTextParts(toolResult);
-      serverDebugResponse('callResult', mergedResult);
-      return mergedResult;
+      // Delivered once, by whichever call first reaches the replacement backend.
+      notice = pendingNotice;
+      pendingNotice = undefined;
+      result = await backend.callTool(request.params.name, request.params.arguments || {}, extra.signal);
     } catch (error) {
-      return {
+      result = {
         content: [{ type: 'text', text: '### Error\n' + String(error) }],
         isError: true,
       };
     }
+    const mergedResult = mergeTextParts(prependText(result, notice));
+    serverDebugResponse('callResult', mergedResult);
+    return mergedResult;
   });
   return server;
 }
@@ -225,6 +236,12 @@ export function allRootPaths(roots: Root[]): string[] {
   if (paths.length === 0)
     paths.push(process.cwd());
   return paths;
+}
+
+function prependText(result: CallToolResult, text: string | undefined): CallToolResult {
+  if (!text)
+    return result;
+  return { ...result, content: [{ type: 'text', text }, ...result.content] };
 }
 
 function mergeTextParts(result: CallToolResult): CallToolResult {
