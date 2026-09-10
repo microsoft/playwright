@@ -142,3 +142,9 @@ it('should isolate the utility world from main world tampering', async ({ page }
   expect(await locator.evaluate(e => e.getAttribute('data-value'))).toBe('tampered');
   expect(await locator.evaluate(e => e.getAttribute('data-value'), undefined, { world: 'utility' })).toBe('1');
 });
+
+it('should reject exposeFunctions in the utility world', async ({ page }) => {
+  const error = await page.evaluate(async ({ cb }) => await cb(17), { cb: (x: number) => x * 2 }, { exposeFunctions: true, world: 'utility' }).catch(e => e);
+  expect(error.message).toContain('Option "exposeFunctions" is not supported in the "utility" world.');
+  expect(await page.evaluate(async ({ cb }) => await cb(17), { cb: (x: number) => x * 2 }, { exposeFunctions: true })).toBe(34);
+});

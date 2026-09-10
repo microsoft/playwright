@@ -147,4 +147,8 @@ export function assertMaxArguments(count: number, max: number): asserts count {
 export function assertEvaluateOptions(options: any) {
   if (options !== undefined && (typeof options !== 'object' || options === null || Array.isArray(options)))
     throw new Error('Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object.');
+  // Bindings are installed by an init script, which only runs in the main world, so the
+  // exposed callbacks are unreachable from the utility world.
+  if (options?.exposeFunctions && options?.world === 'utility')
+    throw new Error('Option "exposeFunctions" is not supported in the "utility" world.');
 }
