@@ -1021,6 +1021,47 @@ it('should contain raw request header', async ({ page, server }) => {
   expect(headers.accept).toBeTruthy();
 });
 
+it('should contain sec-fetch headers in route', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42620' });
+  it.fail(browserName === 'chromium', 'Fetch.requestPaused fires before Chromium attaches Fetch Metadata headers');
+
+  const secFetch = (headers: Record<string, string | string[] | undefined>) => Object.fromEntries(
+      Object.entries(headers).filter(([name]) => name.toLowerCase().startsWith('sec-fetch-')));
+  const modes = ['cors', 'no-cors', 'same-origin'];
+
+  await page.goto(server.EMPTY_PAGE);
+
+  const routed = new Map<string, { headers: any, allHeaders: any }>();
+  await page.route('**/probe-*', async route => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    routed.set(path, { headers: secFetch(request.headers()), allHeaders: secFetch(await request.allHeaders()) });
+    void route.continue();
+  });
+
+  const [serverRequests] = await Promise.all([
+    Promise.all(modes.map(mode => server.waitForRequest(`/probe-${mode}`))),
+    page.evaluate(async modes => {
+      for (const mode of modes)
+        await (await fetch(`/probe-${mode}`, { mode: mode as RequestMode })).text();
+    }, modes),
+  ]);
+
+  for (let i = 0; i < modes.length; i++) {
+    const path = `/probe-${modes[i]}`;
+    const onServer = secFetch(serverRequests[i].headers);
+    // The server does receive the browser-computed Fetch Metadata.
+    expect.soft(onServer, `${path} on server`).toEqual({
+      'sec-fetch-site': 'same-origin',
+      'sec-fetch-mode': modes[i],
+      'sec-fetch-dest': 'empty',
+    });
+    // The route handler should see the same headers.
+    expect.soft(routed.get(path)!.headers, `${path} route.request().headers()`).toEqual(onServer);
+    expect.soft(routed.get(path)!.allHeaders, `${path} route.request().allHeaders()`).toEqual(onServer);
+  }
+});
+
 it('should contain raw response header', async ({ page, server }) => {
   let request: any;
   await page.route('**/*', async route => {
