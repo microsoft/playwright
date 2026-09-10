@@ -377,6 +377,63 @@ test('file upload unrestricted when flag is set', async ({ startClient, server }
   });
 });
 
+test('file upload follows symlinks when checking workspace roots', async ({ startClient, server }, testInfo) => {
+  test.skip(process.platform === 'win32', 'Creating symlinks requires elevated privileges on Windows');
+
+  const rootDir = testInfo.outputPath('workspace');
+  await fs.mkdir(rootDir, { recursive: true });
+  const fileInsideRoot = path.join(rootDir, 'inside.txt');
+  await fs.writeFile(fileInsideRoot, 'Inside root');
+  await fs.symlink(fileInsideRoot, path.join(rootDir, 'inside-link.txt'));
+  const fileOutsideRoot = testInfo.outputPath('outside.txt');
+  await fs.writeFile(fileOutsideRoot, 'Outside root');
+  await fs.symlink(fileOutsideRoot, path.join(rootDir, 'outside-link.txt'));
+  // Root reached through a symlink, like /tmp on macOS.
+  const rootLink = testInfo.outputPath('workspace-link');
+  await fs.symlink(rootDir, rootLink);
+
+  const { client } = await startClient({
+    roots: [
+      {
+        name: 'workspace',
+        uri: `file://${rootLink}`,
+      }
+    ],
+  });
+
+  server.setContent('/', `<input type="file" />`, 'text/html');
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+  await client.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Textbox', target: 'e2' },
+  });
+
+  // Should succeed - symlink points inside the root
+  expect(await client.callTool({
+    name: 'browser_file_upload',
+    arguments: { paths: ['inside-link.txt'] },
+  })).toHaveResponse({
+    code: expect.stringContaining(JSON.stringify(path.join(rootLink, 'inside-link.txt'))),
+  });
+
+  await client.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Textbox', target: 'e2' },
+  });
+
+  // Should fail - symlink points outside the root
+  expect(await client.callTool({
+    name: 'browser_file_upload',
+    arguments: { paths: ['outside-link.txt'] },
+  })).toHaveResponse({
+    isError: true,
+    error: expect.stringMatching('File access denied: .* is outside allowed roots'),
+  });
+});
+
 const dropzoneHtml = `
   <div id="dropzone" aria-label="dropzone" style="width:300px;height:200px;border:2px dashed #888"></div>
   <script>

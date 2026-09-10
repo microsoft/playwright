@@ -22,7 +22,7 @@ import debug from 'debug';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { disposeAll } from '@isomorphic/disposable';
 import { eventsHelper } from '@utils/eventsHelper';
-import { isPathInside, isSystemDirectory, isWritable } from '@utils/fileUtils';
+import { isPathInside, isSystemDirectory, isWritable, resolveSymlinks } from '@utils/fileUtils';
 import { playwright } from '../../inprocess';
 
 import { dedent, languageGeneratorId, secretCode } from './codegen';
@@ -464,6 +464,12 @@ async function checkFile(options: ContextOptions, resolvedFilename: string, flag
   // Trust llm to use valid characters in file names.
   const output = outputDir(options);
   const workspace = options.cwd;
-  if (!isPathInside(output, resolvedFilename) && !isPathInside(workspace, resolvedFilename))
+  // Follow symlinks, an unresolvable root cannot be traversed anyway.
+  const [realOutput, realWorkspace, realFilename] = await Promise.all([
+    resolveSymlinks(output).catch(() => output),
+    resolveSymlinks(workspace).catch(() => workspace),
+    resolveSymlinks(resolvedFilename),
+  ]);
+  if (!isPathInside(realOutput, realFilename) && !isPathInside(realWorkspace, realFilename))
     throw new Error(`File access denied: ${resolvedFilename} is outside allowed roots. Allowed roots: ${output}, ${workspace}`);
 }
