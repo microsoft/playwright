@@ -332,10 +332,10 @@ export class ClientCertificatesProxy {
 
     // Step 2. Create secure contexts for each origin.
     for (const [origin, certs] of origin2certs) {
-      const sendNoneCount = certs.filter(cert => cert.sendNone).length;
-      if (sendNoneCount > 0 && sendNoneCount < certs.length)
-        throw new Error(`clientCertificates for origin "${origin}" mix sendNone with a real certificate`);
-      if (sendNoneCount > 0) {
+      const noCertificateCount = certs.filter(cert => cert.noCertificate).length;
+      if (noCertificateCount > 0 && noCertificateCount < certs.length)
+        throw new Error(`clientCertificates for origin "${origin}" mix noCertificate with a real certificate`);
+      if (noCertificateCount > 0) {
         this.secureContextMap.set(origin, undefined);
         continue;
       }

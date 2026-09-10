@@ -7368,10 +7368,10 @@ export interface PlaywrightTestOptions {
    * with an exact match to the request origin that the certificate is valid for.
    *
    * Client certificate authentication is only active when at least one client certificate is provided. If you want to
-   * reject all client certificates sent by the server for an origin you visit, set `sendNone` to `true` for that origin
-   * instead of omitting it: omitting the origin entirely leaves the connection unintercepted, so the server's own
-   * certificate request still reaches the browser and may trigger a native certificate-selection prompt on some
-   * platforms. `sendNone` forces interception for that origin while still presenting no client certificate.
+   * reject all client certificates sent by the server for an origin you visit, set `noCertificate` to `true` for that
+   * origin instead of omitting it: omitting the origin entirely leaves the connection unintercepted, so the server's
+   * own certificate request still reaches the browser and may trigger a native certificate-selection prompt on some
+   * platforms. `noCertificate` forces interception for that origin while still presenting no client certificate.
    *
    * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
    * work by replacing `localhost` with `local.playwright`.

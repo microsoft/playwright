@@ -91,10 +91,10 @@ const kValidationSubTests: [BrowserContextOptions, string][] = [
   [{
     clientCertificates: [{
       origin: 'test',
-      sendNone: true,
+      noCertificate: true,
       certPath: kDummyFileName,
     }]
-  }, 'sendNone is set together with cert, key, passphrase or pfx'],
+  }, 'noCertificate is set together with cert, key, passphrase or pfx'],
 ];
 
 test.describe('fetch', () => {
@@ -112,13 +112,13 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('should send no client certificate when sendNone is set', async ({ playwright, startCCServer }) => {
+  test('should send no client certificate when noCertificate is set', async ({ playwright, startCCServer }) => {
     const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
         origin: new URL(serverURL).origin,
-        sendNone: true,
+        noCertificate: true,
       }],
     });
     const response = await request.get(serverURL);
@@ -383,7 +383,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should intercept TLS and send no client certificate when sendNone is set for the visited origin', {
+  test('should intercept TLS and send no client certificate when noCertificate is set for the visited origin', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42546' },
   }, async ({ browser, startCCServer }) => {
     const serverURL = await startCCServer();
@@ -391,11 +391,11 @@ test.describe('browser', () => {
       ignoreHTTPSErrors: true,
       clientCertificates: [{
         origin: new URL(serverURL).origin,
-        sendNone: true,
+        noCertificate: true,
       }],
     });
     const response = await page.goto(serverURL);
-    // sendNone forces interception for this origin, so the browser sees the
+    // noCertificate forces interception for this origin, so the browser sees the
     // proxy's own dummy certificate (CN=localhost) instead of the real
     // server's certificate.
     const securityDetails = await response.securityDetails();
@@ -405,17 +405,17 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should throw when sendNone and a real certificate are both set for the same origin', async ({ browser, asset }) => {
+  test('should throw when noCertificate and a real certificate are both set for the same origin', async ({ browser, asset }) => {
     await expect(browser.newContext({
       clientCertificates: [
-        { origin: 'https://not-matching.com', sendNone: true },
+        { origin: 'https://not-matching.com', noCertificate: true },
         {
           origin: 'https://not-matching.com',
           certPath: asset('client-certificates/client/trusted/cert.pem'),
           keyPath: asset('client-certificates/client/trusted/key.pem'),
         },
       ],
-    })).rejects.toThrow('clientCertificates for origin "https://not-matching.com" mix sendNone with a real certificate');
+    })).rejects.toThrow('clientCertificates for origin "https://not-matching.com" mix noCertificate with a real certificate');
   });
 
   test('should fail with no client certificates', async ({ browser, startCCServer, asset, browserName, isMac }) => {
@@ -971,13 +971,13 @@ test.describe('browser', () => {
       await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     });
 
-    test('should intercept TLS and send no client certificate when sendNone is set for the visited origin', async ({ launchPersistent, startCCServer }) => {
+    test('should intercept TLS and send no client certificate when noCertificate is set for the visited origin', async ({ launchPersistent, startCCServer }) => {
       const serverURL = await startCCServer();
       const { page } = await launchPersistent({
         ignoreHTTPSErrors: true,
         clientCertificates: [{
           origin: new URL(serverURL).origin,
-          sendNone: true,
+          noCertificate: true,
         }],
       });
       const response = await page.goto(serverURL);

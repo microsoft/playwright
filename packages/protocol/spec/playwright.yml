@@ -62,7 +62,7 @@ Playwright:
               key: binary?
               passphrase: string?
               pfx: binary?
-              sendNone: boolean?
+              noCertificate: boolean?
         maxRedirects: int?
         httpCredentials:
           type: array?

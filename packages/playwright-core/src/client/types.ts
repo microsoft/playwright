@@ -62,7 +62,7 @@ export type ClientCertificate = {
   pfx?: Buffer;
   pfxPath?: string;
   passphrase?: string;
-  sendNone?: boolean;
+  noCertificate?: boolean;
 };
 
 export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'recordHar' | 'colorScheme' | 'reducedMotion' | 'forcedColors' | 'acceptDownloads' | 'contrast' | 'agent' | 'httpCredentials'> & {
