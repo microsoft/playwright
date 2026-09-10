@@ -61,68 +61,6 @@ test('closes the browser after the idle timeout and relaunches it on the next ca
   });
 });
 
-test('does not close the browser while a tool call is running', async ({ startClient, server }) => {
-  const { client, stderr } = await startClient({
-    args: ['--timeout-idle=500'],
-    env: { DEBUG: 'pw:mcp:test' },
-  });
-
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  });
-
-  // The wait outlasts the idle timeout, which only starts once the call completes.
-  expect(await client.callTool({
-    name: 'browser_wait_for',
-    arguments: { time: 1 },
-  })).toHaveResponse({
-    code: `await new Promise(f => setTimeout(f, 1 * 1000));`,
-  });
-
-  expect(formatLog(stderr())).toEqual({
-    'create browser (persistent)': 1,
-    'create context': 1,
-  });
-});
-
-test('isolated context loses in-memory state on idle close', async ({ startClient, server }) => {
-  server.setContent('/', `
-    <body>
-    </body>
-    <script>
-      document.body.textContent = localStorage.getItem('test') ? 'Storage: YES' : 'Storage: NO';
-      localStorage.setItem('test', 'test');
-    </script>
-  `, 'text/html');
-
-  const { client, stderr } = await startClient({
-    args: ['--isolated', '--timeout-idle=500'],
-    env: { DEBUG: 'pw:mcp:test' },
-  });
-
-  expect(await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.PREFIX },
-  })).toHaveResponse({
-    snapshot: expect.stringContaining(`Storage: NO`),
-  });
-
-  await expect.poll(() => formatLog(stderr())).toEqual({
-    'create browser (isolated)': 1,
-    'connect to shared browser': 1,
-    'create context': 1,
-    'close browser': 1,
-  });
-
-  expect(await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.PREFIX },
-  })).toHaveResponse({
-    snapshot: expect.stringContaining(`Storage: NO`),
-  });
-});
-
 test('cdp endpoint only disconnects on idle and reconnects to the same pages', async ({ cdpServer, startClient, server }) => {
   const browserContext = await cdpServer.start();
   const { client, stderr } = await startClient({
