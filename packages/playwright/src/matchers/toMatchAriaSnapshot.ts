@@ -74,7 +74,7 @@ export async function toMatchAriaSnapshot(
     timeout = expectedParam?.timeout ?? this.timeout;
   }
 
-  const isMissingBaseline = updateSnapshots === 'missing' && !expected;
+  const isMissingBaseline = (updateSnapshots === 'missing' || updateSnapshots === 'default') && !expected;
   if (isMissingBaseline && this.isNot) {
     const message = `Matchers using ".not" can't generate new baselines`;
     return { pass: this.isNot, message: () => message, name: 'toMatchAriaSnapshot' };
@@ -137,7 +137,11 @@ export async function toMatchAriaSnapshot(
         const relativePath = path.relative(process.cwd(), expectedPath);
         if (isMissingBaseline) {
           const message = `A snapshot doesn't exist at ${relativePath}, writing actual.`;
-          return { pass: true, message: () => '', name: 'toMatchAriaSnapshot', softError: new Error(message), shouldNotRetryTest: true };
+          if (updateSnapshots === 'default')
+            return { pass: true, message: () => '', name: 'toMatchAriaSnapshot', softError: new Error(message), shouldNotRetryTest: true };
+          /* eslint-disable no-console */
+          console.log(message);
+          return { pass: true, message: () => '', name: 'toMatchAriaSnapshot' };
         }
         const message = `A snapshot is generated at ${relativePath}.`;
         /* eslint-disable no-console */
@@ -145,7 +149,7 @@ export async function toMatchAriaSnapshot(
         return { pass: true, message: () => '', name: 'toMatchAriaSnapshot' };
       } else {
         const suggestedRebaseline = `\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\``;
-        if (isMissingBaseline) {
+        if (isMissingBaseline && updateSnapshots === 'default') {
           const message = 'A snapshot is not provided, generating new baseline.';
           return { pass: true, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline, softError: new Error(message), shouldNotRetryTest: true };
         }

@@ -59,6 +59,29 @@ test('should generate multiple missing', async ({ runInlineTest }, testInfo) => 
   expect(snapshot2).toBe('- heading "hello world 2" [level=1]');
 });
 
+test('should pass when generating multiple missing with update-snapshots=missing', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<h1>hello world</h1>\`);
+        await expect(page).toMatchAriaSnapshot({ name: 'test-1.aria.yml' });
+        await page.setContent(\`<h1>hello world 2</h1>\`);
+        await expect(page).toMatchAriaSnapshot({ name: 'test-2.aria.yml' });
+      });
+    `
+  }, { 'update-snapshots': 'missing' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain(`A snapshot doesn't exist at a.spec.ts-snapshots${path.sep}test-1.aria.yml, writing actual`);
+  expect(result.output).toContain(`A snapshot doesn't exist at a.spec.ts-snapshots${path.sep}test-2.aria.yml, writing actual`);
+  const snapshot1 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test-1.aria.yml'), 'utf8');
+  expect(snapshot1).toBe('- heading "hello world" [level=1]');
+  const snapshot2 = await fs.promises.readFile(testInfo.outputPath('a.spec.ts-snapshots/test-2.aria.yml'), 'utf8');
+  expect(snapshot2).toBe('- heading "hello world 2" [level=1]');
+});
+
 test('should rebaseline all', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.spec.ts-snapshots/test-1.aria.yml': `
@@ -146,7 +169,7 @@ test('backwards compat with .yml extension', async ({ runInlineTest }) => {
   expect(result.output).toContain(`A snapshot is generated at a.spec.ts-snapshots${path.sep}test-1.yml.`);
 });
 
-for (const updateSnapshots of ['all', 'changed', 'missing', 'none']) {
+for (const updateSnapshots of ['all', 'changed', 'missing', 'none', 'default']) {
   test(`should update snapshot with the update-snapshots=${updateSnapshots} (config)`, async ({ runInlineTest }, testInfo) => {
     const result = await runInlineTest({
       'playwright.config.ts': `

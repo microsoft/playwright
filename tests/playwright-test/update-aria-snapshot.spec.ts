@@ -117,6 +117,40 @@ test('should update missing snapshots', async ({ runInlineTest }, testInfo) => {
   expect(result2.exitCode).toBe(0);
 });
 
+test('should pass while updating missing snapshots with update-snapshots=missing', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    '.git/marker': '',
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<h1>hello</h1>\`);
+        await expect(page).toMatchAriaSnapshot(\`\`);
+      });
+    `
+  }, { 'update-snapshots': 'missing' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+
+  const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
+  const data = fs.readFileSync(patchPath, 'utf-8');
+  expect(trimPatch(data)).toBe(`diff --git a/a.spec.ts b/a.spec.ts
+--- a/a.spec.ts
++++ b/a.spec.ts
+@@ -2,6 +2,8 @@
+       import { test, expect } from '@playwright/test';
+       test('test', async ({ page }) => {
+         await page.setContent(\`<h1>hello</h1>\`);
+-        await expect(page).toMatchAriaSnapshot(\`\`);
++        await expect(page).toMatchAriaSnapshot(\`
++          - heading "hello" [level=1]
++        \`);
+       });
+
+\\ No newline at end of file
+`);
+});
+
 test('should update multiple missing snapshots', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     '.git/marker': '',

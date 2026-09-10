@@ -1967,13 +1967,15 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   tsconfig?: string;
 
   /**
-   * Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
+   * Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'default'`.
    * - `'all'` - All tests that are executed will update snapshots.
    * - `'changed'` - All tests that are executed will update snapshots that did not match. Matching snapshots will not
    *   be updated. Also creates missing snapshots.
    * - `'missing'` - Missing snapshots are created, for example when authoring a new test and running it for the first
-   *   time. This is the default.
+   *   time. Tests that only create missing snapshots pass.
    * - `'none'` - No snapshots are updated.
+   * - `'default'` - Missing snapshots are created, but the tests that create them fail, so that the run does not
+   *   silently pass in CI. This is the default.
    *
    * Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
    *
@@ -1984,12 +1986,12 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
-   *   updateSnapshots: 'missing',
+   *   updateSnapshots: 'default',
    * });
    * ```
    *
    */
-  updateSnapshots?: "all"|"changed"|"missing"|"none";
+  updateSnapshots?: "all"|"changed"|"missing"|"none"|"default";
 
   /**
    * Defines how to update snapshots in the source code.
@@ -2173,7 +2175,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * See [testConfig.updateSnapshots](https://playwright.dev/docs/api/class-testconfig#test-config-update-snapshots).
    */
-  updateSnapshots: "all"|"changed"|"missing"|"none";
+  updateSnapshots: "all"|"changed"|"missing"|"none"|"default";
 
   /**
    * See

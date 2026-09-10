@@ -41,7 +41,7 @@ export type ConfigCLIOverrides = {
   timeout?: number;
   tsconfig?: string;
   ignoreSnapshots?: boolean;
-  updateSnapshots?: 'all' | 'changed' | 'missing' | 'none';
+  updateSnapshots?: 'all' | 'changed' | 'missing' | 'none' | 'default';
   updateSourceMethod?: 'overwrite' | 'patch' | '3way';
   workers?: number | string;
   projects?: { name: string, use?: any }[],

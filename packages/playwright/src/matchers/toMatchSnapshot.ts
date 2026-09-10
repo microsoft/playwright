@@ -80,7 +80,7 @@ class SnapshotHelper {
   readonly diffPath: string;
   readonly mimeType: string;
   readonly kind: 'Screenshot'|'Snapshot';
-  readonly updateSnapshots: 'all' | 'changed' | 'missing' | 'none';
+  readonly updateSnapshots: 'all' | 'changed' | 'missing' | 'none' | 'default';
   readonly comparator: Comparator;
   readonly options: Omit<ToHaveScreenshotOptions, '_comparator'> & { comparator?: string };
   readonly matcherName: string;
@@ -196,12 +196,12 @@ class SnapshotHelper {
     writeFileSync(this.actualPath, actual);
     attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
     const message = `A snapshot doesn't exist at ${this.expectedPath}${isWriteMissingMode ? ', writing actual.' : '.'}`;
-    if (this.updateSnapshots === 'all' || this.updateSnapshots === 'changed') {
+    if (this.updateSnapshots === 'all' || this.updateSnapshots === 'changed' || this.updateSnapshots === 'missing') {
       /* eslint-disable no-console */
       console.log(message);
       return this.createMatcherResult(message, true, undefined, attachments);
     }
-    if (this.updateSnapshots === 'missing') {
+    if (this.updateSnapshots === 'default') {
       return {
         ...this.createMatcherResult('', true, undefined, attachments),
         softError: new Error(message),

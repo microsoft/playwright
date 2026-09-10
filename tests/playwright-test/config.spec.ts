@@ -595,7 +595,7 @@ test('should work with undefined values and base', async ({ runInlineTest }) => 
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
-        expect(testInfo.config.updateSnapshots).toBe('missing');
+        expect(testInfo.config.updateSnapshots).toBe('default');
       });
     `
   });

@@ -61,7 +61,7 @@ const queryParams = {
   reporters: searchParams.has('reporter') ? searchParams.getAll('reporter') : undefined,
   pathSeparator: searchParams.get('pathSeparator') || '/',
 };
-if (queryParams.updateSnapshots && !['all', 'changed', 'none', 'missing'].includes(queryParams.updateSnapshots))
+if (queryParams.updateSnapshots && !['all', 'changed', 'none', 'missing', 'default'].includes(queryParams.updateSnapshots))
   queryParams.updateSnapshots = undefined;
 
 const isMac = navigator.platform === 'MacIntel';
@@ -129,7 +129,7 @@ export const UIModeView: React.FC<{}> = ({
   const onRevealSource = React.useCallback(() => setRevealSource(true), [setRevealSource]);
 
   const [singleWorker, setSingleWorker] = useSetting<boolean>('single-worker', false);
-  const [updateSnapshots, setUpdateSnapshots] = useSetting<reporterTypes.FullConfig['updateSnapshots']>('updateSnapshots', 'missing');
+  const [updateSnapshots, setUpdateSnapshots] = useSetting<reporterTypes.FullConfig['updateSnapshots']>('updateSnapshots', 'default');
   const [onlyChanged, setOnlyChanged] = useSetting<boolean>('only-changed', false);
   const [stopOnFailure, setStopOnFailure] = useSetting<boolean>('stop-on-failure', false);
   const [mergeFiles] = useSetting('mergeFiles', false);
@@ -553,6 +553,7 @@ export const UIModeView: React.FC<{}> = ({
           { type: 'check', value: singleWorker, set: setSingleWorker, name: 'Single worker' },
           { type: 'check', value: stopOnFailure, set: setStopOnFailure, name: 'Stop on first failure' },
           { type: 'select', options: [
+            { label: 'Default', value: 'default' },
             { label: 'All', value: 'all' },
             { label: 'Changed', value: 'changed' },
             { label: 'Missing', value: 'missing' },
