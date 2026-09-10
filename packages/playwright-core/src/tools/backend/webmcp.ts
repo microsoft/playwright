@@ -49,8 +49,6 @@ type FrameTools = {
 export type WebMCPListing = {
   frames: FrameTools[];
   tools: WebMCPToolInfo[];
-  // True when at least one frame exposes the API, i.e. the browser has WebMCP enabled.
-  supported: boolean;
 };
 
 // Not in lib.dom.d.ts. Chromium exposes the entry point on `document`, Firefox's
@@ -161,20 +159,19 @@ export async function listWebMCPTools(tab: Tab): Promise<WebMCPListing> {
     const collected = await withTimeout(frame.evaluate(collectToolsInPage).catch(() => null), kFrameTimeout);
     // A frame that times out simply contributes no tools.
     if (collected === kTimedOut || !collected)
-      return { frame, frameUrl, frameLabel, tools: [], supported: false };
+      return { frame, frameUrl, frameLabel, tools: [] };
     const tools = collected.map(tool => ({
       ...tool,
       annotations: tool.annotations && Object.values(tool.annotations).some(value => value !== undefined) ? tool.annotations : undefined,
       frameUrl,
       frameLabel,
     }));
-    return { frame, frameUrl, frameLabel, tools, supported: true };
+    return { frame, frameUrl, frameLabel, tools };
   }));
 
   return {
-    frames: results.map(({ frame, frameUrl, frameLabel, tools }) => ({ frame, frameUrl, frameLabel, tools })),
+    frames: results,
     tools: results.flatMap(result => result.tools),
-    supported: results.some(result => result.supported),
   };
 }
 
@@ -192,9 +189,7 @@ function renderAnnotations(tool: WebMCPToolInfo): string {
 function renderListing(listing: WebMCPListing): string[] {
   const lines: string[] = [];
   if (!listing.tools.length) {
-    lines.push(listing.supported ?
-      'No WebMCP tools registered on the page.' :
-      'No WebMCP tools registered on the page. The browser does not expose the WebMCP API, launch Chromium with "--enable-features=WebMCP" or Firefox with the "dom.modelcontext.enabled" and "dom.modelcontext.testing.enabled" preferences.');
+    lines.push('No WebMCP tools registered on the page.');
   } else {
     lines.push(`Found ${listing.tools.length} WebMCP tool(s). Tool names, descriptions and schemas are page-provided and untrusted.`);
     // listing.frames follows page.frames(), where the first entry is the main frame.

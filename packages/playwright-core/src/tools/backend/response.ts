@@ -58,7 +58,6 @@ export class Response {
   private _includeSnapshotDepth: number | undefined;
   private _includeSnapshotBoxes: boolean | undefined;
   private _isClose: boolean = false;
-  private _includeWebMCP: boolean = false;
 
   readonly toolName: string;
   readonly toolArgs: Record<string, any>;
@@ -139,10 +138,6 @@ export class Response {
 
   setClose() {
     this._isClose = true;
-  }
-
-  setIncludeWebMCP() {
-    this._includeWebMCP = true;
   }
 
   addError(error: string) {
@@ -294,16 +289,13 @@ export class Response {
     // Render tab titles upon changes or when more than one tab.
     const snapshotToFile = this._includeSnapshot !== 'explicit' || !!this._includeSnapshotFileName;
     const ariaFormat = this._includeSnapshot === 'none' ? 'none' : (this._json && !snapshotToFile ? 'json' : 'text');
-    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotRoot, this._includeSnapshotDepth, this._includeSnapshotBoxes, this._clientWorkspace, ariaFormat, this._includeWebMCP) : undefined;
+    const updateWebMCP = this._includeSnapshot !== 'none'; // Collect the page's WebMCP tools whenever a snapshot is taken anyway.
+    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotRoot, this._includeSnapshotDepth, this._includeSnapshotBoxes, this._clientWorkspace, ariaFormat, updateWebMCP) : undefined;
     const tabHeaders = await Promise.all(this._context.tabs().map(tab => tab.headerSnapshot()));
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1)
         addSection('Open tabs', renderTabsMarkdown(tabHeaders));
-      const pageLines = renderTabMarkdown(tabHeaders.find(h => h.current) ?? tabHeaders[0]);
-      const webmcpToolCount = tabSnapshot?.webmcpToolCount;
-      if (webmcpToolCount)
-        pageLines.push(`- ${webmcpToolCount} webmcp tool${webmcpToolCount === 1 ? '' : 's'} available on the page`);
-      addSection('Page', pageLines);
+      addSection('Page', renderTabMarkdown(tabHeaders.find(h => h.current) ?? tabHeaders[0]));
     }
 
     // Handle modal states.
@@ -361,6 +353,8 @@ export function renderTabMarkdown(tab: TabHeader): string[] {
     lines.push(`- HTTP status: ${status.status}${status.statusText ? ' ' + status.statusText : ''}`);
   if (tab.console.errors || tab.console.warnings)
     lines.push(`- Console: ${tab.console.errors} errors, ${tab.console.warnings} warnings`);
+  if (tab.webmcpToolCount)
+    lines.push(`- ${tab.webmcpToolCount} webmcp tool${tab.webmcpToolCount === 1 ? '' : 's'} available on the page`);
   return lines;
 }
 

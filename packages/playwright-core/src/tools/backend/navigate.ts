@@ -35,7 +35,6 @@ const navigate = defineTool({
     const url = await tab.checkUrlAndNavigate(params.url);
 
     response.setIncludeSnapshot();
-    response.setIncludeWebMCP();
     response.addAction({ name: 'navigate', url });
   },
 });
@@ -53,7 +52,6 @@ const goBack = defineTabTool({
   handle: async (tab, params, response) => {
     await tab.page.goBack({ waitUntil: 'commit', ...tab.navigationTimeoutOptions });
     response.setIncludeSnapshot();
-    response.setIncludeWebMCP();
     response.addCode(`await page.goBack();`);
   },
 });
@@ -72,7 +70,6 @@ const goForward = defineTabTool({
   handle: async (tab, params, response) => {
     await tab.page.goForward({ waitUntil: 'commit', ...tab.navigationTimeoutOptions });
     response.setIncludeSnapshot();
-    response.setIncludeWebMCP();
     response.addCode(`await page.goForward();`);
   },
 });
@@ -91,7 +88,6 @@ const reload = defineTabTool({
   handle: async (tab, params, response) => {
     await tab.page.reload(tab.navigationTimeoutOptions);
     response.setIncludeSnapshot();
-    response.setIncludeWebMCP();
     response.addCode(`await page.reload();`);
   },
 });
