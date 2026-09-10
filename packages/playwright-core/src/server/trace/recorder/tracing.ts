@@ -71,6 +71,8 @@ type RecordingState = {
   traceName: string,
   networkFile: string,
   traceFile: string,
+  actionsFile: string,
+  metaFile: string,
   tracesDir: string,
   chunkOrdinal: number,
   // Blobs referenced by the network stream. The network file is preserved between
@@ -165,6 +167,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       traceName,
       tracesDir,
       traceFile: path.join(tracesDir, traceName + '.trace'),
+      actionsFile: path.join(tracesDir, traceName + '.actions'),
+      metaFile: path.join(tracesDir, traceName + '.meta'),
       networkFile: path.join(tracesDir, traceName + '.network'),
       chunkOrdinal: 0,
       chunkFiles: new Set(),
@@ -219,7 +223,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       wallTime: Date.now(),
       monotonicTime: monotonicTime()
     };
-    this._appendTraceEvent(event);
+    this._appendTraceEvent(event); // Write the meta file before anything else.
+    this._fs.writeFile(this._state.traceFile, '', true /* skipIfExists */);
+    this._fs.writeFile(this._state.actionsFile, '', true /* skipIfExists */);
 
     this._context.instrumentation.addListener(this, this._context);
     this._eventListeners.push(
@@ -310,6 +316,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const suffix = state.chunkOrdinal ? `-chunk${state.chunkOrdinal}` : ``;
     state.chunkOrdinal++;
     state.traceFile = path.join(state.tracesDir, `${state.traceName}${suffix}.trace`);
+    state.actionsFile = path.join(state.tracesDir, `${state.traceName}${suffix}.actions`);
+    state.metaFile = path.join(state.tracesDir, `${state.traceName}${suffix}.meta`);
   }
 
   private _changeTraceName(state: RecordingState, name: string, preserveNetworkResources: boolean) {
@@ -451,7 +459,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const newNetworkFile = path.join(this._state.tracesDir, this._state.traceName + `-pwnetcopy-${this._state.chunkOrdinal}.network`);
 
     const entries: NameValue[] = [];
+    entries.push({ name: 'trace.meta', value: this._state.metaFile });
     entries.push({ name: 'trace.trace', value: this._state.traceFile });
+    entries.push({ name: 'trace.actions', value: this._state.actionsFile });
     entries.push({ name: 'trace.network', value: newNetworkFile });
     for (const file of new Set([...this._state.chunkFiles, ...this._state.crossChunkFiles]))
       entries.push({ name: file, value: path.join(this._state.tracesDir, file) });
@@ -737,10 +747,21 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   private _appendTraceEvent(event: trace.TraceEvent) {
+    if (event.type === 'context-options') {
+      this._appendEventToFile(this._state!.metaFile, event);
+    } else if (event.type === 'before' || event.type === 'after') {
+      this._fs.flushFile(this._state!.traceFile); // Flush pending events upon an action.
+      this._appendEventToFile(this._state!.actionsFile, event);
+    } else {
+      this._appendEventToFile(this._state!.traceFile, event);
+    }
+  }
+
+  private _appendEventToFile(file: string, event: trace.TraceEvent) {
     const visited = visitTraceEvent(event);
     // Do not flush (console) events, they are too noisy, unless we are in ui mode (live).
     const flush = this._state!.options.live || (event.type !== 'event' && event.type !== 'console' && event.type !== 'log');
-    this._fs.appendFile(this._state!.traceFile, JSON.stringify(visited) + '\n', flush);
+    this._fs.appendFile(file, JSON.stringify(visited) + '\n', flush);
   }
 
   private _appendResource(file: string, buffer: Buffer) {
