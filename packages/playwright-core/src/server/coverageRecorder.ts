@@ -38,8 +38,7 @@ export class CoverageRecorder {
     this._context = context;
   }
 
-  // Scopes the stashes in the page storage to this context, so that the ones
-  // left behind by a previous run in a persistent profile are discarded.
+  // Scopes the stashes in the page storage to this context.
   private _sessionId() {
     return this._context.guid;
   }
@@ -77,7 +76,6 @@ export class CoverageRecorder {
   onPageClose(page: Page) {
     if (!this._active)
       return;
-    // The stash of a closed page stays in the storage of its origin.
     for (const frame of page.frames())
       this._noteOrigin(frame.origin());
   }
@@ -93,7 +91,6 @@ export class CoverageRecorder {
     await this._harvestOriginsWithoutPage(progress);
   }
 
-  // Collects pending coverage from all pages and returns it serialized, resetting the accumulator.
   async take(progress: Progress): Promise<string | undefined> {
     if (!this._active)
       return;
@@ -104,13 +101,12 @@ export class CoverageRecorder {
   }
 
   async collectFromPage(page: Page) {
-    // A page that is going away may never answer, give up on it when it does.
+    // A page that is going away may never answer.
     await Promise.race([page.closedPromise, this._collectFromPage(page)]);
   }
 
   private async _collectFromPage(page: Page) {
     for (const frame of page.frames()) {
-      // A document of this origin may leave a stash behind when it goes away.
       this._noteOrigin(frame.origin());
       const chunks: string[] = await frame.nonStallingEvaluateInExistingContext(coverageCollectExpression, 'main').catch(() => []);
       for (const json of chunks || [])
@@ -118,8 +114,7 @@ export class CoverageRecorder {
     }
   }
 
-  // Pages relay the stashes of their own origin, so only the origins that are
-  // left without a page need a page of their own to relay them.
+  // Pages relay the stashes of their own origin, the rest need a page of their own.
   private async _harvestOriginsWithoutPage(progress: Progress) {
     if (!this._stashOrigins.size || this._context.isClosingOrClosed())
       return;
@@ -131,7 +126,7 @@ export class CoverageRecorder {
           liveOrigins.add(origin);
       }
     }
-    // The origins that still have a page were just drained by the sweep above.
+    // The origins that still have a page were drained by the sweep above.
     const origins = new Set([...this._stashOrigins].filter(origin => !liveOrigins.has(origin)));
     this._stashOrigins.clear();
     if (!origins.size)

@@ -100,8 +100,7 @@ class CoverageReporter implements ReporterV2 {
     writeLine(lines.join('\n'));
   }
 
-  // Istanbul report libraries are not shipped with Playwright. Use them for the
-  // html report when the project has them installed.
+  // Istanbul report libraries are not shipped with Playwright, use the project's if any.
   private _tryWriteHtmlReport(mergedJson: IstanbulCoverage, outputDir: string): boolean {
     try {
       const resolveFrom = (name: string) => require.resolve(name, { paths: [this._options.configDir] });
