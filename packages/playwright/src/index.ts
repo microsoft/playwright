@@ -279,6 +279,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
   permissions: [({ contextOptions }, use) => use(contextOptions.permissions), { option: true, box: true }],
   proxy: [({ contextOptions }, use) => use(contextOptions.proxy), { option: true, box: true }],
   reducedMotion: [({ contextOptions }, use) => use(contextOptions.reducedMotion === undefined ? 'no-preference' : contextOptions.reducedMotion), { option: true, box: true }],
+  screen: [({ contextOptions }, use) => use(contextOptions.screen), { option: true, box: true }],
   storageState: [({ contextOptions }, use) => use(contextOptions.storageState), { option: true, box: true }],
   clientCertificates: [({ contextOptions }, use) => use(contextOptions.clientCertificates), { option: true, box: true }],
   timezoneId: [({ contextOptions }, use) => use(contextOptions.timezoneId), { option: true, box: true }],
@@ -311,6 +312,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     permissions,
     proxy,
     reducedMotion,
+    screen,
     storageState,
     viewport,
     timezoneId,
@@ -356,6 +358,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
       options.proxy = proxy;
     if (reducedMotion !== undefined)
       options.reducedMotion = reducedMotion;
+    if (screen !== undefined)
+      options.screen = screen;
     if (storageState !== undefined)
       options.storageState = storageState;
     if (clientCertificates?.length)

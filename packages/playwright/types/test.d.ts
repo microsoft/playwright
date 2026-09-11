@@ -7684,6 +7684,26 @@ export interface PlaywrightTestOptions {
    */
   reducedMotion: ReducedMotion;
   /**
+   * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
+   * [testOptions.viewport](https://playwright.dev/docs/api/class-testoptions#test-options-viewport) is set.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     viewport: { width: 390, height: 664 },
+   *     screen: { width: 390, height: 844 },
+   *   },
+   * });
+   * ```
+   *
+   */
+  screen: ViewportSize | undefined;
+  /**
    * Learn more about [storage state and auth](https://playwright.dev/docs/auth).
    *
    * Populates context with given storage state. This option can be used to initialize context with logged-in
