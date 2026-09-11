@@ -137,6 +137,10 @@ export class TestResultsDb {
     this._conn.closeSync();
     this._instance.closeSync();
   }
+
+  [Symbol.dispose]() {
+    this.close();
+  }
 }
 
 export function fileSize(path: string): number {
