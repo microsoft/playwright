@@ -24,6 +24,8 @@ import type * as channels from './channels';
 import type { EventEmitter } from 'events';
 import type { Zone } from '@utils/zones';
 
+const kDispose: typeof Symbol.dispose = (Symbol.dispose || Symbol.for('Symbol.dispose')) as typeof Symbol.dispose;
+
 export class Waiter {
   private _dispose: (() => void)[];
   private _failures: Promise<any>[] = [];
@@ -107,8 +109,12 @@ export class Waiter {
   }
 
   dispose() {
-    for (const dispose of this._dispose)
+    for (const dispose of this._dispose.splice(0))
       dispose();
+  }
+
+  [kDispose]() {
+    this.dispose();
   }
 
   async waitForPromise<T>(promise: Promise<T>, dispose?: () => void): Promise<T> {
