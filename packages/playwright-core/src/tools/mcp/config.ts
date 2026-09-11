@@ -50,6 +50,7 @@ export type CLIOptions = {
   endpoint?: string;
   extension?: boolean;
   executablePath?: string;
+  filePaths?: 'relative' | 'absolute';
   grantPermissions?: string[];
   headless?: boolean;
   host?: string;
@@ -389,6 +390,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
     outputDir: cliOptions.outputDir,
     outputMaxSize: cliOptions.outputMaxSize,
     imageResponses: cliOptions.imageResponses,
+    filePaths: cliOptions.filePaths,
     testIdAttribute: cliOptions.testIdAttribute,
     timeouts: {
       action: cliOptions.timeoutAction,
@@ -427,6 +429,8 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.device = envToString(e.PLAYWRIGHT_MCP_DEVICE);
   options.executablePath = envToString(e.PLAYWRIGHT_MCP_EXECUTABLE_PATH);
   options.extension = envToBoolean(e.PLAYWRIGHT_MCP_EXTENSION);
+  if (e.PLAYWRIGHT_MCP_FILE_PATHS)
+    options.filePaths = enumParser<'relative' | 'absolute'>('--file-paths', ['relative', 'absolute'], e.PLAYWRIGHT_MCP_FILE_PATHS);
   options.grantPermissions = commaSeparatedList(e.PLAYWRIGHT_MCP_GRANT_PERMISSIONS);
   options.headless = envToBoolean(e.PLAYWRIGHT_MCP_HEADLESS);
   options.host = envToString(e.PLAYWRIGHT_MCP_HOST);
