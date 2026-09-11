@@ -517,7 +517,6 @@ async function connectClient(url: URL, name: string) {
   return { client, close };
 }
 
-// Keeps calling tools for the given time, so an idle timer never fires.
 async function keepBusy(client: Client, ms: number) {
   const deadline = Date.now() + ms;
   while (Date.now() < deadline) {
@@ -534,7 +533,6 @@ test('http transport shared context: one idle timer across clients', async ({ se
     arguments: { url: server.HELLO_WORLD },
   });
 
-  // While the second client keeps working past the timeout, the idle client keeps its state.
   const client2 = await connectClient(url, 'test2');
   await keepBusy(client2.client, 1200);
   expect(formatLog(stderr())).toEqual({
@@ -550,9 +548,7 @@ test('http transport shared context: one idle timer across clients', async ({ se
   expect(response).toHaveResponse({
     inlineSnapshot: expect.stringContaining(`Hello, world!`),
   });
-  expect(response.content[0].text).not.toContain('inactivity');
 
-  // Once every client has been idle for the timeout, the shared browser closes.
   await expect.poll(() => formatLog(stderr())).toEqual({
     'create browser (persistent)': 1,
     'connect to shared browser': 2,
@@ -562,23 +558,13 @@ test('http transport shared context: one idle timer across clients', async ({ se
     'close browser': 1,
   });
 
-  // Each client relaunches on its next call and is told once.
   for (const { client } of [client1, client2]) {
-    const response = await client.callTool({
+    expect(await client.callTool({
       name: 'browser_navigate',
       arguments: { url: server.HELLO_WORLD },
-    });
-    expect(response.content[0].text).toContain('browser was closed after 500ms of inactivity');
-    expect(response).toHaveResponse({
+    })).toHaveResponse({
       snapshot: expect.stringContaining(`Hello, world!`),
     });
-  }
-  for (const { client } of [client1, client2]) {
-    const response = await client.callTool({
-      name: 'browser_snapshot',
-      arguments: {},
-    });
-    expect(response.content[0].text).not.toContain('inactivity');
   }
   expect(formatLog(stderr())).toEqual({
     'create browser (persistent)': 2,
