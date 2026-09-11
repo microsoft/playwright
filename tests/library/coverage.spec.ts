@@ -202,6 +202,33 @@ it('should discard stashes of other sessions', async ({ browser, server }, testI
   expect(data['stale.js']).toBe(undefined);
 });
 
+it('should collect coverage of an origin left without a page', async ({ browser, server }, testInfo) => {
+  const context = await browser.newContext();
+  await context.tracing.start({ coverage: true });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('opener.js', 2)));
+
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(url => window.open(url), server.EMPTY_PAGE),
+  ]);
+  await popup.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('popup.js', 5)));
+  await popup.evaluate(() => setTimeout(() => window.close(), 0));
+  await popup.waitForEvent('close');
+
+  // Leave the origin of the stashes without a page to relay them.
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+
+  const traceFile = testInfo.outputPath('trace.zip');
+  await context.tracing.stop({ path: traceFile });
+  await context.close();
+
+  const data = await readCoverage(traceFile);
+  expect(data['popup.js'].s['0']).toBe(5);
+  expect(data['opener.js'].s['0']).toBe(2);
+});
+
 it('should throw when flushing without coverage', async ({ browser }) => {
   const context = await browser.newContext();
   await context.newPage();

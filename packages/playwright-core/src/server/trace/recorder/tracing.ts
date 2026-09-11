@@ -400,7 +400,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   async flushCoverage(progress: Progress) {
     if (!this._coverageRecorder?.active())
       throw new Error(`Coverage collection has not been started. Pass the "coverage" option to tracing.start().`);
-    await progress.race(this._coverageRecorder.flush());
+    await this._coverageRecorder.flush(progress);
   }
 
   // Best-effort collection before the page is gone, no-op unless collecting.
@@ -415,7 +415,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private async _takeCoverage(progress: Progress, mode: TracingTracingStopChunkParams['mode']): Promise<string | undefined> {
     if (!this._state?.recording || !this._state.options.coverage || !this._coverageRecorder)
       return;
-    const coverageJson = await progress.race(this._coverageRecorder.take());
+    const coverageJson = await this._coverageRecorder.take(progress);
     if (mode === 'discard' || coverageJson === undefined)
       return;
     const coverageFile = path.join(this._state.tracesDir, `${this._state.traceName}-coverage-${this._state.chunkOrdinal}.json`);
@@ -710,6 +710,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   onPageClose(page: Page) {
+    this._coverageRecorder?.onPageClose(page);
     const event: trace.EventTraceEvent = {
       type: 'event',
       time: monotonicTime(),
