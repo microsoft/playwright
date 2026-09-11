@@ -79,28 +79,8 @@ export class CoverageScript {
     return hasFiles ? delta : undefined;
   }
 
-  // Takes the stashes left by this session and discards the ones left by other
-  // sessions, e.g. by a previous run reusing a persistent profile.
   private _takeStashes(): string[] {
-    const result: string[] = [];
-    try {
-      const storage = this._global.localStorage;
-      const sessionPrefix = kCoverageStashPrefix + this._sessionId + '.';
-      const keys: string[] = [];
-      for (let i = 0; i < storage.length; i++) {
-        const key = storage.key(i);
-        if (key && key.startsWith(kCoverageStashPrefix))
-          keys.push(key);
-      }
-      for (const key of keys) {
-        const json = key.startsWith(sessionPrefix) ? storage.getItem(key) : undefined;
-        storage.removeItem(key);
-        if (json)
-          result.push(json);
-      }
-    } catch {
-    }
-    return result;
+    return takeCoverageStashes(this._global, this._sessionId);
   }
 
   private _stashCurrent() {
@@ -116,6 +96,32 @@ export class CoverageScript {
     } catch {
     }
   }
+}
+
+// Takes the stashes left by this session and discards the ones left by other
+// sessions, e.g. by a previous run reusing a persistent profile. Playwright
+// also evaluates this on its own page to reach the origins that have no page
+// left to relay them.
+export function takeCoverageStashes(global: typeof globalThis, sessionId: string): string[] {
+  const result: string[] = [];
+  try {
+    const storage = global.localStorage;
+    const sessionPrefix = kCoverageStashPrefix + sessionId + '.';
+    const keys: string[] = [];
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i);
+      if (key && key.startsWith(kCoverageStashPrefix))
+        keys.push(key);
+    }
+    for (const key of keys) {
+      const json = key.startsWith(sessionPrefix) ? storage.getItem(key) : undefined;
+      storage.removeItem(key);
+      if (json)
+        result.push(json);
+    }
+  } catch {
+  }
+  return result;
 }
 
 // Returns the non-zero counters and resets them, or undefined when there are none.
