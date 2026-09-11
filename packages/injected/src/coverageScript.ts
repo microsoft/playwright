@@ -29,18 +29,15 @@ export class CoverageScript {
   private _reportedFiles = new Set<string>();
   private _stashOrdinal = 0;
 
-  constructor(global: typeof globalThis, bindingName: string, collectName: string, sessionId: string) {
+  constructor(global: typeof globalThis, collectName: string, sessionId: string) {
     this._global = global;
     this._sessionId = sessionId;
     (global as any)[collectName] = () => this.collect();
-    // Counters die with the document, and binding calls made during unload
-    // are not delivered, so stash the delta in localStorage. Any same origin
-    // document picks it up later, including one opened by Playwright itself
-    // after the page that produced it is gone.
+    // Counters die with the document, and calls made during unload are not
+    // delivered, so stash the delta in localStorage. Playwright picks it up
+    // from any same origin document, including one it opens itself after the
+    // page that produced the stash is gone.
     global.addEventListener('pagehide', () => this._stashCurrent());
-    // Relay stashes left by other documents, now that delivery is safe.
-    for (const json of this._takeStashes())
-      (global as any)[bindingName](json).catch(() => {});
   }
 
   collect(): string[] {

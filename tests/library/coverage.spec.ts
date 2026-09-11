@@ -85,25 +85,29 @@ it('should collect coverage per trace chunk', async ({ browser }, testInfo) => {
   expect(data2['a.js']).toBe(undefined);
 });
 
-it('should report maps once and counters incrementally', async ({ browser }) => {
+it('should report maps once and counters incrementally', async ({ browser, server }) => {
   const context = await browser.newContext();
   await context.tracing.start({ coverage: true });
   const page = await context.newPage();
-  await page.setContent(coverageScript('a.js', 3));
+  await page.goto(server.EMPTY_PAGE);
 
-  const collect = () => page.evaluate(() => (window as any).__pwCoverageCollect().map((json: string) => JSON.parse(json)));
-
-  const first = await collect();
+  // Actions collect the counters on their own, so hit and collect in one evaluate.
+  const first = await page.evaluate(coverage => {
+    (window as any).__coverage__ = JSON.parse(coverage);
+    return (window as any).__pwCoverageCollect().map((json: string) => JSON.parse(json));
+  }, JSON.stringify(fileCoverage('a.js', 3)));
   expect(first[0].data['a.js'].statementMap).toBeTruthy();
   expect(first[0].data['a.js'].s).toEqual({ '0': 3 });
 
-  // Nothing was hit since the last report.
-  expect(await collect()).toEqual([]);
+  const second = await page.evaluate(() => {
+    (window as any).__coverage__['a.js'].s['0'] += 2;
+    return (window as any).__pwCoverageCollect().map((json: string) => JSON.parse(json));
+  });
+  expect(second[0].data['a.js'].statementMap).toBe(undefined);
+  expect(second[0].data['a.js'].s).toEqual({ '0': 2 });
 
-  await page.evaluate(() => (window as any).__coverage__['a.js'].s['0'] += 2);
-  const third = await collect();
-  expect(third[0].data['a.js'].statementMap).toBe(undefined);
-  expect(third[0].data['a.js'].s).toEqual({ '0': 2 });
+  // Nothing was hit since the last report.
+  expect(await page.evaluate(() => (window as any).__pwCoverageCollect())).toEqual([]);
 
   await context.tracing.stop();
   await context.close();
@@ -128,20 +132,28 @@ it('should accumulate counters across flushes and keep never hit files', async (
   expect(Object.keys(data['a.js'].statementMap)).toEqual(['0']);
 });
 
+async function openPopup(page: any, server: any, file: string, s0: number) {
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(url => window.open(url), server.EMPTY_PAGE),
+  ]);
+  await popup.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage(file, s0)));
+  return popup;
+}
+
 it('should collect coverage of a page closed by in-page script', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ coverage: true });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
-  const [popup] = await Promise.all([
-    page.waitForEvent('popup'),
-    page.evaluate(url => window.open(url), server.EMPTY_PAGE),
+  const popup = await openPopup(page, server, 'popup.js', 5);
+  // An in-page close never reaches Playwright as page.close(), the counters
+  // are preserved because the actions collect them as they go.
+  await Promise.all([
+    popup.waitForEvent('close'),
+    popup.evaluate(() => setTimeout(() => window.close(), 0)),
   ]);
-  await popup.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('popup.js', 5)));
-  // The popup closes itself, so its counters are only preserved by the stash.
-  await popup.evaluate(() => setTimeout(() => window.close(), 0));
-  await popup.waitForEvent('close');
 
   const traceFile = testInfo.outputPath('trace.zip');
   await context.tracing.stop({ path: traceFile });
@@ -157,28 +169,20 @@ it('should not double count a stash picked up twice', async ({ browser, server }
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
-  const [popup] = await Promise.all([
-    page.waitForEvent('popup'),
-    page.evaluate(url => window.open(url), server.EMPTY_PAGE),
-  ]);
-  await popup.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('popup.js', 5)));
-  await popup.evaluate(() => setTimeout(() => window.close(), 0));
-  await popup.waitForEvent('close');
-
   // Emulate two documents picking up the same stash before either removes it.
-  const copied = await page.evaluate(() => {
-    const key = Object.keys(localStorage).find(key => key.startsWith('__pwCoverage.'))!;
-    localStorage.setItem(key + '.copy', localStorage.getItem(key)!);
-    return Object.keys(localStorage).filter(key => key.startsWith('__pwCoverage.')).length;
-  });
-  expect(copied).toBe(2);
+  const prefix = '__pwCoverage.' + (context as any)._guid + '.';
+  await page.evaluate(({ prefix, coverage }) => {
+    const chunk = JSON.stringify({ id: 'stash-id', data: JSON.parse(coverage) });
+    localStorage.setItem(prefix + 'one', chunk);
+    localStorage.setItem(prefix + 'two', chunk);
+  }, { prefix, coverage: JSON.stringify(fileCoverage('stashed.js', 4)) });
 
   const traceFile = testInfo.outputPath('trace.zip');
   await context.tracing.stop({ path: traceFile });
   await context.close();
 
   const data = await readCoverage(traceFile);
-  expect(data['popup.js'].s['0']).toBe(5);
+  expect(data['stashed.js'].s['0']).toBe(4);
 });
 
 it('should discard stashes of other sessions', async ({ browser, server }, testInfo) => {
@@ -207,17 +211,16 @@ it('should collect coverage of an origin left without a page', async ({ browser,
   await context.tracing.start({ coverage: true });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
-  await page.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('opener.js', 2)));
 
-  const [popup] = await Promise.all([
-    page.waitForEvent('popup'),
-    page.evaluate(url => window.open(url), server.EMPTY_PAGE),
-  ]);
-  await popup.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('popup.js', 5)));
-  await popup.evaluate(() => setTimeout(() => window.close(), 0));
-  await popup.waitForEvent('close');
+  const popup = await openPopup(page, server, 'popup.js', 0);
+  await context.tracing.flushCoverage();
 
-  // Leave the origin of the stashes without a page to relay them.
+  // The popup is hit and navigates away, leaving a stash behind.
+  await popup.evaluate(url => {
+    (window as any).__coverage__['popup.js'].s['0'] = 5;
+    window.location.href = url;
+  }, server.CROSS_PROCESS_PREFIX + '/empty.html');
+  // Leave the origin of the stash without a page to relay it.
   await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
 
   const traceFile = testInfo.outputPath('trace.zip');
@@ -226,7 +229,25 @@ it('should collect coverage of an origin left without a page', async ({ browser,
 
   const data = await readCoverage(traceFile);
   expect(data['popup.js'].s['0']).toBe(5);
-  expect(data['opener.js'].s['0']).toBe(2);
+});
+
+it('should pull counters as the actions go', async ({ browser, server }, testInfo) => {
+  const context = await browser.newContext();
+  await context.tracing.start({ coverage: true });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('a.js', 3)));
+
+  await page.click('body');
+  // The counters are collected by the actions themselves, not only by the flush.
+  expect(await page.evaluate(() => (window as any).__coverage__['a.js'].s['0'])).toBe(0);
+
+  const traceFile = testInfo.outputPath('trace.zip');
+  await context.tracing.stop({ path: traceFile });
+  await context.close();
+
+  const data = await readCoverage(traceFile);
+  expect(data['a.js'].s['0']).toBe(3);
 });
 
 it('should throw when flushing without coverage', async ({ browser }) => {

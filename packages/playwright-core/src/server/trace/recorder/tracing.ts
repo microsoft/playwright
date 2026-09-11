@@ -527,6 +527,14 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       await this._captureScreenshot(progress, page, phase);
     if (options?.snapshotAria)
       await this._captureAriaSnapshot(progress, page, phase);
+    // Pull the counters as the actions go, so that an action is the most that
+    // can be lost when the page goes away without a chance to stash them.
+    if (phase === 'after' && this._coverageRecorder?.active()) {
+      try {
+        await progress.race(this._coverageRecorder.collectFromPage(page));
+      } catch {
+      }
+    }
   }
 
   private _shouldCaptureAtPhase(metadata: CallMetadata, phase: trace.ActionPhase) {
