@@ -17,13 +17,19 @@
 // Diagnostic for the WebKit r2359 GC regression. DO NOT MERGE.
 //
 // `page-leaks.spec.ts` › `expect should not leak` fails ~70% of runs on webkit-macos-15-xlarge
-// since the r2359 roll, while the click/fill/waitFor variants next to it are 100% green. This
-// file asks whether that asymmetry is real or an artifact of timing, by running the same
-// scenario once per locator call and once per equivalent raw-DOM call.
+// since the r2359 roll, while the click/fill/waitFor tests next to it are 100% green. The first
+// run of this matrix showed that asymmetry is not about `expect` at all: the `waitFor` variant
+// below failed 10/10 while page-leaks' own `waitFor` test passed 10/10, on the same bot, in the
+// same job.
 //
-// A standalone reduction hit wholesale retention on the waitFor equivalent, which does not fit
-// the "expect-specific" story, hence this matrix. The raw-DOM variants run in the main world;
-// the locator variants go through the injected script in the utility world.
+// The two tests differ in one thing. The `expect` test registers WeakRefs *before* the loop as
+// well as after; click/fill/waitFor only register after. Every variant here copies the `expect`
+// test's shape, so `registerBefore` reproduces it and the `-no-pre-refs` variants drop it. If
+// those two stay green while their twins fail, the trigger is pre-loop registration plus a
+// locator visibility check, not the assertion path.
+//
+// The raw-DOM variants run in the main world; the locator variants go through the injected
+// script in the utility world.
 
 import { server as coreServer } from '../../packages/playwright-core/lib/coreBundle';
 const { nullProgress } = coreServer;
@@ -53,9 +59,10 @@ async function weakRefCount(pageImpl: any): Promise<{ main: number, utility: num
   return result;
 }
 
-// Same bounds as page-leaks.spec.ts. The failure is wholesale — every ref stays alive, so the
-// count jumps straight to 58 — and it is sticky, so a short toPass window is enough and keeps a
-// failing run from burning the whole test timeout.
+// Same bounds as page-leaks.spec.ts, and they hold either way: the static buttons leave 8 alive
+// with pre-loop registration and 4 without. The failure is wholesale - every ref stays alive, 58
+// or 54 - and it is sticky, so a short toPass window is enough and keeps a failing run from
+// burning the whole test timeout.
 async function checkWeakRefs(pageImpl: any, from: number, to: number) {
   await expect(async () => {
     const counts = await weakRefCount(pageImpl);
@@ -64,10 +71,24 @@ async function checkWeakRefs(pageImpl: any, from: number, to: number) {
   }).toPass({ timeout: 5000 });
 }
 
-const kVariants = ['expect', 'waitFor', 'click', 'dom-style', 'dom-event', 'dom-both', 'none'] as const;
+type Visit = 'expect' | 'waitFor' | 'click' | 'dom-style' | 'dom-event' | 'dom-both' | 'none';
+
+const kVariants: { name: string, registerBefore: boolean, visit: Visit }[] = [
+  { name: 'expect', registerBefore: true, visit: 'expect' },
+  { name: 'waitFor', registerBefore: true, visit: 'waitFor' },
+  { name: 'click', registerBefore: true, visit: 'click' },
+  { name: 'dom-style', registerBefore: true, visit: 'dom-style' },
+  { name: 'dom-event', registerBefore: true, visit: 'dom-event' },
+  { name: 'dom-both', registerBefore: true, visit: 'dom-both' },
+  { name: 'none', registerBefore: true, visit: 'none' },
+  // Identical, minus the pre-loop registration - i.e. exactly how page-leaks.spec.ts shapes the
+  // click/fill/waitFor tests that stay green.
+  { name: 'expect-no-pre-refs', registerBefore: false, visit: 'expect' },
+  { name: 'waitFor-no-pre-refs', registerBefore: false, visit: 'waitFor' },
+];
 
 for (const variant of kVariants) {
-  test(`${variant} should not leak`, async ({ page, mode, toImpl }) => {
+  test(`${variant.name} should not leak`, async ({ page, mode, toImpl }) => {
     test.skip(mode !== 'default');
 
     await page.setContent(`
@@ -75,11 +96,12 @@ for (const variant of kVariants) {
       <button>static button 2</button>
       <div id="buttons"></div>
     `);
-    await weakRefObjects(toImpl(page), 'button');
+    if (variant.registerBefore)
+      await weakRefObjects(toImpl(page), 'button');
 
     const last = () => page.locator('#buttons > button').last();
     const visit = async () => {
-      switch (variant) {
+      switch (variant.visit) {
         case 'expect':
           await expect(last()).toBeVisible();
           break;
