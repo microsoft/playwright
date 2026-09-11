@@ -254,6 +254,23 @@ test.describe('viewport', () => {
   });
 });
 
+test('config file preserves context media preferences', async ({}, testInfo) => {
+  const configFile = testInfo.outputPath('config.json');
+  const fileConfig: Config = {
+    browser: {
+      contextOptions: {
+        colorScheme: 'dark',
+        contrast: 'more',
+        forcedColors: 'active',
+        reducedMotion: 'reduce',
+      },
+    },
+  };
+  await fs.promises.writeFile(configFile, JSON.stringify(fileConfig));
+  const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv);
+  expect(config.browser.contextOptions).toMatchObject(fileConfig.browser!.contextOptions!);
+});
+
 test.describe('mobile', () => {
   test('--mobile defaults to a Chromium mobile device', async () => {
     const config = await resolveCLIConfigForMCP({ mobile: true }, emptyEnv);

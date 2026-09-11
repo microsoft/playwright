@@ -48,6 +48,8 @@ export function toSnakeCase(name: string): string {
 }
 
 export function formatObject(value: any, indent = '  ', mode: 'multiline' | 'oneline' = 'multiline'): string {
+  if (value === null)
+    return 'null';
   if (typeof value === 'string')
     return escapeWithQuotes(value, '\'');
   if (Array.isArray(value))

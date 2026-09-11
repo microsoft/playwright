@@ -474,6 +474,106 @@ const resize = declareCommand({
   toolParams: ({ w: width, h: height }) => ({ width, height }),
 });
 
+const setColorScheme = declareCommand({
+  name: 'set-color-scheme',
+  description: 'Emulate the light or dark color scheme',
+  category: 'emulation',
+  args: z.object({
+    scheme: z.enum(['light', 'dark']).describe('Color scheme to emulate'),
+  }),
+  toolName: 'browser_emulate_media',
+  toolParams: ({ scheme: colorScheme }) => ({ colorScheme }),
+});
+
+const setReducedMotion = declareCommand({
+  name: 'set-reduced-motion',
+  description: 'Emulate the reduced motion preference',
+  category: 'emulation',
+  args: z.object({
+    motion: z.enum(['reduce', 'no-preference']).describe('Reduced motion preference to emulate'),
+  }),
+  toolName: 'browser_emulate_media',
+  toolParams: ({ motion: reducedMotion }) => ({ reducedMotion }),
+});
+
+const setForcedColors = declareCommand({
+  name: 'set-forced-colors',
+  description: 'Emulate forced colors mode',
+  category: 'emulation',
+  args: z.object({
+    colors: z.enum(['active', 'none']).describe('Forced colors mode to emulate'),
+  }),
+  toolName: 'browser_emulate_media',
+  toolParams: ({ colors: forcedColors }) => ({ forcedColors }),
+});
+
+const setContrast = declareCommand({
+  name: 'set-contrast',
+  description: 'Emulate the preferred contrast',
+  category: 'emulation',
+  args: z.object({
+    contrast: z.enum(['more', 'no-preference']).describe('Contrast preference to emulate'),
+  }),
+  toolName: 'browser_emulate_media',
+  toolParams: ({ contrast }) => ({ contrast }),
+});
+
+const setMedia = declareCommand({
+  name: 'set-media',
+  description: 'Emulate the CSS media type',
+  category: 'emulation',
+  args: z.object({
+    media: z.enum(['screen', 'print']).describe('CSS media type to emulate'),
+  }),
+  toolName: 'browser_emulate_media',
+  toolParams: ({ media }) => ({ media }),
+});
+
+const clearColorScheme = declareCommand({
+  name: 'clear-color-scheme',
+  description: 'Clear color scheme emulation',
+  category: 'emulation',
+  args: z.object({}),
+  toolName: 'browser_emulate_media',
+  toolParams: () => ({ colorScheme: null }),
+});
+
+const clearReducedMotion = declareCommand({
+  name: 'clear-reduced-motion',
+  description: 'Clear reduced motion emulation',
+  category: 'emulation',
+  args: z.object({}),
+  toolName: 'browser_emulate_media',
+  toolParams: () => ({ reducedMotion: null }),
+});
+
+const clearForcedColors = declareCommand({
+  name: 'clear-forced-colors',
+  description: 'Clear forced colors emulation',
+  category: 'emulation',
+  args: z.object({}),
+  toolName: 'browser_emulate_media',
+  toolParams: () => ({ forcedColors: null }),
+});
+
+const clearContrast = declareCommand({
+  name: 'clear-contrast',
+  description: 'Clear preferred contrast emulation',
+  category: 'emulation',
+  args: z.object({}),
+  toolName: 'browser_emulate_media',
+  toolParams: () => ({ contrast: null }),
+});
+
+const clearMedia = declareCommand({
+  name: 'clear-media',
+  description: 'Clear CSS media type emulation',
+  category: 'emulation',
+  args: z.object({}),
+  toolName: 'browser_emulate_media',
+  toolParams: () => ({ media: null }),
+});
+
 const runCode = declareCommand({
   name: 'run-code',
   description: 'Run Playwright code snippet',
@@ -1276,6 +1376,18 @@ const commandsArray: AnyCommandSchema[] = [
   sessionStorageSet,
   sessionStorageDelete,
   sessionStorageClear,
+
+  // emulation category
+  setColorScheme,
+  setReducedMotion,
+  setForcedColors,
+  setContrast,
+  setMedia,
+  clearColorScheme,
+  clearReducedMotion,
+  clearForcedColors,
+  clearContrast,
+  clearMedia,
 
   // network category
   networkRequests,
