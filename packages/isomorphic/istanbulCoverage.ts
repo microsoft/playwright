@@ -61,6 +61,13 @@ export type IstanbulFileCoverageDelta = Partial<IstanbulFileCoverage> & Pick<Ist
 
 export type IstanbulCoverageDelta = { [file: string]: IstanbulFileCoverageDelta };
 
+// A single report from a document. Chunks stashed in the page storage carry an
+// id, because they can be picked up by several documents at once.
+export type IstanbulCoverageChunk = {
+  data: IstanbulCoverageDelta;
+  id?: string;
+};
+
 // Merges istanbul hit counts: counters add up, map entries are taken from the
 // first report that carries them. Assumes all data comes from the same build.
 export function mergeIstanbulCoverage(into: Map<string, IstanbulFileCoverage>, data: IstanbulCoverageDelta) {

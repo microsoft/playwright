@@ -16,7 +16,7 @@
 
 import type { IstanbulCoverage, IstanbulCoverageDelta, IstanbulFileCoverageDelta } from '@isomorphic/istanbulCoverage';
 
-const kBacklogKey = '__pwCoverageBacklog';
+export const kCoverageStashPrefix = '__pwCoverage.';
 
 // Harvests istanbul counters accumulated by instrumented application code in
 // `__coverage__`. Every flush serializes the counters and resets them, so
@@ -25,29 +25,33 @@ const kBacklogKey = '__pwCoverageBacklog';
 // first report of each file.
 export class CoverageScript {
   private _global: typeof globalThis;
+  private _sessionId: string;
   private _reportedFiles = new Set<string>();
+  private _stashOrdinal = 0;
 
-  constructor(global: typeof globalThis, bindingName: string, collectName: string) {
+  constructor(global: typeof globalThis, bindingName: string, collectName: string, sessionId: string) {
     this._global = global;
+    this._sessionId = sessionId;
     (global as any)[collectName] = () => this.collect();
     // Counters die with the document, and binding calls made during unload
-    // are not delivered, so park the delta in sessionStorage for the next
-    // same-origin document or the end-of-test sweep to pick up.
-    global.addEventListener('pagehide', () => this._parkCurrent());
-    // Relay deltas parked by previous documents, now that delivery is safe.
-    for (const json of this._takeBacklog())
+    // are not delivered, so stash the delta in localStorage. Any same origin
+    // document picks it up later, including one opened by Playwright itself
+    // after the page that produced it is gone.
+    global.addEventListener('pagehide', () => this._stashCurrent());
+    // Relay stashes left by other documents, now that delivery is safe.
+    for (const json of this._takeStashes())
       (global as any)[bindingName](json).catch(() => {});
   }
 
   collect(): string[] {
-    const chunks = this._takeBacklog();
-    const current = this._takeCurrent();
-    if (current)
-      chunks.push(current);
+    const chunks = this._takeStashes();
+    const delta = this._takeCurrent();
+    if (delta)
+      chunks.push(JSON.stringify({ data: delta }));
     return chunks;
   }
 
-  private _takeCurrent(): string | undefined {
+  private _takeCurrent(): IstanbulCoverageDelta | undefined {
     const coverage: IstanbulCoverage | undefined = (this._global as any).__coverage__;
     if (!coverage)
       return undefined;
@@ -72,30 +76,43 @@ export class CoverageScript {
       delta[file] = entry;
       hasFiles = true;
     }
-    return hasFiles ? JSON.stringify(delta) : undefined;
+    return hasFiles ? delta : undefined;
   }
 
-  private _takeBacklog(): string[] {
+  // Takes the stashes left by this session and discards the ones left by other
+  // sessions, e.g. by a previous run reusing a persistent profile.
+  private _takeStashes(): string[] {
+    const result: string[] = [];
     try {
-      const backlog = this._global.sessionStorage.getItem(kBacklogKey);
-      if (backlog) {
-        this._global.sessionStorage.removeItem(kBacklogKey);
-        return JSON.parse(backlog);
+      const storage = this._global.localStorage;
+      const sessionPrefix = kCoverageStashPrefix + this._sessionId + '.';
+      const keys: string[] = [];
+      for (let i = 0; i < storage.length; i++) {
+        const key = storage.key(i);
+        if (key && key.startsWith(kCoverageStashPrefix))
+          keys.push(key);
+      }
+      for (const key of keys) {
+        const json = key.startsWith(sessionPrefix) ? storage.getItem(key) : undefined;
+        storage.removeItem(key);
+        if (json)
+          result.push(json);
       }
     } catch {
     }
-    return [];
+    return result;
   }
 
-  private _parkCurrent() {
-    const json = this._takeCurrent();
-    if (!json)
+  private _stashCurrent() {
+    const delta = this._takeCurrent();
+    if (!delta)
       return;
     try {
-      const existing = this._global.sessionStorage.getItem(kBacklogKey);
-      const backlog = existing ? JSON.parse(existing) : [];
-      backlog.push(json);
-      this._global.sessionStorage.setItem(kBacklogKey, JSON.stringify(backlog));
+      // A stash can be picked up by several documents at once, so it carries an
+      // id that lets the recorder discard the copies.
+      const id = ++this._stashOrdinal + '-' + Math.random().toString(36).slice(2);
+      const key = kCoverageStashPrefix + this._sessionId + '.' + id;
+      this._global.localStorage.setItem(key, JSON.stringify({ id, data: delta }));
     } catch {
     }
   }

@@ -15,32 +15,39 @@
  */
 
 import { mergeIstanbulCoverage } from '@isomorphic/istanbulCoverage';
+import { createGuid } from '@utils/crypto';
 import * as rawCoverageSource from '../generated/coverageScriptSource';
 
 import type { BrowserContext } from './browserContext';
 import type { Page } from './page';
 import type { Progress } from './progress';
-import type { IstanbulFileCoverage } from '@isomorphic/istanbulCoverage';
+import type { IstanbulCoverageChunk, IstanbulFileCoverage } from '@isomorphic/istanbulCoverage';
 
 const kCoverageBindingName = '__pwCoverageSink';
 const kCoverageCollectName = '__pwCoverageCollect';
-
-const coverageBootstrapSource = `(() => {
-  const module = {};
-  ${rawCoverageSource.source}
-  new (module.exports.CoverageScript())(window, ${JSON.stringify(kCoverageBindingName)}, ${JSON.stringify(kCoverageCollectName)});
-})()`;
 
 const coverageCollectExpression = `window[${JSON.stringify(kCoverageCollectName)}] ? window[${JSON.stringify(kCoverageCollectName)}]() : []`;
 
 export class CoverageRecorder {
   private _context: BrowserContext;
   private _coverage = new Map<string, IstanbulFileCoverage>();
+  private _stashedChunkIds = new Set<string>();
+  // Scopes the stashes in the page storage to this recorder, so that the ones
+  // left behind by a previous run in a persistent profile are discarded.
+  private _sessionId = createGuid();
   private _installed = false;
   private _active = false;
 
   constructor(context: BrowserContext) {
     this._context = context;
+  }
+
+  private _bootstrapSource() {
+    return `(() => {
+      const module = {};
+      ${rawCoverageSource.source}
+      new (module.exports.CoverageScript())(window, ${JSON.stringify(kCoverageBindingName)}, ${JSON.stringify(kCoverageCollectName)}, ${JSON.stringify(this._sessionId)});
+    })()`;
   }
 
   activate() {
@@ -59,10 +66,11 @@ export class CoverageRecorder {
     if (this._installed)
       return;
     this._installed = true;
+    const bootstrapSource = this._bootstrapSource();
     await this._context.exposeBinding(progress, kCoverageBindingName, (source, json: string) => this._append(json));
-    await this._context.addInitScript(progress, coverageBootstrapSource);
+    await this._context.addInitScript(progress, bootstrapSource);
     // Init scripts only affect future documents, bootstrap the existing ones.
-    await progress.race(this._context.safeNonStallingEvaluateInAllFrames(coverageBootstrapSource, 'main'));
+    await progress.race(this._context.safeNonStallingEvaluateInAllFrames(bootstrapSource, 'main'));
   }
 
   async flush() {
@@ -90,7 +98,13 @@ export class CoverageRecorder {
 
   private _append(json: string) {
     try {
-      mergeIstanbulCoverage(this._coverage, JSON.parse(json));
+      const chunk: IstanbulCoverageChunk = JSON.parse(json);
+      if (chunk.id) {
+        if (this._stashedChunkIds.has(chunk.id))
+          return;
+        this._stashedChunkIds.add(chunk.id);
+      }
+      mergeIstanbulCoverage(this._coverage, chunk.data);
     } catch {
     }
   }
