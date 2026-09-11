@@ -26,10 +26,12 @@ import { LogFile } from './logFile';
 import { ModalState } from './tool';
 import { handleDialog } from './dialogs';
 import { uploadFile } from './files';
+import { listWebMCPTools } from './webmcp';
 
 import type { AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
 import type { Disposable } from '@isomorphic/disposable';
 import type { Context, ContextConfig } from './context';
+import type { WebMCPListing } from './webmcp';
 import type * as playwright from '../../..';
 
 const TabEvents = {
@@ -80,6 +82,7 @@ export type TabHeader = {
   crashed: boolean;
   mainDocumentStatus?: { status: number, statusText: string };
   console: { total: number, warnings: number, errors: number };
+  webmcpToolCount?: number;
 };
 
 type TabSnapshot = {
@@ -102,6 +105,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _modalStates: ModalState[] = [];
   private _initializedPromise: Promise<void>;
   private _recentEventEntries: EventEntry[] = [];
+  private _webmcpTools: WebMCPListing | undefined;
   private _consoleLog: LogFile;
   private _disposables: Disposable[];
   readonly actionTimeoutOptions: { timeout?: number; };
@@ -232,6 +236,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   private _clearCollectedArtifacts() {
+    this._webmcpTools = undefined;
     this._downloads.length = 0;
     this._requests.length = 0;
     this._mainDocumentStatus = undefined;
@@ -304,6 +309,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       crashed: this.crashed,
       mainDocumentStatus: this._mainDocumentStatus,
       console: consoleCounts,
+      webmcpToolCount: this._webmcpTools?.tools.length,
     };
 
     if (!tabHeaderEquals(this._lastHeader, newHeader)) {
@@ -413,8 +419,10 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._requests.length = 0;
   }
 
-  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, boxes: boolean | undefined, relativeTo: string | undefined, ariaFormat: 'none' | 'text' | 'json' = 'text'): Promise<TabSnapshot> {
+  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, boxes: boolean | undefined, relativeTo: string | undefined, ariaFormat: 'none' | 'text' | 'json' = 'text', updateWebMCP: boolean = false): Promise<TabSnapshot> {
     await this._initializedPromise;
+    // Kick the WebMCP refresh off next to the aria snapshot so its latency hides behind the tree walk.
+    const webmcpPromise = updateWebMCP ? this.updateWebMCPTools() : undefined;
     let tabSnapshot: TabSnapshot | undefined;
     let modalStates: ModalState[] = [];
     if (ariaFormat !== 'none') {
@@ -456,11 +464,28 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       this._recentEventEntries = [];
     }
 
-    return tabSnapshot ?? {
+    const result = tabSnapshot ?? {
       ariaSnapshot: '',
       modalStates,
       events: [],
     };
+    if (webmcpPromise)
+      await this._raceAgainstModalStates(() => webmcpPromise);
+    return result;
+  }
+
+  webmcpTools(): WebMCPListing | undefined {
+    return this._webmcpTools;
+  }
+
+  async updateWebMCPTools(): Promise<void> {
+    if (this._javaScriptBlocked())
+      return;
+    const listing = await listWebMCPTools(this);
+    // A dialog that opened while probing produces the same empty listing as a page
+    // with no tools, so keep what we had rather than clobbering the cache with it.
+    if (!this._javaScriptBlocked())
+      this._webmcpTools = listing;
   }
 
   private _javaScriptBlocked(): boolean {
@@ -632,5 +657,6 @@ function tabHeaderEquals(a: TabHeader, b: TabHeader): boolean {
       a.mainDocumentStatus?.statusText === b.mainDocumentStatus?.statusText &&
       a.console.errors === b.console.errors &&
       a.console.warnings === b.console.warnings &&
-      a.console.total === b.console.total;
+      a.console.total === b.console.total &&
+      a.webmcpToolCount === b.webmcpToolCount;
 }

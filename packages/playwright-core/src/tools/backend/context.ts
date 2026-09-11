@@ -183,6 +183,7 @@ export class Context {
       throw new Error(`Tab ${index} not found`);
     await tab.page.bringToFront();
     this._currentTab = tab;
+    await tab.updateWebMCPTools();
     return tab;
   }
 
