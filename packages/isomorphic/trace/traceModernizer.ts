@@ -149,13 +149,14 @@ export class TraceModernizer {
       }
       case 'input': {
         const existing = this._actionMap.get(event.callId);
-        existing!.point = event.point;
-        existing!.box = event.box;
+        if (!existing)
+          return;
+        existing.point = event.point;
+        existing.box = event.box;
         break;
       }
       case 'log': {
         const existing = this._actionMap.get(event.callId);
-        // We have some corrupted traces out there, tolerate them.
         if (!existing)
           return;
         existing.log.push({
