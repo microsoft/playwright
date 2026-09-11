@@ -171,10 +171,10 @@ export class Response {
     const rawSections = ['Error', 'Result', 'Snapshot'] as const;
     const sections = this._raw ? allSections.filter(section => rawSections.includes(section.title as typeof rawSections[number])) : allSections;
 
+    const isError = sections.some(section => section.isError);
     let serializedText: string;
     if (this._json) {
       const payload: Record<string, unknown> = {};
-      const isError = sections.some(section => section.isError);
       if (isError)
         payload.isError = true;
       for (const section of sections) {
@@ -214,23 +214,18 @@ export class Response {
       serializedText = text.join('\n');
     }
 
-    const content: (TextContent | ImageContent)[] = [
-      {
-        type: 'text',
-        text: sanitizeUnicode(this._context.redactSecrets(serializedText)),
-      }
+    const imageResponses = this._context.config.imageResponses ?? 'allow';
+    const images: ImageContent[] = imageResponses === 'omit' ? [] : this._imageResults.map(imageResult => ({ type: 'image', data: imageResult.data.toString('base64'), mimeType: `image/${imageResult.imageType}` }));
+    const imagesOnly = imageResponses === 'only' && images.length > 0 && !isError;
+    const content: (TextContent | ImageContent)[] = imagesOnly ? images : [
+      { type: 'text', text: sanitizeUnicode(this._context.redactSecrets(serializedText)) },
+      ...images,
     ];
-
-    // Image attachments.
-    if (this._context.config.imageResponses !== 'omit') {
-      for (const imageResult of this._imageResults)
-        content.push({ type: 'image', data: imageResult.data.toString('base64'), mimeType: `image/${imageResult.imageType}` });
-    }
 
     return {
       content,
       ...(this._isClose ? { isClose: true } : {}),
-      ...(sections.some(section => section.isError) ? { isError: true } : {}),
+      ...(isError ? { isError: true } : {}),
     };
   }
 

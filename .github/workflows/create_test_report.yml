@@ -1,0 +1,133 @@
+name: Publish Test Results
+on:
+  workflow_run:
+    workflows: ["tests 1", "tests 2", "tests others", "MCP"]
+    types:
+      - completed
+
+permissions: {}
+
+jobs:
+  merge-reports:
+    permissions:
+      pull-requests: write
+      checks: write
+      statuses: write
+      contents: read    # This is required for actions/checkout to succeed
+    if: ${{ github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'push' }}
+    runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.pr.outputs.number }}
+      has_failures: ${{ steps.failures.outputs.has_failures }}
+      triage_allowed: ${{ steps.pr.outputs.triage_allowed }}
+    env:
+      MARKDOWN_OUTPUT_FILE: ${{ github.workspace }}/report.md
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: lts/*
+    - run: npm ci
+    - run: npm run build
+
+    - name: Download blob report artifact
+      uses: ./.github/actions/download-artifact
+      with:
+        namePrefix: 'blob-report'
+        path: 'all-blob-reports'
+
+    - name: Merge reports
+      run: |
+        npx playwright merge-reports --config .github/workflows/merge.config.ts ./all-blob-reports
+      env:
+        NODE_OPTIONS: --max-old-space-size=8192
+        WORKFLOW_RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+
+    - name: Detect failures
+      id: failures
+      run: |
+        if [ -f "$MARKDOWN_OUTPUT_FILE" ] && grep -qE '\*\*[0-9]+ failed\*\*' "$MARKDOWN_OUTPUT_FILE"; then
+          echo "has_failures=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "has_failures=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Upload HTML report
+      id: upload-report
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        path: playwright-report/index.html
+        archive: false   # Upload as a single, browser-openable file (no zip)
+        retention-days: 30
+
+    # The triggering workflow ran on a pull_request event, but workflow_run.pull_requests is
+    # empty for PRs from forks, so resolve the number from the head ref instead. gh's head
+    # filter wants "owner:branch" for forks but a bare branch for same-repo PRs.
+    - name: Resolve PR number and triage allow-list
+      if: ${{ github.event.workflow_run.event == 'pull_request' }}
+      id: pr
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        HEAD_REF: ${{ github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch || format('{0}:{1}', github.event.workflow_run.head_repository.owner.login, github.event.workflow_run.head_branch) }}
+      run: |
+        NUMBER=$(gh pr view --repo "${{ github.repository }}" "$HEAD_REF" --json number --jq '.number' 2>/dev/null || true)
+        echo "number=$NUMBER" >> "$GITHUB_OUTPUT"
+
+        AUTHOR=$(gh pr view --repo "${{ github.repository }}" "$HEAD_REF" --json author --jq '.author.login' 2>/dev/null || true)
+        TRIAGE_ALLOWED=false
+        case "$AUTHOR" in
+          app/github-actions|app/microsoft-playwright-automation)
+            TRIAGE_ALLOWED=true
+            ;;
+          *)
+            if [ -n "$AUTHOR" ]; then
+              PERM=$(gh api "repos/${{ github.repository }}/collaborators/$AUTHOR/permission" --jq .permission 2>/dev/null || echo none)
+              case "$PERM" in write|admin) TRIAGE_ALLOWED=true ;; esac
+            fi
+            ;;
+        esac
+        echo "triage_allowed=$TRIAGE_ALLOWED" >> "$GITHUB_OUTPUT"
+
+    - name: Post report comment to PR
+      if: ${{ steps.pr.outputs.number }}
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        HTML_REPORT_URL: ${{ steps.upload-report.outputs.artifact-url }}
+        PR_NUMBER: ${{ steps.pr.outputs.number }}
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const { postReportComment } = require('./tests/config/postReportComment');
+          await postReportComment({
+            github,
+            context,
+            core,
+            reportFile: process.env.MARKDOWN_OUTPUT_FILE,
+            prNumber: +process.env.PR_NUMBER,
+            reportUrl: process.env.HTML_REPORT_URL,
+          });
+
+    - name: Publish Report URL as Commit Status
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      with:
+        script: |
+          await github.rest.repos.createCommitStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            sha: '${{ github.event.workflow_run.head_sha }}',
+            state: 'success',
+            target_url: '${{ steps.upload-report.outputs.artifact-url }}',
+            context: 'HTML Report (${{ github.event.workflow_run.name }})',
+          });
+
+  triage:
+    needs: merge-reports
+    if: ${{ needs.merge-reports.outputs.has_failures == 'true' && needs.merge-reports.outputs.pr_number && needs.merge-reports.outputs.triage_allowed == 'true' }}
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+      copilot-requests: write
+    uses: ./.github/workflows/pr-ci-triage.yml
+    with:
+      pr_number: ${{ needs.merge-reports.outputs.pr_number }}

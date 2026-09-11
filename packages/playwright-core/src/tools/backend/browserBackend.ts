@@ -22,6 +22,7 @@ import { Context } from './context';
 import { Response } from './response';
 import { SessionLog } from './sessionLog';
 import type { ContextConfig } from './context';
+import type { IdleTimer } from './idleTimer';
 import type * as playwright from '../../..';
 import type { Tool } from './tool';
 import type * as mcpServer from '../utils/mcp/server';
@@ -29,14 +30,12 @@ import type { ClientInfo, ServerBackend } from '../utils/mcp/server';
 
 const backendDebug = debug('pw:mcp:backend');
 
-export type BrowserBackendCallbacks = {
+export type BrowserBackendOptions = {
   dispose?: () => Promise<void>;
-  // Bracket every tool call, for example to drive an idle timer.
-  callStarted?: () => void;
-  callFinished?: () => void;
+  idleTimer?: IdleTimer;
 };
 
-export class BrowserBackend extends EventEmitter<{ disconnected: [notice?: string] }> implements ServerBackend {
+export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implements ServerBackend {
   private _tools: Tool[];
   private _context: Context | undefined;
   private _sessionLog: SessionLog | undefined;
@@ -44,16 +43,25 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [notice?: strin
   private _disconnected = false;
   private _disposed = false;
   private _browserContext: playwright.BrowserContext;
-  private _callbacks: BrowserBackendCallbacks;
+  private _disposeCallback: (() => Promise<void>) | undefined;
+  private _idleTimer: IdleTimer | undefined;
 
-  constructor(config: ContextConfig, browserContext: playwright.BrowserContext, tools: Tool[], callbacks: BrowserBackendCallbacks = {}) {
+  constructor(config: ContextConfig, browserContext: playwright.BrowserContext, tools: Tool[], options: BrowserBackendOptions = {}) {
     super();
     this._config = config;
     this._tools = tools;
     this._browserContext = browserContext;
-    this._callbacks = callbacks;
-    this._browserContext.once('close', () => this.markDisconnected());
-    this._browserContext.browser()?.once('disconnected', () => this.markDisconnected());
+    this._disposeCallback = options.dispose;
+    this._idleTimer = options.idleTimer;
+    const markDisconnected = () => {
+      if (this._disconnected)
+        return;
+      backendDebug('browser disconnected');
+      this._disconnected = true;
+      this.emit('disconnected');
+    };
+    this._browserContext.once('close', markDisconnected);
+    this._browserContext.browser()?.once('disconnected', markDisconnected);
   }
 
   async initialize(clientInfo: ClientInfo): Promise<void> {
@@ -65,33 +73,16 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [notice?: strin
     });
   }
 
-  // Detaches the backend from its session, the notice is delivered with the session's next response.
-  markDisconnected(notice?: string) {
-    if (this._disconnected)
-      return;
-    backendDebug('browser disconnected');
-    this._disconnected = true;
-    this.emit('disconnected', notice);
-  }
-
   async dispose() {
     if (this._disposed)
       return;
     this._disposed = true;
     await this._context?.dispose().catch(e => debug('pw:tools:error')(e));
-    await this._callbacks.dispose?.().catch(e => debug('pw:tools:error')(e));
+    await this._disposeCallback?.().catch(e => debug('pw:tools:error')(e));
   }
 
   async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> } = {}, signal?: AbortSignal): Promise<mcpServer.CallToolResult> {
-    this._callbacks.callStarted?.();
-    try {
-      return await this._callTool(name, rawArguments, signal);
-    } finally {
-      this._callbacks.callFinished?.();
-    }
-  }
-
-  private async _callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> }, signal?: AbortSignal): Promise<mcpServer.CallToolResult> {
+    this._idleTimer?.poke();
     const json = !!rawArguments._meta?.json;
     const formatError = (message: string): mcpServer.CallToolResult => ({
       content: [{ type: 'text' as const, text: json ? JSON.stringify({ isError: true, error: message }, null, 2) : `### Error\n${message}` }],

@@ -196,7 +196,7 @@ Playwright MCP supports three profile modes:
 
 ### Idle timeout
 
-The browser is launched by the first tool call and stays open until the MCP server exits, so a page that keeps animating or rendering costs CPU for as long as the agent's session lasts. Pass `--timeout-idle` to close the browser after a period without tool calls, in milliseconds:
+A page that keeps animating or rendering costs CPU for as long as the browser is open, and an agent session can last hours. A headless browser launched by the server is therefore closed after an hour without tool calls. Headed browsers, and browsers attached over `--cdp-endpoint` or `--extension`, are never closed automatically. Pass `--idle-timeout` to set the timeout in milliseconds for any mode, or `0` to disable it:
 
 ```json
 {
@@ -205,17 +205,17 @@ The browser is launched by the first tool call and stays open until the MCP serv
       "command": "npx",
       "args": [
         "@playwright/mcp@latest",
-        "--timeout-idle=300000"
+        "--idle-timeout=300000"
       ]
     }
   }
 }
 ```
 
-When no tool call has completed for that long, the browser is closed the same way `browser_close` closes it, headed or not. The next tool call relaunches the browser, and its response starts with a note about the idle close, so the agent checks the open tabs or navigates again instead of assuming the old page is still open. The timer never fires while a tool call is running.
+When no tool call has completed for that long, the browser is closed, headed or not, the same way as if you had closed it by hand. The next tool call launches a new browser, so the agent navigates again. The timer never fires while a tool call is running.
 
 -   With `--isolated`, cookies and storage kept in memory are lost on an idle close. Use the persistent profile or `--storage-state` to keep them.
--   With `--cdp-endpoint` or `--extension`, the browser is not owned by the server, so an idle close only disconnects from it: the pages stay open, and the note tells the agent to check the open tabs instead. With `--extension`, the next tool call goes through the connect flow again.
+-   With `--cdp-endpoint` or `--extension`, the browser is not owned by the server, so there is no default timeout, and an explicit one only disconnects from it, leaving its pages open. With `--extension`, the next tool call goes through the connect flow again.
 -   With `--shared-browser-context`, the timer spans all clients: a client that is idle while others keep working keeps its tabs and state, and the shared browser is closed only once every client has been idle for the timeout.
 
 ### Configuration file

@@ -54,11 +54,12 @@ export function decorateMCPCommand(command: Command) {
       .option('--grant-permissions <permissions...>', 'List of permissions to grant to the browser context, for example "geolocation", "clipboard-read", "clipboard-write".', commaSeparatedList)
       .option('--headless', 'run browser in headless mode, headed by default')
       .option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.')
+      .option('--idle-timeout <timeout>', 'close the browser after this many milliseconds without a completed tool call, the next tool call relaunches it. Defaults to one hour for headless browsers, never for headed ones, 0 disables.', numberParser)
       .option('--ignore-https-errors', 'ignore https errors')
       .option('--init-page <path...>', 'path to TypeScript file to evaluate on Playwright page object')
       .option('--init-script <path...>', 'path to JavaScript file to add as an initialization script. The script will be evaluated in every page before any of the page\'s scripts. Can be specified multiple times.')
       .option('--isolated', 'keep the browser profile in memory, do not save it to disk.')
-      .option('--image-responses <mode>', 'whether to send image responses to the client. Can be "allow" or "omit", Defaults to "allow".', enumParser.bind(null, '--image-responses', ['allow', 'omit']))
+      .option('--image-responses <mode>', 'whether to send image responses to the client. Can be "allow", "omit" or "only". With "only", a response that carries an image consists of the image parts alone, without the text part. Defaults to "allow".', enumParser.bind(null, '--image-responses', ['allow', 'omit', 'only']))
       .option('--no-sandbox', 'disable the sandbox for all process types that are normally sandboxed.')
       .option('--output-dir <path>', 'path to the directory for automatically named output files, for example a screenshot taken without an explicit file name. Files with an explicit name are resolved against the workspace root instead and are not affected by this option.')
       .option('--output-max-size <bytes>', 'Threshold for evicting old output files, in bytes.', numberParser)
@@ -76,7 +77,6 @@ export function decorateMCPCommand(command: Command) {
       .option('--storage-state <path>', 'path to the storage state file for isolated sessions.')
       .option('--test-id-attribute <attribute>', 'specify the attribute to use for test ids, defaults to "data-testid"')
       .option('--timeout-action <timeout>', 'specify action timeout in milliseconds, defaults to 5000ms', numberParser)
-      .option('--timeout-idle <timeout>', 'close the browser after this many milliseconds without a completed tool call, the next tool call relaunches it. Disabled by default.', numberParser)
       .option('--timeout-navigation <timeout>', 'specify navigation timeout in milliseconds, defaults to 60000ms', numberParser)
       .option('--timeout-settle <timeout>', 'how long to wait after each action for triggered work to settle, in milliseconds, defaults to 500ms', numberParser)
       .option('--user-agent <ua string>', 'specify user agent string')
@@ -102,14 +102,6 @@ export function decorateMCPCommand(command: Command) {
         let sharedBrowserPromise: Promise<BrowserWithInfo> | undefined;
         let clientCount = 0;
         const clientNameCounters = new Map<string, number>();
-        const idleTimeout = config.timeouts?.idle;
-        // A shared context has one idle timer for all clients, it closes the browser once none of them has been active for the timeout.
-        const backends = new Set<BrowserBackend>();
-        let sharedIdleNotice: string | undefined;
-        const sharedIdleTimer = config.sharedBrowserContext && idleTimeout ? new IdleTimer(idleTimeout, () => {
-          for (const backend of backends)
-            backend.markDisconnected(sharedIdleNotice);
-        }) : undefined;
 
         const factory: mcpServer.ServerBackendFactory = {
           name: 'Playwright',
@@ -165,19 +157,9 @@ export function decorateMCPCommand(command: Command) {
               throw error;
             }
 
-            // Pages outlive the connection when the browser is not ours, for example over --cdp-endpoint.
-            const notice = idleTimeout ? idleNotice(idleTimeout, !config.browser.isolated && info.ownership === 'attached') : undefined;
-            if (shared)
-              sharedIdleNotice = notice;
-            const ownIdleTimer = idleTimeout && !sharedIdleTimer ? new IdleTimer(idleTimeout, () => backend.markDisconnected(notice)) : undefined;
-            const idleTimer = sharedIdleTimer ?? ownIdleTimer;
-
-            const backend: BrowserBackend = new BrowserBackend(config, browserContext, tools, {
-              callStarted: () => idleTimer?.callStarted(),
-              callFinished: () => idleTimer?.callFinished(),
+            return new BrowserBackend(config, browserContext, tools, {
+              idleTimer: info.idleTimer,
               dispose: async () => {
-                backends.delete(backend);
-                ownIdleTimer?.dispose();
                 clientCount--;
                 const last = !shared || !clientCount;
                 if (last && sharedBrowserPromise === promise)
@@ -200,44 +182,8 @@ export function decorateMCPCommand(command: Command) {
                 await shared?.browser.close().catch(() => { });
               },
             });
-            backends.add(backend);
-            return backend;
           },
         };
         await mcpServer.start(factory, config.server);
       });
-}
-
-function idleNotice(timeout: number, pagesSurvive: boolean): string {
-  if (pagesSurvive)
-    return `Note: the browser connection was closed after ${timeout}ms of inactivity and has been reestablished. Check the open tabs before interacting with the page.`;
-  return `Note: the browser was closed after ${timeout}ms of inactivity and has been relaunched. Pages from before the idle close are gone, navigate again before interacting with the page.`;
-}
-
-// Fires once no tool call has been running for the timeout, the next call re-arms it.
-class IdleTimer {
-  private _timeout: number;
-  private _onIdle: () => void;
-  private _running = 0;
-  private _timer: NodeJS.Timeout | undefined;
-
-  constructor(timeout: number, onIdle: () => void) {
-    this._timeout = timeout;
-    this._onIdle = onIdle;
-  }
-
-  callStarted() {
-    ++this._running;
-    this.dispose();
-  }
-
-  callFinished() {
-    if (!--this._running)
-      this._timer = setTimeout(this._onIdle, this._timeout).unref();
-  }
-
-  dispose() {
-    clearTimeout(this._timer);
-    this._timer = undefined;
-  }
 }

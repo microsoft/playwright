@@ -1,0 +1,58 @@
+name: "PR: bump stable-test-runner"
+on:
+  workflow_dispatch:
+  schedule:
+    # At 10:00am UTC  (3AM PST) every Monday
+    - cron: "0 10 * * 1"
+jobs:
+  trigger-roll:
+    name: Trigger Roll
+    runs-on: ubuntu-24.04
+    if: github.repository == 'microsoft/playwright'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: lts/*
+      - run: |
+          npm install @playwright/test@next
+          VERSION=$(node -e "console.log(require('./package.json').dependencies['@playwright/test'].replace('^', ''))")
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        working-directory: tests/playwright-test/stable-test-runner/
+        id: bump
+      - name: Prepare branch
+        id: prepare-branch
+        run: |
+          if [[ "$(git status --porcelain)" == "" ]]; then
+              echo "there are no changes";
+              exit 0;
+          fi
+          echo "HAS_CHANGES=1" >> $GITHUB_OUTPUT
+          BRANCH_NAME="roll-stable-test-runner/$(date +%Y-%b-%d)"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          git config --global user.name microsoft-playwright-automation[bot]
+          git config --global user.email 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
+          git checkout -b "$BRANCH_NAME"
+          git add .
+          git commit -m "test: roll stable-test-runner to ${{ steps.bump.outputs.VERSION }}"
+          git push origin $BRANCH_NAME
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: app-token
+        with:
+          client-id: ${{ vars.PLAYWRIGHT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+      - name: Create Pull Request
+        if: ${{ steps.prepare-branch.outputs.HAS_CHANGES == '1' }}
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            await github.rest.pulls.create({
+              owner: 'microsoft',
+              repo: 'playwright',
+              head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
+              base: 'main',
+              title: 'test: roll stable-test-runner to ${{ steps.bump.outputs.VERSION }}',
+            });

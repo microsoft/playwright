@@ -22,6 +22,7 @@ import { playwright } from '../../inprocess';
 import { defaultCacheDirectory } from '../../server/registry/index';
 import { testDebug } from './log';
 import { outputDir } from '../backend/context';
+import { IdleTimer, defaultIdleTimeout } from '../backend/idleTimer';
 import { createExtensionBrowser } from './extensionContextFactory';
 import { connectToBrowserAcrossVersions, descriptorEndpoint } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
@@ -41,6 +42,7 @@ export type BrowserWithInfo = {
   browserInfo: BrowserInfo,
   endpoint: string,
   ownership: 'attached' | 'own',
+  idleTimer?: IdleTimer,
 };
 
 export type BindOptions = {
@@ -49,6 +51,16 @@ export type BindOptions = {
 };
 
 export async function createBrowserWithInfo(config: FullConfig, clientInfo: ClientInfo, cliOptions: CLIOptions, bindOptions: BindOptions): Promise<BrowserWithInfo> {
+  const info = await createBrowser(config, clientInfo, cliOptions, bindOptions);
+  const idleTimeout = config.timeouts?.idle ?? (info.ownership === 'own' && config.browser.launchOptions.headless ? defaultIdleTimeout : undefined);
+  if (idleTimeout) {
+    info.idleTimer = new IdleTimer(idleTimeout, () => info.browser.close().catch(() => {}));
+    info.browser.once('disconnected', () => info.idleTimer?.dispose());
+  }
+  return info;
+}
+
+async function createBrowser(config: FullConfig, clientInfo: ClientInfo, cliOptions: CLIOptions, bindOptions: BindOptions): Promise<BrowserWithInfo> {
   if (config.browser.remoteEndpoint)
     return await createRemoteBrowser(config);
 

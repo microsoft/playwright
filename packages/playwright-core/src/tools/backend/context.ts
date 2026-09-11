@@ -42,7 +42,7 @@ export type ContextConfig = {
   capabilities?: ToolCapability[];
   codegen?: 'typescript' | 'python' | 'java' | 'csharp' | 'none';
   console?: { level?: 'error' | 'warning' | 'info' | 'debug' };
-  imageResponses?: 'allow' | 'omit';
+  imageResponses?: 'allow' | 'omit' | 'only';
   network?: {
     allowedOrigins?: string[];
     blockedOrigins?: string[];
