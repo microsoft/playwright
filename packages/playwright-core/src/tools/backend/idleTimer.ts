@@ -26,9 +26,9 @@ export class IdleTimer {
     this._onIdle = onIdle;
   }
 
-  reset() {
+  poke() {
     this.dispose();
-    this._timer = setTimeout(this._onIdle, this._timeout).unref();
+    this._timer = setTimeout(this._onIdle, this._timeout);
   }
 
   dispose() {
