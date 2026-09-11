@@ -65,7 +65,12 @@ test('webmcp-list and webmcp-call', async ({ cli, server, mcpBrowser }, testInfo
   </script>`);
 
   const { output: openOutput } = await cli('open', server.PREFIX);
-  expect(openOutput).toContain('1 webmcp tool available on the page');
+  expect(openOutput).toContain(`- 1 webmcp tool available on the page:
+  search.`);
+  // The tool set is unchanged, so the header collapses back to the bare count.
+  const { output: reloadOutput } = await cli('reload');
+  expect(reloadOutput).toContain('- 1 webmcp tool available on the page\n');
+  expect(reloadOutput).not.toContain('  search.');
 
   const { output: listOutput } = await cli('webmcp-list');
   expect(listOutput).toBe(`### Result
