@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-import type { IstanbulCoverage } from '@isomorphic/istanbulCoverage';
+import type { IstanbulCoverage, IstanbulCoverageDelta, IstanbulFileCoverageDelta } from '@isomorphic/istanbulCoverage';
 
 const kBacklogKey = '__pwCoverageBacklog';
 
 // Harvests istanbul counters accumulated by instrumented application code in
 // `__coverage__`. Every flush serializes the counters and resets them, so
-// each flush reports only the delta since the previous one.
+// each flush reports only the delta since the previous one. The statement,
+// function and branch maps are large, so they are only reported with the
+// first report of each file.
 export class CoverageScript {
   private _global: typeof globalThis;
+  private _reportedFiles = new Set<string>();
 
   constructor(global: typeof globalThis, bindingName: string, collectName: string) {
     this._global = global;
@@ -48,16 +51,28 @@ export class CoverageScript {
     const coverage: IstanbulCoverage | undefined = (this._global as any).__coverage__;
     if (!coverage)
       return undefined;
-    const json = JSON.stringify(coverage);
-    for (const file of Object.values(coverage)) {
-      for (const key of Object.keys(file.s))
-        file.s[key] = 0;
-      for (const key of Object.keys(file.f))
-        file.f[key] = 0;
-      for (const key of Object.keys(file.b))
-        file.b[key] = file.b[key].map(() => 0);
+    const delta: IstanbulCoverageDelta = {};
+    let hasFiles = false;
+    for (const [file, fileCoverage] of Object.entries(coverage)) {
+      const s = takeCounters(fileCoverage.s);
+      const f = takeCounters(fileCoverage.f);
+      const b = takeBranchCounters(fileCoverage.b);
+      // Report every file once to account for the files that were never hit,
+      // afterwards only report the files that were hit since the last report.
+      const isFirstReport = !this._reportedFiles.has(file);
+      if (!isFirstReport && !s && !f && !b)
+        continue;
+      const entry: IstanbulFileCoverageDelta = { path: fileCoverage.path, s: s || {}, f: f || {}, b: b || {} };
+      if (isFirstReport) {
+        entry.statementMap = fileCoverage.statementMap;
+        entry.fnMap = fileCoverage.fnMap;
+        entry.branchMap = fileCoverage.branchMap;
+        this._reportedFiles.add(file);
+      }
+      delta[file] = entry;
+      hasFiles = true;
     }
-    return json;
+    return hasFiles ? JSON.stringify(delta) : undefined;
   }
 
   private _takeBacklog(): string[] {
@@ -84,4 +99,34 @@ export class CoverageScript {
     } catch {
     }
   }
+}
+
+// Returns the non-zero counters and resets them, or undefined when there are none.
+function takeCounters(counters: { [key: string]: number }): { [key: string]: number } | undefined {
+  let result: { [key: string]: number } | undefined;
+  for (const key of Object.keys(counters)) {
+    const count = counters[key];
+    if (!count)
+      continue;
+    if (!result)
+      result = {};
+    result[key] = count;
+    counters[key] = 0;
+  }
+  return result;
+}
+
+// Branch counters are positional, so hit branches are reported with the whole array.
+function takeBranchCounters(counters: { [key: string]: number[] }): { [key: string]: number[] } | undefined {
+  let result: { [key: string]: number[] } | undefined;
+  for (const key of Object.keys(counters)) {
+    const counts = counters[key];
+    if (!counts.some(Boolean))
+      continue;
+    if (!result)
+      result = {};
+    result[key] = counts.slice();
+    counters[key] = counts.map(() => 0);
+  }
+  return result;
 }

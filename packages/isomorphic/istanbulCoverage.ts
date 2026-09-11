@@ -55,14 +55,33 @@ export type IstanbulFileCoverage = {
 
 export type IstanbulCoverage = { [file: string]: IstanbulFileCoverage };
 
+// Collected counters, reported as a delta since the previous report. The maps
+// are only sent with the first report of each file, so they are optional here.
+export type IstanbulFileCoverageDelta = Partial<IstanbulFileCoverage> & Pick<IstanbulFileCoverage, 'path' | 's' | 'f' | 'b'>;
+
+export type IstanbulCoverageDelta = { [file: string]: IstanbulFileCoverageDelta };
+
 // Merges istanbul hit counts: counters add up, map entries are taken from the
-// first occurrence of each file. Assumes all data comes from the same build.
-export function mergeIstanbulCoverage(into: Map<string, IstanbulFileCoverage>, data: IstanbulCoverage) {
+// first report that carries them. Assumes all data comes from the same build.
+export function mergeIstanbulCoverage(into: Map<string, IstanbulFileCoverage>, data: IstanbulCoverageDelta) {
   for (const [file, fileCov] of Object.entries(data)) {
-    const existing = into.get(file);
+    let existing = into.get(file);
     if (!existing) {
-      into.set(file, fileCov);
-      continue;
+      existing = { path: fileCov.path, statementMap: {}, fnMap: {}, branchMap: {}, s: {}, f: {}, b: {} };
+      into.set(file, existing);
+    }
+    // A counters-only report can arrive first if the report carrying the maps was lost.
+    if (fileCov.statementMap && !Object.keys(existing.statementMap).length) {
+      existing.statementMap = fileCov.statementMap;
+      existing.fnMap = fileCov.fnMap || {};
+      existing.branchMap = fileCov.branchMap || {};
+      // Reports only carry the counters that were hit, zero fill the rest.
+      for (const key of Object.keys(existing.statementMap))
+        existing.s[key] = existing.s[key] || 0;
+      for (const key of Object.keys(existing.fnMap))
+        existing.f[key] = existing.f[key] || 0;
+      for (const [key, branch] of Object.entries(existing.branchMap))
+        existing.b[key] = existing.b[key] || branch.locations.map(() => 0);
     }
     for (const key of Object.keys(fileCov.s))
       existing.s[key] = (existing.s[key] || 0) + fileCov.s[key];
