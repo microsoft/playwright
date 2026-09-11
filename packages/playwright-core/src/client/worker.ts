@@ -91,13 +91,11 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
       const timeoutSettings = this._page?._timeoutSettings ?? this._context?._timeoutSettings ?? new TimeoutSettings();
       const timeoutOptions = timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const waiter = Waiter.createForEvent(this, event);
+      using waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
       if (event !== Events.Worker.Close)
         waiter.rejectOnEvent(this, Events.Worker.Close, () => this._closeErrorWithReason());
-      const result = await waiter.waitForEvent(this, event, predicate as any);
-      waiter.dispose();
-      return result;
+      return await waiter.waitForEvent(this, event, predicate as any);
     });
   }
 

@@ -806,16 +806,14 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implement
     return await this._wrapApiCall(async () => {
       const timeoutOptions = this._page._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const waiter = Waiter.createForEvent(this, event);
+      using waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
       if (event !== Events.WebSocket.Error)
         waiter.rejectOnEvent(this, Events.WebSocket.Error, new Error('Socket error'));
       if (event !== Events.WebSocket.Close)
         waiter.rejectOnEvent(this, Events.WebSocket.Close, new Error('Socket closed'));
       waiter.rejectOnEvent(this._page, Events.Page.Close, () => this._page._closeErrorWithReason());
-      const result = await waiter.waitForEvent(this, event, predicate as any);
-      waiter.dispose();
-      return result;
+      return await waiter.waitForEvent(this, event, predicate as any);
     });
   }
 }

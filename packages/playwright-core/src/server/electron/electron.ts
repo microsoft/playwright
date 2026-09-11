@@ -325,13 +325,11 @@ async function waitForLine(progress: Progress, process: childProcess.ChildProces
   // eslint-disable-next-line no-restricted-properties
   const rl = readline.createInterface({ input: process.stderr! });
   const failError = new Error('Process failed to launch!');
-  const listeners = [
-    eventsHelper.addEventListener(rl, 'line', onLine),
-    eventsHelper.addEventListener(rl, 'close', () => promise.reject(failError)),
-    eventsHelper.addEventListener(process, 'exit', () => promise.reject(failError)),
-    // It is Ok to remove error handler because we did not create process and there is another listener.
-    eventsHelper.addEventListener(process, 'error', () => promise.reject(failError)),
-  ];
+  using lineListener = eventsHelper.addEventListener(rl, 'line', onLine);
+  using closeListener = eventsHelper.addEventListener(rl, 'close', () => promise.reject(failError));
+  using exitListener = eventsHelper.addEventListener(process, 'exit', () => promise.reject(failError));
+  // It is Ok to remove error handler because we did not create process and there is another listener.
+  using errorListener = eventsHelper.addEventListener(process, 'error', () => promise.reject(failError));
 
   function onLine(line: string) {
     const match = line.match(regex);
@@ -339,11 +337,7 @@ async function waitForLine(progress: Progress, process: childProcess.ChildProces
       promise.resolve(match);
   }
 
-  try {
-    return await progress.race(promise);
-  } finally {
-    eventsHelper.removeEventListeners(listeners);
-  }
+  return await progress.race(promise);
 }
 
 function escapeDoubleQuotes(str: string): string {

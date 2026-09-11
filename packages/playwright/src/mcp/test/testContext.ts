@@ -34,6 +34,8 @@ import { configLoader } from '../../common';
 import type { ConfigLocation } from '../../common';
 import type { BrowserMCPRequest, BrowserMCPResponse } from './browserBackend';
 
+const kDispose: typeof Symbol.dispose = (Symbol.dispose || Symbol.for('Symbol.dispose')) as typeof Symbol.dispose;
+
 export type SeedFile = {
   file: string;
   content: string;
@@ -78,7 +80,7 @@ ${step.code}
 type TestRunnerAndScreen = {
   testRunner: testRunner.TestRunner;
   screen: base.TerminalScreen;
-  claimStdio: () => void;
+  claimStdio: () => Disposable;
   releaseStdio: () => void;
   output: string[];
   waitForTestPaused: () => Promise<void>;
@@ -120,11 +122,10 @@ export class TestContext {
     if (!this._testRunnerAndScreen)
       return;
     await this._testRunnerAndScreen.testRunner.stopTests();
-    this._testRunnerAndScreen.claimStdio();
     try {
+      using stdio = this._testRunnerAndScreen.claimStdio();
       await this._testRunnerAndScreen.testRunner.runGlobalTeardown();
     } finally {
-      this._testRunnerAndScreen.releaseStdio();
       this._testRunnerAndScreen = undefined;
     }
   }
@@ -208,64 +209,58 @@ export class TestContext {
   private async _runTestsImpl(params: testRunner.RunTestsParams, signal?: AbortSignal): Promise<{ output: string, status: testRunner.FullResultStatus | 'paused' }> {
     const configDir = this._configLocation.configDir;
     const testRunnerAndScreen = await this.createTestRunner();
-    const { testRunner: runner, screen, claimStdio, releaseStdio } = testRunnerAndScreen;
+    const { testRunner: runner, screen, claimStdio } = testRunnerAndScreen;
 
-    claimStdio();
-    try {
+    {
+      using stdio = claimStdio();
       const setupReporter = new MCPListReporter({ configDir, screen, includeTestId: true });
       const { status } = await runner.runGlobalSetup([setupReporter]);
       if (status !== 'passed')
         return { output: testRunnerAndScreen.output.join('\n'), status };
-    } finally {
-      releaseStdio();
     }
 
     let status: testRunner.FullResultStatus | 'paused' = 'passed';
 
     const cleanup = async () => {
-      claimStdio();
-      try {
-        const result = await runner.runGlobalTeardown();
-        if (status === 'passed')
-          status = result.status;
-      } finally {
-        releaseStdio();
-      }
+      using stdio = claimStdio();
+      const result = await runner.runGlobalTeardown();
+      if (status === 'passed')
+        status = result.status;
     };
 
-    const abort = signal ? signalToPromise(signal) : undefined;
-    const abortPromise = abort
-      ? abort.promise.then(() => 'interrupted' as const)
-      : new Promise<never>(() => {});
+    {
+      using abort = signal ? signalToPromise(signal) : undefined;
+      const abortPromise = abort
+        ? abort.promise.then(() => 'interrupted' as const)
+        : new Promise<never>(() => {});
 
-    try {
-      const reporter = new MCPListReporter({ configDir, screen, includeTestId: true });
-      status = await Promise.race([
-        runner.runTests(reporter, params).then(result => result.status),
-        testRunnerAndScreen.waitForTestPaused().then(() => 'paused' as const),
-        abortPromise,
-      ]);
+      try {
+        const reporter = new MCPListReporter({ configDir, screen, includeTestId: true });
+        status = await Promise.race([
+          runner.runTests(reporter, params).then(result => result.status),
+          testRunnerAndScreen.waitForTestPaused().then(() => 'paused' as const),
+          abortPromise,
+        ]);
 
-      if (status === 'interrupted') {
-        await runner.stopTests();
+        if (status === 'interrupted') {
+          await runner.stopTests();
+          await cleanup();
+          return { output: testRunnerAndScreen.output.join('\n'), status };
+        }
+
+        if (status === 'paused') {
+          const response = await testRunnerAndScreen.sendMessageToPausedTest!({ request: { initialize: { clientInfo: this._clientInfo } } });
+          if (response.error)
+            throw new Error(response.error.message);
+          testRunnerAndScreen.output.push(response.response.initialize!.pausedMessage);
+          return { output: testRunnerAndScreen.output.join('\n'), status };
+        }
+      } catch (e) {
+        status = 'failed';
+        testRunnerAndScreen.output.push(String(e));
         await cleanup();
         return { output: testRunnerAndScreen.output.join('\n'), status };
       }
-
-      if (status === 'paused') {
-        const response = await testRunnerAndScreen.sendMessageToPausedTest!({ request: { initialize: { clientInfo: this._clientInfo } } });
-        if (response.error)
-          throw new Error(response.error.message);
-        testRunnerAndScreen.output.push(response.response.initialize!.pausedMessage);
-        return { output: testRunnerAndScreen.output.join('\n'), status };
-      }
-    } catch (e) {
-      status = 'failed';
-      testRunnerAndScreen.output.push(String(e));
-      await cleanup();
-      return { output: testRunnerAndScreen.output.join('\n'), status };
-    } finally {
-      abort?.dispose();
     }
 
     await cleanup();
@@ -309,7 +304,7 @@ export function createScreen() {
   const originalStdoutWrite = process.stdout.write;
   const originalStderrWrite = process.stderr.write;
 
-  const claimStdio = () => {
+  function claimStdio(): Disposable {
     process.stdout.write = (chunk: string | Buffer) => {
       stdout.write(chunk);
       return true;
@@ -318,12 +313,21 @@ export function createScreen() {
       stderr.write(chunk);
       return true;
     };
-  };
+    let disposed = false;
+    return {
+      [kDispose]() {
+        if (disposed)
+          return;
+        disposed = true;
+        releaseStdio();
+      },
+    };
+  }
 
-  const releaseStdio = () => {
+  function releaseStdio() {
     process.stdout.write = originalStdoutWrite;
     process.stderr.write = originalStderrWrite;
-  };
+  }
   /* eslint-enable no-restricted-properties */
 
   return { screen, claimStdio, releaseStdio, output };

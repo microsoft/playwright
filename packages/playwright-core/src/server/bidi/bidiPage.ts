@@ -535,14 +535,14 @@ export class BidiPage implements PageDelegate {
 
   async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
     // TODO: switch to utility world?
-    const windowHandle = await handle.evaluateHandle(node => {
+    using windowHandle = await handle.evaluateHandle(node => {
       const doc = node.ownerDocument ?? node as Document;
       return doc.defaultView;
     });
     if (!windowHandle)
       return null;
     const executionContext = toBidiExecutionContext(handle._context);
-    return executionContext.frameIdForWindowHandle(windowHandle);
+    return await executionContext.frameIdForWindowHandle(windowHandle);
   }
 
   async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
@@ -566,7 +566,7 @@ export class BidiPage implements PageDelegate {
   private async _framePosition(frame: frames.Frame): Promise<types.Point | null> {
     if (frame === this._page.mainFrame())
       return { x: 0, y: 0 };
-    const element = await frame.frameElement(nullProgress);
+    using element = await frame.frameElement(nullProgress);
     const box = await element.boundingBox(nullProgress);
     if (!box)
       return null;

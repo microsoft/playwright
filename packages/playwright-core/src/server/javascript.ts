@@ -180,15 +180,13 @@ export class JSHandle<T = any> extends SdkObject {
   }
 
   private async _getProperty(propertyName: string): Promise<JSHandle> {
-    const objectHandle = await this.evaluateHandle((object: any, propertyName) => {
+    using objectHandle = await this.evaluateHandle((object: any, propertyName) => {
       const result: any = { __proto__: null };
       result[propertyName] = object[propertyName];
       return result;
     }, propertyName);
     const properties = await objectHandle.internalGetProperties();
-    const result = properties.get(propertyName)!;
-    objectHandle.dispose();
-    return result;
+    return properties.get(propertyName)!;
   }
 
   async internalGetProperties(): Promise<Map<string, JSHandle>> {

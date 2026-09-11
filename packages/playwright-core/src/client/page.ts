@@ -505,7 +505,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._wrapApiCall(async () => {
       const timeoutOptions = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const waiter = Waiter.createForEvent(this, event);
+      using waiter = Waiter.createForEvent(this, event);
       if (logLine)
         waiter.log(logLine);
       waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
@@ -513,9 +513,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
         waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
       if (event !== Events.Page.Close)
         waiter.rejectOnEvent(this, Events.Page.Close, () => this._closeErrorWithReason());
-      const result = await waiter.waitForEvent(this, event, predicate as any);
-      waiter.dispose();
-      return result;
+      return await waiter.waitForEvent(this, event, predicate as any);
     });
   }
 

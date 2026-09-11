@@ -143,7 +143,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   async waitForNavigation(options: WaitForNavigationOptions = {}): Promise<network.Response | null> {
     return await this._page!._wrapApiCall(async () => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      const waiter = this._setupNavigationWaiter(options);
+      using waiter = this._setupNavigationWaiter(options);
 
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
       waiter.log(`waiting for navigation${toUrl} until "${waitUntil}"`);
@@ -169,28 +169,22 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       }
 
       const request = navigatedEvent.newDocument ? network.Request.fromNullable(navigatedEvent.newDocument.request) : null;
-      const response = request ? await waiter.waitForPromise(request._finalRequest()._internalResponse()) : null;
-      waiter.dispose();
-      return response;
+      return request ? await waiter.waitForPromise(request._finalRequest()._internalResponse()) : null;
     }, { title: 'Wait for navigation' });
   }
 
   async waitForLoadState(state: LifecycleEvent = 'load', options?: TimeoutOptions): Promise<void> {
     state = verifyLoadState('state', state);
     return await this._page!._wrapApiCall(async () => {
-      const waiter = this._setupNavigationWaiter(options ?? {});
-      try {
-        if (this._loadStates.has(state)) {
-          waiter.log(`  not waiting, "${state}" event already fired`);
-          waiter.throwIfImmediatelyRejected();
-        } else {
-          await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
-            waiter.log(`  "${s}" event fired`);
-            return s === state;
-          });
-        }
-      } finally {
-        waiter.dispose();
+      using waiter = this._setupNavigationWaiter(options ?? {});
+      if (this._loadStates.has(state)) {
+        waiter.log(`  not waiting, "${state}" event already fired`);
+        waiter.throwIfImmediatelyRejected();
+      } else {
+        await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
+          waiter.log(`  "${s}" event fired`);
+          return s === state;
+        });
       }
     }, { title: `Wait for load state "${state}"` });
   }

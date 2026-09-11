@@ -1103,7 +1103,7 @@ class FrameSession {
 
   async _getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
     // document.documentElement has frameId of the owner frame.
-    const documentElement = await handle.evaluateHandle(node => {
+    using documentElement = await handle.evaluateHandle(node => {
       const doc = node as Document;
       if (doc.documentElement && doc.documentElement.ownerDocument === doc)
         return doc.documentElement;
@@ -1116,10 +1116,8 @@ class FrameSession {
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: documentElement._objectId
     });
-    const frameId = nodeInfo && typeof nodeInfo.node.frameId === 'string' ?
+    return nodeInfo && typeof nodeInfo.node.frameId === 'string' ?
       nodeInfo.node.frameId : null;
-    documentElement.dispose();
-    return frameId;
   }
 
   async _getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
