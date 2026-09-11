@@ -26,6 +26,7 @@ import { SocksProxyAgent } from 'socks-proxy-agent';
 import { getProxyForUrl } from 'proxy-from-env';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { rewriteErrorMessage } from './stackTrace';
+import { eventsHelper } from './eventsHelper';
 
 export type ProxySettings = {
   server: string,
@@ -238,18 +239,11 @@ export function createHttp2Server(...args: any[]): http2.Http2SecureServer {
 
 export async function startHttpServer(server: http.Server, options: { host?: string, port?: number }) {
   const { host = 'localhost', port = 0 } = options;
-  const errorPromise = new ManualPromise();
-  const errorListener = (error: Error) => errorPromise.reject(error);
-  server.on('error', errorListener);
-  try {
-    server.listen(port, host);
-    await Promise.race([
-      new Promise(cb => server.once('listening', cb)),
-      errorPromise,
-    ]);
-  } finally {
-    server.removeListener('error', errorListener);
-  }
+  const listeningPromise = new ManualPromise<void>();
+  using errorListener = eventsHelper.addEventListener(server, 'error', (error: Error) => listeningPromise.reject(error));
+  using listeningListener = eventsHelper.addEventListener(server, 'listening', () => listeningPromise.resolve());
+  server.listen(port, host);
+  await listeningPromise;
 }
 
 export async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean, onLog?: (data: string) => void, onStdErr?: (data: string) => void) {

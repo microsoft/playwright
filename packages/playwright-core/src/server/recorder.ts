@@ -281,11 +281,9 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       recorderChangedState = true;
       selectorPromise.reject(new Error('Locator picking was cancelled'));
     };
-    const listeners: RegisteredListener[] = [
-      eventsHelper.addEventListener(this, RecorderEvent.ElementPicked, onElementPicked),
-      eventsHelper.addEventListener(this, RecorderEvent.ModeChanged, onModeChanged),
-    ];
     try {
+      using elementPickedListener = eventsHelper.addEventListener(this, RecorderEvent.ElementPicked, onElementPicked);
+      using modeChangedListener = eventsHelper.addEventListener(this, RecorderEvent.ModeChanged, onModeChanged);
       const doPickLocator = async () => {
         // Prevent unhandled rejection in case of cancellation during setMode
         selectorPromise.catch(() => {});
@@ -295,7 +293,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       };
       return await progress.race(page.openScope.race(doPickLocator()));
     } finally {
-      eventsHelper.removeEventListeners(listeners);
       this._pickLocatorPage = undefined;
       if (!recorderChangedState)
         await progress.race(this.setMode('none'));

@@ -16,6 +16,7 @@
 
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { createTimeout } from '@isomorphic/timeoutRunner';
+import { eventsHelper } from '@utils/eventsHelper';
 
 import type * as playwright from '../../..';
 import type { Tab } from './tab';
@@ -24,18 +25,11 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
   const settleMs = tab.context.config.timeouts?.settle ?? 500;
   const requests: playwright.Request[] = [];
 
-  const requestListener = (request: playwright.Request) => requests.push(request);
-  const disposeListeners = () => {
-    tab.page.off('request', requestListener);
-  };
-  tab.page.on('request', requestListener);
-
   let result: R;
-  try {
+  {
+    using requestListener = eventsHelper.addEventListener(tab.page, 'request', (request: playwright.Request) => requests.push(request));
     result = await callback();
     await tab.waitForTimeout(settleMs);
-  } finally {
-    disposeListeners();
   }
 
   const requestedNavigation = requests.some(request => request.isNavigationRequest());
@@ -63,27 +57,15 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
 }
 
 export function eventWaiter<T>(page: playwright.Page, event: string, timeout: number): { promise: Promise<T | undefined>, abort: () => void } {
-  const disposables: (() => void)[] = [];
-
-  const eventPromise = new Promise<T | undefined>((resolve, reject) => {
-    // eslint-disable-next-line no-restricted-syntax
-    page.on(event as any, resolve as any);
-    // eslint-disable-next-line no-restricted-syntax
-    disposables.push(() => page.off(event as any, resolve as any));
-  });
-
-  let abort: () => void;
-  const abortPromise = new Promise<T | undefined>((resolve, reject) => {
-    abort = () => resolve(undefined);
-  });
-
-  const timeoutPromise = new Promise<T | undefined>(f => {
-    const timeoutId = setTimeout(() => f(undefined), timeout);
-    disposables.push(() => clearTimeout(timeoutId));
-  });
+  const result = new ManualPromise<T | undefined>();
+  async function waitForResult() {
+    using listener = eventsHelper.addEventListener(page, event, (value: T) => result.resolve(value));
+    using timer = createTimeout(() => result.resolve(undefined), timeout);
+    return await result;
+  }
 
   return {
-    promise: Promise.race([eventPromise, abortPromise, timeoutPromise]).finally(() => disposables.forEach(dispose => dispose())),
-    abort: abort!
+    promise: waitForResult(),
+    abort: () => result.resolve(undefined),
   };
 }

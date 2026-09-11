@@ -45,7 +45,6 @@ import type { ConsoleMessage } from './console';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScript } from '@injected/injectedScript';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
-import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as channels from './channels';
 import type { AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
 
@@ -1110,23 +1109,22 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   private async _raceWithCSPError(func: () => Promise<dom.ElementHandle>): Promise<dom.ElementHandle> {
-    const listeners: RegisteredListener[] = [];
     let result: dom.ElementHandle;
     let error: Error | undefined;
     let cspMessage: ConsoleMessage | undefined;
     const actionPromise = func().then(r => result = r).catch(e => error = e);
-    const errorPromise = new Promise<void>(resolve => {
-      listeners.push(eventsHelper.addEventListener(this._page.browserContext, BrowserContext.Events.Console, (message: ConsoleMessage) => {
+    const errorPromise = new ManualPromise<void>();
+    {
+      using listener = eventsHelper.addEventListener(this._page.browserContext, BrowserContext.Events.Console, (message: ConsoleMessage) => {
         if (message.page() !== this._page || message.type() !== 'error')
           return;
         if (message.text().includes('Content-Security-Policy') || message.text().includes('Content Security Policy')) {
           cspMessage = message;
-          resolve();
+          errorPromise.resolve();
         }
-      }));
-    });
-    await Promise.race([actionPromise, errorPromise]);
-    eventsHelper.removeEventListeners(listeners);
+      });
+      await Promise.race([actionPromise, errorPromise]);
+    }
     if (cspMessage)
       throw new Error(cspMessage.text());
     if (error)
