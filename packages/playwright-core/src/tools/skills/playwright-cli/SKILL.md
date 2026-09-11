@@ -148,10 +148,15 @@ playwright-cli sessionstorage-clear
 
 ```bash
 playwright-cli set-color-scheme dark
+playwright-cli clear-color-scheme
 playwright-cli set-reduced-motion reduce
+playwright-cli clear-reduced-motion
 playwright-cli set-forced-colors active
+playwright-cli clear-forced-colors
 playwright-cli set-contrast more
+playwright-cli clear-contrast
 playwright-cli set-media print
+playwright-cli clear-media
 ```
 
 ### Network

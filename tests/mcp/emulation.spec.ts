@@ -19,10 +19,16 @@ import { test, expect } from './fixtures';
 test('browser_emulate_media', async ({ client, server }) => {
   server.setContent('/', `
     <div id="scheme"></div>
+    <div id="media"></div>
     <script>
-      const query = matchMedia('(prefers-color-scheme: dark)');
-      const update = () => document.getElementById('scheme').textContent = \`Color scheme: \${query.matches ? 'dark' : 'light'}\`;
-      query.addEventListener('change', update);
+      const colorScheme = matchMedia('(prefers-color-scheme: dark)');
+      const print = matchMedia('print');
+      const update = () => {
+        document.getElementById('scheme').textContent = \`Color scheme: \${colorScheme.matches ? 'dark' : 'light'}\`;
+        document.getElementById('media').textContent = \`Media type: \${print.matches ? 'print' : 'screen'}\`;
+      };
+      colorScheme.addEventListener('change', update);
+      print.addEventListener('change', update);
       update();
     </script>
   `, 'text/html');
@@ -53,12 +59,22 @@ test('browser_emulate_media', async ({ client, server }) => {
 
   expect(await client.callTool({
     name: 'browser_emulate_media',
-    arguments: { colorScheme: 'light' },
+    arguments: { media: 'print' },
   })).toHaveResponse({
-    code: `await page.emulateMedia({ colorScheme: 'light' });`,
+    code: `await page.emulateMedia({ media: 'print' });`,
   });
   await expect.poll(() => client.callTool({ name: 'browser_snapshot' })).toHaveResponse({
-    inlineSnapshot: expect.stringContaining(`Color scheme: light`),
+    inlineSnapshot: expect.stringContaining(`Media type: print`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_emulate_media',
+    arguments: { colorScheme: null, contrast: null, forcedColors: null, media: null, reducedMotion: null },
+  })).toHaveResponse({
+    code: `await page.emulateMedia({ colorScheme: null, contrast: null, forcedColors: null, media: null, reducedMotion: null });`,
+  });
+  await expect.poll(() => client.callTool({ name: 'browser_snapshot' })).toHaveResponse({
+    inlineSnapshot: expect.stringContaining(`Media type: screen`),
   });
 });
 

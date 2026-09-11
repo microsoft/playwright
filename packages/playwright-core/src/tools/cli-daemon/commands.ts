@@ -529,6 +529,51 @@ const setMedia = declareCommand({
   toolParams: ({ media }) => ({ media }),
 });
 
+const clearColorScheme = declareCommand({
+  name: 'clear-color-scheme',
+  description: 'Clear color scheme emulation',
+  category: 'emulation',
+  args: z.object({}),
+  toolName: 'browser_emulate_media',
+  toolParams: () => ({ colorScheme: null }),
+});
+
+const clearReducedMotion = declareCommand({
+  name: 'clear-reduced-motion',
+  description: 'Clear reduced motion emulation',
+  category: 'emulation',
+  args: z.object({}),
+  toolName: 'browser_emulate_media',
+  toolParams: () => ({ reducedMotion: null }),
+});
+
+const clearForcedColors = declareCommand({
+  name: 'clear-forced-colors',
+  description: 'Clear forced colors emulation',
+  category: 'emulation',
+  args: z.object({}),
+  toolName: 'browser_emulate_media',
+  toolParams: () => ({ forcedColors: null }),
+});
+
+const clearContrast = declareCommand({
+  name: 'clear-contrast',
+  description: 'Clear preferred contrast emulation',
+  category: 'emulation',
+  args: z.object({}),
+  toolName: 'browser_emulate_media',
+  toolParams: () => ({ contrast: null }),
+});
+
+const clearMedia = declareCommand({
+  name: 'clear-media',
+  description: 'Clear CSS media type emulation',
+  category: 'emulation',
+  args: z.object({}),
+  toolName: 'browser_emulate_media',
+  toolParams: () => ({ media: null }),
+});
+
 const runCode = declareCommand({
   name: 'run-code',
   description: 'Run Playwright code snippet',
@@ -1338,6 +1383,11 @@ const commandsArray: AnyCommandSchema[] = [
   setForcedColors,
   setContrast,
   setMedia,
+  clearColorScheme,
+  clearReducedMotion,
+  clearForcedColors,
+  clearContrast,
+  clearMedia,
 
   // network category
   networkRequests,

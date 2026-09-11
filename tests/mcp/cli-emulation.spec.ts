@@ -16,22 +16,36 @@
 
 import { test, expect } from './cli-fixtures';
 
-test('set media features', async ({ cli, server }) => {
+test('set and clear media features', async ({ cli, server }) => {
   await cli('open', server.PREFIX);
 
   const expectMatches = async (query: string) => {
     const { output } = await cli('eval', `() => matchMedia('${query}').matches`);
-    expect(output).toContain('true');
+    expect(output).toContain('### Result\ntrue');
+  };
+
+  const expectClear = async (command: string, option: string) => {
+    const { output } = await cli(command);
+    expect(output).toContain(`await page.emulateMedia({ ${option}: null });`);
   };
 
   await cli('set-color-scheme', 'dark');
   await expectMatches('(prefers-color-scheme: dark)');
+  await expectClear('clear-color-scheme', 'colorScheme');
+
   await cli('set-reduced-motion', 'reduce');
   await expectMatches('(prefers-reduced-motion: reduce)');
+  await expectClear('clear-reduced-motion', 'reducedMotion');
+
   await cli('set-forced-colors', 'active');
   await expectMatches('(forced-colors: active)');
+  await expectClear('clear-forced-colors', 'forcedColors');
+
   await cli('set-contrast', 'more');
   await expectMatches('(prefers-contrast: more)');
+  await expectClear('clear-contrast', 'contrast');
+
   await cli('set-media', 'print');
   await expectMatches('print');
+  await expectClear('clear-media', 'media');
 });
