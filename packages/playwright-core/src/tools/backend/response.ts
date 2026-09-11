@@ -76,7 +76,9 @@ export class Response {
     this._raw = this._json || (options?.raw ?? false);
   }
 
-  private _computeRelativeTo(fileName: string): string {
+  private _printablePath(fileName: string): string {
+    if (this._context.config.filePaths === 'absolute')
+      return path.resolve(fileName);
     const rel = path.relative(this._clientWorkspace, fileName);
     // Prefix bare filenames with `./` so they're not mistaken for living in
     // the auto-named `.playwright-cli/` artifact directory.
@@ -92,7 +94,7 @@ export class Response {
     else
       fileName = await this._context.outputFile(template, { origin: 'llm' });
     await fs.promises.mkdir(path.dirname(fileName), { recursive: true });
-    const relativeName = this._computeRelativeTo(fileName);
+    const relativeName = this._printablePath(fileName);
     const printableLink = `- [${title}](${relativeName})`;
     return { fileName, relativeName, printableLink };
   }
@@ -128,7 +130,7 @@ export class Response {
   }
 
   addFileLink(title: string, fileName: string) {
-    const relativeName = this._computeRelativeTo(fileName);
+    const relativeName = this._printablePath(fileName);
     this.addTextResult(`- [${title}](${relativeName})`);
   }
 
@@ -290,7 +292,8 @@ export class Response {
     const snapshotToFile = this._includeSnapshot !== 'explicit' || !!this._includeSnapshotFileName;
     const ariaFormat = this._includeSnapshot === 'none' ? 'none' : (this._json && !snapshotToFile ? 'json' : 'text');
     const updateWebMCP = this._includeSnapshot !== 'none'; // Collect the page's WebMCP tools whenever a snapshot is taken anyway.
-    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotRoot, this._includeSnapshotDepth, this._includeSnapshotBoxes, this._clientWorkspace, ariaFormat, updateWebMCP) : undefined;
+    const logRelativeTo = this._context.config.filePaths === 'absolute' ? undefined : this._clientWorkspace;
+    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotRoot, this._includeSnapshotDepth, this._includeSnapshotBoxes, logRelativeTo, ariaFormat, updateWebMCP) : undefined;
     const tabHeaders = await Promise.all(this._context.tabs().map(tab => tab.headerSnapshot()));
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1)
@@ -325,7 +328,7 @@ export class Response {
         if (event.type === 'download-start')
           text.push(`- Downloading file ${event.download.download.suggestedFilename()} ...`);
         else if (event.type === 'download-finish')
-          text.push(`- Downloaded file ${event.download.download.suggestedFilename()} to "${this._computeRelativeTo(event.download.outputFile)}"`);
+          text.push(`- Downloaded file ${event.download.download.suggestedFilename()} to "${this._printablePath(event.download.outputFile)}"`);
       }
     }
     if (text.length)
@@ -334,7 +337,7 @@ export class Response {
     const pausedDetails = this._context.debugger().pausedDetails();
     if (pausedDetails) {
       addSection('Paused', [
-        `- ${pausedDetails.title} at ${this._computeRelativeTo(pausedDetails.location.file)}${pausedDetails.location.line ? ':' + pausedDetails.location.line : ''}`,
+        `- ${pausedDetails.title} at ${this._printablePath(pausedDetails.location.file)}${pausedDetails.location.line ? ':' + pausedDetails.location.line : ''}`,
         '- Use any tools to explore and interact, resume by calling resume/step-over/pause-at',
       ]);
     }

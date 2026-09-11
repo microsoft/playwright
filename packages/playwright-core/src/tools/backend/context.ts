@@ -43,6 +43,7 @@ export type ContextConfig = {
   codegen?: 'typescript' | 'python' | 'java' | 'csharp' | 'none';
   console?: { level?: 'error' | 'warning' | 'info' | 'debug' };
   imageResponses?: 'allow' | 'omit';
+  filePaths?: 'relative' | 'absolute';
   network?: {
     allowedOrigins?: string[];
     blockedOrigins?: string[];

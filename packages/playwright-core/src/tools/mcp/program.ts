@@ -51,6 +51,7 @@ export function decorateMCPCommand(command: Command) {
       .option('--executable-path <path>', 'path to the browser executable.')
       .option('--extension', 'Connect to a running browser instance (Edge/Chrome only). Requires the "Playwright Extension" to be installed.')
       .option('--endpoint <endpoint>', 'Bound browser endpoint to connect to.')
+      .option('--file-paths <mode>', 'how file paths are rendered in tool results, "relative" to the workspace root or "absolute". Default is "relative".', enumParser.bind(null, '--file-paths', ['relative', 'absolute']))
       .option('--grant-permissions <permissions...>', 'List of permissions to grant to the browser context, for example "geolocation", "clipboard-read", "clipboard-write".', commaSeparatedList)
       .option('--headless', 'run browser in headless mode, headed by default')
       .option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.')
