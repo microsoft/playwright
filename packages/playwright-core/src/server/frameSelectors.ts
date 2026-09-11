@@ -78,8 +78,8 @@ export class FrameSelectors {
     const context = await resolved.frame.context(world);
     if (context === resolved.result._context)
       return resolved.result;
-    const properties = await resolved.result.internalGetProperties();
-    resolved.result.dispose();
+    using arrayHandle = resolved.result;
+    const properties = await arrayHandle.internalGetProperties();
     const elements = [...properties.values()];
     try {
       return await context.evaluateExpressionHandle('elements => elements', { isFunction: true }, elements);
@@ -313,7 +313,6 @@ export class FrameSelectors {
 async function adoptIfNeeded<T extends Node>(handle: ElementHandle<T>, context: FrameExecutionContext): Promise<ElementHandle<T>> {
   if (handle._context === context)
     return handle;
-  const adopted = await handle._page.delegate.adoptElementHandle(handle, context);
-  handle.dispose();
-  return adopted;
+  using originalHandle = handle;
+  return await handle._page.delegate.adoptElementHandle(originalHandle, context);
 }

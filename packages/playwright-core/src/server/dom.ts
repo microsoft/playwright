@@ -681,45 +681,40 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       // boundary into the page's main world. Adopt the element to main context and
       // construct the DataTransfer + dispatch events there.
       const mainContext = await progress.race(this._frame.mainContext());
-      const handle = this._context === mainContext ? this : await progress.race(this._page.delegate.adoptElementHandle(this, mainContext));
-      const disposeHandle = handle !== this;
-      try {
-        const result = await progress.race(handle.evaluate((node: Node, { payloads, data, point }) => {
-          if (!node.isConnected || node.nodeType !== 1 /* ELEMENT_NODE */)
-            return 'error:notconnected' as const;
-          const element = node as Element;
-          const dt = new DataTransfer();
-          for (const p of payloads) {
-            const bytes = Uint8Array.from(atob(p.buffer), c => c.charCodeAt(0));
-            const file = new File([bytes], p.name, { type: p.mimeType, lastModified: p.lastModifiedMs });
-            dt.items.add(file);
-          }
-          for (const entry of data)
-            dt.setData(entry.mimeType, entry.value);
-          const makeEvent = (type: string) => new DragEvent(type, {
-            bubbles: true,
-            cancelable: true,
-            composed: true,
-            clientX: point.x,
-            clientY: point.y,
-            dataTransfer: dt,
-          });
-          element.dispatchEvent(makeEvent('dragenter'));
-          const over = makeEvent('dragover');
-          element.dispatchEvent(over);
-          if (!over.defaultPrevented) {
-            element.dispatchEvent(makeEvent('dragleave'));
-            return 'not-accepted' as const;
-          }
-          element.dispatchEvent(makeEvent('drop'));
-          return 'accepted' as const;
-        }, { payloads, data, point }));
-        if (result === 'not-accepted')
-          throw new NonRecoverableDOMError('Drop target did not accept the drop — its dragover handler did not call preventDefault()');
-      } finally {
-        if (disposeHandle)
-          handle.dispose();
-      }
+      using adoptedHandle = this._context === mainContext ? null : await progress.race(this._page.delegate.adoptElementHandle(this, mainContext));
+      const handle = adoptedHandle || this;
+      const result = await progress.race(handle.evaluate((node: Node, { payloads, data, point }) => {
+        if (!node.isConnected || node.nodeType !== 1 /* ELEMENT_NODE */)
+          return 'error:notconnected' as const;
+        const element = node as Element;
+        const dt = new DataTransfer();
+        for (const p of payloads) {
+          const bytes = Uint8Array.from(atob(p.buffer), c => c.charCodeAt(0));
+          const file = new File([bytes], p.name, { type: p.mimeType, lastModified: p.lastModifiedMs });
+          dt.items.add(file);
+        }
+        for (const entry of data)
+          dt.setData(entry.mimeType, entry.value);
+        const makeEvent = (type: string) => new DragEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+          clientX: point.x,
+          clientY: point.y,
+          dataTransfer: dt,
+        });
+        element.dispatchEvent(makeEvent('dragenter'));
+        const over = makeEvent('dragover');
+        element.dispatchEvent(over);
+        if (!over.defaultPrevented) {
+          element.dispatchEvent(makeEvent('dragleave'));
+          return 'not-accepted' as const;
+        }
+        element.dispatchEvent(makeEvent('drop'));
+        return 'accepted' as const;
+      }, { payloads, data, point }));
+      if (result === 'not-accepted')
+        throw new NonRecoverableDOMError('Drop target did not accept the drop — its dragover handler did not call preventDefault()');
     }, { ...options, waitAfter: 'disabled' });
   }
 
@@ -926,9 +921,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _adoptTo(context: FrameExecutionContext): Promise<ElementHandle<T>> {
     if (this._context !== context) {
-      const adopted = await this._page.delegate.adoptElementHandle(this, context);
-      this.dispose();
-      return adopted;
+      using handle = this;
+      return await this._page.delegate.adoptElementHandle(handle, context);
     }
     return this;
   }
