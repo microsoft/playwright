@@ -51,6 +51,16 @@ test('close', async ({ cli, server }) => {
   expect(listOutput).toContain('(no browsers)');
 });
 
+test('idle timeout shuts the session down', async ({ cli, server }) => {
+  await cli('open', '--idle-timeout=3000', server.HELLO_WORLD);
+  const { output } = await cli('list');
+  expect(output).toContain('- default:');
+
+  await expect.poll(async () => (await cli('list')).output).toContain('(no browsers)');
+  const { output: afterOutput } = await cli('snapshot');
+  expect(afterOutput).toContain(`The browser 'default' is not open, please run open first`);
+});
+
 test('close named session', async ({ cli, server }) => {
   await cli('-s', 'mysession', 'open', server.HELLO_WORLD);
 

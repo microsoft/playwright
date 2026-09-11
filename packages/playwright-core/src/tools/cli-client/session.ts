@@ -137,6 +137,8 @@ export class Session {
       args.push(`--profile=${cliArgs.profile}`);
     if (cliArgs.config)
       args.push(`--config=${cliArgs.config}`);
+    if (cliArgs['idle-timeout'] !== undefined)
+      args.push(`--idle-timeout=${cliArgs['idle-timeout']}`);
     if (cliArgs.extension)
       args.push('--extension');
     else if (cliArgs.cdp)

@@ -22,7 +22,7 @@ import { playwright } from '../../inprocess';
 import { defaultCacheDirectory } from '../../server/registry/index';
 import { testDebug } from './log';
 import { outputDir } from '../backend/context';
-import { IdleTimer } from '../backend/idleTimer';
+import { IdleTimer, defaultIdleTimeout } from '../backend/idleTimer';
 import { createExtensionBrowser } from './extensionContextFactory';
 import { connectToBrowserAcrossVersions, descriptorEndpoint } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
@@ -52,7 +52,7 @@ export type BindOptions = {
 
 export async function createBrowserWithInfo(config: FullConfig, clientInfo: ClientInfo, cliOptions: CLIOptions, bindOptions: BindOptions): Promise<BrowserWithInfo> {
   const info = await createBrowser(config, clientInfo, cliOptions, bindOptions);
-  const idleTimeout = config.timeouts?.idle;
+  const idleTimeout = config.timeouts?.idle ?? (info.ownership === 'own' && config.browser.launchOptions.headless ? defaultIdleTimeout : undefined);
   if (idleTimeout) {
     info.idleTimer = new IdleTimer(idleTimeout, () => info.browser.close().catch(() => {}));
     info.browser.once('disconnected', () => info.idleTimer?.dispose());

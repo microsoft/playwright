@@ -219,7 +219,9 @@ export type Config = {
     settle?: number;
 
     /**
-     * Close the browser after this many milliseconds without a tool call, and relaunch it on the next one. Disabled by default.
+     * Close the browser after this many milliseconds without a tool call, and relaunch it on the next one.
+     * Defaults to one hour for headless browsers Playwright launched, and to no timeout for headed or attached ones. Pass 0 to disable.
+     * The CLI shuts the whole session down instead of relaunching.
      */
     idle?: number;
   };

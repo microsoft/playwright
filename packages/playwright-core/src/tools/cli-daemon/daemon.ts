@@ -29,6 +29,7 @@ import { commands } from './commands';
 
 import { SocketConnection } from '../utils/socketConnection';
 import type * as playwright from '../../..';
+import type { IdleTimer } from '../backend/idleTimer';
 import type { SessionConfig, ClientInfo } from '../cli-client/registry';
 import type { CallToolRequest, CallToolResult } from '../backend/tool';
 import type { ContextConfig } from '../backend/context';
@@ -79,6 +80,7 @@ export async function startCliDaemonServer(
     ownership?: 'attached' | 'own',
     persistent?: boolean,
     exitOnClose?: boolean,
+    idleTimer?: IdleTimer,
   }
 ): Promise<string> {
   const sessionConfig = createSessionConfig(clientInfo, sessionName, browserInfo, options);
@@ -93,7 +95,7 @@ export async function startCliDaemonServer(
     }
   }
 
-  const backend = new BrowserBackend(contextConfig, browserContext, browserTools);
+  const backend = new BrowserBackend(contextConfig, browserContext, browserTools, { idleTimer: options.idleTimer });
   await backend.initialize(mcpClientInfo);
 
   if (browserContext.isClosed())
@@ -141,6 +143,7 @@ export async function startCliDaemonServer(
   });
 
   await saveSessionFile(clientInfo, sessionConfig);
+  options.idleTimer?.poke();
   await monitorSocketPath(socketPath);
   return socketPath;
 }
