@@ -35,7 +35,6 @@ test('closes the browser after the idle timeout and relaunches it on the next ca
     'close browser': 1,
   });
 
-  // The next call relaunches the browser.
   const response = await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
@@ -78,7 +77,6 @@ test('cdp endpoint only disconnects on idle and reconnects to the same pages', a
     'create context': 1,
     'close browser': 1,
   });
-  // The browser is not ours, its page stays open.
   expect(browserContext.pages().map(page => page.url())).toContain(server.HELLO_WORLD);
 
   const response = await client.callTool({

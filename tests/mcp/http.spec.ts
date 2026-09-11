@@ -517,7 +517,6 @@ async function connectClient(url: URL, name: string) {
   return { client, close };
 }
 
-// Keeps calling tools for the given time, so an idle timer never fires.
 async function keepBusy(client: Client, ms: number) {
   const deadline = Date.now() + ms;
   while (Date.now() < deadline) {
@@ -534,7 +533,6 @@ test('http transport shared context: one idle timer across clients', async ({ se
     arguments: { url: server.HELLO_WORLD },
   });
 
-  // While the second client keeps working past the timeout, the idle client keeps its state.
   const client2 = await connectClient(url, 'test2');
   await keepBusy(client2.client, 1200);
   expect(formatLog(stderr())).toEqual({
@@ -551,7 +549,6 @@ test('http transport shared context: one idle timer across clients', async ({ se
     inlineSnapshot: expect.stringContaining(`Hello, world!`),
   });
 
-  // Once every client has been idle for the timeout, the shared browser closes.
   await expect.poll(() => formatLog(stderr())).toEqual({
     'create browser (persistent)': 1,
     'connect to shared browser': 2,
@@ -561,7 +558,6 @@ test('http transport shared context: one idle timer across clients', async ({ se
     'close browser': 1,
   });
 
-  // Each client relaunches on its next call.
   for (const { client } of [client1, client2]) {
     expect(await client.callTool({
       name: 'browser_navigate',

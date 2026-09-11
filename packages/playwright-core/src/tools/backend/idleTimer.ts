@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-// Fires once no tool call has been running for the timeout, the next call re-arms it.
 export class IdleTimer {
   private _timeout: number;
   private _onIdle: () => void;
