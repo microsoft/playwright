@@ -57,7 +57,7 @@ export type CLIOptions = {
   initScript?: string[];
   initPage?: string[];
   isolated?: boolean;
-  imageResponses?: 'allow' | 'omit';
+  imageResponses?: 'allow' | 'omit' | 'only';
   mobile?: boolean;
   sandbox?: boolean;
   outputDir?: string;
@@ -439,7 +439,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
     options.initScript = [initScript];
   options.isolated = envToBoolean(e.PLAYWRIGHT_MCP_ISOLATED);
   if (e.PLAYWRIGHT_MCP_IMAGE_RESPONSES)
-    options.imageResponses = enumParser<'allow' | 'omit'>('--image-responses', ['allow', 'omit'], e.PLAYWRIGHT_MCP_IMAGE_RESPONSES);
+    options.imageResponses = enumParser<'allow' | 'omit' | 'only'>('--image-responses', ['allow', 'omit', 'only'], e.PLAYWRIGHT_MCP_IMAGE_RESPONSES);
   options.mobile = envToBoolean(e.PLAYWRIGHT_MCP_MOBILE);
   options.sandbox = envToBoolean(e.PLAYWRIGHT_MCP_SANDBOX);
   options.outputDir = envToString(e.PLAYWRIGHT_MCP_OUTPUT_DIR);

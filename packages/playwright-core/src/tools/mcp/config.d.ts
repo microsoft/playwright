@@ -225,9 +225,10 @@ export type Config = {
   };
 
   /**
-   * Whether to send image responses to the client. Can be "allow", "omit", or "auto". Defaults to "auto", which sends images if the client can display them.
+   * Whether to send image responses to the client. Can be "allow", "omit", or "only". Defaults to "allow".
+   * With "only", a response that carries an image consists of the image parts alone, without the text part.
    */
-  imageResponses?: 'allow' | 'omit';
+  imageResponses?: 'allow' | 'omit' | 'only';
 
   snapshot?: {
     /**

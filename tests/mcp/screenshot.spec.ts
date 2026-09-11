@@ -303,6 +303,44 @@ test('browser_take_screenshot (imageResponses=omit)', async ({ startClient, serv
   });
 });
 
+test('browser_take_screenshot (imageResponses=only)', async ({ startClient, server }, testInfo) => {
+  const outputDir = testInfo.outputPath('output');
+  const { client } = await startClient({
+    args: ['--image-responses=only'],
+    config: { outputDir },
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_take_screenshot',
+  })).toEqual({
+    content: [
+      {
+        data: expect.any(String),
+        mimeType: 'image/png',
+        type: 'image',
+      },
+    ],
+  });
+  expect(fs.readdirSync(outputDir).filter(f => f.endsWith('.png'))).toHaveLength(1);
+
+  expect(await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: { filename: 'screenshot.png' },
+  })).toEqual({
+    content: [
+      {
+        text: expect.stringContaining('[Screenshot of viewport](./screenshot.png)'),
+        type: 'text',
+      },
+    ],
+  });
+});
+
 test('browser_take_screenshot (fullPage: true)', async ({ startClient, server }, testInfo) => {
   const { client } = await startClient({
     config: { outputDir: testInfo.outputPath('output') },
