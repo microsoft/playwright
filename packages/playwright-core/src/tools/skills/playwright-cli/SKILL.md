@@ -144,6 +144,16 @@ playwright-cli sessionstorage-delete step
 playwright-cli sessionstorage-clear
 ```
 
+### Emulation
+
+```bash
+playwright-cli set-color-scheme dark
+playwright-cli set-reduced-motion reduce
+playwright-cli set-forced-colors active
+playwright-cli set-contrast more
+playwright-cli set-media print
+```
+
 ### Network
 
 ```bash

@@ -21,6 +21,7 @@ import console from './console';
 import cookies from './cookies';
 import devtools from './devtools';
 import dialogs from './dialogs';
+import emulation from './emulation';
 import evaluate from './evaluate';
 import files from './files';
 import find from './find';
@@ -54,6 +55,7 @@ export const browserTools: Tool<any>[] = [
   ...cookies,
   ...devtools,
   ...dialogs,
+  ...emulation,
   ...evaluate,
   ...files,
   ...find,
