@@ -51,19 +51,13 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     let frame: Frame | null = this._page._page.mainFrame();
     while (frame) {
       const context: FrameExecutionContext = await progress.race(frame.mainContext());
-      const handle = await progress.race(context.evaluateHandle((text: string) => (window as any).__pw_bidiInsertText(text), text));
+      using handle = await progress.race(context.evaluateHandle((text: string) => (window as any).__pw_bidiInsertText(text), text));
       // insertText returns the focused frame element when the focus lives inside a nested frame,
       // otherwise the text was inserted (if possible) and we are done.
       const element = handle.asElement();
-      if (!element) {
-        handle.dispose();
+      if (!element)
         return;
-      }
-      try {
-        frame = await element.contentFrame(progress);
-      } finally {
-        element.dispose();
-      }
+      frame = await element.contentFrame(progress);
     }
   }
 

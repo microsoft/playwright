@@ -743,7 +743,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, { multiple, directoryUpload: !!localDirectory }));
     if (result === 'error:notconnected' || !result.asElement())
       return 'error:notconnected';
-    const retargeted = result.asElement() as ElementHandle<HTMLInputElement>;
+    using retargeted = result.asElement() as ElementHandle<HTMLInputElement>;
     await this.instrumentation.onBeforeInputAction(progress, this, undefined, box);
     if (localPaths || localDirectory) {
       const localPathsOrDirectory = localDirectory ? [localDirectory] : localPaths!;

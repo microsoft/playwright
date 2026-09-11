@@ -915,7 +915,7 @@ export class WVPage implements PageDelegate {
     let quads = result as types.Quad[];
     let frame: frames.Frame | null = handle._frame;
     while (frame?.parentFrame()) {
-      const frameElement = await this.getFrameElement(frame).catch(() => null);
+      using frameElement = await this.getFrameElement(frame).catch(() => null);
       if (!frameElement)
         return null;
       const offset = await frameElement.evaluateInUtility(([injected, iframe]) => {
@@ -925,7 +925,7 @@ export class WVPage implements PageDelegate {
           return null;
         const rect = element.getBoundingClientRect();
         return { x: rect.left + style.left, y: rect.top + style.top };
-      }, {}).finally(() => frameElement.dispose());
+      }, {});
       if (!offset || typeof offset === 'string')
         return null;
       quads = quads.map(quad => quad.map(point => ({ x: point.x + offset.x, y: point.y + offset.y })) as types.Quad);
@@ -950,8 +950,8 @@ export class WVPage implements PageDelegate {
     let frame: frames.Frame = this._page.mainFrame();
     for (;;) {
       const context = await progress.race(frame.mainContext());
-      const iframe = await progress.race(context.evaluateHandle(() => (globalThis as any).__pwWebViewInput.activeIFrame())) as dom.ElementHandle;
-      const childFrame = await this._childFrameAndDispose(progress, iframe);
+      using iframe = await progress.race(context.evaluateHandle(() => (globalThis as any).__pwWebViewInput.activeIFrame())) as dom.ElementHandle;
+      const childFrame = await progress.race(this.getContentFrame(iframe));
       if (!childFrame)
         break;
       frame = childFrame;
@@ -968,27 +968,15 @@ export class WVPage implements PageDelegate {
     for (;;) {
       path.push({ frame, point });
       const context = await progress.race(frame.mainContext());
-      const position = await progress.race(context.evaluateHandle(p => (globalThis as any).__pwWebViewInput.positionInIFrame(p.x, p.y), point));
-      try {
-        const iframe = await position.getProperty(progress, 'iframe') as dom.ElementHandle;
-        const childFrame = await this._childFrameAndDispose(progress, iframe);
-        if (!childFrame)
-          break;
-        frame = childFrame;
-        point = await progress.race(position.evaluate(result => ({ x: result.x, y: result.y })));
-      } finally {
-        position.dispose();
-      }
+      using position = await progress.race(context.evaluateHandle(p => (globalThis as any).__pwWebViewInput.positionInIFrame(p.x, p.y), point));
+      using iframe = await position.getProperty(progress, 'iframe') as dom.ElementHandle;
+      const childFrame = await progress.race(this.getContentFrame(iframe));
+      if (!childFrame)
+        break;
+      frame = childFrame;
+      point = await progress.race(position.evaluate(result => ({ x: result.x, y: result.y })));
     }
     return path;
-  }
-
-  private async _childFrameAndDispose(progress: Progress, iframe: dom.ElementHandle): Promise<frames.Frame | null> {
-    try {
-      return await progress.race(this.getContentFrame(iframe));
-    } finally {
-      iframe.dispose();
-    }
   }
 
   async resetForReuse(progress: Progress): Promise<void> {
@@ -1001,9 +989,9 @@ export class WVPage implements PageDelegate {
     // Requesting the frame's own document streams its ancestor path, which
     // includes the owner element (and its siblings). Pick the one whose
     // contentDocument is this frame, then resolve it in the parent's context.
-    const documentHandle = await (await frame.mainContext()).evaluateHandle(() => document);
     let ownerNodeId: number | undefined;
-    try {
+    {
+      using documentHandle = await (await frame.mainContext()).evaluateHandle(() => document);
       if (documentHandle._objectId) {
         const { nodesById } = await this._requestNodeViaDOM(documentHandle._objectId);
         for (const node of nodesById.values()) {
@@ -1013,8 +1001,6 @@ export class WVPage implements PageDelegate {
           }
         }
       }
-    } finally {
-      documentHandle.dispose();
     }
     const resolved = ownerNodeId !== undefined ? await this._session.sendMayFail('DOM.resolveNode', { nodeId: ownerNodeId }) : null;
     if (!resolved || resolved.object.subtype === 'null')

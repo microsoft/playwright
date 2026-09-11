@@ -865,21 +865,16 @@ export class Frame extends SdkObject<FrameEventMap> {
           return null;
         return continuePolling;
       }
-      const result = resolved.result;
+      using result = resolved.result;
       const { log, visible, attached } = await progress.race(result.evaluate(r => ({ log: r.log, visible: r.visible, attached: r.attached })));
       if (log)
         progress.log(log);
       const success = { attached, detached: !attached, visible, hidden: !visible }[state];
-      if (!success) {
-        result.dispose();
+      if (!success)
         return continuePolling;
-      }
-      if (options.omitReturnValue) {
-        result.dispose();
+      if (options.omitReturnValue)
         return null;
-      }
       const element = state === 'attached' || state === 'visible' ? await progress.race(result.evaluateHandle(r => r.element)) : null;
-      result.dispose();
       if (!element)
         return null;
       if ((options as any).__testHookBeforeAdoptNode)
@@ -906,12 +901,10 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   private async _evalOnSelector(selector: string, strict: boolean, expression: string, options: { isFunction?: boolean, world?: types.World }, arg: any, scope?: dom.ElementHandle): Promise<any> {
-    const handle = await this.selectors.query(selector, { strict }, scope);
+    using handle = await this.selectors.query(selector, { strict }, scope);
     if (!handle)
       throw new Error(`Failed to find element matching selector "${selector}"`);
-    const result = await handle.internalEvaluateExpression(expression, options, arg);
-    handle.dispose();
-    return result;
+    return await handle.internalEvaluateExpression(expression, options, arg);
   }
 
   async evalOnSelectorAll(progress: Progress, selector: string, expression: string, options: { isFunction?: boolean, world?: types.World }, arg: any, scope?: dom.ElementHandle): Promise<any> {
@@ -919,10 +912,8 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   private async _evalOnSelectorAll(selector: string, expression: string, options: { isFunction?: boolean, world?: types.World }, arg: any, scope?: dom.ElementHandle): Promise<any> {
-    const arrayHandle = await this.selectors.queryArrayInWorld(selector, options.world ?? 'main', scope);
-    const result = await arrayHandle.internalEvaluateExpression(expression, { isFunction: options.isFunction }, arg);
-    arrayHandle.dispose();
-    return result;
+    using arrayHandle = await this.selectors.queryArrayInWorld(selector, options.world ?? 'main', scope);
+    return await arrayHandle.internalEvaluateExpression(expression, { isFunction: options.isFunction }, arg);
   }
 
   async querySelectorAll(progress: Progress, selector: string): Promise<dom.ElementHandle<Element>[]> {
@@ -1223,30 +1214,24 @@ export class Frame extends SdkObject<FrameEventMap> {
           throw new dom.NonRecoverableDOMError('Element(s) not found');
         return continuePolling;
       }
-      const result = resolved.result;
+      using result = resolved.result;
       const { log, success, box } = await progress.race(result.evaluate(r => ({ log: r.log, success: r.success, box: r.box })));
       if (log)
         progress.log(log);
       if (!success) {
         if (noAutoWaiting)
           throw new dom.NonRecoverableDOMError('Element(s) not found');
-        result.dispose();
         return continuePolling;
       }
-      const element = await progress.race(result.evaluateHandle(r => r.element)) as dom.ElementHandle<Element>;
-      result.dispose();
-      try {
-        const result = await action(progress, element, box);
-        if (result === 'error:notconnected') {
-          if (noAutoWaiting)
-            throw new dom.NonRecoverableDOMError('Element is not attached to the DOM');
-          progress.log('element was detached from the DOM, retrying');
-          return continuePolling;
-        }
-        return result;
-      } finally {
-        element?.dispose();
+      using element = await progress.race(result.evaluateHandle(r => r.element)) as dom.ElementHandle<Element>;
+      const actionResult = await action(progress, element, box);
+      if (actionResult === 'error:notconnected') {
+        if (noAutoWaiting)
+          throw new dom.NonRecoverableDOMError('Element is not attached to the DOM');
+        progress.log('element was detached from the DOM, retrying');
+        return continuePolling;
       }
+      return actionResult;
     });
   }
 
@@ -1308,7 +1293,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async resolveSelector(progress: Progress, selector: string, options: { mainWorld?: boolean } = {}): Promise<{ resolvedSelector: string }> {
-    const element = await progress.race(this.selectors.query(selector, options));
+    using element = await progress.race(this.selectors.query(selector, options));
     if (!element)
       throw new Error(`No element matching ${selector}`);
 
@@ -1321,12 +1306,11 @@ export class Frame extends SdkObject<FrameEventMap> {
     let frame: Frame | null = element._frame;
     const result = [generated];
     while (frame?.parentFrame()) {
-      const frameElement = await frame.frameElement(progress);
+      using frameElement = await frame.frameElement(progress);
       if (frameElement) {
         const generated = await progress.race(frameElement.evaluateInUtility(async ([injected, node]) => {
           return injected.generateSelectorSimple(node as unknown as Element);
         }, {}));
-        frameElement.dispose();
         if (generated === 'error:notconnected' || !generated)
           throw new Error(`Unable to generate locator for ${selector}`);
         result.push(generated);
@@ -1613,7 +1597,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return this.retryWithProgressAndTimeouts(progress, [100], async () => {
       const context = world === 'main' ? await progress.race(this.mainContext()) : await progress.race(this.utilityContext());
       const injectedScript = await progress.race(context.injectedScript());
-      const handle = await raceUncancellableOperationWithCleanup(progress, () => injectedScript.evaluateHandle((injected, { expression, isFunction, polling, arg }) => {
+      using handle = await raceUncancellableOperationWithCleanup(progress, () => injectedScript.evaluateHandle((injected, { expression, isFunction, polling, arg }) => {
         let evaledExpression: any;
         const predicate = (): R => {
           // NOTE: make sure to use `globalThis.eval` instead of `self.eval` due to a bug with sandbox isolation
@@ -1671,8 +1655,6 @@ export class Frame extends SdkObject<FrameEventMap> {
         // after this method returns.
         await handle.evaluate(h => h.abort()).catch(() => {});
         throw error;
-      } finally {
-        handle.dispose();
       }
     });
   }

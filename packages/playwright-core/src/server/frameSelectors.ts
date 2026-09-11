@@ -98,7 +98,7 @@ export class FrameSelectors {
     if (!resolved)
       return [];
 
-    const arrayHandle = resolved.result;
+    using arrayHandle = resolved.result;
     const properties = await arrayHandle.internalGetProperties();
     const elementHandles: ElementHandle<Element>[] = [];
     for (const property of properties.values()) {
@@ -108,7 +108,6 @@ export class FrameSelectors {
       else
         property.dispose();
     }
-    arrayHandle.dispose();
     if (!elementHandles.length)
       return [];
 
@@ -182,18 +181,16 @@ export class FrameSelectors {
     result.push(this.frame);
     await this.frame.raceAgainstEvaluationStallingEvents(async () => {
       const injected = await scope._context.injectedScript();
-      const frameElements = await injected.evaluateHandle((injected, scope) => {
+      using frameElements = await injected.evaluateHandle((injected, scope) => {
         return injected.querySelectorAll(injected.parseSelector('css=frame,iframe'), scope);
       }, scope);
       const count = await frameElements.evaluate(elements => elements.length);
       for (let i = 0; i < count; ++i) {
-        const frameElement = await frameElements.evaluateHandle((elements, i) => elements[i], i) as ElementHandle<Element>;
+        using frameElement = await frameElements.evaluateHandle((elements, i) => elements[i], i) as ElementHandle<Element>;
         const childFrame = await this.frame._page.delegate.getContentFrame(frameElement);
-        frameElement.dispose();
         if (childFrame)
           collectSubtree(childFrame);
       }
-      frameElements.dispose();
     }).catch(() => {});
     return result;
   }
@@ -215,7 +212,7 @@ export class FrameSelectors {
           return element;
         }, { info, scope: i === 0 ? scope : undefined, selectorString: stringifySelector(info.parsed) });
       };
-      const handle = noStall ? await frame.raceAgainstEvaluationStallingEvents(queryFrameElement).catch(e => {
+      using handle = noStall ? await frame.raceAgainstEvaluationStallingEvents(queryFrameElement).catch(e => {
         if (e instanceof EvaluationStalledError)
           return null;
         throw e;
@@ -224,7 +221,6 @@ export class FrameSelectors {
       if (!element)
         return null;
       const maybeFrame = await frame._page.delegate.getContentFrame(element);
-      element.dispose();
       if (!maybeFrame)
         return null;
       frame = maybeFrame;
