@@ -42,7 +42,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     super(parent, type, guid, initializer);
   }
 
-  async start(options: { name?: string, title?: string, snapshots?: boolean | { dom?: boolean, aria?: boolean, screen?: boolean }, screenshots?: boolean, sources?: boolean, live?: boolean } = {}) {
+  async start(options: { name?: string, title?: string, snapshots?: boolean | { dom?: boolean, aria?: boolean, screen?: boolean }, screenshots?: boolean, coverage?: boolean, sources?: boolean, live?: boolean } = {}) {
     await this._wrapApiCall(async () => {
       this._includeSources = !!options.sources;
       this._isLive = !!options.live;
@@ -53,6 +53,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
         snapshotAria: snapshots.aria,
         snapshotScreen: snapshots.screen,
         screencast: options.screenshots,
+        coverage: options.coverage,
         live: options.live,
       }, kNoTimeout);
       const { traceName } = await this._channel.tracingStartChunk({ name: options.name, title: options.title }, kNoTimeout);
@@ -76,6 +77,12 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
   async groupEnd() {
     await this._channel.tracingGroupEnd({}, kNoTimeout);
+  }
+
+  async flushCoverage() {
+    await this._wrapApiCall(async () => {
+      await this._channel.tracingFlushCoverage({}, kNoTimeout);
+    });
   }
 
   private async _startCollectingStacks(traceName: string, live: boolean) {

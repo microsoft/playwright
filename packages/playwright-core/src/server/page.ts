@@ -821,6 +821,7 @@ export class Page extends SdkObject<PageEventMap> {
   }
 
   async close(progress: Progress, options: { reason?: string } = {}) {
+    await progress.race(this.browserContext.tracing.flushCoverageBeforePageClose(this).catch(() => {}));
     await progress.race(this._close(options));
   }
 
