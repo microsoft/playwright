@@ -102,14 +102,6 @@ export function decorateMCPCommand(command: Command) {
         let sharedBrowserPromise: Promise<BrowserWithInfo> | undefined;
         let clientCount = 0;
         const clientNameCounters = new Map<string, number>();
-        const idleTimeout = config.timeouts?.idle;
-        // A shared context has one idle timer for all clients, it closes the browser once none of them has been active for the timeout.
-        const backends = new Set<BrowserBackend>();
-        let sharedIdleNotice: string | undefined;
-        const sharedIdleTimer = config.sharedBrowserContext && idleTimeout ? new IdleTimer(idleTimeout, () => {
-          for (const backend of backends)
-            backend.markDisconnected(sharedIdleNotice);
-        }) : undefined;
 
         const factory: mcpServer.ServerBackendFactory = {
           name: 'Playwright',
@@ -165,19 +157,9 @@ export function decorateMCPCommand(command: Command) {
               throw error;
             }
 
-            // Pages outlive the connection when the browser is not ours, for example over --cdp-endpoint.
-            const notice = idleTimeout ? idleNotice(idleTimeout, !config.browser.isolated && info.ownership === 'attached') : undefined;
-            if (shared)
-              sharedIdleNotice = notice;
-            const ownIdleTimer = idleTimeout && !sharedIdleTimer ? new IdleTimer(idleTimeout, () => backend.markDisconnected(notice)) : undefined;
-            const idleTimer = sharedIdleTimer ?? ownIdleTimer;
-
-            const backend: BrowserBackend = new BrowserBackend(config, browserContext, tools, {
-              callStarted: () => idleTimer?.callStarted(),
-              callFinished: () => idleTimer?.callFinished(),
+            return new BrowserBackend(config, browserContext, tools, {
+              idleTimer: info.idleTimer,
               dispose: async () => {
-                backends.delete(backend);
-                ownIdleTimer?.dispose();
                 clientCount--;
                 const last = !shared || !clientCount;
                 if (last && sharedBrowserPromise === promise)
@@ -200,44 +182,8 @@ export function decorateMCPCommand(command: Command) {
                 await shared?.browser.close().catch(() => { });
               },
             });
-            backends.add(backend);
-            return backend;
           },
         };
         await mcpServer.start(factory, config.server);
       });
-}
-
-function idleNotice(timeout: number, pagesSurvive: boolean): string {
-  if (pagesSurvive)
-    return `Note: the browser connection was closed after ${timeout}ms of inactivity and has been reestablished. Check the open tabs before interacting with the page.`;
-  return `Note: the browser was closed after ${timeout}ms of inactivity and has been relaunched. Pages from before the idle close are gone, navigate again before interacting with the page.`;
-}
-
-// Fires once no tool call has been running for the timeout, the next call re-arms it.
-class IdleTimer {
-  private _timeout: number;
-  private _onIdle: () => void;
-  private _running = 0;
-  private _timer: NodeJS.Timeout | undefined;
-
-  constructor(timeout: number, onIdle: () => void) {
-    this._timeout = timeout;
-    this._onIdle = onIdle;
-  }
-
-  callStarted() {
-    ++this._running;
-    this.dispose();
-  }
-
-  callFinished() {
-    if (!--this._running)
-      this._timer = setTimeout(this._onIdle, this._timeout).unref();
-  }
-
-  dispose() {
-    clearTimeout(this._timer);
-    this._timer = undefined;
-  }
 }

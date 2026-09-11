@@ -35,7 +35,7 @@ test('closes the browser after the idle timeout and relaunches it on the next ca
     'close browser': 1,
   });
 
-  // The next call relaunches the browser and says so, once.
+  // The next call relaunches the browser.
   const response = await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
@@ -43,7 +43,6 @@ test('closes the browser after the idle timeout and relaunches it on the next ca
   expect(response).toHaveResponse({
     snapshot: expect.stringContaining(`Hello, world!`),
   });
-  expect(response.content[0].text).toContain('browser was closed after 500ms of inactivity');
 
   const nextResponse = await client.callTool({
     name: 'browser_snapshot',
@@ -52,7 +51,6 @@ test('closes the browser after the idle timeout and relaunches it on the next ca
   expect(nextResponse).toHaveResponse({
     inlineSnapshot: expect.stringContaining(`Hello, world!`),
   });
-  expect(nextResponse.content[0].text).not.toContain('inactivity');
 
   expect(formatLog(stderr())).toEqual({
     'create browser (persistent)': 2,
@@ -87,7 +85,6 @@ test('cdp endpoint only disconnects on idle and reconnects to the same pages', a
     name: 'browser_snapshot',
     arguments: {},
   });
-  expect(response.content[0].text).toContain('connection was closed after 500ms of inactivity');
   expect(response).toHaveResponse({
     inlineSnapshot: expect.stringContaining(`Hello, world!`),
   });

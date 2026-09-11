@@ -550,7 +550,6 @@ test('http transport shared context: one idle timer across clients', async ({ se
   expect(response).toHaveResponse({
     inlineSnapshot: expect.stringContaining(`Hello, world!`),
   });
-  expect(response.content[0].text).not.toContain('inactivity');
 
   // Once every client has been idle for the timeout, the shared browser closes.
   await expect.poll(() => formatLog(stderr())).toEqual({
@@ -562,23 +561,14 @@ test('http transport shared context: one idle timer across clients', async ({ se
     'close browser': 1,
   });
 
-  // Each client relaunches on its next call and is told once.
+  // Each client relaunches on its next call.
   for (const { client } of [client1, client2]) {
-    const response = await client.callTool({
+    expect(await client.callTool({
       name: 'browser_navigate',
       arguments: { url: server.HELLO_WORLD },
-    });
-    expect(response.content[0].text).toContain('browser was closed after 500ms of inactivity');
-    expect(response).toHaveResponse({
+    })).toHaveResponse({
       snapshot: expect.stringContaining(`Hello, world!`),
     });
-  }
-  for (const { client } of [client1, client2]) {
-    const response = await client.callTool({
-      name: 'browser_snapshot',
-      arguments: {},
-    });
-    expect(response.content[0].text).not.toContain('inactivity');
   }
   expect(formatLog(stderr())).toEqual({
     'create browser (persistent)': 2,
