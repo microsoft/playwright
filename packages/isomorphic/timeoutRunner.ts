@@ -21,22 +21,26 @@
 /* eslint-disable no-restricted-globals */
 
 import { monotonicTime } from './time';
+import { ManualPromise } from './manualPromise';
+
+const kDispose: typeof Symbol.dispose = (Symbol.dispose || Symbol.for('Symbol.dispose')) as typeof Symbol.dispose;
+
+// Timers do not implement Symbol.dispose on every supported Node.js version.
+export function createTimeout(callback: () => void, timeout: number): Disposable {
+  const timer = setTimeout(callback, timeout);
+  return {
+    [kDispose]() {
+      clearTimeout(timer);
+    },
+  };
+}
 
 export async function raceAgainstDeadline<T>(cb: () => Promise<T>, deadline: number): Promise<{ result: T, timedOut: false } | { timedOut: true }> {
-  let timer: NodeJS.Timeout | undefined;
+  const resultPromise: Promise<{ result: T, timedOut: false }> = cb().then(result => ({ result, timedOut: false }));
+  const timeoutPromise = new ManualPromise<{ timedOut: true }>();
+  using timer = deadline ? createTimeout(() => timeoutPromise.resolve({ timedOut: true }), Math.max(0, deadline - monotonicTime())) : undefined;
   // Note: not including "await" here truncates the async stack inside cb(), so always include it.
-  return await Promise.race([
-    cb().then(result => {
-      return { result, timedOut: false };
-    }),
-    new Promise<{ timedOut: true }>(resolve => {
-      if (!deadline)
-        return;
-      timer = setTimeout(() => resolve({ timedOut: true }), Math.max(0, deadline - monotonicTime()));
-    }),
-  ]).finally(() => {
-    clearTimeout(timer);
-  });
+  return await Promise.race([resultPromise, timeoutPromise]);
 }
 
 export async function pollAgainstDeadline<T>(callback: () => Promise<{ continuePolling: boolean, result: T }>, deadline: number, [...pollIntervals]: number[] = [100, 250, 500, 1000]): Promise<{ result?: T, timedOut: boolean }> {

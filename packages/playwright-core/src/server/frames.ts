@@ -25,6 +25,7 @@ import { LongStandingScope } from '@isomorphic/manualPromise';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { assert } from '@isomorphic/assert';
 import { constructURLBasedOnBaseURL } from '@isomorphic/urlMatch';
+import { createTimeout } from '@isomorphic/timeoutRunner';
 import { createGuid } from '@utils/crypto';
 import { BrowserContext } from './browserContext';
 import * as dom from './dom';
@@ -1444,17 +1445,13 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async waitForTimeout(progress: Progress, timeout: number) {
-    let timer: NodeJS.Timeout;
-    const promise = new Promise<void>(f => timer = setTimeout(f, timeout));
-    try {
-      // Make sure we react to page close or frame detach.
-      await progress.race(LongStandingScope.raceMultiple([
-        this._page.openScope,
-        this._detachedScope,
-      ], promise));
-    } finally {
-      clearTimeout(timer!);
-    }
+    const promise = new ManualPromise<void>();
+    using timer = createTimeout(() => promise.resolve(), timeout);
+    // Make sure we react to page close or frame detach.
+    await progress.race(LongStandingScope.raceMultiple([
+      this._page.openScope,
+      this._detachedScope,
+    ], promise));
   }
 
   async expect(progress: Progress, selector: string | undefined, options: FrameExpectParams): Promise<void> {

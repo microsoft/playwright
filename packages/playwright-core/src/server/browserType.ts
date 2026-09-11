@@ -21,6 +21,7 @@ import path from 'path';
 import { assert } from '@isomorphic/assert';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { DEFAULT_PLAYWRIGHT_TIMEOUT } from '@isomorphic/time';
+import { createTimeout } from '@isomorphic/timeoutRunner';
 import { debugMode } from '@utils/debug';
 import { existsAsync } from '@utils/fileUtils';
 import { envArrayToObject, launchProcess } from '@utils/processLauncher';
@@ -243,16 +244,15 @@ export abstract class BrowserType extends SdkObject {
     }));
 
     async function closeOrKill(timeout: number): Promise<void> {
-      let timer: NodeJS.Timeout;
+      const timeoutPromise = new ManualPromise<void>();
+      using timer = createTimeout(() => timeoutPromise.reject(new Error('Browser close timed out')), timeout);
       try {
         await Promise.race([
           gracefullyClose(),
-          new Promise((resolve, reject) => timer = setTimeout(reject, timeout)),
+          timeoutPromise,
         ]);
       } catch (ignored) {
         await kill().catch(ignored => {}); // Make sure to await actual process exit.
-      } finally {
-        clearTimeout(timer!);
       }
     }
     browserProcess = {

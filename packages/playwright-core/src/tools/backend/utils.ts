@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { createTimeout } from '@isomorphic/timeoutRunner';
+
 import type * as playwright from '../../..';
 import type { Tab } from './tab';
 
@@ -48,8 +51,11 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
     else
       promises.push(request.response().catch(() => {}));
   }
-  const timeout = new Promise<void>(resolve => setTimeout(resolve, 5000));
-  await Promise.race([Promise.all(promises), timeout]);
+  const timeoutPromise = new ManualPromise<void>();
+  {
+    using timeout = createTimeout(() => timeoutPromise.resolve(), 5000);
+    await Promise.race([Promise.all(promises), timeoutPromise]);
+  }
   if (requests.length)
     await tab.waitForTimeout(settleMs);
 
