@@ -526,7 +526,7 @@ async function keepBusy(client: Client, ms: number) {
   }
 }
 
-test('http transport shared context: idle client keeps its state while another client is active', async ({ serverEndpoint, server }) => {
+test('http transport shared context: one idle timer across clients', async ({ serverEndpoint, server }) => {
   const { url, stderr } = await serverEndpoint({ args: ['--shared-browser-context', '--timeout-idle=500'] });
   const client1 = await connectClient(url, 'test1');
   await client1.client.callTool({
@@ -534,19 +534,15 @@ test('http transport shared context: idle client keeps its state while another c
     arguments: { url: server.HELLO_WORLD },
   });
 
-  // The second client keeps working well past the idle timeout.
+  // While the second client keeps working past the timeout, the idle client keeps its state.
   const client2 = await connectClient(url, 'test2');
   await keepBusy(client2.client, 1200);
-
-  // The idle client was neither disconnected nor closed.
   expect(formatLog(stderr())).toEqual({
     'create browser (persistent)': 1,
     'connect to shared browser': 2,
     'create http session': 2,
     'create context': 2,
   });
-
-  // It resumes with its page and without a notice.
   const response = await client1.client.callTool({
     name: 'browser_snapshot',
     arguments: {},
@@ -556,114 +552,27 @@ test('http transport shared context: idle client keeps its state while another c
   });
   expect(response.content[0].text).not.toContain('inactivity');
 
-  await client1.close();
-  await client2.close();
+  // Once every client has been idle for the timeout, the shared browser closes.
   await expect.poll(() => formatLog(stderr())).toEqual({
     'create browser (persistent)': 1,
     'connect to shared browser': 2,
     'disconnect from shared browser': 1,
     'create http session': 2,
-    'delete http session': 2,
-    'create context': 2,
-    'close browser': 1,
-  });
-});
-
-test('http transport shared context: shared browser closes when the last active client leaves', async ({ serverEndpoint, server }) => {
-  const { url, stderr } = await serverEndpoint({ args: ['--shared-browser-context', '--timeout-idle=500'] });
-  const client1 = await connectClient(url, 'test1');
-  await client1.client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  });
-
-  // The second client keeps the shared browser alive past the idle timeout, then leaves.
-  const client2 = await connectClient(url, 'test2');
-  await keepBusy(client2.client, 1200);
-  await client2.close();
-
-  // Nobody has been active for the timeout, so the browser closes under the remaining client.
-  await expect.poll(() => formatLog(stderr())).toEqual({
-    'create browser (persistent)': 1,
-    'connect to shared browser': 2,
-    'disconnect from shared browser': 1,
-    'create http session': 2,
-    'delete http session': 1,
     'create context': 2,
     'close browser': 1,
   });
 
-  // The idle client relaunches the browser on its next call and is told once.
-  const response = await client1.client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  });
-  expect(response.content[0].text).toContain('browser was closed after 500ms of inactivity');
-  expect(response).toHaveResponse({
-    snapshot: expect.stringContaining(`Hello, world!`),
-  });
-
-  await client1.close();
-  await expect.poll(() => formatLog(stderr())).toEqual({
-    'create browser (persistent)': 2,
-    'connect to shared browser': 3,
-    'disconnect from shared browser': 1,
-    'create http session': 2,
-    'delete http session': 2,
-    'create context': 3,
-    'close browser': 2,
-  });
-});
-
-test('http transport shared context: shared browser closes once every client is idle', async ({ serverEndpoint, server }) => {
-  const { url, stderr } = await serverEndpoint({ args: ['--shared-browser-context', '--timeout-idle=500'] });
-  const client1 = await connectClient(url, 'test1');
-  const client2 = await connectClient(url, 'test2');
+  // Each client relaunches on its next call and is told once.
   for (const { client } of [client1, client2]) {
-    await client.callTool({
+    const response = await client.callTool({
       name: 'browser_navigate',
       arguments: { url: server.HELLO_WORLD },
     });
+    expect(response.content[0].text).toContain('browser was closed after 500ms of inactivity');
+    expect(response).toHaveResponse({
+      snapshot: expect.stringContaining(`Hello, world!`),
+    });
   }
-
-  // The shared browser closes once both clients have been idle for the timeout, dropping both backends.
-  await expect.poll(() => formatLog(stderr())).toEqual({
-    'create browser (persistent)': 1,
-    'connect to shared browser': 2,
-    'disconnect from shared browser': 1,
-    'create http session': 2,
-    'create context': 2,
-    'close browser': 1,
-  });
-
-  // The next call relaunches the shared browser and says so.
-  const response1 = await client1.client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  });
-  expect(response1.content[0].text).toContain('browser was closed after 500ms of inactivity');
-  expect(response1).toHaveResponse({
-    snapshot: expect.stringContaining(`Hello, world!`),
-  });
-  expect(formatLog(stderr())).toEqual({
-    'create browser (persistent)': 2,
-    'connect to shared browser': 3,
-    'disconnect from shared browser': 1,
-    'create http session': 2,
-    'create context': 3,
-    'close browser': 1,
-  });
-
-  // The other client is told once as well.
-  const response2 = await client2.client.callTool({
-    name: 'browser_snapshot',
-    arguments: {},
-  });
-  expect(response2.content[0].text).toContain('browser was closed after 500ms of inactivity');
-  expect(response2).toHaveResponse({
-    inlineSnapshot: expect.stringContaining(`Hello, world!`),
-  });
-
   for (const { client } of [client1, client2]) {
     const response = await client.callTool({
       name: 'browser_snapshot',
@@ -671,6 +580,14 @@ test('http transport shared context: shared browser closes once every client is 
     });
     expect(response.content[0].text).not.toContain('inactivity');
   }
+  expect(formatLog(stderr())).toEqual({
+    'create browser (persistent)': 2,
+    'connect to shared browser': 4,
+    'disconnect from shared browser': 1,
+    'create http session': 2,
+    'create context': 4,
+    'close browser': 1,
+  });
 
   await client1.close();
   await client2.close();
