@@ -17,8 +17,8 @@
 import { browserTest as it, expect } from '../config/browserTest';
 import { parseTraceRaw } from '../config/utils';
 
-const coverageScript = (file: string, s0: number) => {
-  const fileCov = {
+const fileCoverage = (file: string, s0: number) => ({
+  [file]: {
     path: file,
     statementMap: { '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 20 } } },
     fnMap: {},
@@ -26,9 +26,10 @@ const coverageScript = (file: string, s0: number) => {
     s: { '0': s0 },
     f: {},
     b: {},
-  };
-  return `<script>window.__coverage__ = ${JSON.stringify({ [file]: fileCov })}</script>`;
-};
+  },
+});
+
+const coverageScript = (file: string, s0: number) => `<script>window.__coverage__ = ${JSON.stringify(fileCoverage(file, s0))}</script>`;
 
 async function readCoverage(traceFile: string): Promise<any> {
   const { resources } = await parseTraceRaw(traceFile);
@@ -93,16 +94,16 @@ it('should report maps once and counters incrementally', async ({ browser }) => 
   const collect = () => page.evaluate(() => (window as any).__pwCoverageCollect().map((json: string) => JSON.parse(json)));
 
   const first = await collect();
-  expect(first[0]['a.js'].statementMap).toBeTruthy();
-  expect(first[0]['a.js'].s).toEqual({ '0': 3 });
+  expect(first[0].data['a.js'].statementMap).toBeTruthy();
+  expect(first[0].data['a.js'].s).toEqual({ '0': 3 });
 
   // Nothing was hit since the last report.
   expect(await collect()).toEqual([]);
 
   await page.evaluate(() => (window as any).__coverage__['a.js'].s['0'] += 2);
   const third = await collect();
-  expect(third[0]['a.js'].statementMap).toBe(undefined);
-  expect(third[0]['a.js'].s).toEqual({ '0': 2 });
+  expect(third[0].data['a.js'].statementMap).toBe(undefined);
+  expect(third[0].data['a.js'].s).toEqual({ '0': 2 });
 
   await context.tracing.stop();
   await context.close();
@@ -125,6 +126,80 @@ it('should accumulate counters across flushes and keep never hit files', async (
   const data = await readCoverage(traceFile);
   expect(data['a.js'].s['0']).toBe(7);
   expect(Object.keys(data['a.js'].statementMap)).toEqual(['0']);
+});
+
+it('should collect coverage of a page closed by in-page script', async ({ browser, server }, testInfo) => {
+  const context = await browser.newContext();
+  await context.tracing.start({ coverage: true });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(url => window.open(url), server.EMPTY_PAGE),
+  ]);
+  await popup.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('popup.js', 5)));
+  // The popup closes itself, so its counters are only preserved by the stash.
+  await popup.evaluate(() => setTimeout(() => window.close(), 0));
+  await popup.waitForEvent('close');
+
+  const traceFile = testInfo.outputPath('trace.zip');
+  await context.tracing.stop({ path: traceFile });
+  await context.close();
+
+  const data = await readCoverage(traceFile);
+  expect(data['popup.js'].s['0']).toBe(5);
+});
+
+it('should not double count a stash picked up twice', async ({ browser, server }, testInfo) => {
+  const context = await browser.newContext();
+  await context.tracing.start({ coverage: true });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(url => window.open(url), server.EMPTY_PAGE),
+  ]);
+  await popup.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('popup.js', 5)));
+  await popup.evaluate(() => setTimeout(() => window.close(), 0));
+  await popup.waitForEvent('close');
+
+  // Emulate two documents picking up the same stash before either removes it.
+  const copied = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find(key => key.startsWith('__pwCoverage.'))!;
+    localStorage.setItem(key + '.copy', localStorage.getItem(key)!);
+    return Object.keys(localStorage).filter(key => key.startsWith('__pwCoverage.')).length;
+  });
+  expect(copied).toBe(2);
+
+  const traceFile = testInfo.outputPath('trace.zip');
+  await context.tracing.stop({ path: traceFile });
+  await context.close();
+
+  const data = await readCoverage(traceFile);
+  expect(data['popup.js'].s['0']).toBe(5);
+});
+
+it('should discard stashes of other sessions', async ({ browser, server }, testInfo) => {
+  const context = await browser.newContext();
+  await context.tracing.start({ coverage: true });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(coverage => {
+    localStorage.setItem('__pwCoverage.other-session.1', JSON.stringify({ id: 'other', data: JSON.parse(coverage) }));
+  }, JSON.stringify(fileCoverage('stale.js', 7)));
+
+  await context.tracing.flushCoverage();
+  const remaining = await page.evaluate(() => Object.keys(localStorage).filter(key => key.startsWith('__pwCoverage.')));
+  expect(remaining).toEqual([]);
+
+  const traceFile = testInfo.outputPath('trace.zip');
+  await context.tracing.stop({ path: traceFile });
+  await context.close();
+
+  const data = await readCoverage(traceFile);
+  expect(data['stale.js']).toBe(undefined);
 });
 
 it('should throw when flushing without coverage', async ({ browser }) => {
