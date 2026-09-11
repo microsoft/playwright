@@ -108,8 +108,10 @@ function deserializeBidiMapping(
       typeof serializedKey === 'string'
         ? serializedKey
         : deserializeBidiValue(serializedKey, internalIdMap);
-    const value = deserializeBidiValue(serializedValue, internalIdMap);
-    result[key] = value;
+    if (key !== 'toString') {
+      const value = deserializeBidiValue(serializedValue, internalIdMap);
+      result[key] = value;
+    }
   }
   return result;
 }
