@@ -57,6 +57,7 @@ export type CLIOptions = {
   initScript?: string[];
   initPage?: string[];
   isolated?: boolean;
+  idleTimeout?: number;
   imageResponses?: 'allow' | 'omit' | 'only';
   mobile?: boolean;
   sandbox?: boolean;
@@ -75,7 +76,6 @@ export type CLIOptions = {
   storageState?: string;
   testIdAttribute?: string;
   timeoutAction?: number;
-  timeoutIdle?: number;
   timeoutNavigation?: number;
   timeoutSettle?: number;
   userAgent?: string;
@@ -172,6 +172,7 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
     mobile: options.mobile,
     extension: options.extension,
     userDataDir: options.profile,
+    idleTimeout: options.idleTimeout,
     snapshotMode: 'full',
   });
 
@@ -392,7 +393,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
     testIdAttribute: cliOptions.testIdAttribute,
     timeouts: {
       action: cliOptions.timeoutAction,
-      idle: cliOptions.timeoutIdle,
+      idle: cliOptions.idleTimeout,
       navigation: cliOptions.timeoutNavigation,
       settle: cliOptions.timeoutSettle,
     },
@@ -452,7 +453,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.storageState = envToString(e.PLAYWRIGHT_MCP_STORAGE_STATE);
   options.testIdAttribute = envToString(e.PLAYWRIGHT_MCP_TEST_ID_ATTRIBUTE);
   options.timeoutAction = numberParser(e.PLAYWRIGHT_MCP_TIMEOUT_ACTION);
-  options.timeoutIdle = numberParser(e.PLAYWRIGHT_MCP_TIMEOUT_IDLE);
+  options.idleTimeout = numberParser(e.PLAYWRIGHT_MCP_IDLE_TIMEOUT);
   options.timeoutNavigation = numberParser(e.PLAYWRIGHT_MCP_TIMEOUT_NAVIGATION);
   options.timeoutSettle = numberParser(e.PLAYWRIGHT_MCP_TIMEOUT_SETTLE);
   options.userAgent = envToString(e.PLAYWRIGHT_MCP_USER_AGENT);

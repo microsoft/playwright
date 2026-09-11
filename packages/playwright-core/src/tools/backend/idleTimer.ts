@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// Only headless browsers we launched get this by default, headed and attached ones may be in use by a person.
+export const defaultIdleTimeout = 60 * 60 * 1000;
+
 export class IdleTimer {
   private _timeout: number;
   private _onIdle: () => void;
@@ -25,6 +28,11 @@ export class IdleTimer {
     this._onIdle = onIdle;
   }
 
+  // For a session that is ready before its first call and may never receive one.
+  arm() {
+    this._timer = setTimeout(this._onIdle, this._timeout).unref();
+  }
+
   callStarted() {
     ++this._running;
     this.dispose();
@@ -32,7 +40,7 @@ export class IdleTimer {
 
   callFinished() {
     if (!--this._running)
-      this._timer = setTimeout(this._onIdle, this._timeout).unref();
+      this.arm();
   }
 
   dispose() {

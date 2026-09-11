@@ -20,7 +20,7 @@ test('closes the browser after the idle timeout and relaunches it on the next ca
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42548' },
 }, async ({ startClient, server }) => {
   const { client, stderr } = await startClient({
-    args: ['--timeout-idle=500'],
+    args: ['--idle-timeout=500'],
     env: { DEBUG: 'pw:mcp:test' },
   });
 
@@ -61,7 +61,7 @@ test('closes the browser after the idle timeout and relaunches it on the next ca
 test('cdp endpoint only disconnects on idle and reconnects to the same pages', async ({ cdpServer, startClient, server }) => {
   const browserContext = await cdpServer.start();
   const { client, stderr } = await startClient({
-    args: [`--cdp-endpoint=${cdpServer.endpoint}`, '--timeout-idle=500'],
+    args: [`--cdp-endpoint=${cdpServer.endpoint}`, '--idle-timeout=500'],
     env: { DEBUG: 'pw:mcp:test' },
   });
 

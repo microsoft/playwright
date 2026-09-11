@@ -526,7 +526,7 @@ async function keepBusy(client: Client, ms: number) {
 }
 
 test('http transport shared context: one idle timer across clients', async ({ serverEndpoint, server }) => {
-  const { url, stderr } = await serverEndpoint({ args: ['--shared-browser-context', '--timeout-idle=500'] });
+  const { url, stderr } = await serverEndpoint({ args: ['--shared-browser-context', '--idle-timeout=500'] });
   const client1 = await connectClient(url, 'test1');
   await client1.client.callTool({
     name: 'browser_navigate',

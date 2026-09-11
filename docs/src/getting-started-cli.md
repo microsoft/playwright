@@ -261,6 +261,8 @@ playwright-cli kill-all                 # forcefully kill all browser processes
 playwright-cli -s=name delete-data      # delete user data for a named session
 ```
 
+A headless session shuts itself down after an hour without commands, so a session an agent forgot to close does not keep a browser running. Headed and attached browsers are never closed automatically. Change the timeout with `open --idle-timeout=<ms>` or `timeouts.idle` in the config file, and pass `0` to disable it.
+
 ## Monitoring
 
 Use `playwright-cli show` to open a visual dashboard for observing and controlling all running browser sessions:
