@@ -273,7 +273,7 @@ class PerfettoReporter implements ReporterV2 {
 
     // Serialize event by event, the whole report does not have to fit into memory twice.
     await fs.promises.mkdir(path.dirname(this._resolvedOutputFile), { recursive: true });
-    const writer = new ChunkWriter(this._resolvedOutputFile);
+    await using writer = new ChunkWriter(this._resolvedOutputFile);
     await writer.write('{"traceEvents":[');
     let separator = '';
     for (const events of [metadataEvents, this._events]) {
@@ -283,7 +283,6 @@ class PerfettoReporter implements ReporterV2 {
       }
     }
     await writer.write(`],"displayTimeUnit":"ms","metadata":${JSON.stringify(metadata)}}`);
-    await writer.close();
   }
 }
 
@@ -317,6 +316,10 @@ class ChunkWriter {
     await this._closed;
     if (this._error)
       throw this._error;
+  }
+
+  async [Symbol.asyncDispose]() {
+    await this.close();
   }
 }
 
