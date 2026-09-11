@@ -152,13 +152,14 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     else
       printPrompt();
 
-    const waitForCommand = readCommand();
-    const command = await Promise.race([
-      onDirtyTests,
-      waitForCommand.result,
-    ]);
-    if (command === 'changed')
-      waitForCommand.dispose();
+    let command: Command;
+    {
+      using waitForCommand = readCommand();
+      command = await Promise.race([
+        onDirtyTests,
+        waitForCommand.result,
+      ]);
+    }
     if (bufferMode && command === 'changed')
       continue;
 
@@ -274,7 +275,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   return result === 'passed' ? teardown.status : result;
 }
 
-function readKeyPress<T extends string>(handler: (text: string, key: any) => T | undefined): { dispose(): void; result: Promise<T> } {
+function readKeyPress<T extends string>(handler: (text: string, key: any) => T | undefined): Disposable & { result: Promise<T> } {
   const promise = new ManualPromise<T>();
 
   const rl = readline.createInterface({ input: process.stdin, escapeCodeTimeout: 50 });
@@ -288,16 +289,20 @@ function readKeyPress<T extends string>(handler: (text: string, key: any) => T |
       promise.resolve(result);
   });
 
-  const dispose = () => {
+  let disposed = false;
+  function dispose() {
+    if (disposed)
+      return;
+    disposed = true;
     eventsHelper.removeEventListeners([listener]);
     rl.close();
     if (process.stdin.isTTY)
       process.stdin.setRawMode(false);
-  };
+  }
 
   void promise.finally(dispose);
 
-  return { result: promise, dispose };
+  return { result: promise, [Symbol.dispose]: dispose };
 }
 
 const isInterrupt = (text: string, key: any) => text === '\x03' || text === '\x1B' || (key && key.name === 'escape') || (key && key.ctrl && key.name === 'c');
@@ -308,7 +313,7 @@ async function runTests(watchOptions: WatchModeOptions, testServerConnection: Te
 }) {
   printConfiguration(watchOptions, options?.title);
 
-  const waitForDone = readKeyPress((text: string, key: any) => {
+  using waitForDone = readKeyPress((text: string, key: any) => {
     if (isInterrupt(text, key)) {
       testServerConnection.stopTestsNoReply({});
       return 'done';
@@ -324,7 +329,7 @@ async function runTests(watchOptions: WatchModeOptions, testServerConnection: Te
     reuseContext: connectWsEndpoint ? true : undefined,
     workers: connectWsEndpoint ? 1 : undefined,
     headed: connectWsEndpoint ? true : undefined,
-  }).finally(() => waitForDone.dispose());
+  });
 }
 
 function readCommand() {
