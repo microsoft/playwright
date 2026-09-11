@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+const kDispose: typeof Symbol.dispose = (Symbol.dispose || Symbol.for('Symbol.dispose')) as typeof Symbol.dispose;
+
 export class ManualPromise<T = void> extends Promise<T> {
   private _resolve!: (t: T) => void;
   private _reject!: (e: Error) => void;
@@ -111,16 +113,18 @@ export class LongStandingScope {
   }
 }
 
-export function signalToPromise(signal: AbortSignal): { promise: Promise<void>, dispose: () => void } {
-  if (signal.aborted)
-    return { promise: Promise.resolve(), dispose: () => {} };
+export function signalToPromise(signal: AbortSignal): Disposable & { promise: Promise<void>, dispose: () => void } {
+  if (signal.aborted) {
+    function dispose() {}
+    return { promise: Promise.resolve(), dispose, [kDispose]: dispose };
+  }
   let dispose: (() => void) | undefined;
   const promise = new Promise<void>(resolve => {
     const onAbort = () => resolve();
     signal.addEventListener('abort', onAbort, { once: true });
     dispose = () => signal.removeEventListener('abort', onAbort);
   });
-  return { promise, dispose: dispose! };
+  return { promise, dispose: dispose!, [kDispose]: dispose! };
 }
 
 function cloneError(error: Error, frames: string[]) {

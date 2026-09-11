@@ -233,39 +233,39 @@ export class TestContext {
       }
     };
 
-    const abort = signal ? signalToPromise(signal) : undefined;
-    const abortPromise = abort
-      ? abort.promise.then(() => 'interrupted' as const)
-      : new Promise<never>(() => {});
+    {
+      using abort = signal ? signalToPromise(signal) : undefined;
+      const abortPromise = abort
+        ? abort.promise.then(() => 'interrupted' as const)
+        : new Promise<never>(() => {});
 
-    try {
-      const reporter = new MCPListReporter({ configDir, screen, includeTestId: true });
-      status = await Promise.race([
-        runner.runTests(reporter, params).then(result => result.status),
-        testRunnerAndScreen.waitForTestPaused().then(() => 'paused' as const),
-        abortPromise,
-      ]);
+      try {
+        const reporter = new MCPListReporter({ configDir, screen, includeTestId: true });
+        status = await Promise.race([
+          runner.runTests(reporter, params).then(result => result.status),
+          testRunnerAndScreen.waitForTestPaused().then(() => 'paused' as const),
+          abortPromise,
+        ]);
 
-      if (status === 'interrupted') {
-        await runner.stopTests();
+        if (status === 'interrupted') {
+          await runner.stopTests();
+          await cleanup();
+          return { output: testRunnerAndScreen.output.join('\n'), status };
+        }
+
+        if (status === 'paused') {
+          const response = await testRunnerAndScreen.sendMessageToPausedTest!({ request: { initialize: { clientInfo: this._clientInfo } } });
+          if (response.error)
+            throw new Error(response.error.message);
+          testRunnerAndScreen.output.push(response.response.initialize!.pausedMessage);
+          return { output: testRunnerAndScreen.output.join('\n'), status };
+        }
+      } catch (e) {
+        status = 'failed';
+        testRunnerAndScreen.output.push(String(e));
         await cleanup();
         return { output: testRunnerAndScreen.output.join('\n'), status };
       }
-
-      if (status === 'paused') {
-        const response = await testRunnerAndScreen.sendMessageToPausedTest!({ request: { initialize: { clientInfo: this._clientInfo } } });
-        if (response.error)
-          throw new Error(response.error.message);
-        testRunnerAndScreen.output.push(response.response.initialize!.pausedMessage);
-        return { output: testRunnerAndScreen.output.join('\n'), status };
-      }
-    } catch (e) {
-      status = 'failed';
-      testRunnerAndScreen.output.push(String(e));
-      await cleanup();
-      return { output: testRunnerAndScreen.output.join('\n'), status };
-    } finally {
-      abort?.dispose();
     }
 
     await cleanup();
