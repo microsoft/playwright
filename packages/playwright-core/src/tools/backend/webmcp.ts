@@ -230,7 +230,6 @@ function renderListing(listing: WebMCPListing): string[] {
 
 const webmcpList = defineTabTool({
   capability: 'core',
-  skillOnly: true,
 
   schema: {
     name: 'browser_webmcp_list',
@@ -254,7 +253,6 @@ const webmcpList = defineTabTool({
 
 const webmcpCall = defineTabTool({
   capability: 'core',
-  skillOnly: true,
 
   schema: {
     name: 'browser_webmcp_call',

@@ -199,14 +199,14 @@ has them, the page status names them the first time they appear:
 
 ```
 - Page URL: https://example.com/
-- 2 webmcp tools available on the page. Prefer one of these over driving the UI when it matches the task:
+- 2 webmcp tools available on the page:
   search, add_to_cart.
-  Run `webmcp-list` for their schemas, `webmcp-call <name> --params '{...}'` to call one.
 ```
 
 Later responses shorten this to the count while the tool set is unchanged. Prefer these tools over
 driving the UI when one matches the task: the page implements them, so a single call replaces a
 sequence of clicks and fills — and it cannot be blocked by a cookie banner or a newsletter modal.
+Run `webmcp-list` for their schemas, `webmcp-call <name> --params '{...}'` to call one.
 
 ```bash
 playwright-cli webmcp-list

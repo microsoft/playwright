@@ -18,8 +18,6 @@ import fs from 'fs';
 
 import { test, expect } from './cli-fixtures';
 
-// browser_webmcp_list and browser_webmcp_call are skill-only, so the CLI is the only
-// place they can be exercised. Pure MCP gets the page's tools as tools of its own.
 test.skip(({ mcpBrowser }) => mcpBrowser === 'webkit', 'WebKit does not implement WebMCP');
 
 async function writeWebMCPConfig(mcpBrowser: string | undefined, testInfo: { outputPath: (...parts: string[]) => string }) {

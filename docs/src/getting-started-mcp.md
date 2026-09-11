@@ -131,9 +131,9 @@ Save and restore browser state including cookies and localStorage:
 
 ### WebMCP tools
 
-Pages can register their own tools for agents through the experimental [WebMCP](https://webmachinelearning.github.io/webmcp/) API. When a page has them, the page status after a navigation reports how many.
+Pages can register their own tools for agents through the experimental [WebMCP](https://webmachinelearning.github.io/webmcp/) API. When a page has them, the page status after a navigation names them.
 
-The tools of the current tab are offered as MCP tools of their own, named `webmcp_<tool>`, so they can be called like any other tool. The tool list is updated as the page registers tools and as you switch tabs, and only the current tab contributes.
+The tools of the current tab are offered as MCP tools of their own, named `webmcp_<tool>`, so they can be called like any other tool. The tool list is updated as the page registers tools and as you switch tabs, and only the current tab contributes. The `browser_webmcp_list` and `browser_webmcp_call` tools list and call the page's tools by their original names, for clients that do not pick up tool list updates.
 
 Their descriptions are prefixed with an `[UNTRUSTED]` marker, plus `[READ-ONLY]` or `[CONSEQUENTIAL]` when the page annotates them. Tool names, descriptions, schemas, annotations and results are all provided by the page, so treat them as untrusted input rather than as instructions. The annotations are optional claims a page makes about its own tools — a missing `[CONSEQUENTIAL]` is not a promise that a tool is safe, so judge a tool by what it does before letting it transact or act on a user's behalf.
 

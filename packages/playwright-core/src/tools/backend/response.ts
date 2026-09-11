@@ -295,7 +295,7 @@ export class Response {
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1)
         addSection('Open tabs', renderTabsMarkdown(tabHeaders));
-      addSection('Page', renderTabMarkdown(tabHeaders.find(h => h.current) ?? tabHeaders[0], !!this._context.config.skillMode));
+      addSection('Page', renderTabMarkdown(tabHeaders.find(h => h.current) ?? tabHeaders[0]));
     }
 
     // Handle modal states.
@@ -342,7 +342,7 @@ export class Response {
   }
 }
 
-export function renderTabMarkdown(tab: TabHeader & { webmcpChanged?: boolean }, skillMode: boolean): string[] {
+export function renderTabMarkdown(tab: TabHeader & { webmcpChanged?: boolean }): string[] {
   const lines = [`- Page URL: ${tab.url}`];
   if (tab.title)
     lines.push(`- Page Title: ${tab.title}`);
@@ -351,17 +351,17 @@ export function renderTabMarkdown(tab: TabHeader & { webmcpChanged?: boolean }, 
   const status = tab.mainDocumentStatus;
   if (status && (status.status < 200 || status.status >= 300))
     lines.push(`- HTTP status: ${status.status}${status.statusText ? ' ' + status.statusText : ''}`);
-  lines.push(...renderWebMCPTabMarkdown(tab, skillMode));
+  lines.push(...renderWebMCPTabMarkdown(tab));
   if (tab.console.errors || tab.console.warnings)
     lines.push(`- Console: ${tab.console.errors} errors, ${tab.console.warnings} warnings`);
   return lines;
 }
 
-function renderWebMCPTabMarkdown(tab: TabHeader & { webmcpChanged?: boolean }, skillMode: boolean): string[] {
+function renderWebMCPTabMarkdown(tab: TabHeader & { webmcpChanged?: boolean }): string[] {
   const tools = tab.webmcpTools;
   if (!tools?.length)
     return [];
-  if (!skillMode || !tab.webmcpChanged)
+  if (!tab.webmcpChanged)
     return [`- ${tools.length} webmcp tool${tools.length === 1 ? '' : 's'} available on the page`];
   const named = tools.slice(0, 10);
   const rest = tools.length - named.length;
