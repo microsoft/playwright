@@ -232,6 +232,11 @@ export type Config = {
    */
   imageResponses?: 'allow' | 'omit' | 'only';
 
+  /**
+   * How file paths are rendered in tool results. Can be "relative" to the workspace root or "absolute". Defaults to "relative".
+   */
+  filePaths?: 'relative' | 'absolute';
+
   snapshot?: {
     /**
      * When taking snapshots for responses, specifies the mode to use.

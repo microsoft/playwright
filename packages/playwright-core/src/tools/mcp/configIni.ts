@@ -162,6 +162,7 @@ const longhandTypes: Record<string, LonghandType> = {
   'outputDir': 'string',
   'outputMaxSize': 'number',
   'imageResponses': 'string',
+  'filePaths': 'string',
   'allowUnrestrictedFileAccess': 'boolean',
   'codegen': 'string',
   'testIdAttribute': 'string',
