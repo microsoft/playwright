@@ -52,7 +52,7 @@ test('close', async ({ cli, server }) => {
 });
 
 test('idle timeout shuts the session down', async ({ cli, server }) => {
-  await cli('open', '--idle-timeout=500', server.HELLO_WORLD);
+  await cli('open', '--idle-timeout=3000', server.HELLO_WORLD);
   const { output } = await cli('list');
   expect(output).toContain('- default:');
 

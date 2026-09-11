@@ -143,7 +143,7 @@ export async function startCliDaemonServer(
   });
 
   await saveSessionFile(clientInfo, sessionConfig);
-  options.idleTimer?.arm();
+  options.idleTimer?.reset();
   await monitorSocketPath(socketPath);
   return socketPath;
 }
