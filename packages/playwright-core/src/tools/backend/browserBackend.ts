@@ -36,7 +36,7 @@ export type BrowserBackendCallbacks = {
   callFinished?: () => void;
 };
 
-export class BrowserBackend extends EventEmitter<{ disconnected: [notice?: string] }> implements ServerBackend {
+export class BrowserBackend extends EventEmitter<{ disconnected: [notice?: string], dynamictoolschange: [] }> implements ServerBackend {
   private _tools: Tool[];
   private _context: Context | undefined;
   private _sessionLog: SessionLog | undefined;
@@ -62,6 +62,7 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [notice?: strin
       config: this._config,
       sessionLog: this._sessionLog,
       cwd: clientInfo.cwd,
+      onWebMCPToolsChanged: () => this.emit('dynamictoolschange'),
     });
   }
 
@@ -72,6 +73,10 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [notice?: strin
     backendDebug('browser disconnected');
     this._disconnected = true;
     this.emit('disconnected', notice);
+  }
+
+  dynamicTools(): mcpServer.Tool[] {
+    return this._context?.currentWebMCPTools().map(tool => tool.schema) ?? [];
   }
 
   async dispose() {
@@ -99,7 +104,7 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [notice?: strin
     });
     const tool = this._tools.find(tool => tool.schema.name === name)!;
     if (!tool)
-      return formatError(`Tool "${name}" not found`);
+      return await this._callDynamicTool(name, rawArguments, formatError);
     let parsedArguments: any;
     try {
       parsedArguments = tool.schema.inputSchema.parse(rawArguments);
@@ -129,6 +134,33 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [notice?: strin
     if (this._disconnected || responseObject.isClose) {
       delete responseObject.isClose;
       await this.dispose();
+    }
+    return responseObject;
+  }
+
+  private async _callDynamicTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> }, formatError: (message: string) => mcpServer.CallToolResult): Promise<mcpServer.CallToolResult> {
+    const context = this._context;
+    if (!context)
+      return formatError(`Tool "${name}" not found`);
+
+    const dynamicTool = context.currentWebMCPTools().find(tool => tool.schema.name === name);
+    if (!dynamicTool)
+      return formatError(`Tool "${name}" not found`);
+
+    const { _meta, ...params } = rawArguments;
+    const response = new Response(context, name, params, { relativeTo: _meta?.cwd, raw: !!_meta?.raw, json: !!_meta?.json });
+    context.setRunningTool(name);
+    let responseObject: mcpServer.CallToolResult;
+    try {
+      await dynamicTool.handle(params, response);
+      for (const reason of context.drainPendingUnhandledRejections())
+        response.addError(formatRejectionReason(reason));
+      responseObject = await response.serialize();
+      this._sessionLog?.logResponse(name, params, responseObject);
+    } catch (error: any) {
+      responseObject = formatError(String(error));
+    } finally {
+      context.setRunningTool(undefined);
     }
     return responseObject;
   }

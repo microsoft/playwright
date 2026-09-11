@@ -342,7 +342,7 @@ export class Response {
   }
 }
 
-export function renderTabMarkdown(tab: TabHeader): string[] {
+export function renderTabMarkdown(tab: TabHeader & { webmcpChanged?: boolean }): string[] {
   const lines = [`- Page URL: ${tab.url}`];
   if (tab.title)
     lines.push(`- Page Title: ${tab.title}`);
@@ -351,11 +351,24 @@ export function renderTabMarkdown(tab: TabHeader): string[] {
   const status = tab.mainDocumentStatus;
   if (status && (status.status < 200 || status.status >= 300))
     lines.push(`- HTTP status: ${status.status}${status.statusText ? ' ' + status.statusText : ''}`);
+  lines.push(...renderWebMCPTabMarkdown(tab));
   if (tab.console.errors || tab.console.warnings)
     lines.push(`- Console: ${tab.console.errors} errors, ${tab.console.warnings} warnings`);
-  if (tab.webmcpToolCount)
-    lines.push(`- ${tab.webmcpToolCount} webmcp tool${tab.webmcpToolCount === 1 ? '' : 's'} available on the page`);
   return lines;
+}
+
+function renderWebMCPTabMarkdown(tab: TabHeader & { webmcpChanged?: boolean }): string[] {
+  const tools = tab.webmcpTools;
+  if (!tools?.length)
+    return [];
+  if (!tab.webmcpChanged)
+    return [`- ${tools.length} webmcp tool${tools.length === 1 ? '' : 's'} available on the page`];
+  const named = tools.slice(0, 10);
+  const rest = tools.length - named.length;
+  return [
+    `- ${tools.length} webmcp tool${tools.length === 1 ? '' : 's'} available on the page:`,
+    `  ${named.join(', ')}${rest ? `, and ${rest} more` : ''}.`,
+  ];
 }
 
 export function renderTabsMarkdown(tabs: TabHeader[]): string[] {

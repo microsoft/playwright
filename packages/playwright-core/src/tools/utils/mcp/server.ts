@@ -23,7 +23,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { startMcpHttpServer } from './http';
 import { toMcpTool } from './tool';
 
-import type { CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, CallToolRequest, Root, Tool } from '@modelcontextprotocol/sdk/types.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 export type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 export type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
@@ -41,6 +41,8 @@ export type ClientInfo = {
 export interface ServerBackend {
   initialize?(clientInfo: ClientInfo): Promise<void>;
   callTool(name: string, args: CallToolRequest['params']['arguments'], signal: AbortSignal): Promise<CallToolResult>;
+  dynamicTools?(): Tool[];
+  on?(event: 'dynamictoolschange', listener: () => void): void;
   dispose?(): Promise<void>;
   // The notice, if any, is prepended to the next tool response, for example after an idle close.
   once(event: 'disconnected', listener: (notice?: string) => void): void;
@@ -62,19 +64,22 @@ export async function connect(factory: ServerBackendFactory, transport: Transpor
 export function createServer(name: string, version: string, factory: ServerBackendFactory, transportInitialized: Promise<void>, runHeartbeat: boolean): ServerType {
   const server = new Server({ name, version }, {
     capabilities: {
-      tools: {},
+      tools: { listChanged: true },
     }
-  });
-
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
-    serverDebug('listTools');
-    return { tools: factory.toolSchemas.map(s => toMcpTool(s)) };
   });
 
   let backendPromise: Promise<ServerBackend> | undefined;
   let heartbeatStarted = false;
   let disposing: Promise<void> | undefined;
   let pendingNotice: string | undefined;
+
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    serverDebug('listTools');
+    const tools = factory.toolSchemas.map(s => toMcpTool(s));
+    const backend = await backendPromise?.catch(() => undefined);
+    tools.push(...backend?.dynamicTools?.() ?? []);
+    return { tools };
+  });
 
   const onClose = () => backendPromise?.then(b => b.dispose?.()).catch(serverDebug);
   addServerListener(server, 'close', onClose);
@@ -89,6 +94,10 @@ export function createServer(name: string, version: string, factory: ServerBacke
         // Let the previous backend finish closing before its replacement launches.
         await disposing;
         const promise = initializeServer(server, factory, transportInitialized).then(backend => {
+          backend.on?.('dynamictoolschange', () => {
+            if (backendPromise === promise)
+              void server.sendToolListChanged().catch(serverDebug);
+          });
           backend.once('disconnected', disconnectNotice => {
             if (backendPromise === promise)
               backendPromise = undefined;

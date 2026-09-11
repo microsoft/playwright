@@ -82,7 +82,7 @@ export type TabHeader = {
   crashed: boolean;
   mainDocumentStatus?: { status: number, statusText: string };
   console: { total: number, warnings: number, errors: number };
-  webmcpToolCount?: number;
+  webmcpTools?: string[];
 };
 
 type TabSnapshot = {
@@ -293,7 +293,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._onPageClose(this);
   }
 
-  async headerSnapshot(): Promise<TabHeader & { changed: boolean }> {
+  async headerSnapshot(): Promise<TabHeader & { changed: boolean, webmcpChanged: boolean }> {
     let title: string | undefined;
     let consoleCounts = { total: 0, errors: 0, warnings: 0 };
     if (!this.crashed) {
@@ -309,14 +309,15 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       crashed: this.crashed,
       mainDocumentStatus: this._mainDocumentStatus,
       console: consoleCounts,
-      webmcpToolCount: this._webmcpTools?.tools.length,
+      webmcpTools: this._webmcpTools?.tools.map(tool => tool.name),
     };
 
+    const webmcpChanged = !stringArrayEquals(this._lastHeader.webmcpTools, newHeader.webmcpTools);
     if (!tabHeaderEquals(this._lastHeader, newHeader)) {
       this._lastHeader = newHeader;
-      return { ...this._lastHeader, changed: true };
+      return { ...this._lastHeader, changed: true, webmcpChanged };
     }
-    return { ...this._lastHeader, changed: false };
+    return { ...this._lastHeader, changed: false, webmcpChanged };
   }
 
   isCurrentTab(): boolean {
@@ -479,13 +480,17 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   async updateWebMCPTools(): Promise<void> {
+    if (this.context.config.webmcp === false)
+      return;
     if (this._javaScriptBlocked())
       return;
     const listing = await listWebMCPTools(this);
     // A dialog that opened while probing produces the same empty listing as a page
     // with no tools, so keep what we had rather than clobbering the cache with it.
-    if (!this._javaScriptBlocked())
-      this._webmcpTools = listing;
+    if (this._javaScriptBlocked())
+      return;
+    this._webmcpTools = listing;
+    this.context.updateWebMCPTools();
   }
 
   private _javaScriptBlocked(): boolean {
@@ -658,5 +663,13 @@ function tabHeaderEquals(a: TabHeader, b: TabHeader): boolean {
       a.console.errors === b.console.errors &&
       a.console.warnings === b.console.warnings &&
       a.console.total === b.console.total &&
-      a.webmcpToolCount === b.webmcpToolCount;
+      stringArrayEquals(a.webmcpTools, b.webmcpTools);
+}
+
+function stringArrayEquals(a: string[] | undefined, b: string[] | undefined): boolean {
+  if (a === b)
+    return true;
+  if (!a || !b || a.length !== b.length)
+    return false;
+  return a.every((value, index) => value === b[index]);
 }
