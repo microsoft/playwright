@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-// The istanbul coverage format, as produced by istanbul-instrumented code in
-// the `__coverage__` global and consumed by istanbul report tooling.
-// Mirrors the shapes from istanbul-lib-coverage.
+// The istanbul coverage format, mirrors the shapes from istanbul-lib-coverage.
 
 export type IstanbulLocation = {
   line: number;
@@ -55,21 +53,17 @@ export type IstanbulFileCoverage = {
 
 export type IstanbulCoverage = { [file: string]: IstanbulFileCoverage };
 
-// Collected counters, reported as a delta since the previous report. The maps
-// are only sent with the first report of each file, so they are optional here.
+// The maps are only sent with the first report of each file.
 export type IstanbulFileCoverageDelta = Partial<IstanbulFileCoverage> & Pick<IstanbulFileCoverage, 'path' | 's' | 'f' | 'b'>;
 
 export type IstanbulCoverageDelta = { [file: string]: IstanbulFileCoverageDelta };
 
-// A single report from a document. Chunks stashed in the page storage carry an
-// id, because they can be picked up by several documents at once.
 export type IstanbulCoverageChunk = {
   data: IstanbulCoverageDelta;
   id?: string;
 };
 
-// Merges istanbul hit counts: counters add up, map entries are taken from the
-// first report that carries them. Assumes all data comes from the same build.
+// Counters add up, maps are taken from the first report that carries them.
 export function mergeIstanbulCoverage(into: Map<string, IstanbulFileCoverage>, data: IstanbulCoverageDelta) {
   for (const [file, fileCov] of Object.entries(data)) {
     let existing = into.get(file);
@@ -77,7 +71,7 @@ export function mergeIstanbulCoverage(into: Map<string, IstanbulFileCoverage>, d
       existing = { path: fileCov.path, statementMap: {}, fnMap: {}, branchMap: {}, s: {}, f: {}, b: {} };
       into.set(file, existing);
     }
-    // A counters-only report can arrive first if the report carrying the maps was lost.
+    // The maps can arrive late if the report that carried them was lost.
     if (fileCov.statementMap && !Object.keys(existing.statementMap).length) {
       existing.statementMap = fileCov.statementMap;
       existing.fnMap = fileCov.fnMap || {};

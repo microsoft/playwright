@@ -403,15 +403,13 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     await this._coverageRecorder.flush(progress);
   }
 
-  // Best-effort collection before the page is gone, no-op unless collecting.
   async flushCoverageBeforePageClose(page: Page) {
     if (!this._coverageRecorder?.active())
       return;
     await this._coverageRecorder.collectFromPage(page);
   }
 
-  // Collects pending coverage into a file that will become the "coverage.json"
-  // entry of the chunk, while the pages can still be evaluated in.
+  // Collected before the chunk stops, while the pages can still be evaluated in.
   private async _takeCoverage(progress: Progress, mode: TracingTracingStopChunkParams['mode']): Promise<string | undefined> {
     if (!this._state?.recording || !this._state.options.coverage || !this._coverageRecorder)
       return;
@@ -527,8 +525,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       await this._captureScreenshot(progress, page, phase);
     if (options?.snapshotAria)
       await this._captureAriaSnapshot(progress, page, phase);
-    // Pull the counters as the actions go, so that an action is the most that
-    // can be lost when the page goes away without a chance to stash them.
+    // Collecting as the actions go, an action is the most that can be lost.
     if (phase === 'after' && this._coverageRecorder?.active()) {
       try {
         await progress.race(this._coverageRecorder.collectFromPage(page));

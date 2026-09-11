@@ -18,11 +18,7 @@ import type { IstanbulCoverage, IstanbulCoverageDelta, IstanbulFileCoverageDelta
 
 export const kCoverageStashPrefix = '__pwCoverage.';
 
-// Harvests istanbul counters accumulated by instrumented application code in
-// `__coverage__`. Every flush serializes the counters and resets them, so
-// each flush reports only the delta since the previous one. The statement,
-// function and branch maps are large, so they are only reported with the
-// first report of each file.
+// Reports `__coverage__` as a delta: reading resets the counters, maps are sent once per file.
 export class CoverageScript {
   private _global: typeof globalThis;
   private _sessionId: string;
@@ -33,10 +29,7 @@ export class CoverageScript {
     this._global = global;
     this._sessionId = sessionId;
     (global as any)[collectName] = () => this.collect();
-    // Counters die with the document, and calls made during unload are not
-    // delivered, so stash the delta in localStorage. Playwright picks it up
-    // from any same origin document, including one it opens itself after the
-    // page that produced the stash is gone.
+    // Counters die with the document and unload-time calls are not delivered.
     global.addEventListener('pagehide', () => this._stashCurrent());
   }
 
@@ -58,8 +51,7 @@ export class CoverageScript {
       const s = takeCounters(fileCoverage.s);
       const f = takeCounters(fileCoverage.f);
       const b = takeBranchCounters(fileCoverage.b);
-      // Report every file once to account for the files that were never hit,
-      // afterwards only report the files that were hit since the last report.
+      // Every file is reported once, so that the never hit ones are accounted for.
       const isFirstReport = !this._reportedFiles.has(file);
       if (!isFirstReport && !s && !f && !b)
         continue;
@@ -85,8 +77,7 @@ export class CoverageScript {
     if (!delta)
       return;
     try {
-      // A stash can be picked up by several documents at once, so it carries an
-      // id that lets the recorder discard the copies.
+      // Several documents can pick up the same stash, the id discards the copies.
       const id = ++this._stashOrdinal + '-' + Math.random().toString(36).slice(2);
       const key = kCoverageStashPrefix + this._sessionId + '.' + id;
       this._global.localStorage.setItem(key, JSON.stringify({ id, data: delta }));
@@ -95,10 +86,8 @@ export class CoverageScript {
   }
 }
 
-// Takes the stashes left by this session and discards the ones left by other
-// sessions, e.g. by a previous run reusing a persistent profile. Playwright
-// also evaluates this on its own page to reach the origins that have no page
-// left to relay them.
+// Also evaluated by Playwright itself on the origins that have no page left.
+// Stashes of other sessions are stale, e.g. left by a previous run in a persistent profile.
 export function takeCoverageStashes(global: typeof globalThis, sessionId: string): string[] {
   const result: string[] = [];
   try {
@@ -121,7 +110,6 @@ export function takeCoverageStashes(global: typeof globalThis, sessionId: string
   return result;
 }
 
-// Returns the non-zero counters and resets them, or undefined when there are none.
 function takeCounters(counters: { [key: string]: number }): { [key: string]: number } | undefined {
   let result: { [key: string]: number } | undefined;
   for (const key of Object.keys(counters)) {
@@ -136,7 +124,7 @@ function takeCounters(counters: { [key: string]: number }): { [key: string]: num
   return result;
 }
 
-// Branch counters are positional, so hit branches are reported with the whole array.
+// Branch counters are positional, so a hit branch is reported with the whole array.
 function takeBranchCounters(counters: { [key: string]: number[] }): { [key: string]: number[] } | undefined {
   let result: { [key: string]: number[] } | undefined;
   for (const key of Object.keys(counters)) {
