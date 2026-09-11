@@ -37,8 +37,6 @@ jobs:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
     steps:
-    - name: Create ~/.azure directory
-      run: mkdir -p ~/.azure
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
       with:
@@ -74,7 +72,6 @@ jobs:
           --workdir /home/pwuser \
           --env CI \
           --env INSIDE_DOCKER=1 \
-          -v ~/.azure:/root/.azure \
           -d \
           -t \
           playwright:localbuild /bin/bash
@@ -112,29 +109,6 @@ jobs:
           --env GITHUB_SHA \
           --workdir /home/pwuser/playwright docker-tests xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test -- --grep "@smoke"
 
-    - name: Azure Login
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - name: Upload Flakiness dashboard
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      run: |
-        # Flakiness dashboard has to be uploaded from-inside docker container so that it can collect meta information, e.g. arch
-        # See https://github.com/microsoft/playwright/blob/13b1e52d95df416fdfa7846c8a840aad8df263af/utils/upload_flakiness_dashboard.sh#L71-L86
-        docker exec \
-          --env GITHUB_REPOSITORY \
-          --env GITHUB_REF \
-          --env GITHUB_RUN_ID \
-          --user root \
-          --workdir /home/pwuser/playwright docker-tests /bin/bash -c '
-            set -e
-            # Azure-CLI is needed for upload_flakiness_dashboard.sh script.
-            curl -sL https://aka.ms/InstallAzureCLIDeb | bash
-            ./utils/upload_flakiness_dashboard.sh "./test-results/report.json"
-          '
     - name: Copy blob report from container
       if: ${{ !cancelled() && (github.event_name == 'pull_request' || failure()) }}
       run: docker cp "docker-tests:/home/pwuser/playwright/blob-report" "./blob-report"

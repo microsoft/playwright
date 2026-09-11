@@ -31,8 +31,6 @@ env:
 jobs:
   test_mcp:
     name: ${{ matrix.os }} - ${{ matrix.project }}
-    # Used for authentication of flakiness upload
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -51,7 +49,6 @@ jobs:
             project: msedge
     runs-on: ${{ matrix.os }}
     permissions:
-      id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -60,6 +57,3 @@ jobs:
         node-version: "22"
         command: npm run test-mcp -- --project=${{ matrix.project }}
         bot-name: "mcp-${{ matrix.os }}-${{ matrix.project }}"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}

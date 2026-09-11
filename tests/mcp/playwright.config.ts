@@ -27,12 +27,10 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env'), quiet: true });
 
 const rootTestDir = path.join(__dirname, '..');
 const testDir = path.join(rootTestDir, 'mcp');
-const outputDir = path.join(__dirname, '..', '..', 'test-results');
 
 const reporters = () => {
   const result: ReporterDescription[] = process.env.CI ? [
     ['dot'],
-    ['json', { outputFile: path.join(outputDir, 'report.json') }],
     ['blob', { outputDir: path.join(__dirname, '..', '..', 'blob-report') }],
     ['../config/parquetReporter.ts'],
   ] : [
