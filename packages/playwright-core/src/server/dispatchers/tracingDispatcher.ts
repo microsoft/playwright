@@ -56,6 +56,10 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
     this._object.groupEnd(progress);
   }
 
+  async tracingFlushCoverage(params: channels.TracingTracingFlushCoverageParams, progress: Progress): Promise<channels.TracingTracingFlushCoverageResult> {
+    await this._object.flushCoverage(progress);
+  }
+
   async tracingStopChunk(params: channels.TracingTracingStopChunkParams, progress: Progress): Promise<channels.TracingTracingStopChunkResult> {
     const { artifact, entries } = await this._object.stopChunk(progress, params);
     return { artifact: artifact ? ArtifactDispatcher.from(this, artifact) : undefined, entries };
