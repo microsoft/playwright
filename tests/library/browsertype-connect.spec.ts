@@ -741,6 +741,26 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(sourceFile).toEqual(thisFile);
     });
 
+    test('should record trace with coverage', async ({ connect, startRemoteServer, trace }, testInfo) => {
+      test.skip(trace === 'on');
+      const remoteServer = await startRemoteServer(kind);
+      const browser = await connect(remoteServer.wsEndpoint());
+      const context = await browser.newContext();
+      const page = await context.newPage();
+
+      await context.tracing.start({ coverage: true });
+      const fileCov = { path: 'a.js', statementMap: { '0': { start: { line: 1, column: 0 }, end: { line: 1, column: 20 } } }, fnMap: {}, branchMap: {}, s: { '0': 3 }, f: {}, b: {} };
+      await page.setContent(`<script>window.__coverage__ = ${JSON.stringify({ 'a.js': fileCov })}</script>`);
+      await context.tracing.stop({ path: testInfo.outputPath('trace1.zip') });
+
+      await context.close();
+      await browser.close();
+
+      const { resources } = await parseTraceRaw(testInfo.outputPath('trace1.zip'));
+      const data = JSON.parse(resources.get('trace.coverage')!.toString());
+      expect(data['a.js'].s['0']).toBe(3);
+    });
+
     test('should fulfill with global fetch result', async ({ connect, startRemoteServer, playwright, server }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());

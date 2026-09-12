@@ -19,6 +19,7 @@ import { calculateSha1 } from '@utils/crypto';
 import { loadReporter } from './loadUtils';
 import { formatError } from '../reporters/base';
 import { BlobReporter } from '../reporters/blob';
+import CoverageReporter from '../reporters/coverage';
 import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
 import GitHubReporter from '../reporters/github';
@@ -50,6 +51,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     'junit': JUnitReporter,
     'null': EmptyReporter,
     'html': HtmlReporter,
+    'coverage': CoverageReporter,
   };
   const reporters: ReporterV2[] = [];
   descriptions ??= config.config.reporter;

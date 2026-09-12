@@ -5065,6 +5065,7 @@ export interface TracingChannel extends TracingEventTarget, Channel {
   tracingStartChunk(params: TracingTracingStartChunkParams, progress: Progress): Promise<TracingTracingStartChunkResult>;
   tracingGroup(params: TracingTracingGroupParams, progress: Progress): Promise<TracingTracingGroupResult>;
   tracingGroupEnd(params: TracingTracingGroupEndParams, progress: Progress): Promise<TracingTracingGroupEndResult>;
+  tracingFlushCoverage(params: TracingTracingFlushCoverageParams, progress: Progress): Promise<TracingTracingFlushCoverageResult>;
   tracingStopChunk(params: TracingTracingStopChunkParams, progress: Progress): Promise<TracingTracingStopChunkResult>;
   tracingStop(params: TracingTracingStopParams, progress: Progress): Promise<TracingTracingStopResult>;
   harStart(params: TracingHarStartParams, progress: Progress): Promise<TracingHarStartResult>;
@@ -5076,6 +5077,7 @@ export type TracingTracingStartParams = {
   snapshotAria?: boolean,
   snapshotScreen?: boolean,
   screencast?: boolean,
+  coverage?: boolean,
   live?: boolean,
 };
 export type TracingTracingStartOptions = {
@@ -5084,6 +5086,7 @@ export type TracingTracingStartOptions = {
   snapshotAria?: boolean,
   snapshotScreen?: boolean,
   screencast?: boolean,
+  coverage?: boolean,
   live?: boolean,
 };
 export type TracingTracingStartResult = void;
@@ -5117,6 +5120,9 @@ export type TracingTracingGroupResult = void;
 export type TracingTracingGroupEndParams = {};
 export type TracingTracingGroupEndOptions = {};
 export type TracingTracingGroupEndResult = void;
+export type TracingTracingFlushCoverageParams = {};
+export type TracingTracingFlushCoverageOptions = {};
+export type TracingTracingFlushCoverageResult = void;
 export type TracingTracingStopChunkParams = {
   mode: 'archive' | 'discard' | 'entries',
 };

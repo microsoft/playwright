@@ -648,23 +648,30 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
 
     // If there are still origins to save, create a blank page to iterate over origins.
     if (originsToSave.size)  {
-      const page = await this.newPage(progress, true /* forStorageState */);
-      try {
-        await page.addRequestInterceptor(progress, route => {
-          route.fulfill({ body: '<html></html>' }).catch(() => {});
-        }, 'prepend');
-        for (const origin of originsToSave) {
-          const frame = page.mainFrame();
-          await frame.gotoImpl(progress, origin, {});
-          const storage: SerializedStorage = await frame.evaluateExpression(progress, collectScript, { world: 'utility' });
-          if (hasStorage(storage))
-            result.origins.push({ origin, ...storage });
-        }
-      } finally {
-        await page.close(progress);
-      }
+      await this.visitOrigins(progress, originsToSave, async (frame, origin) => {
+        const storage: SerializedStorage = await frame.evaluateExpression(progress, collectScript, { world: 'utility' });
+        if (hasStorage(storage))
+          result.origins.push({ origin, ...storage });
+      });
     }
     return result;
+  }
+
+  // Reaches the storage of the origins that have no page, in a hidden page.
+  async visitOrigins(progress: Progress, origins: Set<string>, callback: (frame: frames.Frame, origin: string) => Promise<void>) {
+    const page = await this.newPage(progress, true /* forStorageState */);
+    try {
+      await page.addRequestInterceptor(progress, route => {
+        route.fulfill({ body: '<html></html>' }).catch(() => {});
+      }, 'prepend');
+      for (const origin of origins) {
+        const frame = page.mainFrame();
+        await frame.gotoImpl(progress, origin, {});
+        await progress.race(callback(frame, origin));
+      }
+    } finally {
+      await page.close(progress);
+    }
   }
 
   isCreatingStorageStatePage(): boolean {

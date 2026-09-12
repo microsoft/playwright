@@ -831,6 +831,9 @@ export class Page extends SdkObject<PageEventMap> {
     if (options.reason)
       this._closeReason = options.reason;
 
+    if (!this.isStorageStatePage)
+      await this.instrumentation.onPageWillClose(this).catch(() => {});
+
     await this.screencast.handlePageOrContextClose();
 
     if (this._lifecycle !== 'closing') {

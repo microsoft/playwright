@@ -3065,6 +3065,7 @@ scheme.TracingTracingStartParams = tObject({
   snapshotAria: tOptional(tBoolean),
   snapshotScreen: tOptional(tBoolean),
   screencast: tOptional(tBoolean),
+  coverage: tOptional(tBoolean),
   live: tOptional(tBoolean),
 });
 scheme.TracingTracingStartResult = tOptional(tObject({}));
@@ -3086,6 +3087,8 @@ scheme.TracingTracingGroupParams = tObject({
 scheme.TracingTracingGroupResult = tOptional(tObject({}));
 scheme.TracingTracingGroupEndParams = tOptional(tObject({}));
 scheme.TracingTracingGroupEndResult = tOptional(tObject({}));
+scheme.TracingTracingFlushCoverageParams = tOptional(tObject({}));
+scheme.TracingTracingFlushCoverageResult = tOptional(tObject({}));
 scheme.TracingTracingStopChunkParams = tObject({
   mode: tEnum(['archive', 'discard', 'entries']),
 });

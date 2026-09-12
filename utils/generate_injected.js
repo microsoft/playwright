@@ -81,6 +81,11 @@ const injectedScripts = [
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
   ],
+  [
+    path.join(ROOT, 'packages', 'injected', 'src', 'coverageScript.ts'),
+    path.join(ROOT, 'packages', 'injected', 'lib'),
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
+  ],
 ];
 
 const modulePrefix = `

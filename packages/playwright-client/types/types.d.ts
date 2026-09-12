@@ -23205,6 +23205,18 @@ export interface Touchscreen {
  */
 export interface Tracing {
   /**
+   * **Experimental.** Collects istanbul coverage counters accumulated by all pages of the browser context into the
+   * coverage recorded by the trace. Requires tracing with the
+   * [`coverage`](https://playwright.dev/docs/api/class-tracing#tracing-start-option-coverage) option to be started
+   * first.
+   *
+   * Coverage is collected automatically when the trace chunk is stopped and when a page is closed with
+   * [page.close([options])](https://playwright.dev/docs/api/class-page#page-close). Call this method before a page is
+   * closed by in-page script, for example a popup closing itself, so that its counters are not lost.
+   */
+  flushCoverage(): Promise<void>;
+
+  /**
    * **NOTE** Use `test.step` instead when available.
    *
    * Creates a new group within the trace, assigning any subsequent API calls to this group, until
@@ -23268,6 +23280,18 @@ export interface Tracing {
    * @param options
    */
   start(options?: {
+    /**
+     * **Experimental.** Whether to collect code coverage from istanbul-instrumented application code. Build the
+     * application with an istanbul instrumentation plugin, for example
+     * [`vite-plugin-istanbul`](https://www.npmjs.com/package/vite-plugin-istanbul) or
+     * [`babel-plugin-istanbul`](https://www.npmjs.com/package/babel-plugin-istanbul), so that pages expose the
+     * `window.__coverage__` object. Playwright collects accumulated counters from all pages and frames, including right
+     * before navigations, and stores them in istanbul format inside the trace file. Use
+     * [tracing.flushCoverage()](https://playwright.dev/docs/api/class-tracing#tracing-flush-coverage) to collect counters
+     * from a page that is about to be closed by in-page script.
+     */
+    coverage?: boolean;
+
     /**
      * When enabled, the trace is written to an unarchived file that is updated in real time as actions occur, instead of
      * caching changes and archiving them into a zip file at the end. This is useful for live trace viewing during test
