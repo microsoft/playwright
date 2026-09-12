@@ -104,6 +104,18 @@ export function suppressCertificateWarning() {
   };
 }
 
+// Traces of several contexts are merged into one, each keeping its own coverage entry.
+export async function parseTraceCoverage(file: string): Promise<any | undefined> {
+  const { resources } = await parseTraceRaw(file);
+  const entries = [...resources.keys()].filter(name => name.match(/(^|-)trace\.coverage$/));
+  if (!entries.length)
+    return undefined;
+  const coverage = new Map<string, any>();
+  for (const entry of entries)
+    iso.mergeIstanbulCoverage(coverage, JSON.parse(resources.get(entry)!.toString()));
+  return iso.sortedIstanbulCoverage(coverage);
+}
+
 export async function parseTraceRaw(file: string): Promise<{ events: any[], resources: Map<string, Buffer>, actions: string[], actionObjects: ActionTraceEvent[], stacks: Map<string, StackFrame[]> }> {
   const zipFS = new utils.ZipFile(file);
   const resources = new Map<string, Buffer>();

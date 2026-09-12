@@ -821,7 +821,6 @@ export class Page extends SdkObject<PageEventMap> {
   }
 
   async close(progress: Progress, options: { reason?: string } = {}) {
-    await progress.race(this.browserContext.tracing.flushCoverageBeforePageClose(this).catch(() => {}));
     await progress.race(this._close(options));
   }
 
@@ -831,6 +830,9 @@ export class Page extends SdkObject<PageEventMap> {
 
     if (options.reason)
       this._closeReason = options.reason;
+
+    if (!this.isStorageStatePage)
+      await this.instrumentation.onPageWillClose(this).catch(() => {});
 
     await this.screencast.handlePageOrContextClose();
 

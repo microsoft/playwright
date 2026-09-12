@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { mergeIstanbulCoverage } from '@isomorphic/istanbulCoverage';
+import { mergeIstanbulCoverage, sortedIstanbulCoverage } from '@isomorphic/istanbulCoverage';
 import * as rawCoverageSource from '../generated/coverageScriptSource';
 
 import type { BrowserContext } from './browserContext';
-import type { Page } from './page';
+import type { InitScript, Page } from './page';
 import type { Progress } from './progress';
 import type { IstanbulCoverageChunk, IstanbulFileCoverage } from '@isomorphic/istanbulCoverage';
 
@@ -31,51 +31,44 @@ export class CoverageRecorder {
   private _coverage = new Map<string, IstanbulFileCoverage>();
   private _stashedChunkIds = new Set<string>();
   private _stashOrigins = new Set<string>();
-  private _installed = false;
-  private _active = false;
+  private _initScript: InitScript | undefined;
 
   constructor(context: BrowserContext) {
     this._context = context;
   }
 
-  // Scopes the stashes in the page storage to this context.
-  private _sessionId() {
-    return this._context.guid;
-  }
-
-  private _bootstrapSource() {
+  private _moduleExpression(call: string) {
     return `(() => {
       const module = {};
       ${rawCoverageSource.source}
-      new (module.exports.CoverageScript())(window, ${JSON.stringify(kCoverageCollectName)}, ${JSON.stringify(this._sessionId())});
+      ${call}
     })()`;
   }
 
-  activate() {
-    this._active = true;
-  }
-
-  deactivate() {
-    this._active = false;
-  }
-
-  active() {
-    return this._active;
+  // The stashes in the page storage are scoped to the context that collects them.
+  private _sessionId() {
+    return JSON.stringify(this._context.guid);
   }
 
   async install(progress: Progress) {
-    if (this._installed)
+    if (this._initScript)
       return;
-    this._installed = true;
-    const bootstrapSource = this._bootstrapSource();
-    await this._context.addInitScript(progress, bootstrapSource);
+    const source = this._moduleExpression(`new (module.exports.CoverageScript())(window, ${JSON.stringify(kCoverageCollectName)}, ${this._sessionId()});`);
+    this._initScript = await this._context.addInitScript(progress, source);
     // Init scripts only affect future documents, bootstrap the existing ones.
-    await progress.race(this._context.safeNonStallingEvaluateInAllFrames(bootstrapSource, 'main'));
+    await progress.race(this._context.safeNonStallingEvaluateInAllFrames(source, 'main'));
+  }
+
+  async uninstall() {
+    const initScript = this._initScript;
+    this._initScript = undefined;
+    this._stashOrigins.clear();
+    this._stashedChunkIds.clear();
+    this._coverage.clear();
+    await initScript?.dispose().catch(() => {});
   }
 
   onPageClose(page: Page) {
-    if (!this._active)
-      return;
     for (const frame of page.frames())
       this._noteOrigin(frame.origin());
   }
@@ -86,32 +79,40 @@ export class CoverageRecorder {
   }
 
   async flush(progress: Progress) {
-    for (const page of this._context.pages())
-      await progress.race(this.collectFromPage(page));
+    await progress.race(Promise.all(this._context.pages().map(page => this.collectFromPage(page))));
     await this._harvestOriginsWithoutPage(progress);
   }
 
-  async take(progress: Progress): Promise<string | undefined> {
-    if (!this._active)
+  async take(progress: Progress, mode: 'keep' | 'discard'): Promise<string | undefined> {
+    if (mode === 'discard') {
+      // The coverage of a chunk is discarded together with it.
+      this._coverage.clear();
       return;
+    }
     await this.flush(progress);
-    const sorted = Object.fromEntries([...this._coverage.entries()].sort(([a], [b]) => a.localeCompare(b)));
+    this._stashedChunkIds.clear();
+    if (!this._coverage.size)
+      return;
+    const sorted = sortedIstanbulCoverage(this._coverage);
     this._coverage.clear();
     return JSON.stringify(sorted);
   }
 
   async collectFromPage(page: Page) {
+    // Pages of Playwright's own making never run the application under test.
+    if (page.isStorageStatePage)
+      return;
     // A page that is going away may never answer.
     await Promise.race([page.closedPromise, this._collectFromPage(page)]);
   }
 
   private async _collectFromPage(page: Page) {
-    for (const frame of page.frames()) {
+    await Promise.all(page.frames().map(async frame => {
       this._noteOrigin(frame.origin());
-      const chunks: string[] = await frame.nonStallingEvaluateInExistingContext(coverageCollectExpression, 'main').catch(() => []);
-      for (const json of chunks || [])
+      const chunks: string[] = await frame.nonStallingRawEvaluateInExistingMainContext(coverageCollectExpression).catch(() => []);
+      for (const json of chunks)
         this._append(json);
-    }
+    }));
   }
 
   // Pages relay the stashes of their own origin, the rest need a page of their own.
@@ -131,14 +132,10 @@ export class CoverageRecorder {
     this._stashOrigins.clear();
     if (!origins.size)
       return;
-    const takeStashesExpression = `(() => {
-      const module = {};
-      ${rawCoverageSource.source}
-      return (module.exports.takeCoverageStashes())(window, ${JSON.stringify(this._sessionId())});
-    })()`;
+    const source = this._moduleExpression(`return (module.exports.takeCoverageStashes())(window, ${this._sessionId()});`);
     await this._context.visitOrigins(progress, origins, async frame => {
-      const chunks: string[] = await frame.evaluateExpression(progress, takeStashesExpression, { world: 'main' }).catch(() => []);
-      for (const json of chunks || [])
+      const chunks: string[] = await frame.evaluateExpression(progress, source, { world: 'main' }).catch(() => []);
+      for (const json of chunks)
         this._append(json);
     });
   }

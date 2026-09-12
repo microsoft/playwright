@@ -15,7 +15,7 @@
  */
 
 import { browserTest as it, expect } from '../config/browserTest';
-import { parseTraceRaw } from '../config/utils';
+import { parseTraceCoverage } from '../config/utils';
 
 const fileCoverage = (file: string, s0: number) => ({
   [file]: {
@@ -30,12 +30,6 @@ const fileCoverage = (file: string, s0: number) => ({
 });
 
 const coverageScript = (file: string, s0: number) => `<script>window.__coverage__ = ${JSON.stringify(fileCoverage(file, s0))}</script>`;
-
-async function readCoverage(traceFile: string): Promise<any> {
-  const { resources } = await parseTraceRaw(traceFile);
-  const entry = resources.get('coverage.json');
-  return entry ? JSON.parse(entry.toString()) : undefined;
-}
 
 it('should collect istanbul coverage into the trace', async ({ browser }, testInfo) => {
   const context = await browser.newContext();
@@ -54,7 +48,7 @@ it('should collect istanbul coverage into the trace', async ({ browser }, testIn
   await context.tracing.stop({ path: traceFile });
   await context.close();
 
-  const data = await readCoverage(traceFile);
+  const data = await parseTraceCoverage(traceFile);
   expect(data['a.js'].s['0']).toBe(3);
   expect(data['b.js'].s['0']).toBe(2);
 });
@@ -76,11 +70,11 @@ it('should collect coverage per trace chunk', async ({ browser }, testInfo) => {
   await context.tracing.stop();
   await context.close();
 
-  const data1 = await readCoverage(traceFile1);
+  const data1 = await parseTraceCoverage(traceFile1);
   expect(data1['a.js'].s['0']).toBe(5);
   expect(data1['b.js']).toBe(undefined);
 
-  const data2 = await readCoverage(traceFile2);
+  const data2 = await parseTraceCoverage(traceFile2);
   expect(data2['b.js'].s['0']).toBe(7);
   expect(data2['a.js']).toBe(undefined);
 });
@@ -127,7 +121,7 @@ it('should accumulate counters across flushes and keep never hit files', async (
   await context.tracing.stop({ path: traceFile });
   await context.close();
 
-  const data = await readCoverage(traceFile);
+  const data = await parseTraceCoverage(traceFile);
   expect(data['a.js'].s['0']).toBe(7);
   expect(Object.keys(data['a.js'].statementMap)).toEqual(['0']);
 });
@@ -159,7 +153,7 @@ it('should collect coverage of a page closed by in-page script', async ({ browse
   await context.tracing.stop({ path: traceFile });
   await context.close();
 
-  const data = await readCoverage(traceFile);
+  const data = await parseTraceCoverage(traceFile);
   expect(data['popup.js'].s['0']).toBe(5);
 });
 
@@ -181,7 +175,7 @@ it('should not double count a stash picked up twice', async ({ browser, server }
   await context.tracing.stop({ path: traceFile });
   await context.close();
 
-  const data = await readCoverage(traceFile);
+  const data = await parseTraceCoverage(traceFile);
   expect(data['stashed.js'].s['0']).toBe(4);
 });
 
@@ -202,8 +196,8 @@ it('should discard stashes of other sessions', async ({ browser, server }, testI
   await context.tracing.stop({ path: traceFile });
   await context.close();
 
-  const data = await readCoverage(traceFile);
-  expect(data['stale.js']).toBe(undefined);
+  // The stale stash was the only coverage, so nothing was collected at all.
+  expect(await parseTraceCoverage(traceFile)).toBe(undefined);
 });
 
 it('should collect coverage of an origin left without a page', async ({ browser, server }, testInfo) => {
@@ -227,7 +221,7 @@ it('should collect coverage of an origin left without a page', async ({ browser,
   await context.tracing.stop({ path: traceFile });
   await context.close();
 
-  const data = await readCoverage(traceFile);
+  const data = await parseTraceCoverage(traceFile);
   expect(data['popup.js'].s['0']).toBe(5);
 });
 
@@ -246,7 +240,7 @@ it('should pull counters as the actions go', async ({ browser, server }, testInf
   await context.tracing.stop({ path: traceFile });
   await context.close();
 
-  const data = await readCoverage(traceFile);
+  const data = await parseTraceCoverage(traceFile);
   expect(data['a.js'].s['0']).toBe(3);
 });
 

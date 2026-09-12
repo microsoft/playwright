@@ -58,10 +58,17 @@ export type IstanbulFileCoverageDelta = Partial<IstanbulFileCoverage> & Pick<Ist
 
 export type IstanbulCoverageDelta = { [file: string]: IstanbulFileCoverageDelta };
 
+// Key prefix of the coverage deltas parked in the page storage.
+export const kCoverageStashPrefix = '__pwCoverage.';
+
 export type IstanbulCoverageChunk = {
   data: IstanbulCoverageDelta;
   id?: string;
 };
+
+export function sortedIstanbulCoverage(coverage: Map<string, IstanbulFileCoverage>): IstanbulCoverage {
+  return Object.fromEntries([...coverage.entries()].sort(([a], [b]) => a.localeCompare(b)));
+}
 
 // Counters add up, maps are taken from the first report that carries them.
 export function mergeIstanbulCoverage(into: Map<string, IstanbulFileCoverage>, data: IstanbulCoverageDelta) {

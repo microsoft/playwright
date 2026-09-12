@@ -17,8 +17,9 @@
 import fs from 'fs';
 import path from 'path';
 
-import { mergeIstanbulCoverage } from '@isomorphic/istanbulCoverage';
+import { mergeIstanbulCoverage, sortedIstanbulCoverage } from '@isomorphic/istanbulCoverage';
 import { ZipFile } from '@utils/zipFile';
+import { terminalScreen } from './base';
 import { resolveReporterOutputPath } from '../util';
 
 import type { IstanbulCoverage, IstanbulFileCoverage } from '@isomorphic/istanbulCoverage';
@@ -55,15 +56,27 @@ class CoverageReporter implements ReporterV2 {
 
   async onEnd() {
     const coverage = new Map<string, IstanbulFileCoverage>();
-    for (const traceFile of this._traceFiles) {
-      const zipFile = new ZipFile(traceFile);
-      try {
-        const entries = await zipFile.entries();
-        if (entries.includes('coverage.json'))
-          mergeIstanbulCoverage(coverage, JSON.parse((await zipFile.read('coverage.json')).toString('utf8')));
-      } catch {
-      } finally {
-        zipFile.close();
+    // Traces of several contexts are merged into one, each keeping its own coverage entry.
+    const traceFiles = [...this._traceFiles];
+    while (traceFiles.length) {
+      const batch = traceFiles.splice(0, 16).map(async traceFile => {
+        const zipFile = new ZipFile(traceFile);
+        try {
+          const entries = (await zipFile.entries()).filter(entry => entry.match(/(^|-)trace\.coverage$/));
+          return await Promise.all(entries.map(entry => zipFile.read(entry)));
+        } catch {
+          return [];
+        } finally {
+          zipFile.close();
+        }
+      });
+      for (const buffers of await Promise.all(batch)) {
+        for (const buffer of buffers) {
+          try {
+            mergeIstanbulCoverage(coverage, JSON.parse(buffer.toString('utf8')));
+          } catch {
+          }
+        }
       }
     }
 
@@ -80,7 +93,7 @@ class CoverageReporter implements ReporterV2 {
 
     const outputDir = resolveReporterOutputPath('coverage', this._options.configDir, this._options.outputDir);
     await fs.promises.mkdir(outputDir, { recursive: true });
-    const mergedJson: IstanbulCoverage = Object.fromEntries([...coverage.entries()].sort(([a], [b]) => a.localeCompare(b)));
+    const mergedJson = sortedIstanbulCoverage(coverage);
     await fs.promises.writeFile(path.join(outputDir, 'coverage-final.json'), JSON.stringify(mergedJson));
     await fs.promises.writeFile(path.join(outputDir, 'lcov.info'), lcovReport(mergedJson));
     const hasHtml = this._tryWriteHtmlReport(mergedJson, outputDir);
@@ -127,30 +140,21 @@ function computeSummary(mergedJson: IstanbulCoverage) {
   const functions: Metric = { covered: 0, total: 0 };
   const lines: Metric = { covered: 0, total: 0 };
   for (const fileCov of Object.values(mergedJson)) {
-    for (const count of Object.values(fileCov.s)) {
-      ++statements.total;
-      if (count > 0)
-        ++statements.covered;
-    }
-    for (const count of Object.values(fileCov.f)) {
-      ++functions.total;
-      if (count > 0)
-        ++functions.covered;
-    }
-    for (const counts of Object.values(fileCov.b)) {
-      for (const count of counts) {
-        ++branches.total;
-        if (count > 0)
-          ++branches.covered;
-      }
-    }
-    for (const count of lineCoverage(fileCov).values()) {
-      ++lines.total;
-      if (count > 0)
-        ++lines.covered;
-    }
+    countHits(statements, Object.values(fileCov.s));
+    countHits(functions, Object.values(fileCov.f));
+    for (const counts of Object.values(fileCov.b))
+      countHits(branches, counts);
+    countHits(lines, lineCoverage(fileCov).values());
   }
   return { statements, branches, functions, lines };
+}
+
+function countHits(metric: Metric, counts: Iterable<number>) {
+  for (const count of counts) {
+    ++metric.total;
+    if (count > 0)
+      ++metric.covered;
+  }
 }
 
 function lineCoverage(fileCov: IstanbulFileCoverage): Map<number, number> {
@@ -210,8 +214,7 @@ function lcovReport(mergedJson: IstanbulCoverage): string {
 }
 
 function writeLine(line: string) {
-  // eslint-disable-next-line no-restricted-properties
-  process.stdout.write(line + '\n');
+  terminalScreen.stdout.write(line + '\n');
 }
 
 export default CoverageReporter;
