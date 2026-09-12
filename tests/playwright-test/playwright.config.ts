@@ -21,11 +21,9 @@ process.env.PWTEST_UNDER_TEST = '1';
 import { defineConfig, type ReporterDescription } from './stable-test-runner';
 import * as path from 'path';
 
-const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const reporters = () => {
   const result: ReporterDescription[] = process.env.CI ? [
     ['dot'],
-    ['json', { outputFile: path.join(outputDir, 'report.json') }],
     ['blob', { outputDir: path.join(__dirname, '..', '..', 'blob-report') }],
     ['../config/parquetReporter.ts'],
   ] : [

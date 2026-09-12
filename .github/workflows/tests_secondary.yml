@@ -16,14 +16,12 @@ env:
   FORCE_COLOR: 1
 
 permissions:
-  id-token: write   # This is required for OIDC login (azure/login) to succeed
   contents: read    # This is required for actions/checkout to succeed
 
 jobs:
   test_mac:
     name: ${{ matrix.os }} (${{ matrix.browser }})
     if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -42,14 +40,10 @@ jobs:
         browsers-to-install: ${{ matrix.browser }} chromium
         command: npm run test -- --project=${{ matrix.browser }}-*
         bot-name: "${{ matrix.browser }}-${{ matrix.os }}"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
   test_win:
     name: "Windows"
     if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -62,14 +56,10 @@ jobs:
         browsers-to-install: ${{ matrix.browser }} chromium
         command: npm run test -- --project=${{ matrix.browser }}-* ${{ matrix.browser == 'firefox' && '--workers 1' || '' }}
         bot-name: "${{ matrix.browser }}-windows-latest"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
   test-package-installations-other-node-versions:
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
     if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:
       fail-fast: false
@@ -98,13 +88,9 @@ jobs:
         node-version: ${{ matrix.node_version }}
         command: npm run itest
         bot-name: "package-installations-${{ matrix.os }}-node${{ matrix.node_version }}"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
   driver_linux:
     name: "Driver"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
     runs-on: ubuntu-22.04
@@ -115,15 +101,11 @@ jobs:
         browsers-to-install: chromium
         command: npm run ctest
         bot-name: "driver"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_MODE: driver
 
   tracing_linux:
     name: Tracing ${{ matrix.browser }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -143,15 +125,11 @@ jobs:
         browsers-to-install: ${{ matrix.browser }} chromium
         command: npm run test -- --project=${{ matrix.browser }}-*
         bot-name: "tracing-${{ matrix.browser }}"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_TRACE: 1
 
   test_chromium_channels:
     name: Test ${{ matrix.channel }} on ${{ matrix.runs-on }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
@@ -176,15 +154,11 @@ jobs:
         browsers-to-install: ${{ matrix.channel }}
         command: npm run ctest
         bot-name: ${{ matrix.channel }}-${{ matrix.runs-on }}
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: ${{ matrix.channel }}
 
   test_android:
     name: Android
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: playwright-x64-ubuntu24-64-core
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -209,16 +183,11 @@ jobs:
         browsers-to-install: android
         command: npm run atest
         bot-name: "android"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
   test_clock_frozen_time_test_runner:
     name: time test runner - ${{ matrix.clock }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-22.04
     permissions:
-      id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
     strategy:
       fail-fast: false
@@ -231,21 +200,16 @@ jobs:
         node-version: 22
         command: npm run ttest
         bot-name: "${{ matrix.clock }}-time-runner-chromium-linux"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PW_CLOCK: ${{ matrix.clock }}
 
   test_electron:
     name: Electron - ${{ matrix.os }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     permissions:
-      id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
     runs-on: ${{ matrix.os }}
     steps:
@@ -269,6 +233,3 @@ jobs:
         setup-command: npx install-electron --no
         command: npm run etest
         bot-name: "electron-${{ matrix.os }}"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
