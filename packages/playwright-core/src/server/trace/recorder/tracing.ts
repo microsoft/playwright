@@ -523,6 +523,18 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       await this._captureScreenshot(progress, page, phase);
     if (options?.snapshotAria)
       await this._captureAriaSnapshot(progress, page, phase);
+    if (options?.coverage && phase === 'after')
+      await this._captureCoverage(progress, page);
+  }
+
+  private async _captureCoverage(progress: Progress, page: Page): Promise<void> {
+    const recorder = this._coverageRecorder;
+    if (!recorder)
+      return;
+    try {
+      await progress.race(recorder.collectFromPage(page));
+    } catch {
+    }
   }
 
   private _shouldCaptureAtPhase(metadata: CallMetadata, phase: trace.ActionPhase) {
@@ -595,27 +607,18 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._appendTraceEvent(event);
   }
 
-  async onAfterCall(progress: Progress, sdkObject: SdkObject) {
-    // IMPORTANT: no awaits before _appendTraceEvent, it must be called synchronously.
+  onAfterCall(progress: Progress, sdkObject: SdkObject) {
+    // IMPORTANT: no awaits in this method, this._appendTraceEvent must be called synchronously.
     const { metadata } = progress;
     if (!this._state?.callsInProgress.has(metadata.id))
-      return;
-    this._state.callsInProgress.delete(metadata.id);
+      return Promise.resolve();
+    this._state?.callsInProgress.delete(metadata.id);
     const event = createAfterActionTraceEvent(metadata);
     if (!event)
-      return;
+      return Promise.resolve();
     this._temporarilyDisableThrottling(sdkObject.attribution.page);
     this._appendTraceEvent(event);
-    await this._captureSnapshot(progress, sdkObject, 'after');
-    // Collecting as the actions go, an action is the most that can be lost.
-    const page = sdkObject.attribution.page;
-    const recorder = this._activeCoverageRecorder();
-    if (page && recorder) {
-      try {
-        await progress.race(recorder.collectFromPage(page));
-      } catch {
-      }
-    }
+    return this._captureSnapshot(progress, sdkObject, 'after');
   }
 
   async onPageWillClose(page: Page) {

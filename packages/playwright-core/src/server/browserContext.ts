@@ -657,7 +657,6 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     return result;
   }
 
-  // Reaches the storage of the origins that have no page, in a hidden page.
   async visitOrigins(progress: Progress, origins: Set<string>, callback: (frame: frames.Frame, origin: string) => Promise<void>) {
     const page = await this.newPage(progress, true /* forStorageState */);
     try {

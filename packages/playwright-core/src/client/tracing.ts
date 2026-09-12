@@ -80,9 +80,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   }
 
   async flushCoverage() {
-    await this._wrapApiCall(async () => {
-      await this._channel.tracingFlushCoverage({}, kNoTimeout);
-    });
+    await this._channel.tracingFlushCoverage({}, kNoTimeout);
   }
 
   private async _startCollectingStacks(traceName: string, live: boolean) {
