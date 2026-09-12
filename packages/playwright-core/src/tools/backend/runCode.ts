@@ -29,6 +29,7 @@ const codeSchema = z.object({
 
 const runCode = defineTabTool({
   capability: 'core',
+  skillOnly: true,
   schema: {
     name: 'browser_run_code_unsafe',
     title: 'Run Playwright code (unsafe)',
