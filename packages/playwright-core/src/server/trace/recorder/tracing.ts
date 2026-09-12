@@ -187,10 +187,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     // Tracing is 10x bigger if we include scripts in every trace.
     if (options.snapshotDom)
       this._harTracer.start({ omitScripts: !options.live });
-    if (options.coverage && this._context instanceof BrowserContext) {
+    if (options.coverage && this._context instanceof BrowserContext)
       this._coverageRecorder ??= new CoverageRecorder(this._context);
-      this._coverageRecorder.activate();
-    }
     this._started = true;
   }
 
@@ -348,7 +346,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._closeAllGroups();
     this._harTracer.stop();
     this.flushHarEntries();
-    this._coverageRecorder?.deactivate();
+    await this._coverageRecorder?.uninstall();
     await this._fs.sync().finally(() => {
       this._state = undefined;
     });
@@ -397,24 +395,24 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._groupEnd();
   }
 
-  async flushCoverage(progress: Progress) {
-    if (!this._coverageRecorder?.active())
-      throw new Error(`Coverage collection has not been started. Pass the "coverage" option to tracing.start().`);
-    await this._coverageRecorder.flush(progress);
+  private _activeCoverageRecorder(): CoverageRecorder | undefined {
+    return this._state?.options.coverage ? this._coverageRecorder : undefined;
   }
 
-  async flushCoverageBeforePageClose(page: Page) {
-    if (!this._coverageRecorder?.active())
-      return;
-    await this._coverageRecorder.collectFromPage(page);
+  async flushCoverage(progress: Progress) {
+    const recorder = this._activeCoverageRecorder();
+    if (!recorder)
+      throw new Error(`Coverage collection has not been started. Pass the "coverage" option to tracing.start().`);
+    await recorder.flush(progress);
   }
 
   // Collected before the chunk stops, while the pages can still be evaluated in.
   private async _takeCoverage(progress: Progress, mode: TracingTracingStopChunkParams['mode']): Promise<string | undefined> {
-    if (!this._state?.recording || !this._state.options.coverage || !this._coverageRecorder)
+    const recorder = this._activeCoverageRecorder();
+    if (!this._state?.recording || !recorder)
       return;
-    const coverageJson = await this._coverageRecorder.take(progress);
-    if (mode === 'discard' || coverageJson === undefined)
+    const coverageJson = await recorder.take(progress, mode === 'discard' ? 'discard' : 'keep');
+    if (coverageJson === undefined)
       return;
     const coverageFile = path.join(this._state.tracesDir, `${this._state.traceName}-coverage-${this._state.chunkOrdinal}.json`);
     this._fs.writeFile(coverageFile, coverageJson);
@@ -489,7 +487,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     entries.push({ name: 'trace.trace', value: this._state.traceFile });
     entries.push({ name: 'trace.network', value: newNetworkFile });
     if (coverageFile)
-      entries.push({ name: 'coverage.json', value: coverageFile });
+      entries.push({ name: 'trace.coverage', value: coverageFile });
     for (const file of new Set([...this._state.chunkFiles, ...this._state.crossChunkFiles]))
       entries.push({ name: file, value: path.join(this._state.tracesDir, file) });
 
@@ -525,13 +523,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       await this._captureScreenshot(progress, page, phase);
     if (options?.snapshotAria)
       await this._captureAriaSnapshot(progress, page, phase);
-    // Collecting as the actions go, an action is the most that can be lost.
-    if (phase === 'after' && this._coverageRecorder?.active()) {
-      try {
-        await progress.race(this._coverageRecorder.collectFromPage(page));
-      } catch {
-      }
-    }
   }
 
   private _shouldCaptureAtPhase(metadata: CallMetadata, phase: trace.ActionPhase) {
@@ -604,18 +595,31 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._appendTraceEvent(event);
   }
 
-  onAfterCall(progress: Progress, sdkObject: SdkObject) {
-    // IMPORTANT: no awaits in this method, this._appendTraceEvent must be called synchronously.
+  async onAfterCall(progress: Progress, sdkObject: SdkObject) {
+    // IMPORTANT: no awaits before _appendTraceEvent, it must be called synchronously.
     const { metadata } = progress;
     if (!this._state?.callsInProgress.has(metadata.id))
-      return Promise.resolve();
-    this._state?.callsInProgress.delete(metadata.id);
+      return;
+    this._state.callsInProgress.delete(metadata.id);
     const event = createAfterActionTraceEvent(metadata);
     if (!event)
-      return Promise.resolve();
+      return;
     this._temporarilyDisableThrottling(sdkObject.attribution.page);
     this._appendTraceEvent(event);
-    return this._captureSnapshot(progress, sdkObject, 'after');
+    await this._captureSnapshot(progress, sdkObject, 'after');
+    // Collecting as the actions go, an action is the most that can be lost.
+    const page = sdkObject.attribution.page;
+    const recorder = this._activeCoverageRecorder();
+    if (page && recorder) {
+      try {
+        await progress.race(recorder.collectFromPage(page));
+      } catch {
+      }
+    }
+  }
+
+  async onPageWillClose(page: Page) {
+    await this._activeCoverageRecorder()?.collectFromPage(page).catch(() => {});
   }
 
   onEntryStarted(entry: har.Entry) {
@@ -715,7 +719,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   onPageClose(page: Page) {
-    this._coverageRecorder?.onPageClose(page);
+    this._activeCoverageRecorder()?.onPageClose(page);
     const event: trace.EventTraceEvent = {
       type: 'event',
       time: monotonicTime(),

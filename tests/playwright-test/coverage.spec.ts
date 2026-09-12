@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import { test, expect } from './playwright-test-fixtures';
-import { parseTraceRaw } from '../config/utils';
+import { parseTraceCoverage } from '../config/utils';
 
 const coverageHelper = `
   const makeCoverage = (file, s0) => ({
@@ -39,12 +39,6 @@ const coverageHelper = `
   });
   const coverageScript = (file, s0) => '<script>window.__coverage__ = ' + JSON.stringify(makeCoverage(file, s0)) + '</script>';
 `;
-
-async function readCoverage(tracePath: string): Promise<any> {
-  const { resources } = await parseTraceRaw(tracePath);
-  const entry = resources.get('coverage.json');
-  return entry ? JSON.parse(entry.toString()) : undefined;
-}
 
 test('should collect istanbul coverage into the trace', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -74,7 +68,7 @@ test('should collect istanbul coverage into the trace', async ({ runInlineTest }
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 
-  const data = await readCoverage(test.info().outputPath('test-results', 'a-pass', 'trace.zip'));
+  const data = await parseTraceCoverage(test.info().outputPath('test-results', 'a-pass', 'trace.zip'));
   expect(data['src/app.js'].s['0']).toBe(7);
   expect(data['src/app.js'].s['1']).toBe(0);
   expect(data['src/app.js'].f['0']).toBe(2);
@@ -100,7 +94,7 @@ test('should collect coverage from frames', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 
-  const data = await readCoverage(test.info().outputPath('test-results', 'a-pass', 'trace.zip'));
+  const data = await parseTraceCoverage(test.info().outputPath('test-results', 'a-pass', 'trace.zip'));
   expect(data['src/app.js'].s['0']).toBe(1);
   expect(data['src/frame.js'].s['0']).toBe(3);
 });
@@ -184,6 +178,30 @@ test('should not collect coverage without the option', async ({ runInlineTest })
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 
-  const data = await readCoverage(test.info().outputPath('test-results', 'a-pass', 'trace.zip'));
+  const data = await parseTraceCoverage(test.info().outputPath('test-results', 'a-pass', 'trace.zip'));
   expect(data).toBe(undefined);
+});
+
+test('should keep the coverage of every context of a test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: { mode: 'on', coverage: true } } };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      ${coverageHelper}
+      test('pass', async ({ page, browser }) => {
+        await page.setContent(coverageScript('src/first.js', 1));
+        const second = await browser.newContext();
+        await (await second.newPage()).setContent(coverageScript('src/second.js', 4));
+        await second.close();
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+
+  const data = await parseTraceCoverage(test.info().outputPath('test-results', 'a-pass', 'trace.zip'));
+  expect(data['src/first.js'].s['0']).toBe(1);
+  expect(data['src/second.js'].s['0']).toBe(4);
 });

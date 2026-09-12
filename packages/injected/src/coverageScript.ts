@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { IstanbulCoverage, IstanbulCoverageDelta, IstanbulFileCoverageDelta } from '@isomorphic/istanbulCoverage';
+import { kCoverageStashPrefix } from '@isomorphic/istanbulCoverage';
 
-export const kCoverageStashPrefix = '__pwCoverage.';
+import type { IstanbulCoverage, IstanbulCoverageDelta, IstanbulFileCoverageDelta } from '@isomorphic/istanbulCoverage';
 
 // Reports `__coverage__` as a delta: reading resets the counters, maps are sent once per file.
 export class CoverageScript {
@@ -34,7 +34,7 @@ export class CoverageScript {
   }
 
   collect(): string[] {
-    const chunks = this._takeStashes();
+    const chunks = takeCoverageStashes(this._global, this._sessionId);
     const delta = this._takeCurrent();
     if (delta)
       chunks.push(JSON.stringify({ data: delta }));
@@ -46,7 +46,6 @@ export class CoverageScript {
     if (!coverage)
       return undefined;
     const delta: IstanbulCoverageDelta = {};
-    let hasFiles = false;
     for (const [file, fileCoverage] of Object.entries(coverage)) {
       const s = takeCounters(fileCoverage.s);
       const f = takeCounters(fileCoverage.f);
@@ -63,13 +62,8 @@ export class CoverageScript {
         this._reportedFiles.add(file);
       }
       delta[file] = entry;
-      hasFiles = true;
     }
-    return hasFiles ? delta : undefined;
-  }
-
-  private _takeStashes(): string[] {
-    return takeCoverageStashes(this._global, this._sessionId);
+    return Object.keys(delta).length ? delta : undefined;
   }
 
   private _stashCurrent() {
@@ -134,7 +128,7 @@ function takeBranchCounters(counters: { [key: string]: number[] }): { [key: stri
     if (!result)
       result = {};
     result[key] = counts.slice();
-    counters[key] = counts.map(() => 0);
+    counts.fill(0);
   }
   return result;
 }

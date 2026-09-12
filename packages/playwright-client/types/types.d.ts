@@ -23286,7 +23286,7 @@ export interface Tracing {
      * [`vite-plugin-istanbul`](https://www.npmjs.com/package/vite-plugin-istanbul) or
      * [`babel-plugin-istanbul`](https://www.npmjs.com/package/babel-plugin-istanbul), so that pages expose the
      * `window.__coverage__` object. Playwright collects accumulated counters from all pages and frames, including right
-     * before navigations, and stores them as `coverage.json` in istanbul format inside the trace file. Use
+     * before navigations, and stores them in istanbul format inside the trace file. Use
      * [tracing.flushCoverage()](https://playwright.dev/docs/api/class-tracing#tracing-flush-coverage) to collect counters
      * from a page that is about to be closed by in-page script.
      */

@@ -151,7 +151,7 @@ a timeline preview.
 * langs: js
 - `coverage` <[boolean]>
 
-**Experimental.** Whether to collect code coverage from istanbul-instrumented application code. Build the application with an istanbul instrumentation plugin, for example [`vite-plugin-istanbul`](https://www.npmjs.com/package/vite-plugin-istanbul) or [`babel-plugin-istanbul`](https://www.npmjs.com/package/babel-plugin-istanbul), so that pages expose the `window.__coverage__` object. Playwright collects accumulated counters from all pages and frames, including right before navigations, and stores them as `coverage.json` in istanbul format inside the trace file. Use [`method: Tracing.flushCoverage`] to collect counters from a page that is about to be closed by in-page script.
+**Experimental.** Whether to collect code coverage from istanbul-instrumented application code. Build the application with an istanbul instrumentation plugin, for example [`vite-plugin-istanbul`](https://www.npmjs.com/package/vite-plugin-istanbul) or [`babel-plugin-istanbul`](https://www.npmjs.com/package/babel-plugin-istanbul), so that pages expose the `window.__coverage__` object. Playwright collects accumulated counters from all pages and frames, including right before navigations, and stores them in istanbul format inside the trace file. Use [`method: Tracing.flushCoverage`] to collect counters from a page that is about to be closed by in-page script.
 
 ### option: Tracing.start.snapshots
 * since: v1.12

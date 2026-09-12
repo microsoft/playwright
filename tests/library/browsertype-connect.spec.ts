@@ -757,7 +757,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
 
       const { resources } = await parseTraceRaw(testInfo.outputPath('trace1.zip'));
-      const data = JSON.parse(resources.get('coverage.json')!.toString());
+      const data = JSON.parse(resources.get('trace.coverage')!.toString());
       expect(data['a.js'].s['0']).toBe(3);
     });
 

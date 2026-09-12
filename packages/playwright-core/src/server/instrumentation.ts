@@ -111,6 +111,7 @@ export interface Instrumentation {
   onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): void;
   onAfterCall(progress: Progress, sdkObject: SdkObject): Promise<void>;
   onPageOpen(page: Page): void;
+  onPageWillClose(page: Page): Promise<void>;
   onPageClose(page: Page): void;
   onBrowserOpen(browser: Browser): void;
   onBrowserClose(browser: Browser): void;
@@ -124,6 +125,7 @@ export interface InstrumentationListener {
   onCallLog?(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): void;
   onAfterCall?(progress: Progress, sdkObject: SdkObject): Promise<void>;
   onPageOpen?(page: Page): void;
+  onPageWillClose?(page: Page): Promise<void>;
   onPageClose?(page: Page): void;
   onBrowserOpen?(browser: Browser): void;
   onBrowserClose?(browser: Browser): void;
