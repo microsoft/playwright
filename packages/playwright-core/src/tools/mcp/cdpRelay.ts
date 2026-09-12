@@ -117,7 +117,7 @@ export class CDPRelayServer {
   }
 
   async start(): Promise<void> {
-    this._wsHost = await this._wsServer.listen(0, undefined, '');
+    this._wsHost = await this._wsServer.listen(0, '127.0.0.1', '');
   }
 
   cdpEndpoint() {
