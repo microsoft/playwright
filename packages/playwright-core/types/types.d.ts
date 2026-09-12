@@ -23205,8 +23205,8 @@ export interface Touchscreen {
  */
 export interface Tracing {
   /**
-   * **Experimental.** Collects istanbul coverage counters accumulated by all pages of the browser context into the
-   * coverage recorded by the trace. Requires tracing with the
+   * Collects istanbul coverage counters accumulated by all pages of the browser context into the coverage recorded by
+   * the trace. Requires tracing with the
    * [`coverage`](https://playwright.dev/docs/api/class-tracing#tracing-start-option-coverage) option to be started
    * first.
    *
@@ -23281,8 +23281,8 @@ export interface Tracing {
    */
   start(options?: {
     /**
-     * **Experimental.** Whether to collect code coverage from istanbul-instrumented application code. Build the
-     * application with an istanbul instrumentation plugin, for example
+     * Whether to collect code coverage from istanbul-instrumented application code. Build the application with an
+     * istanbul instrumentation plugin, for example
      * [`vite-plugin-istanbul`](https://www.npmjs.com/package/vite-plugin-istanbul) or
      * [`babel-plugin-istanbul`](https://www.npmjs.com/package/babel-plugin-istanbul), so that pages expose the
      * `window.__coverage__` object. Playwright collects accumulated counters from all pages and frames, including right
