@@ -108,10 +108,22 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
     return;
   }
   console.log(`Installing dependencies...`);  // eslint-disable-line no-console
+  let missingPackages: string[];
+  try {
+    missingPackages = await getMissingDependenciesLinux(uniqueLibraries);
+  } catch {
+    // Detection failed (e.g. apt package lists are not populated yet on a
+    // fresh image). Fall back to the full set; apt-get resolves what it can.
+    missingPackages = uniqueLibraries;
+  }
+  if (!missingPackages.length) {
+    console.log('All system dependencies are installed.'); // eslint-disable-line no-console
+    return;
+  }
   const commands: string[] = [];
   commands.push('apt-get update');
   commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
-    ...uniqueLibraries,
+    ...missingPackages,
   ].join(' '));
   const { command, args, elevatedPermissions } = await transformCommandsForRoot(commands);
   if (elevatedPermissions)
@@ -123,21 +135,30 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
   });
 }
 
-async function reportMissingDependenciesLinux(packages: string[]) {
-  // `apt-get install -s` simulates the install: it does not need root and does not
-  // modify the system. Stdout includes one `Inst <package> ...` line per package
-  // that would be installed (i.e. that is currently missing).
-  const { code, stdout, stderr, error } = await spawnAsync('apt-get', ['install', '-s', '--no-install-recommends', ...packages], {});
-  if (error)
-    throw new Error(`Failed to run 'apt-get install -s' to simulate dependency install: ${error.message}`);
-  if (code !== 0)
-    throw new Error(`'apt-get install -s' exited with code ${code}:\n${stderr || stdout}`);
+export function parseMissingPackages(stdout: string): string[] {
   const missingPackages: string[] = [];
   for (const line of stdout.split('\n')) {
     const match = /^Inst (\S+) /.exec(line);
     if (match)
       missingPackages.push(match[1]);
   }
+  return missingPackages;
+}
+
+async function getMissingDependenciesLinux(packages: string[]): Promise<string[]> {
+  // `apt-get install -s` simulates the install: it does not need root and does not
+  // modify the system. Stdout includes one `Inst <package>` line per package
+  // that would be installed (i.e. that is currently missing).
+  const { code, stdout, stderr, error } = await spawnAsync('apt-get', ['install', '-s', '--no-install-recommends', ...packages], {});
+  if (error)
+    throw new Error(`Failed to run 'apt-get install -s' to simulate dependency install: ${error.message}`);
+  if (code !== 0)
+    throw new Error(`'apt-get install -s' exited with code ${code}:\n${stderr || stdout}`);
+  return parseMissingPackages(stdout);
+}
+
+async function reportMissingDependenciesLinux(packages: string[]) {
+  const missingPackages = await getMissingDependenciesLinux(packages);
   if (!missingPackages.length) {
     console.log('All system dependencies are installed.'); // eslint-disable-line no-console
     return;
