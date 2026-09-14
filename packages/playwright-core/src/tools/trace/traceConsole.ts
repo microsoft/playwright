@@ -16,7 +16,7 @@
 
 /* eslint-disable no-console */
 
-import { loadTrace, formatTimestamp } from './traceUtils';
+import { loadTrace, formatTimestamp, compileGrep } from './traceUtils';
 
 export async function traceConsole(options: { grep?: string, errorsOnly?: boolean, warnings?: boolean, browser?: boolean, stdio?: boolean }) {
   const trace = await loadTrace();
@@ -89,10 +89,9 @@ export async function traceConsole(options: { grep?: string, errorsOnly?: boolea
   items.sort((a, b) => a.timestamp - b.timestamp);
 
   let filtered = items;
-  if (options.grep) {
-    const pattern = new RegExp(options.grep, 'i');
+  const pattern = compileGrep(options.grep);
+  if (pattern)
     filtered = filtered.filter(item => pattern.test(item.text));
-  }
 
   if (!filtered.length) {
     console.log('  No console entries');

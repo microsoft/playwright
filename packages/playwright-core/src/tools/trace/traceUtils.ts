@@ -118,6 +118,16 @@ export function actionFullTitle(action: ActionEntry): string {
   return renderFullTitleForCall({ ...action, type: action.class }) || `${action.class}.${action.method}`;
 }
 
+export function compileGrep(grep: string | undefined): RegExp | undefined {
+  if (!grep)
+    return undefined;
+  try {
+    return new RegExp(grep, 'i');
+  } catch {
+    throw new Error(`Invalid --grep pattern: ${grep}`);
+  }
+}
+
 export async function saveOutputFile(fileName: string, content: string | Buffer, explicitOutput?: string): Promise<string> {
   let outFile: string;
   if (explicitOutput) {

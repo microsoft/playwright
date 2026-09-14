@@ -18,7 +18,7 @@
 
 import { buildActionTree } from '@isomorphic/trace/traceModel';
 import { msToString } from '@isomorphic/formatUtils';
-import { loadTrace, formatTimestamp, actionFullTitle, actionSubtitle, actionTitle } from './traceUtils';
+import { loadTrace, formatTimestamp, actionFullTitle, actionSubtitle, actionTitle, compileGrep } from './traceUtils';
 
 import { kActionPhases } from './traceUtils';
 
@@ -53,10 +53,9 @@ export async function traceActions(options: { grep?: string, errorsOnly?: boolea
 
 function filterActions(actions: ActionEntry[], options: { grep?: string, errorsOnly?: boolean }): ActionEntry[] {
   let result = actions.filter(a => a.group !== 'configuration');
-  if (options.grep) {
-    const pattern = new RegExp(options.grep, 'i');
+  const pattern = compileGrep(options.grep);
+  if (pattern)
     result = result.filter(a => pattern.test(actionFullTitle(a)));
-  }
   if (options.errorsOnly)
     result = result.filter(a => !!a.error);
   return result;

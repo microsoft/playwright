@@ -18,7 +18,7 @@
 
 import path from 'path';
 import { msToString } from '@isomorphic/formatUtils';
-import { loadTrace, formatTimestamp } from './traceUtils';
+import { loadTrace, formatTimestamp, compileGrep } from './traceUtils';
 
 export async function traceRequests(options: { grep?: string, method?: string, status?: string, failed?: boolean }) {
   const trace = await loadTrace();
@@ -27,10 +27,9 @@ export async function traceRequests(options: { grep?: string, method?: string, s
   // Build indexed list with stable ordinals before filtering.
   let indexed = model.resources.map((r, i) => ({ resource: r, ordinal: i + 1 }));
 
-  if (options.grep) {
-    const pattern = new RegExp(options.grep, 'i');
+  const pattern = compileGrep(options.grep);
+  if (pattern)
     indexed = indexed.filter(({ resource: r }) => pattern.test(r.request.url));
-  }
   if (options.method)
     indexed = indexed.filter(({ resource: r }) => r.request.method.toLowerCase() === options.method!.toLowerCase());
   if (options.status) {

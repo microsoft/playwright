@@ -52,6 +52,13 @@ test('trace actions --grep filters actions', async ({ runTraceCli }) => {
   expect(stdout).not.toContain('Fill');
 });
 
+test('trace actions --grep reports invalid regular expressions', async ({ runTraceCli }) => {
+  const { stderr, exitCode } = await runTraceCli(['actions', '--grep', '[']);
+  expect(exitCode).not.toBe(0);
+  expect(stderr).toContain('Invalid --grep pattern: [');
+  expect(stderr).not.toContain('SyntaxError');
+});
+
 test('trace action displays action details', async ({ runTraceCli }) => {
   // First get an action ordinal from list
   const { stdout: listOutput } = await runTraceCli(['actions', '--grep', 'Navigate']);
