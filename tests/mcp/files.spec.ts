@@ -103,6 +103,43 @@ test('browser_file_upload', async ({ client, server }, testInfo) => {
   }
 });
 
+test('browser_file_upload keeps chooser when setFiles fails', async ({ client, server }, testInfo) => {
+  server.setContent('/', `<input type="file" />`, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Textbox',
+      target: 'e2',
+    },
+  });
+
+  const missing = testInfo.outputPath('missing.txt');
+  const failed = await client.callTool({
+    name: 'browser_file_upload',
+    arguments: { paths: [missing] },
+  });
+  expect(failed).toHaveResponse({
+    isError: true,
+    modalState: expect.stringContaining(`[File chooser]`),
+  });
+
+  const filePath = testInfo.outputPath('retry.txt');
+  await fs.writeFile(filePath, 'retry');
+  const retried = await client.callTool({
+    name: 'browser_file_upload',
+    arguments: { paths: [filePath] },
+  });
+  expect(retried).toHaveResponse({
+    modalState: undefined,
+  });
+});
+
 test('clicking on download link emits download', async ({ startClient, server }, testInfo) => {
   const { client } = await startClient({
     config: { outputDir: testInfo.outputPath('output') },

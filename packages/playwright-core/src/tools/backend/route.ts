@@ -40,9 +40,11 @@ const route = defineTool({
   },
 
   handle: async (context, params, response) => {
-    const addHeaders = params.headers ? Object.fromEntries(params.headers.map(h => {
+    const addHeaders = params.headers ? Object.fromEntries(params.headers.flatMap(h => {
       const colonIndex = h.indexOf(':');
-      return [h.substring(0, colonIndex).trim(), h.substring(colonIndex + 1).trim()];
+      if (colonIndex <= 0)
+        return [];
+      return [[h.substring(0, colonIndex).trim(), h.substring(colonIndex + 1).trim()]];
     })) : undefined;
     const removeHeaders = params.removeHeaders ? params.removeHeaders.split(',').map(h => h.trim()) : undefined;
 
