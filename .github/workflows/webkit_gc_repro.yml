@@ -1,0 +1,32 @@
+name: "webkit gc repro"
+
+# Diagnostic branch only. DO NOT MERGE.
+#
+# Every other workflow is removed on this branch so a draft PR runs nothing but the WebKit leak
+# matrix below, on the one bot that actually reproduces the regression (macos-15-xlarge, arm64).
+# pull_request only: a push to a personal fork cannot schedule a larger runner.
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  webkit_leaks:
+    name: webkit-page leaks (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15-xlarge]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/run-test
+        with:
+          browsers-to-install: webkit chromium
+          command: npx playwright test --config=tests/library/playwright.config.ts tests/page/webkit-gc-repro.spec.ts tests/page/page-leaks.spec.ts --project=webkit-page --repeat-each=10 --retries=0 --reporter=line
+          bot-name: "webkit-gc-repro-${{ matrix.os }}"
