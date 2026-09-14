@@ -134,7 +134,7 @@ export interface Page {
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-option-expression).
    * @param options
    */
-  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean, world?: 'main'|'utility' }): Promise<R>;
+  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean, serialization?: 'default'|'extended', world?: 'main'|'utility' }): Promise<R>;
   /**
    * Returns the value of the
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-option-expression) invocation.
@@ -187,7 +187,7 @@ export interface Page {
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-option-expression).
    * @param options
    */
-  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean, world?: 'main'|'utility' }): Promise<R>;
+  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean, serialization?: 'default'|'extended', world?: 'main'|'utility' }): Promise<R>;
 
   /**
    * Returns the value of the
@@ -235,7 +235,7 @@ export interface Page {
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-handle-option-expression).
    * @param options
    */
-  evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
+  evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean, serialization?: 'default'|'extended' }): Promise<SmartHandle<R>>;
   /**
    * Returns the value of the
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-handle-option-expression) invocation as a
@@ -282,7 +282,7 @@ export interface Page {
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-handle-option-expression).
    * @param options
    */
-  evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
+  evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean, serialization?: 'default'|'extended' }): Promise<SmartHandle<R>>;
 
   /**
    * Adds a script which would be evaluated in one of the following scenarios:
@@ -5963,7 +5963,7 @@ export interface Frame {
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-option-expression).
    * @param options
    */
-  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean, world?: 'main'|'utility' }): Promise<R>;
+  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean, serialization?: 'default'|'extended', world?: 'main'|'utility' }): Promise<R>;
   /**
    * Returns the return value of
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-option-expression).
@@ -6012,7 +6012,7 @@ export interface Frame {
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-option-expression).
    * @param options
    */
-  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean, world?: 'main'|'utility' }): Promise<R>;
+  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean, serialization?: 'default'|'extended', world?: 'main'|'utility' }): Promise<R>;
 
   /**
    * Returns the return value of
@@ -6062,7 +6062,7 @@ export interface Frame {
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle-option-expression).
    * @param options
    */
-  evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
+  evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean, serialization?: 'default'|'extended' }): Promise<SmartHandle<R>>;
   /**
    * Returns the return value of
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle-option-expression) as a
@@ -6111,7 +6111,7 @@ export interface Frame {
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-handle-option-expression).
    * @param options
    */
-  evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
+  evaluateHandle<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean, serialization?: 'default'|'extended' }): Promise<SmartHandle<R>>;
 
   /**
    * **NOTE** Use locator-based [frame.locator(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-locator)
@@ -12035,7 +12035,7 @@ export interface JSHandle<T = any> {
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-option-expression).
    * @param options
    */
-  evaluate<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<R>;
+  evaluate<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean, serialization?: 'default'|'extended' }): Promise<R>;
   /**
    * Returns the return value of
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-option-expression).
@@ -12058,7 +12058,7 @@ export interface JSHandle<T = any> {
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-option-expression).
    * @param options
    */
-  evaluate<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<R>;
+  evaluate<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any, options?: { exposeFunctions?: boolean, serialization?: 'default'|'extended' }): Promise<R>;
 
   /**
    * Returns the return value of
@@ -12082,7 +12082,7 @@ export interface JSHandle<T = any> {
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-handle-option-expression).
    * @param options
    */
-  evaluateHandle<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
+  evaluateHandle<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean, serialization?: 'default'|'extended' }): Promise<SmartHandle<R>>;
   /**
    * Returns the return value of
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-handle-option-expression)
@@ -12105,7 +12105,7 @@ export interface JSHandle<T = any> {
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-evaluate-handle-option-expression).
    * @param options
    */
-  evaluateHandle<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
+  evaluateHandle<R, O extends T = T>(pageFunction: PageFunctionOn<O, void, R>, arg?: any, options?: { exposeFunctions?: boolean, serialization?: 'default'|'extended' }): Promise<SmartHandle<R>>;
 
   /**
    * Returns a JSON representation of the object. If the object has a `toJSON` function, it **will not be called**.
@@ -14300,7 +14300,7 @@ export interface Locator {
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression).
    * @param options
    */
-  evaluate<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal, exposeFunctions?: boolean, world?: 'main'|'utility' }): Promise<R>;
+  evaluate<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal, exposeFunctions?: boolean, serialization?: 'default'|'extended', world?: 'main'|'utility' }): Promise<R>;
   /**
    * Execute JavaScript code in the page, taking the matching element as an argument, and return a
    * [JSHandle](https://playwright.dev/docs/api/class-jshandle) with the result.
@@ -14334,7 +14334,7 @@ export interface Locator {
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression).
    * @param options
    */
-  evaluateHandle<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal, exposeFunctions?: boolean }): Promise<SmartHandle<R>>;
+  evaluateHandle<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal, exposeFunctions?: boolean, serialization?: 'default'|'extended' }): Promise<SmartHandle<R>>;
   /**
    * Execute JavaScript code in the page, taking all matching elements as an argument.
    *

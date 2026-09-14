@@ -29,6 +29,7 @@ JSHandle:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
+        extendedSerialization: boolean?
         world:
           type: enum?
           literals:
@@ -46,6 +47,7 @@ JSHandle:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
+        extendedSerialization: boolean?
       returns:
         handle: JSHandle
       flags:

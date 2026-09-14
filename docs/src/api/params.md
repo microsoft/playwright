@@ -584,6 +584,12 @@ to a function, the function is automatically invoked.
 
 Function to be evaluated in the page context.
 
+## js-evaluate-serialization
+* langs: js
+- `serialization` <[Serialization]<"default"|"extended">>
+
+When set to `"extended"`, preserves additional built-in types in the evaluation argument and return value. Currently supports [Map] and [Set], including nested collections and circular references. Defaults to `"default"`.
+
 ## js-evaluate-expose-functions
 * langs: js
 - `exposeFunctions` <[boolean]>

@@ -77,6 +77,18 @@ SerializedValue:
         properties:
           k: string
           v: SerializedValue
+    # Map entries.
+    me:
+      type: array?
+      items:
+        type: object
+        properties:
+          k: SerializedValue
+          v: SerializedValue
+    # Set entries.
+    se:
+      type: array?
+      items: SerializedValue
     # An index in the handles array from SerializedArgument.
     h: int?
     # Name of a page-side callback that routes back to a client-side function.

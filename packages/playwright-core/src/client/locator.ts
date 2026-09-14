@@ -28,7 +28,7 @@ import { DisposableStub } from './disposable';
 import { kNoTimeout } from './timeoutSettings';
 
 import type { ExpectResult, Frame } from './frame';
-import type { EvaluateOptions, ExposeFunctionsOptions, WorldOptions } from './jsHandle';
+import type { EvaluateOptions, EvaluateHandleOptions, WorldOptions } from './jsHandle';
 import type { DropPayload, FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
@@ -145,7 +145,7 @@ export class Locator implements api.Locator {
     return await this._frame.$$eval(this._selector, pageFunction, arg, options);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<any, Arg, R>, arg?: Arg, options?: TimeoutOptions & ExposeFunctionsOptions): Promise<structs.SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<any, Arg, R>, arg?: Arg, options?: TimeoutOptions & EvaluateHandleOptions): Promise<structs.SmartHandle<R>> {
     return await this._withElement(h => h.evaluateHandle(pageFunction, arg, options), { title: 'Evaluate', timeout: options?.timeout, signal: options?.signal });
   }
 
