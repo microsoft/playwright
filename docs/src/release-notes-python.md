@@ -6,6 +6,72 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.63
+
+### 🪟 Locate across frames
+
+[`method: Page.frameLocator`] and [`method: Frame.frameLocator`] called without a selector search in any frame of the
+subtree, so you no longer need to locate the iframe first:
+
+```python
+# Finds the button in any frame on the page.
+page.frame_locator().get_by_role("button").click()
+```
+
+The rest of the locator resolves inside a single frame, just like a regular locator, and an error is thrown when it
+matches elements in several frames.
+
+### 👁️ Visible-only locators
+
+New [`method: Locator.visible`] returns a locator that matches only visible elements. It is the recommended
+replacement for the `:visible` CSS pseudo-class:
+
+```python
+page.locator("button").visible.click()
+```
+
+### 🖼️ Aria and screen snapshots in traces
+
+New [`option: Tracing.start.ariaSnapshots`] and [`option: Tracing.start.screenSnapshots`] options of
+[`method: Tracing.start`] capture an aria snapshot and a screenshot of the page on every action:
+
+```python
+context.tracing.start(snapshots=True, aria_snapshots=True, screen_snapshots=True)
+```
+
+With aria and screen snapshots recorded, the new **Display Aria** mode in the trace viewer shows the action screenshot
+side by side with the aria snapshot, and hovering an aria node highlights it on the screenshot.
+
+### New APIs
+
+#### Browser and Context
+
+- [`option: Browser.newContext.httpCredentials`] now also accepts an array of credentials. The first entry matching the request origin is used, and entries without an origin match any request.
+- New option [`option: BrowserContext.storageState.opfs`] includes the [origin private file system](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system) in the storage state, so it can be persisted and restored into later contexts.
+- New events [`event: Page.dialogClosed`] and [`event: BrowserContext.dialogClosed`] are emitted when a JavaScript dialog is accepted, dismissed or closed by the user.
+
+#### Command line
+
+- `playwright install --no-remove` keeps the browsers of other Playwright installations instead of removing them.
+- `playwright codegen --http-credentials` records against pages behind HTTP authentication.
+
+### Announcements
+
+* ⚠️ Ubuntu 20.04 is not supported anymore.
+* 🐧 On Linux arm64, Playwright now downloads the [Chrome for Testing](https://developer.chrome.com/blog/chrome-for-testing) build of Chromium, the same build used on all other platforms.
+
+### Browser Versions
+
+- Chromium 153.0.8010.12
+- Mozilla Firefox 155.0
+- WebKit 26.6
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 153
+- Microsoft Edge 153
+
+
 ## Version 1.62
 
 ### 🖼️ WebP screenshots
