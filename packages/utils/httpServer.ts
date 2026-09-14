@@ -263,6 +263,10 @@ export class HttpServer {
     });
 
     const readable = fs.createReadStream(absoluteFilePath, { start, end });
+    readable.on('error', () => {
+      if (!response.writableEnded)
+        response.end();
+    });
     readable.pipe(response);
   }
 
