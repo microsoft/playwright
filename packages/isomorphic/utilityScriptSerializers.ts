@@ -46,7 +46,7 @@ type HandleOrValue = { h: number } | { fn: string } | { fallThrough: any };
 type VisitorInfo = {
   visited: Map<object, number>;
   lastId: number;
-  serializeMapAndSet?: boolean;
+  extendedSerialization?: boolean;
 };
 
 function isRegExp(obj: any): obj is RegExp {
@@ -231,8 +231,8 @@ export function parseEvaluationResultValue(value: SerializedValue, handles: any[
   return value;
 }
 
-export function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue, options: { serializeMapAndSet?: boolean } = {}): SerializedValue {
-  return serialize(value, handleSerializer, { visited: new Map(), lastId: 0, serializeMapAndSet: options.serializeMapAndSet });
+export function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue, options: { extendedSerialization?: boolean } = {}): SerializedValue {
+  return serialize(value, handleSerializer, { visited: new Map(), lastId: 0, extendedSerialization: options.extendedSerialization });
 }
 
 function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo): SerializedValue {
@@ -308,7 +308,7 @@ function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrVa
   if (id)
     return { ref: id };
 
-  if (visitorInfo.serializeMapAndSet) {
+  if (visitorInfo.extendedSerialization) {
     if (isMap(value)) {
       const m: { k: SerializedValue, v: SerializedValue }[] = [];
       const id = ++visitorInfo.lastId;
