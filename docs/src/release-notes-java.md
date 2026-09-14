@@ -45,22 +45,12 @@ context.tracing().start(new Tracing.StartOptions()
 With aria and screen snapshots recorded, the new **Display Aria** mode in the trace viewer shows the action screenshot
 side by side with the aria snapshot, and hovering an aria node highlights it on the screenshot.
 
-### ☕ Nullability annotations and module names
+### ☕ Nullability annotations
 
 The public API is now annotated with [JSpecify](https://jspecify.dev) nullability annotations. The
 `com.microsoft.playwright`, `com.microsoft.playwright.options` and `com.microsoft.playwright.assertions` packages are
 `@NullMarked`, and values that can be absent are marked `@Nullable`, so null-checking tools such as NullAway, as well as
 Kotlin code, can catch missing null checks at compile time.
-
-The published jars now declare `Automatic-Module-Name` manifest entries, so they can be required from the module path
-by stable names — `com.microsoft.playwright`, `com.microsoft.playwright.driver` and
-`com.microsoft.playwright.driver.bundle` — instead of names derived from the jar file names:
-
-```java
-module com.example.tests {
-  requires com.microsoft.playwright;
-}
-```
 
 ### New APIs
 
