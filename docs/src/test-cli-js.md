@@ -102,7 +102,7 @@ npx playwright test --ui
 | `--project <project-name...>` | Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects). |
 | `--quiet` | Suppress stdio. |
 | `--repeat-each <N>` | Run each test `N` times (default: 1). |
-| `--reporter <reporter>` | Reporter to use, comma-separated, can be "dot", "line", "list", or others (default: "list"). You can also pass a path to a custom reporter file. |
+| `--reporter <reporter>` | Reporter to use, comma-separated, can be "dot", "line", "list", or others (default: "list" locally and "dot" on CI). You can also pass a path to a custom reporter file. |
 | `--retries <retries>` | Maximum retry count for flaky tests, zero for no retries (default: no retries). |
 | `--shard <shard>` | Shard tests and execute only the selected shard, specified in the form "current/all", 1-based, e.g., "3/5". |
 | `--test-list <file>` | Path to a file containing a list of tests to run. See [test list](#test-list) for details. |
@@ -317,7 +317,7 @@ npx playwright merge-reports ./reports
 | Option | Description |
 | :--- | :--- |
 | `-c, --config <file>` | Configuration file. Can be used to specify additional configuration for the output report |
-| `--reporter <reporter>` | Reporter to use, comma-separated, can be "list", "line", "dot", "json", "junit", "null", "github", "html", "blob" (default: "list") |
+| `--reporter <reporter>` | Reporter to use, comma-separated, can be "list", "line", "dot", "json", "junit", "null", "github", "html", "blob" (default: "list" locally and "dot" on CI) |
 
 ### Clear Cache
 
