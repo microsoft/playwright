@@ -254,20 +254,25 @@ export class HttpServer {
       return response.end();
     }
 
-    // Sending Partial Content: https://datatracker.ietf.org/doc/html/rfc7233#section-4.1
-    response.writeHead(206, {
-      'Content-Range': `bytes ${start}-${end}/${size}`,
-      'Accept-Ranges': 'bytes',
-      'Content-Length': end - start + 1,
-      'Content-Type': mime.getType(path.extname(absoluteFilePath))!,
-    });
-
     const readable = fs.createReadStream(absoluteFilePath, { start, end });
-    readable.on('error', () => {
-      if (!response.writableEnded)
-        response.end();
+    readable.on('error', error => {
+      if (response.headersSent) {
+        response.destroy(error);
+        return;
+      }
+      response.writeHead(500);
+      response.end();
     });
-    readable.pipe(response);
+    readable.on('open', () => {
+      // Sending Partial Content: https://datatracker.ietf.org/doc/html/rfc7233#section-4.1
+      response.writeHead(206, {
+        'Content-Range': `bytes ${start}-${end}/${size}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': end - start + 1,
+        'Content-Type': mime.getType(path.extname(absoluteFilePath))!,
+      });
+      readable.pipe(response);
+    });
   }
 
   private _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {

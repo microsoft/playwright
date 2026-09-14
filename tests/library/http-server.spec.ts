@@ -68,7 +68,7 @@ test('unreadable file range request does not crash the server', async ({}, testI
         reject(new Error('range request hung'));
       });
     });
-    expect(status).toBeGreaterThan(0);
+    expect(status).toBe(500);
   } finally {
     fs.chmodSync(file, 0o644);
     await server.stop();
