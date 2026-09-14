@@ -203,6 +203,7 @@ async function run() {
                   'css',
                   'js',
                   'markdown',
+                  'mermaid',
                   'ts',
                   'python',
                   'py',

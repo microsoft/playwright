@@ -699,6 +699,40 @@ await Page.RouteAsync("**/title.html", async route =>
 });
 ```
 
+## How request interception works
+
+Routes sit between the page and the browser's network stack. The handler runs before the network stack has processed the request: [`method: Route.continue`] passes it on, [`method: Route.fulfill`] answers it without touching the network, and [`method: Route.abort`] fails it.
+
+```mermaid
+sequenceDiagram
+  participant Page
+  participant Playwright
+  participant Network as Network stack
+  participant Server
+
+  Page->>Playwright: request
+  Note over Playwright: route handler runs
+  Playwright->>Network: route.continue()
+  Note over Network: adds Cookie, Host, Sec-Fetch-*, ...
+  Network->>Server: request
+  Server-->>Network: response
+  Note over Network: stores cookies
+  Network-->>Playwright: response headers as sent by the server
+  Network-->>Page: response
+```
+
+### Headers owned by the network stack
+
+Some headers are attached by the network stack right before the request is sent: `Cookie`, `Host`, `Accept-Encoding`, `Content-Length`, `Sec-Fetch-*` and a few others. This is a security boundary: an `HttpOnly` cookie, for example, is never exposed to the page. Since the route handler runs before that step, these headers are not reliably present in [`method: Request.headers`] or [`method: Request.allHeaders`], and they cannot be overridden. A `cookie` header passed to [`method: Route.continue`] is ignored in favor of the browser's cookie store.
+
+On the response side the network stack has already done its work, so [`method: Response.allHeaders`] returns the headers exactly as the server sent them, including `Set-Cookie` for `HttpOnly` cookies. To see the exact request headers that went over the wire, observe the request without routing it: with no routes installed, [`method: Request.allHeaders`] includes all of them.
+
+### Redirects
+
+Playwright treats a request and its redirects as a single unit. The handler is called once, for the original request, and the browser follows the redirect on its own. [`method: Response.request`] returns the last request in the chain, and [`method: Request.redirectedFrom`] walks it back to the one you intercepted. Headers passed to [`method: Route.continue`] apply to every hop of the chain, except `cookie`, which always comes from the cookie store.
+
+Fulfilling with a `3xx` status does not give you a second chance to intercept. Chromium and Firefox follow the redirect without calling your handler, and WebKit rejects the call. To serve different content, fulfill with that content. To send the request elsewhere, pass `url` to [`method: Route.continue`] or [`method: Route.fallback`].
+
 ## Glob URL patterns
 
 Playwright uses simplified glob patterns for URL matching in network interception methods like [`method: Page.route`] or [`method: Page.waitForResponse`]. These patterns support basic wildcards:
