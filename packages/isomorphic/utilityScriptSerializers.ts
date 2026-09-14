@@ -33,6 +33,8 @@ export type SerializedValue =
     { r: { p: string, f: string } } |
     { a: SerializedValue[], id: number } |
     { o: { k: string, v: SerializedValue }[], id: number } |
+    { m: { k: SerializedValue, v: SerializedValue }[], id: number } |
+    { s: SerializedValue[], id: number } |
     { ref: number } |
     { h: number } |
     { fn: string } |
@@ -44,6 +46,7 @@ type HandleOrValue = { h: number } | { fn: string } | { fallThrough: any };
 type VisitorInfo = {
   visited: Map<object, number>;
   lastId: number;
+  serializeMapAndSet?: boolean;
 };
 
 function isRegExp(obj: any): obj is RegExp {
@@ -183,6 +186,20 @@ export function parseEvaluationResultValue(value: SerializedValue, handles: any[
       }
       return result;
     }
+    if ('m' in value) {
+      const result = new Map();
+      refs.set(value.id, result);
+      for (const { k, v } of value.m)
+        result.set(parseEvaluationResultValue(k, handles, refs), parseEvaluationResultValue(v, handles, refs));
+      return result;
+    }
+    if ('s' in value) {
+      const result = new Set();
+      refs.set(value.id, result);
+      for (const item of value.s)
+        result.add(parseEvaluationResultValue(item, handles, refs));
+      return result;
+    }
     if ('h' in value)
       return handles[value.h];
     if ('fn' in value) {
@@ -198,8 +215,8 @@ export function parseEvaluationResultValue(value: SerializedValue, handles: any[
   return value;
 }
 
-export function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue): SerializedValue {
-  return serialize(value, handleSerializer, { visited: new Map(), lastId: 0 });
+export function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue, options: { serializeMapAndSet?: boolean } = {}): SerializedValue {
+  return serialize(value, handleSerializer, { visited: new Map(), lastId: 0, serializeMapAndSet: options.serializeMapAndSet });
 }
 
 function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo): SerializedValue {
@@ -274,6 +291,40 @@ function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrVa
   const id = visitorInfo.visited.get(value);
   if (id)
     return { ref: id };
+
+  // IndexedDB supports collections, but evaluate() retains its existing serialization.
+  if (visitorInfo.serializeMapAndSet) {
+    const tag = Object.prototype.toString.call(value);
+    // Firefox Xray wrappers hide iterator.next and reject forEach callbacks.
+    if (tag === '[object Map]') {
+      const m: { k: SerializedValue, v: SerializedValue }[] = [];
+      const id = ++visitorInfo.lastId;
+      visitorInfo.visited.set(value, id);
+      const iterator = value.entries();
+      const next = new Map().entries().next;
+      while (true) {
+        const entry = next.call(iterator);
+        if (entry.done)
+          break;
+        m.push({ k: serialize(entry.value[0], handleSerializer, visitorInfo), v: serialize(entry.value[1], handleSerializer, visitorInfo) });
+      }
+      return { m, id };
+    }
+    if (tag === '[object Set]') {
+      const s: SerializedValue[] = [];
+      const id = ++visitorInfo.lastId;
+      visitorInfo.visited.set(value, id);
+      const iterator = value.values();
+      const next = new Set().values().next;
+      while (true) {
+        const entry = next.call(iterator);
+        if (entry.done)
+          break;
+        s.push(serialize(entry.value, handleSerializer, visitorInfo));
+      }
+      return { s, id };
+    }
+  }
 
   if (Array.isArray(value)) {
     const a = [];

@@ -596,6 +596,92 @@ it('should support IndexedDB', async ({ page, server, contextFactory }) => {
   expect(await context.storageState()).toEqual({ cookies: [], origins: [] });
 });
 
+for (const restore of ['newContext', 'setStorageState'] as const) {
+  it(`should roundtrip IndexedDB Map and Set with ${restore}`, { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42703' } }, async ({ page, server, contextFactory }, testInfo) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open('collections', 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('store');
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const db = request.result;
+        const transaction = db.transaction('store', 'readwrite');
+        const store = transaction.objectStore('store');
+        store.put(new Map([['mk', 'mv']]), 'map');
+        store.put(new Set([1, 2]), 'set');
+        store.put([new Map(), new Set()], 'empty');
+
+        const key = { name: 'key' };
+        const map = new Map<unknown, unknown>();
+        const set = new Set<unknown>([key, map]);
+        map.set(key, set);
+        map.set(map, map);
+        map.set('special', { date: new Date(0), bytes: new Uint8Array([1, 2, 250]), bigint: 42n, undefined: undefined });
+        set.add(set);
+        store.put({ key, map, set, again: map, values: [map, set] }, 'nested');
+        transaction.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        transaction.onerror = () => reject(transaction.error);
+      };
+    }));
+
+    const path = testInfo.outputPath('storage-state.json');
+    const storageState = await page.context().storageState({ indexedDB: true, path });
+    const context = await contextFactory(restore === 'newContext' ? { storageState: path } : {});
+    if (restore === 'setStorageState')
+      await context.setStorageState(storageState);
+    expect(await context.storageState({ indexedDB: true })).toEqual(storageState);
+
+    const restoredPage = await context.newPage();
+    await restoredPage.goto(server.EMPTY_PAGE);
+    const values = await restoredPage.evaluate(async () => {
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open('collections', 1);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+      });
+      const transaction = db.transaction('store', 'readonly');
+      const store = transaction.objectStore('store');
+      transaction.oncomplete = () => db.close();
+      const [map, set, empty, nested] = await Promise.all(['map', 'set', 'empty', 'nested'].map(key => new Promise<any>((resolve, reject) => {
+        const request = store.get(key);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      })));
+      return {
+        map: map instanceof Map ? [...map] : map,
+        set: set instanceof Set ? [...set] : set,
+        empty: [empty[0] instanceof Map && empty[0].size === 0, empty[1] instanceof Set && empty[1].size === 0],
+        nested: nested.map instanceof Map && nested.set instanceof Set && {
+          key: nested.map.get(nested.key) === nested.set,
+          mapCycle: nested.map.get(nested.map) === nested.map,
+          setCycle: nested.set.has(nested.set),
+          sharedKey: nested.set.has(nested.key),
+          sharedMap: nested.set.has(nested.map) && nested.again === nested.map && nested.values[0] === nested.map,
+          sharedSet: nested.values[1] === nested.set,
+          special: nested.map.get('special'),
+        },
+      };
+    });
+    expect(values).toEqual({
+      map: [['mk', 'mv']],
+      set: [1, 2],
+      empty: [true, true],
+      nested: {
+        key: true,
+        mapCycle: true,
+        setCycle: true,
+        sharedKey: true,
+        sharedMap: true,
+        sharedSet: true,
+        special: { date: new Date(0), bytes: new Uint8Array([1, 2, 250]), bigint: 42n, undefined: undefined },
+      },
+    });
+  });
+}
+
 it('should support empty indexedDB', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35760' } }, async ({ page, server, contextFactory }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => new Promise<void>(resolve => {
