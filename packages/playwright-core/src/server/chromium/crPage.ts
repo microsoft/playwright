@@ -544,7 +544,9 @@ class FrameSession {
       this._crPage._networkManager.addSession(this._client, undefined, this._isMainFrame()),
       this._client.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
     ];
-    if (!this._page.isStorageStatePage) {
+    if (this._page.isStorageStatePage) {
+      promises.push(this._client.send('Network.setBypassServiceWorker', { bypass: true }));
+    } else {
       const skipDefaultOverrides = browserOptions.noDefaults &&
           this._crPage._browserContext === this._crPage._browserContext._browser._defaultContext;
       if (this._crPage._browserContext.needsPlaywrightBinding())
