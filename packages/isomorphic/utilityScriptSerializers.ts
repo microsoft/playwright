@@ -98,6 +98,22 @@ function isArrayBuffer(obj: any): obj is ArrayBuffer {
   }
 }
 
+function isMap(obj: any): obj is Map<unknown, unknown> {
+  try {
+    return obj instanceof Map || Object.prototype.toString.call(obj) === '[object Map]';
+  } catch (error) {
+    return false;
+  }
+}
+
+function isSet(obj: any): obj is Set<unknown> {
+  try {
+    return obj instanceof Set || Object.prototype.toString.call(obj) === '[object Set]';
+  } catch (error) {
+    return false;
+  }
+}
+
 const typedArrayConstructors: Record<TypedArrayKind, Function> = {
   i8: Int8Array,
   ui8: Uint8Array,
@@ -292,11 +308,8 @@ function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrVa
   if (id)
     return { ref: id };
 
-  // IndexedDB supports collections, but evaluate() retains its existing serialization.
   if (visitorInfo.serializeMapAndSet) {
-    const tag = Object.prototype.toString.call(value);
-    // Firefox Xray wrappers hide iterator.next and reject forEach callbacks.
-    if (tag === '[object Map]') {
+    if (isMap(value)) {
       const m: { k: SerializedValue, v: SerializedValue }[] = [];
       const id = ++visitorInfo.lastId;
       visitorInfo.visited.set(value, id);
@@ -310,7 +323,7 @@ function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrVa
       }
       return { m, id };
     }
-    if (tag === '[object Set]') {
+    if (isSet(value)) {
       const s: SerializedValue[] = [];
       const id = ++visitorInfo.lastId;
       visitorInfo.visited.set(value, id);
