@@ -123,6 +123,13 @@ it('should transfer bigint', async ({ page }) => {
 it('should transfer maps as empty objects', async ({ page }) => {
   const result = await page.evaluate(a => a.x.constructor.name + ' ' + JSON.stringify(a.x), { x: new Map([[1, 2]]) });
   expect(result).toBe('Object {}');
+  expect(await page.evaluate(() => new Map([[1, 2]]))).toEqual({});
+});
+
+it('should transfer sets as empty objects', async ({ page }) => {
+  const result = await page.evaluate(a => a.x.constructor.name + ' ' + JSON.stringify(a.x), { x: new Set([1, 2]) });
+  expect(result).toBe('Object {}');
+  expect(await page.evaluate(() => new Set([1, 2]))).toEqual({});
 });
 
 it('should modify global environment', async ({ page }) => {
