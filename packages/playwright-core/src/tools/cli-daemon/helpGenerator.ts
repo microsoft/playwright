@@ -83,6 +83,7 @@ const categories: { name: Category, title: string }[] = [
   { name: 'export', title: 'Save as' },
   { name: 'tabs', title: 'Tabs' },
   { name: 'storage', title: 'Storage' },
+  { name: 'emulation', title: 'Emulation' },
   { name: 'network', title: 'Network' },
   { name: 'devtools', title: 'DevTools' },
   { name: 'webmcp', title: 'WebMCP' },

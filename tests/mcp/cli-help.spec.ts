@@ -21,6 +21,23 @@ test('prints help', async ({ cli }) => {
   expect(output).toContain('Usage: playwright-cli <command>');
 });
 
+test('prints emulation help after storage', async ({ cli }) => {
+  const { output } = await cli('--help');
+  const headings = output.split('\n').filter(line => /^[A-Z].*:$/.test(line));
+  expect(headings.indexOf('Emulation:')).toBe(headings.indexOf('Storage:') + 1);
+  const emulationHelp = output.slice(output.indexOf('\nEmulation:'), output.indexOf('\nNetwork:'));
+  expect(emulationHelp).toContain('set-color-scheme');
+  expect(emulationHelp).toContain('clear-color-scheme');
+  expect(emulationHelp).toContain('set-reduced-motion');
+  expect(emulationHelp).toContain('clear-reduced-motion');
+  expect(emulationHelp).toContain('set-forced-colors');
+  expect(emulationHelp).toContain('clear-forced-colors');
+  expect(emulationHelp).toContain('set-contrast');
+  expect(emulationHelp).toContain('clear-contrast');
+  expect(emulationHelp).toContain('set-media');
+  expect(emulationHelp).toContain('clear-media');
+});
+
 test('prints help by default', async ({ cli }) => {
   const { output } = await cli();
   expect(output).toContain('Usage: playwright-cli <command>');
