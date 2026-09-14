@@ -27,7 +27,7 @@ export function headersObjectToArray(headers: HeadersObject, separator?: string,
       continue;
     if (separator) {
       const sep = name.toLowerCase() === 'set-cookie' ? setCookieSeparator : separator;
-      for (const value of values.split(sep!))
+      for (const value of splitHeaderValue(name, values, sep!))
         result.push({ name, value: value.trim() });
     } else {
       result.push({ name, value: values });
@@ -41,4 +41,23 @@ export function headersArrayToObject(headers: HeadersArray, lowerCase: boolean):
   for (const { name, value } of headers)
     result[lowerCase ? name.toLowerCase() : name] = value;
   return result;
+}
+
+export function splitHeaderValue(name: string, value: string, separator: string): string[] {
+  if (separator === ',') {
+    switch (name.toLowerCase()) {
+      case 'date':
+      case 'expires':
+      case 'last-modified':
+      case 'if-modified-since':
+      case 'if-unmodified-since':
+      case 'if-range':
+      case 'retry-after':
+        return [value];
+      case 'set-cookie':
+        // Only split before a cookie pair, not the date following an Expires comma.
+        return value.split(/,(?=\s*[!#$%&'*+\-.^_`|~\da-z]+=)/i);
+    }
+  }
+  return value.split(separator);
 }
