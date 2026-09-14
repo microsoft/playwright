@@ -215,6 +215,21 @@ test('should report step params', async ({ runInlineTest }, testInfo) => {
   expect(findSlice(events, 'my step')!.args.params).toEqual({ foo: 'bar', count: 7 });
 });
 
+test('should fail when perfetto output file cannot be written', async ({ runInlineTest }, testInfo) => {
+  const dir = testInfo.outputPath('not-a-file');
+  await fs.promises.mkdir(dir);
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { reporter: [['perfetto', { outputFile: ${JSON.stringify(dir)} }]] };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('one', async () => {});
+    `,
+  });
+  expect(result.exitCode).not.toBe(0);
+});
+
 test('should respect outputFile option', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
