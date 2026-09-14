@@ -138,10 +138,16 @@ test('snapshot renderer drops unsafe tag names that smuggle attributes', () => {
 
 test('snapshot renderer still renders ordinary custom elements', () => {
   const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
-    html: ['HTML', {}, ['BODY', {}, ['MY-WIDGET', { 'id': 'w' }, 'hello']]],
+    html: ['HTML', {}, ['BODY', {},
+      ['MY-WIDGET', { 'id': 'w' }, 'hello'],
+      ['MY-WIDGET_V2', { 'id': 'w2' }, 'v2'],
+      ['MY-WIDGET.V2', { 'id': 'w3' }, 'dot'],
+    ]],
   })], [], 0);
   const { html } = renderer.render();
   expect(html).toContain('<MY-WIDGET id="w">hello</MY-WIDGET>');
+  expect(html).toContain('<MY-WIDGET_V2 id="w2">v2</MY-WIDGET_V2>');
+  expect(html).toContain('<MY-WIDGET.V2 id="w3">dot</MY-WIDGET.V2>');
 });
 
 test('stripAnsiEscapes should not exhibit polynomial backtracking', () => {
