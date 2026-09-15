@@ -416,7 +416,7 @@ export class FFPage implements PageDelegate {
   }
 
   async updateRequestInterception(): Promise<void> {
-    await this._networkManager.setRequestInterception(this._page.needsRequestInterception());
+    await this._networkManager.setRequestInterception(this._page.needsRequestInterception(), this._page.isStorageStatePage);
   }
 
   async updateFileChooserInterception() {
