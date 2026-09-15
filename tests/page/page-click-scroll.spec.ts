@@ -167,7 +167,7 @@ it('should scroll instantly on retry when scroll-behavior is smooth', async ({ p
       html { scroll-behavior: smooth; }
       body { margin: 0; }
       .spacer { height: 2000px; }
-      #header { position: fixed; top: 0; left: 0; right: 0; height: calc(100vh - 50px); background: rgba(0, 0, 0, 0.1); }
+      #header { position: fixed; top: 0; left: 0; right: 0; bottom: 50px; background: rgba(0, 0, 0, 0.1); }
       button { height: 30px; }
     </style>
     <div id="header"></div>

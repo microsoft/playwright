@@ -1027,7 +1027,9 @@ it('should click in an iframe with border 2', async ({ page }) => {
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
 
-it('should not retain removed iframe after clicking inside it', async ({ page }) => {
+it('should not retain removed iframe after clicking inside it', async ({ page, isAndroid }) => {
+  it.skip(isAndroid, 'requesting gc is not enough');
+
   await page.setContent('<iframe srcdoc="<button>Click</button>"></iframe>');
   const button = page.frameLocator('iframe').getByRole('button');
   await button.waitFor();
