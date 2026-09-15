@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import net from 'net';
 import os from 'os';
 import * as util from 'util';
 import { getPlaywrightVersion, utils } from '../../packages/playwright-core/lib/coreBundle';
@@ -799,4 +800,46 @@ it('should not throw when failOnStatusCode is set to false inside APIRequest con
   const response = await request.fetch(server.EMPTY_PAGE);
   expect(response.status()).toBe(404);
   await request.dispose();
+});
+
+it('should respect server Keep-Alive timeout hint and avoid reset on reuse', async ({ playwright }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42698' });
+  const ADVERTISED = 2;
+  const BODY = '{"ok":true}';
+  const RESPONSE =
+    'HTTP/1.1 200 OK\r\n' +
+    `content-length: ${BODY.length}\r\n` +
+    'connection: keep-alive\r\n' +
+    `keep-alive: timeout=${ADVERTISED}\r\n\r\n` +
+    BODY;
+
+  let connections = 0;
+  const server = net.createServer(socket => {
+    connections += 1;
+    let socketRequests = 0;
+    socket.on('error', () => {});
+    socket.on('data', () => {
+      socketRequests += 1;
+      if (socketRequests === 1)
+        socket.write(RESPONSE);
+      else
+        socket.resetAndDestroy();
+    });
+  });
+  const origin = await new Promise<string>(r => server.listen(0, '127.0.0.1', () => r(`http://127.0.0.1:${(server.address() as any).port}`)));
+
+  const request = await playwright.request.newContext();
+  const resp1 = await request.get(`${origin}/x`, { maxRetries: 0 });
+  expect(resp1.status()).toBe(200);
+  expect(connections).toBe(1);
+
+  // Wait past the server's keep-alive timeout hint (2s hint minus 1s buffer -> 1s)
+  await new Promise(r => setTimeout(r, 1500));
+
+  const resp2 = await request.get(`${origin}/x`, { maxRetries: 0 });
+  expect(resp2.status()).toBe(200);
+  expect(connections).toBe(2);
+
+  await request.dispose();
+  server.close();
 });
