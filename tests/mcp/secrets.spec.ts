@@ -184,8 +184,10 @@ test('short secret values are not redacted', async ({ startClient, server }) => 
     arguments: { url: server.PREFIX },
   });
 
+  expect(response).toHaveResponse({
+    snapshot: expect.stringContaining('hello'),
+  });
   expect(JSON.stringify(response)).not.toContain('<secret>X-TINY</secret>');
-  expect(JSON.stringify(response)).toContain('hello');
 });
 
 test('empty secret value is ignored', async ({ startClient, server }) => {
