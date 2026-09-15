@@ -17,6 +17,53 @@
 type HeadersArray = { name: string, value: string }[];
 type HeadersObject = { [key: string]: string };
 
+export const singleValuedHeaders = new Set([
+  'authorization',
+  'content-disposition',
+  'content-length',
+  'content-range',
+  'content-type',
+  'date',
+  'etag',
+  'expires',
+  'host',
+  'if-modified-since',
+  'if-unmodified-since',
+  'last-modified',
+  'location',
+  'proxy-authorization',
+  'referer',
+  'retry-after',
+  'server',
+  'user-agent',
+]);
+
+export function splitSetCookieString(values: string, separator: string): string[] {
+  if (separator !== ',')
+    return values.split(separator).map(v => v.trim()).filter(Boolean);
+  // macOS WebKit joins Set-Cookie headers with ', '.
+  // However, cookie 'Expires' attribute values contain commas (e.g. 'Expires=Wed, 21 Oct 2026 07:28:00 GMT').
+  // We split by comma only when it is not part of an Expires attribute.
+  const cookies: string[] = [];
+  let current = '';
+  for (let i = 0; i < values.length; i++) {
+    if (values[i] === ',') {
+      if (/Expires=[^;]*$/i.test(current)) {
+        current += ',';
+        continue;
+      }
+      if (current.trim())
+        cookies.push(current.trim());
+      current = '';
+    } else {
+      current += values[i];
+    }
+  }
+  if (current.trim())
+    cookies.push(current.trim());
+  return cookies;
+}
+
 export function headersObjectToArray(headers: HeadersObject, separator?: string, setCookieSeparator?: string): HeadersArray {
   if (!setCookieSeparator)
     setCookieSeparator = separator;
@@ -25,10 +72,18 @@ export function headersObjectToArray(headers: HeadersObject, separator?: string,
     const values = headers[name];
     if (values === undefined)
       continue;
+    const lowerName = name.toLowerCase();
     if (separator) {
-      const sep = name.toLowerCase() === 'set-cookie' ? setCookieSeparator : separator;
-      for (const value of values.split(sep!))
-        result.push({ name, value: value.trim() });
+      if (lowerName === 'set-cookie') {
+        const cookies = splitSetCookieString(values, setCookieSeparator);
+        for (const cookie of cookies)
+          result.push({ name, value: cookie });
+      } else if (singleValuedHeaders.has(lowerName)) {
+        result.push({ name, value: values.trim() });
+      } else {
+        for (const value of values.split(separator))
+          result.push({ name, value: value.trim() });
+      }
     } else {
       result.push({ name, value: values });
     }

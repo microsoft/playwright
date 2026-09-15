@@ -260,6 +260,36 @@ it('should report multiple set-cookie headers', async ({ page, server, isElectro
   expect(await response.headerValues('set-cookie')).toEqual(['a=b', 'c=d']);
 });
 
+it('should not split single-valued and http-date headers on comma', async ({ page, server }) => {
+  server.setRoute('/headers', (req, res) => {
+    res.writeHead(200, {
+      'Date': 'Fri, 11 Sep 2026 05:27:07 GMT',
+      'Last-Modified': 'Wed, 21 Oct 2026 07:28:00 GMT',
+      'Expires': 'Thu, 01 Dec 2026 16:00:00 GMT',
+      'Content-Type': 'text/plain; charset=utf-8',
+    });
+    res.end('ok');
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  const [response] = await Promise.all([
+    page.waitForResponse('**/*'),
+    page.evaluate(() => fetch('/headers'))
+  ]);
+  const headers = await response.headersArray();
+  const lastModified = headers.filter(h => h.name.toLowerCase() === 'last-modified');
+  expect(lastModified).toHaveLength(1);
+  expect(lastModified[0].value).toBe('Wed, 21 Oct 2026 07:28:00 GMT');
+
+  const date = headers.filter(h => h.name.toLowerCase() === 'date');
+  expect(date).toHaveLength(1);
+  expect(date[0].value).toBe('Fri, 11 Sep 2026 05:27:07 GMT');
+
+  const expires = headers.filter(h => h.name.toLowerCase() === 'expires');
+  expect(expires).toHaveLength(1);
+  expect(expires[0].value).toBe('Thu, 01 Dec 2026 16:00:00 GMT');
+});
+
 it('should behave the same way for headers and allHeaders', async ({ page, server, browserName, platform }) => {
   it.skip(browserName === 'webkit' && platform === 'win32', 'libcurl does not support non-set-cookie multivalue headers');
   server.setRoute('/headers', (req, res) => {

@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { singleValuedHeaders } from '@isomorphic/headers';
 import { eventsHelper } from '@utils/eventsHelper';
 import * as network from '../network';
 
@@ -280,10 +281,18 @@ class FFRouteImpl implements network.RouteDelegate {
 function parseMultivalueHeaders(headers: HeadersArray) {
   const result: HeadersArray = [];
   for (const header of headers) {
-    const separator = header.name.toLowerCase() === 'set-cookie' ? '\n' : ',';
-    const tokens = header.value.split(separator).map(s => s.trim());
-    for (const token of tokens)
-      result.push({ name: header.name, value: token });
+    const lowerName = header.name.toLowerCase();
+    if (lowerName === 'set-cookie') {
+      const tokens = header.value.split('\n').map(s => s.trim());
+      for (const token of tokens)
+        result.push({ name: header.name, value: token });
+    } else if (singleValuedHeaders.has(lowerName)) {
+      result.push({ name: header.name, value: header.value.trim() });
+    } else {
+      const tokens = header.value.split(',').map(s => s.trim());
+      for (const token of tokens)
+        result.push({ name: header.name, value: token });
+    }
   }
   return result;
 }
