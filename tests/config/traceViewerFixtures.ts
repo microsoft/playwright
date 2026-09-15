@@ -27,6 +27,7 @@ type BaseWorkerFixtures = {
   headless: boolean;
   browser: Browser;
   browserName: 'chromium' | 'firefox' | 'webkit';
+  channel: string | undefined;
   playwright: typeof import('@playwright/test');
 };
 
@@ -152,18 +153,23 @@ class TraceViewerPage {
 }
 
 export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixtures, BaseWorkerFixtures> = {
-  showTraceViewer: async ({ playwright, childProcess, browserName }, use, testInfo) => {
+  showTraceViewer: async ({ playwright, childProcess, browserName, channel }, use, testInfo) => {
     const browsers: Browser[] = [];
     const tracings: any[] = [];
     await use(async (trace: string | undefined, { host, port, stdin, cwd } = {}) => {
+      // In WSL the browser runs in the guest and reaches the host over mirrored networking,
+      // which mirrors the IPv4 loopback but not the host's IPv6 `::1`. Both `--host localhost`
+      // and the server default resolve to `::1` on Windows, so a trace viewer loaded inside
+      // the browser under test is unreachable; pin it to the IPv4 loopback instead.
+      const effectiveHost = channel === 'webkit-wsl' && (host === undefined || host === 'localhost') ? '127.0.0.1' : host;
       const command = [
         'node',
         path.join(__dirname, '../../packages/playwright-core/cli.js'),
         'show-trace',
         '--port', '' + (port ?? '0'),
       ];
-      if (host)
-        command.push('--host', host);
+      if (effectiveHost)
+        command.push('--host', effectiveHost);
       if (stdin)
         command.push('--stdin');
       if (trace)
