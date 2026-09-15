@@ -44,7 +44,6 @@ const testDir = path.join(__dirname, '..');
 const reporters = () => {
   const result: ReporterDescription[] = process.env.CI ? [
     hasDebugOutput ? ['list'] : ['dot'],
-    ['json', { outputFile: path.join(outputDir, 'report.json') }],
     ['blob'],
     ['../config/parquetReporter.ts'],
     ['./csvReporter', { outputFile: path.join(outputDir, 'report.csv') }],

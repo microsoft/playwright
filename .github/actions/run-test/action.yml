@@ -26,15 +26,6 @@ inputs:
     description: 'Shell to use'
     required: false
     default: 'bash'
-  flakiness-client-id:
-    description: 'Azure Flakiness Dashboard Client ID'
-    required: false
-  flakiness-tenant-id:
-    description: 'Azure Flakiness Dashboard Tenant ID'
-    required: false
-  flakiness-subscription-id:
-    description: 'Azure Flakiness Dashboard Subscription ID'
-    required: false
 
 runs:
   using: composite
@@ -80,19 +71,6 @@ runs:
       shell: ${{ inputs.shell }}
       env:
         PW_TAG: "@${{ inputs.bot-name }}"
-    - name: Azure Login
-      uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
-      if: ${{ !cancelled() && env.PLAYWRIGHT_SETUP_COMPLETE == 'true' && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      with:
-        client-id: ${{ inputs.flakiness-client-id }}
-        tenant-id: ${{ inputs.flakiness-tenant-id }}
-        subscription-id: ${{ inputs.flakiness-subscription-id }}
-    - run: |
-        echo "::group::./utils/upload_flakiness_dashboard.sh"
-        ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-        echo "::endgroup::"
-      if: ${{ !cancelled() && env.PLAYWRIGHT_SETUP_COMPLETE == 'true' }}
-      shell: bash
     - name: Upload blob report
       if: ${{ !cancelled() && env.PLAYWRIGHT_SETUP_COMPLETE == 'true' && (github.event_name == 'pull_request' || failure()) }}
       uses: ./.github/actions/upload-blob-report
