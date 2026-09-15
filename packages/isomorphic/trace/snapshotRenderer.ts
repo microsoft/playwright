@@ -108,7 +108,9 @@ export class SnapshotRenderer {
         // crafted trace file could include them to achieve XSS.
         if (name.toUpperCase() === 'SCRIPT')
           return;
-        if (!/^[A-Za-z][A-Za-z0-9:._-]*$/.test(name))
+        // Reject names that would emit extra attributes (space, =, <, >, /).
+        // Allow Unicode custom elements such as math-α.
+        if (!name || /[\s=<>\/]/.test(name))
           return;
         // Element node.
         // Note that <noscript> will not be rendered by default in the trace viewer, because
