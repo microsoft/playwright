@@ -21,6 +21,7 @@ export class IdleTimer {
   private _onIdle: () => void;
   private _running = 0;
   private _timer: NodeJS.Timeout | undefined;
+  private _disposed = false;
 
   constructor(timeout: number, onIdle: () => void) {
     this._timeout = timeout;
@@ -28,25 +29,36 @@ export class IdleTimer {
   }
 
   callStarted() {
+    if (this._disposed)
+      return;
     ++this._running;
-    this.dispose();
+    this._clearTimer();
   }
 
   callFinished() {
     if (this._running > 0)
       --this._running;
+    if (this._disposed)
+      return;
     if (this._running === 0)
       this._timer = setTimeout(this._onIdle, this._timeout).unref();
   }
 
   poke() {
-    this.dispose();
+    if (this._disposed)
+      return;
+    this._clearTimer();
     if (!this._running)
       this._timer = setTimeout(this._onIdle, this._timeout).unref();
   }
 
-  dispose() {
+  private _clearTimer() {
     clearTimeout(this._timer);
     this._timer = undefined;
+  }
+
+  dispose() {
+    this._disposed = true;
+    this._clearTimer();
   }
 }

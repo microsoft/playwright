@@ -127,6 +127,7 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implement
     }
     if (this._disconnected || responseObject.isClose) {
       delete responseObject.isClose;
+      this._idleTimer?.dispose();
       await this.dispose();
     }
     return responseObject;
