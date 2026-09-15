@@ -22,10 +22,15 @@ import { CodeMirrorWrapper, lineHeight } from '@web/components/codeMirrorWrapper
 import { isTextualMimeType } from '@isomorphic/mimeType';
 import { Expandable } from '@web/components/expandable';
 import { linkifyText } from '@web/renderUtils';
+import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useFlash } from '@web/uiUtils';
 import { useTraceModel } from './traceModelContext';
 
 import type { Attachment, TraceModel } from '@isomorphic/trace/traceModel';
+
+type SnapshotAttachment = Pick<Attachment, 'contentType' | 'name'>;
+
+export type UpdateSnapshot = (params: { actual: SnapshotAttachment, expected: SnapshotAttachment }) => Promise<void>;
 
 type ExpandableAttachmentProps = {
   attachment: Attachment;
@@ -90,9 +95,47 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
   </div>;
 };
 
+function UpdateSnapshotButton({ actual, expected, onUpdateSnapshot }: {
+  actual: SnapshotAttachment,
+  expected: SnapshotAttachment,
+  onUpdateSnapshot: UpdateSnapshot,
+}) {
+  const [saving, setSaving] = React.useState(false);
+  const [saved, triggerSavedFlash] = useFlash();
+  const [error, setError] = React.useState<string>();
+
+  const updateSnapshot = React.useCallback(async () => {
+    setSaving(true);
+    setError(undefined);
+    try {
+      await onUpdateSnapshot({
+        actual: { name: actual.name, contentType: actual.contentType },
+        expected: { name: expected.name, contentType: expected.contentType },
+      });
+      triggerSavedFlash();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setSaving(false);
+    }
+  }, [actual, expected, onUpdateSnapshot, triggerSavedFlash]);
+
+  const label = error ? 'Retry save' : 'Save actual as expected';
+
+  return <ToolbarButton
+    className='attachments-update-snapshot'
+    disabled={saving}
+    errorBadge={error}
+    icon={saved ? 'check' : undefined}
+    onClick={updateSnapshot}
+    title={error || label}
+  >{label}</ToolbarButton>;
+}
+
 export const AttachmentsTab: React.FunctionComponent<{
   revealedAttachmentCallId?: { callId: string },
-}> = ({ revealedAttachmentCallId }) => {
+  onUpdateSnapshot?: UpdateSnapshot,
+}> = ({ revealedAttachmentCallId, onUpdateSnapshot }) => {
   const model = useTraceModel();
   const { diffMap, screenshots, attachments } = React.useMemo(() => {
     const attachments = new Set(model?.visibleAttachments ?? []);
@@ -122,16 +165,25 @@ export const AttachmentsTab: React.FunctionComponent<{
     return <PlaceholderPanel text='No attachments' />;
 
   return <div className='attachments-tab'>
-    {[...diffMap.values()].map(({ expected, actual, diff }) => {
-      return <>
-        {expected && actual && <div className='attachments-section'>Image diff</div>}
-        {expected && actual && <ImageDiffView noTargetBlank={true} diff={{
+    {[...diffMap.entries()].map(([name, { expected, actual, diff }]) => {
+      if (!expected || !actual)
+        return null;
+      return <React.Fragment key={`${name}-${actual.callId}`}>
+        <div className={clsx('attachments-section', onUpdateSnapshot && 'attachments-image-diff-header')}>
+          <span>Image diff</span>
+          {onUpdateSnapshot && <UpdateSnapshotButton
+            actual={actual}
+            expected={expected}
+            onUpdateSnapshot={onUpdateSnapshot}
+          />}
+        </div>
+        <ImageDiffView noTargetBlank={true} diff={{
           name: 'Image diff',
           expected: { attachment: { ...expected, path: downloadURL(model, expected) }, title: 'Expected' },
           actual: { attachment: { ...actual, path: downloadURL(model, actual) } },
           diff: diff ? { attachment: { ...diff, path: downloadURL(model, diff) } } : undefined,
-        }} />}
-      </>;
+        }} />
+      </React.Fragment>;
     })}
     {screenshots.size ? <div className='attachments-section'>Screenshots</div> : undefined}
     {[...screenshots.values()].map((a, i) => {

@@ -484,6 +484,7 @@ export const UIModeView: React.FC<{}> = ({
             rootDir={testModel?.config?.rootDir}
             revealSource={revealSource}
             onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
+            onUpdateSnapshot={testServerConnection ? params => testServerConnection.updateSnapshot(params) : undefined}
           />
         </div>
       </div>}
