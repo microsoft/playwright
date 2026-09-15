@@ -984,6 +984,42 @@ it('should throw if screenshot size is too large', async ({ page, browserName, i
   }
 });
 
+it('should throw if webp screenshot size exceeds dimension limit', async ({ page, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42717' });
+  it.skip(browserName === 'firefox', 'Firefox does not implement webp dimension limit');
+  {
+    await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: 16383px; background: red;'></div>`);
+    const result = await page.screenshot({ type: 'webp', fullPage: true });
+    expect(result).toBeTruthy();
+  }
+  {
+    await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: 16384px; background: red;'></div>`);
+    const exception = await page.screenshot({ type: 'webp', fullPage: true }).catch(e => e);
+    expect(exception.message).toContain('Cannot take screenshot larger than 16383 pixels on any dimension when using webp format');
+  }
+});
+
+it('should throw if webp screenshot size exceeds dimension limit with device scale factor', async ({ browser, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42717' });
+  it.skip(browserName === 'firefox', 'Firefox does not implement webp dimension limit');
+  const context = await browser.newContext({ viewport: { width: 500, height: 500 }, deviceScaleFactor: 2 });
+  const page = await context.newPage();
+  {
+    await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: 8191px; background: red;'></div>`);
+    const result = await page.screenshot({ type: 'webp', fullPage: true });
+    expect(result).toBeTruthy();
+  }
+  {
+    await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: 8192px; background: red;'></div>`);
+    const exception = await page.screenshot({ type: 'webp', fullPage: true }).catch(e => e);
+    expect(exception.message).toContain('Cannot take screenshot larger than 16383 pixels on any dimension when using webp format');
+
+    const image = await page.screenshot({ type: 'webp', fullPage: true, scale: 'css' });
+    expect(image).toBeTruthy();
+  }
+  await context.close();
+});
+
 it('page screenshot should capture css transform', async function({ page, browserName, isElectron, isAndroid }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26447' });
   it.fixme(browserName === 'webkit');

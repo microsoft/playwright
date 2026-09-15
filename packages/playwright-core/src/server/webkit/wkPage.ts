@@ -862,13 +862,15 @@ export class WKPage implements PageDelegate {
     return 0;
   }
 
-  private validateScreenshotDimension(side: number, omitDeviceScaleFactor: boolean) {
+  private validateScreenshotDimension(side: number, omitDeviceScaleFactor: boolean, format: string) {
+    if (!omitDeviceScaleFactor && this._page.browserContext._options.deviceScaleFactor)
+      side = Math.ceil(side * this._page.browserContext._options.deviceScaleFactor);
+    if (format === 'webp' && side > 16383)
+      throw new Error('Cannot take screenshot larger than 16383 pixels on any dimension when using webp format');
     // Cairo based implementations (Linux and Windows) have hard limit of 32767
     // (see https://github.com/microsoft/playwright/issues/16727).
     if (process.platform === 'darwin')
       return;
-    if (!omitDeviceScaleFactor && this._page.browserContext._options.deviceScaleFactor)
-      side = Math.ceil(side * this._page.browserContext._options.deviceScaleFactor);
     if (side > 32767)
       throw new Error('Cannot take screenshot larger than 32767 pixels on any dimension');
   }
@@ -876,8 +878,8 @@ export class WKPage implements PageDelegate {
   async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
     const rect = (documentRect || viewportRect)!;
     const omitDeviceScaleFactor = scale === 'css';
-    this.validateScreenshotDimension(rect.width, omitDeviceScaleFactor);
-    this.validateScreenshotDimension(rect.height, omitDeviceScaleFactor);
+    this.validateScreenshotDimension(rect.width, omitDeviceScaleFactor, format);
+    this.validateScreenshotDimension(rect.height, omitDeviceScaleFactor, format);
     // WebKit on macOS has no built-in WebP encoder, so capture a PNG and re-encode it.
     const recodePngToWebp = format === 'webp' && process.platform === 'darwin';
     const result = await progress.race(this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor, format: (recodePngToWebp ? 'png' : format) as 'png' | 'jpeg' | 'webp', quality: recodePngToWebp ? undefined : quality }));

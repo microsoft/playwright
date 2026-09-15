@@ -301,6 +301,8 @@ export class Screenshotter {
     try {
       const quality = format === 'jpeg' ? options.quality ?? 80 : format === 'webp' ? options.quality ?? 100 : undefined;
       const buffer = await this._page.delegate.takeScreenshot(progress, format, documentRect, viewportRect, quality, fitsViewport, options.scale || 'device');
+      if (!buffer.byteLength)
+        throw new Error('Failed to take screenshot, received empty image data from browser');
       await progress.race(cleanupHighlight());
       if (shouldSetDefaultBackground)
         await progress.race(this._page.delegate.setBackgroundColor());

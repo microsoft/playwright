@@ -765,13 +765,15 @@ export class WVPage implements PageDelegate {
     throw new Error('Method not implemented');
   }
 
-  private validateScreenshotDimension(side: number, omitDeviceScaleFactor: boolean) {
+  private validateScreenshotDimension(side: number, omitDeviceScaleFactor: boolean, format: string) {
+    if (!omitDeviceScaleFactor && this._page.browserContext._options.deviceScaleFactor)
+      side = Math.ceil(side * this._page.browserContext._options.deviceScaleFactor);
+    if (format === 'webp' && side > 16383)
+      throw new Error('Cannot take screenshot larger than 16383 pixels on any dimension when using webp format');
     // Cairo based implementations (Linux and Windows) have hard limit of 32767
     // (see https://github.com/microsoft/playwright/issues/16727).
     if (process.platform === 'darwin')
       return;
-    if (!omitDeviceScaleFactor && this._page.browserContext._options.deviceScaleFactor)
-      side = Math.ceil(side * this._page.browserContext._options.deviceScaleFactor);
     if (side > 32767)
       throw new Error('Cannot take screenshot larger than 32767 pixels on any dimension');
   }
@@ -781,8 +783,8 @@ export class WVPage implements PageDelegate {
     const omitDeviceScaleFactor = scale === 'css';
     if (omitDeviceScaleFactor)
       throw new Error('css screenshots are not implemented');
-    this.validateScreenshotDimension(rect.width, omitDeviceScaleFactor);
-    this.validateScreenshotDimension(rect.height, omitDeviceScaleFactor);
+    this.validateScreenshotDimension(rect.width, omitDeviceScaleFactor, format);
+    this.validateScreenshotDimension(rect.height, omitDeviceScaleFactor, format);
     const result = await progress.race(this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport' }));
     const prefix = 'data:image/png;base64,';
     let buffer: Buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');

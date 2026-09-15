@@ -287,11 +287,15 @@ export class CRPage implements PageDelegate {
     // When taking screenshots with documentRect (based on the page content, not viewport),
     // ignore current page scale.
     const clip = { ...documentRect, scale: viewportRect ? visualViewport.scale : 1 };
-    if (scale === 'css') {
-      // deviceScaleFactor override does not affect layout metrics, so if it is set,
-      // we use its value rather than computed one.
-      const deviceScaleFactor =  this._mainFrameSession._metricsOverride?.deviceScaleFactor || contentSize.width / cssContentSize.width || 1;
+    const deviceScaleFactor = this._mainFrameSession._metricsOverride?.deviceScaleFactor || contentSize.width / cssContentSize.width || 1;
+    if (scale === 'css')
       clip.scale /= deviceScaleFactor;
+    if (format === 'webp') {
+      const renderScale = scale === 'css' ? clip.scale : clip.scale * deviceScaleFactor;
+      const width = Math.ceil(clip.width * renderScale);
+      const height = Math.ceil(clip.height * renderScale);
+      if (width > 16383 || height > 16383)
+        throw new Error('Cannot take screenshot larger than 16383 pixels on any dimension when using webp format');
     }
     const result = await progress.race(this._mainFrameSession._client.send('Page.captureScreenshot', { format, quality, clip, captureBeyondViewport: !fitsViewport }));
     if (!fitsViewport && this._browserContext._options.hasTouch) {
@@ -299,6 +303,8 @@ export class CRPage implements PageDelegate {
       // See https://issues.chromium.org/issues/558509412 and https://github.com/microsoft/playwright/issues/42607.
       await progress.race(this._mainFrameSession._client.send('Emulation.setTouchEmulationEnabled', { enabled: true }));
     }
+    if (!result.data)
+      throw new Error('Failed to take screenshot, received empty image data from browser');
     return Buffer.from(result.data, 'base64');
   }
 
