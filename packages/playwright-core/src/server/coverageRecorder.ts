@@ -45,7 +45,6 @@ export class CoverageRecorder {
     })()`;
   }
 
-  // The stashes in the page storage are scoped to the context that collects them.
   private _sessionId() {
     return JSON.stringify(this._context.guid);
   }
@@ -85,7 +84,6 @@ export class CoverageRecorder {
 
   async take(progress: Progress, mode: 'keep' | 'discard'): Promise<string | undefined> {
     if (mode === 'discard') {
-      // The coverage of a chunk is discarded together with it.
       this._coverage.clear();
       return;
     }
@@ -99,7 +97,6 @@ export class CoverageRecorder {
   }
 
   async collectFromPage(page: Page) {
-    // Pages of Playwright's own making never run the application under test.
     if (page.isStorageStatePage)
       return;
     // A page that is going away may never answer.
@@ -115,7 +112,6 @@ export class CoverageRecorder {
     }));
   }
 
-  // Pages relay the stashes of their own origin, the rest need a page of their own.
   private async _harvestOriginsWithoutPage(progress: Progress) {
     if (!this._stashOrigins.size || this._context.isClosingOrClosed())
       return;

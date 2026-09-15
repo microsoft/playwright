@@ -45,7 +45,6 @@ export type IstanbulFileCoverage = {
   statementMap: { [key: string]: IstanbulRange };
   fnMap: { [key: string]: IstanbulFunctionMapping };
   branchMap: { [key: string]: IstanbulBranchMapping };
-  // Hit counts, keyed by the corresponding map entries above.
   s: { [key: string]: number };
   f: { [key: string]: number };
   b: { [key: string]: number[] };
@@ -58,7 +57,6 @@ export type IstanbulFileCoverageDelta = Partial<IstanbulFileCoverage> & Pick<Ist
 
 export type IstanbulCoverageDelta = { [file: string]: IstanbulFileCoverageDelta };
 
-// Key prefix of the coverage deltas parked in the page storage.
 export const kCoverageStashPrefix = '__pwCoverage.';
 
 export type IstanbulCoverageChunk = {
@@ -70,7 +68,6 @@ export function sortedIstanbulCoverage(coverage: Map<string, IstanbulFileCoverag
   return Object.fromEntries([...coverage.entries()].sort(([a], [b]) => a.localeCompare(b)));
 }
 
-// Counters add up, maps are taken from the first report that carries them.
 export function mergeIstanbulCoverage(into: Map<string, IstanbulFileCoverage>, data: IstanbulCoverageDelta) {
   for (const [file, fileCov] of Object.entries(data)) {
     let existing = into.get(file);

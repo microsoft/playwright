@@ -79,7 +79,6 @@ export class CoverageScript {
   }
 }
 
-// Also evaluated by Playwright itself on the origins that have no page left.
 // Stashes of other sessions are stale, e.g. left by a previous run in a persistent profile.
 export function takeCoverageStashes(global: typeof globalThis, sessionId: string): string[] {
   const result: string[] = [];
