@@ -598,7 +598,7 @@ export class BindingCallDispatcher extends Dispatcher<SdkObject, channels.Bindin
     super(scope, new SdkObject(scope._object, 'bindingCall'), 'BindingCall', {
       frame: frameDispatcher,
       name,
-      args: args.map(serializeResult),
+      args: args.map(arg => serializeResult(arg)),
     });
     this._promise = new Promise((resolve, reject) => {
       this._resolve = resolve;

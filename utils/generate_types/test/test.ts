@@ -336,6 +336,18 @@ playwright.chromium.launch().then(async browser => {
   await browser.close();
 })();
 
+// Collection serialization unboxes handles inside collections.
+(async () => {
+  const body = await page.evaluateHandle(() => document.body);
+  const input = { map: new Map([[body, new Set([body])]]) };
+  const value = await page.evaluate(({ map }) => {
+    const elements = map.get(document.body)!;
+    const assertion: AssertType<Set<HTMLElement>, typeof elements> = true;
+    return new Set([...elements].map(element => element.tagName));
+  }, input, { serialize: ['Map', 'Set'] });
+  const assertion: AssertType<Set<string>, typeof value> = true;
+})();
+
 // test $eval and $$eval
 (async () => {
   const browser = await playwright.firefox.launch();
@@ -1049,4 +1061,3 @@ import {
   Geolocation,
   HTTPCredentials,
 } from 'playwright';
-

@@ -27,6 +27,8 @@ export type EvaluationArgument = {};
 
 export type NoHandles<Arg> =
   Arg extends JSHandle ? never :
+  Arg extends Map<infer K, infer V> ? Map<NoHandles<K>, NoHandles<V>> :
+  Arg extends Set<infer T> ? Set<NoHandles<T>> :
   Arg extends (...args: infer T) => PromiseLike<infer U> ? (...args: T) => Promise<NoHandles<U>> :
   Arg extends (...args: infer T) => infer R ? (...args: T) => NoHandles<R> :
   Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } :
@@ -34,6 +36,8 @@ export type NoHandles<Arg> =
 export type Unboxed<Arg> =
   Arg extends ElementHandle<infer T> ? T :
   Arg extends JSHandle<infer T> ? T :
+  Arg extends Map<infer K, infer V> ? Map<Unboxed<K>, Unboxed<V>> :
+  Arg extends Set<infer T> ? Set<Unboxed<T>> :
   Arg extends (...args: infer T) => PromiseLike<infer U> ? (...args: T) => Promise<Unboxed<U>> :
   Arg extends (...args: infer T) => infer R ? (...args: T) => Unboxed<R> :
   Arg extends NoHandles<Arg> ? Arg :

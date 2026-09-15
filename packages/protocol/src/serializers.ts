@@ -111,6 +111,20 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
       result[k] = innerParseSerializedValue(v, handles, refs, [...accessChain, k]);
     return result;
   }
+  if (value.me !== undefined) {
+    const result = new Map();
+    refs.set(value.id!, result);
+    for (const { k, v } of value.me)
+      result.set(innerParseSerializedValue(k, handles, refs, accessChain), innerParseSerializedValue(v, handles, refs, accessChain));
+    return result;
+  }
+  if (value.se !== undefined) {
+    const result = new Set();
+    refs.set(value.id!, result);
+    for (const item of value.se)
+      result.add(innerParseSerializedValue(item, handles, refs, accessChain));
+    return result;
+  }
   if (value.h !== undefined) {
     if (handles === undefined)
       throw new Error('Unexpected handle');
@@ -128,10 +142,11 @@ export type HandleOrValue = { h: number } | { fn: string } | { fallThrough: any 
 type VisitorInfo = {
   visited: Map<object, number>;
   lastId: number;
+  serialize?: ('Map' | 'Set')[];
 };
 
-export function serializeValue(value: any, handleSerializer: (value: any) => HandleOrValue): SerializedValue {
-  return innerSerializeValue(value, handleSerializer, { lastId: 0, visited: new Map() }, []);
+export function serializeValue(value: any, handleSerializer: (value: any) => HandleOrValue, options: { serialize?: ('Map' | 'Set')[] } = {}): SerializedValue {
+  return innerSerializeValue(value, handleSerializer, { lastId: 0, visited: new Map(), serialize: options.serialize }, []);
 }
 
 export function serializePlainValue(arg: any): SerializedValue {
@@ -183,6 +198,23 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
   const id = visitorInfo.visited.get(value);
   if (id)
     return { ref: id };
+
+  if (visitorInfo.serialize?.includes('Map') && value instanceof Map) {
+    const me: { k: SerializedValue, v: SerializedValue }[] = [];
+    const id = ++visitorInfo.lastId;
+    visitorInfo.visited.set(value, id);
+    for (const [k, v] of value)
+      me.push({ k: innerSerializeValue(k, handleSerializer, visitorInfo, accessChain), v: innerSerializeValue(v, handleSerializer, visitorInfo, accessChain) });
+    return { me, id };
+  }
+  if (visitorInfo.serialize?.includes('Set') && value instanceof Set) {
+    const se: SerializedValue[] = [];
+    const id = ++visitorInfo.lastId;
+    visitorInfo.visited.set(value, id);
+    for (const item of value)
+      se.push(innerSerializeValue(item, handleSerializer, visitorInfo, accessChain));
+    return { se, id };
+  }
 
   if (Array.isArray(value)) {
     const a = [];

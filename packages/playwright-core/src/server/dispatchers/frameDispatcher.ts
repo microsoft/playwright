@@ -82,11 +82,11 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async evaluateExpression(params: channels.FrameEvaluateExpressionParams, progress: Progress): Promise<channels.FrameEvaluateExpressionResult> {
-    return { value: serializeResult(await this._frame.evaluateExpression(progress, params.expression, { isFunction: params.isFunction, world: params.world }, parseArgument(params.arg))) };
+    return { value: serializeResult(await this._frame.evaluateExpression(progress, params.expression, { isFunction: params.isFunction, world: params.world, serialize: params.serialize }, parseArgument(params.arg)), params) };
   }
 
   async evaluateExpressionHandle(params: channels.FrameEvaluateExpressionHandleParams, progress: Progress): Promise<channels.FrameEvaluateExpressionHandleResult> {
-    return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this, await this._frame.evaluateExpressionHandle(progress, params.expression, { isFunction: params.isFunction }, parseArgument(params.arg))) };
+    return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this, await this._frame.evaluateExpressionHandle(progress, params.expression, { isFunction: params.isFunction, serialize: params.serialize }, parseArgument(params.arg))) };
   }
 
   async waitForSelector(params: channels.FrameWaitForSelectorParams, progress: Progress): Promise<channels.FrameWaitForSelectorResult> {
