@@ -267,7 +267,7 @@ await page.GotoAsync("https://example.com/login");
 
 **Usage: save credentials in the storage state, restore later**
 
-See [authentication guide](../auth.md) for examples of using saving and resotring the storage state.
+See [authentication guide](../auth.md) for examples of using saving and restoring the storage state.
 
 **Defaults**
 

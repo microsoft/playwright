@@ -20908,7 +20908,7 @@ export interface Coverage {
  *
  * **Usage: save credentials in the storage state, restore later**
  *
- * See [authentication guide](https://playwright.dev/docs/auth) for examples of using saving and resotring the storage state.
+ * See [authentication guide](https://playwright.dev/docs/auth) for examples of using saving and restoring the storage state.
  *
  * **Defaults**
  */
