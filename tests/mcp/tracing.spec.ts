@@ -46,6 +46,8 @@ test('check that trace is saved with browser_start_tracing', async ({ startClien
   expect(files).toEqual([
     'resources',
     'screencast',
+    expect.stringMatching(/trace-\d+\.actions/),
+    expect.stringMatching(/trace-\d+\.meta/),
     expect.stringMatching(/trace-\d+\.network/),
     expect.stringMatching(/trace-\d+\.stacks/),
     expect.stringMatching(/trace-\d+\.trace/),
@@ -80,6 +82,8 @@ test('check that trace is saved with browser_start_tracing (no output dir)', asy
   expect(files).toEqual([
     'resources',
     'screencast',
+    expect.stringMatching(/trace-\d+\.actions/),
+    expect.stringMatching(/trace-\d+\.meta/),
     expect.stringMatching(/trace-\d+\.network/),
     expect.stringMatching(/trace-\d+\.stacks/),
     expect.stringMatching(/trace-\d+\.trace/),
