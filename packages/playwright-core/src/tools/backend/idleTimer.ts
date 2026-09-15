@@ -19,20 +19,46 @@ export const defaultIdleTimeout = 60 * 60 * 1000;
 export class IdleTimer {
   private _timeout: number;
   private _onIdle: () => void;
+  private _running = 0;
   private _timer: NodeJS.Timeout | undefined;
+  private _disposed = false;
 
   constructor(timeout: number, onIdle: () => void) {
     this._timeout = timeout;
     this._onIdle = onIdle;
   }
 
+  callStarted() {
+    if (this._disposed)
+      return;
+    ++this._running;
+    this._clearTimer();
+  }
+
+  callFinished() {
+    if (this._running > 0)
+      --this._running;
+    if (this._disposed)
+      return;
+    if (this._running === 0)
+      this._timer = setTimeout(this._onIdle, this._timeout).unref();
+  }
+
   poke() {
-    this.dispose();
-    this._timer = setTimeout(this._onIdle, this._timeout);
+    if (this._disposed)
+      return;
+    this._clearTimer();
+    if (!this._running)
+      this._timer = setTimeout(this._onIdle, this._timeout).unref();
+  }
+
+  private _clearTimer() {
+    clearTimeout(this._timer);
+    this._timer = undefined;
   }
 
   dispose() {
-    clearTimeout(this._timer);
-    this._timer = undefined;
+    this._disposed = true;
+    this._clearTimer();
   }
 }

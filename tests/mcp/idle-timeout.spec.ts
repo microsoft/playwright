@@ -92,3 +92,61 @@ test('cdp endpoint only disconnects on idle and reconnects to the same pages', a
     'close browser': 1,
   });
 });
+
+test('does not close the browser while a tool call is running', async ({ startClient, server }) => {
+  const { client, stderr } = await startClient({
+    args: ['--idle-timeout=500'],
+    env: { DEBUG: 'pw:mcp:test' },
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  // The wait outlasts the idle timeout, which only starts once the call completes.
+  expect(await client.callTool({
+    name: 'browser_wait_for',
+    arguments: { time: 1 },
+  })).toHaveResponse({
+    code: `await new Promise(f => setTimeout(f, 1 * 1000));`,
+  });
+
+  expect(formatLog(stderr())).toEqual({
+    'create browser (persistent)': 1,
+    'create context': 1,
+  });
+});
+
+test('does not restart the idle timer after browser_close', async ({ startClient, server }) => {
+  const { client, stderr } = await startClient({
+    args: ['--idle-timeout=500'],
+    env: { DEBUG: 'pw:mcp:test' },
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_close',
+  })).toHaveResponse({
+    code: `await page.close()`,
+  });
+
+  expect(formatLog(stderr())).toEqual({
+    'create browser (persistent)': 1,
+    'create context': 1,
+    'close browser': 1,
+  });
+
+  // Outlast the idle timeout to ensure the timer is not re-armed after browser_close.
+  await new Promise(f => setTimeout(f, 1000));
+
+  expect(formatLog(stderr())).toEqual({
+    'create browser (persistent)': 1,
+    'create context': 1,
+    'close browser': 1,
+  });
+});
