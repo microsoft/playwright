@@ -958,6 +958,7 @@ export namespace Protocol {
     }
     export type setRequestInterceptionParameters = {
       enabled: boolean;
+      bypassServiceWorker?: boolean;
     };
     export type setRequestInterceptionReturnValue = void;
     export type setExtraHTTPHeadersParameters = {
