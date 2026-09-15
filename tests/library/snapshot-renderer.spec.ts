@@ -126,6 +126,34 @@ test('snapshot renderer handles case-insensitive iframe tag names', () => {
   expect(html).toContain('__playwright_src__');
 });
 
+test('snapshot renderer drops unsafe tag names that smuggle attributes', () => {
+  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
+    html: ['HTML', {}, ['BODY', {}, ['img src=x onerror=alert(1)', {}], 'safe']],
+  })], [], 0);
+  const { html } = renderer.render();
+  expect(html).not.toContain('onerror=alert(1)');
+  expect(html).not.toContain('<img src=x');
+  expect(html).toContain('safe');
+});
+
+test('snapshot renderer still renders ordinary custom elements', () => {
+  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
+    html: ['HTML', {}, ['BODY', {},
+      ['MY-WIDGET', { 'id': 'w' }, 'hello'],
+      ['MY-WIDGET_V2', { 'id': 'w2' }, 'v2'],
+      ['MY-WIDGET.V2', { 'id': 'w3' }, 'dot'],
+      ['math-α', { 'id': 'm' }, 'alpha'],
+      ['my-élément', { 'id': 'e' }, 'elem'],
+    ]],
+  })], [], 0);
+  const { html } = renderer.render();
+  expect(html).toContain('<MY-WIDGET id="w">hello</MY-WIDGET>');
+  expect(html).toContain('<MY-WIDGET_V2 id="w2">v2</MY-WIDGET_V2>');
+  expect(html).toContain('<MY-WIDGET.V2 id="w3">dot</MY-WIDGET.V2>');
+  expect(html).toContain('<math-α id="m">alpha</math-α>');
+  expect(html).toContain('<my-élément id="e">elem</my-élément>');
+});
+
 test('stripAnsiEscapes should not exhibit polynomial backtracking', () => {
   // \x1b[ + 50000 semicolons + non-terminal character.
   // Before the fix this took >3 seconds due to O(n^2) backtracking.
