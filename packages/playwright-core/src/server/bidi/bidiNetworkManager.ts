@@ -155,9 +155,10 @@ export class BidiNetworkManager {
     response._setHttpVersion(params.response.protocol);
     // "raw" headers are the same as "provisional" headers in Bidi.
     response.setRawResponseHeaders(null);
-    // Chrome's |headersSize| excludes the status line and the final CRLF,
-    // add them to match the header size reported by the other backends.
-    if (this._isChromium() && params.response.headersSize !== null)
+    // Chrome's |headersSize| excludes the status line and the final CRLF for
+    // HTTP/1.x responses, add them to match the other backends. HTTP/2 has no
+    // status line, keep the reported size as is.
+    if (this._isChromium() && params.response.protocol.startsWith('http/1') && params.response.headersSize !== null)
       response.setResponseHeadersSize(params.response.headersSize + this._headerBlockOverheadSize(params.response));
     else
       response.setResponseHeadersSize(params.response.headersSize);
@@ -191,19 +192,22 @@ export class BidiNetworkManager {
     const response = request.request._existingResponse()!;
     const bodySize = params.response.bodySize;
     const headersSize = params.response.headersSize;
-    if (bodySize === null || headersSize === null) {
-      // Leave the sizes to the fallback computation in network.ts.
-      response.setTransferSize(null);
-      response.setEncodedBodySize(null);
-    } else if (this._isChromium()) {
-      // Chrome's |bodySize| is the transfer size (status line + headers + body),
-      // derive the encoded body size by subtracting the full header block size.
-      response.setTransferSize(bodySize);
+    // |bytesReceived| is the number of bytes actually read off the network on both
+    // engines, including the header block and the chunked framing, and is 0 when
+    // the response was served from the cache.
+    response.setTransferSize(params.response.bytesReceived);
+    if (this._isChromium() && bodySize !== null && headersSize !== null && !params.response.fromCache && params.response.protocol.startsWith('http/1')) {
+      // Chrome's |bodySize| of a fresh HTTP/1.x response is the transfer size
+      // (status line + headers + wire body), derive the encoded body size by
+      // subtracting the full header block size.
       response.setEncodedBodySize(bodySize - headersSize - this._headerBlockOverheadSize(params.response));
+    } else if (this._isChromium()) {
+      // Chrome reports no body size for cached responses and a wire size for
+      // HTTP/2, leave the encoded body size to the content-length based fallback
+      // computation in network.ts.
+      response.setEncodedBodySize(null);
     } else {
-      // Firefox's |bodySize| is the encoded body size, and its |headersSize|
-      // already includes the status line and the final CRLF.
-      response.setTransferSize(headersSize + bodySize);
+      // Firefox's |bodySize| is the encoded body size.
       response.setEncodedBodySize(bodySize);
     }
 
