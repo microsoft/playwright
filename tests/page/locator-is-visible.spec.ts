@@ -103,3 +103,52 @@ it('isVisible with invalid selector should throw', async ({ page }) => {
   const error = await page.locator('hey=what').isVisible().catch(e => e);
   expect(error.message).toContain('Unknown engine "hey" while parsing selector hey=what');
 });
+
+it('isVisible and isHidden should work with iframe visibility', async ({ page }) => {
+  await page.setContent(`
+    <iframe name="f1" style="visibility: hidden" srcdoc="<button>Btn1</button>"></iframe>
+    <div style="visibility: hidden">
+      <iframe name="f2" srcdoc="<button>Btn2</button>"></iframe>
+    </div>
+    <div style="visibility: hidden">
+      <iframe name="f3" style="visibility: visible" srcdoc="<button>Btn3</button>"></iframe>
+    </div>
+    <iframe name="outer" style="visibility: hidden" srcdoc="<iframe name='inner' srcdoc='<button>Btn4</button>'></iframe>"></iframe>
+  `);
+
+  const btn1 = page.frameLocator('[name="f1"]').locator('button');
+  expect(await btn1.isVisible()).toBe(false);
+  expect(await btn1.isHidden()).toBe(true);
+  await expect(btn1).toBeHidden();
+  await expect(btn1).not.toBeVisible();
+  await btn1.waitFor({ state: 'hidden' });
+
+  const btn2 = page.frameLocator('[name="f2"]').locator('button');
+  expect(await btn2.isVisible()).toBe(false);
+  expect(await btn2.isHidden()).toBe(true);
+  await expect(btn2).toBeHidden();
+  await expect(btn2).not.toBeVisible();
+
+  const btn3 = page.frameLocator('[name="f3"]').locator('button');
+  expect(await btn3.isVisible()).toBe(true);
+  expect(await btn3.isHidden()).toBe(false);
+  await expect(btn3).toBeVisible();
+
+  const btn4 = page.frameLocator('[name="outer"]').frameLocator('[name="inner"]').locator('button');
+  expect(await btn4.isVisible()).toBe(false);
+  expect(await btn4.isHidden()).toBe(true);
+  await expect(btn4).toBeHidden();
+
+  // Dynamically toggling iframe visibility
+  await page.evaluate(() => {
+    (document.querySelector('[name="f1"]') as HTMLElement).style.visibility = 'visible';
+  });
+  expect(await btn1.isVisible()).toBe(true);
+  await expect(btn1).toBeVisible();
+
+  await page.evaluate(() => {
+    (document.querySelector('[name="f1"]') as HTMLElement).style.visibility = 'hidden';
+  });
+  expect(await btn1.isVisible()).toBe(false);
+  await expect(btn1).toBeHidden();
+});
