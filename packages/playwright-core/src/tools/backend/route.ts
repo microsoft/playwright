@@ -40,12 +40,18 @@ const route = defineTool({
   },
 
   handle: async (context, params, response) => {
-    const addHeaders = params.headers ? Object.fromEntries(params.headers.flatMap(h => {
-      const colonIndex = h.indexOf(':');
-      if (colonIndex <= 0)
-        return [];
-      return [[h.substring(0, colonIndex).trim(), h.substring(colonIndex + 1).trim()]];
-    })) : undefined;
+    let addHeaders: Record<string, string> | undefined;
+    if (params.headers) {
+      addHeaders = {};
+      for (const h of params.headers) {
+        const colonIndex = h.indexOf(':');
+        if (colonIndex <= 0) {
+          response.addError(`Invalid header "${h}": expected "Name: Value"`);
+          return;
+        }
+        addHeaders[h.substring(0, colonIndex).trim()] = h.substring(colonIndex + 1).trim();
+      }
+    }
     const removeHeaders = params.removeHeaders ? params.removeHeaders.split(',').map(h => h.trim()) : undefined;
 
     const handler = async (route: playwright.Route) => {

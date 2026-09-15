@@ -136,40 +136,22 @@ test('browser_route modifies request headers', async ({ client, server }) => {
   expect(receivedHeaders['x-custom-header']).toBe('test-value');
 });
 
-test('browser_route ignores header lines without a colon', async ({ client, server }) => {
-  let receivedHeaders: Record<string, string> = {};
-  server.setRoute('/api/check', (req, res) => {
-    receivedHeaders = req.headers as Record<string, string>;
-    res.writeHead(200);
-    res.end('ok');
-  });
-
-  server.setContent('/', `
-    <button onclick="fetch('/api/check').then(() => document.body.textContent = 'Done')">Fetch</button>
-  `, 'text/html');
-
+test('browser_route errors on header lines without a colon', async ({ client, server }) => {
   await client.callTool({
     name: 'browser_navigate',
-    arguments: { url: server.PREFIX },
+    arguments: { url: server.EMPTY_PAGE },
   });
 
-  await client.callTool({
+  expect(await client.callTool({
     name: 'browser_route',
     arguments: {
       pattern: '**/api/check',
       headers: ['NotAHeader', 'X-Custom-Header: test-value'],
     },
+  })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining('Invalid header "NotAHeader"'),
   });
-
-  const requestPromise = server.waitForRequest('/api/check');
-  await client.callTool({
-    name: 'browser_click',
-    arguments: { element: 'Fetch button', target: 'e2' },
-  });
-
-  await requestPromise;
-  expect(receivedHeaders['x-custom-header']).toBe('test-value');
-  expect(receivedHeaders['']).toBeUndefined();
 });
 
 test('browser_route_list shows active routes', async ({ client, server }) => {
