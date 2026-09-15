@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { splitHeaderValue } from '@isomorphic/headers';
 import { eventsHelper } from '@utils/eventsHelper';
 import * as network from '../network';
 
@@ -281,7 +282,7 @@ function parseMultivalueHeaders(headers: HeadersArray) {
   const result: HeadersArray = [];
   for (const header of headers) {
     const separator = header.name.toLowerCase() === 'set-cookie' ? '\n' : ',';
-    const tokens = header.value.split(separator).map(s => s.trim());
+    const tokens = splitHeaderValue(header.name, header.value, separator).map(s => s.trim());
     for (const token of tokens)
       result.push({ name: header.name, value: token });
   }

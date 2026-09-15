@@ -236,6 +236,35 @@ it('should report all headers', async ({ page, server, browserName, platform, is
   expect(actualHeaders).toEqual(expectedHeaders);
 });
 
+it('should preserve commas in HTTP date headers', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42687' },
+}, async ({ page, server }) => {
+  const date = 'Wed, 21 Oct 2015 07:28:00 GMT';
+  const expectedHeaders = {
+    'Date': date,
+    'Expires': date,
+    'Last-Modified': date,
+    'If-Modified-Since': date,
+    'If-Unmodified-Since': date,
+    'If-Range': date,
+    'Retry-After': date,
+  };
+  server.setRoute('/headers', (req, res) => {
+    res.writeHead(200, expectedHeaders);
+    res.end('ok');
+  });
+
+  const response = await page.goto(server.PREFIX + '/headers');
+  const headers = await response.headersArray();
+  const allHeaders = await response.allHeaders();
+  for (const [name, value] of Object.entries(expectedHeaders)) {
+    expect(headers.filter(header => header.name.toLowerCase() === name.toLowerCase()).map(header => header.value)).toEqual([value]);
+    expect(await response.headerValues(name)).toEqual([value]);
+    expect(await response.headerValue(name)).toBe(value);
+    expect(allHeaders[name.toLowerCase()]).toBe(value);
+  }
+});
+
 it('should report multiple set-cookie headers', async ({ page, server, isElectron, browserMajorVersion }) => {
   it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
 
@@ -258,6 +287,31 @@ it('should report multiple set-cookie headers', async ({ page, server, isElectro
   expect(await response.headerValue('not-there')).toEqual(null);
   expect(await response.headerValue('set-cookie')).toEqual('a=b\nc=d');
   expect(await response.headerValues('set-cookie')).toEqual(['a=b', 'c=d']);
+});
+
+it('should preserve expires dates in set-cookie headers', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42687' },
+}, async ({ page, server, isElectron, browserMajorVersion }) => {
+  it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
+
+  const cookies = [
+    'first=value; Expires=Wed, 21 Oct 2015 07:28:00 GMT; Path=/',
+    'second=value; Expires=Wed, 21 Oct 2015 07:28:00 GMT',
+    'third=value',
+  ];
+  for (const expectedCookies of [[cookies[0]], [cookies[1]], cookies]) {
+    server.setRoute('/headers', (req, res) => {
+      res.writeHead(200, { 'Set-Cookie': expectedCookies });
+      res.end('ok');
+    });
+
+    const response = await page.goto(server.PREFIX + '/headers');
+    const headers = await response.headersArray();
+    expect(headers.filter(({ name }) => name.toLowerCase() === 'set-cookie').map(({ value }) => value)).toEqual(expectedCookies);
+    expect(await response.headerValues('set-cookie')).toEqual(expectedCookies);
+    expect(await response.headerValue('set-cookie')).toBe(expectedCookies.join('\n'));
+    expect((await response.allHeaders())['set-cookie']).toBe(expectedCookies.join('\n'));
+  }
 });
 
 it('should behave the same way for headers and allHeaders', async ({ page, server, browserName, platform }) => {
