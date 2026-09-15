@@ -211,7 +211,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     assertMaxArguments(arguments.length, 3);
     assertEvaluateOptions(options);
     const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._page, arg, options) : serializeArgument(arg, undefined, options);
-    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, extendedSerialization: options?.serialization === 'extended' }, kNoTimeout);
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, serialize: options?.serialize }, kNoTimeout);
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 
@@ -219,7 +219,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     assertMaxArguments(arguments.length, 3);
     assertEvaluateOptions(options);
     const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._page, arg, options) : serializeArgument(arg, undefined, options);
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, world: options?.world, extendedSerialization: options?.serialization === 'extended' }, kNoTimeout);
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, world: options?.world, serialize: options?.serialize }, kNoTimeout);
     return parseResult(result.value);
   }
 

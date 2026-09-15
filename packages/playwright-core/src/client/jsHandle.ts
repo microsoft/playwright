@@ -42,20 +42,20 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg, options?: EvaluateHandleOptions): Promise<R> {
     assertEvaluateOptions(options);
-    return await this._evaluate(pageFunction, arg, { exposeFunctions: options?.exposeFunctions, serialization: options?.serialization });
+    return await this._evaluate(pageFunction, arg, { exposeFunctions: options?.exposeFunctions, serialize: options?.serialize });
   }
 
   async _evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg, options?: EvaluateOptions): Promise<R> {
     assertEvaluateOptions(options);
     const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._parentOfType('Page') as Page | undefined, arg, options) : serializeArgument(arg, undefined, options);
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, world: options?.world, extendedSerialization: options?.serialization === 'extended' }, kNoTimeout);
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, world: options?.world, serialize: options?.serialize }, kNoTimeout);
     return parseResult(result.value);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg, options?: EvaluateHandleOptions): Promise<structs.SmartHandle<R>> {
     assertEvaluateOptions(options);
     const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._parentOfType('Page') as Page | undefined, arg, options) : serializeArgument(arg, undefined, options);
-    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, extendedSerialization: options?.serialization === 'extended' }, kNoTimeout);
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, serialize: options?.serialize }, kNoTimeout);
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 
@@ -112,13 +112,13 @@ export function serializeArgument(arg: any, registerCallback?: (callback: Functi
     if (typeof value === 'function' && registerCallback)
       return { fn: registerCallback(value as Function) };
     return { fallThrough: value };
-  }, { extendedSerialization: options?.serialization === 'extended' });
+  }, options);
   return { value, handles };
 }
 
 export type WorldOptions = { world?: 'main' | 'utility' };
 export type ExposeFunctionsOptions = { exposeFunctions?: boolean };
-export type SerializationOptions = { serialization?: 'default' | 'extended' };
+export type SerializationOptions = { serialize?: ('Map' | 'Set')[] };
 export type EvaluateHandleOptions = ExposeFunctionsOptions & SerializationOptions;
 export type EvaluateOptions = EvaluateHandleOptions & WorldOptions;
 
@@ -149,6 +149,6 @@ export function assertMaxArguments(count: number, max: number): asserts count {
 export function assertEvaluateOptions(options: any) {
   if (options !== undefined && (typeof options !== 'object' || options === null || Array.isArray(options)))
     throw new Error('Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object.');
-  if (options?.serialization !== undefined && options.serialization !== 'default' && options.serialization !== 'extended')
-    throw new Error('serialization: expected one of (default|extended)');
+  if (options?.serialize !== undefined && (!Array.isArray(options.serialize) || options.serialize.some((type: unknown) => type !== 'Map' && type !== 'Set')))
+    throw new Error('serialize: expected an array of (Map|Set)');
 }

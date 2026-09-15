@@ -46,7 +46,7 @@ type HandleOrValue = { h: number } | { fn: string } | { fallThrough: any };
 type VisitorInfo = {
   visited: Map<object, number>;
   lastId: number;
-  extendedSerialization?: boolean;
+  serialize?: ('Map' | 'Set')[];
 };
 
 function isRegExp(obj: any): obj is RegExp {
@@ -231,8 +231,8 @@ export function parseEvaluationResultValue(value: SerializedValue, handles: any[
   return value;
 }
 
-export function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue, options: { extendedSerialization?: boolean } = {}): SerializedValue {
-  return serialize(value, handleSerializer, { visited: new Map(), lastId: 0, extendedSerialization: options.extendedSerialization });
+export function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue, options: { serialize?: ('Map' | 'Set')[] } = {}): SerializedValue {
+  return serialize(value, handleSerializer, { visited: new Map(), lastId: 0, serialize: options.serialize });
 }
 
 function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo): SerializedValue {
@@ -308,35 +308,33 @@ function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrVa
   if (id)
     return { ref: id };
 
-  if (visitorInfo.extendedSerialization) {
-    if (isMap(value)) {
-      const m: { k: SerializedValue, v: SerializedValue }[] = [];
-      const id = ++visitorInfo.lastId;
-      visitorInfo.visited.set(value, id);
-      const iterator = value.entries();
-      const next = new Map().entries().next;
-      while (true) {
-        const entry = next.call(iterator);
-        if (entry.done)
-          break;
-        m.push({ k: serialize(entry.value[0], handleSerializer, visitorInfo), v: serialize(entry.value[1], handleSerializer, visitorInfo) });
-      }
-      return { m, id };
+  if (visitorInfo.serialize?.includes('Map') && isMap(value)) {
+    const m: { k: SerializedValue, v: SerializedValue }[] = [];
+    const id = ++visitorInfo.lastId;
+    visitorInfo.visited.set(value, id);
+    const iterator = value.entries();
+    const next = new Map().entries().next;
+    while (true) {
+      const entry = next.call(iterator);
+      if (entry.done)
+        break;
+      m.push({ k: serialize(entry.value[0], handleSerializer, visitorInfo), v: serialize(entry.value[1], handleSerializer, visitorInfo) });
     }
-    if (isSet(value)) {
-      const s: SerializedValue[] = [];
-      const id = ++visitorInfo.lastId;
-      visitorInfo.visited.set(value, id);
-      const iterator = value.values();
-      const next = new Set().values().next;
-      while (true) {
-        const entry = next.call(iterator);
-        if (entry.done)
-          break;
-        s.push(serialize(entry.value, handleSerializer, visitorInfo));
-      }
-      return { s, id };
+    return { m, id };
+  }
+  if (visitorInfo.serialize?.includes('Set') && isSet(value)) {
+    const s: SerializedValue[] = [];
+    const id = ++visitorInfo.lastId;
+    visitorInfo.visited.set(value, id);
+    const iterator = value.values();
+    const next = new Set().values().next;
+    while (true) {
+      const entry = next.call(iterator);
+      if (entry.done)
+        break;
+      s.push(serialize(entry.value, handleSerializer, visitorInfo));
     }
+    return { s, id };
   }
 
   if (Array.isArray(value)) {

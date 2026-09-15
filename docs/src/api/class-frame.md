@@ -754,7 +754,7 @@ Optional argument to pass to [`param: expression`].
 ### option: Frame.evaluate.exposeFunctions = %%-js-evaluate-expose-functions-%%
 * since: v1.62
 
-### option: Frame.evaluate.serialization = %%-js-evaluate-serialization-%%
+### option: Frame.evaluate.serialize = %%-js-evaluate-serialize-%%
 * since: v1.64
 
 ### option: Frame.evaluate.world = %%-js-evaluate-world-%%
@@ -875,7 +875,7 @@ Optional argument to pass to [`param: expression`].
 ### option: Frame.evaluateHandle.exposeFunctions = %%-js-evaluate-expose-functions-%%
 * since: v1.62
 
-### option: Frame.evaluateHandle.serialization = %%-js-evaluate-serialization-%%
+### option: Frame.evaluateHandle.serialize = %%-js-evaluate-serialize-%%
 * since: v1.64
 
 ## async method: Frame.fill

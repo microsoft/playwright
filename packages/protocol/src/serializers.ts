@@ -142,11 +142,11 @@ export type HandleOrValue = { h: number } | { fn: string } | { fallThrough: any 
 type VisitorInfo = {
   visited: Map<object, number>;
   lastId: number;
-  extendedSerialization?: boolean;
+  serialize?: ('Map' | 'Set')[];
 };
 
-export function serializeValue(value: any, handleSerializer: (value: any) => HandleOrValue, options: { extendedSerialization?: boolean } = {}): SerializedValue {
-  return innerSerializeValue(value, handleSerializer, { lastId: 0, visited: new Map(), extendedSerialization: options.extendedSerialization }, []);
+export function serializeValue(value: any, handleSerializer: (value: any) => HandleOrValue, options: { serialize?: ('Map' | 'Set')[] } = {}): SerializedValue {
+  return innerSerializeValue(value, handleSerializer, { lastId: 0, visited: new Map(), serialize: options.serialize }, []);
 }
 
 export function serializePlainValue(arg: any): SerializedValue {
@@ -199,7 +199,7 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
   if (id)
     return { ref: id };
 
-  if (visitorInfo.extendedSerialization && value instanceof Map) {
+  if (visitorInfo.serialize?.includes('Map') && value instanceof Map) {
     const me: { k: SerializedValue, v: SerializedValue }[] = [];
     const id = ++visitorInfo.lastId;
     visitorInfo.visited.set(value, id);
@@ -207,7 +207,7 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
       me.push({ k: innerSerializeValue(k, handleSerializer, visitorInfo, accessChain), v: innerSerializeValue(v, handleSerializer, visitorInfo, accessChain) });
     return { me, id };
   }
-  if (visitorInfo.extendedSerialization && value instanceof Set) {
+  if (visitorInfo.serialize?.includes('Set') && value instanceof Set) {
     const se: SerializedValue[] = [];
     const id = ++visitorInfo.lastId;
     visitorInfo.visited.set(value, id);

@@ -56,7 +56,7 @@ export class ElementHandleDispatcher extends JSHandleDispatcher<FrameDispatcher>
   }
 
   override async evaluateExpression(params: channels.JSHandleEvaluateExpressionParams, progress: Progress): Promise<channels.JSHandleEvaluateExpressionResult> {
-    const value = await this._elementHandle.evaluateExpression(progress, params.expression, { isFunction: params.isFunction, world: params.world, extendedSerialization: params.extendedSerialization }, parseArgument(params.arg));
+    const value = await this._elementHandle.evaluateExpression(progress, params.expression, { isFunction: params.isFunction, world: params.world, serialize: params.serialize }, parseArgument(params.arg));
     return { value: serializeResult(value, params) };
   }
 

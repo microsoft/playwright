@@ -337,7 +337,13 @@ Frame:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
-        extendedSerialization: boolean?
+        serialize:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Map
+            - Set
         world:
           type: enum?
           literals:
@@ -355,7 +361,13 @@ Frame:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
-        extendedSerialization: boolean?
+        serialize:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Map
+            - Set
       returns:
         handle: JSHandle
       flags:

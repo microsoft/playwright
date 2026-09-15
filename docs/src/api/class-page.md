@@ -1605,7 +1605,7 @@ Optional argument to pass to [`param: expression`].
 ### option: Page.evaluate.exposeFunctions = %%-js-evaluate-expose-functions-%%
 * since: v1.62
 
-### option: Page.evaluate.serialization = %%-js-evaluate-serialization-%%
+### option: Page.evaluate.serialize = %%-js-evaluate-serialize-%%
 * since: v1.64
 
 ### option: Page.evaluate.world = %%-js-evaluate-world-%%
@@ -1723,7 +1723,7 @@ Optional argument to pass to [`param: expression`].
 ### option: Page.evaluateHandle.exposeFunctions = %%-js-evaluate-expose-functions-%%
 * since: v1.62
 
-### option: Page.evaluateHandle.serialization = %%-js-evaluate-serialization-%%
+### option: Page.evaluateHandle.serialize = %%-js-evaluate-serialize-%%
 * since: v1.64
 
 ## async method: Page.exposeBinding

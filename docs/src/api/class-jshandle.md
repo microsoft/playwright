@@ -99,7 +99,7 @@ Optional argument to pass to [`param: expression`].
 ### option: JSHandle.evaluate.exposeFunctions = %%-js-evaluate-expose-functions-%%
 * since: v1.62
 
-### option: JSHandle.evaluate.serialization = %%-js-evaluate-serialization-%%
+### option: JSHandle.evaluate.serialize = %%-js-evaluate-serialize-%%
 * since: v1.64
 
 ## async method: JSHandle.evaluateHandle
@@ -132,7 +132,7 @@ Optional argument to pass to [`param: expression`].
 ### option: JSHandle.evaluateHandle.exposeFunctions = %%-js-evaluate-expose-functions-%%
 * since: v1.62
 
-### option: JSHandle.evaluateHandle.serialization = %%-js-evaluate-serialization-%%
+### option: JSHandle.evaluateHandle.serialize = %%-js-evaluate-serialize-%%
 * since: v1.64
 
 ## async method: JSHandle.getProperties

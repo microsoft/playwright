@@ -1349,7 +1349,7 @@ scheme.FrameEvaluateExpressionParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
-  extendedSerialization: tOptional(tBoolean),
+  serialize: tOptional(tArray(tEnum(['Map', 'Set']))),
   world: tOptional(tEnum(['main', 'utility'])),
 });
 scheme.FrameEvaluateExpressionResult = tObject({
@@ -1359,7 +1359,7 @@ scheme.FrameEvaluateExpressionHandleParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
-  extendedSerialization: tOptional(tBoolean),
+  serialize: tOptional(tArray(tEnum(['Map', 'Set']))),
 });
 scheme.FrameEvaluateExpressionHandleResult = tObject({
   handle: tChannel(['ElementHandle', 'JSHandle']),
@@ -1641,7 +1641,7 @@ scheme.JSHandleEvaluateExpressionParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
-  extendedSerialization: tOptional(tBoolean),
+  serialize: tOptional(tArray(tEnum(['Map', 'Set']))),
   world: tOptional(tEnum(['main', 'utility'])),
 });
 scheme.ElementHandleEvaluateExpressionParams = tType('JSHandleEvaluateExpressionParams');
@@ -1653,7 +1653,7 @@ scheme.JSHandleEvaluateExpressionHandleParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
   arg: tType('SerializedArgument'),
-  extendedSerialization: tOptional(tBoolean),
+  serialize: tOptional(tArray(tEnum(['Map', 'Set']))),
 });
 scheme.ElementHandleEvaluateExpressionHandleParams = tType('JSHandleEvaluateExpressionHandleParams');
 scheme.JSHandleEvaluateExpressionHandleResult = tObject({

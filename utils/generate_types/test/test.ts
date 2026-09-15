@@ -336,7 +336,7 @@ playwright.chromium.launch().then(async browser => {
   await browser.close();
 })();
 
-// Extended serialization unboxes handles inside collections.
+// Collection serialization unboxes handles inside collections.
 (async () => {
   const body = await page.evaluateHandle(() => document.body);
   const input = { map: new Map([[body, new Set([body])]]) };
@@ -344,7 +344,7 @@ playwright.chromium.launch().then(async browser => {
     const elements = map.get(document.body)!;
     const assertion: AssertType<Set<HTMLElement>, typeof elements> = true;
     return new Set([...elements].map(element => element.tagName));
-  }, input, { serialization: 'extended' });
+  }, input, { serialize: ['Map', 'Set'] });
   const assertion: AssertType<Set<string>, typeof value> = true;
 })();
 
