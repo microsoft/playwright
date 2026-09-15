@@ -23,7 +23,6 @@ export class CoverageScript {
   private _global: typeof globalThis;
   private _sessionId: string;
   private _reportedFiles = new Set<string>();
-  private _stashOrdinal = 0;
 
   constructor(global: typeof globalThis, collectName: string, sessionId: string) {
     this._global = global;
@@ -72,7 +71,7 @@ export class CoverageScript {
       return;
     try {
       // Several documents can pick up the same stash, the id discards the copies.
-      const id = ++this._stashOrdinal + '-' + Math.random().toString(36).slice(2);
+      const id = Math.random().toString(36).slice(2);
       const key = kCoverageStashPrefix + this._sessionId + '.' + id;
       this._global.localStorage.setItem(key, JSON.stringify({ id, data: delta }));
     } catch {
