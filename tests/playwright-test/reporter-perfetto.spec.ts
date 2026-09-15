@@ -215,6 +215,24 @@ test('should report step params', async ({ runInlineTest }, testInfo) => {
   expect(findSlice(events, 'my step')!.args.params).toEqual({ foo: 'bar', count: 7 });
 });
 
+test('should fail when gzip perfetto output stream errors', async ({ runInlineTest }, testInfo) => {
+  test.skip(!fs.existsSync('/dev/full'), 'needs /dev/full');
+  const gz = testInfo.outputPath('trace.json.gz');
+  await fs.promises.symlink('/dev/full', gz);
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { reporter: [['perfetto', { outputFile: ${JSON.stringify(gz)} }]] };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('one', async () => {
+        test.info().annotations.push({ type: 'blob', description: ${JSON.stringify('x'.repeat(64 * 1024))} });
+      });
+    `,
+  });
+  expect(result.exitCode).not.toBe(0);
+});
+
 test('should respect outputFile option', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

@@ -290,17 +290,25 @@ class PerfettoReporter implements ReporterV2 {
 // Writes into a ".gz" file through a gzip stream, into a plain file otherwise.
 class ChunkWriter {
   private _stream: Writable;
+  private _fileStream: Writable;
   private _closed: Promise<void>;
   private _error: Error | undefined;
 
   constructor(file: string) {
     const fileStream = fs.createWriteStream(file);
+    this._fileStream = fileStream;
     const gzip = file.endsWith('.gz') ? zlib.createGzip() : undefined;
     gzip?.pipe(fileStream);
     this._stream = gzip ?? fileStream;
     // The file is only complete once the destination closes, which is later than
     // the gzip stream ending.
-    this._closed = new Promise(resolve => fileStream.on('close', resolve));
+    this._closed = new Promise(resolve => {
+      fileStream.on('close', resolve);
+      fileStream.on('error', error => {
+        this._error ??= error;
+        resolve();
+      });
+    });
     for (const stream of new Set<Writable>([this._stream, fileStream]))
       stream.on('error', error => this._error ??= error);
   }
@@ -308,8 +316,26 @@ class ChunkWriter {
   async write(chunk: string) {
     if (this._error)
       throw this._error;
-    if (!this._stream.write(chunk))
-      await new Promise<void>(resolve => this._stream.once('drain', () => resolve()));
+    if (!this._stream.write(chunk)) {
+      await new Promise<void>((resolve, reject) => {
+        if (this._error)
+          return reject(this._error);
+        const onDrain = () => finish(resolve);
+        const onError = (error: Error) => {
+          this._error ??= error;
+          finish(() => reject(error));
+        };
+        const finish = (done: () => void) => {
+          this._stream.off('drain', onDrain);
+          this._stream.off('error', onError);
+          this._fileStream.off('error', onError);
+          done();
+        };
+        this._stream.once('drain', onDrain);
+        this._stream.once('error', onError);
+        this._fileStream.once('error', onError);
+      });
+    }
   }
 
   async close() {
