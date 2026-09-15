@@ -249,6 +249,26 @@ it('should support thrown numbers as error messages', async ({ page }) => {
   expect(error.message).toContain('100500');
 });
 
+it('should reject when a falsy value is thrown', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42661' },
+}, async ({ page }) => {
+  for (const value of ['null', 'undefined', '0', `''`, 'false', 'NaN', '-0', '0n']) {
+    const error = await page.evaluate(`(() => { throw ${value}; })()`).then(() => null, e => e);
+    expect(error, `throw ${value}`).toBeInstanceOf(Error);
+    const rejection = await page.evaluate(`Promise.reject(${value})`).then(() => null, e => e);
+    expect(rejection, `Promise.reject(${value})`).toBeInstanceOf(Error);
+  }
+});
+
+it('should include a non-error rejection value in the error message', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42661' },
+}, async ({ page }) => {
+  const error = await page.evaluate(() => Promise.reject(7)).then(() => null, e => e);
+  expect(error.message).toContain('7');
+  const nullError = await page.evaluate(() => { throw null; }).then(() => null, e => e);
+  expect(nullError.message).toContain('null');
+});
+
 it('should return complex objects', async ({ page }) => {
   const object = { foo: 'bar!' };
   const result = await page.evaluate(a => a, object);
