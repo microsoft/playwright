@@ -114,6 +114,12 @@ function computeElementStyleVisibilityVisible(element: Element, style?: CSSStyle
   }
   if (style.visibility !== 'visible')
     return false;
+  try {
+    const frameElement = element.ownerDocument?.defaultView?.frameElement;
+    if (frameElement && !isElementStyleVisibilityVisible(frameElement))
+      return false;
+  } catch {
+  }
   return true;
 }
 
