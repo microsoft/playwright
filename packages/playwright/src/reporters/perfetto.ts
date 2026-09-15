@@ -290,11 +290,13 @@ class PerfettoReporter implements ReporterV2 {
 // Writes into a ".gz" file through a gzip stream, into a plain file otherwise.
 class ChunkWriter {
   private _stream: Writable;
+  private _fileStream: Writable;
   private _closed: Promise<void>;
   private _error: Error | undefined;
 
   constructor(file: string) {
     const fileStream = fs.createWriteStream(file);
+    this._fileStream = fileStream;
     const gzip = file.endsWith('.gz') ? zlib.createGzip() : undefined;
     gzip?.pipe(fileStream);
     this._stream = gzip ?? fileStream;
@@ -326,10 +328,12 @@ class ChunkWriter {
         const finish = (done: () => void) => {
           this._stream.off('drain', onDrain);
           this._stream.off('error', onError);
+          this._fileStream.off('error', onError);
           done();
         };
         this._stream.once('drain', onDrain);
         this._stream.once('error', onError);
+        this._fileStream.once('error', onError);
       });
     }
   }

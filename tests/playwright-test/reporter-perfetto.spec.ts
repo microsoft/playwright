@@ -215,16 +215,19 @@ test('should report step params', async ({ runInlineTest }, testInfo) => {
   expect(findSlice(events, 'my step')!.args.params).toEqual({ foo: 'bar', count: 7 });
 });
 
-test('should fail when perfetto output file cannot be written', async ({ runInlineTest }, testInfo) => {
-  const dir = testInfo.outputPath('not-a-file');
-  await fs.promises.mkdir(dir);
+test('should fail when gzip perfetto output stream errors', async ({ runInlineTest }, testInfo) => {
+  test.skip(!fs.existsSync('/dev/full'), 'needs /dev/full');
+  const gz = testInfo.outputPath('trace.json.gz');
+  await fs.promises.symlink('/dev/full', gz);
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { reporter: [['perfetto', { outputFile: ${JSON.stringify(dir)} }]] };
+      module.exports = { reporter: [['perfetto', { outputFile: ${JSON.stringify(gz)} }]] };
     `,
     'a.test.ts': `
       import { test } from '@playwright/test';
-      test('one', async () => {});
+      test('one', async () => {
+        test.info().annotations.push({ type: 'blob', description: ${JSON.stringify('x'.repeat(64 * 1024))} });
+      });
     `,
   });
   expect(result.exitCode).not.toBe(0);
