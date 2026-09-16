@@ -23205,18 +23205,6 @@ export interface Touchscreen {
  */
 export interface Tracing {
   /**
-   * Collects istanbul coverage counters accumulated by all pages of the browser context into the coverage recorded by
-   * the trace. Requires tracing with the
-   * [`coverage`](https://playwright.dev/docs/api/class-tracing#tracing-start-option-coverage) option to be started
-   * first.
-   *
-   * Coverage is collected automatically when the trace chunk is stopped and when a page is closed with
-   * [page.close([options])](https://playwright.dev/docs/api/class-page#page-close). Call this method before a page is
-   * closed by in-page script, for example a popup closing itself, so that its counters are not lost.
-   */
-  flushCoverage(): Promise<void>;
-
-  /**
    * **NOTE** Use `test.step` instead when available.
    *
    * Creates a new group within the trace, assigning any subsequent API calls to this group, until
@@ -23286,9 +23274,7 @@ export interface Tracing {
      * [`vite-plugin-istanbul`](https://www.npmjs.com/package/vite-plugin-istanbul) or
      * [`babel-plugin-istanbul`](https://www.npmjs.com/package/babel-plugin-istanbul), so that pages expose the
      * `window.__coverage__` object. Playwright collects accumulated counters from all pages and frames, including right
-     * before navigations, and stores them in istanbul format inside the trace file. Use
-     * [tracing.flushCoverage()](https://playwright.dev/docs/api/class-tracing#tracing-flush-coverage) to collect counters
-     * from a page that is about to be closed by in-page script.
+     * before navigations and page closes, and stores them in istanbul format inside the trace file.
      */
     coverage?: boolean;
 

@@ -151,7 +151,7 @@ a timeline preview.
 * langs: js
 - `coverage` <[boolean]>
 
-Whether to collect code coverage from istanbul-instrumented application code. Build the application with an istanbul instrumentation plugin, for example [`vite-plugin-istanbul`](https://www.npmjs.com/package/vite-plugin-istanbul) or [`babel-plugin-istanbul`](https://www.npmjs.com/package/babel-plugin-istanbul), so that pages expose the `window.__coverage__` object. Playwright collects accumulated counters from all pages and frames, including right before navigations, and stores them in istanbul format inside the trace file. Use [`method: Tracing.flushCoverage`] to collect counters from a page that is about to be closed by in-page script.
+Whether to collect code coverage from istanbul-instrumented application code. Build the application with an istanbul instrumentation plugin, for example [`vite-plugin-istanbul`](https://www.npmjs.com/package/vite-plugin-istanbul) or [`babel-plugin-istanbul`](https://www.npmjs.com/package/babel-plugin-istanbul), so that pages expose the `window.__coverage__` object. Playwright collects accumulated counters from all pages and frames, including right before navigations and page closes, and stores them in istanbul format inside the trace file.
 
 ### option: Tracing.start.snapshots
 * since: v1.12
@@ -485,14 +485,6 @@ Specifies a custom location for the group to be shown in the trace viewer. Defau
 * since: v1.49
 
 Closes the last group created by [`method: Tracing.group`].
-
-## async method: Tracing.flushCoverage
-* since: v1.64
-* langs: js
-
-Collects istanbul coverage counters accumulated by all pages of the browser context into the coverage recorded by the trace. Requires tracing with the [`option: Tracing.start.coverage`] option to be started first.
-
-Coverage is collected automatically when the trace chunk is stopped and when a page is closed with [`method: Page.close`]. Call this method before a page is closed by in-page script, for example a popup closing itself, so that its counters are not lost.
 
 ## async method: Tracing.stop
 * since: v1.12

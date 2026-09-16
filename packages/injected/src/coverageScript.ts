@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { kCoverageStashPrefix } from '@isomorphic/istanbulCoverage';
+import { kCoverageStashError, kCoverageStashPrefix } from '@isomorphic/istanbulCoverage';
 
 import type { IstanbulCoverage, IstanbulCoverageDelta, IstanbulFileCoverageDelta } from '@isomorphic/istanbulCoverage';
 
@@ -87,35 +87,50 @@ export class CoverageScript {
     const delta = this._takeCurrent();
     if (!delta)
       return;
+    // Several documents can pick up the same stash, the id discards the copies.
+    const id = Math.random().toString(36).slice(2);
     try {
-      // Several documents can pick up the same stash, the id discards the copies.
-      const id = Math.random().toString(36).slice(2);
-      const key = kCoverageStashPrefix + this._sessionId + '.' + id;
-      this._global.localStorage.setItem(key, JSON.stringify({ id, data: delta }));
-    } catch {
+      this._global.localStorage.setItem(kCoverageStashPrefix + this._sessionId + '.' + id, JSON.stringify({ id, data: delta }));
+    } catch (error) {
+      // The counters are lost, the next take surfaces the error.
+      try {
+        this._global.localStorage.setItem(stashErrorKey(this._sessionId), String(error));
+      } catch {
+      }
     }
   }
+}
+
+function stashErrorKey(sessionId: string) {
+  return kCoverageStashPrefix + 'error.' + sessionId;
 }
 
 // Stashes of other sessions are stale, e.g. left by a previous run in a persistent profile.
 export function takeCoverageStashes(global: typeof globalThis, sessionId: string): string[] {
   const result: string[] = [];
+  let storage: Storage;
   try {
-    const storage = global.localStorage;
-    const sessionPrefix = kCoverageStashPrefix + sessionId + '.';
-    const keys: string[] = [];
-    for (let i = 0; i < storage.length; i++) {
-      const key = storage.key(i);
-      if (key && key.startsWith(kCoverageStashPrefix))
-        keys.push(key);
-    }
-    for (const key of keys) {
-      const json = key.startsWith(sessionPrefix) ? storage.getItem(key) : undefined;
-      storage.removeItem(key);
-      if (json)
-        result.push(json);
-    }
+    storage = global.localStorage;
   } catch {
+    return result;
+  }
+  const error = storage.getItem(stashErrorKey(sessionId));
+  if (error) {
+    storage.removeItem(stashErrorKey(sessionId));
+    throw new Error(kCoverageStashError + ': ' + error);
+  }
+  const sessionPrefix = kCoverageStashPrefix + sessionId + '.';
+  const keys: string[] = [];
+  for (let i = 0; i < storage.length; i++) {
+    const key = storage.key(i);
+    if (key && key.startsWith(kCoverageStashPrefix))
+      keys.push(key);
+  }
+  for (const key of keys) {
+    const json = key.startsWith(sessionPrefix) ? storage.getItem(key) : undefined;
+    storage.removeItem(key);
+    if (json)
+      result.push(json);
   }
   return result;
 }

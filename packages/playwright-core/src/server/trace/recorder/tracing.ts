@@ -397,13 +397,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._groupEnd();
   }
 
-  async flushCoverage(progress: Progress) {
-    const recorder = this._coverageRecorder;
-    if (!recorder)
-      throw new Error(`Coverage collection has not been started. Pass the "coverage" option to tracing.start().`);
-    await recorder.flush(progress);
-  }
-
   // Collected before the chunk stops, while the pages can still be evaluated in.
   private async _takeCoverage(progress: Progress, mode: TracingTracingStopChunkParams['mode']): Promise<string | undefined> {
     const recorder = this._coverageRecorder;
@@ -422,8 +415,17 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
     try {
-      const coverageFile = await this._takeCoverage(progress, params.mode);
+      let coverageFile: string | undefined;
+      let coverageError: Error | undefined;
+      try {
+        coverageFile = await this._takeCoverage(progress, params.mode);
+      } catch (error) {
+        coverageError = error;
+      }
+      // The chunk is torn down either way, the coverage error is reported after.
       const result = this._stopChunk(params, coverageFile);
+      if (coverageError)
+        throw coverageError;
       if (!result)
         return {};
 

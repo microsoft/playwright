@@ -58,6 +58,7 @@ export type IstanbulFileCoverageDelta = Partial<IstanbulFileCoverage> & Pick<Ist
 export type IstanbulCoverageDelta = { [file: string]: IstanbulFileCoverageDelta };
 
 export const kCoverageStashPrefix = '__pwCoverage.';
+export const kCoverageStashError = 'Failed to stash the coverage';
 
 export type IstanbulCoverageChunk = {
   data: IstanbulCoverageDelta;

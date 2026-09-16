@@ -5064,7 +5064,6 @@ export interface TracingChannel extends TracingEventTarget, Channel {
   tracingStartChunk(params: TracingTracingStartChunkParams, options: TimeoutOptions): Promise<TracingTracingStartChunkResult>;
   tracingGroup(params: TracingTracingGroupParams, options: TimeoutOptions): Promise<TracingTracingGroupResult>;
   tracingGroupEnd(params: TracingTracingGroupEndParams, options: TimeoutOptions): Promise<TracingTracingGroupEndResult>;
-  tracingFlushCoverage(params: TracingTracingFlushCoverageParams, options: TimeoutOptions): Promise<TracingTracingFlushCoverageResult>;
   tracingStopChunk(params: TracingTracingStopChunkParams, options: TimeoutOptions): Promise<TracingTracingStopChunkResult>;
   tracingStop(params: TracingTracingStopParams, options: TimeoutOptions): Promise<TracingTracingStopResult>;
   harStart(params: TracingHarStartParams, options: TimeoutOptions): Promise<TracingHarStartResult>;
@@ -5119,9 +5118,6 @@ export type TracingTracingGroupResult = void;
 export type TracingTracingGroupEndParams = {};
 export type TracingTracingGroupEndOptions = {};
 export type TracingTracingGroupEndResult = void;
-export type TracingTracingFlushCoverageParams = {};
-export type TracingTracingFlushCoverageOptions = {};
-export type TracingTracingFlushCoverageResult = void;
 export type TracingTracingStopChunkParams = {
   mode: 'archive' | 'discard' | 'entries',
 };

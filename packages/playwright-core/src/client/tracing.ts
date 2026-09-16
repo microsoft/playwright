@@ -79,10 +79,6 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     await this._channel.tracingGroupEnd({}, kNoTimeout);
   }
 
-  async flushCoverage() {
-    await this._channel.tracingFlushCoverage({}, kNoTimeout);
-  }
-
   private async _startCollectingStacks(traceName: string, live: boolean) {
     if (!this._isTracing) {
       this._isTracing = true;

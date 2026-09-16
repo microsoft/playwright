@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { mergeIstanbulCoverage, sortedIstanbulCoverage } from '@isomorphic/istanbulCoverage';
+import { kCoverageStashError, mergeIstanbulCoverage, sortedIstanbulCoverage } from '@isomorphic/istanbulCoverage';
 import * as rawCoverageSource from '../generated/coverageScriptSource';
 
 import type { BrowserContext } from './browserContext';
@@ -31,6 +31,7 @@ export class CoverageRecorder {
   private _context: BrowserContext;
   private _coverage = new Map<string, IstanbulFileCoverage>();
   private _stashedChunkIds = new Set<string>();
+  private _stashError: Error | undefined;
   private _initScript: InitScript | undefined;
 
   constructor(context: BrowserContext) {
@@ -75,6 +76,8 @@ export class CoverageRecorder {
       return;
     }
     await this.flush(progress);
+    if (this._stashError)
+      throw this._stashError;
     this._stashedChunkIds.clear();
     if (!this._coverage.size)
       return;
@@ -92,7 +95,7 @@ export class CoverageRecorder {
 
   private async _collectFromPage(page: Page) {
     await Promise.all(page.frames().map(async frame => {
-      const chunks: string[] = await frame.nonStallingRawEvaluateInExistingMainContext(coverageTakeExpression).catch(() => []);
+      const chunks: string[] = await frame.nonStallingRawEvaluateInExistingMainContext(coverageTakeExpression).catch(error => this._takeFailed(error));
       for (const json of chunks)
         this._append(json);
     }));
@@ -115,10 +118,18 @@ export class CoverageRecorder {
       return;
     const source = this._moduleExpression(`return (module.exports.takeCoverageStashes())(window, ${this._sessionId()});`);
     await this._context.visitOrigins(progress, origins, async frame => {
-      const chunks: string[] = await frame.evaluateExpression(progress, source, { world: 'main' }).catch(() => []);
+      const chunks: string[] = await frame.evaluateExpression(progress, source, { world: 'main' }).catch(error => this._takeFailed(error));
       for (const json of chunks)
         this._append(json);
     });
+  }
+
+  // Evaluation fails for pages on their way out, only the stash error matters.
+  private _takeFailed(error: Error): string[] {
+    const message = error.message?.split('\n')[0].replace(/^Error: /, '');
+    if (message?.includes(kCoverageStashError))
+      this._stashError ??= new Error(message);
+    return [];
   }
 
   private _append(json: string) {

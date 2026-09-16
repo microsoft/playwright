@@ -3087,8 +3087,6 @@ scheme.TracingTracingGroupParams = tObject({
 scheme.TracingTracingGroupResult = tOptional(tObject({}));
 scheme.TracingTracingGroupEndParams = tOptional(tObject({}));
 scheme.TracingTracingGroupEndResult = tOptional(tObject({}));
-scheme.TracingTracingFlushCoverageParams = tOptional(tObject({}));
-scheme.TracingTracingFlushCoverageResult = tOptional(tObject({}));
 scheme.TracingTracingStopChunkParams = tObject({
   mode: tEnum(['archive', 'discard', 'entries']),
 });

@@ -37,7 +37,6 @@ it('should collect istanbul coverage into the trace', async ({ browser }, testIn
 
   const page = await context.newPage();
   await page.setContent(coverageScript('a.js', 3));
-  await context.tracing.flushCoverage();
 
   // Coverage of a closed page is collected automatically.
   const page2 = await context.newPage();
@@ -107,14 +106,12 @@ it('should report maps once and counters incrementally', async ({ browser, serve
   await context.close();
 });
 
-it('should accumulate counters across flushes and keep never hit files', async ({ browser }, testInfo) => {
+it('should accumulate counters across pulls and keep never hit files', async ({ browser }, testInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ coverage: true });
   const page = await context.newPage();
   await page.setContent(coverageScript('a.js', 0));
-  await context.tracing.flushCoverage();
   await page.evaluate(() => (window as any).__coverage__['a.js'].s['0'] += 4);
-  await context.tracing.flushCoverage();
   await page.evaluate(() => (window as any).__coverage__['a.js'].s['0'] += 3);
 
   const traceFile = testInfo.outputPath('trace.zip');
@@ -129,7 +126,7 @@ it('should accumulate counters across flushes and keep never hit files', async (
 async function openPopup(page: any, server: any, file: string, s0: number) {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(url => window.open(url), server.EMPTY_PAGE),
+    page.evaluate(url => (window as any).__popup = window.open(url), server.EMPTY_PAGE),
   ]);
   await popup.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage(file, s0)));
   return popup;
@@ -188,7 +185,6 @@ it('should discard stashes of other sessions', async ({ browser, server }, testI
     localStorage.setItem('__pwCoverage.other-session.1', JSON.stringify({ id: 'other', data: JSON.parse(coverage) }));
   }, JSON.stringify(fileCoverage('stale.js', 7)));
 
-  await context.tracing.flushCoverage();
   const remaining = await page.evaluate(() => Object.keys(localStorage).filter(key => key.startsWith('__pwCoverage.')));
   expect(remaining).toEqual([]);
 
@@ -207,13 +203,18 @@ it('should collect coverage of an origin left without a page', async ({ browser,
   await page.goto(server.EMPTY_PAGE);
 
   const popup = await openPopup(page, server, 'popup.js', 0);
-  await context.tracing.flushCoverage();
-
-  // The popup is hit and navigates away, leaving a stash behind.
   await popup.evaluate(url => {
-    (window as any).__coverage__['popup.js'].s['0'] = 5;
-    window.location.href = url;
+    (window as any).__go = () => {
+      (window as any).__coverage__['popup.js'].s['0'] = 5;
+      window.location.href = url;
+    };
   }, server.CROSS_PROCESS_PREFIX + '/empty.html');
+  // The popup is hit and navigates away, leaving a stash behind. Triggered from
+  // the opener, so that the pull after the action does not race the navigation.
+  await Promise.all([
+    popup.waitForURL(server.CROSS_PROCESS_PREFIX + '/empty.html'),
+    page.evaluate(() => (window as any).__popup.__go()),
+  ]);
   // Leave the origin of the stash without a page to relay it.
   await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
 
@@ -230,10 +231,8 @@ it('should pull counters as the actions go', async ({ browser, server }, testInf
   await context.tracing.start({ coverage: true });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
-  await page.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('a.js', 3)));
-
-  await page.click('body');
-  // The counters are collected by the actions themselves, not only by the flush.
+  await page.setContent(coverageScript('a.js', 3));
+  // The counters are collected by the action itself, not only by the final flush.
   expect(await page.evaluate(() => (window as any).__coverage__['a.js'].s['0'])).toBe(0);
 
   const traceFile = testInfo.outputPath('trace.zip');
@@ -291,9 +290,23 @@ it('should stop collecting when tracing stops', async ({ browser, server }, test
   await context.close();
 });
 
-it('should throw when flushing without coverage', async ({ browser }) => {
+it('should surface a failure to stash the coverage', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
-  await context.newPage();
-  await expect(context.tracing.flushCoverage()).rejects.toThrow('Coverage collection has not been started');
+  await context.tracing.start({ coverage: true });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(coverage => {
+    (window as any).__coverage__ = JSON.parse(coverage);
+    // The stash does not fit, the error record still does.
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function(key: string, value: string) {
+      if (value.length > 100)
+        throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+      setItem.call(this, key, value);
+    };
+    window.dispatchEvent(new Event('pagehide'));
+  }, JSON.stringify(fileCoverage('a.js', 3)));
+
+  await expect(context.tracing.stop({ path: testInfo.outputPath('trace.zip') })).rejects.toThrow('Failed to stash the coverage: QuotaExceededError: The quota has been exceeded.');
   await context.close();
 });

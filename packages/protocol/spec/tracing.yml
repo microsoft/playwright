@@ -54,10 +54,6 @@ Tracing:
     tracingGroupEnd:
       title: Group end
 
-    tracingFlushCoverage:
-      title: Flush coverage
-      group: configuration
-
     tracingStopChunk:
       title: Stop tracing
       group: configuration
