@@ -21,27 +21,27 @@ import type { IstanbulCoverage, IstanbulCoverageDelta, IstanbulFileCoverageDelta
 // Reports `__coverage__` as a delta: reading resets the counters, maps are sent once per file.
 export class CoverageScript {
   private _global: typeof globalThis;
-  private _collectName: string;
+  private _takeName: string;
   private _sessionId: string;
   private _reportedFiles = new Set<string>();
   private _onPageHide = () => this._stashCurrent();
 
-  constructor(global: typeof globalThis, collectName: string, sessionId: string) {
+  constructor(global: typeof globalThis, takeName: string, sessionId: string) {
     this._global = global;
-    this._collectName = collectName;
+    this._takeName = takeName;
     this._sessionId = sessionId;
-    (global as any)[collectName]?.dispose();
-    (global as any)[collectName] = Object.assign(() => this.collect(), { dispose: () => this.dispose() });
+    (global as any)[takeName]?.dispose();
+    (global as any)[takeName] = Object.assign(() => this.take(), { dispose: () => this.dispose() });
     // Counters die with the document and unload-time calls are not delivered.
     global.addEventListener('pagehide', this._onPageHide);
   }
 
   dispose() {
     this._global.removeEventListener('pagehide', this._onPageHide);
-    delete (this._global as any)[this._collectName];
+    delete (this._global as any)[this._takeName];
   }
 
-  collect(): string[] {
+  take(): string[] {
     const chunks = takeCoverageStashes(this._global, this._sessionId);
     const delta = this._takeCurrent();
     if (delta)

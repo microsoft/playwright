@@ -22,10 +22,10 @@ import type { InitScript, Page } from './page';
 import type { Progress } from './progress';
 import type { IstanbulCoverageChunk, IstanbulFileCoverage } from '@isomorphic/istanbulCoverage';
 
-const kCoverageCollectName = '__pwCoverageCollect';
+const kCoverageTakeName = '__pwCoverageTake';
 
-const coverageCollectExpression = `window[${JSON.stringify(kCoverageCollectName)}] ? window[${JSON.stringify(kCoverageCollectName)}]() : []`;
-const coverageDisposeExpression = `window[${JSON.stringify(kCoverageCollectName)}]?.dispose()`;
+const coverageTakeExpression = `window[${JSON.stringify(kCoverageTakeName)}] ? window[${JSON.stringify(kCoverageTakeName)}]() : []`;
+const coverageDisposeExpression = `window[${JSON.stringify(kCoverageTakeName)}]?.dispose()`;
 
 export class CoverageRecorder {
   private _context: BrowserContext;
@@ -52,14 +52,16 @@ export class CoverageRecorder {
   async install(progress: Progress) {
     if (this._initScript)
       return;
-    const source = this._moduleExpression(`new (module.exports.CoverageScript())(window, ${JSON.stringify(kCoverageCollectName)}, ${this._sessionId()});`);
+    const source = this._moduleExpression(`new (module.exports.CoverageScript())(window, ${JSON.stringify(kCoverageTakeName)}, ${this._sessionId()});`);
     this._initScript = await this._context.addInitScript(progress, source);
     await progress.race(this._context.safeNonStallingEvaluateInAllFrames(source, 'main'));
   }
 
   async uninstall() {
-    await this._initScript?.dispose().catch(() => {});
-    await this._context.safeNonStallingEvaluateInAllFrames(coverageDisposeExpression, 'main').catch(() => {});
+    await Promise.all([
+      this._initScript?.dispose(),
+      this._context.safeNonStallingEvaluateInAllFrames(coverageDisposeExpression, 'main'),
+    ]).catch(() => {});
   }
 
   async flush(progress: Progress) {
@@ -90,7 +92,7 @@ export class CoverageRecorder {
 
   private async _collectFromPage(page: Page) {
     await Promise.all(page.frames().map(async frame => {
-      const chunks: string[] = await frame.nonStallingRawEvaluateInExistingMainContext(coverageCollectExpression).catch(() => []);
+      const chunks: string[] = await frame.nonStallingRawEvaluateInExistingMainContext(coverageTakeExpression).catch(() => []);
       for (const json of chunks)
         this._append(json);
     }));

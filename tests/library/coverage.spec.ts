@@ -88,20 +88,20 @@ it('should report maps once and counters incrementally', async ({ browser, serve
   // Actions collect the counters on their own, so hit and collect in one evaluate.
   const first = await page.evaluate(coverage => {
     (window as any).__coverage__ = JSON.parse(coverage);
-    return (window as any).__pwCoverageCollect().map((json: string) => JSON.parse(json));
+    return (window as any).__pwCoverageTake().map((json: string) => JSON.parse(json));
   }, JSON.stringify(fileCoverage('a.js', 3)));
   expect(first[0].data['a.js'].statementMap).toBeTruthy();
   expect(first[0].data['a.js'].s).toEqual({ '0': 3 });
 
   const second = await page.evaluate(() => {
     (window as any).__coverage__['a.js'].s['0'] += 2;
-    return (window as any).__pwCoverageCollect().map((json: string) => JSON.parse(json));
+    return (window as any).__pwCoverageTake().map((json: string) => JSON.parse(json));
   });
   expect(second[0].data['a.js'].statementMap).toBe(undefined);
   expect(second[0].data['a.js'].s).toEqual({ '0': 2 });
 
   // Nothing was hit since the last report.
-  expect(await page.evaluate(() => (window as any).__pwCoverageCollect())).toEqual([]);
+  expect(await page.evaluate(() => (window as any).__pwCoverageTake())).toEqual([]);
 
   await context.tracing.stop();
   await context.close();
@@ -265,12 +265,12 @@ it('should stop collecting when tracing stops', async ({ browser, server }, test
   await page.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('a.js', 1)));
   await context.tracing.stop();
 
-  expect(await page.evaluate(() => typeof (window as any).__pwCoverageCollect)).toBe('undefined');
+  expect(await page.evaluate(() => typeof (window as any).__pwCoverageTake)).toBe('undefined');
   // Leaving the document no longer stashes the counters.
   await page.evaluate(() => (window as any).__coverage__['a.js'].s['0'] = 5);
   await page.goto(server.PREFIX + '/title.html');
   expect(await page.evaluate(() => Object.keys(localStorage).filter(key => key.startsWith('__pwCoverage.')))).toEqual([]);
-  expect(await page.evaluate(() => typeof (window as any).__pwCoverageCollect)).toBe('undefined');
+  expect(await page.evaluate(() => typeof (window as any).__pwCoverageTake)).toBe('undefined');
   await context.close();
 });
 
