@@ -155,8 +155,34 @@ export class BidiNetworkManager {
     response._setHttpVersion(params.response.protocol);
     // "raw" headers are the same as "provisional" headers in Bidi.
     response.setRawResponseHeaders(null);
-    response.setResponseHeadersSize(params.response.headersSize);
+    // Chrome's |headersSize| excludes the status line and the final CRLF for
+    // HTTP/1.x responses, add them to match the other backends. HTTP/2 has no
+    // status line, keep the reported size as is.
+    if (this._isChromium() && params.response.protocol.startsWith('http/1') && params.response.headersSize !== null)
+      response.setResponseHeadersSize(params.response.headersSize + this._headerBlockOverheadSize(params.response));
+    else
+      response.setResponseHeadersSize(params.response.headersSize);
     this._page.frameManager.requestReceivedResponse(response);
+  }
+
+  // Chrome and Firefox populate network.ResponseData size fields with different
+  // semantics:
+  // - Chrome's |bodySize| is the full transfer size, including the status line and
+  //   the headers, just like CDP's |encodedDataLength|. Its |headersSize| counts
+  //   only the header lines, without the status line and the final CRLF.
+  // - Firefox's |bodySize| is the response body size, and its |headersSize| is the
+  //   full header block size, including the status line and the final CRLF.
+  private _isChromium(): boolean {
+    // Chromium reaches the BiDi backend through the 'bidi-*' channels and Firefox
+    // through the 'moz-*' channels, see chromium.ts and firefox.ts.
+    return !!this._page.browserContext._browser.options.channel?.startsWith('bidi-');
+  }
+
+  // Size of the response header block bytes that Chrome's |headersSize| omits:
+  // the status line and the CRLF that terminates the header block. This matches
+  // the responseHeadersSize() fallback computation in network.ts.
+  private _headerBlockOverheadSize(responseData: bidi.Network.ResponseData): number {
+    return `${responseData.protocol} ${responseData.status} ${responseData.statusText}\r\n\r\n`.length;
   }
 
   private _onResponseCompleted(params: bidi.Network.ResponseCompletedParameters) {
@@ -164,9 +190,26 @@ export class BidiNetworkManager {
     if (!request)
       return;
     const response = request.request._existingResponse()!;
-    // TODO: body size is the encoded size
-    response.setTransferSize(params.response.bodySize);
-    response.setEncodedBodySize(params.response.bodySize);
+    const bodySize = params.response.bodySize;
+    const headersSize = params.response.headersSize;
+    // |bytesReceived| is the number of bytes actually read off the network on both
+    // engines, including the header block and the chunked framing, and is 0 when
+    // the response was served from the cache.
+    response.setTransferSize(params.response.bytesReceived);
+    if (this._isChromium() && bodySize !== null && headersSize !== null && !params.response.fromCache && params.response.protocol.startsWith('http/1')) {
+      // Chrome's |bodySize| of a fresh HTTP/1.x response is the transfer size
+      // (status line + headers + wire body), derive the encoded body size by
+      // subtracting the full header block size.
+      response.setEncodedBodySize(bodySize - headersSize - this._headerBlockOverheadSize(params.response));
+    } else if (this._isChromium()) {
+      // Chrome reports no body size for cached responses and a wire size for
+      // HTTP/2, leave the encoded body size to the content-length based fallback
+      // computation in network.ts.
+      response.setEncodedBodySize(null);
+    } else {
+      // Firefox's |bodySize| is the encoded body size.
+      response.setEncodedBodySize(bodySize);
+    }
 
     // Keep redirected requests in the map for future reference as redirectedFrom.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
