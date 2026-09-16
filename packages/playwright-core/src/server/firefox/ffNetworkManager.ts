@@ -51,9 +51,9 @@ export class FFNetworkManager {
     eventsHelper.removeEventListeners(this._eventListeners);
   }
 
-  async setRequestInterception(enabled: boolean) {
+  async setRequestInterception(enabled: boolean, bypassServiceWorker: boolean) {
     await Promise.all([
-      this._session.send('Network.setRequestInterception', { enabled }),
+      this._session.send('Network.setRequestInterception', { enabled, bypassServiceWorker }),
       this._session.send('Page.setCacheDisabled', { cacheDisabled: enabled }),
     ]);
   }
