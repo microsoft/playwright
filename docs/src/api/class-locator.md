@@ -1181,6 +1181,9 @@ Optional argument to pass to [`param: expression`].
 ### option: Locator.evaluate.exposeFunctions = %%-js-evaluate-expose-functions-%%
 * since: v1.62
 
+### option: Locator.evaluate.serialize = %%-js-evaluate-serialize-%%
+* since: v1.64
+
 ### option: Locator.evaluate.world = %%-js-evaluate-world-%%
 * since: v1.64
 
@@ -1288,6 +1291,9 @@ Optional argument to pass to [`param: expression`].
 
 ### option: Locator.evaluateHandle.exposeFunctions = %%-js-evaluate-expose-functions-%%
 * since: v1.62
+
+### option: Locator.evaluateHandle.serialize = %%-js-evaluate-serialize-%%
+* since: v1.64
 
 ### option: Locator.evaluateHandle.timeout
 * since: v1.14

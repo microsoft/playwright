@@ -40,22 +40,22 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
     this._channel.on('previewUpdated', ({ preview }) => this._preview = preview);
   }
 
-  async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg, options?: ExposeFunctionsOptions): Promise<R> {
+  async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg, options?: EvaluateHandleOptions): Promise<R> {
     assertEvaluateOptions(options);
-    return await this._evaluate(pageFunction, arg, { exposeFunctions: options?.exposeFunctions });
+    return await this._evaluate(pageFunction, arg, { exposeFunctions: options?.exposeFunctions, serialize: options?.serialize });
   }
 
   async _evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg, options?: EvaluateOptions): Promise<R> {
     assertEvaluateOptions(options);
-    const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._parentOfType('Page') as Page | undefined, arg) : serializeArgument(arg);
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, world: options?.world }, kNoTimeout);
+    const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._parentOfType('Page') as Page | undefined, arg, options) : serializeArgument(arg, undefined, options);
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, world: options?.world, serialize: options?.serialize }, kNoTimeout);
     return parseResult(result.value);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg, options?: ExposeFunctionsOptions): Promise<structs.SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg, options?: EvaluateHandleOptions): Promise<structs.SmartHandle<R>> {
     assertEvaluateOptions(options);
-    const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._parentOfType('Page') as Page | undefined, arg) : serializeArgument(arg);
-    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg }, kNoTimeout);
+    const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._parentOfType('Page') as Page | undefined, arg, options) : serializeArgument(arg, undefined, options);
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, serialize: options?.serialize }, kNoTimeout);
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 
@@ -100,7 +100,7 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
 
 // This function takes care of converting all JSHandles to their channels,
 // so that generic channel serializer converts them to guids.
-export function serializeArgument(arg: any, registerCallback?: (callback: Function) => string): channels.SerializedArgument {
+export function serializeArgument(arg: any, registerCallback?: (callback: Function) => string, options?: SerializationOptions): channels.SerializedArgument {
   const handles: channels.Channel[] = [];
   const pushHandle = (channel: channels.Channel): number => {
     handles.push(channel);
@@ -112,15 +112,17 @@ export function serializeArgument(arg: any, registerCallback?: (callback: Functi
     if (typeof value === 'function' && registerCallback)
       return { fn: registerCallback(value as Function) };
     return { fallThrough: value };
-  });
+  }, options);
   return { value, handles };
 }
 
 export type WorldOptions = { world?: 'main' | 'utility' };
 export type ExposeFunctionsOptions = { exposeFunctions?: boolean };
-export type EvaluateOptions = ExposeFunctionsOptions & WorldOptions;
+export type SerializationOptions = { serialize?: ('Map' | 'Set')[] };
+export type EvaluateHandleOptions = ExposeFunctionsOptions & SerializationOptions;
+export type EvaluateOptions = EvaluateHandleOptions & WorldOptions;
 
-export async function serializeArgumentWithCallbacks(owner: ChannelOwner<any>, page: Page | undefined, arg: any): Promise<channels.SerializedArgument> {
+export async function serializeArgumentWithCallbacks(owner: ChannelOwner<any>, page: Page | undefined, arg: any, options?: SerializationOptions): Promise<channels.SerializedArgument> {
   return await owner._wrapApiCall(async () => {
     const exposePromises: Promise<void>[] = [];
     const serialized = serializeArgument(arg, callback => {
@@ -129,7 +131,7 @@ export async function serializeArgumentWithCallbacks(owner: ChannelOwner<any>, p
       const name = kFunctionBindingPrefix + createGuid();
       exposePromises.push(page._exposeEvaluateCallback(name, callback));
       return name;
-    });
+    }, options);
     await Promise.all(exposePromises);
     return serialized;
   }, { internal: true });
@@ -147,4 +149,6 @@ export function assertMaxArguments(count: number, max: number): asserts count {
 export function assertEvaluateOptions(options: any) {
   if (options !== undefined && (typeof options !== 'object' || options === null || Array.isArray(options)))
     throw new Error('Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object.');
+  if (options?.serialize !== undefined && (!Array.isArray(options.serialize) || options.serialize.some((type: unknown) => type !== 'Map' && type !== 'Set')))
+    throw new Error('serialize: expected an array of (Map|Set)');
 }

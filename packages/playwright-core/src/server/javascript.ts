@@ -143,11 +143,11 @@ export class JSHandle<T = any> extends SdkObject {
       (globalThis as any).leakedJSHandles.set(this, new Error('Leaked JSHandle'));
   }
 
-  async evaluateExpression(progress: Progress, expression: string, options: { isFunction?: boolean }, arg: any) {
+  async evaluateExpression(progress: Progress, expression: string, options: { isFunction?: boolean, serialize?: ('Map' | 'Set')[] }, arg: any) {
     return await progress.race(this.internalEvaluateExpression(expression, options, arg));
   }
 
-  async evaluateExpressionHandle(progress: Progress, expression: string, options: { isFunction?: boolean }, arg: any): Promise<JSHandle<any>> {
+  async evaluateExpressionHandle(progress: Progress, expression: string, options: { isFunction?: boolean, serialize?: ('Map' | 'Set')[] }, arg: any): Promise<JSHandle<any>> {
     return await progress.race(this._evaluateExpressionHandle(expression, options, arg));
   }
 
@@ -171,11 +171,11 @@ export class JSHandle<T = any> extends SdkObject {
     return evaluate(this._context, false /* returnByValue */, pageFunction, this, arg);
   }
 
-  async internalEvaluateExpression(expression: string, options: { isFunction?: boolean }, arg: any) {
+  async internalEvaluateExpression(expression: string, options: { isFunction?: boolean, serialize?: ('Map' | 'Set')[] }, arg: any) {
     return await evaluateExpression(this._context, expression, { ...options, returnByValue: true }, this, arg);
   }
 
-  private async _evaluateExpressionHandle(expression: string, options: { isFunction?: boolean }, arg: any): Promise<JSHandle<any>> {
+  private async _evaluateExpressionHandle(expression: string, options: { isFunction?: boolean, serialize?: ('Map' | 'Set')[] }, arg: any): Promise<JSHandle<any>> {
     return await evaluateExpression(this._context, expression, { ...options, returnByValue: false }, this, arg);
   }
 
@@ -254,7 +254,7 @@ export async function evaluate(context: ExecutionContext, returnByValue: boolean
   return evaluateExpression(context, String(pageFunction), { returnByValue, isFunction: typeof pageFunction === 'function' }, ...args);
 }
 
-export async function evaluateExpression(context: ExecutionContext, expression: string, options: { returnByValue?: boolean, isFunction?: boolean }, ...args: any[]): Promise<any> {
+export async function evaluateExpression(context: ExecutionContext, expression: string, options: { returnByValue?: boolean, isFunction?: boolean, serialize?: ('Map' | 'Set')[] }, ...args: any[]): Promise<any> {
   expression = normalizeEvaluationExpression(expression, options.isFunction);
   const handles: (Promise<JSHandle>)[] = [];
   const toDispose: Promise<JSHandle>[] = [];
@@ -276,7 +276,7 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
       return { h: pushHandle(adopted) };
     }
     return { fallThrough: handle };
-  }));
+  }, options));
 
   const utilityScriptObjects: JSHandle[] = [];
   for (const handle of await Promise.all(handles)) {
@@ -286,7 +286,7 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
   }
 
   // See UtilityScript for arguments.
-  const utilityScriptValues = [options.isFunction, options.returnByValue, expression, args.length, ...args];
+  const utilityScriptValues = [options.isFunction, options.returnByValue, options.serialize, expression, args.length, ...args];
 
   const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)`;
   try {

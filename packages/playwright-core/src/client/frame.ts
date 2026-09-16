@@ -35,7 +35,7 @@ import { kLifecycleEvents } from './types';
 import { Waiter } from './waiter';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 
-import type { EvaluateOptions, ExposeFunctionsOptions, WorldOptions } from './jsHandle';
+import type { EvaluateOptions, EvaluateHandleOptions, WorldOptions } from './jsHandle';
 import type { LocatorOptions } from './locator';
 import type { Page } from './page';
 import type { DropPayload, FilePayload, LifecycleEvent, SelectOption, SelectOptionOptions, StrictOptions, TimeoutOptions, WaitForFunctionOptions } from './types';
@@ -207,19 +207,19 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return ElementHandle.from((await this._channel.frameElement({}, kNoTimeout)).element);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: ExposeFunctionsOptions): Promise<structs.SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: EvaluateHandleOptions): Promise<structs.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 3);
     assertEvaluateOptions(options);
-    const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._page, arg) : serializeArgument(arg);
-    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg }, kNoTimeout);
+    const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._page, arg, options) : serializeArgument(arg, undefined, options);
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, serialize: options?.serialize }, kNoTimeout);
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: EvaluateOptions): Promise<R> {
     assertMaxArguments(arguments.length, 3);
     assertEvaluateOptions(options);
-    const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._page, arg) : serializeArgument(arg);
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, world: options?.world }, kNoTimeout);
+    const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._page, arg, options) : serializeArgument(arg, undefined, options);
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, world: options?.world, serialize: options?.serialize }, kNoTimeout);
     return parseResult(result.value);
   }
 

@@ -584,6 +584,12 @@ to a function, the function is automatically invoked.
 
 Function to be evaluated in the page context.
 
+## js-evaluate-serialize
+* langs: js
+- `serialize` <[Array]<[SerializationType]<"Map"|"Set">>>
+
+Additional built-in types to preserve in the evaluation argument and return value, including nested collections and circular references. Supports `"Map"` and `"Set"`. For example, `serialize: ['Map', 'Set']` preserves both [Map] and [Set] instances. Defaults to an empty array, in which case these types are serialized as plain objects.
+
 ## js-evaluate-expose-functions
 * langs: js
 - `exposeFunctions` <[boolean]>
