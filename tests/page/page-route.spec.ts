@@ -1138,3 +1138,32 @@ it('should be able to intercept every navigation to a page controlled by service
   await page.goto(URL);
   expect(interceptions).toBe(2);
 });
+
+it('should not report blob: urls to route handler', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42727' });
+
+  const seen: string[] = [];
+  await page.route('**/*', route => {
+    seen.push(route.request().url());
+    return route.continue();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const reply = await page.evaluate(async () => {
+    const blob = new Blob(['self.postMessage("ready")'], { type: 'text/javascript' });
+    const worker = new Worker(URL.createObjectURL(blob));
+    return await new Promise(resolve => {
+      worker.onmessage = (e: any) => resolve(e.data);
+    });
+  });
+  expect(reply).toBe('ready');
+
+  const fetchReply = await page.evaluate(async () => {
+    const blob = new Blob(['hello blob'], { type: 'text/plain' });
+    const blobUrl = URL.createObjectURL(blob);
+    const res = await fetch(blobUrl);
+    return await res.text();
+  });
+  expect(fetchReply).toBe('hello blob');
+
+  expect(seen.filter(url => url.startsWith('blob:'))).toEqual([]);
+});
