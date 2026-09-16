@@ -338,6 +338,7 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Tracing.tracingStartChunk', { title: 'Start tracing', group: 'configuration', }],
   ['Tracing.tracingGroup', { title: 'Trace "{name}"', renderParams: ['name'], }],
   ['Tracing.tracingGroupEnd', { title: 'Group end', }],
+  ['Tracing.tracingFlushCoverage', { title: 'Flush coverage', group: 'configuration', }],
   ['Tracing.tracingStopChunk', { title: 'Stop tracing', group: 'configuration', }],
   ['Tracing.tracingStop', { title: 'Stop tracing', group: 'configuration', }],
   ['Tracing.harStart', { internal: true, }],
