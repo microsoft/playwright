@@ -505,6 +505,7 @@ const Network = {
     'setRequestInterception': {
       params: {
         enabled: t.Boolean,
+        bypassServiceWorker: t.Optional(t.Boolean),
       },
     },
     'setExtraHTTPHeaders': {

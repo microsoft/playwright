@@ -250,10 +250,7 @@ class Runtime {
     if (obj.promiseState === 'fulfilled')
       return {success: true, obj: obj.promiseValue};
     if (obj.promiseState === 'rejected') {
-      const debuggee = executionContext._debuggee;
-      const errorInfo = debuggee.executeInGlobalWithBindings('({m: e?.message, s: e?.stack})', {e: obj.promiseReason}, {useInnerBindings: true}).return;
-      exceptionDetails.text = errorInfo.getOwnPropertyDescriptor('m').value;
-      exceptionDetails.stack = errorInfo.getOwnPropertyDescriptor('s').value;
+      executionContext._fillExceptionDetails(obj.promiseReason, exceptionDetails);
       return {success: false, obj: null};
     }
     let resolve, reject;
@@ -284,10 +281,7 @@ class Runtime {
         pendingPromise.resolve({success: true, obj: obj.promiseValue});
         continue;
       }
-      const debuggee = pendingPromise.executionContext._debuggee;
-      const errorInfo = debuggee.executeInGlobalWithBindings('({m: e?.message, s: e?.stack})', {e: obj.promiseReason}, {useInnerBindings: true}).return;
-      pendingPromise.exceptionDetails.text = errorInfo.getOwnPropertyDescriptor('m').value;
-      pendingPromise.exceptionDetails.stack = errorInfo.getOwnPropertyDescriptor('s').value;
+      pendingPromise.executionContext._fillExceptionDetails(obj.promiseReason, pendingPromise.exceptionDetails);
       pendingPromise.resolve({success: false, obj: null});
     }
     if (!this._pendingPromises.size)
@@ -578,17 +572,36 @@ class ExecutionContext {
   _getResult(completionValue, exceptionDetails = {}) {
     if (!completionValue)
       throw new Error('evaluation terminated');
-    if (completionValue.throw) {
-      const errorInfo = this._debuggee.executeInGlobalWithBindings('e instanceof Error ? ({m: e.message, s: e.stack}) : null', {e: completionValue.throw}, {useInnerBindings: true}).return;
-      if (errorInfo) {
-        exceptionDetails.text = errorInfo.getOwnPropertyDescriptor('m').value;
-        exceptionDetails.stack = errorInfo.getOwnPropertyDescriptor('s').value;
-      } else {
-        exceptionDetails.value = this._serialize(completionValue.throw);
-      }
+    if ('throw' in completionValue) {
+      this._fillExceptionDetails(completionValue.throw, exceptionDetails);
       return {success: false, obj: null};
     }
     return {success: true, obj: completionValue.return};
+  }
+
+  _fillExceptionDetails(thrown, exceptionDetails) {
+    // Always populate `text`, so that the client reports something for any thrown
+    // value. Evaluate inside the debuggee and guard against throwing getters/toString.
+    const info = this._debuggee.executeInGlobalWithBindings(`(() => {
+      try {
+        if (e instanceof Error)
+          return {isError: true, text: e.message, stack: e.stack};
+        return {isError: false, text: String(e)};
+      } catch {
+        return {isError: false, text: 'Unserializable exception'};
+      }
+    })()`, {e: thrown}, {useInnerBindings: true}).return;
+    const property = name => info.getOwnPropertyDescriptor(name).value;
+    exceptionDetails.text = property('text');
+    if (property('isError')) {
+      exceptionDetails.stack = property('stack');
+      return;
+    }
+    try {
+      exceptionDetails.value = this._serialize(thrown);
+    } catch (e) {
+      // Not serializable (bigint, symbol, cyclic object): `text` is all we have.
+    }
   }
 }
 

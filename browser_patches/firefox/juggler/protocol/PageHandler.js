@@ -266,9 +266,9 @@ export class PageHandler {
     this._pageNetwork.setExtraHTTPHeaders(headers);
   }
 
-  async ['Network.setRequestInterception']({enabled}) {
+  async ['Network.setRequestInterception']({enabled, bypassServiceWorker}) {
     if (enabled)
-      this._pageNetwork.enableRequestInterception();
+      this._pageNetwork.enableRequestInterception(bypassServiceWorker);
     else
       this._pageNetwork.disableRequestInterception();
   }
