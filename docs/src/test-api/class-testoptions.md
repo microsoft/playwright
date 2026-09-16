@@ -561,6 +561,27 @@ export default defineConfig({
 });
 ```
 
+## property: TestOptions.screen
+* since: v1.64
+- type: ?<[Object]>
+  - `width` <[int]> page width in pixels.
+  - `height` <[int]> page height in pixels.
+
+Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the [`property: TestOptions.viewport`] is set.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    viewport: { width: 390, height: 664 },
+    screen: { width: 390, height: 844 },
+  },
+});
+```
+
 ## property: TestOptions.screenshot
 * since: v1.10
 - type: <[Object]|[ScreenshotMode]<"off"|"on"|"only-on-failure"|"on-first-failure">>
