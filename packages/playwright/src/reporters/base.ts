@@ -27,7 +27,7 @@ import { fitToWidth } from '@utils/stringWidth';
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
-import type { FullConfig, FullResult, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { FullConfig, FullResult, Location, ReporterOptions, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 import type { Colors } from '@isomorphic/colors';
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
@@ -49,7 +49,7 @@ type TestSummary = {
   fatalErrors: TestError[];
 };
 
-export type CommonReporterOptions = {
+export type CommonReporterOptions = ReporterOptions & {
   configDir: string,
   _mode?: 'list' | 'test' | 'merge',
   _commandHash?: string,
@@ -159,7 +159,7 @@ export const internalScreen: Screen = {
   resolveFiles: 'rootDir',
 };
 
-export type TerminalReporterOptions = {
+export type TerminalReporterOptions = ReporterOptions & {
   screen?: TerminalScreen;
   omitFailures?: boolean;
   includeTestId?: boolean;
@@ -386,6 +386,34 @@ export class TerminalReporter implements ReporterV2 {
   writeLine(line?: string) {
     this.screen.stdout?.write(line ? line + '\n' : '\n');
   }
+}
+
+export function isFailure(test: TestCase): boolean {
+  const outcome = test.outcome();
+  return outcome === 'unexpected' || outcome === 'flaky' || test.results.some(result => result.status === 'interrupted');
+}
+
+export type TestFilter = (test: TestCase) => boolean;
+
+export function createTestFilter(options: ReporterOptions): TestFilter | undefined {
+  return options.onlyFailures ? isFailure : undefined;
+}
+
+export function* visitTests(suite: Suite, filter?: TestFilter): Generator<TestCase> {
+  for (const entry of suite.entries()) {
+    if (entry.type !== 'test')
+      yield* visitTests(entry, filter);
+    else if (!filter || filter(entry))
+      yield entry;
+  }
+}
+
+export function filterSuites(suites: Suite[], filter?: TestFilter): Suite[] {
+  return filter ? suites.filter(suite => !visitTests(suite, filter).next().done) : suites;
+}
+
+export function filterSuiteEntries(suite: Suite, filter?: TestFilter): (Suite | TestCase)[] {
+  return filter ? suite.entries().filter(entry => entry.type === 'test' ? filter(entry) : !visitTests(entry, filter).next().done) : suite.entries();
 }
 
 function formatResultErrors(screen: Screen, test: TestCase, result: TestResult): string {

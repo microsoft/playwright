@@ -28,7 +28,7 @@ class DotReporter extends TerminalReporter {
 
   constructor(options?: DotReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
     super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_DOT_OMIT_TAGS', options?.omitTags) });
-    this._printOnlyFailures = getAsBooleanFromENV('PLAYWRIGHT_DOT_PRINT_ONLY_FAILURES', options?.printOnlyFailures);
+    this._printOnlyFailures = !!options?.onlyFailures || getAsBooleanFromENV('PLAYWRIGHT_DOT_PRINT_ONLY_FAILURES', options?.printOnlyFailures);
   }
 
   override onBegin(suite: Suite) {

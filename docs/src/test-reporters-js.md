@@ -50,6 +50,21 @@ export default defineConfig({
 });
 ```
 
+### Report only failures
+
+Use `--reporter-only-failures` to report only failed, flaky, and interrupted tests:
+
+```bash
+npx playwright test --reporter-only-failures
+npx playwright merge-reports --reporter=html --reporter-only-failures ./blob-report
+```
+
+Terminal reporters hide progress output and retain the full run summary and timing information.  Generated HTML, JSON, JUnit, and Perfetto reports omit passing tests, tests with expected failures, and skipped tests.  Their test counts describe the included results.
+
+Blob reports always retain every test, result, and attachment so they can be replayed into either complete or filtered reports.  Apply `--reporter-only-failures` when merging to filter the generated reports without changing the blob data.
+
+The flag overrides terminal reporter options and environment variables.  Custom reporters receive `onlyFailures: true` in their constructor options and can choose how to respect it; their callbacks still receive all tests and results.  `--list` output is unchanged.  Test stdout and stderr remain controlled by [`property: TestConfig.quiet`].
+
 ## Built-in reporters
 
 All built-in reporters show detailed information about failures, and mostly differ in verbosity for successful runs.
@@ -107,6 +122,18 @@ export default defineConfig({
 });
 ```
 
+You can hide progress output while keeping failure details and the final summary:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [['list', { printOnlyFailures: true }]],
+});
+```
+
+Failed attempts are printed when they finish, without displaying an initial progress row.  This can be combined with `printFailuresInline`.  It takes precedence over `printSteps` and does not suppress stdout or stderr from tests.
+
 You can omit test tags that are automatically appended to test titles:
 
 ```js title="playwright.config.ts"
@@ -123,6 +150,7 @@ List report supports the following configuration options and environment variabl
 |---|---|---|---|
 | `PLAYWRIGHT_LIST_PRINT_STEPS` | `printSteps` | Whether to print each step on its own line. | `false`
 | `PLAYWRIGHT_LIST_PRINT_FAILURES_INLINE` | `printFailuresInline` | Whether to print failure details immediately after a failed test instead of at the end. | `false`
+| `PLAYWRIGHT_LIST_PRINT_ONLY_FAILURES` | `printOnlyFailures` | Whether to hide progress output while keeping failure details and the final summary. | `false`
 | `PLAYWRIGHT_LIST_OMIT_TAGS` | `omitTags` | Whether to omit test tags that are automatically appended to test titles. | `false`
 | `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. Supports `true`, `1`, `false`, `0`, `[WIDTH]`, and `[WIDTH]x[HEIGHT]`. `[WIDTH]` and `[WIDTH]x[HEIGHT]` specifies the TTY dimensions. | `true` when terminal is in TTY mode, `false` otherwise.
 | `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.

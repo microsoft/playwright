@@ -59,6 +59,8 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   for (const r of descriptions) {
     const [name, arg] = r;
     const options = { ...reportOptions, ...arg };
+    if (reportOptions.onlyFailures)
+      options.onlyFailures = true;
     if (name in defaultReporters) {
       reporters.push(new defaultReporters[name as keyof typeof defaultReporters](options));
     } else {
@@ -83,7 +85,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     if (mode === 'list')
       reporters.unshift(new ListModeReporter());
     else if (mode !== 'merge')
-      reporters.unshift(!process.env.CI ? new LineReporter() : new DotReporter());
+      reporters.unshift(!process.env.CI ? new LineReporter(reportOptions) : new DotReporter(reportOptions));
   }
   return reporters;
 }
@@ -109,6 +111,7 @@ function reporterCommandOptions(config: FullConfigInternal, mode: 'list' | 'test
     configDir: config.configDir,
     _mode: mode,
     _commandHash: computeCommandHash(config, runOptions),
+    onlyFailures: mode !== 'list' && config.configCLIOverrides.reporterOnlyFailures,
   };
 }
 

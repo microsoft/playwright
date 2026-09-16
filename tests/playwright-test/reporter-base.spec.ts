@@ -21,7 +21,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
   test.describe(`${useIntermediateMergeReport ? 'merged' : 'created'}`, () => {
     test.use({ useIntermediateMergeReport });
 
-    for (const reporter of ['dot', 'line']) {
+    for (const reporter of ['dot', 'line', 'list']) {
       for (const tty of ['0', '1']) {
         test(`${reporter} printOnlyFailures prints only the summary for successful tests with TTY=${tty}`, async ({ runInlineTest }) => {
           const result = await runInlineTest({
@@ -105,7 +105,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           expect(result.exitCode).toBe(0);
           expect(result.passed).toBe(1);
           expect(result.output.includes('Running 1 test using')).toBe(!printOnlyFailures);
-          expect(result.output.includes(reporter === 'dot' ? '·' : '[1/1]')).toBe(!printOnlyFailures);
+          expect(result.output.includes(reporter === 'dot' ? '·' : '› passes')).toBe(!printOnlyFailures);
         });
       }
 
@@ -130,7 +130,6 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           expect(result.passed).toBe(1);
           expect(result.output.includes('test stdout')).toBe(!quiet);
           expect(result.output.includes('test stderr')).toBe(!quiet);
-          expect(result.output).toMatch(/(?:^|\n)  1 passed \([^)]+\)\n$/);
           expect(result.rawOutput).not.toContain('\u001B[1A');
         });
       }

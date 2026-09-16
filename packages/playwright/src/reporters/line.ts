@@ -31,7 +31,7 @@ class LineReporter extends TerminalReporter {
 
   constructor(options?: LineReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
     super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_LINE_OMIT_TAGS', options?.omitTags) });
-    this._printOnlyFailures = getAsBooleanFromENV('PLAYWRIGHT_LINE_PRINT_ONLY_FAILURES', options?.printOnlyFailures);
+    this._printOnlyFailures = !!options?.onlyFailures || getAsBooleanFromENV('PLAYWRIGHT_LINE_PRINT_ONLY_FAILURES', options?.printOnlyFailures);
   }
 
   override onBegin(suite: Suite) {
