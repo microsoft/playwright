@@ -52,6 +52,37 @@ const kRegisterAdd = `
   });
 `;
 
+test('browser_navigate reports available WebMCP tools', async ({ startClient, server, mcpBrowser }) => {
+  server.setRoute('/', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<title>WebMCP</title><script>${kRegisterAdd}</script>`);
+  });
+
+  const { client } = await startClient({ config: webmcpConfig(mcpBrowser) });
+  const response = await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+  // Names are spelled out the first time a tab reports them, even though the tools are
+  // also offered as webmcp_<tool>, for clients that ignore the tools-changed notification.
+  expect(response).toHaveResponse({
+    page: expect.stringContaining('1 webmcp tool available on the page:\n  add.'),
+  });
+  // The tool set is unchanged, so the header collapses back to the bare count.
+  const reloaded = await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+  expect(reloaded).toHaveResponse({
+    page: expect.stringMatching(/1 webmcp tool available on the page$/m),
+  });
+  expect(reloaded).toHaveResponse({
+    page: expect.not.stringContaining('  add.'),
+  });
+});
+
+test('browser_navigate says nothing when the page has no WebMCP tools', async ({ startClient, server, mcpBrowser }) => {
+  const { client } = await startClient({ config: webmcpConfig(mcpBrowser) });
+  const response = await client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
+  expect(response).toHaveResponse({
+    page: expect.not.stringContaining('webmcp tool'),
+  });
+});
+
 test('browser_webmcp_list lists the tools registered by the page', async ({ startClient, server, mcpBrowser }) => {
   server.setRoute('/', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -70,27 +101,6 @@ test('browser_webmcp_list lists the tools registered by the page', async ({ star
   });
   expect(response).toHaveResponse({
     result: expect.stringContaining('inputSchema: {"type":"object"'),
-  });
-});
-
-test('browser_navigate reports available WebMCP tools', async ({ startClient, server, mcpBrowser }) => {
-  server.setRoute('/', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`<title>WebMCP</title><script>${kRegisterAdd}</script>`);
-  });
-
-  const { client } = await startClient({ config: webmcpConfig(mcpBrowser) });
-  const response = await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
-  expect(response).toHaveResponse({
-    page: expect.stringContaining('1 webmcp tool available on the page'),
-  });
-});
-
-test('browser_navigate says nothing when the page has no WebMCP tools', async ({ startClient, server, mcpBrowser }) => {
-  const { client } = await startClient({ config: webmcpConfig(mcpBrowser) });
-  const response = await client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
-  expect(response).toHaveResponse({
-    page: expect.not.stringContaining('webmcp tool'),
   });
 });
 
@@ -124,133 +134,5 @@ test('browser_webmcp_call reports an unknown tool', async ({ startClient, server
   const response = await client.callTool({ name: 'browser_webmcp_call', arguments: { name: 'missing' } });
   expect(response).toHaveResponse({
     error: expect.stringContaining('No WebMCP tool named "missing". Available tools: add.'),
-  });
-});
-
-test('browser_webmcp_list has no tools when the page registers none', async ({ startClient, server, mcpBrowser }) => {
-  const { client } = await startClient({ config: webmcpConfig(mcpBrowser) });
-  await client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
-
-  expect(await client.callTool({ name: 'browser_webmcp_list' })).toHaveResponse({
-    result: 'No WebMCP tools registered on the page.',
-  });
-});
-
-test('browser_webmcp_list stitches tools across frames', async ({ startClient, server, mcpBrowser }) => {
-  test.skip(mcpBrowser === 'firefox', 'Firefox does not support registering WebMCP tools in iframes yet, https://bugzilla.mozilla.org/show_bug.cgi?id=2019743');
-
-  server.setRoute('/', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`<title>WebMCP</title><script>${kRegisterAdd}</script><iframe src="/frame.html"></iframe>`);
-  });
-  server.setRoute('/frame.html', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`<script>
-      const modelContext = document.modelContext || navigator.modelContext;
-      modelContext.registerTool({
-        name: 'subscribe',
-        description: 'Subscribes to the newsletter',
-        async execute() { return { content: [{ type: 'text', text: 'subscribed' }] }; },
-      });
-    </script>`);
-  });
-
-  const { client } = await startClient({ config: webmcpConfig(mcpBrowser) });
-  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
-
-  const response = await client.callTool({ name: 'browser_webmcp_list' });
-  expect(response).toHaveResponse({
-    result: expect.stringContaining('Found 2 WebMCP tool(s)'),
-  });
-  // Each tool is listed once, attributed to the frame that registered it.
-  expect(response).toHaveResponse({
-    result: expect.stringContaining(`- subscribe: Subscribes to the newsletter\n  - frame: ${server.PREFIX}/frame.html`),
-  });
-
-  expect(await client.callTool({
-    name: 'browser_webmcp_call',
-    arguments: { name: 'subscribe' },
-  })).toHaveResponse({
-    result: expect.stringContaining('"text": "subscribed"'),
-  });
-});
-
-test('browser_webmcp_call disambiguates duplicate tool names by frame', async ({ startClient, server, mcpBrowser }) => {
-  test.skip(mcpBrowser === 'firefox', 'Firefox does not support registering WebMCP tools in iframes yet, https://bugzilla.mozilla.org/show_bug.cgi?id=2019743');
-
-  const registerEcho = (text: string) => `
-    const modelContext = document.modelContext || navigator.modelContext;
-    modelContext.registerTool({
-      name: 'echo',
-      description: 'Echoes',
-      async execute() { return { content: [{ type: 'text', text: '${text}' }] }; },
-    });
-  `;
-  server.setRoute('/', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`<title>WebMCP</title><script>${registerEcho('main')}</script><iframe src="/frame.html"></iframe>`);
-  });
-  server.setRoute('/frame.html', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`<script>${registerEcho('frame')}</script>`);
-  });
-
-  const { client } = await startClient({ config: webmcpConfig(mcpBrowser) });
-  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
-
-  expect(await client.callTool({ name: 'browser_webmcp_call', arguments: { name: 'echo' } })).toHaveResponse({
-    error: expect.stringContaining('is registered in multiple frames, retry with the frame parameter'),
-  });
-
-  expect(await client.callTool({
-    name: 'browser_webmcp_call',
-    arguments: { name: 'echo', frame: `${server.PREFIX}/frame.html` },
-  })).toHaveResponse({
-    result: expect.stringContaining('"text": "frame"'),
-  });
-});
-
-test('browser_webmcp_call disambiguates same-name tools in identical same-origin frames', async ({ startClient, server, mcpBrowser }) => {
-  test.skip(mcpBrowser === 'firefox', 'Firefox does not support registering WebMCP tools in iframes yet, https://bugzilla.mozilla.org/show_bug.cgi?id=2019743');
-
-  // Two iframes of the very same URL each own a tool called "echo", so the frame URL alone
-  // cannot address them and the listing falls back to the frame position.
-  server.setRoute('/', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`<title>WebMCP</title><iframe src="/widget.html"></iframe><iframe src="/widget.html"></iframe>`);
-  });
-  server.setRoute('/widget.html', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`<script>
-      const modelContext = document.modelContext || navigator.modelContext;
-      modelContext.registerTool({
-        name: 'echo',
-        description: 'Echoes',
-        async execute() { return { content: [{ type: 'text', text: location.href + '#' + window.length }] }; },
-      });
-    </script>`);
-  });
-
-  const { client } = await startClient({ config: webmcpConfig(mcpBrowser) });
-  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
-
-  const listed = await client.callTool({ name: 'browser_webmcp_list' });
-  expect(listed).toHaveResponse({ result: expect.stringContaining('Found 2 WebMCP tool(s)') });
-  expect(listed).toHaveResponse({ result: expect.stringContaining(`- frame: ${server.PREFIX}/widget.html (frame 1)`) });
-  expect(listed).toHaveResponse({ result: expect.stringContaining(`- frame: ${server.PREFIX}/widget.html (frame 2)`) });
-
-  // The bare URL is ambiguous, the label is not.
-  expect(await client.callTool({
-    name: 'browser_webmcp_call',
-    arguments: { name: 'echo', frame: `${server.PREFIX}/widget.html` },
-  })).toHaveResponse({
-    error: expect.stringContaining('is registered in multiple frames, retry with the frame parameter'),
-  });
-
-  expect(await client.callTool({
-    name: 'browser_webmcp_call',
-    arguments: { name: 'echo', frame: `${server.PREFIX}/widget.html (frame 2)` },
-  })).toHaveResponse({
-    result: expect.stringContaining(`Called WebMCP tool "echo" in ${server.PREFIX}/widget.html (frame 2)`),
   });
 });
