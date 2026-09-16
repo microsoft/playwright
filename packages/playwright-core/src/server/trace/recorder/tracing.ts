@@ -188,7 +188,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (options.snapshotDom)
       this._harTracer.start({ omitScripts: !options.live });
     if (options.coverage && this._context instanceof BrowserContext)
-      this._coverageRecorder ??= new CoverageRecorder(this._context);
+      this._coverageRecorder = new CoverageRecorder(this._context);
     this._started = true;
   }
 
@@ -346,7 +346,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._closeAllGroups();
     this._harTracer.stop();
     this.flushHarEntries();
-    await this._coverageRecorder?.uninstall();
+    const coverageRecorder = this._coverageRecorder;
+    this._coverageRecorder = undefined;
+    await coverageRecorder?.uninstall();
     await this._fs.sync().finally(() => {
       this._state = undefined;
     });
@@ -395,12 +397,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._groupEnd();
   }
 
-  private _activeCoverageRecorder(): CoverageRecorder | undefined {
-    return this._state?.options.coverage ? this._coverageRecorder : undefined;
-  }
-
   async flushCoverage(progress: Progress) {
-    const recorder = this._activeCoverageRecorder();
+    const recorder = this._coverageRecorder;
     if (!recorder)
       throw new Error(`Coverage collection has not been started. Pass the "coverage" option to tracing.start().`);
     await recorder.flush(progress);
@@ -408,7 +406,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   // Collected before the chunk stops, while the pages can still be evaluated in.
   private async _takeCoverage(progress: Progress, mode: TracingTracingStopChunkParams['mode']): Promise<string | undefined> {
-    const recorder = this._activeCoverageRecorder();
+    const recorder = this._coverageRecorder;
     if (!this._state?.recording || !recorder)
       return;
     const coverageJson = await recorder.take(progress, mode === 'discard' ? 'discard' : 'keep');
@@ -622,7 +620,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   async onPageWillClose(page: Page) {
-    await this._activeCoverageRecorder()?.collectFromPage(page).catch(() => {});
+    await this._coverageRecorder?.collectFromPage(page).catch(() => {});
   }
 
   onEntryStarted(entry: har.Entry) {

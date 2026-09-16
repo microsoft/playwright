@@ -25,6 +25,7 @@ import type { IstanbulCoverageChunk, IstanbulFileCoverage } from '@isomorphic/is
 const kCoverageCollectName = '__pwCoverageCollect';
 
 const coverageCollectExpression = `window[${JSON.stringify(kCoverageCollectName)}] ? window[${JSON.stringify(kCoverageCollectName)}]() : []`;
+const coverageDisposeExpression = `window[${JSON.stringify(kCoverageCollectName)}]?.dispose()`;
 
 export class CoverageRecorder {
   private _context: BrowserContext;
@@ -53,16 +54,12 @@ export class CoverageRecorder {
       return;
     const source = this._moduleExpression(`new (module.exports.CoverageScript())(window, ${JSON.stringify(kCoverageCollectName)}, ${this._sessionId()});`);
     this._initScript = await this._context.addInitScript(progress, source);
-    // Init scripts only affect future documents, bootstrap the existing ones.
     await progress.race(this._context.safeNonStallingEvaluateInAllFrames(source, 'main'));
   }
 
   async uninstall() {
-    const initScript = this._initScript;
-    this._initScript = undefined;
-    this._stashedChunkIds.clear();
-    this._coverage.clear();
-    await initScript?.dispose().catch(() => {});
+    await this._initScript?.dispose().catch(() => {});
+    await this._context.safeNonStallingEvaluateInAllFrames(coverageDisposeExpression, 'main').catch(() => {});
   }
 
   async flush(progress: Progress) {

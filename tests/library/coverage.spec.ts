@@ -257,6 +257,23 @@ it('should not collect coverage without the option', async ({ browser }, testInf
   expect(await parseTraceCoverage(traceFile)).toBe(undefined);
 });
 
+it('should stop collecting when tracing stops', async ({ browser, server }, testInfo) => {
+  const context = await browser.newContext();
+  await context.tracing.start({ coverage: true });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('a.js', 1)));
+  await context.tracing.stop();
+
+  expect(await page.evaluate(() => typeof (window as any).__pwCoverageCollect)).toBe('undefined');
+  // Leaving the document no longer stashes the counters.
+  await page.evaluate(() => (window as any).__coverage__['a.js'].s['0'] = 5);
+  await page.goto(server.PREFIX + '/title.html');
+  expect(await page.evaluate(() => Object.keys(localStorage).filter(key => key.startsWith('__pwCoverage.')))).toEqual([]);
+  expect(await page.evaluate(() => typeof (window as any).__pwCoverageCollect)).toBe('undefined');
+  await context.close();
+});
+
 it('should throw when flushing without coverage', async ({ browser }) => {
   const context = await browser.newContext();
   await context.newPage();
