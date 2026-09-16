@@ -521,7 +521,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       await this._captureScreenshot(progress, page, phase);
     if (options?.snapshotAria)
       await this._captureAriaSnapshot(progress, page, phase);
-    if (options?.coverage && phase === 'after')
+    if (phase === 'after')
       await this._captureCoverage(progress, page);
   }
 

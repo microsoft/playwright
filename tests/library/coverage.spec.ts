@@ -257,6 +257,23 @@ it('should not collect coverage without the option', async ({ browser }, testInf
   expect(await parseTraceCoverage(traceFile)).toBe(undefined);
 });
 
+it('should count only the hits after start', async ({ browser, server }, testInfo) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('a.js', 3)));
+
+  await context.tracing.start({ coverage: true });
+  await page.evaluate(() => (window as any).__coverage__['a.js'].s['0'] += 2);
+  const traceFile = testInfo.outputPath('trace.zip');
+  await context.tracing.stop({ path: traceFile });
+  await context.close();
+
+  const data = await parseTraceCoverage(traceFile);
+  expect(data['a.js'].s['0']).toBe(2);
+  expect(Object.keys(data['a.js'].statementMap)).toEqual(['0']);
+});
+
 it('should stop collecting when tracing stops', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ coverage: true });

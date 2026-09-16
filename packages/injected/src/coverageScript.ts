@@ -32,8 +32,18 @@ export class CoverageScript {
     this._sessionId = sessionId;
     (global as any)[takeName]?.dispose();
     (global as any)[takeName] = Object.assign(() => this.take(), { dispose: () => this.dispose() });
+    this._resetCounters();
     // Counters die with the document and unload-time calls are not delivered.
     global.addEventListener('pagehide', this._onPageHide);
+  }
+
+  private _resetCounters() {
+    const coverage: IstanbulCoverage | undefined = (this._global as any).__coverage__;
+    for (const fileCoverage of Object.values(coverage || {})) {
+      takeCounters(fileCoverage.s);
+      takeCounters(fileCoverage.f);
+      takeBranchCounters(fileCoverage.b);
+    }
   }
 
   dispose() {
