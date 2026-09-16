@@ -59,6 +59,7 @@ export type TestRunOptions = {
   grepInvert?: string;
   onlyChanged?: string;
   projectFilter?: string[];
+  includeNonDefaultProjects?: boolean;
   listMode?: boolean;
   passWithNoTests?: boolean;
   lastFailed?: boolean;
@@ -98,7 +99,7 @@ export class TestRun {
     this.config = config;
     this.options = options ?? {};
     this.reporter = reporter;
-    this.filteredProjects = filterProjects(config.projects, this.options.projectFilter);
+    this.filteredProjects = filterProjects(config.projects, this.options.projectFilter, this.options.includeNonDefaultProjects);
     config.config.filteredProjects = this.filteredProjects.map(p => p.project);
   }
 

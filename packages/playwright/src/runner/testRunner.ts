@@ -203,7 +203,8 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     if (!config)
       return { status: 'failed' };
 
-    const options: TestRunOptions = { projectFilter: projects?.length ? projects : undefined };
+    // Non-default projects are listed so that they can be selected by name.
+    const options: TestRunOptions = { projectFilter: projects?.length ? projects : undefined, includeNonDefaultProjects: true };
     const status = await runTasks(new TestRun(config, reporter, options), [
       createListFilesTask(),
       createReportBeginTask(),
@@ -242,6 +243,8 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       grep: params.grep,
       grepInvert: params.grepInvert,
       projectFilter: params.projects?.length ? params.projects : undefined,
+      // Non-default projects are listed so that they can be selected by name.
+      includeNonDefaultProjects: true,
       onlyChanged: params.onlyChanged ? 'HEAD' : undefined,
       listMode: true,
     };

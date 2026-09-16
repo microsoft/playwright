@@ -150,6 +150,28 @@ test('should list tests with testIdAttribute', async ({ startTestServer, writeFi
   expect(onProject.use.testIdAttribute).toBe('testId');
 });
 
+test('should list non-default projects', async ({ startTestServer, writeFiles }) => {
+  await writeFiles({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('foo', () => {});
+      `,
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'default' },
+          { name: 'non-default', default: false },
+        ]
+      };
+      `,
+  });
+
+  const testServerConnection = await startTestServer();
+  const events = await testServerConnection.listTests({});
+  const projectNames = events.report.filter(e => e.method === 'onProject').map(e => e.params.project.name);
+  expect(projectNames).toEqual(['default', 'non-default']);
+});
+
 test('stdio interception', async ({ startTestServer, writeFiles }) => {
   const testServerConnection = await startTestServer();
   await testServerConnection.initialize({ interceptStdio: true });
