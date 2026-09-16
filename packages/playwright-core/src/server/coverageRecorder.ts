@@ -30,7 +30,6 @@ export class CoverageRecorder {
   private _context: BrowserContext;
   private _coverage = new Map<string, IstanbulFileCoverage>();
   private _stashedChunkIds = new Set<string>();
-  private _stashOrigins = new Set<string>();
   private _initScript: InitScript | undefined;
 
   constructor(context: BrowserContext) {
@@ -61,20 +60,9 @@ export class CoverageRecorder {
   async uninstall() {
     const initScript = this._initScript;
     this._initScript = undefined;
-    this._stashOrigins.clear();
     this._stashedChunkIds.clear();
     this._coverage.clear();
     await initScript?.dispose().catch(() => {});
-  }
-
-  onPageClose(page: Page) {
-    for (const frame of page.frames())
-      this._noteOrigin(frame.origin());
-  }
-
-  private _noteOrigin(origin: string | undefined) {
-    if (origin)
-      this._stashOrigins.add(origin);
   }
 
   async flush(progress: Progress) {
@@ -105,7 +93,6 @@ export class CoverageRecorder {
 
   private async _collectFromPage(page: Page) {
     await Promise.all(page.frames().map(async frame => {
-      this._noteOrigin(frame.origin());
       const chunks: string[] = await frame.nonStallingRawEvaluateInExistingMainContext(coverageCollectExpression).catch(() => []);
       for (const json of chunks)
         this._append(json);
@@ -113,7 +100,7 @@ export class CoverageRecorder {
   }
 
   private async _harvestOriginsWithoutPage(progress: Progress) {
-    if (!this._stashOrigins.size || this._context.isClosingOrClosed())
+    if (this._context.isClosingOrClosed())
       return;
     const liveOrigins = new Set<string>();
     for (const page of this._context.pages()) {
@@ -124,8 +111,7 @@ export class CoverageRecorder {
       }
     }
     // The origins that still have a page were drained by the sweep above.
-    const origins = new Set([...this._stashOrigins].filter(origin => !liveOrigins.has(origin)));
-    this._stashOrigins.clear();
+    const origins = new Set([...this._context.visitedOrigins()].filter(origin => !liveOrigins.has(origin)));
     if (!origins.size)
       return;
     const source = this._moduleExpression(`return (module.exports.takeCoverageStashes())(window, ${this._sessionId()});`);

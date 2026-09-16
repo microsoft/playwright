@@ -722,7 +722,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   onPageClose(page: Page) {
-    this._activeCoverageRecorder()?.onPageClose(page);
     const event: trace.EventTraceEvent = {
       type: 'event',
       time: monotonicTime(),

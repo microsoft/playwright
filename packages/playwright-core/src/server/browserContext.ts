@@ -614,6 +614,10 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     this._origins.add(origin);
   }
 
+  visitedOrigins(): ReadonlySet<string> {
+    return this._origins;
+  }
+
   async storageState(progress: Progress, { indexedDB = false, opfs = false, credentials = false }: { indexedDB?: boolean, opfs?: boolean, credentials?: boolean } = {}): Promise<channels.BrowserContextStorageStateResult> {
     const result: channels.BrowserContextStorageStateResult = {
       cookies: await this.cookies(progress),
