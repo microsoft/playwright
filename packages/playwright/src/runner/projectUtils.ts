@@ -33,9 +33,9 @@ function wildcardPatternToRegExp(pattern: string): RegExp {
   return new RegExp('^' + pattern.split('*').map(escapeRegExp).join('.*') + '$', 'ig');
 }
 
-export function filterProjects(projects: commonConfig.FullProjectInternal[], projectNames?: string[]): commonConfig.FullProjectInternal[] {
+export function filterProjects(projects: commonConfig.FullProjectInternal[], projectNames?: string[], includeNonDefault?: boolean): commonConfig.FullProjectInternal[] {
   if (!projectNames)
-    return [...projects];
+    return projects.filter(project => includeNonDefault || project.default);
 
   const projectNamesToFind = new Set<string>();
   const unmatchedProjectNames = new Map<string, string>();

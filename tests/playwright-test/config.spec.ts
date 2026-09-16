@@ -338,6 +338,70 @@ test('should filter by project wildcard and exact name', async ({ runInlineTest 
   expect(new Set(result.outputLines)).toEqual(new Set(['first', 'fooBar', 'prefix']));
 });
 
+test('should not run non-default project by default', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        projects: [
+          { name: 'default' },
+          { name: 'non-default', default: false },
+        ]
+      };
+    `,
+    'a.test.js': `
+      const { test } = require('@playwright/test');
+      test('one', async ({}) => {
+        console.log('%%' + test.info().project.name);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual(['default']);
+});
+
+test('should run non-default project when selected by name', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        projects: [
+          { name: 'default' },
+          { name: 'non-default', default: false },
+        ]
+      };
+    `,
+    'a.test.js': `
+      const { test } = require('@playwright/test');
+      test('one', async ({}) => {
+        console.log('%%' + test.info().project.name);
+      });
+    `
+  }, { '--project': ['Non-Default'] });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual(['non-default']);
+});
+
+test('should match non-default project by wildcard', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        projects: [
+          { name: 'foo-default' },
+          { name: 'foo-non-default', default: false },
+          { name: 'bar-non-default', default: false },
+        ]
+      };
+    `,
+    'a.test.js': `
+      const { test } = require('@playwright/test');
+      test('one', async ({}) => {
+        console.log('%%' + test.info().project.name);
+      });
+    `
+  }, { '--project': ['foo-*'] });
+  expect(result.exitCode).toBe(0);
+  expect(new Set(result.outputLines)).toEqual(new Set(['foo-default', 'foo-non-default']));
+});
+
 test('should print nice error when project is unknown', async ({ runInlineTest }) => {
   const { output, exitCode } = await runInlineTest({
     'playwright.config.ts': `

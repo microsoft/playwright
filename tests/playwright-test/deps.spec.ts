@@ -452,6 +452,29 @@ test('should run project with teardown', async ({ runInlineTest }) => {
   expect(result.outputLines).toEqual(['A', 'B']);
 });
 
+test('should run non-default dependency and teardown', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', teardown: 'teardown', default: false },
+          { name: 'teardown', default: false },
+          { name: 'A', dependencies: ['setup'] },
+          { name: 'B', default: false },
+        ],
+      };`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.outputLines).toEqual(['setup', 'A', 'teardown']);
+});
+
 test('should run teardown after dependents', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

@@ -136,6 +136,40 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
    */
   use?: UseOptions<TestArgs, WorkerArgs>;
   /**
+   * Whether the project runs when no `--project` command line option is passed. Defaults to `true`.
+   *
+   * To run a project with `default: false`, select it with the `--project` command line option.
+   *
+   * A project with `default: false` still runs when another running project lists it in
+   * [testProject.dependencies](https://playwright.dev/docs/api/class-testproject#test-project-dependencies) or
+   * [testProject.teardown](https://playwright.dev/docs/api/class-testproject#test-project-teardown).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   projects: [
+   *     {
+   *       name: 'chromium',
+   *       use: devices['Desktop Chrome'],
+   *     },
+   *     {
+   *       name: 'slow',
+   *       testDir: './slow-tests',
+   *       default: false,
+   *     },
+   *   ],
+   * });
+   * ```
+   *
+   * Now `npx playwright test` only runs `chromium`, while `npx playwright test --project=slow` runs `slow`.
+   */
+  default?: boolean;
+
+  /**
    * List of projects that need to run before any test in this project runs. Dependencies can be useful for configuring
    * the global setup actions in a way that every action is in a form of a test. Passing `--no-deps` argument ignores
    * the dependencies and behaves as if they were not specified.
