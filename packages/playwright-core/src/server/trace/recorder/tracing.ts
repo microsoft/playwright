@@ -721,7 +721,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._appendTraceEvent(event);
   }
 
-  onPageClose(page: Page) {
+  onPageDidClose(page: Page) {
     const event: trace.EventTraceEvent = {
       type: 'event',
       time: monotonicTime(),

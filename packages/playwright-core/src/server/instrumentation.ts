@@ -112,7 +112,7 @@ export interface Instrumentation {
   onAfterCall(progress: Progress, sdkObject: SdkObject): Promise<void>;
   onPageOpen(page: Page): void;
   onPageWillClose(page: Page): Promise<void>;
-  onPageClose(page: Page): void;
+  onPageDidClose(page: Page): void;
   onBrowserOpen(browser: Browser): void;
   onBrowserClose(browser: Browser): void;
   onDialog(dialog: Dialog): void;
@@ -126,7 +126,7 @@ export interface InstrumentationListener {
   onAfterCall?(progress: Progress, sdkObject: SdkObject): Promise<void>;
   onPageOpen?(page: Page): void;
   onPageWillClose?(page: Page): Promise<void>;
-  onPageClose?(page: Page): void;
+  onPageDidClose?(page: Page): void;
   onBrowserOpen?(browser: Browser): void;
   onBrowserClose?(browser: Browser): void;
   onDialog?(dialog: Dialog): void;

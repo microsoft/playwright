@@ -316,7 +316,7 @@ export class Page extends SdkObject<PageEventMap> {
     this.browserContext.emit(BrowserContext.Events.PageClosed, this);
     this.closedPromise.resolve();
     if (!this.isStorageStatePage)
-      this.instrumentation.onPageClose(this);
+      this.instrumentation.onPageDidClose(this);
   }
 
   _didCrash() {
