@@ -30,7 +30,6 @@ export class CoverageScript {
     this._global = global;
     this._takeName = takeName;
     this._sessionId = sessionId;
-    (global as any)[takeName]?.dispose();
     (global as any)[takeName] = Object.assign(() => this.take(), { dispose: () => this.dispose() });
     this._resetCounters();
     // Counters die with the document and unload-time calls are not delivered.
