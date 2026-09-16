@@ -146,6 +146,13 @@ To specify the final trace zip file name, you need to pass `path` option to
 Whether to capture screenshots during tracing. Screenshots are used to build
 a timeline preview.
 
+### option: Tracing.start.coverage
+* since: v1.64
+* langs: js
+- `coverage` <[boolean]>
+
+Whether to collect code coverage from istanbul-instrumented application code. Build the application with an istanbul instrumentation plugin, for example [`vite-plugin-istanbul`](https://www.npmjs.com/package/vite-plugin-istanbul) or [`babel-plugin-istanbul`](https://www.npmjs.com/package/babel-plugin-istanbul), so that pages expose the `window.__coverage__` object. Playwright collects accumulated counters from all pages and frames, including right before navigations and page closes, and stores them in istanbul format inside the trace file.
+
 ### option: Tracing.start.snapshots
 * since: v1.12
 * langs: js

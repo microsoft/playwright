@@ -68,7 +68,7 @@ export class DebugController extends SdkObject {
     if (enabled && !this._trackHierarchyListener) {
       this._trackHierarchyListener = {
         onPageOpen: () => this._emitSnapshot(false),
-        onPageClose: () => this._emitSnapshot(false),
+        onPageDidClose: () => this._emitSnapshot(false),
       };
       this._playwright.instrumentation.addListener(this._trackHierarchyListener, null);
       this._emitSnapshot(true);

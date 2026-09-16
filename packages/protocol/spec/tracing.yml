@@ -26,6 +26,7 @@ Tracing:
         snapshotAria: boolean?
         snapshotScreen: boolean?
         screencast: boolean?
+        coverage: boolean?
         live: boolean?
 
     tracingStartChunk:

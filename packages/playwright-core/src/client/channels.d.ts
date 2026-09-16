@@ -5075,6 +5075,7 @@ export type TracingTracingStartParams = {
   snapshotAria?: boolean,
   snapshotScreen?: boolean,
   screencast?: boolean,
+  coverage?: boolean,
   live?: boolean,
 };
 export type TracingTracingStartOptions = {
@@ -5083,6 +5084,7 @@ export type TracingTracingStartOptions = {
   snapshotAria?: boolean,
   snapshotScreen?: boolean,
   screencast?: boolean,
+  coverage?: boolean,
   live?: boolean,
 };
 export type TracingTracingStartResult = void;

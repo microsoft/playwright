@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { kCoverageStashPrefix } from '@isomorphic/istanbulCoverage';
 import { parseEvaluationResultValue, serializeAsCallArgument, typedArrayToBase64 } from '@isomorphic/utilityScriptSerializers';
 
 import type { IndexedDBDatabase, OPFSEntry, OriginStorage, SetOriginStorage } from '@protocol/structs';
@@ -170,7 +171,9 @@ export class StorageScript {
   }
 
   async collect(record: { indexedDB: boolean, opfs: boolean }): Promise<SerializedStorage> {
-    const localStorage = Object.keys(this._global.localStorage).map(name => ({ name, value: this._global.localStorage.getItem(name)! }));
+    const localStorage = Object.keys(this._global.localStorage)
+        .filter(name => !name.startsWith(kCoverageStashPrefix))
+        .map(name => ({ name, value: this._global.localStorage.getItem(name)! }));
     const result: SerializedStorage = { localStorage };
     if (record.indexedDB) {
       try {

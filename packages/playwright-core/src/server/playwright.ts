@@ -56,7 +56,7 @@ export class Playwright extends SdkObject {
       onBrowserOpen: browser => this._allBrowsers.add(browser),
       onBrowserClose: browser => this._allBrowsers.delete(browser),
       onPageOpen: page => this._allPages.add(page),
-      onPageClose: page => this._allPages.delete(page),
+      onPageDidClose: page => this._allPages.delete(page),
     }, null);
     this.chromium = new Chromium(this, new BidiChromium(this));
     this.firefox = new Firefox(this, new BidiFirefox(this));

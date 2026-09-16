@@ -23269,6 +23269,16 @@ export interface Tracing {
    */
   start(options?: {
     /**
+     * Whether to collect code coverage from istanbul-instrumented application code. Build the application with an
+     * istanbul instrumentation plugin, for example
+     * [`vite-plugin-istanbul`](https://www.npmjs.com/package/vite-plugin-istanbul) or
+     * [`babel-plugin-istanbul`](https://www.npmjs.com/package/babel-plugin-istanbul), so that pages expose the
+     * `window.__coverage__` object. Playwright collects accumulated counters from all pages and frames, including right
+     * before navigations and page closes, and stores them in istanbul format inside the trace file.
+     */
+    coverage?: boolean;
+
+    /**
      * When enabled, the trace is written to an unarchived file that is updated in real time as actions occur, instead of
      * caching changes and archiving them into a zip file at the end. This is useful for live trace viewing during test
      * execution.
