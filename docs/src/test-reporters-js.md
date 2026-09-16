@@ -159,10 +159,23 @@ Running 124 tests using 6 workers
 [23/124] gitignore.spec.ts - should respect nested .gitignore
 ```
 
+You can hide progress output while keeping failure details and the final summary:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [['line', { printOnlyFailures: true }]],
+});
+```
+
+This does not suppress stdout or stderr from tests.  Use [`property: TestConfig.quiet`] to suppress that output.
+
 Line report supports the following configuration options and environment variables:
 
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
+| `PLAYWRIGHT_LINE_PRINT_ONLY_FAILURES` | `printOnlyFailures` | Whether to hide progress output while keeping failure details and the final summary. | `false`
 | `PLAYWRIGHT_LINE_OMIT_TAGS` | `omitTags` | Whether to omit test tags that are automatically appended to test titles. | `false`
 | `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. Supports `true`, `1`, `false`, `0`, `[WIDTH]`, and `[WIDTH]x[HEIGHT]`. `[WIDTH]` and `[WIDTH]x[HEIGHT]` specifies the TTY dimensions. | `true` when terminal is in TTY mode, `false` otherwise.
 | `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
@@ -203,10 +216,23 @@ One character is displayed for each test that has run, indicating its status:
 | `T` | Timed out
 | `°` | Skipped
 
+You can hide progress output while keeping failure details and the final summary:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [['dot', { printOnlyFailures: true }]],
+});
+```
+
+This does not suppress stdout or stderr from tests.  Use [`property: TestConfig.quiet`] to suppress that output.
+
 Dot report supports the following configuration options and environment variables:
 
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
+| `PLAYWRIGHT_DOT_PRINT_ONLY_FAILURES` | `printOnlyFailures` | Whether to hide progress output while keeping failure details and the final summary. | `false`
 | `PLAYWRIGHT_DOT_OMIT_TAGS` | `omitTags` | Whether to omit test tags that are automatically appended to test titles. | `false`
 | `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. Supports `true`, `1`, `false`, `0`, `[WIDTH]`, and `[WIDTH]x[HEIGHT]`. `[WIDTH]` and `[WIDTH]x[HEIGHT]` specifies the TTY dimensions. | `true` when terminal is in TTY mode, `false` otherwise.
 | `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.

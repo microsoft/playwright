@@ -21,6 +21,148 @@ for (const useIntermediateMergeReport of [false, true] as const) {
   test.describe(`${useIntermediateMergeReport ? 'merged' : 'created'}`, () => {
     test.use({ useIntermediateMergeReport });
 
+    for (const reporter of ['dot', 'line']) {
+      for (const tty of ['0', '1']) {
+        test(`${reporter} printOnlyFailures prints only the summary for successful tests with TTY=${tty}`, async ({ runInlineTest }) => {
+          const result = await runInlineTest({
+            'playwright.config.ts': `
+              export default { reporter: [['${reporter}', { printOnlyFailures: true }]] };
+            `,
+            'a.test.ts': `
+              import { test } from '@playwright/test';
+              for (let testIndex = 0; testIndex < 81; testIndex++) {
+                test('passing ' + testIndex, async () => {
+                  await test.step('passing step', async () => {});
+                });
+              }
+              test.skip('skipped', () => {});
+              test('expected failure', () => {
+                test.fail();
+                throw new Error('expected failure');
+              });
+            `,
+          }, {}, { PLAYWRIGHT_FORCE_TTY: tty });
+          expect(result.exitCode).toBe(0);
+          expect(result.output).toMatch(/^\n?  1 skipped\n  82 passed \([^)]+\)\n$/);
+          expect(result.rawOutput).not.toContain('\u001B[1A');
+        });
+      }
+
+      test(`${reporter} printOnlyFailures preserves failure details and retries`, async ({ runInlineTest }) => {
+        const result = await runInlineTest({
+          'playwright.config.ts': `
+            export default { reporter: [['${reporter}', { printOnlyFailures: true }]] };
+          `,
+          'failures.test.ts': `
+            import { test, expect } from '@playwright/test';
+            test('fails', () => {
+              expect(1).toBe(2);
+            });
+            test('flaky', ({}, testInfo) => {
+              if (!testInfo.retry)
+                throw new Error('flaky failure');
+            });
+            test('times out', async () => {
+              test.setTimeout(500);
+              await new Promise(() => {});
+            });
+          `,
+          'passing.test.ts': `
+            import { test } from '@playwright/test';
+            test('passes', () => {});
+          `,
+        }, { retries: 1, workers: 1 }, { PLAYWRIGHT_FORCE_TTY: '1' });
+        expect(result.exitCode).toBe(1);
+        expect(result.failed).toBe(2);
+        expect(result.flaky).toBe(1);
+        expect(result.passed).toBe(1);
+        expect(result.output).toContain('Error: expect(received).toBe(expected)');
+        expect(result.output).toContain('Expected: 2');
+        expect(result.output).toContain('Received: 1');
+        expect(result.output).toMatch(/> 4 \| +expect\(1\)\.toBe\(2\);/);
+        expect(result.output).toContain('failures.test.ts:4:25');
+        expect(result.output).toContain('Error: flaky failure');
+        expect(result.output).toContain('Test timeout of 500ms exceeded.');
+        expect(result.output).toContain('Retry #1');
+        expect(result.output.match(/^  \d+\) /gm)).toHaveLength(3);
+        expect(result.output).not.toContain('passing.test.ts');
+        expect(result.output).not.toContain('Running 4 tests');
+        expect(result.output).not.toMatch(/^\[\d+\/\d+\]|^[·×F±T°]+$/m);
+        expect(result.rawOutput).not.toContain('\u001B[1A');
+      });
+
+      for (const printOnlyFailures of [false, true]) {
+        test(`${reporter} printOnlyFailures environment override ${printOnlyFailures}`, async ({ runInlineTest }) => {
+          const result = await runInlineTest({
+            'playwright.config.ts': `
+              export default { reporter: [['${reporter}', { printOnlyFailures: ${!printOnlyFailures} }]] };
+            `,
+            'a.test.ts': `
+              import { test } from '@playwright/test';
+              test('passes', () => {});
+            `,
+          }, {}, { [`PLAYWRIGHT_${reporter.toUpperCase()}_PRINT_ONLY_FAILURES`]: String(printOnlyFailures) });
+          expect(result.exitCode).toBe(0);
+          expect(result.passed).toBe(1);
+          expect(result.output.includes('Running 1 test using')).toBe(!printOnlyFailures);
+          expect(result.output.includes(reporter === 'dot' ? '·' : '[1/1]')).toBe(!printOnlyFailures);
+        });
+      }
+
+      for (const quiet of [false, true]) {
+        test(`${reporter} printOnlyFailures preserves quiet=${quiet}`, async ({ runInlineTest }) => {
+          const result = await runInlineTest({
+            'playwright.config.ts': `
+              export default {
+                reporter: [['${reporter}', { printOnlyFailures: true }]],
+                quiet: ${quiet},
+              };
+            `,
+            'a.test.ts': `
+              import { test } from '@playwright/test';
+              test('passes', () => {
+                process.stdout.write('test stdout');
+                process.stderr.write('test stderr');
+              });
+            `,
+          }, {}, { PLAYWRIGHT_FORCE_TTY: '1' });
+          expect(result.exitCode).toBe(0);
+          expect(result.passed).toBe(1);
+          expect(result.output.includes('test stdout')).toBe(!quiet);
+          expect(result.output.includes('test stderr')).toBe(!quiet);
+          expect(result.output).toMatch(/(?:^|\n)  1 passed \([^)]+\)\n$/);
+          expect(result.rawOutput).not.toContain('\u001B[1A');
+        });
+      }
+
+      test(`${reporter} printOnlyFailures preserves errors outside tests`, async ({ runInlineTest }) => {
+        const result = await runInlineTest({
+          'playwright.config.ts': `
+            export default {
+              reporter: [['${reporter}', { printOnlyFailures: true }]],
+              globalTeardown: './global-teardown.ts',
+            };
+          `,
+          'global-teardown.ts': `
+            export default () => {
+              throw new Error('global teardown failed');
+            };
+          `,
+          'a.test.ts': `
+            import { test } from '@playwright/test';
+            test('passes', () => {});
+          `,
+        }, {}, { PLAYWRIGHT_FORCE_TTY: '1' });
+        expect(result.exitCode).toBe(1);
+        expect(result.failed).toBe(0);
+        expect(result.passed).toBe(1);
+        expect(result.output).toContain('Error: global teardown failed');
+        expect(result.output).toContain('1 error was not a part of any test');
+        expect(result.output).not.toContain('Running 1 test using');
+        expect(result.rawOutput).not.toContain('\u001B[1A');
+      });
+    }
+
     test('handle long test names', async ({ runInlineTest }) => {
       const title = 'title'.repeat(30);
       const result = await runInlineTest({

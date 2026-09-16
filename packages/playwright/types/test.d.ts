@@ -19,8 +19,8 @@ import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions,
 export * from 'playwright-core';
 
 export type BlobReporterOptions = { outputDir?: string, fileName?: string };
-export type DotReporterOptions = { omitTags?: boolean };
-export type LineReporterOptions = { omitTags?: boolean };
+export type DotReporterOptions = { printOnlyFailures?: boolean, omitTags?: boolean };
+export type LineReporterOptions = { printOnlyFailures?: boolean, omitTags?: boolean };
 export type ListReporterOptions = { printSteps?: boolean, printFailuresInline?: boolean, omitTags?: boolean };
 export type GitHubReporterOptions = { omitTags?: boolean };
 export type JUnitReporterOptions = { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean, includeRetries?: boolean, omitTags?: boolean };
