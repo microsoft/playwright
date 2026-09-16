@@ -553,18 +553,17 @@ class ExecutionContext {
 
   getObjectProperties(objectId) {
     if (!this._remoteObjects.has(objectId))
-      throw new Error('Cannot find object with id = ' + arg.objectId);
+      throw new Error('Cannot find object with id = ' + objectId);
     const result = [];
-    for (let obj = this._remoteObjects.get(objectId); obj; obj = obj.proto) {
-      for (const propertyName of obj.getOwnPropertyNames()) {
-        const descriptor = obj.getOwnPropertyDescriptor(propertyName);
-        if (!descriptor.enumerable)
-          continue;
-        result.push({
-          name: propertyName,
-          value: this._createRemoteObject(descriptor.value),
-        });
-      }
+    const obj = this._remoteObjects.get(objectId);
+    for (const propertyName of obj.getOwnPropertyNames()) {
+      const descriptor = obj.getOwnPropertyDescriptor(propertyName);
+      if (!descriptor.enumerable)
+        continue;
+      result.push({
+        name: propertyName,
+        value: this._createRemoteObject(descriptor.value),
+      });
     }
     return result;
   }

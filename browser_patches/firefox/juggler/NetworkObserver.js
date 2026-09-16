@@ -185,6 +185,8 @@ class NetworkRequest {
     if (this.redirectedFromId) {
       // Redirects are not interceptable.
       this._sendOnRequest(false);
+      // Everything we need from the previous request has been inherited above.
+      redirectedFrom._releaseReferences();
     }
   }
 
@@ -447,6 +449,16 @@ class NetworkRequest {
     }
 
     delete this._responseBodyChunks;
+    this._releaseReferences();
+  }
+
+  // Firefox may keep this object alive long after the request has finished
+  // through callbacks or delegates, and we don't want to retain the page/window/context.
+  _releaseReferences() {
+    this.httpChannel = undefined;
+    this._originalListener = undefined;
+    this._pageNetwork = undefined;
+    this._interceptedChannel = undefined;
   }
 
   _shouldIntercept() {
