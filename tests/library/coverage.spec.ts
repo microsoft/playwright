@@ -244,6 +244,19 @@ it('should pull counters as the actions go', async ({ browser, server }, testInf
   expect(data['a.js'].s['0']).toBe(3);
 });
 
+it('should not collect coverage without the option', async ({ browser }, testInfo) => {
+  const context = await browser.newContext();
+  await context.tracing.start();
+  const page = await context.newPage();
+  await page.setContent(coverageScript('a.js', 1));
+
+  const traceFile = testInfo.outputPath('trace.zip');
+  await context.tracing.stop({ path: traceFile });
+  await context.close();
+
+  expect(await parseTraceCoverage(traceFile)).toBe(undefined);
+});
+
 it('should throw when flushing without coverage', async ({ browser }) => {
   const context = await browser.newContext();
   await context.newPage();

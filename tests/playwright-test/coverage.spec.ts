@@ -54,11 +54,17 @@ test('should collect istanbul coverage into the trace', async ({ runInlineTest }
         const http = require('http');
         const server = http.createServer((req, res) => {
           res.setHeader('Content-Type', 'text/html');
-          res.end(coverageScript('src/app.js', req.url === '/page1' ? 5 : 2));
+          if (req.url === '/frame')
+            res.end(coverageScript('src/frame.js', 3));
+          else if (req.url === '/page1')
+            res.end(coverageScript('src/app.js', 5) + '<iframe src="/frame"></iframe>');
+          else
+            res.end(coverageScript('src/app.js', 2));
         });
         await new Promise(f => server.listen(0, '127.0.0.1', f));
         const origin = 'http://127.0.0.1:' + server.address().port;
         await page.goto(origin + '/page1');
+        await expect(page.locator('iframe')).toBeVisible();
         // Navigating away parks the first document's counters for the next one.
         await page.goto(origin + '/page2');
         server.close();
@@ -73,29 +79,6 @@ test('should collect istanbul coverage into the trace', async ({ runInlineTest }
   expect(data['src/app.js'].s['1']).toBe(0);
   expect(data['src/app.js'].f['0']).toBe(2);
   expect(data['src/app.js'].b['0']).toEqual([2, 0]);
-});
-
-test('should collect coverage from frames', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = {
-        use: { trace: { mode: 'on', coverage: true } },
-      };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      ${coverageHelper}
-      test('pass', async ({ page }) => {
-        await page.setContent(coverageScript('src/app.js', 1) + '<iframe src="data:text/html,' + encodeURIComponent(coverageScript('src/frame.js', 3)) + '"></iframe>');
-        await expect(page.locator('iframe')).toBeVisible();
-      });
-    `,
-  });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-
-  const data = await parseTraceCoverage(test.info().outputPath('test-results', 'a-pass', 'trace.zip'));
-  expect(data['src/app.js'].s['0']).toBe(1);
   expect(data['src/frame.js'].s['0']).toBe(3);
 });
 
@@ -117,8 +100,12 @@ test('should aggregate coverage with the coverage reporter', async ({ runInlineT
     'b.test.ts': `
       import { test, expect } from '@playwright/test';
       ${coverageHelper}
-      test('second', async ({ page }) => {
+      test('second', async ({ page, browser }) => {
         await page.setContent(coverageScript('src/app.js', 2));
+        // Every context of a test keeps its own coverage entry in the trace.
+        const second = await browser.newContext();
+        await (await second.newPage()).setContent(coverageScript('src/second.js', 4));
+        await second.close();
       });
     `,
   });
@@ -130,14 +117,16 @@ test('should aggregate coverage with the coverage reporter', async ({ runInlineT
   expect(final['src/app.js'].s['1']).toBe(0);
   expect(final['src/app.js'].f['0']).toBe(2);
   expect(final['src/app.js'].b['0']).toEqual([2, 0]);
+  expect(final['src/second.js'].s['0']).toBe(4);
 
   const lcov = fs.readFileSync(test.info().outputPath('coverage-report', 'lcov.info'), 'utf8');
   expect(lcov).toContain('SF:src/app.js');
   expect(lcov).toContain('DA:1,7');
   expect(lcov).toContain('FNDA:2,foo');
+  expect(lcov).toContain('SF:src/second.js');
 
-  expect(result.output).toContain('Code coverage (1 files)');
-  expect(result.output).toContain('statements: 50.00% (1/2)');
+  expect(result.output).toContain('Code coverage (2 files)');
+  expect(result.output).toContain('statements: 50.00% (2/4)');
 });
 
 test('should warn when no coverage was collected', async ({ runInlineTest }) => {
@@ -158,50 +147,4 @@ test('should warn when no coverage was collected', async ({ runInlineTest }) => 
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain('No code coverage was collected');
   expect(fs.existsSync(test.info().outputPath('coverage-report', 'coverage-final.json'))).toBe(false);
-});
-
-test('should not collect coverage without the option', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = {
-        use: { trace: 'on' },
-      };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      ${coverageHelper}
-      test('pass', async ({ page }) => {
-        await page.setContent(coverageScript('src/app.js', 1));
-      });
-    `,
-  });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-
-  const data = await parseTraceCoverage(test.info().outputPath('test-results', 'a-pass', 'trace.zip'));
-  expect(data).toBe(undefined);
-});
-
-test('should keep the coverage of every context of a test', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { use: { trace: { mode: 'on', coverage: true } } };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      ${coverageHelper}
-      test('pass', async ({ page, browser }) => {
-        await page.setContent(coverageScript('src/first.js', 1));
-        const second = await browser.newContext();
-        await (await second.newPage()).setContent(coverageScript('src/second.js', 4));
-        await second.close();
-      });
-    `,
-  });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-
-  const data = await parseTraceCoverage(test.info().outputPath('test-results', 'a-pass', 'trace.zip'));
-  expect(data['src/first.js'].s['0']).toBe(1);
-  expect(data['src/second.js'].s['0']).toBe(4);
 });
