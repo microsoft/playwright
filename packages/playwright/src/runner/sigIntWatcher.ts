@@ -40,6 +40,10 @@ export class SigIntWatcher {
   disarm() {
     FixedNodeSIGINTHandler.off(this._sigintHandler);
   }
+
+  [Symbol.dispose]() {
+    this.disarm();
+  }
 }
 
 // NPM/NPX will send us duplicate SIGINT signals, so we need to ignore them.

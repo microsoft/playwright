@@ -69,7 +69,7 @@ const ignores = [
 export const baseRules = {
   "@typescript-eslint/no-unused-vars": [
     2,
-    { args: "none", caughtErrors: "none" },
+    { args: "none", caughtErrors: "none", ignoreUsingDeclarations: true },
   ],
 
   /**

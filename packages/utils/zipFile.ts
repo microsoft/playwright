@@ -72,4 +72,8 @@ export class ZipFile {
   close() {
     this._zipFile?.close();
   }
+
+  [Symbol.dispose]() {
+    this.close();
+  }
 }

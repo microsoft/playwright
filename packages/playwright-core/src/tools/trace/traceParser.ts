@@ -82,18 +82,14 @@ export class DirTraceLoaderBackend implements TraceLoaderBackend {
 }
 
 export async function extractTrace(traceFile: string, outDir: string): Promise<void> {
-  const zipFile = new ZipFile(traceFile);
-  try {
-    const entries = await zipFile.entries();
-    for (const entry of entries) {
-      const outPath = resolveWithinRoot(outDir, entry);
-      if (!outPath)
-        throw new Error(`Trace entry '${entry}' escapes output directory`);
-      await fs.promises.mkdir(path.dirname(outPath), { recursive: true });
-      const buffer = await zipFile.read(entry);
-      await fs.promises.writeFile(outPath, buffer);
-    }
-  } finally {
-    zipFile.close();
+  using zipFile = new ZipFile(traceFile);
+  const entries = await zipFile.entries();
+  for (const entry of entries) {
+    const outPath = resolveWithinRoot(outDir, entry);
+    if (!outPath)
+      throw new Error(`Trace entry '${entry}' escapes output directory`);
+    await fs.promises.mkdir(path.dirname(outPath), { recursive: true });
+    const buffer = await zipFile.read(entry);
+    await fs.promises.writeFile(outPath, buffer);
   }
 }

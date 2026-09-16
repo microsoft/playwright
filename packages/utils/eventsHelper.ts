@@ -20,7 +20,9 @@ type EventEmitterLike = {
   removeListener(eventName: string | symbol, handler: (...args: any[]) => unknown): unknown;
 };
 
-export type RegisteredListener = {
+const kDispose: typeof Symbol.dispose = (Symbol.dispose || Symbol.for('Symbol.dispose')) as typeof Symbol.dispose;
+
+export type RegisteredListener = Disposable & {
   emitter: EventEmitterLike;
   eventName: (string | symbol);
   handler: (...args: any[]) => void;
@@ -33,7 +35,16 @@ class EventsHelper {
     eventName: (string | symbol),
     handler: (...args: any[]) => void): RegisteredListener {
     emitter.on(eventName, handler);
-    return { emitter, eventName, handler, dispose: async () => { emitter.removeListener(eventName, handler); } };
+    function removeListener() {
+      emitter.removeListener(eventName, handler);
+    }
+    return {
+      emitter,
+      eventName,
+      handler,
+      dispose: async () => removeListener(),
+      [kDispose]: removeListener,
+    };
   }
 
   static removeEventListeners(listeners: Array<{

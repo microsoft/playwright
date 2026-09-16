@@ -43,6 +43,7 @@ export { writeDockerVersion } from './dependencies';
 
 const PACKAGE_PATH = packageRoot;
 const BIN_PATH = binPath;
+const kAsyncDispose: typeof Symbol.asyncDispose = (Symbol.asyncDispose || Symbol.for('Symbol.asyncDispose')) as typeof Symbol.asyncDispose;
 
 const PLAYWRIGHT_CDN_MIRRORS = [
   'https://cdn.playwright.dev/dbazure/download/playwright', // ESRP CDN
@@ -937,21 +938,22 @@ export class Registry {
     const lockfilePath = path.join(registryDirectory, '__dirlock');
     const linksDir = path.join(registryDirectory, '.links');
 
-    let releaseLock;
     try {
-      releaseLock = await lock(registryDirectory, {
-        retries: {
-          // Retry 20 times during 10 minutes with
-          // exponential back-off.
-          // See documentation at: https://www.npmjs.com/package/retry#retrytimeoutsoptions
-          retries: 20,
-          factor: 1.27579,
-        },
-        onCompromised: (err: Error) => {
-          throw new Error(`${err.message} Path: ${lockfilePath}`);
-        },
-        lockfilePath,
-      });
+      await using installationLock = {
+        [kAsyncDispose]: await lock(registryDirectory, {
+          retries: {
+            // Retry 20 times during 10 minutes with
+            // exponential back-off.
+            // See documentation at: https://www.npmjs.com/package/retry#retrytimeoutsoptions
+            retries: 20,
+            factor: 1.27579,
+          },
+          onCompromised: (err: Error) => {
+            throw new Error(`${err.message} Path: ${lockfilePath}`);
+          },
+          lockfilePath,
+        }),
+      };
       // Create a link first, so that cache validation does not remove our own browsers.
       await fs.promises.mkdir(linksDir, { recursive: true });
       await fs.promises.writeFile(path.join(linksDir, calculateSha1(PACKAGE_PATH)), PACKAGE_PATH);
@@ -1007,9 +1009,6 @@ export class Registry {
       } else {
         throw e;
       }
-    } finally {
-      if (releaseLock)
-        await releaseLock();
     }
   }
 

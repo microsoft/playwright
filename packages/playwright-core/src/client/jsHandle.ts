@@ -26,6 +26,8 @@ import type * as api from '../../types/types';
 import type * as channels from './channels';
 import type { Page } from './page';
 
+// Match esbuild's `await using` fallback in browsers without Symbol.asyncDispose.
+const kAsyncDispose: typeof Symbol.asyncDispose = (Symbol.asyncDispose || Symbol.for('Symbol.asyncDispose')) as typeof Symbol.asyncDispose;
 
 export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> implements api.JSHandle {
   private _preview: string;
@@ -79,7 +81,7 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
     return null as any;
   }
 
-  async [Symbol.asyncDispose]() {
+  async [kAsyncDispose]() {
     await this.dispose();
   }
 

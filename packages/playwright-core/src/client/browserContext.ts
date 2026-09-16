@@ -469,13 +469,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     return await this._wrapApiCall(async () => {
       const timeoutOptions = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function'  ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function'  ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const waiter = Waiter.createForEvent(this, event);
+      using waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
       if (event !== Events.BrowserContext.Close)
         waiter.rejectOnEvent(this, Events.BrowserContext.Close, () => new TargetClosedError(this._effectiveCloseReason()));
-      const result = await waiter.waitForEvent(this, event, predicate as any);
-      waiter.dispose();
-      return result;
+      return await waiter.waitForEvent(this, event, predicate as any);
     });
   }
 

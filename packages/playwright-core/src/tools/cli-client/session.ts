@@ -232,16 +232,16 @@ class SocketConnectionClient {
   }
 
   static async sendAndClose(socket: net.Socket, method: string, params: any = {}): Promise<any> {
-    const connection = new SocketConnectionClient(socket);
-    try {
-      return await connection.send(method, params);
-    } finally {
-      connection.close();
-    }
+    using connection = new SocketConnectionClient(socket);
+    return await connection.send(method, params);
   }
 
   close() {
     this._connection.close();
+  }
+
+  [Symbol.dispose]() {
+    this.close();
   }
 
   private _onMessage(object: { id: number, error?: string, result: any }) {

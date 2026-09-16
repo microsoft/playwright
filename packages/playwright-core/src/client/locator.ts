@@ -87,14 +87,10 @@ export class Locator implements api.Locator {
 
     return await this._frame._wrapApiCall<R>(async () => {
       const result = await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, state: 'attached' }, { signal: options.signal, timeout });
-      const handle = ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
+      await using handle = ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
       if (!handle)
         throw new Error(`Could not resolve ${this._selector} to DOM Element`);
-      try {
-        return await task(handle, deadline ? deadline - monotonicTime() : 0);
-      } finally {
-        await handle.dispose();
-      }
+      return await task(handle, deadline ? deadline - monotonicTime() : 0);
     }, { title: options.title, internal: options.internal });
   }
 
