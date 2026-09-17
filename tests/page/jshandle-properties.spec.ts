@@ -74,7 +74,7 @@ it('getProperties should return empty map for non-objects', async ({ page }) => 
   expect(properties.size).toBe(0);
 });
 
-it('getProperties should return even non-own properties', async ({ page }) => {
+it('getProperties should return properties inhertied from super class', async ({ page }) => {
   const aHandle = await page.evaluateHandle(() => {
     class A {
       a: string;
@@ -94,6 +94,26 @@ it('getProperties should return even non-own properties', async ({ page }) => {
   const properties = await aHandle.getProperties();
   expect(await properties.get('a').jsonValue()).toBe('1');
   expect(await properties.get('b').jsonValue()).toBe('2');
+});
+
+it('getProperties should return own enumerable properties only', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42651' },
+}, async ({ page }) => {
+  const aHandle = await page.evaluateHandle(() => {
+    class A {
+      constructor() {
+        (this as any).own = 1;
+        Object.defineProperty(this, 'ownHidden', { value: 2, enumerable: false });
+      }
+    }
+    (A.prototype as any).inherited = 3;
+    return new A();
+  });
+  expect([...(await aHandle.getProperties()).keys()]).toEqual(['own']);
+
+  await page.setContent('<div id=d><span>a</span><span>b</span></div>');
+  const collection = await page.evaluateHandle(() => document.querySelector('#d').children);
+  expect([...(await collection.getProperties()).keys()]).toEqual(['0', '1']);
 });
 
 it('getProperties should work with elements', async ({ page }) => {
