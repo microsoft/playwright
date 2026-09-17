@@ -136,6 +136,24 @@ test('browser_route modifies request headers', async ({ client, server }) => {
   expect(receivedHeaders['x-custom-header']).toBe('test-value');
 });
 
+test('browser_route errors on header lines without a colon', async ({ client, server }) => {
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.EMPTY_PAGE },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_route',
+    arguments: {
+      pattern: '**/api/check',
+      headers: ['NotAHeader', 'X-Custom-Header: test-value'],
+    },
+  })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining('Invalid header "NotAHeader"'),
+  });
+});
+
 test('browser_route_list shows active routes', async ({ client, server }) => {
   await client.callTool({
     name: 'browser_navigate',

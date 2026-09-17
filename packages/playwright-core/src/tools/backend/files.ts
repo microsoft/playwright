@@ -44,10 +44,16 @@ export const uploadFile = defineTabTool({
     response.addCode(`await fileChooser.setFiles(${JSON.stringify(paths)})`);
 
     tab.clearModalState(modalState);
-    await tab.waitForCompletion(async () => {
-      if (paths)
-        await modalState.fileChooser.setFiles(paths);
-    });
+    try {
+      await tab.waitForCompletion(async () => {
+        if (paths)
+          await modalState.fileChooser.setFiles(paths);
+      });
+    } catch (e) {
+      tab.setModalState(modalState);
+      response.addError(e instanceof Error ? e.message : String(e));
+      return;
+    }
   },
 
   clearsModalState: 'fileChooser',
