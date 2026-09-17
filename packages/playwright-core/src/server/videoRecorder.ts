@@ -32,7 +32,7 @@ import type { ChildProcess } from 'child_process';
 import type { Screencast, ScreencastClient } from './screencast';
 import type { Page, PageDelegate } from './page';
 
-const fps = 25;
+const kDefaultFps = 25;
 
 export class VideoRecorder {
   private _screencast: Screencast;
@@ -44,7 +44,7 @@ export class VideoRecorder {
     this._screencast = screencast;
   }
 
-  start(options: { fileName?: string, size?: { width: number, height: number } }) {
+  start(options: { fileName?: string, size?: { width: number, height: number }, fps?: number }) {
     assert(!this._artifact);
     // Do this first, it likes to throw.
     const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._screencast.page.browserContext._browser.sdkLanguage());
@@ -60,7 +60,7 @@ export class VideoRecorder {
     const { size } = this._screencast.addClient(this._client);
     // For video files only, prioritize encoding into the given size, regardless of the actual pixel data.
     const videoSize = options.size ?? size;
-    this._videoRecorder = new FfmpegVideoRecorder(ffmpegPath, videoSize, outputFile, this._screencast.page.delegate);
+    this._videoRecorder = new FfmpegVideoRecorder(ffmpegPath, videoSize, options.fps ?? kDefaultFps, outputFile, this._screencast.page.delegate);
     this._artifact = new Artifact(this._screencast.page.browserContext, outputFile);
     return this._artifact;
   }
@@ -92,12 +92,13 @@ export function startAutomaticVideoRecording(page: Page) {
   if (page.browserContext._options.recordVideo?.showActions)
     page.screencast.showActions(page.browserContext._options.recordVideo?.showActions);
   const dir = recordVideo.dir ?? page.browserContext._browser.options.artifactsDir;
-  const artifact = recorder.start({ size: recordVideo.size, fileName: path.join(dir, page.guid + '.webm') });
+  const artifact = recorder.start({ size: recordVideo.size, fps: recordVideo.fps, fileName: path.join(dir, page.guid + '.webm') });
   page.video = artifact;
 }
 
 class FfmpegVideoRecorder {
   private _size: types.Size;
+  private _fps: number;
   private _process: ChildProcess | null = null;
   private _gracefullyClose: (() => Promise<void>) | null = null;
   private _creationTimeMs: number;
@@ -108,12 +109,13 @@ class FfmpegVideoRecorder {
   private _launchPromise: Promise<Error | null>;
   private _outputFile: string;
 
-  constructor(ffmpegPath: string, size: types.Size, outputFile: string, page: PageDelegate) {
+  constructor(ffmpegPath: string, size: types.Size, fps: number, outputFile: string, page: PageDelegate) {
     if (!outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
     this._outputFile = outputFile;
     this._ffmpegPath = ffmpegPath;
     this._size = size;
+    this._fps = fps;
     this._creationTimeMs = Date.now();
     this._launchPromise = this._launch(page).catch(e => e);
   }
@@ -138,8 +140,10 @@ class FfmpegVideoRecorder {
     //     Suggested here: https://trac.ffmpeg.org/wiki/Encode/VP8
     //   "-crf 8" - constant quality mode, 4-63, lower means better quality.
     //   "-deadline realtime -speed 8" - do not use too much cpu to keep up with incoming frames.
-    //   "-b:v 1M" - video bitrate. Default value is too low for vp8
+    //   "-b:v 1M" - video bitrate for the default 800x450 video at 25fps. Default value is too low for vp8
     //     Suggested here: https://trac.ffmpeg.org/wiki/Encode/VP8
+    //     Larger or faster videos get the bitrate scaled with the pixel rate: at 1920x1080 and 60fps
+    //     the 1M budget visibly blurs scrolling text, while the scaled ~14M is visually lossless.
     //   Note that we can switch to "-qmin 20 -qmax 50 -crf 30" for smaller video size but worse quality.
     //
     // We use "pad" and "crop" video filters (-vf option) to resize incoming frames
@@ -161,11 +165,21 @@ class FfmpegVideoRecorder {
     //   the input timestamps, so we don't have to repeat frames ourselves.
     // "-threads 1" means using one thread. This drastically reduces stalling when
     //   cpu is overbooked. By default vp8 tries to use all available threads?
+    //   A single thread can't keep up with larger or faster videos (1920x1080 at 60fps encodes
+    //   below realtime), so we add a thread per 4x the default pixel rate.
 
     const w = this._size.width;
     const h = this._size.height;
     const videoFilterArgs = page.getFFmpegVideoFilterArgs?.({ width: w, height: h }) ?? `pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`;
-    const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf ${videoFilterArgs}`.split(' ');
+    // Bitrate and encoder threads scale with the pixel rate relative to 800x450 at 25fps:
+    //   800x450 at 25fps   -> scale 1,    bitrate 1000k,  1 thread
+    //   800x800 at 25fps   -> scale 1.78, bitrate 1778k,  1 thread
+    //   1920x1080 at 25fps -> scale 5.76, bitrate 5760k,  2 threads
+    //   1920x1080 at 60fps -> scale 13.8, bitrate 13824k, 4 threads
+    const pixelRateScale = Math.max(1, w * h * this._fps / (800 * 450 * kDefaultFps));
+    const bitrate = Math.round(pixelRateScale * 1000);
+    const threads = Math.min(8, Math.ceil(pixelRateScale / 4));
+    const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${this._fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v ${bitrate}k -threads ${threads} -vf ${videoFilterArgs}`.split(' ');
     args.push('-metadata', `creation_time=${new Date(this._creationTimeMs).toISOString()}`);
     args.push(this._outputFile);
 

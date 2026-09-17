@@ -66,6 +66,7 @@ Electron:
               properties:
                 width: int
                 height: int
+            fps: int?
             showActions:
               type: object?
               properties:

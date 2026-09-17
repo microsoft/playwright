@@ -414,6 +414,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
         recordVideo: {
           dir: tracing().artifactsDir(),
           size: typeof video === 'string' ? undefined : video.size,
+          fps: typeof video === 'string' ? undefined : video.fps,
           showActions: show?.actions,
         }
       } : {};

@@ -30,13 +30,14 @@ const videoStart = defineTool({
         width: z.number().describe('Video width'),
         height: z.number().describe('Video height'),
       }).optional().describe('Video size'),
+      fps: z.number().optional().describe('Video frame rate in frames per second, defaults to 25'),
     }),
     type: 'readOnly',
   },
 
   handle: async (context, params, response) => {
     const resolvedFile = await response.resolveClientOutputFile({ prefix: 'video', ext: 'webm', suggestedFilename: params.filename }, 'Video');
-    await context.startVideoRecording(resolvedFile.fileName, { size: params.size });
+    await context.startVideoRecording(resolvedFile.fileName, { size: params.size, fps: params.fps });
     response.addTextResult('Video recording started.');
   },
 });

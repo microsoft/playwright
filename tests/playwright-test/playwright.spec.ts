@@ -25,6 +25,7 @@ const ffmpeg = registry.registry.findExecutable('ffmpeg')!.executablePath();
 export class VideoPlayer {
   videoWidth: number;
   videoHeight: number;
+  fps: number;
 
   constructor(fileName: string) {
     const output = spawnSync(ffmpeg, ['-i', fileName, '-r', '25', `${fileName}-%03d.png`]).stderr.toString();
@@ -33,6 +34,7 @@ export class VideoPlayer {
     const resolutionMatch = streamLine!.match(/, (\d+)x(\d+),/);
     this.videoWidth = parseInt(resolutionMatch![1], 10);
     this.videoHeight = parseInt(resolutionMatch![2], 10);
+    this.fps = parseFloat(streamLine!.match(/, ([\d.]+) fps,/)![1]);
   }
 }
 
@@ -642,6 +644,31 @@ test('should work with video size', async ({ runInlineTest }) => {
   const videoPlayer = new VideoPlayer(path.join(folder, file));
   expect(videoPlayer.videoWidth).toBe(220);
   expect(videoPlayer.videoHeight).toBe(110);
+});
+
+test('should work with video fps', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        use: { video: { mode: 'on', fps: 60 } },
+        name: 'chromium',
+        preserveOutput: 'always',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<div>PASS</div>');
+        await page.waitForTimeout(1000);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const folder = test.info().outputPath(`test-results/a-pass-chromium/`);
+  const [file] = fs.readdirSync(folder);
+  const videoPlayer = new VideoPlayer(path.join(folder, file));
+  expect(videoPlayer.fps).toBe(60);
 });
 
 test('should work with video.path() throwing', async ({ runInlineTest }, testInfo) => {

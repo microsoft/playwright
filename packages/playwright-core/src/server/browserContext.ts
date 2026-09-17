@@ -783,6 +783,8 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     options.viewport = { width: 1280, height: 720 };
   if (options.proxy)
     options.proxy = normalizeProxySettings(options.proxy);
+  if (options.recordVideo?.fps !== undefined && options.recordVideo.fps <= 0)
+    throw new Error(`"recordVideo.fps" must be a positive number, got ${options.recordVideo.fps}`);
   verifyGeolocation(options.geolocation);
 }
 

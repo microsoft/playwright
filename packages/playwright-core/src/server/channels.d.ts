@@ -422,6 +422,7 @@ export type AndroidDeviceLaunchBrowserParams = {
       width: number,
       height: number,
     },
+    fps?: number,
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -490,6 +491,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
       width: number,
       height: number,
     },
+    fps?: number,
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -873,6 +875,7 @@ export type BrowserNewContextParams = {
       width: number,
       height: number,
     },
+    fps?: number,
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -944,6 +947,7 @@ export type BrowserNewContextOptions = {
       width: number,
       height: number,
     },
+    fps?: number,
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -1018,6 +1022,7 @@ export type BrowserNewContextForReuseParams = {
       width: number,
       height: number,
     },
+    fps?: number,
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -1089,6 +1094,7 @@ export type BrowserNewContextForReuseOptions = {
       width: number,
       height: number,
     },
+    fps?: number,
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -1202,6 +1208,7 @@ export type BrowserContextInitializer = {
         width: number,
         height: number,
       },
+      fps?: number,
       showActions?: {
         duration?: number,
         position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -1854,6 +1861,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
       width: number,
       height: number,
     },
+    fps?: number,
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -1938,6 +1946,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
       width: number,
       height: number,
     },
+    fps?: number,
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -2040,6 +2049,7 @@ export type ElectronLaunchParams = {
       width: number,
       height: number,
     },
+    fps?: number,
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -2079,6 +2089,7 @@ export type ElectronLaunchOptions = {
       width: number,
       height: number,
     },
+    fps?: number,
     showActions?: {
       duration?: number,
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
@@ -4499,6 +4510,7 @@ export type PageScreencastStartParams = {
     height: number,
   },
   quality?: number,
+  fps?: number,
   sendFrames?: boolean,
   record?: boolean,
 };
@@ -4508,6 +4520,7 @@ export type PageScreencastStartOptions = {
     height: number,
   },
   quality?: number,
+  fps?: number,
   sendFrames?: boolean,
   record?: boolean,
 };
