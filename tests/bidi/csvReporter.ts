@@ -51,7 +51,7 @@ class CsvReporter implements Reporter {
             continue;
           const row = [];
           const [, , , ...titles] = test.titlePath();
-          row.push(csvEscape(`${file.title} › ${titles.join(' › ')}`));
+          row.push(`${file.title} › ${titles.join(' › ')}`);
           row.push(test.expectedStatus);
           row.push(test.outcome());
           if (fixme) {
@@ -60,11 +60,11 @@ class CsvReporter implements Reporter {
             const result = test.results.find(r => r.error);
             if (result) {
               const errorMessage = stripAnsi(result.error?.message.replace(/\s+/g, ' ').trim().substring(0, 1024) ?? '');
-              row.push(csvEscape(errorMessage));
+              row.push(errorMessage);
             } else {
               const fail = test.annotations.find(a => a.type === 'fail');
               if (fail)
-                row.push(csvEscape(`Should have failed: ${fail.description}`));
+                row.push(`Should have failed: ${fail.description}`);
               else
                 row.push('');
             }
@@ -73,11 +73,11 @@ class CsvReporter implements Reporter {
         }
       }
     }
-    const csv = rows.map(r => r.join(',')).join('\n');
     const reportFile = path.resolve(this._options.configDir, this._options.outputFile || 'test-results.csv');
     this._pendingWrite = (async () => {
       await fs.promises.mkdir(path.dirname(reportFile), { recursive: true });
-      await fs.promises.writeFile(reportFile, csv);
+      await fs.promises.writeFile(reportFile, rows.map(r => r.map(csvEscape).join(',')).join('\n'));
+      await fs.promises.writeFile(reportFile.replace(/\.csv$/, '.md'), markdownTable(rows));
     })();
   }
 
@@ -94,6 +94,29 @@ function csvEscape(str) {
   if (str.includes('"') || str.includes(',') || str.includes('\n'))
     return `"${str.replace(/"/g, '""')}"`;
   return str;
+}
+
+// GitHub job summaries are capped at 1MiB, so keep the rendered table bounded.
+const maxMarkdownRows = 500;
+const maxMarkdownCell = 200;
+
+function markdownTable(rows: string[][]): string {
+  const [header, ...body] = rows;
+  const lines = [
+    `### ${body.length} failing tests`,
+    '',
+    `| ${header.join(' | ')} |`,
+    `| ${header.map(() => '---').join(' | ')} |`,
+    ...body.slice(0, maxMarkdownRows).map(row => `| ${row.map(markdownEscape).join(' | ')} |`),
+  ];
+  if (body.length > maxMarkdownRows)
+    lines.push('', `_...and ${body.length - maxMarkdownRows} more, see the csv report._`);
+  return lines.join('\n') + '\n';
+}
+
+function markdownEscape(str: string): string {
+  const truncated = str.length > maxMarkdownCell ? str.substring(0, maxMarkdownCell) + '…' : str;
+  return truncated.replace(/[\\|`<>]/g, c => '\\' + c);
 }
 
 export default CsvReporter;

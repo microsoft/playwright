@@ -24,11 +24,9 @@ env:
 jobs:
   test_bidi:
     name: BiDi
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-24.04
     permissions:
-      id-token: write   # This is required for OIDC login (azure/login) to succeed
-      contents: read    # This is required for actions/checkout to succeed
+      contents: write   # This is required for actions/checkout and to push to the bidi-reports branch
     strategy:
       fail-fast: false
       matrix:
@@ -76,19 +74,49 @@ jobs:
       with:
         job_name: ${{ matrix.channel }}
 
-    - name: Azure Login
-      if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
-      uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
-      with:
-        client-id: ${{ secrets.AZURE_BLOB_REPORTS_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_BLOB_REPORTS_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_BLOB_REPORTS_SUBSCRIPTION_ID }}
+    - name: Add report to the job summary
+      if: ${{ !cancelled() && hashFiles('test-results/report.md') != '' }}
+      run: cat test-results/report.md >> "$GITHUB_STEP_SUMMARY"
 
-    - name: Upload report.csv to Azure
-      if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+    - name: Publish report.csv to the bidi-reports branch
+      if: ${{ !cancelled() && github.ref == 'refs/heads/main' && github.repository == 'microsoft/playwright' }}
       run: |
-        REPORT_DIR='bidi-reports'
-        azcopy cp "./test-results/report.csv" "https://mspwblobreport.blob.core.windows.net/\$web/$REPORT_DIR/${{ matrix.channel }}.csv"
-        echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/${{ matrix.channel }}.csv"
+        cp test-results/report.csv "$RUNNER_TEMP/report.csv"
+        REPO_URL="https://x-access-token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git"
+        # Seed the orphan branch on the first run, or if it ever gets deleted.
+        if ! git ls-remote --exit-code --heads "$REPO_URL" bidi-reports > /dev/null; then
+          git init -q "$RUNNER_TEMP/seed"
+          cd "$RUNNER_TEMP/seed"
+          echo 'Nightly BiDi test reports, published by .github/workflows/tests_bidi.yml.' > README.md
+          git add README.md
+          git commit -q -m 'chore: seed the bidi-reports branch'
+          git push "$REPO_URL" HEAD:refs/heads/bidi-reports || true
+        fi
+        git clone --depth=1 --branch bidi-reports "$REPO_URL" "$RUNNER_TEMP/bidi-reports"
+        cd "$RUNNER_TEMP/bidi-reports"
+        # Both matrix channels push to the same branch, so retry on a racing push.
+        for i in 1 2 3 4 5; do
+          git fetch --depth=1 origin bidi-reports
+          git reset --hard FETCH_HEAD
+          cp "$RUNNER_TEMP/report.csv" '${{ matrix.channel }}.csv'
+          git add '${{ matrix.channel }}.csv'
+          if git diff --cached --quiet; then
+            echo "No changes since the last run."
+            exit 0
+          fi
+          git commit -m "bidi(${{ matrix.channel }}): results for ${GITHUB_SHA:0:9}"
+          if git push origin HEAD:bidi-reports; then
+            echo "Report url: https://github.com/$GITHUB_REPOSITORY/blob/bidi-reports/${{ matrix.channel }}.csv"
+            echo "Raw report url: https://raw.githubusercontent.com/$GITHUB_REPOSITORY/bidi-reports/${{ matrix.channel }}.csv"
+            exit 0
+          fi
+          sleep $((RANDOM % 10 + 5))
+        done
+        echo "Failed to push the report after 5 attempts."
+        exit 1
       env:
-        AZCOPY_AUTO_LOGIN_TYPE: AZCLI
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GIT_AUTHOR_NAME: microsoft-playwright-automation[bot]
+        GIT_AUTHOR_EMAIL: 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
+        GIT_COMMITTER_NAME: microsoft-playwright-automation[bot]
+        GIT_COMMITTER_EMAIL: 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
