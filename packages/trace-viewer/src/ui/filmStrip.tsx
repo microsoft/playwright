@@ -40,8 +40,8 @@ export const FilmStrip: React.FunctionComponent<{
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const lanesRef = React.useRef<HTMLDivElement>(null);
 
-  const video = model?.videos?.[0];
-  const videoThumbnails = useVideoThumbnails(video, video && model ? model.createRelativeUrl(`file/${video.file}`) : undefined);
+  const videos = (model?.videos ?? []).map(video => ({ video, url: model!.createRelativeUrl(`file/${video.file}`) }));
+  const videoThumbnails = useVideoThumbnails(videos);
 
   let laneIndex = 0;
   if (lanesRef.current && previewPoint) {
@@ -50,7 +50,7 @@ export const FilmStrip: React.FunctionComponent<{
   }
 
   const pageLanes = (model?.pages ?? []).filter(page => page.screencastFrames.length);
-  const videoLanes: VideoThumbnail[][] = videoThumbnails.length ? [videoThumbnails] : [];
+  const videoLanes = videoLanesByPage(videos.map(({ video }) => video.pageId), videoThumbnails);
 
   let previewFrames: { timestamp: number, width: number, height: number, url: string }[] | undefined;
   if (laneIndex < pageLanes.length)
@@ -97,6 +97,19 @@ export const FilmStrip: React.FunctionComponent<{
     }
   </div>;
 };
+
+function videoLanesByPage(pageIds: string[], thumbnails: VideoThumbnail[][]): VideoThumbnail[][] {
+  const lanes = new Map<string, VideoThumbnail[]>();
+  pageIds.forEach((pageId, index) => {
+    let lane = lanes.get(pageId);
+    if (!lane) {
+      lane = [];
+      lanes.set(pageId, lane);
+    }
+    lane.push(...thumbnails[index]);
+  });
+  return [...lanes.values()].filter(lane => lane.length).map(lane => lane.sort((a, b) => a.timestamp - b.timestamp));
+}
 
 const VideoFilmStripLane: React.FunctionComponent<{
   boundaries: Boundaries,

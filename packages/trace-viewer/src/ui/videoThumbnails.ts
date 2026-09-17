@@ -35,19 +35,21 @@ const cache = new Map<string, CacheEntry>();
 const maxThumbnails = 120;
 const thumbnailsPerSecond = 2;
 
-export function useVideoThumbnails(video: trace.VideoTraceEvent | undefined, videoUrl: string | undefined): VideoThumbnail[] {
+export function useVideoThumbnails(videos: { video: trace.VideoTraceEvent, url: string }[]): VideoThumbnail[][] {
   const [, setVersion] = React.useState(0);
-  const entry = video && videoUrl ? ensureEntry(video, videoUrl) : undefined;
+  const entries = videos.map(({ video, url }) => ensureEntry(video, url));
+  const urls = videos.map(({ url }) => url).join('\n');
   React.useEffect(() => {
-    if (!entry)
-      return;
     const listener = () => setVersion(version => version + 1);
-    entry.listeners.add(listener);
+    const subscribed = urls ? urls.split('\n').map(url => cache.get(url)!) : [];
+    for (const entry of subscribed)
+      entry.listeners.add(listener);
     return () => {
-      entry.listeners.delete(listener);
+      for (const entry of subscribed)
+        entry.listeners.delete(listener);
     };
-  }, [entry]);
-  return entry?.thumbnails ?? [];
+  }, [urls]);
+  return entries.map(entry => entry.thumbnails);
 }
 
 function ensureEntry(video: trace.VideoTraceEvent, videoUrl: string): CacheEntry {
