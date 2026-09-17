@@ -408,7 +408,7 @@ export class Context {
 
   redactSecrets(text: string): string {
     for (const [secretName, secretValue] of Object.entries(this.config.secrets ?? {})) {
-      if (!secretValue || secretValue.length < 4)
+      if (!secretValue)
         continue;
       text = text.replaceAll(secretValue, `<secret>${secretName}</secret>`);
     }

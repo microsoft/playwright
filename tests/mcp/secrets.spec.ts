@@ -164,32 +164,6 @@ await page.getByRole('textbox', { name: 'Password' }).fill(process.env['X-PASSWO
   });
 });
 
-test('short secret values are not redacted', async ({ startClient, server }) => {
-  const secretsFile = test.info().outputPath('secrets.env');
-  await fs.promises.writeFile(secretsFile, 'X-TINY=e');
-
-  const { client } = await startClient({
-    args: ['--secrets', secretsFile],
-  });
-
-  server.setContent('/', `
-    <!DOCTYPE html>
-    <html>
-      <body><p>hello</p></body>
-    </html>
-  `, 'text/html');
-
-  const response = await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.PREFIX },
-  });
-
-  expect(response).toHaveResponse({
-    snapshot: expect.stringContaining('hello'),
-  });
-  expect(JSON.stringify(response)).not.toContain('<secret>X-TINY</secret>');
-});
-
 test('empty secret value is ignored', async ({ startClient, server }) => {
   const secretsFile = test.info().outputPath('secrets.env');
   await fs.promises.writeFile(secretsFile, 'EMPTY_SECRET=\nX-PASSWORD=password123');
