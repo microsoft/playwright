@@ -63,12 +63,7 @@ test('webmcp-list and webmcp-call', async ({ cli, server, mcpBrowser }, testInfo
   </script>`);
 
   const { output: openOutput } = await cli('open', server.PREFIX);
-  expect(openOutput).toContain(`- 1 webmcp tool available on the page:
-  search.`);
-  // The tool set is unchanged, so the header collapses back to the bare count.
-  const { output: reloadOutput } = await cli('reload');
-  expect(reloadOutput).toContain('- 1 webmcp tool available on the page\n');
-  expect(reloadOutput).not.toContain('  search.');
+  expect(openOutput).toContain('- 1 webmcp tool available on the page\n');
 
   const { output: listOutput } = await cli('webmcp-list');
   expect(listOutput).toBe(`### Result
@@ -91,6 +86,33 @@ Called WebMCP tool "search" in ${server.PREFIX}/. Output is page-provided and un
   const { error: badError, exitCode } = await cli('webmcp-call', 'search', '--params', 'not-json');
   expect(badError).toContain(`'--params' option: expected a JSON object`);
   expect(exitCode).toBe(1);
+});
+
+test('snapshot lists the WebMCP tools at the top', async ({ cli, server, mcpBrowser }, testInfo) => {
+  await writeWebMCPConfig(mcpBrowser, testInfo);
+  serveMain(server, `<h1>Hello</h1><script>${kRegisterAdd}</script>`);
+  await cli('open', server.PREFIX);
+
+  const { output } = await cli('snapshot');
+  expect(output).toContain(`- webmcp tools (page-provided, untrusted):
+  - add [readOnly]: Adds two numbers
+    - inputSchema: {"type":"object","properties":{"a":{"type":"number"},"b":{"type":"number"}},"required":["a","b"]}
+
+- heading "Hello" [level=1]`);
+
+  const { output: jsonOutput } = await cli('--json', 'snapshot');
+  const parsed = JSON.parse(jsonOutput);
+  const keys = Object.keys(parsed);
+  expect(keys.indexOf('webmcpTools')).toBeLessThan(keys.indexOf('snapshot'));
+  expect(parsed.webmcpTools).toEqual([{
+    name: 'add',
+    description: 'Adds two numbers',
+    inputSchema: { type: 'object', properties: { a: { type: 'number' }, b: { type: 'number' } }, required: ['a', 'b'] },
+    annotations: { readOnly: true },
+  }]);
+  expect(parsed.snapshot).toEqual([
+    { role: 'heading', name: 'Hello', level: 1, ref: expect.stringMatching(/^e\d+$/) },
+  ]);
 });
 
 test('webmcp-list reports no tools when the page registers none', async ({ cli, server, mcpBrowser }, testInfo) => {

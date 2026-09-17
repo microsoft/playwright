@@ -20,6 +20,7 @@ import path from 'path';
 import debug from 'debug';
 import { actionInContext, codeframeForLanguage, renderCode, substituteSecrets } from './codegen';
 import { renderModalStates } from './tab';
+import { renderWebMCPToolsYaml, webmcpToolsJSON } from './webmcp';
 
 import { outputDir as resolveOutputDir } from './context';
 
@@ -42,6 +43,7 @@ type SectionContent = string[] | { json: unknown };
 
 type Section = {
   title: string;
+  key?: string; // Property name in the json output, defaults to the lower-cased title.
   content: SectionContent;
   isError?: boolean;
   codeframe?: 'yaml' | 'js' | 'json' | 'python' | 'java' | 'csharp';
@@ -170,7 +172,7 @@ export class Response {
   async serialize(): Promise<CallToolResult> {
     const allSections = await this._build();
     await this._enforceOutputBudget();
-    const rawSections = ['Error', 'Result', 'Snapshot'] as const;
+    const rawSections = ['Error', 'Result', 'WebMCP tools', 'Snapshot'] as const;
     const sections = this._raw ? allSections.filter(section => rawSections.includes(section.title as typeof rawSections[number])) : allSections;
 
     const isError = sections.some(section => section.isError);
@@ -180,7 +182,7 @@ export class Response {
       if (isError)
         payload.isError = true;
       for (const section of sections) {
-        const key = section.title.toLowerCase();
+        const key = section.key ?? section.title.toLowerCase();
         if (!Array.isArray(section.content)) {
           if (section.content.json !== undefined)
             payload[key] = section.content.json;
@@ -264,8 +266,8 @@ export class Response {
 
   private async _build(): Promise<Section[]> {
     const sections: Section[] = [];
-    const addSection = (title: string, content: SectionContent, codeframe?: Section['codeframe']) => {
-      const section = { title, content, isError: title === 'Error', codeframe };
+    const addSection = (title: string, content: SectionContent, codeframe?: Section['codeframe'], key?: string) => {
+      const section = { title, key, content, isError: title === 'Error', codeframe };
       sections.push(section);
       return content;
     };
@@ -300,17 +302,25 @@ export class Response {
     if (tabSnapshot?.modalStates.length)
       addSection('Modal state', renderModalStates(this._context.config, tabSnapshot.modalStates));
 
-    // Handle tab snapshot
+    // Handle tab snapshot and WebMCP tools.
     if (tabSnapshot && this._includeSnapshot !== 'none') {
-      if (snapshotToFile) {
-        const suggestedFilename = this._includeSnapshotFileName === '<auto>' ? undefined : this._includeSnapshotFileName;
-        const resolvedFile = await this.resolveClientOutputFile({ prefix: 'page', ext: 'yml', suggestedFilename }, 'Snapshot');
-        await this._writeFile(resolvedFile, tabSnapshot.ariaSnapshot);
-        addSection('Snapshot', [resolvedFile.printableLink]);
-      } else if (tabSnapshot.ariaSnapshotJSON !== undefined) {
+      const webmcpListing = this._context.currentTab()?.webmcpTools();
+      if (!snapshotToFile && tabSnapshot.ariaSnapshotJSON !== undefined) {
+        if (webmcpListing?.tools.length)
+          addSection('WebMCP tools', { json: webmcpToolsJSON(webmcpListing) }, 'json', 'webmcpTools');
         addSection('Snapshot', { json: tabSnapshot.ariaSnapshotJSON }, 'json');
       } else {
-        addSection('Snapshot', [tabSnapshot.ariaSnapshot], 'yaml');
+        let ariaSnapshot = tabSnapshot.ariaSnapshot;
+        if (webmcpListing?.tools.length)
+          ariaSnapshot = renderWebMCPToolsYaml(webmcpListing).join('\n') + '\n\n' + ariaSnapshot;
+        if (snapshotToFile) {
+          const suggestedFilename = this._includeSnapshotFileName === '<auto>' ? undefined : this._includeSnapshotFileName;
+          const resolvedFile = await this.resolveClientOutputFile({ prefix: 'page', ext: 'yml', suggestedFilename }, 'Snapshot');
+          await this._writeFile(resolvedFile, ariaSnapshot);
+          addSection('Snapshot', [resolvedFile.printableLink]);
+        } else {
+          addSection('Snapshot', [ariaSnapshot], 'yaml');
+        }
       }
     }
 
@@ -340,7 +350,7 @@ export class Response {
   }
 }
 
-export function renderTabMarkdown(tab: TabHeader & { webmcpChanged?: boolean }): string[] {
+export function renderTabMarkdown(tab: TabHeader): string[] {
   const lines = [`- Page URL: ${tab.url}`];
   if (tab.title)
     lines.push(`- Page Title: ${tab.title}`);
@@ -349,24 +359,11 @@ export function renderTabMarkdown(tab: TabHeader & { webmcpChanged?: boolean }):
   const status = tab.mainDocumentStatus;
   if (status && (status.status < 200 || status.status >= 300))
     lines.push(`- HTTP status: ${status.status}${status.statusText ? ' ' + status.statusText : ''}`);
-  lines.push(...renderWebMCPTabMarkdown(tab));
+  if (tab.webmcpToolCount)
+    lines.push(`- ${tab.webmcpToolCount} webmcp tool${tab.webmcpToolCount === 1 ? '' : 's'} available on the page`);
   if (tab.console.errors || tab.console.warnings)
     lines.push(`- Console: ${tab.console.errors} errors, ${tab.console.warnings} warnings`);
   return lines;
-}
-
-function renderWebMCPTabMarkdown(tab: TabHeader & { webmcpChanged?: boolean }): string[] {
-  const tools = tab.webmcpTools;
-  if (!tools?.length)
-    return [];
-  if (!tab.webmcpChanged)
-    return [`- ${tools.length} webmcp tool${tools.length === 1 ? '' : 's'} available on the page`];
-  const named = tools.slice(0, 10);
-  const rest = tools.length - named.length;
-  return [
-    `- ${tools.length} webmcp tool${tools.length === 1 ? '' : 's'} available on the page:`,
-    `  ${named.join(', ')}${rest ? `, and ${rest} more` : ''}.`,
-  ];
 }
 
 export function renderTabsMarkdown(tabs: TabHeader[]): string[] {

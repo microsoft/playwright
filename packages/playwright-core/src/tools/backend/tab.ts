@@ -82,7 +82,7 @@ export type TabHeader = {
   crashed: boolean;
   mainDocumentStatus?: { status: number, statusText: string };
   console: { total: number, warnings: number, errors: number };
-  webmcpTools?: string[];
+  webmcpToolCount?: number;
 };
 
 type TabSnapshot = {
@@ -293,7 +293,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._onPageClose(this);
   }
 
-  async headerSnapshot(): Promise<TabHeader & { changed: boolean, webmcpChanged: boolean }> {
+  async headerSnapshot(): Promise<TabHeader & { changed: boolean }> {
     let title: string | undefined;
     let consoleCounts = { total: 0, errors: 0, warnings: 0 };
     if (!this.crashed) {
@@ -309,15 +309,14 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       crashed: this.crashed,
       mainDocumentStatus: this._mainDocumentStatus,
       console: consoleCounts,
-      webmcpTools: this._webmcpTools?.tools.map(tool => tool.name),
+      webmcpToolCount: this._webmcpTools?.tools.length,
     };
 
-    const webmcpChanged = !stringArrayEquals(this._lastHeader.webmcpTools, newHeader.webmcpTools);
     if (!tabHeaderEquals(this._lastHeader, newHeader)) {
       this._lastHeader = newHeader;
-      return { ...this._lastHeader, changed: true, webmcpChanged };
+      return { ...this._lastHeader, changed: true };
     }
-    return { ...this._lastHeader, changed: false, webmcpChanged };
+    return { ...this._lastHeader, changed: false };
   }
 
   isCurrentTab(): boolean {
@@ -490,7 +489,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     if (this._javaScriptBlocked())
       return;
     this._webmcpTools = listing;
-    this.context.updateWebMCPTools();
+    this.context.maybeNotifyWebMCPToolsChanged();
   }
 
   private _javaScriptBlocked(): boolean {
@@ -663,13 +662,5 @@ function tabHeaderEquals(a: TabHeader, b: TabHeader): boolean {
       a.console.errors === b.console.errors &&
       a.console.warnings === b.console.warnings &&
       a.console.total === b.console.total &&
-      stringArrayEquals(a.webmcpTools, b.webmcpTools);
-}
-
-function stringArrayEquals(a: string[] | undefined, b: string[] | undefined): boolean {
-  if (a === b)
-    return true;
-  if (!a || !b || a.length !== b.length)
-    return false;
-  return a.every((value, index) => value === b[index]);
+      a.webmcpToolCount === b.webmcpToolCount;
 }

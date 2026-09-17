@@ -93,25 +93,37 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictool
       content: [{ type: 'text' as const, text: json ? JSON.stringify({ isError: true, error: message }, null, 2) : `### Error\n${message}` }],
       isError: true,
     });
-    const tool = this._tools.find(tool => tool.schema.name === name)!;
-    if (!tool)
-      return await this._callDynamicTool(name, rawArguments, formatError);
+    const context = this._context!;
+
     let parsedArguments: any;
-    try {
-      parsedArguments = tool.schema.inputSchema.parse(rawArguments);
-    } catch (error) {
-      if (error instanceof z.ZodError)
-        return formatError(`Invalid arguments for tool "${name}":\n${z.prettifyError(error)}`);
-      throw error;
+    let handle: (params: any, response: Response) => Promise<void>;
+    const tool = this._tools.find(tool => tool.schema.name === name);
+    if (tool) {
+      try {
+        parsedArguments = tool.schema.inputSchema.parse(rawArguments);
+      } catch (error) {
+        if (error instanceof z.ZodError)
+          return formatError(`Invalid arguments for tool "${name}":\n${z.prettifyError(error)}`);
+        throw error;
+      }
+      handle = (params, response) => tool.handle(context, params, response, signal);
+    } else {
+      const webmcpTool = context.currentWebMCPTools().find(tool => tool.schema.name === name);
+      if (!webmcpTool)
+        return formatError(`Tool "${name}" not found`);
+      // Page-registered WebMCP tools validate their own input, only strip the meta.
+      parsedArguments = { ...rawArguments };
+      delete parsedArguments._meta;
+      handle = webmcpTool.handle;
     }
+
     const cwd = rawArguments._meta?.cwd;
     const raw = !!rawArguments._meta?.raw;
-    const context = this._context!;
     const response = new Response(context, name, parsedArguments, { relativeTo: cwd, raw, json });
     context.setRunningTool(name);
     let responseObject: mcpServer.CallToolResult & { isClose?: boolean };
     try {
-      await tool.handle(context, parsedArguments, response, signal);
+      await handle(parsedArguments, response);
       for (const reason of context.drainPendingUnhandledRejections())
         response.addError(formatRejectionReason(reason));
       responseObject = await response.serialize();
@@ -125,33 +137,6 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictool
     if (this._disconnected || responseObject.isClose) {
       delete responseObject.isClose;
       await this.dispose();
-    }
-    return responseObject;
-  }
-
-  private async _callDynamicTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> }, formatError: (message: string) => mcpServer.CallToolResult): Promise<mcpServer.CallToolResult> {
-    const context = this._context;
-    if (!context)
-      return formatError(`Tool "${name}" not found`);
-
-    const dynamicTool = context.currentWebMCPTools().find(tool => tool.schema.name === name);
-    if (!dynamicTool)
-      return formatError(`Tool "${name}" not found`);
-
-    const { _meta, ...params } = rawArguments;
-    const response = new Response(context, name, params, { relativeTo: _meta?.cwd, raw: !!_meta?.raw, json: !!_meta?.json });
-    context.setRunningTool(name);
-    let responseObject: mcpServer.CallToolResult;
-    try {
-      await dynamicTool.handle(params, response);
-      for (const reason of context.drainPendingUnhandledRejections())
-        response.addError(formatRejectionReason(reason));
-      responseObject = await response.serialize();
-      this._sessionLog?.logResponse(name, params, responseObject);
-    } catch (error: any) {
-      responseObject = formatError(String(error));
-    } finally {
-      context.setRunningTool(undefined);
     }
     return responseObject;
   }

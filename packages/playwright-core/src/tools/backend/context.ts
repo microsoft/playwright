@@ -323,7 +323,7 @@ export class Context {
     return this._webmcpTools;
   }
 
-  updateWebMCPTools() {
+  maybeNotifyWebMCPToolsChanged() {
     const tools = this._currentTab?.webmcpTools()?.tools.map(tool => tool.mcpTool) ?? [];
     const signature = JSON.stringify(tools.map(tool => tool.schema));
     if (signature === this._webmcpToolsSignature)
@@ -337,7 +337,7 @@ export class Context {
     if (this._currentTab === tab)
       return;
     this._currentTab = tab;
-    this.updateWebMCPTools();
+    this.maybeNotifyWebMCPToolsChanged();
   }
 
   routes(): RouteEntry[] {
