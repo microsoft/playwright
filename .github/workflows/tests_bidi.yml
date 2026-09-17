@@ -24,10 +24,8 @@ env:
 jobs:
   test_bidi:
     name: BiDi
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-24.04
     permissions:
-      id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
     strategy:
       fail-fast: false
@@ -76,19 +74,53 @@ jobs:
       with:
         job_name: ${{ matrix.channel }}
 
-    - name: Azure Login
-      if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
-      uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
-      with:
-        client-id: ${{ secrets.AZURE_BLOB_REPORTS_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_BLOB_REPORTS_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_BLOB_REPORTS_SUBSCRIPTION_ID }}
+    - name: Add report to the job summary
+      if: ${{ !cancelled() && hashFiles('test-results/report.md') != '' }}
+      run: cat test-results/report.md >> "$GITHUB_STEP_SUMMARY"
 
-    - name: Upload report.csv to Azure
-      if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+  publish_reports:
+    name: Publish reports
+    needs: test_bidi
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && github.repository == 'microsoft/playwright' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write   # This is required to push to the bidi-reports branch
+    steps:
+    - name: Download csv reports
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        pattern: csv-report-*
+        path: csv-reports
+    - name: Publish the reports to the bidi-reports branch
       run: |
-        REPORT_DIR='bidi-reports'
-        azcopy cp "./test-results/report.csv" "https://mspwblobreport.blob.core.windows.net/\$web/$REPORT_DIR/${{ matrix.channel }}.csv"
-        echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/${{ matrix.channel }}.csv"
+        git init -q "$RUNNER_TEMP/reports"
+        cd "$RUNNER_TEMP/reports"
+        git remote add origin "https://x-access-token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git"
+        # Continue the branch history, or start it on the very first run. An
+        # initial commit with no fetched parent is what makes the branch orphan.
+        git fetch --depth=1 origin bidi-reports && git reset --hard FETCH_HEAD || true
+        echo 'Nightly BiDi test reports, published by .github/workflows/tests_bidi.yml.' > README.md
+        channels=()
+        for dir in "$GITHUB_WORKSPACE"/csv-reports/csv-report-*/; do
+          channel=${dir%/}
+          channel=${channel##*/csv-report-}
+          cp "$dir/report.csv" "$channel.csv"
+          channels+=("$channel")
+        done
+        git add -A
+        if git diff --cached --quiet; then
+          echo "No changes since the last run."
+          exit 0
+        fi
+        git commit -q -m "bidi: results for ${GITHUB_SHA:0:9}"
+        git push origin HEAD:bidi-reports
+        for channel in "${channels[@]}"; do
+          echo "Report url: https://github.com/$GITHUB_REPOSITORY/blob/bidi-reports/$channel.csv"
+          echo "Raw report url: https://raw.githubusercontent.com/$GITHUB_REPOSITORY/bidi-reports/$channel.csv"
+        done
       env:
-        AZCOPY_AUTO_LOGIN_TYPE: AZCLI
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GIT_AUTHOR_NAME: microsoft-playwright-automation[bot]
+        GIT_AUTHOR_EMAIL: 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
+        GIT_COMMITTER_NAME: microsoft-playwright-automation[bot]
+        GIT_COMMITTER_EMAIL: 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
