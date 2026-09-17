@@ -108,19 +108,45 @@ x-pw-action-point {
   z-index: 2;
 }
 
+x-pw-screencast-highlight,
+x-pw-screencast-point,
+x-pw-title {
+  animation: pw-fade-out var(--pw-fade-duration) ease-out var(--pw-fade-delay, 0ms) forwards;
+}
+
+x-pw-screencast-highlight,
+x-pw-screencast-point {
+  position: absolute;
+  pointer-events: none;
+}
+
+x-pw-screencast-highlight {
+  z-index: 1;
+}
+
+/* Zero-sized and centered on the action point, user style draws around it. */
+x-pw-screencast-point {
+  width: 0;
+  height: 0;
+  overflow: visible;
+  translate: -50% -50%;
+  z-index: 2;
+}
+
 x-pw-action-cursor {
   position: absolute;
-  width: 18px;
-  height: 22px;
+  width: 14px;
+  height: 21px;
   pointer-events: none;
   z-index: 4;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.35));
 }
 
 x-pw-action-cursor svg {
   width: 100%;
   height: 100%;
   position: static;
+  overflow: visible;
 }
 
 x-pw-title {

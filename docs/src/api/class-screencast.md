@@ -139,6 +139,7 @@ Position of the action title overlay. Defaults to `"top-right"`.
 
 ### option: Screencast.showActions.fontSize
 * since: v1.59
+* deprecated: Use `title` in [`option: Screencast.showActions.style`] instead, for example `style: { title: 'font-size: 32px' }`.
 - `fontSize` ?<[int]>
 
 Font size of the action title in pixels. Defaults to `24`.
@@ -150,6 +151,28 @@ Font size of the action title in pixels. Defaults to `24`.
 Cursor decoration shown for pointer actions. `"pointer"` (the default) renders
 a mouse pointer that animates from the previous action point to the next one.
 `"none"` disables the cursor decoration.
+
+### option: Screencast.showActions.style
+* since: v1.64
+- `style` ?<[Object]>
+  * alias-csharp: ScreencastActionStyle
+  - `point` ?<[string]> CSS declarations for the marker at the action point. The marker is positioned at the action point, has zero size and is centered on the point, so its size and look come from this style. Not shown when omitted.
+  - `highlight` ?<[string]> CSS declarations for the box that covers the target element. The box is positioned and sized to the element bounds. Not shown when omitted.
+  - `title` ?<[string]> CSS declarations for the action title, for example `'font-size: 32px; background: #333'`. The title is placed according to [`option: Screencast.showActions.position`].
+
+Styles of the action decorations. All decorations fade out over [`option: Screencast.showActions.duration`].
+
+**Usage**
+
+```js
+await page.screencast.showActions({
+  style: {
+    point: 'width: 20px; height: 20px; border-radius: 50%; background: red',
+    highlight: 'outline: 2px solid #333; background: rgba(0, 128, 255, .15)',
+    title: 'font-size: 16px',
+  },
+});
+```
 
 ## async method: Screencast.showOverlays
 * since: v1.59

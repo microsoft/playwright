@@ -1351,32 +1351,38 @@ export class InjectedScript {
     highlight.setElementHighlights(highlights);
   }
 
-  setScreencastAnnotation(annotation: { point?: Point, box?: Rect, actionTitle?: string, duration?: number, position?: string, fontSize?: number, cursor?: 'none' | 'pointer' } | null) {
+  setScreencastAnnotation(annotation: { point?: Point, box?: Rect, actionTitle?: string, duration?: number, position?: string, cursor?: 'none' | 'pointer', style?: { point?: string, highlight?: string, title?: string }, lastCursorPoint?: Point } | null) {
     const highlight = this._ensureHighlight();
+    highlight.hideScreencastDecorations();
+    // The cursor outlives the annotation, it stays at the last action point.
     if (!annotation) {
-      highlight.updateHighlight([]);
-      highlight.hideActionPoint();
       highlight.hideActionTitle();
-      highlight.hideActionCursor();
       return;
     }
     const fadeDuration = annotation.duration ?? 500;
 
-    if (annotation.box) {
-      highlight.updateHighlight([{
-        box: annotation.box,
-        color: 'rgba(0, 128, 255, 0.15)',
-        borderColor: 'rgba(0, 128, 255, 0.6)',
-        fadeDuration,
-      }]);
-    }
+    if (annotation.box && annotation.style?.highlight)
+      highlight.showScreencastHighlight(annotation.box, annotation.style.highlight, fadeDuration);
     if (annotation.point) {
-      if (annotation.cursor !== 'none')
+      if (annotation.cursor !== 'none') {
+        // After navigation, animate from where the cursor was in the previous document.
+        if (annotation.lastCursorPoint)
+          highlight.restoreActionCursor(annotation.lastCursorPoint.x, annotation.lastCursorPoint.y);
         highlight.moveActionCursor(annotation.point.x, annotation.point.y, fadeDuration);
-      highlight.showActionPoint(annotation.point.x, annotation.point.y, fadeDuration);
+      }
+      if (annotation.style?.point)
+        highlight.showScreencastPoint(annotation.point.x, annotation.point.y, annotation.style.point, fadeDuration);
     }
     if (annotation.actionTitle)
-      highlight.showActionTitle(annotation.actionTitle, fadeDuration, annotation.position, annotation.fontSize);
+      highlight.showActionTitle(annotation.actionTitle, fadeDuration, annotation.position, annotation.style?.title);
+  }
+
+  restoreScreencastCursor(point: Point) {
+    this._ensureHighlight().restoreActionCursor(point.x, point.y);
+  }
+
+  hideScreencastCursor() {
+    this._highlight?.hideActionCursor();
   }
 
   addUserOverlay(id: string, html: string) {

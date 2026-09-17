@@ -189,8 +189,8 @@ playwright-cli video-start video.webm
 playwright-cli video-chapter "Chapter Title" --description="Details" --duration=2000
 playwright-cli video-stop
 
-# annotate each subsequent action (click, type, ...) with a callout naming the action and highlighting the target
-playwright-cli video-show-actions --duration=600 --position=top-right
+# annotate each subsequent action (click, type, ...) with a callout naming the action, optionally styling the action point and target highlight
+playwright-cli video-show-actions --duration=600 --position=top-right --highlight-style="outline: 2px solid #333"
 playwright-cli video-hide-actions
 
 # launch the dashboard for UI review / design feedback — user annotates the page, you receive the annotated screenshot, snapshot, and notes

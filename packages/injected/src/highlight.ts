@@ -29,8 +29,6 @@ type Rect = { x: number, y: number, width: number, height: number };
 type RenderedHighlightEntry = {
   targetElement?: Element,
   color: string,
-  borderColor?: string,
-  fadeDuration?: number,
   highlightElement: HTMLElement,
   tooltipElement?: HTMLElement,
   box?: DOMRect,
@@ -44,8 +42,6 @@ export type HighlightEntry = {
   element?: Element,
   box?: Rect,
   color: string,
-  borderColor?: string,
-  fadeDuration?: number,
   tooltipText?: string,
   cssStyle?: string,
 };
@@ -56,6 +52,8 @@ export class Highlight {
   private _renderedEntries: RenderedHighlightEntry[] = [];
   private _actionPointElement: HTMLElement | undefined;
   private _actionCursorElement: HTMLElement;
+  private _actionCursorAnimation: Animation | undefined;
+  private _screencastDecorations: HTMLElement[] = [];
   private _titleElement: HTMLElement;
   private _userOverlayContainer: HTMLElement;
   private _userOverlays = new Map<string, HTMLElement>();
@@ -179,7 +177,7 @@ export class Highlight {
     this._glassPaneElement.remove();
   }
 
-  showActionPoint(x: number, y: number, fadeDuration?: number) {
+  showActionPoint(x: number, y: number) {
     if (!this._actionPointElement) {
       this._actionPointElement = this._injectedScript.document.createElement('x-pw-action-point');
       this._glassPaneShadow.appendChild(this._actionPointElement);
@@ -187,10 +185,6 @@ export class Highlight {
     this._actionPointElement.style.top = y + 'px';
     this._actionPointElement.style.left = x + 'px';
     this._actionPointElement.hidden = false;
-    if (fadeDuration)
-      this._actionPointElement.style.animation = `pw-fade-out ${fadeDuration}ms ease-out forwards`;
-    else
-      this._actionPointElement.style.animation = '';
   }
 
   hideActionPoint() {
@@ -198,12 +192,59 @@ export class Highlight {
       this._actionPointElement.hidden = true;
   }
 
+  showScreencastHighlight(box: Rect, style: string, fadeDuration: number) {
+    const element = this._createScreencastDecoration('x-pw-screencast-highlight', style, fadeDuration);
+    element.style.left = box.x + 'px';
+    element.style.top = box.y + 'px';
+    element.style.width = box.width + 'px';
+    element.style.height = box.height + 'px';
+  }
+
+  showScreencastPoint(x: number, y: number, style: string, fadeDuration: number) {
+    const element = this._createScreencastDecoration('x-pw-screencast-point', style, fadeDuration);
+    element.style.left = x + 'px';
+    element.style.top = y + 'px';
+  }
+
+  hideScreencastDecorations() {
+    for (const element of this._screencastDecorations)
+      element.remove();
+    this._screencastDecorations = [];
+  }
+
+  private _createScreencastDecoration(name: string, style: string, fadeDuration: number): HTMLElement {
+    const element = this._injectedScript.document.createElement(name);
+    // User style goes first so that the geometry assigned by the caller wins.
+    element.style.cssText = style;
+    if (fadeDuration)
+      element.style.setProperty('--pw-fade-duration', fadeDuration + 'ms');
+    this._glassPaneShadow.appendChild(element);
+    this._screencastDecorations.push(element);
+    return element;
+  }
+
   moveActionCursor(x: number, y: number, fadeDuration?: number) {
-    const moveDuration = fadeDuration ? Math.max(80, Math.min(fadeDuration * 0.6, 400)) : 0;
-    this._actionCursorElement.style.transition = `top ${moveDuration}ms ease, left ${moveDuration}ms ease`;
-    this._actionCursorElement.style.left = x + 'px';
-    this._actionCursorElement.style.top = y + 'px';
-    this._actionCursorElement.style.visibility = 'visible';
+    const element = this._actionCursorElement;
+    // Start where the cursor is rendered, it might be in the middle of the previous move.
+    const from = element.getBoundingClientRect();
+    const wasVisible = element.style.visibility === 'visible';
+    this._actionCursorAnimation?.cancel();
+    this._actionCursorAnimation = undefined;
+    element.style.left = x + 'px';
+    element.style.top = y + 'px';
+    element.style.visibility = 'visible';
+    const dx = from.left - x;
+    const dy = from.top - y;
+    if (!wasVisible || !fadeDuration || Math.hypot(dx, dy) < 1)
+      return;
+    const duration = Math.max(80, Math.min(fadeDuration * 0.6, 400));
+    // Start slow, speed up in the middle and land gently.
+    this._actionCursorAnimation = element.animate(cursorPathKeyframes(dx, dy, x + y + dx + dy), { duration, easing: 'cubic-bezier(0.5, 0, 0.3, 1)' });
+  }
+
+  restoreActionCursor(x: number, y: number) {
+    if (this._actionCursorElement.style.visibility !== 'visible')
+      this.moveActionCursor(x, y);
   }
 
   hideActionCursor() {
@@ -213,33 +254,29 @@ export class Highlight {
   private _createCursorSvg(document: Document): SVGSVGElement {
     const svgNs = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNs, 'svg');
-    svg.setAttribute('viewBox', '0 0 18 22');
+    // macOS-style arrow with the tip at the origin, the border is drawn outside of the fill.
+    svg.setAttribute('viewBox', '0 0 12 18');
     const path = document.createElementNS(svgNs, 'path');
-    path.setAttribute('d', 'M1 1 L1 17 L5.5 13 L8 20.5 L11 19.5 L8.5 12 L15 12 Z');
-    path.setAttribute('fill', 'white');
-    path.setAttribute('stroke', 'black');
-    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('d', 'M0 0 L0 15.8 L3.9 12.4 L6.6 18.6 L8.9 17.6 L6.2 11.4 L11.2 11.4 Z');
+    path.setAttribute('fill', 'black');
+    path.setAttribute('stroke', 'white');
+    path.setAttribute('stroke-width', '1.6');
     path.setAttribute('stroke-linejoin', 'round');
+    path.setAttribute('paint-order', 'stroke');
     svg.appendChild(path);
     return svg;
   }
 
-  showActionTitle(text: string, fadeDuration: number, position?: string, fontSize?: number) {
+  showActionTitle(text: string, fadeDuration: number, position?: string, style?: string) {
     this._titleElement.textContent = text;
     this._titleElement.hidden = false;
+    // User style goes first so that the position assigned below wins.
+    this._titleElement.style.cssText = style ?? '';
     if (fadeDuration) {
       const fadeTime = fadeDuration / 4;
-      this._titleElement.style.animation = `pw-fade-out ${fadeTime}ms ease-out ${fadeDuration - fadeTime}ms forwards`;
-    } else {
-      this._titleElement.style.animation = '';
+      this._titleElement.style.setProperty('--pw-fade-duration', fadeTime + 'ms');
+      this._titleElement.style.setProperty('--pw-fade-delay', (fadeDuration - fadeTime) + 'ms');
     }
-
-    // Reset positioning
-    this._titleElement.style.top = '';
-    this._titleElement.style.bottom = '';
-    this._titleElement.style.left = '';
-    this._titleElement.style.right = '';
-    this._titleElement.style.transform = '';
 
     switch (position) {
       case 'top-left':
@@ -270,9 +307,6 @@ export class Highlight {
         this._titleElement.style.right = '6px';
         break;
     }
-
-    if (fontSize)
-      this._titleElement.style.fontSize = fontSize + 'px';
   }
 
   hideActionTitle() {
@@ -377,7 +411,7 @@ export class Highlight {
         lineElement.textContent = entry.tooltipText;
         tooltipElement.appendChild(lineElement);
       }
-      this._renderedEntries.push({ targetElement: entry.element, box: toDOMRect(entry.box), color: entry.color, borderColor: entry.borderColor, fadeDuration: entry.fadeDuration, cssStyle: entry.cssStyle, tooltipElement, highlightElement });
+      this._renderedEntries.push({ targetElement: entry.element, box: toDOMRect(entry.box), color: entry.color, cssStyle: entry.cssStyle, tooltipElement, highlightElement });
     }
 
     // 2. Trigger layout while positioning tooltips and computing bounding boxes.
@@ -407,10 +441,6 @@ export class Highlight {
       entry.highlightElement.style.width = box.width + 'px';
       entry.highlightElement.style.height = box.height + 'px';
       entry.highlightElement.style.display = 'block';
-      if (entry.borderColor)
-        entry.highlightElement.style.border = '2px solid ' + entry.borderColor;
-      if (entry.fadeDuration)
-        entry.highlightElement.style.animation = `pw-fade-out ${entry.fadeDuration}ms ease-out forwards`;
       if (entry.cssStyle)
         entry.highlightElement.style.cssText += ';' + entry.cssStyle;
 
@@ -502,6 +532,36 @@ export class Highlight {
     this._glassPaneElement.style.backgroundColor = 'transparent';
     this._glassPaneElement.removeEventListener('click', handler);
   }
+}
+
+// Keyframes that bring the cursor from (dx, dy) relative to its destination to the destination.
+// The path bows to one side, more at the start than at the end, the way a hand moves a mouse.
+function cursorPathKeyframes(dx: number, dy: number, seed: number): Keyframe[] {
+  const random = (salt: number) => {
+    const value = Math.sin(seed * 12.9898 + salt * 78.233) * 43758.5453;
+    return value - Math.floor(value);
+  };
+  const distance = Math.hypot(dx, dy);
+  const normalX = -dy / distance;
+  const normalY = dx / distance;
+  const side = random(1) < 0.5 ? -1 : 1;
+  const startBow = side * distance * (0.03 + 0.03 * random(2));
+  const endBow = side * distance * (0.01 + 0.02 * random(3));
+  // Control points at one and two thirds of the way.
+  const c1x = dx * 2 / 3 + normalX * startBow;
+  const c1y = dy * 2 / 3 + normalY * startBow;
+  const c2x = dx / 3 + normalX * endBow;
+  const c2y = dy / 3 + normalY * endBow;
+  const keyframes: Keyframe[] = [];
+  const steps = 30;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const u = 1 - t;
+    const px = u * u * u * dx + 3 * u * u * t * c1x + 3 * u * t * t * c2x;
+    const py = u * u * u * dy + 3 * u * u * t * c1y + 3 * u * t * t * c2y;
+    keyframes.push({ transform: `translate(${px}px, ${py}px)` });
+  }
+  return keyframes;
 }
 
 function toDOMRect(box: Rect): DOMRect;

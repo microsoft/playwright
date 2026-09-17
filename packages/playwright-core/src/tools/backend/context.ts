@@ -94,7 +94,10 @@ export type FilenameTemplate = {
   date?: Date;
 };
 
-type VideoParams = { size?: { width: number; height: number }, fps?: number };
+type VideoParams = { size?: { width: number; height: number }, fps?: number, cursor?: boolean };
+
+// Actions are paced by this delay when the cursor is shown, giving it time to travel.
+const kCursorDuration = 800;
 
 export class Context {
   readonly config: ContextConfig;
@@ -292,7 +295,12 @@ export class Context {
       fileName = path.join(dir, path.basename(fileName, ext) + suffix + ext);
     }
     this._video.fileNames.push(fileName);
-    await page.screencast.start({ path: fileName, ...this._video.params });
+    const { cursor, ...startParams } = this._video.params;
+    await page.screencast.start({ path: fileName, ...startParams });
+    if (cursor) {
+      // Show the cursor only, the action title is what `browser_video_show_actions` is for.
+      await page.screencast.showActions({ cursor: 'pointer', duration: kCursorDuration, style: { title: 'display: none' } });
+    }
   }
 
   private _onPageCreated(page: playwrightTypes.Page) {

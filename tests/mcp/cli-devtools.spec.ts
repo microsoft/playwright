@@ -259,6 +259,21 @@ test('video-start with fps', async ({ cli, server }, testInfo) => {
   expect(stderr.toString()).toContain(', 60 fps,');
 });
 
+test('video-start --cursor', async ({ boundBrowser, cli }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button>`);
+
+  await cli('attach', 'default');
+  await cli('snapshot');
+  await cli('video-start', 'video.webm', '--cursor');
+  await cli('click', 'e2');
+
+  // The cursor travels to the action point, the action title stays out of the video.
+  await expect(page.locator('x-pw-action-cursor')).toBeVisible();
+  await expect(page.locator('x-pw-title')).toBeHidden();
+  await cli('video-stop');
+});
+
 test('video-chapter', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
   await cli('video-start', 'video.webm');

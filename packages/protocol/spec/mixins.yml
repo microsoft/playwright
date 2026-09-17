@@ -31,6 +31,12 @@ ShowActionsOptions:
       literals:
       - none
       - pointer
+    style:
+      type: object?
+      properties:
+        point: string?
+        highlight: string?
+        title: string?
 
 CommonScreenshotOptions:
   type: mixin

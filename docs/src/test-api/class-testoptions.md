@@ -730,8 +730,12 @@ export default defineConfig({
     - `actions` ?<[Object]> Controls visual annotations on interacted elements.
       - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
       - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the action title overlay. Defaults to `"top-right"`.
-      - `fontSize` ?<[int]> Font size of the action title in pixels. Defaults to `24`.
+      - `fontSize` ?<[int]> Font size of the action title in pixels. Defaults to `24`. Deprecated, use `style.title` instead.
       - `cursor` ?<[ScreencastCursor]<"none"|"pointer">> Cursor decoration shown for pointer actions. `"pointer"` (the default) renders a mouse pointer that animates from the previous action point to the next one. `"none"` disables the cursor decoration.
+      - `style` ?<[Object]> Styles of the action decorations.
+        - `point` ?<[string]> CSS declarations for the zero-sized marker centered on the action point. Not shown when omitted.
+        - `highlight` ?<[string]> CSS declarations for the box that covers the target element. Not shown when omitted.
+        - `title` ?<[string]> CSS declarations for the action title.
     - `test` ?<[Object]> Controls test information displayed as a status overlay in the video.
       - `level` ?<[TestAnnotationLevel]<"file"|"test"|"step">> Level of the detail to include about the current test.
       - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the test information overlay. Defaults to `"top-left"`.
