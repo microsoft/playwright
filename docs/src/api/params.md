@@ -305,6 +305,18 @@ Specify environment variables that will be visible to the browser. Defaults to `
     - `localStorage` <[Array]<[Object]>> localStorage to set for context
       - `name` <[string]>
       - `value` <[string]>
+    - `indexedDB` ?<[Array]<[unknown]>> indexedDB to set for context
+    - `opfs` ?<[Array]<[Object]>> opfs to set for context
+      - `path` <[string]>
+      - `type` <[OPFSEntryType]<"file"|"directory">>
+      - `base64` ?<[string]>
+  - `credentials` ?<[Array]<[Object]>> WebAuthn credentials to set for context
+    * alias: VirtualCredential
+    - `id` <[string]>
+    - `rpId` <[string]>
+    - `userHandle` <[string]>
+    - `privateKey` <[string]>
+    - `publicKey` <[string]>
 
 Learn more about [storage state and auth](../auth.md).
 

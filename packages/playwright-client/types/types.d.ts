@@ -10684,6 +10684,37 @@ export interface BrowserContext {
 
         value: string;
       }>;
+
+      /**
+       * indexedDB to set for context
+       */
+      indexedDB?: Array<unknown>;
+
+      /**
+       * opfs to set for context
+       */
+      opfs?: Array<{
+        path: string;
+
+        type: "file"|"directory";
+
+        base64?: string;
+      }>;
+    }>;
+
+    /**
+     * WebAuthn credentials to set for context
+     */
+    credentials?: Array<{
+      id: string;
+
+      rpId: string;
+
+      userHandle: string;
+
+      privateKey: string;
+
+      publicKey: string;
     }>;
   }): Promise<void>;
 
@@ -10760,6 +10791,28 @@ export interface BrowserContext {
 
         value: string;
       }>;
+
+      indexedDB?: Array<unknown>;
+
+      opfs?: Array<{
+        path: string;
+
+        type: "file"|"directory";
+
+        base64?: string;
+      }>;
+    }>;
+
+    credentials?: Array<{
+      id: string;
+
+      rpId: string;
+
+      userHandle: string;
+
+      privateKey: string;
+
+      publicKey: string;
     }>;
   }>;
 
@@ -11708,6 +11761,37 @@ export interface Browser {
 
           value: string;
         }>;
+
+        /**
+         * indexedDB to set for context
+         */
+        indexedDB?: Array<unknown>;
+
+        /**
+         * opfs to set for context
+         */
+        opfs?: Array<{
+          path: string;
+
+          type: "file"|"directory";
+
+          base64?: string;
+        }>;
+      }>;
+
+      /**
+       * WebAuthn credentials to set for context
+       */
+      credentials?: Array<{
+        id: string;
+
+        rpId: string;
+
+        userHandle: string;
+
+        privateKey: string;
+
+        publicKey: string;
       }>;
     };
 
@@ -19535,6 +19619,16 @@ export interface APIRequest {
 
           value: string;
         }>;
+
+        indexedDB?: Array<unknown>;
+
+        opfs?: Array<{
+          path: string;
+
+          type: "file"|"directory";
+
+          base64?: string;
+        }>;
       }>;
     };
 
@@ -20427,6 +20521,16 @@ export interface APIRequestContext {
         name: string;
 
         value: string;
+      }>;
+
+      indexedDB?: Array<unknown>;
+
+      opfs?: Array<{
+        path: string;
+
+        type: "file"|"directory";
+
+        base64?: string;
       }>;
     }>;
   }>;
@@ -26209,6 +26313,37 @@ export interface BrowserContextOptions {
 
         value: string;
       }>;
+
+      /**
+       * indexedDB to set for context
+       */
+      indexedDB?: Array<unknown>;
+
+      /**
+       * opfs to set for context
+       */
+      opfs?: Array<{
+        path: string;
+
+        type: "file"|"directory";
+
+        base64?: string;
+      }>;
+    }>;
+
+    /**
+     * WebAuthn credentials to set for context
+     */
+    credentials?: Array<{
+      id: string;
+
+      rpId: string;
+
+      userHandle: string;
+
+      privateKey: string;
+
+      publicKey: string;
     }>;
   };
 

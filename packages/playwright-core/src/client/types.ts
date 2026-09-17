@@ -42,7 +42,8 @@ export type DropPayload = {
 };
 export type StorageState = {
   cookies: channels.NetworkCookie[],
-  origins: (Omit<channels.OriginStorage, 'indexedDB'>)[],
+  origins: (Omit<channels.OriginStorage, 'indexedDB'> & { indexedDB?: unknown[] })[],
+  credentials?: channels.VirtualCredential[],
 };
 export type SetStorageState = {
   cookies?: channels.SetNetworkCookie[],

@@ -1568,6 +1568,18 @@ Offline emulation only affects requests that go through the browser's regular ne
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
+    - `indexedDB` ?<[Array]<[unknown]>>
+    - `opfs` ?<[Array]<[Object]>>
+      - `path` <[string]>
+      - `type` <[OPFSEntryType]<"file"|"directory">>
+      - `base64` ?<[string]>
+  - `credentials` ?<[Array]<[Object]>>
+    * alias: VirtualCredential
+    - `id` <[string]>
+    - `rpId` <[string]>
+    - `userHandle` <[string]>
+    - `privateKey` <[string]>
+    - `publicKey` <[string]>
 
 Returns storage state for this browser context, contains current cookies, local storage snapshot, IndexedDB snapshot, origin private file system snapshot and virtual WebAuthn credentials.
 

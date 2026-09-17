@@ -898,6 +898,11 @@ context cookies from the response. The method will automatically follow redirect
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
+    - `indexedDB` ?<[Array]<[unknown]>>
+    - `opfs` ?<[Array]<[Object]>>
+      - `path` <[string]>
+      - `type` <[OPFSEntryType]<"file"|"directory">>
+      - `base64` ?<[string]>
 
 Returns storage state for this request context, contains current cookies and local storage snapshot if it was passed to the constructor.
 

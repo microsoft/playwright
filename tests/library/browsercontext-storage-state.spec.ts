@@ -812,3 +812,19 @@ it('setStorageState should handle missing file', async ({ contextFactory }, test
   const error = await context.setStorageState(file).catch(e => e);
   expect(error.message).toContain(`Error reading storage state from ${file}`);
 });
+
+it('storageState return type should include credentials, opfs, and indexedDB', async ({ contextFactory, server }) => {
+  const context = await contextFactory();
+  const credential = await context.credentials.create(server.HOSTNAME);
+  const state = await context.storageState({ credentials: true, indexedDB: true, opfs: true });
+  const credentials = state.credentials;
+  const origin = state.origins[0];
+  const indexedDB = origin?.indexedDB;
+  const opfs = origin?.opfs;
+  expect(credentials).toEqual([credential]);
+  expect(indexedDB).toBeUndefined();
+  expect(opfs).toBeUndefined();
+
+  const context2 = await contextFactory({ storageState: state });
+  expect(await context2.credentials.get()).toEqual([credential]);
+});
