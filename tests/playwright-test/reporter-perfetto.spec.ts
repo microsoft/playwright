@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { execFileSync } from 'child_process';
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as zlib from 'zlib';
@@ -216,9 +218,11 @@ test('should report step params', async ({ runInlineTest }, testInfo) => {
 });
 
 test('should fail when gzip perfetto output stream errors', async ({ runInlineTest }, testInfo) => {
-  test.skip(!fs.existsSync('/dev/full'), 'needs /dev/full');
   const gz = testInfo.outputPath('trace.json.gz');
-  await fs.promises.symlink('/dev/full', gz);
+  execFileSync('mkfifo', [gz]);
+  const reader = fs.createReadStream(gz);
+  reader.on('error', () => {});
+  reader.once('data', () => reader.destroy());
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { reporter: [['perfetto', { outputFile: ${JSON.stringify(gz)} }]] };
@@ -226,10 +230,11 @@ test('should fail when gzip perfetto output stream errors', async ({ runInlineTe
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('one', async () => {
-        test.info().annotations.push({ type: 'blob', description: ${JSON.stringify('x'.repeat(64 * 1024))} });
+        test.info().annotations.push({ type: 'blob', description: ${JSON.stringify(crypto.randomBytes(256 * 1024).toString('base64'))} });
       });
     `,
   });
+  reader.destroy();
   expect(result.exitCode).not.toBe(0);
 });
 
