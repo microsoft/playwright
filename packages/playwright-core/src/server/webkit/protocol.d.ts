@@ -6389,7 +6389,11 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       /**
        * Limits the bytes per second of requests if positive. Removes any limits if zero or not provided.
        */
-      bytesPerSecondLimit?: number;
+      bandwidth?: number;
+      /**
+       * Adds a round-trip delay (in milliseconds) to each request if positive. Removes any delay if zero or not provided.
+       */
+      latency?: number;
     }
     export type setEmulatedConditionsReturnValue = {
     }
