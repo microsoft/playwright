@@ -31,6 +31,14 @@ await page.screencast.start({
 await page.screencast.stop();
 ```
 
+### option: Screencast.start.fps
+* since: v1.64
+- `fps` <[int]>
+
+Frame rate of the video recording in frames per second. Only used together with [`option: Screencast.start.path`]. Defaults to `25`.
+
+Higher frame rates make animations and scrolling smoother at the cost of more CPU spent on encoding. Combine with [`option: Screencast.start.size`] to record high resolution videos. The video can only contain as many distinct frames as the browser produces; Firefox and WebKit currently capture up to 25 frames per second.
+
 ### option: Screencast.start.onFrame
 * since: v1.59
 - `onFrame` <[function]\([Object]\): [Promise]>

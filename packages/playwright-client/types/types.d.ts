@@ -11592,6 +11592,12 @@ export interface Browser {
       };
 
       /**
+       * Frame rate of the recorded videos in frames per second. Defaults to `25`. Firefox and WebKit currently capture up
+       * to 25 frames per second.
+       */
+      fps?: number;
+
+      /**
        * If specified, enables visual annotations on interacted elements during video recording.
        */
       showActions?: {
@@ -17955,6 +17961,12 @@ export interface BrowserType<Unused = {}> {
       };
 
       /**
+       * Frame rate of the recorded videos in frames per second. Defaults to `25`. Firefox and WebKit currently capture up
+       * to 25 frames per second.
+       */
+      fps?: number;
+
+      /**
        * If specified, enables visual annotations on interacted elements during video recording.
        */
       showActions?: {
@@ -18693,6 +18705,7 @@ export interface Screencast {
       height: number;
     };
     quality?: number;
+    fps?: number;
   }): Promise<Disposable>;
   /**
    * Removes action decorations.
@@ -24134,6 +24147,12 @@ export interface Electron {
       };
 
       /**
+       * Frame rate of the recorded videos in frames per second. Defaults to `25`. Firefox and WebKit currently capture up
+       * to 25 frames per second.
+       */
+      fps?: number;
+
+      /**
        * If specified, enables visual annotations on interacted elements during video recording.
        */
       showActions?: {
@@ -24847,6 +24866,12 @@ export interface AndroidDevice {
          */
         height: number;
       };
+
+      /**
+       * Frame rate of the recorded videos in frames per second. Defaults to `25`. Firefox and WebKit currently capture up
+       * to 25 frames per second.
+       */
+      fps?: number;
 
       /**
        * If specified, enables visual annotations on interacted elements during video recording.
@@ -26066,6 +26091,12 @@ export interface BrowserContextOptions {
        */
       height: number;
     };
+
+    /**
+     * Frame rate of the recorded videos in frames per second. Defaults to `25`. Firefox and WebKit currently capture up
+     * to 25 frames per second.
+     */
+    fps?: number;
 
     /**
      * If specified, enables visual annotations on interacted elements during video recording.

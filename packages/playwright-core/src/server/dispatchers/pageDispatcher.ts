@@ -397,6 +397,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   async screencastStart(params: channels.PageScreencastStartParams, progress?: Progress): Promise<channels.PageScreencastStartResult> {
     if (this._screencastClient || this._videoRecorder)
       throw new Error('Screencast is already running');
+    if (params.fps !== undefined && params.fps <= 0)
+      throw new Error(`"fps" must be a positive number, got ${params.fps}`);
 
     if (params.sendFrames) {
       this._screencastClient = {

@@ -39,7 +39,7 @@ export class Screencast implements api.Screencast {
     });
   }
 
-  async start(options: { onFrame?: (frame: { data: Buffer, timestamp: number, viewportWidth: number, viewportHeight: number }) => Promise<any>|any, path?: string, size?: { width: number, height: number }, quality?: number } = {}): Promise<DisposableStub> {
+  async start(options: { onFrame?: (frame: { data: Buffer, timestamp: number, viewportWidth: number, viewportHeight: number }) => Promise<any>|any, path?: string, size?: { width: number, height: number }, quality?: number, fps?: number } = {}): Promise<DisposableStub> {
     if (this._started)
       throw new Error('Screencast is already started');
     this._started = true;
@@ -48,6 +48,7 @@ export class Screencast implements api.Screencast {
     const result = await this._page._channel.screencastStart({
       size: options.size,
       quality: options.quality,
+      fps: options.fps,
       sendFrames: !!options.onFrame,
       record: !!options.path,
     }, kNoTimeout);

@@ -1077,11 +1077,12 @@ const videoStart = declareCommand({
   }),
   options: z.object({
     size: z.string().optional().describe('Video frame size, e.g. "800x600". If not specified, the size of the recorded video will fit 800x800.'),
+    fps: numberArg.optional().describe('Video frame rate in frames per second, defaults to 25.'),
   }),
   toolName: 'browser_start_video',
-  toolParams: ({ filename, size }) => {
+  toolParams: ({ filename, size, fps }) => {
     const parsedSize = size ? size.split('x').map(Number) : undefined;
-    return { filename, size: parsedSize ? { width: parsedSize[0], height: parsedSize[1] } : undefined };
+    return { filename, size: parsedSize ? { width: parsedSize[0], height: parsedSize[1] } : undefined, fps };
   }
 });
 

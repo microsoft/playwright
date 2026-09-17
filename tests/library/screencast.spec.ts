@@ -225,6 +225,22 @@ test('start should work when recordVideo is set', async ({ browser }, testInfo) 
   expect(videoFiles2).toHaveLength(1);
 });
 
+test('start should record video with the requested fps', async ({ browser }, testInfo) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const videoPath = testInfo.outputPath('video.webm');
+  await page.screencast.start({ path: videoPath, fps: 60 });
+  await ensureSomeFrames(page);
+  await page.screencast.stop();
+  expect(new VideoPlayer(videoPath).fps).toBe(60);
+  await context.close();
+});
+
+test('start should throw on invalid fps', async ({ page }, testInfo) => {
+  const error = await page.screencast.start({ path: testInfo.outputPath('video.webm'), fps: -1 }).catch(e => e);
+  expect(error.message).toContain('"fps" must be a positive number, got -1');
+});
+
 test('start should fail when another recording is in progress', async ({ page, trace }, testInfo) => {
   test.skip(trace === 'on', 'trace=on has different screencast image configuration');
   await page.screencast.start({ path: testInfo.outputPath('video.webm') });

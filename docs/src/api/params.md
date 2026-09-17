@@ -858,6 +858,7 @@ When set to `minimal`, only record information necessary for routing from HAR. T
     Actual picture of each page will be scaled down if necessary to fit the specified size.
     - `width` <[int]> Video frame width.
     - `height` <[int]> Video frame height.
+  - `fps` ?<[int]> Frame rate of the recorded videos in frames per second. Defaults to `25`. Firefox and WebKit currently capture up to 25 frames per second.
   - `showActions` ?<[Object]> If specified, enables visual annotations on interacted elements during video recording.
     - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
     - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the action title overlay. Defaults to `"top-right"`.
@@ -886,6 +887,13 @@ not recorded. Make sure to call [`method: BrowserContext.close`] for videos to b
 Dimensions of the recorded videos. If not specified the size will be equal to `viewport`
 scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450.
 Actual picture of each page will be scaled down if necessary to fit the specified size.
+
+## context-option-recordvideo-fps
+* langs: csharp, java, python
+  - alias-python: record_video_fps
+- `recordVideoFps` <[int]>
+
+Frame rate of the recorded videos in frames per second. Defaults to `25`. Firefox and WebKit currently capture up to 25 frames per second.
 
 ## context-option-proxy
 - `proxy` <[Object]>

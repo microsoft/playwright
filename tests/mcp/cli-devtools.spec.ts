@@ -16,6 +16,8 @@
 
 import fs from 'fs';
 import path from 'path';
+import { spawnSync } from 'child_process';
+import { registry } from '../../packages/playwright-core/lib/coreBundle';
 import { test, expect } from './cli-fixtures';
 
 test('console', async ({ cli, server }) => {
@@ -245,6 +247,16 @@ test('video-start-stop', async ({ cli, server }) => {
   expect(tabCloseOutput).toContain(`0: (current) [](${server.EMPTY_PAGE})`);
   const { output: videoStopOutput } = await cli('video-stop');
   expect(videoStopOutput).toContain(`### Result\n- [Video](recordings${path.sep}video.webm)\n- [Video](recordings${path.sep}video-1.webm)`);
+});
+
+test('video-start with fps', async ({ cli, server }, testInfo) => {
+  await cli('open', server.HELLO_WORLD);
+  const { output } = await cli('video-start', 'video.webm', '--fps=60');
+  expect(output).toContain('Video recording started.');
+  await cli('video-stop');
+  const ffmpeg = registry.registry.findExecutable('ffmpeg')!.executablePath();
+  const { stderr } = spawnSync(ffmpeg, ['-i', testInfo.outputPath('video.webm')]);
+  expect(stderr.toString()).toContain(', 60 fps,');
 });
 
 test('video-chapter', async ({ cli, server }) => {

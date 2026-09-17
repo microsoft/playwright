@@ -256,6 +256,7 @@ export interface Screencast {
       height: number;
     };
     quality?: number;
+    fps?: number;
   }): Promise<Disposable>;
 }
 

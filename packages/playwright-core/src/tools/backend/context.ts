@@ -94,7 +94,7 @@ export type FilenameTemplate = {
   date?: Date;
 };
 
-type VideoParams = { size?: { width: number; height: number } };
+type VideoParams = { size?: { width: number; height: number }, fps?: number };
 
 export class Context {
   readonly config: ContextConfig;

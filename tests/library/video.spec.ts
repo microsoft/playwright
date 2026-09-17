@@ -472,6 +472,32 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(450);
   });
 
+  it('should record video with the requested fps', async ({ browser }, testInfo) => {
+    const context = await browser.newContext({
+      recordVideo: {
+        dir: testInfo.outputPath(''),
+        fps: 60,
+      },
+    });
+
+    const page = await context.newPage();
+    await ensureSomeFrames(page);
+    await context.close();
+
+    const videoPlayer = new VideoPlayer(await page.video().path());
+    expect(videoPlayer.fps).toBe(60);
+  });
+
+  it('should throw on invalid fps', async ({ browser }, testInfo) => {
+    const error = await browser.newContext({
+      recordVideo: {
+        dir: testInfo.outputPath(''),
+        fps: 0,
+      },
+    }).catch(e => e);
+    expect(error.message).toContain('"recordVideo.fps" must be a positive number, got 0');
+  });
+
   it('should be 800x600 with null viewport', async ({ browser, headless, browserName, isBidi }, testInfo) => {
     it.fixme(browserName === 'firefox' && headless && !isBidi, 'Fails in headless on bots');
 

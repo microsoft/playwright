@@ -375,6 +375,9 @@ Chromium/Chrome: Due to recent Chrome policy changes, automating the default Chr
 ### option: BrowserType.launchPersistentContext.clientCertificates = %%-context-option-clientCertificates-%%
 * since: 1.46
 
+### option: BrowserType.launchPersistentContext.recordVideoFps = %%-context-option-recordvideo-fps-%%
+* since: v1.64
+
 ## async method: BrowserType.launchServer
 * since: v1.8
 * langs: js

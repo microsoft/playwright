@@ -189,6 +189,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
       width: tInt,
       height: tInt,
     })),
+    fps: tOptional(tInt),
     showActions: tOptional(tObject({
       duration: tOptional(tFloat),
       position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
@@ -472,6 +473,7 @@ scheme.BrowserNewContextParams = tObject({
       width: tInt,
       height: tInt,
     })),
+    fps: tOptional(tInt),
     showActions: tOptional(tObject({
       duration: tOptional(tFloat),
       position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
@@ -546,6 +548,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
       width: tInt,
       height: tInt,
     })),
+    fps: tOptional(tInt),
     showActions: tOptional(tObject({
       duration: tOptional(tFloat),
       position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
@@ -642,6 +645,7 @@ scheme.BrowserContextInitializer = tObject({
         width: tInt,
         height: tInt,
       })),
+      fps: tOptional(tInt),
       showActions: tOptional(tObject({
         duration: tOptional(tFloat),
         position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
@@ -1043,6 +1047,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
       width: tInt,
       height: tInt,
     })),
+    fps: tOptional(tInt),
     showActions: tOptional(tObject({
       duration: tOptional(tFloat),
       position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
@@ -1132,6 +1137,7 @@ scheme.ElectronLaunchParams = tObject({
       width: tInt,
       height: tInt,
     })),
+    fps: tOptional(tInt),
     showActions: tOptional(tObject({
       duration: tOptional(tFloat),
       position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
@@ -2611,6 +2617,7 @@ scheme.PageScreencastStartParams = tObject({
     height: tInt,
   })),
   quality: tOptional(tInt),
+  fps: tOptional(tInt),
   sendFrames: tOptional(tBoolean),
   record: tOptional(tBoolean),
 });

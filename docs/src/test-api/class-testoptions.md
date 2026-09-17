@@ -725,6 +725,7 @@ export default defineConfig({
   - `size` ?<[Object]> Size of the recorded video. Optional.
     - `width` <[int]>
     - `height` <[int]>
+  - `fps` ?<[int]> Frame rate of the recorded video in frames per second. Defaults to `25`.
   - `show` ?<[Object]> If specified, visually annotates the video with test information and action highlights.
     - `actions` ?<[Object]> Controls visual annotations on interacted elements.
       - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
@@ -748,6 +749,8 @@ Whether to record video for each test. Defaults to `'off'`. The initial run of a
 See [video modes](../test-use-options.md#video-modes) for a side-by-side comparison of what each mode records and keeps.
 
 To control video size, pass an object with `mode` and `size` properties. If video size is not specified, it will be equal to [`property: TestOptions.viewport`] scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page will be scaled down if necessary to fit the specified size.
+
+To record smoother video of animations and scrolling, pass `fps`, for example `{ mode: 'on', size: { width: 1920, height: 1080 }, fps: 60 }`. Higher frame rates and sizes use more CPU for encoding. Firefox and WebKit currently capture up to 25 frames per second.
 
 To annotate actions in the video, pass `show` with `action` and/or `test` sub-options. The `action` option controls visual highlights on interacted elements with an optional `delay` in milliseconds (defaults to `500`). The `test` option controls which test information is displayed as a status overlay.
 

@@ -625,6 +625,7 @@ Page:
             width: int
             height: int
         quality: int?
+        fps: int?
         sendFrames: boolean?
         record: boolean?
       returns:
