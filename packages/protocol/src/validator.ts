@@ -195,6 +195,11 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
       position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
       fontSize: tOptional(tInt),
       cursor: tOptional(tEnum(['none', 'pointer'])),
+      style: tOptional(tObject({
+        point: tOptional(tString),
+        highlight: tOptional(tString),
+        title: tOptional(tString),
+      })),
     })),
   })),
   strictSelectors: tOptional(tBoolean),
@@ -479,6 +484,11 @@ scheme.BrowserNewContextParams = tObject({
       position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
       fontSize: tOptional(tInt),
       cursor: tOptional(tEnum(['none', 'pointer'])),
+      style: tOptional(tObject({
+        point: tOptional(tString),
+        highlight: tOptional(tString),
+        title: tOptional(tString),
+      })),
     })),
   })),
   strictSelectors: tOptional(tBoolean),
@@ -554,6 +564,11 @@ scheme.BrowserNewContextForReuseParams = tObject({
       position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
       fontSize: tOptional(tInt),
       cursor: tOptional(tEnum(['none', 'pointer'])),
+      style: tOptional(tObject({
+        point: tOptional(tString),
+        highlight: tOptional(tString),
+        title: tOptional(tString),
+      })),
     })),
   })),
   strictSelectors: tOptional(tBoolean),
@@ -651,6 +666,11 @@ scheme.BrowserContextInitializer = tObject({
         position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
         fontSize: tOptional(tInt),
         cursor: tOptional(tEnum(['none', 'pointer'])),
+        style: tOptional(tObject({
+          point: tOptional(tString),
+          highlight: tOptional(tString),
+          title: tOptional(tString),
+        })),
       })),
     })),
     strictSelectors: tOptional(tBoolean),
@@ -1053,6 +1073,11 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
       position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
       fontSize: tOptional(tInt),
       cursor: tOptional(tEnum(['none', 'pointer'])),
+      style: tOptional(tObject({
+        point: tOptional(tString),
+        highlight: tOptional(tString),
+        title: tOptional(tString),
+      })),
     })),
   })),
   strictSelectors: tOptional(tBoolean),
@@ -1143,6 +1168,11 @@ scheme.ElectronLaunchParams = tObject({
       position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
       fontSize: tOptional(tInt),
       cursor: tOptional(tEnum(['none', 'pointer'])),
+      style: tOptional(tObject({
+        point: tOptional(tString),
+        highlight: tOptional(tString),
+        title: tOptional(tString),
+      })),
     })),
   })),
   strictSelectors: tOptional(tBoolean),
@@ -2607,6 +2637,11 @@ scheme.PageScreencastShowActionsParams = tObject({
   position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
   fontSize: tOptional(tInt),
   cursor: tOptional(tEnum(['none', 'pointer'])),
+  style: tOptional(tObject({
+    point: tOptional(tString),
+    highlight: tOptional(tString),
+    title: tOptional(tString),
+  })),
 });
 scheme.PageScreencastShowActionsResult = tOptional(tObject({}));
 scheme.PageScreencastHideActionsParams = tOptional(tObject({}));

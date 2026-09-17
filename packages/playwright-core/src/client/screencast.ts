@@ -71,8 +71,8 @@ export class Screencast implements api.Screencast {
     });
   }
 
-  async showActions(options?: { duration?: number, position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right', fontSize?: number, cursor?: 'none' | 'pointer' }): Promise<DisposableStub> {
-    await this._page._channel.screencastShowActions({ duration: options?.duration, position: options?.position, fontSize: options?.fontSize, cursor: options?.cursor }, kNoTimeout);
+  async showActions(options?: { duration?: number, position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right', fontSize?: number, cursor?: 'none' | 'pointer', style?: { point?: string, highlight?: string, title?: string } }): Promise<DisposableStub> {
+    await this._page._channel.screencastShowActions({ duration: options?.duration, position: options?.position, fontSize: options?.fontSize, cursor: options?.cursor, style: options?.style }, kNoTimeout);
     return new DisposableStub(() => this._page._channel.screencastHideActions({}, kNoTimeout));
   }
 

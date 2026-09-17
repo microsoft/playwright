@@ -1078,11 +1078,12 @@ const videoStart = declareCommand({
   options: z.object({
     size: z.string().optional().describe('Video frame size, e.g. "800x600". If not specified, the size of the recorded video will fit 800x800.'),
     fps: numberArg.optional().describe('Video frame rate in frames per second, defaults to 25.'),
+    cursor: z.boolean().optional().describe('Render an animated mouse cursor that travels to each action point. Paces actions by 800ms so that the cursor has time to travel.'),
   }),
   toolName: 'browser_start_video',
-  toolParams: ({ filename, size, fps }) => {
+  toolParams: ({ filename, size, fps, cursor }) => {
     const parsedSize = size ? size.split('x').map(Number) : undefined;
-    return { filename, size: parsedSize ? { width: parsedSize[0], height: parsedSize[1] } : undefined, fps };
+    return { filename, size: parsedSize ? { width: parsedSize[0], height: parsedSize[1] } : undefined, fps, cursor };
   }
 });
 
@@ -1114,16 +1115,19 @@ const actionCursorArg = z.enum(['none', 'pointer']);
 
 const videoShowActions = declareCommand({
   name: 'video-show-actions',
-  description: 'Annotate subsequent CLI/MCP actions on the page with a callout that names the action and highlights the target element',
+  description: 'Annotate subsequent CLI/MCP actions on the page with a callout that names the action and, when styled, marks the action point and highlights the target element',
   category: 'devtools',
   args: z.object({}),
   options: z.object({
     duration: numberArg.optional().describe('How long each action annotation stays on screen, in milliseconds. Defaults to 500.'),
     position: actionPositionArg.optional().describe('Where to place the action title: top-left, top, top-right, bottom-left, bottom, bottom-right. Defaults to top-right.'),
     cursor: actionCursorArg.optional().describe('Cursor decoration: "pointer" (default) animates a mouse pointer between action points; "none" disables it.'),
+    ['point-style']: z.string().optional().describe('CSS declarations for the zero-sized marker centered on the action point, e.g. "width: 20px; height: 20px; border-radius: 50%; background: red". Not shown when omitted.'),
+    ['highlight-style']: z.string().optional().describe('CSS declarations for the box that covers the target element, e.g. "outline: 2px solid #333". Not shown when omitted.'),
+    ['title-style']: z.string().optional().describe('CSS declarations for the action title, e.g. "font-size: 16px".'),
   }),
   toolName: 'browser_video_show_actions',
-  toolParams: ({ duration, position, cursor }) => ({ duration, position, cursor }),
+  toolParams: ({ duration, position, cursor, ['point-style']: point, ['highlight-style']: highlight, ['title-style']: title }) => ({ duration, position, cursor, style: point || highlight || title ? { point, highlight, title } : undefined }),
 });
 
 const videoHideActions = declareCommand({

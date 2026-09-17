@@ -18,6 +18,11 @@ import { expect, browserTest as test } from '../config/browserTest';
 
 test.skip(({ mode }) => mode !== 'default', 'Annotations use an open shadow root only in default mode');
 
+const style = {
+  point: 'width: 20px; height: 20px; border-radius: 50%; background: red',
+  highlight: 'outline: 2px solid #333',
+};
+
 test('should show annotation on click', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -26,10 +31,11 @@ test('should show annotation on click', async ({ browser, server }) => {
   await page.screencast.showActions({ duration: 5000 });
   page.click('button').catch(() => {});
 
-  await expect(page.locator('x-pw-highlight')).toBeVisible();
-  await expect(page.locator('x-pw-action-point')).toBeVisible();
   await expect(page.locator('x-pw-title')).toBeVisible();
   await expect(page.locator('x-pw-title')).toHaveText(/click/i);
+  // Point and highlight are only shown when styled.
+  await expect(page.locator('x-pw-screencast-highlight')).toHaveCount(0);
+  await expect(page.locator('x-pw-screencast-point')).toHaveCount(0);
 
   await context.close();
 });
@@ -39,44 +45,37 @@ test('should render annotation styles', async ({ browser, server }) => {
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
 
-  await page.screencast.showActions({ duration: 5000, fontSize: 32 });
+  await page.screencast.showActions({ duration: 5000, fontSize: 32, style: { ...style, title: 'top: 100px; background-color: rgb(1, 2, 3)' } });
+  const buttonBox = (await page.locator('button').boundingBox())!;
   page.click('button').catch(() => {});
 
-  // Highlight box: blue overlay with non-zero dimensions.
-  const highlight = page.locator('x-pw-highlight');
+  // Highlight: styled box that covers the target.
+  const highlight = page.locator('x-pw-screencast-highlight');
   await expect(highlight).toBeVisible();
-  const highlightStyle = await highlight.evaluate((el: HTMLElement) => ({
-    backgroundColor: el.style.backgroundColor,
-    borderColor: el.style.borderColor,
-  }));
-  expect(highlightStyle.backgroundColor).toBe('rgba(0, 128, 255, 0.15)');
-  expect(highlightStyle.borderColor).toBe('rgba(0, 128, 255, 0.6)');
-  const box = await highlight.boundingBox();
-  expect(box!.width).toBeGreaterThan(0);
-  expect(box!.height).toBeGreaterThan(0);
+  expect(await highlight.evaluate((el: HTMLElement) => getComputedStyle(el).outlineWidth)).toBe('2px');
+  const box = (await highlight.boundingBox())!;
+  expect(box.x).toBeCloseTo(buttonBox.x, 0);
+  expect(box.y).toBeCloseTo(buttonBox.y, 0);
+  expect(box.width).toBeCloseTo(buttonBox.width, 0);
+  expect(box.height).toBeCloseTo(buttonBox.height, 0);
 
-  // Action point: 20x20 red circle.
-  const actionPoint = page.locator('x-pw-action-point');
-  await expect(actionPoint).toBeVisible();
-  const apStyle = await actionPoint.evaluate((el: HTMLElement) => {
-    const cs = getComputedStyle(el);
-    return { width: cs.width, height: cs.height, background: cs.backgroundColor, borderRadius: cs.borderRadius };
-  });
-  expect(apStyle.width).toBe('20px');
-  expect(apStyle.height).toBe('20px');
-  expect(apStyle.background).toBe('rgb(255, 0, 0)');
-  expect(apStyle.borderRadius).toBe('10px');
+  // Point: styled marker centered on the click point, Firefox rounds the click point.
+  const pointBox = (await page.locator('x-pw-screencast-point').boundingBox())!;
+  expect(pointBox.width).toBe(20);
+  expect(Math.abs(pointBox.x + 10 - (buttonBox.x + buttonBox.width / 2))).toBeLessThanOrEqual(1);
+  expect(Math.abs(pointBox.y + 10 - (buttonBox.y + buttonBox.height / 2))).toBeLessThanOrEqual(1);
 
-  // Title: white text, dark background, positioned top-right by default, custom fontSize.
+  // Title: style applies on top of deprecated fontSize, position wins over style.
   const title = page.locator('x-pw-title');
   await expect(title).toBeVisible();
   const titleStyle = await title.evaluate((el: HTMLElement) => {
     const cs = getComputedStyle(el);
     return {
-      color: cs.color, borderRadius: cs.borderRadius, padding: cs.padding,
+      color: cs.color, borderRadius: cs.borderRadius, padding: cs.padding, backgroundColor: cs.backgroundColor,
       top: el.style.top, right: el.style.right, fontSize: el.style.fontSize,
     };
   });
+  expect(titleStyle.backgroundColor).toBe('rgb(1, 2, 3)');
   expect(titleStyle.color).toBe('rgb(255, 255, 255)');
   expect(titleStyle.borderRadius).toBe('6px');
   expect(titleStyle.padding).toBe('6px');
@@ -124,10 +123,11 @@ test('should clear annotation after duration', async ({ browser, server }) => {
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
 
-  await page.screencast.showActions({ duration: 1000 });
+  await page.screencast.showActions({ duration: 1000, style });
   await page.click('button');
 
-  await expect(page.locator('x-pw-action-point')).toBeHidden();
+  await expect(page.locator('x-pw-screencast-point')).toHaveCount(0);
+  await expect(page.locator('x-pw-screencast-highlight')).toHaveCount(0);
   await expect(page.locator('x-pw-title')).toBeHidden();
 
   await context.close();
@@ -234,9 +234,31 @@ test('cursor: "none" suppresses the action cursor decoration', async ({ browser,
   await page.screencast.showActions({ duration: 5000, cursor: 'none' });
   page.click('button').catch(() => {});
 
-  // The click marker still renders, but the cursor does not.
-  await expect(page.locator('x-pw-action-point')).toBeVisible();
+  // The title still renders, but the cursor does not.
+  await expect(page.locator('x-pw-title')).toBeVisible();
   await expect(page.locator('x-pw-action-cursor')).toBeHidden();
+
+  await context.close();
+});
+
+test('cursor stays at the last action point until hideActions', async ({ browser, server }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/input/button.html');
+
+  await page.screencast.showActions({ duration: 100 });
+  await page.click('button');
+  await expect(page.locator('x-pw-title')).toBeHidden();
+  const cursor = page.locator('x-pw-action-cursor');
+  await expect(cursor).toBeVisible();
+  const position = await cursor.evaluate((el: HTMLElement) => ({ top: el.style.top, left: el.style.left }));
+
+  await page.goto(server.EMPTY_PAGE);
+  await expect(cursor).toBeVisible();
+  expect(await cursor.evaluate((el: HTMLElement) => ({ top: el.style.top, left: el.style.left }))).toEqual(position);
+
+  await page.screencast.hideActions();
+  await expect(cursor).toBeHidden();
 
   await context.close();
 });

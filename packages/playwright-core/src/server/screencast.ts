@@ -40,6 +40,7 @@ type ActionOptions = {
   position?: AnnotatePosition,
   fontSize?: number,
   cursor?: 'none' | 'pointer',
+  style?: { point?: string, highlight?: string, title?: string },
 };
 
 export class Screencast implements InstrumentationListener {
@@ -48,10 +49,15 @@ export class Screencast implements InstrumentationListener {
   private _actions: ActionOptions | undefined;
   private _size: types.Size | undefined;
   private _lastFrame: types.ScreencastFrame | undefined;
+  private _cursorPoint: types.Point | undefined;
 
   constructor(page: Page) {
     this.page = page;
     this.page.instrumentation.addListener(this, this.page.browserContext);
+    this.page.on(Page.Events.InternalFrameNavigatedToNewDocument, frame => {
+      if (!frame.parentFrame() && this._cursorPoint)
+        this._restoreCursor(this._cursorPoint).catch(e => debugLogger.log('error', e));
+    });
   }
 
   async handlePageOrContextClose() {
@@ -75,11 +81,32 @@ export class Screencast implements InstrumentationListener {
   }
 
   showActions(options: ActionOptions) {
-    this._actions = options;
+    // Deprecated fontSize is folded into the title style, explicit title style wins.
+    const title = options.fontSize !== undefined ? `font-size: ${options.fontSize}px; ${options.style?.title ?? ''}` : options.style?.title;
+    this._actions = { ...options, style: { ...options.style, title } };
+    if (options.cursor === 'none')
+      this._hideCursor();
   }
 
   hideActions() {
     this._actions = undefined;
+    this._hideCursor();
+  }
+
+  private async _restoreCursor(point: types.Point) {
+    const utility = await this.page.mainFrame().utilityContext();
+    await utility.evaluate(({ injected, point }) => injected.restoreScreencastCursor(point), { injected: await utility.injectedScript(), point });
+  }
+
+  private _hideCursor() {
+    if (!this._cursorPoint)
+      return;
+    this._cursorPoint = undefined;
+    const frame = this.page.mainFrame();
+    frame.raceAgainstEvaluationStallingEvents(async () => {
+      const injectedScript = await frame.existingContext('utility')?.injectedScript();
+      await injectedScript?.evaluate(injected => injected.hideScreencastCursor());
+    }).catch(e => debugLogger.log('error', e));
   }
 
   addClient(client: ScreencastClient): { size: types.Size } {
@@ -166,10 +193,14 @@ export class Screencast implements InstrumentationListener {
     if (page !== this.page)
       return;
 
-    if (!box && (sdkObject instanceof ElementHandle))
+    if (!box && this._actions.style?.highlight && (sdkObject instanceof ElementHandle))
       box = await sdkObject.boundingBox(nullProgress) || undefined;
 
     const actionTitle = renderFullTitleForCall(progress.metadata, this.page.browserContext._browser.sdkLanguage());
+    const cursor = this._actions?.cursor ?? 'pointer';
+    const lastCursorPoint = this._cursorPoint;
+    if (point && cursor !== 'none')
+      this._cursorPoint = point;
     const utility = await progress.race(page.mainFrame().utilityContext());
 
     // Run this outside of the progress timer.
@@ -186,8 +217,9 @@ export class Screencast implements InstrumentationListener {
       box,
       actionTitle,
       position: this._actions?.position,
-      fontSize: this._actions?.fontSize,
-      cursor: this._actions?.cursor ?? 'pointer',
+      cursor,
+      style: this._actions?.style,
+      lastCursorPoint,
     }).catch(e => debugLogger.log('error', e)));
   }
 }

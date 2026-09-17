@@ -31,13 +31,14 @@ const videoStart = defineTool({
         height: z.number().describe('Video height'),
       }).optional().describe('Video size'),
       fps: z.number().optional().describe('Video frame rate in frames per second, defaults to 25'),
+      cursor: z.boolean().optional().describe('Render an animated mouse cursor that travels to each action point. Paces actions by 800ms so that the cursor has time to travel.'),
     }),
     type: 'readOnly',
   },
 
   handle: async (context, params, response) => {
     const resolvedFile = await response.resolveClientOutputFile({ prefix: 'video', ext: 'webm', suggestedFilename: params.filename }, 'Video');
-    await context.startVideoRecording(resolvedFile.fileName, { size: params.size, fps: params.fps });
+    await context.startVideoRecording(resolvedFile.fileName, { size: params.size, fps: params.fps, cursor: params.cursor });
     response.addTextResult('Video recording started.');
   },
 });
@@ -104,11 +105,16 @@ const videoShowActions = defineTool({
   schema: {
     name: 'browser_video_show_actions',
     title: 'Show action overlays',
-    description: 'Annotate subsequent actions performed on the page with a callout that names the action and highlights the target element. Useful while video recording or screencasting.',
+    description: 'Annotate subsequent actions performed on the page with a callout that names the action and, when styled, marks the action point and highlights the target element. Useful while video recording or screencasting.',
     inputSchema: z.object({
       duration: z.number().optional().describe('How long each action annotation stays on screen, in milliseconds. Defaults to 500.'),
       position: actionPosition.optional().describe('Where to place the action title relative to the page. Defaults to top-right.'),
       cursor: actionCursor.optional().describe('Cursor decoration for pointer actions. "pointer" (default) animates a mouse pointer from the previous action point to the next one; "none" disables the cursor decoration.'),
+      style: z.object({
+        point: z.string().optional().describe('CSS declarations for the zero-sized marker centered on the action point, e.g. "width: 20px; height: 20px; border-radius: 50%; background: red". Not shown when omitted.'),
+        highlight: z.string().optional().describe('CSS declarations for the box that covers the target element, e.g. "outline: 2px solid #333". Not shown when omitted.'),
+        title: z.string().optional().describe('CSS declarations for the action title, e.g. "font-size: 16px".'),
+      }).optional().describe('Styles of the action decorations.'),
     }),
     type: 'readOnly',
   },
@@ -119,6 +125,7 @@ const videoShowActions = defineTool({
       duration: params.duration,
       position: params.position,
       cursor: params.cursor,
+      style: params.style,
     });
     response.addTextResult('Action annotations enabled.');
   },
