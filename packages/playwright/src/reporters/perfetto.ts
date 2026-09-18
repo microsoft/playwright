@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { once } from 'events';
 import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
@@ -298,6 +299,10 @@ class ChunkWriter {
     const gzip = file.endsWith('.gz') ? zlib.createGzip() : undefined;
     gzip?.pipe(fileStream);
     this._stream = gzip ?? fileStream;
+    // pipe() only unpipes on a destination error, so the gzip stream would never
+    // emit 'drain' or 'error' again. Destroy it to wake up the pending write.
+    if (gzip)
+      fileStream.on('error', error => gzip.destroy(error));
     // The file is only complete once the destination closes, which is later than
     // the gzip stream ending.
     this._closed = new Promise(resolve => fileStream.on('close', resolve));
@@ -309,7 +314,7 @@ class ChunkWriter {
     if (this._error)
       throw this._error;
     if (!this._stream.write(chunk))
-      await new Promise<void>(resolve => this._stream.once('drain', () => resolve()));
+      await once(this._stream, 'drain'); // Rejects if 'error' is emitted first.
   }
 
   async close() {
