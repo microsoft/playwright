@@ -166,16 +166,14 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       const attrSelector = parseAttributeSelector(part.body as string, true);
       const options: LocatorOptions = { attrs: [] };
       for (const attr of attrSelector.attributes) {
-        if (attr.name === 'name') {
-          if (options.exact !== undefined && options.exact !== attr.caseSensitive)
-            throw new Error(`Conflicting exactness in internal:role selector: ${stringifySelector({ parts: [part] })}`);
-          options.exact = attr.caseSensitive;
-          options.name = attr.value;
-        } else if (attr.name === 'description') {
-          if (options.exact !== undefined && options.exact !== attr.caseSensitive)
-            throw new Error(`Conflicting exactness in internal:role selector: ${stringifySelector({ parts: [part] })}`);
-          options.exact = attr.caseSensitive;
-          options.description = attr.value;
+        if (attr.name === 'name' || attr.name === 'description') {
+          // Only string values carry exactness, regular expressions are used as is.
+          if (typeof attr.value === 'string') {
+            if (options.exact !== undefined && options.exact !== attr.caseSensitive)
+              throw new Error(`Conflicting exactness in internal:role selector: ${stringifySelector({ parts: [part] })}`);
+            options.exact = attr.caseSensitive;
+          }
+          options[attr.name] = attr.value;
         } else {
           if (attr.name === 'level' && typeof attr.value === 'string')
             attr.value = +attr.value;
