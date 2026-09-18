@@ -37,11 +37,11 @@ module.exports = MyReporter;
 
 ```js tab=js-ts title="my-awesome-reporter.ts"
 import type {
-  Reporter, FullConfig, Suite, TestCase, TestResult, FullResult
+  Reporter, ReporterOptions, FullConfig, Suite, TestCase, TestResult, FullResult
 } from '@playwright/test/reporter';
 
 class MyReporter implements Reporter {
-  constructor(options: { customOption?: string } = {}) {
+  constructor(options: ReporterOptions & { customOption?: string } = {}) {
     console.log(`my-awesome-reporter setup with customOption set to ${options.customOption}`);
   }
 
@@ -73,6 +73,16 @@ export default defineConfig({
   reporter: [['./my-awesome-reporter.ts', { customOption: 'some value' }]],
 });
 ```
+
+**Reporter options**
+
+The reporter constructor receives its configured options together with common options described by the `ReporterOptions` type:
+
+| Option | Description |
+|---|---|
+| `onlyFailures` | Set to `true` by `--reporter-only-failures`, overriding a configured value of `false`. Custom reporters can use it to limit their output to failed, flaky, and interrupted tests. |
+
+This option does not filter or delay reporter callbacks.  Reporters still receive the complete suite, every test result, and all timing information.
 
 Here is a typical order of reporter calls:
 * [`method: Reporter.onBegin`] is called once with a root suite that contains all other suites and tests. Learn more about [suites hierarchy][Suite].

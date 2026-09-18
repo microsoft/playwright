@@ -103,6 +103,7 @@ npx playwright test --ui
 | `--quiet` | Suppress stdio. |
 | `--repeat-each <N>` | Run each test `N` times (default: 1). |
 | `--reporter <reporter>` | Reporter to use, comma-separated, can be "dot", "line", "list", or others (default: "list" locally and "dot" on CI). You can also pass a path to a custom reporter file. |
+| `--reporter-only-failures` | Report only failed, flaky, and interrupted tests. Terminal summaries retain the full run counts. HTML, JSON, JUnit, and Perfetto reports contain only the included results; blob reports remain complete. Custom reporters receive the `onlyFailures` constructor option. `--list` output is unchanged. |
 | `--retries <retries>` | Maximum retry count for flaky tests, zero for no retries (default: no retries). |
 | `--shard <shard>` | Shard tests and execute only the selected shard, specified in the form "current/all", 1-based, e.g., "3/5". |
 | `--test-list <file>` | Path to a file containing a list of tests to run. See [test list](#test-list) for details. |
@@ -318,6 +319,7 @@ npx playwright merge-reports ./reports
 | :--- | :--- |
 | `-c, --config <file>` | Configuration file. Can be used to specify additional configuration for the output report |
 | `--reporter <reporter>` | Reporter to use, comma-separated, can be "list", "line", "dot", "json", "junit", "null", "github", "html", "blob" (default: "list" locally and "dot" on CI) |
+| `--reporter-only-failures` | Report only failed, flaky, and interrupted tests in terminal, HTML, JSON, JUnit, and Perfetto output. Blob reports remain complete. Custom reporters receive the `onlyFailures` constructor option. |
 
 ### Clear Cache
 

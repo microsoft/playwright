@@ -39,6 +39,7 @@ class ListReporter extends TerminalReporter {
   private _needNewLine = false;
   private _printSteps: boolean;
   private _printFailuresInline: boolean;
+  private _printOnlyFailures: boolean;
   private _failureIndex = new Map<TestCase, number>();
   private _paused = new Set<TestResult>();
 
@@ -47,12 +48,13 @@ class ListReporter extends TerminalReporter {
     super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_LIST_OMIT_TAGS', options?.omitTags), lastResult: printFailuresInline });
     this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options?.printSteps);
     this._printFailuresInline = printFailuresInline;
+    this._printOnlyFailures = !!options?.onlyFailures || getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_ONLY_FAILURES', options?.printOnlyFailures);
   }
 
   override onBegin(suite: Suite) {
     super.onBegin(suite);
     const startingMessage = this.generateStartingMessage();
-    if (startingMessage) {
+    if (!this._printOnlyFailures && startingMessage) {
       this.writeLine(startingMessage);
       this.writeLine('');
     }
@@ -62,7 +64,7 @@ class ListReporter extends TerminalReporter {
     const index = String(this._resultIndex.size + 1);
     this._resultIndex.set(result, index);
 
-    if (!this.screen.isTTY)
+    if (this._printOnlyFailures || !this.screen.isTTY)
       return;
     this._maybeWriteNewLine();
     this._testRows.set(test, this._lastRow);
@@ -93,7 +95,7 @@ class ListReporter extends TerminalReporter {
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
-    if (step.category !== 'test.step')
+    if (this._printOnlyFailures || step.category !== 'test.step')
       return;
     const testIndex = this._resultIndex.get(result) || '';
 
@@ -112,7 +114,7 @@ class ListReporter extends TerminalReporter {
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    if (step.category !== 'test.step')
+    if (this._printOnlyFailures || step.category !== 'test.step')
       return;
 
     const testIndex = this._resultIndex.get(result) || '';
@@ -193,9 +195,9 @@ class ListReporter extends TerminalReporter {
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
     const wasPaused = this._paused.delete(result);
-    if (!wasPaused)
-      this._updateTestLine(test, result);
     const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
+    if (!wasPaused && (!this._printOnlyFailures || isFailure))
+      this._updateTestLine(test, result);
     if (!wasPaused && this._printFailuresInline && isFailure)
       this._printFailure(test);
   }
@@ -248,7 +250,7 @@ class ListReporter extends TerminalReporter {
   private _updateOrAppendLine<T>(entityRowNumbers: Map<T, number>, entity: T, text: string, prefix: string) {
     const row = entityRowNumbers.get(entity);
     // Only update the line if we assume that the line is still on the screen
-    if (row !== undefined && this.screen.isTTY && this._lastRow - row < this.screen.ttyHeight) {
+    if (!this._printOnlyFailures && row !== undefined && this.screen.isTTY && this._lastRow - row < this.screen.ttyHeight) {
       this._updateLine(row, text, prefix);
     } else {
       this._maybeWriteNewLine();

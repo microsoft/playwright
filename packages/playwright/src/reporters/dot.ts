@@ -24,14 +24,17 @@ import type { CommonReporterOptions, TerminalReporterOptions } from './base';
 
 class DotReporter extends TerminalReporter {
   private _counter = 0;
+  private _printOnlyFailures: boolean;
 
   constructor(options?: DotReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
     super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_DOT_OMIT_TAGS', options?.omitTags) });
+    this._printOnlyFailures = !!options?.onlyFailures || getAsBooleanFromENV('PLAYWRIGHT_DOT_PRINT_ONLY_FAILURES', options?.printOnlyFailures);
   }
 
   override onBegin(suite: Suite) {
     super.onBegin(suite);
-    this.writeLine(this.generateStartingMessage());
+    if (!this._printOnlyFailures)
+      this.writeLine(this.generateStartingMessage());
   }
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
@@ -48,6 +51,8 @@ class DotReporter extends TerminalReporter {
 
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
+    if (this._printOnlyFailures)
+      return;
     if (this._counter === 80) {
       this.screen.stdout.write('\n');
       this._counter = 0;

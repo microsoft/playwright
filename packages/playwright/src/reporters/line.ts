@@ -27,15 +27,17 @@ class LineReporter extends TerminalReporter {
   private _failures = 0;
   private _lastTest: TestCase | undefined;
   private _didBegin = false;
+  private _printOnlyFailures: boolean;
 
   constructor(options?: LineReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
     super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_LINE_OMIT_TAGS', options?.omitTags) });
+    this._printOnlyFailures = !!options?.onlyFailures || getAsBooleanFromENV('PLAYWRIGHT_LINE_PRINT_ONLY_FAILURES', options?.printOnlyFailures);
   }
 
   override onBegin(suite: Suite) {
     super.onBegin(suite);
     const startingMessage = this.generateStartingMessage();
-    if (startingMessage) {
+    if (!this._printOnlyFailures && startingMessage) {
       this.writeLine(startingMessage);
       this.writeLine();
     }
@@ -55,7 +57,7 @@ class LineReporter extends TerminalReporter {
   private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
     if (this.config.quiet)
       return;
-    if (!process.env.PW_TEST_DEBUG_REPORTERS)
+    if (!this._printOnlyFailures && !process.env.PW_TEST_DEBUG_REPORTERS)
       stream.write(`\u001B[1A\u001B[2K`);
     if (test && this._lastTest !== test) {
       // Write new header for the output.
@@ -68,7 +70,8 @@ class LineReporter extends TerminalReporter {
     if (chunk[chunk.length - 1] !== '\n')
       this.writeLine();
 
-    this.writeLine();
+    if (!this._printOnlyFailures)
+      this.writeLine();
   }
 
   onTestBegin(test: TestCase, result: TestResult) {
@@ -91,7 +94,7 @@ class LineReporter extends TerminalReporter {
     if (!process.stdin.isTTY && !process.env.PW_TEST_DEBUG_REPORTERS)
       return;
 
-    if (!process.env.PW_TEST_DEBUG_REPORTERS)
+    if (!this._printOnlyFailures && !process.env.PW_TEST_DEBUG_REPORTERS)
       this.screen.stdout.write(`\u001B[1A\u001B[2K`);
 
     if (test.outcome() === 'unexpected') {
@@ -112,7 +115,7 @@ class LineReporter extends TerminalReporter {
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
     if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected' || result.status === 'interrupted')) {
-      if (!process.env.PW_TEST_DEBUG_REPORTERS)
+      if (!this._printOnlyFailures && !process.env.PW_TEST_DEBUG_REPORTERS)
         this.screen.stdout.write(`\u001B[1A\u001B[2K`);
       this.writeLine(this.formatFailure(test, ++this._failures));
       this.writeLine();
@@ -120,6 +123,8 @@ class LineReporter extends TerminalReporter {
   }
 
   private _updateLine(test: TestCase, result: TestResult, step?: TestStep) {
+    if (this._printOnlyFailures)
+      return;
     const retriesPrefix = result.retry ? ` (retries)` : ``;
     const prefix = `[${this._current}/${this.totalTestCount}]${retriesPrefix} `;
     const currentRetrySuffix = result.retry ? this.screen.colors.yellow(` (retry #${result.retry})`) : '';
@@ -134,14 +139,14 @@ class LineReporter extends TerminalReporter {
     super.onError(error);
 
     const message = this.formatError(error).message + '\n';
-    if (!process.env.PW_TEST_DEBUG_REPORTERS && this._didBegin)
+    if (!this._printOnlyFailures && !process.env.PW_TEST_DEBUG_REPORTERS && this._didBegin)
       this.screen.stdout.write(`\u001B[1A\u001B[2K`);
     this.screen.stdout.write(message);
     this.writeLine();
   }
 
   override async onEnd(result: FullResult) {
-    if (!process.env.PW_TEST_DEBUG_REPORTERS && this._didBegin)
+    if (!this._printOnlyFailures && !process.env.PW_TEST_DEBUG_REPORTERS && this._didBegin)
       this.screen.stdout.write(`\u001B[1A\u001B[2K`);
     await super.onEnd(result);
     this.epilogue(false);

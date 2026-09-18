@@ -362,7 +362,7 @@ export async function loadConfigFromFile(configFile: string | undefined, overrid
   return await loadConfig(resolveConfigLocation(configFile), overrides, ignoreDeps);
 }
 
-export async function loadEmptyConfigForMergeReports() {
+export async function loadEmptyConfigForMergeReports(overrides?: ConfigCLIOverrides) {
   // Merge reports is "different" for no good reason. It should not pick up local config from the cwd.
-  return await loadConfig({ configDir: process.cwd() });
+  return await loadConfig({ configDir: process.cwd() }, overrides);
 }

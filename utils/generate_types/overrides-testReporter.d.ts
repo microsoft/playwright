@@ -45,6 +45,14 @@ export interface Reporter {
   onEnd?(result: FullResult): Promise<{ status?: FullResult['status'] } | undefined | void> | void;
 }
 
+export type ReporterOptions = {
+  /**
+   * Whether `--reporter-only-failures` requests output limited to failed, flaky, and interrupted tests.
+   * Reporter callbacks still receive all tests and results.
+   */
+  onlyFailures?: boolean;
+};
+
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
     projects: {

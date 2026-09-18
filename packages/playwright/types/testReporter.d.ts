@@ -52,11 +52,11 @@ export interface FullResult {
  * ```js
  * // my-awesome-reporter.ts
  * import type {
- *   Reporter, FullConfig, Suite, TestCase, TestResult, FullResult
+ *   Reporter, ReporterOptions, FullConfig, Suite, TestCase, TestResult, FullResult
  * } from '@playwright/test/reporter';
  *
  * class MyReporter implements Reporter {
- *   constructor(options: { customOption?: string } = {}) {
+ *   constructor(options: ReporterOptions & { customOption?: string } = {}) {
  *     console.log(`my-awesome-reporter setup with customOption set to ${options.customOption}`);
  *   }
  *
@@ -91,6 +91,18 @@ export interface FullResult {
  *   reporter: [['./my-awesome-reporter.ts', { customOption: 'some value' }]],
  * });
  * ```
+ *
+ * **Reporter options**
+ *
+ * The reporter constructor receives its configured options together with common options described by the
+ * `ReporterOptions` type:
+ *
+ * | Option | Description |
+ * |---|---|
+ * | `onlyFailures` | Set to `true` by `--reporter-only-failures`, overriding a configured value of `false`. Custom reporters can use it to limit their output to failed, flaky, and interrupted tests. |
+ *
+ * This option does not filter or delay reporter callbacks.  Reporters still receive the complete suite, every test
+ * result, and all timing information.
  *
  * Here is a typical order of reporter calls:
  * - [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin) is called
@@ -263,6 +275,14 @@ export interface Reporter {
    */
   printsToStdio?(): boolean;
 }
+
+export type ReporterOptions = {
+  /**
+   * Whether `--reporter-only-failures` requests output limited to failed, flaky, and interrupted tests.
+   * Reporter callbacks still receive all tests and results.
+   */
+  onlyFailures?: boolean;
+};
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {

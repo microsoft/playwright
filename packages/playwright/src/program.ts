@@ -129,6 +129,7 @@ function addMergeReportsCommand(program: Command) {
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
   command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${config.defaultReporter}")`);
+  command.option('--reporter-only-failures', 'Only report failures with built-in reporters');
   command.addHelpText('afterAll', `
 Arguments [dir]:
   Directory containing blob reports.
@@ -230,6 +231,7 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--quiet', { description: `Suppress stdio` }],
   ['--repeat-each <N>', { description: `Run each test N times (default: 1)` }],
   ['--reporter <reporter>', { description: `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${config.defaultReporter}")` }],
+  ['--reporter-only-failures', { description: `Only report failures with built-in reporters` }],
   ['--retries <retries>', { description: `Maximum retry count for flaky tests, zero for no retries (default: no retries)` }],
   ['--run-agents <mode>', { description: `Run agents to generate the code for page.perform`, choices: ['missing', 'all', 'none'], preset: 'none' }],
   ['--shard <shard>', { description: `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"` }],

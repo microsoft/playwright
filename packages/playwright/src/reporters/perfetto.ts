@@ -21,10 +21,11 @@ import zlib from 'zlib';
 import { toPosixPath } from '@utils/fileUtils';
 import { getPlaywrightVersion } from 'playwright-core/lib/coreBundle';
 
-import { formatError, nonTerminalScreen, resolveOutputFile, CommonReporterOptions } from './base';
+import { createTestFilter, formatError, nonTerminalScreen, resolveOutputFile, visitTests } from './base';
 import { stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
+import type { CommonReporterOptions, TestFilter } from './base';
 import type { Writable } from 'stream';
 import type { PerfettoReporterOptions } from '../../types/test';
 import type { FullConfig, FullResult, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
@@ -64,8 +65,10 @@ class PerfettoReporter implements ReporterV2 {
   private _events: TraceEvent[] = [];
   private _laneEndTime = new Map<number, number>();
   private _globalErrors: { error: TestError, timestamp: number }[] = [];
+  private _testFilter: TestFilter | undefined;
 
   constructor(options: PerfettoReporterOptions & CommonReporterOptions) {
+    this._testFilter = createTestFilter(options);
     this._resolvedOutputFile = resolveOutputFile('PERFETTO', {
       ...options,
       default: {
@@ -97,7 +100,7 @@ class PerfettoReporter implements ReporterV2 {
 
   async onEnd(result: FullResult) {
     const entries: { test: TestCase, result: TestResult }[] = [];
-    for (const test of this._suite?.allTests() ?? []) {
+    for (const test of this._suite ? visitTests(this._suite, this._testFilter) : []) {
       for (const testResult of test.results)
         entries.push({ test, result: testResult });
     }
