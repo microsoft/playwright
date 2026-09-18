@@ -131,20 +131,10 @@ Save and restore browser state including cookies and localStorage:
 
 ### WebMCP tools
 
-Pages can register their own tools for agents through the experimental [WebMCP](https://webmachinelearning.github.io/webmcp/) API. When a page has them, the page status after a navigation reports how many, and `browser_webmcp_list` and `browser_webmcp_call` expose them:
-
--   **List tools**: See the tools the page registers, with their input schemas and annotations.
--   **Call a tool**: Invoke one by name, letting the page do the work instead of driving its UI.
+Pages can register their own tools for agents through the experimental [WebMCP](https://webmachinelearning.github.io/webmcp/) API. The tools of the current tab are offered as MCP tools named `webmcp_<tool>`.
 
 Tool names, descriptions, schemas and results are provided by the page, so treat them as untrusted input.
 
-WebMCP is experimental and only available in Chromium and Firefox behind a browser flag, passed through the [configuration file](#configuration-file):
-
-```json
-{
-  "browser": { "launchOptions": { "args": ["--enable-features=WebMCP"] } }
-}
-```
 
 ## Configuration
 

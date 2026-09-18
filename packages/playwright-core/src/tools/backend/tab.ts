@@ -479,13 +479,17 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   async updateWebMCPTools(): Promise<void> {
+    if (this.context.config.webmcp === false)
+      return;
     if (this._javaScriptBlocked())
       return;
     const listing = await listWebMCPTools(this);
     // A dialog that opened while probing produces the same empty listing as a page
     // with no tools, so keep what we had rather than clobbering the cache with it.
-    if (!this._javaScriptBlocked())
-      this._webmcpTools = listing;
+    if (this._javaScriptBlocked())
+      return;
+    this._webmcpTools = listing;
+    this.context.maybeNotifyWebMCPToolsChanged();
   }
 
   private _javaScriptBlocked(): boolean {

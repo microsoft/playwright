@@ -35,7 +35,7 @@ export type BrowserBackendOptions = {
   idleTimer?: IdleTimer;
 };
 
-export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implements ServerBackend {
+export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictoolschange: [] }> implements ServerBackend {
   private _tools: Tool[];
   private _context: Context | undefined;
   private _sessionLog: SessionLog | undefined;
@@ -70,7 +70,12 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implement
       config: this._config,
       sessionLog: this._sessionLog,
       cwd: clientInfo.cwd,
+      onWebMCPToolsChanged: () => this.emit('dynamictoolschange'),
     });
+  }
+
+  dynamicTools(): mcpServer.Tool[] {
+    return this._context?.currentWebMCPTools().map(tool => tool.schema) ?? [];
   }
 
   async dispose() {
@@ -88,25 +93,37 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implement
       content: [{ type: 'text' as const, text: json ? JSON.stringify({ isError: true, error: message }, null, 2) : `### Error\n${message}` }],
       isError: true,
     });
-    const tool = this._tools.find(tool => tool.schema.name === name)!;
-    if (!tool)
-      return formatError(`Tool "${name}" not found`);
+    const context = this._context!;
+
     let parsedArguments: any;
-    try {
-      parsedArguments = tool.schema.inputSchema.parse(rawArguments);
-    } catch (error) {
-      if (error instanceof z.ZodError)
-        return formatError(`Invalid arguments for tool "${name}":\n${z.prettifyError(error)}`);
-      throw error;
+    let handle: (params: any, response: Response) => Promise<void>;
+    const tool = this._tools.find(tool => tool.schema.name === name);
+    if (tool) {
+      try {
+        parsedArguments = tool.schema.inputSchema.parse(rawArguments);
+      } catch (error) {
+        if (error instanceof z.ZodError)
+          return formatError(`Invalid arguments for tool "${name}":\n${z.prettifyError(error)}`);
+        throw error;
+      }
+      handle = (params, response) => tool.handle(context, params, response, signal);
+    } else {
+      const webmcpTool = context.currentWebMCPTools().find(tool => tool.schema.name === name);
+      if (!webmcpTool)
+        return formatError(`Tool "${name}" not found`);
+      // Page-registered WebMCP tools validate their own input, only strip the meta.
+      parsedArguments = { ...rawArguments };
+      delete parsedArguments._meta;
+      handle = webmcpTool.handle;
     }
+
     const cwd = rawArguments._meta?.cwd;
     const raw = !!rawArguments._meta?.raw;
-    const context = this._context!;
     const response = new Response(context, name, parsedArguments, { relativeTo: cwd, raw, json });
     context.setRunningTool(name);
     let responseObject: mcpServer.CallToolResult & { isClose?: boolean };
     try {
-      await tool.handle(context, parsedArguments, response, signal);
+      await handle(parsedArguments, response);
       for (const reason of context.drainPendingUnhandledRejections())
         response.addError(formatRejectionReason(reason));
       responseObject = await response.serialize();
