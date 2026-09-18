@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { defaults } from '@istanbuljs/schema';
 import { createInstrumenter } from 'istanbul-lib-instrument';
 
 import type { Plugin } from 'vite';
@@ -31,14 +30,13 @@ export function istanbul(): Plugin {
       const file = id.split('?')[0];
       if (!enabled || !/\/packages\/.*\.[jt]sx?$/.test(file) || file.endsWith('.d.ts') || file.includes('/node_modules/'))
         return;
-      // The option replaces the defaults.
-      const parserPlugins = [...defaults.instrumenter.parserPlugins];
+      const parserPlugins: string[] = [];
       if (/\.tsx?$/.test(file))
         parserPlugins.push('typescript');
       if (/\.[jt]sx$/.test(file))
         parserPlugins.push('jsx');
       const instrumenter = createInstrumenter({ esModules: true, produceSourceMap: true, parserPlugins });
-      return { code: instrumenter.instrumentSync(code, file), map: instrumenter.lastSourceMap() };
+      return { code: instrumenter.instrumentSync(code, file), map: { ...instrumenter.lastSourceMap(), version: 3 } };
     },
   };
 }

@@ -38,7 +38,7 @@
     "skipLibCheck": true,
   },
   "compileOnSave": true,
-  "files": ["packages/html-reporter/tests/stories.d.ts", "utils/build/istanbul.d.ts"],
+  "files": ["packages/html-reporter/tests/stories.d.ts"],
   "include": ["packages"],
   "exclude": [
     "packages/*/lib",
