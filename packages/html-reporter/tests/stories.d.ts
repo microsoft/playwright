@@ -20,6 +20,7 @@ type StoriesOf<Prefix extends string, Mod> = { [K in keyof Mod & string as `${Pr
 declare module '@playwright/test' {
   interface Stories extends
     StoriesOf<'html-reporter/chip', typeof import('../src/chip.story')>,
+    StoriesOf<'html-reporter/coverage/coverageView', typeof import('../src/coverage/coverageView.story')>,
     StoriesOf<'html-reporter/headerView', typeof import('../src/headerView.story')>,
     StoriesOf<'html-reporter/testCaseView', typeof import('../src/testCaseView.story')>,
     StoriesOf<'html-reporter/testFileView', typeof import('../src/testFileView.story')> {}

@@ -99,3 +99,65 @@ export function mergeIstanbulCoverage(into: Map<string, IstanbulFileCoverage>, d
     }
   }
 }
+
+export type CoverageMetric = { covered: number, total: number };
+
+export type CoverageSummary = {
+  statements: CoverageMetric;
+  branches: CoverageMetric;
+  functions: CoverageMetric;
+  lines: CoverageMetric;
+};
+
+export function emptyCoverageSummary(): CoverageSummary {
+  return {
+    statements: { covered: 0, total: 0 },
+    branches: { covered: 0, total: 0 },
+    functions: { covered: 0, total: 0 },
+    lines: { covered: 0, total: 0 },
+  };
+}
+
+export function fileCoverageSummary(fileCov: IstanbulFileCoverage): CoverageSummary {
+  const summary = emptyCoverageSummary();
+  countHits(summary.statements, Object.values(fileCov.s));
+  countHits(summary.functions, Object.values(fileCov.f));
+  for (const counts of Object.values(fileCov.b))
+    countHits(summary.branches, counts);
+  countHits(summary.lines, lineCoverage(fileCov).values());
+  return summary;
+}
+
+export function addCoverageSummary(into: CoverageSummary, summary: CoverageSummary) {
+  for (const key of ['statements', 'branches', 'functions', 'lines'] as const) {
+    into[key].covered += summary[key].covered;
+    into[key].total += summary[key].total;
+  }
+}
+
+export function coveragePercent(metric: CoverageMetric): number {
+  return metric.total ? metric.covered / metric.total * 100 : 100;
+}
+
+export function formatCoveragePercent(metric: CoverageMetric): string {
+  return coveragePercent(metric).toFixed(2) + '%';
+}
+
+// Line coverage is derived from statements, as nyc does.
+export function lineCoverage(fileCov: IstanbulFileCoverage): Map<number, number> {
+  const lines = new Map<number, number>();
+  for (const [key, statement] of Object.entries(fileCov.statementMap)) {
+    const line = statement.start.line;
+    const count = fileCov.s[key] || 0;
+    lines.set(line, Math.max(lines.get(line) || 0, count));
+  }
+  return lines;
+}
+
+function countHits(metric: CoverageMetric, counts: Iterable<number>) {
+  for (const count of counts) {
+    ++metric.total;
+    if (count > 0)
+      ++metric.covered;
+  }
+}

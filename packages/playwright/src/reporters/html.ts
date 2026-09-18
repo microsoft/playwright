@@ -17,7 +17,6 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { Transform } from 'stream';
 
 import colors from 'colors/safe';
 import mime from 'mime';
@@ -37,6 +36,7 @@ import { extractZip } from '@utils/third_party/extractZip';
 declare const __PW_HMR__: boolean;
 
 import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
+import { appendZipDataTemplate, inlineViteApp } from './htmlUtils';
 import * as babel from '../transform/babelBundle';
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
@@ -44,7 +44,6 @@ import type { ReportConfigureParams, ReportEndParams, ReporterV2 } from './repor
 import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAnnotation } from '../../types/test';
 import type * as api from '../../types/testReporter';
 import type { HTMLReport, HTMLReportOptions, Location, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
-import type { TransformCallback } from 'stream';
 import type { ZipFile } from 'yazl';
 
 type TestEntry = {
@@ -452,28 +451,13 @@ class HtmlBuilder {
         fs.promises.copyFile(path.join(appFolder, 'report.css'), path.join(this._reportFolder, 'report.css')),
       ]);
     } else {
-      let html = await fs.promises.readFile(path.join(appFolder, 'index.html'), 'utf-8');
-      const [js, css] = await Promise.all([
-        fs.promises.readFile(path.join(appFolder, 'report.js'), 'utf-8'),
-        fs.promises.readFile(path.join(appFolder, 'report.css'), 'utf-8'),
-      ]);
-      html = html.replace(/<script type="module"[^>]*><\/script>/, () => `<script type="module">${js}</script>`);
-      html = html.replace(/<link rel="stylesheet"[^>]*>/, () => `<style type='text/css'>${css}</style>`);
-      await fs.promises.writeFile(reportIndexFile, html);
+      await fs.promises.writeFile(reportIndexFile, await inlineViteApp(appFolder));
     }
     return reportIndexFile;
   }
 
   private async _writeReportData(filePath: string) {
-    fs.appendFileSync(filePath, '<template id="playwrightReportBase64">data:application/zip;base64,');
-    await new Promise<void>((resolve, reject) => {
-      this._dataZipFile.end(undefined, () => {
-        this._dataZipFile.outputStream
-            .pipe(new Base64Encoder())
-            .pipe(fs.createWriteStream(filePath, { flags: 'a' })).on('close', resolve).on('error', reject);
-      });
-    });
-    fs.appendFileSync(filePath, '</template>');
+    await appendZipDataTemplate(filePath, this._dataZipFile, 'playwrightReportBase64');
   }
 
   private _addDataFile(fileName: string, data: any) {
@@ -721,32 +705,6 @@ const addStats = (stats: Stats, delta: Stats): Stats => {
   stats.ok = stats.ok && delta.ok;
   return stats;
 };
-
-class Base64Encoder extends Transform {
-  private _remainder: Buffer | undefined;
-
-  override _transform(chunk: any, encoding: BufferEncoding, callback: TransformCallback): void {
-    if (this._remainder) {
-      chunk = Buffer.concat([this._remainder, chunk]);
-      this._remainder = undefined;
-    }
-
-    const remaining = chunk.length % 3;
-    if (remaining) {
-      this._remainder = chunk.slice(chunk.length - remaining);
-      chunk = chunk.slice(0, chunk.length - remaining);
-    }
-    chunk = chunk.toString('base64');
-    this.push(Buffer.from(chunk));
-    callback();
-  }
-
-  override _flush(callback: TransformCallback): void {
-    if (this._remainder)
-      this.push(Buffer.from(this._remainder.toString('base64')));
-    callback();
-  }
-}
 
 function isTextContentType(contentType: string) {
   return contentType.startsWith('text/') || contentType.startsWith('application/json');

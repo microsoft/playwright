@@ -14,35 +14,37 @@
  * limitations under the License.
  */
 
-import type { HTMLReport } from './types';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
-import './colors.css';
-import type { LoadedReport } from './loadedReport';
-import { ReportView } from './reportView';
-import { ZipReport } from './zipReport';
-
-import logo from '@web/assets/playwright-logo.svg';
-import { SearchParamsProvider } from './links';
+import '../theme.css';
+import { CoverageView } from './coverageView';
+import { HeaderView } from '../headerView';
+import { SearchParamsProvider } from '../links';
+import { ZipReport } from '../zipReport';
 import { applyTheme } from '@web/theme';
+import logo from '@web/assets/playwright-logo.svg';
+
+import type { LoadedCoverage } from './loadedCoverage';
+import type { CoverageReport } from '../types';
 
 const link = document.createElement('link');
 link.rel = 'shortcut icon';
 link.href = logo;
 document.head.appendChild(link);
 
-const ReportLoader: React.FC = () => {
-  const [report, setReport] = React.useState<LoadedReport | undefined>();
+const CoverageLoader: React.FC = () => {
+  const [coverage, setCoverage] = React.useState<LoadedCoverage | undefined>();
   React.useEffect(() => {
-    const zipReport = new ZipReport<HTMLReport>('playwrightReportBase64', 'report.json');
-    zipReport.load().then(() => setReport(zipReport));
+    const zipCoverage = new ZipReport<CoverageReport>('playwrightCoverageBase64', 'coverage.json');
+    zipCoverage.load().then(() => setCoverage(zipCoverage));
   }, []);
   return <SearchParamsProvider>
-    <ReportView report={report} />
+    <HeaderView title='Coverage report' />
+    <CoverageView coverage={coverage} />
   </SearchParamsProvider>;
 };
 
 window.onload = () => {
   applyTheme();
-  ReactDOM.createRoot(document.querySelector('#root')!).render(<ReportLoader />);
+  ReactDOM.createRoot(document.querySelector('#root')!).render(<CoverageLoader />);
 };

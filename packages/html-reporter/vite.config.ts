@@ -21,6 +21,20 @@ import { storyTypes } from './tests/storyTypes';
 import packageJSON from './package.json';
 import path from 'path';
 
+const buildOptions = {
+  emptyOutDir: true,
+  assetsInlineLimit: 100000000,
+  chunkSizeWarningLimit: 100000000,
+  cssCodeSplit: false,
+};
+
+const outputOptions = {
+  manualChunks: undefined,
+  inlineDynamicImports: true,
+  entryFileNames: 'report.js',
+  assetFileNames: (assetInfo: { names: string[] }) => assetInfo.names.some(n => n.endsWith('.css')) ? 'report.css' : '[name][extname]',
+};
+
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '',
@@ -35,18 +49,28 @@ export default defineConfig({
       '@isomorphic': path.resolve(__dirname, '../isomorphic'),
     },
   },
-  build: {
-    outDir: path.resolve(__dirname, '../playwright-core/lib/vite/htmlReport'),
-    emptyOutDir: true,
-    assetsInlineLimit: 100000000,
-    chunkSizeWarningLimit: 100000000,
-    cssCodeSplit: false,
-    rollupOptions: {
-      output: {
-        manualChunks: undefined,
-        inlineDynamicImports: true,
-        entryFileNames: 'report.js',
-        assetFileNames: (assetInfo) => assetInfo.names.some(n => n.endsWith('.css')) ? 'report.css' : '[name][extname]',
+  builder: {},
+  environments: {
+    client: {
+      build: {
+        ...buildOptions,
+        outDir: path.resolve(__dirname, '../playwright-core/lib/vite/htmlReport'),
+        rollupOptions: {
+          input: path.resolve(__dirname, 'index.html'),
+          output: outputOptions,
+        },
+      },
+    },
+    // Standalone coverage report, the same components are also used by the html report.
+    coverage: {
+      consumer: 'client',
+      build: {
+        ...buildOptions,
+        outDir: path.resolve(__dirname, '../playwright-core/lib/vite/coverageReport'),
+        rollupOptions: {
+          input: path.resolve(__dirname, 'coverage.html'),
+          output: outputOptions,
+        },
       },
     },
   },

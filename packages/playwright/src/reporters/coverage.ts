@@ -17,15 +17,20 @@
 import fs from 'fs';
 import path from 'path';
 
-import { mergeIstanbulCoverage, sortedIstanbulCoverage } from '@isomorphic/istanbulCoverage';
+import * as yazl from 'yazl';
+import { addCoverageSummary, emptyCoverageSummary, fileCoverageSummary, formatCoveragePercent, lineCoverage, mergeIstanbulCoverage, sortedIstanbulCoverage } from '@isomorphic/istanbulCoverage';
+import { calculateSha1 } from '@utils/crypto';
+import { toPosixPath } from '@utils/fileUtils';
 import { ZipFile } from '@utils/zipFile';
 import { terminalScreen } from './base';
+import { appendZipDataTemplate, inlineViteApp } from './htmlUtils';
 import { resolveReporterOutputPath } from '../util';
 
-import type { IstanbulCoverage, IstanbulFileCoverage } from '@isomorphic/istanbulCoverage';
+import type { CoverageMetric, IstanbulCoverage, IstanbulFileCoverage } from '@isomorphic/istanbulCoverage';
 import type { CommonReporterOptions } from './base';
 import type { ReporterV2 } from './reporterV2';
 import type { TestCase, TestResult } from '../../types/testReporter';
+import type { CoverageFile, CoverageReport } from '@html-reporter/types';
 
 type CoverageReporterOptions = {
   outputDir?: string,
@@ -96,80 +101,48 @@ class CoverageReporter implements ReporterV2 {
     const mergedJson = sortedIstanbulCoverage(coverage);
     await fs.promises.writeFile(path.join(outputDir, 'coverage-final.json'), JSON.stringify(mergedJson));
     await fs.promises.writeFile(path.join(outputDir, 'lcov.info'), lcovReport(mergedJson));
-    const hasHtml = this._tryWriteHtmlReport(mergedJson, outputDir);
+    const report = await this._writeHtmlReport(mergedJson, outputDir);
 
-    const summary = computeSummary(mergedJson);
-    const lines = [
+    const { summary } = report;
+    writeLine([
       ``,
-      `Code coverage (${coverage.size} files):`,
+      `Code coverage (${report.files.length} files):`,
       `  statements: ${formatMetric(summary.statements)}`,
       `  branches:   ${formatMetric(summary.branches)}`,
       `  functions:  ${formatMetric(summary.functions)}`,
       `  lines:      ${formatMetric(summary.lines)}`,
       `Coverage report written to ${path.relative(process.cwd(), outputDir)}`,
-    ];
-    if (!hasHtml)
-      lines.push(`For an HTML report, install istanbul-lib-coverage, istanbul-lib-report and istanbul-reports, or run 'npx nyc report --temp-dir=${path.relative(process.cwd(), outputDir)} --reporter=html'.`);
-    writeLine(lines.join('\n'));
+    ].join('\n'));
   }
 
-  // Istanbul report libraries are not shipped with Playwright, use the project's if any.
-  private _tryWriteHtmlReport(mergedJson: IstanbulCoverage, outputDir: string): boolean {
-    try {
-      const resolveFrom = (name: string) => require.resolve(name, { paths: [this._options.configDir] });
-      const libCoverage = require(resolveFrom('istanbul-lib-coverage'));
-      const libReport = require(resolveFrom('istanbul-lib-report'));
-      const reports = require(resolveFrom('istanbul-reports'));
-      const context = libReport.createContext({
-        dir: outputDir,
-        coverageMap: libCoverage.createCoverageMap(mergedJson),
-      });
-      reports.create('html').execute(context);
-      return true;
-    } catch {
-      return false;
-    }
+  private async _writeHtmlReport(mergedJson: IstanbulCoverage, outputDir: string): Promise<CoverageReport> {
+    const report: CoverageReport = { files: [], summary: emptyCoverageSummary() };
+    const dataZipFile = new yazl.ZipFile();
+    const sources = await Promise.all(Object.keys(mergedJson).map(filePath => this._readSource(filePath)));
+    Object.entries(mergedJson).forEach(([filePath, coverage], index) => {
+      const fileId = calculateSha1(filePath).slice(0, 20);
+      const summary = fileCoverageSummary(coverage);
+      report.files.push({ fileId, path: toPosixPath(filePath), summary });
+      addCoverageSummary(report.summary, summary);
+      const file: CoverageFile = { path: toPosixPath(filePath), source: sources[index], coverage };
+      dataZipFile.addBuffer(Buffer.from(JSON.stringify(file)), `coverage/${fileId}.json`);
+    });
+    dataZipFile.addBuffer(Buffer.from(JSON.stringify(report)), 'coverage.json');
+
+    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite', 'coverageReport');
+    const reportIndexFile = path.join(outputDir, 'index.html');
+    await fs.promises.writeFile(reportIndexFile, await inlineViteApp(appFolder, 'coverage.html'));
+    await appendZipDataTemplate(reportIndexFile, dataZipFile, 'playwrightCoverageBase64');
+    return report;
   }
-}
 
-type Metric = { covered: number, total: number };
-
-function computeSummary(mergedJson: IstanbulCoverage) {
-  const statements: Metric = { covered: 0, total: 0 };
-  const branches: Metric = { covered: 0, total: 0 };
-  const functions: Metric = { covered: 0, total: 0 };
-  const lines: Metric = { covered: 0, total: 0 };
-  for (const fileCov of Object.values(mergedJson)) {
-    countHits(statements, Object.values(fileCov.s));
-    countHits(functions, Object.values(fileCov.f));
-    for (const counts of Object.values(fileCov.b))
-      countHits(branches, counts);
-    countHits(lines, lineCoverage(fileCov).values());
-  }
-  return { statements, branches, functions, lines };
-}
-
-function countHits(metric: Metric, counts: Iterable<number>) {
-  for (const count of counts) {
-    ++metric.total;
-    if (count > 0)
-      ++metric.covered;
+  private async _readSource(filePath: string): Promise<string | undefined> {
+    return fs.promises.readFile(path.resolve(this._options.configDir, filePath), 'utf8').catch(() => undefined);
   }
 }
 
-function lineCoverage(fileCov: IstanbulFileCoverage): Map<number, number> {
-  const lines = new Map<number, number>();
-  for (const [key, statement] of Object.entries(fileCov.statementMap)) {
-    const line = statement.start.line;
-    const count = fileCov.s[key] || 0;
-    lines.set(line, Math.max(lines.get(line) || 0, count));
-  }
-  return lines;
-}
-
-function formatMetric(metric: Metric) {
-  const percent = metric.total ? (metric.covered / metric.total * 100).toFixed(2) : '100.00';
-  return `${percent}% (${metric.covered}/${metric.total})`;
+function formatMetric(metric: CoverageMetric) {
+  return `${formatCoveragePercent(metric)} (${metric.covered}/${metric.total})`;
 }
 
 function lcovReport(mergedJson: IstanbulCoverage): string {
