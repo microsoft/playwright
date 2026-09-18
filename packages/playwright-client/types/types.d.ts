@@ -22715,9 +22715,10 @@ export interface Response {
   headers(): { [key: string]: string; };
 
   /**
-   * An array with all the request HTTP headers associated with this response. Unlike
+   * An array with all the response HTTP headers associated with this response. Unlike
    * [response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers), header names are NOT
-   * lower-cased. Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
+   * lower-cased. Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times. Some browser
+   * network stacks combine multiple field values before reporting them, so separate entries are not always available.
    */
   headersArray(): Promise<Array<{
     /**

@@ -42,3 +42,17 @@ export function headersArrayToObject(headers: HeadersArray, lowerCase: boolean):
     result[lowerCase ? name.toLowerCase() : name] = value;
   return result;
 }
+
+export function splitSetCookieHeader(headers: HeadersArray): HeadersArray {
+  const index = headers.findIndex(({ name }) => name.toLowerCase() === 'set-cookie');
+  if (index === -1)
+    return headers;
+
+  const header = headers[index];
+  const values = header.value.split('\n');
+  if (values.length === 1)
+    return headers;
+  const result = headers.slice();
+  result.splice(index, 1, ...values.map(value => ({ name: header.name, value })));
+  return result;
+}
