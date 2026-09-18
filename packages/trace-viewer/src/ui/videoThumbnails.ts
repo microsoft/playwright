@@ -24,7 +24,15 @@ export type VideoThumbnail = {
   height: number;
 };
 
+export type VideoSource = {
+  // Blob url of the whole video, so that the player can seek without range requests.
+  readonly url: string | undefined;
+  // Keyframes for the film strip, the player renders the video itself.
+  readonly thumbnails: VideoThumbnail[];
+};
+
 type CacheEntry = {
+  url: string | undefined;
   thumbnails: VideoThumbnail[];
   listeners: Set<() => void>;
   started: boolean;
@@ -35,7 +43,7 @@ const cache = new Map<string, CacheEntry>();
 const maxThumbnails = 120;
 const thumbnailsPerSecond = 2;
 
-export function useVideoThumbnails(videos: { video: trace.VideoTraceEvent, url: string }[]): VideoThumbnail[][] {
+export function useVideoSources(videos: { video: trace.VideoTraceEvent, url: string }[]): VideoSource[] {
   const [, setVersion] = React.useState(0);
   const entries = videos.map(({ video, url }) => ensureEntry(video, url));
   const urls = videos.map(({ url }) => url).join('\n');
@@ -49,13 +57,13 @@ export function useVideoThumbnails(videos: { video: trace.VideoTraceEvent, url: 
         entry.listeners.delete(listener);
     };
   }, [urls]);
-  return entries.map(entry => entry.thumbnails);
+  return entries;
 }
 
 function ensureEntry(video: trace.VideoTraceEvent, videoUrl: string): CacheEntry {
   let entry = cache.get(videoUrl);
   if (!entry) {
-    entry = { thumbnails: [], listeners: new Set(), started: false };
+    entry = { url: undefined, thumbnails: [], listeners: new Set(), started: false };
     cache.set(videoUrl, entry);
   }
   if (!entry.started) {
@@ -69,6 +77,9 @@ async function generateThumbnails(entry: CacheEntry, video: trace.VideoTraceEven
   const response = await fetch(videoUrl);
   const blob = await response.blob();
   const objectUrl = URL.createObjectURL(blob);
+  entry.url = objectUrl;
+  for (const listener of entry.listeners)
+    listener();
   const element = document.createElement('video');
   element.muted = true;
   element.preload = 'auto';
@@ -113,9 +124,9 @@ async function generateThumbnails(entry: CacheEntry, video: trace.VideoTraceEven
         listener();
     }
   } finally {
+    // The blob url outlives thumbnail generation, the player seeks in it.
     element.removeAttribute('src');
     element.load();
-    URL.revokeObjectURL(objectUrl);
   }
 }
 

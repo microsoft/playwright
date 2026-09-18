@@ -192,3 +192,89 @@ test('should drag scrubber to select action', async ({ runAndTrace, page: action
   const scrubberValue = await scrubber.getAttribute('aria-valuenow');
   expect(Number(scrubberValue)).toBeGreaterThan(50);
 });
+
+test('should show screencast while playing and snapshot when stopped', async ({ runAndTrace, page: actionPage }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await actionPage.setContent('<button>Click me</button>');
+    await actionPage.click('button');
+    await actionPage.setContent('<input/>');
+    await actionPage.waitForTimeout(2000);
+  });
+  const page = traceViewer.page;
+  const screencast = page.getByRole('img', { name: 'Screencast frame' });
+
+  await traceViewer.selectAction('Set content');
+  await expect(traceViewer.snapshotContainer).toBeVisible();
+  await expect(screencast).toHaveCount(0);
+
+  // Selecting an action stops the playback and snaps to its snapshot.
+  await page.getByRole('button', { name: 'Play' }).click();
+  await expect(screencast).toBeVisible();
+  await traceViewer.selectAction('Click');
+  await expect(screencast).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  await expect(page.frameLocator('iframe.snapshot-visible[name=snapshot]').getByRole('button', { name: 'Click me' })).toBeVisible();
+
+  // Reaching the end snaps to the last action as well.
+  await page.getByRole('button', { name: 'Play' }).click();
+  await expect(screencast).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible({ timeout: 15000 });
+  await expect(screencast).toHaveCount(0);
+  await expect(traceViewer.snapshotContainer).toBeVisible();
+});
+
+test('should reveal snapshot when hovering an action or picking a locator during playback', async ({ runAndTrace, page: actionPage }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await actionPage.setContent('<button>Click me</button>');
+    await actionPage.click('button');
+    await actionPage.setContent('<input/>');
+    await actionPage.waitForTimeout(2000);
+  });
+  const page = traceViewer.page;
+  const screencast = page.getByRole('img', { name: 'Screencast frame' });
+  const snapshot = page.frameLocator('iframe.snapshot-visible[name=snapshot]');
+
+  // Hovering an action reveals its snapshot.
+  await traceViewer.selectAction('Set content');
+  await page.getByRole('button', { name: 'Play' }).click();
+  await expect(screencast).toBeVisible();
+  await traceViewer.hoverAction('Click');
+  await expect(screencast).toHaveCount(0);
+  await expect(snapshot.getByRole('button', { name: 'Click me' })).toBeVisible();
+
+  // Picking a locator stops the playback, the snapshot receives mouse events.
+  await traceViewer.selectAction('Set content');
+  await page.getByRole('button', { name: 'Play' }).click();
+  await expect(screencast).toBeVisible();
+  await page.getByTitle('Pick locator').click();
+  await expect(screencast).toHaveCount(0);
+  await expect(traceViewer.snapshotContainer).toBeVisible();
+  await snapshot.locator('body').click();
+  await expect(page.locator('.cm-wrapper').first()).toContainText('locator(');
+});
+
+test('should show screencast while dragging and snap to the action on release', async ({ runAndTrace, page: actionPage }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await actionPage.setContent('<button>Click me</button>');
+    await actionPage.click('button');
+    await actionPage.setContent('<input/>');
+  });
+  const page = traceViewer.page;
+  const screencast = page.getByRole('img', { name: 'Screencast frame' });
+  const scrubber = page.getByRole('slider', { name: 'Playback position' });
+  const box = (await scrubber.boundingBox())!;
+
+  // While dragging, the screencast follows the pointer between the action ticks.
+  await page.mouse.move(box.x + box.width * 0.5, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.99, box.y + box.height / 2);
+  await expect(screencast).toBeVisible();
+  await expect(scrubber).toHaveAttribute('aria-valuenow', '99');
+
+  // Releasing snaps to the nearest action and shows its snapshot.
+  await page.mouse.up();
+  await expect(screencast).toHaveCount(0);
+  await expect(traceViewer.snapshotContainer).toBeVisible();
+  await expect(traceViewer.actionsTree.getByRole('treeitem', { selected: true })).toHaveText(/Set content/);
+  expect(Number(await scrubber.getAttribute('aria-valuenow'))).toBeLessThan(99);
+});

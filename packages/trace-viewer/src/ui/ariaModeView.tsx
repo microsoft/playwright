@@ -21,7 +21,7 @@ import { renderAriaSnapshotAsYaml } from '@isomorphic/ariaSnapshotRenderer';
 import { clsx, useMeasure } from '@web/uiUtils';
 import { PlaceholderPanel } from './placeholderPanel';
 
-import type { ActionPhase, ActionTraceEvent, ScreenshotTraceEvent } from '@isomorphic/trace/trace';
+import type { ActionPhase, ActionTraceEvent } from '@isomorphic/trace/trace';
 import type { AriaNodeJSON, AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
 import type { TraceModel } from '@isomorphic/trace/traceModel';
 
@@ -144,7 +144,8 @@ export const AriaModeView: React.FunctionComponent<{
   target: AriaModeTarget | undefined,
   point?: Point,
   box?: Box,
-}> = ({ model, target, point, box }) => {
+  screencastFrame?: React.ReactNode,
+}> = ({ model, target, point, box, screencastFrame }) => {
   const screenshot = model && target ? model.screenshotForCall(target.callId, target.phase) : undefined;
   const ariaSnapshot = model && target ? model.ariaSnapshotForCall(target.callId, target.phase) : undefined;
   const [lines, setLines] = React.useState<AriaSnapshotLine[]>([]);
@@ -172,11 +173,16 @@ export const AriaModeView: React.FunctionComponent<{
     };
   }, [model, ariaSnapshot]);
 
-  if (!screenshot && !ariaSnapshot)
+  if (!screenshot && !ariaSnapshot && !screencastFrame)
     return <PlaceholderPanel text='No aria snapshot' />;
 
   return <div className='aria-mode-view hbox'>
-    <AriaModeScreenshot model={model!} screenshot={screenshot} highlightedBox={highlightedBox} point={point} box={box} />
+    <AriaModeScreenshot
+      imageUrl={model && screenshot ? model.createRelativeUrl(`file/${screenshot.file}`) : undefined}
+      screencastFrame={screencastFrame}
+      highlightedBox={screencastFrame ? undefined : highlightedBox}
+      point={screencastFrame ? undefined : point}
+      box={screencastFrame ? undefined : box} />
     <div className='aria-mode-snapshot vbox'>
       {ariaSnapshot && <div className='aria-mode-lines' onMouseLeave={() => setHighlightedBox(undefined)}>
         {lines.map((line, index) => <div
@@ -191,12 +197,12 @@ export const AriaModeView: React.FunctionComponent<{
 };
 
 const AriaModeScreenshot: React.FunctionComponent<{
-  model: TraceModel,
-  screenshot: ScreenshotTraceEvent | undefined,
+  imageUrl: string | undefined,
+  screencastFrame: React.ReactNode,
   highlightedBox: Box | undefined,
   point: Point | undefined,
   box: Box | undefined,
-}> = ({ model, screenshot, highlightedBox, point, box }) => {
+}> = ({ imageUrl, screencastFrame, highlightedBox, point, box }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [naturalSize, setNaturalSize] = React.useState<{ width: number, height: number } | undefined>();
 
@@ -204,7 +210,7 @@ const AriaModeScreenshot: React.FunctionComponent<{
   // coordinates. The image is scaled to fit into the available area, scale the boxes and
   // the action point to match the rendered image.
   let overlays: React.ReactNode;
-  if (screenshot && naturalSize && measure.width) {
+  if (imageUrl && naturalSize && measure.width) {
     const padding = 10;
     const availableWidth = measure.width - 2 * padding;
     const availableHeight = measure.height - 2 * padding;
@@ -231,13 +237,13 @@ const AriaModeScreenshot: React.FunctionComponent<{
   }
 
   return <div ref={ref} className='aria-mode-screenshot'>
-    {screenshot && <img
-      key={screenshot.file}
-      src={model.createRelativeUrl(`file/${screenshot.file}`)}
+    {screencastFrame}
+    {!screencastFrame && imageUrl && <img
+      src={imageUrl}
       alt='Screenshot'
       onLoad={event => setNaturalSize({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })}
     />}
-    {!screenshot && <PlaceholderPanel text='No screenshot' />}
+    {!screencastFrame && !imageUrl && <PlaceholderPanel text='No screenshot' />}
     {overlays}
   </div>;
 };

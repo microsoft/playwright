@@ -28,7 +28,8 @@
   position: relative;
 }
 
-.aria-mode-screenshot img {
+.aria-mode-screenshot img,
+.aria-mode-screenshot .screencast-frame {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
