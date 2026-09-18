@@ -82,7 +82,15 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [] }> implement
   }
 
   async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> } = {}, signal?: AbortSignal): Promise<mcpServer.CallToolResult> {
-    this._idleTimer?.poke();
+    this._idleTimer?.callStarted();
+    try {
+      return await this._callTool(name, rawArguments, signal);
+    } finally {
+      this._idleTimer?.callFinished();
+    }
+  }
+
+  private async _callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> }, signal?: AbortSignal): Promise<mcpServer.CallToolResult> {
     const json = !!rawArguments._meta?.json;
     const formatError = (message: string): mcpServer.CallToolResult => ({
       content: [{ type: 'text' as const, text: json ? JSON.stringify({ isError: true, error: message }, null, 2) : `### Error\n${message}` }],
