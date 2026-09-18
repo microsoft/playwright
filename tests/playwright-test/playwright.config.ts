@@ -29,10 +29,16 @@ const reporters = () => {
   ] : [
     ['list']
   ];
+  if (process.env.PWTEST_COVERAGE)
+    result.push(['coverage', { outputDir: path.join(__dirname, '..', '..', 'coverage', 'html-reporter') }]);
   return result;
 };
 export default defineConfig({
   timeout: 30000,
+  use: {
+    // Coverage of the html reporter and trace viewer pages, built with PWTEST_COVERAGE=1.
+    trace: process.env.PWTEST_COVERAGE ? { mode: 'on', snapshots: false, screenshots: false, coverage: true } : 'off',
+  },
   forbidOnly: !!process.env.CI,
   workers: undefined,
   snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',

@@ -41,6 +41,7 @@ const ignores = [
   "*.js",
   "**/.cache/",
   "**/*.d.ts",
+  "coverage/",
   "index.d.ts",
   "node_modules/",
   "output/",
