@@ -58,6 +58,9 @@ const ignores = [
   "packages/html-reporter/playwright.config.ts",
   "packages/html-reporter/tests/*",
   "packages/html-reporter/vite.config.ts",
+  "packages/coverage-report/playwright.config.ts",
+  "packages/coverage-report/tests/*",
+  "packages/coverage-report/vite.config.ts",
   "test-results/",
   "tests/assets/",
   "tests/components/",
@@ -284,6 +287,8 @@ const reactBaseConfig = fixupConfigRules(
 const reactFiles = [
   `packages/html-reporter/src/**/*.ts`,
   `packages/html-reporter/src/**/*.tsx`,
+  `packages/coverage-report/src/**/*.ts`,
+  `packages/coverage-report/src/**/*.tsx`,
   `packages/recorder/src/**/*.ts`,
   `packages/recorder/src/**/*.tsx`,
   `packages/trace-viewer/src/**/*.ts`,
@@ -528,6 +533,7 @@ export default [
     files: reactFiles,
   })),
   reactPackageSection("html-reporter"),
+  reactPackageSection("coverage-report"),
   reactPackageSection("recorder"),
   reactPackageSection("trace-viewer"),
 ];

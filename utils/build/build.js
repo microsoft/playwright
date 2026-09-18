@@ -955,7 +955,7 @@ const pkgSizePlugin = {
 // in other code paths (e.g. HtmlBuilder.build() reads lib/vite/htmlReport/
 // and lib/vite/traceViewer/), so we always keep the static build alongside
 // HMR. Recorder is not yet HMR'd.
-const webPackages = ['html-reporter', 'recorder', 'trace-viewer', 'dashboard'];
+const webPackages = ['html-reporter', 'coverage-report', 'recorder', 'trace-viewer', 'dashboard'];
 for (const webPackage of webPackages) {
   steps.push(new ProgramStep({
     command: process.execPath,

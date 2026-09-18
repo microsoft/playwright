@@ -17,6 +17,7 @@
 import fs from 'fs';
 import { test, expect } from './playwright-test-fixtures';
 import { parseTraceCoverage } from '../config/utils';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 
 const coverageHelper = `
   const makeCoverage = (file, s0) => ({
@@ -127,6 +128,45 @@ test('should aggregate coverage with the coverage reporter', async ({ runInlineT
 
   expect(result.output).toContain('Code coverage (2 files)');
   expect(result.output).toContain('statements: 50.00% (2/4)');
+  expect(fs.existsSync(test.info().outputPath('coverage-report', 'index.html'))).toBe(true);
+});
+
+test('should generate html coverage report', async ({ runInlineTest, page }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: { trace: { mode: 'on', coverage: true } },
+        reporter: [['dot'], ['coverage', { outputDir: 'coverage-report' }]],
+      };
+    `,
+    'src/app.js': `function foo() {\nif (a) { b(); }\n}\n`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      ${coverageHelper}
+      test('first', async ({ page }) => {
+        await page.setContent(coverageScript('src/app.js', 5));
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+
+  const server = utils.serveFolder(test.info().outputPath('coverage-report'));
+  await server.start();
+  try {
+    await page.goto(server.urlPrefix('precise'));
+    await expect(page.getByText('Coverage report')).toBeVisible();
+    await expect(page.getByTestId('coverage-metric-statements')).toContainText('50.00%');
+    await expect(page.getByTestId('coverage-file')).toHaveText([/app\.js/]);
+    await page.getByRole('link', { name: 'app.js' }).click();
+    const source = page.getByTestId('coverage-source');
+    await expect(source.locator('tr')).toHaveCount(3);
+    await expect(source.locator('[data-line="1"] .coverage-line-count')).toHaveText('5x');
+    await expect(source.locator('[data-line="2"] .coverage-line-count')).toHaveText('0x');
+    await expect(source.locator('[data-line="2"] .coverage-branch-marker')).toHaveText('E');
+    await expect(source.locator('[data-line="2"] .coverage-segment-statement')).toHaveText('if (a) { b(); }');
+  } finally {
+    await server.stop();
+  }
 });
 
 test('should warn when no coverage was collected', async ({ runInlineTest }) => {

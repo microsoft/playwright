@@ -1,0 +1,303 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+
+
+.coverage-view {
+  padding: 12px 8px 0 8px;
+}
+
+.coverage-view a {
+  color: var(--color-accent-fg);
+  text-decoration: none;
+}
+
+.coverage-title {
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.25;
+}
+
+.coverage-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.coverage-metric {
+  flex: 1 1 140px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 6px;
+  padding: 8px 12px;
+  background-color: var(--color-canvas-subtle);
+}
+
+.coverage-metric-label {
+  color: var(--color-fg-muted);
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.coverage-metric .coverage-percent {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.coverage-metric .coverage-fraction {
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.coverage-fraction {
+  color: var(--color-fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.coverage-bar {
+  height: 6px;
+  border-radius: 3px;
+  background-color: var(--color-neutral-muted);
+  overflow: hidden;
+  min-width: 60px;
+}
+
+.coverage-bar-fill {
+  height: 100%;
+}
+
+.coverage-high .coverage-bar-fill { background-color: var(--color-success-emphasis); }
+.coverage-medium .coverage-bar-fill { background-color: var(--color-attention-emphasis); }
+.coverage-low .coverage-bar-fill { background-color: var(--color-danger-emphasis); }
+.coverage-high .coverage-percent { color: var(--color-success-fg); }
+.coverage-medium .coverage-percent { color: var(--color-attention-fg); }
+.coverage-low .coverage-percent { color: var(--color-danger-fg); }
+
+.coverage-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.coverage-toolbar .subnav-search {
+  margin: 0;
+  flex: auto;
+  max-width: 400px;
+}
+
+.coverage-breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 12px 0;
+  font-size: 16px;
+}
+
+.coverage-breadcrumbs-separator {
+  color: var(--color-fg-muted);
+}
+
+.coverage-files {
+  width: 100%;
+  border: 1px solid var(--color-border-default);
+  border-radius: 6px;
+  border-spacing: 0;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.coverage-files th {
+  text-align: left;
+  font-weight: 600;
+  padding: 8px;
+  background-color: var(--color-canvas-subtle);
+  border-bottom: 1px solid var(--color-border-default);
+  white-space: nowrap;
+}
+
+.coverage-files td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--color-border-muted);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.coverage-files tr:last-child td {
+  border-bottom: none;
+}
+
+.coverage-files tbody tr:hover {
+  background-color: var(--color-canvas-subtle);
+}
+
+.coverage-files-name {
+  width: 100%;
+  min-width: 240px;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+}
+
+.coverage-files-toggle {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.coverage-files-toggle:focus-visible {
+  outline: 1px solid var(--color-accent-fg);
+  border-radius: 3px;
+}
+
+.coverage-files-metric {
+  text-align: right;
+}
+
+.coverage-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.coverage-cell .coverage-percent {
+  min-width: 60px;
+  text-align: right;
+}
+
+.coverage-cell .coverage-fraction {
+  min-width: 70px;
+  text-align: right;
+}
+
+.coverage-empty {
+  color: var(--color-fg-muted);
+  padding: 16px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 6px;
+}
+
+.coverage-source {
+  border: 1px solid var(--color-border-default);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+  font-size: 12px;
+  line-height: 20px;
+  background-color: var(--color-canvas-default);
+}
+
+.coverage-source table {
+  border-spacing: 0;
+  min-width: 100%;
+}
+
+.coverage-source td {
+  padding: 0 8px;
+  vertical-align: top;
+}
+
+.coverage-line-number {
+  text-align: right;
+  color: var(--color-fg-subtle);
+  user-select: none;
+  width: 1%;
+  min-width: 40px;
+}
+
+.coverage-line-count {
+  text-align: right;
+  color: var(--color-fg-muted);
+  user-select: none;
+  width: 1%;
+  min-width: 40px;
+  border-right: 1px solid var(--color-border-muted);
+}
+
+.coverage-line-covered .coverage-line-count {
+  color: var(--color-success-fg);
+  background-color: var(--color-success-subtle);
+}
+
+.coverage-line-uncovered .coverage-line-count {
+  color: var(--color-danger-fg);
+  background-color: var(--color-danger-subtle);
+}
+
+.coverage-line-uncovered .coverage-line-code {
+  background-color: var(--color-danger-subtle);
+}
+
+.coverage-line-code {
+  white-space: pre;
+}
+
+.coverage-segment-statement {
+  background-color: var(--color-danger-muted);
+}
+
+.coverage-segment-function {
+  background-color: var(--color-danger-muted);
+  text-decoration: underline wavy var(--color-danger-fg);
+}
+
+.coverage-segment-branch {
+  background-color: var(--color-attention-muted);
+}
+
+.coverage-branch-marker {
+  display: inline-block;
+  min-width: 14px;
+  padding: 0 3px;
+  margin-right: 4px;
+  border-radius: 3px;
+  background-color: var(--color-attention-emphasis);
+  color: var(--color-fg-on-emphasis);
+  font-size: 10px;
+  line-height: 14px;
+  text-align: center;
+  cursor: default;
+}
+
+.coverage-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: var(--color-fg-muted);
+  font-size: 12px;
+  margin: 8px 0 12px;
+}
+
+.coverage-legend span {
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
+.coverage-root-path {
+  color: var(--color-fg-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

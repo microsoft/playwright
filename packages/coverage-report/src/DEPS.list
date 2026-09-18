@@ -1,0 +1,6 @@
+[*]
+@web/**
+@isomorphic/**
+
+[coverageView.spec.ts]
+***
