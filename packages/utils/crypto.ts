@@ -42,13 +42,29 @@ function encodeBase128(value: number): Buffer {
 }
 
 // ASN1/DER Speficiation:   https://www.itu.int/rec/T-REC-X.680-X.693-202102-I/en
-class DER {
+export class DER {
   static encodeSequence(data: Buffer[]): Buffer {
     return this._encode(0x30, Buffer.concat(data));
   }
-  static encodeInteger(data: number): Buffer {
-    assert(data >= -128 && data <= 127);
-    return this._encode(0x02, Buffer.from([data]));
+  static encodeInteger(data: number | Buffer): Buffer {
+    if (typeof data === 'number') {
+      assert(data >= -128 && data <= 127);
+      return this._encode(0x02, Buffer.from([data]));
+    }
+    // Unsigned big-endian magnitude, e.g. a certificate serial number.
+    let start = 0;
+    while (start < data.length - 1 && data[start] === 0)
+      start++;
+    const magnitude = data.subarray(start);
+    // A leading 1 bit would read as negative; pad with a zero byte.
+    const content = magnitude[0] & 0x80 ? Buffer.concat([Buffer.from([0]), magnitude]) : magnitude;
+    return this._encode(0x02, content);
+  }
+  static encodeBoolean(value: boolean): Buffer {
+    return this._encode(0x01, Buffer.from([value ? 0xff : 0x00]));
+  }
+  static encodeOctetString(data: Buffer): Buffer {
+    return this._encode(0x04, data);
   }
   static encodeObjectIdentifier(oid: string): Buffer {
     const parts = oid.split('.').map(v => Number(v));
@@ -72,8 +88,18 @@ class DER {
   static encodeExplicitContextDependent(tag: number, data: Buffer): Buffer {
     return this._encode(0xa0 + tag, data);
   }
+  // Primitive form, for choices such as GeneralName's dNSName [2] and iPAddress [7].
+  static encodeImplicitContextDependent(tag: number, data: Buffer): Buffer {
+    return this._encode(0x80 + tag, data);
+  }
   static encodePrintableString(data: string): Buffer {
     return this._encode(0x13, Buffer.from(data));
+  }
+  static encodeIA5String(data: string): Buffer {
+    return this._encode(0x16, Buffer.from(data, 'ascii'));
+  }
+  static encodeUTF8String(data: string): Buffer {
+    return this._encode(0x0c, Buffer.from(data, 'utf8'));
   }
   static encodeBitString(data: Buffer): Buffer {
     // The first byte of the content is the number of unused bits at the end
