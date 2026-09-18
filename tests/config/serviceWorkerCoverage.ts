@@ -16,9 +16,8 @@
 
 type PageLike = { evaluate(pageFunction: any): Promise<any> };
 
-// The trace viewer service worker keeps its own counters and serves them as a delta
-// from a coverage route that exists in instrumented builds only. Folds them into the
-// page's counters, from where the tracing coverage reads.
+// Folds the worker's counters, served by its coverage route in instrumented builds,
+// into the page's, from where the tracing coverage reads.
 export async function mergeServiceWorkerCoverage(page: PageLike) {
   if (!process.env.PWTEST_COVERAGE)
     return;

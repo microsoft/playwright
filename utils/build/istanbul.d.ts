@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// The parts of the untyped istanbul packages that the vite plugin uses.
-
 declare module 'istanbul-lib-instrument' {
   export type InstrumenterOptions = {
     esModules?: boolean;

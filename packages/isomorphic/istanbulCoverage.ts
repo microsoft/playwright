@@ -100,7 +100,6 @@ export function mergeIstanbulCoverage(into: Map<string, IstanbulFileCoverage>, d
   }
 }
 
-// Returns the hit counters and resets them, so that the next take is a delta.
 export function takeCounters(counters: { [key: string]: number }): { [key: string]: number } | undefined {
   let result: { [key: string]: number } | undefined;
   for (const key of Object.keys(counters)) {

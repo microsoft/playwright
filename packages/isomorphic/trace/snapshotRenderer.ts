@@ -320,7 +320,7 @@ function generateNonce(): string {
 }
 
 function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
-  // Stringified into the snapshot, where coverage counters do not exist.
+  // Stringified into the snapshot, keep it free of counters.
   /* istanbul ignore next */
   function applyPlaywrightAttributes(blankSnapshotUrl: string, viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
     // eslint-disable-next-line no-restricted-globals

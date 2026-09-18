@@ -195,7 +195,7 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
     });
     for (const [index, page] of tracedPages.entries()) {
       const path = testInfo.outputPath(`viewer-trace-${index}.zip`);
-      // The worker's counters are read through the page, before the page is collected.
+      // Before the page is collected.
       await mergeServiceWorkerCoverage(page);
       await page.context().tracing.stop({ path });
       // The coverage reporter aggregates the attachments named "trace".

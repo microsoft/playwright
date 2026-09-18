@@ -19,10 +19,8 @@ import { createInstrumenter } from 'istanbul-lib-instrument';
 
 import type { Plugin } from 'vite';
 
-// Instruments the sources under packages/ for istanbul coverage when PWTEST_COVERAGE is set.
-// Runs before the other transforms, so that the counters point at the original sources.
-// The __PW_COVERAGE__ define lets the sources ship test-only code, e.g. the coverage
-// route of the trace viewer service worker, that a normal build drops.
+// Instruments the sources under packages/ before the other transforms, so that the
+// counters point at the originals. __PW_COVERAGE__ gates test-only code in the sources.
 export function istanbul(): Plugin {
   const enabled = !!process.env.PWTEST_COVERAGE;
   return {
@@ -33,7 +31,7 @@ export function istanbul(): Plugin {
       const file = id.split('?')[0];
       if (!enabled || !/\/packages\/.*\.[jt]sx?$/.test(file) || file.endsWith('.d.ts') || file.includes('/node_modules/'))
         return;
-      // The option replaces the default parser plugins rather than extending them.
+      // The option replaces the defaults.
       const parserPlugins = [...defaults.instrumenter.parserPlugins];
       if (/\.tsx?$/.test(file))
         parserPlugins.push('typescript');

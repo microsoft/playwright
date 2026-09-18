@@ -30,7 +30,7 @@ const { spawnAsync } = utils;
 const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<void> }>({
   page: async ({ page }, use) => {
     await use(page);
-    // The trace viewer worker's counters are read through the page, before it is collected.
+    // Before the page is collected.
     await mergeServiceWorkerCoverage(page);
   },
   showReport: async ({ page }, use, testInfo) => {

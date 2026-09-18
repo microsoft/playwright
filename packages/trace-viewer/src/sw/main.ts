@@ -155,7 +155,6 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   if (relativePath === '/ping')
     return new Response(null, { status: 200 });
 
-  // Coverage of the worker itself, only in a build instrumented with PWTEST_COVERAGE.
   if (__PW_COVERAGE__ && relativePath === '/coverage')
     return new Response(JSON.stringify(takeCoverage()), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
