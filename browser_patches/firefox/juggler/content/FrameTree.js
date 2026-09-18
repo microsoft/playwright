@@ -44,7 +44,7 @@ export class FrameTree {
       Ci.nsISupportsWeakReference,
     ]);
 
-    this._wdm = Cc["@mozilla.org/dom/workers/workerdebuggermanager;1"].createInstance(Ci.nsIWorkerDebuggerManager);
+    this._wdm = Cc["@mozilla.org/dom/workers/workerdebuggermanager;1"].getService(Ci.nsIWorkerDebuggerManager);
     this._wdmListener = {
       QueryInterface: ChromeUtils.generateQI([Ci.nsIWorkerDebuggerManagerListener]),
       onRegister: this._onWorkerCreated.bind(this),
