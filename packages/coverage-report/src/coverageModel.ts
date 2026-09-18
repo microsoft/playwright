@@ -16,8 +16,7 @@
 
 import { addCoverageSummary, coveragePercent, emptyCoverageSummary, lineCoverage } from '@isomorphic/istanbulCoverage';
 
-import type { CoverageFile, CoverageFileSummary } from '../types';
-import type { CoverageMetric, CoverageSummary, IstanbulRange } from '@isomorphic/istanbulCoverage';
+import type { CoverageFile, CoverageFileSummary, CoverageMetric, CoverageSummary, IstanbulRange } from '@isomorphic/istanbulCoverage';
 
 export type CoverageTreeNode = {
   name: string;

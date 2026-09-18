@@ -161,3 +161,20 @@ function countHits(metric: CoverageMetric, counts: Iterable<number>) {
       ++metric.covered;
   }
 }
+
+export type CoverageFileSummary = {
+  fileId: string;
+  path: string;
+  summary: CoverageSummary;
+};
+
+export type CoverageReport = {
+  files: CoverageFileSummary[];
+  summary: CoverageSummary;
+};
+
+export type CoverageFile = {
+  path: string;
+  source?: string;
+  coverage: IstanbulFileCoverage;
+};

@@ -21,8 +21,8 @@ import { Transform } from 'stream';
 import type { TransformCallback } from 'stream';
 import type { ZipFile } from 'yazl';
 
-export async function inlineViteApp(appFolder: string, htmlName = 'index.html'): Promise<string> {
-  let html = await fs.promises.readFile(path.join(appFolder, htmlName), 'utf-8');
+export async function inlineViteApp(appFolder: string): Promise<string> {
+  let html = await fs.promises.readFile(path.join(appFolder, 'index.html'), 'utf-8');
   const [js, css] = await Promise.all([
     fs.promises.readFile(path.join(appFolder, 'report.js'), 'utf-8'),
     fs.promises.readFile(path.join(appFolder, 'report.css'), 'utf-8'),

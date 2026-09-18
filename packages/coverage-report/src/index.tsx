@@ -16,16 +16,15 @@
 
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
-import '../theme.css';
+import './colors.css';
+import './common.css';
 import { CoverageView } from './coverageView';
-import { HeaderView } from '../headerView';
-import { SearchParamsProvider } from '../links';
-import { ZipReport } from '../zipReport';
+import { ZipReport } from '@web/zipReport';
 import { applyTheme } from '@web/theme';
 import logo from '@web/assets/playwright-logo.svg';
 
 import type { LoadedCoverage } from './loadedCoverage';
-import type { CoverageReport } from '../types';
+import type { CoverageReport } from '@isomorphic/istanbulCoverage';
 
 const link = document.createElement('link');
 link.rel = 'shortcut icon';
@@ -38,10 +37,7 @@ const CoverageLoader: React.FC = () => {
     const zipCoverage = new ZipReport<CoverageReport>('playwrightCoverageBase64', 'coverage.json');
     zipCoverage.load().then(() => setCoverage(zipCoverage));
   }, []);
-  return <SearchParamsProvider>
-    <HeaderView title='Coverage report' />
-    <CoverageView coverage={coverage} />
-  </SearchParamsProvider>;
+  return <CoverageView coverage={coverage} title='Coverage report' />;
 };
 
 window.onload = () => {

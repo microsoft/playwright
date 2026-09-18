@@ -16,10 +16,12 @@
 
 import { fileCoverageSummary, addCoverageSummary, emptyCoverageSummary } from '@isomorphic/istanbulCoverage';
 
-import type { LoadedReport } from '../loadedReport';
-import type { CoverageFile, CoverageReport } from '../types';
+import type { CoverageFile, CoverageReport } from '@isomorphic/istanbulCoverage';
 
-export type LoadedCoverage = LoadedReport<CoverageReport>;
+export interface LoadedCoverage {
+  json(): CoverageReport;
+  entry(name: string): Promise<Object | undefined>;
+}
 
 export function coverageFileEntry(fileId: string): string {
   return `coverage/${fileId}.json`;

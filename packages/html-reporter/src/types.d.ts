@@ -15,7 +15,6 @@
  */
 
 import type { TestAnnotation, Metadata } from '@playwright/test';
-import type { CoverageSummary, IstanbulFileCoverage } from '@isomorphic/istanbulCoverage';
 
 export type Stats = {
   total: number;
@@ -130,21 +129,4 @@ export type TestStep = {
   attachments: number[];
   count: number;
   skipped?: boolean;
-};
-
-export type CoverageFileSummary = {
-  fileId: string;
-  path: string;
-  summary: CoverageSummary;
-};
-
-export type CoverageReport = {
-  files: CoverageFileSummary[];
-  summary: CoverageSummary;
-};
-
-export type CoverageFile = {
-  path: string;
-  source?: string;
-  coverage: IstanbulFileCoverage;
 };

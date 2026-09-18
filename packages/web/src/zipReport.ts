@@ -18,12 +18,11 @@
 import * as zipImport from '@zip.js/zip.js/lib/zip-no-worker-inflate.js';
 
 import type * as zip from '@zip.js/zip.js';
-import type { LoadedReport } from './loadedReport';
 // @ts-ignore
 const zipjs = zipImport as typeof zip;
 
 // Reads the report data from the base64 zip embedded into the page.
-export class ZipReport<T> implements LoadedReport<T> {
+export class ZipReport<T> {
   private _entries = new Map<string, zip.Entry>();
   private _json!: T;
   private _templateId: string;

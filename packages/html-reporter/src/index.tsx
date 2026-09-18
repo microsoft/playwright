@@ -20,7 +20,7 @@ import * as ReactDOM from 'react-dom/client';
 import './colors.css';
 import type { LoadedReport } from './loadedReport';
 import { ReportView } from './reportView';
-import { ZipReport } from './zipReport';
+import { ZipReport } from '@web/zipReport';
 
 import logo from '@web/assets/playwright-logo.svg';
 import { SearchParamsProvider } from './links';

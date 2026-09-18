@@ -26,11 +26,10 @@ import { terminalScreen } from './base';
 import { appendZipDataTemplate, inlineViteApp } from './htmlUtils';
 import { resolveReporterOutputPath } from '../util';
 
-import type { CoverageMetric, IstanbulCoverage, IstanbulFileCoverage } from '@isomorphic/istanbulCoverage';
+import type { CoverageFile, CoverageMetric, CoverageReport, IstanbulCoverage, IstanbulFileCoverage } from '@isomorphic/istanbulCoverage';
 import type { CommonReporterOptions } from './base';
 import type { ReporterV2 } from './reporterV2';
 import type { TestCase, TestResult } from '../../types/testReporter';
-import type { CoverageFile, CoverageReport } from '@html-reporter/types';
 
 type CoverageReporterOptions = {
   outputDir?: string,
@@ -131,7 +130,7 @@ class CoverageReporter implements ReporterV2 {
 
     const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite', 'coverageReport');
     const reportIndexFile = path.join(outputDir, 'index.html');
-    await fs.promises.writeFile(reportIndexFile, await inlineViteApp(appFolder, 'coverage.html'));
+    await fs.promises.writeFile(reportIndexFile, await inlineViteApp(appFolder));
     await appendZipDataTemplate(reportIndexFile, dataZipFile, 'playwrightCoverageBase64');
     return report;
   }

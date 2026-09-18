@@ -17,7 +17,18 @@
 
 
 .coverage-view {
-  padding: 0 8px;
+  padding: 12px 8px 0 8px;
+}
+
+.coverage-view a {
+  color: var(--color-accent-fg);
+  text-decoration: none;
+}
+
+.coverage-title {
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.25;
 }
 
 .coverage-summary {
@@ -98,10 +109,6 @@
   font-size: 16px;
 }
 
-.coverage-breadcrumbs a {
-  color: var(--color-accent-fg) !important;
-}
-
 .coverage-breadcrumbs-separator {
   color: var(--color-fg-muted);
 }
@@ -141,12 +148,9 @@
 
 .coverage-files-name {
   width: 100%;
+  min-width: 240px;
   white-space: normal !important;
-  word-break: break-all;
-}
-
-.coverage-files-name a {
-  color: var(--color-accent-fg) !important;
+  overflow-wrap: anywhere;
 }
 
 .coverage-files-toggle {

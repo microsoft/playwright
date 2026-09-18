@@ -19,7 +19,7 @@ import { expect, test } from '@playwright/test';
 test.use({ viewport: { width: 1000, height: 800 } });
 
 test('should render summary and file tree', async ({ mount }) => {
-  const component = await mount('html-reporter/coverage/coverageView/Default');
+  const component = await mount('coverage-report/coverageView/Default');
   await expect(component.getByTestId('coverage-metric-statements')).toContainText('57.14%');
   await expect(component.getByTestId('coverage-metric-statements')).toContainText('4/7');
   await expect(component.getByTestId('coverage-metric-branches')).toContainText('25.00%');
@@ -34,7 +34,7 @@ test('should render summary and file tree', async ({ mount }) => {
 });
 
 test('should collapse directories', async ({ mount }) => {
-  const component = await mount('html-reporter/coverage/coverageView/Default');
+  const component = await mount('coverage-report/coverageView/Default');
   await component.getByRole('button', { name: 'src', exact: true }).click();
   await expect(component.getByTestId('coverage-file')).toHaveText([/util\.js/]);
   await component.getByRole('button', { name: 'src', exact: true }).click();
@@ -42,7 +42,7 @@ test('should collapse directories', async ({ mount }) => {
 });
 
 test('should filter files', async ({ mount }) => {
-  const component = await mount('html-reporter/coverage/coverageView/Default');
+  const component = await mount('coverage-report/coverageView/Default');
   await component.getByLabel('Filter files').fill('button');
   await expect(component.getByTestId('coverage-file')).toHaveText([/button\.tsx/]);
   await expect(component.getByTestId('coverage-directory')).toHaveText([/src/, /components/]);
@@ -51,7 +51,7 @@ test('should filter files', async ({ mount }) => {
 });
 
 test('should show annotated source', async ({ mount, page }) => {
-  const component = await mount('html-reporter/coverage/coverageView/Default');
+  const component = await mount('coverage-report/coverageView/Default');
   await component.getByRole('link', { name: 'app.js' }).click();
   await expect(page).toHaveURL(/coverageFile=file-0/);
   await expect(component.getByText('src/app.js')).toBeVisible();
@@ -73,13 +73,13 @@ test('should show annotated source', async ({ mount, page }) => {
 });
 
 test('should report missing source', async ({ mount }) => {
-  const component = await mount('html-reporter/coverage/coverageView/Default');
+  const component = await mount('coverage-report/coverageView/Default');
   await component.getByRole('link', { name: 'util.js' }).click();
   await expect(component.getByText('Source is not available for /home/user/project/lib/util.js.')).toBeVisible();
 });
 
 test('should render empty report', async ({ mount }) => {
-  const component = await mount('html-reporter/coverage/coverageView/Empty');
+  const component = await mount('coverage-report/coverageView/Empty');
   await expect(component.getByTestId('coverage-metric-statements')).toContainText('100.00%');
   await expect(component.getByText('No files match the filter.')).toBeVisible();
 });

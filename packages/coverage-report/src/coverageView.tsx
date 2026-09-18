@@ -18,18 +18,17 @@ import * as React from 'react';
 import { coveragePercent, formatCoveragePercent } from '@isomorphic/istanbulCoverage';
 import { toTitleCase } from '@isomorphic/stringUtils';
 import { clsx, useAsyncMemo } from '@web/uiUtils';
-import '../colors.css';
-import '../common.css';
+import './colors.css';
+import './common.css';
 import './coverageView.css';
-import * as icons from '../icons';
-import { Link, useSearchParams } from '../links';
+import * as icons from './icons';
+import { hashHref, useHashParams } from './links';
 import { annotateCoverage, buildCoverageTree, coverageLevel } from './coverageModel';
 import { coverageFileEntry } from './loadedCoverage';
 
 import type { CoverageBranchMarker, CoverageLine, CoverageSegmentKind, CoverageTreeNode } from './coverageModel';
 import type { LoadedCoverage } from './loadedCoverage';
-import type { CoverageFile, CoverageFileSummary } from '../types';
-import type { CoverageMetric, CoverageSummary } from '@isomorphic/istanbulCoverage';
+import type { CoverageFile, CoverageFileSummary, CoverageMetric, CoverageSummary } from '@isomorphic/istanbulCoverage';
 
 export const kCoverageFileParam = 'coverageFile';
 
@@ -48,20 +47,22 @@ const kMarkerTitles: Record<CoverageBranchMarker, string> = {
 
 export const CoverageView: React.FC<{
   coverage: LoadedCoverage | undefined,
-}> = ({ coverage }) => {
-  const searchParams = useSearchParams();
-  const fileId = searchParams.get(kCoverageFileParam);
+  title?: string,
+}> = ({ coverage, title }) => {
+  const params = useHashParams();
+  const fileId = params.get(kCoverageFileParam);
   const report = coverage?.json();
   const file = React.useMemo(() => report?.files.find(f => f.fileId === fileId), [report, fileId]);
   const tree = React.useMemo(() => buildCoverageTree(report?.files || []), [report]);
 
-  if (!coverage || !report)
-    return null;
-  if (file)
-    return <CoverageFileView coverage={coverage} file={file} rootPath={tree.path} />;
   return <div className='coverage-view'>
-    <CoverageSummaryView summary={report.summary} />
-    <CoverageFilesView root={tree} />
+    {title && <div className='coverage-title'>{title}</div>}
+    {coverage && report && (file ?
+      <CoverageFileView coverage={coverage} file={file} rootPath={tree.path} params={params} /> :
+      <>
+        <CoverageSummaryView summary={report.summary} />
+        <CoverageFilesView root={tree} params={params} />
+      </>)}
   </div>;
 };
 
@@ -101,8 +102,8 @@ const CoverageCell: React.FC<{ metric: CoverageMetric }> = ({ metric }) => {
 
 export const CoverageFilesView: React.FC<{
   root: CoverageTreeNode,
-}> = ({ root }) => {
-  const searchParams = useSearchParams();
+  params: URLSearchParams,
+}> = ({ root, params }) => {
   const [filterText, setFilterText] = React.useState('');
   const [collapsed, setCollapsed] = React.useState<Set<string>>(new Set());
   const filtered = React.useMemo(() => filterTree(root, filterText.trim().toLowerCase()), [root, filterText]);
@@ -119,7 +120,7 @@ export const CoverageFilesView: React.FC<{
   const visit = (node: CoverageTreeNode, depth: number) => {
     for (const child of node.children) {
       const isCollapsed = !filterText && collapsed.has(child.path);
-      rows.push(<CoverageRow key={child.path} node={child} depth={depth} collapsed={isCollapsed} toggle={toggle} searchParams={searchParams} />);
+      rows.push(<CoverageRow key={child.path} node={child} depth={depth} collapsed={isCollapsed} toggle={toggle} params={params} />);
       if (!child.fileId && !isCollapsed)
         visit(child, depth + 1);
     }
@@ -151,13 +152,12 @@ const CoverageRow: React.FC<{
   depth: number,
   collapsed: boolean,
   toggle: (path: string) => void,
-  searchParams: URLSearchParams,
-}> = ({ node, depth, collapsed, toggle, searchParams }) => {
-  const href = node.fileId ? coverageFileHref(searchParams, node.fileId) : undefined;
+  params: URLSearchParams,
+}> = ({ node, depth, collapsed, toggle, params }) => {
   return <tr data-testid={node.fileId ? 'coverage-file' : 'coverage-directory'}>
     <td className='coverage-files-name' style={{ paddingLeft: 8 + depth * 20 }}>
-      {href ?
-        <Link href={href} click={href} title={node.path}>{node.name}</Link> :
+      {node.fileId ?
+        <a href={coverageFileHref(params, node.fileId)} title={node.path}>{node.name}</a> :
         <button type='button' className='coverage-files-toggle' aria-expanded={!collapsed} onClick={() => toggle(node.path)}>
           {collapsed ? icons.rightArrow() : icons.downArrow()}
           {node.name}
@@ -171,19 +171,18 @@ export const CoverageFileView: React.FC<{
   coverage: LoadedCoverage,
   file: CoverageFileSummary,
   rootPath: string,
-}> = ({ coverage, file, rootPath }) => {
-  const searchParams = useSearchParams();
+  params: URLSearchParams,
+}> = ({ coverage, file, rootPath, params }) => {
   const content = useAsyncMemo(() => coverage.entry(coverageFileEntry(file.fileId)) as Promise<CoverageFile | undefined>, [coverage, file.fileId], undefined);
   const lines = React.useMemo(() => content ? annotateCoverage(content) : [], [content]);
   const relativePath = rootPath && file.path.startsWith(rootPath + '/') ? file.path.slice(rootPath.length + 1) : file.path;
 
-  const listParams = new URLSearchParams(searchParams);
+  const listParams = new URLSearchParams(params);
   listParams.delete(kCoverageFileParam);
-  const listHref = '#?' + listParams.toString();
 
-  return <div className='coverage-view'>
+  return <>
     <div className='coverage-breadcrumbs'>
-      <Link href={listHref} click={listHref}>All files</Link>
+      <a href={hashHref(listParams)}>All files</a>
       <span className='coverage-breadcrumbs-separator'>/</span>
       <span title={file.path}>{relativePath}</span>
     </div>
@@ -202,7 +201,7 @@ export const CoverageFileView: React.FC<{
         </table>
       </div>
     </>}
-  </div>;
+  </>;
 };
 
 const CoverageLineView: React.FC<{ line: CoverageLine }> = ({ line }) => {
@@ -219,10 +218,10 @@ const CoverageLineView: React.FC<{ line: CoverageLine }> = ({ line }) => {
   </tr>;
 };
 
-export function coverageFileHref(searchParams: URLSearchParams, fileId: string): string {
-  const params = new URLSearchParams(searchParams);
-  params.set(kCoverageFileParam, fileId);
-  return '#?' + params.toString();
+export function coverageFileHref(params: URLSearchParams, fileId: string): string {
+  const fileParams = new URLSearchParams(params);
+  fileParams.set(kCoverageFileParam, fileId);
+  return hashHref(fileParams);
 }
 
 function filterTree(node: CoverageTreeNode, filter: string): CoverageTreeNode {

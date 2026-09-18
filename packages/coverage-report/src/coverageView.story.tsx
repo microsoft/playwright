@@ -18,7 +18,7 @@ import * as React from 'react';
 import { CoverageView } from './coverageView';
 import { createMemoryCoverage } from './loadedCoverage';
 
-import type { CoverageFile } from '../types';
+import type { CoverageFile } from '@isomorphic/istanbulCoverage';
 
 const appSource = [
   `export function greet(name) {`,

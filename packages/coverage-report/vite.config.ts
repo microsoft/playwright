@@ -16,8 +16,8 @@
 
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { bundle } from './bundle';
-import { storyTypes } from './tests/storyTypes';
+import { bundle } from '../html-reporter/bundle';
+import { storyTypes } from '../html-reporter/tests/storyTypes';
 import packageJSON from './package.json';
 import path from 'path';
 
@@ -36,7 +36,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: path.resolve(__dirname, '../playwright-core/lib/vite/htmlReport'),
+    outDir: path.resolve(__dirname, '../playwright-core/lib/vite/coverageReport'),
     emptyOutDir: true,
     assetsInlineLimit: 100000000,
     chunkSizeWarningLimit: 100000000,
