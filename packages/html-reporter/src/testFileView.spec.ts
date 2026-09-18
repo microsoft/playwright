@@ -16,7 +16,7 @@
 
 import { expect, test } from '@playwright/test';
 
-import type { Default } from './testFileView.story';
+import type { Default, Tagged } from './testFileView.story';
 
 test.use({ viewport: { width: 800, height: 600 } });
 
@@ -29,4 +29,13 @@ test('should render project links', async ({ mount, page }) => {
   await expect(page).toHaveURL(/p(:|%3A)webkit/);
   await webkitLabel.click({ modifiers: ['ControlOrMeta'] });
   await expect(page).not.toHaveURL(/webkit/);
+});
+
+test('should filter by tag with keyboard', async ({ mount, page }) => {
+  const component = await mount<typeof Tagged>('testFileView/Tagged');
+  const tag = component.getByRole('button', { name: 'smoke' }).first();
+  await tag.focus();
+  await expect(tag).toBeFocused();
+  await tag.press(' ');
+  await expect(page).toHaveURL(/q=%40smoke/);
 });

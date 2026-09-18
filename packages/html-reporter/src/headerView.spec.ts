@@ -34,6 +34,7 @@ test('should render counters', async ({ mount }) => {
       - link "Failed31"
       - link "Flaky17"
       - link "Skipped10"
+      - button "Settings"
   `);
 });
 
@@ -56,4 +57,15 @@ test('should toggle filters', async ({ page, mount }) => {
   await expect(filterText).toHaveValue('s:skipped ');
   await component.getByRole('textbox').fill('annot:annotation type=annotation description');
   await expect(filterText).toHaveValue('annot:annotation type=annotation description');
+});
+
+test('should open settings with keyboard', async ({ mount }) => {
+  const component = await mount<typeof Default>('headerView/Default');
+  const settings = component.getByRole('button', { name: 'Settings' });
+  await settings.focus();
+  await expect(settings).toBeFocused();
+  await settings.press('Enter');
+  await expect(component.getByTestId('settings-dialog')).toBeVisible();
+  await settings.press(' ');
+  await expect(component.getByTestId('settings-dialog')).toBeHidden();
 });

@@ -28,7 +28,10 @@ export const Label: React.FC<{
   onClick?: (e: React.MouseEvent, label: string) => void,
   colorIndex?: number,
 }> = ({ label, href, onClick, colorIndex, trimAtSymbolPrefix }) => {
-  const baseLabel = <span className={clsx('label', 'label-color-' + (colorIndex !== undefined ? colorIndex : hashStringToInt(label)))} onClick={onClick ? e => onClick(e, label) : undefined}>
+  const labelClass = clsx('label', 'label-color-' + (colorIndex !== undefined ? colorIndex : hashStringToInt(label)));
+  const baseLabel = onClick ? <button className={labelClass} onClick={e => onClick(e, label)}>
+    {trimAtSymbolPrefix && label.startsWith('@') ? label.slice(1) : label}
+  </button> : <span className={labelClass}>
     {trimAtSymbolPrefix && label.startsWith('@') ? label.slice(1) : label}
   </span>;
 

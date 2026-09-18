@@ -19,3 +19,6 @@ import { TestFileView } from './testFileView';
 
 export const Default = () =>
   <TestFileView file={testFile} projectNames={report.projectNames} />;
+
+export const Tagged = () =>
+  <TestFileView file={{ ...testFile, tests: testFile.tests.map(test => ({ ...test, tags: ['@smoke'] })) }} projectNames={report.projectNames} />;

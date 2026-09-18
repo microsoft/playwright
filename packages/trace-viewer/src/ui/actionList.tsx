@@ -112,7 +112,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   }, [setSelectedTime]);
 
   return <div className='vbox action-list-container'>
-    {selectedTime && <div className='action-list-show-all' onClick={onShowAll}><span className='codicon codicon-triangle-left'></span>Show all</div>}
+    {selectedTime && <button className='action-list-show-all' onClick={onShowAll}><span className='codicon codicon-triangle-left'></span>Show all</button>}
     <ActionTreeView
       name='actions'
       rootItem={rootItem}
@@ -164,10 +164,10 @@ export const renderAction = (
       {showAttachments && <ToolbarButton icon='attach' title='Open Attachment' onClick={() => revealActionAttachment?.()} />}
       {showDuration && !isSkipped && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
       {isSkipped && <span className={clsx('action-skipped', 'codicon', testStatusIcon('skipped'))} title='skipped'></span>}
-      {showBadges && <div className='action-icons' onClick={() => revealConsole?.()}>
+      {showBadges && <button className='action-icons' onClick={() => revealConsole?.()} onKeyDown={e => e.stopPropagation()}>
         {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className='action-icon-value'>{errors}</span></div>}
         {!!warnings && <div className='action-icon'><span className='codicon codicon-warning'></span><span className='action-icon-value'>{warnings}</span></div>}
-      </div>}
+      </button>}
     </div>
     {locator && <div className='action-title-selector' title={locator}>{locator}</div>}
   </div>;

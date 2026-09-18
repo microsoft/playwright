@@ -226,14 +226,24 @@ test('should keep selected action in view after Show all', async ({ runAndTrace,
   await deepAction.scrollIntoViewIfNeeded();
   await deepAction.dblclick();
 
-  const showAll = traceViewer.page.locator('.action-list-show-all');
+  const showAll = traceViewer.page.getByRole('button', { name: 'Show all' });
   await expect(showAll).toBeVisible();
-  await showAll.click();
+  await showAll.focus();
+  await showAll.press('Enter');
   await expect(showAll).toBeHidden();
 
   const selected = traceViewer.actionsTree.locator('[role="treeitem"][aria-selected="true"]');
   await expect(selected).toHaveCount(1);
   await expect(selected).toBeInViewport();
+});
+
+test('should reveal console from action badge with keyboard', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  const badge = traceViewer.page.locator('.action-icons').filter({ has: traceViewer.page.locator('.action-icon'), visible: true }).first();
+  await badge.focus();
+  await expect(badge).toBeFocused();
+  await badge.press('Enter');
+  await expect(traceViewer.page.getByRole('tab', { name: 'Console' })).toHaveAttribute('aria-selected', 'true');
 });
 
 test('should open uncompressed trace directory', async ({ showTraceViewer }) => {

@@ -128,13 +128,12 @@ const NavLink: React.FC<{
 };
 
 const SettingsButton: React.FC = () => {
-  const settingsRef = React.useRef<HTMLDivElement>(null);
+  const settingsRef = React.useRef<HTMLButtonElement>(null);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [theme, setTheme] = useThemeSetting();
 
   return <>
-    <div
-      role='button'
+    <button
       ref={settingsRef}
       style={{ cursor: 'pointer' }}
       className='subnav-item'
@@ -145,7 +144,7 @@ const SettingsButton: React.FC = () => {
       }}
       onMouseDown={preventDefault}>
       {icons.settings()}
-    </div>
+    </button>
 
     <Dialog
       open={settingsOpen}

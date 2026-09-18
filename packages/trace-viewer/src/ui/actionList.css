@@ -75,6 +75,7 @@
 }
 
 .action-icons {
+  all: unset;
   flex: none;
   display: flex;
   flex-direction: row;
@@ -83,6 +84,11 @@
   position: relative;
   top: 1px;
   border-bottom: 1px solid transparent;
+}
+
+.action-icons:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 1px;
 }
 
 .action-icons:hover {
@@ -118,10 +124,16 @@
 }
 
 .action-list-show-all {
+  all: unset;
   display: flex;
   cursor: pointer;
   height: 28px;
   align-items: center;
+}
+
+.action-list-show-all:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
 }
 
 .action-list-container {

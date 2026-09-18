@@ -15,6 +15,7 @@
  */
 
 .label {
+  font-family: inherit;
   display: inline-block;
   padding: 0 8px;
   font-size: 12px;
@@ -28,6 +29,11 @@
   flex: none;
   font-weight: 600;
   cursor: pointer;
+}
+
+.label:focus-visible {
+  outline: 1px solid var(--color-accent-fg);
+  outline-offset: 1px;
 }
 
 .label-anchor {
