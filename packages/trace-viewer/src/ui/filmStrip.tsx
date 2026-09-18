@@ -20,8 +20,10 @@ import * as React from 'react';
 import { useMeasure, upperBound } from '@web/uiUtils';
 import type { PageEntry } from '@isomorphic/trace/entries';
 import { useTraceModel } from './traceModelContext';
-import { useVideoThumbnails } from './videoThumbnails';
-import type { VideoThumbnail } from './videoThumbnails';
+import { useVideoSources } from './videoThumbnails';
+import type { VideoSource, VideoThumbnail } from './videoThumbnails';
+import { VideoFrame, lastVideoIndex } from './videoFrame';
+import type * as trace from '@isomorphic/trace/trace';
 
 export type FilmStripPreviewPoint = {
   x: number;
@@ -41,7 +43,7 @@ export const FilmStrip: React.FunctionComponent<{
   const lanesRef = React.useRef<HTMLDivElement>(null);
 
   const videos = (model?.videos ?? []).map(video => ({ video, url: model!.createRelativeUrl(`file/${video.file}`) }));
-  const videoThumbnails = useVideoThumbnails(videos);
+  const videoSources = useVideoSources(videos);
 
   let laneIndex = 0;
   if (lanesRef.current && previewPoint) {
@@ -50,24 +52,30 @@ export const FilmStrip: React.FunctionComponent<{
   }
 
   const pageLanes = (model?.pages ?? []).filter(page => page.screencastFrames.length);
-  const videoLanes = videoLanesByPage(videos.map(({ video }) => video.pageId), videoThumbnails);
+  const videoLanes = videoLanesByPage(videos.map(({ video }) => video), videoSources);
 
-  let previewFrames: { timestamp: number, width: number, height: number, url: string }[] | undefined;
-  if (laneIndex < pageLanes.length)
-    previewFrames = model ? pageLanes[laneIndex]?.screencastFrames.map(frame => ({ ...frame, url: model.createRelativeUrl(`file/${frame.file}`) })) : undefined;
-  else
-    previewFrames = videoLanes[laneIndex - pageLanes.length];
-
-  let previewImage = undefined;
-  let previewSize = undefined;
-  if (previewPoint !== undefined && previewFrames && previewFrames.length) {
+  // The thumbnails only index the lanes, the preview renders the video itself.
+  let preview: React.ReactNode | undefined;
+  let previewSize: Size | undefined;
+  if (model && previewPoint !== undefined) {
     const previewTime = boundaries.minimum + (boundaries.maximum - boundaries.minimum) * previewPoint.x / measure.width;
-    previewImage = previewFrames[upperBound(previewFrames, previewTime, timeComparator) - 1];
     const fitInto = {
       width: Math.min(800, (window.innerWidth / 2) | 0),
       height: Math.min(800, (window.innerHeight / 2) | 0),
     };
-    previewSize = previewImage ? inscribe({ width: previewImage.width, height: previewImage.height }, fitInto) : undefined;
+    const frames = pageLanes[laneIndex]?.screencastFrames;
+    const frame = frames?.[upperBound(frames, previewTime, timeComparator) - 1];
+    const lane = videoLanes[laneIndex - pageLanes.length];
+    const videoIndex = lane ? lastVideoIndex(lane.videos, previewTime) : -1;
+    const videoUrl = videoIndex === -1 ? undefined : lane.sources[videoIndex].url;
+    if (frame) {
+      previewSize = inscribe(frame, fitInto);
+      preview = <img src={model.createRelativeUrl(`file/${frame.file}`)} width={previewSize.width} height={previewSize.height} />;
+    } else if (videoUrl) {
+      const video = lane.videos[videoIndex];
+      previewSize = inscribe(video, fitInto);
+      preview = <VideoFrame url={videoUrl} startTime={video.timestamp} time={previewTime} width={previewSize.width} height={previewSize.height} />;
+    }
   }
 
   return <div className='film-strip' ref={ref}>
@@ -78,37 +86,48 @@ export const FilmStrip: React.FunctionComponent<{
         width={measure.width}
         key={index}
       />)}
-      {videoLanes.map((thumbnails, index) => <VideoFilmStripLane
+      {videoLanes.map((lane, index) => <VideoFilmStripLane
         boundaries={boundaries}
-        thumbnails={thumbnails}
+        thumbnails={lane.thumbnails}
         width={measure.width}
         key={'video-' + index}
       />)}
     </div>
-    {model && previewPoint && previewImage && previewSize &&
+    {previewPoint && preview && previewSize &&
       <div className='film-strip-hover' style={{
         top: measure.bottom + 5,
         left: Math.min(previewPoint.x, measure.width - previewSize.width - 10),
         width: previewSize.width,
         height: previewSize.height,
       }}>
-        <img src={previewImage.url} width={previewSize.width} height={previewSize.height} />
+        {preview}
       </div>
     }
   </div>;
 };
 
-function videoLanesByPage(pageIds: string[], thumbnails: VideoThumbnail[][]): VideoThumbnail[][] {
-  const lanes = new Map<string, VideoThumbnail[]>();
-  pageIds.forEach((pageId, index) => {
-    let lane = lanes.get(pageId);
+type VideoLane = {
+  videos: trace.VideoTraceEvent[];
+  sources: VideoSource[];
+  thumbnails: VideoThumbnail[];
+};
+
+function videoLanesByPage(videos: trace.VideoTraceEvent[], sources: VideoSource[]): VideoLane[] {
+  const lanes = new Map<string, VideoLane>();
+  videos.forEach((video, index) => {
+    let lane = lanes.get(video.pageId);
     if (!lane) {
-      lane = [];
-      lanes.set(pageId, lane);
+      lane = { videos: [], sources: [], thumbnails: [] };
+      lanes.set(video.pageId, lane);
     }
-    lane.push(...thumbnails[index]);
+    lane.videos.push(video);
+    lane.sources.push(sources[index]);
+    lane.thumbnails.push(...sources[index].thumbnails);
   });
-  return [...lanes.values()].filter(lane => lane.length).map(lane => lane.sort((a, b) => a.timestamp - b.timestamp));
+  return [...lanes.values()].filter(lane => lane.thumbnails.length).map(lane => {
+    lane.thumbnails.sort((a, b) => a.timestamp - b.timestamp);
+    return lane;
+  });
 }
 
 const VideoFilmStripLane: React.FunctionComponent<{

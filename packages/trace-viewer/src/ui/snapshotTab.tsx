@@ -21,7 +21,7 @@ import { nextActionByStartTime, previousActionByEndTime } from '@isomorphic/trac
 import type { TraceModel } from '@isomorphic/trace/traceModel';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { clsx, useMeasure, useSetting } from '@web/uiUtils';
+import { clsx, upperBound, useMeasure, useSetting } from '@web/uiUtils';
 import { InjectedScript } from '@injected/injectedScript';
 import { Recorder } from '@injected/recorder/recorder';
 import { asLocator } from '@isomorphic/locatorGenerators';
@@ -36,6 +36,8 @@ import yaml from 'yaml';
 import { PlaybackButtons } from './playbackControl';
 import type { PlaybackState } from './playbackControl';
 import { AriaModeView, collectAriaModeTargets, shouldDisplayAriaMode } from './ariaModeView';
+import { useVideoSources } from './videoThumbnails';
+import { VideoFrame, lastVideoIndex } from './videoFrame';
 
 export type HighlightedElement = {
   locator?: string,
@@ -52,13 +54,16 @@ export const SnapshotTabsView: React.FunctionComponent<{
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedElement: HighlightedElement,
   setHighlightedElement: (element: HighlightedElement) => void,
+  // Time to show the screencast at, undefined to show the action snapshot.
+  screencastTime?: number,
   playback: PlaybackState
-}> = ({ action, model, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement, playback }) => {
+}> = ({ action, model, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement, screencastTime, playback }) => {
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
   const [shouldPopulateCanvasFromScreenshot] = useSetting('shouldPopulateCanvasFromScreenshot', false);
   const [displayAriaModeSetting] = useSetting('displayAriaMode', false);
   const displayAriaMode = shouldDisplayAriaMode(model, displayAriaModeSetting);
+  const screencastFrame = useScreencastFrame(model, screencastTime, playback.playing, playback.speed);
 
   const snapshots = React.useMemo(() => {
     return collectSnapshots(model, action);
@@ -107,6 +112,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
       target={ariaModeTargets[snapshotTab]}
       point={snapshotTab === 'action' ? action?.point : undefined}
       box={snapshotTab === 'action' ? action?.box : undefined}
+      screencastFrame={screencastFrame}
     />}
     {!displayAriaMode && <SnapshotView
       snapshotUrls={snapshotUrls}
@@ -116,6 +122,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
       setIsInspecting={setIsInspecting}
       highlightedElement={highlightedElement}
       setHighlightedElement={setHighlightedElement}
+      screencastFrame={screencastFrame}
     />}
   </div>;
 };
@@ -128,7 +135,8 @@ export const SnapshotView: React.FunctionComponent<{
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedElement: HighlightedElement,
   setHighlightedElement: (element: HighlightedElement) => void,
-}> = ({ snapshotUrls, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement }) => {
+  screencastFrame?: React.ReactNode,
+}> = ({ snapshotUrls, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement, screencastFrame }) => {
   const iframeRef0 = React.useRef<HTMLIFrameElement>(null);
   const iframeRef1 = React.useRef<HTMLIFrameElement>(null);
   const [snapshotInfo, setSnapshotInfo] = React.useState<SnapshotInfo>({ viewport: kDefaultViewport, url: '' });
@@ -146,7 +154,8 @@ export const SnapshotView: React.FunctionComponent<{
       if (loadingRef.current.iteration !== thisIteration)
         return;
 
-      const iframe = [iframeRef0, iframeRef1][newVisibleIframe].current;
+      // While the screencast frame covers the snapshot, only take the viewport and the url from it.
+      const iframe = screencastFrame ? undefined : [iframeRef0, iframeRef1][newVisibleIframe].current;
       if (iframe) {
         let loadedCallback = () => {};
         const loadedPromise = new Promise<void>(f => loadedCallback = f);
@@ -172,10 +181,11 @@ export const SnapshotView: React.FunctionComponent<{
       if (loadingRef.current.iteration !== thisIteration)
         return;
 
-      loadingRef.current.visibleIframe = newVisibleIframe;
+      if (iframe)
+        loadingRef.current.visibleIframe = newVisibleIframe;
       setSnapshotInfo(newSnapshotInfo);
     })();
-  }, [snapshotUrls]);
+  }, [snapshotUrls, screencastFrame]);
 
   return <div
     className='vbox'
@@ -207,6 +217,7 @@ export const SnapshotView: React.FunctionComponent<{
       <div className='snapshot-switcher'>
         <iframe ref={iframeRef0} name='snapshot' title='DOM Snapshot' sandbox='allow-same-origin allow-scripts' className={clsx(loadingRef.current.visibleIframe === 0 && 'snapshot-visible')}></iframe>
         <iframe ref={iframeRef1} name='snapshot' title='DOM Snapshot' sandbox='allow-same-origin allow-scripts' className={clsx(loadingRef.current.visibleIframe === 1 && 'snapshot-visible')}></iframe>
+        {screencastFrame}
       </div>
     </SnapshotWrapper>
   </div>;
@@ -478,3 +489,27 @@ export async function fetchSnapshotInfo(snapshotInfoUrl: string | undefined) {
 }
 
 export const kDefaultViewport = { width: 1280, height: 720 };
+
+function useScreencastFrame(model: TraceModel | undefined, time: number | undefined, playing: boolean, speed: number): React.ReactNode | undefined {
+  const videos = model && time !== undefined ? model.videos.map(video => ({ video, url: model.createRelativeUrl(`file/${video.file}`) })) : [];
+  const videoSources = useVideoSources(videos);
+  if (!model || time === undefined)
+    return undefined;
+
+  // A trace has either screencast frames or videos, never both.
+  // Show the page that painted most recently.
+  let frame: { timestamp: number, file: string } | undefined;
+  for (const page of model.pages) {
+    const candidate = page.screencastFrames[upperBound(page.screencastFrames, time, (t, f) => t - f.timestamp) - 1];
+    if (candidate && (!frame || candidate.timestamp > frame.timestamp))
+      frame = candidate;
+  }
+  if (frame)
+    return <img className='screencast-frame' src={model.createRelativeUrl(`file/${frame.file}`)} alt='Screencast frame' />;
+
+  const index = lastVideoIndex(videos.map(({ video }) => video), time);
+  const url = videoSources[index]?.url;
+  if (!url)
+    return undefined;
+  return <VideoFrame className='screencast-frame' url={url} startTime={videos[index].video.timestamp} time={time} playing={playing} speed={speed} />;
+}

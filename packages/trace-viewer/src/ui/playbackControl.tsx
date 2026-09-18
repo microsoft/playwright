@@ -28,11 +28,14 @@ export type PlaybackState = {
   currentIndex: number;
   percent: number;
   animating: boolean;
+  screencastTime: number | undefined;
   togglePlay: () => void;
   stop: () => void;
   prev: () => void;
   next: () => void;
   cycleSpeed: () => void;
+  selectAction: (action: ActionEntry) => void;
+  showSelectedAction: () => void;
   onScrubberMouseDown: (e: React.MouseEvent) => void;
   scrubberRef: React.RefObject<HTMLDivElement | null>;
   actionsLength: number;
@@ -52,8 +55,8 @@ export function usePlayback(
   const [playing, setPlaying] = React.useState(false);
   const [speedIndex, setSpeedIndex] = React.useState(1);
   const [dragging, setDragging] = React.useState(false);
-  const [dragFraction, setDragFraction] = React.useState<number | undefined>(undefined);
-  const [cursorTime, setCursorTime] = React.useState<number | undefined>(undefined);
+  // Set while playing or positioned between actions: the screencast is shown at this time instead of the action snapshot.
+  const [screencastTime, setScreencastTime] = React.useState<number | undefined>(undefined);
   const speed = speeds[speedIndex];
 
   const currentIndex = selectedAction ? actions.indexOf(selectedAction) : -1;
@@ -64,7 +67,6 @@ export function usePlayback(
   const fullDuration = fullMax - fullMin || 1;
 
   // Playback boundaries: constrained to time window when selected.
-  const windowMin = timeWindow ? timeWindow.minimum : fullMin;
   const windowMax = timeWindow ? timeWindow.maximum : fullMax;
 
   // Actions within the effective window.
@@ -86,7 +88,12 @@ export function usePlayback(
 
   const scrubberRef = React.useRef<HTMLDivElement>(null);
 
-  const actionIndexAtTime = React.useCallback((t: number): number => {
+  const clampToWindow = React.useCallback((index: number) => {
+    return Math.max(firstWindowIndex, Math.min(lastWindowIndex, index));
+  }, [firstWindowIndex, lastWindowIndex]);
+
+  // Last action started at or before t, or the first action when none has started yet.
+  const lastStartedIndex = React.useCallback((t: number): number => {
     let lo = 0;
     let hi = actions.length - 1;
     while (lo < hi) {
@@ -96,29 +103,13 @@ export function usePlayback(
       else
         hi = mid - 1;
     }
-    if (lo < actions.length - 1) {
-      const distPrev = t - actions[lo].startTime;
-      const distNext = actions[lo + 1].startTime - t;
-      if (distNext < distPrev)
-        lo = lo + 1;
-    }
-    // Clamp to window bounds.
-    return Math.max(firstWindowIndex, Math.min(lastWindowIndex, lo));
-  }, [actions, firstWindowIndex, lastWindowIndex]);
+    return lo;
+  }, [actions]);
 
   const selectedTime = selectedAction ? selectedAction.startTime : fullMin;
+  const positionTime = screencastTime ?? selectedTime;
+  const percent = Math.max(0, Math.min(100, ((positionTime - fullMin) / fullDuration) * 100));
 
-  let percent: number;
-  if (dragging && dragFraction !== undefined)
-    percent = dragFraction * 100;
-  else if (playing && cursorTime !== undefined)
-    percent = Math.max(0, Math.min(100, ((cursorTime - fullMin) / fullDuration) * 100));
-  else
-    percent = Math.max(0, Math.min(100, ((selectedTime - fullMin) / fullDuration) * 100));
-
-  // Refs for raf closure.
-  const windowMinRef = React.useRef(windowMin);
-  windowMinRef.current = windowMin;
   const windowMaxRef = React.useRef(windowMax);
   windowMaxRef.current = windowMax;
 
@@ -127,13 +118,8 @@ export function usePlayback(
       return;
     let rafId: number;
     let lastFrameTime: number | undefined;
-    let traceTime = selectedTime;
-    // If starting from before the window, jump to window start.
-    if (traceTime < windowMinRef.current)
-      traceTime = windowMinRef.current;
-    let lastSelectedIndex = currentIndex;
-
-    setCursorTime(traceTime);
+    let traceTime = positionTime;
+    let lastSelectedIndex = clampToWindow(lastStartedIndex(traceTime));
 
     const tick = (now: number) => {
       if (lastFrameTime !== undefined) {
@@ -141,16 +127,17 @@ export function usePlayback(
         traceTime = Math.min(traceTime + delta, windowMaxRef.current);
       }
       lastFrameTime = now;
-      setCursorTime(traceTime);
+      setScreencastTime(traceTime);
 
-      const idx = actionIndexAtTime(traceTime);
-      if (idx !== lastSelectedIndex) {
-        lastSelectedIndex = idx;
-        onActionSelectedRef.current(actionsRef.current[idx]);
+      const index = clampToWindow(lastStartedIndex(traceTime));
+      if (index !== lastSelectedIndex) {
+        lastSelectedIndex = index;
+        onActionSelectedRef.current(actionsRef.current[index]);
       }
 
       if (traceTime >= windowMaxRef.current) {
         setPlaying(false);
+        setScreencastTime(undefined);
         return;
       }
       rafId = requestAnimationFrame(tick);
@@ -160,38 +147,51 @@ export function usePlayback(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, speed]);
 
-  React.useEffect(() => {
-    if (!playing)
-      setCursorTime(undefined);
-  }, [playing]);
-
   const togglePlay = React.useCallback(() => {
     if (!actions.length)
       return;
-    // Always restart from the window start when at the end (or beyond the window).
-    const atEnd = currentIndex >= lastWindowIndex;
-    if (!playing && atEnd)
+    if (playing) {
+      setPlaying(false);
+      setScreencastTime(undefined);
+      return;
+    }
+    // Restart from the window start when at the end, or outside the window.
+    if (currentIndex >= lastWindowIndex || currentIndex < firstWindowIndex)
       onActionSelected(actions[firstWindowIndex]);
-    setPlaying(!playing);
+    setPlaying(true);
   }, [playing, actions, currentIndex, onActionSelected, firstWindowIndex, lastWindowIndex]);
+
+  const selectAction = React.useCallback((action: ActionEntry) => {
+    setPlaying(false);
+    setScreencastTime(undefined);
+    onActionSelectedRef.current(action);
+  }, []);
+
+  // Leave the between-actions position, so that the selected action's snapshot is shown.
+  const showSelectedAction = React.useCallback(() => {
+    setPlaying(false);
+    setScreencastTime(undefined);
+  }, []);
 
   const stop = React.useCallback(() => {
     setPlaying(false);
+    setScreencastTime(undefined);
     if (actions.length)
       onActionSelected(actions[firstWindowIndex]);
   }, [actions, onActionSelected, firstWindowIndex]);
 
+  const canPrev = currentIndex > firstWindowIndex;
+  const canNext = currentIndex < lastWindowIndex;
+
   const prev = React.useCallback(() => {
-    const target = Math.max(currentIndex - 1, firstWindowIndex);
-    if (target !== currentIndex)
-      onActionSelected(actions[target]);
-  }, [actions, currentIndex, onActionSelected, firstWindowIndex]);
+    if (canPrev)
+      selectAction(actions[currentIndex - 1]);
+  }, [actions, canPrev, currentIndex, selectAction]);
 
   const next = React.useCallback(() => {
-    const target = Math.min(currentIndex + 1, lastWindowIndex);
-    if (target !== currentIndex)
-      onActionSelected(actions[target]);
-  }, [actions, currentIndex, onActionSelected, lastWindowIndex]);
+    if (canNext)
+      selectAction(actions[currentIndex + 1]);
+  }, [actions, canNext, currentIndex, selectAction]);
 
   const cycleSpeed = React.useCallback(() => {
     setSpeedIndex(i => (i + 1) % speeds.length);
@@ -199,20 +199,21 @@ export function usePlayback(
 
   React.useEffect(() => {
     setPlaying(false);
+    setScreencastTime(undefined);
   }, [actions]);
 
-  const fractionFromMouseEvent = React.useCallback((e: MouseEvent | React.MouseEvent) => {
+  const seekToMouseEvent = React.useCallback((e: MouseEvent | React.MouseEvent, snap: boolean) => {
     const rect = scrubberRef.current!.getBoundingClientRect();
-    return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-  }, []);
-
-  const selectActionAtFraction = React.useCallback((fraction: number) => {
-    if (!actions.length)
-      return;
-    const t = fullMin + fraction * fullDuration;
-    const idx = actionIndexAtTime(t);
-    onActionSelectedRef.current(actionsRef.current[idx]);
-  }, [actions, fullMin, fullDuration, actionIndexAtTime]);
+    const fraction = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const time = fullMin + fraction * fullDuration;
+    // The screencast follows the pointer while dragging, releasing snaps to the action snapshot.
+    setScreencastTime(snap ? undefined : time);
+    let index = lastStartedIndex(time);
+    const next = actions[index + 1];
+    if (next && next.startTime - time < time - actions[index].startTime)
+      ++index;
+    onActionSelectedRef.current(actions[clampToWindow(index)]);
+  }, [actions, fullMin, fullDuration, clampToWindow, lastStartedIndex]);
 
   const dragCleanupRef = React.useRef<(() => void) | null>(null);
 
@@ -228,22 +229,16 @@ export function usePlayback(
     scrubberRef.current?.focus();
     setDragging(true);
     setPlaying(false);
-    const fraction = fractionFromMouseEvent(e);
-    setDragFraction(fraction);
-    selectActionAtFraction(fraction);
+    seekToMouseEvent(e, false);
 
     const onMouseMove = (me: MouseEvent) => {
-      const f = fractionFromMouseEvent(me);
-      setDragFraction(f);
-      selectActionAtFraction(f);
+      seekToMouseEvent(me, false);
     };
     const onMouseUp = (me: MouseEvent) => {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
       dragCleanupRef.current = null;
-      const f = fractionFromMouseEvent(me);
-      selectActionAtFraction(f);
-      setDragFraction(undefined);
+      seekToMouseEvent(me, true);
       setDragging(false);
     };
     document.addEventListener('mousemove', onMouseMove);
@@ -252,18 +247,16 @@ export function usePlayback(
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
     };
-  }, [actions, selectActionAtFraction, fractionFromMouseEvent]);
+  }, [actions, seekToMouseEvent]);
 
   const animating = !playing && !dragging;
   const ticks = actions.length > 0 && actions.length <= 200 ? actions.map(a => ((a.startTime - fullMin) / fullDuration) * 100) : undefined;
 
-  const canPrev = currentIndex > firstWindowIndex;
-  const canNext = currentIndex < lastWindowIndex;
   const canStop = playing || currentIndex > firstWindowIndex;
 
   return {
-    playing, speed, currentIndex, percent, animating,
-    togglePlay, stop, prev, next, cycleSpeed,
+    playing, speed, currentIndex, percent, animating, screencastTime,
+    togglePlay, stop, prev, next, cycleSpeed, selectAction, showSelectedAction,
     onScrubberMouseDown, scrubberRef, actionsLength: actions.length,
     canPrev, canNext, canStop, ticks,
   };
