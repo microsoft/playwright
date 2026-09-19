@@ -36,6 +36,20 @@
   margin-top: 10px;
 }
 
+.attachments-image-diff-header {
+  position: relative;
+}
+
+.attachments-update-snapshot {
+  background-color: var(--vscode-editor-inactiveSelectionBackground);
+  font-weight: normal;
+  padding: 4px 12px;
+  position: absolute;
+  right: 5px;
+  text-transform: none;
+  top: 5px;
+}
+
 .attachment-item {
   margin: 4px 8px;
 }
