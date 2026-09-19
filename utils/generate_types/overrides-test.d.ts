@@ -299,6 +299,7 @@ export interface PlaywrightTestOptions {
   permissions: string[] | undefined;
   proxy: Proxy | undefined;
   reducedMotion: ReducedMotion;
+  screen: ViewportSize | undefined;
   storageState: StorageState | undefined;
   timezoneId: string | undefined;
   userAgent: string | undefined;

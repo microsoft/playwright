@@ -242,3 +242,67 @@ test('should respect testIdAttribute with multiple comma-separated names', async
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+
+test('should support screen option in test runner', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import { defineConfig, devices } from '@playwright/test';
+      export default defineConfig({
+        projects: [
+          {
+            name: 'chromium',
+            use: { ...devices['iPhone 13'] },
+          },
+        ],
+      });
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('screen should match device descriptor', async ({ page }) => {
+        const screen = await page.evaluate(() => ({
+          width: window.screen.width,
+          height: window.screen.height
+        }));
+        // iPhone 13 has screen dimensions of 390x844
+        expect(screen.width).toBe(390);
+        expect(screen.height).toBe(844);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should support explicit screen option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        use: {
+          screen: { width: 1920, height: 1080 },
+          viewport: { width: 800, height: 600 }
+        }
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('screen should differ from viewport', async ({ page }) => {
+        const viewport = page.viewportSize();
+        const screen = await page.evaluate(() => ({
+          width: window.screen.width,
+          height: window.screen.height
+        }));
+        // Viewport is 800x600
+        expect(viewport.width).toBe(800);
+        expect(viewport.height).toBe(600);
+        // But screen is 1920x1080
+        expect(screen.width).toBe(1920);
+        expect(screen.height).toBe(1080);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

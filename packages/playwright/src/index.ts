@@ -284,6 +284,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
   timezoneId: [({ contextOptions }, use) => use(contextOptions.timezoneId), { option: true, box: true }],
   userAgent: [({ contextOptions }, use) => use(contextOptions.userAgent), { option: true, box: true }],
   viewport: [({ contextOptions }, use) => use(contextOptions.viewport === undefined ? { width: 1280, height: 720 } : contextOptions.viewport), { option: true, box: true }],
+  screen: [({ contextOptions }, use) => use(contextOptions.screen), { option: true, box: true }],
   actionTimeout: [0, { option: true, box: true }],
   navigationTimeout: [0, { option: true, box: true }],
   baseURL: [async ({ }, use) => {
@@ -311,6 +312,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     permissions,
     proxy,
     reducedMotion,
+    screen,
     storageState,
     viewport,
     timezoneId,
@@ -356,6 +358,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
       options.proxy = proxy;
     if (reducedMotion !== undefined)
       options.reducedMotion = reducedMotion;
+    if (screen !== undefined)
+      options.screen = screen;
     if (storageState !== undefined)
       options.storageState = storageState;
     if (clientCertificates?.length)
