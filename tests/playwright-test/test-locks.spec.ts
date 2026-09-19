@@ -44,6 +44,17 @@ const lockedTest = (name: string, delay: number, lock?: string | string[]) => `
   });
 `;
 
+const signalHelper = `
+  import fs from 'fs';
+  import path from 'path';
+  export async function signalAndWait(signal: string, waitFor: string) {
+    fs.mkdirSync(process.env.SIGNAL_DIR, { recursive: true });
+    fs.writeFileSync(path.join(process.env.SIGNAL_DIR, signal), '');
+    while (!fs.existsSync(path.join(process.env.SIGNAL_DIR, waitFor)))
+      await new Promise(f => setTimeout(f, 100));
+  }
+`;
+
 test('should not run tests with the same lock at the same time', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
@@ -68,16 +79,7 @@ test('should run tests with different locks at the same time', async ({ runInlin
     'playwright.config.ts': `
       module.exports = { fullyParallel: true };
     `,
-    'helper.ts': `
-      import fs from 'fs';
-      import path from 'path';
-      export async function signalAndWait(signal: string, waitFor: string) {
-        fs.mkdirSync(process.env.SIGNAL_DIR, { recursive: true });
-        fs.writeFileSync(path.join(process.env.SIGNAL_DIR, signal), '');
-        while (!fs.existsSync(path.join(process.env.SIGNAL_DIR, waitFor)))
-          await new Promise(f => setTimeout(f, 100));
-      }
-    `,
+    'helper.ts': signalHelper,
     'a.test.ts': `
       import { test } from '@playwright/test';
       import { signalAndWait } from './helper';
@@ -138,6 +140,99 @@ test('should support locks declared on a describe group', async ({ runInlineTest
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
   expect(conflictingOverlaps(result.outputLines, [['test1', 'test2']])).toEqual([]);
+});
+
+for (const position of ['before', 'after']) {
+  test(`should support locks configured ${position} declaring tests`, async ({ runInlineTest }) => {
+    const configure = `test.describe.configure({ lock: 'shared' });`;
+    const result = await runInlineTest({
+      'playwright.config.ts': `
+        module.exports = { fullyParallel: true };
+      `,
+      'a.test.ts': `
+        import { test } from '@playwright/test';
+        ${position === 'before' ? configure : ''}
+        ${lockedTest('test1', 1000)}
+        ${position === 'after' ? configure : ''}
+      `,
+      'b.test.ts': `
+        import { test } from '@playwright/test';
+        ${lockedTest('test2', 1000, 'shared')}
+      `,
+    }, { workers: 2 });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(2);
+    expect(conflictingOverlaps(result.outputLines, [['test1', 'test2']])).toEqual([]);
+  });
+}
+
+test('should add configured locks to declared and inherited locks', async ({ runInlineTest }) => {
+  const locks = ['file', 'details', 'first', 'second', 'third', 'test'];
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { fullyParallel: true };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test.describe.configure({ lock: 'file' });
+      test.describe('locked suite', { lock: 'details' }, () => {
+        test.describe.configure({ lock: 'first' });
+        test.describe.configure({ lock: ['second', 'third'] });
+        test.describe.configure({ lock: [] });
+        test.describe.configure({ lock: undefined, timeout: 10_000 });
+        test.describe('nested suite', () => {
+          ${lockedTest('test1', 1000, 'test')}
+        });
+      });
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      ${locks.map(lock => lockedTest(lock, 1000, lock)).join('\n')}
+    `,
+  }, { workers: 3 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(7);
+  expect(conflictingOverlaps(result.outputLines, locks.map<[string, string]>(lock => ['test1', lock]))).toEqual([]);
+});
+
+test('should compose configured locks with scoped fixture options', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { fullyParallel: true };
+    `,
+    'signals.ts': signalHelper,
+    'helper.ts': `
+      import { test as base } from '@playwright/test';
+      export const test = base.extend<{ seed: string }>({
+        seed: ['local', { option: true }],
+      });
+      export function useSeed(seed: string) {
+        test.use({ seed });
+        if (seed === 'stripe')
+          test.describe.configure({ lock: 'stripe' });
+      }
+    `,
+    'a.test.ts': `
+      import { expect } from '@playwright/test';
+      import { test, useSeed } from './helper';
+      import { signalAndWait } from './signals';
+      test.describe('stripe', () => {
+        useSeed('stripe');
+        test.describe('nested', () => {
+          test('locked', async ({ seed }) => {
+            expect(seed).toBe('stripe');
+            await signalAndWait('locked', 'unlocked');
+          });
+        });
+      });
+      test('unlocked', async ({ seed }) => {
+        expect(seed).toBe('local');
+        await signalAndWait('unlocked', 'locked');
+      });
+    `,
+  }, { workers: 2 }, { SIGNAL_DIR: test.info().outputDir });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
 });
 
 test('should support multiple locks on a single test', async ({ runInlineTest }) => {
@@ -236,3 +331,17 @@ test('should validate lock in test details', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('details.lock');
 });
+
+for (const lock of [42, null, ['shared', 42]]) {
+  test(`should validate configured lock ${JSON.stringify(lock)}`, async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        import { test } from '@playwright/test';
+        test.describe.configure({ lock: ${JSON.stringify(lock)} });
+        test('test1', async () => {});
+      `,
+    });
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toContain('details.lock');
+  });
+}

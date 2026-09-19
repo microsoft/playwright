@@ -56,6 +56,12 @@ test('basics should work', async ({ runTSC }) => {
       test.foo();
       test.describe.configure({ mode: 'parallel' });
       test.describe.configure({ retries: 3, timeout: 123 });
+      test.describe.configure({ lock: 'shared' });
+      test.describe.configure({ lock: ['first', 'second'], mode: 'parallel', retries: 3, timeout: 123 });
+      // @ts-expect-error
+      test.describe.configure({ lock: 42 });
+      // @ts-expect-error
+      test.describe.configure({ lock: ['shared', 42] });
       test('title', { tag: '@foo' }, () => {});
       test('title', { tag: ['@foo', '@bar'] }, () => {});
       test('title', { annotation: { type: 'issue' } }, () => {});
