@@ -123,6 +123,27 @@ it('should work with Cross-Origin-Opener-Policy', async ({ page, server }) => {
   expect(response.request().failure()).toBeNull();
 });
 
+for (const crossOriginEmbedderPolicy of [undefined, 'require-corp']) {
+  it(`should work with Cross-Origin-Opener-Policy${crossOriginEmbedderPolicy ? ' and Cross-Origin-Embedder-Policy' : ''} and history state`, async ({ page, server }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42731' });
+    server.setRoute('/empty.html', (req, res) => {
+      res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+      if (crossOriginEmbedderPolicy)
+        res.setHeader('Cross-Origin-Embedder-Policy', crossOriginEmbedderPolicy);
+      res.end(`
+        <!doctype html>
+        <h1>hello</h1>
+        <script type="module">history.replaceState({ key: 1 }, '', location.href);</script>
+      `);
+    });
+    const response = await page.goto(server.EMPTY_PAGE);
+    expect(response.status()).toBe(200);
+    expect(page.url()).toBe(server.EMPTY_PAGE);
+    expect(await page.evaluate(() => history.state)).toEqual({ key: 1 });
+    await expect(page.locator('h1')).toHaveText('hello');
+  });
+}
+
 it('should work with Cross-Origin-Opener-Policy and interception', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
