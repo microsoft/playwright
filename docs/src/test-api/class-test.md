@@ -541,6 +541,14 @@ Learn more about the execution modes [here](../test-parallel.md).
   test('runs second', async ({ page }) => {});
   ```
 
+* Declaring locks for all tests in a scope.
+
+  ```js
+  test.describe.configure({ lock: 'user-settings' });
+  test('update user settings', async ({ page }) => {});
+  test('reset user settings', async ({ page }) => {});
+  ```
+
 * Run multiple describes in parallel, but tests inside each describe in order.
 
   ```js
@@ -558,6 +566,12 @@ Learn more about the execution modes [here](../test-parallel.md).
     test('in order B2', async ({ page }) => {});
   });
   ```
+
+### option: Test.describe.configure.lock
+* since: v1.64
+- `lock` <[string]|[Array]<[string]>>
+
+Additional named locks for all tests in the enclosing scope, including nested groups.  Locks are added to those declared in [`method: Test.describe`] details and previous calls to [`method: Test.describe.configure`].
 
 ### option: Test.describe.configure.mode
 * since: v1.10

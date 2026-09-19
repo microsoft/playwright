@@ -189,11 +189,14 @@ export class TestTypeImpl {
     suite._hooks.push({ type: name, fn: fn!, title, location });
   }
 
-  private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) {
+  private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number, lock?: string | string[] }) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite(location, `test.describe.configure()`);
     if (!suite)
       return;
+
+    if (options.lock !== undefined)
+      suite._locks.push(...validateTestDetails({ lock: options.lock }, location).locks);
 
     if (options.timeout !== undefined)
       suite._timeout = options.timeout;
