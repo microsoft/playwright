@@ -19,16 +19,14 @@ import { createInstrumenter } from 'istanbul-lib-instrument';
 import type { Plugin } from 'vite';
 
 // Instruments the sources under packages/ before the other transforms, so that the
-// counters point at the originals. __PW_COVERAGE__ gates test-only code in the sources.
+// counters point at the originals.
 export function istanbul(): Plugin {
-  const enabled = !!process.env.PWTEST_COVERAGE;
   return {
     name: 'playwright-istanbul',
     enforce: 'pre',
-    config: () => ({ define: { __PW_COVERAGE__: JSON.stringify(enabled) } }),
     transform(code, id) {
       const file = id.split('?')[0];
-      if (!enabled || !/\/packages\/.*\.[jt]sx?$/.test(file) || file.endsWith('.d.ts') || file.includes('/node_modules/'))
+      if (!/\/packages\/.*\.[jt]sx?$/.test(file) || file.endsWith('.d.ts') || file.includes('/node_modules/'))
         return;
       const parserPlugins: string[] = [];
       if (/\.tsx?$/.test(file))

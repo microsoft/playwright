@@ -28,7 +28,7 @@ export default defineConfig({
   plugins: [
     react(),
     bundle(),
-    istanbul(),
+    ...(process.env.PWTEST_COVERAGE ? [istanbul()] : []),
   ],
   define: {
     'process.env': {},

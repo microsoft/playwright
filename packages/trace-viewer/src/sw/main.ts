@@ -155,7 +155,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   if (relativePath === '/ping')
     return new Response(null, { status: 200 });
 
-  if (__PW_COVERAGE__ && relativePath === '/coverage')
+  if (relativePath === '/coverage' && (self as any).__coverage__)
     return new Response(JSON.stringify(takeCoverage()), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
   const isNavigation = !!event.resultingClientId;

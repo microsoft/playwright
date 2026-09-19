@@ -29,7 +29,7 @@ export default defineConfig({
     react(),
     bundle(),
     storyTypes({ prefix: packageJSON.name, src: path.resolve(__dirname, 'src'), outFile: path.resolve(__dirname, 'tests/stories.d.ts') }),
-    istanbul(),
+    ...(process.env.PWTEST_COVERAGE ? [istanbul()] : []),
   ],
   resolve: {
     alias: {
