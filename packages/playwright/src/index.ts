@@ -877,7 +877,7 @@ async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: Br
   const fontSize = testAnnotate.fontSize ?? 14;
   const level = testAnnotate.level ?? 'step';
 
-  const updateOverlay = async () => {
+  const doUpdateOverlay = async () => {
     const parts = level === 'step' ? [...testTitle, ...stepStack] : testTitle;
     const html = createTestOverlay(parts, position, fontSize);
     for (const page of context.pages()) {
@@ -886,6 +886,18 @@ async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: Br
       const disposable = await page.screencast.showOverlay(html);
       overlays.set(page, disposable);
     }
+  };
+
+  // Updates come from step callbacks and from the 'page' event, and each one removes the
+  // previous overlay before adding a new one. Serialize them: an update that starts while
+  // another is mid-flight finds nothing to remove and leaves a stale overlay in the page
+  // for the rest of the recording.
+  let pendingUpdate = Promise.resolve();
+  const updateOverlay = () => {
+    const update = pendingUpdate.then(doUpdateOverlay);
+    // Keep the chain going when an update fails, but still report the failure to the caller.
+    pendingUpdate = update.catch(() => {});
+    return update;
   };
   testInfo._onUserStepBegin = async title => {
     stepStack.push(title);
@@ -896,8 +908,8 @@ async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: Br
     await updateOverlay();
   };
 
-  context.on('page', async () => {
-    void updateOverlay();
+  context.on('page', () => {
+    void updateOverlay().catch(() => {});
   });
   await updateOverlay();
 }
