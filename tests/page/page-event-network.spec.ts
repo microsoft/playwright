@@ -92,6 +92,20 @@ it('should fire events in proper order', async ({ page, server }) => {
   expect(events).toEqual(['request', 'response', 'requestfinished']);
 });
 
+it('should resolve finished() for a 204 response', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42786' });
+  server.setRoute('/204', (req, res) => {
+    res.statusCode = 204;
+    res.end();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const [response] = await Promise.all([
+    page.waitForEvent('response', r => r.url().endsWith('/204')),
+    page.evaluate(() => fetch('/204')),
+  ]);
+  expect(await response.finished()).toBe(null);
+});
+
 it('should support redirects', async ({ page, server }) => {
   const FOO_URL = server.PREFIX + '/foo.html';
   const events = {};
