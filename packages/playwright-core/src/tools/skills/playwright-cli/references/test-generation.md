@@ -68,6 +68,12 @@ await page.getByRole('button', { name: 'Submit' }).click();
 await page.locator('#submit-btn').click();
 ```
 
+### Account for page state
+
+`generate-locator` uses the current page state, and `recording-stop` returns code with locators generated when each action was recorded.  A locator that is unique in a filtered or paginated view may become ambiguous in another state.  Generate locators for each step's intended state, and replay the setup needed to reach it.
+
+Start each replay from a clean initial state to avoid duplicate test data.  If an action fails with `strict mode violation: ... resolved to N elements`, correct the page state or scope the locator to the intended row or region.  Do not add `.first()` just to hide the ambiguity.
+
 ### Explore before recording
 
 Take snapshots to understand the page structure before recording actions:
