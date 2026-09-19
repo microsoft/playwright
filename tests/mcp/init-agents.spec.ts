@@ -130,6 +130,9 @@ test('init-skills installs all skills', async ({  }) => {
   for (const skill of ['playwright-cli', 'playwright-component-testing', 'playwright-trace'])
     expect(fs.existsSync(path.join(baseDir, '.claude', 'skills', skill, 'SKILL.md'))).toBe(true);
   expect(fs.existsSync(path.join(baseDir, '.claude', 'skills', 'playwright-cli', 'references', 'tracing.md'))).toBe(true);
+
+  const traceSkill = fs.readFileSync(path.join(baseDir, '.claude', 'skills', 'playwright-trace', 'SKILL.md'), 'utf-8');
+  expect(traceSkill.match(/^allowed-tools: .*/gm)).toEqual(['allowed-tools: Bash(npx playwright trace:*)']);
 });
 
 test('init-skills installs into .agents with --loop agents', async ({  }) => {

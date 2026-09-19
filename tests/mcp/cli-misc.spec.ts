@@ -63,6 +63,10 @@ test('install workspace w/skills', async ({ cli }, testInfo) => {
 
   const skillFile = testInfo.outputPath('.claude', 'skills', 'playwright-cli', 'SKILL.md');
   expect(fs.existsSync(skillFile)).toBe(true);
+  const skillContents = fs.readFileSync(skillFile, 'utf-8');
+  expect(skillContents.match(/^allowed-tools: .*/gm)).toEqual([
+    'allowed-tools: Bash(playwright-cli:*) Bash(npx playwright:*) Bash(npx --no-install playwright:*)',
+  ]);
 
   const referencesDir = testInfo.outputPath('.claude', 'skills', 'playwright-cli', 'references');
   const references = await fs.promises.readdir(referencesDir);
