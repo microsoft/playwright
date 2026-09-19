@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { kCoverageStashError, kCoverageStashPrefix } from '@isomorphic/istanbulCoverage';
+import { kCoverageStashError, kCoverageStashPrefix, takeBranchCounters, takeCounters } from '@isomorphic/istanbulCoverage';
 
 import type { IstanbulCoverage, IstanbulCoverageDelta, IstanbulFileCoverageDelta } from '@isomorphic/istanbulCoverage';
 
@@ -131,35 +131,6 @@ export function takeCoverageStashes(global: typeof globalThis, sessionId: string
     storage.removeItem(key);
     if (json)
       result.push(json);
-  }
-  return result;
-}
-
-function takeCounters(counters: { [key: string]: number }): { [key: string]: number } | undefined {
-  let result: { [key: string]: number } | undefined;
-  for (const key of Object.keys(counters)) {
-    const count = counters[key];
-    if (!count)
-      continue;
-    if (!result)
-      result = {};
-    result[key] = count;
-    counters[key] = 0;
-  }
-  return result;
-}
-
-// Branch counters are positional, so a hit branch is reported with the whole array.
-function takeBranchCounters(counters: { [key: string]: number[] }): { [key: string]: number[] } | undefined {
-  let result: { [key: string]: number[] } | undefined;
-  for (const key of Object.keys(counters)) {
-    const counts = counters[key];
-    if (!counts.some(Boolean))
-      continue;
-    if (!result)
-      result = {};
-    result[key] = counts.slice();
-    counts.fill(0);
   }
   return result;
 }

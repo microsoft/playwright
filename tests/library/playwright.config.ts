@@ -50,6 +50,8 @@ const reporters = () => {
   ] : [
     ['html', { open: 'on-failure', title: 'Playwright Library Tests' }]
   ];
+  if (process.env.PWTEST_COVERAGE)
+    result.push(['coverage', { outputDir: path.join(__dirname, '..', '..', 'coverage', 'trace-viewer') }]);
   return result;
 };
 

@@ -20,13 +20,15 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 import { bundle } from './bundle';
+import { istanbul } from '../../utils/build/viteIstanbul';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '',
   plugins: [
     react(),
-    bundle()
+    bundle(),
+    ...(process.env.PWTEST_COVERAGE ? [istanbul()] : []),
   ],
   define: {
     'process.env': {},

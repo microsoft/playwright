@@ -20,6 +20,7 @@ import url from 'url';
 import * as yazl from 'yazl';
 import { test as baseTest, expect as baseExpect, cliEntrypoint, createImage } from './playwright-test-fixtures';
 import { iso, utils } from '../../packages/playwright-core/lib/coreBundle';
+import { mergeServiceWorkerCoverage } from '../config/serviceWorkerCoverage';
 
 type HttpServer = utils.HttpServer;
 
@@ -27,6 +28,11 @@ const { msToString } = iso;
 const { spawnAsync } = utils;
 
 const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<void> }>({
+  page: async ({ page }, use) => {
+    await use(page);
+    // Before the page is collected.
+    await mergeServiceWorkerCoverage(page);
+  },
   showReport: async ({ page }, use, testInfo) => {
     let server: HttpServer | undefined;
     await use(async (reportFolder?: string) => {

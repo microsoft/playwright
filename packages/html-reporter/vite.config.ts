@@ -20,6 +20,7 @@ import { bundle } from './bundle';
 import { storyTypes } from './tests/storyTypes';
 import packageJSON from './package.json';
 import path from 'path';
+import { istanbul } from '../../utils/build/viteIstanbul';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -28,6 +29,7 @@ export default defineConfig({
     react(),
     bundle(),
     storyTypes({ prefix: packageJSON.name, src: path.resolve(__dirname, 'src'), outFile: path.resolve(__dirname, 'tests/stories.d.ts') }),
+    ...(process.env.PWTEST_COVERAGE ? [istanbul()] : []),
   ],
   resolve: {
     alias: {

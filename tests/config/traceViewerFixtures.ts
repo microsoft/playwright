@@ -18,6 +18,7 @@ import type { Fixtures, FrameLocator, Locator, Page, Browser, BrowserContext } f
 import { step } from './baseTest';
 import path from 'path';
 import { CommonFixtures, TestChildProcess } from './commonFixtures';
+import { mergeServiceWorkerCoverage } from './serviceWorkerCoverage';
 
 type BaseTestFixtures = CommonFixtures & {
   context: BrowserContext;
@@ -155,7 +156,7 @@ class TraceViewerPage {
 export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixtures, BaseWorkerFixtures> = {
   showTraceViewer: async ({ playwright, childProcess, browserName, channel }, use, testInfo) => {
     const browsers: Browser[] = [];
-    const tracings: any[] = [];
+    const tracedPages: Page[] = [];
     await use(async (trace: string | undefined, { host, port, stdin, cwd } = {}) => {
       // In WSL the browser runs in the guest and reaches the host over mirrored networking,
       // which mirrors the IPv4 loopback but not the host's IPv6 `::1`. Both `--host localhost`
@@ -182,19 +183,23 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
       });
       browsers.push(browser);
       const page = await browser.newPage();
-      if (process.env.PWTEST_DEBUG_TRACE_VIEWER) {
-        const tracing = page.context().tracing;
-        await tracing.start({ snapshots: true, screenshots: true });
-        tracings.push(tracing);
+      if (process.env.PWTEST_DEBUG_TRACE_VIEWER || process.env.PWTEST_COVERAGE) {
+        const debug = !!process.env.PWTEST_DEBUG_TRACE_VIEWER;
+        // Coverage of the trace viewer itself, picked up by the coverage reporter.
+        await page.context().tracing.start({ snapshots: debug, screenshots: debug, coverage: !!process.env.PWTEST_COVERAGE });
+        tracedPages.push(page);
       }
       const url = cp.output.match(/Listening on (http:\/\/[^\s]+)/)![1];
       await page.goto(url);
       return new TraceViewerPage(page, cp);
     });
-    for (const [index, tracing] of tracings.entries()) {
+    for (const [index, page] of tracedPages.entries()) {
       const path = testInfo.outputPath(`viewer-trace-${index}.zip`);
-      await tracing.stop({ path });
-      await testInfo.attach(`viewer-trace-${index}.zip`, { path, contentType: 'application/zip' });
+      // Before the page is collected.
+      await mergeServiceWorkerCoverage(page);
+      await page.context().tracing.stop({ path });
+      // The coverage reporter aggregates the attachments named "trace".
+      await testInfo.attach(process.env.PWTEST_COVERAGE ? 'trace' : `viewer-trace-${index}.zip`, { path, contentType: 'application/zip' });
     }
     for (const browser of browsers)
       await browser.close();

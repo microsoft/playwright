@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+import { takeBranchCounters, takeCounters } from '@isomorphic/istanbulCoverage';
 import { SnapshotServer } from '@isomorphic/trace/snapshotServer';
 import { TraceLoader } from '@isomorphic/trace/traceLoader';
 import { TraceVersionError } from '@isomorphic/trace/traceModernizer';
 
 import { Progress, splitProgress } from './progress';
 import { FetchTraceLoaderBackend, ZipTraceLoaderBackend } from './traceLoaderBackends';
+
+import type { IstanbulCoverage } from '@isomorphic/istanbulCoverage';
 
 type Client = {
   id: string;
@@ -152,6 +155,9 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   if (relativePath === '/ping')
     return new Response(null, { status: 200 });
 
+  if (relativePath === '/coverage')
+    return new Response(JSON.stringify(takeCoverage()), { status: 200, headers: { 'Content-Type': 'application/json' } });
+
   const isNavigation = !!event.resultingClientId;
   const client = event.clientId ? await self.clients.get(event.clientId) : undefined;
 
@@ -231,6 +237,18 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
   // Pass through to the server for file requests and static content.
   return fetch(event.request);
+}
+
+// Reading resets the counters, so every response is a delta.
+function takeCoverage(): IstanbulCoverage {
+  const coverage: IstanbulCoverage = (self as any).__coverage__ || {};
+  const result = JSON.parse(JSON.stringify(coverage));
+  for (const file of Object.values(coverage)) {
+    takeCounters(file.s);
+    takeCounters(file.f);
+    takeBranchCounters(file.b);
+  }
+  return result;
 }
 
 function downloadHeaders(searchParams: URLSearchParams): Headers | undefined {
