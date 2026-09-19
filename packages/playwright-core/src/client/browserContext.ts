@@ -222,6 +222,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   private _onRequestFailed(request: network.Request, responseEndTiming: number, failureText: string | undefined, page: Page | null) {
     request._failureText = failureText || null;
     request._setResponseEndTiming(responseEndTiming);
+    request._response?._finishedPromise.resolve(null);
     this.emit(Events.BrowserContext.RequestFailed, request);
     if (page)
       page.emit(Events.Page.RequestFailed, request);
