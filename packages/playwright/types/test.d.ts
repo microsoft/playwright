@@ -7263,9 +7263,9 @@ export interface PlaywrightWorkerOptions {
    * height: 1080 }, fps: 60 }`. Higher frame rates and sizes use more CPU for encoding. Firefox and WebKit currently
    * capture up to 25 frames per second.
    *
-   * To annotate actions in the video, pass `show` with `action` and/or `test` sub-options. The `action` option controls
-   * visual highlights on interacted elements with an optional `delay` in milliseconds (defaults to `500`). The `test`
-   * option controls which test information is displayed as a status overlay.
+   * To annotate actions in the video, pass `show` with `actions` and/or `test` sub-options. The `actions` option
+   * controls visual highlights on interacted elements, each shown for an optional `duration` in milliseconds (defaults
+   * to `500`). The `test` option controls which test information is displayed as a status overlay.
    *
    * **Usage**
    *
