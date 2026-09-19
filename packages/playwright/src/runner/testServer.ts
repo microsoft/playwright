@@ -323,15 +323,17 @@ async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverr
   const testServer = new TestServer(configLocation, configCLIOverrides);
   const cancelPromise = new ManualPromise<void>();
   const sigintWatcher = new SigIntWatcher();
-  process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
-  void sigintWatcher.promise().then(() => cancelPromise.resolve());
-  try {
-    const server = await testServer.start(options);
-    await openUI(server, cancelPromise);
-    await cancelPromise;
-  } finally {
-    await testServer.stop();
-    sigintWatcher.disarm();
+  {
+    using watcher = sigintWatcher;
+    process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
+    void watcher.promise().then(() => cancelPromise.resolve());
+    try {
+      const server = await testServer.start(options);
+      await openUI(server, cancelPromise);
+      await cancelPromise;
+    } finally {
+      await testServer.stop();
+    }
   }
   return sigintWatcher.hadSignal() ? 'interrupted' : 'passed';
 }

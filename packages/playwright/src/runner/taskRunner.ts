@@ -52,8 +52,6 @@ export class TaskRunner<Context> {
   }
 
   async runDeferCleanup(context: Context, deadline: number, cancelPromise = new ManualPromise<void>()): Promise<{ status: FullResult['status'], cleanup: () => Promise<FullResult['status']> }> {
-    const sigintWatcher = new SigIntWatcher();
-    const timeoutWatcher = new TimeoutWatcher(deadline);
     const teardownRunner = new TaskRunner<Context>(this._reporter, this._globalTimeoutForError);
     teardownRunner._isTearDown = true;
 
@@ -86,15 +84,21 @@ export class TaskRunner<Context> {
       }
     };
 
-    await Promise.race([
-      taskLoop(),
-      cancelPromise,
-      sigintWatcher.promise(),
-      timeoutWatcher.promise,
-    ]);
-
-    sigintWatcher.disarm();
-    timeoutWatcher.disarm();
+    let sigintWatcher: SigIntWatcher;
+    let timeoutWatcher: TimeoutWatcher;
+    {
+      // Disarm SIGINT first, then the timeout, before calculating the status.
+      using timeout = new TimeoutWatcher(deadline);
+      using sigint = new SigIntWatcher();
+      sigintWatcher = sigint;
+      timeoutWatcher = timeout;
+      await Promise.race([
+        taskLoop(),
+        cancelPromise,
+        sigint.promise(),
+        timeout.promise,
+      ]);
+    }
 
     // Prevent subsequent tasks from running.
     this._interrupted = true;
@@ -142,5 +146,9 @@ class TimeoutWatcher {
 
   disarm() {
     clearTimeout(this._timer);
+  }
+
+  [Symbol.dispose]() {
+    this.disarm();
   }
 }

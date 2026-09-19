@@ -17,6 +17,7 @@
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { assert } from '@isomorphic/assert';
 import { monotonicTime } from '@isomorphic/time';
+import { createTimeout } from '@isomorphic/timeoutRunner';
 import { debugLogger } from '@utils/debugLogger';
 import { TimeoutError } from './errors';
 
@@ -125,9 +126,9 @@ export class ProgressController {
       },
       wait: async (timeout: number) => {
         // Timeout = 0 here means nowait. Counter to what it typically is (wait forever).
-        let timer: NodeJS.Timeout;
-        const promise = new Promise<void>(f => timer = setTimeout(f, timeout));
-        return progress.race(promise).finally(() => clearTimeout(timer));
+        const promise = new ManualPromise<void>();
+        using timer = createTimeout(() => promise.resolve(), timeout);
+        return await progress.race(promise);
       },
       signal: this._controller.signal,
     };

@@ -35,47 +35,43 @@ export type UpdateOptions = {
 // so disk usage stays bounded to one batch.
 export async function cmdUpdate(dbPath: string, token: string, options: UpdateOptions): Promise<void> {
   const github = new GitHubClient(token);
-  const db = await TestResultsDb.open(dbPath);
-  try {
-    const ingested = await db.ingestedArtifactIds();
-    console.log(`Test results database`);
-    console.log(`  ${await db.rowCount()} rows from ${ingested.size} artifacts`);
+  using db = await TestResultsDb.open(dbPath);
+  const ingested = await db.ingestedArtifactIds();
+  console.log(`Test results database`);
+  console.log(`  ${await db.rowCount()} rows from ${ingested.size} artifacts`);
 
-    const todo = await github.listArtifacts(PARQUET_ARTIFACT_PREFIX, {
-      ingested,
-      lookbackDays: options.lookbackDays,
-      stopAfterSeen: options.stopAfterSeen,
-    });
-    console.log(`\nScanning for new artifacts (last ${options.lookbackDays} days)`);
-    console.log(`  ${todo.length} new artifacts to import`);
+  const todo = await github.listArtifacts(PARQUET_ARTIFACT_PREFIX, {
+    ingested,
+    lookbackDays: options.lookbackDays,
+    stopAfterSeen: options.stopAfterSeen,
+  });
+  console.log(`\nScanning for new artifacts (last ${options.lookbackDays} days)`);
+  console.log(`  ${todo.length} new artifacts to import`);
 
-    let imported = 0;
-    for (const batch of chunk(todo, options.concurrency)) {
-      const files = await Promise.all(batch.map(async artifact => {
-        const zip = await github.downloadArtifactZip(artifact.id);
-        const file = path.join(os.tmpdir(), `trdb-${artifact.id}.parquet`);
-        await extractSingle(zip, '.parquet', file);
-        return { id: artifact.id, file };
-      }));
-      for (const { id, file } of files) {
-        try {
-          await db.ingestParquet(file, id);
-          imported++;
-        } finally {
-          fs.rmSync(file, { force: true });
-        }
+  let imported = 0;
+  for (const batch of chunk(todo, options.concurrency)) {
+    const files = await Promise.all(batch.map(async artifact => {
+      const zip = await github.downloadArtifactZip(artifact.id);
+      const file = path.join(os.tmpdir(), `trdb-${artifact.id}.parquet`);
+      await extractSingle(zip, '.parquet', file);
+      return { id: artifact.id, file };
+    }));
+    for (const { id, file } of files) {
+      try {
+        await db.ingestParquet(file, id);
+        imported++;
+      } finally {
+        fs.rmSync(file, { force: true });
       }
-      console.log(`  imported ${imported}/${todo.length}`);
     }
-
-    console.log(`\nSummary`);
-    console.log(`  imported ${imported} new artifacts`);
-    console.log(`  ${await db.rowCount()} rows from ${await db.runCount()} runs`);
-    console.log(`  size ${formatBytes(fileSize(dbPath))}`);
-
-    if (process.env.GITHUB_OUTPUT)
-      fs.appendFileSync(process.env.GITHUB_OUTPUT, `imported=${imported}\n`);
-  } finally {
-    db.close();
+    console.log(`  imported ${imported}/${todo.length}`);
   }
+
+  console.log(`\nSummary`);
+  console.log(`  imported ${imported} new artifacts`);
+  console.log(`  ${await db.rowCount()} rows from ${await db.runCount()} runs`);
+  console.log(`  size ${formatBytes(fileSize(dbPath))}`);
+
+  if (process.env.GITHUB_OUTPUT)
+    fs.appendFileSync(process.env.GITHUB_OUTPUT, `imported=${imported}\n`);
 }

@@ -188,28 +188,24 @@ export function harClose(harBackends: Map<string, HarBackend>, params: channels.
 
 export async function harUnzip(progress: Progress, params: channels.LocalUtilsHarUnzipParams): Promise<void> {
   const resourcesDir = params.resourcesDir ?? path.dirname(params.zipFile);
-  const zipFile = new ZipFile(params.zipFile);
+  using zipFile = new ZipFile(params.zipFile);
   let resourcesDirCreated = false;
-  try {
-    for (const entry of await progress.race(zipFile.entries())) {
-      const buffer = await progress.race(zipFile.read(entry));
-      if (entry === 'har.har') {
-        await progress.race(fs.promises.writeFile(params.harFile, buffer));
-      } else {
-        if (!resourcesDirCreated) {
-          await progress.race(fs.promises.mkdir(resourcesDir, { recursive: true }));
-          resourcesDirCreated = true;
-        }
-        const outPath = resolveWithinRoot(resourcesDir, entry);
-        if (!outPath)
-          throw new Error(`HAR zip entry '${entry}' escapes output directory`);
-        await progress.race(fs.promises.writeFile(outPath, buffer));
+  for (const entry of await progress.race(zipFile.entries())) {
+    const buffer = await progress.race(zipFile.read(entry));
+    if (entry === 'har.har') {
+      await progress.race(fs.promises.writeFile(params.harFile, buffer));
+    } else {
+      if (!resourcesDirCreated) {
+        await progress.race(fs.promises.mkdir(resourcesDir, { recursive: true }));
+        resourcesDirCreated = true;
       }
+      const outPath = resolveWithinRoot(resourcesDir, entry);
+      if (!outPath)
+        throw new Error(`HAR zip entry '${entry}' escapes output directory`);
+      await progress.race(fs.promises.writeFile(outPath, buffer));
     }
-    await progress.race(fs.promises.unlink(params.zipFile));
-  } finally {
-    zipFile.close();
   }
+  await progress.race(fs.promises.unlink(params.zipFile));
 }
 
 export async function tracingStarted(progress: Progress, stackSessions: Map<string, StackSession>, params: channels.LocalUtilsTracingStartedParams): Promise<channels.LocalUtilsTracingStartedResult> {

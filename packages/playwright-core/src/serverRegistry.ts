@@ -28,6 +28,7 @@ import type { FSWatcher } from 'chokidar';
 import type { LaunchOptions } from '../types/types';
 
 const packageVersion = packageJSON.version;
+const kDispose: typeof Symbol.dispose = (Symbol.dispose || Symbol.for('Symbol.dispose')) as typeof Symbol.dispose;
 
 export type BrowserInfo = {
   guid: string;
@@ -91,36 +92,29 @@ class ServerRegistry extends EventEmitter {
   }
 
   async list(): Promise<Map<string, BrowserDescriptor[]>> {
-    const ownWatcher = !this._watcher;
-    let dispose: (() => void) | undefined;
-    if (ownWatcher)
-      dispose = this.watch();
-    try {
-      await this._ready;
-      const statuses = await Promise.all(
-          [...this._descriptors.values()].map(async descriptor => {
-            const canConnect = await canConnectTo(descriptor);
-            return { descriptor, canConnect };
-          }),
-      );
-      const result = new Map<string, BrowserDescriptor[]>();
-      for (const { descriptor, canConnect } of statuses) {
-        if (!canConnect) {
-          await fs.promises.unlink(path.join(this._browsersDir(), descriptor.browser.guid)).catch(() => {});
-          continue;
-        }
-        const key = descriptor.workspaceDir ?? '';
-        let list = result.get(key);
-        if (!list) {
-          list = [];
-          result.set(key, list);
-        }
-        list.push(descriptor);
+    using watcher = this._watcher ? undefined : { [kDispose]: this.watch() };
+    await this._ready;
+    const statuses = await Promise.all(
+        [...this._descriptors.values()].map(async descriptor => {
+          const canConnect = await canConnectTo(descriptor);
+          return { descriptor, canConnect };
+        }),
+    );
+    const result = new Map<string, BrowserDescriptor[]>();
+    for (const { descriptor, canConnect } of statuses) {
+      if (!canConnect) {
+        await fs.promises.unlink(path.join(this._browsersDir(), descriptor.browser.guid)).catch(() => {});
+        continue;
       }
-      return result;
-    } finally {
-      dispose?.();
+      const key = descriptor.workspaceDir ?? '';
+      let list = result.get(key);
+      if (!list) {
+        list = [];
+        result.set(key, list);
+      }
+      list.push(descriptor);
     }
+    return result;
   }
 
   async create(browser: BrowserInfo, endpoint: EndpointInfo) {

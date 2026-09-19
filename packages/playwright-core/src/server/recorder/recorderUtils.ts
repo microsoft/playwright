@@ -125,7 +125,7 @@ async function generateFrameSelector(progress: Progress, frame: Frame, timeout: 
 async function generateFrameSelectorInParent(prgoress: Progress, parent: Frame, frame: Frame, timeout: number): Promise<string> {
   const result = await raceAgainstDeadline(async () => {
     try {
-      const frameElement = await frame.frameElement(prgoress);
+      using frameElement = await frame.frameElement(prgoress);
       if (!frameElement || !parent)
         return;
       const utility = await parent.utilityContext();

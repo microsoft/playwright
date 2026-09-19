@@ -166,7 +166,7 @@ export class Snapshotter {
 
   private _annotateFrameHierarchy(frame: Frame) {
     (async () => {
-      const frameElement = await frame.frameElement(nullProgress);
+      using frameElement = await frame.frameElement(nullProgress);
       const parent = frame.parentFrame();
       if (!parent)
         return;
@@ -174,7 +174,6 @@ export class Snapshotter {
       await context?.evaluate(({ snapshotStreamer, frameElement, frameId }) => {
         (window as any)[snapshotStreamer].markIframe(frameElement, frameId);
       }, { snapshotStreamer: this._snapshotStreamer, frameElement, frameId: frame.guid });
-      frameElement.dispose();
     })().catch(() => {});
   }
 }
