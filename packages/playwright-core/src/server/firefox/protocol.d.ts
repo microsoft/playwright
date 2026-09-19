@@ -222,6 +222,10 @@ export namespace Protocol {
       }|null;
     };
     export type setDefaultViewportReturnValue = void;
+    export type setWindowMaximizedParameters = {
+      browserContextId?: string;
+    };
+    export type setWindowMaximizedReturnValue = void;
     export type setInitScriptsParameters = {
       browserContextId?: string;
       scripts: {
@@ -1067,6 +1071,7 @@ export namespace Protocol {
     "Browser.setDownloadOptions": Browser.setDownloadOptionsParameters;
     "Browser.setTouchOverride": Browser.setTouchOverrideParameters;
     "Browser.setDefaultViewport": Browser.setDefaultViewportParameters;
+    "Browser.setWindowMaximized": Browser.setWindowMaximizedParameters;
     "Browser.setInitScripts": Browser.setInitScriptsParameters;
     "Browser.addBinding": Browser.addBindingParameters;
     "Browser.grantPermissions": Browser.grantPermissionsParameters;
@@ -1149,6 +1154,7 @@ export namespace Protocol {
     "Browser.setDownloadOptions": Browser.setDownloadOptionsReturnValue;
     "Browser.setTouchOverride": Browser.setTouchOverrideReturnValue;
     "Browser.setDefaultViewport": Browser.setDefaultViewportReturnValue;
+    "Browser.setWindowMaximized": Browser.setWindowMaximizedReturnValue;
     "Browser.setInitScripts": Browser.setInitScriptsReturnValue;
     "Browser.addBinding": Browser.addBindingReturnValue;
     "Browser.grantPermissions": Browser.grantPermissionsReturnValue;
