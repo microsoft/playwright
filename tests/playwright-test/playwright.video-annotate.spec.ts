@@ -17,7 +17,7 @@
 import { test, expect } from './playwright-test-fixtures';
 
 const configWithTestAnnotation = `
-  module.exports = { use: { video: { mode: 'on', show: { test: { level: 'step' } } } }, name: 'chromium' };
+  module.exports = { use: { video: { mode: 'on', show: { test: { level: 'step' } } } } };
 `;
 
 test('should show file, test title and step in the annotation overlay', async ({ runInlineTest }) => {
@@ -62,6 +62,28 @@ test('should not stack annotation overlays when a page opens during a step', asy
           await expect(page.locator('.x-pw-user-overlay')).toHaveCount(1);
           await expect(second.locator('.x-pw-user-overlay')).toHaveCount(1);
         });
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should not fail a step when a page closes while the overlay is updated', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': configWithTestAnnotation,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+
+      test('my test', async ({ context, page }) => {
+        const pages = [];
+        for (let i = 0; i < 5; i++)
+          pages.push(await context.newPage());
+        const closed = Promise.all(pages.map(p => p.close()));
+        await test.step('first step', async () => {});
+        await test.step('second step', async () => {});
+        await closed;
       });
     `,
   }, { workers: 1 });

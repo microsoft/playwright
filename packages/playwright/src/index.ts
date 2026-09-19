@@ -881,10 +881,16 @@ async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: Br
     const parts = level === 'step' ? [...testTitle, ...stepStack] : testTitle;
     const html = createTestOverlay(parts, position, fontSize);
     for (const page of context.pages()) {
-      await overlays.get(page)?.dispose();
-      overlays.delete(page);
-      const disposable = await page.screencast.showOverlay(html);
-      overlays.set(page, disposable);
+      // The annotation is cosmetic, and the page list is a snapshot: a page that closes
+      // while we are updating it must not fail the test sitting at a step boundary.
+      try {
+        await overlays.get(page)?.dispose();
+        overlays.delete(page);
+        const disposable = await page.screencast.showOverlay(html);
+        overlays.set(page, disposable);
+      } catch (error) {
+        debugLogger.log('error', `failed to update the video annotation overlay: ${error}`);
+      }
     }
   };
 
