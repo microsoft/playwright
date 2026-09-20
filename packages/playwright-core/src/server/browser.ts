@@ -108,7 +108,8 @@ export abstract class Browser extends SdkObject {
     let context: BrowserContext | undefined;
     try {
       if (options.clientCertificates?.length) {
-        clientCertificatesProxy = await ClientCertificatesProxy.create(progress, options);
+        // The interceptor replaces the browser proxy, so it must apply the browser-level proxy itself.
+        clientCertificatesProxy = await ClientCertificatesProxy.create(progress, { ...options, proxy: options.proxy ?? this.options.proxy });
         options = { ...options };
         options.proxyOverride = clientCertificatesProxy.proxySettings();
         options.internalIgnoreHTTPSErrors = true;

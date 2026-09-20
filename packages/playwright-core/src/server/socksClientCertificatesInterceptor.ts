@@ -287,7 +287,8 @@ export class ClientCertificatesProxy {
   ) {
     verifyClientCertificates(contextOptions.clientCertificates);
     this.ignoreHTTPSErrors = contextOptions.ignoreHTTPSErrors;
-    this._proxy = contextOptions.proxy;
+    // 'per-context' is a Chromium launch-time placeholder, not a real proxy.
+    this._proxy = contextOptions.proxy?.server === 'per-context' ? undefined : contextOptions.proxy;
     this._initSecureContexts(contextOptions.clientCertificates);
     this._socksProxy = new SocksProxy();
     this._socksProxy.setPattern('*');
@@ -312,9 +313,8 @@ export class ClientCertificatesProxy {
   }
 
   _getProxyAgent(host: string, port: number) {
-    const proxyFromOptions = createProxyAgent(this._proxy);
-    if (proxyFromOptions)
-      return proxyFromOptions;
+    if (this._proxy)
+      return createProxyAgent(this._proxy, new URL(`https://${host.includes(':') ? `[${host}]` : host}:${port}`));
     const proxyFromEnv = getProxyForUrl(`https://${host}:${port}`);
     if (proxyFromEnv)
       return createProxyAgent({ server: proxyFromEnv });
