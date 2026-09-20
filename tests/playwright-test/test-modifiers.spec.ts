@@ -808,3 +808,44 @@ test('test.slow should be idempotent', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('test.slow callback that depends on worker fixtures should extend the timeout of every test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.slow(({ browserName }) => !!browserName, 'always slow');
+      test('first', async ({}) => {
+        expect(test.info().timeout).toBe(3000);
+        await new Promise(f => setTimeout(f, 1500));
+      });
+      test('second', async ({}) => {
+        expect(test.info().timeout).toBe(3000);
+        await new Promise(f => setTimeout(f, 1500));
+      });
+    `,
+  }, { timeout: 1000 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
+
+test('test.slow inside a fixture with its own timeout should extend the test timeout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        foo: [async ({}, use) => {
+          base.slow();
+          await use('foo');
+        }, { timeout: 5000 }],
+      });
+      test('test', async ({ foo }) => {
+        expect(test.info().timeout).toBe(3000);
+        test.slow();
+        expect(test.info().timeout).toBe(3000);
+        await new Promise(f => setTimeout(f, 1500));
+      });
+    `,
+  }, { timeout: 1000 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

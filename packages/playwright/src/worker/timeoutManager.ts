@@ -148,9 +148,9 @@ export class TimeoutManager {
     if (this._slow)
       return;
     this._slow = true;
-    const slot = this._running ? this._running.slot : this._defaultSlot;
-    slot.timeout = slot.timeout * 3;
-    if (this._running)
+    // Always extend the test itself, even when called from a modifier or fixture that has its own time slot.
+    this._defaultSlot.timeout = this._defaultSlot.timeout * 3;
+    if (this._running && this._running.slot === this._defaultSlot)
       this._updateTimeout(this._running);
   }
 
