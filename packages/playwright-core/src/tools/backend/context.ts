@@ -333,11 +333,13 @@ export class Context {
 
   maybeNotifyWebMCPToolsChanged() {
     const tools = this._currentTab?.webmcpTools()?.tools.map(tool => tool.mcpTool) ?? [];
+    // Handlers are bound to the tab and frame they were listed from, so always take
+    // the fresh ones. Only the listChanged notification depends on the schemas.
+    this._webmcpTools = tools;
     const signature = JSON.stringify(tools.map(tool => tool.schema));
     if (signature === this._webmcpToolsSignature)
       return;
     this._webmcpToolsSignature = signature;
-    this._webmcpTools = tools;
     this.options.onWebMCPToolsChanged?.();
   }
 
