@@ -90,6 +90,7 @@ export type APIRequestFinishedEvent = {
 type SendRequestOptions = https.RequestOptions & {
   maxRedirects: number,
   headers: HeadersObject,
+  proxy?: types.ProxySettings,
   __testHookLookup?: (hostname: string) => LookupAddress[]
 };
 
@@ -221,12 +222,9 @@ export abstract class APIRequestContext extends SdkObject {
       setBasicAuthorizationHeader(headers, credentials);
 
     const method = params.method?.toUpperCase() || 'GET';
-    const proxy = defaults.proxy;
-    let agent;
     // We skip 'per-context' in order to not break existing users. 'per-context' was previously used to
     // workaround an upstream Chromium bug. Can be removed in the future.
-    if (proxy?.server !== 'per-context')
-      agent = createProxyAgent(proxy, requestUrl);
+    const proxy = defaults.proxy?.server !== 'per-context' ? defaults.proxy : undefined;
 
     let maxRedirects = params.maxRedirects ?? (defaults.maxRedirects ?? 20);
     maxRedirects = maxRedirects === 0 ? -1 : maxRedirects;
@@ -234,7 +232,7 @@ export abstract class APIRequestContext extends SdkObject {
     const options: SendRequestOptions = {
       method,
       headers,
-      agent,
+      proxy,
       maxRedirects,
       ...getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, requestUrl.origin),
       __testHookLookup: (params as any).__testHookLookup,
@@ -362,11 +360,11 @@ export abstract class APIRequestContext extends SdkObject {
     const resultPromise = new Promise<SendRequestResult>((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
-      // Without an explicit proxy agent, use this context's own agent, which has
-      // keep-alive enabled and connects with Happy Eyeballs (autoSelectFamily).
-      // Resolved per request so that a cross-protocol redirect picks the right agent.
+      // Without a proxy, use this context's own agent, which has keep-alive enabled
+      // and connects with Happy Eyeballs (autoSelectFamily). Resolved per request so
+      // that each redirect hop evaluates proxy bypass and picks the right agent.
       const requestOptions = { ...options, ...happyEyeballsOptions };
-      requestOptions.agent = options.agent ?? this._ensureAgent(url.protocol);
+      requestOptions.agent = createProxyAgent(options.proxy, url) ?? this._ensureAgent(url.protocol);
       if (options.__testHookLookup)
         requestOptions.lookup = lookupWithTestHook(options.__testHookLookup);
 
@@ -484,7 +482,7 @@ export abstract class APIRequestContext extends SdkObject {
           const redirectOptions: SendRequestOptions = {
             method,
             headers,
-            agent: options.agent,
+            proxy: options.proxy,
             maxRedirects: options.maxRedirects - 1,
             __testHookLookup: options.__testHookLookup,
           };

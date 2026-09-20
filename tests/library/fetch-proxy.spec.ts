@@ -130,6 +130,31 @@ it(`should support proxy.bypass`, async ({ contextFactory, contextOptions, serve
   }
 });
 
+it('should evaluate proxy.bypass for each redirect', async ({ contextFactory, contextOptions, server, proxyServer }) => {
+  proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
+  server.setRedirect('/redirect-to-cross-process', server.CROSS_PROCESS_PREFIX + '/simple.json');
+  server.setRedirect('/redirect-to-same-process', server.PREFIX + '/simple.json');
+  const context = await contextFactory({
+    ...contextOptions,
+    proxy: { server: `localhost:${proxyServer.PORT}`, bypass: new URL(server.PREFIX).hostname },
+  });
+
+  {
+    // Bypassed first hop, redirect target goes through the proxy.
+    const response = await context.request.get(server.PREFIX + '/redirect-to-cross-process');
+    expect(response.url()).toBe(server.CROSS_PROCESS_PREFIX + '/simple.json');
+    expect(proxyServer.connectHosts).toEqual([new URL(server.CROSS_PROCESS_PREFIX).host]);
+    proxyServer.connectHosts = [];
+  }
+
+  {
+    // First hop through the proxy, bypassed redirect target goes direct.
+    const response = await context.request.get(server.CROSS_PROCESS_PREFIX + '/redirect-to-same-process');
+    expect(response.url()).toBe(server.PREFIX + '/simple.json');
+    expect(proxyServer.connectHosts).toEqual([new URL(server.CROSS_PROCESS_PREFIX).host]);
+  }
+});
+
 it('should use socks proxy', async ({ playwright, server, socksPort }) => {
   it.skip(!!process.env.INSIDE_DOCKER, 'connect ECONNREFUSED 127.0.0.1:<port>');
 
