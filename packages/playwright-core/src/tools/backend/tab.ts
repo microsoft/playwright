@@ -348,8 +348,16 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._clearCollectedArtifacts();
 
     const { promise: downloadEvent, abort: abortDownloadEvent } = eventWaiter<playwright.Download>(this.page, 'download', 3000);
+    // A dialog that opens during the load blocks it, so report the dialog
+    // right away instead of waiting for the navigation timeout.
+    const modalStatePromise = new ManualPromise<void>();
+    const modalStateListener = () => modalStatePromise.resolve();
+    this.once(TabEvents.modalState, modalStateListener);
     try {
-      await this.page.goto(url, { waitUntil: 'domcontentloaded', ...this.navigationTimeoutOptions });
+      await Promise.race([
+        this.page.goto(url, { waitUntil: 'domcontentloaded', ...this.navigationTimeoutOptions }),
+        modalStatePromise,
+      ]);
       abortDownloadEvent();
     } catch (_e: unknown) {
       const e = _e as Error;
@@ -363,7 +371,11 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       // Make sure other "download" listeners are notified first.
       await new Promise(resolve => setTimeout(resolve, 500));
       return;
+    } finally {
+      this.off(TabEvents.modalState, modalStateListener);
     }
+    if (modalStatePromise.isDone())
+      return;
 
     // Cap load event to 5 seconds, the page is operational at this point.
     await this.waitForLoadState('load', { timeout: 5000 });
