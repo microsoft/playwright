@@ -375,3 +375,15 @@ it('getByRole with description whitespace normalization', async ({ page }) => {
     'Alert',
   ]);
 });
+
+it('getByText and getByLabel should not be affected by global and sticky regex flags', async ({ page }) => {
+  await page.setContent(`
+    <div>foo</div><div>foo</div><div>foo</div>
+    <label>foo<input></label><label>foo<input></label><label>foo<input></label>
+  `);
+  await expect(page.getByText(/foo/)).toHaveCount(6);
+  await expect(page.getByText(/foo/g)).toHaveCount(6);
+  await expect(page.getByText(/foo/y)).toHaveCount(6);
+  await expect(page.getByLabel(/foo/)).toHaveCount(3);
+  await expect(page.getByLabel(/foo/g)).toHaveCount(3);
+});

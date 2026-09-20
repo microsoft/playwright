@@ -1750,7 +1750,12 @@ function createTextMatcher(selector: string, internal: boolean): { matcher: Text
   if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
     const lastSlash = selector.lastIndexOf('/');
     const re = new RegExp(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
-    return { matcher: (elementText: ElementText) => re.test(elementText.full), kind: 'regex' };
+    const matcher = (elementText: ElementText) => {
+      // Global and sticky regexes keep lastIndex between calls.
+      re.lastIndex = 0;
+      return re.test(elementText.full);
+    };
+    return { matcher, kind: 'regex' };
   }
   const unquote = internal ? JSON.parse.bind(JSON) : cssUnquote;
   let strict = false;
@@ -1812,8 +1817,11 @@ class ExpectedTextMatcher {
       return text === this._string;
     if (this._substring !== undefined)
       return text.includes(this._substring);
-    if (this._regex)
+    if (this._regex) {
+      // Global and sticky regexes keep lastIndex between calls.
+      this._regex.lastIndex = 0;
       return !!this._regex.test(text);
+    }
     return false;
   }
 
