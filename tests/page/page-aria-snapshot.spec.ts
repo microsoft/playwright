@@ -55,6 +55,25 @@ it('should snapshot list with accessible name', async ({ page }) => {
   `);
 });
 
+it('should quote names that look like regexes', async ({ page }) => {
+  await page.setContent(`
+    <nav>
+      <a href="/">/</a>
+      <a href="/docs/">/docs/</a>
+      <a href="/a(b/">/a(b/</a>
+    </nav>
+  `);
+  await checkAndMatchSnapshot(page.locator('nav'), `
+    - navigation:
+      - link "/":
+        - /url: /
+      - link "/docs/":
+        - /url: /docs/
+      - link "/a(b/":
+        - /url: /a(b/
+  `);
+});
+
 it('should snapshot complex', async ({ page }) => {
   await page.setContent(`
     <ul>
