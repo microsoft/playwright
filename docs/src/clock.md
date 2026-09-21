@@ -22,6 +22,7 @@ The recommended approach is to use `setFixedTime` to set the time to a specific 
 :::note
 [`property: Page.clock`] overrides native global classes and functions related to time allowing them to be manually controlled:
   - `Date`
+  - `Temporal.Now`
   - `setTimeout`
   - `clearTimeout`
   - `setInterval`
