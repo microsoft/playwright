@@ -304,6 +304,71 @@ it('should not add context cookie if cookie header passed as a parameter', async
   expect(req.headers.cookie).toEqual('foo=bar');
 });
 
+it('should keep cookie header passed as a parameter on redirects', async ({ context, server }) => {
+  server.setRedirect('/redirect1', '/redirect2');
+  server.setRedirect('/redirect2', '/simple.json');
+  await context.addCookies([{
+    name: 'username',
+    value: 'John Doe',
+    domain: '.my.playwright.dev',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'Lax',
+  }]);
+  const [req1, req2, req3] = await Promise.all([
+    server.waitForRequest('/redirect1'),
+    server.waitForRequest('/redirect2'),
+    server.waitForRequest('/simple.json'),
+    context.request.get(`http://www.my.playwright.dev:${server.PORT}/redirect1`, {
+      headers: {
+        'Cookie': 'foo=bar'
+      },
+      __testHookLookup
+    } as any),
+  ]);
+  expect(req1.headers.cookie).toBe('foo=bar');
+  expect(req2.headers.cookie).toBe('foo=bar');
+  expect(req3.headers.cookie).toBe('foo=bar');
+});
+
+it('should apply cookies set by a redirect to cookie header passed as a parameter', async ({ context, server }) => {
+  server.setRoute('/redirect1', (req, res) => {
+    res.setHeader('Set-Cookie', ['r1=v1; Path=/', 'scoped=v; Path=/a/b']);
+    res.writeHead(302, { location: '/redirect2' });
+    res.end();
+  });
+  server.setRoute('/redirect2', (req, res) => {
+    res.setHeader('Set-Cookie', ['r1=v2', 'foo=; Max-Age=0']);
+    res.writeHead(302, { location: '/title.html' });
+    res.end();
+  });
+  const [req1, req2, req3] = await Promise.all([
+    server.waitForRequest('/redirect1'),
+    server.waitForRequest('/redirect2'),
+    server.waitForRequest('/title.html'),
+    context.request.get(`${server.PREFIX}/redirect1`, { headers: { 'Cookie': 'foo=bar; other=1' } }),
+  ]);
+  expect(req1.headers.cookie).toBe('foo=bar; other=1');
+  // Cookies set by the redirect are added when they match the next url.
+  expect(req2.headers.cookie).toBe('foo=bar; other=1; r1=v1');
+  // Cookies updated or expired by the redirect are reflected as well.
+  expect(req3.headers.cookie).toBe('other=1; r1=v2');
+});
+
+it('should drop cookie header passed as a parameter on cross-origin redirect', async ({ context, server }) => {
+  server.setRedirect('/redirect', server.CROSS_PROCESS_PREFIX + '/empty.html');
+  await context.addCookies([{ url: server.CROSS_PROCESS_PREFIX, name: 'cross', value: 'store' }]);
+  const [req1, req2] = await Promise.all([
+    server.waitForRequest('/redirect'),
+    server.waitForRequest('/empty.html'),
+    context.request.get(`${server.PREFIX}/redirect`, { headers: { 'Cookie': 'foo=bar' } }),
+  ]);
+  expect(req1.headers.cookie).toBe('foo=bar');
+  expect(req2.headers.cookie).toBe('cross=store');
+});
+
 it('should follow redirects', async ({ context, server }) => {
   server.setRedirect('/redirect1', '/redirect2');
   server.setRedirect('/redirect2', '/simple.json');

@@ -55,6 +55,33 @@ it('should fulfill intercepted response', async ({ page, server, isElectron, ele
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
+it('should apply cookies set by a redirect when fetching the intercepted request', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
+  it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
+  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
+  server.setRoute('/login', (req, res) => {
+    res.setHeader('Set-Cookie', 'session=abc; Path=/');
+    res.writeHead(302, { location: '/dashboard' });
+    res.end();
+  });
+  server.setRoute('/dashboard', (req, res) => {
+    res.end('dashboard');
+  });
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => document.cookie = 'original=value');
+  await page.route('**/login', async route => {
+    const response = await route.fetch();
+    await route.fulfill({ response });
+  });
+  const [loginReq, dashboardReq, response] = await Promise.all([
+    server.waitForRequest('/login'),
+    server.waitForRequest('/dashboard'),
+    page.goto(server.PREFIX + '/login'),
+  ]);
+  expect(loginReq.headers.cookie).toBe('original=value');
+  expect(dashboardReq.headers.cookie.split(';').map(s => s.trim()).sort()).toEqual(['original=value', 'session=abc']);
+  expect(await response.text()).toBe('dashboard');
+});
+
 it('should fulfill response with empty body', async ({ page, server, isAndroid, isElectron, electronMajorVersion, browserName, browserMajorVersion }) => {
   it.skip(browserName === 'chromium' && browserMajorVersion <= 91, 'Fails in Electron that uses old Chromium');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
