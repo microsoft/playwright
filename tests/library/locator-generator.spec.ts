@@ -264,6 +264,21 @@ it('refuses to translate internal:role with conflicting name/description exactne
   }
 });
 
+it('reverse engineer internal:role with regex and string name/description', async () => {
+  expect.soft(generateForSelector('internal:role=alert[name=/Upload/][description="doc.pdf"i]')).toEqual({
+    javascript: `getByRole('alert', { name: /Upload/, description: 'doc.pdf' })`,
+    python: `get_by_role("alert", name=re.compile(r"Upload"), description="doc.pdf")`,
+    java: `getByRole(AriaRole.ALERT, new Page.GetByRoleOptions().setName(Pattern.compile("Upload")).setDescription("doc.pdf"))`,
+    csharp: `GetByRole(AriaRole.Alert, new() { NameRegex = new Regex("Upload"), Description = "doc.pdf" })`,
+  });
+  expect.soft(generateForSelector('internal:role=alert[name="Upload"i][description=/doc\\.pdf/]')).toEqual({
+    javascript: `getByRole('alert', { name: 'Upload', description: /doc\\.pdf/ })`,
+    python: `get_by_role("alert", name="Upload", description=re.compile(r"doc\\.pdf"))`,
+    java: `getByRole(AriaRole.ALERT, new Page.GetByRoleOptions().setName("Upload").setDescription(Pattern.compile("doc\\\\.pdf")))`,
+    csharp: `GetByRole(AriaRole.Alert, new() { Name = "Upload", DescriptionRegex = new Regex("doc\\\\.pdf") })`,
+  });
+});
+
 it('reverse engineer ignore-case locators', async ({ page }) => {
   expect.soft(generate(page.getByText('hello my\nwo"rld'))).toEqual({
     csharp: 'GetByText("hello my\\nwo\\"rld")',
