@@ -1037,7 +1037,7 @@ export class WKPage implements PageDelegate {
         // Make sure the request completes if the provisional navigation is canceled.
         this._onLoadingFailed(provisionalPage._session, {
           requestId: requestId,
-          errorText: 'Provisiolal navigation canceled.',
+          errorText: 'Provisional navigation canceled.',
           timestamp: request._timestamp,
           canceled: true,
         });
