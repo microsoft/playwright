@@ -2450,10 +2450,10 @@ export type FrameClickOptions = {
 };
 export type FrameClickResult = void;
 export type FrameContentParams = {
-  includeShadowRoots?: boolean,
+  includeShadow?: boolean,
 };
 export type FrameContentOptions = {
-  includeShadowRoots?: boolean,
+  includeShadow?: boolean,
 };
 export type FrameContentResult = {
   value: string,

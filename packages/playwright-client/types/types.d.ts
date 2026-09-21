@@ -2467,7 +2467,7 @@ export interface Page {
      * i.e. `<template shadowrootmode="open">` elements nested inside their host elements. Closed shadow roots are never
      * included. Defaults to `false`.
      */
-    includeShadowRoots?: boolean;
+    includeShadow?: boolean;
   }): Promise<string>;
 
   /**
@@ -6963,7 +6963,7 @@ export interface Frame {
      * i.e. `<template shadowrootmode="open">` elements nested inside their host elements. Closed shadow roots are never
      * included. Defaults to `false`.
      */
-    includeShadowRoots?: boolean;
+    includeShadow?: boolean;
   }): Promise<string>;
 
   /**

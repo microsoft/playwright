@@ -299,7 +299,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 Gets the full HTML contents of the frame, including the doctype.
 
-### option: Frame.content.includeShadowRoots = %%-content-option-include-shadow-roots-%%
+### option: Frame.content.includeShadow = %%-content-option-include-shadow-%%
 * since: v1.64
 
 ## async method: Frame.dblclick

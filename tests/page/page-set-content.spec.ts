@@ -59,7 +59,7 @@ it('should include shadow roots', async ({ page }) => {
   // Closed shadow roots are not accessible from script and are never serialized.
   await page.setContent(html.replace('<div id="closed">', '<div id="closed"><template shadowrootmode="closed"><span>closed</span></template>'));
   expect(await page.content()).toBe('<!DOCTYPE html><html lang="en"><head></head><body><div id="host"><span>light</span></div><div id="closed"></div></body></html>');
-  expect(await page.content({ includeShadowRoots: true })).toBe(html);
+  expect(await page.content({ includeShadow: true })).toBe(html);
 });
 
 it('should respect timeout', async ({ page, server, playwright }) => {

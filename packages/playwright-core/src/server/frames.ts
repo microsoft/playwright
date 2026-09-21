@@ -946,14 +946,14 @@ export class Frame extends SdkObject<FrameEventMap> {
   private async _content(options: channels.FrameContentParams): Promise<string> {
     try {
       const context = await this.utilityContext();
-      return await context.evaluate(includeShadowRoots => {
+      return await context.evaluate(includeShadow => {
         let retVal = '';
         if (document.doctype)
           retVal = new XMLSerializer().serializeToString(document.doctype);
         const root = document.documentElement;
         if (!root)
           return retVal;
-        if (!includeShadowRoots)
+        if (!includeShadow)
           return retVal + root.outerHTML;
         const shadowRoots: ShadowRoot[] = [];
         const collectShadowRoots = (node: Document | ShadowRoot) => {
@@ -969,7 +969,7 @@ export class Frame extends SdkObject<FrameEventMap> {
         const emptyRoot = (root.cloneNode(false) as Element).outerHTML;
         const endTagIndex = emptyRoot.lastIndexOf('</');
         return retVal + emptyRoot.slice(0, endTagIndex) + root.getHTML({ shadowRoots }) + emptyRoot.slice(endTagIndex);
-      }, options.includeShadowRoots);
+      }, options.includeShadow);
     } catch (e) {
       if (this.isNonRetriableError(e))
         throw e;
