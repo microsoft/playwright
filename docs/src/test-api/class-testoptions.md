@@ -140,7 +140,7 @@ export default defineConfig({
 ```
 
 ## property: TestOptions.clientCertificates = %%-context-option-clientCertificates-%%
-* since: 1.46
+* since: v1.46
 
 **Usage**
 

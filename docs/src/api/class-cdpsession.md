@@ -141,7 +141,7 @@ Optional method parameters.
 Optional method parameters.
 
 ## method: CDPSession.event
-* since: v.1.30
+* since: v1.30
 * langs: csharp
 - returns: <[CDPSessionEvent]>
 
