@@ -51,6 +51,7 @@ Time may be the number of milliseconds to advance the clock by or a human-readab
 Install fake implementations for the following time-related functions:
 
 * `Date`
+* `Temporal.Now`
 * `setTimeout`
 * `clearTimeout`
 * `setInterval`
