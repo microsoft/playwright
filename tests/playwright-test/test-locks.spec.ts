@@ -122,7 +122,7 @@ test('should not run tests with the same lock from different projects at the sam
   expect(conflictingOverlaps(result.outputLines, [['project1', 'project2']])).toEqual([]);
 });
 
-test('should support locks declared on a describe group', async ({ runInlineTest }) => {
+test('should support locks declared and configured on describe groups', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { fullyParallel: true };
@@ -131,6 +131,10 @@ test('should support locks declared on a describe group', async ({ runInlineTest
       import { test } from '@playwright/test';
       test.describe('locked suite', { lock: 'shared' }, () => {
         ${lockedTest('test1', 1000)}
+      });
+      test.describe('configured suite', () => {
+        test.describe.configure({ lock: 'shared' });
+        test.describe.configure({ lock: ['other'] });
         ${lockedTest('test2', 1000)}
       });
     `,

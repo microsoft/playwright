@@ -155,6 +155,12 @@ test('reset the database', { lock: ['database', 'external-api'] }, async () => {
 });
 ```
 
+You can also add locks to the enclosing file or describe group with [`method: Test.describe.configure`].  Repeated calls add locks without removing existing ones.
+
+```js
+test.describe.configure({ lock: 'user-settings' });
+```
+
 Playwright acquires all the locks of a test before the test starts and releases them when it finishes.
 
 :::note
