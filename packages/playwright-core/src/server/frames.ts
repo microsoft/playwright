@@ -946,30 +946,8 @@ export class Frame extends SdkObject<FrameEventMap> {
   private async _content(options: channels.FrameContentParams): Promise<string> {
     try {
       const context = await this.utilityContext();
-      return await context.evaluate(includeShadow => {
-        let retVal = '';
-        if (document.doctype)
-          retVal = new XMLSerializer().serializeToString(document.doctype);
-        const root = document.documentElement;
-        if (!root)
-          return retVal;
-        if (!includeShadow)
-          return retVal + root.outerHTML;
-        const shadowRoots: ShadowRoot[] = [];
-        const collectShadowRoots = (node: Document | ShadowRoot) => {
-          for (const element of node.querySelectorAll('*')) {
-            if (element.shadowRoot) {
-              shadowRoots.push(element.shadowRoot);
-              collectShadowRoots(element.shadowRoot);
-            }
-          }
-        };
-        collectShadowRoots(document);
-        // getHTML() serializes children only, wrap them with the root element tags.
-        const emptyRoot = (root.cloneNode(false) as Element).outerHTML;
-        const endTagIndex = emptyRoot.lastIndexOf('</');
-        return retVal + emptyRoot.slice(0, endTagIndex) + root.getHTML({ shadowRoots }) + emptyRoot.slice(endTagIndex);
-      }, options.includeShadow);
+      const injected = await context.injectedScript();
+      return await injected.evaluate((injected, includeShadow) => injected.documentContent(includeShadow), !!options.includeShadow);
     } catch (e) {
       if (this.isNonRetriableError(e))
         throw e;
