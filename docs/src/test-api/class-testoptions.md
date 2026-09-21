@@ -737,7 +737,7 @@ export default defineConfig({
         - `highlight` ?<[string]> CSS declarations for the box that covers the target element. Not shown when omitted.
         - `title` ?<[string]> CSS declarations for the action title.
     - `test` ?<[Object]> Controls test information displayed as a status overlay in the video.
-      - `level` ?<[TestAnnotationLevel]<"file"|"test"|"step">> Level of the detail to include about the current test.
+      - `level` ?<[TestAnnotationLevel]<"file"|"title"|"step">> Level of the detail to include about the current test.
       - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the test information overlay. Defaults to `"top-left"`.
       - `fontSize` ?<[int]> Font size of the test information in pixels. Defaults to `14`.
 
@@ -756,7 +756,7 @@ To control video size, pass an object with `mode` and `size` properties. If vide
 
 To record smoother video of animations and scrolling, pass `fps`, for example `{ mode: 'on', size: { width: 1920, height: 1080 }, fps: 60 }`. Higher frame rates and sizes use more CPU for encoding. Firefox and WebKit currently capture up to 25 frames per second.
 
-To annotate actions in the video, pass `show` with `action` and/or `test` sub-options. The `action` option controls visual highlights on interacted elements with an optional `delay` in milliseconds (defaults to `500`). The `test` option controls which test information is displayed as a status overlay.
+To annotate actions in the video, pass `show` with `actions` and/or `test` sub-options. The `actions` option controls visual highlights on interacted elements, each shown for an optional `duration` in milliseconds (defaults to `500`). The `test` option controls which test information is displayed as a status overlay.
 
 **Usage**
 
