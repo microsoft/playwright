@@ -30,7 +30,7 @@ export type Builtins = {
   Intl: typeof window['Intl'],
   Date: typeof window['Date'],
   AbortSignal: typeof window['AbortSignal'],
-  Temporal?: typeof Temporal,
+  Temporal: typeof window['Temporal'],
 };
 
 export class UtilityScript {

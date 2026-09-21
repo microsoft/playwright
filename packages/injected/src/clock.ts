@@ -578,7 +578,7 @@ function createIntl(clock: ClockController, NativeIntl: Builtins['Intl']): Built
   return ClockIntl;
 }
 
-function createTemporal(clock: ClockController, NativeTemporal: NonNullable<Builtins['Temporal']>): Builtins['Temporal'] {
+function createTemporal(clock: ClockController, NativeTemporal: Builtins['Temporal']): Builtins['Temporal'] {
   const NativeNow = NativeTemporal.Now;
   const instant = () => NativeTemporal.Instant.fromEpochMilliseconds(Math.trunc(clock.now()));
   const zonedDateTimeISO = (timeZone?: Temporal.TimeZoneLike) => instant().toZonedDateTimeISO(timeZone ?? NativeNow.timeZoneId());
@@ -722,7 +722,7 @@ function createApi(clock: ClockController, originals: Builtins, browserName?: st
     Date: createDate(clock, originals.Date),
     performance: originals.performance ? fakePerformance(clock, originals.performance) : (undefined as unknown as Builtins['performance']),
     AbortSignal: originals.AbortSignal ? fakeAbortSignal(clock, originals.AbortSignal, browserName) : (undefined as unknown as Builtins['AbortSignal']),
-    Temporal: originals.Temporal ? createTemporal(clock, originals.Temporal) : undefined,
+    Temporal: originals.Temporal ? createTemporal(clock, originals.Temporal) : (undefined as unknown as Builtins['Temporal']),
   };
 }
 
