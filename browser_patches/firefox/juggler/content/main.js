@@ -61,7 +61,7 @@ export function initialize(browsingContext, docShell) {
   for (const { worldName, name, script } of [...contextCrossProcessCookie.bindings, ...pageCrossProcessCookie.bindings])
     data.frameTree.addBinding(worldName, name, script);
   data.frameTree.setInitScripts([...contextCrossProcessCookie.initScripts, ...pageCrossProcessCookie.initScripts]);
-  data.channel = new SimpleChannel('', 'process-' + Services.appinfo.processID);
+  data.channel = new SimpleChannel('', 'process-' + Services.appinfo.processID + '-' + helper.generateId());
   data.pageAgent = new PageAgent(data.channel, data.frameTree);
   docShell.fileInputInterceptionEnabled = !!pageCrossProcessCookie.interceptFileChooserDialog;
 
