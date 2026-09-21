@@ -520,6 +520,12 @@ export class CRNetworkManager {
       request.request.setRawRequestHeaders(null);
     }
     this._deleteRequest(request);
+    // Chromium aborts 204 subresource responses with net::ERR_ABORTED, while other browsers
+    // report them as finished. Navigation 204 responses are aborted in all browsers.
+    if (response?.status() === 204 && !request.request.isNavigationRequest()) {
+      (this._page?.frameManager || this._serviceWorker)!.reportRequestFinished(request.request, response);
+      return;
+    }
     request.request._setFailureText(event.errorText || event.blockedReason || '');
     (this._page?.frameManager || this._serviceWorker)!.requestFailed(request.request, !!event.canceled);
   }
