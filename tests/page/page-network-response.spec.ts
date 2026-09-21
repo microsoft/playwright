@@ -157,6 +157,13 @@ it('should return body', async ({ page, server, asset }) => {
   expect(responseBuffer.equals(imageBuffer)).toBe(true);
 });
 
+it('should return body multiple times', async ({ page, server, asset }) => {
+  const response = await page.goto(server.PREFIX + '/pptr.png');
+  const imageBuffer = fs.readFileSync(asset('pptr.png'));
+  expect((await response.body()).equals(imageBuffer)).toBe(true);
+  expect((await response.body()).equals(imageBuffer)).toBe(true);
+});
+
 it('should return body with compression', async ({ page, server, asset }) => {
   server.enableGzip('/pptr.png');
   const response = await page.goto(server.PREFIX + '/pptr.png');
@@ -515,9 +522,8 @@ it('Response.formData() should parse multipart/form-data in page context', async
   expect(result.fileContent).toBe('hello');
 });
 
-it('should give a readable error when response.body() races with navigation', async ({ page, server, browserName, trace }) => {
+it('should give a readable error when response.body() races with navigation', async ({ page, server, browserName }) => {
   it.skip(browserName === 'firefox', 'Firefox keeps the response body available after navigating away, so it never throws');
-  it.skip(trace === 'on', 'Tracing fetches response bodies eagerly, so the body is already cached before navigation');
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41512' });
   const [response] = await Promise.all([
     page.waitForResponse(server.PREFIX + '/title.html'),
