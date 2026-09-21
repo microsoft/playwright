@@ -337,18 +337,18 @@ export abstract class APIRequestContext extends SdkObject {
       log.push(message);
       progress.log(message);
     };
-    await this._updateRequestCookieHeader(progress, url, options.headers);
+    // Context cookies are added to a per-request copy of the headers, so that a "cookie"
+    // header in options.headers is always the one passed by the caller and redirects can
+    // carry it over.
+    const requestHeaders = { ...options.headers };
+    await this._updateRequestCookieHeader(progress, url, requestHeaders);
 
-    const requestCookies = getHeader(options.headers, 'cookie')?.split(';').map(p => {
-      const indexOfEquals = p.indexOf('=');
-      const name = indexOfEquals !== -1 ? p.substring(0, indexOfEquals).trim() : p.trim();
-      const value = indexOfEquals !== -1 ? p.substring(indexOfEquals + 1).trim() : '';
-      return { name, value };
-    }) || [];
+    const cookieHeader = getHeader(requestHeaders, 'cookie');
+    const requestCookies = cookieHeader !== undefined ? parseCookieHeader(cookieHeader) : [];
     const requestEvent: APIRequestEvent = {
       url,
       method: options.method!,
-      headers: options.headers,
+      headers: requestHeaders,
       cookies: requestCookies,
       postData
     };
@@ -366,6 +366,7 @@ export abstract class APIRequestContext extends SdkObject {
       // keep-alive enabled and connects with Happy Eyeballs (autoSelectFamily).
       // Resolved per request so that a cross-protocol redirect picks the right agent.
       const requestOptions = { ...options, ...happyEyeballsOptions };
+      requestOptions.headers = requestHeaders;
       requestOptions.agent = options.agent ?? this._ensureAgent(url.protocol);
       if (options.__testHookLookup)
         requestOptions.lookup = lookupWithTestHook(options.__testHookLookup);
@@ -464,7 +465,6 @@ export abstract class APIRequestContext extends SdkObject {
             return;
           }
           const headers = { ...options.headers };
-          removeHeader(headers, `cookie`);
 
           // HTTP-redirect fetch step 13 (https://fetch.spec.whatwg.org/#http-redirect-fetch)
           const status = response.statusCode!;
@@ -509,8 +509,13 @@ export abstract class APIRequestContext extends SdkObject {
             setHeader(headers, 'host', locationURL.host);
 
             // Drop credentials scoped to the original origin on cross-origin redirects.
-            if (locationURL.origin !== url.origin)
+            // Cookies for the new origin come from the context cookie store.
+            if (locationURL.origin !== url.origin) {
               removeHeader(headers, 'authorization');
+              removeHeader(headers, 'cookie');
+            } else {
+              applyCookiesToCookieHeader(headers, cookies, locationURL);
+            }
 
             // Client certificates are origin-scoped — pick them based on the redirect
             // target, not the original URL.
@@ -662,10 +667,8 @@ export abstract class APIRequestContext extends SdkObject {
       request.on('finish', () => { requestFinishAt = monotonicTime(); });
 
       fetchLog(`→ ${options.method} ${url.toString()}`);
-      if (options.headers) {
-        for (const [name, value] of Object.entries(options.headers))
-          fetchLog(`  ${name}: ${value}`);
-      }
+      for (const [name, value] of Object.entries(requestHeaders))
+        fetchLog(`  ${name}: ${value}`);
 
       if (postData)
         request.write(postData);
@@ -887,6 +890,36 @@ function removeHeader(headers: { [name: string]: string }, name: string) {
   const existing = Object.entries(headers).find(pair => pair[0].toLowerCase() === name.toLowerCase());
   if (existing)
     delete headers[existing[0]];
+}
+
+function parseCookieHeader(header: string): { name: string, value: string }[] {
+  return header.split(';').map(p => {
+    const indexOfEquals = p.indexOf('=');
+    const name = indexOfEquals !== -1 ? p.substring(0, indexOfEquals).trim() : p.trim();
+    const value = indexOfEquals !== -1 ? p.substring(indexOfEquals + 1).trim() : '';
+    return { name, value };
+  });
+}
+
+// A "cookie" header passed by the caller replaces the context cookies for the request.
+// Cookies set by a redirect response are applied to that header for the next hop, the same
+// way they are stored in the context, so that a redirect setting a session cookie keeps working.
+function applyCookiesToCookieHeader(headers: { [name: string]: string }, cookies: channels.NetworkCookie[], url: URL) {
+  const existing = getHeader(headers, 'cookie');
+  if (existing === undefined || !cookies.length)
+    return;
+  const values = parseCookieHeader(existing).filter(c => c.name);
+  for (const cookie of cookies) {
+    if (!new Cookie(cookie).matches(url))
+      continue;
+    const index = values.findIndex(c => c.name === cookie.name);
+    const expired = cookie.expires !== -1 && cookie.expires * 1000 < Date.now();
+    if (index !== -1)
+      values.splice(index, 1);
+    if (!expired)
+      values.push({ name: cookie.name, value: cookie.value });
+  }
+  setHeader(headers, 'cookie', values.map(c => `${c.name}=${c.value}`).join('; '));
 }
 
 function isNetworkConnectionError(e: any): boolean {
