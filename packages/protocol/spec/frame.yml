@@ -205,6 +205,8 @@ Frame:
 
     content:
       title: Get content
+      parameters:
+        includeShadowRoots: boolean?
       returns:
         value: string
       flags:

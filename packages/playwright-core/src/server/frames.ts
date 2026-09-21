@@ -939,21 +939,37 @@ export class Frame extends SdkObject<FrameEventMap> {
     }
   }
 
-  async content(progress: Progress): Promise<string> {
-    return progress.race(this._content());
+  async content(progress: Progress, options: channels.FrameContentParams): Promise<string> {
+    return progress.race(this._content(options));
   }
 
-  private async _content(): Promise<string> {
+  private async _content(options: channels.FrameContentParams): Promise<string> {
     try {
       const context = await this.utilityContext();
-      return await context.evaluate(() => {
+      return await context.evaluate(includeShadowRoots => {
         let retVal = '';
         if (document.doctype)
           retVal = new XMLSerializer().serializeToString(document.doctype);
-        if (document.documentElement)
-          retVal += document.documentElement.outerHTML;
-        return retVal;
-      });
+        const root = document.documentElement;
+        if (!root)
+          return retVal;
+        if (!includeShadowRoots)
+          return retVal + root.outerHTML;
+        const shadowRoots: ShadowRoot[] = [];
+        const collectShadowRoots = (node: Document | ShadowRoot) => {
+          for (const element of node.querySelectorAll('*')) {
+            if (element.shadowRoot) {
+              shadowRoots.push(element.shadowRoot);
+              collectShadowRoots(element.shadowRoot);
+            }
+          }
+        };
+        collectShadowRoots(document);
+        // getHTML() serializes children only, wrap them with the root element tags.
+        const emptyRoot = (root.cloneNode(false) as Element).outerHTML;
+        const endTagIndex = emptyRoot.lastIndexOf('</');
+        return retVal + emptyRoot.slice(0, endTagIndex) + root.getHTML({ shadowRoots }) + emptyRoot.slice(endTagIndex);
+      }, options.includeShadowRoots);
     } catch (e) {
       if (this.isNonRetriableError(e))
         throw e;

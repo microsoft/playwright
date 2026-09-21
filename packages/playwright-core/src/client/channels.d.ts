@@ -2449,8 +2449,12 @@ export type FrameClickOptions = {
   steps?: number,
 };
 export type FrameClickResult = void;
-export type FrameContentParams = {};
-export type FrameContentOptions = {};
+export type FrameContentParams = {
+  includeShadowRoots?: boolean,
+};
+export type FrameContentOptions = {
+  includeShadowRoots?: boolean,
+};
 export type FrameContentResult = {
   value: string,
 };

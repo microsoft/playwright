@@ -272,8 +272,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return (await this._channel.queryCount({ selector }, kNoTimeout)).value;
   }
 
-  async content(): Promise<string> {
-    return (await this._channel.content({}, kNoTimeout)).value;
+  async content(options: channels.FrameContentOptions = {}): Promise<string> {
+    return (await this._channel.content({ ...options }, kNoTimeout)).value;
   }
 
   async setContent(html: string, options: channels.FrameSetContentOptions & TimeoutOptions = {}): Promise<void> {

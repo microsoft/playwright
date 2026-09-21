@@ -407,8 +407,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this._mainFrame.url();
   }
 
-  async content(): Promise<string> {
-    return await this._mainFrame.content();
+  async content(options?: channels.FrameContentOptions): Promise<string> {
+    return await this._mainFrame.content(options);
   }
 
   async setContent(html: string, options?: channels.FrameSetContentOptions & TimeoutOptions): Promise<void> {
