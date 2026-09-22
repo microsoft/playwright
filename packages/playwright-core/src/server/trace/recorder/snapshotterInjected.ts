@@ -94,8 +94,16 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
     private _observer: MutationObserver;
     private _observedDocument: Document | undefined;
     private _targetGeneration = 0;
+    private _nativeShadowRoot: typeof ShadowRoot;
+    private _nativeFirstChild: (this: Node) => Node | null;
+    private _nativeNextSibling: (this: Node) => Node | null;
 
     constructor() {
+      // Some pages overwrite the following native functions, so capture them in advance.
+      this._nativeShadowRoot = window.ShadowRoot;
+      this._nativeFirstChild = Object.getOwnPropertyDescriptor(window.Node.prototype, 'firstChild')!.get!;
+      this._nativeNextSibling = Object.getOwnPropertyDescriptor(window.Node.prototype, 'nextSibling')!.get!;
+
       const invalidateCSSGroupingRule = (rule: CSSGroupingRule) => {
         if (rule.parentStyleSheet)
           this._invalidateStyleSheet(rule.parentStyleSheet);
@@ -158,6 +166,12 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       (document as any).addEventListener('__playwright_reset_targets__', () => {
         ++this._targetGeneration;
       });
+    }
+
+    private _shadowRoot(element: Element): ShadowRoot | null {
+      // Some frameworks define fake `element.shadowRoot` properties, thus an `instanceof` check.
+      const shadowRoot = element.shadowRoot;
+      return shadowRoot instanceof this._nativeShadowRoot ? shadowRoot : null;
     }
 
     private _interceptNativeMethod(obj: any, method: string, cb: (thisObj: any, result: any) => void) {
@@ -272,11 +286,11 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       const visitNode = (node: Node | ShadowRoot) => {
         resetCachedData(node);
         if (node.nodeType === Node.ELEMENT_NODE) {
-          const element = node as Element;
-          if (element.shadowRoot)
-            visitNode(element.shadowRoot);
+          const shadowRoot = this._shadowRoot(node as Element);
+          if (shadowRoot)
+            visitNode(shadowRoot);
         }
-        for (let child = node.firstChild; child; child = child.nextSibling)
+        for (let child = this._nativeFirstChild.call(node); child; child = this._nativeNextSibling.call(child))
           visitNode(child);
       };
       visitNode(document.documentElement);
@@ -515,9 +529,10 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
             expectValue(element.scrollLeft);
             attrs[kScrollLeftAttribute] = '' + element.scrollLeft;
           }
-          if (element.shadowRoot) {
+          const shadowRoot = this._shadowRoot(element);
+          if (shadowRoot) {
             ++shadowDomNesting;
-            visitChild(element.shadowRoot);
+            visitChild(shadowRoot);
             --shadowDomNesting;
           }
           if ((element as any).__playwright_target__ === this._targetGeneration) {
@@ -532,7 +547,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
           this._fakeBase.setAttribute('href', document.baseURI);
           visitChild(this._fakeBase);
         }
-        for (let child = node.firstChild; child; child = child.nextSibling)
+        for (let child = this._nativeFirstChild.call(node); child; child = this._nativeNextSibling.call(child))
           visitChild(child);
         if (nodeName === 'HEAD')
           --headNesting;
