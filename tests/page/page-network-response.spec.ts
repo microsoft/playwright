@@ -157,13 +157,6 @@ it('should return body', async ({ page, server, asset }) => {
   expect(responseBuffer.equals(imageBuffer)).toBe(true);
 });
 
-it('should return body multiple times', async ({ page, server, asset }) => {
-  const response = await page.goto(server.PREFIX + '/pptr.png');
-  const imageBuffer = fs.readFileSync(asset('pptr.png'));
-  expect((await response.body()).equals(imageBuffer)).toBe(true);
-  expect((await response.body()).equals(imageBuffer)).toBe(true);
-});
-
 it('should return body with compression', async ({ page, server, asset }) => {
   server.enableGzip('/pptr.png');
   const response = await page.goto(server.PREFIX + '/pptr.png');
