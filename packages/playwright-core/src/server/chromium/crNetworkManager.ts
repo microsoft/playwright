@@ -591,8 +591,8 @@ class InterceptableRequest {
       (request as any)[kInterceptableRequest] = undefined;
   }
 
-  static createResponseBodyCallback(request: network.Request): () => Promise<Buffer> {
-    return async () => {
+  static createResponseBodyCallback(request: network.Request): (isExplicit: boolean) => Promise<Buffer> {
+    return async (isExplicit: boolean) => {
       // Lookup the request lazily, so that the response does not retain the
       // InterceptableRequest and its session after detachIfNeeded().
       const interceptable = InterceptableRequest.from(request);
@@ -610,11 +610,18 @@ class InterceptableRequest {
       if (interceptable._originalRequestRoute?._fulfilled)
         return Buffer.from('');
 
-      // Re-fetching the resource may produce side effects on the server, only
-      // do it for GETs of static subresources and prefetch requests.
+      // Re-fetching the resource may produce side effects on the server, so
+      // never do it for non-GETs, explicit call or not: a caller who
+      // deliberately reads a POST's body did not ask to resubmit it.
       if (request.method() !== 'GET')
         return Buffer.from('');
-      if (!kRefetchSafeResourceTypes.has(request.resourceType())) {
+      // For an automatic, blanket capture (harTracer.ts records every
+      // response for HAR/trace output, isExplicit=false) only re-fetch GETs
+      // that are safe to replay sight unseen: static subresources and
+      // prefetches (see #42002). A caller that explicitly awaited
+      // response.body() for this one response already accepts a re-fetch
+      // for it, whatever the resource type.
+      if (!isExplicit && !kRefetchSafeResourceTypes.has(request.resourceType())) {
         const rawHeaders = await request.internalRawRequestHeaders();
         const isPrefetch = rawHeaders.some(h => h.name.toLowerCase() === 'sec-purpose' && h.value.startsWith('prefetch'));
         if (!isPrefetch)

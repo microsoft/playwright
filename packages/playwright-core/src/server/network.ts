@@ -477,7 +477,7 @@ export class Route extends SdkObject {
 
 export type RouteHandler = (route: Route, request: Request) => void;
 
-type GetResponseBodyCallback = () => Promise<Buffer>;
+type GetResponseBodyCallback = (isExplicit: boolean) => Promise<Buffer>;
 
 export type ResourceTiming = {
   startTime: number;
@@ -546,7 +546,11 @@ export class Response extends SdkObject {
   }
 
   async body(progress: Progress): Promise<Buffer> {
-    return await this._request.raceWithPageClosure(progress, this.internalBody());
+    // This is a deliberate, one-off call from client code (as opposed to
+    // harTracer's automatic per-response capture), so it is safe to recover
+    // an evicted body by re-fetching regardless of resource type: see the
+    // isExplicit parameter on internalBody().
+    return await this._request.raceWithPageClosure(progress, this.internalBody(true));
   }
 
   async securityDetails(progress: Progress): Promise<SecurityDetails | null> {
@@ -643,7 +647,16 @@ export class Response extends SdkObject {
     return await this._rawResponseHeadersPromise;
   }
 
-  async internalBody(): Promise<Buffer> {
+  // isExplicit distinguishes a deliberate, one-off body() call (from client
+  // code, via body() above) from an automatic, blanket capture of every
+  // response (harTracer.ts, for HAR/trace recording). When Chromium has
+  // evicted the body and it needs to be recovered via a real re-fetch, only
+  // the explicit case is allowed to do so for any GET: re-fetching every
+  // response automatically can silently duplicate requests with server-side
+  // side effects (see https://github.com/microsoft/playwright/issues/42002),
+  // but a test author who deliberately calls response.body() once already
+  // accepts that cost for the one response they asked for.
+  async internalBody(isExplicit = false): Promise<Buffer> {
     await this._finishedPromise;
     if (this._status >= 300 && this._status <= 399)
       throw new Error('Response body is unavailable for redirect responses');
@@ -652,7 +665,7 @@ export class Response extends SdkObject {
       return Buffer.from(body, isBase64 ? 'base64' : 'utf-8');
     }
     try {
-      return await this._getResponseBodyCallback();
+      return await this._getResponseBodyCallback(isExplicit);
     } catch (e) {
       if (isProtocolError(e) && e.type === 'error')
         rewriteErrorMessage(e, e.message + '\nResponse body is not available for a response that was navigated away from. Read response.body() before triggering any navigation.');

@@ -392,6 +392,32 @@ it('should return body for image with evicted body', {
   expect(body.toString('base64')).toBe(imageBase64);
 });
 
+it('should return body for a fetch()ed resource with evicted body when the page already read it', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42862' },
+}, async ({ page, server, isMac, browserName }) => {
+  it.fixme(isMac && browserName === 'webkit', 'WebKit on Mac evicts the body and returns empty buffer');
+  // Any app that turns a fetch() response into a downloadable file reads the
+  // body in-page first (here via .blob(), same as URL.createObjectURL-based
+  // downloads). That consumption is what makes Chromium evict the body, so
+  // response.body() needs the explicit re-fetch path even though "fetch" is
+  // not in the static-subresource allowlist used for automatic HAR capture.
+  server.setRoute('/resource.bin', (req, res) => {
+    res.setHeader('content-type', 'application/octet-stream');
+    res.end(Buffer.from('hello from resource.bin'));
+  });
+  server.setRoute('/page.html', (req, res) => {
+    res.setHeader('content-type', 'text/html');
+    res.end('<html><body><script>window.fetchAndConsume = () => fetch("/resource.bin").then(r => r.blob());</script></body></html>');
+  });
+  await page.goto(server.PREFIX + '/page.html');
+  const [response] = await Promise.all([
+    page.waitForResponse('**/resource.bin'),
+    page.evaluate(() => window['fetchAndConsume']()),
+  ]);
+  const body = await response.body();
+  expect(body.toString()).toBe('hello from resource.bin');
+});
+
 it('should bypass disk cache when page interception is enabled', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30000' });
   await page.goto(server.PREFIX + '/frames/one-frame.html');
