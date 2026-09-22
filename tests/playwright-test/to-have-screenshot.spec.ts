@@ -703,6 +703,7 @@ test('should use configured webp type', async ({ runInlineTest }, testInfo) => {
     'a.spec.js': `
       const { test, expect } = require('@playwright/test');
       test('is a test', async ({ page }) => {
+        expect(test.info().snapshotPath({ kind: 'screenshot' })).toMatch(/is-a-test-1\\.webp$/);
         // Anonymous and explicit .png name both match existing snapshots.
         await expect(page).toHaveScreenshot();
         await expect(page).toHaveScreenshot('snapshot.png');

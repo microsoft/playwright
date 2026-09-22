@@ -343,8 +343,8 @@ export async function toHaveScreenshot(
 
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   const [page, locator] = (pageOrLocator as any)._apiName === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as Locator];
-  const { type: configType, ...configOptions } = expectConfig().toHaveScreenshot || {};
-  const helper = new SnapshotHelper(this, testInfo, 'toHaveScreenshot', locator, configType ? '.' + configType : undefined, configOptions, nameOrOptions, optOptions);
+  const configOptions = expectConfig().toHaveScreenshot || {};
+  const helper = new SnapshotHelper(this, testInfo, 'toHaveScreenshot', locator, undefined, configOptions, nameOrOptions, optOptions);
   const screenshotType = ({ 'image/png': 'png', 'image/webp': 'webp' } as const)[helper.mimeType];
   if (!screenshotType)
     throw new Error(`Screenshot name "${path.basename(helper.expectedPath)}" must have a '.png' or '.webp' extension`);
