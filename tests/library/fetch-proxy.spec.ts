@@ -173,27 +173,30 @@ it('should send correct ALPN protocol to HTTPS proxy', { annotation: { type: 'is
 });
 
 it('should apply proxy.bypass to redirect targets', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42815' } }, async ({ contextFactory, server, proxyServer }) => {
+  const crossProcessHost = new URL(server.CROSS_PROCESS_PREFIX).host;
+  it.skip(crossProcessHost === server.HOST, 'Needs two different host names for the same server');
+
   proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
-  server.setRedirect('/redirect-to-ip', `http://127.0.0.1:${server.PORT}/simple.json`);
-  server.setRedirect('/redirect-to-localhost', `http://localhost:${server.PORT}/simple.json`);
+  server.setRedirect('/redirect-to-cross-process', server.CROSS_PROCESS_PREFIX + '/simple.json');
+  server.setRedirect('/redirect-to-same-origin', server.PREFIX + '/simple.json');
   const context = await contextFactory({
-    proxy: { server: `localhost:${proxyServer.PORT}`, bypass: 'localhost' }
+    proxy: { server: `localhost:${proxyServer.PORT}`, bypass: server.HOSTNAME }
   });
 
   {
     // Bypassed first hop redirects to a host that must go through the proxy.
-    const response = await context.request.get(`http://localhost:${server.PORT}/redirect-to-ip`);
-    expect(response.url()).toBe(`http://127.0.0.1:${server.PORT}/simple.json`);
+    const response = await context.request.get(server.PREFIX + '/redirect-to-cross-process');
+    expect(response.url()).toBe(server.CROSS_PROCESS_PREFIX + '/simple.json');
     expect(await response.json()).toEqual({ foo: 'bar' });
-    expect(proxyServer.connectHosts).toEqual([`127.0.0.1:${server.PORT}`]);
+    expect(proxyServer.connectHosts).toEqual([crossProcessHost]);
     proxyServer.connectHosts = [];
   }
 
   {
     // Proxied first hop redirects to a bypassed host.
-    const response = await context.request.get(`http://127.0.0.1:${server.PORT}/redirect-to-localhost`);
-    expect(response.url()).toBe(`http://localhost:${server.PORT}/simple.json`);
+    const response = await context.request.get(server.CROSS_PROCESS_PREFIX + '/redirect-to-same-origin');
+    expect(response.url()).toBe(server.PREFIX + '/simple.json');
     expect(await response.json()).toEqual({ foo: 'bar' });
-    expect(proxyServer.connectHosts).toEqual([`127.0.0.1:${server.PORT}`]);
+    expect(proxyServer.connectHosts).toEqual([crossProcessHost]);
   }
 });

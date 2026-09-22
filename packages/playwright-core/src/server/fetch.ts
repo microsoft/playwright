@@ -87,7 +87,7 @@ export type APIRequestFinishedEvent = {
   securityDetails?: har.SecurityDetails;
 };
 
-type SendRequestOptions = https.RequestOptions & {
+type SendRequestOptions = Omit<https.RequestOptions, 'agent'> & {
   maxRedirects: number,
   headers: HeadersObject,
   __testHookLookup?: (hostname: string) => LookupAddress[]
@@ -172,9 +172,7 @@ export abstract class APIRequestContext extends SdkObject {
     const proxy = this._defaultOptions().proxy;
     // We skip 'per-context' in order to not break existing users. 'per-context' was previously used to
     // workaround an upstream Chromium bug. Can be removed in the future.
-    if (proxy?.server === 'per-context')
-      return undefined;
-    return createProxyAgent(proxy, url);
+    return createProxyAgent(proxy?.server === 'per-context' ? undefined : proxy, url);
   }
 
   private _ensureAgent(protocol: string): http.Agent {
@@ -237,7 +235,6 @@ export abstract class APIRequestContext extends SdkObject {
       method,
       headers,
       maxRedirects,
-      ...getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, requestUrl.origin),
       __testHookLookup: (params as any).__testHookLookup,
     };
     // rejectUnauthorized = undefined is treated as true in Node.js 12.
@@ -363,12 +360,15 @@ export abstract class APIRequestContext extends SdkObject {
     const resultPromise = new Promise<SendRequestResult>((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
-      // Without a proxy agent, use this context's own agent, which has
-      // keep-alive enabled and connects with Happy Eyeballs (autoSelectFamily).
-      // Resolved per request so that a redirect picks the right agent: proxy bypass
-      // rules apply to the redirect target, and a cross-protocol redirect switches agents.
-      const requestOptions = { ...options, ...happyEyeballsOptions };
-      requestOptions.agent = this._proxyAgentForUrl(url) ?? this._ensureAgent(url.protocol);
+      // Proxy bypass rules and client certificates are resolved per hop, so that
+      // a redirect target picks its own agent and TLS options. Without a proxy agent,
+      // use this context's own agent (keep-alive, Happy Eyeballs).
+      const requestOptions: https.RequestOptions = {
+        ...options,
+        ...happyEyeballsOptions,
+        ...getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, url.origin),
+        agent: this._proxyAgentForUrl(url) ?? this._ensureAgent(url.protocol),
+      };
       if (options.__testHookLookup)
         requestOptions.lookup = lookupWithTestHook(options.__testHookLookup);
 
@@ -512,11 +512,6 @@ export abstract class APIRequestContext extends SdkObject {
             // Drop credentials scoped to the original origin on cross-origin redirects.
             if (locationURL.origin !== url.origin)
               removeHeader(headers, 'authorization');
-
-            // Client certificates are origin-scoped — pick them based on the redirect
-            // target, not the original URL.
-            Object.assign(redirectOptions,
-                getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, locationURL.origin));
 
             notifyRequestFinished();
             fulfill(this._sendRequest(progress, log, locationURL, redirectOptions, postData));
