@@ -72,6 +72,23 @@ test('should display native tags and filter by them on click', async ({ runUITes
   `);
 });
 
+test('should filter by tag from the keyboard', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('p', () => {});
+      test('pwt', { tag: '@smoke' }, () => {});
+  `,
+  });
+
+  const tag = page.locator('.ui-mode-tree-item-title').getByRole('button', { name: 'smoke' });
+  await tag.focus();
+  await expect(tag).toBeFocused();
+
+  await tag.press('Enter');
+  await expect(page.getByPlaceholder('Filter (e.g. text, @tag)')).toHaveValue('@smoke');
+});
+
 test('should toggle filters from the keyboard', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
   const summary = page.locator('.filter-summary');
