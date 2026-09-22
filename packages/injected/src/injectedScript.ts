@@ -344,6 +344,31 @@ export class InjectedScript {
     return renderAriaSnapshotAsYaml(json);
   }
 
+  documentContent(includeShadow: boolean): string {
+    let content = '';
+    if (this.document.doctype)
+      content = new XMLSerializer().serializeToString(this.document.doctype);
+    const root = this.document.documentElement;
+    if (!root)
+      return content;
+    if (!includeShadow)
+      return content + root.outerHTML;
+    const shadowRoots: ShadowRoot[] = [];
+    const collectShadowRoots = (node: Document | ShadowRoot) => {
+      for (const element of node.querySelectorAll('*')) {
+        if (element.shadowRoot) {
+          shadowRoots.push(element.shadowRoot);
+          collectShadowRoots(element.shadowRoot);
+        }
+      }
+    };
+    collectShadowRoots(this.document);
+    // getHTML() serializes children only, wrap them with the root element tags.
+    const emptyRoot = (root.cloneNode(false) as Element).outerHTML;
+    const endTagIndex = emptyRoot.lastIndexOf('</');
+    return content + emptyRoot.slice(0, endTagIndex) + root.getHTML({ shadowRoots }) + emptyRoot.slice(endTagIndex);
+  }
+
   getAllElementsMatchingExpectAriaTemplate(document: Document, template: AriaTemplateNode): Element[] {
     return getAllElementsMatchingExpectAriaTemplate(document.documentElement, template);
   }

@@ -866,6 +866,9 @@ Defaults to `false`. Whether to run the
 
 Gets the full HTML contents of the page, including the doctype.
 
+### option: Page.content.includeShadow = %%-content-option-include-shadow-%%
+* since: v1.64
+
 ## method: Page.context
 * since: v1.8
 - returns: <[BrowserContext]>

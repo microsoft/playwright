@@ -2458,8 +2458,17 @@ export interface Page {
 
   /**
    * Gets the full HTML contents of the page, including the doctype.
+   * @param options
    */
-  content(): Promise<string>;
+  content(options?: {
+    /**
+     * When true, contents of open shadow roots are included as
+     * [declarative shadow DOM](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM#declaratively_with_html),
+     * i.e. `<template shadowrootmode="open">` elements nested inside their host elements. Closed shadow roots are never
+     * included. Defaults to `false`.
+     */
+    includeShadow?: boolean;
+  }): Promise<string>;
 
   /**
    * Get the browser context that the page belongs to.
@@ -6945,8 +6954,17 @@ export interface Frame {
 
   /**
    * Gets the full HTML contents of the frame, including the doctype.
+   * @param options
    */
-  content(): Promise<string>;
+  content(options?: {
+    /**
+     * When true, contents of open shadow roots are included as
+     * [declarative shadow DOM](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM#declaratively_with_html),
+     * i.e. `<template shadowrootmode="open">` elements nested inside their host elements. Closed shadow roots are never
+     * included. Defaults to `false`.
+     */
+    includeShadow?: boolean;
+  }): Promise<string>;
 
   /**
    * **NOTE** Use locator-based [locator.dblclick([options])](https://playwright.dev/docs/api/class-locator#locator-dblclick)

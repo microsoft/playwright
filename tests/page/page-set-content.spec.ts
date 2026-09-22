@@ -54,6 +54,14 @@ it('should work with HTML 4 doctype', async ({ page, server }) => {
   expect(result).toBe(`${doctype}${expectedOutput}`);
 });
 
+it('should include shadow roots', async ({ page }) => {
+  const html = '<!DOCTYPE html><html lang="en"><head></head><body><div id="host"><template shadowrootmode="open"><div id="nested"><template shadowrootmode="open"><span>nested</span></template><slot></slot></div></template><span>light</span></div><div id="closed"></div></body></html>';
+  // Closed shadow roots are not accessible from script and are never serialized.
+  await page.setContent(html.replace('<div id="closed">', '<div id="closed"><template shadowrootmode="closed"><span>closed</span></template>'));
+  expect(await page.content()).toBe('<!DOCTYPE html><html lang="en"><head></head><body><div id="host"><span>light</span></div><div id="closed"></div></body></html>');
+  expect(await page.content({ includeShadow: true })).toBe(html);
+});
+
 it('should respect timeout', async ({ page, server, playwright }) => {
   const imgPath = '/img.png';
   // stall for image

@@ -1328,7 +1328,9 @@ scheme.FrameClickParams = tObject({
   steps: tOptional(tInt),
 });
 scheme.FrameClickResult = tOptional(tObject({}));
-scheme.FrameContentParams = tOptional(tObject({}));
+scheme.FrameContentParams = tObject({
+  includeShadow: tOptional(tBoolean),
+});
 scheme.FrameContentResult = tObject({
   value: tString,
 });

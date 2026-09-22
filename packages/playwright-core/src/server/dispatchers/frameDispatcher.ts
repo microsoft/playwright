@@ -119,7 +119,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async content(params: channels.FrameContentParams, progress: Progress): Promise<channels.FrameContentResult> {
-    return { value: await this._frame.content(progress) };
+    return { value: await this._frame.content(progress, params) };
   }
 
   async setContent(params: channels.FrameSetContentParams, progress: Progress): Promise<void> {

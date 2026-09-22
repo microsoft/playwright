@@ -7,6 +7,12 @@ When to consider operation succeeded, defaults to `load`. Events can be either:
 * `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
 * `'commit'` - consider operation to be finished when network response is received and the document started loading.
 
+## content-option-include-shadow
+- `includeShadow` <[boolean]>
+
+When true, contents of open shadow roots are included as [declarative shadow DOM](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM#declaratively_with_html),
+i.e. `<template shadowrootmode="open">` elements nested inside their host elements. Closed shadow roots are never included. Defaults to `false`.
+
 ## navigation-timeout
 * langs: python, java, csharp
 - `timeout` <[float]>
