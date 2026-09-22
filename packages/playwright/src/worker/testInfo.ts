@@ -566,7 +566,7 @@ export class TestInfoImpl implements TestInfo {
     // NOTE: snapshot path must not ever change for backwards compatibility!
 
     const snapshotNames = kind === 'aria' ? this._ariaSnapshotNames : this._snapshotNames;
-    const defaultExtensions = { 'aria': '.aria.yml', 'screenshot': '.png', 'snapshot': '.txt' };
+    const defaultExtensions = { 'aria': '.aria.yml', 'screenshot': '.' + (this._projectInternal.expect?.toHaveScreenshot?.type ?? 'png'), 'snapshot': '.txt' };
     const ariaAwareExtname = (filePath: string) => kind === 'aria' && filePath.endsWith('.aria.yml') ? '.aria.yml' : path.extname(filePath);
 
     let subPath: string;

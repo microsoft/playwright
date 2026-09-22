@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import type { Frame } from './frames';
+import type { FrameExecutionContext } from './dom';
 import type { Page } from './page';
+import type * as types from './types';
 import type { ParsedSelector } from '@isomorphic/selectorParser';
 
 export type HighlightOptions = {
@@ -26,6 +27,9 @@ export type HighlightOptions = {
 type HighlightEntry = HighlightOptions & {
   selector: string;
 };
+
+// Custom selector engines run in the main world, so highlights may live in either world.
+const worlds: types.World[] = ['utility', 'main'];
 
 export class HighlightController {
   private _page: Page;
@@ -59,9 +63,10 @@ export class HighlightController {
   async hideHighlights() {
     this._entries.clear();
     await Promise.all(this._page.frames().map(frame => frame.raceAgainstEvaluationStallingEvents(async () => {
-      const context = frame.existingContext('utility');
-      const injectedScript = await context?.injectedScript();
-      await injectedScript?.evaluate(injected => injected.hideHighlight());
+      await Promise.all(worlds.map(async world => {
+        const injectedScript = await frame.existingContext(world)?.injectedScript();
+        await injectedScript?.evaluate(injected => injected.hideHighlight());
+      }));
     }).catch(() => {})));
   }
 
@@ -78,25 +83,32 @@ export class HighlightController {
     if (this._page.isClosed())
       return;
 
-    const perFrame = new Map<Frame, { selector: ParsedSelector, cssStyle?: string }[]>();
+    const perContext = new Map<FrameExecutionContext, { selector: ParsedSelector, cssStyle?: string }[]>();
     for (const entry of this._entries.values()) {
       const results = await this._page.mainFrame().selectors.resolveFramesForSelector(entry.selector, { strict: false, anyFrame: entry.anyFrame }).catch(() => []);
       for (const { frame, info } of results) {
-        let list = perFrame.get(frame);
+        const context = frame.existingContext(info.world);
+        if (!context)
+          continue;
+        let list = perContext.get(context);
         if (!list) {
           list = [];
-          perFrame.set(frame, list);
+          perContext.set(context, list);
         }
         list.push({ selector: info.parsed, cssStyle: entry.style });
       }
     }
 
     await Promise.all(this._page.frames().map(async frame => {
-      const highlights = perFrame.get(frame) || [];
       await frame.raceAgainstEvaluationStallingEvents(async () => {
-        const context = frame.existingContext('utility');
-        const injectedScript = await context?.injectedScript();
-        await injectedScript?.evaluate((injected, highlights) => injected.setHighlights(highlights), highlights);
+        await Promise.all(worlds.map(async world => {
+          const context = frame.existingContext(world);
+          if (!context)
+            return;
+          const highlights = perContext.get(context) || [];
+          const injectedScript = await context.injectedScript();
+          await injectedScript.evaluate((injected, highlights) => injected.setHighlights(highlights), highlights);
+        }));
       }).catch(() => {});
     }));
 

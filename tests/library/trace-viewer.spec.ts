@@ -1254,6 +1254,25 @@ test('should register custom elements', async ({ page, server, runAndTrace }) =>
   await expect(frame.getByText('worldhello')).toBeVisible();
 });
 
+test('should not treat synthetic shadow root as a shadow root', async ({ page, server, runAndTrace }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42772' });
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/synthetic-shadow.html');
+    await page.evaluate(() => {});
+  });
+
+  const frame = await traceViewer.snapshotFrame('Evaluate');
+  // Synthetic host: content is physically in the light DOM, styled by document-level CSS.
+  await expect(frame.locator('#synth .box')).toHaveCSS('border-top-width', '4px');
+  await expect(frame.locator('#synth .icon')).toHaveCSS('width', '24px');
+  await expect(frame.locator('#synth .icon')).toHaveCSS('fill', 'rgb(102, 51, 153)');
+  await expect(frame.locator('#synth slot')).toHaveText('slotted content');
+  // Native host: styled by its own <style> inside the shadow root.
+  await expect(frame.locator('#native .box')).toHaveCSS('border-top-width', '4px');
+  await expect(frame.locator('#native .icon')).toHaveCSS('width', '24px');
+  await expect(frame.locator('#native .icon')).toHaveCSS('fill', 'rgb(46, 139, 87)');
+});
+
 test('should highlight target elements', async ({ page, runAndTrace, browserName }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`

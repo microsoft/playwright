@@ -151,4 +151,6 @@ export function assertEvaluateOptions(options: any) {
     throw new Error('Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object.');
   if (options?.serialize !== undefined && (!Array.isArray(options.serialize) || options.serialize.some((type: unknown) => type !== 'Map' && type !== 'Set')))
     throw new Error('serialize: expected an array of (Map|Set)');
+  if (options?.exposeFunctions && options?.world === 'utility')
+    throw new Error('Option "exposeFunctions" is not supported in the "utility" world.');
 }

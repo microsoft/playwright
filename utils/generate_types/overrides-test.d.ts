@@ -154,7 +154,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
       only(title: string, details: TestDetails, callback: () => void): void;
     };
 
-    configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
+    configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number, lock?: string | string[] }) => void;
   };
 
   skip(title: string, body: TestBody<TestArgs & WorkerArgs>): void;
@@ -299,6 +299,7 @@ export interface PlaywrightTestOptions {
   permissions: string[] | undefined;
   proxy: Proxy | undefined;
   reducedMotion: ReducedMotion;
+  screen: ViewportSize | undefined;
   storageState: StorageState | undefined;
   timezoneId: string | undefined;
   userAgent: string | undefined;

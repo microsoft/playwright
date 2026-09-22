@@ -35,8 +35,10 @@ export function matchesAttributePart(value: any, attr: AttributeSelectorPart) {
   if (attr.op === '<truthy>')
     return !!objValue;
   if (attr.op === '=') {
-    if (attrValue instanceof RegExp)
+    if (attrValue instanceof RegExp) {
+      attrValue.lastIndex = 0;
       return typeof objValue === 'string' && !!objValue.match(attrValue);
+    }
     return objValue === attrValue;
   }
   if (typeof objValue !== 'string' || typeof attrValue !== 'string')

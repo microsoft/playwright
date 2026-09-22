@@ -123,7 +123,7 @@ export class DialogManager {
         hasHandlers = true;
     }
     if (!hasHandlers)
-      dialog._close().then(() => {});
+      dialog._close().catch(() => {});
   }
 
   _dialogWillClose(dialog: Dialog) {

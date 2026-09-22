@@ -7,6 +7,12 @@ When to consider operation succeeded, defaults to `load`. Events can be either:
 * `'networkidle'` - **DISCOURAGED** consider operation to be finished when there are no network connections for at least `500` ms. Don't use this method for testing, rely on web assertions to assess readiness instead.
 * `'commit'` - consider operation to be finished when network response is received and the document started loading.
 
+## content-option-include-shadow
+- `includeShadow` <[boolean]>
+
+When true, contents of open shadow roots are included as [declarative shadow DOM](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM#declaratively_with_html),
+i.e. `<template shadowrootmode="open">` elements nested inside their host elements. Closed shadow roots are never included. Defaults to `false`.
+
 ## navigation-timeout
 * langs: python, java, csharp
 - `timeout` <[float]>
@@ -594,19 +600,19 @@ Additional built-in types to preserve in the evaluation argument and return valu
 * langs: js
 - `exposeFunctions` <[boolean]>
 
-When set to `true`, functions passed inside [`param: arg`] are exposed in the page and can be called from the page function. Calling one returns a [Promise] of its result. Under the hood, each function is exposed via [`method: Page.exposeFunction`], so it is technically accessible from all frames and worlds of the page. Exposed functions are cleared upon the top-level navigation. Defaults to `false`, in which case functions are not serializable and passing one throws an error.
+When set to `true`, functions passed inside [`param: arg`] are exposed in the page and can be called from the page function. Calling one returns a [Promise] of its result. Under the hood, each function is exposed via [`method: Page.exposeFunction`], so it is technically accessible from all frames of the page. Exposed functions are cleared upon the top-level navigation. Defaults to `false`, in which case functions are not serializable and passing one throws an error.
 
 ## js-init-script-expose-functions
 * langs: js
 - `exposeFunctions` <[boolean]>
 
-When set to `true`, functions passed inside [`param: arg`] are exposed in the page and can be called from the init script. Calling one returns a [Promise] of its result. Under the hood, each function is exposed via [`method: Page.exposeFunction`], so it is technically accessible from all frames and worlds of the page. Unlike functions passed to [`method: Page.evaluate`], functions passed to an init script are exposed in every new document, so they survive navigations. Defaults to `false`, in which case functions are not serializable and are silently dropped.
+When set to `true`, functions passed inside [`param: arg`] are exposed in the page and can be called from the init script. Calling one returns a [Promise] of its result. Under the hood, each function is exposed via [`method: Page.exposeFunction`], so it is technically accessible from all frames of the page. Unlike functions passed to [`method: Page.evaluate`], functions passed to an init script are exposed in every new document, so they survive navigations. Defaults to `false`, in which case functions are not serializable and are silently dropped.
 
 ## js-evaluate-world
 * langs: js
 - `world` <[EvaluationWorld]<"main"|"utility">>
 
-The JavaScript world to evaluate the function in. `"main"` is the world where the page's own scripts run. `"utility"` is an isolated world that shares the DOM with the page, but has a separate JavaScript environment that the page's scripts cannot observe or tamper with. Defaults to `"main"`.
+The JavaScript world to evaluate the function in. `"main"` is the world where the page's own scripts run. `"utility"` is an isolated world that shares the DOM with the page, but has a separate JavaScript environment that the page's scripts cannot observe or tamper with. Defaults to `"main"`. Exposed functions are only available in the `"main"` world.
 
 ## js-evalonselector-pagefunction
 * langs: js
@@ -684,7 +690,7 @@ Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn m
 ## context-option-ismobile
 - `isMobile` <[boolean]>
 
-Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device, so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more about [mobile emulation](../emulation.md#ismobile).
+Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device, so you don't actually need to set it manually. Defaults to `false`. Learn more about [mobile emulation](../emulation.md#ismobile).
 
 ## context-option-hastouch
 - `hasTouch` <[boolean]>

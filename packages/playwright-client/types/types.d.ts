@@ -2458,8 +2458,17 @@ export interface Page {
 
   /**
    * Gets the full HTML contents of the page, including the doctype.
+   * @param options
    */
-  content(): Promise<string>;
+  content(options?: {
+    /**
+     * When true, contents of open shadow roots are included as
+     * [declarative shadow DOM](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM#declaratively_with_html),
+     * i.e. `<template shadowrootmode="open">` elements nested inside their host elements. Closed shadow roots are never
+     * included. Defaults to `false`.
+     */
+    includeShadow?: boolean;
+  }): Promise<string>;
 
   /**
    * Get the browser context that the page belongs to.
@@ -6945,8 +6954,17 @@ export interface Frame {
 
   /**
    * Gets the full HTML contents of the frame, including the doctype.
+   * @param options
    */
-  content(): Promise<string>;
+  content(options?: {
+    /**
+     * When true, contents of open shadow roots are included as
+     * [declarative shadow DOM](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM#declaratively_with_html),
+     * i.e. `<template shadowrootmode="open">` elements nested inside their host elements. Closed shadow roots are never
+     * included. Defaults to `false`.
+     */
+    includeShadow?: boolean;
+  }): Promise<string>;
 
   /**
    * **NOTE** Use locator-based [locator.dblclick([options])](https://playwright.dev/docs/api/class-locator#locator-dblclick)
@@ -11456,8 +11474,8 @@ export interface Browser {
 
     /**
      * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
-     * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
-     * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
+     * so you don't actually need to set it manually. Defaults to `false`. Learn more about
+     * [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
      */
     isMobile?: boolean;
 
@@ -17845,8 +17863,8 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
-     * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
-     * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
+     * so you don't actually need to set it manually. Defaults to `false`. Learn more about
+     * [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
      */
     isMobile?: boolean;
 
@@ -20604,6 +20622,7 @@ export interface Clock {
   /**
    * Install fake implementations for the following time-related functions:
    * - `Date`
+   * - `Temporal.Now`
    * - `setTimeout`
    * - `clearTimeout`
    * - `setInterval`
@@ -24827,8 +24846,8 @@ export interface AndroidDevice {
 
     /**
      * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
-     * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
-     * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
+     * so you don't actually need to set it manually. Defaults to `false`. Learn more about
+     * [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
      */
     isMobile?: boolean;
 
@@ -26077,8 +26096,8 @@ export interface BrowserContextOptions {
 
   /**
    * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
-   * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
-   * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
+   * so you don't actually need to set it manually. Defaults to `false`. Learn more about
+   * [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
    */
   isMobile?: boolean;
 

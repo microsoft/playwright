@@ -205,6 +205,8 @@ Frame:
 
     content:
       title: Get content
+      parameters:
+        includeShadow: boolean?
       returns:
         value: string
       flags:

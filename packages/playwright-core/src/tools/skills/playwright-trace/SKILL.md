@@ -1,7 +1,7 @@
 ---
 name: playwright-trace
 description: Inspect Playwright trace files from the command line — list actions, view requests, console, errors, snapshots and screenshots.
-allowed-tools: Bash(npx:*)
+allowed-tools: Bash(npx playwright trace:*)
 ---
 
 # Playwright Trace CLI

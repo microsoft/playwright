@@ -17,6 +17,8 @@
 import { browserTest as it, expect } from '../config/browserTest';
 import { parseTraceCoverage } from '../config/utils';
 
+it.skip(({ trace }) => trace === 'on', 'the tests start their own tracing');
+
 const fileCoverage = (file: string, s0: number) => ({
   [file]: {
     path: file,

@@ -57,6 +57,16 @@ result to report, not a non-finding.
    be worth it). If neither reproduces, it's incomplete or env-specific — say what you couldn't
    match. (A version ending in `-next`, e.g. `1.62.0-next`, is **not** an npm version — it means
    tip-of-tree, which is the `@next` build you already tried.)
+5. **If ToT does reproduce it** - search for related reports. Check the issue timeline for cross-references
+   first. Use GitHub MCP issue and pull request search tools, not `gh` in CI, and limit this to a handful
+   of searches. Search open and closed issues and PRs with queries such as `repo:microsoft/playwright
+   "exact error string"` and `repo:microsoft/playwright <API name> <trigger>`. Also search the relevant
+   family repos: `microsoft/playwright-python`, `microsoft/playwright-java`, `microsoft/playwright-dotnet`,
+   and `microsoft/playwright-vscode`. Read useful matches and linked changes, including maintainer decisions
+   and follow-up reports. Compare the API usage, trigger, versions, and behavior, not just titles. Check
+   whether an existing API or option actually meets the reporter's goal rather than avoiding the failing
+   operation. If the existing evidence establishes a duplicate or a shipped fix for the reporter's
+   conditions, report that status without repeating the reproduction.
 
 To step through a test interactively, use the [playwright-cli](../../../packages/playwright-core/src/tools/skills/playwright-cli/SKILL.md) skill.
 
@@ -86,12 +96,19 @@ Mirror real self-contained tests, e.g.:
 - [`tests/page/selectors-css.spec.ts`](../../../tests/page/selectors-css.spec.ts) — `should use light DOM structure for child combinator with slotted content`: `page.setContent` with inline shadow DOM ([#37768](https://github.com/microsoft/playwright/issues/37768))
 - [`tests/page/workers.spec.ts`](../../../tests/page/workers.spec.ts) — `should report worker script as network request after redirect`: `server` fixture with routes/redirects + a browser-gap `fixme` ([#35678](https://github.com/microsoft/playwright/issues/35678))
 
+## Verify related fixes
+
+For a related PR, check whether it is open, closed without merging, or merged, and whether the fix
+has shipped and in which version. Run the condensed repro against the PR branch when available,
+recording the exact commit and result. If the fix has shipped, verify the repro on that release too.
+Report anything you could not verify rather than treating an open or merged PR as proof of a fix.
+
 ## Report
 
 Give a **status** that fits the issue type — for a bug: reproduced / fixed-on-latest /
-cannot-reproduce / not-a-bug; for a feature request or upstream/env issue: a short verdict
-(already-possible, valid request, upstream — owned by X) — plus the evidence. For bugs, include
-the condensed repro and be exhaustive about **what you ran** — the full matrix of browsers,
+cannot-reproduce / not-a-bug / duplicate of #N; for a feature request or upstream/env issue: a short
+verdict (already-possible, valid request, upstream — owned by X) — plus the evidence. For bugs,
+include the condensed repro and be exhaustive about **what you ran** — the full matrix of browsers,
 versions, and variations you tried, not just the one that worked — so the reader can trust the
 verdict and skip re-checking. Call out any browser-specific divergence. Write it in the
 Playwright bot voice (`.github/workflows/bot-voice.md`, relative to the repo root) — maintainer voice, not AI-speak.

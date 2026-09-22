@@ -488,7 +488,10 @@ const textMatchesEngine: SelectorEngine = {
     if (args.length === 0 || typeof args[0] !== 'string' || args.length > 2 || (args.length === 2 && typeof args[1] !== 'string'))
       throw new Error(`"text-matches" engine expects a regexp body and optional regexp flags`);
     const re = new RegExp(args[0], args.length === 2 ? args[1] : undefined);
-    const matcher = (elementText: ElementText) => re.test(elementText.full);
+    const matcher = (elementText: ElementText) => {
+      re.lastIndex = 0;
+      return re.test(elementText.full);
+    };
     return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) === 'self';
   },
 };

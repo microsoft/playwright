@@ -542,6 +542,80 @@ it.describe('Date.now', () => {
   });
 });
 
+it.describe('Temporal.Now', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42830' } }, () => {
+  it.beforeEach(async ({ page }) => {
+    it.skip(!await page.evaluate(() => 'Temporal' in globalThis), 'Temporal is not supported');
+  });
+
+  it('should follow fixed time', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2020-01-01T00:00:00Z'));
+    await page.goto('data:text/html,');
+    expect(await page.evaluate(() => {
+      const Temporal = (globalThis as any).Temporal;
+      return {
+        instant: Temporal.Now.instant().toString(),
+        zonedDateTime: Temporal.Now.zonedDateTimeISO('UTC').toString(),
+        plainDateTime: Temporal.Now.plainDateTimeISO('UTC').toString(),
+        plainDate: Temporal.Now.plainDateISO('UTC').toString(),
+        plainTime: Temporal.Now.plainTimeISO('UTC').toString(),
+      };
+    })).toEqual({
+      instant: '2020-01-01T00:00:00Z',
+      zonedDateTime: '2020-01-01T00:00:00+00:00[UTC]',
+      plainDateTime: '2020-01-01T00:00:00',
+      plainDate: '2020-01-01',
+      plainTime: '00:00:00',
+    });
+  });
+
+  it('should advance with the clock', async ({ page }) => {
+    await page.clock.install({ time: 0 });
+    await page.goto('data:text/html,');
+    await page.clock.pauseAt(1000);
+    await page.clock.runFor(2000);
+    expect(await page.evaluate(() => (globalThis as any).Temporal.Now.instant().epochMilliseconds)).toBe(3000);
+  });
+
+  it('should use the system time zone by default', async ({ browser }) => {
+    const context = await browser.newContext({ timezoneId: 'America/Los_Angeles' });
+    const page = await context.newPage();
+    await page.clock.setFixedTime(new Date('2020-01-01T00:00:00Z'));
+    await page.goto('data:text/html,');
+    expect(await page.evaluate(() => {
+      const Temporal = (globalThis as any).Temporal;
+      return {
+        timeZoneId: Temporal.Now.timeZoneId(),
+        zonedDateTime: Temporal.Now.zonedDateTimeISO().toString(),
+        plainDateTime: Temporal.Now.plainDateTimeISO().toString(),
+      };
+    })).toEqual({
+      timeZoneId: 'America/Los_Angeles',
+      zonedDateTime: '2019-12-31T16:00:00-08:00[America/Los_Angeles]',
+      plainDateTime: '2019-12-31T16:00:00',
+    });
+    await context.close();
+  });
+
+  it('should keep the rest of Temporal intact', async ({ page }) => {
+    await page.clock.install({ time: 0 });
+    await page.goto('data:text/html,');
+    expect(await page.evaluate(() => {
+      const Temporal = (globalThis as any).Temporal;
+      return {
+        tag: Object.prototype.toString.call(Temporal.Now),
+        enumerable: Object.keys(Temporal).concat(Object.keys(Temporal.Now)),
+        isInstant: Temporal.Now.instant() instanceof Temporal.Instant,
+        duration: Temporal.Duration.from({ hours: 1 }).toString(),
+      };
+    })).toEqual({
+      tag: '[object Temporal.Now]',
+      enumerable: [],
+      isInstant: true,
+      duration: 'PT1H',
+    });
+  });
+});
+
 it('AbortSignal.timeout', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39293' } }, async ({ page, browserName }) => {
   await page.clock.install({ time: 0 });
   const controller = await page.evaluateHandle(() => {

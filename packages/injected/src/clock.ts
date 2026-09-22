@@ -578,6 +578,27 @@ function createIntl(clock: ClockController, NativeIntl: Builtins['Intl']): Built
   return ClockIntl;
 }
 
+function createTemporal(clock: ClockController, NativeTemporal: Builtins['Temporal']): Builtins['Temporal'] {
+  const NativeNow = NativeTemporal.Now;
+  const instant = () => NativeTemporal.Instant.fromEpochMilliseconds(Math.trunc(clock.now()));
+  const zonedDateTimeISO = (timeZone?: Temporal.TimeZoneLike) => instant().toZonedDateTimeISO(timeZone ?? NativeNow.timeZoneId());
+  const overrides: Partial<typeof Temporal.Now> = {
+    instant,
+    zonedDateTimeISO,
+    plainDateTimeISO: timeZone => zonedDateTimeISO(timeZone).toPlainDateTime(),
+    plainDateISO: timeZone => zonedDateTimeISO(timeZone).toPlainDate(),
+    plainTimeISO: timeZone => zonedDateTimeISO(timeZone).toPlainTime(),
+  };
+
+  // All properties of Temporal are non-enumerable, mirror them with their descriptors.
+  const ClockNow = Object.create(Object.getPrototypeOf(NativeNow), Object.getOwnPropertyDescriptors(NativeNow));
+  for (const [key, value] of Object.entries(overrides))
+    Object.defineProperty(ClockNow, key, { value, writable: true, enumerable: false, configurable: true });
+  const ClockTemporal = Object.create(Object.getPrototypeOf(NativeTemporal), Object.getOwnPropertyDescriptors(NativeTemporal));
+  Object.defineProperty(ClockTemporal, 'Now', { value: ClockNow, writable: true, enumerable: false, configurable: true });
+  return ClockTemporal;
+}
+
 function compareTimers(a: Timer, b: Timer) {
   // Sort first by absolute timing
   if (a.callAt < b.callAt)
@@ -623,6 +644,7 @@ function platformOriginals(globalObject: WindowOrWorkerGlobalScope): { raw: Buil
     performance: globalObject.performance,
     Intl: (globalObject as any).Intl,
     AbortSignal: (globalObject as any).AbortSignal,
+    Temporal: (globalObject as any).Temporal,
   };
   const bound = { ...raw };
   for (const key of Object.keys(bound) as (keyof Builtins)[]) {
@@ -700,6 +722,7 @@ function createApi(clock: ClockController, originals: Builtins, browserName?: st
     Date: createDate(clock, originals.Date),
     performance: originals.performance ? fakePerformance(clock, originals.performance) : (undefined as unknown as Builtins['performance']),
     AbortSignal: originals.AbortSignal ? fakeAbortSignal(clock, originals.AbortSignal, browserName) : (undefined as unknown as Builtins['AbortSignal']),
+    Temporal: originals.Temporal ? createTemporal(clock, originals.Temporal) : (undefined as unknown as Builtins['Temporal']),
   };
 }
 
@@ -800,12 +823,16 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
   const toFake = config.toFake?.length ? config.toFake : Object.keys(originals) as (keyof Builtins)[];
 
   for (const method of toFake) {
+    if (method === 'Temporal' && !api.Temporal)
+      continue;
     if (method === 'Date') {
       (globalObject as any).Date = mirrorDateProperties(api.Date, (globalObject as any).Date);
     } else if (method === 'Intl') {
       (globalObject as any).Intl = api[method]!;
     } else if (method === 'AbortSignal') {
       (globalObject as any).AbortSignal = api[method]!;
+    } else if (method === 'Temporal') {
+      (globalObject as any).Temporal = api[method]!;
     } else if (method === 'performance') {
       (globalObject as any).performance = api[method]!;
       const kEventTimeStamp = Symbol('playwrightEventTimeStamp');

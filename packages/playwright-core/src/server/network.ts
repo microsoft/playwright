@@ -513,7 +513,6 @@ export type SecurityDetails = {
 
 export class Response extends SdkObject {
   private _request: Request;
-  private _contentPromise: Promise<Buffer> | null = null;
   private _finishedPromise = new ManualPromise<void>();
   private _status: number;
   private _statusText: string;
@@ -644,25 +643,21 @@ export class Response extends SdkObject {
     return await this._rawResponseHeadersPromise;
   }
 
-  internalBody(): Promise<Buffer> {
-    if (!this._contentPromise) {
-      this._contentPromise = this._finishedPromise.then(async () => {
-        if (this._status >= 300 && this._status <= 399)
-          throw new Error('Response body is unavailable for redirect responses');
-        if (this._request._responseBodyOverride) {
-          const { body, isBase64 } = this._request._responseBodyOverride;
-          return Buffer.from(body, isBase64 ? 'base64' : 'utf-8');
-        }
-        try {
-          return await this._getResponseBodyCallback();
-        } catch (e) {
-          if (isProtocolError(e) && e.type === 'error')
-            rewriteErrorMessage(e, e.message + '\nResponse body is not available for a response that was navigated away from. Read response.body() before triggering any navigation.');
-          throw e;
-        }
-      });
+  async internalBody(): Promise<Buffer> {
+    await this._finishedPromise;
+    if (this._status >= 300 && this._status <= 399)
+      throw new Error('Response body is unavailable for redirect responses');
+    if (this._request._responseBodyOverride) {
+      const { body, isBase64 } = this._request._responseBodyOverride;
+      return Buffer.from(body, isBase64 ? 'base64' : 'utf-8');
     }
-    return this._contentPromise;
+    try {
+      return await this._getResponseBodyCallback();
+    } catch (e) {
+      if (isProtocolError(e) && e.type === 'error')
+        rewriteErrorMessage(e, e.message + '\nResponse body is not available for a response that was navigated away from. Read response.body() before triggering any navigation.');
+      throw e;
+    }
   }
 
   request(): Request {

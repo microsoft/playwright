@@ -272,6 +272,12 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
       stylePath?: string|Array<string>;
 
       /**
+       * Format of the screenshots taken when the snapshot name is omitted, defaults to `"png"`. Snapshots with an explicit
+       * name use the format matching their `.png` or `.webp` extension.
+       */
+      type?: "png"|"webp";
+
+      /**
        * A template controlling location of the screenshots. See
        * [testProject.snapshotPathTemplate](https://playwright.dev/docs/api/class-testproject#test-project-snapshot-path-template)
        * for details.
@@ -1217,6 +1223,12 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
        * [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
        */
       threshold?: number;
+
+      /**
+       * Format of the screenshots taken when the snapshot name is omitted, defaults to `"png"`. Snapshots with an explicit
+       * name use the format matching their `.png` or `.webp` extension.
+       */
+      type?: "png"|"webp";
 
       /**
        * A template controlling location of the screenshots. See
@@ -4414,6 +4426,14 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      *   test('runs second', async ({ page }) => {});
      *   ```
      *
+     * - Declaring locks for all tests in a scope.
+     *
+     *   ```js
+     *   test.describe.configure({ lock: 'user-settings' });
+     *   test('update user settings', async ({ page }) => {});
+     *   test('reset user settings', async ({ page }) => {});
+     *   ```
+     *
      * - Run multiple describes in parallel, but tests inside each describe in order.
      *
      *   ```js
@@ -4434,7 +4454,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      *
      * @param options
      */
-    configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
+    configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number, lock?: string | string[] }) => void;
   };
 
   /**
@@ -7263,9 +7283,9 @@ export interface PlaywrightWorkerOptions {
    * height: 1080 }, fps: 60 }`. Higher frame rates and sizes use more CPU for encoding. Firefox and WebKit currently
    * capture up to 25 frames per second.
    *
-   * To annotate actions in the video, pass `show` with `action` and/or `test` sub-options. The `action` option controls
-   * visual highlights on interacted elements with an optional `delay` in milliseconds (defaults to `500`). The `test`
-   * option controls which test information is displayed as a status overlay.
+   * To annotate actions in the video, pass `show` with `actions` and/or `test` sub-options. The `actions` option
+   * controls visual highlights on interacted elements, each shown for an optional `duration` in milliseconds (defaults
+   * to `500`). The `test` option controls which test information is displayed as a status overlay.
    *
    * **Usage**
    *
@@ -7584,8 +7604,8 @@ export interface PlaywrightTestOptions {
   ignoreHTTPSErrors: boolean;
   /**
    * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
-   * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
-   * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
+   * so you don't actually need to set it manually. Defaults to `false`. Learn more about
+   * [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
    *
    * **Usage**
    *
@@ -7721,6 +7741,26 @@ export interface PlaywrightTestOptions {
    *
    */
   reducedMotion: ReducedMotion;
+  /**
+   * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
+   * [testOptions.viewport](https://playwright.dev/docs/api/class-testoptions#test-options-viewport) is set.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     viewport: { width: 390, height: 664 },
+   *     screen: { width: 390, height: 844 },
+   *   },
+   * });
+   * ```
+   *
+   */
+  screen: ViewportSize | undefined;
   /**
    * Learn more about [storage state and auth](https://playwright.dev/docs/auth).
    *
