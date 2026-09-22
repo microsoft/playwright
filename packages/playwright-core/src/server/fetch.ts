@@ -328,9 +328,12 @@ export abstract class APIRequestContext extends SdkObject {
       log.push(message);
       progress.log(message);
     };
-    await this._updateRequestCookieHeader(progress, url, options.headers);
+    // Cookies from the store are added to a per-request copy, so that options.headers
+    // only holds what the caller passed and redirects can carry a caller's cookie header over.
+    const requestHeaders = { ...options.headers };
+    await this._updateRequestCookieHeader(progress, url, requestHeaders);
 
-    const requestCookies = getHeader(options.headers, 'cookie')?.split(';').map(p => {
+    const requestCookies = getHeader(requestHeaders, 'cookie')?.split(';').map(p => {
       const indexOfEquals = p.indexOf('=');
       const name = indexOfEquals !== -1 ? p.substring(0, indexOfEquals).trim() : p.trim();
       const value = indexOfEquals !== -1 ? p.substring(indexOfEquals + 1).trim() : '';
@@ -339,7 +342,7 @@ export abstract class APIRequestContext extends SdkObject {
     const requestEvent: APIRequestEvent = {
       url,
       method: options.method!,
-      headers: options.headers,
+      headers: requestHeaders,
       cookies: requestCookies,
       postData
     };
@@ -358,6 +361,7 @@ export abstract class APIRequestContext extends SdkObject {
       // use this context's own agent (keep-alive, Happy Eyeballs).
       const requestOptions: https.RequestOptions = {
         ...options,
+        headers: requestHeaders,
         ...happyEyeballsOptions,
         ...getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, url.origin),
         agent: createProxyAgent(this._defaultOptions().proxy, url) ?? this._ensureAgent(url.protocol),
@@ -459,7 +463,6 @@ export abstract class APIRequestContext extends SdkObject {
             return;
           }
           const headers = { ...options.headers };
-          removeHeader(headers, `cookie`);
 
           // HTTP-redirect fetch step 13 (https://fetch.spec.whatwg.org/#http-redirect-fetch)
           const status = response.statusCode!;
@@ -503,8 +506,10 @@ export abstract class APIRequestContext extends SdkObject {
             setHeader(headers, 'host', locationURL.host);
 
             // Drop credentials scoped to the original origin on cross-origin redirects.
-            if (locationURL.origin !== url.origin)
+            if (locationURL.origin !== url.origin) {
               removeHeader(headers, 'authorization');
+              removeHeader(headers, 'cookie');
+            }
 
             notifyRequestFinished();
             fulfill(this._sendRequest(progress, log, locationURL, redirectOptions, postData));
@@ -651,10 +656,8 @@ export abstract class APIRequestContext extends SdkObject {
       request.on('finish', () => { requestFinishAt = monotonicTime(); });
 
       fetchLog(`→ ${options.method} ${url.toString()}`);
-      if (options.headers) {
-        for (const [name, value] of Object.entries(options.headers))
-          fetchLog(`  ${name}: ${value}`);
-      }
+      for (const [name, value] of Object.entries(requestHeaders))
+        fetchLog(`  ${name}: ${value}`);
 
       if (postData)
         request.write(postData);

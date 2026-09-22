@@ -192,8 +192,11 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       else if (options.params instanceof URLSearchParams)
         encodedParams = options.params.toString();
       // Cannot call allHeaders() here as the request may be paused inside route handler.
-      const headersObj = options.headers || options.request?.headers();
-      const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
+      let headers = options.headers ? headersObjectToArray(options.headers) : undefined;
+      // The cookie header of an intercepted request belongs to the browser context. Drop it,
+      // so that every hop, including redirects, resolves cookies from the context.
+      if (!headers && options.request)
+        headers = headersObjectToArray(options.request.headers()).filter(h => h.name.toLowerCase() !== 'cookie');
       let jsonData: any;
       let formData: channels.NameValue[] | undefined;
       let multipartData: channels.FormField[] | undefined;
