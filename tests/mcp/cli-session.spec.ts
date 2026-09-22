@@ -56,7 +56,8 @@ test('idle timeout shuts the session down', async ({ cli, server }) => {
   const { output } = await cli('list');
   expect(output).toContain('- default:');
 
-  await expect.poll(async () => (await cli('list')).output).toContain('(no browsers)');
+  // Firefox on Windows takes several seconds to shut down after the idle timer fires.
+  await expect.poll(async () => (await cli('list')).output, { timeout: 20_000 }).toContain('(no browsers)');
   const { output: afterOutput } = await cli('snapshot');
   expect(afterOutput).toContain(`The browser 'default' is not open, please run open first`);
 });
