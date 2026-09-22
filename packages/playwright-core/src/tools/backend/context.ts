@@ -119,7 +119,6 @@ export class Context {
   private _recordedActions: string[] | undefined;
   private _disposables: Disposable[] = [];
 
-  private _webmcpTools: WebMCPToolDefinition[] = [];
   private _webmcpToolsSignature = '';
 
   private _runningToolName: string | undefined;
@@ -328,15 +327,12 @@ export class Context {
   }
 
   currentWebMCPTools(): WebMCPToolDefinition[] {
-    return this._webmcpTools;
+    // Handlers are bound to a tab and frame, always take the fresh ones.
+    return this._currentTab?.webmcpTools()?.tools.map(tool => tool.mcpTool) ?? [];
   }
 
   maybeNotifyWebMCPToolsChanged() {
-    const tools = this._currentTab?.webmcpTools()?.tools.map(tool => tool.mcpTool) ?? [];
-    // Handlers are bound to the tab and frame they were listed from, so always take
-    // the fresh ones. Only the listChanged notification depends on the schemas.
-    this._webmcpTools = tools;
-    const signature = JSON.stringify(tools.map(tool => tool.schema));
+    const signature = JSON.stringify(this.currentWebMCPTools().map(tool => tool.schema));
     if (signature === this._webmcpToolsSignature)
       return;
     this._webmcpToolsSignature = signature;

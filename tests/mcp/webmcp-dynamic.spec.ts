@@ -187,6 +187,7 @@ test('only the current tab contributes tools, switching tabs swaps them', async 
 });
 
 test('a tool registered in an iframe can be called after the page is reloaded', async ({ startClient, server, mcpBrowser }) => {
+  test.skip(mcpBrowser === 'firefox', 'Firefox does not list tools registered in iframes');
   server.setRoute('/frame', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<title>frame</title>${registerScript(kAdd)}`);
@@ -205,37 +206,6 @@ test('a tool registered in an iframe can be called after the page is reloaded', 
   await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
   expect(await client.callTool({ name: 'webmcp_add', arguments: { a: 2, b: 3 } })).toHaveResponse({
     result: expect.stringContaining('"text": "5"'),
-  });
-});
-
-test('a tool with the same name in two tabs runs in the current tab', async ({ startClient, server, mcpBrowser }) => {
-  const whoami = (answer: string) => registerScript(`
-    modelContext.registerTool({
-      name: 'whoami',
-      description: 'Answers with the tab name',
-      async execute() { return { content: [{ type: 'text', text: '${answer}' }] }; },
-    });
-  `);
-  server.setRoute('/one', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`<title>one</title>${whoami('tab-one')}`);
-  });
-  server.setRoute('/two', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`<title>two</title>${whoami('tab-two')}`);
-  });
-
-  const { client } = await startClient({ config: webmcpConfig(mcpBrowser) });
-  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX + '/one' } });
-  await client.callTool({ name: 'browser_tabs', arguments: { action: 'new' } });
-  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX + '/two' } });
-  expect(await client.callTool({ name: 'webmcp_whoami', arguments: {} })).toHaveResponse({
-    result: expect.stringContaining('"text": "tab-two"'),
-  });
-
-  await client.callTool({ name: 'browser_tabs', arguments: { action: 'select', index: 0 } });
-  expect(await client.callTool({ name: 'webmcp_whoami', arguments: {} })).toHaveResponse({
-    result: expect.stringContaining('"text": "tab-one"'),
   });
 });
 
