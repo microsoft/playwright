@@ -113,6 +113,15 @@ it('reverse engineer locators', async ({ page }) => {
     javascript: 'getByLabel(/Last\\s+name/i)',
     python: 'get_by_label(re.compile(r"Last\\s+name", re.IGNORECASE))',
   });
+  // Only JavaScript can express these flags, other languages drop them.
+  for (const flags of ['u', 's', 'y', 'd', 'v', 'gm']) {
+    for (const [engine, method] of [['text', 'getByText'], ['label', 'getByLabel']]) {
+      const selector = `internal:${engine}=/Hello/${flags}`;
+      const locatorString = asLocator('javascript', selector);
+      expect.soft(locatorString, selector).toBe(`${method}(/Hello/${flags})`);
+      expect.soft(parseLocator('javascript', locatorString, 'data-testid'), selector).toBe(selector);
+    }
+  }
 
   expect.soft(generate(page.getByPlaceholder('hello'))).toEqual({
     csharp: 'GetByPlaceholder("hello")',
