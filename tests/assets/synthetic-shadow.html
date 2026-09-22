@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<style>
+  /* Document-level CSS, the way LWC emits it: an attribute-scoped rule plus a plain class rule. */
+  [my-tok] .box { border: 4px solid rebeccapurple; padding: 4px; }
+  .icon { width: 24px; height: 24px; fill: rebeccapurple; }
+</style>
+<script>
+// Minimal imitation of @lwc/synthetic-shadow. A synthetic "shadow root" is a DocumentFragment
+// with a swapped prototype, its content physically lives inside the host, and patched accessors
+// hide that from the page: root.firstChild returns the host's real children, while host.firstChild
+// returns the "light DOM" nodes that were slotted, which physically live inside the <slot>.
+(() => {
+  const NativeShadowRoot = window.ShadowRoot;
+  const nativeAttachShadow = Element.prototype.attachShadow;
+  const nativeShadowRootGetter = Object.getOwnPropertyDescriptor(Element.prototype, 'shadowRoot').get;
+  const nativeFirstChildGetter = Object.getOwnPropertyDescriptor(Node.prototype, 'firstChild').get;
+  const nativeChildNodesGetter = Object.getOwnPropertyDescriptor(Node.prototype, 'childNodes').get;
+  const nativeAppendChild = Node.prototype.appendChild;
+  const roots = new WeakMap();  // host -> synthetic root
+  const hosts = new WeakMap();  // synthetic root -> host
+
+  function SyntheticShadowRoot() { throw new TypeError('Illegal constructor'); }
+  SyntheticShadowRoot.prototype = Object.create(DocumentFragment.prototype, {
+    mode: { get() { return 'open'; } },
+    host: { get() { return hosts.get(this); } },
+    firstChild: { get() { return nativeFirstChildGetter.call(hosts.get(this)); } },
+    childNodes: { get() { return nativeChildNodesGetter.call(hosts.get(this)); } },
+    appendChild: { value(node) { return nativeAppendChild.call(hosts.get(this), node); } },
+  });
+  // `root instanceof ShadowRoot` is true for both native and synthetic roots.
+  Object.defineProperty(SyntheticShadowRoot, Symbol.hasInstance, {
+    value: object => object instanceof NativeShadowRoot || Object.getPrototypeOf(object) === SyntheticShadowRoot.prototype,
+  });
+  window.ShadowRoot = SyntheticShadowRoot;
+
+  Element.prototype.attachShadow = function(options) {
+    if (!options['$$lwc-synthetic-mode'])
+      return nativeAttachShadow.call(this, options);
+    const root = document.createDocumentFragment();
+    Object.setPrototypeOf(root, SyntheticShadowRoot.prototype);
+    roots.set(this, root);
+    hosts.set(root, this);
+    return root;
+  };
+  Object.defineProperty(Element.prototype, 'shadowRoot', {
+    configurable: true,
+    get() { return roots.get(this) || nativeShadowRootGetter.call(this); },
+  });
+  Object.defineProperty(Node.prototype, 'firstChild', {
+    configurable: true,
+    get() {
+      if (!roots.has(this))
+        return nativeFirstChildGetter.call(this);
+      const slot = this.querySelector('slot');
+      return slot ? nativeFirstChildGetter.call(slot) : null;
+    },
+  });
+})();
+</script>
+<my-card id="synth" my-tok></my-card>
+<my-card id="native"></my-card>
+<script>
+  const template = '<div class="box" my-tok><svg class="icon" my-tok viewBox="0 0 10 10"><rect width="10" height="10"></rect></svg><slot></slot></div>';
+
+  const synth = document.getElementById('synth').attachShadow({ mode: 'open', '$$lwc-synthetic-mode': true });
+  const tpl = document.createElement('template');
+  tpl.innerHTML = template;
+  synth.appendChild(tpl.content);
+  const slotted = document.createElement('span');
+  slotted.textContent = 'slotted content';
+  document.getElementById('synth').querySelector('slot').appendChild(slotted);
+
+  const native = document.getElementById('native').attachShadow({ mode: 'open' });
+  native.innerHTML = '<style>.box { border: 4px solid seagreen; padding: 4px; } .icon { width: 24px; height: 24px; fill: seagreen; }</style>' + template.replace(/ my-tok/g, '');
+</script>
