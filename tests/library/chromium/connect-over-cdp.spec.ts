@@ -161,6 +161,9 @@ test('should connect to an existing cdp session twice', async ({ browserType, mo
     expect(context1.pages().length).toBe(2);
     expect(context2.pages().length).toBe(2);
 
+    await page1.evaluate(() => alert('dialog race'));
+    await expect(context2.pages()[0].title()).resolves.toBe('');
+
     await cdpBrowser1.close();
     await cdpBrowser2.close();
   } finally {
