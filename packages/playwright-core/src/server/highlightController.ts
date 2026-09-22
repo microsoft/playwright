@@ -21,6 +21,7 @@ import type { ParsedSelector } from '@isomorphic/selectorParser';
 export type HighlightOptions = {
   style?: string;
   anyFrame?: boolean; // Highlight in all the frames the selector could resolve to, instead of a single one.
+  frame?: Frame; // Resolve the selector relative to this frame, defaults to the main frame.
 };
 
 type HighlightEntry = HighlightOptions & {
@@ -40,13 +41,18 @@ export class HighlightController {
   async addHighlight(selector: string, options: HighlightOptions = {}) {
     // Validate the selector upfront, so that the caller gets a synchronous error.
     this._page.browserContext.selectors().parseSelector(selector, false);
-    this._entries.set(selector, { selector, ...options });
+    this._entries.set(this._key(options.frame, selector), { selector, ...options });
     await this._resolveNow();
   }
 
-  async removeHighlight(selector: string) {
-    this._entries.delete(selector);
+  async removeHighlight(selector: string, frame?: Frame) {
+    this._entries.delete(this._key(frame, selector));
     await this._resolveNow();
+  }
+
+  // The same selector may be highlighted from different frames, so key the entries by frame as well.
+  private _key(frame: Frame | undefined, selector: string): string {
+    return `${(frame ?? this._page.mainFrame()).guid}|${selector}`;
   }
 
   dispose() {
@@ -80,7 +86,8 @@ export class HighlightController {
 
     const perFrame = new Map<Frame, { selector: ParsedSelector, cssStyle?: string }[]>();
     for (const entry of this._entries.values()) {
-      const results = await this._page.mainFrame().selectors.resolveFramesForSelector(entry.selector, { strict: false, anyFrame: entry.anyFrame }).catch(() => []);
+      const owner = entry.frame ?? this._page.mainFrame();
+      const results = await owner.selectors.resolveFramesForSelector(entry.selector, { strict: false, anyFrame: entry.anyFrame }).catch(() => []);
       for (const { frame, info } of results) {
         let list = perFrame.get(frame);
         if (!list) {

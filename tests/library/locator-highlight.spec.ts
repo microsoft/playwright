@@ -118,3 +118,91 @@ test('Page.hideHighlight clears all locator highlights', async ({ browser, serve
 
   await context.close();
 });
+
+test('highlight should resolve relative to the frame of the locator', async ({ browser, server }) => {
+  server.setRoute('/highlight/child.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<button>foo</button>');
+  });
+  server.setRoute('/highlight/parent.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<iframe name="frame" src="/highlight/child.html"></iframe><button>bar</button>');
+  });
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/highlight/parent.html');
+  const frame = page.frame({ name: 'frame' })!;
+
+  await frame.locator('button').highlight();
+  await expect(frame.locator('x-pw-highlight')).toHaveCount(1);
+  await expect(page.locator('x-pw-highlight')).toHaveCount(0);
+
+  await frame.locator('button').hideHighlight();
+  await expect(frame.locator('x-pw-highlight')).toHaveCount(0);
+
+  await context.close();
+});
+
+test('highlight same selector in different frames', async ({ browser, server }) => {
+  server.setRoute('/highlight/child.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<button>foo</button>');
+  });
+  server.setRoute('/highlight/parent.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end([
+      '<iframe name="frame1" src="/highlight/child.html"></iframe>',
+      '<iframe name="frame2" src="/highlight/child.html"></iframe>',
+      '<button>bar</button>',
+    ].join(''));
+  });
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/highlight/parent.html');
+  const frame1 = page.frame({ name: 'frame1' })!;
+  const frame2 = page.frame({ name: 'frame2' })!;
+
+  await page.locator('button').highlight();
+  await frame1.locator('button').highlight();
+  await frame2.locator('button').highlight();
+  await expect(page.locator('x-pw-highlight')).toHaveCount(1);
+  await expect(frame1.locator('x-pw-highlight')).toHaveCount(1);
+  await expect(frame2.locator('x-pw-highlight')).toHaveCount(1);
+
+  await page.hideHighlight();
+  await expect(page.locator('x-pw-highlight')).toHaveCount(0);
+  await expect(frame1.locator('x-pw-highlight')).toHaveCount(0);
+  await expect(frame2.locator('x-pw-highlight')).toHaveCount(0);
+
+  await context.close();
+});
+
+test('frame highlight should survive frame navigation', async ({ browser, server }) => {
+  server.setRoute('/highlight/child.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<button>foo</button>');
+  });
+  server.setRoute('/highlight/child2.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<button>baz</button>');
+  });
+  server.setRoute('/highlight/parent.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<iframe name="frame" src="/highlight/child.html"></iframe><button>bar</button>');
+  });
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/highlight/parent.html');
+  const frame = page.frame({ name: 'frame' })!;
+
+  await frame.locator('button').highlight();
+  await expect(frame.locator('x-pw-highlight')).toHaveCount(1);
+
+  await frame.goto(server.PREFIX + '/highlight/child2.html');
+  await expect(frame.locator('x-pw-highlight')).toHaveCount(1);
+
+  await context.close();
+});
