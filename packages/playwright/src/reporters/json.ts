@@ -20,10 +20,11 @@ import path from 'path';
 import { MultiMap } from '@isomorphic/multimap';
 import { toPosixPath } from '@utils/fileUtils';
 
-import { formatError, nonTerminalScreen, prepareErrorStack, resolveOutputFile, CommonReporterOptions } from './base';
+import { createTestFilter, filterSuiteEntries, formatError, nonTerminalScreen, prepareErrorStack, resolveOutputFile, visitTests } from './base';
 import { config } from '../common';
 
 import type { ReporterV2 } from './reporterV2';
+import type { CommonReporterOptions, TestFilter } from './base';
 import type { JsonReporterOptions } from '../../types/test';
 import type { FullConfig, FullResult, JSONReport, JSONReportError, JSONReportSpec, JSONReportSuite, JSONReportTest, JSONReportTestResult, JSONReportTestStep, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 
@@ -32,9 +33,11 @@ class JSONReporter implements ReporterV2 {
   suite!: Suite;
   private _errors: TestError[] = [];
   private _resolvedOutputFile: string | undefined;
+  private _testFilter: TestFilter | undefined;
 
   constructor(options: JsonReporterOptions & CommonReporterOptions) {
     this._resolvedOutputFile = resolveOutputFile('JSON', options)?.outputFile;
+    this._testFilter = createTestFilter(options);
   }
 
   version(): 'v2' {
@@ -92,7 +95,7 @@ class JSONReporter implements ReporterV2 {
         flaky: 0,
       },
     };
-    for (const test of this.suite.allTests())
+    for (const test of visitTests(this.suite, this._testFilter))
       ++report.stats[test.outcome()];
     return report;
   }
@@ -162,13 +165,15 @@ class JSONReporter implements ReporterV2 {
   }
 
   private _serializeSuite(projectId: string, projectName: string, suite: Suite): null | JSONReportSuite {
-    if (!suite.allTests().length)
+    const entries = filterSuiteEntries(suite, this._testFilter);
+    const suites = entries.filter(entry => entry.type !== 'test').map(suite => this._serializeSuite(projectId, projectName, suite)).filter(s => s) as JSONReportSuite[];
+    const tests = entries.filter(entry => entry.type === 'test');
+    if (!tests.length && !suites.length)
       return null;
-    const suites = suite.suites.map(suite => this._serializeSuite(projectId, projectName, suite)).filter(s => s) as JSONReportSuite[];
     return {
       title: suite.title,
       ...this._relativeLocation(suite.location),
-      specs: suite.tests.map(test => this._serializeTestSpec(projectId, projectName, test)),
+      specs: tests.map(test => this._serializeTestSpec(projectId, projectName, test)),
       suites: suites.length ? suites : undefined,
     };
   }

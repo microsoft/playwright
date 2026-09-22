@@ -29,6 +29,7 @@ import JUnitReporter from '../reporters/junit';
 import LineReporter from '../reporters/line';
 import ListReporter from '../reporters/list';
 import ListModeReporter from '../reporters/listModeReporter';
+import OnlyFailuresTestReporter from '../reporters/onlyFailures';
 import PerfettoReporter from '../reporters/perfetto';
 import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
@@ -56,11 +57,19 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   const reporters: ReporterV2[] = [];
   descriptions ??= config.config.reporter;
   const reportOptions = reporterCommandOptions(config, mode, runOptions);
+
+  function createBuiltInReporter(name: commonConfig.BuiltInReporter, options: CommonReporterOptions): ReporterV2 {
+    const reporter = new defaultReporters[name](options);
+    if ((reporter instanceof DotReporter || reporter instanceof LineReporter || reporter instanceof ListReporter) && reporter.options.onlyFailures)
+      return new OnlyFailuresTestReporter(reporter.options);
+    return reporter;
+  }
+
   for (const r of descriptions) {
     const [name, arg] = r;
-    const options = { ...reportOptions, ...arg };
+    const options = resolveReporterOptions(reportOptions, { ...reportOptions, ...arg });
     if (name in defaultReporters) {
-      reporters.push(new defaultReporters[name as keyof typeof defaultReporters](options));
+      reporters.push(createBuiltInReporter(name as commonConfig.BuiltInReporter, options));
     } else {
       const reporterConstructor = await loadReporter(config, name);
       reporters.push(wrapReporterAsV2(new reporterConstructor(options)));
@@ -68,11 +77,12 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   }
   if (process.env.PW_TEST_REPORTER) {
     const name = process.env.PW_TEST_REPORTER;
+    const options = resolveReporterOptions(reportOptions);
     if (name in defaultReporters) {
-      reporters.push(new defaultReporters[name as keyof typeof defaultReporters](reportOptions));
+      reporters.push(createBuiltInReporter(name as commonConfig.BuiltInReporter, options));
     } else {
       const reporterConstructor = await loadReporter(config, name);
-      reporters.push(wrapReporterAsV2(new reporterConstructor(reportOptions)));
+      reporters.push(wrapReporterAsV2(new reporterConstructor(options)));
     }
   }
 
@@ -80,10 +90,12 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   if (reporters.length && !someReporterPrintsToStdio) {
     // Add a line/dot/list-mode reporter for convenience.
     // Important to put it first, just in case some other reporter stalls onEnd.
-    if (mode === 'list')
+    if (mode === 'list') {
       reporters.unshift(new ListModeReporter());
-    else if (mode !== 'merge')
-      reporters.unshift(!process.env.CI ? new LineReporter() : new DotReporter());
+    } else if (mode !== 'merge') {
+      const name = process.env.CI ? 'dot' : 'line';
+      reporters.unshift(createBuiltInReporter(name, resolveReporterOptions(reportOptions)));
+    }
   }
   return reporters;
 }
@@ -109,7 +121,17 @@ function reporterCommandOptions(config: FullConfigInternal, mode: 'list' | 'test
     configDir: config.configDir,
     _mode: mode,
     _commandHash: computeCommandHash(config, runOptions),
+    onlyFailures: mode !== 'list' && config.configCLIOverrides.reporterOnlyFailures,
   };
+}
+
+function resolveReporterOptions(commonOptions: CommonReporterOptions, options: CommonReporterOptions = commonOptions): CommonReporterOptions {
+  let onlyFailures = options.onlyFailures;
+  if (commonOptions._mode === 'list')
+    onlyFailures = false;
+  else if (commonOptions.onlyFailures)
+    onlyFailures = true;
+  return { ...options, onlyFailures };
 }
 
 function computeCommandHash(config: FullConfigInternal, runOptions?: TestRunOptions) {

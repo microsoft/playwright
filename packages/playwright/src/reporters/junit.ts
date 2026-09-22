@@ -19,10 +19,11 @@ import path from 'path';
 
 import { getAsBooleanFromENV } from '@utils/env';
 
-import { CommonReporterOptions, formatFailure, nonTerminalScreen, resolveOutputFile } from './base';
+import { createTestFilter, filterSuites, formatFailure, nonTerminalScreen, resolveOutputFile, visitTests } from './base';
 import { stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
+import type { CommonReporterOptions, TestFilter } from './base';
 import type { JUnitReporterOptions } from '../../types/test';
 import type { FullConfig, FullResult, Suite, TestCase, TestResult } from '../../types/testReporter';
 
@@ -40,8 +41,10 @@ class JUnitReporter implements ReporterV2 {
   private includeProjectInTestName = false;
   private includeRetries = false;
   private omitTags = false;
+  private testFilter: TestFilter | undefined;
 
   constructor(options: JUnitReporterOptions & CommonReporterOptions) {
+    this.testFilter = createTestFilter(options);
     this.stripANSIControlSequences = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_STRIP_ANSI', !!options.stripANSIControlSequences);
     this.includeProjectInTestName = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME', !!options.includeProjectInTestName);
     this.includeRetries = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_RETRIES', !!options.includeRetries);
@@ -70,7 +73,7 @@ class JUnitReporter implements ReporterV2 {
   async onEnd(result: FullResult) {
     const children: XMLEntry[] = [];
     for (const projectSuite of this.suite.suites) {
-      for (const fileSuite of projectSuite.suites)
+      for (const fileSuite of filterSuites(projectSuite.suites, this.testFilter))
         children.push(await this._buildTestSuite(projectSuite.title, fileSuite));
     }
     const tokens: string[] = [];
@@ -110,7 +113,7 @@ class JUnitReporter implements ReporterV2 {
     const children: XMLEntry[] = [];
     const testCaseNamePrefix = projectName && this.includeProjectInTestName ? `[${projectName}] ` : '';
 
-    for (const test of suite.allTests()){
+    for (const test of visitTests(suite, this.testFilter)) {
       ++tests;
       if (test.outcome() === 'skipped')
         ++skipped;

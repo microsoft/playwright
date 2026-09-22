@@ -16,17 +16,18 @@
  */
 
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
+import type { ReporterOptions } from './testReporter';
 export * from 'playwright-core';
 
 export type BlobReporterOptions = { outputDir?: string, fileName?: string };
-export type DotReporterOptions = { omitTags?: boolean };
-export type LineReporterOptions = { omitTags?: boolean };
-export type ListReporterOptions = { printSteps?: boolean, printFailuresInline?: boolean, omitTags?: boolean, printWorkerIndex?: boolean };
-export type GitHubReporterOptions = { omitTags?: boolean };
-export type JUnitReporterOptions = { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean, includeRetries?: boolean, omitTags?: boolean };
-export type JsonReporterOptions = { outputFile?: string };
-export type PerfettoReporterOptions = { outputFile?: string };
-export type HtmlReporterOptions = {
+export type DotReporterOptions = ReporterOptions & { omitTags?: boolean };
+export type LineReporterOptions = ReporterOptions & { omitTags?: boolean };
+export type ListReporterOptions = ReporterOptions & { printSteps?: boolean, printFailuresInline?: boolean, omitTags?: boolean, printWorkerIndex?: boolean };
+export type GitHubReporterOptions = ReporterOptions & { omitTags?: boolean };
+export type JUnitReporterOptions = ReporterOptions & { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean, includeRetries?: boolean, omitTags?: boolean };
+export type JsonReporterOptions = ReporterOptions & { outputFile?: string };
+export type PerfettoReporterOptions = ReporterOptions & { outputFile?: string };
+export type HtmlReporterOptions = ReporterOptions & {
   outputFolder?: string;
   open?: 'always' | 'never' | 'on-failure';
   host?: string;

@@ -126,6 +126,7 @@ function overridesFromOptions(options: { [key: string]: any }): ipc.ConfigCLIOve
     repeatEach: options.repeatEach ? parseInt(options.repeatEach, 10) : undefined,
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
     reporter: resolveReporterOption(options.reporter),
+    reporterOnlyFailures: options.reporterOnlyFailures ? true : undefined,
     additionalReporters: resolveReporterOption(options.addReporter),
     shard: resolveShardOption(options.shard),
     shuffle: resolveShuffleOption(options.shuffle),
