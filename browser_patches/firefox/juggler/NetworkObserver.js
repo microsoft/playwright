@@ -553,7 +553,7 @@ class NetworkRequest {
       responseStart: this.httpChannel.responseStartTime,
     };
 
-    const { status, statusText, headers } = responseHead(this.httpChannel, opt_statusCode, opt_statusText);
+    const { status, statusText, headers } = responseHead(this.httpChannel, fromCache, opt_statusCode, opt_statusText);
     if (redirectStatus.includes(status) && this._overriddenHeadersForRedirect)
       this._overriddenHeadersForRedirect = filterHeadersForRedirect(this._overriddenHeadersForRedirect, this.httpChannel.requestMethod, status);
     let remoteIPAddress = undefined;
@@ -968,19 +968,39 @@ class ResponseStorage {
   }
 }
 
-function responseHead(httpChannel, opt_statusCode, opt_statusText) {
-  const headers = [];
+function responseHead(httpChannel, fromCache, opt_statusCode, opt_statusText) {
+  let headers = [];
   let status = opt_statusCode || 0;
   let statusText = opt_statusText || '';
   try {
     status = httpChannel.responseStatus;
     statusText = httpChannel.responseStatusText;
-    httpChannel.visitResponseHeaders({
-      visitHeader: (name, value) => headers.push({name, value}),
-    });
   } catch (e) {
-    // Response headers, status and/or statusText are not available
-    // when redirect did not actually hit the network.
+    if (e.result !== Cr.NS_ERROR_NOT_AVAILABLE)
+      console.error('Failed to read response status', e);
+    return { status, statusText, headers };
+  }
+  const visitor = {
+    visitHeader: (name, value) => headers.push({name, value}),
+  };
+  // Responses are cached after cookies and authentication headers are revalidated/pruned.
+  // As such, do not use the original headers as that may not reflect what was actually used.
+  if (!fromCache) {
+    try {
+      httpChannel.visitOriginalResponseHeaders(visitor);
+    } catch (e) {
+      if (e.result !== Cr.NS_ERROR_NOT_AVAILABLE)
+        console.error('Failed to read original response headers', e);
+      headers = [];
+    }
+  }
+  if (!headers.length) {
+    try {
+      httpChannel.visitResponseHeaders(visitor);
+    } catch (e) {
+      if (e.result !== Cr.NS_ERROR_NOT_AVAILABLE)
+        console.error('Failed to read response headers', e);
+    }
   }
   return { status, statusText, headers };
 }

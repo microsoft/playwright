@@ -17,7 +17,7 @@
     },
     {
       "name": "firefox",
-      "revision": "1549",
+      "revision": "1551",
       "installByDefault": true,
       "browserVersion": "156.0",
       "title": "Firefox"
