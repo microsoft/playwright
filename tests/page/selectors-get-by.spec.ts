@@ -375,3 +375,24 @@ it('getByRole with description whitespace normalization', async ({ page }) => {
     'Alert',
   ]);
 });
+
+it('locators should not be affected by global and sticky regex flags', async ({ page }) => {
+  await page.setContent(`
+    <div>foo</div><div>foo</div><div>foo</div>
+    <label>foo<input></label><label>foo<input></label><label>foo<input></label>
+    <button>foo</button><button>foo</button><button>foo</button>
+    <input placeholder=foo><input placeholder=foo><input placeholder=foo>
+  `);
+  await expect(page.getByText(/foo/)).toHaveCount(9);
+  await expect(page.getByText(/foo/g)).toHaveCount(9);
+  await expect(page.getByText(/foo/y)).toHaveCount(9);
+  await expect(page.getByLabel(/foo/)).toHaveCount(3);
+  await expect(page.getByLabel(/foo/g)).toHaveCount(3);
+  await expect(page.getByLabel(/foo/y)).toHaveCount(3);
+  await expect(page.getByRole('button', { name: /foo/ })).toHaveCount(3);
+  await expect(page.getByRole('button', { name: /foo/g })).toHaveCount(3);
+  await expect(page.getByRole('button', { name: /foo/y })).toHaveCount(3);
+  await expect(page.getByPlaceholder(/foo/)).toHaveCount(3);
+  await expect(page.getByPlaceholder(/foo/g)).toHaveCount(3);
+  await expect(page.getByPlaceholder(/foo/y)).toHaveCount(3);
+});
