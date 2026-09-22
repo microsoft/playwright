@@ -50,6 +50,35 @@ export default defineConfig({
 });
 ```
 
+### Report only failures
+
+Use `onlyFailures` with the JSON, JUnit, or HTML reporter to include only failed, flaky, and interrupted tests.  Every attempt of an included test is retained, including successful retries:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [['html', { onlyFailures: true }]],
+});
+```
+
+The command line flag enables this option for all configured reporters that support it:
+
+```bash
+npx playwright test --reporter=failures,html --reporter-only-failures
+npx playwright merge-reports --reporter=html --reporter-only-failures ./blob-report
+```
+
+Use the `failures` reporter for live terminal diagnostics without progress output.  For example, retain a complete HTML report alongside concise terminal output:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [['failures'], ['html']],
+});
+```
+
 ## Built-in reporters
 
 All built-in reporters show detailed information about failures, and mostly differ in verbosity for successful runs.
@@ -222,6 +251,33 @@ Dot report supports the following configuration options and environment variable
 | `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. Supports `true`, `1`, `false`, `0`, `[WIDTH]`, and `[WIDTH]x[HEIGHT]`. `[WIDTH]` and `[WIDTH]x[HEIGHT]` specifies the TTY dimensions. | `true` when terminal is in TTY mode, `false` otherwise.
 | `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
 | `NO_COLOR` | | Whether to disable colored output ([no-color.org](https://no-color.org/)). Any non-empty value disables colors. | unset
+
+### Failures reporter
+
+The failures reporter prints failures and successful retries as they occur, followed by a summary.
+
+```bash
+npx playwright test --reporter=failures
+```
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: 'failures',
+});
+```
+
+Use [`property: TestConfig.quiet`] to suppress test stdout and stderr.
+
+Failures report supports the following configuration options and environment variables:
+
+| Environment Variable Name | Reporter Config Option | Description | Default |
+|---|---|---|---|
+| `PLAYWRIGHT_FAILURES_OMIT_TAGS` | `omitTags` | Whether to omit test tags appended to test titles. | `false` |
+| `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. | `true` when terminal is in TTY mode, `false` otherwise |
+| `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise |
+| `NO_COLOR` | | Whether to disable colored output. | unset |
 
 ### HTML reporter
 

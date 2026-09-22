@@ -74,6 +74,8 @@ export default defineConfig({
 });
 ```
 
+When `--reporter-only-failures` is set, custom reporters receive `onlyFailures: true` in their constructor options.
+
 Here is a typical order of reporter calls:
 * [`method: Reporter.onBegin`] is called once with a root suite that contains all other suites and tests. Learn more about [suites hierarchy][Suite].
 * [`method: Reporter.onTestBegin`] is called for each test run. It is given a [TestCase] that is executed, and a [TestResult] that is almost empty. Test result will be populated while the test runs (for example, with steps and stdio) and will get final `status` once the test finishes.

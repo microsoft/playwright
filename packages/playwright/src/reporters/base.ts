@@ -51,6 +51,7 @@ type TestSummary = {
 
 export type CommonReporterOptions = {
   configDir: string,
+  onlyFailures?: boolean,
   _mode?: 'list' | 'test' | 'merge',
   _commandHash?: string,
 };
@@ -387,6 +388,30 @@ export class TerminalReporter implements ReporterV2 {
   writeLine(line?: string) {
     this.screen.stdout?.write(line ? line + '\n' : '\n');
   }
+}
+
+export function isFailure(test: TestCase): boolean {
+  const outcome = test.outcome();
+  return outcome === 'unexpected' || outcome === 'flaky' || test.results.some(result => result.status === 'interrupted');
+}
+
+export type TestFilter = (test: TestCase) => boolean;
+
+export function createTestFilter(options: CommonReporterOptions): TestFilter | undefined {
+  return options.onlyFailures ? isFailure : undefined;
+}
+
+export function* visitTests(suite: Suite, filter?: TestFilter): Generator<TestCase> {
+  for (const entry of suite.entries()) {
+    if (entry.type !== 'test')
+      yield* visitTests(entry, filter);
+    else if (!filter || filter(entry))
+      yield entry;
+  }
+}
+
+export function filterTests<T extends Suite | TestCase>(entries: T[], filter?: TestFilter): T[] {
+  return filter ? entries.filter(entry => entry.type === 'test' ? filter(entry) : !visitTests(entry, filter).next().done) : entries;
 }
 
 function formatResultErrors(screen: Screen, test: TestCase, result: TestResult): string {

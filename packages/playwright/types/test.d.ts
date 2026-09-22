@@ -20,13 +20,15 @@ export * from 'playwright-core';
 
 export type BlobReporterOptions = { outputDir?: string, fileName?: string };
 export type DotReporterOptions = { omitTags?: boolean };
+export type FailuresReporterOptions = { omitTags?: boolean };
 export type LineReporterOptions = { omitTags?: boolean };
 export type ListReporterOptions = { printSteps?: boolean, printFailuresInline?: boolean, omitTags?: boolean, printWorkerIndex?: boolean };
 export type GitHubReporterOptions = { omitTags?: boolean };
-export type JUnitReporterOptions = { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean, includeRetries?: boolean, omitTags?: boolean };
-export type JsonReporterOptions = { outputFile?: string };
+export type JUnitReporterOptions = { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean, includeRetries?: boolean, omitTags?: boolean, onlyFailures?: boolean };
+export type JsonReporterOptions = { outputFile?: string, onlyFailures?: boolean };
 export type PerfettoReporterOptions = { outputFile?: string };
 export type HtmlReporterOptions = {
+  onlyFailures?: boolean;
   outputFolder?: string;
   open?: 'always' | 'never' | 'on-failure';
   host?: string;
@@ -42,6 +44,7 @@ export type HtmlReporterOptions = {
 export type ReporterDescription = Readonly<
   ['blob'] | ['blob', BlobReporterOptions] |
   ['dot'] | ['dot', DotReporterOptions] |
+  ['failures'] | ['failures', FailuresReporterOptions] |
   ['line'] | ['line', LineReporterOptions] |
   ['list'] | ['list', ListReporterOptions] |
   ['github'] | ['github', GitHubReporterOptions] |
@@ -961,7 +964,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * ```
    *
    */
-  reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html'|'blob'|'perfetto', string> | ReporterDescription[];
+  reporter?: LiteralUnion<'list'|'dot'|'failures'|'line'|'github'|'json'|'junit'|'null'|'html'|'blob'|'perfetto', string> | ReporterDescription[];
   /**
    * Global options for all tests, for example
    * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more
