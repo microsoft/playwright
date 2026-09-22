@@ -589,7 +589,6 @@ export class TestInfoImpl implements TestInfo {
       relativeOutputPath = sanitizeFilePathBeforeExtension(trimLongString(fullTitleWithoutSpec, windowsFilesystemFriendlyLength) + ext, ext);
     } else {
       if (kind === 'screenshot') {
-        // Named screenshots without an extension use the configured format.
         const defaultExt = anonymousExtension ?? defaultExtensions[kind];
         if (Array.isArray(name) && !path.extname(name[name.length - 1]))
           name = [...name.slice(0, -1), name[name.length - 1] + defaultExt];
