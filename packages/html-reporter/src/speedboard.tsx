@@ -43,7 +43,7 @@ export function SlowestTests({ report, tests }: { report: LoadedReport, tests: T
       length < tests.length
         ? <button className='link-badge fullwidth-link' style={{ padding: '8px 5px' }} onClick={() => setLength(l => l + 50)}>
           {icons.downArrow()}
-          Show 50 more
+          Show {Math.min(50, tests.length - length)} more
         </button>
         : undefined
     }

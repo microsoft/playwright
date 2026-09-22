@@ -95,6 +95,30 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByTestId('metadata-view')).not.toBeVisible();
     });
 
+    test('speedboard "Show more" button should show the remaining test count', async ({ runInlineTest, showReport, page }) => {
+      const tests: string[] = [];
+      for (let i = 1; i <= 57; ++i)
+        tests.push(`test('test ${String(i).padStart(2, '0')}', async () => { await new Promise(f => setTimeout(f, ${i})); });`);
+      await runInlineTest({
+        'a.spec.ts': `
+          import { test } from '@playwright/test';
+          ${tests.join('\n          ')}
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+      await showReport();
+      await page.getByRole('link', { name: 'Speedboard' }).click();
+
+      // 57 tests with the initial page size of 50 → exactly 7 remain.
+      const button = page.locator('button', { hasText: /Show \d+ more/ });
+      await expect(button).toHaveCount(1);
+      await expect(button).toContainText('Show 7 more');
+
+      // Revealing the remaining tests removes the button.
+      await button.click();
+      await expect(page.locator('button', { hasText: /Show \d+ more/ })).toHaveCount(0);
+    });
+
     test('should allow navigating to testId=test.id', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
