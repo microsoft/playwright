@@ -42,6 +42,13 @@ const kRegisterAdd = `
   });
 `;
 
+// Chromium reflects tools registered by child frames asynchronously, so the listing collected
+// right after navigation can still miss them. See https://github.com/microsoft/playwright/issues/42869.
+async function waitForWebMCPToolCount(cli: (...args: any[]) => Promise<{ output: string }>, count: number) {
+  await expect.poll(async () => (await cli('snapshot')).output, { timeout: 10000 })
+      .toContain(`- ${count} webmcp tool${count === 1 ? '' : 's'} available on the page`);
+}
+
 function serveMain(server: any, body: string) {
   server.setRoute('/', (req: any, res: any) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -149,6 +156,7 @@ test('webmcp-list stitches tools across frames', async ({ cli, server, mcpBrowse
     </script>`);
   });
   await cli('open', server.PREFIX);
+  await waitForWebMCPToolCount(cli, 2);
 
   const { output } = await cli('webmcp-list');
   expect(output).toContain('Found 2 WebMCP tool(s)');
@@ -177,6 +185,7 @@ test('webmcp-call disambiguates duplicate tool names by frame', async ({ cli, se
     res.end(`<script>${registerEcho('frame')}</script>`);
   });
   await cli('open', server.PREFIX);
+  await waitForWebMCPToolCount(cli, 2);
 
   const { output: ambiguous } = await cli('webmcp-call', 'echo');
   expect(ambiguous).toContain('is registered in multiple frames, retry with the frame parameter');
@@ -204,6 +213,7 @@ test('webmcp-call disambiguates same-name tools in identical same-origin frames'
     </script>`);
   });
   await cli('open', server.PREFIX);
+  await waitForWebMCPToolCount(cli, 2);
 
   const { output: listOutput } = await cli('webmcp-list');
   expect(listOutput).toContain(`- frame: ${server.PREFIX}/widget.html (frame 1)`);
