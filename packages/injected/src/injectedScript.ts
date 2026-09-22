@@ -1723,8 +1723,13 @@ function oneLine(s: string): string {
 
 function createAttributeMatcher(part: AttributeSelectorPart): (s: string) => boolean {
   const { value, caseSensitive } = part;
-  if (value instanceof RegExp)
-    return s => !!s.match(value);
+  if (value instanceof RegExp) {
+    return s => {
+      // Sticky regexes keep lastIndex between calls.
+      value.lastIndex = 0;
+      return !!s.match(value);
+    };
+  }
   if (caseSensitive)
     return s => s === value;
   const lowerCaseValue = value.toLowerCase();
