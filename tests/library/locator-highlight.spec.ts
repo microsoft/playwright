@@ -118,3 +118,36 @@ test('Page.hideHighlight clears all locator highlights', async ({ browser, serve
 
   await context.close();
 });
+
+test('highlight should work with a custom selector engine that runs in the main world', async ({ playwright, browser }) => {
+  // Engines registered without "contentScript" run in the main world and can see page globals.
+  const createEngine = () => ({
+    query(root, selector) {
+      return window['__engineEnabled'] ? root.querySelector(selector) : null;
+    },
+    queryAll(root, selector) {
+      return window['__engineEnabled'] ? Array.from(root.querySelectorAll(selector)) : [];
+    },
+  });
+  await playwright.selectors.register('highlight-tag', createEngine);
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.setContent('<button>Button</button>');
+  await page.evaluate(() => window['__engineEnabled'] = true);
+
+  const button = page.locator('highlight-tag=button');
+  await button.highlight();
+  await expect(page.locator('x-pw-highlight')).toHaveCount(1);
+
+  await button.hideHighlight();
+  await expect(page.locator('x-pw-highlight')).toHaveCount(0);
+
+  await button.highlight();
+  await expect(page.locator('x-pw-highlight')).toHaveCount(1);
+
+  await page.hideHighlight();
+  await expect(page.locator('x-pw-highlight')).toHaveCount(0);
+
+  await context.close();
+});
