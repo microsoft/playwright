@@ -258,6 +258,8 @@ test('should show screencast while dragging and snap to the action on release', 
     await actionPage.setContent('<button>Click me</button>');
     await actionPage.click('button');
     await actionPage.setContent('<input/>');
+    // In WebKit, screencast frames are captured on a timer, give it enough time.
+    await new Promise(f => setTimeout(f, 200));
   });
   const page = traceViewer.page;
   const screencast = page.getByRole('img', { name: 'Screencast frame' });
