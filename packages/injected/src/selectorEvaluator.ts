@@ -489,7 +489,6 @@ const textMatchesEngine: SelectorEngine = {
       throw new Error(`"text-matches" engine expects a regexp body and optional regexp flags`);
     const re = new RegExp(args[0], args.length === 2 ? args[1] : undefined);
     const matcher = (elementText: ElementText) => {
-      // Global and sticky regexes keep lastIndex between calls.
       re.lastIndex = 0;
       return re.test(elementText.full);
     };

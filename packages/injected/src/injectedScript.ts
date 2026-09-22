@@ -1725,7 +1725,6 @@ function createAttributeMatcher(part: AttributeSelectorPart): (s: string) => boo
   const { value, caseSensitive } = part;
   if (value instanceof RegExp) {
     return s => {
-      // Sticky regexes keep lastIndex between calls.
       value.lastIndex = 0;
       return !!s.match(value);
     };
@@ -1756,7 +1755,6 @@ function createTextMatcher(selector: string, internal: boolean): { matcher: Text
     const lastSlash = selector.lastIndexOf('/');
     const re = new RegExp(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
     const matcher = (elementText: ElementText) => {
-      // Global and sticky regexes keep lastIndex between calls.
       re.lastIndex = 0;
       return re.test(elementText.full);
     };
@@ -1823,7 +1821,6 @@ class ExpectedTextMatcher {
     if (this._substring !== undefined)
       return text.includes(this._substring);
     if (this._regex) {
-      // Global and sticky regexes keep lastIndex between calls.
       this._regex.lastIndex = 0;
       return !!this._regex.test(text);
     }

@@ -36,7 +36,6 @@ export function matchesAttributePart(value: any, attr: AttributeSelectorPart) {
     return !!objValue;
   if (attr.op === '=') {
     if (attrValue instanceof RegExp) {
-      // Sticky regexes keep lastIndex between calls.
       attrValue.lastIndex = 0;
       return typeof objValue === 'string' && !!objValue.match(attrValue);
     }
