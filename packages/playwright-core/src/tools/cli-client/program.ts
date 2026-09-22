@@ -453,8 +453,12 @@ function validateFlags(args: MinimistArgs, command: { flags: Record<string, 'boo
       continue;
     if ((globalOptions as readonly string[]).includes(key))
       continue;
-    if (!(key in command.flags))
-      unknownFlags.push(key);
+    if (key in command.flags)
+      continue;
+    // Negated flags like '--no-shell' are parsed as { shell: false }.
+    if (args[key] === false && `no-${key}` in command.flags)
+      continue;
+    unknownFlags.push(key);
   }
   if (unknownFlags.length)
     output.errorUnknownOption(unknownFlags, command.help);

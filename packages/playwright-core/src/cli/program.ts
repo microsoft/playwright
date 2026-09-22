@@ -83,7 +83,7 @@ export function decorateProgram(program: Command) {
       .option('--no-shell', 'do not install chromium headless shell')
       .option('--no-progress', 'do not show download progress bars')
       .option('--no-remove', 'do not remove unused browsers')
-      .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean, progress?: boolean, remove?: boolean }) {
+      .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, onlyShell?: boolean, progress?: boolean, remove?: boolean }) {
         try {
           await installBrowsers(args, options);
         } catch (e) {
