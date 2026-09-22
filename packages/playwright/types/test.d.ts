@@ -272,8 +272,8 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
       stylePath?: string|Array<string>;
 
       /**
-       * Format of the screenshots whose snapshot name is omitted or has no extension, defaults to `"png"`. Names with a
-       * `.png` or `.webp` extension use the format matching the extension.
+       * Format of the screenshots taken when the snapshot name is omitted, defaults to `"png"`. Snapshots with an explicit
+       * name use the format matching their `.png` or `.webp` extension.
        */
       type?: "png"|"webp";
 
@@ -1225,8 +1225,8 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
       threshold?: number;
 
       /**
-       * Format of the screenshots whose snapshot name is omitted or has no extension, defaults to `"png"`. Names with a
-       * `.png` or `.webp` extension use the format matching the extension.
+       * Format of the screenshots taken when the snapshot name is omitted, defaults to `"png"`. Snapshots with an explicit
+       * name use the format matching their `.png` or `.webp` extension.
        */
       type?: "png"|"webp";
 
@@ -9954,9 +9954,8 @@ interface LocatorAssertions {
    * ```
    *
    * Note that screenshot assertions only work with Playwright test runner.
-   * @param name Snapshot name. The `.png` or `.webp` extension determines the format of the screenshot, both formats are lossless.
-   * When the extension is omitted, the format is taken from the `expect.toHaveScreenshot.type` option in the config,
-   * `png` by default.
+   * @param name Snapshot name. Must have a `.png` or `.webp` extension, the screenshot is captured in the corresponding format.
+   * Both formats are lossless.
    * @param options
    */
   toHaveScreenshot(name: string|ReadonlyArray<string>, options?: {
@@ -10403,9 +10402,8 @@ interface PageAssertions {
    * ```
    *
    * Note that screenshot assertions only work with Playwright test runner.
-   * @param name Snapshot name. The `.png` or `.webp` extension determines the format of the screenshot, both formats are lossless.
-   * When the extension is omitted, the format is taken from the `expect.toHaveScreenshot.type` option in the config,
-   * `png` by default.
+   * @param name Snapshot name. Must have a `.png` or `.webp` extension, the screenshot is captured in the corresponding format.
+   * Both formats are lossless.
    * @param options
    */
   toHaveScreenshot(name: string|ReadonlyArray<string>, options?: PageAssertionsToHaveScreenshotOptions): Promise<void>;

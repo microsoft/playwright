@@ -588,13 +588,6 @@ export class TestInfoImpl implements TestInfo {
       // Trim the output file paths more aggressively to avoid hitting Windows filesystem limits.
       relativeOutputPath = sanitizeFilePathBeforeExtension(trimLongString(fullTitleWithoutSpec, windowsFilesystemFriendlyLength) + ext, ext);
     } else {
-      if (kind === 'screenshot') {
-        const defaultExt = anonymousExtension ?? defaultExtensions[kind];
-        if (Array.isArray(name) && !path.extname(name[name.length - 1]))
-          name = [...name.slice(0, -1), name[name.length - 1] + defaultExt];
-        else if (typeof name === 'string' && !path.extname(name))
-          name += defaultExt;
-      }
       if (Array.isArray(name)) {
         // We intentionally do not sanitize user-provided array of segments,
         // assuming it is a file system path.

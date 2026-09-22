@@ -699,49 +699,25 @@ test('should use configured webp type', async ({ runInlineTest }, testInfo) => {
       },
     }),
     '__screenshots__/a.spec.js/is-a-test-1.webp': createWebpImage(IMG_WIDTH, IMG_HEIGHT, 255, 255, 255),
-    '__screenshots__/a.spec.js/existing.webp': createWebpImage(IMG_WIDTH, IMG_HEIGHT, 255, 255, 255),
     '__screenshots__/a.spec.js/snapshot.png': whiteImage,
     'a.spec.js': `
       const { test, expect } = require('@playwright/test');
       test('is a test', async ({ page }) => {
-        // Anonymous, name without extension and explicit .png name all match existing snapshots.
+        // Anonymous and explicit .png name both match existing snapshots.
         await expect(page).toHaveScreenshot();
-        await expect(page).toHaveScreenshot('existing');
         await expect(page).toHaveScreenshot('snapshot.png');
-        // These are written as webp.
+        // Anonymous locator snapshot is written as webp.
         await expect(page.locator('body')).toHaveScreenshot();
-        await expect(page).toHaveScreenshot('missing');
-        await expect(page).toHaveScreenshot(['dir', 'segments']);
       });
     `
   });
   expect(result.exitCode).toBe(1);
-  for (const name of ['is-a-test-1.webp', 'existing.webp', 'snapshot.png'])
+  for (const name of ['is-a-test-1.webp', 'snapshot.png'])
     expect(result.output).not.toContain(`A snapshot doesn't exist at ${testInfo.outputPath('__screenshots__', 'a.spec.js', name)}`);
-  for (const name of ['is-a-test-2.webp', 'missing.webp', path.join('dir', 'segments.webp')]) {
-    const snapshotOutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', name);
-    expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, writing actual`);
-    expect(utils.decodeWebp(fs.readFileSync(snapshotOutputPath)).width).toBeGreaterThan(0);
-  }
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'missing-actual.webp'))).toBe(true);
-});
-
-test('should default names without extension to png', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    ...playwrightConfig({
-      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
-    }),
-    'a.spec.js': `
-      const { test, expect } = require('@playwright/test');
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot');
-      });
-    `
-  });
-  expect(result.exitCode).toBe(1);
-  const snapshotOutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot.png');
+  const snapshotOutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'is-a-test-2.webp');
   expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, writing actual`);
-  expect(fs.existsSync(snapshotOutputPath)).toBe(true);
+  expect(utils.decodeWebp(fs.readFileSync(snapshotOutputPath)).width).toBeGreaterThan(0);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-2-actual.webp'))).toBe(true);
 });
 
 test('should fail on unsupported configured type', async ({ runInlineTest }) => {

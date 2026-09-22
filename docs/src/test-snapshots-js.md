@@ -56,7 +56,7 @@ Snapshots are stored as PNG by default. Give the snapshot a name with the `.webp
 await expect(page).toHaveScreenshot('landing.webp');
 ```
 
-To store all snapshots that do not specify the extension as WebP, set the `type` option in the [`property: TestConfig.expect`] configuration:
+To store all unnamed snapshots as WebP, set the `type` option in the [`property: TestConfig.expect`] configuration:
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
