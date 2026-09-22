@@ -284,6 +284,11 @@ function validateProject(file: string, project: Project, title: string) {
       throw errorWithFile(file, `${title}.testDir must be a string`);
   }
 
+  if (project.expect?.toHaveScreenshot?.type !== undefined) {
+    if (!['png', 'webp'].includes(project.expect.toHaveScreenshot.type))
+      throw errorWithFile(file, `${title}.expect.toHaveScreenshot.type must be one of "png" or "webp"`);
+  }
+
   for (const prop of ['testIgnore', 'testMatch'] as const) {
     if (prop in project && project[prop] !== undefined) {
       const value = project[prop];

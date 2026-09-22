@@ -2021,7 +2021,7 @@ Note that screenshot assertions only work with Playwright test runner.
 * since: v1.23
 - `name` <[string]|[Array]<[string]>>
 
-Snapshot name. Must have a `.png` or `.webp` extension, the screenshot is captured in the corresponding format. Both formats are lossless.
+Snapshot name. The `.png` or `.webp` extension determines the format of the screenshot, both formats are lossless. When the extension is omitted, the format is taken from the `expect.toHaveScreenshot.type` option in the config, `png` by default.
 
 ### option: LocatorAssertions.toHaveScreenshot#1.timeout = %%-js-assertions-timeout-%%
 * since: v1.23
