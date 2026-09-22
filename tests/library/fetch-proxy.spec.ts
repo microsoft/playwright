@@ -171,3 +171,29 @@ it('should send correct ALPN protocol to HTTPS proxy', { annotation: { type: 'is
   proxy.close();
   await request.dispose();
 });
+
+it('should apply proxy.bypass to redirect targets', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42815' } }, async ({ contextFactory, server, proxyServer }) => {
+  proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
+  server.setRedirect('/redirect-to-ip', `http://127.0.0.1:${server.PORT}/simple.json`);
+  server.setRedirect('/redirect-to-localhost', `http://localhost:${server.PORT}/simple.json`);
+  const context = await contextFactory({
+    proxy: { server: `localhost:${proxyServer.PORT}`, bypass: 'localhost' }
+  });
+
+  {
+    // Bypassed first hop redirects to a host that must go through the proxy.
+    const response = await context.request.get(`http://localhost:${server.PORT}/redirect-to-ip`);
+    expect(response.url()).toBe(`http://127.0.0.1:${server.PORT}/simple.json`);
+    expect(await response.json()).toEqual({ foo: 'bar' });
+    expect(proxyServer.connectHosts).toEqual([`127.0.0.1:${server.PORT}`]);
+    proxyServer.connectHosts = [];
+  }
+
+  {
+    // Proxied first hop redirects to a bypassed host.
+    const response = await context.request.get(`http://127.0.0.1:${server.PORT}/redirect-to-localhost`);
+    expect(response.url()).toBe(`http://localhost:${server.PORT}/simple.json`);
+    expect(await response.json()).toEqual({ foo: 'bar' });
+    expect(proxyServer.connectHosts).toEqual([`127.0.0.1:${server.PORT}`]);
+  }
+});
