@@ -49,6 +49,12 @@ function serveMain(server: any, body: string) {
   });
 }
 
+// Reloading the frame once replaces the initial blank page's window in Chromium
+// and works around the bug where tools do not register.
+function iframe(src: string) {
+  return `<iframe src="${src}" onload="if (!this.dataset.reloaded) { this.dataset.reloaded = '1'; this.contentWindow.location.reload(); }"></iframe>`;
+}
+
 test('webmcp-list and webmcp-call', async ({ cli, server, mcpBrowser }, testInfo) => {
   await writeWebMCPConfig(mcpBrowser, testInfo);
   serveMain(server, `<script>
@@ -136,7 +142,7 @@ test('webmcp-list stitches tools across frames', async ({ cli, server, mcpBrowse
   test.skip(mcpBrowser === 'firefox', 'Firefox does not support registering WebMCP tools in iframes yet, https://bugzilla.mozilla.org/show_bug.cgi?id=2019743');
   await writeWebMCPConfig(mcpBrowser, testInfo);
 
-  serveMain(server, `<script>${kRegisterAdd}</script><iframe src="/frame.html"></iframe>`);
+  serveMain(server, `<script>${kRegisterAdd}</script>${iframe('/frame.html')}`);
   server.setRoute('/frame.html', (req: any, res: any) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<script>
@@ -171,7 +177,7 @@ test('webmcp-call disambiguates duplicate tool names by frame', async ({ cli, se
       async execute() { return { content: [{ type: 'text', text: '${text}' }] }; },
     });
   `;
-  serveMain(server, `<script>${registerEcho('main')}</script><iframe src="/frame.html"></iframe>`);
+  serveMain(server, `<script>${registerEcho('main')}</script>${iframe('/frame.html')}`);
   server.setRoute('/frame.html', (req: any, res: any) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<script>${registerEcho('frame')}</script>`);
@@ -191,7 +197,7 @@ test('webmcp-call disambiguates same-name tools in identical same-origin frames'
 
   // Two iframes of the very same URL each own a tool called "echo", so the frame URL alone
   // cannot address them and the listing falls back to the frame position.
-  serveMain(server, `<iframe src="/widget.html"></iframe><iframe src="/widget.html"></iframe>`);
+  serveMain(server, `${iframe('/widget.html')}${iframe('/widget.html')}`);
   server.setRoute('/widget.html', (req: any, res: any) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<script>
