@@ -21,7 +21,7 @@ import { escapeForAttributeSelector, escapeForTextSelector } from './stringUtils
 
 import type { Language, Quote } from './locatorGenerators';
 
-type TemplateParams = { quote: string, text: string }[];
+type TemplateParams = { quote: string, text: string, nested?: boolean }[];
 function parseLocator(locator: string, testIdAttributeName: string): { selector: string, preferredQuote: Quote | undefined } {
   locator = locator
       .replace(/AriaRole\s*\.\s*([\w]+)/g, (_, group) => group.toLowerCase())
@@ -129,16 +129,6 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
         break;
     }
 
-    // Replace Java sethas(...) and sethasnot(...) with has=... and hasnot=...
-    const nestedKind = hasMatch[2] === 'locator' ? 'chain' : hasMatch[2];
-    let prefix = template.substring(0, start);
-    let extraSymbol = 0;
-    if (['sethas(', 'sethasnot('].includes(hasMatch[1])) {
-      // Eat extra ) symbol at the end of sethas(...)
-      extraSymbol = 1;
-      prefix = prefix.replace(/sethas\($/, 'has=').replace(/sethasnot\($/, 'hasnot=');
-    }
-
     const paramsCountBeforeHas = countParams(template.substring(0, start));
     const hasTemplate = shiftParams(template.substring(start, end), paramsCountBeforeHas);
     const paramsCountInHas = countParams(hasTemplate);
@@ -147,19 +137,24 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
 
     // Replace filter(has=...) with filter(has2=$5). Use has2 to avoid matching the same filter again.
     // Replace filter(hasnot=...) with filter(hasnot2=$5). Use hasnot2 to avoid matching the same filter again.
+    // Replace Java sethas(...) and sethasnot(...) with has2=... and hasnot2=..., eating the extra ) symbol.
     // Replace .and(...), .or(...) and .locator(...) with .internal:and=$5, .internal:or=$5 and .internal:chain=$5.
-    if (nestedKind) {
-      prefix = prefix.substring(0, hasMatch.index!) + `.internal:${nestedKind}=`;
-      extraSymbol = 1;
+    let prefix = template.substring(0, start);
+    let extraSymbol = 1;
+    if (hasMatch[2]) {
+      prefix = template.substring(0, hasMatch.index!) + `.internal:${hasMatch[2] === 'locator' ? 'chain' : hasMatch[2]}=`;
+    } else if (hasMatch[1] === 'sethas(' || hasMatch[1] === 'sethasnot(') {
+      prefix = prefix.replace(/sethas\($/, 'has2=').replace(/sethasnot\($/, 'hasnot2=');
     } else {
       prefix = prefix.replace(/=$/, '2=');
+      extraSymbol = 0;
     }
     template = prefix + `$${paramsCountBeforeHas + 1}` + shiftParams(template.substring(end + extraSymbol), paramsCountInHas - 1);
 
     // Replace inner params with $5 value.
     const paramsBeforeHas = params.slice(0, paramsCountBeforeHas);
     const paramsAfterHas = params.slice(paramsCountBeforeHas + paramsCountInHas);
-    params = paramsBeforeHas.concat([{ quote: '"', text: hasSelector }]).concat(paramsAfterHas);
+    params = paramsBeforeHas.concat([{ quote: '"', text: hasSelector, nested: true }]).concat(paramsAfterHas);
   }
 
   // Transform to selector engines.
@@ -218,7 +213,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
         })
         .replace(/\$(\d+)(i|s)?/g, (_, ordinal, suffix) => {
           const param = params[+ordinal - 1];
-          if (t.startsWith('internal:has=') || t.startsWith('internal:has-not=') || t.startsWith('internal:and=') || t.startsWith('internal:or=') || t.startsWith('internal:chain='))
+          if (param.nested)
             return param.text;
           if (t.startsWith('internal:testid'))
             return escapeForAttributeSelector(param.text, true);
