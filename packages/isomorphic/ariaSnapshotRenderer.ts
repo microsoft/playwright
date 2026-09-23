@@ -41,8 +41,9 @@ export function renderAriaSnapshotAsYaml(snapshot: AriaSnapshotJSON, options: Ar
     if (node.name && node.name.length <= 900) {
       const name = renderString(node.name);
       if (name) {
-        const stringifiedName = name.startsWith('/') && name.endsWith('/') ? name : JSON.stringify(name);
-        key += ' ' + stringifiedName;
+        // Only a name that was actually converted to a regex may be left unquoted.
+        const isRegex = options.convertStringsToRegex && name !== node.name;
+        key += ' ' + (isRegex ? name : JSON.stringify(name));
       }
     }
     if (node.checked === 'mixed')
