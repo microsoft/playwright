@@ -19,7 +19,8 @@ import { test, expect } from './cli-fixtures';
 test('press', async ({ cli, server }) => {
   server.setContent('/', `<input type=text>`, 'text/html');
   await cli('open', server.PREFIX);
-  await cli('click', 'e2');
+  const { output: clickOutput } = await cli('click', 'e2');
+  expect(clickOutput).not.toContain('### Error');
   await cli('press', 'h');
   const { inlineSnapshot } = await cli('snapshot');
   expect(inlineSnapshot).toBe(`- textbox [active] [ref=e2]: h`);
@@ -28,7 +29,8 @@ test('press', async ({ cli, server }) => {
 test('keydown keyup', async ({ cli, server }) => {
   server.setContent('/', `<input type=text>`, 'text/html');
   await cli('open', server.PREFIX);
-  await cli('click', 'e2');
+  const { output: clickOutput } = await cli('click', 'e2');
+  expect(clickOutput).not.toContain('### Error');
   await cli('keydown', 'h');
   await cli('keyup', 'h');
   const { inlineSnapshot } = await cli('snapshot');

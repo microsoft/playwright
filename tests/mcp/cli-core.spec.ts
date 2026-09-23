@@ -54,10 +54,10 @@ await page.getByRole('button', { name: 'Submit' }).click();
 \`\`\``);
 });
 
-test('click link', async ({ cli, server, mcpBrowser }) => {
+test('click link', async ({ cli, server }) => {
   server.setContent('/', `<a href="/hello-world">Hello, world!</a>`, 'text/html');
 
-  const { snapshot } = await cli('open', server.PREFIX, { env: { PLAYWRIGHT_MCP_TIMEOUT_ACTION: mcpBrowser === 'firefox' ? '30000' : '' } });
+  const { snapshot } = await cli('open', server.PREFIX);
   expect(snapshot).toContain(`- link \"Hello, world!\" [ref=e2]`);
 
   const { output: clickOutput, snapshot: clickSnapshot } = await cli('click', 'e2');
