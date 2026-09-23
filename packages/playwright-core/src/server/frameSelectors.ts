@@ -37,10 +37,11 @@ export type SelectorInfo = {
 type SelectorInFrame = {
   frame: Frame;
   info: SelectorInfo;
+  frameVisible: boolean;
   scope?: ElementHandle;
 };
 
-type MatchedElementsCallback<Arg, R> = (data: { injected: InjectedScript, elements: Element[], info: SelectorInfo }, arg: Unboxed<Arg>) => R | Promise<R>;
+type MatchedElementsCallback<Arg, R> = (data: { injected: InjectedScript, elements: Element[], info: SelectorInfo, frameVisible: boolean }, arg: Unboxed<Arg>) => R | Promise<R>;
 
 export class FrameSelectors {
   readonly frame: Frame;
@@ -154,8 +155,8 @@ export class FrameSelectors {
 
     const result: SelectorInFrame[] = [];
     const seenFrames = new Set<Frame>();
-    for (const startFrame of await this._anyFrameCandidates(scope)) {
-      const resolved = await this._resolveChainedSelector(startFrame, selector, options, chunks, startFrame === this.frame ? scope : undefined, startFrame !== this.frame /* noStall */);
+    for (const { frame: startFrame, frameVisible } of await this._anyFrameCandidates(scope)) {
+      const resolved = await this._resolveChainedSelector(startFrame, selector, options, chunks, startFrame === this.frame ? scope : undefined, startFrame !== this.frame /* noStall */, frameVisible);
       // Different starting frames may resolve into the same frame, e.g. with an aria-ref selector.
       if (!resolved || seenFrames.has(resolved.frame))
         continue;
@@ -166,75 +167,77 @@ export class FrameSelectors {
   }
 
   // All the frames the selector may start in: the frame subtree, restricted to the scope when given.
-  private async _anyFrameCandidates(scope: ElementHandle | undefined): Promise<Frame[]> {
-    const result: Frame[] = [];
-    const collectSubtree = (frame: Frame) => {
-      result.push(frame);
-      for (const child of frame.childFrames())
-        collectSubtree(child);
+  private async _anyFrameCandidates(scope: ElementHandle | undefined): Promise<{ frame: Frame, frameVisible: boolean }[]> {
+    const result: { frame: Frame, frameVisible: boolean }[] = [];
+    const info = this._parseSelector('css=frame,iframe', { strict: false });
+    const collectSubtree = async (frame: Frame, frameVisible: boolean, scope: ElementHandle | undefined) => {
+      result.push({ frame, frameVisible });
+      const childFrames = await this._queryFrames(frame, info, scope, true /* noStall */, frameVisible);
+      for (const childFrame of childFrames ?? [])
+        await collectSubtree(childFrame.frame, childFrame.frameVisible, undefined);
     };
-
-    if (!scope) {
-      collectSubtree(this.frame);
-      return result;
-    }
-
-    result.push(this.frame);
-    await this.frame.raceAgainstEvaluationStallingEvents(async () => {
-      const injected = await scope._context.injectedScript();
-      const frameElements = await injected.evaluateHandle((injected, scope) => {
-        return injected.querySelectorAll(injected.parseSelector('css=frame,iframe'), scope);
-      }, scope);
-      const count = await frameElements.evaluate(elements => elements.length);
-      for (let i = 0; i < count; ++i) {
-        const frameElement = await frameElements.evaluateHandle((elements, i) => elements[i], i) as ElementHandle<Element>;
-        const childFrame = await this.frame._page.delegate.getContentFrame(frameElement);
-        frameElement.dispose();
-        if (childFrame)
-          collectSubtree(childFrame);
-      }
-      frameElements.dispose();
-    }).catch(() => {});
+    await collectSubtree(this.frame, true, scope);
     return result;
   }
 
-  private async _resolveChainedSelector(startFrame: Frame, selector: string, options: types.StrictOptions, frameChunks: ParsedSelector[], scope: ElementHandle | undefined, noStall: boolean): Promise<SelectorInFrame | null> {
+  private async _queryFrames(frame: Frame, info: SelectorInfo, scope: ElementHandle | undefined, noStall: boolean, parentFrameVisible: boolean): Promise<{ frame: Frame, frameVisible: boolean }[] | null> {
+    const context = noStall ? frame.existingContext(info.world) : await frame.context(info.world);
+    if (!context)
+      return null;
+    const query = async () => {
+      const injected = await context.injectedScript();
+      const arrayHandle = await injected.evaluateHandle((injected, { info, scope, selectorString }) => {
+        const elements = injected.querySelectorAll(info.parsed, scope || document);
+        if (info.strict && elements.length > 1)
+          throw injected.strictModeViolationError(info.parsed, elements);
+        for (const element of elements) {
+          if (element.nodeName !== 'IFRAME' && element.nodeName !== 'FRAME')
+            throw injected.createStacklessError(`Selector "${selectorString}" resolved to ${injected.previewNode(element)}, <iframe> was expected`);
+        }
+        return elements;
+      }, { info, scope, selectorString: stringifySelector(info.parsed) });
+      const visible = parentFrameVisible ? await injected.evaluate((injected, elements) => elements.map(element => injected.utils.isElementVisible(element)), arrayHandle) : [];
+      const properties = await arrayHandle.internalGetProperties();
+      arrayHandle.dispose();
+      const result: { frame: Frame, frameVisible: boolean }[] = [];
+      let visibleIndex = 0;
+      for (const property of properties.values()) {
+        const handle = property.asElement() as ElementHandle<Element> | null;
+        const contentFrame = handle ? await frame._page.delegate.getContentFrame(handle) : null;
+        property.dispose();
+        if (contentFrame)
+          result.push({ frame: contentFrame, frameVisible: parentFrameVisible && visible[visibleIndex] === true });
+        ++visibleIndex;
+      }
+      return result;
+    };
+    if (!noStall)
+      return await query();
+    return await frame.raceAgainstEvaluationStallingEvents(query).catch(e => {
+      if (e instanceof EvaluationStalledError)
+        return null;
+      throw e;
+    });
+  }
+
+  private async _resolveChainedSelector(startFrame: Frame, selector: string, options: types.StrictOptions, frameChunks: ParsedSelector[], scope: ElementHandle | undefined, noStall: boolean, startFrameVisible = true): Promise<SelectorInFrame | null> {
     let frame = startFrame;
+    let frameVisible = startFrameVisible;
     for (let i = 0; i < frameChunks.length - 1; ++i) {
       const info = this._parseSelector(frameChunks[i], options);
       frame = this._jumpToAriaRefFrameIfNeeded(selector, info, frame);
-      const context = noStall ? frame.existingContext(info.world) : await frame.context(info.world);
-      if (!context)
+      const frames = await this._queryFrames(frame, info, i === 0 ? scope : undefined, noStall, frameVisible);
+      if (!frames?.length)
         return null;
-      const queryFrameElement = async () => {
-        const injectedScript = await context.injectedScript();
-        return await injectedScript.evaluateHandle((injected, { info, scope, selectorString }) => {
-          const element = injected.querySelector(info.parsed, scope || document, info.strict);
-          if (element && element.nodeName !== 'IFRAME' && element.nodeName !== 'FRAME')
-            throw injected.createStacklessError(`Selector "${selectorString}" resolved to ${injected.previewNode(element)}, <iframe> was expected`);
-          return element;
-        }, { info, scope: i === 0 ? scope : undefined, selectorString: stringifySelector(info.parsed) });
-      };
-      const handle = noStall ? await frame.raceAgainstEvaluationStallingEvents(queryFrameElement).catch(e => {
-        if (e instanceof EvaluationStalledError)
-          return null;
-        throw e;
-      }) : await queryFrameElement();
-      const element = handle?.asElement() as ElementHandle<Element> | null;
-      if (!element)
-        return null;
-      const maybeFrame = await frame._page.delegate.getContentFrame(element);
-      element.dispose();
-      if (!maybeFrame)
-        return null;
-      frame = maybeFrame;
+      frame = frames[0].frame;
+      frameVisible = frames[0].frameVisible;
     }
     // If we end up in the different frame, we should start from the frame root, so throw away the scope.
     if (frame !== startFrame)
       scope = undefined;
     const lastChunk = frame.selectors._parseSelector(frameChunks[frameChunks.length - 1], options);
     frame = this._jumpToAriaRefFrameIfNeeded(selector, lastChunk, frame);
-    return { frame, info: lastChunk, scope };
+    return { frame, info: lastChunk, scope, frameVisible };
   }
 
   private async _callOnSelectorInternal<Arg, R>(
@@ -243,11 +246,11 @@ export class FrameSelectors {
     pageFunction: MatchedElementsCallback<Arg, R>,
     arg: Arg,
     returnByValue: boolean,
-  ): Promise<{ frame: Frame, info: SelectorInfo, result: R | SmartHandle<R> } | null> {
+  ): Promise<{ frame: Frame, info: SelectorInfo, frameVisible: boolean, result: R | SmartHandle<R> } | null> {
     const resolved = await this.resolveFramesForSelector(selector, options, options.scope);
-    let aggregatedResult: { frame: Frame, info: SelectorInfo, result: R | SmartHandle<R> } | null = null;
+    let aggregatedResult: { frame: Frame, info: SelectorInfo, frameVisible: boolean, result: R | SmartHandle<R> } | null = null;
     const noStall = resolved.length > 1;
-    for (const { frame, info, scope } of resolved) {
+    for (const { frame, info, scope, frameVisible } of resolved) {
       const world = options.mainWorld ? 'main' : info.world;
       const context = noStall ? frame.existingContext(world) : await frame.context(world);
       if (!context)
@@ -269,8 +272,8 @@ export class FrameSelectors {
           if (!elements.length && !params.callWithoutMatches)
             return '--playwright--no--result--value--';
           const func = injected.eval('(' + params.functionText + ')') as MatchedElementsCallback<Arg, R>;
-          return func({ injected, elements, info: params.info }, params.arg);
-        }, { info, scope, functionText: String(pageFunction), arg, callWithoutMatches: options.callWithoutMatches, markTargets: options.markTargets, returnByValue });
+          return func({ injected, elements, info: params.info, frameVisible: params.frameVisible }, params.arg);
+        }, { info, scope, frameVisible, functionText: String(pageFunction), arg, callWithoutMatches: options.callWithoutMatches, markTargets: options.markTargets, returnByValue });
         if (returnByValue && evalResult === '--playwright--no--result--value--')
           return;
         if (!returnByValue && (evalResult as JSHandle)._value === '--playwright--no--result--value--') {
@@ -288,7 +291,7 @@ export class FrameSelectors {
         continue;
       if (aggregatedResult)
         throw new NonRecoverableDOMError(`frameLocator() matched elements in multiple frames.`);
-      aggregatedResult = { frame, info, result: maybeResult.result };
+      aggregatedResult = { frame, info, frameVisible, result: maybeResult.result };
     }
     return aggregatedResult;
   }
@@ -298,9 +301,9 @@ export class FrameSelectors {
     options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none' },
     pageFunction: MatchedElementsCallback<Arg, R>,
     arg: Arg,
-  ): Promise<{ frame: Frame, info: SelectorInfo, result: R } | null> {
+  ): Promise<{ frame: Frame, info: SelectorInfo, frameVisible: boolean, result: R } | null> {
     const result = await this._callOnSelectorInternal(selector, options, pageFunction, arg, true /* returnByValue */);
-    return result as { frame: Frame, info: SelectorInfo, result: R } | null;
+    return result as { frame: Frame, info: SelectorInfo, frameVisible: boolean, result: R } | null;
   }
 
   async callOnSelectorHandle<Arg, R>(
@@ -308,9 +311,9 @@ export class FrameSelectors {
     options: types.StrictOptions & { mainWorld?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none' },
     pageFunction: MatchedElementsCallback<Arg, R>,
     arg: Arg,
-  ): Promise<{ frame: Frame, info: SelectorInfo, result: SmartHandle<R> } | null> {
+  ): Promise<{ frame: Frame, info: SelectorInfo, frameVisible: boolean, result: SmartHandle<R> } | null> {
     const result = await this._callOnSelectorInternal(selector, { ...options, callWithoutMatches: false }, pageFunction, arg, false /* returnByValue */);
-    return result as { frame: Frame, info: SelectorInfo, result: SmartHandle<R> } | null;
+    return result as { frame: Frame, info: SelectorInfo, frameVisible: boolean, result: SmartHandle<R> } | null;
   }
 }
 
