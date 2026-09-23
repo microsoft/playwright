@@ -87,7 +87,7 @@ export async function markDockerImage(dockerImageNameTemplate: string) {
   await writeDockerVersion(dockerImageNameTemplate);
 }
 
-export async function installBrowsers(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean, progress?: boolean, remove?: boolean }) {
+export async function installBrowsers(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, onlyShell?: boolean, progress?: boolean, remove?: boolean }) {
   if (options.progress === false)
     process.env.PLAYWRIGHT_DOWNLOAD_NO_PROGRESS = '1';
   if (isLikelyNpxGlobal()) {

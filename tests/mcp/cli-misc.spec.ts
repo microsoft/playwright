@@ -33,6 +33,16 @@ test('install-browser', async ({ cli, server, mcpBrowser }) => {
   expect(output).toMatch(/chromium-\d+/);
 });
 
+test('install-browser --no-shell', async ({ cli }) => {
+  const withShell = await cli('install-browser', 'chromium', '--dry-run');
+  expect(withShell.exitCode).toBe(0);
+  expect(withShell.output).toContain('chromium-headless-shell');
+  const noShell = await cli('install-browser', 'chromium', '--no-shell', '--dry-run');
+  expect(noShell.exitCode).toBe(0);
+  expect(noShell.output).toMatch(/chromium v\d+/);
+  expect(noShell.output).not.toContain('chromium-headless-shell');
+});
+
 test('install workspace', async ({ cli }, testInfo) => {
   const { output } = await cli('install');
   expect(output).toContain(`Workspace initialized at`);
