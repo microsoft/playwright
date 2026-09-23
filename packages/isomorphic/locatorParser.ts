@@ -82,8 +82,8 @@ function parseLocator(locator: string, testIdAttributeName: string): { selector:
       .replace(/new\(\)/g, '')
       .replace(/new[\w]+\.[\w]+options\(\)/g, '')
       .replace(/\.set/g, ',set')
-      .replace(/\.or_\(/g, 'or(') // Python has "or_" instead of "or".
-      .replace(/\.and_\(/g, 'and(') // Python has "and_" instead of "and".
+      .replace(/\.or_\(/g, '.or(') // Python has "or_" instead of "or".
+      .replace(/\.and_\(/g, '.and(') // Python has "and_" instead of "and".
       .replace(/:/g, '=')
       .replace(/,re\.ignorecase/g, 'i')
       .replace(/,pattern.case_insensitive/g, 'i')
@@ -109,10 +109,10 @@ function shiftParams(template: string, sub: number) {
 }
 
 function transform(template: string, params: TemplateParams, testIdAttributeName: string): string {
-  // Recursively handle filter(has=, hasnot=, sethas(), sethasnot()).
-  // TODO: handle and(locator), or(locator), locator(locator), locator(has=, hasnot=, sethas(), sethasnot()).
+  // Recursively handle filter(has=, hasnot=, sethas(), sethasnot()) and and(locator), or(locator), locator(locator).
+  // TODO: handle locator(has=, hasnot=, sethas(), sethasnot()).
   while (true) {
-    const hasMatch = template.match(/filter\(,?(has=|hasnot=|sethas\(|sethasnot\()/);
+    const hasMatch = template.match(/filter\(,?(has=|hasnot=|sethas\(|sethasnot\()|\.(and|or|locator)\((?!\$)/);
     if (!hasMatch)
       break;
 
@@ -130,6 +130,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
     }
 
     // Replace Java sethas(...) and sethasnot(...) with has=... and hasnot=...
+    const nestedKind = hasMatch[2] === 'locator' ? 'chain' : hasMatch[2];
     let prefix = template.substring(0, start);
     let extraSymbol = 0;
     if (['sethas(', 'sethasnot('].includes(hasMatch[1])) {
@@ -146,7 +147,14 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
 
     // Replace filter(has=...) with filter(has2=$5). Use has2 to avoid matching the same filter again.
     // Replace filter(hasnot=...) with filter(hasnot2=$5). Use hasnot2 to avoid matching the same filter again.
-    template = prefix.replace(/=$/, '2=') + `$${paramsCountBeforeHas + 1}` + shiftParams(template.substring(end + extraSymbol), paramsCountInHas - 1);
+    // Replace .and(...), .or(...) and .locator(...) with .internal:and=$5, .internal:or=$5 and .internal:chain=$5.
+    if (nestedKind) {
+      prefix = prefix.substring(0, hasMatch.index!) + `.internal:${nestedKind}=`;
+      extraSymbol = 1;
+    } else {
+      prefix = prefix.replace(/=$/, '2=');
+    }
+    template = prefix + `$${paramsCountBeforeHas + 1}` + shiftParams(template.substring(end + extraSymbol), paramsCountInHas - 1);
 
     // Replace inner params with $5 value.
     const paramsBeforeHas = params.slice(0, paramsCountBeforeHas);
@@ -210,7 +218,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
         })
         .replace(/\$(\d+)(i|s)?/g, (_, ordinal, suffix) => {
           const param = params[+ordinal - 1];
-          if (t.startsWith('internal:has=') || t.startsWith('internal:has-not='))
+          if (t.startsWith('internal:has=') || t.startsWith('internal:has-not=') || t.startsWith('internal:and=') || t.startsWith('internal:or=') || t.startsWith('internal:chain='))
             return param.text;
           if (t.startsWith('internal:testid'))
             return escapeForAttributeSelector(param.text, true);
