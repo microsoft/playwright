@@ -242,9 +242,10 @@ export class TerminalReporter implements ReporterV2 {
   protected generateStartingMessage() {
     const jobs = this.config.metadata.actualWorkers ?? this.config.workers;
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
+    const shuffleDetails = this.config.metadata.shuffleSeed ? `, shuffle seed ${this.config.metadata.shuffleSeed}` : '';
     if (!this.totalTestCount)
       return '';
-    return '\n' + this.screen.colors.dim('Running ') + this.totalTestCount + this.screen.colors.dim(` test${this.totalTestCount !== 1 ? 's' : ''} using `) + jobs + this.screen.colors.dim(` worker${jobs !== 1 ? 's' : ''}${shardDetails}`);
+    return '\n' + this.screen.colors.dim('Running ') + this.totalTestCount + this.screen.colors.dim(` test${this.totalTestCount !== 1 ? 's' : ''} using `) + jobs + this.screen.colors.dim(` worker${jobs !== 1 ? 's' : ''}${shardDetails}${shuffleDetails}`);
   }
 
   protected getSlowTests(): [string, number][] {

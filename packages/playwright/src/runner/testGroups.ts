@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { calculateSha1 } from '@utils/crypto';
+
 import type { test } from '../common';
 
 export type TestGroup = {
@@ -139,6 +141,11 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
     group.locks = [...locks];
   }
   return result;
+}
+
+export function shuffleTestGroups(testGroups: TestGroup[], seed: string) {
+  const keys = new Map(testGroups.map(group => [group, calculateSha1(seed + '\x1e' + group.tests[0].id)]));
+  testGroups.sort((a, b) => keys.get(a)!.localeCompare(keys.get(b)!));
 }
 
 export function filterForShard(shard: { total: number, current: number }, weights: number[] | undefined, testGroups: TestGroup[]): Set<TestGroup> {
