@@ -74,12 +74,13 @@ export function asLocator(lang: Language, selector: string, isFrameLocator: bool
   return asLocators(lang, selector, isFrameLocator, 1)[0];
 }
 
-export function asLocators(lang: Language, selector: string, isFrameLocator: boolean = false, maxOutputSize = 20, preferredQuote?: Quote): string[] {
+export function asLocators(lang: Language, selector: string | ParsedSelector, isFrameLocator: boolean = false, maxOutputSize = 20, preferredQuote?: Quote): string[] {
   try {
-    return innerAsLocators(new generators[lang](preferredQuote), parseSelector(selector), isFrameLocator, maxOutputSize);
+    const parsed = typeof selector === 'string' ? parseSelector(selector) : selector;
+    return innerAsLocators(new generators[lang](preferredQuote), parsed, isFrameLocator, maxOutputSize);
   } catch (e) {
     // Tolerate invalid input.
-    return [selector];
+    return [stringifySelector(selector)];
   }
 }
 
@@ -493,7 +494,7 @@ export class PythonLocatorFactory implements LocatorFactory {
   }
 
   private regexToString(body: RegExp) {
-    const suffix = body.flags.includes('i') ? ', re.IGNORECASE' : '';
+    const suffix = regexFlagsSuffix(body, 're', regexFlagNames.python);
     return `re.compile(r"${normalizeEscapedRegexQuotes(body.source).replace(/\\\//, '/').replace(/"/g, '\\"')}"${suffix})`;
   }
 
@@ -605,7 +606,7 @@ export class JavaLocatorFactory implements LocatorFactory {
   }
 
   private regexToString(body: RegExp) {
-    const suffix = body.flags.includes('i') ? ', Pattern.CASE_INSENSITIVE' : '';
+    const suffix = regexFlagsSuffix(body, 'Pattern', regexFlagNames.java);
     return `Pattern.compile(${this.quote(normalizeEscapedRegexQuotes(body.source))}${suffix})`;
   }
 
@@ -711,7 +712,7 @@ export class CSharpLocatorFactory implements LocatorFactory {
   }
 
   private regexToString(body: RegExp): string {
-    const suffix = body.flags.includes('i') ? ', RegexOptions.IgnoreCase' : '';
+    const suffix = regexFlagsSuffix(body, 'RegexOptions', regexFlagNames.csharp);
     return `new Regex(${this.quote(normalizeEscapedRegexQuotes(body.source))}${suffix})`;
   }
 
@@ -775,6 +776,19 @@ const generators: Record<Language, new (preferredQuote?: Quote) => LocatorFactor
   csharp: CSharpLocatorFactory,
   jsonl: JsonlLocatorFactory,
 };
+
+// Regular expression flags supported by the Python, Java and C# locators.
+export const regexFlagNames = {
+  python: { i: 'IGNORECASE', m: 'MULTILINE', s: 'DOTALL' },
+  java: { i: 'CASE_INSENSITIVE', m: 'MULTILINE', s: 'DOTALL' },
+  csharp: { i: 'IgnoreCase', m: 'Multiline', s: 'Singleline' },
+};
+
+// E.g. `, re.IGNORECASE | re.MULTILINE`.
+function regexFlagsSuffix(body: RegExp, flagsEnum: string, names: Record<string, string>): string {
+  const flags = [...body.flags].filter(flag => flag in names).map(flag => `${flagsEnum}.${names[flag]}`);
+  return flags.length ? `, ${flags.join(' | ')}` : '';
+}
 
 function isRegExp(obj: any): obj is RegExp {
   return obj instanceof RegExp;

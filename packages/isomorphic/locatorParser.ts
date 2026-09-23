@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-import { asLocators } from './locatorGenerators';
+import { asLocators, regexFlagNames } from './locatorGenerators';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from './locatorUtils';
-import { parseSelector } from './selectorParser';
+import { parseSelector, stringifySelector } from './selectorParser';
 import { escapeForAttributeSelector, escapeForTextSelector } from './stringUtils';
 
 import type { Language, Quote } from './locatorGenerators';
+import type { ParsedSelector, ParsedSelectorPart } from './selectorParser';
 
-// Locator source code is parsed in two steps:
-//   1. A language-specific parser turns the source into a language-neutral chain of calls,
-//      e.g. `get_by_role("button", name="Submit")` becomes { method: 'getByRole', args: ['button'], options: { name: 'Submit' } }.
-//   2. SelectorBuilder turns the chain of calls into a selector.
+// Locator source code is parsed by a language-specific parser straight into a ParsedSelector.
+// Each language maps its method names to call handlers that turn call arguments into selector parts.
 
-type Value = string | number | boolean | RegExp | LocatorCall[];
+type Value = string | number | boolean | RegExp | ParsedSelector;
 
-type LocatorCall = {
+// Arguments of a single call, collected until the call is converted into selector parts.
+type CallArguments = {
   method: string;
   args: Value[];
   options: Map<string, Value>;
 };
+
+type CallHandler = (call: CallArguments, testIdAttributeName: string) => ParsedSelectorPart[];
 
 type Token =
   | { kind: 'identifier', value: string }
@@ -43,6 +45,7 @@ type Token =
   | { kind: 'end' };
 
 type ParserOptions = {
+  methods: Map<string, CallHandler>;
   quotes: string;
   // Python r"..." strings.
   rawStrings?: boolean;
@@ -107,7 +110,7 @@ function tokenize(source: string, options: ParserOptions): Token[] {
     } else if (options.regexLiterals && char === '/') {
       const regexSource = readString('/', true);
       tokens.push({ kind: 'regex', value: new RegExp(regexSource, match(kRegexFlagsRegex)) });
-    } else if ('(){}.,:='.includes(char)) {
+    } else if ('(){}.,:=|'.includes(char)) {
       tokens.push({ kind: 'punctuation', value: char });
       ++pos;
     } else if ((text = match(kIdentifierRegex))) {
@@ -129,50 +132,68 @@ function isToken(token: Token, kind: 'identifier' | 'punctuation', value: string
 abstract class LocatorParser {
   private _tokens: Token[];
   private _pos = 0;
+  private _methods: Map<string, CallHandler>;
   private _booleans: [string, string];
+  private _testIdAttributeName: string;
 
-  constructor(source: string, options: ParserOptions) {
+  constructor(source: string, options: ParserOptions, testIdAttributeName: string) {
     this._tokens = tokenize(source, options);
+    this._methods = options.methods;
     this._booleans = options.booleans ?? ['true', 'false'];
+    this._testIdAttributeName = testIdAttributeName;
   }
 
-  parse(): { calls: LocatorCall[], preferredQuote: Quote | undefined } {
-    const calls = this.parseChain();
+  parse(): { selector: ParsedSelector, preferredQuote: Quote | undefined } {
+    const selector = this.parseLocator();
     if (this.peek().kind !== 'end')
       this.unexpected();
+    // Same as in parseSelector(), nested selectors like internal:chain cannot be first.
+    if (selector.parts.length && isNestedSelectorPart(selector.parts[0]))
+      throw new Error(`"${selector.parts[0].name}" selector cannot be first`);
     const preferredQuote = this._tokens.find(token => token.kind === 'string')?.quote;
-    return { calls, preferredQuote };
-  }
-
-  // Methods are normalized to their JavaScript names, e.g. `get_by_role` => `getByRole`.
-  protected methodName(identifier: string): string {
-    return identifier;
+    return { selector, preferredQuote };
   }
 
   // Parses a single argument that is either a positional value or an options bag.
-  protected abstract parseArgument(call: LocatorCall): void;
+  protected abstract parseArgument(call: CallArguments): void;
 
   // Parses a language-specific regular expression, e.g. `re.compile(...)`.
   protected parseRegex(): RegExp | undefined {
     return undefined;
   }
 
-  protected parseChain(): LocatorCall[] {
-    const calls = [this.parseCall()];
-    while (this.eat('.'))
-      calls.push(this.parseCall());
-    return calls;
+  protected parseLocator(): ParsedSelector {
+    const parts: ParsedSelectorPart[] = [];
+    // FrameLocator enters the frame lazily, so that first(), last() and nth() apply to the frame element.
+    let inFrameLocator = false;
+    do {
+      const { handler, call } = this.parseCall();
+      if (inFrameLocator && !kFrameElementHandlers.has(handler)) {
+        parts.push(selectorPart('internal:control', 'enter-frame'));
+        inFrameLocator = false;
+      }
+      parts.push(...handler(call, this._testIdAttributeName));
+      if (handler === contentFrameParts || (handler === frameLocatorParts && call.args.length))
+        inFrameLocator = true;
+    } while (this.eat('.'));
+    if (inFrameLocator)
+      parts.push(selectorPart('internal:control', 'enter-frame'));
+    return { parts };
   }
 
-  private parseCall(): LocatorCall {
-    const call: LocatorCall = { method: this.methodName(this.expectIdentifier()), args: [], options: new Map() };
+  private parseCall(): { handler: CallHandler, call: CallArguments } {
+    const method = this.expectIdentifier();
+    const handler = this._methods.get(method);
+    if (!handler)
+      throw new Error(`Unsupported locator method ${method}`);
+    const call: CallArguments = { method, args: [], options: new Map() };
     if (this.eat('(') && !this.eat(')')) {
       do
         this.parseArgument(call);
       while (this.eat(','));
       this.expect(')');
     }
-    return call;
+    return { handler, call };
   }
 
   protected parseValue(): Value {
@@ -193,11 +214,11 @@ abstract class LocatorParser {
       this.expect('.');
       return this.expectIdentifier().toLowerCase();
     }
-    return this.parseRegex() ?? this.parseChain();
+    return this.parseRegex() ?? this.parseLocator();
   }
 
   // Parses `{ name <separator> value, ... }` after the opening brace.
-  protected parseOptionsBag(call: LocatorCall, separator: string, optionName: (identifier: string) => string) {
+  protected parseOptionsBag(call: CallArguments, separator: string, optionName: (identifier: string) => string) {
     while (!this.eat('}')) {
       const name = optionName(this.expectIdentifier());
       this.expect(separator);
@@ -209,16 +230,21 @@ abstract class LocatorParser {
     }
   }
 
-  // Parses `(source[, <flagsEnum>.<ignoreCaseFlag>])`.
-  protected parseRegexArguments(flagsEnum: string, ignoreCaseFlag: string): RegExp {
+  // Parses `(source[, <flagsEnum>.<flag> ( "|" <flagsEnum>.<flag> )*])`.
+  protected parseRegexArguments(flagsEnum: string, flagNames: Record<string, string>): RegExp {
     this.expect('(');
     const source = this.expectString();
     let flags = '';
     if (this.eat(',')) {
-      this.expectIdentifier(flagsEnum);
-      this.expect('.');
-      this.expectIdentifier(ignoreCaseFlag);
-      flags = 'i';
+      do {
+        this.expectIdentifier(flagsEnum);
+        this.expect('.');
+        const name = this.expectIdentifier();
+        const flag = Object.keys(flagNames).find(flag => flagNames[flag] === name);
+        if (!flag)
+          throw new Error(`Unsupported regular expression flag ${flagsEnum}.${name}`);
+        flags += flag;
+      } while (this.eat('|'));
     }
     this.expect(')');
     return new RegExp(source, flags);
@@ -277,11 +303,11 @@ abstract class LocatorParser {
 
 // getByRole('button', { name: /submit/i, exact: true })
 class JavaScriptLocatorParser extends LocatorParser {
-  constructor(source: string) {
-    super(source, { quotes: '\'"`', regexLiterals: true });
+  constructor(source: string, testIdAttributeName: string) {
+    super(source, { methods: kJavaScriptMethods, quotes: '\'"`', regexLiterals: true }, testIdAttributeName);
   }
 
-  protected parseArgument(call: LocatorCall) {
+  protected parseArgument(call: CallArguments) {
     if (this.eat('{'))
       this.parseOptionsBag(call, ':', name => name);
     else
@@ -291,22 +317,18 @@ class JavaScriptLocatorParser extends LocatorParser {
 
 // get_by_role("button", name=re.compile(r"submit", re.IGNORECASE), exact=True)
 class PythonLocatorParser extends LocatorParser {
-  constructor(source: string) {
-    super(source, { quotes: '\'"', rawStrings: true, booleans: ['True', 'False'] });
+  constructor(source: string, testIdAttributeName: string) {
+    super(source, { methods: kPythonMethods, quotes: '\'"', rawStrings: true, booleans: ['True', 'False'] }, testIdAttributeName);
   }
 
-  protected override methodName(identifier: string): string {
-    return snakeToCamelCase(identifier.replace(/_+$/, ''));
-  }
-
-  protected parseArgument(call: LocatorCall) {
+  protected parseArgument(call: CallArguments) {
     if (!isToken(this.peek(1), 'punctuation', '=')) {
       call.args.push(this.parseValue());
       return;
     }
     const name = this.expectIdentifier();
     this.expect('=');
-    call.options.set(snakeToCamelCase(name), this.parseValue());
+    call.options.set(name.replace(/_([a-z])/g, (_, char) => char.toUpperCase()), this.parseValue());
   }
 
   protected override parseRegex(): RegExp | undefined {
@@ -314,17 +336,17 @@ class PythonLocatorParser extends LocatorParser {
       return;
     this.expect('.');
     this.expectIdentifier('compile');
-    return this.parseRegexArguments('re', 'IGNORECASE');
+    return this.parseRegexArguments('re', regexFlagNames.python);
   }
 }
 
 // getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(Pattern.compile("submit", Pattern.CASE_INSENSITIVE)).setExact(true))
 class JavaLocatorParser extends LocatorParser {
-  constructor(source: string) {
-    super(source, { quotes: '"' });
+  constructor(source: string, testIdAttributeName: string) {
+    super(source, { methods: kJavaScriptMethods, quotes: '"' }, testIdAttributeName);
   }
 
-  protected parseArgument(call: LocatorCall) {
+  protected parseArgument(call: CallArguments) {
     if (!this.eatIdentifier('new')) {
       call.args.push(this.parseValue());
       return;
@@ -350,21 +372,17 @@ class JavaLocatorParser extends LocatorParser {
       return;
     this.expect('.');
     this.expectIdentifier('compile');
-    return this.parseRegexArguments('Pattern', 'CASE_INSENSITIVE');
+    return this.parseRegexArguments('Pattern', regexFlagNames.java);
   }
 }
 
 // GetByRole(AriaRole.Button, new() { NameRegex = new Regex("submit", RegexOptions.IgnoreCase), Exact = true })
 class CSharpLocatorParser extends LocatorParser {
-  constructor(source: string) {
-    super(source, { quotes: '"' });
+  constructor(source: string, testIdAttributeName: string) {
+    super(source, { methods: kCSharpMethods, quotes: '"' }, testIdAttributeName);
   }
 
-  protected override methodName(identifier: string): string {
-    return lowerFirst(identifier);
-  }
-
-  protected parseArgument(call: LocatorCall) {
+  protected parseArgument(call: CallArguments) {
     // `new() { ... }` is an options bag, while `new Regex(...)` is a value.
     if (!isToken(this.peek(), 'identifier', 'new') || !isToken(this.peek(1), 'punctuation', '(')) {
       call.args.push(this.parseValue());
@@ -382,11 +400,11 @@ class CSharpLocatorParser extends LocatorParser {
     if (!this.eatIdentifier('new'))
       return;
     this.expectIdentifier('Regex');
-    return this.parseRegexArguments('RegexOptions', 'IgnoreCase');
+    return this.parseRegexArguments('RegexOptions', regexFlagNames.csharp);
   }
 }
 
-const parsers: Partial<Record<Language, new (source: string) => LocatorParser>> = {
+const parsers: Partial<Record<Language, new (source: string, testIdAttributeName: string) => LocatorParser>> = {
   javascript: JavaScriptLocatorParser,
   python: PythonLocatorParser,
   java: JavaLocatorParser,
@@ -394,130 +412,189 @@ const parsers: Partial<Record<Language, new (source: string) => LocatorParser>> 
 };
 
 const kFilterOptions = ['hasText', 'hasNotText', 'has', 'hasNot', 'visible'];
-const kFrameLocatorNthMethods = new Set(['first', 'last', 'nth']);
-const kTextSelectors: Record<string, (text: string | RegExp, options: { exact?: boolean }) => string> = {
-  getByAltText: getByAltTextSelector,
-  getByLabel: getByLabelSelector,
-  getByPlaceholder: getByPlaceholderSelector,
-  getByText: getByTextSelector,
-  getByTitle: getByTitleSelector,
-};
 
-class SelectorBuilder {
-  private _testIdAttributeName: string;
-
-  constructor(testIdAttributeName: string) {
-    this._testIdAttributeName = testIdAttributeName;
-  }
-
-  build(calls: LocatorCall[]): string {
-    const parts: string[] = [];
-    // FrameLocator enters the frame lazily, so that first(), last() and nth() apply to the frame element.
-    let inFrameLocator = false;
-    for (const call of calls) {
-      if (inFrameLocator && !kFrameLocatorNthMethods.has(call.method)) {
-        parts.push('internal:control=enter-frame');
-        inFrameLocator = false;
-      }
-      if (call.method === 'contentFrame') {
-        checkArguments(call, 0, []);
-        inFrameLocator = true;
-        continue;
-      }
-      parts.push(...this._callToSelectorParts(call));
-      if (call.method === 'frameLocator' && call.args.length)
-        inFrameLocator = true;
-    }
-    if (inFrameLocator)
-      parts.push('internal:control=enter-frame');
-    return parts.join(' >> ');
-  }
-
-  private _callToSelectorParts(call: LocatorCall): string[] {
-    const { method } = call;
-    switch (method) {
-      case 'locator': {
-        checkArguments(call, 1, kFilterOptions);
-        const inner = arg(call, 0, (value): value is string | LocatorCall[] => isString(value) || isLocator(value));
-        const selector = isString(inner) ? inner : 'internal:chain=' + JSON.stringify(this.build(inner));
-        return [selector, ...this._filters(call)];
-      }
-      case 'filter':
-        checkArguments(call, 0, kFilterOptions);
-        return this._filters(call);
-      case 'and':
-      case 'or':
-        checkArguments(call, 1, []);
-        return [`internal:${method}=` + JSON.stringify(this.build(arg(call, 0, isLocator)))];
-      case 'frameLocator':
-        checkArguments(call, 1, []);
-        return [call.args.length ? arg(call, 0, isString) : 'internal:control=any-frame'];
-      case 'first':
-        checkArguments(call, 0, []);
-        return ['nth=0'];
-      case 'last':
-        checkArguments(call, 0, []);
-        return ['nth=-1'];
-      case 'nth':
-        checkArguments(call, 1, []);
-        return [`nth=${arg(call, 0, isNumber)}`];
-      case 'visible':
-        checkArguments(call, 0, []);
-        return ['visible=true'];
-      case 'getByRole':
-        return [this._role(call)];
-      case 'getByTestId':
-        checkArguments(call, 1, []);
-        return [getByTestIdSelector(this._testIdAttributeName, arg(call, 0, isText))];
-      case 'getByAltText':
-      case 'getByLabel':
-      case 'getByPlaceholder':
-      case 'getByText':
-      case 'getByTitle':
-        checkArguments(call, 1, ['exact']);
-        return [kTextSelectors[method](arg(call, 0, isText), { exact: option(call, 'exact', isBoolean) })];
-    }
-    throw new Error(`Unsupported locator method ${method}`);
-  }
-
-  private _filters(call: LocatorCall): string[] {
-    const parts: string[] = [];
-    const hasText = option(call, 'hasText', isText);
-    if (hasText !== undefined)
-      parts.push(`internal:has-text=${escapeForTextSelector(hasText, false)}`);
-    const hasNotText = option(call, 'hasNotText', isText);
-    if (hasNotText !== undefined)
-      parts.push(`internal:has-not-text=${escapeForTextSelector(hasNotText, false)}`);
-    const has = option(call, 'has', isLocator);
-    if (has)
-      parts.push(`internal:has=` + JSON.stringify(this.build(has)));
-    const hasNot = option(call, 'hasNot', isLocator);
-    if (hasNot)
-      parts.push(`internal:has-not=` + JSON.stringify(this.build(hasNot)));
-    const visible = option(call, 'visible', isBoolean);
-    if (visible !== undefined)
-      parts.push(`visible=${visible}`);
-    return parts;
-  }
-
-  private _role(call: LocatorCall): string {
-    checkArguments(call, 1, ['name', 'description', 'exact', 'checked', 'disabled', 'expanded', 'includeHidden', 'level', 'pressed', 'selected']);
-    const exact = !!option(call, 'exact', isBoolean);
-    let selector = `internal:role=${arg(call, 0, isString)}`;
-    // Keep the attributes in the source order, so that the selector renders back into the same locator.
-    for (const name of call.options.keys()) {
-      if (name === 'name' || name === 'description')
-        selector += `[${name}=${escapeForAttributeSelector(option(call, name, isText)!, exact)}]`;
-      else if (name === 'level')
-        selector += `[level=${option(call, name, isNumber)}]`;
-      else if (name !== 'exact')
-        selector += `[${name === 'includeHidden' ? 'include-hidden' : name}=${option(call, name, isBoolean)}]`;
-    }
-    return selector;
-  }
+function locatorParts(call: CallArguments): ParsedSelectorPart[] {
+  checkArguments(call, 1, kFilterOptions);
+  const inner = arg(call, 0, (value): value is string | ParsedSelector => isString(value) || isSelector(value));
+  const parts = isString(inner) ? parseSelector(inner).parts : [nestedSelectorPart('internal:chain', inner)];
+  return [...parts, ...filterSelectorParts(call)];
 }
 
-function checkArguments(call: LocatorCall, maxArgs: number, allowedOptions: string[]) {
+function filterParts(call: CallArguments): ParsedSelectorPart[] {
+  checkArguments(call, 0, kFilterOptions);
+  return filterSelectorParts(call);
+}
+
+function nestedParts(name: string): CallHandler {
+  return call => {
+    checkArguments(call, 1, []);
+    return [nestedSelectorPart(name, arg(call, 0, isSelector))];
+  };
+}
+
+function frameLocatorParts(call: CallArguments): ParsedSelectorPart[] {
+  checkArguments(call, 1, []);
+  return call.args.length ? parseSelector(arg(call, 0, isString)).parts : [selectorPart('internal:control', 'any-frame')];
+}
+
+// Entering the frame is deferred by the parser.
+function contentFrameParts(call: CallArguments): ParsedSelectorPart[] {
+  checkArguments(call, 0, []);
+  return [];
+}
+
+function fixedNthParts(index: string): CallHandler {
+  return call => {
+    checkArguments(call, 0, []);
+    return [selectorPart('nth', index)];
+  };
+}
+
+function nthParts(call: CallArguments): ParsedSelectorPart[] {
+  checkArguments(call, 1, []);
+  return [selectorPart('nth', String(arg(call, 0, isNumber)))];
+}
+
+function visibleParts(call: CallArguments): ParsedSelectorPart[] {
+  checkArguments(call, 0, []);
+  return [selectorPart('visible', 'true')];
+}
+
+function getByTestIdParts(call: CallArguments, testIdAttributeName: string): ParsedSelectorPart[] {
+  checkArguments(call, 1, []);
+  return parseSelector(getByTestIdSelector(testIdAttributeName, arg(call, 0, isText))).parts;
+}
+
+function textParts(toSelector: (text: string | RegExp, options: { exact?: boolean }) => string): CallHandler {
+  return call => {
+    checkArguments(call, 1, ['exact']);
+    return parseSelector(toSelector(arg(call, 0, isText), { exact: option(call, 'exact', isBoolean) })).parts;
+  };
+}
+
+const andParts = nestedParts('internal:and');
+const orParts = nestedParts('internal:or');
+const firstParts = fixedNthParts('0');
+const lastParts = fixedNthParts('-1');
+const getByTextParts = textParts(getByTextSelector);
+const getByLabelParts = textParts(getByLabelSelector);
+const getByAltTextParts = textParts(getByAltTextSelector);
+const getByPlaceholderParts = textParts(getByPlaceholderSelector);
+const getByTitleParts = textParts(getByTitleSelector);
+
+// FrameLocator methods that apply to the frame element rather than enter the frame.
+const kFrameElementHandlers = new Set<CallHandler>([firstParts, lastParts, nthParts]);
+
+// JavaScript and Java share the method names.
+const kJavaScriptMethods = new Map<string, CallHandler>([
+  ['locator', locatorParts],
+  ['filter', filterParts],
+  ['and', andParts],
+  ['or', orParts],
+  ['frameLocator', frameLocatorParts],
+  ['contentFrame', contentFrameParts],
+  ['first', firstParts],
+  ['last', lastParts],
+  ['nth', nthParts],
+  ['visible', visibleParts],
+  ['getByRole', getByRoleParts],
+  ['getByText', getByTextParts],
+  ['getByLabel', getByLabelParts],
+  ['getByTestId', getByTestIdParts],
+  ['getByAltText', getByAltTextParts],
+  ['getByPlaceholder', getByPlaceholderParts],
+  ['getByTitle', getByTitleParts],
+]);
+
+const kPythonMethods = new Map<string, CallHandler>([
+  ['locator', locatorParts],
+  ['filter', filterParts],
+  ['and_', andParts],
+  ['or_', orParts],
+  ['frame_locator', frameLocatorParts],
+  ['content_frame', contentFrameParts],
+  ['first', firstParts],
+  ['last', lastParts],
+  ['nth', nthParts],
+  ['visible', visibleParts],
+  ['get_by_role', getByRoleParts],
+  ['get_by_text', getByTextParts],
+  ['get_by_label', getByLabelParts],
+  ['get_by_test_id', getByTestIdParts],
+  ['get_by_alt_text', getByAltTextParts],
+  ['get_by_placeholder', getByPlaceholderParts],
+  ['get_by_title', getByTitleParts],
+]);
+
+const kCSharpMethods = new Map<string, CallHandler>([
+  ['Locator', locatorParts],
+  ['Filter', filterParts],
+  ['And', andParts],
+  ['Or', orParts],
+  ['FrameLocator', frameLocatorParts],
+  ['ContentFrame', contentFrameParts],
+  ['First', firstParts],
+  ['Last', lastParts],
+  ['Nth', nthParts],
+  ['Visible', visibleParts],
+  ['GetByRole', getByRoleParts],
+  ['GetByText', getByTextParts],
+  ['GetByLabel', getByLabelParts],
+  ['GetByTestId', getByTestIdParts],
+  ['GetByAltText', getByAltTextParts],
+  ['GetByPlaceholder', getByPlaceholderParts],
+  ['GetByTitle', getByTitleParts],
+]);
+
+function filterSelectorParts(call: CallArguments): ParsedSelectorPart[] {
+  const parts: ParsedSelectorPart[] = [];
+  const hasText = option(call, 'hasText', isText);
+  if (hasText !== undefined)
+    parts.push(selectorPart('internal:has-text', escapeForTextSelector(hasText, false)));
+  const hasNotText = option(call, 'hasNotText', isText);
+  if (hasNotText !== undefined)
+    parts.push(selectorPart('internal:has-not-text', escapeForTextSelector(hasNotText, false)));
+  const has = option(call, 'has', isSelector);
+  if (has)
+    parts.push(nestedSelectorPart('internal:has', has));
+  const hasNot = option(call, 'hasNot', isSelector);
+  if (hasNot)
+    parts.push(nestedSelectorPart('internal:has-not', hasNot));
+  const visible = option(call, 'visible', isBoolean);
+  if (visible !== undefined)
+    parts.push(selectorPart('visible', String(visible)));
+  return parts;
+}
+
+function getByRoleParts(call: CallArguments): ParsedSelectorPart[] {
+  checkArguments(call, 1, ['name', 'description', 'exact', 'checked', 'disabled', 'expanded', 'includeHidden', 'level', 'pressed', 'selected']);
+  const exact = !!option(call, 'exact', isBoolean);
+  let body = arg(call, 0, isString);
+  // Keep the attributes in the source order, so that the selector renders back into the same locator.
+  for (const name of call.options.keys()) {
+    if (name === 'name' || name === 'description')
+      body += `[${name}=${escapeForAttributeSelector(option(call, name, isText)!, exact)}]`;
+    else if (name === 'level')
+      body += `[level=${option(call, name, isNumber)}]`;
+    else if (name !== 'exact')
+      body += `[${name === 'includeHidden' ? 'include-hidden' : name}=${option(call, name, isBoolean)}]`;
+  }
+  return [selectorPart('internal:role', body)];
+}
+
+function selectorPart(name: string, body: string): ParsedSelectorPart {
+  return { name, body, source: body };
+}
+
+function nestedSelectorPart(name: string, parsed: ParsedSelector): ParsedSelectorPart {
+  return { name, body: { parsed }, source: JSON.stringify(stringifySelector(parsed)) };
+}
+
+function isNestedSelectorPart(part: ParsedSelectorPart): boolean {
+  return typeof part.body === 'object' && 'parsed' in part.body;
+}
+
+function checkArguments(call: CallArguments, maxArgs: number, allowedOptions: string[]) {
   if (call.args.length > maxArgs)
     throw new Error(`Too many arguments for ${call.method}`);
   for (const name of call.options.keys()) {
@@ -526,14 +603,14 @@ function checkArguments(call: LocatorCall, maxArgs: number, allowedOptions: stri
   }
 }
 
-function arg<T extends Value>(call: LocatorCall, index: number, is: (value: Value) => value is T): T {
+function arg<T extends Value>(call: CallArguments, index: number, is: (value: Value) => value is T): T {
   const value = call.args[index];
   if (value === undefined || !is(value))
     throw new Error(`Unexpected argument #${index} for ${call.method}`);
   return value;
 }
 
-function option<T extends Value>(call: LocatorCall, name: string, is: (value: Value) => value is T): T | undefined {
+function option<T extends Value>(call: CallArguments, name: string, is: (value: Value) => value is T): T | undefined {
   const value = call.options.get(name);
   if (value !== undefined && !is(value))
     throw new Error(`Unexpected ${name} option for ${call.method}`);
@@ -556,24 +633,12 @@ function isBoolean(value: Value): value is boolean {
   return typeof value === 'boolean';
 }
 
-function isLocator(value: Value): value is LocatorCall[] {
-  return Array.isArray(value);
-}
-
-function snakeToCamelCase(identifier: string): string {
-  return identifier.replace(/_([a-z])/g, (_, char) => char.toUpperCase());
+function isSelector(value: Value): value is ParsedSelector {
+  return typeof value === 'object' && !(value instanceof RegExp);
 }
 
 function lowerFirst(identifier: string): string {
   return identifier.charAt(0).toLowerCase() + identifier.substring(1);
-}
-
-function parseLocator(language: Language, locator: string, testIdAttributeName: string): { selector: string, preferredQuote: Quote | undefined } {
-  const Parser = parsers[language];
-  if (!Parser)
-    throw new Error(`Parsing ${language} locators is not supported`);
-  const { calls, preferredQuote } = new Parser(locator).parse();
-  return { selector: new SelectorBuilder(testIdAttributeName).build(calls), preferredQuote };
 }
 
 export function locatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string = 'data-testid'): string {
@@ -590,11 +655,14 @@ export function unsafeLocatorOrSelectorAsSelector(language: Language, locator: s
     return locator;
   } catch (e) {
   }
-  const { selector, preferredQuote } = parseLocator(language, locator, testIdAttributeName);
+  const Parser = parsers[language];
+  if (!Parser)
+    return '';
+  const { selector, preferredQuote } = new Parser(locator, testIdAttributeName).parse();
   const locators = asLocators(language, selector, undefined, undefined, preferredQuote);
   const digest = digestForComparison(language, locator);
   if (locators.some(candidate => digestForComparison(language, candidate) === digest))
-    return selector;
+    return stringifySelector(selector);
   return '';
 }
 
