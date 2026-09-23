@@ -211,3 +211,16 @@ Error: The assertion was aborted: stop it
 `);
   }
 });
+
+test('should respect timeout when the page is unresponsive', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42880' } }, async ({ page }) => {
+  test.setTimeout(10000);
+  await page.setContent('<div>hello</div>');
+  await page.evaluate(() => {
+    setTimeout(() => {
+      while (true) {}
+    }, 0);
+  });
+  await new Promise(f => setTimeout(f, 100));
+  const error = await expect(page.locator('div')).toBeVisible({ timeout: 1000 }).catch(e => e);
+  expect(stripAnsi(error.message)).toContain('Timeout:  1000ms');
+});

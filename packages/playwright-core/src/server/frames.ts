@@ -510,6 +510,28 @@ export type FrameEventMap = {
   [FrameEvent.RemoveLifecycle]: [event: types.LifecycleEvent];
 };
 
+// How long the one-shot expect check may keep running after the call has been aborted.
+const kOneShotGracePeriod = 1000;
+
+async function raceWithGracePeriod<T>(progress: Progress, promise: Promise<T>, gracePeriod: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const onAbort = () => {
+    timer = setTimeout(() => rejectOnAbort(progress.signal.reason), gracePeriod);
+  };
+  let rejectOnAbort: (reason: any) => void = () => {};
+  const aborted = new Promise<never>((_, reject) => rejectOnAbort = reject);
+  if (progress.signal.aborted)
+    onAbort();
+  else
+    progress.signal.addEventListener('abort', onAbort, { once: true });
+  try {
+    return await Promise.race([promise, aborted]);
+  } finally {
+    clearTimeout(timer);
+    progress.signal.removeEventListener('abort', onAbort);
+  }
+}
+
 export class Frame extends SdkObject<FrameEventMap> {
   static Events = FrameEvent;
 
@@ -1483,11 +1505,13 @@ export class Frame extends SdkObject<FrameEventMap> {
         progress.log(`waiting for ${this._asLocator(selector)}`);
       await this._page.performActionPreChecks(progress);
 
-      // Step 2: perform one-shot expect check without a timeout.
+      // Step 2: perform one-shot expect check that may run past the deadline.
       // Supports the case of `expect(locator).toBeVisible({ timeout: 1 })`
       // that should succeed when the locator is already visible.
+      // The grace period prevents an unresponsive page (e.g. a blocked event loop)
+      // from holding the call past its timeout.
       try {
-        const resultOneShot = await this._expectInternal(progress, selector, options, lastIntermediateResult, true);
+        const resultOneShot = await raceWithGracePeriod(progress, this._expectInternal(progress, selector, options, lastIntermediateResult, true), kOneShotGracePeriod);
         if (resultOneShot.matches !== options.isNot)
           return;
       } catch (e) {
