@@ -240,6 +240,24 @@ it('should support locator.locator with and/or', async ({ page }) => {
   await expect(page.locator('button').and(page.getByRole('button'))).toHaveText(['three', 'five']);
 });
 
+it('should support locator.within', async ({ page }) => {
+  await page.setContent(`
+    <table>
+      <tr><td>a1</td><td>a2</td><td>a3</td></tr>
+      <tr><td>b1</td><td>b2</td><td>b3</td></tr>
+      <tr><td>c1</td><td>c2</td><td>c3</td></tr>
+    </table>
+    <span>outside</span>
+  `);
+
+  await expect(page.getByRole('cell').within(page.getByRole('row'))).toHaveText(['a1', 'a2', 'a3', 'b1', 'b2', 'b3', 'c1', 'c2', 'c3']);
+  await expect(page.getByRole('cell').nth(1).within(page.getByRole('row'))).toHaveText(['a2', 'b2', 'c2']);
+  await expect(page.getByRole('cell').last().within(page.getByRole('row'))).toHaveText(['a3', 'b3', 'c3']);
+  await expect(page.getByRole('cell').nth(1).within(page.getByRole('row').nth(2))).toHaveText(['c2']);
+  await expect(page.locator('span').within(page.getByRole('row'))).toHaveCount(0);
+  await expect(page.getByRole('cell').nth(1).within(page.getByRole('row')).nth(1)).toHaveText('b2');
+});
+
 it('should allow some, but not all nested frameLocators', async ({ page }) => {
   await page.setContent(`<iframe srcdoc="<span id=target>world</span>"></iframe><span>hello</span>`);
   await expect(page.frameLocator('iframe').locator('span').or(page.frameLocator('iframe').locator('article'))).toHaveText('world');
