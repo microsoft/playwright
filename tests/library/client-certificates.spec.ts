@@ -657,7 +657,10 @@ test.describe('browser', () => {
       } else if (req.url === '/from-fetch-api') {
         res.writeHead(200, {
           'Content-Type': 'text/plain',
-          'Transfer-Encoding': 'chunked'
+          'Transfer-Encoding': 'chunked',
+          // A renegotiated connection must not be reused: a second renegotiation on
+          // the same socket trips Node's tls.CLIENT_RENEG_LIMIT and destroys it.
+          'Connection': 'close'
         });
         res.flushHeaders();
 
@@ -677,7 +680,8 @@ test.describe('browser', () => {
         res.writeHead(200, {
           'Content-Type': 'text/css',
           'Content-Encoding': 'gzip',
-          'Transfer-Encoding': 'chunked'
+          'Transfer-Encoding': 'chunked',
+          'Connection': 'close'
         });
         res.flushHeaders();
 
