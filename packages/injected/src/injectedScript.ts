@@ -665,7 +665,7 @@ export class InjectedScript {
     return element;
   }
 
-  async checkElementStates(node: Node, states: ElementState[]): Promise<'error:notconnected' | { missingState: ElementState } | undefined> {
+  async checkElementStates(node: Node, states: ElementState[], frameVisible: boolean): Promise<'error:notconnected' | { missingState: ElementState } | undefined> {
     if (states.includes('stable')) {
       const stableResult = await this._checkElementIsStable(node);
       if (stableResult === false)
@@ -675,7 +675,7 @@ export class InjectedScript {
     }
     for (const state of states) {
       if (state !== 'stable') {
-        const result = this.elementState(node, state);
+        const result = this.elementState(node, state, frameVisible);
         if (result.received === 'error:notconnected')
           return 'error:notconnected';
         if (!result.matches)
@@ -753,7 +753,9 @@ export class InjectedScript {
     return { queryAll };
   }
 
-  elementState(node: Node, state: ElementStateWithoutStable, frameVisible = true): ElementStateQueryResult {
+  elementState(node: Node, state: ElementStateWithoutStable, frameVisible: boolean): ElementStateQueryResult;
+  elementState(node: Node, state: Exclude<ElementStateWithoutStable, 'visible' | 'hidden'>): ElementStateQueryResult;
+  elementState(node: Node, state: ElementStateWithoutStable, frameVisible?: boolean): ElementStateQueryResult {
     const element = this.retarget(node, ['visible', 'hidden'].includes(state) ? 'none' : 'follow-label');
     if (!element || !element.isConnected) {
       if (state === 'hidden')
@@ -762,7 +764,7 @@ export class InjectedScript {
     }
 
     if (state === 'visible' || state === 'hidden') {
-      const visible = frameVisible && isElementVisible(element);
+      const visible = !!frameVisible && isElementVisible(element);
       return {
         matches: state === 'visible' ? visible : !visible,
         received: visible ? 'visible' : 'hidden'
