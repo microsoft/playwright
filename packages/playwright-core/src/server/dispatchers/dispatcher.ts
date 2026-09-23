@@ -21,11 +21,9 @@ import { eventsHelper } from '@utils/eventsHelper';
 import { isUnderTest } from '@utils/debug';
 import { assert } from '@isomorphic/assert';
 import { monotonicTime } from '@isomorphic/time';
-import { rewriteErrorMessage } from '@utils/stackTrace';
 import { ValidationError, createMetadataValidator, createWaitInfoValidator, findValidator, maybeFindValidator } from '@protocol/validator';
-import { AbortError, TargetClosedError, isTargetClosedError, serializeError } from '../errors';
+import { AbortError, TargetClosedError, rewriteErrorForClosedTarget, serializeError } from '../errors';
 import { createRootSdkObject, SdkObject } from '../instrumentation';
-import { isProtocolError } from '../protocolError';
 import { compressCallLog } from '../callLog';
 import { Progress, ProgressController } from '../progress';
 
@@ -379,16 +377,7 @@ export class DispatcherConnection {
       response.result = validator(result, '', this._validatorToWireContext());
       callMetadata.result = result;
     } catch (e) {
-      if (isTargetClosedError(e)) {
-        const reason = sdkObject.closeReason();
-        if (reason)
-          rewriteErrorMessage(e, reason);
-      } else if (isProtocolError(e)) {
-        if (e.type === 'closed')
-          e = new TargetClosedError(sdkObject.closeReason(), e.browserLogMessage());
-        else if (e.type === 'crashed')
-          rewriteErrorMessage(e, 'Target crashed ' + e.browserLogMessage());
-      }
+      e = rewriteErrorForClosedTarget(e, sdkObject.closeReason());
       response.error = serializeError(e);
       const detailsValidator = maybeFindValidator(dispatcher._type, method, 'ErrorDetails');
       if (detailsValidator)

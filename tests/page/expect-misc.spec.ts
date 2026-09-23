@@ -675,3 +675,13 @@ test('should report expect error details when page closes during expect', async 
   expect(stripAnsi(error.message)).toContain('Expected: "world"');
   expect(stripAnsi(error.message)).toContain('Received: "hello"');
 });
+
+test('should report page close reason when page closes during expect', async ({ page }) => {
+  await page.setContent(`<div>hello</div>`);
+  const promise = expect(page.locator('non-existent')).toHaveText('world', { timeout: 10000 }).catch((e: Error) => e);
+  await page.close({ reason: 'Bye bye.' });
+  const error = await promise as Error;
+  expect(stripAnsi(error.message)).toContain('expect(locator).toHaveText(expected) failed');
+  expect(stripAnsi(error.message)).toContain('Bye bye.');
+  expect(stripAnsi(error.message)).not.toContain('Internal server error');
+});

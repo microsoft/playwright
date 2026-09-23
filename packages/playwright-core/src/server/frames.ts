@@ -28,7 +28,7 @@ import { constructURLBasedOnBaseURL } from '@isomorphic/urlMatch';
 import { createGuid } from '@utils/crypto';
 import { BrowserContext } from './browserContext';
 import * as dom from './dom';
-import { EvaluationStalledError, TimeoutError, isTargetClosedError } from './errors';
+import { EvaluationStalledError, TimeoutError, isTargetClosedError, rewriteErrorForClosedTarget } from './errors';
 import { prepareFilesForUpload } from './fileUploadUtils';
 import { FrameSelectors } from './frameSelectors';
 import { helper } from './helper';
@@ -1509,6 +1509,9 @@ export class Frame extends SdkObject<FrameEventMap> {
         return { matches, received };
       });
     } catch (e) {
+      const closedError = isTargetClosedError(e) || isSessionClosedError(e) ? rewriteErrorForClosedTarget(e, this.closeReason()) : undefined;
+      if (closedError)
+        progress.log(closedError.message);
       const details: ExpectErrorDetails = {};
       if (isInvalidSelectorError(e) || dom.isNonRecoverableDOMError(e)) {
         details.customErrorMessage = e.message;
@@ -1517,9 +1520,9 @@ export class Frame extends SdkObject<FrameEventMap> {
       } else if (lastIntermediateResult.isSet) {
         details.received = lastIntermediateResult.received;
         details.customErrorMessage = lastIntermediateResult.errorMessage;
+      } else if (closedError) {
+        details.customErrorMessage = closedError.message;
       }
-      if (isTargetClosedError(e) || isSessionClosedError(e))
-        progress.log(e.message);
       if (e instanceof TimeoutError)
         details.timedOut = true;
       throw new ExpectError(details);
