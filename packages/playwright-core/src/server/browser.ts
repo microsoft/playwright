@@ -18,7 +18,7 @@ import fs from 'fs';
 
 import { makeSocketPath } from '@utils/fileUtils';
 import { createGuid } from '@utils/crypto';
-import { BrowserContext, effectiveProxy, validateBrowserContextOptions } from './browserContext';
+import { BrowserContext, validateBrowserContextOptions } from './browserContext';
 import { Download } from './download';
 import { SdkObject } from './instrumentation';
 import { Page } from './page';
@@ -108,7 +108,7 @@ export abstract class Browser extends SdkObject {
     let context: BrowserContext | undefined;
     try {
       if (options.clientCertificates?.length) {
-        clientCertificatesProxy = await ClientCertificatesProxy.create(progress, { ...options, proxy: effectiveProxy(options.proxy, this.options.proxy) });
+        clientCertificatesProxy = await ClientCertificatesProxy.create(progress, { ...options, proxy: options.proxy || this.options.proxy });
         options = { ...options, proxyOverride: clientCertificatesProxy.proxySettings(), internalIgnoreHTTPSErrors: true };
       }
       context = await progress.race(this.doCreateNewContext(options));

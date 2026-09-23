@@ -42,6 +42,31 @@ it('should work when passing the proxy only on the context level', async ({ brow
   }
 });
 
+for (const launchProxy of ['per-context', 'http://per-context']) {
+  it(`should ignore legacy '${launchProxy}' launch proxy`, async ({ browserType, server, proxyServer }) => {
+    proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
+    const browser = await browserType.launch({ proxy: { server: launchProxy } });
+    try {
+      const context = await browser.newContext({ proxy: { server: proxyServer.HOST } });
+      const page = await context.newPage();
+      await page.goto('http://non-existent.com/target.html');
+      expect(await page.title()).toBe('Served by the proxy');
+      const response = await context.request.get('http://non-existent.com/target.html');
+      expect(await response.text()).toContain('Served by the proxy');
+      expect(proxyServer.connectHosts).toContain('non-existent.com:80');
+
+      const directContext = await browser.newContext();
+      const directPage = await directContext.newPage();
+      await directPage.goto(server.PREFIX + '/target.html');
+      expect(await directPage.title()).toBe('Served by the proxy');
+      const directResponse = await directContext.request.get(server.PREFIX + '/target.html');
+      expect(directResponse.ok()).toBe(true);
+    } finally {
+      await browser.close();
+    }
+  });
+}
+
 it('should throw for bad server value', async ({ contextFactory }) => {
   const error = await contextFactory({
     // @ts-expect-error server must be a string
