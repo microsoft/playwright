@@ -781,3 +781,53 @@ test('should connect over CDP using a ConnectionTransport', async ({ browserType
     await browserServer.close();
   }
 });
+
+test('should not wait for a pre-existing page whose renderer never responds', async ({ browserType, server }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({ args: ['--remote-debugging-port=' + port] });
+  try {
+    const first = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
+    const responsive = await first.contexts()[0].newPage();
+    await responsive.goto(server.EMPTY_PAGE);
+    // A renderer that is busy forever stands in for a tab frozen by Memory Saver: it never answers page-level CDP.
+    const frozen = await first.contexts()[0].newPage();
+    await frozen.goto('data:text/html,<script>setTimeout(() => { for (;;) {} }, 100)</script>');
+    await new Promise(f => setTimeout(f, 500));
+
+    const second = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`, { timeout: 15000 });
+    const urls = second.contexts()[0].pages().map(page => page.url());
+    expect(urls).toContain(server.EMPTY_PAGE);
+    expect(urls.filter(url => url.startsWith('data:'))).toEqual([]);
+    await second.close();
+    await first.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
+test('should report a pre-existing page once its renderer responds, with context updates made meanwhile', async ({ browserType, server }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({ args: ['--remote-debugging-port=' + port] });
+  try {
+    const first = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
+    const sleeping = await first.contexts()[0].newPage();
+    // Busy for well past the grace period connect gives an unresponsive page, then wakes up.
+    await sleeping.goto('data:text/html,<script>setTimeout(() => { const end = Date.now() + 6000; while (Date.now() < end) {} }, 100)</script>');
+    await new Promise(f => setTimeout(f, 500));
+
+    const second = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`, { timeout: 15000 });
+    const context = second.contexts()[0];
+    expect(context.pages().filter(page => page.url().startsWith('data:'))).toEqual([]);
+    const pagePromise = context.waitForEvent('page', { timeout: 15000 });
+    // Added while the page is still unresponsive, so it only reaches the page once it wakes.
+    await context.addInitScript(() => (window as any).__addedWhileAsleep = 'yes');
+    const woken = await pagePromise;
+    expect(woken.url()).toMatch(/^data:/);
+    await woken.goto(server.EMPTY_PAGE);
+    expect(await woken.evaluate(() => (window as any).__addedWhileAsleep)).toBe('yes');
+    await second.close();
+    await first.close();
+  } finally {
+    await browserServer.close();
+  }
+});
