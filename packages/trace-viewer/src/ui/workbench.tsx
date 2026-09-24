@@ -168,6 +168,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
   }, [model]);
 
   const playback = usePlayback(actions || [], selectedAction, onActionSelected, selectedTime, boundaries);
+  const { showSelectedAction } = playback;
 
   const selectPropertiesTab = React.useCallback((tab: string) => {
     setSelectedPropertiesTab(tab);
@@ -180,9 +181,9 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
       selectPropertiesTab('inspector');
     // Inspecting works against the DOM snapshot, not the screencast frame.
     if (value)
-      playback.showSelectedAction();
+      showSelectedAction();
     setIsInspectingState(value);
-  }, [setIsInspectingState, selectPropertiesTab, isInspecting, playback.showSelectedAction]);
+  }, [setIsInspectingState, selectPropertiesTab, isInspecting, showSelectedAction]);
 
   const elementPicked = React.useCallback((element: HighlightedElement) => {
     setHighlightedElement(element);
