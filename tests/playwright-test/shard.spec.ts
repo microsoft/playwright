@@ -357,3 +357,59 @@ test('should respect custom shard weights', async ({ runInlineTest }) => {
     ]);
   });
 });
+
+test('should not count statically skipped tests when sharding', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42875' });
+  const tests = {
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test.describe.configure({ mode: 'parallel' });
+      test.skip('skip1', async () => {});
+      test.fixme('skip2', async () => {});
+      test.describe.skip('suite', () => {
+        test('skip3', async () => {});
+        test('skip4', async () => {});
+      });
+    `,
+    'b.spec.ts': `
+      import { test } from '@playwright/test';
+      test.describe.configure({ mode: 'parallel' });
+      for (let i = 1; i <= 4; i++) {
+        test('test' + i, async () => {
+          console.log('\\n%%b-test' + i + '-done');
+        });
+      }
+    `,
+  };
+
+  await test.step('shard 1', async () => {
+    const result = await runInlineTest(tests, { shard: '1/2', workers: 1 });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(2);
+    expect(result.skipped).toBe(4);
+    expect(result.outputLines).toEqual(['b-test1-done', 'b-test2-done']);
+  });
+  await test.step('shard 2', async () => {
+    const result = await runInlineTest(tests, { shard: '2/2', workers: 1 });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(2);
+    expect(result.skipped).toBe(0);
+    expect(result.outputLines).toEqual(['b-test3-done', 'b-test4-done']);
+  });
+});
+
+test('should shard when all tests are skipped', async ({ runInlineTest }) => {
+  const tests = {
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test.describe.configure({ mode: 'parallel' });
+      test.skip('skip1', async () => {});
+      test.skip('skip2', async () => {});
+    `,
+  };
+  for (const shard of ['1/2', '2/2']) {
+    const result = await runInlineTest(tests, { shard, workers: 1 });
+    expect(result.exitCode).toBe(0);
+    expect(result.skipped).toBe(1);
+  }
+});

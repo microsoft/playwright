@@ -44,6 +44,7 @@ Without the fullyParallel setting, Playwright Test defaults to file-level granul
 - **With** `fullyParallel: true`: Tests are split at the individual test level, leading to more balanced shard execution.
 - **Without** `fullyParallel`: Tests are split at the file level, so to balance the shards, it's important to keep your test files small and evenly sized.
 - To ensure the most effective use of sharding, especially in CI environments, it is recommended to use `fullyParallel: true` when aiming for balanced distribution across shards. Otherwise, you may need to manually organize your test files to avoid imbalances.
+- Tests that are statically skipped, for example with [`method: Test.skip`] or [`method: Test.fixme`], are not counted when balancing shards, because they do not run.
 
 ## Merging reports from multiple shards
 
