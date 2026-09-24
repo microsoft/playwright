@@ -86,7 +86,7 @@ const reload = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    await tab.page.reload(tab.navigationTimeoutOptions);
+    await tab.reload();
     response.setIncludeSnapshot();
     response.addCode(`await page.reload();`);
   },
