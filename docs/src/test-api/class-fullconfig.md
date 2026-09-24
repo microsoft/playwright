@@ -19,7 +19,7 @@ any argument-parsing library.
 * since: v1.20
 - type: ?<[string]>
 
-Path to the configuration file used to run the tests. The value is `undefined` if no config file was used.
+Path to the configuration file used to run the tests. The value is an empty string if no config file was used.
 
 ## property: FullConfig.failOnFlakyTests
 * since: v1.61
