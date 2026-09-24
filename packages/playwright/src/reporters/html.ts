@@ -177,7 +177,10 @@ class HtmlReporter implements ReporterV2 {
       await showHTMLReport(this._outputFolder, this._host, this._port, singleTestId);
     } else if (this._options._mode === 'test' && !!process.stdin.isTTY) {
       const packageManagerCommand = getPackageManagerExecCommand();
-      const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
+      // npm sets INIT_CWD to "the full path you were in when you ran npm run".
+      const invocationDir = process.env.INIT_CWD || process.cwd();
+      const isDefaultFolder = invocationDir === process.cwd() && this._outputFolder === standaloneDefaultFolder();
+      const relativeReportPath = isDefaultFolder ? '' : ' ' + (path.relative(invocationDir, this._outputFolder) || '.');
       const hostArg = this._host ? ` --host ${this._host}` : '';
       const portArg = this._port ? ` --port ${this._port}` : '';
       writeLine('');
