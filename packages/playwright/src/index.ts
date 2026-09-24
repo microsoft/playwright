@@ -881,7 +881,7 @@ async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: Br
   const fontSize = testAnnotate.fontSize ?? 14;
   const level = testAnnotate.level ?? 'step';
 
-  const updateOverlay = async () => {
+  const doUpdateOverlay = async () => {
     const parts = level === 'step' ? [...testTitle, ...stepStack] : testTitle;
     const html = createTestOverlay(parts, position, fontSize);
     for (const page of context.pages()) {
@@ -890,6 +890,12 @@ async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: Br
       const disposable = await page.screencast.showOverlay(html);
       overlays.set(page, disposable);
     }
+  };
+  let lastUpdate = Promise.resolve();
+  const updateOverlay = () => {
+    const result = lastUpdate.then(doUpdateOverlay);
+    lastUpdate = result.catch(() => {});
+    return result;
   };
   testInfo._onUserStepBegin = async title => {
     stepStack.push(title);

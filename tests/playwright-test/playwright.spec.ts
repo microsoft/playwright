@@ -618,6 +618,26 @@ test('should work with video: retain-on-first-failure', async ({ runInlineTest }
   expect(fs.readdirSync(dirRetry).find(file => file.endsWith('webm'))).toBeFalsy();
 });
 
+test('should show a single test overlay when a step starts right after page creation', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { video: { mode: 'on', show: { test: { level: 'step' } } } }, name: 'chromium' };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('my test', async ({ page }) => {
+        await test.step('first step', async () => {
+          const lines = await page.locator('.x-pw-user-overlay').evaluateAll(els => els.map(el => el.innerText.split('\\n')));
+          expect(lines).toEqual([['a.test.ts', 'my test', 'first step']]);
+        });
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should work with video: retain-on-failure-and-retries', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
