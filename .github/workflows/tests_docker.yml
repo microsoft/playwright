@@ -49,7 +49,7 @@ jobs:
     # main repo, where the secrets are present; forks fall back to Docker Hub.
     - name: Azure Login
       if: ${{ github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
+      uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
       with:
         client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
