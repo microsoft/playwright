@@ -156,7 +156,9 @@ const rule = createRule({
         if (!isInProgressFunction())
           return;
 
-        const awaited = node.argument;
+        let awaited = node.argument;
+        if (awaited.type === 'ChainExpression')
+          awaited = awaited.expression;
 
         // await progress.anything(...) is always fine — calls on the progress object itself.
         if (awaited.type === 'CallExpression' &&
