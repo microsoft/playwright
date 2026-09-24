@@ -302,6 +302,9 @@ export abstract class BrowserType extends SdkObject {
       headless = false;
     if (downloadsPath && !path.isAbsolute(downloadsPath))
       downloadsPath = path.join(process.cwd(), downloadsPath);
+    // Legacy placeholder for "every context sets its own proxy", no longer required.
+    if (proxy?.server === 'per-context' || proxy?.server === 'http://per-context')
+      proxy = undefined;
     if (options.socksProxyPort)
       proxy = { server: `socks5://127.0.0.1:${options.socksProxyPort}` };
     return { ...options, headless, downloadsPath, proxy };

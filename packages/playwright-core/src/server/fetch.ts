@@ -168,13 +168,6 @@ export abstract class APIRequestContext extends SdkObject {
     this.emit(APIRequestContext.Events.Dispose);
   }
 
-  private _proxyAgentForUrl(url: URL): http.Agent | undefined {
-    const proxy = this._defaultOptions().proxy;
-    // We skip 'per-context' in order to not break existing users. 'per-context' was previously used to
-    // workaround an upstream Chromium bug. Can be removed in the future.
-    return createProxyAgent(proxy?.server === 'per-context' ? undefined : proxy, url);
-  }
-
   private _ensureAgent(protocol: string): http.Agent {
     let agent = this._agentForProtocol.get(protocol);
     if (!agent) {
@@ -367,7 +360,7 @@ export abstract class APIRequestContext extends SdkObject {
         ...options,
         ...happyEyeballsOptions,
         ...getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, url.origin),
-        agent: this._proxyAgentForUrl(url) ?? this._ensureAgent(url.protocol),
+        agent: createProxyAgent(this._defaultOptions().proxy, url) ?? this._ensureAgent(url.protocol),
       };
       if (options.__testHookLookup)
         requestOptions.lookup = lookupWithTestHook(options.__testHookLookup);
