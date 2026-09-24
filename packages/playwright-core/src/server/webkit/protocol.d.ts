@@ -586,7 +586,7 @@ export namespace Protocol {
        */
       groupings?: Grouping[];
       /**
-       * <code>true</code> if this style is for a rule implicitly wrapping properties declared inside of CSSGrouping.
+       * <code>true</code> if this is a nested declarations rule holding declarations interleaved with other rules inside a style rule or nested grouping rule. Such a rule has no selector of its own, it matches whatever its nesting parent style rule matches.
        */
       isImplicitlyNested?: boolean;
     }
