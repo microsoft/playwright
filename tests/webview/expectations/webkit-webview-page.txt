@@ -363,7 +363,6 @@ page/page-aria-snapshot-ai.spec.ts › should snapshot a locator inside an ifram
 # Unexpected pass: test.fail(webkit) expects ephemeral CacheStorage, but the iOS
 # WebView uses the persistent default data store, so the entry survives reload.
 page/page-cache-storage.spec.ts › CacheStorage entry should survive page.reload() [fail]
-page/page-click.spec.ts › should not wait with noAutoWaiting 2 [fail]
 page/page-emulate-media.spec.ts › should report hover and fine pointer for desktop [fail]
 # evaluate() function arguments (#41801) work in the main frame, but the
 # callback bridge is not wired for subframes, so the evaluate never resolves.
