@@ -850,9 +850,9 @@ export class Frame extends SdkObject<FrameEventMap> {
       if (scope && await progress.race(scope.evaluateInUtility(([injected, node]) => node.isConnected, {})) !== true)
         throw new dom.NonRecoverableDOMError('Element is not attached to the DOM');
 
-      const resolved = await progress.race(this.selectors.callOnSelectorHandle(selector, { ...options, scope }, ({ injected, elements }) => {
+      const resolved = await progress.race(this.selectors.callOnSelectorHandle(selector, { ...options, scope }, ({ injected, elements, frameVisible }) => {
         const element: Element | undefined  = elements[0];
-        const visible = element ? injected.utils.isElementVisible(element) : false;
+        const visible = element ? injected.elementState(element, 'visible', frameVisible).matches : false;
         let log = '';
         if (elements.length > 1)
           log = `  locator resolved to ${elements.length} elements. Proceeding with the first one: ${injected.previewNode(elements[0])}`;
@@ -1193,11 +1193,12 @@ export class Frame extends SdkObject<FrameEventMap> {
   private async _retryWithProgressIfNotConnected<R>(
     progress: Progress,
     selector: string,
-    options: { strict?: boolean, noAutoWaiting?: boolean, force?: boolean, performActionPreChecks?: boolean },
-    action: (progress: Progress, handle: dom.ElementHandle<Element>, box?: types.Rect) => Promise<R | 'error:notconnected'>): Promise<R> {
+    options: { strict?: boolean, noAutoWaiting?: boolean, force?: boolean, performActionPreChecks?: boolean, waitForFrameVisible?: boolean },
+    action: (progress: Progress, handle: dom.ElementHandle<Element>, box: types.Rect | undefined, frameVisible: boolean) => Promise<R | 'error:notconnected'>): Promise<R> {
     progress.log(`waiting for ${this._asLocator(selector)}`);
     const noAutoWaiting = (options as any).__testHookNoAutoWaiting ?? options.noAutoWaiting;
     const performActionPreChecks = (options.performActionPreChecks ?? !options.force) && !noAutoWaiting;
+    const waitForFrameVisible = options.waitForFrameVisible && !options.force;
     return this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
       if (performActionPreChecks)
         await this._page.performActionPreChecks(progress);
@@ -1227,10 +1228,17 @@ export class Frame extends SdkObject<FrameEventMap> {
         result.dispose();
         return continuePolling;
       }
+      if (waitForFrameVisible && !resolved.frameVisible) {
+        if (noAutoWaiting)
+          throw new dom.NonRecoverableDOMError('Element is not visible');
+        progress.log('  element is inside a hidden frame, retrying');
+        result.dispose();
+        return continuePolling;
+      }
       const element = await progress.race(result.evaluateHandle(r => r.element)) as dom.ElementHandle<Element>;
       result.dispose();
       try {
-        const result = await action(progress, element, box);
+        const result = await action(progress, element, box, resolved.frameVisible);
         if (result === 'error:notconnected') {
           if (noAutoWaiting)
             throw new dom.NonRecoverableDOMError('Element is not attached to the DOM');
@@ -1245,22 +1253,22 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async rafrafTimeoutScreenshotElementWithProgress(progress: Progress, selector: string, timeout: number, options: ScreenshotOptions): Promise<Buffer> {
-    return await this._retryWithProgressIfNotConnected(progress, selector, { strict: true, performActionPreChecks: true }, async (progress, handle) => {
+    return await this._retryWithProgressIfNotConnected(progress, selector, { strict: true, performActionPreChecks: true, waitForFrameVisible: true }, async (progress, handle, box, frameVisible) => {
       await handle._frame.rafrafTimeout(progress, timeout);
-      return await this._page.screenshotter.screenshotElement(progress, handle, options);
+      return await this._page.screenshotter.screenshotElement(progress, handle, options, frameVisible);
     });
   }
 
   async click(progress: Progress, selector: string, options: { noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._click(progress, { ...options, waitAfter: !options.noWaitAfter })));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, { ...options, waitForFrameVisible: true }, (progress, handle, box, frameVisible) => handle._click(progress, { ...options, waitAfter: !options.noWaitAfter }, frameVisible)));
   }
 
   async dblclick(progress: Progress, selector: string, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._dblclick(progress, options)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, { ...options, waitForFrameVisible: true }, (progress, handle, box, frameVisible) => handle._dblclick(progress, options, frameVisible)));
   }
 
   async dragAndDrop(progress: Progress, source: string, target: string, options: types.DragActionOptions & types.PointerActionWaitOptions) {
-    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, options, async (progress, handle) => {
+    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, { ...options, waitForFrameVisible: true }, async (progress, handle, box, frameVisible) => {
       return handle._retryPointerAction(progress, 'move and down', false, async (progress, point) => {
         await this._page.mouse.move(progress, point.x, point.y);
         await this._page.mouse.down(progress);
@@ -1268,10 +1276,10 @@ export class Frame extends SdkObject<FrameEventMap> {
         ...options,
         waitAfter: 'disabled',
         position: options.sourcePosition,
-      });
+      }, frameVisible);
     }));
     // Note: do not perform locator handlers checkpoint to avoid moving the mouse in the middle of a drag operation.
-    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, { ...options, performActionPreChecks: false }, async (progress, handle) => {
+    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, { ...options, performActionPreChecks: false, waitForFrameVisible: true }, async (progress, handle, box, frameVisible) => {
       return handle._retryPointerAction(progress, 'move and up', false, async (progress, point) => {
         await this._page.mouse.move(progress, point.x, point.y, { steps: options.steps });
         await this._page.mouse.up(progress);
@@ -1279,18 +1287,18 @@ export class Frame extends SdkObject<FrameEventMap> {
         ...options,
         waitAfter: 'disabled',
         position: options.targetPosition,
-      });
+      }, frameVisible);
     }));
   }
 
   async tap(progress: Progress, selector: string, options: types.PointerActionWaitOptions) {
     if (!this._page.browserContext._options.hasTouch)
       throw new Error('The page does not support tap. Use hasTouch context option to enable touch support.');
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._tap(progress, options)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, { ...options, waitForFrameVisible: true }, (progress, handle, box, frameVisible) => handle._tap(progress, options, frameVisible)));
   }
 
   async fill(progress: Progress, selector: string, value: string, options: types.CommonActionOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle, box) => handle._fill(progress, value, options, box)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, { ...options, waitForFrameVisible: true }, (progress, handle, box, frameVisible) => handle._fill(progress, value, options, frameVisible, box)));
   }
 
   async focus(progress: Progress, selector: string, options: types.StrictOptions & { noAutoWaiting?: boolean }) {
@@ -1365,7 +1373,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return result;
   }
 
-  private async _elementState(progress: Progress, selector: string, state: ElementStateWithoutStable, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<boolean> {
+  private async _elementState(progress: Progress, selector: string, state: Exclude<ElementStateWithoutStable, 'visible' | 'hidden'>, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<boolean> {
     const { result } = await this._waitForFunctionOnSelector(progress, selector, (injected, element, data) => {
       return { result: injected.elementState(element, data.state) };
     }, { state }, options, scope);
@@ -1381,8 +1389,8 @@ export class Frame extends SdkObject<FrameEventMap> {
 
   async isVisibleInternal(progress: Progress, selector: string, options: types.StrictOptions = {}, scope?: dom.ElementHandle): Promise<boolean> {
     try {
-      const resolved = await progress.race(this.selectors.callOnSelector(selector, { ...options, scope }, ({ injected, elements }) => {
-        return injected.elementState(elements[0], 'visible').matches;
+      const resolved = await progress.race(this.selectors.callOnSelector(selector, { ...options, scope }, ({ injected, elements, frameVisible }) => {
+        return injected.elementState(elements[0], 'visible', frameVisible).matches;
       }, {}));
       if (!resolved)
         return false;
@@ -1415,11 +1423,11 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async hover(progress: Progress, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._hover(progress, options)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, { ...options, waitForFrameVisible: true }, (progress, handle, box, frameVisible) => handle._hover(progress, options, frameVisible)));
   }
 
   async selectOption(progress: Progress, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[]> {
-    return await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle, box) => handle._selectOption(progress, elements, values, options, box));
+    return await this._retryWithProgressIfNotConnected(progress, selector, { ...options, waitForFrameVisible: true }, (progress, handle, box, frameVisible) => handle._selectOption(progress, elements, values, options, frameVisible, box));
   }
 
   async setInputFiles(progress: Progress, selector: string, params: Omit<channels.FrameSetInputFilesParams, 'timeout'> & { noAutoWaiting?: boolean }): Promise<channels.FrameSetInputFilesResult> {
@@ -1434,7 +1442,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       throw new Error('At least one of "files" or "data" must be provided.');
     const inputFileItems = hasFiles ? await progress.race(prepareFilesForUpload(this, params)) : { filePayloads: undefined, localPaths: undefined };
     const data = params.data ?? [];
-    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._drop(progress, inputFileItems, data, options)));
+    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, { ...options, waitForFrameVisible: true }, (progress, handle, box, frameVisible) => handle._drop(progress, inputFileItems, data, options, frameVisible)));
   }
 
   async type(progress: Progress, selector: string, text: string, options: { delay?: number, noAutoWaiting?: boolean } & types.StrictOptions) {
@@ -1446,11 +1454,11 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async check(progress: Progress, selector: string, options: types.PointerActionWaitOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._setChecked(progress, true, options)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, { ...options, waitForFrameVisible: true }, (progress, handle, box, frameVisible) => handle._setChecked(progress, true, options, frameVisible)));
   }
 
   async uncheck(progress: Progress, selector: string, options: types.PointerActionWaitOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._setChecked(progress, false, options)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, { ...options, waitForFrameVisible: true }, (progress, handle, box, frameVisible) => handle._setChecked(progress, false, options, frameVisible)));
   }
 
   async waitForTimeout(progress: Progress, timeout: number) {
@@ -1543,12 +1551,12 @@ export class Frame extends SdkObject<FrameEventMap> {
     let missingReceived = false;
 
     // Non-array expectations are strict (callOnSelector throws on multiple); array ones are not.
-    const resolved = await progress.race(this.selectors.callOnSelector(effectiveSelector, { strict: !isArray, mainWorld, markTargets: 'all' }, async ({ injected, elements }, options) => {
+    const resolved = await progress.race(this.selectors.callOnSelector(effectiveSelector, { strict: !isArray, mainWorld, markTargets: 'all' }, async ({ injected, elements, frameVisible }, options) => {
       const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
       const log = isArray
         ? `  locator resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`
         : `  locator resolved to ${injected.previewNode(elements[0])}`;
-      return { log, ...await injected.expect(elements[0], options, elements) };
+      return { log, ...await injected.expect(elements[0], options, elements, frameVisible) };
     }, options));
 
     if (resolved) {

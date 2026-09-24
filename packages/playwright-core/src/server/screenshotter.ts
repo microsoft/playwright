@@ -221,7 +221,7 @@ export class Screenshotter {
     });
   }
 
-  async screenshotElement(progress: Progress, handle: dom.ElementHandle, options: ScreenshotOptions): Promise<Buffer> {
+  async screenshotElement(progress: Progress, handle: dom.ElementHandle, options: ScreenshotOptions, frameVisible: boolean): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
     return this._queue._postTask(async () => {
       progress.log('taking element screenshot');
@@ -229,7 +229,7 @@ export class Screenshotter {
 
       await this._preparePageForScreenshot(progress, handle._frame, options.style, options.caret !== 'initial', options.animations === 'disabled');
       try {
-        await handle._waitAndScrollIntoViewIfNeeded(progress, true /* waitForVisible */);
+        await handle._waitAndScrollIntoViewIfNeeded(progress, true /* waitForVisible */, frameVisible);
 
         const boundingBox = await handle.boundingBox(progress);
         assert(boundingBox, 'Node is either not visible or not an HTMLElement');

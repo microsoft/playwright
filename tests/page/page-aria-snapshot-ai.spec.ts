@@ -971,3 +971,18 @@ it('should only annotate the top element in a hidden subtree', { annotation: { t
       - paragraph [ref=e4]: Paragraph
   `);
 });
+
+it('should not include hidden iframes', async ({ page }) => {
+  await page.setContent(`
+    <iframe name="visible" srcdoc="<button>Visible</button>"></iframe>
+    <iframe name="hidden" style="visibility: hidden" srcdoc="<button>Hidden</button>"></iframe>
+    <iframe name="none" style="display: none" srcdoc="<button>None</button>"></iframe>
+  `);
+  const snapshot = await snapshotForAI(page);
+  expect(snapshot).toContainYaml(`
+    - iframe [ref=e2]:
+      - button "Visible" [ref=f1e2]
+  `);
+  expect(snapshot).not.toContain('Hidden');
+  expect(snapshot).not.toContain('None');
+});

@@ -813,3 +813,14 @@ it('should not include box when option is omitted', async ({ page }) => {
   const snapshot = await page.ariaSnapshot();
   expect(snapshot).not.toMatch(/\[box=/);
 });
+
+it('should not include hidden iframes', async ({ page }) => {
+  await page.setContent(`
+    <iframe name="visible" srcdoc="<button>Visible</button>"></iframe>
+    <iframe name="hidden" style="visibility: hidden" srcdoc="<button>Hidden</button>"></iframe>
+    <iframe name="none" style="display: none" srcdoc="<button>None</button>"></iframe>
+  `);
+  expect(await page.ariaSnapshot()).toBe(unshift(`
+    - iframe
+  `));
+});

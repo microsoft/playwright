@@ -526,3 +526,22 @@ it('should support toHaveCount while another iframe is stalled', async ({ page, 
   await expect.poll(() => page.frames().length).toBe(3);
   await expect(page.frameLocator().locator('button')).toHaveCount(1);
 });
+
+it('should treat elements inside hidden iframe as hidden', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42719' } }, async ({ page, server }) => {
+  await routePage(page, 'empty.html', `<iframe src="a.html" style="visibility: hidden"></iframe>`);
+  await routePage(page, 'a.html', `<button onclick="window.__clicked = true">Click me</button>`);
+  await page.goto(server.EMPTY_PAGE);
+  const button = page.frameLocator().locator('button');
+  await expect(button).toBeAttached();
+  expect(await button.isVisible()).toBe(false);
+  await expect(button).toBeHidden();
+
+  const error = await button.click({ timeout: 1000 }).catch(e => e);
+  expect(error.message).toContain('element is inside a hidden frame, retrying');
+  expect(await page.frames()[1].evaluate(() => (window as any).__clicked)).toBe(undefined);
+
+  await page.evaluate(() => document.querySelector('iframe')!.style.visibility = 'visible');
+  await expect(button).toBeVisible();
+  await button.click();
+  expect(await page.frames()[1].evaluate(() => (window as any).__clicked)).toBe(true);
+});

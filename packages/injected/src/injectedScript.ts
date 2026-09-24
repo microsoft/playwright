@@ -690,7 +690,7 @@ export class InjectedScript {
     return element;
   }
 
-  async checkElementStates(node: Node, states: ElementState[]): Promise<'error:notconnected' | { missingState: ElementState } | undefined> {
+  async checkElementStates(node: Node, states: ElementState[], frameVisible: boolean): Promise<'error:notconnected' | { missingState: ElementState } | undefined> {
     if (states.includes('stable')) {
       const stableResult = await this._checkElementIsStable(node);
       if (stableResult === false)
@@ -700,7 +700,7 @@ export class InjectedScript {
     }
     for (const state of states) {
       if (state !== 'stable') {
-        const result = this.elementState(node, state);
+        const result = this.elementState(node, state, frameVisible);
         if (result.received === 'error:notconnected')
           return 'error:notconnected';
         if (!result.matches)
@@ -778,7 +778,9 @@ export class InjectedScript {
     return { queryAll };
   }
 
-  elementState(node: Node, state: ElementStateWithoutStable): ElementStateQueryResult {
+  elementState(node: Node, state: ElementStateWithoutStable, frameVisible: boolean): ElementStateQueryResult;
+  elementState(node: Node, state: Exclude<ElementStateWithoutStable, 'visible' | 'hidden'>): ElementStateQueryResult;
+  elementState(node: Node, state: ElementStateWithoutStable, frameVisible?: boolean): ElementStateQueryResult {
     const element = this.retarget(node, ['visible', 'hidden'].includes(state) ? 'none' : 'follow-label');
     if (!element || !element.isConnected) {
       if (state === 'hidden')
@@ -787,7 +789,7 @@ export class InjectedScript {
     }
 
     if (state === 'visible' || state === 'hidden') {
-      const visible = isElementVisible(element);
+      const visible = !!frameVisible && isElementVisible(element);
       return {
         matches: state === 'visible' ? visible : !visible,
         received: visible ? 'visible' : 'hidden'
@@ -1489,20 +1491,20 @@ export class InjectedScript {
     this.onGlobalListenersRemoved.add(addHitTargetInterceptorListeners);
   }
 
-  async expect(element: Element, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: ExpectReceived }> {
+  async expect(element: Element, options: FrameExpectParams, elements: Element[], frameVisible: boolean): Promise<{ matches: boolean, received?: ExpectReceived }> {
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
-    const core = isArray ? this.expectArray(elements, options) : await this.expectSingleElement(element, options);
-    const ariaSnapshot = core.matches !== options.isNot ? undefined : this._ariaSnapshotForExpect(element, options);
+    const core = isArray ? this.expectArray(elements, options) : await this.expectSingleElement(element, options, frameVisible);
+    const ariaSnapshot = core.matches !== options.isNot ? undefined : this._ariaSnapshotForExpect(element, options, frameVisible);
     if (core.received === undefined && ariaSnapshot === undefined)
       return { matches: core.matches };
     return { matches: core.matches, received: { value: core.received, ariaSnapshot } };
   }
 
-  private _ariaSnapshotForExpect(element: Element, options: FrameExpectParams): string | undefined {
+  private _ariaSnapshotForExpect(element: Element, options: FrameExpectParams, frameVisible: boolean): string | undefined {
     const expression = options.expression;
     if (expression === 'to.have.count' || expression.endsWith('.array') || expression === 'to.match.aria')
       return undefined;
-    if (isElementVisible(element) && expression !== 'to.have.title' && expression !== 'to.have.url') {
+    if (frameVisible && isElementVisible(element) && expression !== 'to.have.title' && expression !== 'to.have.url') {
       // Element-scoped snapshot. Containment matchers want the full subtree;
       // property matchers only need the element's own line.
       const isContainment = expression === 'to.have.text';
@@ -1513,7 +1515,7 @@ export class InjectedScript {
     return this.ariaSnapshotForExpectFailure(this.document.body, { mode: 'default' });
   }
 
-  private async expectSingleElement(element: Element, options: FrameExpectParams): Promise<{ matches: boolean, received?: any }> {
+  private async expectSingleElement(element: Element, options: FrameExpectParams, frameVisible: boolean): Promise<{ matches: boolean, received?: any }> {
     const expression = options.expression;
 
     {
@@ -1570,9 +1572,9 @@ export class InjectedScript {
           received: focused ? 'focused' : 'inactive',
         };
       } else if (expression === 'to.be.hidden') {
-        result = this.elementState(element, 'hidden');
+        result = this.elementState(element, 'hidden', frameVisible);
       } else if (expression === 'to.be.visible') {
-        result = this.elementState(element, 'visible');
+        result = this.elementState(element, 'visible', frameVisible);
       } else if (expression === 'to.be.attached') {
         result = {
           matches: true,

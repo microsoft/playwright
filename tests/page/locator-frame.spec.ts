@@ -318,3 +318,65 @@ it('frameLocator.owner should work', async ({ page, server }) => {
   await expect(locator).toBeVisible();
   expect(await locator.getAttribute('name')).toBe('frame1');
 });
+
+it('should treat elements inside hidden iframe as hidden', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42719' } }, async ({ page }) => {
+  await page.setContent(`
+    <iframe name="hidden" style="visibility: hidden" srcdoc="<button>Hidden</button>"></iframe>
+    <div style="visibility: hidden">
+      <iframe name="hidden-parent" srcdoc="<button>Hidden parent</button>"></iframe>
+      <iframe name="visible-override" style="visibility: visible" srcdoc="<button>Visible override</button>"></iframe>
+    </div>
+    <iframe name="outer" style="visibility: hidden" srcdoc="<iframe name='inner' srcdoc='<button>Nested</button>'></iframe>"></iframe>
+  `);
+
+  for (const button of [
+    page.frameLocator('[name=hidden]').locator('button'),
+    page.frameLocator('[name=hidden-parent]').locator('button'),
+    page.frameLocator('[name=outer]').frameLocator('[name=inner]').locator('button'),
+  ]) {
+    await expect(button).toBeAttached();
+    expect(await button.isVisible()).toBe(false);
+    expect(await button.isHidden()).toBe(true);
+    await expect(button).toBeHidden();
+    await expect(button).not.toBeVisible();
+    await button.waitFor({ state: 'hidden' });
+  }
+
+  const button = page.frameLocator('[name=visible-override]').locator('button');
+  expect(await button.isVisible()).toBe(true);
+  await expect(button).toBeVisible();
+  await button.waitFor({ state: 'visible' });
+});
+
+it('should wait for hidden iframe to become visible', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42719' } }, async ({ page }) => {
+  await page.setContent(`<iframe name="frame" style="visibility: hidden" srcdoc="<button onclick='window.__clicked = true'>Button</button>"></iframe>`);
+  const button = page.frameLocator('[name=frame]').locator('button');
+  await expect(button).toBeHidden();
+
+  const error = await button.click({ timeout: 1000 }).catch(e => e);
+  expect(error.message).toContain('element is inside a hidden frame, retrying');
+  expect(await button.evaluate(() => (window as any).__clicked)).toBe(undefined);
+
+  const clickPromise = button.click();
+  const visiblePromise = expect(button).toBeVisible();
+  await page.evaluate(() => document.querySelector('iframe')!.style.visibility = 'visible');
+  await Promise.all([clickPromise, visiblePromise]);
+  expect(await button.evaluate(() => (window as any).__clicked)).toBe(true);
+
+  await page.evaluate(() => document.querySelector('iframe')!.style.visibility = 'hidden');
+  await expect(button).toBeHidden();
+  expect(await button.isVisible()).toBe(false);
+});
+
+it('should treat elements inside hidden cross-origin iframe as hidden', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42719' } }, async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<iframe style="visibility: hidden" src="${server.CROSS_PROCESS_PREFIX}/frames/frame.html"></iframe>`);
+  const div = page.frameLocator('iframe').locator('div');
+  await expect(div).toHaveText(`Hi, I'm frame`);
+  expect(await div.isVisible()).toBe(false);
+  await expect(div).toBeHidden();
+
+  await page.evaluate(() => document.querySelector('iframe')!.style.visibility = 'visible');
+  await expect(div).toBeVisible();
+  expect(await div.isVisible()).toBe(true);
+});
