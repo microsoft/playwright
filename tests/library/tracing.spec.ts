@@ -479,6 +479,7 @@ test('should not hang when page is unresponsive', async ({ browserType, server }
       while (true) {}
     }, 0);
   });
+  // All bets are off with a tight loop in the page, but an explicit timeout should still fire.
   const error = await page.goto(server.EMPTY_PAGE, { timeout: 1000 }).catch(e => e);
   expect(error.message).toContain('Timeout 1000ms exceeded');
   await browser.close();
