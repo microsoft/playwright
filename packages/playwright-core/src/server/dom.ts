@@ -540,13 +540,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._retryPointerAction(progress, 'click', true /* waitForEnabled */, (progress, point) => this._page.mouse.click(progress, point.x, point.y, options), options, frameVisible);
   }
 
-  async dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions): Promise<void> {
+  async dblclick(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions): Promise<void> {
     await this._markAsTargetElement(progress);
     const result = await this._dblclick(progress, options, true /* frameVisible */);
     return assertDone(throwRetargetableDOMError(result));
   }
 
-  _dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions, frameVisible: boolean): Promise<'error:notconnected' | 'done'> {
+  _dblclick(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions, frameVisible: boolean): Promise<'error:notconnected' | 'done'> {
     return this._retryPointerAction(progress, 'dblclick', true /* waitForEnabled */, (progress, point) => this._page.mouse.click(progress, point.x, point.y, { ...options, clickCount: 2 }), { ...options, waitAfter: 'disabled' }, frameVisible);
   }
 
@@ -648,7 +648,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return assertDone(throwRetargetableDOMError(result));
   }
 
-  async _drop(progress: Progress, inputFileItems: InputFilesItems, data: { mimeType: string, value: string }[], options: types.PointerActionWaitOptions, frameVisible: boolean): Promise<'error:notconnected' | 'done'> {
+  async _drop(progress: Progress, inputFileItems: InputFilesItems, data: { mimeType: string, value: string }[], options: { position?: types.Point }, frameVisible: boolean): Promise<'error:notconnected' | 'done'> {
     const { filePayloads, localPaths } = inputFileItems;
     let payloads: { name: string, mimeType: string, buffer: string, lastModifiedMs?: number }[];
     if (localPaths && !filePayloads) {
