@@ -3793,6 +3793,38 @@ test('should support merge files option', async ({ runInlineTest, showReport, pa
   `);
 });
 
+test('should print show-report command without path when invoked from the report dir', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      process.stdin.isTTY = true;
+      export default { reporter: 'html' };
+    `,
+    'a.test.js': `
+      import { test } from '@playwright/test';
+      test('passes', () => {});
+    `,
+  }, {}, { PLAYWRIGHT_HTML_OPEN: 'never', INIT_CWD: testInfo.outputPath() });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('To open last HTML report run:');
+  expect(result.output).toMatch(/npx playwright show-report\n/);
+});
+
+test('should print show-report command with path relative to npm invocation dir', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'sub/package.json': `{ "name": "sub" }`,
+    'sub/playwright.config.ts': `
+      process.stdin.isTTY = true;
+      export default { reporter: 'html' };
+    `,
+    'sub/a.test.js': `
+      import { test } from '@playwright/test';
+      test('passes', () => {});
+    `,
+  }, {}, { PLAYWRIGHT_HTML_OPEN: 'never', INIT_CWD: testInfo.outputPath() }, { cwd: 'sub' });
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain(`npx playwright show-report ${path.join('sub', 'playwright-report')}\n`);
+});
+
 test.describe('show-report .zip support', () => {
   test('should serve a zipped report', async ({ runInlineTest, childProcess, findFreePort, page }, testInfo) => {
     await runInlineTest({
