@@ -22,9 +22,6 @@ import { escapeForAttributeSelector, escapeForTextSelector } from './stringUtils
 import type { Language } from './locatorGenerators';
 import type { ParsedSelector, ParsedSelectorPart } from './selectorParser';
 
-// Locator source code is parsed by a language-specific parser straight into a ParsedSelector.
-// Each language maps its method names to call handlers that turn call arguments into selector parts.
-
 type Value = string | number | boolean | RegExp | ParsedSelector;
 
 // Arguments of a single call, collected until the call is converted into selector parts.
@@ -47,9 +44,7 @@ type Token =
 type ParserOptions = {
   methods: Map<string, CallHandler>;
   quotes: string;
-  // Python r"..." strings.
   rawStrings?: boolean;
-  // JavaScript /.../flags literals.
   regexLiterals?: boolean;
   booleans?: [string, string];
 };
@@ -156,9 +151,7 @@ abstract class LocatorParser {
   protected abstract parseArgument(call: CallArguments): void;
 
   // Parses a language-specific regular expression, e.g. `re.compile(...)`.
-  protected parseRegex(): RegExp | undefined {
-    return undefined;
-  }
+  protected abstract parseRegex(): RegExp | undefined;
 
   protected parseLocator(): ParsedSelector {
     const parts: ParsedSelectorPart[] = [];
@@ -311,6 +304,11 @@ class JavaScriptLocatorParser extends LocatorParser {
     else
       call.args.push(this.parseValue());
   }
+
+  // Regular expression literals are tokens.
+  protected parseRegex(): RegExp | undefined {
+    return undefined;
+  }
 }
 
 // get_by_role("button", name=re.compile(r"submit", re.IGNORECASE), exact=True)
@@ -329,7 +327,7 @@ class PythonLocatorParser extends LocatorParser {
     call.options.set(name.replace(/_([a-z])/g, (_, char) => char.toUpperCase()), this.parseValue());
   }
 
-  protected override parseRegex(): RegExp | undefined {
+  protected parseRegex(): RegExp | undefined {
     if (!this.eatIdentifier('re'))
       return;
     this.expect('.');
@@ -365,7 +363,7 @@ class JavaLocatorParser extends LocatorParser {
     }
   }
 
-  protected override parseRegex(): RegExp | undefined {
+  protected parseRegex(): RegExp | undefined {
     if (!this.eatIdentifier('Pattern'))
       return;
     this.expect('.');
@@ -394,7 +392,7 @@ class CSharpLocatorParser extends LocatorParser {
     this.parseOptionsBag(call, '=', name => lowerFirst(name.replace(/Regex$/, '')));
   }
 
-  protected override parseRegex(): RegExp | undefined {
+  protected parseRegex(): RegExp | undefined {
     if (!this.eatIdentifier('new'))
       return;
     this.expectIdentifier('Regex');
@@ -480,7 +478,6 @@ const getByAltTextParts = textParts(getByAltTextSelector);
 const getByPlaceholderParts = textParts(getByPlaceholderSelector);
 const getByTitleParts = textParts(getByTitleSelector);
 
-// FrameLocator methods that apply to the frame element rather than enter the frame.
 const kFrameElementHandlers = new Set<CallHandler>([firstParts, lastParts, nthParts]);
 
 // JavaScript and Java share the method names.
@@ -568,7 +565,6 @@ function getByRoleParts(call: CallArguments): ParsedSelectorPart[] {
   checkArguments(call, 1, ['name', 'description', 'exact', 'checked', 'disabled', 'expanded', 'includeHidden', 'level', 'pressed', 'selected']);
   const exact = !!option(call, 'exact', isBoolean);
   let body = arg(call, 0, isString);
-  // Keep the attributes in the source order, so that the selector renders back into the same locator.
   for (const name of call.options.keys()) {
     if (name === 'name' || name === 'description')
       body += `[${name}=${escapeForAttributeSelector(option(call, name, isText)!, exact)}]`;
