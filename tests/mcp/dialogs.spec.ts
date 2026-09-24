@@ -293,3 +293,29 @@ test('alert dialog w/ race', async ({ client, server }) => {
 - Page Title: Title`),
   });
 });
+
+test('alert dialog during navigation', async ({ client, server }) => {
+  server.setContent('/', `<title>Title</title><script>alert('Alert')</script><button>Button</button>`, 'text/html');
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    modalState: expect.stringContaining(`- ["alert" dialog with message "Alert"]: can be handled by browser_handle_dialog`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_handle_dialog',
+    arguments: { accept: true },
+  })).toHaveResponse({
+    modalState: undefined,
+    page: expect.stringContaining(`- Page URL: ${server.PREFIX}/
+- Page Title: Title`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+    arguments: {},
+  })).toHaveResponse({
+    inlineSnapshot: expect.stringContaining(`- button "Button"`),
+  });
+});

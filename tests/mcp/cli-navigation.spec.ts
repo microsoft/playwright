@@ -35,6 +35,17 @@ test('go-forward', async ({ cli, server }) => {
 - Page Title: Title`);
 });
 
+test('reload with alert during load', async ({ cli, server }) => {
+  server.setContent('/', `<title>Title</title>`, 'text/html');
+  await cli('open', server.PREFIX);
+  server.setContent('/', `<title>Title</title><script>alert('MyAlert')</script><button>Button</button>`, 'text/html');
+  const { output } = await cli('reload');
+  expect(output).toContain('["alert" dialog with message "MyAlert"]: can be handled by dialog-accept or dialog-dismiss');
+  await cli('dialog-accept');
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).toContain('button "Button"');
+});
+
 test('open without url opens about:blank', async ({ cli }) => {
   const { output } = await cli('open');
   expect(output).toContain('- Page URL: about:blank');
