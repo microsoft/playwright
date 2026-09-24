@@ -81,7 +81,3 @@ jobs:
       uses: ./.github/actions/upload-parquet-report
       with:
         job_name: ${{ matrix.channel }}
-
-    - name: Add report to the job summary
-      if: ${{ !cancelled() && hashFiles('test-results/report.md') != '' }}
-      run: cat test-results/report.md >> "$GITHUB_STEP_SUMMARY"
