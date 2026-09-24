@@ -160,10 +160,12 @@ export function filterForShard(shard: { total: number, current: number }, weight
   //
   // Shards are still balanced by the number of tests, not files,
   // even in the case of non-paralleled files.
-
-  let shardableTotal = 0;
-  for (const group of testGroups)
-    shardableTotal += group.tests.length;
+  //
+  // Statically skipped tests take no time, so they are not counted.
+  const activeSizes = testGroups.map(group => group.tests.filter(test => test.expectedStatus !== 'skipped').length);
+  // If all tests are skipped, balance them as usual.
+  const groupSizes = activeSizes.some(Boolean) ? activeSizes : testGroups.map(group => group.tests.length);
+  const shardableTotal = groupSizes.reduce((a, b) => a + b, 0);
 
   // Each shard gets some tests.
   const shardSizes = weights.map(w => Math.floor(w * shardableTotal / totalWeight));
@@ -180,12 +182,14 @@ export function filterForShard(shard: { total: number, current: number }, weight
 
   let current = 0;
   const result = new Set<TestGroup>();
-  for (const group of testGroups) {
+  testGroups.forEach((group, index) => {
     // Any test group goes to the shard that contains the first test of this group.
-    // So, this shard gets any group that starts at [from; to)
-    if (current >= from && current < to)
+    // So, this shard gets any group that starts at [from; to).
+    // Fully skipped groups go along with the preceding group.
+    const position = groupSizes[index] ? current : Math.max(current - 1, 0);
+    if (position >= from && position < to)
       result.add(group);
-    current += group.tests.length;
-  }
+    current += groupSizes[index];
+  });
   return result;
 }
