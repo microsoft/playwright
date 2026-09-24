@@ -199,8 +199,9 @@ test('navigating to download link emits download', async ({ startClient, server,
 });
 
 test('closing browser during download does not crash the server', async ({ startClient, server }, testInfo) => {
+  // Persistent Chromium on macOS does not quit while a download is in progress.
   const { client } = await startClient({
-    config: { outputDir: testInfo.outputPath('output') },
+    config: { outputDir: testInfo.outputPath('output'), browser: { isolated: true } },
   });
 
   server.setContent('/', `<a href="/download" download="test.txt">Download</a>`, 'text/html');
