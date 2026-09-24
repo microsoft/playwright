@@ -60,18 +60,12 @@ jobs:
       run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --retries=${{ matrix.isPullRequest && 2 || 0 }} --project=${{ matrix.channel }}*
       env:
         PWTEST_USE_BIDI_EXPECTATIONS: ${{ matrix.isPullRequest && '1' || '' }}
-    # Name the report after the channel so that the publish job can merge all of
-    # them into one directory without collisions.
-    - name: Name the csv report after the channel
-      if: ${{ !cancelled() && hashFiles('test-results/report.csv') != '' }}
-      run: cp test-results/report.csv "$RUNNER_TEMP/${{ matrix.channel }}.csv"
-
     - name: Upload csv report to GitHub
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: csv-report-${{ matrix.channel }}
-        path: ${{ runner.temp }}/${{ matrix.channel }}.csv
+        path: test-results/report.csv
         retention-days: 7
 
     - name: Upload json report to GitHub
@@ -91,48 +85,3 @@ jobs:
     - name: Add report to the job summary
       if: ${{ !cancelled() && hashFiles('test-results/report.md') != '' }}
       run: cat test-results/report.md >> "$GITHUB_STEP_SUMMARY"
-
-  publish_reports:
-    name: Publish reports
-    needs: test_bidi
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && github.repository == 'microsoft/playwright' }}
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write   # This is required to push to the bidi-reports branch
-    steps:
-    - name: Download csv reports
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-      with:
-        pattern: csv-report-*
-        merge-multiple: true
-        path: csv-reports
-    - name: Publish the reports to the bidi-reports branch
-      run: |
-        git init -q "$RUNNER_TEMP/reports"
-        cd "$RUNNER_TEMP/reports"
-        git remote add origin "https://x-access-token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git"
-        git fetch --depth=1 origin bidi-reports
-        git reset --hard FETCH_HEAD
-        channels=()
-        for file in "$GITHUB_WORKSPACE"/csv-reports/*.csv; do
-          channel=$(basename "$file" .csv)
-          cp "$file" "$channel.csv"
-          channels+=("$channel")
-        done
-        git add -A
-        if git diff --cached --quiet; then
-          echo "No changes since the last run."
-          exit 0
-        fi
-        git commit -q -m "bidi: results for ${GITHUB_SHA:0:9}"
-        git push origin HEAD:bidi-reports
-        for channel in "${channels[@]}"; do
-          echo "Report url: https://github.com/$GITHUB_REPOSITORY/blob/bidi-reports/$channel.csv"
-          echo "Raw report url: https://raw.githubusercontent.com/$GITHUB_REPOSITORY/bidi-reports/$channel.csv"
-        done
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GIT_AUTHOR_NAME: microsoft-playwright-automation[bot]
-        GIT_AUTHOR_EMAIL: 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
-        GIT_COMMITTER_NAME: microsoft-playwright-automation[bot]
-        GIT_COMMITTER_EMAIL: 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
