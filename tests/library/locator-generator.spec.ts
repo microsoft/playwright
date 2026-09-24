@@ -619,6 +619,23 @@ it('parseLocator and, or, chain', async () => {
   }
 });
 
+it('parseLocator nested and, or, locator', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42891' }
+}, async ({ page }) => {
+  expect.soft(generate(page.getByRole('row').locator(page.getByRole('cell').nth(2)))).toEqual({
+    csharp: `GetByRole(AriaRole.Row).Locator(GetByRole(AriaRole.Cell).Nth(2))`,
+    java: `getByRole(AriaRole.ROW).locator(getByRole(AriaRole.CELL).nth(2))`,
+    javascript: `getByRole('row').locator(getByRole('cell').nth(2))`,
+    python: `get_by_role("row").locator(get_by_role("cell").nth(2))`,
+  });
+  expect.soft(generate(page.locator('div').and(page.getByText('foo')).or(page.locator('span').locator(page.locator('a'))).first())).toEqual({
+    csharp: `Locator("div").And(GetByText("foo")).Or(Locator("span").Locator(Locator("a"))).First`,
+    java: `locator("div").and(getByText("foo")).or(locator("span").locator(locator("a"))).first()`,
+    javascript: `locator('div').and(getByText('foo')).or(locator('span').locator(locator('a'))).first()`,
+    python: `locator("div").and_(get_by_text("foo")).or_(locator("span").locator(locator("a"))).first`,
+  });
+});
+
 it('asLocator xpath', async () => {
   const selector = `//*[contains(normalizer-text(), 'foo']`;
   expect.soft(asLocator('javascript', selector)).toBe(`locator('//*[contains(normalizer-text(), \\'foo\\']')`);
