@@ -671,6 +671,20 @@ test('should not hang for clicks that open dialogs', async ({ context, page }) =
   await context.tracing.stop();
 });
 
+test('should not hang when page is unresponsive', async ({ context, page, server }) => {
+  await context.tracing.start({ snapshots: true });
+  await page.goto(server.EMPTY_PAGE);
+  // Schedule an infinite loop on the main thread that starts right after this
+  // call returns, so that tracing snapshot hooks cannot evaluate the page anymore.
+  const evaluate = page.evaluate(() => { setTimeout(() => { while (true) {} }, 0); });
+  // The evaluate settles once its after-action snapshot hook gives up.
+  await evaluate;
+  // The goto settles once its before-action snapshot hook gives up, and
+  // its own timeout applies.
+  await expect(page.goto(server.EMPTY_PAGE, { timeout: 3000 })).rejects.toThrow(/Timeout 3000ms exceeded/);
+  await context.tracing.stop();
+});
+
 test('should ignore iframes in head', async ({ context, page, server }, testInfo) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.evaluate(() => {
