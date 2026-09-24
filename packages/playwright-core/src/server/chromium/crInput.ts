@@ -81,7 +81,8 @@ export class RawKeyboardImpl implements input.RawKeyboard {
       key,
       windowsVirtualKeyCode: description.keyCodeWithoutLocation,
       code,
-      location
+      location,
+      isKeypad: location === input.keypadLocation
     }));
   }
 
