@@ -17368,6 +17368,31 @@ export interface Locator {
      */
     timeout?: number;
   }): Promise<void>;
+
+  /**
+   * Returns a locator that matches this locator's elements inside each element matched by
+   * [`locator`](https://playwright.dev/docs/api/class-locator#locator-within-option-locator). This is the same as
+   * calling
+   * [locator.locator(selectorOrLocator[, options])](https://playwright.dev/docs/api/class-locator#locator-locator) on
+   * [`locator`](https://playwright.dev/docs/api/class-locator#locator-within-option-locator) with this locator as an
+   * argument, but reads in the natural order.
+   *
+   * Note that relative locators, such as
+   * [locator.nth(index)](https://playwright.dev/docs/api/class-locator#locator-nth) or
+   * [locator.first()](https://playwright.dev/docs/api/class-locator#locator-first), are resolved separately inside each
+   * matched parent. In the example below, `page.getByRole('cell').nth(2)` picks the third cell of every row, not the
+   * third cell in the whole table.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const thirdColumn = page.getByRole('cell').nth(2).within(page.getByRole('row'));
+   * await expect(thirdColumn).toHaveText(['Apple', 'Banana', 'Cherry']);
+   * ```
+   *
+   * @param locator Locator matching the parent elements to search within.
+   */
+  within(locator: Locator): Locator;
 }
 
 /**

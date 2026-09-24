@@ -542,6 +542,36 @@ test.describe('browser', () => {
     delete process.env.HTTPS_PROXY;
   });
 
+  test('should respect launch proxy and proxy bypass', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42806' } }, async ({ browserType, startCCServer, asset, browserName, proxyServer, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
+    const { origin, hostname, port } = new URL(serverURL);
+    proxyServer.forwardTo(parseInt(port, 10), { allowConnectRequests: true });
+    const proxy = { server: `localhost:${proxyServer.PORT}` };
+    const clientCertificates = [{
+      origin,
+      certPath: asset('client-certificates/client/trusted/cert.pem'),
+      keyPath: asset('client-certificates/client/trusted/key.pem'),
+    }];
+    const browser = await browserType.launch({ proxy });
+    {
+      const page = await browser.newPage({ ignoreHTTPSErrors: true, clientCertificates });
+      await page.goto(serverURL);
+      await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
+      const host = browserName === 'webkit' && isMac ? 'localhost' : '127.0.0.1';
+      expect([...new Set(proxyServer.connectHosts)]).toEqual([`${host}:${port}`]);
+      await page.close();
+    }
+    proxyServer.connectHosts = [];
+    {
+      const page = await browser.newPage({ ignoreHTTPSErrors: true, clientCertificates, proxy: { ...proxy, bypass: hostname } });
+      await page.goto(serverURL);
+      await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
+      expect(proxyServer.connectHosts).toEqual([]);
+      await page.close();
+    }
+    await browser.close();
+  });
+
   test('should pass with matching certificates and when a socks proxy is used', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const serverPort = parseInt(new URL(serverURL).port, 10);

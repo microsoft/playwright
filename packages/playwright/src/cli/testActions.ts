@@ -128,6 +128,7 @@ function overridesFromOptions(options: { [key: string]: any }): ipc.ConfigCLIOve
     reporter: resolveReporterOption(options.reporter),
     additionalReporters: resolveReporterOption(options.addReporter),
     shard: resolveShardOption(options.shard),
+    shuffle: resolveShuffleOption(options.shuffle),
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     tsconfig: options.tsconfig ? path.resolve(process.cwd(), options.tsconfig) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
@@ -168,6 +169,14 @@ function resolveReporterOption(reporter?: string): ReporterDescription[] | undef
   if (!reporter || !reporter.length)
     return undefined;
   return reporter.split(',').map((r: string) => [resolveReporter(r)]);
+}
+
+function resolveShuffleOption(shuffle?: string | boolean): string | undefined {
+  if (!shuffle)
+    return undefined;
+  if (shuffle === true)
+    return String(Math.floor(Math.random() * 1e9));
+  return shuffle;
 }
 
 function resolveShardOption(shard?: string): ipc.ConfigCLIOverrides['shard'] {

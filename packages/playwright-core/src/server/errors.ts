@@ -16,6 +16,9 @@
 
 import { isError } from '@isomorphic/rtti';
 import { parseSerializedValue, parseSystemErrorFields, serializeSystemErrorFields, serializeValue, systemErrorMessage } from '@protocol/serializers';
+import { rewriteErrorMessage } from '@utils/stackTrace';
+
+import { isProtocolError } from './protocolError';
 
 import type { SerializedError } from './channels';
 
@@ -46,6 +49,19 @@ export class AbortError extends CustomError {
 
 export function isTargetClosedError(error: Error) {
   return error instanceof TargetClosedError || error.name === 'TargetClosedError';
+}
+
+export function rewriteErrorForClosedTarget(error: Error, closeReason: string | undefined): Error {
+  if (isTargetClosedError(error)) {
+    if (closeReason)
+      rewriteErrorMessage(error, closeReason);
+  } else if (isProtocolError(error)) {
+    if (error.type === 'closed')
+      return new TargetClosedError(closeReason, error.browserLogMessage());
+    if (error.type === 'crashed')
+      rewriteErrorMessage(error, 'Target crashed ' + error.browserLogMessage());
+  }
+  return error;
 }
 
 export function serializeError(e: any): SerializedError {

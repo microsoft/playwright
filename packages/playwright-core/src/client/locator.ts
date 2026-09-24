@@ -180,6 +180,10 @@ export class Locator implements api.Locator {
     return new Locator(this._frame, this._selector + ' >> internal:chain=' + JSON.stringify(selectorOrLocator._selector), options);
   }
 
+  within(locator: Locator): Locator {
+    return locator.locator(this);
+  }
+
   getByTestId(testId: string | RegExp): Locator {
     return this.locator(getByTestIdSelector(testIdAttributeName(), testId));
   }

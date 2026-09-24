@@ -67,7 +67,7 @@ npx playwright test --ui
 
 | Option | Description |
 | :--- | :--- |
-| `--debug` | Run tests with Playwright Inspector. Shortcut for `PWDEBUG=1` environment variable and `--timeout=0 --max-failures=1 --headed --workers=1` options. |
+| `--debug [mode]` | Run tests with Playwright Inspector. Shortcut for `PWDEBUG=1` environment variable and `--timeout=0 --max-failures=1 --headed --workers=1` options. The optional mode is "inspector" (default) or "cli" — "cli" allows attaching and debugging over the CLI. |
 | `--headed` | Run tests in headed browsers (default: headless). |
 | `-g <grep>` or `--grep <grep>` | Only run tests matching this regular expression (default: ".*"). |
 | `--project <project-name...>` | Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects). |
@@ -81,7 +81,7 @@ npx playwright test --ui
 | Non-option arguments | Each argument is treated as a regular expression matched against the full test file path. Only tests from files matching the pattern will be executed. Special symbols like `$` or `*` should be escaped with `\`. In many shells/terminals you may need to quote the arguments. |
 | `--add-reporter <reporter>` | Reporter to add on top of the reporters configured in the config file, comma-separated. Can be a built-in reporter name or a path to a custom reporter file. Unlike `--reporter`, this keeps the configured reporters instead of replacing them. |
 | `-c <file>` or `--config <file>` | Configuration file, or a test directory with optional "playwright.config.&#123;m,c&#125;?&#123;js,ts&#125;". Defaults to `playwright.config.ts` or `playwright.config.js` in the current directory. |
-| `--debug` | Run tests with Playwright Inspector. Shortcut for `PWDEBUG=1` environment variable and `--timeout=0 --max-failures=1 --headed --workers=1` options. |
+| `--debug [mode]` | Run tests with Playwright Inspector. Shortcut for `PWDEBUG=1` environment variable and `--timeout=0 --max-failures=1 --headed --workers=1` options. The optional mode is "inspector" (default) or "cli" — "cli" allows attaching and debugging over the CLI. |
 | `--fail-on-flaky-tests` | Fail if any test is flagged as flaky (default: false). |
 | `--forbid-only` | Fail if `test.only` is called (default: false). Useful on CI. |
 | `--fully-parallel` | Run all tests in parallel (default: false). |
@@ -104,7 +104,9 @@ npx playwright test --ui
 | `--repeat-each <N>` | Run each test `N` times (default: 1). |
 | `--reporter <reporter>` | Reporter to use, comma-separated, can be "dot", "line", "list", or others (default: "list" locally and "dot" on CI). You can also pass a path to a custom reporter file. |
 | `--retries <retries>` | Maximum retry count for flaky tests, zero for no retries (default: no retries). |
+| `--run-agents <mode>` | Run agents to generate the code for `page.perform`. Possible values are "missing", "all" and "none" (default: "none"). See [test-agents](./test-agents.md). |
 | `--shard <shard>` | Shard tests and execute only the selected shard, specified in the form "current/all", 1-based, e.g., "3/5". |
+| `--shuffle [seed]` | Schedule tests in a random order: test files are shuffled, and so are individual tests in [parallel mode](./test-parallel.md). Tests that must run together, for example in a serial suite, keep their order. The seed is printed at the start of the run, pass it to reproduce the same order. |
 | `--test-list <file>` | Path to a file containing a list of tests to run. See [test list](#test-list) for details. |
 | `--test-list-invert <file>` | Path to a file containing a list of tests to skip. See [test list](#test-list) for details.  |
 | `--timeout <timeout>` | Specify test timeout threshold in milliseconds, zero for unlimited (default: 30 seconds). |

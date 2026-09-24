@@ -828,6 +828,10 @@ export function verifyClientCertificates(clientCertificates?: types.BrowserConte
   }
 }
 
+export function effectiveProxy(contextProxy: types.ProxySettings | undefined, launchProxy: types.ProxySettings | undefined): types.ProxySettings | undefined {
+  return contextProxy || (launchProxy?.server === 'per-context' ? undefined : launchProxy);
+}
+
 export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxySettings {
   let { server, bypass } = proxy;
   let url;

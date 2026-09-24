@@ -3056,3 +3056,44 @@ Optional argument to pass to [`param: expression`].
 
 ### option: Locator.waitForFunction.signal = %%-input-signal-%%
 * since: v1.62
+
+## method: Locator.within
+* since: v1.64
+- returns: <[Locator]>
+
+Returns a locator that matches this locator's elements inside each element matched by [`param: locator`]. This is the same as calling [`method: Locator.locator`] on [`param: locator`] with this locator as an argument, but reads in the natural order.
+
+Note that relative locators, such as [`method: Locator.nth`] or [`method: Locator.first`], are resolved separately inside each matched parent. In the example below, `page.getByRole('cell').nth(2)` picks the third cell of every row, not the third cell in the whole table.
+
+**Usage**
+
+```js
+const thirdColumn = page.getByRole('cell').nth(2).within(page.getByRole('row'));
+await expect(thirdColumn).toHaveText(['Apple', 'Banana', 'Cherry']);
+```
+
+```python async
+third_column = page.get_by_role("cell").nth(2).within(page.get_by_role("row"))
+await expect(third_column).to_have_text(["Apple", "Banana", "Cherry"])
+```
+
+```python sync
+third_column = page.get_by_role("cell").nth(2).within(page.get_by_role("row"))
+expect(third_column).to_have_text(["Apple", "Banana", "Cherry"])
+```
+
+```java
+Locator thirdColumn = page.getByRole(AriaRole.CELL).nth(2).within(page.getByRole(AriaRole.ROW));
+assertThat(thirdColumn).hasText(new String[] {"Apple", "Banana", "Cherry"});
+```
+
+```csharp
+var thirdColumn = page.GetByRole(AriaRole.Cell).Nth(2).Within(page.GetByRole(AriaRole.Row));
+await Expect(thirdColumn).ToHaveTextAsync(new[] { "Apple", "Banana", "Cherry" });
+```
+
+### param: Locator.within.locator
+* since: v1.64
+- `locator` <[Locator]>
+
+Locator matching the parent elements to search within.

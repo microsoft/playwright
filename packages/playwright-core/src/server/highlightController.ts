@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
+import { Page } from './page';
+
 import type { FrameExecutionContext } from './dom';
-import type { Page } from './page';
+import type { Frame } from './frames';
 import type * as types from './types';
 import type { ParsedSelector } from '@isomorphic/selectorParser';
 
 export type HighlightOptions = {
   style?: string;
   anyFrame?: boolean; // Highlight in all the frames the selector could resolve to, instead of a single one.
+  frame?: Frame; // Resolve the selector relative to this frame, defaults to the main frame.
 };
 
 type HighlightEntry = HighlightOptions & {
   selector: string;
+  frame: Frame;
 };
 
 // Custom selector engines run in the main world, so highlights may live in either world.
@@ -39,18 +43,29 @@ export class HighlightController {
 
   constructor(page: Page) {
     this._page = page;
+    page.on(Page.Events.FrameDetached, frame => {
+      for (const [key, entry] of this._entries) {
+        if (entry.frame === frame)
+          this._entries.delete(key);
+      }
+    });
   }
 
   async addHighlight(selector: string, options: HighlightOptions = {}) {
     // Validate the selector upfront, so that the caller gets a synchronous error.
     this._page.browserContext.selectors().parseSelector(selector, false);
-    this._entries.set(selector, { selector, ...options });
+    const frame = options.frame ?? this._page.mainFrame();
+    this._entries.set(this._key(frame, selector), { selector, ...options, frame });
     await this._resolveNow();
   }
 
-  async removeHighlight(selector: string) {
-    this._entries.delete(selector);
+  async removeHighlight(selector: string, frame?: Frame) {
+    this._entries.delete(this._key(frame ?? this._page.mainFrame(), selector));
     await this._resolveNow();
+  }
+
+  private _key(frame: Frame, selector: string) {
+    return frame.guid + ':' + selector;
   }
 
   dispose() {
@@ -85,7 +100,7 @@ export class HighlightController {
 
     const perContext = new Map<FrameExecutionContext, { selector: ParsedSelector, cssStyle?: string }[]>();
     for (const entry of this._entries.values()) {
-      const results = await this._page.mainFrame().selectors.resolveFramesForSelector(entry.selector, { strict: false, anyFrame: entry.anyFrame }).catch(() => []);
+      const results = await entry.frame.selectors.resolveFramesForSelector(entry.selector, { strict: false, anyFrame: entry.anyFrame }).catch(() => []);
       for (const { frame, info } of results) {
         const context = frame.existingContext(info.world);
         if (!context)

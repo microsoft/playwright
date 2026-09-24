@@ -235,6 +235,7 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--shard <shard>', { description: `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"` }],
   ['--test-list <file>', { description: `Path to a file containing a list of tests to run. See https://playwright.dev/docs/test-cli for more details.` }],
   ['--test-list-invert <file>', { description: `Path to a file containing a list of tests to skip. See https://playwright.dev/docs/test-cli for more details.` }],
+  ['--shuffle [seed]', { description: `Schedule test files, and tests in parallel mode, in a random order; pass a seed to reproduce a previous order` }],
   ['--timeout <timeout>', { description: `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${config.defaultTimeout})` }],
   ['--trace <mode>', { description: `Force tracing mode`, choices: kTraceModes as string[] }],
   ['--tsconfig <path>', { description: `Path to a single tsconfig applicable to all imported files (default: look up tsconfig for each imported file separately)` }],

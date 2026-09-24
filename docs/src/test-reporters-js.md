@@ -117,6 +117,16 @@ export default defineConfig({
 });
 ```
 
+You can prefix every line of the output with the index of the worker that produced it:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [['list', { printWorkerIndex: true }]],
+});
+```
+
 List report supports the following configuration options and environment variables:
 
 | Environment Variable Name | Reporter Config Option| Description | Default
@@ -124,6 +134,7 @@ List report supports the following configuration options and environment variabl
 | `PLAYWRIGHT_LIST_PRINT_STEPS` | `printSteps` | Whether to print each step on its own line. | `false`
 | `PLAYWRIGHT_LIST_PRINT_FAILURES_INLINE` | `printFailuresInline` | Whether to print failure details immediately after a failed test instead of at the end. | `false`
 | `PLAYWRIGHT_LIST_OMIT_TAGS` | `omitTags` | Whether to omit test tags that are automatically appended to test titles. | `false`
+| `PLAYWRIGHT_LIST_PRINT_WORKER_INDEX` | `printWorkerIndex` | Whether to prefix every line of the output with the index of the worker that produced it. | `false`
 | `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. Supports `true`, `1`, `false`, `0`, `[WIDTH]`, and `[WIDTH]x[HEIGHT]`. `[WIDTH]` and `[WIDTH]x[HEIGHT]` specifies the TTY dimensions. | `true` when terminal is in TTY mode, `false` otherwise.
 | `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
 | `NO_COLOR` | | Whether to disable colored output ([no-color.org](https://no-color.org/)). Any non-empty value disables colors. | unset

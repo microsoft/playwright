@@ -373,6 +373,31 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(0);
     });
 
+    test('print worker index', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = { reporter: [['list', { printWorkerIndex: true, printFailuresInline: true }]] };
+        `,
+        'a.test.ts': `
+          import { test, expect } from '@playwright/test';
+          test('fails', async ({}) => {
+            expect(1).toBe(2);
+          });
+          test('passes', async ({}) => {
+            console.log('line1\\nline2');
+          });
+        `,
+      }, { workers: 1 }, { PW_TEST_DEBUG_REPORTERS: '1', PLAYWRIGHT_FORCE_TTY: '80' });
+      expect(result.exitCode).toBe(1);
+      const lines = result.output.split('\n').map(l => l.replace(/^#\d+ : /, ''));
+      expect(lines.some(l => l.startsWith(`[0]   ${NEGATIVE_STATUS_MARK} 1 a.test.ts:3:15 › fails`))).toBe(true);
+      expect(lines).toContain('[0]     Error: expect(received).toBe(expected) // Object.is equality');
+      expect(lines.some(l => /^\[0\] +at .*a.test.ts:4:23/.test(l))).toBe(true);
+      expect(lines).toContain('[1] line1');
+      expect(lines).toContain('[1] line2');
+      expect(lines.some(l => l.startsWith(`[1]   ${POSITIVE_STATUS_MARK} 2 a.test.ts:6:15 › passes`))).toBe(true);
+    });
+
     test('print stdio', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.ts': `
