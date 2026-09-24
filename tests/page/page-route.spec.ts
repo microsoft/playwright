@@ -1138,3 +1138,23 @@ it('should be able to intercept every navigation to a page controlled by service
   await page.goto(URL);
   expect(interceptions).toBe(2);
 });
+
+it('should respect URLPattern ignoreCase', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42918' });
+  it.skip(globalThis.URLPattern === undefined, 'URLPattern is not supported in this environment');
+
+  const intercepted: string[] = [];
+  // @ts-ignore URLPattern is not in @types/node yet
+  await page.route(new URLPattern(server.PREFIX + '/EMPTY.html', { ignoreCase: true }), route => {
+    intercepted.push('ignoreCase');
+    return route.fulfill({ body: 'mock' });
+  });
+  // @ts-ignore URLPattern is not in @types/node yet
+  await page.route(new URLPattern(server.PREFIX + '/EMPTY.html'), route => {
+    intercepted.push('caseSensitive');
+    return route.fulfill({ body: 'mock' });
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(await response!.text()).toBe('mock');
+  expect(intercepted).toEqual(['ignoreCase']);
+});

@@ -147,6 +147,8 @@ function deserializeURLPattern(v: ReturnType<typeof serializeURLPattern>): URLPa
   if (typeof globalThis.URLPattern !== 'function')
     return () => true;
 
+  // URLPattern does not expose ignoreCase, so match case-insensitively on the server
+  // to avoid false negatives. The client filters again with the original pattern.
   // @ts-ignore URLPattern is not in @types/node yet
   // eslint-disable-next-line no-restricted-globals
   return new globalThis.URLPattern({
@@ -158,7 +160,7 @@ function deserializeURLPattern(v: ReturnType<typeof serializeURLPattern>): URLPa
     protocol: v.protocol,
     search: v.search,
     username: v.username,
-  });
+  }, { ignoreCase: true });
 }
 
 export function deserializeURLMatch(match: { glob?: string, regexSource?: string, regexFlags?: string, urlPattern?: ReturnType<typeof serializeURLPattern> }): URLMatch {
