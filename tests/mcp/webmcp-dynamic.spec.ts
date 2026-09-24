@@ -186,6 +186,29 @@ test('only the current tab contributes tools, switching tabs swaps them', async 
   expect(await names()).toEqual(['webmcp_add']);
 });
 
+test('a tool registered in an iframe can be called after the page is reloaded', async ({ startClient, server, mcpBrowser }) => {
+  test.skip(mcpBrowser === 'firefox', 'Firefox does not list tools registered in iframes');
+  server.setRoute('/frame', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<title>frame</title>${registerScript(kAdd)}`);
+  });
+  server.setRoute('/', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<title>top</title><iframe src="/frame"></iframe>`);
+  });
+
+  const { client } = await startClient({ config: webmcpConfig(mcpBrowser) });
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+  expect(await client.callTool({ name: 'webmcp_add', arguments: { a: 1, b: 2 } })).toHaveResponse({
+    result: expect.stringContaining('"text": "3"'),
+  });
+
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+  expect(await client.callTool({ name: 'webmcp_add', arguments: { a: 2, b: 3 } })).toHaveResponse({
+    result: expect.stringContaining('"text": "5"'),
+  });
+});
+
 test('--no-webmcp opts out of page tools entirely', async ({ startClient, server, mcpBrowser }) => {
   server.setRoute('/', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
