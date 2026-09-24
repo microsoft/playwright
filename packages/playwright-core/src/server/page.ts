@@ -576,7 +576,7 @@ export class Page extends SdkObject<PageEventMap> {
       return;
     for (const [uid, handler] of this._locatorHandlers) {
       if (!handler.resolved) {
-        if (await this.mainFrame().isVisibleInternal(progress, handler.selector, { strict: true })) {
+        if (await this.mainFrame().isVisibleInternal(progress, { selector: handler.selector, strict: true })) {
           handler.resolved = new ManualPromise();
           this.emit(Page.Events.LocatorHandlerTriggered, uid);
         }
@@ -587,7 +587,7 @@ export class Page extends SdkObject<PageEventMap> {
         const promise = handler.resolved.then(async () => {
           if (!handler.noWaitAfter) {
             progress.log(`  locator handler has finished, waiting for ${asLocator(this.browserContext._browser.sdkLanguage(), handler.selector)} to be hidden`);
-            await this.mainFrame().waitForSelector(progress, handler.selector, false, { state: 'hidden' });
+            await this.mainFrame().waitForSelector(progress, { selector: handler.selector }, false, { state: 'hidden' });
           } else {
             progress.log(`  locator handler has finished`);
           }
@@ -1122,7 +1122,7 @@ export async function ariaSnapshotJSONForFrame(progress: Progress, frame: frames
       // Note: the resolved frame might differ from the original |frame|.
       // See https://developer.mozilla.org/en-US/docs/Web/API/Document/body for body/frameset explanation.
       // Non-strict, because pages with nested framesets have multiple "frameset" elements.
-      const resolved = await progress.race(frame.selectors.callOnSelector(selector || 'body,frameset', { strict: options.strict ?? !!selector }, ({ injected, elements }, ariaOptions) => {
+      const resolved = await progress.race(frame.selectors.callOnSelector({ selector: selector || 'body,frameset', strict: options.strict ?? !!selector }, ({ injected, elements }, ariaOptions) => {
         return injected.ariaSnapshotJSON(elements[0], ariaOptions);
       }, {
         mode: options.mode ?? 'default',

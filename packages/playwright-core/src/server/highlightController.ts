@@ -100,7 +100,7 @@ export class HighlightController {
 
     const perContext = new Map<FrameExecutionContext, { selector: ParsedSelector, cssStyle?: string }[]>();
     for (const entry of this._entries.values()) {
-      const results = await entry.frame.selectors.resolveFramesForSelector(entry.selector, { strict: false, anyFrame: entry.anyFrame }).catch(() => []);
+      const results = await entry.frame.selectors.resolveFramesForSelector({ selector: entry.selector, strict: false, anyFrame: entry.anyFrame }).catch(() => []);
       for (const { frame, info } of results) {
         const context = frame.existingContext(info.world);
         if (!context)

@@ -55,7 +55,7 @@ export async function buildFullSelectorForFrame(progress: Progress, frame: Frame
 
 async function resolvesToFrame(progress: Progress, selector: string, frame: Frame): Promise<boolean> {
   try {
-    const resolved = await progress.race(frame._page.mainFrame().selectors.callOnSelector(selector, { strict: false }, () => true, {}));
+    const resolved = await progress.race(frame._page.mainFrame().selectors.callOnSelector({ selector, strict: false }, () => true, {}));
     return resolved?.frame === frame;
   } catch (e) {
     // Errors like "matched in multiple frames" mean the selector does not pinpoint the frame.

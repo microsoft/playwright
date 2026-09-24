@@ -23,7 +23,7 @@ import type { Frame } from '../frames';
 
 export async function performAction(progress: Progress, mainFrame: Frame, action: actions.PerformableAction) {
   const options = toClickOptions(action);
-  await mainFrame.click(progress, action.selector, { ...options, strict: true });
+  await mainFrame.click(progress, { selector: action.selector, strict: true }, options);
 }
 
 export function toClickOptions(action: actions.ClickAction): types.MouseClickOptions {
