@@ -515,7 +515,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (this._snapshotter?.started()) {
       // Node references are only reset by the first snapshot of the action.
       const resetTargets = phase === 'before';
-      await this._snapshotter?.captureSnapshot(page, progress.metadata.id, phase, resetTargets).catch(() => {});
+      try {
+        await progress.race(this._snapshotter.captureSnapshot(page, progress.metadata.id, phase, resetTargets));
+      } catch {
+      }
     }
 
     const options = this._state?.options;

@@ -16,6 +16,8 @@
 
 // @ts-check
 
+const crypto = require('crypto');
+const fs = require('fs');
 const { ESLintUtils } = require('@typescript-eslint/utils');
 
 const createRule = ESLintUtils.RuleCreator(name => name);
@@ -156,7 +158,9 @@ const rule = createRule({
         if (!isInProgressFunction())
           return;
 
-        const awaited = node.argument;
+        let awaited = node.argument;
+        if (awaited.type === 'ChainExpression')
+          awaited = awaited.expression;
 
         // await progress.anything(...) is always fine — calls on the progress object itself.
         if (awaited.type === 'CallExpression' &&
@@ -195,6 +199,11 @@ const rule = createRule({
 });
 
 module.exports = {
+  meta: {
+    name: 'eslint-plugin-progress',
+    // ESLint cache key includes plugin version, so edits to this file invalidate cached results.
+    version: crypto.createHash('sha1').update(fs.readFileSync(__filename)).digest('hex'),
+  },
   rules: {
     'await-must-use-progress': rule,
   },
