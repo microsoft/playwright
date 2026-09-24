@@ -77,7 +77,7 @@ type PageRegisteredTool = {
 
 type PageModelContext = {
   getTools?: () => Promise<PageRegisteredTool[]>;
-  executeTool?: (tool: PageRegisteredTool, inputJson: string) => Promise<unknown>;
+  executeTool?: (tool: PageRegisteredTool, input: object | string) => Promise<unknown>;
   invokeTool?: (name: string, input: unknown) => Promise<unknown>;
 };
 
@@ -128,12 +128,17 @@ function callToolInPage(params: { name: string, inputJson: string }) {
     throw new Error('WebMCP is not available on this page');
   const stringify = (result: unknown) => result === undefined ? 'null' : JSON.stringify(result);
   if (modelContext.executeTool) {
-    // Chromium: executeTool(registeredTool, inputJsonString) resolves to a JSON string.
+    // Chromium: executeTool(registeredTool, input) resolves to a JSON string. Chromium 155+ takes
+    // the input as an object, older versions as a JSON string.
     return Promise.resolve(modelContext.getTools!()).then(tools => {
       const tool = tools.filter(t => !('window' in t) || t.window === window).find(t => t.name === params.name);
       if (!tool)
         throw new Error(`WebMCP tool "${params.name}" is not registered in this frame`);
-      return modelContext.executeTool!(tool, params.inputJson);
+      return Promise.resolve().then(() => modelContext.executeTool!(tool, JSON.parse(params.inputJson))).catch(e => {
+        if (String(e?.message).includes('Failed to parse input arguments'))
+          return modelContext.executeTool!(tool, params.inputJson);
+        throw e;
+      });
     }).then(result => typeof result === 'string' ? result : stringify(result));
   }
   // Firefox: invokeTool(name, inputObject) resolves to the value itself.
