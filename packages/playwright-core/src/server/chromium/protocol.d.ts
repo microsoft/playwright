@@ -1064,7 +1064,7 @@ Should be updated alongside RequestIdTokenStatus in
 third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
 all cases except for success.
      */
-    export type FederatedAuthRequestIssueReason = "ShouldEmbargo"|"TooManyRequests"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownBlockedByConnectionAllowlist"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"ConfigNotInWellKnown"|"WellKnownTooBig"|"ConfigHttpNotFound"|"ConfigNoResponse"|"ConfigBlockedByConnectionAllowlist"|"ConfigInvalidResponse"|"ConfigInvalidContentType"|"IdpNotPotentiallyTrustworthy"|"DisabledInSettings"|"DisabledInFlags"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsBlockedByConnectionAllowlist"|"AccountsInvalidResponse"|"AccountsListEmpty"|"AccountsInvalidContentType"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenBlockedByConnectionAllowlist"|"IdTokenInvalidResponse"|"IdTokenIdpErrorResponse"|"IdTokenCrossSiteIdpErrorResponse"|"IdTokenInvalidRequest"|"IdTokenInvalidContentType"|"ErrorIdToken"|"Canceled"|"RpPageNotVisible"|"SilentMediationFailure"|"NotSignedInWithIdp"|"MissingTransientUserActivation"|"ReplacedByActiveMode"|"RelyingPartyOriginIsOpaque"|"TypeNotMatching"|"UiDismissedNoEmbargo"|"CorsError"|"SuppressedBySegmentationPlatform";
+    export type FederatedAuthRequestIssueReason = "ShouldEmbargo"|"TooManyRequests"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownBlockedByConnectionAllowlist"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"ConfigNotInWellKnown"|"WellKnownTooBig"|"ConfigHttpNotFound"|"ConfigNoResponse"|"ConfigBlockedByConnectionAllowlist"|"ConfigInvalidResponse"|"ConfigInvalidContentType"|"IdpNotPotentiallyTrustworthy"|"DisabledInSettings"|"DisabledInFlags"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsBlockedByConnectionAllowlist"|"AccountsInvalidResponse"|"AccountsListEmpty"|"AccountsInvalidContentType"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenBlockedByConnectionAllowlist"|"IdTokenInvalidResponse"|"IdTokenIdpErrorResponse"|"IdTokenCrossSiteIdpErrorResponse"|"IdTokenInvalidRequest"|"IdTokenInvalidContentType"|"ErrorIdToken"|"Canceled"|"RpPageNotVisible"|"SilentMediationFailure"|"NotSignedInWithIdp"|"MissingTransientUserActivation"|"ReplacedByActiveMode"|"RelyingPartyOriginIsOpaque"|"TypeNotMatching"|"UiDismissedNoEmbargo"|"CorsError"|"SuppressedBySegmentationPlatform"|"PopupBlockedByConnectionAllowlist";
     export interface FederatedAuthUserInfoRequestIssueDetails {
       federatedAuthUserInfoRequestIssueReason: FederatedAuthUserInfoRequestIssueReason;
     }
@@ -1082,7 +1082,7 @@ third_party/blink/public/mojom/devtools/inspector_issue.mojom.
 Should be updated alongside EmailVerificationRequestResult in
 third_party/blink/public/mojom/devtools/inspector_issue.mojom.
      */
-    export type EmailVerificationRequestIssueReason = "InvalidEmail"|"DnsFetchFailed"|"DnsInvalidRecord"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"WellKnownMissingIssuanceEndpoint"|"WellKnownIssuanceEndpointCrossOrigin"|"WellKnownUnsupportedSigningAlgorithm"|"TokenHttpNotFound"|"TokenNoResponse"|"TokenInvalidResponse"|"TokenInvalidContentType"|"TokenMalformedSdJwt"|"TokenInvalidSdJwt"|"KeyBindingSigningFailed"|"RpOriginIsOpaque"|"WellKnownMissingAccountsEndpoint"|"UserLoggedOut"|"WellKnownAccountsEndpointCrossOrigin"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"AccountsInvalidContentType"|"AccountsEmptyList"|"EmailVerificationWellKnownHttpNotFound"|"EmailVerificationWellKnownNoResponse"|"EmailVerificationWellKnownInvalidResponse"|"EmailVerificationWellKnownInvalidContentType"|"JwksHttpNotFound"|"JwksInvalidResponse"|"TokenVerificationSdJwtUnsupportedHeaderAlg"|"TokenVerificationSdJwtInvalidTyp"|"TokenVerificationSdJwtMissingIss"|"TokenVerificationSdJwtMissingIat"|"TokenVerificationSdJwtMissingCnf"|"TokenVerificationSdJwtMissingEmail"|"TokenVerificationSdJwtInvalidIssuedAt"|"TokenVerificationSdJwtInvalidIssuer"|"TokenVerificationSdJwtJwksMissingKeys"|"TokenVerificationSdJwtSignatureFailed"|"TokenVerificationSdJwtInvalidEmailVerified"|"TokenVerificationSdJwtInvalidEmail"|"TokenVerificationSdJwtInvalidHolderKey"|"TokenVerificationKbInvalidTyp"|"TokenVerificationKbMissingAud"|"TokenVerificationKbMissingNonce"|"TokenVerificationKbMissingIat"|"TokenVerificationKbMissingSdHash"|"TokenVerificationKbInvalidIssuedAt"|"TokenVerificationKbInvalidAudience"|"TokenVerificationKbInvalidNonce"|"TokenVerificationKbInvalidSdHash"|"TokenVerificationKbMissingCnf"|"TokenVerificationKbSignatureFailed";
+    export type EmailVerificationRequestIssueReason = "InvalidEmail"|"DnsFetchFailed"|"DnsInvalidRecord"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"WellKnownMissingIssuanceEndpoint"|"WellKnownIssuanceEndpointCrossOrigin"|"WellKnownUnsupportedSigningAlgorithm"|"TokenHttpNotFound"|"TokenNoResponse"|"TokenInvalidResponse"|"TokenInvalidContentType"|"TokenMalformedSdJwt"|"TokenInvalidSdJwt"|"KeyBindingSigningFailed"|"RpOriginIsOpaque"|"WellKnownMissingAccountsEndpoint"|"UserLoggedOut"|"WellKnownAccountsEndpointCrossOrigin"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"AccountsInvalidContentType"|"AccountsEmptyList"|"EmailVerificationWellKnownHttpNotFound"|"EmailVerificationWellKnownNoResponse"|"EmailVerificationWellKnownInvalidResponse"|"EmailVerificationWellKnownInvalidContentType"|"JwksHttpNotFound"|"JwksInvalidResponse"|"TokenVerificationSdJwtUnsupportedHeaderAlg"|"TokenVerificationSdJwtInvalidTyp"|"TokenVerificationSdJwtMissingIss"|"TokenVerificationSdJwtMissingIat"|"TokenVerificationSdJwtMissingCnf"|"TokenVerificationSdJwtMissingEmail"|"TokenVerificationSdJwtInvalidIssuedAt"|"TokenVerificationSdJwtInvalidIssuer"|"TokenVerificationSdJwtJwksMissingKeys"|"TokenVerificationSdJwtSignatureFailed"|"TokenVerificationSdJwtInvalidEmailVerified"|"TokenVerificationSdJwtInvalidEmail"|"TokenVerificationSdJwtInvalidHolderKey"|"TokenVerificationKbInvalidTyp"|"TokenVerificationKbMissingAud"|"TokenVerificationKbMissingNonce"|"TokenVerificationKbMissingIat"|"TokenVerificationKbMissingSdHash"|"TokenVerificationKbInvalidIssuedAt"|"TokenVerificationKbInvalidAudience"|"TokenVerificationKbInvalidNonce"|"TokenVerificationKbInvalidSdHash"|"TokenVerificationKbMissingCnf"|"TokenVerificationKbSignatureFailed"|"CrossOriginIframeNotSupported";
     /**
      * This issue tracks client hints related issues. It's used to deprecate old
 features, encourage the use of new ones, and provide general guidance.
@@ -1211,6 +1211,15 @@ Used for messages that reference a specific permission name
        */
       disableReason?: string;
     }
+    export type WebInstallIssueReason = "ManifestParsingOrNetworkError"|"StartUrlInvalid"|"ManifestMissingNameOrShortName"|"ManifestMissingId"|"NoManifest";
+    /**
+     * This issue reports a failure involving a web app manifest used by a Web
+Install operation.
+     */
+    export interface WebInstallIssueDetails {
+      manifestUrl?: string;
+      reason: WebInstallIssueReason;
+    }
     /**
      * The issue warns about blocked calls to privacy sensitive APIs via the
 Selective Permissions Intervention.
@@ -1251,7 +1260,7 @@ Selective Permissions Intervention.
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"CorsIssue"|"QuirksModeIssue"|"PartitioningBlobURLIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue"|"BounceTrackingIssue"|"CookieDeprecationMetadataIssue"|"StylesheetLoadingIssue"|"FederatedAuthUserInfoRequestIssue"|"PropertyRuleIssue"|"SharedDictionaryIssue"|"ElementAccessibilityIssue"|"SRIMessageSignatureIssue"|"UnencodedDigestIssue"|"ConnectionAllowlistIssue"|"UserReidentificationIssue"|"PermissionElementIssue"|"PerformanceIssue"|"SelectivePermissionsInterventionIssue"|"EmailVerificationRequestIssue"|"LazyLoadImageIssue";
+    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"CorsIssue"|"QuirksModeIssue"|"PartitioningBlobURLIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue"|"BounceTrackingIssue"|"CookieDeprecationMetadataIssue"|"StylesheetLoadingIssue"|"FederatedAuthUserInfoRequestIssue"|"PropertyRuleIssue"|"SharedDictionaryIssue"|"ElementAccessibilityIssue"|"SRIMessageSignatureIssue"|"UnencodedDigestIssue"|"ConnectionAllowlistIssue"|"UserReidentificationIssue"|"PermissionElementIssue"|"PerformanceIssue"|"SelectivePermissionsInterventionIssue"|"EmailVerificationRequestIssue"|"LazyLoadImageIssue"|"WebInstallIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -1288,6 +1297,7 @@ add a new optional field to this type.
       selectivePermissionsInterventionIssueDetails?: SelectivePermissionsInterventionIssueDetails;
       emailVerificationRequestIssueDetails?: EmailVerificationRequestIssueDetails;
       lazyLoadImageIssueDetails?: LazyLoadImageIssueDetails;
+      webInstallIssueDetails?: WebInstallIssueDetails;
     }
     /**
      * A unique id for a DevTools inspector issue. Allows other entities (e.g.
@@ -5906,6 +5916,21 @@ if there are multiple invokers, this is just an estimate.
       nodeIds: NodeId[];
     }
     /**
+     * Returns candidate nodes that are configured as triggers for the given popover.
+     */
+    export type getImplicitAnchorCandidatesParameters = {
+      /**
+       * Id of the popover HTMLElement.
+       */
+      nodeId: NodeId;
+    }
+    export type getImplicitAnchorCandidatesReturnValue = {
+      /**
+       * Candidate elements that can invoke this popover.
+       */
+      backendNodeIds: BackendNodeId[];
+    }
+    /**
      * When enabling, this API forces an element to gain interest in its target,
 keeping interest active until disabled.
      */
@@ -5920,6 +5945,52 @@ keeping interest active until disabled.
       enable: boolean;
     }
     export type forceShowInterestReturnValue = {
+    }
+    /**
+     * Sets a spelling or grammar error marker on the given range of text.
+See https://github.com/Igalia/explainers/blob/main/force-spelling-grammar-markers/README.md
+Note: exactly one between nodeId, backendNodeId and objectId should be passed
+to identify the node.
+     */
+    export type setTextMarkerParameters = {
+      /**
+       * Identifier of the node.
+       */
+      nodeId?: NodeId;
+      /**
+       * Identifier of the backend node.
+       */
+      backendNodeId?: BackendNodeId;
+      /**
+       * JavaScript object id of the node wrapper.
+       */
+      objectId?: Runtime.RemoteObjectId;
+      /**
+       * The type of marker to set on the given range of text.
+       */
+      type: "spelling"|"grammar";
+      /**
+       * Start offset into the element's rendered text in UTF-16 code units.
+For a text control, an offset into the control's value.
+Offsets count text in DOM order and do not enter shadow trees.
+To mark text inside a shadow tree, pass the element inside the shadow tree.
+       */
+      start: number;
+      /**
+       * End offset (exclusive) in the same units and space as start.
+       */
+      end: number;
+    }
+    export type setTextMarkerReturnValue = {
+    }
+    /**
+     * Clears the spelling and grammar error text markers overlapping the ranges
+set by setTextMarker in this session. These markers are also removed when
+the DOM domain is disabled or the session ends.
+     */
+    export type clearTextMarkersParameters = {
+    }
+    export type clearTextMarkersReturnValue = {
     }
   }
   
@@ -7329,6 +7400,11 @@ useful for emulating mobile device orientation lock behavior in
 responsive design mode.
        */
       screenOrientationLockEmulation?: boolean;
+      /**
+       * Viewport meta tag behavior. Default: `default`. Note: if `mobile` is `true`,
+the viewport meta tag is always enabled.
+       */
+      viewportMeta?: "enable"|"default";
     }
     export type setDeviceMetricsOverrideReturnValue = {
     }
@@ -11883,7 +11959,7 @@ one.
       /**
        * The reason for a session being deleted.
        */
-      deletionReason: "Expired"|"FailedToRestoreKey"|"FailedToUnwrapKey"|"StoragePartitionCleared"|"ClearBrowsingData"|"ServerRequested"|"InvalidSessionParams"|"RefreshFatalError"|"DevTools";
+      deletionReason: "Expired"|"FailedToRestoreKey"|"FailedToUnwrapKey"|"StoragePartitionCleared"|"ClearBrowsingData"|"ServerRequested"|"InvalidSessionParams"|"RefreshFatalError"|"DevTools"|"Replaced";
     }
     /**
      * Session event details specific to challenges.
@@ -17184,9 +17260,7 @@ be handled by the DevTools client and should be answered with `handleCertificate
     export type ServiceWorkerVersionStatus = "new"|"installing"|"installed"|"activating"|"activated"|"redundant";
     /**
      * Mostly corresponds to `RouterCondition` in ServiceWorker spec
-(https://www.w3.org/TR/service-workers/#dictdef-routercondition) while this
-currently lacks support for the nested conditions ("or" and "not").
-TODO(crbug.com/540469610): Support recursive conditions.
+(https://www.w3.org/TR/service-workers/#dictdef-routercondition)
      */
     export interface ServiceWorkerRouterCondition {
       /**
@@ -17197,6 +17271,8 @@ TODO(crbug.com/540469610): Support recursive conditions.
       requestMode?: string;
       requestDestination?: string;
       runningStatus?: ServiceWorkerVersionRunningStatus;
+      or?: ServiceWorkerRouterCondition[];
+      not?: ServiceWorkerRouterCondition;
     }
     export type ServiceWorkerRouterSourceType = "cache"|"fetchEvent"|"network"|"raceNetworkAndFetchHandler"|"raceNetworkAndCache"|"sourceDict";
     /**
@@ -20149,6 +20225,14 @@ variables as its properties.
        * Location in the source code where scope ends
        */
       endLocation?: Location;
+      /**
+       * True if the scope does not declare any variables or have a runtime context.
+Only present if true.
+Empty scopes are retained in the scope chain because
+they can be targeted via `evaluateOnCallFrame` (using `scopeNumber`) or
+matched against scopes in source maps.
+       */
+      empty?: boolean;
     }
     /**
      * Search match for resource.
@@ -21620,7 +21704,7 @@ per value in the scope of one CDP call.
 NOTE: If you change anything here, make sure to also update
 `subtype` in `ObjectPreview` and `PropertyPreview` below.
        */
-      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory"|"wasmvalue"|"trustedtype";
+      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory"|"wasmvalue"|"deferredmodule"|"trustedtype";
       /**
        * Object class (constructor) name. Specified for `object` type values only.
        */
@@ -21676,7 +21760,7 @@ The result value is json ML array.
       /**
        * Object subtype hint. Specified for `object` type values only.
        */
-      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory"|"wasmvalue"|"trustedtype";
+      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory"|"wasmvalue"|"deferredmodule"|"trustedtype";
       /**
        * String representation of the object.
        */
@@ -21714,7 +21798,7 @@ The result value is json ML array.
       /**
        * Object subtype hint. Specified for `object` type values only.
        */
-      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory"|"wasmvalue"|"trustedtype";
+      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory"|"wasmvalue"|"deferredmodule"|"trustedtype";
     }
     export interface EntryPreview {
       /**
@@ -23291,7 +23375,10 @@ Error was thrown.
     "DOM.getQueryingDescendantsForContainer": DOM.getQueryingDescendantsForContainerParameters;
     "DOM.getAnchorElement": DOM.getAnchorElementParameters;
     "DOM.forceShowPopover": DOM.forceShowPopoverParameters;
+    "DOM.getImplicitAnchorCandidates": DOM.getImplicitAnchorCandidatesParameters;
     "DOM.forceShowInterest": DOM.forceShowInterestParameters;
+    "DOM.setTextMarker": DOM.setTextMarkerParameters;
+    "DOM.clearTextMarkers": DOM.clearTextMarkersParameters;
     "DOMDebugger.getEventListeners": DOMDebugger.getEventListenersParameters;
     "DOMDebugger.removeDOMBreakpoint": DOMDebugger.removeDOMBreakpointParameters;
     "DOMDebugger.removeEventListenerBreakpoint": DOMDebugger.removeEventListenerBreakpointParameters;
@@ -23954,7 +24041,10 @@ Error was thrown.
     "DOM.getQueryingDescendantsForContainer": DOM.getQueryingDescendantsForContainerReturnValue;
     "DOM.getAnchorElement": DOM.getAnchorElementReturnValue;
     "DOM.forceShowPopover": DOM.forceShowPopoverReturnValue;
+    "DOM.getImplicitAnchorCandidates": DOM.getImplicitAnchorCandidatesReturnValue;
     "DOM.forceShowInterest": DOM.forceShowInterestReturnValue;
+    "DOM.setTextMarker": DOM.setTextMarkerReturnValue;
+    "DOM.clearTextMarkers": DOM.clearTextMarkersReturnValue;
     "DOMDebugger.getEventListeners": DOMDebugger.getEventListenersReturnValue;
     "DOMDebugger.removeDOMBreakpoint": DOMDebugger.removeDOMBreakpointReturnValue;
     "DOMDebugger.removeEventListenerBreakpoint": DOMDebugger.removeEventListenerBreakpointReturnValue;
