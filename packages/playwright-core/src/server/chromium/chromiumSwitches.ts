@@ -43,6 +43,10 @@ const disabledFeatures = [
   'AutoDeElevate',
   // Prevents downloading optimization hints on startup.
   'OptimizationHints',
+  // Prevents network time queries to clients2.google.com on startup.
+  'NetworkTimeServiceQuerying',
+  // Prevents AI Mode eligibility requests to www.google.com on startup.
+  'AimEnabled',
   // Disables forced sign-in in Edge.
   'msForceBrowserSignIn',
   // Disables updating the preferred version in LaunchServices preferences on mac.
