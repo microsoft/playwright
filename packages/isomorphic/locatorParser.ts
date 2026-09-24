@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { asLocators, regexFlagNames } from './locatorGenerators';
+import { regexFlagNames } from './locatorGenerators';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from './locatorUtils';
 import { parseSelector, stringifySelector } from './selectorParser';
 import { escapeForAttributeSelector, escapeForTextSelector } from './stringUtils';
 
-import type { Language, Quote } from './locatorGenerators';
+import type { Language } from './locatorGenerators';
 import type { ParsedSelector, ParsedSelectorPart } from './selectorParser';
 
 // Locator source code is parsed by a language-specific parser straight into a ParsedSelector.
@@ -38,7 +38,7 @@ type CallHandler = (call: CallArguments, testIdAttributeName: string) => ParsedS
 
 type Token =
   | { kind: 'identifier', value: string }
-  | { kind: 'string', value: string, quote: Quote }
+  | { kind: 'string', value: string }
   | { kind: 'regex', value: RegExp }
   | { kind: 'number', value: number }
   | { kind: 'punctuation', value: string }
@@ -103,10 +103,9 @@ function tokenize(source: string, options: ParserOptions): Token[] {
     if (/\s/.test(char)) {
       ++pos;
     } else if (options.quotes.includes(char)) {
-      tokens.push({ kind: 'string', value: readString(char, false), quote: char as Quote });
+      tokens.push({ kind: 'string', value: readString(char, false) });
     } else if (options.rawStrings && char === 'r' && options.quotes.includes(source[pos + 1])) {
-      const quote = source[++pos] as Quote;
-      tokens.push({ kind: 'string', value: readString(quote, true), quote });
+      tokens.push({ kind: 'string', value: readString(source[++pos], true) });
     } else if (options.regexLiterals && char === '/') {
       const regexSource = readString('/', true);
       tokens.push({ kind: 'regex', value: new RegExp(regexSource, match(kRegexFlagsRegex)) });
@@ -143,15 +142,14 @@ abstract class LocatorParser {
     this._testIdAttributeName = testIdAttributeName;
   }
 
-  parse(): { selector: ParsedSelector, preferredQuote: Quote | undefined } {
+  parse(): ParsedSelector {
     const selector = this.parseLocator();
     if (this.peek().kind !== 'end')
       this.unexpected();
     // Same as in parseSelector(), nested selectors like internal:chain cannot be first.
     if (selector.parts.length && isNestedSelectorPart(selector.parts[0]))
       throw new Error(`"${selector.parts[0].name}" selector cannot be first`);
-    const preferredQuote = this._tokens.find(token => token.kind === 'string')?.quote;
-    return { selector, preferredQuote };
+    return selector;
   }
 
   // Parses a single argument that is either a positional value or an options bag.
@@ -658,17 +656,5 @@ export function unsafeLocatorOrSelectorAsSelector(language: Language, locator: s
   const Parser = parsers[language];
   if (!Parser)
     return '';
-  const { selector, preferredQuote } = new Parser(locator, testIdAttributeName).parse();
-  const locators = asLocators(language, selector, undefined, undefined, preferredQuote);
-  const digest = digestForComparison(language, locator);
-  if (locators.some(candidate => digestForComparison(language, candidate) === digest))
-    return stringifySelector(selector);
-  return '';
-}
-
-function digestForComparison(language: Language, locator: string) {
-  locator = locator.replace(/\s/g, '');
-  if (language === 'javascript')
-    locator = locator.replace(/\\?["`]/g, '\'').replace(/,{}/g, '');
-  return locator;
+  return stringifySelector(new Parser(locator, testIdAttributeName).parse());
 }

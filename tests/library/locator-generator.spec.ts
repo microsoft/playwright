@@ -642,7 +642,7 @@ it('parseLocator quotes', async () => {
   expect.soft(parseLocator('javascript', `locator("text='bar'")`, '')).toBe(`text='bar'`);
   expect.soft(parseLocator('javascript', "locator(`text='bar'`)", '')).toBe(`text='bar'`);
   expect.soft(parseLocator('python', `locator("text='bar'")`, '')).toBe(`text='bar'`);
-  expect.soft(parseLocator('python', `locator('text="bar"')`, '')).toBe(``);
+  expect.soft(parseLocator('python', `locator('text="bar"')`, '')).toBe(`text="bar"`);
   expect.soft(parseLocator('java', `locator("text='bar'")`, '')).toBe(`text='bar'`);
   expect.soft(parseLocator('java', `locator('text="bar"')`, '')).toBe(``);
   expect.soft(parseLocator('csharp', `Locator("text='bar'")`, '')).toBe(`text='bar'`);
@@ -786,7 +786,7 @@ it('parse locators strictly', () => {
 
   // Quotes
   expect.soft(parseLocator('javascript', `locator("div").filter({ hasText: "Goodbye world" }).locator("span")`)).toBe(selector);
-  expect.soft(parseLocator('python', `locator('div').filter(has_text='Goodbye world').locator('span')`)).not.toBe(selector);
+  expect.soft(parseLocator('python', `locator('div').filter(has_text='Goodbye world').locator('span')`)).toBe(selector);
 
   // Whitespace
   expect.soft(parseLocator('csharp', `Locator("div")  .  Filter (new ( ) {  HasText =    "Goodbye world" }).Locator(  "span"   )`)).toBe(selector);

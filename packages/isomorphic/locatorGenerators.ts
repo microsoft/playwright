@@ -74,13 +74,12 @@ export function asLocator(lang: Language, selector: string, isFrameLocator: bool
   return asLocators(lang, selector, isFrameLocator, 1)[0];
 }
 
-export function asLocators(lang: Language, selector: string | ParsedSelector, isFrameLocator: boolean = false, maxOutputSize = 20, preferredQuote?: Quote): string[] {
+export function asLocators(lang: Language, selector: string, isFrameLocator: boolean = false, maxOutputSize = 20, preferredQuote?: Quote): string[] {
   try {
-    const parsed = typeof selector === 'string' ? parseSelector(selector) : selector;
-    return innerAsLocators(new generators[lang](preferredQuote), parsed, isFrameLocator, maxOutputSize);
+    return innerAsLocators(new generators[lang](preferredQuote), parseSelector(selector), isFrameLocator, maxOutputSize);
   } catch (e) {
     // Tolerate invalid input.
-    return [stringifySelector(selector)];
+    return [selector];
   }
 }
 
