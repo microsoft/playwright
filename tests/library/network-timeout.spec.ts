@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import dns from 'dns';
 import http from 'http';
 import { browserTest as test, expect } from '../config/browserTest';
 import { utils } from '../../packages/playwright-core/lib/coreBundle.js';
@@ -61,6 +62,36 @@ test('httpRequest should honor socketTimeout for stalled responses', async () =>
     expect(elapsed).toBeGreaterThanOrEqual(socketTimeout - 500);
     expect(elapsed).toBeLessThan(socketTimeout * 3);
   } finally {
+    server.close();
+  }
+});
+
+test('httpRequest should honor ipv4first result order', async () => {
+  const server = http.createServer((req, res) => res.end('ok'));
+  await new Promise<void>(f => server.listen(0, '127.0.0.1', () => f()));
+  const port = (server.address() as import('node:net').AddressInfo).port;
+  const originalLookup = dns.promises.lookup;
+  const originalOrder = dns.getDefaultResultOrder();
+  // Emulate a host whose IPv6 address is not routable: connecting to it stalls.
+  (dns.promises as any).lookup = async (hostname: string, options: dns.LookupOptions) => {
+    if (hostname !== 'dual-stack.test')
+      return originalLookup(hostname, options as dns.LookupAllOptions);
+    return options.family === 6 ? [{ address: '203.0.113.1', family: 4 }] : [{ address: '127.0.0.1', family: 4 }];
+  };
+  dns.setDefaultResultOrder('ipv4first');
+  try {
+    const start = Date.now();
+    const status = await new Promise<number | Error>(resolve => {
+      utils.httpRequest({
+        url: `http://dual-stack.test:${port}/`,
+        socketTimeout: 30000,
+      }, response => resolve(response.statusCode!), resolve);
+    });
+    expect(status).toBe(200);
+    expect(Date.now() - start).toBeLessThan(2000);
+  } finally {
+    dns.setDefaultResultOrder(originalOrder);
+    dns.promises.lookup = originalLookup;
     server.close();
   }
 });
