@@ -26,7 +26,11 @@ class DotReporter extends TerminalReporter {
   private _counter = 0;
 
   constructor(options?: DotReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
-    super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_DOT_OMIT_TAGS', options?.omitTags) });
+    super({
+      ...options,
+      onlyFailures: getAsBooleanFromENV('PLAYWRIGHT_DOT_ONLY_FAILURES', options?.onlyFailures),
+      omitTags: getAsBooleanFromENV('PLAYWRIGHT_DOT_OMIT_TAGS', options?.omitTags),
+    });
   }
 
   override onBegin(suite: Suite) {

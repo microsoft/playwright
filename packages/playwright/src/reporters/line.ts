@@ -29,7 +29,11 @@ class LineReporter extends TerminalReporter {
   private _didBegin = false;
 
   constructor(options?: LineReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
-    super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_LINE_OMIT_TAGS', options?.omitTags) });
+    super({
+      ...options,
+      onlyFailures: getAsBooleanFromENV('PLAYWRIGHT_LINE_ONLY_FAILURES', options?.onlyFailures),
+      omitTags: getAsBooleanFromENV('PLAYWRIGHT_LINE_OMIT_TAGS', options?.omitTags),
+    });
   }
 
   override onBegin(suite: Suite) {

@@ -27,7 +27,7 @@ import { fitToWidth } from '@utils/stringWidth';
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
-import type { FullConfig, FullResult, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { FullConfig, FullResult, Location, ReporterOptions, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 import type { Colors } from '@isomorphic/colors';
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
@@ -49,7 +49,7 @@ type TestSummary = {
   fatalErrors: TestError[];
 };
 
-export type CommonReporterOptions = {
+export type CommonReporterOptions = ReporterOptions & {
   configDir: string,
   _mode?: 'list' | 'test' | 'merge',
   _commandHash?: string,
@@ -159,7 +159,7 @@ export const internalScreen: Screen = {
   resolveFiles: 'rootDir',
 };
 
-export type TerminalReporterOptions = {
+export type TerminalReporterOptions = ReporterOptions & {
   screen?: TerminalScreen;
   omitFailures?: boolean;
   includeTestId?: boolean;
@@ -168,19 +168,19 @@ export type TerminalReporterOptions = {
 };
 
 export class TerminalReporter implements ReporterV2 {
+  readonly options: TerminalReporterOptions;
   screen: TerminalScreen;
   config!: FullConfig;
   suite!: Suite;
   totalTestCount = 0;
   result!: FullResult;
   private fileDurations = new Map<string, { duration: number, workers: Set<number> }>();
-  private _options: TerminalReporterOptions;
   private _fatalErrors: TestError[] = [];
   private _failureCount: number = 0;
 
   constructor(options: TerminalReporterOptions = {}) {
     this.screen = options.screen ?? terminalScreen;
-    this._options = options;
+    this.options = options;
   }
 
   version(): 'v2' {
@@ -333,7 +333,7 @@ export class TerminalReporter implements ReporterV2 {
   epilogue(full: boolean) {
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
-    if (full && summary.failuresToPrint.length && !this._options.omitFailures)
+    if (full && summary.failuresToPrint.length && !this.options.omitFailures)
       this._printFailures(summary.failuresToPrint);
     this._printSlowTests();
     this._printSummary(summaryMessage);
@@ -365,15 +365,15 @@ export class TerminalReporter implements ReporterV2 {
   }
 
   formatTestTitle(test: TestCase, step?: TestStep): string {
-    return formatTestTitle(this.screen, this.config, test, step, this._options);
+    return formatTestTitle(this.screen, this.config, test, step, this.options);
   }
 
   formatTestHeader(test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error' } = {}): string {
-    return formatTestHeader(this.screen, this.config, test, { ...options, includeTestId: this._options.includeTestId, omitTags: this._options.omitTags });
+    return formatTestHeader(this.screen, this.config, test, { ...options, includeTestId: this.options.includeTestId, omitTags: this.options.omitTags });
   }
 
   formatFailure(test: TestCase, index?: number): string {
-    return formatFailure(this.screen, this.config, test, index, this._options);
+    return formatFailure(this.screen, this.config, test, index, this.options);
   }
 
   formatError(error: TestError): ErrorDetails {
@@ -387,6 +387,34 @@ export class TerminalReporter implements ReporterV2 {
   writeLine(line?: string) {
     this.screen.stdout?.write(line ? line + '\n' : '\n');
   }
+}
+
+export function isFailure(test: TestCase): boolean {
+  const outcome = test.outcome();
+  return outcome === 'unexpected' || outcome === 'flaky' || test.results.some(result => result.status === 'interrupted');
+}
+
+export type TestFilter = (test: TestCase) => boolean;
+
+export function createTestFilter(options: ReporterOptions): TestFilter | undefined {
+  return options.onlyFailures ? isFailure : undefined;
+}
+
+export function* visitTests(suite: Suite, filter?: TestFilter): Generator<TestCase> {
+  for (const entry of suite.entries()) {
+    if (entry.type !== 'test')
+      yield* visitTests(entry, filter);
+    else if (!filter || filter(entry))
+      yield entry;
+  }
+}
+
+export function filterSuites(suites: Suite[], filter?: TestFilter): Suite[] {
+  return filter ? suites.filter(suite => !visitTests(suite, filter).next().done) : suites;
+}
+
+export function filterSuiteEntries(suite: Suite, filter?: TestFilter): (Suite | TestCase)[] {
+  return filter ? suite.entries().filter(entry => entry.type === 'test' ? filter(entry) : !visitTests(entry, filter).next().done) : suite.entries();
 }
 
 function formatResultErrors(screen: Screen, test: TestCase, result: TestResult): string {

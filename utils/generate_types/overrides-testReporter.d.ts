@@ -45,6 +45,15 @@ export interface Reporter {
   onEnd?(result: FullResult): Promise<{ status?: FullResult['status'] } | undefined | void> | void;
 }
 
+export type ReporterOptions = {
+  /**
+   * Whether to limit output to failed, flaky, and interrupted tests.
+   * Terminal reporters print failure details as soon as each attempt finishes.
+   * Reporter callbacks still receive all tests and results.
+   */
+  onlyFailures?: boolean;
+};
+
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
     projects: {

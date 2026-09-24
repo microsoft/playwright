@@ -36,11 +36,12 @@ import { extractZip } from '@utils/third_party/extractZip';
 // `import('vite')`) is DCE'd in release builds.
 declare const __PW_HMR__: boolean;
 
-import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
+import { createTestFilter, filterSuiteEntries, filterSuites, formatError, formatResultFailure, internalScreen } from './base';
 import * as babel from '../transform/babelBundle';
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
 import type { ReportConfigureParams, ReportEndParams, ReporterV2 } from './reporterV2';
+import type { CommonReporterOptions, TestFilter } from './base';
 import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAnnotation } from '../../types/test';
 import type * as api from '../../types/testReporter';
 import type { HTMLReport, HTMLReportOptions, Location, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
@@ -164,7 +165,7 @@ class HtmlReporter implements ReporterV2 {
       noSnippets,
       noCopyPrompt,
       mergeFiles,
-    });
+    }, createTestFilter(this._options));
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors, this._machines);
   }
 
@@ -339,13 +340,15 @@ class HtmlBuilder {
   private _attachmentsBaseURL: string;
   private _options: HTMLReportOptions;
   private _doNotInlineAssets: boolean;
+  private _testFilter: TestFilter | undefined;
 
-  constructor(yazl: typeof import('yazl'), config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, doNotInlineAssets: boolean, options: HTMLReportOptions) {
+  constructor(yazl: typeof import('yazl'), config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, doNotInlineAssets: boolean, options: HTMLReportOptions, testFilter?: TestFilter) {
     this._dataZipFile = new yazl.ZipFile();
     this._config = config;
     this._reportFolder = outputDir;
     this._options = options;
     this._doNotInlineAssets = doNotInlineAssets;
+    this._testFilter = testFilter;
     fs.mkdirSync(this._reportFolder, { recursive: true });
     this._attachmentsBaseURL = attachmentsBaseURL;
   }
@@ -354,7 +357,7 @@ class HtmlBuilder {
     const data: DataMap = new Map();
     for (const projectSuite of projectSuites) {
       const projectName = projectSuite.project()!.name;
-      for (const fileSuite of projectSuite.suites) {
+      for (const fileSuite of filterSuites(projectSuite.suites, this._testFilter)) {
         const fileName = this._relativeLocation(fileSuite.location)!.file;
         this._createEntryForSuite(data, projectName, fileSuite, fileName, true);
       }
@@ -505,7 +508,7 @@ class HtmlBuilder {
 
   private _processSuite(suite: api.Suite, projectName: string, path: string[], deep: boolean, outTests: TestEntry[]) {
     const newPath = [...path, suite.title];
-    suite.entries().forEach(e => {
+    filterSuiteEntries(suite, this._testFilter).forEach(e => {
       if (e.type === 'test')
         outTests.push(this._createTestEntry(e, projectName, newPath));
       else if (deep)

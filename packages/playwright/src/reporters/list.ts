@@ -45,7 +45,12 @@ class ListReporter extends TerminalReporter {
 
   constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
     const printFailuresInline = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_FAILURES_INLINE', options?.printFailuresInline);
-    super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_LIST_OMIT_TAGS', options?.omitTags), lastResult: printFailuresInline });
+    super({
+      ...options,
+      onlyFailures: getAsBooleanFromENV('PLAYWRIGHT_LIST_ONLY_FAILURES', options?.onlyFailures),
+      omitTags: getAsBooleanFromENV('PLAYWRIGHT_LIST_OMIT_TAGS', options?.omitTags),
+      lastResult: printFailuresInline,
+    });
     this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options?.printSteps);
     this._printFailuresInline = printFailuresInline;
     this._printWorkerIndex = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_WORKER_INDEX', options?.printWorkerIndex);
