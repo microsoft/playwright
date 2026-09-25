@@ -198,6 +198,49 @@ test('navigating to download link emits download', async ({ startClient, server,
   });
 });
 
+test('closing browser during download does not crash the server', async ({ startClient, server }, testInfo) => {
+  // Persistent Chromium on macOS does not quit while a download is in progress.
+  const { client } = await startClient({
+    config: { outputDir: testInfo.outputPath('output'), browser: { isolated: true } },
+  });
+
+  server.setContent('/', `<a href="/download" download="test.txt">Download</a>`, 'text/html');
+  server.setRoute('/download', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'application/octet-stream',
+      'Content-Disposition': 'attachment; filename=test.txt',
+    });
+    // Never finish the response so that the download stays in progress.
+    res.write('a'.repeat(4096));
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+  let events = parseResponse(await client.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Download link', target: 'e2' },
+  })).events ?? '';
+  await expect.poll(async () => {
+    events += parseResponse(await client.callTool({ name: 'browser_snapshot' })).events ?? '';
+    return events;
+  }).toContain('- Downloading file test.txt ...');
+
+  expect(await client.callTool({ name: 'browser_close' })).toHaveResponse({
+    result: expect.stringContaining('No open tabs'),
+  });
+  // Give the pending download a chance to fail after the browser is gone.
+  await new Promise(f => setTimeout(f, 1000));
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`- link "Download" [ref=e2]`),
+  });
+});
+
 test('file upload restricted to roots by default', async ({ startClient, server }, testInfo) => {
   const rootDir = testInfo.outputPath('workspace');
   await fs.mkdir(rootDir, { recursive: true });

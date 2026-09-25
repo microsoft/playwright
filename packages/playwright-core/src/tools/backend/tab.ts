@@ -137,7 +137,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       eventsHelper.addEventListener(p, 'dialog', dialog => this._dialogShown(dialog)),
       eventsHelper.addEventListener(p, 'dialogclosed', dialog => this._dialogClosed(dialog)),
       eventsHelper.addEventListener(p, 'download', download => {
-        void this._downloadStarted(download);
+        this._downloadStarted(download).catch(e => debug('pw:tools:error')(e));
       }),
     ];
     // eslint-disable-next-line no-restricted-syntax
