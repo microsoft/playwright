@@ -635,6 +635,7 @@ export namespace BrowsingContext {
     origin?: 'viewport' | 'document';
     format?: BrowsingContext.ImageFormat;
     clip?: BrowsingContext.ClipRectangle;
+    imageSize?: BrowsingContext.ImageSize;
   };
 }
 export namespace BrowsingContext {
@@ -644,6 +645,18 @@ export namespace BrowsingContext {
      * Must be between `0` and `1`, inclusive.
      */
     quality?: number;
+  };
+}
+export namespace BrowsingContext {
+  export type ImageSize = {
+    /**
+     * Must be greater than or equal to `1`.
+     */
+    maxWidth?: JsUint;
+    /**
+     * Must be greater than or equal to `1`.
+     */
+    maxHeight?: JsUint;
   };
 }
 export namespace BrowsingContext {
