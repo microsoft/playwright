@@ -90,15 +90,15 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async waitForSelector(params: channels.FrameWaitForSelectorParams, progress: Progress): Promise<channels.FrameWaitForSelectorResult> {
-    return { element: ElementHandleDispatcher.fromNullable(this, await this._frame.waitForSelector(progress, params.selector, true, params)) };
+    return { element: ElementHandleDispatcher.fromNullable(this, await this._frame.waitForSelector(progress, params, true, params)) };
   }
 
   async dispatchEvent(params: channels.FrameDispatchEventParams, progress: Progress): Promise<void> {
-    return this._frame.dispatchEvent(progress, params.selector, params.type, parseArgument(params.eventInit), params);
+    return this._frame.dispatchEvent(progress, params, params.type, parseArgument(params.eventInit));
   }
 
   async evalOnSelector(params: channels.FrameEvalOnSelectorParams, progress: Progress): Promise<channels.FrameEvalOnSelectorResult> {
-    return { value: serializeResult(await this._frame.evalOnSelector(progress, params.selector, !!params.strict, params.expression, { isFunction: params.isFunction, world: params.world }, parseArgument(params.arg))) };
+    return { value: serializeResult(await this._frame.evalOnSelector(progress, params, params.expression, { isFunction: params.isFunction, world: params.world }, parseArgument(params.arg))) };
   }
 
   async evalOnSelectorAll(params: channels.FrameEvalOnSelectorAllParams, progress: Progress): Promise<channels.FrameEvalOnSelectorAllResult> {
@@ -106,7 +106,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async querySelector(params: channels.FrameQuerySelectorParams, progress: Progress): Promise<channels.FrameQuerySelectorResult> {
-    return { element: ElementHandleDispatcher.fromNullable(this, await this._frame.querySelector(progress, params.selector, params)) };
+    return { element: ElementHandleDispatcher.fromNullable(this, await this._frame.querySelector(progress, params)) };
   }
 
   async querySelectorAll(params: channels.FrameQuerySelectorAllParams, progress: Progress): Promise<channels.FrameQuerySelectorAllResult> {
@@ -143,48 +143,48 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async click(params: channels.FrameClickParams, progress: Progress): Promise<void> {
-    return await this._frame.click(progress, params.selector, params);
+    return await this._frame.click(progress, params, params);
   }
 
   async dblclick(params: channels.FrameDblclickParams, progress: Progress): Promise<void> {
-    return await this._frame.dblclick(progress, params.selector, params);
+    return await this._frame.dblclick(progress, params, params);
   }
 
   async dragAndDrop(params: channels.FrameDragAndDropParams, progress: Progress): Promise<void> {
-    return await this._frame.dragAndDrop(progress, params.source, params.target, params);
+    return await this._frame.dragAndDrop(progress, { selector: params.source, strict: params.strict }, { selector: params.target, strict: params.strict }, params);
   }
 
   async drop(params: channels.FrameDropParams, progress: Progress): Promise<void> {
-    return await this._frame.drop(progress, params.selector, params, params);
+    return await this._frame.drop(progress, params, params);
   }
 
   async tap(params: channels.FrameTapParams, progress: Progress): Promise<void> {
-    return await this._frame.tap(progress, params.selector, params);
+    return await this._frame.tap(progress, params, params);
   }
 
   async fill(params: channels.FrameFillParams, progress: Progress): Promise<void> {
-    return await this._frame.fill(progress, params.selector, params.value, params);
+    return await this._frame.fill(progress, params, params.value, params);
   }
 
   async focus(params: channels.FrameFocusParams, progress: Progress): Promise<void> {
-    await this._frame.focus(progress, params.selector, params);
+    await this._frame.focus(progress, params);
   }
 
   async blur(params: channels.FrameBlurParams, progress: Progress): Promise<void> {
-    await this._frame.blur(progress, params.selector, params);
+    await this._frame.blur(progress, params);
   }
 
   async textContent(params: channels.FrameTextContentParams, progress: Progress): Promise<channels.FrameTextContentResult> {
-    const value = await this._frame.textContent(progress, params.selector, params);
+    const value = await this._frame.textContent(progress, params);
     return { value: value === null ? undefined : value };
   }
 
   async innerText(params: channels.FrameInnerTextParams, progress: Progress): Promise<channels.FrameInnerTextResult> {
-    return { value: await this._frame.innerText(progress, params.selector, params) };
+    return { value: await this._frame.innerText(progress, params) };
   }
 
   async innerHTML(params: channels.FrameInnerHTMLParams, progress: Progress): Promise<channels.FrameInnerHTMLResult> {
-    return { value: await this._frame.innerHTML(progress, params.selector, params) };
+    return { value: await this._frame.innerHTML(progress, params) };
   }
 
   async resolveSelector(params: channels.FrameResolveSelectorParams, progress: Progress): Promise<channels.FrameResolveSelectorResult> {
@@ -192,66 +192,66 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async getAttribute(params: channels.FrameGetAttributeParams, progress: Progress): Promise<channels.FrameGetAttributeResult> {
-    const value = await this._frame.getAttribute(progress, params.selector, params.name, params);
+    const value = await this._frame.getAttribute(progress, params, params.name);
     return { value: value === null ? undefined : value };
   }
 
   async inputValue(params: channels.FrameInputValueParams, progress: Progress): Promise<channels.FrameInputValueResult> {
-    const value = await this._frame.inputValue(progress, params.selector, params);
+    const value = await this._frame.inputValue(progress, params);
     return { value };
   }
 
   async isChecked(params: channels.FrameIsCheckedParams, progress: Progress): Promise<channels.FrameIsCheckedResult> {
-    return { value: await this._frame.isChecked(progress, params.selector, params) };
+    return { value: await this._frame.isChecked(progress, params) };
   }
 
   async isDisabled(params: channels.FrameIsDisabledParams, progress: Progress): Promise<channels.FrameIsDisabledResult> {
-    return { value: await this._frame.isDisabled(progress, params.selector, params) };
+    return { value: await this._frame.isDisabled(progress, params) };
   }
 
   async isEditable(params: channels.FrameIsEditableParams, progress: Progress): Promise<channels.FrameIsEditableResult> {
-    return { value: await this._frame.isEditable(progress, params.selector, params) };
+    return { value: await this._frame.isEditable(progress, params) };
   }
 
   async isEnabled(params: channels.FrameIsEnabledParams, progress: Progress): Promise<channels.FrameIsEnabledResult> {
-    return { value: await this._frame.isEnabled(progress, params.selector, params) };
+    return { value: await this._frame.isEnabled(progress, params) };
   }
 
   async isHidden(params: channels.FrameIsHiddenParams, progress: Progress): Promise<channels.FrameIsHiddenResult> {
-    return { value: await this._frame.isHidden(progress, params.selector, params) };
+    return { value: await this._frame.isHidden(progress, params) };
   }
 
   async isVisible(params: channels.FrameIsVisibleParams, progress: Progress): Promise<channels.FrameIsVisibleResult> {
-    return { value: await this._frame.isVisible(progress, params.selector, params) };
+    return { value: await this._frame.isVisible(progress, params) };
   }
 
   async hover(params: channels.FrameHoverParams, progress: Progress): Promise<void> {
-    return await this._frame.hover(progress, params.selector, params);
+    return await this._frame.hover(progress, params, params);
   }
 
   async selectOption(params: channels.FrameSelectOptionParams, progress: Progress): Promise<channels.FrameSelectOptionResult> {
     const elements = (params.elements || []).map(e => (e as ElementHandleDispatcher)._elementHandle);
-    return { values: await this._frame.selectOption(progress, params.selector, elements, params.options || [], params) };
+    return { values: await this._frame.selectOption(progress, params, elements, params.options || [], params) };
   }
 
   async setInputFiles(params: channels.FrameSetInputFilesParams, progress: Progress): Promise<channels.FrameSetInputFilesResult> {
-    return await this._frame.setInputFiles(progress, params.selector, params);
+    return await this._frame.setInputFiles(progress, params, params);
   }
 
   async type(params: channels.FrameTypeParams, progress: Progress): Promise<void> {
-    return await this._frame.type(progress, params.selector, params.text, params);
+    return await this._frame.type(progress, params, params.text, params);
   }
 
   async press(params: channels.FramePressParams, progress: Progress): Promise<void> {
-    return await this._frame.press(progress, params.selector, params.key, params);
+    return await this._frame.press(progress, params, params.key, params);
   }
 
   async check(params: channels.FrameCheckParams, progress: Progress): Promise<void> {
-    return await this._frame.check(progress, params.selector, params);
+    return await this._frame.check(progress, params, params);
   }
 
   async uncheck(params: channels.FrameUncheckParams, progress: Progress): Promise<void> {
-    return await this._frame.uncheck(progress, params.selector, params);
+    return await this._frame.uncheck(progress, params, params);
   }
 
   async waitForTimeout(params: channels.FrameWaitForTimeoutParams, progress: Progress): Promise<void> {
@@ -260,7 +260,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
 
   async waitForFunction(params: channels.FrameWaitForFunctionParams, progress: Progress): Promise<channels.FrameWaitForFunctionResult> {
     if (params.selector !== undefined) {
-      await this._frame.waitForFunctionExpressionOnElement(progress, params.selector, params.expression, params.isFunction, parseArgument(params.arg), { strict: params.strict });
+      await this._frame.waitForFunctionExpressionOnElement(progress, { selector: params.selector, strict: params.strict }, params.expression, params.isFunction, parseArgument(params.arg));
       return {};
     }
     const handle = await this._frame.waitForFunctionExpression(progress, params.expression, params.isFunction, parseArgument(params.arg), params);
