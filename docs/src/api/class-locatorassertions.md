@@ -1591,7 +1591,8 @@ Expected attribute value. If not specified, the assertion verifies that the attr
 
 ## async method: LocatorAssertions.toHaveAttribute#2
 * since: v1.39
-* langs: js
+* langs: js, java
+  - alias-java: hasAttribute
 
 Ensures the [Locator] points to an element with given attribute. The method will assert attribute
 presence.
@@ -1601,6 +1602,11 @@ const locator = page.locator('input');
 // Assert attribute existence.
 await expect(locator).toHaveAttribute('disabled');
 await expect(locator).not.toHaveAttribute('open');
+```
+
+```java
+assertThat(locator).hasAttribute("disabled");
+assertThat(locator).not().hasAttribute("open");
 ```
 
 ### param: LocatorAssertions.toHaveAttribute#2.name
@@ -1614,6 +1620,9 @@ Attribute name.
 
 ### option: LocatorAssertions.toHaveAttribute#2.signal = %%-js-assertions-signal-%%
 * since: v1.62
+
+### option: LocatorAssertions.toHaveAttribute#2.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.39
 
 ## async method: LocatorAssertions.toHaveClass
 * since: v1.20
