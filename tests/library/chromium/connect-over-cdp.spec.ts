@@ -66,12 +66,12 @@ test('should connect when an existing page has been discarded', async ({ browser
     const discards = await context.newPage();
     await discards.goto('chrome://discards/');
     // Discarding replaces the tab's WebContents, but the url in the table survives.
-    const row = discards.locator('tr', { has: discards.locator('.tab-url-cell', { hasText: victimUrl }) });
-    await row.locator('[is=action-link]', { hasText: 'Urgent Discard' }).click();
+    const row = discards.getByRole('row', { name: victimUrl });
+    await row.getByText('Urgent Discard').click();
     await expect(row).toContainText('discarded');
     // The renderer process is shut down asynchronously after the discard.
     await discards.waitForTimeout(3000);
-    await testInfo.attach('discards rows', { body: (await discards.locator('tr').allInnerTexts()).map(text => text.replace(/\s+/g, ' ')).join('\n') });
+    await testInfo.attach('discards rows', { body: (await discards.getByRole('row').allInnerTexts()).map(text => text.replace(/\s+/g, ' ')).join('\n') });
     const targets = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
     await testInfo.attach('targets', { body: JSON.stringify(targets, null, 2), contentType: 'application/json' });
 
