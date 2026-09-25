@@ -1193,11 +1193,10 @@ export class Frame extends SdkObject<FrameEventMap> {
   private async _retryWithProgressIfNotConnected<R>(
     progress: Progress,
     selector: string,
-    options: { strict?: boolean, noAutoWaiting?: boolean, force?: boolean, performActionPreChecks?: boolean, waitForFrameVisible?: boolean },
+    options: { strict?: boolean, force?: boolean, performActionPreChecks?: boolean, waitForFrameVisible?: boolean },
     action: (progress: Progress, handle: dom.ElementHandle<Element>, box: types.Rect | undefined, frameVisible: boolean) => Promise<R | 'error:notconnected'>): Promise<R> {
     progress.log(`waiting for ${this._asLocator(selector)}`);
-    const noAutoWaiting = (options as any).__testHookNoAutoWaiting ?? options.noAutoWaiting;
-    const performActionPreChecks = (options.performActionPreChecks ?? !options.force) && !noAutoWaiting;
+    const performActionPreChecks = options.performActionPreChecks ?? !options.force;
     const waitForFrameVisible = options.waitForFrameVisible && !options.force;
     return this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
       if (performActionPreChecks)
@@ -1213,24 +1212,17 @@ export class Frame extends SdkObject<FrameEventMap> {
         const rect = element?.getBoundingClientRect();
         return { log, success: !!element, element, box: rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : undefined };
       }, {}));
-      if (!resolved) {
-        if (noAutoWaiting)
-          throw new dom.NonRecoverableDOMError('Element(s) not found');
+      if (!resolved)
         return continuePolling;
-      }
       const result = resolved.result;
       const { log, success, box } = await progress.race(result.evaluate(r => ({ log: r.log, success: r.success, box: r.box })));
       if (log)
         progress.log(log);
       if (!success) {
-        if (noAutoWaiting)
-          throw new dom.NonRecoverableDOMError('Element(s) not found');
         result.dispose();
         return continuePolling;
       }
       if (waitForFrameVisible && !resolved.frameVisible) {
-        if (noAutoWaiting)
-          throw new dom.NonRecoverableDOMError('Element is not visible');
         progress.log('  element is inside a hidden frame, retrying');
         result.dispose();
         return continuePolling;
@@ -1240,8 +1232,6 @@ export class Frame extends SdkObject<FrameEventMap> {
       try {
         const result = await action(progress, element, box, resolved.frameVisible);
         if (result === 'error:notconnected') {
-          if (noAutoWaiting)
-            throw new dom.NonRecoverableDOMError('Element is not attached to the DOM');
           progress.log('element was detached from the DOM, retrying');
           return continuePolling;
         }
@@ -1301,11 +1291,11 @@ export class Frame extends SdkObject<FrameEventMap> {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, { ...options, waitForFrameVisible: true }, (progress, handle, box, frameVisible) => handle._fill(progress, value, options, frameVisible, box)));
   }
 
-  async focus(progress: Progress, selector: string, options: types.StrictOptions & { noAutoWaiting?: boolean }) {
+  async focus(progress: Progress, selector: string, options: types.StrictOptions) {
     dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._focus(progress)));
   }
 
-  async blur(progress: Progress, selector: string, options: types.StrictOptions & { noAutoWaiting?: boolean }) {
+  async blur(progress: Progress, selector: string, options: types.StrictOptions) {
     dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._blur(progress)));
   }
 
@@ -1430,7 +1420,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return await this._retryWithProgressIfNotConnected(progress, selector, { ...options, waitForFrameVisible: true }, (progress, handle, box, frameVisible) => handle._selectOption(progress, elements, values, options, frameVisible, box));
   }
 
-  async setInputFiles(progress: Progress, selector: string, params: Omit<channels.FrameSetInputFilesParams, 'timeout'> & { noAutoWaiting?: boolean }): Promise<channels.FrameSetInputFilesResult> {
+  async setInputFiles(progress: Progress, selector: string, params: Omit<channels.FrameSetInputFilesParams, 'timeout'>): Promise<channels.FrameSetInputFilesResult> {
     const inputFileItems = await progress.race(prepareFilesForUpload(this, params));
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, params, (progress, handle, box) => handle._setInputFiles(progress, inputFileItems, box)));
   }
@@ -1445,11 +1435,11 @@ export class Frame extends SdkObject<FrameEventMap> {
     dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, { ...options, waitForFrameVisible: true }, (progress, handle, box, frameVisible) => handle._drop(progress, inputFileItems, data, options, frameVisible)));
   }
 
-  async type(progress: Progress, selector: string, text: string, options: { delay?: number, noAutoWaiting?: boolean } & types.StrictOptions) {
+  async type(progress: Progress, selector: string, text: string, options: { delay?: number } & types.StrictOptions) {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle, box) => handle._type(progress, text, options, box)));
   }
 
-  async press(progress: Progress, selector: string, key: string, options: { delay?: number, noWaitAfter?: boolean, noAutoWaiting?: boolean } & types.StrictOptions) {
+  async press(progress: Progress, selector: string, key: string, options: { delay?: number, noWaitAfter?: boolean } & types.StrictOptions) {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle, box) => handle._press(progress, key, options, box)));
   }
 
