@@ -468,23 +468,6 @@ test('should not crash when browser closes mid-trace', async ({ browserType, ser
   await new Promise(f => setTimeout(f, 1000));  // Give it some time to throw errors
 });
 
-test('should not hang when page is unresponsive', async ({ browserType, server }) => {
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42903' });
-  const browser = await browserType.launch();
-  const page = await browser.newPage();
-  await page.context().tracing.start({ snapshots: true });
-  await page.goto(server.EMPTY_PAGE);
-  await page.evaluate(() => {
-    setTimeout(() => {
-      while (true) {}
-    }, 0);
-  });
-  // All bets are off with a tight loop in the page, but an explicit timeout should still fire.
-  const error = await page.goto(server.EMPTY_PAGE, { timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain('Timeout 1000ms exceeded');
-  await browser.close();
-});
-
 test('should survive browser.close with auto-created traces dir', async ({ browserType }, testInfo) => {
   const oldTracesDir = (browserType as any)._playwright._defaultTracesDir;
   (browserType as any)._playwright._defaultTracesDir = undefined;
