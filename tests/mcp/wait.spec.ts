@@ -112,6 +112,25 @@ test('browser_wait_for(time)', async ({ client, server }) => {
     name: 'browser_wait_for',
     arguments: { time: 1 },
   })).toHaveResponse({
+    result: `Waited for 1 seconds`,
     code: `await new Promise(f => setTimeout(f, 1 * 1000));`,
+  });
+});
+
+test('browser_wait_for(time) reports capped time', async ({ client, server }) => {
+  test.slow();
+  server.setContent('/', `<body><div>Hello World</div></body>`, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_wait_for',
+    arguments: { time: 70 },
+  })).toHaveResponse({
+    result: `Waited for 30 seconds (requested 70, maximum is 30)`,
+    code: `await new Promise(f => setTimeout(f, 30 * 1000));`,
   });
 });
