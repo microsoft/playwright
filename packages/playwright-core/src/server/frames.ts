@@ -894,7 +894,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return scope ? scope._context.raceAgainstContextDestroyed(promise) : promise;
   }
 
-  async dispatchEvent(progress: Progress, selector: string, type: string, eventInit: Object = {}, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<void> {
+  async dispatchEvent(progress: Progress, selector: string, type: string, eventInit: Object = {}, options: types.StrictOptions, scope?: dom.ElementHandle): Promise<void> {
     await this._waitForFunctionOnSelector(progress, selector, (injectedScript, element, data) => {
       injectedScript.dispatchEvent(element, data.type, data.eventInit);
       return { result: undefined };
@@ -1253,7 +1253,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, { ...options, waitForFrameVisible: true }, (progress, handle, box, frameVisible) => handle._click(progress, { ...options, waitAfter: !options.noWaitAfter }, frameVisible)));
   }
 
-  async dblclick(progress: Progress, selector: string, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions) {
+  async dblclick(progress: Progress, selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions) {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, { ...options, waitForFrameVisible: true }, (progress, handle, box, frameVisible) => handle._dblclick(progress, options, frameVisible)));
   }
 
@@ -1329,12 +1329,12 @@ export class Frame extends SdkObject<FrameEventMap> {
     return { resolvedSelector };
   }
 
-  async textContent(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<string | null> {
+  async textContent(progress: Progress, selector: string, options: types.StrictOptions, scope?: dom.ElementHandle): Promise<string | null> {
     const { result } = await this._waitForFunctionOnSelector(progress, selector, (injected, element) => ({ result: element.textContent }), undefined, options, scope);
     return result;
   }
 
-  async innerText(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<string> {
+  async innerText(progress: Progress, selector: string, options: types.StrictOptions, scope?: dom.ElementHandle): Promise<string> {
     const { result } = await this._waitForFunctionOnSelector(progress, selector, (injectedScript, element) => {
       if (element.namespaceURI !== 'http://www.w3.org/1999/xhtml')
         throw injectedScript.createStacklessError('Node is not an HTMLElement');
@@ -1343,12 +1343,12 @@ export class Frame extends SdkObject<FrameEventMap> {
     return result;
   }
 
-  async innerHTML(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<string> {
+  async innerHTML(progress: Progress, selector: string, options: types.StrictOptions, scope?: dom.ElementHandle): Promise<string> {
     const { result } = await this._waitForFunctionOnSelector(progress, selector, (injected, element) => ({ result: element.innerHTML }), undefined, options, scope);
     return result;
   }
 
-  async getAttribute(progress: Progress, selector: string, name: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<string | null> {
+  async getAttribute(progress: Progress, selector: string, name: string, options: types.StrictOptions, scope?: dom.ElementHandle): Promise<string | null> {
     const { result } = await this._waitForFunctionOnSelector(progress, selector, (injected, element, data) => ({ result: element.getAttribute(data.name) }), { name }, options, scope);
     return result;
   }
@@ -1363,7 +1363,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return result;
   }
 
-  private async _elementState(progress: Progress, selector: string, state: Exclude<ElementStateWithoutStable, 'visible' | 'hidden'>, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<boolean> {
+  private async _elementState(progress: Progress, selector: string, state: Exclude<ElementStateWithoutStable, 'visible' | 'hidden'>, options: types.StrictOptions, scope?: dom.ElementHandle): Promise<boolean> {
     const { result } = await this._waitForFunctionOnSelector(progress, selector, (injected, element, data) => {
       return { result: injected.elementState(element, data.state) };
     }, { state }, options, scope);
@@ -1396,19 +1396,19 @@ export class Frame extends SdkObject<FrameEventMap> {
     return !(await this.isVisible(progress, selector, options, scope));
   }
 
-  async isDisabled(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<boolean> {
+  async isDisabled(progress: Progress, selector: string, options: types.StrictOptions, scope?: dom.ElementHandle): Promise<boolean> {
     return this._elementState(progress, selector, 'disabled', options, scope);
   }
 
-  async isEnabled(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<boolean> {
+  async isEnabled(progress: Progress, selector: string, options: types.StrictOptions, scope?: dom.ElementHandle): Promise<boolean> {
     return this._elementState(progress, selector, 'enabled', options, scope);
   }
 
-  async isEditable(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<boolean> {
+  async isEditable(progress: Progress, selector: string, options: types.StrictOptions, scope?: dom.ElementHandle): Promise<boolean> {
     return this._elementState(progress, selector, 'editable', options, scope);
   }
 
-  async isChecked(progress: Progress, selector: string, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<boolean> {
+  async isChecked(progress: Progress, selector: string, options: types.StrictOptions, scope?: dom.ElementHandle): Promise<boolean> {
     return this._elementState(progress, selector, 'checked', options, scope);
   }
 
@@ -1425,7 +1425,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, params, (progress, handle, box) => handle._setInputFiles(progress, inputFileItems, box)));
   }
 
-  async drop(progress: Progress, selector: string, params: Omit<channels.FrameDropParams, 'timeout' | 'selector'>, options: types.PointerActionWaitOptions): Promise<void> {
+  async drop(progress: Progress, selector: string, params: Omit<channels.FrameDropParams, 'timeout' | 'selector'>, options: types.StrictOptions & { position?: types.Point }): Promise<void> {
     const hasFiles = !!(params.payloads?.length || params.localPaths?.length || params.streams?.length);
     const hasData = !!params.data?.length;
     if (!hasFiles && !hasData)

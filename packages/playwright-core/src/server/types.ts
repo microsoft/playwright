@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { HeadersArray, Point, Size } from '@isomorphic/types';
+import type { HeadersArray, Point } from '@isomorphic/types';
 export type { HeadersArray, Point, Quad, Rect, Size, DeviceDescriptor, Devices } from '@isomorphic/types';
 import type * as channels from './channels';
 import type { ProxySettings } from '@utils/network';
@@ -23,8 +23,6 @@ import type { ProxySettings } from '@utils/network';
 export type StrictOptions = {
   strict?: boolean,
 };
-
-export type QueryOnSelectorOptions = StrictOptions;
 
 export type WaitForElementOptions = StrictOptions & { state?: 'attached' | 'detached' | 'visible' | 'hidden' } & { omitReturnValue?: boolean };
 
@@ -37,17 +35,11 @@ export type NavigateOptions = {
 
 export type CommonActionOptions = StrictOptions & {
   force?: boolean,
-  scroll?: 'auto' | 'none',
 };
 
 export type PointerActionWaitOptions = CommonActionOptions & {
   trial?: boolean;
-};
-
-export type VideoOptions = {
-  width: number,
-  height: number,
-  outputFile: string,
+  scroll?: 'auto' | 'none';
 };
 
 export type ScreencastFrame = {
@@ -64,6 +56,7 @@ export type Geolocation = {
 };
 
 export type SelectOption = {
+  valueOrLabel?: string;
   value?: string;
   label?: string;
   index?: number;
@@ -108,11 +101,7 @@ export type MouseClickOptions = PointerActionOptions & {
   delay?: number;
   button?: MouseButton;
   clickCount?: number;
-};
-
-export type MouseMultiClickOptions = PointerActionOptions & {
-  delay?: number;
-  button?: MouseButton;
+  steps?: number;
 };
 
 export type World = 'main' | 'utility';
@@ -135,8 +124,6 @@ export type NormalizedContinueOverrides = {
   postData?: Buffer,
   isFallback: boolean,
 };
-
-export type EmulatedSize = { viewport: Size, screen: Size };
 
 export type LaunchOptions = Omit<channels.BrowserTypeLaunchParams, 'timeout'> & {
   proxyOverride?: ProxySettings,
