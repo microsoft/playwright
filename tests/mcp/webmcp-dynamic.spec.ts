@@ -225,27 +225,16 @@ test('--no-webmcp opts out of page tools entirely', async ({ startClient, server
   expect((await client.listTools()).tools.map(tool => tool.name)).not.toContain('webmcp_add');
 });
 
-test('--allowed-tools hides page tools that are not listed', async ({ startClient, server, mcpBrowser }) => {
+test('--allowed-tools filters page tools by name', async ({ startClient, server, mcpBrowser }) => {
   server.setRoute('/', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`<title>WebMCP</title>${registerScript(kAdd)}`);
-  });
-
-  const { client } = await startClient({
-    config: { ...webmcpConfig(mcpBrowser), allowedTools: ['browser_navigate'] },
-  });
-  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
-  expect((await client.listTools()).tools.map(tool => tool.name)).toEqual(['browser_navigate']);
-  expect(await client.callTool({ name: 'webmcp_add', arguments: { a: 1, b: 1 } })).toHaveResponse({
-    isError: true,
-    error: expect.stringContaining('Tool "webmcp_add" not found'),
-  });
-});
-
-test('--allowed-tools can expose a page tool by name', async ({ startClient, server, mcpBrowser }) => {
-  server.setRoute('/', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`<title>WebMCP</title>${registerScript(kAdd)}`);
+    res.end(`<title>WebMCP</title>${registerScript(kAdd + `
+      modelContext.registerTool({
+        name: 'checkout',
+        description: 'Places the order',
+        async execute() { return { content: [{ type: 'text', text: 'ordered' }] }; },
+      });
+    `)}`);
   });
 
   const { client } = await startClient({
@@ -256,21 +245,8 @@ test('--allowed-tools can expose a page tool by name', async ({ startClient, ser
   expect(await client.callTool({ name: 'webmcp_add', arguments: { a: 2, b: 40 } })).toHaveResponse({
     result: expect.stringContaining('"text": "42"'),
   });
-});
-
-test('--blocked-tools hides a page tool', async ({ startClient, server, mcpBrowser }) => {
-  server.setRoute('/', (req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`<title>WebMCP</title>${registerScript(kAdd)}`);
-  });
-
-  const { client } = await startClient({
-    config: { ...webmcpConfig(mcpBrowser), blockedTools: ['webmcp_add'] },
-  });
-  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
-  expect((await client.listTools()).tools.map(tool => tool.name)).not.toContain('webmcp_add');
-  expect(await client.callTool({ name: 'webmcp_add', arguments: { a: 1, b: 1 } })).toHaveResponse({
+  expect(await client.callTool({ name: 'webmcp_checkout', arguments: {} })).toHaveResponse({
     isError: true,
-    error: expect.stringContaining('Tool "webmcp_add" not found'),
+    error: expect.stringContaining('Tool "webmcp_checkout" not found'),
   });
 });

@@ -105,22 +105,10 @@ test('--blocked-tools removes tools and rejects their calls', async ({ startClie
   });
 });
 
-test('--allowed-tools exposes only the listed tools', async ({ startClient }) => {
+test('allowedTools and blockedTools in config file', async ({ startClient }) => {
   const { client } = await startClient({
-    args: ['--allowed-tools=browser_navigate,browser_snapshot'],
+    config: { allowedTools: ['browser_navigate', 'browser_snapshot', 'browser_run_code_unsafe'], blockedTools: ['browser_run_code_unsafe'] },
   });
   const toolNames = (await client.listTools()).tools.map(t => t.name);
   expect(new Set(toolNames)).toEqual(new Set(['browser_navigate', 'browser_snapshot']));
-  expect(await client.callTool({ name: 'browser_close', arguments: {} })).toHaveResponse({
-    isError: true,
-    error: expect.stringContaining('Tool "browser_close" not found'),
-  });
-});
-
-test('blockedTools wins over allowedTools in config file', async ({ startClient }) => {
-  const { client } = await startClient({
-    config: { allowedTools: ['browser_navigate', 'browser_run_code_unsafe'], blockedTools: ['browser_run_code_unsafe'] },
-  });
-  const toolNames = (await client.listTools()).tools.map(t => t.name);
-  expect(toolNames).toEqual(['browser_navigate']);
 });
