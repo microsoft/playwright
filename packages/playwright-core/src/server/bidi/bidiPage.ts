@@ -613,6 +613,10 @@ export class BidiPage implements PageDelegate {
         format: {
           type: 'image/jpeg',
           quality: options.quality / 100
+        },
+        imageSize: {
+          maxWidth: options.width,
+          maxHeight: options.height,
         }
       });
       if (payload) {
@@ -638,14 +642,6 @@ export class BidiPage implements PageDelegate {
       clearTimeout(this._screencastTimer);
       this._screencastTimer = undefined;
     }
-  }
-
-  getFFmpegVideoFilterArgs({ width, height }: { width: number, height: number }) {
-    // We use "scale" and "pad" video filters (-vf option) to resize incoming frames
-    // that might be of a different size to the desired video size.
-    //   https://ffmpeg.org/ffmpeg-filters.html#scale
-    //   https://ffmpeg.org/ffmpeg-filters.html#pad-1
-    return `scale=w='min(iw,${width})':h='min(ih,${height})':force_original_aspect_ratio=decrease:eval=frame,pad=${width}:${height}:0:0:gray`;
   }
 
   rafCountForStablePosition(): number {

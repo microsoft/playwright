@@ -30,7 +30,7 @@ import { registry } from './registry';
 import type * as types from './types';
 import type { ChildProcess } from 'child_process';
 import type { Screencast, ScreencastClient } from './screencast';
-import type { Page, PageDelegate } from './page';
+import type { Page } from './page';
 
 const kDefaultFps = 25;
 
@@ -61,7 +61,7 @@ export class VideoRecorder {
     const { size } = this._screencast.addClient(this._client);
     // For video files only, prioritize encoding into the given size, regardless of the actual pixel data.
     const videoSize = options.size ?? size;
-    this._videoRecorder = new FfmpegVideoRecorder(ffmpegPath, videoSize, options.fps ?? kDefaultFps, outputFile, this._screencast.page.delegate);
+    this._videoRecorder = new FfmpegVideoRecorder(ffmpegPath, videoSize, options.fps ?? kDefaultFps, outputFile);
     this._artifact = new Artifact(this._screencast.page.browserContext, outputFile);
     return this._artifact;
   }
@@ -110,7 +110,7 @@ class FfmpegVideoRecorder {
   private _launchPromise: Promise<Error | null>;
   private _outputFile: string;
 
-  constructor(ffmpegPath: string, size: types.Size, fps: number, outputFile: string, page: PageDelegate) {
+  constructor(ffmpegPath: string, size: types.Size, fps: number, outputFile: string) {
     if (!outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
     this._outputFile = outputFile;
@@ -118,10 +118,10 @@ class FfmpegVideoRecorder {
     this._size = size;
     this._fps = fps;
     this._creationTimeMs = Date.now();
-    this._launchPromise = this._launch(page).catch(e => e);
+    this._launchPromise = this._launch().catch(e => e);
   }
 
-  private async _launch(page: PageDelegate) {
+  private async _launch() {
     await mkdirIfNeeded(this._outputFile);
     // How to tune the codec:
     // 1. Read vp8 documentation to figure out the options.
@@ -171,7 +171,6 @@ class FfmpegVideoRecorder {
 
     const w = this._size.width;
     const h = this._size.height;
-    const videoFilterArgs = page.getFFmpegVideoFilterArgs?.({ width: w, height: h }) ?? `pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`;
     // Bitrate and encoder threads scale with the pixel rate relative to 800x450 at 25fps:
     //   800x450 at 25fps   -> scale 1,    bitrate 1000k,  1 thread
     //   800x800 at 25fps   -> scale 1.78, bitrate 1778k,  1 thread
@@ -180,7 +179,7 @@ class FfmpegVideoRecorder {
     const pixelRateScale = Math.max(1, w * h * this._fps / (800 * 450 * kDefaultFps));
     const bitrate = Math.round(pixelRateScale * 1000);
     const threads = Math.min(8, Math.ceil(pixelRateScale / 4));
-    const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${this._fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v ${bitrate}k -threads ${threads} -vf ${videoFilterArgs}`.split(' ');
+    const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${this._fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v ${bitrate}k -threads ${threads} -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
     args.push('-metadata', `creation_time=${new Date(this._creationTimeMs).toISOString()}`);
     args.push(this._outputFile);
 
