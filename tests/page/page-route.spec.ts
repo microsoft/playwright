@@ -985,9 +985,9 @@ it('should support async handler w/ times', async ({ page, server }) => {
   await expect(page.locator('body')).not.toHaveText('intercepted');
 });
 
-it('route abort with times: 1 should not affect second sequential fetch', async ({ page, server, browserName }) => {
+it('route abort with times: 1 should not affect second sequential fetch', async ({ page, server, browserName, browserMajorVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41802' });
-  it.fixme(browserName === 'chromium', 'Chromium drops a request that is intercepted while Fetch.disable is being processed; fix is not rolled yet');
+  it.skip(browserName === 'chromium' && browserMajorVersion < 155, 'Chromium drops a request that is intercepted while Fetch.disable is being processed; fix is not rolled yet');
 
   server.setRoute('/data', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
