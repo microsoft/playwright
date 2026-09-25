@@ -137,6 +137,19 @@ export type Config = {
   capabilities?: ToolCapability[];
 
   /**
+   * List of tool names to enable in addition to the tools from the enabled capabilities,
+   * for example `browser_pdf_save`. Tools matching both `allowedTools` and `blockedTools`
+   * are disabled.
+   */
+  allowedTools?: string[];
+
+  /**
+   * List of tool names to disable, for example `browser_run_code_unsafe`. Tools matching
+   * both `allowedTools` and `blockedTools` are disabled.
+   */
+  blockedTools?: string[];
+
+  /**
    * Whether to save the Playwright session into the output directory.
    */
   saveSession?: boolean;

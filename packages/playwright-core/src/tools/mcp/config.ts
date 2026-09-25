@@ -35,8 +35,10 @@ type ViewportSize = { width: number; height: number };
 export type CLIOptions = {
   allowedHosts?: string[];
   allowedOrigins?: string[];
+  allowedTools?: string[];
   allowUnrestrictedFileAccess?: boolean;
   blockedOrigins?: string[];
+  blockedTools?: string[];
   blockServiceWorkers?: boolean;
   browser?: string;
   caps?: string[];
@@ -376,6 +378,8 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       allowedHosts: cliOptions.allowedHosts,
     },
     capabilities: cliOptions.caps as ToolCapability[],
+    allowedTools: cliOptions.allowedTools,
+    blockedTools: cliOptions.blockedTools,
     console: {
       level: cliOptions.consoleLevel,
     },
@@ -419,8 +423,10 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   const options: CLIOptions = {};
   options.allowedHosts = commaSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_HOSTS);
   options.allowedOrigins = semicolonSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
+  options.allowedTools = commaSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_TOOLS);
   options.allowUnrestrictedFileAccess = envToBoolean(e.PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS);
   options.blockedOrigins = semicolonSeparatedList(e.PLAYWRIGHT_MCP_BLOCKED_ORIGINS);
+  options.blockedTools = commaSeparatedList(e.PLAYWRIGHT_MCP_BLOCKED_TOOLS);
   options.blockServiceWorkers = envToBoolean(e.PLAYWRIGHT_MCP_BLOCK_SERVICE_WORKERS);
   options.browser = envToString(e.PLAYWRIGHT_MCP_BROWSER);
   options.caps = commaSeparatedList(e.PLAYWRIGHT_MCP_CAPS);

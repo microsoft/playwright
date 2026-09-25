@@ -156,6 +156,8 @@ const longhandTypes: Record<string, LonghandType> = {
   // top-level
   'extension': 'boolean',
   'capabilities': 'string[]',
+  'allowedTools': 'string[]',
+  'blockedTools': 'string[]',
   'saveSession': 'boolean',
   'saveVideo': 'size',
   'sharedBrowserContext': 'boolean',
