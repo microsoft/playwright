@@ -31,6 +31,7 @@ export type ScreencastClient = {
   dispose: () => void;
   size?: types.Size;
   quality?: number;
+  fps?: number;
 };
 
 type AnnotatePosition = 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right';
@@ -113,7 +114,7 @@ export class Screencast implements InstrumentationListener {
     const isFirst = this._clients.size === 0;
     this._clients.set(client, new LongStandingScope());
     if (isFirst) {
-      this._startScreencast(client.size, client.quality);
+      this._startScreencast(client.size, client.quality, client.fps);
     } else if (this._lastFrame) {
       // Deliver the cached last frame to the new client so it does not have
       // to wait for the next browser repaint. setTimeout(0) ensures the caller
@@ -138,7 +139,7 @@ export class Screencast implements InstrumentationListener {
       this._stopScreencast();
   }
 
-  private _startScreencast(size: types.Size | undefined, quality: number | undefined) {
+  private _startScreencast(size: types.Size | undefined, quality: number | undefined, fps: number | undefined) {
     this._size = size;
     if (!this._size) {
       const viewport = this.page.browserContext._options.viewport || { width: 800, height: 600 };
@@ -159,6 +160,7 @@ export class Screencast implements InstrumentationListener {
       width: this._size.width,
       height: this._size.height,
       quality: quality ?? 90,
+      fps,
     });
   }
 

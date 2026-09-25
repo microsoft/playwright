@@ -413,6 +413,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
         dispose: () => this._clearScreencastFrameAcks(),
         size: params.size,
         quality: params.quality,
+        fps: params.fps,
       };
       this._page.screencast.addClient(this._screencastClient);
     }

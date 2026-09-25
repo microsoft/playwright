@@ -55,6 +55,7 @@ export class VideoRecorder {
       gracefulClose: () => this.stop(),
       dispose: () => this.stop().catch(e => debugLogger.log('error', `Failed to stop video recorder: ${String(e)}`)),
       size: options.size,
+      fps: options.fps,
     };
 
     const { size } = this._screencast.addClient(this._client);

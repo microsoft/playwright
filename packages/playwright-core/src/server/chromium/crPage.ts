@@ -318,12 +318,13 @@ export class CRPage implements PageDelegate {
     return this._sessionForHandle(handle)._scrollRectIntoViewIfNeeded(handle, rect);
   }
 
-  startScreencast(options: { width: number; height: number; quality: number; }) {
+  startScreencast(options: { width: number; height: number; quality: number; fps?: number }) {
     this._mainFrameSession._client.send('Page.startScreencast', {
       format: 'jpeg',
       quality: options.quality,
       maxWidth: options.width,
       maxHeight: options.height,
+      maxFramesInFlight: (options.fps ?? 0) > 30 ? 10 : 5,
     }).catch(() => {});
   }
 
