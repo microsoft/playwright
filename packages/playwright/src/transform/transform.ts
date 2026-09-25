@@ -136,6 +136,10 @@ export function resolveHook(filename: string, specifier: string): string | undef
   if (!shouldTransform(filename))
     return;
 
+  // Compiled JSX imports a bare specifier, so that cached transforms do not depend on the install location.
+  if (specifier === 'playwright/jsx-runtime')
+    return require.resolve('playwright/jsx-runtime');
+
   if (isRelativeSpecifier(specifier))
     return resolveImportSpecifierAfterMapping(path.resolve(path.dirname(filename), specifier), false);
 
