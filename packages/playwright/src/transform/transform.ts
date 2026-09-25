@@ -215,7 +215,7 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
     process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
     process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
   const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
-  const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsEpilogue);
+  const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsEpilogue, _transformConfig.jsxImportSource);
   const { cachedCode, addToCache, serializedCache } = cc.getFromCompilationCache(filename, hash, moduleUrl);
   if (cachedCode !== undefined)
     return { code: cachedCode, serializedCache };
@@ -233,13 +233,14 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   return { code, serializedCache: added.serializedCache };
 }
 
-function calculateHash(content: string, filePath: string, isModule: boolean, pluginsEpilogue: BabelPlugin[]): string {
+function calculateHash(content: string, filePath: string, isModule: boolean, pluginsEpilogue: BabelPlugin[], jsxImportSource: string | undefined): string {
   const hash = crypto.createHash('sha1')
       .update(isModule ? 'esm' : 'no_esm')
       .update(content)
       .update(filePath)
       .update(version)
       .update(pluginsEpilogue.map(p => p[0]).join(','))
+      .update(jsxImportSource || '')
       .digest('hex');
   return hash;
 }
