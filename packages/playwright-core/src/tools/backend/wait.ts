@@ -17,6 +17,8 @@
 import * as z from 'zod';
 import { defineTool } from './tool';
 
+const maxWaitSeconds = 30;
+
 const wait = defineTool({
   capability: 'core',
 
@@ -25,7 +27,7 @@ const wait = defineTool({
     title: 'Wait for',
     description: 'Wait for text to appear or disappear or a specified time to pass',
     inputSchema: z.object({
-      time: z.number().optional().describe('The time to wait in seconds'),
+      time: z.number().optional().describe(`The time to wait in seconds, at most ${maxWaitSeconds}`),
       text: z.string().optional().describe('The text to wait for'),
       textGone: z.string().optional().describe('The text to wait for to disappear'),
     }),
@@ -36,9 +38,10 @@ const wait = defineTool({
     if (!params.text && !params.textGone && !params.time)
       throw new Error('Either time, text or textGone must be provided');
 
-    if (params.time) {
-      response.addCode(`await new Promise(f => setTimeout(f, ${params.time!} * 1000));`);
-      await new Promise(f => setTimeout(f, Math.min(30000, params.time! * 1000)));
+    const time = params.time ? Math.min(maxWaitSeconds, params.time) : undefined;
+    if (time) {
+      response.addCode(`await new Promise(f => setTimeout(f, ${time} * 1000));`);
+      await new Promise(f => setTimeout(f, time * 1000));
     }
 
     const tab = context.currentTabOrDie();
@@ -55,7 +58,12 @@ const wait = defineTool({
       await locator.waitFor({ state: 'visible', ...tab.actionTimeoutOptions });
     }
 
-    response.addTextResult(`Waited for ${params.text || params.textGone || params.time}`);
+    if (params.text || params.textGone)
+      response.addTextResult(`Waited for ${params.text || params.textGone}`);
+    else if (time !== params.time)
+      response.addTextResult(`Waited for ${time} seconds (requested ${params.time}, maximum is ${maxWaitSeconds})`);
+    else
+      response.addTextResult(`Waited for ${time} seconds`);
     response.setIncludeSnapshot();
   },
 });
