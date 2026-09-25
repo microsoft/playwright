@@ -306,6 +306,15 @@ it('should specify location', async ({ page, server }) => {
   expect.soft(await lastEvent.evaluate(e => e.code)).toBe('NumpadSubtract');
 });
 
+it('should specify numpad location on keyup', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/keyboard.html');
+  await page.keyboard.press('NumpadSubtract');
+  expect(await page.evaluate('getResult()')).toBe(
+      ['Keydown: - NumpadSubtract NUMPAD []',
+        'Keypress: - NumpadSubtract NUMPAD 45 []',
+        'Keyup: - NumpadSubtract NUMPAD []'].join('\n'));
+});
+
 it('should press Enter', async ({ page, server }) => {
   await page.setContent('<textarea></textarea>');
   await page.focus('textarea');
