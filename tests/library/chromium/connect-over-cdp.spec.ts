@@ -42,6 +42,51 @@ test('should connect to an existing cdp session', async ({ browserType, mode }, 
   }
 });
 
+test('should connect when an existing page has been discarded', async ({ browserType, createUserDataDir, server }, testInfo) => {
+  // https://github.com/microsoft/playwright/issues/41714
+  const port = 9339 + testInfo.workerIndex;
+  const userDataDir = await createUserDataDir();
+  // chrome://discards is an internal debug page that is only available with this pref.
+  fs.writeFileSync(path.join(userDataDir, 'Local State'), JSON.stringify({ internal_only_uis_enabled: true }));
+  const context = await browserType.launchPersistentContext(userDataDir, {
+    headless: false,
+    // Emulating the viewport of a discarded tab crashes the browser in
+    // WebContentsImpl::SetDeviceEmulationSize, because it has no view.
+    viewport: null,
+    args: [
+      '--remote-debugging-port=' + port,
+      // Chrome refuses to discard tabs with DevTools attached, and we attach to all of them.
+      '--enable-features=AllowDevtoolsConnectedDiscard',
+    ],
+  });
+  try {
+    const victimUrl = server.PREFIX + '/title.html';
+    const victim = await context.newPage();
+    await victim.goto(victimUrl);
+    const discards = await context.newPage();
+    await discards.goto('chrome://discards/');
+    // Discarding replaces the tab's WebContents, but the url in the table survives.
+    const row = discards.getByRole('row', { name: victimUrl });
+    await row.getByText('Urgent Discard').click();
+    await expect(row).toContainText('discarded');
+    // The renderer process is shut down asynchronously after the discard.
+    await discards.waitForTimeout(3000);
+    await testInfo.attach('discards rows', { body: (await discards.getByRole('row').allInnerTexts()).map(text => text.replace(/\s+/g, ' ')).join('\n') });
+    const targets = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+    await testInfo.attach('targets', { body: JSON.stringify(targets, null, 2), contentType: 'application/json' });
+
+    // Connecting should not hang on the discarded page, and the page should not be reported.
+    const cdpBrowser = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+    });
+    const pages = cdpBrowser.contexts()[0].pages();
+    expect(pages.map(page => page.url()).sort()).toEqual(['about:blank', 'chrome://discards/']);
+    await cdpBrowser.close();
+  } finally {
+    await context.close();
+  }
+});
+
 test('should cleanup artifacts dir after connectOverCDP disconnects due to ws close', async ({ browserType, toImpl, mode }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
