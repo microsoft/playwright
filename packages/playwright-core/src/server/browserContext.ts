@@ -768,10 +768,15 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
 }
 
 export function validateBrowserContextOptions(options: types.BrowserContextOptions, browserOptions: BrowserOptions) {
+  const noDefaultViewportDescription = options.viewportMaximized ? '"maximized" viewport' : 'null "viewport"';
   if (options.noDefaultViewport && options.deviceScaleFactor !== undefined)
-    throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
+    throw new Error(`"deviceScaleFactor" option is not supported with ${noDefaultViewportDescription}`);
   if (options.noDefaultViewport && !!options.isMobile)
-    throw new Error(`"isMobile" option is not supported with null "viewport"`);
+    throw new Error(`"isMobile" option is not supported with ${noDefaultViewportDescription}`);
+  if (options.viewportMaximized && !browserOptions.headful)
+    throw new Error(`"maximized" viewport is not supported in headless mode`);
+  if (options.viewportMaximized && !supportsMaximizedViewport(browserOptions))
+    throw new Error(`"maximized" viewport is not supported for this browser`);
   if (options.acceptDownloads === undefined && browserOptions.name !== 'electron')
     options.acceptDownloads = 'accept';
   // Electron requires explicit acceptDownloads: true since we wait for
@@ -786,6 +791,14 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   if (options.recordVideo?.fps !== undefined && options.recordVideo.fps <= 0)
     throw new Error(`"recordVideo.fps" must be a positive number, got ${options.recordVideo.fps}`);
   verifyGeolocation(options.geolocation);
+}
+
+function supportsMaximizedViewport(browserOptions: BrowserOptions) {
+  if (browserOptions.name === 'chromium')
+    return !browserOptions.channel?.startsWith('bidi-');
+  if (browserOptions.name === 'firefox')
+    return !browserOptions.channel?.startsWith('moz-');
+  return browserOptions.name === 'webkit';
 }
 
 export function findMatchingHttpCredentials(credentials: HttpCredentials[] | undefined, url: string): HttpCredentials | undefined {
@@ -864,6 +877,7 @@ const paramsThatAllowContextReuse: (keyof channels.BrowserNewContextForReusePara
 
 const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {
   noDefaultViewport: false,
+  viewportMaximized: false,
   ignoreHTTPSErrors: false,
   javaScriptEnabled: true,
   bypassCSP: false,

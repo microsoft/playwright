@@ -185,6 +185,11 @@ export class FFBrowserContext extends BrowserContext {
         },
       }));
     }
+    if (this._options.viewportMaximized) {
+      promises.push(this._browser.session.send('Browser.setWindowMaximized', {
+        browserContextId,
+      }));
+    }
     promises.push(this.doUpdateDefaultViewport());
     if (this._options.hasTouch)
       promises.push(this._browser.session.send('Browser.setTouchOverride', { browserContextId, hasTouch: true }));

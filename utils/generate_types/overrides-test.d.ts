@@ -303,7 +303,7 @@ export interface PlaywrightTestOptions {
   storageState: StorageState | undefined;
   timezoneId: string | undefined;
   userAgent: string | undefined;
-  viewport: ViewportSize | null;
+  viewport: ViewportSize | 'maximized' | null;
   baseURL: string | undefined;
   contextOptions: BrowserContextOptions;
   actionTimeout: number;

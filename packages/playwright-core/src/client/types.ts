@@ -65,8 +65,8 @@ export type ClientCertificate = {
   noCertificate?: boolean;
 };
 
-export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'recordHar' | 'colorScheme' | 'reducedMotion' | 'forcedColors' | 'acceptDownloads' | 'contrast' | 'agent' | 'httpCredentials'> & {
-  viewport?: Size | null;
+export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'viewportMaximized' | 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'recordHar' | 'colorScheme' | 'reducedMotion' | 'forcedColors' | 'acceptDownloads' | 'contrast' | 'agent' | 'httpCredentials'> & {
+  viewport?: Size | 'maximized' | null;
   extraHTTPHeaders?: Headers;
   httpCredentials?: HttpCredentials | HttpCredentials[];
   logger?: Logger;
