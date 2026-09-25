@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, cliEntrypoint } from './playwright-test-fixtures';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import url from 'url';
 
@@ -545,6 +546,35 @@ test('should load jsx with top-level component', async ({ runInlineTest }) => {
   });
   expect(passed).toBe(1);
   expect(exitCode).toBe(0);
+});
+
+test('should load jsx when playwright is not resolvable from the project', async ({ childProcess }) => {
+  // Mimic pnpm isolated layout: only @playwright/test is linked into the project's node_modules.
+  // The project must live outside of the repo, so that the repo's node_modules is not visible.
+  const baseDir = await fs.promises.realpath(await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-jsx-')));
+  const symlinkType = process.platform === 'win32' ? 'junction' : 'dir';
+  await fs.promises.mkdir(path.join(baseDir, 'node_modules', '@playwright'), { recursive: true });
+  await fs.promises.symlink(path.join(__dirname, '../../packages/playwright-test'), path.join(baseDir, 'node_modules', '@playwright', 'test'), symlinkType);
+  await fs.promises.writeFile(path.join(baseDir, 'playwright.config.ts'), `export default {};`);
+  await fs.promises.writeFile(path.join(baseDir, 'a.spec.tsx'), `
+    import { test, expect } from '@playwright/test';
+    const component = <div />;
+    test('succeeds', () => {
+      expect(component).toEqual({ __pw_type: 'jsx', type: 'div', props: {} });
+    });
+  `);
+  try {
+    const testProcess = childProcess({
+      command: ['node', cliEntrypoint, 'test', '--reporter=line'],
+      env: { PWTEST_CACHE_DIR: path.join(baseDir, 'cache') },
+      cwd: baseDir,
+    });
+    const { exitCode } = await testProcess.exited;
+    expect(testProcess.output).toContain('1 passed');
+    expect(exitCode).toBe(0);
+  } finally {
+    await fs.promises.rm(baseDir, { recursive: true, force: true });
+  }
 });
 
 test('should load a jsx/tsx files with fragments', async ({ runInlineTest }) => {
