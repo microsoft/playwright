@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { createHash } from 'node:crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -100,4 +101,58 @@ test('should automatically clean cached versions of a changed file', async ({ ru
 
   expect(finalPathHash).toBe(firstPathHash);
   expect(finalTestHash).not.toBe(firstTestHash);
+});
+
+// jsxImportSource (the absolute directory of the `playwright` package) is baked
+// into the transformed code as the jsx-runtime import path, see configLoader's
+// `path.dirname(require.resolve('playwright'))`. The transform cache key must
+// include it: when the install layout changes between runs (npm -> pnpm, new
+// worktree), a cached .tsx transform would otherwise keep importing the old
+// install location and the run silently collects zero tests.
+// https://github.com/microsoft/playwright/issues/42934
+test('should not reuse the cached transform when jsxImportSource changes', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42934' },
+}, async ({ runInlineTest }) => {
+  const specContent = `
+      import { test, expect } from '@playwright/test';
+      const element = <div>hello</div>;
+      test('jsx', () => { expect(element).toBeTruthy(); });
+    `;
+  const files = {
+    'a.spec.tsx': specContent,
+  };
+  const cacheDir = test.info().outputPath('cache');
+  const specPath = path.join(test.info().outputPath(), 'a.spec.tsx');
+
+  // Seed the cache with a stale entry for the spec, as if it was cached when
+  // `playwright` was installed elsewhere: the baked import still points at the
+  // old install location. The entry is keyed with the cache hash that ignores
+  // jsxImportSource - exactly what the buggy `calculateHash` produces.
+  const version = require('../../packages/playwright/package.json').version;
+  const staleContent = `module.exports = {}; require(${JSON.stringify(path.join(cacheDir, 'old-playwright-install', 'jsx-runtime'))});`;
+  const filePathHash = createHash('sha1').update(specPath).digest('hex').substring(0, 10);
+  const seedEntry = (isModule: boolean) => {
+    const contentHash = createHash('sha1')
+        .update(isModule ? 'esm' : 'no_esm')
+        .update(specContent)
+        .update(specPath)
+        .update(version)
+        .update('')
+        .digest('hex');
+    const artifactPath = path.join(cacheDir, filePathHash.substring(0, 2), `${filePathHash}_${contentHash.substring(0, 7)}_aspec.js`);
+    fs.mkdirSync(path.dirname(artifactPath), { recursive: true });
+    fs.writeFileSync(artifactPath, `// ${createHash('sha1').update(staleContent).digest('hex')}\n${staleContent}`, 'utf8');
+  };
+  // The loader picks the esm or the cjs pipeline depending on the project,
+  // seed both variants - only one is ever looked up.
+  seedEntry(false);
+  seedEntry(true);
+
+  const result = await runInlineTest(files, undefined, {
+    PWTEST_CACHE_DIR: cacheDir,
+    PW_TEST_SOURCE_TRANSFORM: '',
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(0);
 });

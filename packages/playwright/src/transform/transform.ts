@@ -240,6 +240,12 @@ function calculateHash(content: string, filePath: string, isModule: boolean, plu
       .update(filePath)
       .update(version)
       .update(pluginsEpilogue.map(p => p[0]).join(','))
+      // jsxImportSource is baked into the transformed code as an absolute
+      // jsx-runtime import path, so the install location must be part of the
+      // cache key, otherwise a cached transform keeps importing the previous
+      // install location after the package moves (e.g. npm -> pnpm switch).
+      // See https://github.com/microsoft/playwright/issues/42934
+      .update(_transformConfig.jsxImportSource ?? '')
       .digest('hex');
   return hash;
 }
