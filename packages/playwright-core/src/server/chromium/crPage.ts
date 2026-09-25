@@ -498,6 +498,7 @@ class FrameSession {
     this._bufferedAttachedToTargetEvents = [];
 
     const promises: Promise<any>[] = [
+      this._client.send('Inspector.enable'),
       this._client.send('Page.enable'),
       this._client.send('Page.getFrameTree').then(({ frameTree }) => {
         if (this._isMainFrame()) {

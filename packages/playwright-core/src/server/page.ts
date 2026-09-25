@@ -244,6 +244,12 @@ export class Page extends SdkObject<PageEventMap> {
       // context/browser closure. Just ignore the page.
       if (this.browserContext.isClosingOrClosed())
         return;
+      if (this._lifecycle === 'crashed') {
+        // When connecting, any crashed/discarded/unloaded page
+        // is not reported to the client at all.
+        this._initializedPromise.resolve(error);
+        return;
+      }
       this.frameManager.createDummyMainFrameIfNeeded();
     }
     this._initialized = error || this;

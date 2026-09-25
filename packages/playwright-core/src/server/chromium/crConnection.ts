@@ -163,6 +163,8 @@ export class CRSession extends SdkObject<Protocol.EventMap & ConnectionEventMap>
       }
     } else if (object.id && object.error?.code === -32001) {
       // Message to a closed session, just ignore it.
+    } else if (object.id && this._crashed) {
+      // _markAsCrashed() has already rejected all pending calls, nothing to do here.
     } else {
       assert(!object.id, object?.error?.message || undefined);
       Promise.resolve().then(() => {
