@@ -371,8 +371,8 @@ it('should emulate navigator.onLine across navigations', {
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42174' },
     { type: 'issue', description: 'https://issues.chromium.org/issues/544795254' },
   ],
-}, async ({ browser, server, browserName }) => {
-  it.fixme(browserName === 'chromium', 'does not survive cross-process navgiation');
+}, async ({ browser, server, browserName, browserMajorVersion }) => {
+  it.skip(browserName === 'chromium' && browserMajorVersion < 155, 'does not survive cross-process navgiation');
 
   const context = await browser.newContext();
   const page = await context.newPage();
