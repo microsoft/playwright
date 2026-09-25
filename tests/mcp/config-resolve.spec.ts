@@ -412,7 +412,7 @@ test.describe('validation', () => {
   test('unknown tool names are rejected', async () => {
     expect(() => filteredTools({ blockedTools: ['browser_run_code'] })).toThrow('Unknown tool in --blocked-tools: browser_run_code');
     expect(() => filteredTools({ allowedTools: ['browser_nav'] })).toThrow('Unknown tool in --allowed-tools: browser_nav');
-    expect(() => filteredTools({ allowedTools: ['browser_navigate', 'webmcp_add'] })).not.toThrow();
+    expect(() => filteredTools({ allowedTools: ['webmcp_add'] })).toThrow('Unknown tool in --allowed-tools: webmcp_add');
   });
 });
 

@@ -137,9 +137,9 @@ export type Config = {
   capabilities?: ToolCapability[];
 
   /**
-   * List of tool names to expose. When set, all other tools are disabled, including the
-   * tools registered by the page through WebMCP (named `webmcp_<name>`). Tools matching
-   * both `allowedTools` and `blockedTools` are disabled.
+   * List of tool names to enable in addition to the tools from the enabled capabilities,
+   * for example `browser_pdf_save`. Tools matching both `allowedTools` and `blockedTools`
+   * are disabled.
    */
   allowedTools?: string[];
 

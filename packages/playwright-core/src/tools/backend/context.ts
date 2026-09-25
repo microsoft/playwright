@@ -75,12 +75,6 @@ export type ContextConfig = {
   skillMode?: boolean;
 };
 
-export function isToolAllowed(config: Pick<ContextConfig, 'allowedTools' | 'blockedTools'>, name: string) {
-  if (config.blockedTools?.includes(name))
-    return false;
-  return !config.allowedTools || config.allowedTools.includes(name);
-}
-
 type ContextOptions = {
   config: ContextConfig;
   sessionLog?: SessionLog;
@@ -336,8 +330,7 @@ export class Context {
 
   currentWebMCPTools(): WebMCPToolDefinition[] {
     // Handlers are bound to a tab and frame, always take the fresh ones.
-    const tools = this._currentTab?.webmcpTools()?.tools.map(tool => tool.mcpTool) ?? [];
-    return tools.filter(tool => isToolAllowed(this.config, tool.schema.name));
+    return this._currentTab?.webmcpTools()?.tools.map(tool => tool.mcpTool) ?? [];
   }
 
   maybeNotifyWebMCPToolsChanged() {

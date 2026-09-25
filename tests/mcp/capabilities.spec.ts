@@ -105,10 +105,21 @@ test('--blocked-tools removes tools and rejects their calls', async ({ startClie
   });
 });
 
-test('allowedTools and blockedTools in config file', async ({ startClient }) => {
+test('--allowed-tools adds tools from capabilities that are not enabled', async ({ startClient }) => {
   const { client } = await startClient({
-    config: { allowedTools: ['browser_navigate', 'browser_snapshot', 'browser_run_code_unsafe'], blockedTools: ['browser_run_code_unsafe'] },
+    args: ['--allowed-tools=browser_pdf_save'],
   });
   const toolNames = (await client.listTools()).tools.map(t => t.name);
-  expect(new Set(toolNames)).toEqual(new Set(['browser_navigate', 'browser_snapshot']));
+  expect(toolNames).toContain('browser_pdf_save');
+  expect(toolNames).toContain('browser_navigate');
+  expect(toolNames).not.toContain('browser_mouse_click_xy');
+});
+
+test('blockedTools takes precedence over allowedTools', async ({ startClient }) => {
+  const { client } = await startClient({
+    config: { allowedTools: ['browser_pdf_save', 'browser_mouse_click_xy'], blockedTools: ['browser_pdf_save'] },
+  });
+  const toolNames = (await client.listTools()).tools.map(t => t.name);
+  expect(toolNames).not.toContain('browser_pdf_save');
+  expect(toolNames).toContain('browser_mouse_click_xy');
 });
