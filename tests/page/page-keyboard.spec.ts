@@ -69,6 +69,24 @@ it('should send a character with insertText', async ({ page, server }) => {
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('嗨a');
 });
 
+it('should not type text with Alt modifier', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42928' },
+}, async ({ page }) => {
+  await page.setContent(`<input><textarea></textarea><div contenteditable></div>`);
+  for (const locator of [page.locator('input'), page.locator('textarea'), page.locator('div')]) {
+    await locator.press('Alt+KeyA');
+    await locator.press('Alt+Digit1');
+    await locator.press('Alt+Shift+KeyA');
+    await page.keyboard.down('Alt');
+    await page.keyboard.press('b');
+    await page.keyboard.up('Alt');
+    await locator.press('c');
+  }
+  await expect(page.locator('input')).toHaveValue('c');
+  await expect(page.locator('textarea')).toHaveValue('c');
+  await expect(page.locator('div')).toHaveText('c');
+});
+
 it('insertText should only emit input event', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
@@ -115,9 +133,7 @@ it('should dispatch key events in separate tasks', async ({ page, browserName, i
   expect(await log.jsonValue()).toEqual(['keydown', 'microtask-keydown', 'keypress', 'microtask-keypress']);
 });
 
-it('should report shiftKey', async ({ page, server, browserName, platform }) => {
-  it.fail(browserName === 'firefox' && platform === 'darwin');
-
+it('should report shiftKey', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   const keyboard = page.keyboard;
   const codeForKey = { 'Shift': 16, 'Alt': 18, 'Control': 17 };
