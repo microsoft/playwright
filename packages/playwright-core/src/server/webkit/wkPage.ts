@@ -211,8 +211,8 @@ export class WKPage implements PageDelegate {
       }));
     }
     promises.push(session.send('Network.setExtraHTTPHeaders', { headers: headersArrayToObject(this._calculateExtraHTTPHeaders(), false /* lowerCase */) }));
-    if (contextOptions.offline)
-      promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
+    if (contextOptions.offline !== undefined)
+      promises.push(session.send('Network.setEmulateOfflineState', { offline: contextOptions.offline }));
     promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: !!contextOptions.hasTouch }));
     if (contextOptions.timezoneId) {
       promises.push(session.send('Page.setTimeZone', { timeZone: contextOptions.timezoneId }).

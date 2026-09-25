@@ -327,6 +327,36 @@ it('should work with offline option', async ({ browser, server, browserName }) =
   await context.close();
 });
 
+it('should isolate offline state between contexts', async ({ context, contextFactory, page, server }) => {
+  await context.setOffline(true);
+  const onlineContext = await contextFactory();
+  const onlinePage = await onlineContext.newPage();
+  const response = await onlinePage.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  await expect(page.goto(server.EMPTY_PAGE)).rejects.toThrow();
+});
+
+it('should go online without open pages', async ({ context, page, server }) => {
+  await context.setOffline(true);
+  await page.close();
+  await context.setOffline(false);
+  const newPage = await context.newPage();
+  const response = await newPage.goto(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  expect(await newPage.evaluate(() => navigator.onLine)).toBe(true);
+});
+
+it('should not emit online when opening an online page', async ({ browser }) => {
+  const context = await browser.newContext();
+  await context.addInitScript(() => {
+    window['onlineEvents'] = [];
+    window.addEventListener('online', () => window['onlineEvents'].push(true));
+  });
+  const page = await context.newPage();
+  expect(await page.evaluate(() => window['onlineEvents'])).toEqual([]);
+  await context.close();
+});
+
 it('fetch with keepalive should throw when offline', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35701' },
 }, async ({ contextFactory, server }) => {
