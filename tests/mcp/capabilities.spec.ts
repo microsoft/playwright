@@ -87,3 +87,29 @@ test('legacy --vision option combined with --caps', async ({ startClient }) => {
   expect(toolNames).toContain('browser_mouse_move_xy');
   expect(toolNames).toContain('browser_pdf_save');
 });
+
+test('--disable-caps removes core tools and rejects their calls', async ({ startClient }) => {
+  const { client } = await startClient({
+    args: ['--disable-caps=core-run-code,core-tabs'],
+  });
+  const toolNames = (await client.listTools()).tools.map(t => t.name);
+  expect(toolNames).not.toContain('browser_run_code_unsafe');
+  expect(toolNames).not.toContain('browser_tabs');
+  expect(toolNames).toContain('browser_navigate');
+  expect(await client.callTool({
+    name: 'browser_run_code_unsafe',
+    arguments: { code: 'async () => 42' },
+  })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining('Tool "browser_run_code_unsafe" not found'),
+  });
+});
+
+test('disabledCapabilities in config file', async ({ startClient }) => {
+  const { client } = await startClient({
+    config: { disabledCapabilities: ['core-run-code'] },
+  });
+  const toolNames = (await client.listTools()).tools.map(t => t.name);
+  expect(toolNames).not.toContain('browser_run_code_unsafe');
+  expect(toolNames).toContain('browser_snapshot');
+});

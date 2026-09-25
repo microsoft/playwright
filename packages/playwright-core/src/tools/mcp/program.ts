@@ -47,6 +47,7 @@ export function decorateMCPCommand(command: Command) {
       .option('--config <path>', 'path to the configuration file.')
       .option('--console-level <level>', 'level of console messages to return: "error", "warning", "info", "debug". Each level includes the messages of more severe levels.', enumParser.bind(null, '--console-level', ['error', 'warning', 'info', 'debug']))
       .option('--device <device>', 'device to emulate, for example: "iPhone 15"')
+      .option('--disable-caps <caps>', 'comma-separated list of core capabilities to disable, possible values: core-run-code, core-webmcp, core-navigation, core-tabs, core-input, core-install.', commaSeparatedList)
       .option('--mobile', 'emulate a generic mobile device (Pixel 10 for Chromium, iPhone 17 for WebKit). Mobile pages are usually lighter, which saves tokens. Cannot be combined with --device.')
       .option('--executable-path <path>', 'path to the browser executable.')
       .option('--extension', 'Connect to a running browser instance (Edge/Chrome only). Requires the "Playwright Extension" to be installed.')

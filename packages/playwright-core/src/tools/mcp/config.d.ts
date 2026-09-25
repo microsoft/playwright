@@ -23,6 +23,8 @@ export type ToolCapability =
   'core-tabs' |
   'core-input' |
   'core-install' |
+  'core-run-code' |
+  'core-webmcp' |
   'network' |
   'pdf' |
   'storage' |
@@ -135,6 +137,14 @@ export type Config = {
    *   - 'devtools': Developer tools features.
    */
   capabilities?: ToolCapability[];
+
+  /**
+   * List of core tool capabilities to disable. Possible values:
+   *   - 'core-run-code': the `browser_run_code_unsafe` tool.
+   *   - 'core-webmcp': tools registered by the page through WebMCP.
+   *   - 'core-navigation', 'core-tabs', 'core-input', 'core-install'.
+   */
+  disabledCapabilities?: ToolCapability[];
 
   /**
    * Whether to save the Playwright session into the output directory.

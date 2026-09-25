@@ -491,7 +491,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   async updateWebMCPTools(): Promise<void> {
-    if (this.context.config.webmcp === false)
+    if (this.context.config.webmcp === false || this.context.config.disabledCapabilities?.includes('core-webmcp'))
       return;
     if (this._javaScriptBlocked())
       return;

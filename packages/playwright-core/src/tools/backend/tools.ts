@@ -45,7 +45,7 @@ import wait from './wait';
 import webmcp from './webmcp';
 import webstorage from './webstorage';
 
-import type { Tool } from './tool';
+import type { Tool, ToolCapability } from './tool';
 import type { ContextConfig } from './context';
 
 export const browserTools: Tool<any>[] = [
@@ -80,8 +80,9 @@ export const browserTools: Tool<any>[] = [
   ...webstorage,
 ];
 
-export function filteredTools(config: Pick<ContextConfig, 'capabilities'>) {
-  return browserTools.filter(tool => tool.capability.startsWith('core') || config.capabilities?.includes(tool.capability)).filter(tool => !tool.skillOnly).map(tool => ({
+export function filteredTools(config: Pick<ContextConfig, 'capabilities' | 'disabledCapabilities'>) {
+  const isEnabled = (capability: ToolCapability) => (capability.startsWith('core') || config.capabilities?.includes(capability)) && !config.disabledCapabilities?.includes(capability);
+  return browserTools.filter(tool => isEnabled(tool.capability)).filter(tool => !tool.skillOnly).map(tool => ({
     ...tool,
     schema: {
       ...tool.schema,

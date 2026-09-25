@@ -30,7 +30,7 @@ type ToolSchema<Input extends z.Schema> = {
   type: 'input' | 'assertion' | 'action' | 'readOnly';
 };
 
-export type ToolCapability = 'config' | 'core' | 'core-navigation' | 'core-tabs' | 'core-input' | 'core-install' | 'network' | 'pdf' | 'storage' | 'testing' | 'vision' | 'devtools';
+export type ToolCapability = 'config' | 'core' | 'core-navigation' | 'core-tabs' | 'core-input' | 'core-install' | 'core-run-code' | 'core-webmcp' | 'network' | 'pdf' | 'storage' | 'testing' | 'vision' | 'devtools';
 
 export type FileUploadModalState = {
   type: 'fileChooser';

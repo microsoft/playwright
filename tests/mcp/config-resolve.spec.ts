@@ -398,6 +398,19 @@ test.describe('validation', () => {
     await expect(resolveCLIConfigForMCP({ isolated: true, userDataDir: '/tmp/data' }, emptyEnv))
         .rejects.toThrow('Browser userDataDir is not supported in isolated mode.');
   });
+
+  test('--disable-caps is parsed from cli and env', async () => {
+    const options = await parseCLIOptions(['--disable-caps=core-run-code,core-webmcp']);
+    expect((await resolveCLIConfigForMCP(options, emptyEnv)).disabledCapabilities).toEqual(['core-run-code', 'core-webmcp']);
+    expect((await resolveCLIConfigForMCP({}, { PLAYWRIGHT_MCP_DISABLE_CAPS: 'core-run-code' })).disabledCapabilities).toEqual(['core-run-code']);
+  });
+
+  test('--disable-caps rejects non-core capabilities', async () => {
+    await expect(resolveCLIConfigForMCP({ disableCaps: ['core'] }, emptyEnv))
+        .rejects.toThrow('Invalid --disable-caps: core.');
+    await expect(resolveCLIConfigForMCP({ disableCaps: ['pdf'] }, emptyEnv))
+        .rejects.toThrow('Invalid --disable-caps: pdf.');
+  });
 });
 
 // ---------------------------------------------------------------------------
