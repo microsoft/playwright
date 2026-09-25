@@ -35,8 +35,10 @@ type ViewportSize = { width: number; height: number };
 export type CLIOptions = {
   allowedHosts?: string[];
   allowedOrigins?: string[];
+  allowedTools?: string[];
   allowUnrestrictedFileAccess?: boolean;
   blockedOrigins?: string[];
+  blockedTools?: string[];
   blockServiceWorkers?: boolean;
   browser?: string;
   caps?: string[];
@@ -47,7 +49,6 @@ export type CLIOptions = {
   config?: string;
   consoleLevel?: 'error' | 'warning' | 'info' | 'debug';
   device?: string;
-  disableCaps?: string[];
   endpoint?: string;
   extension?: boolean;
   executablePath?: string;
@@ -125,7 +126,6 @@ export type FullConfig = MergedConfig & {
 export async function resolveConfig(config: Config): Promise<FullConfig> {
   const merged = mergeConfig(defaultConfig, config);
   const browser = await validateBrowserConfig(merged.browser);
-  validateDisabledCapabilities(merged.disabledCapabilities);
   return { ...merged, browser };
 }
 
@@ -146,18 +146,8 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJ
     browser.launchOptions.headless = os.platform() === 'linux' && !process.env.DISPLAY;
 
   validateOutputDir(result.outputDir);
-  validateDisabledCapabilities(result.disabledCapabilities);
 
   return { ...result, browser, configFile };
-}
-
-const disableableCapabilities: ToolCapability[] = ['core-navigation', 'core-tabs', 'core-input', 'core-install', 'core-run-code', 'core-webmcp'];
-
-function validateDisabledCapabilities(capabilities: ToolCapability[] | undefined) {
-  for (const capability of capabilities ?? []) {
-    if (!disableableCapabilities.includes(capability))
-      throw new Error(`Invalid --disable-caps: ${capability}. Valid values are: ${disableableCapabilities.join(', ')}`);
-  }
 }
 
 function validateOutputDir(outputDir: string | undefined) {
@@ -388,7 +378,8 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       allowedHosts: cliOptions.allowedHosts,
     },
     capabilities: cliOptions.caps as ToolCapability[],
-    disabledCapabilities: cliOptions.disableCaps as ToolCapability[],
+    allowedTools: cliOptions.allowedTools,
+    blockedTools: cliOptions.blockedTools,
     console: {
       level: cliOptions.consoleLevel,
     },
@@ -432,8 +423,10 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   const options: CLIOptions = {};
   options.allowedHosts = commaSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_HOSTS);
   options.allowedOrigins = semicolonSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
+  options.allowedTools = commaSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_TOOLS);
   options.allowUnrestrictedFileAccess = envToBoolean(e.PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS);
   options.blockedOrigins = semicolonSeparatedList(e.PLAYWRIGHT_MCP_BLOCKED_ORIGINS);
+  options.blockedTools = commaSeparatedList(e.PLAYWRIGHT_MCP_BLOCKED_TOOLS);
   options.blockServiceWorkers = envToBoolean(e.PLAYWRIGHT_MCP_BLOCK_SERVICE_WORKERS);
   options.browser = envToString(e.PLAYWRIGHT_MCP_BROWSER);
   options.caps = commaSeparatedList(e.PLAYWRIGHT_MCP_CAPS);
@@ -446,7 +439,6 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   if (e.PLAYWRIGHT_MCP_CONSOLE_LEVEL)
     options.consoleLevel = enumParser<'error' | 'warning' | 'info' | 'debug'>('--console-level', ['error', 'warning', 'info', 'debug'], e.PLAYWRIGHT_MCP_CONSOLE_LEVEL);
   options.device = envToString(e.PLAYWRIGHT_MCP_DEVICE);
-  options.disableCaps = commaSeparatedList(e.PLAYWRIGHT_MCP_DISABLE_CAPS);
   options.executablePath = envToString(e.PLAYWRIGHT_MCP_EXECUTABLE_PATH);
   options.extension = envToBoolean(e.PLAYWRIGHT_MCP_EXTENSION);
   if (e.PLAYWRIGHT_MCP_FILE_PATHS)

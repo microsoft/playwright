@@ -257,7 +257,7 @@ export function webmcpToolsJSON(listing: WebMCPListing): Record<string, unknown>
 }
 
 const webmcpList = defineTabTool({
-  capability: 'core-webmcp',
+  capability: 'core',
   skillOnly: true,
 
   schema: {
@@ -281,7 +281,7 @@ const webmcpList = defineTabTool({
 });
 
 const webmcpCall = defineTabTool({
-  capability: 'core-webmcp',
+  capability: 'core',
   skillOnly: true,
 
   schema: {

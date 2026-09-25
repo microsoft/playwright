@@ -25,7 +25,7 @@ import { test, expect } from './fixtures';
 import { tools } from '../../packages/playwright-core/lib/coreBundle';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
 
-const { decorateMCPCommand, resolveCLIConfigForCLI, resolveCLIConfigForMCP, isSystemDirectory, outputDir } = tools;
+const { decorateMCPCommand, filteredTools, resolveCLIConfigForCLI, resolveCLIConfigForMCP, isSystemDirectory, outputDir } = tools;
 
 // Parses the command line the same way the mcp server entry point does, without starting the server.
 async function parseCLIOptions(argv: string[]): Promise<any> {
@@ -399,17 +399,20 @@ test.describe('validation', () => {
         .rejects.toThrow('Browser userDataDir is not supported in isolated mode.');
   });
 
-  test('--disable-caps is parsed from cli and env', async () => {
-    const options = await parseCLIOptions(['--disable-caps=core-run-code,core-webmcp']);
-    expect((await resolveCLIConfigForMCP(options, emptyEnv)).disabledCapabilities).toEqual(['core-run-code', 'core-webmcp']);
-    expect((await resolveCLIConfigForMCP({}, { PLAYWRIGHT_MCP_DISABLE_CAPS: 'core-run-code' })).disabledCapabilities).toEqual(['core-run-code']);
+  test('--allowed-tools and --blocked-tools are parsed from cli and env', async () => {
+    const options = await parseCLIOptions(['--allowed-tools=browser_navigate,browser_snapshot', '--blocked-tools=browser_run_code_unsafe']);
+    const config = await resolveCLIConfigForMCP(options, emptyEnv);
+    expect(config.allowedTools).toEqual(['browser_navigate', 'browser_snapshot']);
+    expect(config.blockedTools).toEqual(['browser_run_code_unsafe']);
+    const envConfig = await resolveCLIConfigForMCP({}, { PLAYWRIGHT_MCP_ALLOWED_TOOLS: 'browser_navigate', PLAYWRIGHT_MCP_BLOCKED_TOOLS: 'browser_evaluate' });
+    expect(envConfig.allowedTools).toEqual(['browser_navigate']);
+    expect(envConfig.blockedTools).toEqual(['browser_evaluate']);
   });
 
-  test('--disable-caps rejects non-core capabilities', async () => {
-    await expect(resolveCLIConfigForMCP({ disableCaps: ['core'] }, emptyEnv))
-        .rejects.toThrow('Invalid --disable-caps: core.');
-    await expect(resolveCLIConfigForMCP({ disableCaps: ['pdf'] }, emptyEnv))
-        .rejects.toThrow('Invalid --disable-caps: pdf.');
+  test('unknown tool names are rejected', async () => {
+    expect(() => filteredTools({ blockedTools: ['browser_run_code'] })).toThrow('Unknown tool in --blocked-tools: browser_run_code');
+    expect(() => filteredTools({ allowedTools: ['browser_nav'] })).toThrow('Unknown tool in --allowed-tools: browser_nav');
+    expect(() => filteredTools({ allowedTools: ['browser_navigate', 'webmcp_add'] })).not.toThrow();
   });
 });
 

@@ -45,7 +45,9 @@ import wait from './wait';
 import webmcp from './webmcp';
 import webstorage from './webstorage';
 
-import type { Tool, ToolCapability } from './tool';
+import { isToolAllowed } from './context';
+
+import type { Tool } from './tool';
 import type { ContextConfig } from './context';
 
 export const browserTools: Tool<any>[] = [
@@ -80,9 +82,19 @@ export const browserTools: Tool<any>[] = [
   ...webstorage,
 ];
 
-export function filteredTools(config: Pick<ContextConfig, 'capabilities' | 'disabledCapabilities'>) {
-  const isEnabled = (capability: ToolCapability) => (capability.startsWith('core') || config.capabilities?.includes(capability)) && !config.disabledCapabilities?.includes(capability);
-  return browserTools.filter(tool => isEnabled(tool.capability)).filter(tool => !tool.skillOnly).map(tool => ({
+function validateToolNames(option: string, names: string[] | undefined) {
+  const knownNames = new Set(browserTools.filter(tool => !tool.skillOnly).map(tool => tool.schema.name));
+  for (const name of names ?? []) {
+    // Page-registered WebMCP tools are only known at runtime.
+    if (!knownNames.has(name) && !name.startsWith('webmcp_'))
+      throw new Error(`Unknown tool in ${option}: ${name}`);
+  }
+}
+
+export function filteredTools(config: Pick<ContextConfig, 'capabilities' | 'allowedTools' | 'blockedTools'>) {
+  validateToolNames('--allowed-tools', config.allowedTools);
+  validateToolNames('--blocked-tools', config.blockedTools);
+  return browserTools.filter(tool => tool.capability.startsWith('core') || config.capabilities?.includes(tool.capability)).filter(tool => !tool.skillOnly && isToolAllowed(config, tool.schema.name)).map(tool => ({
     ...tool,
     schema: {
       ...tool.schema,

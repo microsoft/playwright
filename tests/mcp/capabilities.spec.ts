@@ -88,13 +88,13 @@ test('legacy --vision option combined with --caps', async ({ startClient }) => {
   expect(toolNames).toContain('browser_pdf_save');
 });
 
-test('--disable-caps removes core tools and rejects their calls', async ({ startClient }) => {
+test('--blocked-tools removes tools and rejects their calls', async ({ startClient }) => {
   const { client } = await startClient({
-    args: ['--disable-caps=core-run-code,core-tabs'],
+    args: ['--blocked-tools=browser_run_code_unsafe,browser_evaluate'],
   });
   const toolNames = (await client.listTools()).tools.map(t => t.name);
   expect(toolNames).not.toContain('browser_run_code_unsafe');
-  expect(toolNames).not.toContain('browser_tabs');
+  expect(toolNames).not.toContain('browser_evaluate');
   expect(toolNames).toContain('browser_navigate');
   expect(await client.callTool({
     name: 'browser_run_code_unsafe',
@@ -105,11 +105,22 @@ test('--disable-caps removes core tools and rejects their calls', async ({ start
   });
 });
 
-test('disabledCapabilities in config file', async ({ startClient }) => {
+test('--allowed-tools exposes only the listed tools', async ({ startClient }) => {
   const { client } = await startClient({
-    config: { disabledCapabilities: ['core-run-code'] },
+    args: ['--allowed-tools=browser_navigate,browser_snapshot'],
   });
   const toolNames = (await client.listTools()).tools.map(t => t.name);
-  expect(toolNames).not.toContain('browser_run_code_unsafe');
-  expect(toolNames).toContain('browser_snapshot');
+  expect(new Set(toolNames)).toEqual(new Set(['browser_navigate', 'browser_snapshot']));
+  expect(await client.callTool({ name: 'browser_close', arguments: {} })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining('Tool "browser_close" not found'),
+  });
+});
+
+test('blockedTools wins over allowedTools in config file', async ({ startClient }) => {
+  const { client } = await startClient({
+    config: { allowedTools: ['browser_navigate', 'browser_run_code_unsafe'], blockedTools: ['browser_run_code_unsafe'] },
+  });
+  const toolNames = (await client.listTools()).tools.map(t => t.name);
+  expect(toolNames).toEqual(['browser_navigate']);
 });
