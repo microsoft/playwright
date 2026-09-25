@@ -158,6 +158,6 @@ export const USKeyboardLayout: KeyboardLayout = {
   'Numpad2': { 'keyCode': 40, 'shiftKeyCode': 98, 'key': 'ArrowDown', 'shiftKey': '2', 'location': 3 },
   'Numpad3': { 'keyCode': 34, 'shiftKeyCode': 99, 'key': 'PageDown', 'shiftKey': '3', 'location': 3 },
   'Numpad0': { 'keyCode': 45, 'shiftKeyCode': 96, 'key': 'Insert', 'shiftKey': '0', 'location': 3 },
-  'NumpadDecimal': { 'keyCode': 46, 'shiftKeyCode': 110, 'key': '\u0000', 'shiftKey': '.', 'location': 3 },
+  'NumpadDecimal': { 'keyCode': 46, 'shiftKeyCode': 110, 'key': 'Delete', 'shiftKey': '.', 'location': 3 },
   'NumpadEnter': { 'keyCode': 13, 'key': 'Enter', 'text': '\r', 'location': 3 },
 };
