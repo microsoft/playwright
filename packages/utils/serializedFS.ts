@@ -68,10 +68,10 @@ export class SerializedFS {
     for (const chunk of buffer)
       size += chunk.length;
     if (flush || size >= APPEND_CHUNK_SIZE)
-      this._flushFile(file);
+      this.flushFile(file);
   }
 
-  private _flushFile(file: string) {
+  flushFile(file: string) {
     const buffer = this._buffers.get(file);
     if (buffer === undefined)
       return;
@@ -81,14 +81,14 @@ export class SerializedFS {
   }
 
   copyFile(from: string, to: string) {
-    this._flushFile(from);
+    this.flushFile(from);
     this._buffers.delete(to); // No need to flush the buffer since we'll overwrite anyway.
     this._appendOperation({ op: 'copyFile', from, to });
   }
 
   async sync() {
     for (const file of this._buffers.keys())
-      this._flushFile(file);
+      this.flushFile(file);
     await this._operationsDone;
     if (this._error) {
       const e = this._error;
@@ -99,7 +99,7 @@ export class SerializedFS {
 
   zip(entries: NameValue[], zipFileName: string) {
     for (const file of this._buffers.keys())
-      this._flushFile(file);
+      this.flushFile(file);
 
     // Chain the export operation against write operations,
     // so that files do not change during the export.
