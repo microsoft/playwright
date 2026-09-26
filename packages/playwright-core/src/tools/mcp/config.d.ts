@@ -171,6 +171,11 @@ export type Config = {
    */
   outputMaxSize?: number;
 
+  /**
+   * Whether to resolve relative file names inside the output directory instead of the workspace root.
+   */
+  resolveFilenamesInOutputDir?: boolean;
+
   console?: {
     /**
      * The level of console messages to return. Each level includes the messages of more severe levels. Defaults to "info".

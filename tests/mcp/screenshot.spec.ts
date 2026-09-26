@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 
 import { test, expect } from './fixtures';
 import { jpegjs, PNG } from '../../packages/playwright-core/lib/utilsBundle';
@@ -269,6 +270,76 @@ test('browser_take_screenshot (filename: "sub/dir/output.png")', async ({ client
   });
 
   expect(fs.existsSync(testInfo.outputPath('sub', 'dir', 'output.png'))).toBeTruthy();
+});
+
+test('browser_take_screenshot (filename with resolveFilenamesInOutputDir)', async ({ startClient, server }, testInfo) => {
+  const outputDir = testInfo.outputPath('output');
+  const { client } = await startClient({
+    config: {
+      outputDir,
+      resolveFilenamesInOutputDir: true,
+    },
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: {
+      filename: 'output.png',
+    },
+  })).toEqual({
+    content: [
+      {
+        text: expect.stringContaining(`output.png`),
+        type: 'text',
+      },
+    ],
+  });
+
+  const outputFiles = [...fs.readdirSync(outputDir)].filter(f => f.endsWith('.png'));
+  expect(outputFiles).toHaveLength(1);
+  expect(outputFiles[0]).toBe('output.png');
+
+  const workspaceFiles = [...fs.readdirSync(testInfo.outputPath())].filter(f => f.endsWith('.png'));
+  expect(workspaceFiles).toHaveLength(0);
+});
+
+test('browser_take_screenshot (sub/dir/output.png with resolveFilenamesInOutputDir)', async ({ startClient, server }, testInfo) => {
+  const outputDir = testInfo.outputPath('output');
+  const { client } = await startClient({
+    config: {
+      outputDir,
+      resolveFilenamesInOutputDir: true,
+    },
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: {
+      filename: 'sub/dir/output.png',
+    },
+  })).toEqual({
+    content: [
+      {
+        text: expect.stringContaining(`output.png`),
+        type: 'text',
+      },
+    ],
+  });
+
+  expect(fs.existsSync(path.join(outputDir, 'sub', 'dir', 'output.png'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('sub', 'dir', 'output.png'))).toBeFalsy();
 });
 
 test('browser_take_screenshot (imageResponses=omit)', async ({ startClient, server }, testInfo) => {

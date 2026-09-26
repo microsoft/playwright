@@ -69,6 +69,7 @@ export type CLIOptions = {
   proxyBypass?: string;
   proxyServer?: string;
   remoteHeader?: Record<string, string>;
+  resolveFilenamesInOutputDir?: boolean;
   saveSession?: boolean;
   secrets?: Record<string, string>;
   sharedBrowserContext?: boolean;
@@ -391,6 +392,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
     snapshot: cliOptions.snapshotMode || cliOptions.snapshotBoxes !== undefined ? { mode: cliOptions.snapshotMode, boxes: cliOptions.snapshotBoxes } : undefined,
     outputDir: cliOptions.outputDir,
     outputMaxSize: cliOptions.outputMaxSize,
+    resolveFilenamesInOutputDir: cliOptions.resolveFilenamesInOutputDir,
     imageResponses: cliOptions.imageResponses,
     filePaths: cliOptions.filePaths,
     testIdAttribute: cliOptions.testIdAttribute,
@@ -454,6 +456,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.sandbox = envToBoolean(e.PLAYWRIGHT_MCP_SANDBOX);
   options.outputDir = envToString(e.PLAYWRIGHT_MCP_OUTPUT_DIR);
   options.outputMaxSize = numberParser(e.PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE);
+  options.resolveFilenamesInOutputDir = envToBoolean(e.PLAYWRIGHT_MCP_RESOLVE_FILENAMES_IN_OUTPUT_DIR);
   options.port = numberParser(e.PLAYWRIGHT_MCP_PORT);
   options.proxyBypass = envToString(e.PLAYWRIGHT_MCP_PROXY_BYPASS);
   options.proxyServer = envToString(e.PLAYWRIGHT_MCP_PROXY_SERVER);
