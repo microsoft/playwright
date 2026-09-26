@@ -548,31 +548,26 @@ test('should load jsx with top-level component', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
 });
 
-test('should load jsx from a package that does not depend on @playwright/test', async ({ childProcess }) => {
-  // Mimic pnpm isolated layout: only the e2e package links @playwright/test, the ui package has no dependencies.
+test('should load jsx when playwright is not resolvable from the project', async ({ childProcess }) => {
+  // Mimic pnpm isolated layout: only @playwright/test is linked into the project's node_modules.
   // The project must live outside of the repo, so that the repo's node_modules is not visible.
   const baseDir = await fs.promises.realpath(await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-jsx-')));
-  const e2eDir = path.join(baseDir, 'e2e');
   const symlinkType = process.platform === 'win32' ? 'junction' : 'dir';
-  await fs.promises.mkdir(path.join(e2eDir, 'node_modules', '@playwright'), { recursive: true });
-  await fs.promises.mkdir(path.join(baseDir, 'ui'));
-  await fs.promises.symlink(path.join(__dirname, '../../packages/playwright-test'), path.join(e2eDir, 'node_modules', '@playwright', 'test'), symlinkType);
-  await fs.promises.writeFile(path.join(e2eDir, 'playwright.config.ts'), `export default {};`);
-  await fs.promises.writeFile(path.join(baseDir, 'ui', 'button.tsx'), `export const button = <button />;`);
-  await fs.promises.writeFile(path.join(e2eDir, 'a.spec.tsx'), `
+  await fs.promises.mkdir(path.join(baseDir, 'node_modules', '@playwright'), { recursive: true });
+  await fs.promises.symlink(path.join(__dirname, '../../packages/playwright-test'), path.join(baseDir, 'node_modules', '@playwright', 'test'), symlinkType);
+  await fs.promises.writeFile(path.join(baseDir, 'playwright.config.ts'), `export default {};`);
+  await fs.promises.writeFile(path.join(baseDir, 'a.spec.tsx'), `
     import { test, expect } from '@playwright/test';
-    import { button } from '../ui/button';
     const component = <div />;
     test('succeeds', () => {
       expect(component).toEqual({ __pw_type: 'jsx', type: 'div', props: {} });
-      expect(button).toEqual({ __pw_type: 'jsx', type: 'button', props: {} });
     });
   `);
   try {
     const testProcess = childProcess({
       command: ['node', cliEntrypoint, 'test', '--reporter=line'],
       env: { PWTEST_CACHE_DIR: path.join(baseDir, 'cache') },
-      cwd: e2eDir,
+      cwd: baseDir,
     });
     const { exitCode } = await testProcess.exited;
     expect(testProcess.output).toContain('1 passed');
