@@ -114,7 +114,7 @@ Call log:
 test('should not miss element that appears between retries before the deadline', async ({ page }) => {
   await page.setContent(`<div id="target" style="display:none">content</div>`);
   await page.evaluate(() => {
-    window.builtins.setTimeout(() => {
+    (window.builtins || window).setTimeout(() => {
       document.getElementById('target')!.style.display = 'block';
     }, 1500);
   });
@@ -210,4 +210,18 @@ Expected: ${JSON.stringify(server.EMPTY_PAGE)}
 Error: The assertion was aborted: stop it
 `);
   }
+});
+
+test('should not hang when event loop is blocked', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42880' },
+}, async ({ page }) => {
+  test.setTimeout(5000);
+  await page.setContent('<button>Hello</button>');
+  await page.evaluate(() => {
+    setTimeout(() => {
+      while (true) {}
+    }, 10);
+  });
+  const error = await expect(page.locator('button')).toBeVisible({ timeout: 500 }).catch(e => e);
+  expect(error.message).toMatch(/Timeout:\s*500ms/);
 });
