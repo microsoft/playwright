@@ -497,3 +497,28 @@ test('browser_take_screenshot (viewport without snapshot)', async ({ startClient
     ],
   });
 });
+
+test('browser_take_screenshot (webp dimension limit returns error)', async ({ startClient, mcpBrowser, server }, testInfo) => {
+  test.skip(!!mcpBrowser && mcpBrowser !== 'chromium' && mcpBrowser !== 'chrome', 'Dimension limit is specific to Chromium');
+  const outputDir = testInfo.outputPath('output');
+  const { client } = await startClient({
+    config: { outputDir },
+  });
+  server.setRoute('/tall.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end('<style>body { margin: 0; }</style><div style="height: 16384px; background: red;"></div>');
+  });
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX + '/tall.html' },
+  });
+
+  const response = await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: { type: 'webp', fullPage: true },
+  });
+  expect(response.isError).toBe(true);
+  expect(response.content?.[0]?.text).toContain('Unable to encode screenshot');
+  const imageFiles = fs.existsSync(outputDir) ? fs.readdirSync(outputDir).filter(f => f.endsWith('.webp')) : [];
+  expect(imageFiles).toHaveLength(0);
+});

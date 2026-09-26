@@ -299,6 +299,8 @@ export class CRPage implements PageDelegate {
       // See https://issues.chromium.org/issues/558509412 and https://github.com/microsoft/playwright/issues/42607.
       await progress.race(this._mainFrameSession._client.send('Emulation.setTouchEmulationEnabled', { enabled: true }));
     }
+    if (!result.data)
+      throw new Error('Unable to encode screenshot');
     return Buffer.from(result.data, 'base64');
   }
 
