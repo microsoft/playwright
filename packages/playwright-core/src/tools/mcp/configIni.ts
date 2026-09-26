@@ -161,6 +161,7 @@ const longhandTypes: Record<string, LonghandType> = {
   'sharedBrowserContext': 'boolean',
   'outputDir': 'string',
   'outputMaxSize': 'number',
+  'resolveFilenamesInOutputDir': 'boolean',
   'imageResponses': 'string',
   'filePaths': 'string',
   'allowUnrestrictedFileAccess': 'boolean',

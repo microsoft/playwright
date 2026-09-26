@@ -91,10 +91,14 @@ export class Response {
 
   async resolveClientOutputFile(template: FilenameTemplate, title: string): Promise<ResolvedFile> {
     let fileName: string;
-    if (template.suggestedFilename)
-      fileName = await this.resolveClientFilename(template.suggestedFilename);
-    else
+    if (template.suggestedFilename) {
+      if (this._context.config.resolveFilenamesInOutputDir && !path.isAbsolute(template.suggestedFilename))
+        fileName = await this._context.outputFile(template, { origin: 'llm' });
+      else
+        fileName = await this.resolveClientFilename(template.suggestedFilename);
+    } else {
       fileName = await this._context.outputFile(template, { origin: 'llm' });
+    }
     await fs.promises.mkdir(path.dirname(fileName), { recursive: true });
     const relativeName = this._printablePath(fileName);
     const printableLink = `- [${title}](${relativeName})`;

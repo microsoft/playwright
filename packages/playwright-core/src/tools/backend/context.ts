@@ -51,6 +51,7 @@ export type ContextConfig = {
   };
   outputDir?: string;
   outputMaxSize?: number;
+  resolveFilenamesInOutputDir?: boolean;
   saveSession?: boolean;
   secrets?: Record<string, string>;
   sharedBrowserContext?: boolean;

@@ -495,6 +495,21 @@ test.describe('resolveCLIConfigForMCP', () => {
     const config = await resolveCLIConfigForMCP({ config: configFile, timeoutAction: 9999 }, emptyEnv);
     expect(config.timeouts.action).toBe(9999);
   });
+
+  test('resolveFilenamesInOutputDir defaults to undefined and can be set via cli, env, or config file', async ({}, testInfo) => {
+    expect((await resolveCLIConfigForMCP({}, emptyEnv)).resolveFilenamesInOutputDir).toBeUndefined();
+
+    expect((await resolveCLIConfigForMCP({ resolveFilenamesInOutputDir: true }, emptyEnv)).resolveFilenamesInOutputDir).toBe(true);
+
+    expect((await resolveCLIConfigForMCP({}, { ...emptyEnv, PLAYWRIGHT_MCP_RESOLVE_FILENAMES_IN_OUTPUT_DIR: 'true' })).resolveFilenamesInOutputDir).toBe(true);
+
+    const configFile = testInfo.outputPath('config.json');
+    await fs.promises.writeFile(configFile, JSON.stringify({ resolveFilenamesInOutputDir: true }));
+    expect((await resolveCLIConfigForMCP({ config: configFile }, emptyEnv)).resolveFilenamesInOutputDir).toBe(true);
+
+    const cliOptions = await parseCLIOptions(['--resolve-filenames-in-output-dir']);
+    expect(cliOptions.resolveFilenamesInOutputDir).toBe(true);
+  });
 });
 
 // ---------------------------------------------------------------------------
