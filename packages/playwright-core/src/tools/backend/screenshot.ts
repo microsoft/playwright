@@ -71,6 +71,8 @@ const screenshot = defineTabTool({
     const screenshotTargetLabel = params.target ? params.element || 'element' : (params.fullPage ? 'full page' : 'viewport');
     const target = params.target ? await tab.targetLocator({ element: params.element, target: params.target }) : null;
     const data = target ? await target.locator.screenshot(options) : await tab.page.screenshot(options);
+    if (!data.length)
+      throw new Error('Failed to take screenshot, received empty image data');
 
     const resolvedFile = await response.resolveClientOutputFile({ prefix: target ? 'element' : 'page', ext: fileType, suggestedFilename: params.filename }, `Screenshot of ${screenshotTargetLabel}`);
 

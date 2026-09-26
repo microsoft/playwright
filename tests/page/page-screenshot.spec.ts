@@ -984,6 +984,14 @@ it('should throw if screenshot size is too large', async ({ page, browserName, i
   }
 });
 
+it('should throw if screenshot encoding fails in chromium', async ({ page, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42717' });
+  it.skip(browserName !== 'chromium', 'Chromium webp dimension limit');
+  await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: 16384px; background: red;'></div>`);
+  const exception = await page.screenshot({ type: 'webp', fullPage: true }).catch(e => e);
+  expect(exception.message).toContain('Unable to encode screenshot');
+});
+
 it('page screenshot should capture css transform', async function({ page, browserName, isElectron, isAndroid }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26447' });
   it.fixme(browserName === 'webkit');
