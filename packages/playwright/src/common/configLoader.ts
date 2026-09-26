@@ -117,7 +117,7 @@ export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLI
 
   // 3. Load transform options from the playwright config.
   const external = userConfig.build?.external || [];
-  await setTransformConfig({ external, jsxImportSource: 'playwright' });
+  await setTransformConfig({ external, jsxImportSource: '@playwright/test' });
   if (!overrides?.tsconfig)
     await setSingleTSConfig(fullConfig?.singleTSConfigPath);
 

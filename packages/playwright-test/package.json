@@ -22,6 +22,11 @@
       "default": "./index.js"
     },
     "./cli": "./cli.js",
+    "./jsx-runtime": {
+      "import": "./jsx-runtime.mjs",
+      "require": "./jsx-runtime.js",
+      "default": "./jsx-runtime.js"
+    },
     "./package.json": "./package.json",
     "./reporter": "./reporter.js"
   },
