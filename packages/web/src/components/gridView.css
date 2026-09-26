@@ -66,6 +66,20 @@
   white-space: nowrap;
 }
 
+.grid-view-header-cell-button {
+  all: unset;
+  display: flex;
+  align-items: center;
+  flex: auto;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.grid-view-header-cell-button:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
 .grid-view-header-cell-title {
   overflow: hidden;
   text-overflow: ellipsis;

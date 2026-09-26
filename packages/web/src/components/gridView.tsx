@@ -75,17 +75,24 @@ export function GridView<T>(model: GridViewProps<T>) {
     <div className='vbox'>
       <div className='grid-view-header'>
         {model.columns.map((column, i) => {
+          const title = <>
+            <span className='grid-view-header-cell-title'>{model.columnTitle(column)}</span>
+            <span className='codicon codicon-triangle-up' />
+            <span className='codicon codicon-triangle-down' />
+          </>;
           return <div
             key={model.columnTitle(column)}
             className={'grid-view-header-cell ' + sortingHeader(column, model.sorting)}
             style={{
               width: i < model.columns.length - 1 ? model.columnWidths.get(column) : undefined,
             }}
-            onClick={() => model.setSorting && toggleSorting(column)}
           >
-            <span className='grid-view-header-cell-title'>{model.columnTitle(column)}</span>
-            <span className='codicon codicon-triangle-up' />
-            <span className='codicon codicon-triangle-down' />
+            {model.setSorting ? <button
+              className='grid-view-header-cell-button'
+              onClick={() => toggleSorting(column)}
+            >
+              {title}
+            </button> : title}
           </div>;
         })}
       </div>
