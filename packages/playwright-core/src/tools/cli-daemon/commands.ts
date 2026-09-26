@@ -398,9 +398,10 @@ const find = declareCommand({
   }),
   options: z.object({
     regex: z.string().optional().describe('Regular expression to search for in the page snapshot. Provide either a text argument or --regex, not both.'),
+    ['max-results']: numberArg.optional().describe('Maximum number of matching items to return, unlimited by default.'),
   }),
   toolName: 'browser_find',
-  toolParams: ({ text, regex }) => ({ text, regex }),
+  toolParams: ({ text, regex, ['max-results']: maxResults }) => ({ text, regex, maxResults }),
 });
 
 const generateLocator = declareCommand({

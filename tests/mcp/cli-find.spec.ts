@@ -58,3 +58,13 @@ test('find reports no matches', async ({ cli, server }) => {
   const { output } = await cli('find', 'Pineapples');
   expect(output).toContain('No matches found for "Pineapples".');
 });
+
+test('find with --max-results', async ({ cli, server }) => {
+  server.setContent('/', listPage, 'text/html');
+  await cli('open', server.PREFIX);
+
+  const { output } = await cli('find', '--regex=Apples|Bananas|Cherries', '--max-results=2');
+  expect(output).toContain('Found 3 matches for /Apples|Bananas|Cherries/ (showing first 2):');
+  expect(output).toContain('Apples');
+  expect(output).toContain('Bananas');
+});

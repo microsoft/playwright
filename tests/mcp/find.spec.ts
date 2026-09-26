@@ -229,3 +229,48 @@ test('browser_find rejects invalid regex', async ({ client, server }) => {
     isError: true,
   });
 });
+
+test('browser_find limits results with maxResults', async ({ client, server }) => {
+  server.setContent('/', listPage, 'text/html');
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+  const response = await client.callTool({
+    name: 'browser_find',
+    arguments: { regex: 'Apples|Bananas|Cherries', maxResults: 1 },
+  });
+  expect(response).toHaveResponse({
+    result: expect.stringContaining('Found 3 matches for /Apples|Bananas|Cherries/ (showing first 1):'),
+  });
+  expect(response).toHaveResponse({
+    result: expect.stringContaining('Apples'),
+  });
+});
+
+test('browser_find shows all matches when maxResults exceeds match count', async ({ client, server }) => {
+  server.setContent('/', listPage, 'text/html');
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+  const response = await client.callTool({
+    name: 'browser_find',
+    arguments: { text: 'Bananas', maxResults: 5 },
+  });
+  expect(response).toHaveResponse({
+    result: expect.stringContaining('Found 1 match for "Bananas":'),
+  });
+  expect(response).toHaveResponse({
+    result: expect.not.stringContaining('(showing first'),
+  });
+});
+
+test('browser_find rejects non-positive maxResults', async ({ client, server }) => {
+  server.setContent('/', listPage, 'text/html');
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+  expect(await client.callTool({
+    name: 'browser_find',
+    arguments: { text: 'Apples', maxResults: 0 },
+  })).toHaveResponse({
+    error: expect.stringContaining('"maxResults" must be a positive integer.'),
+    isError: true,
+  });
+});
