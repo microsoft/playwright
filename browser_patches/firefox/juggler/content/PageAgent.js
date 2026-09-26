@@ -480,7 +480,23 @@ export class PageAgent {
         tip.commitCompositionWith(text, keyEvent);
       } else {
         const flags = 0;
-        tip.keydown(keyEvent, flags);
+        // On macOS, Firefox treats Option+<printable key> as text input. Empty text
+        // means no text should be inserted, so we consume keydown after the page
+        // has seen it, which prevents the keypress, same as in Chromium and WebKit.
+        const suppressTextInput = !text && [...key].length === 1 && Services.appinfo.OS === 'Darwin';
+        if (!suppressTextInput) {
+          tip.keydown(keyEvent, flags);
+        } else {
+          const dispose = helper.addEventListener(this._docShell.chromeEventHandler, 'keydown', event => {
+            if (event.altKey && !event.ctrlKey && !event.metaKey)
+              event.preventDefault();
+          }, { capture: true, mozSystemGroup: true });
+          try {
+            tip.keydown(keyEvent, flags);
+          } finally {
+            dispose();
+          }
+        }
       }
     } else if (type === 'keyup') {
       if (text)
