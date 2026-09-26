@@ -1481,11 +1481,12 @@ export class Frame extends SdkObject<FrameEventMap> {
         progress.log(`waiting for ${this._asLocator(selector)}`);
       await this._page.performActionPreChecks(progress);
 
-      // Step 2: perform one-shot expect check without a timeout.
+      // Step 2: perform one-shot expect check without a timeout for impossible timeouts.
       // Supports the case of `expect(locator).toBeVisible({ timeout: 1 })`
       // that should succeed when the locator is already visible.
       try {
-        const resultOneShot = await this._expectInternal(progress, selector, options, lastIntermediateResult, true);
+        const noAbort = !progress.timeout || progress.timeout <= 100;
+        const resultOneShot = await this._expectInternal(progress, selector, options, lastIntermediateResult, noAbort);
         if (resultOneShot.matches !== options.isNot)
           return;
       } catch (e) {
@@ -1529,7 +1530,8 @@ export class Frame extends SdkObject<FrameEventMap> {
 
   private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: ExpectReceived, isSet: boolean, errorMessage?: string }, noAbort: boolean) {
     const progressLog = (text: string) => progress.log(text);
-    // The first expect check, a.k.a. one-shot, always finishes - even when progress is aborted.
+    // The first expect check, a.k.a. one-shot, always finishes - even when progress is aborted
+    // by an impossible timeout (e.g. timeout: 1).
     if (noAbort)
       progress = nullProgress;
     const mainWorld = options.expression === 'to.have.property';
