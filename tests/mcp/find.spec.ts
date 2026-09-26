@@ -247,3 +247,93 @@ test('browser_find saves results to file', async ({ client, server }, testInfo) 
   expect(content).toContain('Found 1 match for "Bananas":');
   expect(content).toContain('Apples');
 });
+
+test('browser_find maxResults option', async ({ client, server }) => {
+  server.setContent('/', `
+    <section aria-label="First Section">
+      <ul>
+        <li>Fruit: Apples</li>
+        <li>Fruit: Bananas</li>
+        <li>Spacer 1</li>
+        <li>Spacer 2</li>
+        <li>Spacer 3</li>
+        <li>Spacer 4</li>
+      </ul>
+    </section>
+    <section aria-label="Second Section">
+      <ul>
+        <li>Fruit: Cherries</li>
+      </ul>
+    </section>
+  `, 'text/html');
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+  // Case 1: maxResults truncates output.
+  // With maxResults=2 and 3 matches (Apples, Bananas, Cherries):
+  // - header shows "Found 3 matches ... (showing first 2)"
+  // - output contains Apples and Bananas (first 2 matches)
+  // - output contains ancestor path of rendered matches ("First Section")
+  // - output does NOT contain Cherries (the truncated 3rd match)
+  // - output does NOT contain the truncated match's ancestor path ("Second Section")
+  const truncated = await client.callTool({
+    name: 'browser_find',
+    arguments: { regex: 'Fruit', maxResults: 2 },
+  });
+  expect(truncated).toHaveResponse({
+    result: expect.stringContaining('Found 3 matches for /Fruit/ (showing first 2):'),
+  });
+  expect(truncated).toHaveResponse({
+    result: expect.stringContaining('Apples'),
+  });
+  expect(truncated).toHaveResponse({
+    result: expect.stringContaining('Bananas'),
+  });
+  expect(truncated).toHaveResponse({
+    result: expect.stringContaining('First Section'),
+  });
+  expect(truncated).toHaveResponse({
+    result: expect.not.stringContaining('Cherries'),
+  });
+  expect(truncated).toHaveResponse({
+    result: expect.not.stringContaining('Second Section'),
+  });
+
+  // Case 2: maxResults >= total matches → no truncation suffix.
+  const notTruncated = await client.callTool({
+    name: 'browser_find',
+    arguments: { text: 'Bananas', maxResults: 5 },
+  });
+  expect(notTruncated).toHaveResponse({
+    result: expect.stringContaining('Found 1 match for "Bananas":'),
+  });
+  expect(notTruncated).toHaveResponse({
+    result: expect.not.stringContaining('(showing first'),
+  });
+
+  // Case 3: maxResults=0 → validation error.
+  expect(await client.callTool({
+    name: 'browser_find',
+    arguments: { text: 'Apples', maxResults: 0 },
+  })).toHaveResponse({
+    error: expect.stringContaining('"maxResults" must be a positive integer.'),
+    isError: true,
+  });
+
+  // Case 4: maxResults=-1 → validation error.
+  expect(await client.callTool({
+    name: 'browser_find',
+    arguments: { text: 'Apples', maxResults: -1 },
+  })).toHaveResponse({
+    error: expect.stringContaining('"maxResults" must be a positive integer.'),
+    isError: true,
+  });
+
+  // Case 5: maxResults=1.5 (non-integer) → validation error.
+  expect(await client.callTool({
+    name: 'browser_find',
+    arguments: { text: 'Apples', maxResults: 1.5 },
+  })).toHaveResponse({
+    error: expect.stringContaining('"maxResults" must be a positive integer.'),
+    isError: true,
+  });
+});
