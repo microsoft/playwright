@@ -108,9 +108,12 @@ function computeElementStyleVisibilityVisible(element: Element, style?: CSSStyle
       return false;
   } else {
     // Manual workaround for WebKit that does not have checkVisibility.
-    const detailsOrSummary = element.closest('details,summary');
-    if (detailsOrSummary !== element && detailsOrSummary?.nodeName === 'DETAILS' && !(detailsOrSummary as HTMLDetailsElement).open)
-      return false;
+    // Check all ancestors: an open details inside a closed one is still hidden.
+    for (let child: Element | undefined = element; child; child = parentElementOrShadowHost(child)) {
+      const parent = parentElementOrShadowHost(child);
+      if (parent?.nodeName === 'DETAILS' && !(parent as HTMLDetailsElement).open && child.nodeName !== 'SUMMARY')
+        return false;
+    }
   }
   if (style.visibility !== 'visible')
     return false;
