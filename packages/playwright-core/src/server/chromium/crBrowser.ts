@@ -41,6 +41,12 @@ import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
 import type * as channels from '../channels';
 
+// How long connect waits for a pre-existing page's renderer to answer before leaving it to
+// initialize in the background.
+const kUnresponsivePageTimeout = 3000;
+
+export type ContextUpdateKind = 'extraHTTPHeaders' | 'offline' | 'httpCredentials' | 'requestInterception' | 'geolocation' | 'userAgent' | 'initScripts' | 'playwrightBinding';
+
 export class CRBrowser extends Browser {
   readonly _connection: CRConnection;
   _session: CRSession;
@@ -159,7 +165,10 @@ export class CRBrowser extends Browser {
   }
 
   async _waitForAllPagesToBeInitialized() {
-    await Promise.all([...this._crPages.values()].map(crPage => crPage._page.waitForInitializedOrError()));
+    // A pre-existing tab whose renderer is frozen or asleep (Memory Saver, sleeping tabs, a hung
+    // renderer) never answers page-level CDP. Waiting on it would hold the connection forever,
+    // so wait only for pages whose renderer responds.
+    await Promise.all([...this._crPages.values()].map(crPage => crPage._waitForInitializedIfResponsive(kUnresponsivePageTimeout)));
   }
 
   _onAttachedToTarget({ targetInfo, sessionId, waitingForDebugger }: Protocol.Target.attachedToTargetPayload) {
@@ -342,6 +351,12 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
   static CREvents = CREvents;
 
   declare readonly _browser: CRBrowser;
+  // Counts, per kind, the context-wide updates that are pushed to initialized pages only, so that a
+  // page still initializing can tell which ones it missed. See CRPage._syncContextUpdatesMissedDuringInitialization.
+  readonly _updateCounts: Record<ContextUpdateKind, number> = {
+    extraHTTPHeaders: 0, offline: 0, httpCredentials: 0, requestInterception: 0,
+    geolocation: 0, userAgent: 0, initScripts: 0, playwrightBinding: 0,
+  };
 
   constructor(browser: CRBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
@@ -484,11 +499,13 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
   async setGeolocation(geolocation?: types.Geolocation): Promise<void> {
     verifyGeolocation(geolocation);
     this._options.geolocation = geolocation;
+    ++this._updateCounts.geolocation;
     for (const page of this.pages())
       await (page.delegate as CRPage).updateGeolocation();
   }
 
   async doUpdateExtraHTTPHeaders(): Promise<void> {
+    ++this._updateCounts.extraHTTPHeaders;
     for (const page of this.pages())
       await (page.delegate as CRPage).updateExtraHTTPHeaders();
     for (const sw of this.serviceWorkers())
@@ -497,6 +514,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
 
   async setUserAgent(userAgent: string | undefined): Promise<void> {
     this._options.userAgent = userAgent;
+    ++this._updateCounts.userAgent;
     await Promise.all([
       ...this.pages().map(page => (page.delegate as CRPage).updateUserAgent()),
       ...this.serviceWorkers().map(sw => sw.updateUserAgent()),
@@ -504,6 +522,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
   }
 
   async doUpdateOffline(): Promise<void> {
+    ++this._updateCounts.offline;
     for (const page of this.pages())
       await (page.delegate as CRPage).updateOffline();
     for (const sw of this.serviceWorkers())
@@ -512,6 +531,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
 
   async doSetHTTPCredentials(httpCredentials?: HttpCredentials[]): Promise<void> {
     this._options.httpCredentials = httpCredentials;
+    ++this._updateCounts.httpCredentials;
     for (const page of this.pages())
       await (page.delegate as CRPage).updateHttpCredentials();
     for (const sw of this.serviceWorkers())
@@ -519,16 +539,19 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
   }
 
   async doAddInitScript(initScript: InitScript) {
+    ++this._updateCounts.initScripts;
     for (const page of this.pages())
       await (page.delegate as CRPage).addInitScript(initScript);
   }
 
   async doRemoveInitScripts(initScripts: InitScript[]) {
+    ++this._updateCounts.initScripts;
     for (const page of this.pages())
       await (page.delegate as CRPage).removeInitScripts(initScripts);
   }
 
   async doUpdateRequestInterception(): Promise<void> {
+    ++this._updateCounts.requestInterception;
     for (const page of this.pages())
       await (page.delegate as CRPage).updateRequestInterception();
     for (const sw of this.serviceWorkers())
@@ -544,6 +567,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
   }
 
   override async doExposePlaywrightBinding() {
+    ++this._updateCounts.playwrightBinding;
     for (const page of this._crPages())
       await page.exposePlaywrightBinding();
   }

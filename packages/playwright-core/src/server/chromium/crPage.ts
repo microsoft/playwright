@@ -16,6 +16,7 @@
  */
 
 import { assert } from '@isomorphic/assert';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { rewriteErrorMessage } from '@utils/stackTrace';
 import { eventsHelper } from '@utils/eventsHelper';
 import * as dialog from '../dialog';
@@ -38,6 +39,7 @@ import { isSessionClosedError } from '../protocolError';
 import { startAutomaticVideoRecording } from '../videoRecorder';
 import { nullProgress } from '../progress';
 
+import type { ContextUpdateKind } from './crBrowser';
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
 import type { RegisteredListener } from '@utils/eventsHelper';
@@ -86,6 +88,8 @@ export class CRPage implements PageDelegate {
   // of their Page.windowOpen events is not guaranteed to match the order
   // of new popup targets.
   readonly _nextWindowOpenPopupFeatures: string[][] = [];
+  // Context-wide update counts when this page started initializing, see CRBrowserContext._updateCounts.
+  private readonly _initialUpdateCounts: Record<ContextUpdateKind, number>;
 
   static mainFrameSession(page: Page): FrameSession {
     const crPage = page.delegate as CRPage;
@@ -102,6 +106,7 @@ export class CRPage implements PageDelegate {
     this._pdf = new CRPDF(client);
     this._coverage = new CRCoverage(client);
     this._browserContext = browserContext;
+    this._initialUpdateCounts = { ...browserContext._updateCounts };
     this._page = new Page(this, browserContext);
     // Create a unique utility world for this Playwright instance, just in case there
     // are multiple instances of Playwright connected to the same browser page.
@@ -122,9 +127,46 @@ export class CRPage implements PageDelegate {
         this._page.setEmulatedSizeFromWindowOpen({ viewport: viewportSize, screen: viewportSize });
     }
 
-    this._mainFrameSession._initialize(bits.hasUIWindow).then(
+    this._mainFrameSession._initialize(bits.hasUIWindow).then(() => this._syncContextUpdatesMissedDuringInitialization()).then(
         () => this._page.reportAsNew(this._opener?._page, undefined),
         error => this._page.reportAsNew(this._opener?._page, error));
+  }
+
+  // Context-wide updates only reach initialized pages, while initialization reads the context
+  // state once, up front. A page that initializes slowly - for example a pre-existing tab that
+  // was asleep when connectOverCDP attached - would otherwise miss updates made in between.
+  // Re-apply only the kinds that actually changed: some updates are not no-ops when repeated
+  // (a user agent override, clearing geolocation) and must not touch a page nobody asked about.
+  private async _syncContextUpdatesMissedDuringInitialization() {
+    const missed = (kind: ContextUpdateKind) => this._browserContext._updateCounts[kind] !== this._initialUpdateCounts[kind];
+    const updates: Record<ContextUpdateKind, () => Promise<void>> = {
+      extraHTTPHeaders: () => this.updateExtraHTTPHeaders(),
+      offline: () => this.updateOffline(),
+      httpCredentials: () => this.updateHttpCredentials(),
+      requestInterception: () => this.updateRequestInterception(),
+      geolocation: () => this.updateGeolocation(),
+      userAgent: () => this.updateUserAgent(),
+      initScripts: () => this._forAllFrameSessions(frame => frame._syncInitScripts()),
+      playwrightBinding: () => this.exposePlaywrightBinding(),
+    };
+    await Promise.all((Object.keys(updates) as ContextUpdateKind[]).filter(missed).map(kind => updates[kind]()));
+  }
+
+  // Resolves once the page is initialized, or right away if its renderer has not answered a
+  // single page-level command within `timeout`. A frozen or sleeping tab never answers, and
+  // keeps initializing in the background; it is reported through the page event if it wakes.
+  async _waitForInitializedIfResponsive(timeout: number) {
+    const initialized = this._page.waitForInitializedOrError();
+    let timer: NodeJS.Timeout | undefined;
+    const unresponsive = new Promise<boolean>(f => timer = setTimeout(() => f(false), timeout));
+    const responsive = await Promise.race([
+      initialized.then(() => true),
+      this._mainFrameSession._rendererResponded.then(() => true),
+      unresponsive,
+    ]);
+    clearTimeout(timer);
+    if (responsive)
+      await initialized;
   }
 
   private async _forAllFrameSessions(cb: (frame: FrameSession) => Promise<any>) {
@@ -416,6 +458,8 @@ class FrameSession {
   _metricsOverride: Protocol.Emulation.setDeviceMetricsOverrideParameters | undefined;
   private _workerSessions = new Map<string, CRSession>();
   private _initScriptIds = new Map<InitScript, string>();
+  // Page.getFrameTree is answered by the renderer, so a reply proves the renderer is responsive.
+  readonly _rendererResponded = new ManualPromise<void>();
   private _bufferedAttachedToTargetEvents: Protocol.Target.attachedToTargetPayload[] | undefined;
 
   constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
@@ -500,6 +544,7 @@ class FrameSession {
     const promises: Promise<any>[] = [
       this._client.send('Page.enable'),
       this._client.send('Page.getFrameTree').then(({ frameTree }) => {
+        this._rendererResponded.resolve();
         if (this._isMainFrame()) {
           this._handleFrameTree(frameTree);
           this._addRendererListeners();
@@ -1089,6 +1134,12 @@ class FrameSession {
       this._initScriptIds.delete(script);
     }
     await Promise.all(ids.map(identifier => this._client.send('Page.removeScriptToEvaluateOnNewDocument', { identifier }).catch(() => {}))); // target can be closed
+  }
+
+  async _syncInitScripts(): Promise<void> {
+    const wanted = new Set(this._crPage._page.allInitScripts());
+    await this._removeEvaluatesOnNewDocument([...this._initScriptIds.keys()].filter(script => !wanted.has(script)));
+    await Promise.all([...wanted].filter(script => !this._initScriptIds.has(script)).map(script => this._evaluateOnNewDocument(script, 'main')));
   }
 
   async exposePlaywrightBinding() {
