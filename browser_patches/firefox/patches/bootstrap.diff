@@ -254,7 +254,7 @@ index 1fa976de8af749b5dd8838f298aa1a51ab24bb3d..1d9aa0854dcaf116a91f3e0bd2c1ccce
  }
  
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 6fe906d34382c51d6078f84f0733841841ed3ecb..866cb2e292c8cfc30cf7b4ec1e6b18139707943e 100644
+index 6fe906d34382c51d6078f84f0733841841ed3ecb..ac83df4b907caa29f40833f6c0bef9320ef79410 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -16,6 +16,12 @@
@@ -395,8 +395,8 @@ index 6fe906d34382c51d6078f84f0733841841ed3ecb..866cb2e292c8cfc30cf7b4ec1e6b1813
 +  return NS_OK;
 +}
 +
-+bool nsDocShell::ShouldOverrideHasFocus() const {
-+  return mOverrideHasFocus;
++bool nsDocShell::ShouldOverrideHasFocus() {
++  return GetRootDocShell()->mOverrideHasFocus;
 +}
 +
 +NS_IMETHODIMP
@@ -571,7 +571,7 @@ index 6fe906d34382c51d6078f84f0733841841ed3ecb..866cb2e292c8cfc30cf7b4ec1e6b1813
                                           aTriggeringPrincipal);
    return result.isErr() ? result.unwrapErr() : NS_OK;
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index c3fcd2985a2e3d3f4906dcbfc985b389be6da31a..622da5b84e434cdef969a239fbcef068d5b5e8e4 100644
+index c3fcd2985a2e3d3f4906dcbfc985b389be6da31a..9b4cc0bdadf182c45790c84e9a5b3d7a74d9cb6d 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
 @@ -16,6 +16,7 @@
@@ -597,7 +597,7 @@ index c3fcd2985a2e3d3f4906dcbfc985b389be6da31a..622da5b84e434cdef969a239fbcef068
 +  bool IsFileInputInterceptionEnabled();
 +  void FilePickerShown(mozilla::dom::Element* element);
 +
-+  bool ShouldOverrideHasFocus() const;
++  bool ShouldOverrideHasFocus();
 +
 +  bool IsBypassCSPEnabled();
 +
@@ -687,7 +687,7 @@ index db0721841de3732d297b1ca31ae009e9e6a5356b..2c95a3ebbc437d31d393b5243b923f4f
     * This attempts to save any applicable layout history state (like
     * scroll position) in the nsISHEntry. This is normally done
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index 3fa58ad22661760494830d2df7b690ba4e4ed253..d72dbace4ceb790eba27b0298f21a540b0250ba5 100644
+index 3fa58ad22661760494830d2df7b690ba4e4ed253..6d8038a8f45fa3f21e381433b7d3601ababb11f8 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -3850,6 +3850,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
@@ -712,12 +712,16 @@ index 3fa58ad22661760494830d2df7b690ba4e4ed253..d72dbace4ceb790eba27b0298f21a540
    // If this is a data document - no need to set CSP.
    if (mLoadedAsData) {
      return NS_OK;
-@@ -4928,6 +4936,10 @@ bool Document::HasFocus(ErrorResult& rv) const {
+@@ -4928,6 +4936,14 @@ bool Document::HasFocus(ErrorResult& rv) const {
      return false;
    }
  
 +  if (IsActive() && mDocumentContainer->ShouldOverrideHasFocus()) {
-+    return true;
++    // Emulate the window being active, but keep reporting which frame has focus.
++    if (bc->IsTop()) {
++      return true;
++    }
++    return fm->IsSameOrAncestor(bc, fm->GetFocusedBrowsingContext());
 +  }
 +
    if (!fm->IsInActiveWindow(bc)) {
