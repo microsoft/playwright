@@ -53,7 +53,7 @@ export function addressToString(address: string | net.AddressInfo | null, option
   if (typeof address === 'string')
     throw new Error('Unexpected address type: ' + address);
   let host = urlHostFromAddress(address);
-  if (options.normalizeLoopback && (host === '0.0.0.0' || host === '[::]' || host === '[::1]' || host === '127.0.0.1'))
+  if (options.normalizeLoopback && (host === '[::1]' || host === '127.0.0.1'))
     host = 'localhost';
   return `${options.protocol}://${host}:${address.port}`;
 }
