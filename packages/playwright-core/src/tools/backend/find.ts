@@ -30,6 +30,7 @@ const find = defineTabTool({
     inputSchema: z.object({
       text: z.string().optional().describe('Plain text to search for in the page snapshot (case-insensitive substring match). Provide either text or regex, not both.'),
       regex: z.string().optional().refine(v => !v || isValidRegex(v), { message: 'Invalid regular expression' }).describe('Regular expression to search for in the page snapshot. Matching is case-sensitive by default; wrap the pattern in slashes to add flags, e.g. "/error/i" for case-insensitive. Provide either text or regex, not both.'),
+      filename: z.string().optional().describe('Save results to a file instead of returning them in the response. Relative file names are resolved against the workspace root.'),
     }),
     type: 'readOnly',
   },
@@ -69,7 +70,7 @@ const find = defineTabTool({
     }
 
     if (!matchedLines.length) {
-      response.addTextResult(`No matches found for ${query}.`);
+      await response.addResult('Find results', `No matches found for ${query}.`, { prefix: 'find', ext: 'md', suggestedFilename: params.filename });
       return;
     }
 
@@ -106,7 +107,7 @@ const find = defineTabTool({
       return out.join('\n');
     });
     const matchWord = matchedLines.length === 1 ? 'match' : 'matches';
-    response.addTextResult(`Found ${matchedLines.length} ${matchWord} for ${query}:\n\n${snippets.join('\n\n----\n\n')}`);
+    await response.addResult('Find results', `Found ${matchedLines.length} ${matchWord} for ${query}:\n\n${snippets.join('\n\n----\n\n')}`, { prefix: 'find', ext: 'md', suggestedFilename: params.filename });
   },
 });
 

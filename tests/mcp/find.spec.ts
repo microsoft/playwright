@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { test, expect } from './fixtures';
 
 const listPage = `
@@ -228,4 +230,20 @@ test('browser_find rejects invalid regex', async ({ client, server }) => {
   })).toHaveResponse({
     isError: true,
   });
+});
+
+test('browser_find saves results to file', async ({ client, server }, testInfo) => {
+  server.setContent('/', listPage, 'text/html');
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+  const response = await client.callTool({
+    name: 'browser_find',
+    arguments: { text: 'Bananas', filename: 'find.md' },
+  });
+  expect(response).toHaveTextResponse(expect.stringContaining('find.md'));
+  expect(response).toHaveTextResponse(expect.not.stringContaining('Apples'));
+
+  const content = await fs.promises.readFile(testInfo.outputPath('find.md'), 'utf8');
+  expect(content).toContain('Found 1 match for "Bananas":');
+  expect(content).toContain('Apples');
 });
