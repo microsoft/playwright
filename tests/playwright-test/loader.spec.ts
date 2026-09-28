@@ -469,8 +469,28 @@ test('should load web server w/o esm loader in esm module', async ({ runInlineTe
   expect(result.output).toContain('NODE_OPTIONS undefined');
 });
 
+const jsxRuntimeFiles = (...names: string[]) => Object.assign({ 'package.json': JSON.stringify({ name: 'test-project' }) }, ...names.map(name => ({
+  [`node_modules/${name}/package.json`]: JSON.stringify({
+    name,
+    exports: {
+      './jsx-runtime': './jsx-runtime.js',
+      './jsx-dev-runtime': './jsx-dev-runtime.js',
+    },
+  }),
+  [`node_modules/${name}/jsx-runtime.js`]: `
+    exports.jsx = (type, props) => ({ runtime: '${name}', type, props });
+    exports.jsxs = exports.jsx;
+    exports.Fragment = '${name}-fragment';
+  `,
+  [`node_modules/${name}/jsx-dev-runtime.js`]: `
+    exports.jsxDEV = (type, props, key, isStatic, source) => ({ runtime: '${name}-dev', type, props, fileName: source.fileName });
+    exports.Fragment = '${name}-fragment';
+  `,
+})));
+
 test('should load a jsx/tsx files', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
+    ...jsxRuntimeFiles('react'),
     'a.spec.tsx': `
       import { test, expect } from '@playwright/test';
       const component = () => <div></div>;
@@ -492,6 +512,7 @@ test('should load a jsx/tsx files', async ({ runInlineTest }) => {
 
 test('should load a jsx/tsx files in ESM mode', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
+    ...jsxRuntimeFiles('react'),
     'package.json': JSON.stringify({
       type: 'module'
     }),
@@ -518,25 +539,20 @@ test('should load a jsx/tsx files in ESM mode', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
 });
 
-test('should load jsx with top-level component', async ({ runInlineTest }) => {
+test('should use react/jsx-runtime when tsconfig does not configure jsx', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
+    ...jsxRuntimeFiles('react'),
     'a.spec.tsx': `
       import { test, expect } from '@playwright/test';
-      const component = <div>Hello <span>world</span></div>;
       test('succeeds', () => {
-        expect(component).toEqual({
-          __pw_type: 'jsx',
+        expect(<div>Hello <span>world</span><>!</></div>).toEqual({
+          runtime: 'react',
           type: 'div',
           props: {
             children: [
               'Hello ',
-              {
-                __pw_type: 'jsx',
-                type: 'span',
-                props: {
-                  children: 'world'
-                },
-              }
+              { runtime: 'react', type: 'span', props: { children: 'world' } },
+              { runtime: 'react', type: 'react-fragment', props: { children: '!' } },
             ]
           },
         });
@@ -547,8 +563,130 @@ test('should load jsx with top-level component', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
 });
 
+test('should respect jsxImportSource from tsconfig', async ({ runInlineTest }) => {
+  const { exitCode, passed } = await runInlineTest({
+    ...jsxRuntimeFiles('my-jsx'),
+    'tsconfig.json': JSON.stringify({ compilerOptions: { jsx: 'react-jsx', jsxImportSource: 'my-jsx' } }),
+    'a.spec.tsx': `
+      import { test, expect } from '@playwright/test';
+      test('succeeds', () => {
+        expect(<div><>!</></div>).toEqual({
+          runtime: 'my-jsx',
+          type: 'div',
+          props: { children: { runtime: 'my-jsx', type: 'my-jsx-fragment', props: { children: '!' } } },
+        });
+      });
+    `,
+    'b.spec.jsx': `
+      import { test, expect } from '@playwright/test';
+      test('succeeds', () => {
+        expect(<span />).toEqual({ runtime: 'my-jsx', type: 'span', props: {} });
+      });
+    `,
+  });
+  expect(passed).toBe(2);
+  expect(exitCode).toBe(0);
+});
+
+test('should respect jsxImportSource from tsconfig in ESM mode', async ({ runInlineTest }) => {
+  const { exitCode, passed } = await runInlineTest({
+    ...jsxRuntimeFiles('my-jsx'),
+    'package.json': JSON.stringify({ type: 'module' }),
+    'playwright.config.ts': `export default {};`,
+    'tsconfig.json': JSON.stringify({ compilerOptions: { jsx: 'react-jsx', jsxImportSource: 'my-jsx' } }),
+    'a.spec.tsx': `
+      import { test, expect } from '@playwright/test';
+      test('succeeds', () => {
+        expect(<div />).toEqual({ runtime: 'my-jsx', type: 'div', props: {} });
+      });
+    `,
+  });
+  expect(passed).toBe(1);
+  expect(exitCode).toBe(0);
+});
+
+test('should respect classic jsx factory from tsconfig', async ({ runInlineTest }) => {
+  const { exitCode, passed } = await runInlineTest({
+    'tsconfig.json': JSON.stringify({ compilerOptions: { jsx: 'react', jsxFactory: 'h', jsxFragmentFactory: 'Frag' } }),
+    'a.spec.tsx': `
+      import { test, expect } from '@playwright/test';
+      const h = (type, props, ...children) => ({ factory: 'h', type, props, children });
+      const Frag = 'frag';
+      test('succeeds', () => {
+        expect(<div id="a">Hello <>world</></div>).toEqual({
+          factory: 'h',
+          type: 'div',
+          props: { id: 'a' },
+          children: ['Hello ', { factory: 'h', type: 'frag', props: null, children: ['world'] }],
+        });
+      });
+    `,
+  });
+  expect(passed).toBe(1);
+  expect(exitCode).toBe(0);
+});
+
+test('should respect react-jsxdev from tsconfig', async ({ runInlineTest }) => {
+  const { exitCode, passed } = await runInlineTest({
+    ...jsxRuntimeFiles('my-jsx'),
+    'tsconfig.json': JSON.stringify({ compilerOptions: { jsx: 'react-jsxdev', jsxImportSource: 'my-jsx' } }),
+    'a.spec.tsx': `
+      import { test, expect } from '@playwright/test';
+      test('succeeds', () => {
+        expect(<div />).toEqual({ runtime: 'my-jsx-dev', type: 'div', props: {}, fileName: expect.stringContaining('a.spec.tsx') });
+      });
+    `,
+  });
+  expect(passed).toBe(1);
+  expect(exitCode).toBe(0);
+});
+
+test('should respect jsx options from tsconfig references and extends', async ({ runInlineTest }) => {
+  const { exitCode, passed } = await runInlineTest({
+    ...jsxRuntimeFiles('my-jsx'),
+    'tsconfig.json': JSON.stringify({ files: [], references: [{ path: './tsconfig.node.json' }, { path: './tsconfig.app.json' }] }),
+    'tsconfig.node.json': JSON.stringify({ compilerOptions: { strict: true } }),
+    'tsconfig.app.json': JSON.stringify({ extends: './tsconfig.base.json', compilerOptions: { jsxImportSource: 'my-jsx' } }),
+    'tsconfig.base.json': JSON.stringify({ compilerOptions: { jsx: 'react-jsx', jsxImportSource: 'other-jsx' } }),
+    'a.spec.tsx': `
+      import { test, expect } from '@playwright/test';
+      test('succeeds', () => {
+        expect(<div />).toEqual({ runtime: 'my-jsx', type: 'div', props: {} });
+      });
+    `,
+  });
+  expect(passed).toBe(1);
+  expect(exitCode).toBe(0);
+});
+
+test('should recompile when tsconfig jsx options change', async ({ runInlineTest }) => {
+  const files = {
+    ...jsxRuntimeFiles('jsx-a', 'jsx-b'),
+    'a.spec.tsx': `
+      import { test, expect } from '@playwright/test';
+      test('succeeds', () => {
+        console.log('%%' + (<div />).runtime);
+      });
+    `,
+  };
+  const result1 = await runInlineTest({
+    ...files,
+    'tsconfig.json': JSON.stringify({ compilerOptions: { jsx: 'react-jsx', jsxImportSource: 'jsx-a' } }),
+  });
+  expect(result1.exitCode).toBe(0);
+  expect(result1.outputLines).toEqual(['jsx-a']);
+
+  const result2 = await runInlineTest({
+    ...files,
+    'tsconfig.json': JSON.stringify({ compilerOptions: { jsx: 'react-jsx', jsxImportSource: 'jsx-b' } }),
+  });
+  expect(result2.exitCode).toBe(0);
+  expect(result2.outputLines).toEqual(['jsx-b']);
+});
+
 test('should load a jsx/tsx files with fragments', async ({ runInlineTest }) => {
   const { exitCode, passed } = await runInlineTest({
+    ...jsxRuntimeFiles('react'),
     'helper.tsx': `
       export const component = () => <><div></div></>;
       export function add(a: number, b: number) {
