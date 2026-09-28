@@ -30,7 +30,7 @@ const find = defineTabTool({
     inputSchema: z.object({
       text: z.string().optional().describe('Plain text to search for in the page snapshot (case-insensitive substring match). Provide either text or regex, not both.'),
       regex: z.string().optional().refine(v => !v || isValidRegex(v), { message: 'Invalid regular expression' }).describe('Regular expression to search for in the page snapshot. Matching is case-sensitive by default; wrap the pattern in slashes to add flags, e.g. "/error/i" for case-insensitive. Provide either text or regex, not both.'),
-      filename: z.string().optional().describe('File name to save the results to. Relative file names are resolved against the workspace root. If not provided, results are returned as text.'),
+      filename: z.string().optional().describe('Save results to a file instead of returning them in the response. Relative file names are resolved against the workspace root.'),
     }),
     type: 'readOnly',
   },
