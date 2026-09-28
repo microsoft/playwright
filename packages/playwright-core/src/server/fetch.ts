@@ -328,8 +328,6 @@ export abstract class APIRequestContext extends SdkObject {
       log.push(message);
       progress.log(message);
     };
-    // Cookies from the store are added to a per-request copy, so that options.headers
-    // only holds what the caller passed and redirects can carry a caller's cookie header over.
     const requestHeaders = { ...options.headers };
     await this._updateRequestCookieHeader(progress, url, requestHeaders);
 
