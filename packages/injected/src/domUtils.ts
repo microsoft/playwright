@@ -14,17 +14,6 @@
  * limitations under the License.
  */
 
-type GlobalOptions = {
-  browserNameForWorkarounds?: string;
-};
-let globalOptions: GlobalOptions = {};
-export function setGlobalOptions(options: GlobalOptions) {
-  globalOptions = options;
-}
-export function getGlobalOptions(): GlobalOptions {
-  return globalOptions;
-}
-
 export function isInsideScope(scope: Node, element: Element | undefined): boolean {
   while (element) {
     if (scope.contains(element))
@@ -100,14 +89,12 @@ function computeElementStyleVisibilityVisible(element: Element, style?: CSSStyle
   // Element.checkVisibility checks for content-visibility and also looks at
   // styles up the flat tree including user-agent ShadowRoots, such as the
   // details element for example.
-  // All the browser implement it, but WebKit has a bug which prevents us from using it:
-  // https://bugs.webkit.org/show_bug.cgi?id=264733
-  // @ts-ignore
-  if (Element.prototype.checkVisibility && globalOptions.browserNameForWorkarounds !== 'webkit') {
+  // @ts-ignore Older Electron versions do not have checkVisibility.
+  if (Element.prototype.checkVisibility) {
     if (!element.checkVisibility())
       return false;
   } else {
-    // Manual workaround for WebKit that does not have checkVisibility.
+    // Manual workaround for browsers that do not have checkVisibility.
     const detailsOrSummary = element.closest('details,summary');
     if (detailsOrSummary !== element && detailsOrSummary?.nodeName === 'DETAILS' && !(detailsOrSummary as HTMLDetailsElement).open)
       return false;
