@@ -305,7 +305,6 @@ scheme.APIRequestContextFetchParams = tObject({
   params: tOptional(tArray(tType('NameValue'))),
   method: tOptional(tString),
   headers: tOptional(tArray(tType('NameValue'))),
-  browserRequest: tOptional(tBoolean),
   postData: tOptional(tBinary),
   jsonData: tOptional(tString),
   formData: tOptional(tArray(tType('NameValue'))),

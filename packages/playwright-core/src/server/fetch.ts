@@ -90,7 +90,6 @@ export type APIRequestFinishedEvent = {
 type SendRequestOptions = Omit<https.RequestOptions, 'agent'> & {
   maxRedirects: number,
   headers: HeadersObject,
-  browserRequest?: boolean,
   __testHookLookup?: (hostname: string) => LookupAddress[]
 };
 
@@ -228,7 +227,6 @@ export abstract class APIRequestContext extends SdkObject {
     const options: SendRequestOptions = {
       method,
       headers,
-      browserRequest: params.browserRequest,
       maxRedirects,
       __testHookLookup: (params as any).__testHookLookup,
     };
@@ -465,10 +463,6 @@ export abstract class APIRequestContext extends SdkObject {
             return;
           }
           const headers = { ...options.headers };
-          // The cookie header of a browser request is per hop, the browser would resolve
-          // cookies for the redirect target anew.
-          if (options.browserRequest)
-            removeHeader(headers, 'cookie');
 
           // HTTP-redirect fetch step 13 (https://fetch.spec.whatwg.org/#http-redirect-fetch)
           const status = response.statusCode!;
@@ -488,7 +482,6 @@ export abstract class APIRequestContext extends SdkObject {
           const redirectOptions: SendRequestOptions = {
             method,
             headers,
-            browserRequest: options.browserRequest,
             maxRedirects: options.maxRedirects - 1,
             __testHookLookup: options.__testHookLookup,
           };

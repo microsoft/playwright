@@ -70,7 +70,7 @@ it('should send cookies set by a redirect when fetching the intercepted request'
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.cookie = 'original=value');
   await page.route('**/login', async route => {
-    const response = await route.fetch({ headers: { ...route.request().headers(), 'x-extra': 'value' } });
+    const response = await route.fetch();
     await route.fulfill({ response });
   });
   const [loginReq, dashboardReq, response] = await Promise.all([
@@ -79,9 +79,7 @@ it('should send cookies set by a redirect when fetching the intercepted request'
     page.goto(server.PREFIX + '/login'),
   ]);
   expect(loginReq.headers.cookie).toBe('original=value');
-  expect(loginReq.headers['x-extra']).toBe('value');
   expect(dashboardReq.headers.cookie.split(';').map(s => s.trim()).sort()).toEqual(['original=value', 'session=abc']);
-  expect(dashboardReq.headers['x-extra']).toBe('value');
   expect(await response.text()).toBe('dashboard');
 });
 
