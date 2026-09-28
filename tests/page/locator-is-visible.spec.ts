@@ -60,6 +60,54 @@ it('isVisible and isHidden should work with details', async ({ page }) => {
   await expect(page.locator('ul')).toBeHidden();
 });
 
+it('isVisible and isHidden should work with nested details', async ({ page }) => {
+  await page.setContent(`<details>
+    <summary>outer</summary>
+    <details open>
+      <summary>inner</summary>
+      <button>hidden button</button>
+    </details>
+  </details>`);
+
+  await expect(page.locator('summary', { hasText: 'outer' })).toBeVisible();
+  await expect(page.locator('summary', { hasText: 'inner' })).toBeHidden();
+  await expect(page.locator('button')).toBeHidden();
+  await expect(page.getByRole('button')).toHaveCount(0);
+});
+
+it('isVisible and isHidden should work with unslotted content', async ({ page }) => {
+  await page.setContent(`
+    <div id=unslotted><span>hidden 1</span><div><span>hidden 2</span></div></div>
+    <div id=slotted><span>visible</span></div>
+    <script>
+      unslotted.attachShadow({ mode: 'open' }).innerHTML = 'nothing to see here';
+      slotted.attachShadow({ mode: 'open' }).innerHTML = '<slot></slot>';
+    </script>
+  `);
+
+  await expect(page.locator('span', { hasText: 'hidden 1' })).toBeHidden();
+  await expect(page.locator('span', { hasText: 'hidden 2' })).toBeHidden();
+  await expect(page.locator('span', { hasText: 'visible' })).toBeVisible();
+});
+
+it('isVisible and isHidden should work with list box options', async ({ page }) => {
+  await page.setContent(`
+    <select multiple>
+      <option>visible 1</option>
+      <optgroup label="group"><option>visible 2</option></optgroup>
+      <option hidden>hidden 1</option>
+      <optgroup label="hidden group" style="display:none"><option>hidden 2</option></optgroup>
+    </select>
+    <select size=3><option>visible 3</option></select>
+    <select multiple style="display:none"><option>hidden 3</option></select>
+  `);
+
+  for (const name of ['visible 1', 'visible 2', 'visible 3'])
+    await expect(page.getByRole('option', { name, exact: true })).toBeVisible();
+  for (const text of ['hidden 1', 'hidden 2', 'hidden 3'])
+    await expect(page.locator('option', { hasText: text })).toBeHidden();
+});
+
 it('isVisible inside a button', async ({ page }) => {
   await page.setContent(`<button><span></span>a button</button>`);
   const span = page.locator('span');

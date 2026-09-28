@@ -16,7 +16,7 @@
 
 import * as css from '@isomorphic/cssTokenizer';
 
-import { beginDOMCaches, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, endDOMCaches, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
+import { beginDOMCaches, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, endDOMCaches, getElementComputedStyle, isElementStyleVisibilityVisible, isListBoxSelect, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
 
 import type { AriaRole } from '@isomorphic/ariaSnapshot';
 
@@ -155,7 +155,7 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
   'PROGRESS': () => 'progressbar',
   'SEARCH': () => 'search',
   'SECTION': (e: Element) => hasExplicitAccessibleName(e) ? 'region' : null,
-  'SELECT': (e: Element) => e.hasAttribute('multiple') || (e as HTMLSelectElement).size > 1 ? 'listbox' : 'combobox',
+  'SELECT': (e: Element) => isListBoxSelect(e as HTMLSelectElement) ? 'listbox' : 'combobox',
   'STRONG': () => 'strong',
   'SUB': () => 'subscript',
   'SUP': () => 'superscript',
@@ -341,7 +341,7 @@ function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element): boolean
 
     // When parent has a shadow root, all light dom children must be assigned to a slot,
     // otherwise they are not rendered and considered hidden for aria.
-    // Note: we can remove this logic once WebKit supports `Element.checkVisibility`.
+    // Note: needed for <option> and <slot>, which skip checkVisibility above.
     if (element.parentElement && element.parentElement.shadowRoot && !element.assignedSlot)
       hidden = true;
 

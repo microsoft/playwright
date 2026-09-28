@@ -21,9 +21,6 @@ let globalOptions: GlobalOptions = {};
 export function setGlobalOptions(options: GlobalOptions) {
   globalOptions = options;
 }
-export function getGlobalOptions(): GlobalOptions {
-  return globalOptions;
-}
 
 export function isInsideScope(scope: Node, element: Element | undefined): boolean {
   while (element) {
@@ -100,21 +97,29 @@ function computeElementStyleVisibilityVisible(element: Element, style?: CSSStyle
   // Element.checkVisibility checks for content-visibility and also looks at
   // styles up the flat tree including user-agent ShadowRoots, such as the
   // details element for example.
-  // All the browser implement it, but WebKit has a bug which prevents us from using it:
-  // https://bugs.webkit.org/show_bug.cgi?id=264733
-  // @ts-ignore
-  if (Element.prototype.checkVisibility && globalOptions.browserNameForWorkarounds !== 'webkit') {
-    if (!element.checkVisibility())
-      return false;
-  } else {
-    // Manual workaround for WebKit that does not have checkVisibility.
-    const detailsOrSummary = element.closest('details,summary');
-    if (detailsOrSummary !== element && detailsOrSummary?.nodeName === 'DETAILS' && !(detailsOrSummary as HTMLDetailsElement).open)
-      return false;
-  }
+  if (!element.checkVisibility() && !isWebKitListBoxOptionVisible(element, style))
+    return false;
   if (style.visibility !== 'visible')
     return false;
   return true;
+}
+
+export function isListBoxSelect(select: HTMLSelectElement): boolean {
+  return select.multiple || select.size > 1;
+}
+
+// WebKit does not create renderers for list box options, so checkVisibility() returns false for them.
+function isWebKitListBoxOptionVisible(element: Element, style: CSSStyleDeclaration): boolean {
+  if (globalOptions.browserNameForWorkarounds !== 'webkit' || element.nodeName !== 'OPTION' || style.display === 'none')
+    return false;
+  const select = element.closest('select');
+  if (!select || !isListBoxSelect(select))
+    return false;
+  for (let e = element.parentElement; e && e !== select; e = e.parentElement) {
+    if (getElementComputedStyle(e)?.display === 'none')
+      return false;
+  }
+  return isElementStyleVisibilityVisible(select);
 }
 
 export function computeBox(element: Element) {

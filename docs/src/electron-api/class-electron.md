@@ -41,9 +41,7 @@ const { _electron: electron } = require('playwright');
 ```
 
 **Supported Electron versions are:**
-* v12.2.0+
-* v13.4.0+
-* v14+
+* v21+
 
 **Known issues:**
 

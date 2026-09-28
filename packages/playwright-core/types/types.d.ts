@@ -24015,9 +24015,7 @@ export interface WebStorage {
  * ```
  *
  * **Supported Electron versions are:**
- * - v12.2.0+
- * - v13.4.0+
- * - v14+
+ * - v21+
  *
  * **Known issues:**
  *
@@ -24351,7 +24349,7 @@ export interface Electron {
  * - Android device or AVD Emulator.
  * - [ADB daemon](https://developer.android.com/studio/command-line/adb) running and authenticated with your device.
  *   Typically running `adb devices` is all you need to do.
- * - [`Chrome 87`](https://play.google.com/store/apps/details?id=com.android.chrome) or newer installed on the
+ * - [`Chrome 105`](https://play.google.com/store/apps/details?id=com.android.chrome) or newer installed on the
  *   device
  * - "Enable command line on non-rooted devices" enabled in `chrome://flags`.
  *
