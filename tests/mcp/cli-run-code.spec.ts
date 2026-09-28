@@ -58,3 +58,16 @@ test('run-code from file with template literals', async ({ cli, server }) => {
   const { output } = await cli('run-code', '--filename=template-script.js');
   expect(output).toContain('result: templated');
 });
+
+test('run-code delayed route with setTimeout', async ({ cli, server }) => {
+  server.setContent('/', '<div>Hello</div>', 'text/html');
+  await cli('open', server.PREFIX);
+  await cli('run-code', `async page => {
+    await page.route('**/api/slow', async route => {
+      await new Promise(r => setTimeout(r, 100));
+      await route.fulfill({ body: 'loaded' });
+    });
+  }`);
+  const { output } = await cli('eval', 'async () => { const r = await fetch("/api/slow"); return r.text(); }');
+  expect(output).toContain('loaded');
+});

@@ -22,6 +22,13 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 
 import { defineTabTool } from './tool';
 
+const exposedGlobals = [
+  'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'queueMicrotask',
+  'URL', 'URLSearchParams', 'TextEncoder', 'TextDecoder', 'AbortController', 'AbortSignal',
+  'fetch', 'Headers', 'Request', 'Response', 'FormData', 'Blob',
+  'Buffer', 'crypto', 'atob', 'btoa', 'structuredClone',
+];
+
 const codeSchema = z.object({
   code: z.string().optional().describe(`A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction. For example: \`async (page) => { await page.getByRole('button', { name: 'Submit' }).click(); return await page.title(); }\``),
   filename: z.string().optional().describe('Load code from the specified file. Relative file names are resolved against the workspace root. If both code and filename are provided, code will be ignored.'),
@@ -49,6 +56,8 @@ const runCode = defineTabTool({
       page: tab.page,
       __end__,
     };
+    for (const name of exposedGlobals)
+      context[name] = globalThis[name as keyof typeof globalThis];
     vm.createContext(context);
     // User-installed callbacks (e.g. page.route handlers) can throw
     // asynchronously while __fn__ awaits an operation that depends on them

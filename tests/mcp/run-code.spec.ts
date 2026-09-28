@@ -118,8 +118,7 @@ test('browser_run_code_unsafe route handler exception keeps server alive', async
   const code = `async (page) => {
     await page.unroute('**/*').catch(() => {});
     await page.route('**/route-throws.json', async (route) => {
-      const path = new URL(route.request().url()).pathname;
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ path }) });
+      throw new Error('route handler failed');
     });
     return await page.evaluate(async () => {
       const response = await fetch('/route-throws.json');
@@ -130,7 +129,7 @@ test('browser_run_code_unsafe route handler exception keeps server alive', async
     name: 'browser_run_code_unsafe',
     arguments: { code },
   })).toHaveResponse({
-    error: expect.stringContaining('ReferenceError: URL is not defined'),
+    error: expect.stringContaining('route handler failed'),
     isError: true,
   });
 
@@ -140,6 +139,69 @@ test('browser_run_code_unsafe route handler exception keeps server alive', async
     arguments: { action: 'list' },
   });
   expect(followUp.isError).toBeFalsy();
+});
+
+test('browser_run_code_unsafe exposes benign globals', async ({ client, server }) => {
+  server.setContent('/', '<div>Hello</div>', 'text/html');
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  const code = `async (page) => {
+    return {
+      setTimeout: typeof setTimeout,
+      URL: typeof URL,
+      fetch: typeof fetch,
+      Buffer: typeof Buffer,
+      crypto: typeof crypto,
+      AbortController: typeof AbortController,
+      TextEncoder: typeof TextEncoder,
+      require: typeof require,
+      process: typeof process,
+    };
+  }`;
+  expect(await client.callTool({
+    name: 'browser_run_code_unsafe',
+    arguments: { code },
+  })).toHaveResponse({
+    result: JSON.stringify({
+      setTimeout: 'function',
+      URL: 'function',
+      fetch: 'function',
+      Buffer: 'function',
+      crypto: 'object',
+      AbortController: 'function',
+      TextEncoder: 'function',
+      require: 'undefined',
+      process: 'undefined',
+    }),
+  });
+});
+
+test('browser_run_code_unsafe delayed route with setTimeout', async ({ client, server }) => {
+  server.setContent('/', '<div>Hello</div>', 'text/html');
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  const code = `async (page) => {
+    await page.route('**/api/slow', async route => {
+      await new Promise(r => setTimeout(r, 100));
+      await route.fulfill({ body: JSON.stringify({ path: new URL(route.request().url()).pathname }) });
+    });
+    return await page.evaluate(async () => {
+      const response = await fetch('/api/slow');
+      return response.json();
+    });
+  }`;
+  expect(await client.callTool({
+    name: 'browser_run_code_unsafe',
+    arguments: { code },
+  })).toHaveResponse({
+    result: JSON.stringify({ path: '/api/slow' }),
+  });
 });
 
 test('browser_run_code_unsafe with filename', async ({ client, server }) => {
