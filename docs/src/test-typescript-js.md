@@ -28,7 +28,7 @@ npx tsc -p tsconfig.json --noEmit -w
 
 ## tsconfig.json
 
-Playwright will pick up `tsconfig.json` for each source file it loads. Note that Playwright **only supports** the following tsconfig options: `allowJs`, `baseUrl`, `paths`, `references` and `extends`.
+Playwright will pick up `tsconfig.json` for each source file it loads. Note that Playwright **only supports** the following tsconfig options: `allowJs`, `baseUrl`, `paths`, `jsx`, `jsxFactory`, `jsxFragmentFactory`, `jsxImportSource`, `references` and `extends`.
 
 We recommend setting up a separate `tsconfig.json` in the tests directory so that you can change some preferences specifically for the tests. Here is an example directory structure.
 
@@ -71,6 +71,19 @@ test('example', async ({ page }) => {
   await page.getByLabel('User Name').fill(username);
   await page.getByLabel('Password').fill(password);
 });
+```
+
+### tsconfig JSX options
+
+Playwright compiles JSX in `.tsx` and `.jsx` files according to the `jsx`, `jsxFactory`, `jsxFragmentFactory` and `jsxImportSource` options in the `tsconfig.json`. When `jsx` is not specified, or is set to `preserve` or `react-native`, Playwright uses the automatic runtime from `react/jsx-runtime`.
+
+```json title="tsconfig.json"
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
+}
 ```
 
 ### tsconfig resolution

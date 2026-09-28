@@ -37,6 +37,10 @@ interface TsConfig {
     paths?: { [key: string]: Array<string> };
     strict?: boolean;
     allowJs?: boolean;
+    jsx?: string;
+    jsxFactory?: string;
+    jsxFragmentFactory?: string;
+    jsxImportSource?: string;
   };
   references?: { path: string }[];
 }
@@ -49,7 +53,13 @@ export interface LoadedTsConfig {
   };
   absoluteBaseUrl?: string;
   allowJs?: boolean;
+  jsx?: string;
+  jsxFactory?: string;
+  jsxFragmentFactory?: string;
+  jsxImportSource?: string;
 }
+
+const jsxOptionNames = ['jsx', 'jsxFactory', 'jsxFragmentFactory', 'jsxImportSource'] as const;
 
 export function loadTsConfig(configPath: string): LoadedTsConfig[] {
   try {
@@ -107,6 +117,10 @@ function innerLoadTsConfig(
 
   if (parsedConfig.compilerOptions?.allowJs !== undefined)
     result.allowJs = parsedConfig.compilerOptions.allowJs;
+  for (const name of jsxOptionNames) {
+    if (parsedConfig.compilerOptions?.[name] !== undefined)
+      result[name] = parsedConfig.compilerOptions[name];
+  }
   if (parsedConfig.compilerOptions?.paths !== undefined) {
     // We must store pathsBasePath from the config that defines "paths" and later resolve
     // based on this absolute path, when no "baseUrl" is specified. See tsc for reference:
