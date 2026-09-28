@@ -341,7 +341,7 @@ function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element): boolean
 
     // When parent has a shadow root, all light dom children must be assigned to a slot,
     // otherwise they are not rendered and considered hidden for aria.
-    // Note: needed for older Electron versions that do not have `Element.checkVisibility`.
+    // Note: checkVisibility is skipped for <option> and <slot>, so check ancestors here.
     if (element.parentElement && element.parentElement.shadowRoot && !element.assignedSlot)
       hidden = true;
 

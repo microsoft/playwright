@@ -89,16 +89,8 @@ function computeElementStyleVisibilityVisible(element: Element, style?: CSSStyle
   // Element.checkVisibility checks for content-visibility and also looks at
   // styles up the flat tree including user-agent ShadowRoots, such as the
   // details element for example.
-  // @ts-ignore Older Electron versions do not have checkVisibility.
-  if (Element.prototype.checkVisibility) {
-    if (!element.checkVisibility())
-      return false;
-  } else {
-    // Manual workaround for browsers that do not have checkVisibility.
-    const detailsOrSummary = element.closest('details,summary');
-    if (detailsOrSummary !== element && detailsOrSummary?.nodeName === 'DETAILS' && !(detailsOrSummary as HTMLDetailsElement).open)
-      return false;
-  }
+  if (!element.checkVisibility())
+    return false;
   if (style.visibility !== 'visible')
     return false;
   return true;

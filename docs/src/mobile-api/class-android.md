@@ -7,7 +7,7 @@ Playwright has **experimental** support for Android automation. This includes Ch
 *Requirements*
 * Android device or AVD Emulator.
 * [ADB daemon](https://developer.android.com/studio/command-line/adb) running and authenticated with your device. Typically running `adb devices` is all you need to do.
-* [`Chrome 87`](https://play.google.com/store/apps/details?id=com.android.chrome) or newer installed on the device
+* [`Chrome 105`](https://play.google.com/store/apps/details?id=com.android.chrome) or newer installed on the device
 * "Enable command line on non-rooted devices" enabled in `chrome://flags`.
 
 *Known limitations*
