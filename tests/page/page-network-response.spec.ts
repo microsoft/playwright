@@ -410,7 +410,7 @@ it('should throw explicit error for fetch()ed resource with evicted body', {
     }),
   ]);
   expect(await page.evaluate(() => (window as any).__blobSize)).toBe(50000);
-  
+
   if (browserName !== 'chromium') {
     expect((await response.body()).length).toBe(50000);
   } else {
