@@ -59,6 +59,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
       const { traceName } = await this._channel.tracingStartChunk({ name: options.name, title: options.title }, kNoTimeout);
       await this._startCollectingStacks(traceName, this._isLive);
     });
+    return new DisposableStub(() => this.stop());
   }
 
   async startChunk(options: { name?: string, title?: string } = {}) {
@@ -66,6 +67,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
       const { traceName } = await this._channel.tracingStartChunk(options, kNoTimeout);
       await this._startCollectingStacks(traceName, this._isLive);
     });
+    return new DisposableStub(() => this.stopChunk());
   }
 
   async group(name: string, options: { location?: { file: string, line?: number, column?: number } } = {}) {

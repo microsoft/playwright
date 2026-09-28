@@ -70,8 +70,9 @@ await context.Tracing.StopAsync(new()
 
 ## async method: Tracing.start
 * since: v1.12
+- returns: <[Disposable]>
 
-Start tracing.
+Start tracing. Disposing the returned [Disposable] stops tracing without saving the trace, similarly to calling [`method: Tracing.stop`] without a path.
 
 :::note
 You probably want to [enable tracing in your config file](https://playwright.dev/docs/api/class-testoptions#test-options-trace) instead of using `Tracing.start`.
@@ -216,8 +217,9 @@ viewing during test execution.
 
 ## async method: Tracing.startChunk
 * since: v1.15
+- returns: <[Disposable]>
 
-Start a new trace chunk. If you'd like to record multiple traces on the same [BrowserContext], use [`method: Tracing.start`] once, and then create multiple trace chunks with [`method: Tracing.startChunk`] and [`method: Tracing.stopChunk`].
+Start a new trace chunk. Disposing the returned [Disposable] stops the chunk without saving it, similarly to calling [`method: Tracing.stopChunk`] without a path. If you'd like to record multiple traces on the same [BrowserContext], use [`method: Tracing.start`] once, and then create multiple trace chunks with [`method: Tracing.startChunk`] and [`method: Tracing.stopChunk`].
 
 **Usage**
 

@@ -23381,7 +23381,9 @@ export interface Tracing {
   groupEnd(): Promise<void>;
 
   /**
-   * Start tracing.
+   * Start tracing. Disposing the returned [Disposable](https://playwright.dev/docs/api/class-disposable) stops tracing
+   * without saving the trace, similarly to calling
+   * [tracing.stop([options])](https://playwright.dev/docs/api/class-tracing#tracing-stop) without a path.
    *
    * **NOTE** You probably want to
    * [enable tracing in your config file](https://playwright.dev/docs/api/class-testoptions#test-options-trace) instead
@@ -23466,10 +23468,13 @@ export interface Tracing {
      * Trace name to be shown in the Trace Viewer.
      */
     title?: string;
-  }): Promise<void>;
+  }): Promise<Disposable>;
 
   /**
-   * Start a new trace chunk. If you'd like to record multiple traces on the same
+   * Start a new trace chunk. Disposing the returned [Disposable](https://playwright.dev/docs/api/class-disposable)
+   * stops the chunk without saving it, similarly to calling
+   * [tracing.stopChunk([options])](https://playwright.dev/docs/api/class-tracing#tracing-stop-chunk) without a path. If
+   * you'd like to record multiple traces on the same
    * [BrowserContext](https://playwright.dev/docs/api/class-browsercontext), use
    * [tracing.start([options])](https://playwright.dev/docs/api/class-tracing#tracing-start) once, and then create
    * multiple trace chunks with
@@ -23511,7 +23516,7 @@ export interface Tracing {
      * Trace name to be shown in the Trace Viewer.
      */
     title?: string;
-  }): Promise<void>;
+  }): Promise<Disposable>;
 
   /**
    * Start recording a HAR (HTTP Archive) of network activity in this context. The HAR file is written to disk when

@@ -606,6 +606,23 @@ test('should not throw when stopping without start but not exporting', async ({ 
   await context.tracing.stop();
 });
 
+test('start should return a disposable that discards the trace', async ({ context, page, server }, testInfo) => {
+  const disposable = await context.tracing.start();
+  await page.goto(server.EMPTY_PAGE);
+  await disposable.dispose();
+  const error = await context.tracing.stop({ path: testInfo.outputPath('trace.zip') }).catch(e => e);
+  expect(error.message).toContain('Must start tracing before stopping');
+});
+
+test('startChunk should return a disposable that discards the chunk', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start();
+  const disposable = await context.tracing.startChunk();
+  await page.goto(server.EMPTY_PAGE);
+  await disposable.dispose();
+  const error = await context.tracing.stopChunk({ path: testInfo.outputPath('trace.zip') }).catch(e => e);
+  expect(error.message).toContain('Must start tracing before stopping');
+});
+
 test('should work with multiple chunks', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.PREFIX + '/frames/frame.html');
