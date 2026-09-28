@@ -90,11 +90,11 @@ it('should propagate extra http headers with redirects', async ({ playwright, se
   await request.dispose();
 });
 
-it('should preserve authorization on same-origin redirect but strip on cross-origin', async ({ playwright, server }) => {
+it('should preserve authorization and cookie on same-origin redirect but strip on cross-origin', async ({ playwright, server }) => {
   server.setRedirect('/same/redirect', '/same/dest');
   server.setRedirect('/cross/redirect', server.CROSS_PROCESS_PREFIX + '/cross/dest');
   const request = await playwright.request.newContext({
-    extraHTTPHeaders: { 'Authorization': 'Bearer secret' },
+    extraHTTPHeaders: { 'Authorization': 'Bearer secret', 'Cookie': 'session=secret' },
   });
 
   const [sameDestReq] = await Promise.all([
@@ -102,33 +102,13 @@ it('should preserve authorization on same-origin redirect but strip on cross-ori
     request.get(`${server.PREFIX}/same/redirect`),
   ]);
   expect(sameDestReq.headers['authorization']).toBe('Bearer secret');
-
-  const [crossDestReq] = await Promise.all([
-    server.waitForRequest('/cross/dest'),
-    request.get(`${server.PREFIX}/cross/redirect`),
-  ]);
-  expect(crossDestReq.headers['authorization']).toBeUndefined();
-
-  await request.dispose();
-});
-
-it('should preserve cookie header on same-origin redirect but strip on cross-origin', async ({ playwright, server }) => {
-  server.setRedirect('/same/redirect', '/same/dest');
-  server.setRedirect('/cross/redirect', server.CROSS_PROCESS_PREFIX + '/cross/dest');
-  const request = await playwright.request.newContext({
-    extraHTTPHeaders: { 'Cookie': 'session=secret' },
-  });
-
-  const [sameDestReq] = await Promise.all([
-    server.waitForRequest('/same/dest'),
-    request.get(`${server.PREFIX}/same/redirect`),
-  ]);
   expect(sameDestReq.headers['cookie']).toBe('session=secret');
 
   const [crossDestReq] = await Promise.all([
     server.waitForRequest('/cross/dest'),
     request.get(`${server.PREFIX}/cross/redirect`),
   ]);
+  expect(crossDestReq.headers['authorization']).toBeUndefined();
   expect(crossDestReq.headers['cookie']).toBeUndefined();
 
   await request.dispose();

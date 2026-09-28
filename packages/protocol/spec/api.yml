@@ -36,6 +36,9 @@ APIRequestContext:
         headers:
           type: array?
           items: NameValue
+        # Headers are those of a browser request. Its cookie header applies to the first hop only,
+        # redirects resolve cookies from the context.
+        browserRequest: boolean?
         postData: binary?
         jsonData: string?
         formData:
