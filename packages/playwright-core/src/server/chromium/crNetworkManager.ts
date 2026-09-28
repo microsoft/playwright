@@ -613,12 +613,12 @@ class InterceptableRequest {
       // Re-fetching the resource may produce side effects on the server, only
       // do it for GETs of static subresources and prefetch requests.
       if (request.method() !== 'GET')
-        return Buffer.from('');
+        throw new Error('Response body is unavailable for evicted resources');
       if (!kRefetchSafeResourceTypes.has(request.resourceType())) {
         const rawHeaders = await request.internalRawRequestHeaders();
         const isPrefetch = rawHeaders.some(h => h.name.toLowerCase() === 'sec-purpose' && h.value.startsWith('prefetch'));
         if (!isPrefetch)
-          return Buffer.from('');
+          throw new Error('Response body is unavailable for evicted resources');
       }
 
       const resource = await session.send('Network.loadNetworkResource', { url: request.url(), frameId: request.serviceWorker() ? undefined : request.frame()!._id, options: { disableCache: false, includeCredentials: true } });

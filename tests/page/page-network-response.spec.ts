@@ -392,6 +392,33 @@ it('should return body for image with evicted body', {
   expect(body.toString('base64')).toBe(imageBase64);
 });
 
+it('should throw explicit error for fetch()ed resource with evicted body', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42862' },
+}, async ({ page, server, browserName }) => {
+  const bodyBuffer = Buffer.alloc(50000, 0x50);
+  server.setRoute('/export', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Length': String(bodyBuffer.length) });
+    res.end(bodyBuffer);
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const [response] = await Promise.all([
+    page.waitForResponse(r => r.url().includes('/export')),
+    page.evaluate(async () => {
+      const response = await fetch('/export');
+      const blob = await response.blob();
+      (window as any).__blobSize = blob.size;
+    }),
+  ]);
+  expect(await page.evaluate(() => (window as any).__blobSize)).toBe(50000);
+  
+  if (browserName !== 'chromium') {
+    expect((await response.body()).length).toBe(50000);
+  } else {
+    const error = await response.body().catch(e => e);
+    expect(error.message).toContain('Response body is unavailable for evicted resources');
+  }
+});
+
 it('should bypass disk cache when page interception is enabled', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30000' });
   await page.goto(server.PREFIX + '/frames/one-frame.html');
