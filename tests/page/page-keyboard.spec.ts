@@ -331,6 +331,27 @@ it('should specify numpad location on keyup', async ({ page, server }) => {
         'Keyup: - NumpadSubtract NUMPAD []'].join('\n'));
 });
 
+it('should press NumpadDecimal as Delete', async ({ page }) => {
+  await page.setContent('<textarea></textarea>');
+  const lastEvent = await captureLastKeydown(page);
+  const textarea = page.locator('textarea');
+
+  await textarea.press('NumpadDecimal');
+  expect(await lastEvent.evaluate(e => e.key)).toBe('Delete');
+  expect(await lastEvent.evaluate(e => e.code)).toBe('NumpadDecimal');
+  expect(await lastEvent.evaluate(e => e.location)).toBe(3);
+  await expect(textarea).toHaveValue('');
+});
+
+it('should type numpad digits with Shift', async ({ page }) => {
+  await page.setContent('<textarea></textarea>');
+  const textarea = page.locator('textarea');
+  await textarea.press('Shift+Numpad1');
+  await textarea.press('Shift+NumpadDecimal');
+  await textarea.press('Shift+Numpad9');
+  await expect(textarea).toHaveValue('1.9');
+});
+
 it('should press Enter', async ({ page, server }) => {
   await page.setContent('<textarea></textarea>');
   await page.focus('textarea');

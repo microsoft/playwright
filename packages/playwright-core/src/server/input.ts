@@ -326,8 +326,10 @@ function buildLayoutClosure(layout: keyboardLayout.KeyboardLayout): Map<string, 
       shiftedDescription = { ...description };
       shiftedDescription.key = definition.shiftKey;
       shiftedDescription.text = definition.shiftKey;
-      if (definition.shiftKeyCode)
+      if (definition.shiftKeyCode) {
         shiftedDescription.keyCode = definition.shiftKeyCode;
+        shiftedDescription.keyCodeWithoutLocation = definition.shiftKeyCode;
+      }
     }
 
     // Map from code: Digit3 -> { ... description, shifted }
