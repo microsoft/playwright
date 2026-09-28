@@ -22,7 +22,7 @@ import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelec
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
 
 import { generateAriaTree, getAllElementsMatchingExpectAriaTemplate, matchesExpectAriaTemplate, renderAriaTreeAsJSON, findNewElement } from './ariaSnapshot';
-import { beginDOMCaches, enclosingShadowRootOrDocument, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';
+import { beginDOMCaches, enclosingShadowRootOrDocument, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost, setGlobalOptions } from './domUtils';
 import { Highlight } from './highlight';
 import { kLayoutSelectorNames, layoutSelectorScore } from './layoutSelectorUtils';
 import { createRoleEngine } from './roleSelectorEngine';
@@ -252,6 +252,7 @@ export class InjectedScript {
     this._browserName = options.browserName;
     this._shouldPrependErrorPrefix = !!options.shouldPrependErrorPrefix;
     this._isUtilityWorld = !!options.isUtilityWorld;
+    setGlobalOptions({ browserNameForWorkarounds: options.browserName });
 
     this._setupGlobalListenersRemovalDetection();
     this._setupHitTargetInterceptors();

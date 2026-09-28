@@ -90,6 +90,24 @@ it('isVisible and isHidden should work with unslotted content', async ({ page })
   await expect(page.locator('span', { hasText: 'visible' })).toBeVisible();
 });
 
+it('isVisible and isHidden should work with list box options', async ({ page }) => {
+  await page.setContent(`
+    <select multiple>
+      <option>visible 1</option>
+      <optgroup label="group"><option>visible 2</option></optgroup>
+      <option hidden>hidden 1</option>
+      <optgroup label="hidden group" style="display:none"><option>hidden 2</option></optgroup>
+    </select>
+    <select size=3><option>visible 3</option></select>
+    <select multiple style="display:none"><option>hidden 3</option></select>
+  `);
+
+  for (const name of ['visible 1', 'visible 2', 'visible 3'])
+    await expect(page.getByRole('option', { name, exact: true })).toBeVisible();
+  for (const text of ['hidden 1', 'hidden 2', 'hidden 3'])
+    await expect(page.locator('option', { hasText: text })).toBeHidden();
+});
+
 it('isVisible inside a button', async ({ page }) => {
   await page.setContent(`<button><span></span>a button</button>`);
   const span = page.locator('span');

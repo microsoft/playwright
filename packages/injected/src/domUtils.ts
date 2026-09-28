@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
+type GlobalOptions = {
+  browserNameForWorkarounds?: string;
+};
+let globalOptions: GlobalOptions = {};
+export function setGlobalOptions(options: GlobalOptions) {
+  globalOptions = options;
+}
+
 export function isInsideScope(scope: Node, element: Element | undefined): boolean {
   while (element) {
     if (scope.contains(element))
@@ -89,11 +97,29 @@ function computeElementStyleVisibilityVisible(element: Element, style?: CSSStyle
   // Element.checkVisibility checks for content-visibility and also looks at
   // styles up the flat tree including user-agent ShadowRoots, such as the
   // details element for example.
-  if (!element.checkVisibility())
+  if (!element.checkVisibility() && !isWebKitListBoxOptionVisible(element, style))
     return false;
   if (style.visibility !== 'visible')
     return false;
   return true;
+}
+
+export function isListBoxSelect(select: HTMLSelectElement): boolean {
+  return select.multiple || select.size > 1;
+}
+
+// WebKit does not create renderers for list box options, so checkVisibility() returns false for them.
+function isWebKitListBoxOptionVisible(element: Element, style: CSSStyleDeclaration): boolean {
+  if (globalOptions.browserNameForWorkarounds !== 'webkit' || element.nodeName !== 'OPTION' || style.display === 'none')
+    return false;
+  const select = element.closest('select');
+  if (!select || !isListBoxSelect(select))
+    return false;
+  for (let e = element.parentElement; e && e !== select; e = e.parentElement) {
+    if (getElementComputedStyle(e)?.display === 'none')
+      return false;
+  }
+  return isElementStyleVisibilityVisible(select);
 }
 
 export function computeBox(element: Element) {
