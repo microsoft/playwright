@@ -41,6 +41,17 @@ export type InputFilesItems = {
 type ActionName = 'click' | 'hover' | 'dblclick' | 'tap' | 'move and up' | 'move and down' | 'drop';
 type PerformActionResult = 'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | 'error:optionsnotfound' | 'error:optionnotenabled' | { missingState: ElementState } | { hitTargetDescription: string } | 'done';
 
+type PointerAction = {
+  name: ActionName,
+  waitForEnabled: boolean,
+  // true: wait for navigations triggered by the action.
+  // false: noWaitAfter was passed, do not wait and do not stall on hit target cleanup.
+  // 'disabled': this action never waits for navigations.
+  waitAfter: boolean | 'disabled',
+  skipActionPreChecks?: boolean,
+  perform: (progress: Progress, point: types.Point) => Promise<void>,
+};
+
 export class NonRecoverableDOMError extends Error {
 }
 
@@ -198,27 +209,27 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async getAttribute(progress: Progress, name: string): Promise<string | null> {
-    return this._frame.getAttribute(progress, ':scope', name, {}, this);
+    return this._frame.getAttribute(progress, { selector: ':scope', scope: this }, name);
   }
 
   async inputValue(progress: Progress): Promise<string> {
-    return this._frame.inputValue(progress, ':scope', {}, this);
+    return this._frame.inputValue(progress, { selector: ':scope', scope: this });
   }
 
   async textContent(progress: Progress): Promise<string | null> {
-    return this._frame.textContent(progress, ':scope', {}, this);
+    return this._frame.textContent(progress, { selector: ':scope', scope: this });
   }
 
   async innerText(progress: Progress): Promise<string> {
-    return this._frame.innerText(progress, ':scope', {}, this);
+    return this._frame.innerText(progress, { selector: ':scope', scope: this });
   }
 
   async innerHTML(progress: Progress): Promise<string> {
-    return this._frame.innerHTML(progress, ':scope', {}, this);
+    return this._frame.innerHTML(progress, { selector: ':scope', scope: this });
   }
 
   async dispatchEvent(progress: Progress, type: string, eventInit: Object = {}) {
-    return this._frame.dispatchEvent(progress, ':scope', type, eventInit, {}, this);
+    return this._frame.dispatchEvent(progress, { selector: ':scope', scope: this }, type, eventInit);
   }
 
   async _scrollRectIntoViewIfNeeded(progress: Progress, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
@@ -368,11 +379,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }
   }
 
-  async _retryPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (progress: Progress, point: types.Point) => Promise<void>,
-    options: { waitAfter: boolean | 'disabled' } & types.PointerActionOptions & types.PointerActionWaitOptions, frameVisible: boolean): Promise<'error:notconnected' | 'done'> {
-    // Note: do not perform locator handlers checkpoint to avoid moving the mouse in the middle of a drag operation.
-    const skipActionPreChecks = actionName === 'move and up';
-    return await this._retryAction(progress, actionName, async (progress, retry) => {
+  async _retryPointerAction(progress: Progress, action: PointerAction, options: types.PointerActionOptions & types.PointerActionWaitOptions, frameVisible: boolean): Promise<'error:notconnected' | 'done'> {
+    return await this._retryAction(progress, action.name, async (progress, retry) => {
       // By default, we scroll with protocol method to reveal the action point.
       // However, that might not work to scroll from under position:sticky elements
       // that overlay the target element. To fight this, we cycle through different
@@ -384,17 +392,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         { block: 'start', inline: 'start' },
       ];
       const forceScrollOptions = scrollOptions[retry % scrollOptions.length];
-      return await this._performPointerAction(progress, actionName, waitForEnabled, action, forceScrollOptions, options, frameVisible);
-    }, { ...options, skipActionPreChecks });
+      return await this._performPointerAction(progress, action, forceScrollOptions, options, frameVisible);
+    }, { trial: options.trial, force: options.force, skipActionPreChecks: action.skipActionPreChecks });
   }
 
   async _performPointerAction(
     progress: Progress,
-    actionName: ActionName,
-    waitForEnabled: boolean,
-    action: (progress: Progress, point: types.Point) => Promise<void>,
+    action: PointerAction,
     forceScrollOptions: ScrollIntoViewOptions | undefined,
-    options: { waitAfter: boolean | 'disabled' } & types.PointerActionOptions & types.PointerActionWaitOptions,
+    options: types.PointerActionOptions & types.PointerActionWaitOptions,
     frameVisible: boolean,
   ): Promise<PerformActionResult> {
     const { force = false, position, scroll } = options;
@@ -423,14 +429,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await progress.race((options as any).__testHookBeforeStable());
 
     if (!force) {
-      const elementStates: ElementState[] = waitForEnabled ? ['visible', 'enabled', 'stable'] : ['visible', 'stable'];
-      progress.log(`  waiting for element to be ${waitForEnabled ? 'visible, enabled and stable' : 'visible and stable'}`);
+      const elementStates: ElementState[] = action.waitForEnabled ? ['visible', 'enabled', 'stable'] : ['visible', 'stable'];
+      progress.log(`  waiting for element to be ${action.waitForEnabled ? 'visible, enabled and stable' : 'visible and stable'}`);
       const result = await progress.race(this.evaluateInUtility(async ([injected, node, { elementStates, frameVisible }]) => {
         return await injected.checkElementStates(node, elementStates, frameVisible);
       }, { elementStates, frameVisible }));
       if (result)
         return result;
-      progress.log(`  element is ${waitForEnabled ? 'visible, enabled and stable' : 'visible and stable'}`);
+      progress.log(`  element is ${action.waitForEnabled ? 'visible, enabled and stable' : 'visible and stable'}`);
     }
 
     if ((options as any).__testHookAfterStable)
@@ -459,7 +465,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (frameCheckResult === 'error:notconnected' || ('hitTargetDescription' in frameCheckResult))
         return frameCheckResult;
       const hitPoint = frameCheckResult.framePoint;
-      const actionType = actionName === 'move and up' ? 'drag' : ((actionName === 'hover' || actionName === 'tap') ? actionName : 'mouse');
+      const actionType = action.name === 'move and up' ? 'drag' : ((action.name === 'hover' || action.name === 'tap') ? action.name : 'mouse');
       const handle = await progress.race(this._evaluateHandleInUtility(([injected, node, { actionType, hitPoint, trial }]) => injected.setupHitTargetInterceptor(node, actionType, hitPoint, trial), { actionType, hitPoint, trial: !!options.trial } as const));
       if (handle === 'error:notconnected')
         return handle;
@@ -472,14 +478,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       hitTargetInterceptionHandle = handle as any;
     }
 
-    const actionResult = await this._page.frameManager.waitForSignalsCreatedBy(progress, options.waitAfter === true, async progress => {
+    const actionResult = await this._page.frameManager.waitForSignalsCreatedBy(progress, action.waitAfter === true, async progress => {
       if ((options as any).__testHookBeforePointerAction)
         await progress.race((options as any).__testHookBeforePointerAction());
       let restoreModifiers: types.KeyboardModifier[] | undefined;
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard.ensureModifiers(progress, options.modifiers);
-      progress.log(`  performing ${actionName} action`);
-      await action(progress, point);
+      progress.log(`  performing ${action.name} action`);
+      await action.perform(progress, point);
       if (restoreModifiers)
         await this._page.keyboard.ensureModifiers(progress, restoreModifiers);
       if (hitTargetInterceptionHandle) {
@@ -488,7 +494,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         }).catch(e => 'done' as const).finally(() => {
           hitTargetInterceptionHandle?.dispose();
         });
-        if (options.waitAfter !== false) {
+        if (action.waitAfter !== false) {
           // When noWaitAfter is passed, we do not want to accidentally stall on
           // non-committed navigation blocking the evaluate.
           const hitTargetResult = await progress.race(stopHitTargetInterception);
@@ -496,7 +502,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
             return hitTargetResult;
         }
       }
-      progress.log(`  ${options.trial ? 'trial ' : ''}${actionName} action done`);
+      progress.log(`  ${options.trial ? 'trial ' : ''}${action.name} action done`);
       progress.log('  waiting for scheduled navigations to finish');
       if ((options as any).__testHookAfterPointerAction)
         await progress.race((options as any).__testHookAfterPointerAction());
@@ -527,17 +533,27 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions, frameVisible: boolean): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'hover', false /* waitForEnabled */, (progress, point) => this._page.mouse.move(progress, point.x, point.y), { ...options, waitAfter: 'disabled' }, frameVisible);
+    return this._retryPointerAction(progress, {
+      name: 'hover',
+      waitForEnabled: false,
+      waitAfter: 'disabled',
+      perform: (progress, point) => this._page.mouse.move(progress, point.x, point.y),
+    }, options, frameVisible);
   }
 
   async click(progress: Progress, options: { noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions): Promise<void> {
     await this._markAsTargetElement(progress);
-    const result = await this._click(progress, { ...options, waitAfter: !options.noWaitAfter }, true /* frameVisible */);
+    const result = await this._click(progress, options, !options.noWaitAfter, true /* frameVisible */);
     return assertDone(throwRetargetableDOMError(result));
   }
 
-  _click(progress: Progress, options: { waitAfter: boolean | 'disabled' } & types.MouseClickOptions & types.PointerActionWaitOptions, frameVisible: boolean): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'click', true /* waitForEnabled */, (progress, point) => this._page.mouse.click(progress, point.x, point.y, options), options, frameVisible);
+  _click(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions, waitAfter: boolean | 'disabled', frameVisible: boolean): Promise<'error:notconnected' | 'done'> {
+    return this._retryPointerAction(progress, {
+      name: 'click',
+      waitForEnabled: true,
+      waitAfter,
+      perform: (progress, point) => this._page.mouse.click(progress, point.x, point.y, options),
+    }, options, frameVisible);
   }
 
   async dblclick(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions): Promise<void> {
@@ -547,7 +563,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _dblclick(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions, frameVisible: boolean): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'dblclick', true /* waitForEnabled */, (progress, point) => this._page.mouse.click(progress, point.x, point.y, { ...options, clickCount: 2 }), { ...options, waitAfter: 'disabled' }, frameVisible);
+    return this._retryPointerAction(progress, {
+      name: 'dblclick',
+      waitForEnabled: true,
+      waitAfter: 'disabled',
+      perform: (progress, point) => this._page.mouse.click(progress, point.x, point.y, { ...options, clickCount: 2 }),
+    }, options, frameVisible);
   }
 
   async tap(progress: Progress, options: types.PointerActionWaitOptions): Promise<void> {
@@ -557,7 +578,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _tap(progress: Progress, options: types.PointerActionWaitOptions, frameVisible: boolean): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'tap', true /* waitForEnabled */, (progress, point) => this._page.touchscreen.tap(progress, point.x, point.y), { ...options, waitAfter: 'disabled' }, frameVisible);
+    return this._retryPointerAction(progress, {
+      name: 'tap',
+      waitForEnabled: true,
+      waitAfter: 'disabled',
+      perform: (progress, point) => this._page.touchscreen.tap(progress, point.x, point.y),
+    }, options, frameVisible);
   }
 
   async selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[]> {
@@ -668,7 +694,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         lastModifiedMs: p.lastModifiedMs,
       }));
     }
-    return this._retryPointerAction(progress, 'drop', false /* waitForEnabled */, async (progress, point) => {
+    const perform = async (progress: Progress, point: types.Point) => {
       // Firefox strips files from DataTransfer objects that cross the isolated-world
       // boundary into the page's main world. Adopt the element to main context and
       // construct the DataTransfer + dispatch events there.
@@ -712,7 +738,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         if (disposeHandle)
           handle.dispose();
       }
-    }, { ...options, waitAfter: 'disabled' }, frameVisible);
+    };
+    return this._retryPointerAction(progress, { name: 'drop', waitForEnabled: false, waitAfter: 'disabled', perform }, options, frameVisible);
   }
 
   async _setInputFiles(progress: Progress, items: InputFilesItems, box?: types.Rect): Promise<'error:notconnected' | 'done'> {
@@ -769,13 +796,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return await progress.race(this.evaluateInUtility(([injected, node]) => injected.blurNode(node), {}));
   }
 
-  async type(progress: Progress, text: string, options: { delay?: number } & types.StrictOptions): Promise<void> {
+  async type(progress: Progress, text: string, options: { delay?: number }): Promise<void> {
     await this._markAsTargetElement(progress);
     const result = await this._type(progress, text, options);
     return assertDone(throwRetargetableDOMError(result));
   }
 
-  async _type(progress: Progress, text: string, options: { delay?: number } & types.StrictOptions, box?: types.Rect): Promise<'error:notconnected' | 'done'> {
+  async _type(progress: Progress, text: string, options: { delay?: number }, box?: types.Rect): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.type("${text}")`);
     await this.instrumentation.onBeforeInputAction(progress, this, undefined, box);
     const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
@@ -785,13 +812,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  async press(progress: Progress, key: string, options: { delay?: number, noWaitAfter?: boolean } & types.StrictOptions): Promise<void> {
+  async press(progress: Progress, key: string, options: { delay?: number, noWaitAfter?: boolean }): Promise<void> {
     await this._markAsTargetElement(progress);
     const result = await this._press(progress, key, options);
     return assertDone(throwRetargetableDOMError(result));
   }
 
-  async _press(progress: Progress, key: string, options: { delay?: number, noWaitAfter?: boolean } & types.StrictOptions, box?: types.Rect): Promise<'error:notconnected' | 'done'> {
+  async _press(progress: Progress, key: string, options: { delay?: number, noWaitAfter?: boolean }, box?: types.Rect): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.press("${key}")`);
     await this.instrumentation.onBeforeInputAction(progress, this, undefined, box);
     return this._page.frameManager.waitForSignalsCreatedBy(progress, !options.noWaitAfter, async progress => {
@@ -826,7 +853,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return 'done';
     if (!state && checkedState.isRadio)
       throw new NonRecoverableDOMError('Cannot uncheck radio button. Radio buttons can only be unchecked by selecting another radio button in the same group.');
-    const result = await this._click(progress, { ...options, waitAfter: 'disabled' }, frameVisible);
+    const result = await this._click(progress, options, 'disabled', frameVisible);
     if (result !== 'done')
       return result;
     if (options.trial)
@@ -845,12 +872,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return await this._page.screenshotter.screenshotElement(progress, this, options, true /* frameVisible */);
   }
 
-  async querySelector(progress: Progress, selector: string, options: types.StrictOptions): Promise<ElementHandle | null> {
-    return progress.race(this._querySelector(selector, options));
-  }
-
-  private async _querySelector(selector: string, options: types.StrictOptions): Promise<ElementHandle | null> {
-    return this._frame.selectors.query(selector, options, this);
+  async querySelector(progress: Progress, target: types.SelectorTarget): Promise<ElementHandle | null> {
+    return progress.race(this._frame.selectors.query({ ...target, scope: this }));
   }
 
   async querySelectorAll(progress: Progress, selector: string): Promise<ElementHandle<Element>[]> {
@@ -870,8 +893,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return await js.evaluateExpression(context, expression, { isFunction: options.isFunction, serialize: options.serialize, returnByValue: true }, this, arg);
   }
 
-  async evalOnSelector(progress: Progress, selector: string, strict: boolean, expression: string, options: { isFunction?: boolean, world?: types.World }, arg: any): Promise<any> {
-    return this._frame.evalOnSelector(progress, selector, strict, expression, options, arg, this);
+  async evalOnSelector(progress: Progress, target: types.SelectorTarget, expression: string, options: { isFunction?: boolean, world?: types.World }, arg: any): Promise<any> {
+    return this._frame.evalOnSelector(progress, { ...target, scope: this }, expression, options, arg);
   }
 
   async evalOnSelectorAll(progress: Progress, selector: string, expression: string, options: { isFunction?: boolean, world?: types.World }, arg: any): Promise<any> {
@@ -879,27 +902,27 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async isVisible(progress: Progress): Promise<boolean> {
-    return this._frame.isVisible(progress, ':scope', {}, this);
+    return this._frame.isVisible(progress, { selector: ':scope', scope: this });
   }
 
   async isHidden(progress: Progress): Promise<boolean> {
-    return this._frame.isHidden(progress, ':scope', {}, this);
+    return this._frame.isHidden(progress, { selector: ':scope', scope: this });
   }
 
   async isEnabled(progress: Progress): Promise<boolean> {
-    return this._frame.isEnabled(progress, ':scope', {}, this);
+    return this._frame.isEnabled(progress, { selector: ':scope', scope: this });
   }
 
   async isDisabled(progress: Progress): Promise<boolean> {
-    return this._frame.isDisabled(progress, ':scope', {}, this);
+    return this._frame.isDisabled(progress, { selector: ':scope', scope: this });
   }
 
   async isEditable(progress: Progress): Promise<boolean> {
-    return this._frame.isEditable(progress, ':scope', {}, this);
+    return this._frame.isEditable(progress, { selector: ':scope', scope: this });
   }
 
   async isChecked(progress: Progress): Promise<boolean> {
-    return this._frame.isChecked(progress, ':scope', {}, this);
+    return this._frame.isChecked(progress, { selector: ':scope', scope: this });
   }
 
   async waitForElementState(progress: Progress, state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable'): Promise<void> {
@@ -912,8 +935,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     assertDone(throwRetargetableDOMError(result));
   }
 
-  async waitForSelector(progress: Progress, selector: string, options: types.WaitForElementOptions): Promise<ElementHandle<Element> | null> {
-    return await this._frame.waitForSelector(progress, selector, true, options, this);
+  async waitForSelector(progress: Progress, target: types.SelectorTarget, options: types.WaitForElementOptions): Promise<ElementHandle<Element> | null> {
+    return await this._frame.waitForSelector(progress, { ...target, scope: this }, true, options);
   }
 
   async _adoptTo(context: FrameExecutionContext): Promise<ElementHandle<T>> {

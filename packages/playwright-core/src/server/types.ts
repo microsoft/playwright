@@ -16,15 +16,18 @@
  */
 
 import type { HeadersArray, Point } from '@isomorphic/types';
+import type { ElementHandle } from './dom';
 export type { HeadersArray, Point, Quad, Rect, Size, DeviceDescriptor, Devices } from '@isomorphic/types';
 import type * as channels from './channels';
 import type { ProxySettings } from '@utils/network';
 
-export type StrictOptions = {
+export type SelectorTarget = {
+  selector: string,
   strict?: boolean,
+  scope?: ElementHandle,
 };
 
-export type WaitForElementOptions = StrictOptions & { state?: 'attached' | 'detached' | 'visible' | 'hidden' } & { omitReturnValue?: boolean };
+export type WaitForElementOptions = { state?: 'attached' | 'detached' | 'visible' | 'hidden', omitReturnValue?: boolean };
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
@@ -33,7 +36,7 @@ export type NavigateOptions = {
   waitUntil?: LifecycleEvent,
 };
 
-export type CommonActionOptions = StrictOptions & {
+export type CommonActionOptions = {
   force?: boolean,
 };
 

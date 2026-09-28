@@ -50,13 +50,12 @@ export class FrameSelectors {
     this.frame = frame;
   }
 
-  private _parseSelector(selector: string | ParsedSelector, options?: types.StrictOptions): SelectorInfo {
-    const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.frame._page.browserContext._options.strictSelectors;
-    return this.frame._page.browserContext.selectors().parseSelector(selector, strict);
+  private _parseSelector(selector: string | ParsedSelector, strict: boolean | undefined): SelectorInfo {
+    return this.frame._page.browserContext.selectors().parseSelector(selector, strict ?? !!this.frame._page.browserContext._options.strictSelectors);
   }
 
-  async query(selector: string, options?: types.StrictOptions & { mainWorld?: boolean }, scope?: ElementHandle): Promise<ElementHandle<Element> | null> {
-    const resolved = await this.callOnSelectorHandle(selector, { ...options, scope }, ({ elements }) => elements[0], {});
+  async query(target: types.SelectorTarget & { mainWorld?: boolean }): Promise<ElementHandle<Element> | null> {
+    const resolved = await this.callOnSelectorHandle(target, ({ elements }) => elements[0], {});
     if (!resolved)
       return null;
     const handle = resolved.result;
@@ -69,7 +68,7 @@ export class FrameSelectors {
   }
 
   async queryArrayInWorld(selector: string, world: types.World, scope?: ElementHandle): Promise<JSHandle<Element[]>> {
-    const resolved = await this.callOnSelectorHandle(selector, { mainWorld: world === 'main', strict: false, scope }, ({ elements }) => elements, {});
+    const resolved = await this.callOnSelectorHandle({ selector, mainWorld: world === 'main', strict: false, scope }, ({ elements }) => elements, {});
     if (!resolved) {
       const context = await this.frame.context(world);
       return await context.evaluateHandle(() => []);
@@ -90,12 +89,12 @@ export class FrameSelectors {
   }
 
   async queryCount(selector: string): Promise<number> {
-    const resolved = await this.callOnSelector(selector, { strict: false }, ({ elements }) => elements.length, {});
+    const resolved = await this.callOnSelector({ selector, strict: false }, ({ elements }) => elements.length, {});
     return resolved ? resolved.result : 0;
   }
 
   async queryAll(selector: string, scope?: ElementHandle): Promise<ElementHandle<Element>[]> {
-    const resolved = await this.callOnSelectorHandle(selector, { strict: false, scope }, ({ elements }) => elements, {});
+    const resolved = await this.callOnSelectorHandle({ selector, strict: false, scope }, ({ elements }) => elements, {});
     if (!resolved)
       return [];
 
@@ -133,7 +132,8 @@ export class FrameSelectors {
     return jumptToFrame;
   }
 
-  async resolveFramesForSelector(selector: string, options: types.StrictOptions & { anyFrame?: boolean } = {}, scope?: ElementHandle): Promise<SelectorInFrame[]> {
+  async resolveFramesForSelector(target: types.SelectorTarget & { anyFrame?: boolean }): Promise<SelectorInFrame[]> {
+    const { selector, scope } = target;
     const { anyFrame, chunks } = splitSelectorByFrame(selector);
     for (const chunk of chunks) {
       visitAllSelectorParts(chunk, (part, nested) => {
@@ -148,15 +148,15 @@ export class FrameSelectors {
       });
     }
 
-    if (!anyFrame && !options.anyFrame) {
-      const result = await this._resolveChainedSelector(this.frame, selector, options, chunks, scope, false /* noStall */);
+    if (!anyFrame && !target.anyFrame) {
+      const result = await this._resolveChainedSelector(this.frame, target, chunks, false /* noStall */);
       return result ? [result] : [];
     }
 
     const result: SelectorInFrame[] = [];
     const seenFrames = new Set<Frame>();
     for (const { frame: startFrame, frameVisible } of await this._anyFrameCandidates(scope)) {
-      const resolved = await this._resolveChainedSelector(startFrame, selector, options, chunks, startFrame === this.frame ? scope : undefined, startFrame !== this.frame /* noStall */, frameVisible);
+      const resolved = await this._resolveChainedSelector(startFrame, startFrame === this.frame ? target : { ...target, scope: undefined }, chunks, startFrame !== this.frame /* noStall */, frameVisible);
       // Different starting frames may resolve into the same frame, e.g. with an aria-ref selector.
       if (!resolved || seenFrames.has(resolved.frame))
         continue;
@@ -169,7 +169,7 @@ export class FrameSelectors {
   // All the frames the selector may start in: the frame subtree, restricted to the scope when given.
   private async _anyFrameCandidates(scope: ElementHandle | undefined): Promise<{ frame: Frame, frameVisible: boolean }[]> {
     const result: { frame: Frame, frameVisible: boolean }[] = [];
-    const info = this._parseSelector('css=frame,iframe', { strict: false });
+    const info = this._parseSelector('css=frame,iframe', false);
     const collectSubtree = async (frame: Frame, frameVisible: boolean, scope: ElementHandle | undefined) => {
       result.push({ frame, frameVisible });
       const childFrames = await this._queryFrames(frame, info, scope, true /* noStall */, frameVisible);
@@ -220,11 +220,13 @@ export class FrameSelectors {
     });
   }
 
-  private async _resolveChainedSelector(startFrame: Frame, selector: string, options: types.StrictOptions, frameChunks: ParsedSelector[], scope: ElementHandle | undefined, noStall: boolean, startFrameVisible = true): Promise<SelectorInFrame | null> {
+  private async _resolveChainedSelector(startFrame: Frame, target: types.SelectorTarget, frameChunks: ParsedSelector[], noStall: boolean, startFrameVisible = true): Promise<SelectorInFrame | null> {
+    const { selector } = target;
+    let scope = target.scope;
     let frame = startFrame;
     let frameVisible = startFrameVisible;
     for (let i = 0; i < frameChunks.length - 1; ++i) {
-      const info = this._parseSelector(frameChunks[i], options);
+      const info = this._parseSelector(frameChunks[i], target.strict);
       frame = this._jumpToAriaRefFrameIfNeeded(selector, info, frame);
       const frames = await this._queryFrames(frame, info, i === 0 ? scope : undefined, noStall, frameVisible);
       if (!frames?.length)
@@ -235,23 +237,22 @@ export class FrameSelectors {
     // If we end up in the different frame, we should start from the frame root, so throw away the scope.
     if (frame !== startFrame)
       scope = undefined;
-    const lastChunk = frame.selectors._parseSelector(frameChunks[frameChunks.length - 1], options);
+    const lastChunk = frame.selectors._parseSelector(frameChunks[frameChunks.length - 1], target.strict);
     frame = this._jumpToAriaRefFrameIfNeeded(selector, lastChunk, frame);
     return { frame, info: lastChunk, scope, frameVisible };
   }
 
   private async _callOnSelectorInternal<Arg, R>(
-    selector: string,
-    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none' },
+    target: types.SelectorTarget & { mainWorld?: boolean, callWithoutMatches?: boolean, markTargets?: 'all' | 'first' | 'none' },
     pageFunction: MatchedElementsCallback<Arg, R>,
     arg: Arg,
     returnByValue: boolean,
   ): Promise<{ frame: Frame, info: SelectorInfo, frameVisible: boolean, result: R | SmartHandle<R> } | null> {
-    const resolved = await this.resolveFramesForSelector(selector, options, options.scope);
+    const resolved = await this.resolveFramesForSelector(target);
     let aggregatedResult: { frame: Frame, info: SelectorInfo, frameVisible: boolean, result: R | SmartHandle<R> } | null = null;
     const noStall = resolved.length > 1;
     for (const { frame, info, scope, frameVisible } of resolved) {
-      const world = options.mainWorld ? 'main' : info.world;
+      const world = target.mainWorld ? 'main' : info.world;
       const context = noStall ? frame.existingContext(world) : await frame.context(world);
       if (!context)
         continue;
@@ -273,7 +274,7 @@ export class FrameSelectors {
             return '--playwright--no--result--value--';
           const func = injected.eval('(' + params.functionText + ')') as MatchedElementsCallback<Arg, R>;
           return func({ injected, elements, info: params.info, frameVisible: params.frameVisible }, params.arg);
-        }, { info, scope, frameVisible, functionText: String(pageFunction), arg, callWithoutMatches: options.callWithoutMatches, markTargets: options.markTargets, returnByValue });
+        }, { info, scope, frameVisible, functionText: String(pageFunction), arg, callWithoutMatches: target.callWithoutMatches, markTargets: target.markTargets, returnByValue });
         if (returnByValue && evalResult === '--playwright--no--result--value--')
           return;
         if (!returnByValue && (evalResult as JSHandle)._value === '--playwright--no--result--value--') {
@@ -297,22 +298,20 @@ export class FrameSelectors {
   }
 
   async callOnSelector<Arg, R>(
-    selector: string,
-    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none' },
+    target: types.SelectorTarget & { mainWorld?: boolean, callWithoutMatches?: boolean, markTargets?: 'all' | 'first' | 'none' },
     pageFunction: MatchedElementsCallback<Arg, R>,
     arg: Arg,
   ): Promise<{ frame: Frame, info: SelectorInfo, frameVisible: boolean, result: R } | null> {
-    const result = await this._callOnSelectorInternal(selector, options, pageFunction, arg, true /* returnByValue */);
+    const result = await this._callOnSelectorInternal(target, pageFunction, arg, true /* returnByValue */);
     return result as { frame: Frame, info: SelectorInfo, frameVisible: boolean, result: R } | null;
   }
 
   async callOnSelectorHandle<Arg, R>(
-    selector: string,
-    options: types.StrictOptions & { mainWorld?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none' },
+    target: types.SelectorTarget & { mainWorld?: boolean, markTargets?: 'all' | 'first' | 'none' },
     pageFunction: MatchedElementsCallback<Arg, R>,
     arg: Arg,
   ): Promise<{ frame: Frame, info: SelectorInfo, frameVisible: boolean, result: SmartHandle<R> } | null> {
-    const result = await this._callOnSelectorInternal(selector, { ...options, callWithoutMatches: false }, pageFunction, arg, false /* returnByValue */);
+    const result = await this._callOnSelectorInternal({ ...target, callWithoutMatches: false }, pageFunction, arg, false /* returnByValue */);
     return result as { frame: Frame, info: SelectorInfo, frameVisible: boolean, result: SmartHandle<R> } | null;
   }
 }
