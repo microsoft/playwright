@@ -52,6 +52,8 @@ playwright-cli find "Sign in"
 playwright-cli find --regex "Sign (in|up)"
 # wrap the regexp in slashes to add flags, e.g. /i for case-insensitive
 playwright-cli find --regex "/sign (in|up)/i"
+# save results to a file when a query produces too many matches
+playwright-cli find "Add" --filename=results.md
 playwright-cli eval "document.title"
 playwright-cli eval "el => el.textContent" e5
 # get element id, class, or any attribute not visible in the snapshot

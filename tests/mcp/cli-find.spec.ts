@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { test, expect } from './cli-fixtures';
 
 const listPage = `
@@ -57,4 +59,17 @@ test('find reports no matches', async ({ cli, server }) => {
 
   const { output } = await cli('find', 'Pineapples');
   expect(output).toContain('No matches found for "Pineapples".');
+});
+
+test('find --filename', async ({ cli, server }, testInfo) => {
+  server.setContent('/', listPage, 'text/html');
+  await cli('open', server.PREFIX);
+
+  const { output } = await cli('find', 'Bananas', '--filename=find.md');
+  expect(output).toContain('[Find results](./find.md)');
+  expect(output).not.toContain('Apples');
+
+  const content = fs.readFileSync(testInfo.outputPath('find.md'), 'utf-8');
+  expect(content).toContain('Found 1 match for "Bananas":');
+  expect(content).toContain('Apples');
 });
