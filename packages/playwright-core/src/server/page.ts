@@ -41,7 +41,6 @@ import * as rawBindingsControllerSource from '../generated/bindingsControllerSou
 import { Overlay } from './overlay';
 import { NonRecoverableDOMError } from './dom';
 import { Screencast } from './screencast';
-import { WebMCP } from './webmcp';
 import { saveGlobalsSnapshotSource } from './javascript';
 
 import type { Artifact } from './artifact';
@@ -56,7 +55,6 @@ import type { ImageComparatorOptions } from '@utils/comparators';
 import type * as channels from './channels';
 import type { BindingPayload } from '@injected/bindingsController';
 import type { AriaNodeJSON, AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
-import type { WebMCPTool } from './webmcp';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -97,9 +95,6 @@ export interface PageDelegate {
   pdf?: (options: channels.PagePdfParams) => Promise<Buffer>;
   coverage?: () => any;
   noUtilityWorld?: () => boolean;
-  // Resolves to true when the browser reports tool registrations natively.
-  enableWebMCP?(): Promise<boolean>;
-  callWebMCPTool?(progress: Progress, frame: frames.Frame, name: string, input: unknown): Promise<unknown>;
 
   // Work around WebKit's raf issues on Windows.
   rafCountForStablePosition(): number;
@@ -143,7 +138,6 @@ const PageEvent = {
   FrameDetached: 'framedetached',
   InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
   LocatorHandlerTriggered: 'locatorhandlertriggered',
-  WebMCPToolsChanged: 'webmcptoolschanged',
   WebSocket: 'websocket',
   Worker: 'worker',
 } as const;
@@ -158,7 +152,6 @@ export type PageEventMap = {
   [PageEvent.FrameDetached]: [frame: frames.Frame];
   [PageEvent.InternalFrameNavigatedToNewDocument]: [frame: frames.Frame];
   [PageEvent.LocatorHandlerTriggered]: [uid: number];
-  [PageEvent.WebMCPToolsChanged]: [tools: WebMCPTool[]];
   [PageEvent.WebSocket]: [webSocket: network.WebSocket];
   [PageEvent.Worker]: [worker: Worker];
 };
@@ -208,7 +201,6 @@ export class Page extends SdkObject<PageEventMap> {
 
   readonly overlay: Overlay;
   readonly screencast: Screencast;
-  readonly webmcp: WebMCP;
   _closeReason: string | undefined;
   private _customCloseHandler?: (runBeforeUnload: boolean) => Promise<void>;
 
@@ -225,7 +217,6 @@ export class Page extends SdkObject<PageEventMap> {
     this.frameManager = new frames.FrameManager(this);
     this.overlay = new Overlay(this);
     this.screencast = new Screencast(this);
-    this.webmcp = new WebMCP(this);
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;
