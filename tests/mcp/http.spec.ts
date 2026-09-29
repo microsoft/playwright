@@ -24,6 +24,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { test as baseTest, expect, mcpServerPath, formatLog } from './fixtures';
 import { inheritAndCleanEnv } from '../config/utils';
 
+import { addressToString } from '../../packages/playwright-core/src/tools/utils/mcp/http';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
 import { ListRootsRequestSchema, PingRequestSchema } from 'playwright-core/lib/utilsBundle';
 
@@ -63,6 +64,14 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
     });
     cp?.kill('SIGTERM');
   },
+});
+
+test('addressToString normalizes loopback addresses only', () => {
+  const options = { protocol: 'http' as const, normalizeLoopback: true };
+  expect(addressToString({ address: '127.0.0.1', family: 'IPv4', port: 1234 }, options)).toBe('http://localhost:1234');
+  expect(addressToString({ address: '::1', family: 'IPv6', port: 1234 }, options)).toBe('http://localhost:1234');
+  expect(addressToString({ address: '0.0.0.0', family: 'IPv4', port: 1234 }, options)).toBe('http://0.0.0.0:1234');
+  expect(addressToString({ address: '::', family: 'IPv6', port: 1234 }, options)).toBe('http://[::]:1234');
 });
 
 async function resolveToIp(address: string) {
