@@ -261,6 +261,19 @@ test('accessible name with slots', async ({ page }) => {
     </script>
   `);
   expect.soft(await getNameAndRole(page, 'button')).toEqual({ role: 'button', name: 'pre' });
+
+  // Text "foo" is not assigned to any slot, so it is not rendered and should not be used.
+  await page.setContent(`
+    <div role=button>foo</div>
+    <script>
+      (() => {
+        const container = document.querySelector('div');
+        const shadow = container.attachShadow({ mode: 'open' });
+        shadow.appendChild(document.createTextNode('bar'));
+      })();
+    </script>
+  `);
+  expect.soft(await getNameAndRole(page, 'div')).toEqual({ role: 'button', name: 'bar' });
 });
 
 test('accessible name nested treeitem', async ({ page }) => {

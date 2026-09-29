@@ -115,6 +115,24 @@ it('should snapshot details visibility', async ({ page }) => {
   `);
 });
 
+it('should not snapshot text that is not rendered', async ({ page }) => {
+  await page.setContent(`
+    <details>
+      <summary>Summary</summary>
+      Details
+    </details>
+    <div>Light</div>
+    <script>
+      document.querySelector('div').attachShadow({ mode: 'open' }).innerHTML = '<p>Shadow</p>';
+    </script>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - group: Summary
+    - paragraph: Shadow
+  `);
+});
+
 it('should snapshot integration', async ({ page }) => {
   await page.setContent(`
     <h1>Microsoft</h1>

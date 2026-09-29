@@ -98,7 +98,7 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
     visited.add(node);
 
     if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
-      if (!parentElementVisible)
+      if (!parentElementVisible || roleUtils.isTextNodeHiddenForAria(node as Text))
         return;
 
       const text = node.nodeValue;

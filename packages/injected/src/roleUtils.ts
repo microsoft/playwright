@@ -362,6 +362,18 @@ function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element): boolean
   return hidden;
 }
 
+// Text nodes are not rendered when they are light dom children of a shadow host
+// but not assigned to a slot, or when they sit directly inside a closed <details>.
+// Their parent element is visible in both cases, so check them separately.
+export function isTextNodeHiddenForAria(text: Text): boolean {
+  const parent = text.parentElement;
+  if (!parent)
+    return false;
+  if (parent.shadowRoot && !text.assignedSlot)
+    return true;
+  return parent.nodeName === 'DETAILS' && !(parent as HTMLDetailsElement).open;
+}
+
 function getIdRefs(element: Element, ref: string | null): Element[] {
   if (!ref)
     return [];
@@ -1034,7 +1046,7 @@ function innerAccumulatedElementText(element: Element, options: AccessibleNameOp
       if (display !== 'inline' || node.nodeName === 'BR')
         token = ' ' + token + ' ';
       tokens.push(token);
-    } else if (node.nodeType === 3 /* Node.TEXT_NODE */) {
+    } else if (node.nodeType === 3 /* Node.TEXT_NODE */ && !isTextNodeHiddenForAria(node as Text)) {
       // step 2g.
       tokens.push(node.textContent || '');
     }
