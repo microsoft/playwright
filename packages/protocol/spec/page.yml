@@ -721,43 +721,6 @@ Page:
           - local
           - session
 
-    webmcpEnable:
-      title: Enable WebMCP
-      group: configuration
-
-    webmcpDisable:
-      title: Disable WebMCP
-      group: configuration
-
-    webmcpTools:
-      title: List WebMCP tools
-      group: getter
-      returns:
-        tools:
-          type: array
-          items:
-            type: object
-            properties:
-              name: string
-              description: string
-              inputSchema: json?
-              annotations:
-                type: object?
-                properties:
-                  readOnly: boolean?
-                  untrustedContent: boolean?
-                  consequential: boolean?
-              frame: Frame
-
-    webmcpCallTool:
-      title: Call WebMCP tool
-      parameters:
-        name: string
-        input: json?
-        frame: Frame?
-      returns:
-        result: json?
-
   events:
 
     bindingCall:
@@ -822,21 +785,3 @@ Page:
     worker:
       parameters:
         worker: Worker
-
-    webmcpToolsChanged:
-      parameters:
-        tools:
-          type: array
-          items:
-            type: object
-            properties:
-              name: string
-              description: string
-              inputSchema: json?
-              annotations:
-                type: object?
-                properties:
-                  readOnly: boolean?
-                  untrustedContent: boolean?
-                  consequential: boolean?
-              frame: Frame

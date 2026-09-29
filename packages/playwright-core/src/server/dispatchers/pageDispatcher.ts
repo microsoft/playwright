@@ -52,7 +52,6 @@ import type { Progress } from '../progress';
 import type { URLMatch } from '@isomorphic/urlMatch';
 import type { ScreencastFrame } from '../types';
 import type { ScreencastClient } from '../screencast';
-import type { WebMCPTool } from '../webmcp';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_Page = true;
@@ -126,7 +125,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this.addObjectListener(Page.Events.FrameAttached, frame => this._onFrameAttached(frame));
     this.addObjectListener(Page.Events.FrameDetached, frame => this._onFrameDetached(frame));
     this.addObjectListener(Page.Events.LocatorHandlerTriggered, (uid: number) => this._dispatchEvent('locatorHandlerTriggered', { uid }));
-    this.addObjectListener(Page.Events.WebMCPToolsChanged, (tools: WebMCPTool[]) => this._dispatchEvent('webmcpToolsChanged', { tools: this._serializeWebMCPTools(tools) }));
     this.addObjectListener(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this, webSocket) }));
     this.addObjectListener(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this, worker) }));
     // Ensure client knows about all frames.
@@ -515,27 +513,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async setDockTile(params: channels.PageSetDockTileParams): Promise<void> {
     await this._page.setDockTile(params.image);
-  }
-
-  async webmcpEnable(params: channels.PageWebmcpEnableParams, progress: Progress): Promise<void> {
-    await this._page.webmcp.enable(progress);
-  }
-
-  async webmcpDisable(params: channels.PageWebmcpDisableParams, progress: Progress): Promise<void> {
-    await this._page.webmcp.disable(progress);
-  }
-
-  async webmcpTools(params: channels.PageWebmcpToolsParams, progress: Progress): Promise<channels.PageWebmcpToolsResult> {
-    return { tools: this._serializeWebMCPTools(await this._page.webmcp.tools(progress)) };
-  }
-
-  async webmcpCallTool(params: channels.PageWebmcpCallToolParams, progress: Progress): Promise<channels.PageWebmcpCallToolResult> {
-    const frame = params.frame ? (params.frame as FrameDispatcher)._object : undefined;
-    return { result: await this._page.webmcp.callTool(progress, params.name, params.input, frame) };
-  }
-
-  private _serializeWebMCPTools(tools: WebMCPTool[]): channels.PageWebmcpToolsResult['tools'] {
-    return tools.map(tool => ({ ...tool, frame: FrameDispatcher.from(this.parentScope(), tool.frame) }));
   }
 
   async webStorageItems(params: channels.PageWebStorageItemsParams, progress: Progress): Promise<channels.PageWebStorageItemsResult> {
