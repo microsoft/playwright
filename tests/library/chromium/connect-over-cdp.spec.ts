@@ -116,7 +116,7 @@ test('should connect when an existing page has been discarded', {
       endpointURL: `http://127.0.0.1:${port}/`,
     });
     const pages = cdpBrowser.contexts()[0].pages();
-    expect(pages.map(page => page.url()).sort()).toEqual(['about:blank', 'chrome://discards/']);
+    expect(pages.map(page => page.url()).sort()).toEqual(['about:blank', discards.url()].sort());
     await cdpBrowser.close();
   } finally {
     await context.close();

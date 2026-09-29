@@ -85,16 +85,21 @@ export class CRBrowser extends Browser {
       return browser;
     }
     browser._defaultContext = new CRBrowserContext(browser, undefined, options.persistent);
-    await Promise.all([
-      session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }).then(async () => {
-        // Target.setAutoAttach has a bug where it does not wait for new Targets being attached.
-        // However making a dummy call afterwards fixes this.
-        // This can be removed after https://chromium-review.googlesource.com/c/chromium/src/+/2885888 lands in stable.
-        await session.send('Target.getTargetInfo');
-      }),
-      browser._defaultContext.initialize(),
-    ]);
-    await browser._waitForAllPagesToBeInitialized();
+    browser._defaultContext._skipCrashedPages = true;
+    try {
+      await Promise.all([
+        session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }).then(async () => {
+          // Target.setAutoAttach has a bug where it does not wait for new Targets being attached.
+          // However making a dummy call afterwards fixes this.
+          // This can be removed after https://chromium-review.googlesource.com/c/chromium/src/+/2885888 lands in stable.
+          await session.send('Target.getTargetInfo');
+        }),
+        browser._defaultContext.initialize(),
+      ]);
+      await browser._waitForAllPagesToBeInitialized();
+    } finally {
+      browser._defaultContext._skipCrashedPages = false;
+    }
     return browser;
   }
 

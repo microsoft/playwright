@@ -469,6 +469,12 @@ class FrameSession {
   }
 
   async _initialize(hasUIWindow: boolean) {
+    let inspectorEnabled: Promise<any> | undefined;
+    if (this._isMainFrame() && this._crPage._browserContext._skipCrashedPages) {
+      // Get notified with Inspector.targetCrashed right away, so we can skip pages without a renderer.
+      inspectorEnabled = this._client._sendMayFail('Inspector.enable');
+    }
+
     const browserOptions = this._crPage._browserContext._browser.options;
     if (!this._page.isStorageStatePage && hasUIWindow &&
       !this._crPage._browserContext._browser.isClank() &&
@@ -497,7 +503,6 @@ class FrameSession {
     this._bufferedAttachedToTargetEvents = [];
 
     const promises: Promise<any>[] = [
-      this._client.send('Inspector.enable'),
       this._client.send('Page.enable'),
       this._client.send('Page.getFrameTree').then(({ frameTree }) => {
         if (this._isMainFrame()) {
@@ -580,6 +585,8 @@ class FrameSession {
       for (const initScript of this._crPage._page.allInitScripts())
         promises.push(this._evaluateOnNewDocument(initScript, 'main', true /* runImmediately */));
     }
+    if (inspectorEnabled)
+      promises.push(inspectorEnabled);
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);
     await Promise.all(promises);
