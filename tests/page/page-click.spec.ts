@@ -1400,3 +1400,34 @@ it('should throw an Error when aborted via an already-aborted signal with a stri
   expect(error.name).toBe('AbortError');
   expect(error.cause).toBe('already aborted');
 });
+
+it('should retry click when overlay clears with disabled javascript', async ({ contextFactory }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42977' });
+  const context = await contextFactory({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.setContent(`
+    <style>
+      @keyframes hideOverlay {
+        from { transform: translateY(0); }
+        to { transform: translateY(-200px); }
+      }
+      #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 200px;
+        height: 200px;
+        background: red;
+        animation: hideOverlay 0.05s 300ms forwards;
+      }
+    </style>
+    <form action="#clicked">
+      <button type="submit">Target</button>
+    </form>
+    <div id="overlay"></div>
+  `);
+  const startTime = Date.now();
+  await page.click('button', { timeout: 10000 });
+  expect(Date.now() - startTime).toBeLessThan(5000);
+  expect(page.url()).toContain('#clicked');
+});
