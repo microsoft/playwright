@@ -121,7 +121,7 @@ export type Config = {
     host?: string;
 
     /**
-     * The hosts this server is allowed to serve from. Defaults to the host server is bound to.
+     * The hosts this server is allowed to serve from. Defaults to the host server is bound to, or any host when bound to all interfaces.
      * This is not for CORS, but rather for the DNS rebinding protection.
      */
     allowedHosts?: string[];

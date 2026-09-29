@@ -59,9 +59,11 @@ export function addressToString(address: string | net.AddressInfo | null, option
 }
 
 async function installHttpTransport(httpServer: http.Server, serverBackendFactory: ServerBackendFactory, allowedHosts?: string[]) {
-  const url = addressToString(httpServer.address(), { protocol: 'http', normalizeLoopback: true });
-  const host = new URL(url).host;
-  allowedHosts = (allowedHosts || [host]).map(h => h.toLowerCase());
+  const address = httpServer.address() as net.AddressInfo;
+  const url = addressToString(address, { protocol: 'http', normalizeLoopback: true });
+  // Server bound to all interfaces is meant to be reachable by any host name.
+  const boundToAllInterfaces = address.address === '0.0.0.0' || address.address === '::';
+  allowedHosts = (allowedHosts || [boundToAllInterfaces ? '*' : new URL(url).host]).map(h => h.toLowerCase());
   const allowAnyHost = allowedHosts.includes('*');
 
   const sseSessions = new Map();

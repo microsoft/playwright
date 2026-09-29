@@ -734,6 +734,14 @@ test('should respect allowed hosts (positive)', async ({ serverEndpoint, findFre
   expect(response.status).toBe(400);
 });
 
+test('should allow any host when bound to all interfaces', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42952' } }, async ({ serverEndpoint }) => {
+  const { url } = await serverEndpoint({ args: ['--host=0.0.0.0'] });
+  const response = await fetch(`http://127.0.0.1:${url.port}`);
+  // 400 is expected for the mcp fetch.
+  expect(response.status).toBe(400);
+  expect(await response.text()).toBe('Invalid request');
+});
+
 test('should be able to allow any host', async ({ serverEndpoint }) => {
   const { url } = await serverEndpoint({ args: ['--allowed-hosts=*'] });
   const response = await fetch(url.href);
