@@ -237,13 +237,14 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
       threshold?: number;
 
       /**
-       * an acceptable amount of pixels that could be different, unset by default.
+       * an acceptable amount of pixels that could be different, unset by default. Note that `threshold` defines which
+       * pixels are considered different.
        */
       maxDiffPixels?: number;
 
       /**
        * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
-       * default.
+       * default. Note that `threshold` defines which pixels are considered different.
        */
       maxDiffPixelRatio?: number;
 
@@ -327,13 +328,14 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
       threshold?: number;
 
       /**
-       * an acceptable amount of pixels that could be different, unset by default.
+       * an acceptable amount of pixels that could be different, unset by default. Note that `threshold` defines which
+       * pixels are considered different.
        */
       maxDiffPixels?: number;
 
       /**
        * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
-       * default.
+       * default. Note that `threshold` defines which pixels are considered different.
        */
       maxDiffPixelRatio?: number;
     };
@@ -1195,13 +1197,14 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
       caret?: "hide"|"initial";
 
       /**
-       * An acceptable amount of pixels that could be different, unset by default.
+       * An acceptable amount of pixels that could be different, unset by default. Note that `threshold` defines which
+       * pixels are considered different.
        */
       maxDiffPixels?: number;
 
       /**
        * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
-       * default.
+       * default. Note that `threshold` defines which pixels are considered different.
        */
       maxDiffPixelRatio?: number;
 
@@ -1266,13 +1269,14 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
      */
     toMatchSnapshot?: {
       /**
-       * An acceptable amount of pixels that could be different, unset by default.
+       * An acceptable amount of pixels that could be different, unset by default. Note that `threshold` defines which
+       * pixels are considered different.
        */
       maxDiffPixels?: number;
 
       /**
        * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by
-       * default.
+       * default. Note that `threshold` defines which pixels are considered different.
        */
       maxDiffPixelRatio?: number;
 
@@ -9992,13 +9996,16 @@ interface LocatorAssertions {
 
     /**
      * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * configurable with `TestConfig.expect`. Note that
+     * [`threshold`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-screenshot-1-option-threshold)
+     * defines which pixels are considered different.
      */
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
-     * default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Note that
+     * [`threshold`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-screenshot-1-option-threshold)
+     * defines which pixels are considered different.
      */
     maxDiffPixels?: number;
 
@@ -10095,13 +10102,16 @@ interface LocatorAssertions {
 
     /**
      * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * configurable with `TestConfig.expect`. Note that
+     * [`threshold`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-screenshot-2-option-threshold)
+     * defines which pixels are considered different.
      */
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
-     * default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Note that
+     * [`threshold`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-screenshot-2-option-threshold)
+     * defines which pixels are considered different.
      */
     maxDiffPixels?: number;
 
@@ -10629,13 +10639,16 @@ interface SnapshotAssertions {
   toMatchSnapshot(name: string|ReadonlyArray<string>, options?: {
     /**
      * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * configurable with `TestConfig.expect`. Note that
+     * [`threshold`](https://playwright.dev/docs/api/class-snapshotassertions#snapshot-assertions-to-match-snapshot-1-option-threshold)
+     * defines which pixels are considered different.
      */
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
-     * default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Note that
+     * [`threshold`](https://playwright.dev/docs/api/class-snapshotassertions#snapshot-assertions-to-match-snapshot-1-option-threshold)
+     * defines which pixels are considered different.
      */
     maxDiffPixels?: number;
 
@@ -10681,13 +10694,16 @@ interface SnapshotAssertions {
   toMatchSnapshot(options?: {
     /**
      * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * configurable with `TestConfig.expect`. Note that
+     * [`threshold`](https://playwright.dev/docs/api/class-snapshotassertions#snapshot-assertions-to-match-snapshot-2-option-threshold)
+     * defines which pixels are considered different.
      */
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
-     * default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Note that
+     * [`threshold`](https://playwright.dev/docs/api/class-snapshotassertions#snapshot-assertions-to-match-snapshot-2-option-threshold)
+     * defines which pixels are considered different.
      */
     maxDiffPixels?: number;
 
@@ -11013,13 +11029,16 @@ export interface PageAssertionsToHaveScreenshotOptions {
 
   /**
    * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
-   * configurable with `TestConfig.expect`. Unset by default.
+   * configurable with `TestConfig.expect`. Note that
+   * [`threshold`](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1-option-threshold)
+   * defines which pixels are considered different.
    */
   maxDiffPixelRatio?: number;
 
   /**
-   * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
-   * default.
+   * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Note that
+   * [`threshold`](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1-option-threshold)
+   * defines which pixels are considered different.
    */
   maxDiffPixels?: number;
 

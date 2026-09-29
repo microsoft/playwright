@@ -1099,13 +1099,13 @@ Whether to perform case-insensitive match. [`option: ignoreCase`] option takes p
 * langs: js
 - `maxDiffPixels` <[int]>
 
-An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by default.
+An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Note that [`option: threshold`] defines which pixels are considered different.
 
 ## assertions-max-diff-pixel-ratio
 * langs: js
 - `maxDiffPixelRatio` <[float]>
 
-An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is configurable with `TestConfig.expect`. Unset by default.
+An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is configurable with `TestConfig.expect`. Note that [`option: threshold`] defines which pixels are considered different.
 
 ## assertions-threshold
 * langs: js
