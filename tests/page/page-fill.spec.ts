@@ -426,3 +426,12 @@ it('should fill contenteditable with focus handler that collapses selection', {
   await page.fill('div[contenteditable]', 'some value');
   expect(await page.locator('div[contenteditable]').textContent()).toBe('some value');
 });
+
+it('should not fill an input inside an inert container', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42967' });
+  await page.setContent('<div inert><input id=target></div><input id=outside>');
+  await page.locator('#outside').focus();
+  await expect(page.locator('#target').fill('hello', { timeout: 1000 })).rejects.toThrow(/Timeout/);
+  await expect(page.locator('#target')).toHaveValue('');
+  await expect(page.locator('#outside')).toHaveValue('');
+});

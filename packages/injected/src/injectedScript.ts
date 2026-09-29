@@ -778,6 +778,14 @@ export class InjectedScript {
     return { queryAll };
   }
 
+  private isInert(element: Element): boolean {
+    for (let current: Element | undefined = element; current; current = parentElementOrShadowHost(current)) {
+      if (current.hasAttribute('inert'))
+        return true;
+    }
+    return false;
+  }
+
   elementState(node: Node, state: ElementStateWithoutStable, frameVisible: boolean): ElementStateQueryResult;
   elementState(node: Node, state: Exclude<ElementStateWithoutStable, 'visible' | 'hidden'>): ElementStateQueryResult;
   elementState(node: Node, state: ElementStateWithoutStable, frameVisible?: boolean): ElementStateQueryResult {
@@ -805,7 +813,7 @@ export class InjectedScript {
     }
 
     if (state === 'editable') {
-      const disabled = getAriaDisabled(element);
+      const disabled = getAriaDisabled(element) || this.isInert(element);
       const readonly = getReadonly(element);
       if (readonly === 'error')
         throw this.createStacklessError('Element is not an <input>, <textarea>, <select> or [contenteditable] and does not have a role allowing [aria-readonly]');
@@ -965,6 +973,9 @@ export class InjectedScript {
       return 'error:notconnected';
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Node is not an element');
+
+    if (this.isInert(node as Element))
+      throw this.createStacklessError('Element is inert and cannot be focused');
 
     const { activeElement, isFocused: wasFocused } = this._activelyFocused(node);
     if ((node as HTMLElement).isContentEditable && !wasFocused && activeElement && (activeElement as HTMLElement | SVGElement).blur) {
