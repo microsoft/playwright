@@ -763,7 +763,7 @@ test('should respect allowed hosts (positive)', async ({ serverEndpoint, findFre
 
 test('should allow only loopback hosts by default when bound to all interfaces', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42952' } }, async ({ serverEndpoint }) => {
   const { url } = await serverEndpoint({ args: ['--host=0.0.0.0'] });
-  expect(url.hostname).toBe('0.0.0.0');
+  expect(url.hostname).toBe('localhost');
   // 400 is expected for the mcp fetch.
   expect((await fetch(`http://localhost:${url.port}`)).status).toBe(400);
   expect((await fetch(`http://127.0.0.1:${url.port}`)).status).toBe(400);

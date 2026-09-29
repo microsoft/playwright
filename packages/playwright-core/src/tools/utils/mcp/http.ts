@@ -45,11 +45,12 @@ export async function startMcpHttpServer(
   assert(address, 'Could not bind server socket');
   if (typeof address === 'string')
     throw new Error('Unexpected address type: ' + address);
-  const host = config.host ? (net.isIPv6(config.host) ? `[${config.host}]` : config.host) : 'localhost';
+  const bindHost = config.host;
+  const host = !bindHost || bindHost === '0.0.0.0' || bindHost === '::' ? 'localhost' : net.isIPv6(bindHost) ? `[${bindHost}]` : bindHost;
   const url = `http://${host}:${address.port}`;
   // Loopback names cannot be rebound, so they are safe to allow for any bind address.
-  allowedHosts ??= [`localhost:${address.port}`, `127.0.0.1:${address.port}`, `[::1]:${address.port}`];
-  installHttpTransport(httpServer, serverBackendFactory, allowedHosts.map(h => h.toLowerCase()));
+  allowedHosts = allowedHosts?.map(h => h.toLowerCase()) ?? [`localhost:${address.port}`, `127.0.0.1:${address.port}`, `[::1]:${address.port}`];
+  installHttpTransport(httpServer, serverBackendFactory, allowedHosts);
   return url;
 }
 
