@@ -39,6 +39,7 @@ import { Page, ariaSnapshotJSONForFrame } from './page';
 import { isAbortError, nullProgress, ProgressController, raceUncancellableOperationWithCleanup } from './progress';
 import * as types from './types';
 import { isSessionClosedError } from './protocolError';
+import { WebMCP } from './webmcp';
 
 import type { ConsoleMessage } from './console';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScript } from '@injected/injectedScript';
@@ -47,6 +48,7 @@ import type { ScreenshotOptions } from './screenshotter';
 import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as channels from './channels';
 import type { AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
+import type { WebMCPToolInfo } from './webmcp';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | { destroyedReason: string }>;
@@ -502,12 +504,14 @@ const FrameEvent = {
   InternalNavigation: 'internalnavigation',
   AddLifecycle: 'addlifecycle',
   RemoveLifecycle: 'removelifecycle',
+  WebMCPToolsChanged: 'webmcptoolschanged',
 } as const;
 
 export type FrameEventMap = {
   [FrameEvent.InternalNavigation]: [event: NavigationEvent];
   [FrameEvent.AddLifecycle]: [event: types.LifecycleEvent];
   [FrameEvent.RemoveLifecycle]: [event: types.LifecycleEvent];
+  [FrameEvent.WebMCPToolsChanged]: [tools: WebMCPToolInfo[]];
 };
 
 export class Frame extends SdkObject<FrameEventMap> {
@@ -515,6 +519,7 @@ export class Frame extends SdkObject<FrameEventMap> {
 
   _id: string;
   seq: number;
+  readonly webmcp: WebMCP;
   _firedLifecycleEvents = new Set<types.LifecycleEvent>();
   private _firedNetworkIdleSelf = false;
   _currentDocument: DocumentInfo;
@@ -536,6 +541,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     super(page, 'frame');
     this.attribution.frame = this;
     this.seq = page.frameManager._allocateFrameSeq();
+    this.webmcp = new WebMCP(this);
     this._id = id;
     this._page = page;
     this._parentFrame = parentFrame;

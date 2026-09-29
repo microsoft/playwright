@@ -63,6 +63,7 @@ import type { AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
 import type { URLMatch } from '@isomorphic/urlMatch';
 import type * as channels from './channels';
+import type { WebMCP } from './webmcp';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -109,7 +110,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   readonly screencast: Screencast;
   readonly localStorage: WebStorage;
   readonly sessionStorage: WebStorage;
-
+  readonly webmcp: WebMCP;
 
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   readonly _timeoutSettings: TimeoutSettings;
@@ -146,6 +147,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
     this._mainFrame = Frame.from(initializer.mainFrame);
     this._mainFrame._page = this;
+    this.webmcp = this._mainFrame.webmcp;
     this._frames.add(this._mainFrame);
     this._viewportSize = initializer.viewportSize;
     this._closed = initializer.isClosed;

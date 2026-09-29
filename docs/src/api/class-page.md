@@ -5925,6 +5925,20 @@ Receives the [Worker] object and resolves to truthy value when the waiting shoul
 ### param: Page.waitForWorker.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
+## property: Page.webmcp
+* since: v1.64
+* langs: js
+- type: <[WebMCP]>
+
+Tools that the main frame registers through the experimental [WebMCP](https://webmachinelearning.github.io/webmcp/) browser API. Shortcut for [`property: Frame.webmcp`] of [`method: Page.mainFrame`], see [WebMCP] for details.
+
+**Usage**
+
+```js
+const tools = await page.webmcp.tools();
+const result = await page.webmcp.callTool('add', { a: 2, b: 40 });
+```
+
 ## method: Page.workers
 * since: v1.8
 - returns: <[Array]<[Worker]>>

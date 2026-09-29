@@ -33,6 +33,7 @@ import { FrameLocator, Locator, testIdAttributeName } from './locator';
 import * as network from './network';
 import { kLifecycleEvents } from './types';
 import { Waiter } from './waiter';
+import { WebMCP } from './webmcp';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 
 import type { EvaluateOptions, EvaluateHandleOptions, WorldOptions } from './jsHandle';
@@ -61,6 +62,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   _detached = false;
   _childFrames = new Set<Frame>();
   _page: Page | undefined;
+  readonly webmcp: WebMCP;
 
   static from(frame: channels.FrameChannel): Frame {
     return (frame as any)._object;
@@ -74,6 +76,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     super(parent, type, guid, initializer);
     this._eventEmitter = new EventEmitter();
     this._eventEmitter.setMaxListeners(0);
+    this.webmcp = new WebMCP(this);
     this._parentFrame = Frame.fromNullable(initializer.parentFrame);
     if (this._parentFrame)
       this._parentFrame._childFrames.add(this);

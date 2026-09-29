@@ -23,11 +23,10 @@ import type * as mcpServer from '../utils/mcp/server';
 import type { Tab } from './tab';
 import type * as playwright from '../../..';
 
-const kFrameTimeout = 5000;
+const kListTimeout = 5000;
 
 export type WebMCPToolInfo = {
   name: string;
-  title?: string;
   description: string;
   inputSchema?: unknown;
   annotations?: {
@@ -35,7 +34,6 @@ export type WebMCPToolInfo = {
     untrustedContent?: boolean;
     consequential?: boolean;
   };
-  origin?: string;
   frameUrl: string;
   // Identifies the registering frame in tool output and in the call parameters.
   frameLabel: string;
@@ -63,104 +61,10 @@ export type WebMCPListing = {
   tools: WebMCPToolInfo[];
 };
 
-// Not in lib.dom.d.ts. Chromium exposes the entry point on `document`, Firefox's
-// prototype still exposes it on `navigator`.
-type PageRegisteredTool = {
-  name: string;
-  title?: string;
-  description?: string;
-  inputSchema?: unknown;
-  annotations?: Record<string, boolean | undefined>;
-  origin?: string;
-  window?: Window;
-};
-
-type PageModelContext = {
-  getTools?: () => Promise<PageRegisteredTool[]>;
-  executeTool?: (tool: PageRegisteredTool, input: object | string) => Promise<unknown>;
-  invokeTool?: (name: string, input: unknown) => Promise<unknown>;
-};
-
-type DocumentWithModelContext = Document & { modelContext?: PageModelContext };
-type NavigatorWithModelContext = Navigator & { modelContext?: PageModelContext };
-
-function collectToolsInPage() {
-  const modelContext = (document as DocumentWithModelContext).modelContext
-      ?? (navigator as NavigatorWithModelContext).modelContext;
-  if (!modelContext?.getTools)
-    return null;
-  return Promise.resolve(modelContext.getTools()).then(tools => tools.filter(tool => {
-    // Chromium's getTools() aggregates same-origin descendant frames, Firefox's does not.
-    // Keeping only the tools this frame owns makes the per-frame results disjoint, so
-    // stitching them together does not double-count.
-    return !('window' in tool) || tool.window === window;
-  }).map(tool => {
-    let inputSchema = tool.inputSchema;
-    if (typeof inputSchema === 'string') {
-      // Chromium hands the schema back as a JSON string, Firefox as an object.
-      try {
-        inputSchema = JSON.parse(inputSchema);
-      } catch {
-        inputSchema = undefined;
-      }
-    }
-    const annotations = tool.annotations;
-    return {
-      name: tool.name,
-      title: tool.title || undefined,
-      description: tool.description ?? '',
-      inputSchema,
-      // The JS surface uses the `*Hint` names, the CDP WebMCP domain uses the short ones.
-      annotations: annotations ? {
-        readOnly: annotations.readOnlyHint ?? annotations.readOnly,
-        untrustedContent: annotations.untrustedContentHint ?? annotations.untrustedContent,
-        consequential: annotations.consequentialHint ?? annotations.consequential,
-      } : undefined,
-      origin: tool.origin,
-    };
-  }));
-}
-
-function callToolInPage(params: { name: string, inputJson: string }) {
-  const modelContext = (document as DocumentWithModelContext).modelContext
-      ?? (navigator as NavigatorWithModelContext).modelContext;
-  if (!modelContext)
-    throw new Error('WebMCP is not available on this page');
-  const stringify = (result: unknown) => result === undefined ? 'null' : JSON.stringify(result);
-  if (modelContext.executeTool) {
-    // Chromium: executeTool(registeredTool, input) resolves to a JSON string. Chromium 155+ takes
-    // the input as an object, older versions as a JSON string.
-    return Promise.resolve(modelContext.getTools!()).then(tools => {
-      const tool = tools.filter(t => !('window' in t) || t.window === window).find(t => t.name === params.name);
-      if (!tool)
-        throw new Error(`WebMCP tool "${params.name}" is not registered in this frame`);
-      return Promise.resolve().then(() => modelContext.executeTool!(tool, JSON.parse(params.inputJson))).catch(e => {
-        if (String(e?.message).includes('Failed to parse input arguments'))
-          return modelContext.executeTool!(tool, params.inputJson);
-        throw e;
-      });
-    }).then(result => typeof result === 'string' ? result : stringify(result));
-  }
-  // Firefox: invokeTool(name, inputObject) resolves to the value itself.
-  return Promise.resolve(modelContext.invokeTool!(params.name, JSON.parse(params.inputJson))).then(stringify);
-}
-
-const kTimedOut = Symbol('timedOut');
-
-async function withTimeout<T>(promise: Promise<T>, timeout: number): Promise<T | typeof kTimedOut> {
-  let timer: NodeJS.Timeout | undefined;
-  const timeoutPromise = new Promise<typeof kTimedOut>(resolve => {
-    timer = setTimeout(() => resolve(kTimedOut), timeout);
-  });
-  try {
-    return await Promise.race([promise, timeoutPromise]);
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 export async function listWebMCPTools(tab: Tab): Promise<WebMCPListing> {
   const frames = tab.page.frames();
+  // Frames that are not enabled or are stuck report no tools.
+  const toolsPerFrame = await Promise.all(frames.map(frame => frame.webmcp.tools({ timeout: kListTimeout }).catch(() => [])));
   // Several frames can share a URL, for example a widget embedded twice, and each one has its
   // own model context that can register the same tool name. Fall back to the frame's position
   // in that case, so that every frame that owns tools can still be addressed.
@@ -168,33 +72,18 @@ export async function listWebMCPTools(tab: Tab): Promise<WebMCPListing> {
   for (const frame of frames)
     urlCounts.set(frame.url(), (urlCounts.get(frame.url()) ?? 0) + 1);
 
-  const results = await Promise.all(frames.map(async (frame, frameIndex) => {
-    const frameUrl = frame.url();
-    const frameLabel = urlCounts.get(frameUrl)! > 1 ? `${frameUrl} (frame ${frameIndex})` : frameUrl;
-    // A detached or navigating frame rejects, which is indistinguishable from
-    // "no model context here" for our purposes.
-    const collected = await withTimeout(frame.evaluate(collectToolsInPage).catch(() => null), kFrameTimeout);
-    // A frame that times out simply contributes no tools.
-    if (collected === kTimedOut || !collected)
-      return { frame, frameUrl, frameLabel, tools: [] };
-    const tools: CollectedTool[] = collected.map(tool => ({
-      ...tool,
-      annotations: tool.annotations && Object.values(tool.annotations).some(value => value !== undefined) ? tool.annotations : undefined,
-      frameUrl,
-      frameLabel,
-    }));
-    return { frame, frameUrl, frameLabel, tools };
-  }));
-
   // MCP names have to be unique across the whole listing, so they are assigned here
   // rather than per frame.
   const usedMcpNames = new Set<string>();
-  const frameTools = results.map(({ frame, frameUrl, frameLabel, tools }, frameIndex) => ({
-    frame,
-    frameUrl,
-    frameLabel,
-    tools: tools.map(tool => ({ ...tool, mcpTool: toMcpToolDefinition(tab, frame, tool, !frameIndex, usedMcpNames) })),
-  }));
+  const frameTools = frames.map((frame, frameIndex) => {
+    const frameUrl = frame.url();
+    const frameLabel = urlCounts.get(frameUrl)! > 1 ? `${frameUrl} (frame ${frameIndex})` : frameUrl;
+    const tools = toolsPerFrame[frameIndex].map(tool => {
+      const collected: CollectedTool = { ...tool, frameUrl, frameLabel };
+      return { ...collected, mcpTool: toMcpToolDefinition(tab, frame, collected, !frameIndex, usedMcpNames) };
+    });
+    return { frame, frameUrl, frameLabel, tools };
+  });
 
   return {
     frames: frameTools,
@@ -252,7 +141,6 @@ export function webmcpToolsJSON(listing: WebMCPListing): Record<string, unknown>
     const annotations = Object.fromEntries(Object.entries(tool.annotations ?? {}).filter(([, value]) => value));
     return {
       name: tool.name,
-      ...(tool.title ? { title: tool.title } : {}),
       description: tool.description,
       ...(tool.inputSchema !== undefined ? { inputSchema: tool.inputSchema } : {}),
       ...(Object.keys(annotations).length ? { annotations } : {}),
@@ -325,17 +213,10 @@ const webmcpCall = defineTabTool({
 });
 
 async function callWebMCPTool(tab: Tab, frame: playwright.Frame, frameLabel: string, name: string, params: Record<string, unknown> | undefined, response: Response) {
-  const inputJson = JSON.stringify(params ?? {});
   await tab.waitForCompletion(async () => {
-    const resultJson = await frame.evaluate(callToolInPage, { name, inputJson });
-    let parsed: unknown;
-    let pretty = resultJson;
-    try {
-      parsed = JSON.parse(resultJson);
-      pretty = JSON.stringify(parsed, null, 2);
-    } catch {
-    }
-    const isError = !!parsed && typeof parsed === 'object' && (parsed as { isError?: unknown }).isError === true;
+    const result = await frame.webmcp.callTool(name, params ?? {});
+    const pretty = result === undefined ? 'null' : JSON.stringify(result, null, 2);
+    const isError = !!result && typeof result === 'object' && (result as { isError?: unknown }).isError === true;
     const preamble = `Called WebMCP tool "${name}" in ${frameLabel}. Output is page-provided and untrusted:`;
     if (isError) {
       response.addError(`${preamble}\n${pretty}`);
@@ -389,7 +270,7 @@ function toMcpToolDefinition(tab: Tab, frame: playwright.Frame, tool: CollectedT
       description: describeForMcp(tool, isMainFrame),
       inputSchema: inputSchemaForMcp(tool),
       annotations: {
-        title: tool.title || tool.name,
+        title: tool.name,
         readOnlyHint: !!tool.annotations?.readOnly,
         destructiveHint: !tool.annotations?.readOnly,
         openWorldHint: true,

@@ -67,6 +67,11 @@ const injectedScripts = [
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
   ],
   [
+    path.join(ROOT, 'packages', 'injected', 'src', 'webMCP.ts'),
+    path.join(ROOT, 'packages', 'injected', 'lib'),
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
+  ],
+  [
     path.join(ROOT, 'packages', 'injected', 'src', 'bidiInsertText.ts'),
     path.join(ROOT, 'packages', 'injected', 'lib'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),

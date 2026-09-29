@@ -909,6 +909,41 @@ Frame:
         snapshot: true
         pause: true
 
+    webmcpEnable:
+      title: Enable WebMCP
+      group: configuration
+
+    webmcpDisable:
+      title: Disable WebMCP
+      group: configuration
+
+    webmcpTools:
+      title: List WebMCP tools
+      group: getter
+      returns:
+        tools:
+          type: array
+          items:
+            type: object
+            properties:
+              name: string
+              description: string
+              inputSchema: json?
+              annotations:
+                type: object?
+                properties:
+                  readOnly: boolean?
+                  untrustedContent: boolean?
+                  consequential: boolean?
+
+    webmcpCallTool:
+      title: Call WebMCP tool
+      parameters:
+        name: string
+        input: json?
+      returns:
+        result: json?
+
   events:
 
     loadstate:
@@ -925,3 +960,20 @@ Frame:
           properties:
             request: Request?
         error: string?
+
+    webmcpToolsChanged:
+      parameters:
+        tools:
+          type: array
+          items:
+            type: object
+            properties:
+              name: string
+              description: string
+              inputSchema: json?
+              annotations:
+                type: object?
+                properties:
+                  readOnly: boolean?
+                  untrustedContent: boolean?
+                  consequential: boolean?

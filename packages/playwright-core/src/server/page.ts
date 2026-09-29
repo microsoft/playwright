@@ -41,6 +41,7 @@ import * as rawBindingsControllerSource from '../generated/bindingsControllerSou
 import { Overlay } from './overlay';
 import { NonRecoverableDOMError } from './dom';
 import { Screencast } from './screencast';
+import { WebMCPInstrumentation } from './webmcp';
 import { saveGlobalsSnapshotSource } from './javascript';
 
 import type { Artifact } from './artifact';
@@ -95,6 +96,8 @@ export interface PageDelegate {
   pdf?: (options: channels.PagePdfParams) => Promise<Buffer>;
   coverage?: () => any;
   noUtilityWorld?: () => boolean;
+  enableWebMCP?(): Promise<boolean>;
+  callWebMCPTool?(progress: Progress, frame: frames.Frame, name: string, input: unknown): Promise<unknown>;
 
   // Work around WebKit's raf issues on Windows.
   rafCountForStablePosition(): number;
@@ -201,6 +204,7 @@ export class Page extends SdkObject<PageEventMap> {
 
   readonly overlay: Overlay;
   readonly screencast: Screencast;
+  readonly webmcpInstrumentation: WebMCPInstrumentation;
   _closeReason: string | undefined;
   private _customCloseHandler?: (runBeforeUnload: boolean) => Promise<void>;
 
@@ -217,6 +221,7 @@ export class Page extends SdkObject<PageEventMap> {
     this.frameManager = new frames.FrameManager(this);
     this.overlay = new Overlay(this);
     this.screencast = new Screencast(this);
+    this.webmcpInstrumentation = new WebMCPInstrumentation(this);
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;

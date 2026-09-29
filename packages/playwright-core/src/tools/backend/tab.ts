@@ -140,6 +140,12 @@ export class Tab extends EventEmitter<TabEventsInterface> {
         this._downloadStarted(download).catch(e => debug('pw:tools:error')(e));
       }),
     ];
+    if (context.config.webmcp !== false) {
+      this._disposables.push(
+          eventsHelper.addEventListener(p, 'frameattached', frame => this._enableWebMCP(frame)),
+          eventsHelper.addEventListener(p, 'framedetached', () => this._refreshWebMCPTools()),
+      );
+    }
     // eslint-disable-next-line no-restricted-syntax
     (page as any)[tabSymbol] = this;
     const wallTime = Date.now();
@@ -176,6 +182,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   private async _initialize() {
+    if (this.context.config.webmcp !== false)
+      await Promise.all(this.page.frames().map(frame => this._enableWebMCP(frame)));
     for (const message of await Tab.collectConsoleMessages(this.page))
       this._handleConsoleMessage(message);
     const requests = await this.page.requests().catch(() => []);
@@ -488,6 +496,21 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   webmcpTools(): WebMCPListing | undefined {
     return this._webmcpTools;
+  }
+
+  private async _enableWebMCP(frame: playwright.Frame) {
+    try {
+      await frame.webmcp.enable();
+    } catch (e) {
+      debug('pw:tools:error')(e);
+      return;
+    }
+    // The browser reports registrations as they happen, so the MCP tool list follows the page.
+    frame.webmcp.on('toolschanged', () => this._refreshWebMCPTools());
+  }
+
+  private _refreshWebMCPTools() {
+    this.updateWebMCPTools().catch(e => debug('pw:tools:error')(e));
   }
 
   async updateWebMCPTools(): Promise<void> {
