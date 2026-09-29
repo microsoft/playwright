@@ -977,7 +977,7 @@ test('should run last failed tests in a shard with PLAYWRIGHT_LAST_RUN_OUTPUT_FI
   expect(result1.output).toContain('b.spec.js:3:11 › pass-b');
   expect(result1.output).toContain('b.spec.js:4:11 › fail-b');
 
-  const result2 = await runInlineTest(workspace, { shard: '2/2' }, env, { additionalArgs: ['--last-failed'] });
+  const result2 = await runInlineTest(workspace, { shard: '2/2' }, env, { additionalArgs: [`--last-failed=${customRel}`] });
   expect(result2.exitCode).toBe(1);
   expect(result2.passed).toBe(0);
   expect(result2.failed).toBe(1);
@@ -985,11 +985,11 @@ test('should run last failed tests in a shard with PLAYWRIGHT_LAST_RUN_OUTPUT_FI
   expect(result2.output).toContain('b.spec.js:4:11 › fail-b');
 });
 
-test('should run last failed tests in a shard with --last-failed-file', async ({ runInlineTest }, testInfo) => {
+test('should run last failed tests in a shard with --last-run-output-file', async ({ runInlineTest }, testInfo) => {
   const customRel = '.cache/shard-2-cli-last-run.json';
   const customAbs = path.join(testInfo.outputPath(), customRel);
   const defaultLastRun = path.join(testInfo.outputPath(), 'test-results', '.last-run.json');
-  const lastRunArgs = ['--last-failed', `--last-failed-file=${customRel}`];
+  const lastRunArgs = [`--last-run-output-file=${customRel}`];
   const workspace = {
     'a.spec.js': `
       import { test, expect } from '@playwright/test';
@@ -1015,10 +1015,92 @@ test('should run last failed tests in a shard with --last-failed-file', async ({
   expect(result1.output).toContain('b.spec.js:3:11 › pass-b');
   expect(result1.output).toContain('b.spec.js:4:11 › fail-b');
 
-  const result2 = await runInlineTest(workspace, { shard: '2/2' }, {}, { additionalArgs: lastRunArgs });
+  const result2 = await runInlineTest(workspace, { shard: '2/2' }, {}, { additionalArgs: [`--last-failed=${customRel}`, ...lastRunArgs] });
   expect(result2.exitCode).toBe(1);
   expect(result2.passed).toBe(0);
   expect(result2.failed).toBe(1);
   expect(result2.output).not.toContain('b.spec.js:3:11 › pass-b');
   expect(result2.output).toContain('b.spec.js:4:11 › fail-b');
+});
+
+test('should read --last-failed=<file> without overwriting it', async ({ runInlineTest }, testInfo) => {
+  const inputFile = testInfo.outputPath('.cache', 'input.json');
+  const outputFile = testInfo.outputPath('.cache', 'output.json');
+  const defaultLastRun = testInfo.outputPath('test-results', '.last-run.json');
+  const spec = (expected: number) => `
+    import { test, expect } from '@playwright/test';
+    test('pass-a', async () => {});
+    test('fail-a', async () => {
+      expect(1).toBe(${expected});
+    });
+  `;
+
+  const result1 = await runInlineTest({ 'a.spec.js': spec(2) }, {}, {}, { additionalArgs: ['--last-run-output-file=.cache/input.json'] });
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(1);
+  expect(result1.failed).toBe(1);
+  expect(fs.existsSync(defaultLastRun)).toBe(false);
+  const input = fs.readFileSync(inputFile, 'utf8');
+  expect(JSON.parse(input).failedTests).toHaveLength(1);
+
+  const result2 = await runInlineTest({ 'a.spec.js': spec(1) }, {}, {}, { additionalArgs: ['--last-failed=.cache/input.json'] });
+  expect(result2.exitCode).toBe(0);
+  expect(result2.passed).toBe(1);
+  expect(result2.output).not.toContain('pass-a');
+  expect(result2.output).toContain('fail-a');
+  expect(fs.readFileSync(inputFile, 'utf8')).toBe(input);
+  expect(JSON.parse(fs.readFileSync(defaultLastRun, 'utf8'))).toEqual({ status: 'passed', failedTests: [] });
+
+  const result3 = await runInlineTest({ 'a.spec.js': spec(1) }, {}, {}, { additionalArgs: ['--last-failed=.cache/input.json', '--last-run-output-file=.cache/output.json'] });
+  expect(result3.exitCode).toBe(0);
+  expect(result3.passed).toBe(1);
+  expect(result3.output).not.toContain('pass-a');
+  expect(fs.readFileSync(inputFile, 'utf8')).toBe(input);
+  expect(JSON.parse(fs.readFileSync(outputFile, 'utf8'))).toEqual({ status: 'passed', failedTests: [] });
+  expect(fs.existsSync(defaultLastRun)).toBe(false);
+});
+
+test('should fail when --last-failed=<file> is missing or malformed', async ({ runInlineTest }) => {
+  const workspace = {
+    'a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass-a', async () => {});
+    `,
+    'malformed.json': `{ "status": "failed" }`,
+  };
+
+  const result1 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--last-failed=missing.json'] });
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(0);
+  expect(result1.output).toContain('missing.json: Cannot read last run file: ENOENT');
+
+  const result2 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--last-failed=malformed.json'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(0);
+  expect(result2.output).toContain('malformed.json: Cannot read last run file: "failedTests" list is missing');
+});
+
+test('should resolve --last-failed and --last-run-output-file against cwd', async ({ runInlineTest }, testInfo) => {
+  const workspace = {
+    'dir/playwright.config.ts': `module.exports = {};`,
+    'dir/a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass-a', async () => {});
+      test('fail-a', async () => {
+        expect(1).toBe(2);
+      });
+    `,
+  };
+
+  const result1 = await runInlineTest(workspace, { config: 'dir/playwright.config.ts' }, {}, { additionalArgs: ['--last-run-output-file=last-run.json'] });
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(1);
+  expect(result1.failed).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('last-run.json'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('dir', 'last-run.json'))).toBe(false);
+
+  const result2 = await runInlineTest(workspace, { config: 'dir/playwright.config.ts' }, {}, { additionalArgs: ['--last-failed=last-run.json'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(0);
+  expect(result2.failed).toBe(1);
 });
