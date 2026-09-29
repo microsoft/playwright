@@ -16,10 +16,12 @@
  */
 
 import { playwrightTest as test, expect } from '../../config/browserTest';
-import http from 'http';
+import { spawn } from 'child_process';
 import fs from 'fs';
+import http from 'http';
+import os from 'os';
 import path from 'path';
-import { getUserAgent, server as coreServer } from '../../../packages/playwright-core/lib/coreBundle';
+import { getUserAgent, inprocess, server as coreServer } from '../../../packages/playwright-core/lib/coreBundle';
 import { suppressCertificateWarning } from '../../config/utils';
 
 const { WebSocketTransport, nullProgress } = coreServer;
@@ -168,6 +170,57 @@ test('should connect to an existing cdp session twice', async ({ browserType, mo
     await cdpBrowser2.close();
   } finally {
     await browserServer.close();
+  }
+});
+
+test('should not replace the main frame with a nested iframe when connecting over CDP', async ({ browserType, mode }, testInfo) => {
+  test.skip(mode !== 'default');
+  test.setTimeout(90000);
+  const server = http.createServer((req, res) => {
+    const port = (server.address() as { port: number }).port;
+    const pages: Record<string, string> = {
+      '/': `<h1 id=top>TOP</h1><iframe src="http://localhost:${port}/outer"></iframe>`,
+      '/outer': '<iframe src="/inner"></iframe>',
+      '/inner': '<iframe sandbox="allow-scripts" srcdoc="<p>D</p>"></iframe>',
+    };
+    res.setHeader('content-type', 'text/html');
+    res.end(pages[req.url || ''] || '');
+  });
+  await new Promise<void>(resolve => server.listen(0, resolve));
+  const url = `http://127.0.0.1:${(server.address() as { port: number }).port}/`;
+  const port = 9339 + testInfo.workerIndex;
+  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-cdp-'));
+  const chrome = spawn(process.env.CRPATH || browserType.executablePath(), [
+    '--headless=new', '--no-first-run', '--no-sandbox', '--remote-debugging-port=' + port,
+    '--user-data-dir=' + userDataDir, url,
+  ], { stdio: 'ignore' });
+  try {
+    await expect.poll(async () => {
+      try {
+        const response = await fetch(`http://127.0.0.1:${port}/json/list`);
+        return (await response.json()).some((target: { url: string }) => target.url === url);
+      } catch {
+        return false;
+      }
+    }, { timeout: 20000 }).toBe(true);
+    // Let the pre-existing page's nested iframe targets finish loading.
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    const cdpBrowser = await inprocess.playwright.chromium.connectOverCDP(`http://127.0.0.1:${port}/`);
+    try {
+      const page = cdpBrowser.contexts().flatMap(context => context.pages()).find(page => page.url() === url);
+      expect(page).toBeTruthy();
+      expect(await page!.evaluate(() => window.top === window)).toBe(true);
+      expect(await page!.locator('#top').count()).toBe(1);
+    } finally {
+      await cdpBrowser.close();
+    }
+  } finally {
+    chrome.kill();
+    if (chrome.exitCode === null)
+      await new Promise<void>(resolve => chrome.once('exit', () => resolve()));
+    server.close();
+    await fs.promises.rm(userDataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
   }
 });
 

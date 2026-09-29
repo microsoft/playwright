@@ -759,7 +759,9 @@ class FrameSession {
       if (!frame && event.targetInfo.parentFrameId) {
         // When connecting to an existing page with an iframe, there is an "iframe" target,
         // but no local frame is reported in getFrameTree. We can create a remote frame here.
-        frame = this._page.frameManager.frameAttached(targetId, event.targetInfo.parentFrameId);
+        // Its parent must already be known, otherwise frameAttached would replace the main frame.
+        if (this._page.frameManager.frame(event.targetInfo.parentFrameId))
+          frame = this._page.frameManager.frameAttached(targetId, event.targetInfo.parentFrameId);
       }
       if (!frame)
         return; // Subtree may be already gone due to renderer/browser race.
