@@ -398,6 +398,25 @@ it('should intercept response body from oopif', async function({ page, browser, 
   expect(await response.text()).toBeTruthy();
 });
 
+it('should navigate a local frame to oopif with frame.goto', async ({ page, browser, server }) => {
+  await page.goto(server.PREFIX + '/frames/one-frame.html');
+  await assertOOPIFCount(browser, 0);
+  const frame = page.frames()[1];
+  expect(frame.url()).toBe(server.PREFIX + '/frames/frame.html');
+
+  const navigations: string[] = [];
+  page.on('framenavigated', f => navigations.push(f.url()));
+
+  const response = await frame.goto(server.CROSS_PROCESS_PREFIX + '/grid.html');
+  await assertOOPIFCount(browser, 1);
+  expect(response!.url()).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
+  expect(response!.frame()).toBe(frame);
+  expect(frame.url()).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
+  expect(await frame.evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
+  expect(navigations).toEqual([server.CROSS_PROCESS_PREFIX + '/grid.html']);
+  expect(page.frames().length).toBe(2);
+});
+
 it('should allow to re-connect to OOPIFs with CDP when iframes were there already', async ({ browserType, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36095' });
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17656' });
@@ -413,6 +432,61 @@ it('should allow to re-connect to OOPIFs with CDP when iframes were there alread
   expect(page.frames().length).toBe(2);
   await assertOOPIFCount(browser, 1);
   expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
+  await browser.close();
+  await hostBrowser.close();
+});
+
+it('should report the whole frame tree when connecting over CDP to nested OOPIFs', async ({ browserType, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42955' });
+  it.skip(!!process.env.PWTEST_CHANNEL, 'Test default channel only');
+
+  // top > cross-site iframe (oopif) > same-process child iframe > sandboxed srcdoc iframe (oopif).
+  server.setRoute('/nested-top.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<h1 id=top>TOP</h1><iframe src="${server.CROSS_PROCESS_PREFIX}/nested-b.html"></iframe>`);
+  });
+  server.setRoute('/nested-b.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<iframe src="/nested-c.html"></iframe>`);
+  });
+  server.setRoute('/nested-c.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<iframe sandbox="allow-scripts" srcdoc="<p>D</p>"></iframe>`);
+  });
+
+  const cdpPort = 10123 + it.info().parallelIndex * 4;
+  const hostBrowser = await browserType.launch({
+    channel: 'chromium',
+    args: ['--remote-debugging-port=' + cdpPort, '--site-per-process', '--enable-features=IsolateSandboxedIframes'],
+  });
+  const hostPage = await hostBrowser.newPage();
+  await hostPage.goto(server.PREFIX + '/nested-top.html');
+
+  const browser = await browserType.connectOverCDP(`http://localhost:${cdpPort}`);
+  await assertOOPIFCount(browser, 2);
+  const page = browser.contexts()[0].pages()[0];
+
+  const expectedTree = [
+    server.PREFIX + '/nested-top.html',
+    '    ' + server.CROSS_PROCESS_PREFIX + '/nested-b.html',
+    '        ' + server.CROSS_PROCESS_PREFIX + '/nested-c.html',
+    '            about:srcdoc',
+  ];
+  const dumpFrames = async (frame: Frame, indent = ''): Promise<string[]> => {
+    expect(await frame.evaluate(() => '' + location.href)).toBe(frame.url());
+    const result = [indent + frame.url()];
+    for (const child of frame.childFrames())
+      result.push(...await dumpFrames(child, indent + '    '));
+    return result;
+  };
+  expect(await dumpFrames(page.mainFrame())).toEqual(expectedTree);
+  expect(page.frames().length).toBe(4);
+
+  expect(page.url()).toBe(server.PREFIX + '/nested-top.html');
+  expect(await page.evaluate(() => window.top === window)).toBe(true);
+  await expect(page.locator('#top')).toHaveText('TOP');
+  await expect(page.frameLocator('iframe').frameLocator('iframe').frameLocator('iframe').locator('p')).toHaveText('D');
+
   await browser.close();
   await hostBrowser.close();
 });
