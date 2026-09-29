@@ -3929,6 +3929,7 @@ export interface PageEventTarget {
   on(event: 'webSocketRoute', callback: (params: PageWebSocketRouteEvent) => void): this;
   on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
   on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
+  on(event: 'webmcpToolsChanged', callback: (params: PageWebmcpToolsChangedEvent) => void): this;
 }
 export interface PageChannel extends PageEventTarget, Channel {
   _type_Page: boolean;
@@ -3991,6 +3992,10 @@ export interface PageChannel extends PageEventTarget, Channel {
   webStorageSetItem(params: PageWebStorageSetItemParams, options: TimeoutOptions): Promise<PageWebStorageSetItemResult>;
   webStorageRemoveItem(params: PageWebStorageRemoveItemParams, options: TimeoutOptions): Promise<PageWebStorageRemoveItemResult>;
   webStorageClear(params: PageWebStorageClearParams, options: TimeoutOptions): Promise<PageWebStorageClearResult>;
+  webmcpEnable(params: PageWebmcpEnableParams, options: TimeoutOptions): Promise<PageWebmcpEnableResult>;
+  webmcpDisable(params: PageWebmcpDisableParams, options: TimeoutOptions): Promise<PageWebmcpDisableResult>;
+  webmcpTools(params: PageWebmcpToolsParams, options: TimeoutOptions): Promise<PageWebmcpToolsResult>;
+  webmcpCallTool(params: PageWebmcpCallToolParams, options: TimeoutOptions): Promise<PageWebmcpCallToolResult>;
 }
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
@@ -4039,6 +4044,19 @@ export type PageWebSocketEvent = {
 };
 export type PageWorkerEvent = {
   worker: WorkerChannel,
+};
+export type PageWebmcpToolsChangedEvent = {
+  tools: {
+    name: string,
+    description: string,
+    inputSchema?: any,
+    annotations?: {
+      readOnly?: boolean,
+      untrustedContent?: boolean,
+      consequential?: boolean,
+    },
+    frame: FrameChannel,
+  }[],
 };
 export type PageAddInitScriptParams = {
   source: string,
@@ -4663,6 +4681,39 @@ export type PageWebStorageClearOptions = {
 
 };
 export type PageWebStorageClearResult = void;
+export type PageWebmcpEnableParams = {};
+export type PageWebmcpEnableOptions = {};
+export type PageWebmcpEnableResult = void;
+export type PageWebmcpDisableParams = {};
+export type PageWebmcpDisableOptions = {};
+export type PageWebmcpDisableResult = void;
+export type PageWebmcpToolsParams = {};
+export type PageWebmcpToolsOptions = {};
+export type PageWebmcpToolsResult = {
+  tools: {
+    name: string,
+    description: string,
+    inputSchema?: any,
+    annotations?: {
+      readOnly?: boolean,
+      untrustedContent?: boolean,
+      consequential?: boolean,
+    },
+    frame: FrameChannel,
+  }[],
+};
+export type PageWebmcpCallToolParams = {
+  name: string,
+  input?: any,
+  frame?: FrameChannel,
+};
+export type PageWebmcpCallToolOptions = {
+  input?: any,
+  frame?: FrameChannel,
+};
+export type PageWebmcpCallToolResult = {
+  result?: any,
+};
 
 export interface PageEvents {
   'bindingCall': PageBindingCallEvent;
@@ -4679,6 +4730,7 @@ export interface PageEvents {
   'webSocketRoute': PageWebSocketRouteEvent;
   'webSocket': PageWebSocketEvent;
   'worker': PageWorkerEvent;
+  'webmcpToolsChanged': PageWebmcpToolsChangedEvent;
 }
 
 // ----------- Root -----------

@@ -92,6 +92,10 @@ export const Events = {
     Worker: 'worker',
   },
 
+  WebMCP: {
+    ToolsChanged: 'toolschanged',
+  },
+
   WebSocket: {
     Close: 'close',
     Error: 'socketerror',

@@ -140,6 +140,12 @@ export class Tab extends EventEmitter<TabEventsInterface> {
         this._downloadStarted(download).catch(e => debug('pw:tools:error')(e));
       }),
     ];
+    if (context.config.webmcp !== false) {
+      // Subscribing makes the browser report registrations as they happen, so the MCP tool list follows the page.
+      this._disposables.push(eventsHelper.addEventListener(p.webmcp, 'toolschanged', () => {
+        this.updateWebMCPTools().catch(e => debug('pw:tools:error')(e));
+      }));
+    }
     // eslint-disable-next-line no-restricted-syntax
     (page as any)[tabSymbol] = this;
     const wallTime = Date.now();
@@ -176,6 +182,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   private async _initialize() {
+    if (this.context.config.webmcp !== false)
+      await this.page.webmcp.enable().catch(e => debug('pw:tools:error')(e));
     for (const message of await Tab.collectConsoleMessages(this.page))
       this._handleConsoleMessage(message);
     const requests = await this.page.requests().catch(() => []);

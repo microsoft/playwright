@@ -2309,6 +2309,19 @@ scheme.PageWebSocketEvent = tObject({
 scheme.PageWorkerEvent = tObject({
   worker: tChannel(['Worker']),
 });
+scheme.PageWebmcpToolsChangedEvent = tObject({
+  tools: tArray(tObject({
+    name: tString,
+    description: tString,
+    inputSchema: tOptional(tAny),
+    annotations: tOptional(tObject({
+      readOnly: tOptional(tBoolean),
+      untrustedContent: tOptional(tBoolean),
+      consequential: tOptional(tBoolean),
+    })),
+    frame: tChannel(['Frame']),
+  })),
+});
 scheme.PageAddInitScriptParams = tObject({
   source: tString,
 });
@@ -2704,6 +2717,32 @@ scheme.PageWebStorageClearParams = tObject({
   kind: tEnum(['local', 'session']),
 });
 scheme.PageWebStorageClearResult = tOptional(tObject({}));
+scheme.PageWebmcpEnableParams = tOptional(tObject({}));
+scheme.PageWebmcpEnableResult = tOptional(tObject({}));
+scheme.PageWebmcpDisableParams = tOptional(tObject({}));
+scheme.PageWebmcpDisableResult = tOptional(tObject({}));
+scheme.PageWebmcpToolsParams = tOptional(tObject({}));
+scheme.PageWebmcpToolsResult = tObject({
+  tools: tArray(tObject({
+    name: tString,
+    description: tString,
+    inputSchema: tOptional(tAny),
+    annotations: tOptional(tObject({
+      readOnly: tOptional(tBoolean),
+      untrustedContent: tOptional(tBoolean),
+      consequential: tOptional(tBoolean),
+    })),
+    frame: tChannel(['Frame']),
+  })),
+});
+scheme.PageWebmcpCallToolParams = tObject({
+  name: tString,
+  input: tOptional(tAny),
+  frame: tOptional(tChannel(['Frame'])),
+});
+scheme.PageWebmcpCallToolResult = tObject({
+  result: tOptional(tAny),
+});
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tType('SDKLanguage'),
