@@ -22594,7 +22594,7 @@ export interface Request {
   /**
    * Contains the request's resource type as it was perceived by the rendering engine. ResourceType will be one of the
    * following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttrack`, `xhr`, `fetch`,
-   * `eventsource`, `websocket`, `manifest`, `other`.
+   * `eventsource`, `websocket`, `manifest`, `beacon`, `ping`, `cspreport`, `other`.
    */
   resourceType(): string;
 
