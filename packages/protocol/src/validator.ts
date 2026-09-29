@@ -1245,6 +1245,18 @@ scheme.FrameNavigatedEvent = tObject({
   })),
   error: tOptional(tString),
 });
+scheme.FrameWebmcpToolsChangedEvent = tObject({
+  tools: tArray(tObject({
+    name: tString,
+    description: tString,
+    inputSchema: tOptional(tAny),
+    annotations: tOptional(tObject({
+      readOnly: tOptional(tBoolean),
+      untrustedContent: tOptional(tBoolean),
+      consequential: tOptional(tBoolean),
+    })),
+  })),
+});
 scheme.FrameEvalOnSelectorParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
@@ -1663,6 +1675,30 @@ scheme.FrameExpectErrorDetails = tObject({
   })),
   timedOut: tOptional(tBoolean),
   customErrorMessage: tOptional(tString),
+});
+scheme.FrameWebmcpEnableParams = tOptional(tObject({}));
+scheme.FrameWebmcpEnableResult = tOptional(tObject({}));
+scheme.FrameWebmcpDisableParams = tOptional(tObject({}));
+scheme.FrameWebmcpDisableResult = tOptional(tObject({}));
+scheme.FrameWebmcpToolsParams = tOptional(tObject({}));
+scheme.FrameWebmcpToolsResult = tObject({
+  tools: tArray(tObject({
+    name: tString,
+    description: tString,
+    inputSchema: tOptional(tAny),
+    annotations: tOptional(tObject({
+      readOnly: tOptional(tBoolean),
+      untrustedContent: tOptional(tBoolean),
+      consequential: tOptional(tBoolean),
+    })),
+  })),
+});
+scheme.FrameWebmcpCallToolParams = tObject({
+  name: tString,
+  input: tOptional(tAny),
+});
+scheme.FrameWebmcpCallToolResult = tObject({
+  result: tOptional(tAny),
 });
 scheme.JSHandleInitializer = tObject({
   preview: tString,

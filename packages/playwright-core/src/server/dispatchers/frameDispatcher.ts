@@ -25,6 +25,7 @@ import type { Progress } from '../progress';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
 import type { NavigationEvent } from '../frames';
+import type { WebMCPToolInfo } from '../webmcp';
 import type * as channels from '../channels';
 
 export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, BrowserContextDispatcher | PageDispatcher> implements channels.FrameChannel {
@@ -57,6 +58,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     }, gcBucket);
     this._browserContextDispatcher = scope;
     this._frame = frame;
+    this.addObjectListener(Frame.Events.WebMCPToolsChanged, (tools: WebMCPToolInfo[]) => this._dispatchEvent('webmcpToolsChanged', { tools }));
     this.addObjectListener(Frame.Events.AddLifecycle, lifecycleEvent => {
       this._dispatchEvent('loadstate', { add: lifecycleEvent });
     });
@@ -252,6 +254,22 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
 
   async uncheck(params: channels.FrameUncheckParams, progress: Progress): Promise<void> {
     return await this._frame.uncheck(progress, params, params);
+  }
+
+  async webmcpEnable(params: channels.FrameWebmcpEnableParams, progress: Progress): Promise<void> {
+    await this._frame.webmcp.enable(progress);
+  }
+
+  async webmcpDisable(params: channels.FrameWebmcpDisableParams, progress: Progress): Promise<void> {
+    await this._frame.webmcp.disable(progress);
+  }
+
+  async webmcpTools(params: channels.FrameWebmcpToolsParams, progress: Progress): Promise<channels.FrameWebmcpToolsResult> {
+    return { tools: await this._frame.webmcp.tools(progress) };
+  }
+
+  async webmcpCallTool(params: channels.FrameWebmcpCallToolParams, progress: Progress): Promise<channels.FrameWebmcpCallToolResult> {
+    return { result: await this._frame.webmcp.callTool(progress, params.name, params.input) };
   }
 
   async waitForTimeout(params: channels.FrameWaitForTimeoutParams, progress: Progress): Promise<void> {

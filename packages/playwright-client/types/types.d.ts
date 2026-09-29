@@ -5885,6 +5885,22 @@ export interface Page {
 
   touchscreen: Touchscreen;
 
+  /**
+   * Tools that the main frame registers through the experimental [WebMCP](https://playwright.dev/docs/api/class-webmcp)
+   * browser API. Shortcut for [frame.webmcp](https://playwright.dev/docs/api/class-frame#frame-webmcp) of
+   * [page.mainFrame()](https://playwright.dev/docs/api/class-page#page-main-frame), see
+   * [WebMCP](https://playwright.dev/docs/api/class-webmcp) for details.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const tools = await page.webmcp.tools();
+   * const result = await page.webmcp.callTool('add', { a: 2, b: 40 });
+   * ```
+   *
+   */
+  webmcp: WebMCP;
+
   [Symbol.asyncDispose](): Promise<void>;
 }
 
@@ -9139,6 +9155,12 @@ export interface Frame {
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<void>;
+
+  /**
+   * Tools that the frame registers through the experimental [WebMCP](https://playwright.dev/docs/api/class-webmcp)
+   * browser API. See [WebMCP](https://playwright.dev/docs/api/class-webmcp) for details.
+   */
+  webmcp: WebMCP;
 }
 
 /**
@@ -23666,6 +23688,528 @@ export interface WebError {
    * The page that produced this unhandled exception, if any.
    */
   page(): null|Page;
+}
+
+/**
+ * [WebMCP](https://playwright.dev/docs/api/class-webmcp) exposes the tools that a frame registers through the
+ * experimental [WebMCP](https://playwright.dev/docs/api/class-webmcp) browser API, `navigator.modelContext`. It lists
+ * the tools, reports when the set of tools changes, and calls the tools.
+ *
+ * Instances are accessed through [frame.webmcp](https://playwright.dev/docs/api/class-frame#frame-webmcp).
+ * [page.webmcp](https://playwright.dev/docs/api/class-page#page-webmcp) is the instance of the main frame. Call
+ * [webMCP.enable()](https://playwright.dev/docs/api/class-webmcp#web-mcp-enable) before using the other methods.
+ *
+ * **NOTE** WebMCP is an experimental browser feature. Chromium enables it with the `--enable-features=WebMCP` launch
+ * argument, Firefox with the `dom.modelcontext.enabled` preference. WebKit does not implement it.
+ *
+ * Tool names, descriptions, input schemas and results are provided by the page, so treat them as untrusted input.
+ *
+ * ```js
+ * const browser = await chromium.launch({ args: ['--enable-features=WebMCP'] });
+ * const page = await browser.newPage();
+ * await page.webmcp.enable();
+ * await page.goto('https://example.com');
+ *
+ * for (const tool of await page.webmcp.tools())
+ *   console.log(tool.name, tool.description);
+ *
+ * const result = await page.webmcp.callTool('add', { a: 2, b: 40 });
+ * ```
+ *
+ */
+export interface WebMCP {
+  /**
+   * Emitted while WebMCP is enabled, whenever the set of tools registered by the frame changes, for example when the
+   * page registers or unregisters a tool, or when the frame navigates away. The argument is the new list of tools, the
+   * same one [webMCP.tools([options])](https://playwright.dev/docs/api/class-webmcp#web-mcp-tools) returns.
+   *
+   * ```js
+   * page.webmcp.on('toolschanged', tools => {
+   *   console.log('tools are now', tools.map(tool => tool.name));
+   * });
+   * ```
+   *
+   */
+  on(event: 'toolschanged', listener: (data: Array<{
+    /**
+     * Tool name, unique within the frame.
+     */
+    name: string;
+
+    /**
+     * Tool description.
+     */
+    description: string;
+
+    /**
+     * JSON Schema of the tool input, when the page provides one.
+     */
+    inputSchema?: Serializable;
+
+    /**
+     * Hints the page provides about the tool.
+     */
+    annotations?: {
+      /**
+       * The tool does not modify any state.
+       */
+      readOnly?: boolean;
+
+      /**
+       * The tool output may contain third-party content.
+       */
+      untrustedContent?: boolean;
+
+      /**
+       * The tool takes a consequential action, such as placing an order.
+       */
+      consequential?: boolean;
+    };
+  }>) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'toolschanged', listener: (data: Array<{
+    /**
+     * Tool name, unique within the frame.
+     */
+    name: string;
+
+    /**
+     * Tool description.
+     */
+    description: string;
+
+    /**
+     * JSON Schema of the tool input, when the page provides one.
+     */
+    inputSchema?: Serializable;
+
+    /**
+     * Hints the page provides about the tool.
+     */
+    annotations?: {
+      /**
+       * The tool does not modify any state.
+       */
+      readOnly?: boolean;
+
+      /**
+       * The tool output may contain third-party content.
+       */
+      untrustedContent?: boolean;
+
+      /**
+       * The tool takes a consequential action, such as placing an order.
+       */
+      consequential?: boolean;
+    };
+  }>) => any): this;
+
+  /**
+   * Emitted while WebMCP is enabled, whenever the set of tools registered by the frame changes, for example when the
+   * page registers or unregisters a tool, or when the frame navigates away. The argument is the new list of tools, the
+   * same one [webMCP.tools([options])](https://playwright.dev/docs/api/class-webmcp#web-mcp-tools) returns.
+   *
+   * ```js
+   * page.webmcp.on('toolschanged', tools => {
+   *   console.log('tools are now', tools.map(tool => tool.name));
+   * });
+   * ```
+   *
+   */
+  addListener(event: 'toolschanged', listener: (data: Array<{
+    /**
+     * Tool name, unique within the frame.
+     */
+    name: string;
+
+    /**
+     * Tool description.
+     */
+    description: string;
+
+    /**
+     * JSON Schema of the tool input, when the page provides one.
+     */
+    inputSchema?: Serializable;
+
+    /**
+     * Hints the page provides about the tool.
+     */
+    annotations?: {
+      /**
+       * The tool does not modify any state.
+       */
+      readOnly?: boolean;
+
+      /**
+       * The tool output may contain third-party content.
+       */
+      untrustedContent?: boolean;
+
+      /**
+       * The tool takes a consequential action, such as placing an order.
+       */
+      consequential?: boolean;
+    };
+  }>) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'toolschanged', listener: (data: Array<{
+    /**
+     * Tool name, unique within the frame.
+     */
+    name: string;
+
+    /**
+     * Tool description.
+     */
+    description: string;
+
+    /**
+     * JSON Schema of the tool input, when the page provides one.
+     */
+    inputSchema?: Serializable;
+
+    /**
+     * Hints the page provides about the tool.
+     */
+    annotations?: {
+      /**
+       * The tool does not modify any state.
+       */
+      readOnly?: boolean;
+
+      /**
+       * The tool output may contain third-party content.
+       */
+      untrustedContent?: boolean;
+
+      /**
+       * The tool takes a consequential action, such as placing an order.
+       */
+      consequential?: boolean;
+    };
+  }>) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'toolschanged', listener: (data: Array<{
+    /**
+     * Tool name, unique within the frame.
+     */
+    name: string;
+
+    /**
+     * Tool description.
+     */
+    description: string;
+
+    /**
+     * JSON Schema of the tool input, when the page provides one.
+     */
+    inputSchema?: Serializable;
+
+    /**
+     * Hints the page provides about the tool.
+     */
+    annotations?: {
+      /**
+       * The tool does not modify any state.
+       */
+      readOnly?: boolean;
+
+      /**
+       * The tool output may contain third-party content.
+       */
+      untrustedContent?: boolean;
+
+      /**
+       * The tool takes a consequential action, such as placing an order.
+       */
+      consequential?: boolean;
+    };
+  }>) => any): this;
+
+  /**
+   * Emitted while WebMCP is enabled, whenever the set of tools registered by the frame changes, for example when the
+   * page registers or unregisters a tool, or when the frame navigates away. The argument is the new list of tools, the
+   * same one [webMCP.tools([options])](https://playwright.dev/docs/api/class-webmcp#web-mcp-tools) returns.
+   *
+   * ```js
+   * page.webmcp.on('toolschanged', tools => {
+   *   console.log('tools are now', tools.map(tool => tool.name));
+   * });
+   * ```
+   *
+   */
+  prependListener(event: 'toolschanged', listener: (data: Array<{
+    /**
+     * Tool name, unique within the frame.
+     */
+    name: string;
+
+    /**
+     * Tool description.
+     */
+    description: string;
+
+    /**
+     * JSON Schema of the tool input, when the page provides one.
+     */
+    inputSchema?: Serializable;
+
+    /**
+     * Hints the page provides about the tool.
+     */
+    annotations?: {
+      /**
+       * The tool does not modify any state.
+       */
+      readOnly?: boolean;
+
+      /**
+       * The tool output may contain third-party content.
+       */
+      untrustedContent?: boolean;
+
+      /**
+       * The tool takes a consequential action, such as placing an order.
+       */
+      consequential?: boolean;
+    };
+  }>) => any): this;
+
+  /**
+   * Calls a tool registered by the frame and returns its result. The result is whatever the tool's `execute` function
+   * resolved to, typically an object with a `content` array. A result with `isError: true` is returned as is. The
+   * method throws when the tool is not registered or its `execute` function throws.
+   *
+   * ```js
+   * const result = await page.webmcp.callTool('add', { a: 2, b: 40 });
+   * console.log(result.content[0].text); // "42"
+   * ```
+   *
+   * @param name Name of the tool, as reported by
+   * [webMCP.tools([options])](https://playwright.dev/docs/api/class-webmcp#web-mcp-tools).
+   * @param input Input for the tool, matching its `inputSchema`. Defaults to an empty object.
+   * @param options
+   */
+  callTool(name: string, input?: Serializable, options?: {
+    /**
+     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+     * option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<Serializable>;
+
+  /**
+   * Stops tracking the tools that the frame registers and stops emitting
+   * [webMCP.on('toolschanged')](https://playwright.dev/docs/api/class-webmcp#web-mcp-event-tools-changed). Disposing
+   * the [Disposable](https://playwright.dev/docs/api/class-disposable) returned by
+   * [webMCP.enable()](https://playwright.dev/docs/api/class-webmcp#web-mcp-enable) does the same.
+   */
+  disable(): Promise<void>;
+
+  /**
+   * Starts tracking the tools that the frame registers, so that
+   * [webMCP.tools([options])](https://playwright.dev/docs/api/class-webmcp#web-mcp-tools),
+   * [webMCP.callTool(name[, input, options])](https://playwright.dev/docs/api/class-webmcp#web-mcp-call-tool) and
+   * [webMCP.on('toolschanged')](https://playwright.dev/docs/api/class-webmcp#web-mcp-event-tools-changed) work. Throws
+   * if the browser was launched without WebMCP support, see the note above for the launch options that enable it.
+   * Returns a [Disposable](https://playwright.dev/docs/api/class-disposable) that disables the tracking again.
+   *
+   * Tracking is per frame. [page.webmcp](https://playwright.dev/docs/api/class-page#page-webmcp) covers the main frame
+   * only, child frames are tracked through their own
+   * [frame.webmcp](https://playwright.dev/docs/api/class-frame#frame-webmcp).
+   *
+   * Chromium reports tool registrations natively. Firefox does not, so Playwright instruments `navigator.modelContext`
+   * in the page to observe registrations. Tools registered before the call are picked up as well.
+   *
+   * ```js
+   * await page.webmcp.enable();
+   * await page.goto('https://example.com');
+   * console.log(await page.webmcp.tools());
+   * ```
+   *
+   */
+  enable(): Promise<Disposable>;
+
+  /**
+   * Returns the tools currently registered by the frame.
+   * @param options
+   */
+  tools(options?: {
+    /**
+     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+     * option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<Array<{
+    /**
+     * Tool name, unique within the frame.
+     */
+    name: string;
+
+    /**
+     * Tool description.
+     */
+    description: string;
+
+    /**
+     * JSON Schema of the tool input, when the page provides one.
+     */
+    inputSchema?: Serializable;
+
+    /**
+     * Hints the page provides about the tool.
+     */
+    annotations?: {
+      /**
+       * The tool does not modify any state.
+       */
+      readOnly?: boolean;
+
+      /**
+       * The tool output may contain third-party content.
+       */
+      untrustedContent?: boolean;
+
+      /**
+       * The tool takes a consequential action, such as placing an order.
+       */
+      consequential?: boolean;
+    };
+  }>>;
+
+  /**
+   * Emitted while WebMCP is enabled, whenever the set of tools registered by the frame changes, for example when the
+   * page registers or unregisters a tool, or when the frame navigates away. The argument is the new list of tools, the
+   * same one [webMCP.tools([options])](https://playwright.dev/docs/api/class-webmcp#web-mcp-tools) returns.
+   *
+   * ```js
+   * page.webmcp.on('toolschanged', tools => {
+   *   console.log('tools are now', tools.map(tool => tool.name));
+   * });
+   * ```
+   *
+   */
+  waitForEvent(event: 'toolschanged', optionsOrPredicate?: { predicate?: (data: Array<{
+    /**
+     * Tool name, unique within the frame.
+     */
+    name: string;
+
+    /**
+     * Tool description.
+     */
+    description: string;
+
+    /**
+     * JSON Schema of the tool input, when the page provides one.
+     */
+    inputSchema?: Serializable;
+
+    /**
+     * Hints the page provides about the tool.
+     */
+    annotations?: {
+      /**
+       * The tool does not modify any state.
+       */
+      readOnly?: boolean;
+
+      /**
+       * The tool output may contain third-party content.
+       */
+      untrustedContent?: boolean;
+
+      /**
+       * The tool takes a consequential action, such as placing an order.
+       */
+      consequential?: boolean;
+    };
+  }>) => boolean | Promise<boolean>, timeout?: number, signal?: AbortSignal } | ((data: Array<{
+    /**
+     * Tool name, unique within the frame.
+     */
+    name: string;
+
+    /**
+     * Tool description.
+     */
+    description: string;
+
+    /**
+     * JSON Schema of the tool input, when the page provides one.
+     */
+    inputSchema?: Serializable;
+
+    /**
+     * Hints the page provides about the tool.
+     */
+    annotations?: {
+      /**
+       * The tool does not modify any state.
+       */
+      readOnly?: boolean;
+
+      /**
+       * The tool output may contain third-party content.
+       */
+      untrustedContent?: boolean;
+
+      /**
+       * The tool takes a consequential action, such as placing an order.
+       */
+      consequential?: boolean;
+    };
+  }>) => boolean | Promise<boolean>)): Promise<Array<{
+    /**
+     * Tool name, unique within the frame.
+     */
+    name: string;
+
+    /**
+     * Tool description.
+     */
+    description: string;
+
+    /**
+     * JSON Schema of the tool input, when the page provides one.
+     */
+    inputSchema?: Serializable;
+
+    /**
+     * Hints the page provides about the tool.
+     */
+    annotations?: {
+      /**
+       * The tool does not modify any state.
+       */
+      readOnly?: boolean;
+
+      /**
+       * The tool output may contain third-party content.
+       */
+      untrustedContent?: boolean;
+
+      /**
+       * The tool takes a consequential action, such as placing an order.
+       */
+      consequential?: boolean;
+    };
+  }>>;
+
 }
 
 /**

@@ -18,6 +18,7 @@
 import { assert } from '@isomorphic/assert';
 import { rewriteErrorMessage } from '@utils/stackTrace';
 import { eventsHelper } from '@utils/eventsHelper';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as frames from '../frames';
@@ -45,6 +46,7 @@ import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
 import type * as channels from '../channels';
+import type { RawWebMCPTool } from '../webmcp';
 
 
 export type WindowBounds = { top?: number, left?: number, width?: number, height?: number };
@@ -86,6 +88,9 @@ export class CRPage implements PageDelegate {
   // of their Page.windowOpen events is not guaranteed to match the order
   // of new popup targets.
   readonly _nextWindowOpenPopupFeatures: string[][] = [];
+  // Resolves to whether the browser implements the WebMCP domain.
+  _webmcpSupported: Promise<boolean> = Promise.resolve(false);
+  private readonly _webmcpInvocations = new Map<string, ManualPromise<Protocol.WebMCP.toolRespondedPayload>>();
 
   static mainFrameSession(page: Page): FrameSession {
     const crPage = page.delegate as CRPage;
@@ -159,6 +164,34 @@ export class CRPage implements PageDelegate {
 
   willBeginDownload() {
     this._mainFrameSession._willBeginDownload();
+  }
+
+  enableWebMCP(): Promise<boolean> {
+    return this._webmcpSupported;
+  }
+
+  async callWebMCPTool(progress: Progress, frame: frames.Frame, name: string, input: unknown): Promise<unknown> {
+    const client = this._sessionForFrame(frame)._client;
+    const { invocationId } = await progress.race(client.send('WebMCP.invokeTool', { frameId: frame._id, toolName: name, input: input as Protocol.WebMCP.invokeToolParameters['input'] }));
+    // The invocation id arrives before any of the invocation events.
+    const responded = new ManualPromise<Protocol.WebMCP.toolRespondedPayload>();
+    this._webmcpInvocations.set(invocationId, responded);
+    try {
+      const response = await progress.race(responded);
+      if (response.exception?.objectId)
+        releaseObject(client, response.exception.objectId);
+      if (response.status === 'Completed')
+        return response.output;
+      throw new Error(response.errorText || response.exception?.description || `WebMCP tool "${name}" ${response.status === 'Canceled' ? 'was canceled' : 'failed'}`);
+    } finally {
+      this._webmcpInvocations.delete(invocationId);
+      if (!responded.isDone())
+        client._sendMayFail('WebMCP.cancelInvocation', { invocationId });
+    }
+  }
+
+  _onWebMCPToolResponded(event: Protocol.WebMCP.toolRespondedPayload) {
+    this._webmcpInvocations.get(event.invocationId)?.resolve(event);
   }
 
   didClose() {
@@ -456,6 +489,9 @@ class FrameSession {
       eventsHelper.addEventListener(this._client, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
       eventsHelper.addEventListener(this._client, 'Runtime.executionContextDestroyed', event => this._onExecutionContextDestroyed(event.executionContextId)),
       eventsHelper.addEventListener(this._client, 'Runtime.executionContextsCleared', event => this._onExecutionContextsCleared()),
+      eventsHelper.addEventListener(this._client, 'WebMCP.toolsAdded', event => this._onWebMCPToolsAdded(event)),
+      eventsHelper.addEventListener(this._client, 'WebMCP.toolsRemoved', event => this._onWebMCPToolsRemoved(event)),
+      eventsHelper.addEventListener(this._client, 'WebMCP.toolResponded', event => this._crPage._onWebMCPToolResponded(event)),
     ]);
   }
 
@@ -496,6 +532,12 @@ class FrameSession {
     // Note that we cannot send Target.setAutoAttach after Runtime.runIfWaitingForDebugger,
     // so we have to buffer events instead.
     this._bufferedAttachedToTargetEvents = [];
+
+    // Enabling only reports the tools of the main frame, so listen from the start to catch the
+    // ones that child frames register. Older browsers do not have the domain.
+    const webmcpEnabled = this._client._sendMayFail('WebMCP.enable').then(result => !!result);
+    if (this._isMainFrame())
+      this._crPage._webmcpSupported = webmcpEnabled;
 
     const promises: Promise<any>[] = [
       this._client.send('Page.enable'),
@@ -538,6 +580,7 @@ class FrameSession {
       this._client.send('Log.enable', {}),
       lifecycleEventsEnabled = this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}),
+      webmcpEnabled,
       this._client.send('Page.addScriptToEvaluateOnNewDocument', {
         source: '',
         worldName: this._crPage.utilityWorldName,
@@ -879,6 +922,40 @@ class FrameSession {
       if (context)
         await this._page.onBindingCalled(event.payload, context);
     }
+  }
+
+  private _onWebMCPToolsAdded(event: Protocol.WebMCP.toolsAddedPayload) {
+    const toolsByFrame = new Map<frames.Frame, RawWebMCPTool[]>();
+    for (const tool of event.tools) {
+      const frame = this._page.frameManager.frame(tool.frameId);
+      if (!frame)
+        continue;
+      let tools = toolsByFrame.get(frame);
+      if (!tools) {
+        tools = [];
+        toolsByFrame.set(frame, tools);
+      }
+      tools.push({ name: tool.name, description: tool.description, inputSchema: tool.inputSchema, annotations: tool.annotations });
+    }
+    for (const [frame, tools] of toolsByFrame)
+      frame.webmcp.toolsAdded(tools);
+  }
+
+  private _onWebMCPToolsRemoved(event: Protocol.WebMCP.toolsRemovedPayload) {
+    const namesByFrame = new Map<frames.Frame, string[]>();
+    for (const tool of event.tools) {
+      const frame = this._page.frameManager.frame(tool.frameId);
+      if (!frame)
+        continue;
+      let names = namesByFrame.get(frame);
+      if (!names) {
+        names = [];
+        namesByFrame.set(frame, names);
+      }
+      names.push(tool.name);
+    }
+    for (const [frame, names] of namesByFrame)
+      frame.webmcp.toolsRemoved(names);
   }
 
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
