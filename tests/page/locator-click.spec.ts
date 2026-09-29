@@ -60,3 +60,14 @@ it('should click if the target element is removed in pointerdown event', async (
   await page.$eval('#clickme', element => element.addEventListener('pointerdown', () => element.remove(), false));
   await page.locator('#clickme').click();
 });
+
+it('should retry click when JavaScript is disabled and an overlay disappears', async ({ contextFactory }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42977' });
+  const context = await contextFactory({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.setContent(`<style>
+    #cover { position: fixed; inset: 0; animation: hide 0s linear 0.3s forwards; }
+    @keyframes hide { to { visibility: hidden; } }
+  </style><button>Continue</button><div id="cover"></div>`);
+  await page.getByRole('button', { name: 'Continue' }).click({ timeout: 2000 });
+});
