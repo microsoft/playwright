@@ -19,6 +19,5 @@ jobs:
   test_linux_docker:
     uses: ./.github/workflows/tests_docker.yml
     permissions:
-      id-token: write
       contents: read
     secrets: inherit
