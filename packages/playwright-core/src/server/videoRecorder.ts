@@ -179,8 +179,27 @@ class FfmpegVideoRecorder {
     const pixelRateScale = Math.max(1, w * h * this._fps / (800 * 450 * kDefaultFps));
     const bitrate = Math.round(pixelRateScale * 1000);
     const threads = Math.min(8, Math.ceil(pixelRateScale / 4));
-    const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${this._fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v ${bitrate}k -threads ${threads} -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
-    args.push('-metadata', `creation_time=${new Date(this._creationTimeMs).toISOString()}`);
+    const args = [
+      '-loglevel error',
+      '-f matroska',
+      '-fpsprobesize 0',
+      '-probesize 32',
+      '-analyzeduration 0',
+      '-i pipe:0',
+      '-y',
+      '-an',
+      `-r ${this._fps}`,
+      '-c:v vp8',
+      '-qmin 0',
+      '-qmax 50',
+      '-crf 8',
+      '-deadline realtime',
+      '-speed 8',
+      `-b:v ${bitrate}k`,
+      `-threads ${threads}`,
+      `-vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`,
+      `-metadata creation_time=${new Date(this._creationTimeMs).toISOString()}`,
+    ].flatMap(option => option.split(' '));
     args.push(this._outputFile);
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
