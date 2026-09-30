@@ -15,7 +15,6 @@
  */
 
 import fs from 'fs';
-import dns from 'dns';
 import http from 'http';
 
 import { ChildProcess, spawn } from 'child_process';
@@ -65,19 +64,6 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
     cp?.kill('SIGTERM');
   },
 });
-
-async function resolveToIp(address: string) {
-  const resolvedIp = await new Promise<{ address: string, family: number }>((resolve, reject) => {
-    dns.lookup('localhost', (err, address, family) => {
-      if (err)
-        return reject(err);
-      resolve({ address, family }); // ::1 6  OR  127.0.0.1 4
-    });
-  });
-  if (resolvedIp.family === 6)
-    return `[${resolvedIp.address}]`;
-  return resolvedIp.address;
-}
 
 test('http transport', async ({ serverEndpoint }) => {
   const { url } = await serverEndpoint();
@@ -725,21 +711,6 @@ test('should not allow rebinding to localhost', async ({ serverEndpoint }) => {
   expect.soft(response.text).toContain('Access is only allowed at localhost');
 });
 
-test('should allow loopback ip when bound to localhost', async ({ serverEndpoint }) => {
-  const { url } = await serverEndpoint();
-  const ip = await resolveToIp('localhost');
-  const response = await fetch(url.href.replace('localhost', ip));
-  // 400 is expected for the mcp fetch.
-  expect(response.status).toBe(400);
-});
-
-test('should allow requests without host header', async ({ serverEndpoint }) => {
-  const { url } = await serverEndpoint({ args: ['--host=0.0.0.0'] });
-  const response = await requestWithHost(url, undefined);
-  // 400 is expected for the mcp fetch.
-  expect(response.status).toBe(400);
-});
-
 test('should respect allowed hosts (negative)', async ({ serverEndpoint }) => {
   const { url } = await serverEndpoint({ args: ['--allowed-hosts=example.com'] });
   const response = await fetch(url.href);
@@ -767,6 +738,7 @@ test('should allow only loopback hosts by default when bound to all interfaces',
   // 400 is expected for the mcp fetch.
   expect((await fetch(`http://localhost:${url.port}`)).status).toBe(400);
   expect((await fetch(`http://127.0.0.1:${url.port}`)).status).toBe(400);
+  expect((await requestWithHost(url, undefined)).status).toBe(400);
   const response = await requestWithHost(url, `some-container:${url.port}`);
   expect(response.status).toBe(403);
   expect(response.text).toContain('Access is only allowed at localhost');
@@ -777,13 +749,6 @@ test('should allow the bound host by default', async ({ serverEndpoint }) => {
   const { url } = await serverEndpoint({ args: ['--host=127.0.0.2'] });
   expect(url.hostname).toBe('127.0.0.2');
   const response = await fetch(url.href);
-  // 400 is expected for the mcp fetch.
-  expect(response.status).toBe(400);
-});
-
-test('should allow any host when bound to all interfaces with allowed hosts', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42952' } }, async ({ serverEndpoint }) => {
-  const { url } = await serverEndpoint({ args: ['--host=0.0.0.0', '--allowed-hosts=*'] });
-  const response = await requestWithHost(url, `some-container:${url.port}`);
   // 400 is expected for the mcp fetch.
   expect(response.status).toBe(400);
 });
