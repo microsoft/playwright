@@ -90,7 +90,8 @@ it('isVisible and isHidden should work with unslotted content', async ({ page })
   await expect(page.locator('span', { hasText: 'visible' })).toBeVisible();
 });
 
-it('isVisible and isHidden should work with list box options', async ({ page }) => {
+it('isVisible and isHidden should work with list box options', async ({ page, isAndroid }) => {
+  it.skip(isAndroid, 'Android Chrome renders list boxes as popups, so options are not visible in the page');
   await page.setContent(`
     <select multiple>
       <option>visible 1</option>
