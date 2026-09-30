@@ -189,17 +189,6 @@ test(`pending attach is released when the connection closes`, {
   void client.callTool({ name: 'browser_tabs', arguments: { action: 'new', url: server.PREFIX + '/second.html' } }).catch(() => {});
   await expect.poll(() => sw.evaluate(() => (globalThis as any).__heldTabId)).toBeTruthy();
 
-  const isAttached = () => sw.evaluate(async () => {
-    const g = globalThis as any;
-    try {
-      await g.__originalAttach({ tabId: g.__heldTabId }, '1.3');
-    } catch {
-      return true;
-    }
-    await g.chrome.debugger.detach({ tabId: g.__heldTabId });
-    return false;
-  });
-
   await client.close();
   const statusPage = await browserContext.newPage();
   await statusPage.goto(`chrome-extension://${extensionId}/status.html`);
@@ -209,6 +198,16 @@ test(`pending attach is released when the connection closes`, {
     const g = globalThis as any;
     g.__releaseAttach();
     await g.__pendingAttach;
+  });
+  const isAttached = () => sw.evaluate(async () => {
+    const g = globalThis as any;
+    try {
+      await g.__originalAttach({ tabId: g.__heldTabId }, '1.3');
+    } catch {
+      return true;
+    }
+    await g.chrome.debugger.detach({ tabId: g.__heldTabId });
+    return false;
   });
   await expect.poll(isAttached).toBe(false);
 });
