@@ -217,11 +217,13 @@ npx playwright install --with-deps
 
 | Option | Description |
 | :--- | :--- |
-| `--force` | Force reinstall of stable browser channels |
+| `--force` | Force reinstall of already installed browsers |
 | `--with-deps` | Install browser system dependencies |
 | `--dry-run` | Don't perform installation, just print information |
+| `--list` | Print list of browsers from all Playwright installations |
 | `--only-shell` | Only install chromium-headless-shell instead of full Chromium |
 | `--no-shell` | Don't install chromium-headless-shell |
+| `--no-progress` | Don't show download progress bars |
 | `--no-remove` | Don't remove unused browsers |
 
 #### Install Deps Options
