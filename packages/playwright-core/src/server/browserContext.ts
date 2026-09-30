@@ -95,6 +95,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   readonly requestInterceptors: network.RouteHandler[] = [];
   private _isPersistentContext: boolean;
   private _closedStatus: 'open' | 'closing' | 'closed' = 'open';
+  _skipCrashedPages = false;
   readonly _closePromise: Promise<Error>;
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
   readonly _permissions = new Map<string, string[]>();

@@ -247,6 +247,13 @@ export class Page extends SdkObject<PageEventMap> {
       // context/browser closure. Just ignore the page.
       if (this.browserContext.isClosingOrClosed())
         return;
+      if (this._lifecycle === 'crashed' && this.browserContext._skipCrashedPages) {
+        // When connecting, any crashed/discarded/unloaded page is not reported to the client at all.
+        // This is not a default behavior to avoid false positives when a newly created
+        // page is navigating slowly for whatever reason. TODO: fix in chromium upstream.
+        this._initializedPromise.resolve(error);
+        return;
+      }
       this.frameManager.createDummyMainFrameIfNeeded();
     }
     this._initialized = error || this;
