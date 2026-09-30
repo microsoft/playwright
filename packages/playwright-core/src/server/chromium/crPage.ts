@@ -461,8 +461,8 @@ class FrameSession {
 
   private _addBrowserListeners() {
     this._eventListeners.push(...[
-      eventsHelper.addEventListener(this._client, 'Target.attachedToTarget', event => this._onAttachedToTarget(event)),
-      eventsHelper.addEventListener(this._client, 'Target.detachedFromTarget', event => this._onDetachedFromTarget(event)),
+      eventsHelper.addEventListener(this._client, 'Target.attachedToTarget', event => this._onAttachedToTarget(this._client, event)),
+      eventsHelper.addEventListener(this._client, 'Target.detachedFromTarget', event => this._onDetachedFromTarget(this._client, event)),
       eventsHelper.addEventListener(this._client, 'Inspector.targetCrashed', event => this._onTargetCrashed()),
       eventsHelper.addEventListener(this._client, 'Page.screencastFrame', event => this._onScreencastFrame(event)),
       eventsHelper.addEventListener(this._client, 'Page.windowOpen', event => this._onWindowOpen(event)),
@@ -509,7 +509,7 @@ class FrameSession {
         const attachedToTargetEvents = this._bufferedAttachedToTargetEvents || [];
         this._bufferedAttachedToTargetEvents = undefined;
         for (const event of attachedToTargetEvents)
-          this._onAttachedToTarget(event);
+          this._onAttachedToTarget(this._client, event);
 
         const localFrames = this._isMainFrame() ? this._page.frames() : [this._page.frameManager.frame(this._targetId)!];
         for (const frame of localFrames) {
@@ -744,13 +744,13 @@ class FrameSession {
       this._onExecutionContextDestroyed(contextId);
   }
 
-  _onAttachedToTarget(event: Protocol.Target.attachedToTargetPayload) {
+  _onAttachedToTarget(parentSession: CRSession, event: Protocol.Target.attachedToTargetPayload) {
     if (this._bufferedAttachedToTargetEvents) {
       this._bufferedAttachedToTargetEvents.push(event);
       return;
     }
 
-    const session = this._client.createChildSession(event.sessionId);
+    const session = parentSession.createChildSession(event.sessionId);
 
     if (event.targetInfo.type === 'iframe') {
       // Frame id equals target id.
@@ -795,8 +795,8 @@ class FrameSession {
     this._crPage._networkManager.addSession(session, this._page.frameManager.frame(event.targetInfo.parentFrameId ?? this._targetId) ?? undefined).catch(() => {});
     session._sendMayFail('Runtime.runIfWaitingForDebugger');
     session._sendMayFail('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
-    session.on('Target.attachedToTarget', event => this._onAttachedToTarget(event));
-    session.on('Target.detachedFromTarget', event => this._onDetachedFromTarget(event));
+    session.on('Target.attachedToTarget', event => this._onAttachedToTarget(session, event));
+    session.on('Target.detachedFromTarget', event => this._onDetachedFromTarget(session, event));
     session.on('Runtime.consoleAPICalled', event => {
       const args = event.args.map(o => createHandle(worker.existingExecutionContext!, o));
       this._page.addConsoleMessage(worker, event.type, args, stackTraceToLocation(event.stackTrace), undefined, event.timestamp);
@@ -815,15 +815,18 @@ class FrameSession {
     return true;
   }
 
-  _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
+  _onDetachedFromTarget(parentSession: CRSession, event: Protocol.Target.detachedFromTargetPayload) {
     // This might be a worker...
     if (this._removeWorkerSession(event.sessionId))
       return;
 
     // ... or an oopif.
     const childFrameSession = this._crPage._sessions.get(event.targetId!);
-    if (!childFrameSession)
+    if (!childFrameSession) {
+      // Something else - perhaps a stalled service worker? Just dispose of it to reject all the callbacks.
+      parentSession.disposeChildSession(event.sessionId);
       return;
+    }
 
     // Usually, we get frameAttached in this session first and mark child as swappedIn.
     if (childFrameSession._swappedIn) {

@@ -135,6 +135,13 @@ export class CRSession extends SdkObject<Protocol.EventMap & ConnectionEventMap>
     return session;
   }
 
+  disposeChildSession(sessionId: string) {
+    const session = this._connection._sessions.get(sessionId);
+    if (session && session._parentSession !== this)
+      debugLogger.log('error', `Session ${sessionId} should be a child of ${this._sessionId}, but it has ${session._parentSession?._sessionId} as a parent`);
+    session?.dispose();
+  }
+
   async send<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T]

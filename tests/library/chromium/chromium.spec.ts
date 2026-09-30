@@ -16,7 +16,7 @@
  */
 
 import { contextTest as test, expect } from '../../config/browserTest';
-import { playwrightTest } from '../../config/browserTest';
+import { browserTest, playwrightTest } from '../../config/browserTest';
 
 import type { Page } from 'playwright-core';
 
@@ -810,4 +810,18 @@ test('should fire dialogclosed event when dialog is closed out of band', async (
   await client.send('Page.handleJavaScriptDialog', { accept: true });
   expect(await closedPromise).toBe(dialog);
   await evaluatePromise;
+});
+
+browserTest('should not leak service worker session after context close', async ({ browser, server, toImpl }) => {
+  browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43009' });
+  const sessions: Map<string, unknown> = toImpl(browser)._connection._sessions;
+  const sessionCount = sessions.size;
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+  ]);
+  await context.close();
+  await expect.poll(() => sessions.size).toBe(sessionCount);
 });

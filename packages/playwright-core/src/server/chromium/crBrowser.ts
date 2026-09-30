@@ -225,6 +225,7 @@ export class CRBrowser extends Browser {
       serviceWorker.didClose();
       return;
     }
+    this._session.disposeChildSession(payload.sessionId);
   }
 
   private _didDisconnect() {
