@@ -125,6 +125,7 @@ export type ExpectConfig = {
     scale?: 'css' | 'device';
     stylePath?: string | string[];
     type?: 'png' | 'webp';
+    effort?: number;
     pathTemplate?: string;
     timeout?: number;
     _comparator?: string;

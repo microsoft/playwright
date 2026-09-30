@@ -297,6 +297,9 @@ Snapshot name. Must have a `.png` or `.webp` extension, the screenshot is captur
 ### option: PageAssertions.toHaveScreenshot#1.threshold = %%-assertions-threshold-%%
 * since: v1.23
 
+### option: PageAssertions.toHaveScreenshot#1.effort = %%-screenshot-option-effort-%%
+* since: v1.64
+
 ## async method: PageAssertions.toHaveScreenshot#2
 * since: v1.23
 * langs: js
@@ -355,6 +358,9 @@ Note that screenshot assertions only work with Playwright test runner.
 
 ### option: PageAssertions.toHaveScreenshot#2.threshold = %%-assertions-threshold-%%
 * since: v1.23
+
+### option: PageAssertions.toHaveScreenshot#2.effort = %%-screenshot-option-effort-%%
+* since: v1.64
 
 ## async method: PageAssertions.toHaveTitle
 * since: v1.20

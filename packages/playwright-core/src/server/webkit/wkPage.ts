@@ -873,13 +873,14 @@ export class WKPage implements PageDelegate {
       throw new Error('Cannot take screenshot larger than 32767 pixels on any dimension');
   }
 
-  async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
+  async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device', effort?: number): Promise<Buffer> {
     const rect = (documentRect || viewportRect)!;
     const omitDeviceScaleFactor = scale === 'css';
     this.validateScreenshotDimension(rect.width, omitDeviceScaleFactor);
     this.validateScreenshotDimension(rect.height, omitDeviceScaleFactor);
     // WebKit on macOS has no built-in WebP encoder, so capture a PNG and re-encode it.
-    const recodePngToWebp = format === 'webp' && process.platform === 'darwin';
+    // If effort > 0 is specified, also capture a PNG and recode it in Node, since WebKit's native encoder does not support effort.
+    const recodePngToWebp = format === 'webp' && (process.platform === 'darwin' || (effort !== undefined && effort > 0));
     const result = await progress.race(this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor, format: (recodePngToWebp ? 'png' : format) as 'png' | 'jpeg' | 'webp', quality: recodePngToWebp ? undefined : quality }));
     // Strip the 'data:image/<format>;base64,' prefix.
     const buffer = Buffer.from(result.dataURL.substring(result.dataURL.indexOf(',') + 1), 'base64');
@@ -887,7 +888,7 @@ export class WKPage implements PageDelegate {
       const png = PNG.sync.read(buffer);
       const image = { width: png.width, height: png.height, data: png.data };
       // Match the native WebKit encoder: webp quality 100 (or omitted) is lossless.
-      return (quality === undefined || quality >= 100) ? encodeWebp(image, { lossless: true }) : encodeWebp(image, { quality });
+      return (quality === undefined || quality >= 100) ? encodeWebp(image, { lossless: true, method: effort }) : encodeWebp(image, { quality, method: effort });
     }
     return buffer;
   }

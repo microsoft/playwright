@@ -3378,6 +3378,7 @@ export type ElementHandleQuerySelectorAllResult = {
 export type ElementHandleScreenshotParams = {
   type?: 'png' | 'jpeg' | 'webp',
   quality?: number,
+  effort?: number,
   omitBackground?: boolean,
   caret?: 'hide' | 'initial',
   animations?: 'disabled' | 'allow',
@@ -3392,6 +3393,7 @@ export type ElementHandleScreenshotParams = {
 export type ElementHandleScreenshotOptions = {
   type?: 'png' | 'jpeg' | 'webp',
   quality?: number,
+  effort?: number,
   omitBackground?: boolean,
   caret?: 'hide' | 'initial',
   animations?: 'disabled' | 'allow',
@@ -4272,6 +4274,7 @@ export type PageExpectScreenshotErrorDetails = {
 export type PageScreenshotParams = {
   type?: 'png' | 'jpeg' | 'webp',
   quality?: number,
+  effort?: number,
   fullPage?: boolean,
   clip?: Rect,
   omitBackground?: boolean,
@@ -4288,6 +4291,7 @@ export type PageScreenshotParams = {
 export type PageScreenshotOptions = {
   type?: 'png' | 'jpeg' | 'webp',
   quality?: number,
+  effort?: number,
   fullPage?: boolean,
   clip?: Rect,
   omitBackground?: boolean,

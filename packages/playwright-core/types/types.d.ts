@@ -13662,6 +13662,12 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     caret?: "hide"|"initial";
 
     /**
+     * The compression effort for WebP screenshots, between 0-6. 0 is the fastest, while 6 produces the smallest file
+     * size. Defaults to 0. Only applicable to `webp` images.
+     */
+    effort?: number;
+
+    /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
      * box `#FF00FF` (customized by
      * [`maskColor`](https://playwright.dev/docs/api/class-elementhandle#element-handle-screenshot-option-mask-color))
@@ -26402,6 +26408,12 @@ export interface LocatorScreenshotOptions {
   caret?: "hide"|"initial";
 
   /**
+   * The compression effort for WebP screenshots, between 0-6. 0 is the fastest, while 6 produces the smallest file
+   * size. Defaults to 0. Only applicable to `webp` images.
+   */
+  effort?: number;
+
+  /**
    * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
    * box `#FF00FF` (customized by
    * [`maskColor`](https://playwright.dev/docs/api/class-locator#locator-screenshot-option-mask-color)) that completely
@@ -27155,6 +27167,12 @@ export interface PageScreenshotOptions {
      */
     height: number;
   };
+
+  /**
+   * The compression effort for WebP screenshots, between 0-6. 0 is the fastest, while 6 produces the smallest file
+   * size. Defaults to 0. Only applicable to `webp` images.
+   */
+  effort?: number;
 
   /**
    * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to

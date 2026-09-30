@@ -288,6 +288,11 @@ function validateProject(file: string, project: Project, title: string) {
       throw errorWithFile(file, `${title}.expect.toHaveScreenshot.type must be one of "png" or "webp"`);
   }
 
+  if (project.expect?.toHaveScreenshot?.effort !== undefined) {
+    if (typeof project.expect.toHaveScreenshot.effort !== 'number' || !Number.isInteger(project.expect.toHaveScreenshot.effort) || project.expect.toHaveScreenshot.effort < 0 || project.expect.toHaveScreenshot.effort > 6)
+      throw errorWithFile(file, `${title}.expect.toHaveScreenshot.effort must be an integer between 0 and 6`);
+  }
+
   for (const prop of ['testIgnore', 'testMatch'] as const) {
     if (prop in project && project[prop] !== undefined) {
       const value = project[prop];

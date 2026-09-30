@@ -47,6 +47,23 @@ it.describe('element screenshot', () => {
     expect(webpImage.data.equals(pngImage.data)).toBe(true);
   });
 
+  it('effort option should work for webp', async ({ page, server }) => {
+    await page.setViewportSize({ width: 500, height: 500 });
+    await page.goto(server.PREFIX + '/grid.html');
+    const elementHandle = await page.$('.box:nth-of-type(3)');
+    const screenshotDefault = await elementHandle.screenshot({ type: 'webp' });
+    const screenshotEffort0 = await elementHandle.screenshot({ type: 'webp', effort: 0 });
+    const screenshotEffort6 = await elementHandle.screenshot({ type: 'webp', effort: 6 });
+    expect(screenshotEffort6.length).toBeLessThanOrEqual(screenshotDefault.length);
+    expect(screenshotEffort6.length).toBeLessThanOrEqual(screenshotEffort0.length);
+
+    const image0 = utils.decodeWebp(screenshotEffort0);
+    const image6 = utils.decodeWebp(screenshotEffort6);
+    expect(image0.width).toBe(image6.width);
+    expect(image0.height).toBe(image6.height);
+    expect(image0.data.equals(image6.data)).toBe(true);
+  });
+
   it('should work when main world busts JSON.stringify', async ({ page, server }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');

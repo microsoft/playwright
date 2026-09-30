@@ -69,7 +69,8 @@ emcmake cmake -S "$SRC" -B "$BUILD" \
   -DWEBP_BUILD_CWEBP=OFF -DWEBP_BUILD_DWEBP=OFF -DWEBP_BUILD_GIF2WEBP=OFF \
   -DWEBP_BUILD_IMG2WEBP=OFF -DWEBP_BUILD_VWEBP=OFF -DWEBP_BUILD_WEBPINFO=OFF \
   -DWEBP_BUILD_WEBPMUX=OFF -DWEBP_BUILD_EXTRAS=OFF -DWEBP_BUILD_ANIM_UTILS=OFF
-emmake make -C "$BUILD" webp sharpyuv -j"$(nproc)"
+NPROC="$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)"
+emmake make -C "$BUILD" webp sharpyuv -j"$NPROC"
 
 # --- 4. Link the wrapper into a synchronous CommonJS module ------------------
 # WASM_ASYNC_COMPILATION=0 instantiates the module with `new WebAssembly.Instance`
@@ -120,4 +121,5 @@ EOF
   cat "$(dirname "$(command -v emcc)")/LICENSE"
 } > "$OUT/webp_codec.LICENSE"
 
-echo "Built into $OUT: webp_codec.wasm ($(stat -c%s "$OUT/webp_codec.wasm") bytes), webp_codec.js, webp_codec.LICENSE"
+WASM_SIZE="$(stat -c%s "$OUT/webp_codec.wasm" 2>/dev/null || stat -f%z "$OUT/webp_codec.wasm" 2>/dev/null || wc -c < "$OUT/webp_codec.wasm")"
+echo "Built into $OUT: webp_codec.wasm ($WASM_SIZE bytes), webp_codec.js, webp_codec.LICENSE"

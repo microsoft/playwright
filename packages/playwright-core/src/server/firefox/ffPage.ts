@@ -16,6 +16,8 @@
  */
 
 import { assert } from '@isomorphic/assert';
+import { PNG } from 'pngjs';
+import { encodeWebp } from '@utils/webp/webp';
 import { splitErrorMessage } from '@utils/stackTrace';
 import { eventsHelper } from '@utils/eventsHelper';
 import * as dialog from '../dialog';
@@ -466,7 +468,7 @@ export class FFPage implements PageDelegate {
       throw new Error('Not implemented');
   }
 
-  async takeScreenshot(progress: Progress, format: 'png' | 'jpeg' | 'webp', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
+  async takeScreenshot(progress: Progress, format: 'png' | 'jpeg' | 'webp', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device', effort?: number): Promise<Buffer> {
     if (!documentRect) {
       const scrollOffset = await this._page.mainFrame().waitForFunctionValueInUtility(progress, () => ({ x: window.scrollX, y: window.scrollY }));
       documentRect = {
@@ -476,13 +478,21 @@ export class FFPage implements PageDelegate {
         height: viewportRect!.height,
       };
     }
+    const recodeWebp = format === 'webp' && (effort !== undefined && effort > 0);
+    const ffFormat = recodeWebp ? 'png' : format;
+    const ffQuality = recodeWebp ? undefined : quality;
     const { data } = await progress.race(this._session.send('Page.screenshot', {
-      mimeType: ('image/' + format) as ('image/png' | 'image/jpeg' | 'image/webp'),
+      mimeType: ('image/' + ffFormat) as ('image/png' | 'image/jpeg' | 'image/webp'),
       clip: documentRect,
-      quality,
+      quality: ffQuality,
       omitDeviceScaleFactor: scale === 'css',
     }));
-    return Buffer.from(data, 'base64');
+    const buffer = Buffer.from(data, 'base64');
+    if (recodeWebp) {
+      const png = PNG.sync.read(buffer);
+      return (quality === undefined || quality >= 100) ? encodeWebp(png, { lossless: true, method: effort }) : encodeWebp(png, { quality, method: effort });
+    }
+    return buffer;
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {

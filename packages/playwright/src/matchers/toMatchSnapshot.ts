@@ -22,6 +22,7 @@ import { getMimeTypeForPath } from '@isomorphic/mimeType';
 import { isString } from '@isomorphic/stringUtils';
 import { compareBuffersOrStrings, getComparator } from '@utils/comparators';
 import { addSuffixToFilePath } from '@utils/fileUtils';
+import { decodeWebp, encodeWebp } from '@utils/webp/webp';
 
 import { callLogText, expectTypes, formatMatcherMessage } from './matcherHint';
 import { expectConfig } from './expect';
@@ -42,6 +43,7 @@ type ToHaveScreenshotConfigOptions = ImageComparatorOptions & {
   stylePath?: string | string[];
   timeout?: number;
   _comparator?: string;
+  effort?: number;
 };
 
 type ToHaveScreenshotOptions = ToHaveScreenshotConfigOptions & {
@@ -138,6 +140,11 @@ class SnapshotHelper {
     if (this.options.maxDiffPixelRatio !== undefined && (this.options.maxDiffPixelRatio < 0 || this.options.maxDiffPixelRatio > 1))
       throw new Error('`maxDiffPixelRatio` option value must be between 0 and 1');
 
+    if (this.options.effort !== undefined) {
+      if (typeof this.options.effort !== 'number' || !Number.isInteger(this.options.effort) || this.options.effort < 0 || this.options.effort > 6)
+        throw new Error('`effort` option value must be an integer between 0 and 6');
+    }
+
     this.matcherName = matcherName;
     this.locator = locator;
 
@@ -148,6 +155,14 @@ class SnapshotHelper {
     this.testInfo = testInfo;
     this.state = state;
     this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
+  }
+
+  formatExpectedBuffer(actual: Buffer | string): Buffer | string {
+    if (Buffer.isBuffer(actual) && this.mimeType === 'image/webp' && this.options.effort !== undefined && this.options.effort > 0) {
+      const image = decodeWebp(actual);
+      return encodeWebp(image, { lossless: true, method: this.options.effort });
+    }
+    return actual;
   }
 
   createMatcherResult(message: string, pass: boolean, log?: string[], attachments?: MatcherAttachment[]): MatcherResult<string, string> {
@@ -190,7 +205,7 @@ class SnapshotHelper {
     const attachments: MatcherAttachment[] = [];
     const isWriteMissingMode = this.updateSnapshots !== 'none';
     if (isWriteMissingMode) {
-      writeFileSync(this.expectedPath, actual);
+      writeFileSync(this.expectedPath, this.formatExpectedBuffer(actual));
       attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
     }
     writeFileSync(this.actualPath, actual);
@@ -292,7 +307,7 @@ export function toMatchSnapshot(
   if (helper.updateSnapshots === 'all') {
     if (!compareBuffersOrStrings(received, expected))
       return helper.handleMatching();
-    writeFileSync(helper.expectedPath, received);
+    writeFileSync(helper.expectedPath, helper.formatExpectedBuffer(received));
     /* eslint-disable no-console */
     console.log(helper.expectedPath + ' is not the same, writing actual.');
     return helper.createMatcherResult(helper.expectedPath + ' running with --update-snapshots, writing actual.', true);
@@ -302,7 +317,7 @@ export function toMatchSnapshot(
     const result = helper.comparator(received, expected, helper.options);
     if (!result)
       return helper.handleMatching();
-    writeFileSync(helper.expectedPath, received);
+    writeFileSync(helper.expectedPath, helper.formatExpectedBuffer(received));
     /* eslint-disable no-console */
     console.log(helper.expectedPath + ' does not match, writing actual.');
     return helper.createMatcherResult(helper.expectedPath + ' running with --update-snapshots, writing actual.', true);
@@ -348,6 +363,8 @@ export async function toHaveScreenshot(
   const screenshotType = ({ 'image/png': 'png', 'image/webp': 'webp' } as const)[helper.mimeType];
   if (!screenshotType)
     throw new Error(`Screenshot name "${path.basename(helper.expectedPath)}" must have a '.png' or '.webp' extension`);
+  if (screenshotType !== 'webp' && (optOptions.effort !== undefined || (typeof nameOrOptions === 'object' && !Array.isArray(nameOrOptions) && nameOrOptions.effort !== undefined)))
+    throw new Error('`effort` option is only supported for webp images');
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   const style = await loadScreenshotStyles(helper.options.stylePath);
   const timeout = helper.options.timeout ?? this.timeout;
@@ -417,7 +434,7 @@ export async function toHaveScreenshot(
 
     const { actual, previous, diff, errorMessage, log, timedOut } = await page._expectScreenshot(expectScreenshotOptions);
     const writeFiles = (actualBuffer: Buffer) => {
-      writeFileSync(helper.expectedPath, actualBuffer);
+      writeFileSync(helper.expectedPath, helper.formatExpectedBuffer(actualBuffer));
       writeFileSync(helper.actualPath, actualBuffer);
       /* eslint-disable no-console */
       console.log(helper.expectedPath + ' is re-generated, writing actual.');
@@ -426,7 +443,7 @@ export async function toHaveScreenshot(
 
     if (!errorMessage) {
       // Screenshot is matching, but is not necessarily the same as the expected.
-      if (helper.updateSnapshots === 'all' && actual && compareBuffersOrStrings(actual, expected)) {
+      if (helper.updateSnapshots === 'all' && actual && compareBuffersOrStrings(helper.formatExpectedBuffer(actual), expected)) {
         console.log(helper.expectedPath + ' is re-generated, writing actual.');
         return writeFiles(actual);
       }

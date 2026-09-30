@@ -35,6 +35,7 @@ declare global {
 export type ScreenshotOptions = {
   type?: 'png' | 'jpeg' | 'webp';
   quality?: number;
+  effort?: number;
   omitBackground?: boolean;
   animations?: 'disabled' | 'allow';
   mask?: { frame: Frame, selector: string}[];
@@ -300,7 +301,7 @@ export class Screenshotter {
 
     try {
       const quality = format === 'jpeg' ? options.quality ?? 80 : format === 'webp' ? options.quality ?? 100 : undefined;
-      const buffer = await this._page.delegate.takeScreenshot(progress, format, documentRect, viewportRect, quality, fitsViewport, options.scale || 'device');
+      const buffer = await this._page.delegate.takeScreenshot(progress, format, documentRect, viewportRect, quality, fitsViewport, options.scale || 'device', options.effort);
       await progress.race(cleanupHighlight());
       if (shouldSetDefaultBackground)
         await progress.race(this._page.delegate.setBackgroundColor());
@@ -362,6 +363,12 @@ export function validateScreenshotOptions(options: ScreenshotOptions): 'png' | '
     assert(typeof options.quality === 'number', 'Expected options.quality to be a number but found ' + (typeof options.quality));
     assert(Number.isInteger(options.quality), 'Expected options.quality to be an integer');
     assert(options.quality >= 0 && options.quality <= 100, 'Expected options.quality to be between 0 and 100 (inclusive), got ' + options.quality);
+  }
+  if (options.effort !== undefined) {
+    assert(format === 'webp', 'options.effort is unsupported for the ' + format + ' screenshots');
+    assert(typeof options.effort === 'number', 'Expected options.effort to be a number but found ' + (typeof options.effort));
+    assert(Number.isInteger(options.effort), 'Expected options.effort to be an integer');
+    assert(options.effort >= 0 && options.effort <= 6, 'Expected options.effort to be between 0 and 6 (inclusive), got ' + options.effort);
   }
   if (options.clip) {
     assert(typeof options.clip.x === 'number', 'Expected options.clip.x to be a number but found ' + (typeof options.clip.x));

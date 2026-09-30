@@ -4,6 +4,7 @@
 ../
 ../../generated/
 ./third_party/
+node_modules/pngjs
 
 [bidiOverCdp.ts]
 ***

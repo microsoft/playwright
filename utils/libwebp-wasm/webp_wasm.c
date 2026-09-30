@@ -27,12 +27,13 @@
 //   lossless == 0: lossy, `quality` is the 0..100 quality factor.
 //   lossless != 0: lossless (pixels preserved exactly); `quality` is the 0..100
 //                  compression effort (higher = smaller/slower).
+//   method: 0 (fastest) to 6 (slowest/best compression). Values < 0 use default (0).
 // Returns a pointer to the libwebp-allocated output and writes its byte length
 // to *out_size. Returns NULL (and *out_size == 0) on failure. Free the returned
 // pointer with webp_free().
 EMSCRIPTEN_KEEPALIVE
 uint8_t* webp_encode_rgba(const uint8_t* rgba, int width, int height,
-                          float quality, int lossless, size_t* out_size) {
+                          float quality, int lossless, int method, size_t* out_size) {
   *out_size = 0;
 
   WebPConfig config;
@@ -40,6 +41,7 @@ uint8_t* webp_encode_rgba(const uint8_t* rgba, int width, int height,
     return NULL;
   config.lossless = lossless ? 1 : 0;
   config.quality = quality;
+  config.method = (method >= 0 && method <= 6) ? method : 0;
   if (!WebPValidateConfig(&config))
     return NULL;
 

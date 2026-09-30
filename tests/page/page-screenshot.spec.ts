@@ -339,6 +339,53 @@ it.describe('page screenshot', () => {
     expect(error.message).toContain('Expected options.quality to be between 0 and 100');
   });
 
+  it('effort option should work for webp', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/grid.html');
+    const lowEffort = await page.screenshot({ type: 'webp', effort: 0 });
+    const highEffort = await page.screenshot({ type: 'webp', effort: 6 });
+    expect(highEffort.byteLength).toBeLessThanOrEqual(lowEffort.byteLength);
+    const lowImg = utils.decodeWebp(lowEffort);
+    const highImg = utils.decodeWebp(highEffort);
+    expect(lowImg.width).toBe(highImg.width);
+    expect(lowImg.height).toBe(highImg.height);
+    expect(lowImg.data.equals(highImg.data)).toBe(true);
+  });
+
+  it('effort option should throw for webp when out of range', async ({ page }) => {
+    const errorHigh = await page.screenshot({ type: 'webp', effort: 7 }).catch(e => e);
+    expect(errorHigh.message).toContain('Expected options.effort to be between 0 and 6');
+    const errorLow = await page.screenshot({ type: 'webp', effort: -1 }).catch(e => e);
+    expect(errorLow.message).toContain('Expected options.effort to be between 0 and 6');
+  });
+
+  it('effort option should throw when used with non-webp type', async ({ page }) => {
+    const errorPng = await page.screenshot({ type: 'png', effort: 4 } as any).catch(e => e);
+    expect(errorPng.message).toContain('options.effort is unsupported for the png screenshots');
+  });
+
+  it('encodeWebp should respect method option and default to 0', () => {
+    const width = 100;
+    const height = 100;
+    const data = Buffer.alloc(width * height * 4);
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = (y * width + x) * 4;
+        data[idx] = x * 2;
+        data[idx + 1] = y * 2;
+        data[idx + 2] = (x + y);
+        data[idx + 3] = 255;
+      }
+    }
+    const img = { data, width, height };
+    const webpDefault = utils.encodeWebp(img, { lossless: true });
+    const webp0 = utils.encodeWebp(img, { lossless: true, method: 0 });
+    const webp6 = utils.encodeWebp(img, { lossless: true, method: 6 });
+    expect(webpDefault.byteLength).toBe(webp0.byteLength);
+    expect(webp6.byteLength).toBeLessThan(webp0.byteLength);
+    expect(utils.decodeWebp(webp0).data.equals(data)).toBe(true);
+    expect(utils.decodeWebp(webp6).data.equals(data)).toBe(true);
+  });
+
   it('should work with odd clip size on Retina displays', async ({ page, isElectron }) => {
     it.skip(isElectron, 'electron does not set device scale factor to 1');
 

@@ -473,6 +473,7 @@ ElementHandle:
           - jpeg
           - webp
         quality: int?
+        effort: int?
         $mixin: CommonScreenshotOptions
       returns:
         binary: binary

@@ -279,6 +279,12 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
       type?: "png"|"webp";
 
       /**
+       * The compression effort for WebP screenshots, ranging from 0 (fastest) to 6 (slowest/best compression). Defaults to
+       * 0.
+       */
+      effort?: number;
+
+      /**
        * A template controlling location of the screenshots. See
        * [testProject.snapshotPathTemplate](https://playwright.dev/docs/api/class-testproject#test-project-snapshot-path-template)
        * for details.
@@ -1232,6 +1238,12 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
        * name use the format matching their `.png` or `.webp` extension.
        */
       type?: "png"|"webp";
+
+      /**
+       * The compression effort for WebP screenshots, ranging from 0 (fastest) to 6 (slowest/best compression). Defaults to
+       * 0.
+       */
+      effort?: number;
 
       /**
        * A template controlling location of the screenshots. See
@@ -9980,6 +9992,12 @@ interface LocatorAssertions {
     caret?: "hide"|"initial";
 
     /**
+     * The compression effort for WebP screenshots, between 0-6. 0 is the fastest, while 6 produces the smallest file
+     * size. Defaults to 0. Only applicable to `webp` images.
+     */
+    effort?: number;
+
+    /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
      * box `#FF00FF` (customized by
      * [`maskColor`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-screenshot-1-option-mask-color))
@@ -10084,6 +10102,12 @@ interface LocatorAssertions {
      * changed.  Defaults to `"hide"`.
      */
     caret?: "hide"|"initial";
+
+    /**
+     * The compression effort for WebP screenshots, between 0-6. 0 is the fastest, while 6 produces the smallest file
+     * size. Defaults to 0. Only applicable to `webp` images.
+     */
+    effort?: number;
 
     /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
@@ -11005,6 +11029,12 @@ export interface PageAssertionsToHaveScreenshotOptions {
      */
     height: number;
   };
+
+  /**
+   * The compression effort for WebP screenshots, between 0-6. 0 is the fastest, while 6 produces the smallest file
+   * size. Defaults to 0. Only applicable to `webp` images.
+   */
+  effort?: number;
 
   /**
    * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to

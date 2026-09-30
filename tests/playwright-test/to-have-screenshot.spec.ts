@@ -741,6 +741,108 @@ test('should fail on unsupported configured type', async ({ runInlineTest }) => 
   expect(result.output).toContain(`config.expect.toHaveScreenshot.type must be one of "png" or "webp"`);
 });
 
+test('should fail on invalid configured effort', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      expect: {
+        toHaveScreenshot: {
+          effort: 10,
+        },
+      },
+    }),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.webp');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`config.expect.toHaveScreenshot.effort must be an integer between 0 and 6`);
+});
+
+test('should fail when effort is used with png', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({}),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png', { effort: 4 });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('`effort` option is only supported for webp images');
+});
+
+test('should fail when effort is out of range', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({}),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.webp', { effort: 8 });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('`effort` option value must be an integer between 0 and 6');
+});
+
+test('should write webp expectation with configured effort and match on subsequent runs', async ({ runInlineTest }, testInfo) => {
+  const result1 = await runInlineTest({
+    ...playwrightConfig({
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.webp', { effort: 6 });
+      });
+    `
+  });
+  expect(result1.exitCode).toBe(1);
+  const snapshotOutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot.webp');
+  expect(result1.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, writing actual`);
+  expect(fs.existsSync(snapshotOutputPath)).toBe(true);
+
+  // Subsequent run without effort option should match the baseline (which was saved with effort 6).
+  const result2 = await runInlineTest({
+    ...playwrightConfig({
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.webp');
+      });
+    `
+  });
+  expect(result2.exitCode).toBe(0);
+});
+
+test('should update webp snapshot with effort on update-snapshots', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    '__screenshots__/a.spec.js/snapshot.webp': createWebpImage(IMG_WIDTH, IMG_HEIGHT, 255, 0, 0),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.webp', { effort: 6 });
+      });
+    `
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(0);
+  const snapshotOutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot.webp');
+  expect(result.output).toContain(`${snapshotOutputPath} is re-generated, writing actual.`);
+  const image = utils.decodeWebp(fs.readFileSync(snapshotOutputPath));
+  expect(image.width).toBe(IMG_WIDTH);
+  expect(image.height).toBe(IMG_HEIGHT);
+  expect([...image.data.subarray(0, 4)]).toEqual([255, 255, 255, 255]);
+});
+
 test('should fail when given buffer', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...playwrightConfig({}),

@@ -776,7 +776,7 @@ export class WVPage implements PageDelegate {
       throw new Error('Cannot take screenshot larger than 32767 pixels on any dimension');
   }
 
-  async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
+  async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device', effort?: number): Promise<Buffer> {
     const rect = (documentRect || viewportRect)!;
     const omitDeviceScaleFactor = scale === 'css';
     if (omitDeviceScaleFactor)
@@ -791,7 +791,7 @@ export class WVPage implements PageDelegate {
     } else if (format === 'webp') {
       const png = PNG.sync.read(buffer);
       // Match the native WebKit encoder: webp quality 100 (or omitted) is lossless.
-      buffer = (quality === undefined || quality >= 100) ? encodeWebp(png, { lossless: true }) : encodeWebp(png, { quality });
+      buffer = (quality === undefined || quality >= 100) ? encodeWebp(png, { lossless: true, method: effort }) : encodeWebp(png, { quality, method: effort });
     }
     return buffer;
   }

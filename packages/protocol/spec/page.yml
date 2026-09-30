@@ -225,6 +225,7 @@ Page:
           - jpeg
           - webp
         quality: int?
+        effort: int?
         fullPage: boolean?
         clip: Rect?
         $mixin: CommonScreenshotOptions

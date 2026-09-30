@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { PNG } from 'pngjs';
+import { encodeWebp } from '@utils/webp/webp';
 import { debugLogger } from '@utils/debugLogger';
 import { eventsHelper } from '@utils/eventsHelper';
 import { monotonicTime } from '@isomorphic/time';
@@ -508,13 +510,16 @@ export class BidiPage implements PageDelegate {
       throw new Error('Not implemented');
   }
 
-  async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
+  async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device', effort?: number): Promise<Buffer> {
     const rect = (documentRect || viewportRect)!;
+    const recodeWebp = format === 'webp' && (effort !== undefined && effort > 0);
+    const bidiFormat = recodeWebp ? 'png' : format;
+    const bidiQuality = recodeWebp ? undefined : (quality !== undefined ? quality / 100 : undefined);
     const { data } = await progress.race(this._session.send('browsingContext.captureScreenshot', {
       context: this._session.sessionId,
       format: {
-        type: `image/${format === 'png' || format === 'webp' ? format : 'jpeg'}`,
-        quality: quality !== undefined ? quality / 100 : undefined,
+        type: `image/${bidiFormat === 'png' || bidiFormat === 'webp' ? bidiFormat : 'jpeg'}`,
+        quality: bidiQuality,
       },
       origin: documentRect ? 'document' : 'viewport',
       clip: {
@@ -522,7 +527,12 @@ export class BidiPage implements PageDelegate {
         ...rect,
       }
     }));
-    return Buffer.from(data, 'base64');
+    const buffer = Buffer.from(data, 'base64');
+    if (recodeWebp) {
+      const png = PNG.sync.read(buffer);
+      return (quality === undefined || quality >= 100) ? encodeWebp(png, { lossless: true, method: effort }) : encodeWebp(png, { quality, method: effort });
+    }
+    return buffer;
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {

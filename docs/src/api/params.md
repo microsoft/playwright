@@ -1352,6 +1352,12 @@ Defaults to `false`.
 The quality of the image, between 0-100. Not applicable to `png` images. For `jpeg` the default is `80`.
 For `webp`, a quality of `100` (the default) produces a lossless image, while lower values use lossy compression.
 
+## screenshot-option-effort
+* since: v1.64
+- `effort` <[int]>
+
+The compression effort for WebP screenshots, between 0-6. 0 is the fastest, while 6 produces the smallest file size. Defaults to 0. Only applicable to `webp` images.
+
 ## screenshot-option-path
 - `path` <[path]>
 
@@ -1428,6 +1434,7 @@ File name containing the stylesheet to apply while making the screenshot. This i
 - %%-screenshot-option-animations-%%
 - %%-screenshot-option-omit-background-%%
 - %%-screenshot-option-quality-%%
+- %%-screenshot-option-effort-%%
 - %%-screenshot-option-path-%%
 - %%-screenshot-option-scale-%%
 - %%-screenshot-option-caret-%%

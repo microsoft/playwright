@@ -30,7 +30,7 @@ type WebpModule = {
   _malloc(size: number): number;
   _free(ptr: number): void;
   _webp_free(ptr: number): void;
-  _webp_encode_rgba(rgba: number, width: number, height: number, quality: number, lossless: number, outSize: number): number;
+  _webp_encode_rgba(rgba: number, width: number, height: number, quality: number, lossless: number, method: number, outSize: number): number;
   _webp_decode_rgba(data: number, size: number, widthPtr: number, heightPtr: number): number;
   HEAPU8: Uint8Array;
   HEAPU32: Uint32Array;
@@ -52,15 +52,22 @@ function webpModule(): WebpModule {
   return module;
 }
 
-export function encodeWebp(image: WebpImage, options: { quality?: number, lossless?: boolean } = {}): Buffer {
+export type WebpEncodeOptions = {
+  quality?: number;
+  lossless?: boolean;
+  method?: number;
+};
+
+export function encodeWebp(image: WebpImage, options: WebpEncodeOptions = {}): Buffer {
   // For lossy, `quality` is the 0..100 quality factor; for lossless it is the
   // 0..100 compression effort (higher = smaller/slower).
-  const { quality = 75, lossless = false } = options;
+  // `method` is the 0..6 speed/quality trade-off (higher = smaller/slower). Defaults to 0 (fastest).
+  const { quality = 75, lossless = false, method = 0 } = options;
   const m = webpModule();
   const inPtr = m._malloc(image.data.length);
   m.HEAPU8.set(image.data, inPtr);
   const sizePtr = m._malloc(4);
-  const outPtr = m._webp_encode_rgba(inPtr, image.width, image.height, quality, lossless ? 1 : 0, sizePtr);
+  const outPtr = m._webp_encode_rgba(inPtr, image.width, image.height, quality, lossless ? 1 : 0, method, sizePtr);
   const size = m.HEAPU32[sizePtr >> 2];
   let out: Buffer | undefined;
   if (outPtr && size) {
