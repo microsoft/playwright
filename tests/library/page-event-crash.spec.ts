@@ -99,12 +99,19 @@ test('should be able to close context when page crashes', async ({ isAndroid, pa
   await page.context().close();
 });
 
-test('should be able to close page after crash', async ({ page, crash }) => {
+test('should be able to close page after crash', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42956' },
+}, async ({ page, crash }) => {
   await page.setContent(`<div>This page should crash</div>`);
   crash();
   await page.waitForEvent('crash');
+  // Give the browser a chance to erroneously "close" the crashed page.
+  await new Promise(f => setTimeout(f, 3000));
+  expect(page.isClosed()).toBe(false);
+  expect(page.context().pages()).toEqual([page]);
   await page.close();
   expect(page.isClosed()).toBe(true);
+  expect(page.context().pages()).toEqual([]);
 });
 
 test.fixme('should reject in-flight worker.evaluate when page crashes', async ({ page, crash, server }) => {
