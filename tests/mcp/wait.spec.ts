@@ -134,3 +134,29 @@ test('browser_wait_for(time) reports capped time', async ({ client, server }) =>
     code: `await new Promise(f => setTimeout(f, 30 * 1000));`,
   });
 });
+
+test('wait_for textGone timeout option parameter', async ({ startClient, server }) => {
+  const { client } = await startClient({ args: [`--timeout-action=1234`] });
+  server.setContent('/', `
+    <!DOCTYPE html>
+    <html>
+      <div>Permanent text</div>
+    </html>
+  `, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      text: 'this will never appear',
+      timeout: 3
+    },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_wait_for',
+    arguments: { textGone: 'Permanent text' },
+  })).toHaveResponse({
+    error: expect.stringContaining(`Timeout 3000ms exceeded.`),
+    isError: true,
+  });
+});

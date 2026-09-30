@@ -22,6 +22,7 @@ export type ToolSchema<Input extends z.Schema> = {
   name: string;
   title: string;
   description: string;
+  timeout: number;
   inputSchema: Input;
   type: 'input' | 'assertion' | 'action' | 'readOnly';
 };

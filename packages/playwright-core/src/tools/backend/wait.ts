@@ -30,6 +30,7 @@ const wait = defineTool({
       time: z.number().optional().describe(`The time to wait in seconds, at most ${maxWaitSeconds}`),
       text: z.string().optional().describe('The text to wait for'),
       textGone: z.string().optional().describe('The text to wait for to disappear'),
+      timeout: z.number().optional().describe(`Maximum time to wait for text/textGone in seconds, at most ${maxWaitSeconds}. Defaults to the action timeout.`),
     }),
     type: 'assertion',
   },
@@ -45,17 +46,19 @@ const wait = defineTool({
     }
 
     const tab = context.currentTabOrDie();
+    const timeout = params.timeout ? { timeout: Math.min(maxWaitSeconds, params.timeout) * 1000 } : tab.actionTimeoutOptions;
+
     const locator = params.text ? tab.page.getByText(params.text).first() : undefined;
     const goneLocator = params.textGone ? tab.page.getByText(params.textGone).first() : undefined;
 
     if (goneLocator) {
       response.addCode(`await page.getByText(${JSON.stringify(params.textGone)}).first().waitFor({ state: 'hidden' });`);
-      await goneLocator.waitFor({ state: 'hidden', ...tab.actionTimeoutOptions });
+      await goneLocator.waitFor({ state: 'hidden', ...timeout });
     }
 
     if (locator) {
       response.addCode(`await page.getByText(${JSON.stringify(params.text)}).first().waitFor({ state: 'visible' });`);
-      await locator.waitFor({ state: 'visible', ...tab.actionTimeoutOptions });
+      await locator.waitFor({ state: 'visible', ...timeout });
     }
 
     if (params.text || params.textGone)
