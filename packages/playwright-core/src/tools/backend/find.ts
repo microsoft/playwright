@@ -30,6 +30,7 @@ const find = defineTabTool({
     inputSchema: z.object({
       text: z.string().optional().describe('Plain text to search for in the page snapshot (case-insensitive substring match). Provide either text or regex, not both.'),
       regex: z.string().optional().refine(v => !v || isValidRegex(v), { message: 'Invalid regular expression' }).describe('Regular expression to search for in the page snapshot. Matching is case-sensitive by default; wrap the pattern in slashes to add flags, e.g. "/error/i" for case-insensitive. Provide either text or regex, not both.'),
+      maxResults: z.number().optional().describe('Maximum number of matching items to return. Defaults to returning all matches.'),
       filename: z.string().optional().describe('Save results to a file instead of returning them in the response. Relative file names are resolved against the workspace root.'),
     }),
     type: 'readOnly',
@@ -42,6 +43,10 @@ const find = defineTabTool({
     }
     if (params.text && params.regex) {
       response.addError('Provide only one of "text" or "regex", not both.');
+      return;
+    }
+    if (params.maxResults !== undefined && (!Number.isInteger(params.maxResults) || params.maxResults <= 0)) {
+      response.addError('"maxResults" must be a positive integer.');
       return;
     }
 
@@ -74,9 +79,14 @@ const find = defineTabTool({
       return;
     }
 
+    const totalMatches = matchedLines.length;
+    const matchesToRender = params.maxResults !== undefined && params.maxResults < totalMatches
+      ? matchedLines.slice(0, params.maxResults)
+      : matchedLines;
+
     // Merge matched lines into windows of context, coalescing overlapping ones.
     const windows: { start: number, end: number }[] = [];
-    for (const line of matchedLines) {
+    for (const line of matchesToRender) {
       const start = Math.max(0, line - contextLines);
       const end = Math.min(lines.length - 1, line + contextLines);
       const last = windows[windows.length - 1];
@@ -87,7 +97,7 @@ const find = defineTabTool({
     }
 
     const path = new Set<number>();
-    for (const match of matchedLines) {
+    for (const match of matchesToRender) {
       path.add(match);
       for (const ancestor of ancestorIndices(lines, indents, match))
         path.add(ancestor);
@@ -106,8 +116,11 @@ const find = defineTabTool({
       }
       return out.join('\n');
     });
-    const matchWord = matchedLines.length === 1 ? 'match' : 'matches';
-    await response.addResult('Find results', `Found ${matchedLines.length} ${matchWord} for ${query}:\n\n${snippets.join('\n\n----\n\n')}`, { prefix: 'find', ext: 'md', suggestedFilename: params.filename });
+    const matchWord = totalMatches === 1 ? 'match' : 'matches';
+    const header = matchesToRender.length < totalMatches
+      ? `Found ${totalMatches} ${matchWord} for ${query} (showing first ${matchesToRender.length}):`
+      : `Found ${totalMatches} ${matchWord} for ${query}:`;
+    await response.addResult('Find results', `${header}\n\n${snippets.join('\n\n----\n\n')}`, { prefix: 'find', ext: 'md', suggestedFilename: params.filename });
   },
 });
 
