@@ -150,7 +150,7 @@ export class Screencast implements InstrumentationListener {
       };
     }
 
-    // Make sure both dimensions are odd, this is required for vp8
+    // Make sure both dimensions are even, this is required for vp9
     this._size = {
       width: this._size.width & ~1,
       height: this._size.height & ~1
