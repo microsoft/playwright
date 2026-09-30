@@ -91,7 +91,10 @@ playwright-cli mousedown
 playwright-cli mousedown right
 playwright-cli mouseup
 playwright-cli mouseup right
+# scroll by <dx> <dy> pixels, negative dy scrolls up
+# the element under the mouse pointer scrolls, so mousemove over it first
 playwright-cli mousewheel 0 100
+playwright-cli mousewheel 0 -100
 ```
 
 ### Save as
