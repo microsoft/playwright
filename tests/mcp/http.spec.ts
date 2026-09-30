@@ -772,6 +772,15 @@ test('should allow only loopback hosts by default when bound to all interfaces',
   expect(response.text).toContain('Access is only allowed at localhost');
 });
 
+test('should allow the bound host by default', async ({ serverEndpoint }) => {
+  test.skip(process.platform !== 'linux', 'Only Linux routes all of 127.0.0.0/8 to loopback');
+  const { url } = await serverEndpoint({ args: ['--host=127.0.0.2'] });
+  expect(url.hostname).toBe('127.0.0.2');
+  const response = await fetch(url.href);
+  // 400 is expected for the mcp fetch.
+  expect(response.status).toBe(400);
+});
+
 test('should allow any host when bound to all interfaces with allowed hosts', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42952' } }, async ({ serverEndpoint }) => {
   const { url } = await serverEndpoint({ args: ['--host=0.0.0.0', '--allowed-hosts=*'] });
   const response = await requestWithHost(url, `some-container:${url.port}`);

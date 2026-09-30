@@ -48,8 +48,8 @@ export async function startMcpHttpServer(
   const bindHost = config.host;
   const host = !bindHost || bindHost === '0.0.0.0' || bindHost === '::' ? 'localhost' : net.isIPv6(bindHost) ? `[${bindHost}]` : bindHost;
   const url = `http://${host}:${address.port}`;
-  // Loopback names cannot be rebound, so they are safe to allow for any bind address.
-  allowedHosts = allowedHosts?.map(h => h.toLowerCase()) ?? [`localhost:${address.port}`, `127.0.0.1:${address.port}`, `[::1]:${address.port}`];
+  // Loopback names cannot be rebound, so they are safe to allow for any bind address. The host passed via --host is chosen by the user.
+  allowedHosts = allowedHosts?.map(h => h.toLowerCase()) ?? [...new Set([`localhost:${address.port}`, `127.0.0.1:${address.port}`, `[::1]:${address.port}`, new URL(url).host])];
   installHttpTransport(httpServer, serverBackendFactory, allowedHosts);
   return url;
 }
