@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as zlib from 'zlib';
@@ -214,6 +215,25 @@ test('should report step params', async ({ runInlineTest }, testInfo) => {
   expect(findSlice(events, `Expect "toBeVisible" getByRole('button')`)!.args.params).toEqual({ locator: `getByRole('button')` });
   expect(findSlice(events, 'my step')!.args.params).toEqual({ foo: 'bar', count: 7 });
 });
+
+for (const fileName of ['trace.json', 'trace.json.gz']) {
+  test(`should fail when ${fileName} output is a directory`, async ({ runInlineTest }, testInfo) => {
+    const outputFile = testInfo.outputPath(fileName);
+    await fs.promises.mkdir(outputFile);
+    const result = await runInlineTest({
+      'playwright.config.ts': `
+        module.exports = { reporter: [['perfetto', { outputFile: ${JSON.stringify(outputFile)} }]] };
+      `,
+      'a.test.ts': `
+        import { test } from '@playwright/test';
+        test('one', async () => {
+          test.info().annotations.push({ type: 'blob', description: ${JSON.stringify(crypto.randomBytes(256 * 1024).toString('base64'))} });
+        });
+      `,
+    });
+    expect(result.exitCode).not.toBe(0);
+  });
+}
 
 test('should respect outputFile option', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
