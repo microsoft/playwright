@@ -23,7 +23,6 @@ import debug from 'debug';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isUnderTest } from '@utils/debug';
-import { urlHostFromAddress } from '@utils/httpServer';
 import { createHttpServer, startHttpServer } from '@utils/network';
 import { ManualPromise } from '@isomorphic/manualPromise';
 
@@ -42,40 +41,29 @@ export async function startMcpHttpServer(
 ): Promise<string> {
   const httpServer = createHttpServer();
   await startHttpServer(httpServer, config);
-  return await installHttpTransport(httpServer, serverBackendFactory, allowedHosts);
-}
-
-export function addressToString(address: string | net.AddressInfo | null, options: {
-  protocol: 'http' | 'ws';
-  normalizeLoopback?: boolean;
-}): string {
+  const address = httpServer.address();
   assert(address, 'Could not bind server socket');
   if (typeof address === 'string')
     throw new Error('Unexpected address type: ' + address);
-  let host = urlHostFromAddress(address);
-  if (options.normalizeLoopback && (host === '0.0.0.0' || host === '[::]' || host === '[::1]' || host === '127.0.0.1'))
-    host = 'localhost';
-  return `${options.protocol}://${host}:${address.port}`;
+  const bindHost = config.host;
+  const host = !bindHost || bindHost === '0.0.0.0' || bindHost === '::' ? 'localhost' : net.isIPv6(bindHost) ? `[${bindHost}]` : bindHost;
+  const url = `http://${host}:${address.port}`;
+  // Loopback names cannot be rebound, so they are safe to allow for any bind address. The host passed via --host is chosen by the user.
+  allowedHosts = allowedHosts?.map(h => h.toLowerCase()) ?? [...new Set([`localhost:${address.port}`, `127.0.0.1:${address.port}`, `[::1]:${address.port}`, new URL(url).host])];
+  installHttpTransport(httpServer, serverBackendFactory, allowedHosts);
+  return url;
 }
 
-async function installHttpTransport(httpServer: http.Server, serverBackendFactory: ServerBackendFactory, allowedHosts?: string[]) {
-  const url = addressToString(httpServer.address(), { protocol: 'http', normalizeLoopback: true });
-  const host = new URL(url).host;
-  allowedHosts = (allowedHosts || [host]).map(h => h.toLowerCase());
+function installHttpTransport(httpServer: http.Server, serverBackendFactory: ServerBackendFactory, allowedHosts: string[]) {
   const allowAnyHost = allowedHosts.includes('*');
 
   const sseSessions = new Map();
   const streamableSessions = new Map();
   httpServer.on('request', async (req, res) => {
     if (!allowAnyHost) {
+      // Prevent DNS evil.com -> localhost rebind. Browsers always send Host, requests without it are not affected.
       const host = req.headers.host?.toLowerCase();
-      if (!host) {
-        res.statusCode = 400;
-        return res.end('Missing host');
-      }
-
-      // Prevent DNS evil.com -> localhost rebind.
-      if (!allowedHosts.includes(host)) {
+      if (host && !allowedHosts.includes(host)) {
         // Access from the browser is forbidden.
         res.statusCode = 403;
         return res.end('Access is only allowed at ' + allowedHosts.join(', '));
@@ -95,8 +83,6 @@ async function installHttpTransport(httpServer: http.Server, serverBackendFactor
     else
       await handleStreamable(serverBackendFactory, req, res, streamableSessions);
   });
-
-  return url;
 }
 
 async function handleSSE(serverBackendFactory: ServerBackendFactory, req: http.IncomingMessage, res: http.ServerResponse, url: URL, sessions: Map<string, SSEServerTransportType>) {

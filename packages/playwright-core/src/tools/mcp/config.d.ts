@@ -121,7 +121,7 @@ export type Config = {
     host?: string;
 
     /**
-     * The hosts this server is allowed to serve from. Defaults to the host server is bound to.
+     * The hosts this server is allowed to serve from. Defaults to localhost, loopback IPs and the host passed via --host; other hosts must be listed explicitly.
      * This is not for CORS, but rather for the DNS rebinding protection.
      */
     allowedHosts?: string[];
