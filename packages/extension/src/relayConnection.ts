@@ -117,9 +117,7 @@ export class RelayConnection {
   detachTab(tabId: number): void {
     if (this._closed || !this._attachedTabs.has(tabId))
       return;
-    chrome.debugger.detach({ tabId }).catch(error => {
-      debugLog('Error detaching tab:', error);
-    });
+    detachDebugger(tabId);
     this._notifyTabDetached(tabId);
     this._sendMessage({
       method: 'chrome.debugger.onDetach',
@@ -161,7 +159,7 @@ export class RelayConnection {
       l.remove();
     this._eventListeners = [];
     for (const tabId of [...this._attachedTabs]) {
-      chrome.debugger.detach({ tabId }).catch(() => {});
+      detachDebugger(tabId);
       this._notifyTabDetached(tabId);
     }
     this.onclose?.();
@@ -286,8 +284,13 @@ export class RelayConnection {
     // Attach bookkeeping; detach flows through the chrome.debugger.onDetach event.
     if (message.method === 'chrome.debugger.attach') {
       const target = args[0] as chrome.debugger.Debuggee | undefined;
-      if (target?.tabId !== undefined)
-        this._notifyTabAttached(target.tabId);
+      if (target?.tabId !== undefined) {
+        // The connection may have closed while the attach was pending.
+        if (this._closed)
+          detachDebugger(target.tabId);
+        else
+          this._notifyTabAttached(target.tabId);
+      }
     }
     return result ?? {};
   }
@@ -322,6 +325,12 @@ function resolveChromeMember(fullMethod: string): { obj: any; name: string } {
       throw new Error(`Unknown chrome path: ${parts.slice(0, i + 1).join('.')}, calling ${fullMethod}`);
   }
   return { obj, name: parts[parts.length - 1] };
+}
+
+function detachDebugger(tabId: number): void {
+  chrome.debugger.detach({ tabId }).catch(error => {
+    debugLog('Error detaching tab:', error);
+  });
 }
 
 async function invokeChromeMethod(fullMethod: string, args: any[]): Promise<any> {
