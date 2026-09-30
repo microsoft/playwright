@@ -9,7 +9,6 @@ env:
 jobs:
   test_linux_docker:
     name: "Docker ${{ matrix.docker_tag }} ${{ matrix.docker_arch }}"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
       matrix:
@@ -34,7 +33,6 @@ jobs:
           host_os: ubuntu-22.04-arm
     runs-on: ${{ matrix.host_os }}
     permissions:
-      id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -45,21 +43,6 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm ci
     - run: npm run build
-    # Used as a Pull-through cache for the Docker images. Only available on the
-    # main repo, where the secrets are present; forks fall back to Docker Hub.
-    - name: Azure Login
-      if: ${{ github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
-      with:
-        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-    - name: Login to ACR via OIDC
-      if: ${{ github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      run: az acr login --name playwright
-    - name: Add Dockerfile cache
-      if: ${{ github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
-      run: sed -i 's/FROM ubuntu/FROM playwright.azurecr.io\/cached\/ubuntu/' utils/docker/Dockerfile.${{matrix.docker_tag}}
     - run: ./utils/docker/build.sh --${{ matrix.docker_arch }} ${{ matrix.docker_tag }} playwright:localbuild
       shell: bash
     - name: Launch container
