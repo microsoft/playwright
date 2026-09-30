@@ -281,13 +281,21 @@ export class RelayConnection {
   private async _handleCommand(message: ProtocolCommand): Promise<any> {
     if (!ALLOWED_CHROME_COMMANDS.has(message.method))
       throw new Error(`Unknown method: ${message.method}`);
+    if (this._closed)
+      throw new Error('Connection closed');
     const args = (message.params ?? []) as any[];
     const result = await invokeChromeMethod(message.method, args);
     // Attach bookkeeping; detach flows through the chrome.debugger.onDetach event.
     if (message.method === 'chrome.debugger.attach') {
       const target = args[0] as chrome.debugger.Debuggee | undefined;
-      if (target?.tabId !== undefined)
+      if (target?.tabId !== undefined) {
+        // The connection may have closed while the attach was pending.
+        if (this._closed) {
+          await chrome.debugger.detach({ tabId: target.tabId }).catch(() => {});
+          throw new Error('Connection closed');
+        }
         this._notifyTabAttached(target.tabId);
+      }
     }
     return result ?? {};
   }
