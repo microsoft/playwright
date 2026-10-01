@@ -145,7 +145,6 @@ export class TargetRegistry {
         if (!target)
           return;
         target.emit(PageTarget.Events.Crashed);
-        target.dispose();
       }
     }, 'oop-frameloader-crashed');
 
