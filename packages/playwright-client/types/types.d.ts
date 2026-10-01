@@ -10728,8 +10728,8 @@ export interface BrowserContext {
     /**
      * Set to `true` to include the context's virtual WebAuthn
      * [browserContext.credentials](https://playwright.dev/docs/api/class-browsercontext#browser-context-credentials)
-     * (passkeys) in the storage state snapshot. The captured credentials carry their private keys, so they can be
-     * re-seeded into a later context via the
+     * (passkeys) in the storage state snapshot. The captured credentials carry their private keys and signature counters,
+     * so they can be re-seeded into a later context via the
      * [`storageState`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-storage-state) option or
      * [browserContext.setStorageState(storageState)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-storage-state).
      * Note that restoring the storage state that contains credentials will automatically install the virtual WebAuthn
@@ -21128,6 +21128,8 @@ export interface Credentials {
    * [`userHandle`](https://playwright.dev/docs/api/class-credentials#credentials-create-option-user-handle),
    * [`privateKey`](https://playwright.dev/docs/api/class-credentials#credentials-create-option-private-key) and
    * [`publicKey`](https://playwright.dev/docs/api/class-credentials#credentials-create-option-public-key) together.
+   * Pass [`signCount`](https://playwright.dev/docs/api/class-credentials#credentials-create-option-sign-count) as well
+   * to continue from the signature counter the relying party has already seen.
    *
    * Call [credentials.install()](https://playwright.dev/docs/api/class-credentials#credentials-install) before
    * navigating to a page that uses WebAuthn.
@@ -21149,6 +21151,13 @@ export interface Credentials {
      * Base64url-encoded SPKI (DER) public key. Auto-generated if omitted.
      */
     publicKey?: string;
+
+    /**
+     * Initial value of the [signature counter](https://www.w3.org/TR/webauthn-2/#signature-counter). The counter is
+     * incremented by one on every successful `navigator.credentials.get()` assertion, so the first assertion reports
+     * `signCount + 1`. Defaults to `0`.
+     */
+    signCount?: number;
 
     /**
      * Base64url-encoded user handle. Auto-generated if omitted.
@@ -21179,6 +21188,11 @@ export interface Credentials {
      * Base64url-encoded SPKI (DER) public key.
      */
     publicKey: string;
+
+    /**
+     * Signature counter, the value reported to the relying party in the most recent assertion.
+     */
+    signCount: number;
   }>;
 
   /**
@@ -21197,8 +21211,8 @@ export interface Credentials {
    * [credentials.create(rpId[, options])](https://playwright.dev/docs/api/class-credentials#credentials-create) and
    * credentials the page registered itself by calling `navigator.credentials.create()`.
    *
-   * Each returned credential includes its private and public keys, so a passkey the app just registered can be saved
-   * and re-seeded into a later test with
+   * Each returned credential includes its private and public keys and the current signature counter, so a passkey the
+   * app just registered can be saved and re-seeded into a later test with
    * [credentials.create(rpId[, options])](https://playwright.dev/docs/api/class-credentials#credentials-create) — see
    * the second example in the class overview.
    * @param options
@@ -21223,6 +21237,8 @@ export interface Credentials {
     privateKey: string;
 
     publicKey: string;
+
+    signCount: number;
   }>>;
 
   /**

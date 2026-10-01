@@ -78,7 +78,7 @@ Browser:
               items: SetOriginStorage
             credentials:
               type: array?
-              items: VirtualCredential
+              items: SetVirtualCredential
       returns:
         context: BrowserContext
 
@@ -104,7 +104,7 @@ Browser:
               items: SetOriginStorage
             credentials:
               type: array?
-              items: VirtualCredential
+              items: SetVirtualCredential
       returns:
         context: BrowserContext
 

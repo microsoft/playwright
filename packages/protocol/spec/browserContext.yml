@@ -207,7 +207,7 @@ BrowserContext:
               items: SetOriginStorage
             credentials:
               type: array?
-              items: VirtualCredential
+              items: SetVirtualCredential
 
     pause:
       title: Pause
@@ -336,6 +336,7 @@ BrowserContext:
         userHandle: string?
         privateKey: string?
         publicKey: string?
+        signCount: int?
       returns:
         credential: VirtualCredential
 

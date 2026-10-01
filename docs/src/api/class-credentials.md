@@ -200,7 +200,8 @@ context.credentials().create(credential.rpId, new Credentials.CreateOptions()
     .setId(credential.id)
     .setUserHandle(credential.userHandle)
     .setPrivateKey(credential.privateKey)
-    .setPublicKey(credential.publicKey));
+    .setPublicKey(credential.publicKey)
+    .setSignCount(credential.signCount));
 context.credentials().install();
 
 Page page = context.newPage();
@@ -219,6 +220,7 @@ await context.credentials.create(
     user_handle=credential["userHandle"],
     private_key=credential["privateKey"],
     public_key=credential["publicKey"],
+    sign_count=credential["signCount"],
 )
 await context.credentials.install()
 
@@ -238,6 +240,7 @@ context.credentials.create(
     user_handle=credential["userHandle"],
     private_key=credential["privateKey"],
     public_key=credential["publicKey"],
+    sign_count=credential["signCount"],
 )
 context.credentials.install()
 
@@ -257,6 +260,7 @@ await context.Credentials.CreateAsync(credential.RpId, new()
     UserHandle = credential.UserHandle,
     PrivateKey = credential.PrivateKey,
     PublicKey = credential.PublicKey,
+    SignCount = credential.SignCount,
 });
 await context.Credentials.InstallAsync();
 
@@ -278,6 +282,8 @@ See [authentication guide](../auth.md) for examples of using saving and restorin
   usernameless passkey flows resolve them.
 - Fresh keys are ECDSA P-256 (COSE algorithm `-7`). An omitted `id` or `userHandle` is
   filled with 16 random bytes.
+- The signature counter of a fresh credential starts at `0` and is incremented by one on every
+  successful `navigator.credentials.get()` assertion. Pass [`option: Credentials.create.signCount`] to seed a different value.
 
 ## async method: Credentials.install
 * since: v1.61
@@ -300,6 +306,7 @@ page will never see those credentials.
   - `userHandle` <[string]> Base64url-encoded user handle.
   - `privateKey` <[string]> Base64url-encoded PKCS#8 (DER) private key.
   - `publicKey` <[string]> Base64url-encoded SPKI (DER) public key.
+  - `signCount` <[int]> Signature counter, the value reported to the relying party in the most recent assertion.
 
 Seeds a virtual WebAuthn credential and returns it.
 
@@ -308,7 +315,8 @@ seeded credential is discoverable (resident), so the page can resolve it from bo
 username-then-passkey and usernameless passkey flows. The returned object carries the private and public keys, so it can be persisted to disk and re-seeded in a later test.
 
 To **import a known credential**, supply all four of [`option: Credentials.create.id`], [`option: Credentials.create.userHandle`], [`option: Credentials.create.privateKey`] and
-[`option: Credentials.create.publicKey`] together.
+[`option: Credentials.create.publicKey`] together. Pass [`option: Credentials.create.signCount`] as well to continue from the
+signature counter the relying party has already seen.
 
 Call [`method: Credentials.install`] before navigating to a page that uses WebAuthn.
 
@@ -342,6 +350,13 @@ Base64url-encoded PKCS#8 (DER) private key. Auto-generated if omitted.
 
 Base64url-encoded SPKI (DER) public key. Auto-generated if omitted.
 
+### option: Credentials.create.signCount
+* since: v1.64
+- `signCount` <[int]>
+
+Initial value of the [signature counter](https://www.w3.org/TR/webauthn-2/#signature-counter). The counter is incremented by one on
+every successful `navigator.credentials.get()` assertion, so the first assertion reports `signCount + 1`. Defaults to `0`.
+
 ## async method: Credentials.delete
 * since: v1.61
 
@@ -364,12 +379,13 @@ Base64url-encoded credential id.
   - `userHandle` <[string]>
   - `privateKey` <[string]>
   - `publicKey` <[string]>
+  - `signCount` <[int]>
 
 Returns every credential currently held by the authenticator, optionally filtered by [`option: Credentials.get.rpId`] or
 [`option: Credentials.get.id`]. This includes both credentials seeded with [`method: Credentials.create`] and credentials
 the page registered itself by calling `navigator.credentials.create()`.
 
-Each returned credential includes its private and public keys, so a passkey the app just
+Each returned credential includes its private and public keys and the current signature counter, so a passkey the app just
 registered can be saved and re-seeded into a later test with [`method: Credentials.create`] — see the second example in the class overview.
 
 ### option: Credentials.get.rpId
