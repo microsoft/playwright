@@ -47,7 +47,7 @@ Entries can be relative paths, alias paths (`@isomorphic/**`, `@utils/**`), or `
 
 ### packages/protocol/spec/*.yml
 
-Define all RPC interfaces, commands (methods), events, and types, one file per domain (`page.yml`, `frame.yml`, ...). Example:
+These files define all RPC interfaces, commands (methods), events, and types, one file per domain (`page.yml`, `frame.yml`, ...). Example:
 
 ```yaml
 Page:

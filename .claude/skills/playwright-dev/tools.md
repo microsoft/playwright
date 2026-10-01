@@ -481,6 +481,7 @@ packages/playwright-core/src/tools/
 │       ├── server.ts         # MCP server wrapper
 │       ├── tool.ts           # ToolSchema type, toMcpTool()
 │       └── http.ts           # HTTP utilities
+├── index.ts                  # Public exports
 └── skills/
     └── playwright-cli/
         ├── SKILL.md          # Skill documentation
