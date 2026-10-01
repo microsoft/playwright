@@ -1363,6 +1363,100 @@ test('support PLAYWRIGHT_BLOB_OUTPUT_NAME env variable', async ({ runInlineTest,
   expect(reportFiles.sort()).toEqual(['report-one.zip', 'report-two.zip']);
 });
 
+test('should keep reports from other shards in the output dir', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43013' });
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+  };
+
+  await runInlineTest(files, { shard: `1/2` });
+  await runInlineTest(files, { shard: `2/2` });
+
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles.sort()).toEqual(['report-1.zip', 'report-2.zip']);
+  const { exitCode, output } = await mergeReports(reportDir);
+  expect(exitCode).toBe(0);
+  expect(stripAnsi(output)).toContain('Running 2 tests');
+});
+
+test('rerunning a shard should only replace its own report', async ({ runInlineTest, mergeReports }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43013' });
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+  };
+
+  await runInlineTest(files, { shard: `1/2` });
+  await runInlineTest(files, { shard: `2/2` });
+  await runInlineTest(files, { shard: `1/2` });
+
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles.sort()).toEqual(['report-1.zip', 'report-2.zip']);
+  const { exitCode, output } = await mergeReports(reportDir);
+  expect(exitCode).toBe(0);
+  expect(stripAnsi(output)).toContain('Running 2 tests');
+});
+
+test('non-sharded run should still remove stale reports from the output dir', async ({ runInlineTest }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+  };
+
+  await runInlineTest(files);
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles.sort()).toEqual(['report.zip']);
+  // Simulate a stale report from a previous run.
+  await fs.promises.copyFile(path.join(reportDir, 'report.zip'), path.join(reportDir, 'report-old.zip'));
+
+  await runInlineTest(files);
+  const reportFilesAfter = await fs.promises.readdir(reportDir);
+  expect(reportFilesAfter.sort()).toEqual(['report.zip']);
+});
+
 test('support outputFile option', async ({ runInlineTest, mergeReports }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30091' });
   const files = (fileSuffix: string) => ({
@@ -2263,7 +2357,8 @@ test('project filter in report name', async ({ runInlineTest }) => {
     const result = await runInlineTest(files, { shard: `1/2`, project: ['foo', 'b*r'], grep: 'smoke' });
     expect(result.exitCode).toBe(0);
     const reportFiles = await fs.promises.readdir(reportDir);
-    expect(reportFiles.sort()).toEqual(['report-foo-b-r-c29b5fa-1.zip']);
+    // The second sharded run keeps the first shard's report (issue #43013).
+    expect(reportFiles.sort()).toEqual(['report-foo-2.zip', 'report-foo-b-r-c29b5fa-1.zip']);
   }
 
   {

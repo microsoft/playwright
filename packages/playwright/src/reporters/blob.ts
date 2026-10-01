@@ -111,8 +111,15 @@ export class BlobReporter extends TeleReporterEmitter {
         outputDir: 'blob-report',
       }
     })!;
-    if (!process.env.PWTEST_BLOB_DO_NOT_REMOVE)
-      await removeFolders([outputDir!]);
+    if (!process.env.PWTEST_BLOB_DO_NOT_REMOVE) {
+      if (this._config.shard) {
+        // Sharded runs share the output dir. Only remove this shard's own report
+        // so reports from other shards are preserved (issue #43013).
+        await fs.promises.rm(outputFile, { force: true });
+      } else {
+        await removeFolders([outputDir!]);
+      }
+    }
     await fs.promises.mkdir(path.dirname(outputFile), { recursive: true });
     return outputFile;
   }
