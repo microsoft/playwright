@@ -3066,11 +3066,6 @@ scheme.SerializedError = tObject({
     name: tString,
     stack: tOptional(tString),
     code: tOptional(tString),
-    errno: tOptional(tInt),
-    syscall: tOptional(tString),
-    address: tOptional(tString),
-    port: tOptional(tInt),
-    hostname: tOptional(tString),
   })),
   value: tOptional(tType('SerializedValue')),
 });

@@ -719,7 +719,7 @@ it('should retry ECONNRESET', {
   await request.dispose();
 });
 
-it('should expose node error fields on network errors', {
+it('should expose node error code on network errors', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42532' }
 }, async ({ playwright, server }) => {
   // Reset the connection so that node reports a system error instead of a plain 'socket hang up'.
@@ -728,8 +728,8 @@ it('should expose node error fields on network errors', {
   const error = await request.get(server.PREFIX + '/reset', { maxRetries: 0 }).catch(e => e);
   expect(error.message).toContain('ECONNRESET');
   expect(error.code).toBe('ECONNRESET');
-  expect(error.syscall).toBe('read');
-  expect(typeof error.errno).toBe('number');
+  expect(error.syscall).toBe(undefined);
+  expect(error.errno).toBe(undefined);
   await request.dispose();
 });
 
