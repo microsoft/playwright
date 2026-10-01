@@ -37,7 +37,7 @@ export default defineConfig({
   timeout: 30000,
   use: {
     // Coverage of the html reporter and trace viewer pages, built with PWTEST_COVERAGE=1.
-    trace: process.env.PWTEST_COVERAGE ? { mode: 'on', snapshots: false, screenshots: false, coverage: true } : 'off',
+    trace: process.env.PWTEST_COVERAGE ? { mode: 'on', snapshots: false, screenshots: false, _coverage: true } as any : 'off',
   },
   forbidOnly: !!process.env.CI,
   workers: undefined,

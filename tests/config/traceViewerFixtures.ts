@@ -186,7 +186,7 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
       if (process.env.PWTEST_DEBUG_TRACE_VIEWER || process.env.PWTEST_COVERAGE) {
         const debug = !!process.env.PWTEST_DEBUG_TRACE_VIEWER;
         // Coverage of the trace viewer itself, picked up by the coverage reporter.
-        await page.context().tracing.start({ snapshots: debug, screenshots: debug, coverage: !!process.env.PWTEST_COVERAGE });
+        await page.context().tracing.start({ snapshots: debug, screenshots: debug, _coverage: !!process.env.PWTEST_COVERAGE } as any);
         tracedPages.push(page);
       }
       const url = cp.output.match(/Listening on (http:\/\/[^\s]+)/)![1];

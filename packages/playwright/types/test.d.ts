@@ -961,7 +961,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * ```
    *
    */
-  reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html'|'blob'|'perfetto'|'coverage', string> | ReporterDescription[];
+  reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html'|'blob'|'perfetto', string> | ReporterDescription[];
   /**
    * Global options for all tests, for example
    * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more
@@ -7260,7 +7260,7 @@ export interface PlaywrightWorkerOptions {
    *
    * Learn more about [recording trace](https://playwright.dev/docs/test-use-options#recording-options).
    */
-  trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean | { dom?: boolean, aria?: boolean, screen?: boolean }, screenshots?: boolean, coverage?: boolean, sources?: boolean, attachments?: boolean };
+  trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean | { dom?: boolean, aria?: boolean, screen?: boolean }, screenshots?: boolean, sources?: boolean, attachments?: boolean };
   /**
    * Whether to record video for each test. Defaults to `'off'`. The initial run of a test is the "first run";
    * subsequent runs caused by [retries](https://playwright.dev/docs/test-retries) are "retries".

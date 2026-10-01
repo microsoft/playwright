@@ -35,7 +35,7 @@ const coverageScript = (file: string, s0: number) => `<script>window.__coverage_
 
 it('should collect istanbul coverage into the trace', async ({ browser }, testInfo) => {
   const context = await browser.newContext();
-  await context.tracing.start({ coverage: true });
+  await context.tracing.start({ _coverage: true } as any);
 
   const page = await context.newPage();
   await page.setContent(coverageScript('a.js', 3));
@@ -56,7 +56,7 @@ it('should collect istanbul coverage into the trace', async ({ browser }, testIn
 
 it('should collect coverage per trace chunk', async ({ browser }, testInfo) => {
   const context = await browser.newContext();
-  await context.tracing.start({ coverage: true });
+  await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
 
   await page.setContent(coverageScript('a.js', 5));
@@ -82,7 +82,7 @@ it('should collect coverage per trace chunk', async ({ browser }, testInfo) => {
 
 it('should report maps once and counters incrementally', async ({ browser, server }) => {
   const context = await browser.newContext();
-  await context.tracing.start({ coverage: true });
+  await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
@@ -110,7 +110,7 @@ it('should report maps once and counters incrementally', async ({ browser, serve
 
 it('should accumulate counters across pulls and keep never hit files', async ({ browser }, testInfo) => {
   const context = await browser.newContext();
-  await context.tracing.start({ coverage: true });
+  await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
   await page.setContent(coverageScript('a.js', 0));
   await page.evaluate(() => (window as any).__coverage__['a.js'].s['0'] += 4);
@@ -136,7 +136,7 @@ async function openPopup(page: any, server: any, file: string, s0: number) {
 
 it('should collect coverage of a page closed by in-page script', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
-  await context.tracing.start({ coverage: true });
+  await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
@@ -158,7 +158,7 @@ it('should collect coverage of a page closed by in-page script', async ({ browse
 
 it('should not double count a stash picked up twice', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
-  await context.tracing.start({ coverage: true });
+  await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
@@ -180,7 +180,7 @@ it('should not double count a stash picked up twice', async ({ browser, server }
 
 it('should discard stashes of other sessions', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
-  await context.tracing.start({ coverage: true });
+  await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(coverage => {
@@ -200,7 +200,7 @@ it('should discard stashes of other sessions', async ({ browser, server }, testI
 
 it('should collect coverage of an origin left without a page', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
-  await context.tracing.start({ coverage: true });
+  await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
@@ -230,7 +230,7 @@ it('should collect coverage of an origin left without a page', async ({ browser,
 
 it('should pull counters as the actions go', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
-  await context.tracing.start({ coverage: true });
+  await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(coverageScript('a.js', 3));
@@ -264,7 +264,7 @@ it('should count only the hits after start', async ({ browser, server }, testInf
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('a.js', 3)));
 
-  await context.tracing.start({ coverage: true });
+  await context.tracing.start({ _coverage: true } as any);
   await page.evaluate(() => (window as any).__coverage__['a.js'].s['0'] += 2);
   const traceFile = testInfo.outputPath('trace.zip');
   await context.tracing.stop({ path: traceFile });
@@ -277,7 +277,7 @@ it('should count only the hits after start', async ({ browser, server }, testInf
 
 it('should stop collecting when tracing stops', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
-  await context.tracing.start({ coverage: true });
+  await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(coverage => (window as any).__coverage__ = JSON.parse(coverage), JSON.stringify(fileCoverage('a.js', 1)));
@@ -294,7 +294,7 @@ it('should stop collecting when tracing stops', async ({ browser, server }, test
 
 it('should surface a failure to stash the coverage', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
-  await context.tracing.start({ coverage: true });
+  await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(coverage => {
