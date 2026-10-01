@@ -113,7 +113,7 @@ it('should generate refs in ai mode', async ({ page }) => {
       ],
     },
   ]);
-  await expect(page.locator('aria-ref=e2')).toHaveText('One');
+  await expect(page.getByRef('e2')).toHaveText('One');
 });
 
 it('should mark clickable elements with cursor in ai mode', async ({ page }) => {

@@ -2361,6 +2361,49 @@ Attribute name to get the value for.
 
 ### option: Page.getByPlaceholder.exact = %%-locator-get-by-text-exact-%%
 
+## method: Page.getByRef
+* since: v1.64
+- returns: <[Locator]>
+
+Locate element by its aria ref. Refs like `[ref=e2]` are reported by [`method: Page.ariaSnapshot`] when called with
+the `"ai"` mode, and resolve against the latest snapshot taken in the element's frame.
+
+**Usage**
+
+Consider the following aria snapshot.
+
+```yaml
+- button "Submit" [ref=e2]
+```
+
+You can locate the button by its ref:
+
+```js
+await page.getByRef('e2').click();
+```
+
+```java
+page.getByRef("e2").click();
+```
+
+```python async
+await page.get_by_ref("e2").click()
+```
+
+```python sync
+page.get_by_ref("e2").click()
+```
+
+```csharp
+await page.GetByRef("e2").ClickAsync();
+```
+
+### param: Page.getByRef.ref
+* since: v1.64
+- `ref` <[string]>
+
+Aria ref of the element, for example `e2` or `f1e3`.
+
 ## method: Page.getByRole
 * since: v1.27
 - returns: <[Locator]>

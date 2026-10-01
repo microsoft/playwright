@@ -545,7 +545,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
         return { locator: this.page.locator(selector), resolved: asLocator('javascript', selector), selector };
       } else {
         try {
-          let locator = this.page.locator(`aria-ref=${param.target}`);
+          let locator = this.page.getByRef(param.target);
           if (param.element)
             locator = locator.describe(param.element);
           const resolved = await locator.normalize();
