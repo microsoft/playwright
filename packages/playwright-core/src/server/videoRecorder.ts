@@ -124,25 +124,24 @@ class FfmpegVideoRecorder {
   private async _launch() {
     await mkdirIfNeeded(this._outputFile);
     // How to tune the codec:
-    // 1. Read vp8 documentation to figure out the options.
+    // 1. Read vp9 documentation to figure out the options.
+    //   https://developers.google.com/media/vp9/live-encoding
     //   https://www.webmproject.org/docs/encoder-parameters/
     // 2. Use the following command to map the options to ffmpeg arguments.
-    //   $ ./third_party/ffmpeg/ffmpeg-mac -h encoder=vp8
-    // 3. A bit more about passing vp8 options to ffmpeg.
-    //   https://trac.ffmpeg.org/wiki/Encode/VP8
-    // 4. Tuning for VP9:
-    //   https://developers.google.com/media/vp9/live-encoding
+    //   $ ./third_party/ffmpeg/ffmpeg-mac -h encoder=libvpx-vp9
+    // 3. A bit more about passing vp9 options to ffmpeg.
+    //   https://trac.ffmpeg.org/wiki/Encode/VP9
     //
     // How to stress-test video recording (runs 10 recorders in parallel to book all cpus available):
     //   $ node ./utils/video_stress.js
     //
-    // We use the following vp8 options:
+    // We use the following vp9 options:
     //   "-qmin 0 -qmax 50" - quality variation from 0 to 50.
-    //     Suggested here: https://trac.ffmpeg.org/wiki/Encode/VP8
-    //   "-crf 8" - constant quality mode, 4-63, lower means better quality.
-    //   "-deadline realtime -speed 8" - do not use too much cpu to keep up with incoming frames.
-    //   "-b:v 1M" - video bitrate for the default 800x450 video at 25fps. Default value is too low for vp8
-    //     Suggested here: https://trac.ffmpeg.org/wiki/Encode/VP8
+    //   "-crf 8" - constrained quality mode (together with -b:v), 0-63, lower means better quality.
+    //   "-deadline realtime -cpu-used 8" - do not use too much cpu to keep up with incoming frames.
+    //     Realtime mode accepts -cpu-used 5-9, higher is faster.
+    //   "-lag-in-frames 0" - do not buffer frames for lookahead, encode as they arrive.
+    //   "-b:v 1M" - video bitrate for the default 800x450 video at 25fps.
     //     Larger or faster videos get the bitrate scaled with the pixel rate: at 1920x1080 and 60fps
     //     the 1M budget visibly blurs scrolling text, while the scaled ~14M is visually lossless.
     //   Note that we can switch to "-qmin 20 -qmax 50 -crf 30" for smaller video size but worse quality.
@@ -165,9 +164,9 @@ class FfmpegVideoRecorder {
     // "-r 25" forces a constant output frame rate; ffmpeg duplicates frames as needed based on
     //   the input timestamps, so we don't have to repeat frames ourselves.
     // "-threads 1" means using one thread. This drastically reduces stalling when
-    //   cpu is overbooked. By default vp8 tries to use all available threads?
-    //   A single thread can't keep up with larger or faster videos (1920x1080 at 60fps encodes
-    //   below realtime), so we add a thread per 4x the default pixel rate.
+    //   cpu is overbooked. A single thread can't keep up with larger or faster videos
+    //   (1920x1080 at 60fps encodes below realtime), so we add a thread per 4x the default pixel rate.
+    //   vp9 only parallelizes across tile columns and rows, hence "-tile-columns" and "-row-mt 1".
 
     const w = this._size.width;
     const h = this._size.height;
@@ -179,6 +178,7 @@ class FfmpegVideoRecorder {
     const pixelRateScale = Math.max(1, w * h * this._fps / (800 * 450 * kDefaultFps));
     const bitrate = Math.round(pixelRateScale * 1000);
     const threads = Math.min(8, Math.ceil(pixelRateScale / 4));
+    const tileColumns = Math.ceil(Math.log2(threads));
     const args = [
       '-loglevel error',
       '-f matroska',
@@ -189,14 +189,17 @@ class FfmpegVideoRecorder {
       '-y',
       '-an',
       `-r ${this._fps}`,
-      '-c:v vp8',
+      '-c:v libvpx-vp9',
       '-qmin 0',
       '-qmax 50',
       '-crf 8',
       '-deadline realtime',
-      '-speed 8',
+      '-cpu-used 8',
+      '-lag-in-frames 0',
       `-b:v ${bitrate}k`,
       `-threads ${threads}`,
+      `-tile-columns ${tileColumns}`,
+      '-row-mt 1',
       `-vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`,
       `-metadata creation_time=${new Date(this._creationTimeMs).toISOString()}`,
     ].flatMap(option => option.split(' '));
