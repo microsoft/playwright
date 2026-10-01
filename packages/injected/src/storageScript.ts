@@ -78,7 +78,7 @@ export class StorageScript {
         trivial = false;
 
       return { fallThrough: v };
-    }, { serialize: ['Map', 'Set'] });
+    }, { extendedSerialization: true });
     if (trivial)
       return { trivial: value };
     return { encoded };

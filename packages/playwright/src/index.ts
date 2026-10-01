@@ -513,7 +513,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
         if (typeof w.mount !== 'function')
           throw new Error('The gallery page does not define window.mount().');
         await w.mount(p);
-      }, params, { exposeFunctions: true, serialize: ['Map', 'Set'] });
+      }, params, { exposeFunctions: true });
     await use(async (storyId: string, props?: any) => {
       if (!baseURL)
         throw new Error('mount() requires `baseURL` to point at the component gallery. Set it in your Playwright config.');
