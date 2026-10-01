@@ -20,10 +20,13 @@
 
 const fs = require('fs');
 const ts = require('typescript');
-const path = require('path').posix;
+const nativePath = require('path');
+const path = nativePath.posix;
 const Module = require('module');
 const builtins = new Set(Module.builtinModules);
-const packagesDir = path.resolve(path.join(__dirname, '..', 'packages'));
+// path.posix.resolve() treats Windows drive-letter paths as relative, so resolve natively and keep forward slashes.
+const resolvePath = (...segments) => nativePath.resolve(...segments).replace(/\\/g, '/');
+const packagesDir = resolvePath(__dirname, '..', 'packages');
 
 const packages = new Map();
 packages.set('web', packagesDir + '/web/src/');
@@ -67,7 +70,7 @@ async function innerCheckDeps(root) {
 
   let packageJSON;
   try {
-    packageJSON = require(path.resolve(path.join(root, 'package.json')));
+    packageJSON = require(resolvePath(root, 'package.json'));
   } catch {
   }
 
@@ -144,7 +147,7 @@ async function innerCheckDeps(root) {
       const importName = node.moduleSpecifier.text;
       let importPath;
       if (importName.startsWith('.')) {
-        importPath = path.resolve(path.dirname(fileName), importName);
+        importPath = resolvePath(path.dirname(fileName), importName);
       } else if (importName.startsWith('@')) {
         const tokens = importName.substring(1).split('/');
         const package = tokens[0];
@@ -233,7 +236,7 @@ async function innerCheckDeps(root) {
         else if (line.startsWith('@'))
           group.push(line.replace(/@([\w-]+)\/(.*)/, (_, arg1, arg2) => packages.get(arg1) + arg2));
         else
-          group.push(path.resolve(depsDirectory, line));
+          group.push(resolvePath(depsDirectory, line));
       }
       depsCache[depsDirectory] = deps;
     }
@@ -287,7 +290,7 @@ function listAllFiles(dir) {
   const dirs = fs.readdirSync(dir, { withFileTypes: true });
   const result = [];
   dirs.forEach(d => {
-    const res = path.resolve(dir, d.name);
+    const res = resolvePath(dir, d.name);
     if (d.isDirectory())
       result.push(...listAllFiles(res));
     else
