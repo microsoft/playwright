@@ -773,6 +773,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this.mainFrame().getByPlaceholder(text, options);
   }
 
+  getByRef(ref: string): Locator {
+    return this.locator(`aria-ref=${ref}`);
+  }
+
   getByText(text: string | RegExp, options?: { exact?: boolean }): Locator {
     return this.mainFrame().getByText(text, options);
   }

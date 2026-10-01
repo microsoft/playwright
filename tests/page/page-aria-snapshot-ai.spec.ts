@@ -37,11 +37,11 @@ it('should generate refs', async ({ page }) => {
       - button "Two" [ref=e3]
       - button "Three" [ref=e4]
   `);
-  await expect(page.locator('aria-ref=e2')).toHaveText('One');
-  await expect(page.locator('aria-ref=e3')).toHaveText('Two');
-  await expect(page.locator('aria-ref=e4')).toHaveText('Three');
+  await expect(page.getByRef('e2')).toHaveText('One');
+  await expect(page.getByRef('e3')).toHaveText('Two');
+  await expect(page.getByRef('e4')).toHaveText('Three');
 
-  await page.locator('aria-ref=e3').evaluate((e: HTMLElement) => {
+  await page.getByRef('e3').evaluate((e: HTMLElement) => {
     e.textContent = 'Not Two';
   });
 
@@ -114,30 +114,30 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
         - generic [ref=f2e1]: Hi, I'm frame
   `);
 
-  const href = await page.locator('aria-ref=e1').evaluate(e => e.ownerDocument.defaultView.location.href);
+  const href = await page.getByRef('e1').evaluate(e => e.ownerDocument.defaultView.location.href);
   expect(href).toBe(server.PREFIX + '/frames/nested-frames.html');
 
-  const href2 = await page.locator('aria-ref=f1e2').evaluate(e => e.ownerDocument.defaultView.location.href);
+  const href2 = await page.getByRef('f1e2').evaluate(e => e.ownerDocument.defaultView.location.href);
   expect(href2).toBe(server.PREFIX + '/frames/two-frames.html');
 
-  const href3 = await page.locator('aria-ref=f4e2').evaluate(e => e.ownerDocument.defaultView.location.href);
+  const href3 = await page.getByRef('f4e2').evaluate(e => e.ownerDocument.defaultView.location.href);
   expect(href3).toBe(server.PREFIX + '/frames/frame.html');
 
   {
-    const resolved = await page.locator('aria-ref=e1').normalize();
+    const resolved = await page.getByRef('e1').normalize();
     expect(resolved.toString()).toBe(`locator('body')`);
   }
   {
-    const resolved = await page.locator('aria-ref=f4e2').normalize();
+    const resolved = await page.getByRef('f4e2').normalize();
     expect(resolved.toString()).toBe(`locator('iframe[name="2frames"]').contentFrame().locator('iframe[name="dos"]').contentFrame().getByText('Hi, I\\'m frame')`);
   }
   {
     // Should tolerate .describe().
-    const resolved = await page.locator('aria-ref=f3e2').describe('foo bar').normalize();
+    const resolved = await page.getByRef('f3e2').describe('foo bar').normalize();
     expect(resolved.toString()).toBe(`locator('iframe[name=\"2frames\"]').contentFrame().locator('iframe[name=\"uno\"]').contentFrame().getByText('Hi, I\\'m frame')`);
   }
   {
-    const error = await page.locator('aria-ref=e1000').normalize().catch(e => e);
+    const error = await page.getByRef('e1000').normalize().catch(e => e);
     expect(error.message).toContain(`No element matching aria-ref=e1000`);
   }
 });
@@ -155,21 +155,21 @@ it('should re-number refs across navigations but not same-document navigations',
   // The first committed document keeps the base seq, so the main frame has no prefix.
   await page.goto(server.PREFIX + '/one.html');
   const oneRef = (await snapshotForAI(page)).match(/button "One" \[ref=(e\d+)\]/)![1];
-  await expect(page.locator(`aria-ref=${oneRef}`)).toHaveText('One');
+  await expect(page.getByRef(oneRef)).toHaveText('One');
 
   // Cross-document navigation re-numbers the main frame, so its refs gain a frame prefix.
   await page.goto(server.PREFIX + '/two.html');
   const twoRef = (await snapshotForAI(page)).match(/button "Two" \[ref=(f\d+e\d+)\]/)![1];
-  await expect(page.locator(`aria-ref=${twoRef}`)).toHaveText('Two');
+  await expect(page.getByRef(twoRef)).toHaveText('Two');
 
   // The stale ref from the previous document must not resolve against the new one.
-  const error = await page.locator(`aria-ref=${oneRef}`).normalize().catch(e => e);
+  const error = await page.getByRef(oneRef).normalize().catch(e => e);
   expect(error.message).toContain(`No element matching aria-ref=${oneRef}`);
 
   // Same-document navigation keeps refs intact.
   await page.evaluate(() => history.pushState({}, '', '/pushed.html'));
   expect(await snapshotForAI(page)).toContain(`button "Two" [ref=${twoRef}]`);
-  await expect(page.locator(`aria-ref=${twoRef}`)).toHaveText('Two');
+  await expect(page.getByRef(twoRef)).toHaveText('Two');
 });
 
 it('should persist iframe references', async ({ page }) => {
@@ -197,7 +197,7 @@ it('should persist iframe references', async ({ page }) => {
         - iframe [ref=e6]:
           - button "button2" [ref=f2e2]
   `);
-  await expect(page.locator('aria-ref=f2e2')).toHaveText('button2');
+  await expect(page.getByRef('f2e2')).toHaveText('button2');
 
   await page.evaluate(() => {
     const frame = document.createElement('iframe');
@@ -213,8 +213,8 @@ it('should persist iframe references', async ({ page }) => {
         - iframe [ref=e6]:
           - button "button2" [ref=f2e2]
   `);
-  await expect(page.locator('aria-ref=f3e2')).toHaveText('button1');
-  await expect(page.locator('aria-ref=f2e2')).toHaveText('button2');
+  await expect(page.getByRef('f3e2')).toHaveText('button1');
+  await expect(page.getByRef('f2e2')).toHaveText('button2');
 });
 
 it('should not generate refs for elements with pointer-events:none', async ({ page }) => {
@@ -524,7 +524,7 @@ it('should resolve refs of distilled-away nodes', async ({ page }) => {
   const snapshot = await snapshotForAI(page);
   // The inner leaf generic is distilled away, but its ref still resolves to the element.
   expect(snapshot).not.toContain('[ref=e3]');
-  await expect(page.locator('aria-ref=e3')).toHaveText('[Feature] a dedicated clipboard API');
+  await expect(page.getByRef('e3')).toHaveText('[Feature] a dedicated clipboard API');
 });
 
 it('should not distill snapshots outside of ai mode', async ({ page }) => {
@@ -737,7 +737,7 @@ it('should snapshot frameset pages', { annotation: { type: 'issue', description:
       - iframe [ref=e5]:
         - button "Button three" [ref=f3e2]
   `);
-  await expect(page.locator('aria-ref=f2e2')).toHaveText('Button two');
+  await expect(page.getByRef('f2e2')).toHaveText('Button two');
 });
 
 it('should snapshot a locator inside a frameset frame', async ({ page, server }) => {
@@ -748,8 +748,8 @@ it('should snapshot a locator inside a frameset frame', async ({ page, server })
     - generic [ref=f1e1]: Hi, I'm frame
   `);
 
-  await expect(page.locator('aria-ref=f1e1')).toHaveText(`Hi, I'm frame`);
-  const resolved = await page.locator('aria-ref=f1e1').normalize();
+  await expect(page.getByRef('f1e1')).toHaveText(`Hi, I'm frame`);
+  const resolved = await page.getByRef('f1e1').normalize();
   expect(resolved.toString()).toBe(`locator('frame').first().contentFrame().locator('body')`);
 });
 
@@ -771,10 +771,10 @@ it('should stitch iframes inside a frameset frame', async ({ page, server }) => 
         - iframe [ref=f1e3]:
           - button "In iframe" [ref=f2e2]
   `);
-  await expect(page.locator('aria-ref=f1e2')).toHaveText('In frame');
-  await expect(page.locator('aria-ref=f2e2')).toHaveText('In iframe');
+  await expect(page.getByRef('f1e2')).toHaveText('In frame');
+  await expect(page.getByRef('f2e2')).toHaveText('In iframe');
 
-  const resolved = await page.locator('aria-ref=f2e2').normalize();
+  const resolved = await page.getByRef('f2e2').normalize();
   expect(resolved.toString()).toBe(`locator('frame').contentFrame().locator('iframe').contentFrame().getByRole('button', { name: 'In iframe' })`);
 });
 
@@ -798,7 +798,7 @@ it('should stitch nested frameset documents', async ({ page, server }) => {
       - iframe [ref=f1e3]:
         - button "Leaf button" [ref=f2e2]
   `);
-  await expect(page.locator('aria-ref=f2e2')).toHaveText('Leaf button');
+  await expect(page.getByRef('f2e2')).toHaveText('Leaf button');
 });
 
 it('should collapse inline generic nodes', async ({ page }) => {

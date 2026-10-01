@@ -3157,6 +3157,25 @@ export interface Page {
   }): Locator;
 
   /**
+   * Locate element by its aria ref. Refs like `[ref=e2]` are reported by
+   * [page.ariaSnapshot([options])](https://playwright.dev/docs/api/class-page#page-aria-snapshot) when called with the
+   * `"ai"` mode, and resolve against the latest snapshot taken in the element's frame.
+   *
+   * **Usage**
+   *
+   * Consider the following aria snapshot.
+   *
+   * You can locate the button by its ref:
+   *
+   * ```js
+   * await page.getByRef('e2').click();
+   * ```
+   *
+   * @param ref Aria ref of the element, for example `e2` or `f1e3`.
+   */
+  getByRef(ref: string): Locator;
+
+  /**
    * Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles),
    * [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and
    * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
