@@ -717,9 +717,15 @@ percentage [0 - 100] for scroll driven animations
        */
       animations: string[];
       /**
-       * Set the current time of each animation.
+       * Set each animation to the same time.
        */
-      currentTime: number;
+      currentTime?: number;
+      /**
+       * Set each animation to a different time. If set, should have the same
+length as animations. Exactly one of currentTime or currentTimes should
+be set.
+       */
+      currentTimes?: number[];
     }
     export type seekAnimationsReturnValue = {
     }
@@ -801,7 +807,7 @@ percentage [0 - 100] for scroll driven animations
     export interface AffectedFrame {
       frameId: Page.FrameId;
     }
-    export type CookieExclusionReason = "ExcludeSameSiteUnspecifiedTreatedAsLax"|"ExcludeSameSiteNoneInsecure"|"ExcludeSameSiteLax"|"ExcludeSameSiteStrict"|"ExcludeDomainNonASCII"|"ExcludeThirdPartyCookieBlockedInFirstPartySet"|"ExcludeThirdPartyPhaseout"|"ExcludePortMismatch"|"ExcludeSchemeMismatch";
+    export type CookieExclusionReason = "ExcludeSameSiteUnspecifiedTreatedAsLax"|"ExcludeSameSiteNoneInsecure"|"ExcludeSameSiteLax"|"ExcludeSameSiteStrict"|"ExcludeDomainNonASCII"|"ExcludeThirdPartyPhaseout"|"ExcludePortMismatch"|"ExcludeSchemeMismatch";
     export type CookieWarningReason = "WarnSameSiteUnspecifiedCrossSiteContext"|"WarnSameSiteNoneInsecure"|"WarnSameSiteUnspecifiedLaxAllowUnsafe"|"WarnSameSiteStrictLaxDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeLax"|"WarnSameSiteLaxCrossDowngradeStrict"|"WarnSameSiteLaxCrossDowngradeLax"|"WarnAttributeValueExceedsMaxSize"|"WarnDomainNonASCII"|"WarnThirdPartyPhaseout"|"WarnCrossSiteRedirectDowngradeChangesInclusion"|"WarnDeprecationTrialMetadata"|"WarnThirdPartyCookieHeuristic";
     export type CookieOperation = "SetCookie"|"ReadCookie";
     /**
@@ -7405,6 +7411,11 @@ responsive design mode.
 the viewport meta tag is always enabled.
        */
       viewportMeta?: "enable"|"default";
+      /**
+       * Text layout mode. Default: `default`. Note: if `mobile` is `true`,
+mobile text layout mode (text autosizing) is always enabled.
+       */
+      textLayoutMode?: "mobile"|"default";
     }
     export type setDeviceMetricsOverrideReturnValue = {
     }
@@ -8687,6 +8698,46 @@ domain before body is received results in an undefined behavior.
        * Returns the directory object at the path.
        */
       directory: Directory;
+    }
+  }
+  
+  /**
+   * This domain provides commands to trigger the "Find in page" feature.
+   */
+  export namespace FindInPage {
+    
+    
+    /**
+     * Forwards `query` to the find-in-page facility, starting a new find session.
+Where exactly the search starts from is implementation-specific.
+     */
+    export type findFirstParameters = {
+      query: string;
+    }
+    export type findFirstReturnValue = {
+    }
+    /**
+     * Moves to the next match for the query passed to the most recent
+findFirst() call.
+     */
+    export type findNextParameters = {
+    }
+    export type findNextReturnValue = {
+    }
+    /**
+     * Moves to the previous match for the query passed to the most recent
+findFirst() call.
+     */
+    export type findPrevParameters = {
+    }
+    export type findPrevReturnValue = {
+    }
+    /**
+     * Ends the current find session, if any, and clears its highlighting.
+     */
+    export type stopParameters = {
+    }
+    export type stopReturnValue = {
     }
   }
   
@@ -11208,11 +11259,11 @@ This is a temporary ability and it will be removed in the future.
     /**
      * Types of reasons why a cookie may not be stored from a response.
      */
-    export type SetCookieBlockedReason = "SecureOnly"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"ThirdPartyPhaseout"|"ThirdPartyBlockedInFirstPartySet"|"SyntaxError"|"SchemeNotSupported"|"OverwriteSecure"|"InvalidDomain"|"InvalidPrefix"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax"|"NameValuePairExceedsMaxSize"|"DisallowedCharacter"|"NoCookieContent";
+    export type SetCookieBlockedReason = "SecureOnly"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"ThirdPartyPhaseout"|"SyntaxError"|"SchemeNotSupported"|"OverwriteSecure"|"InvalidDomain"|"InvalidPrefix"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax"|"NameValuePairExceedsMaxSize"|"DisallowedCharacter"|"NoCookieContent";
     /**
      * Types of reasons why a cookie may not be sent with a request.
      */
-    export type CookieBlockedReason = "SecureOnly"|"NotOnPath"|"DomainMismatch"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"ThirdPartyPhaseout"|"ThirdPartyBlockedInFirstPartySet"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax"|"NameValuePairExceedsMaxSize"|"PortMismatch"|"SchemeMismatch"|"AnonymousContext";
+    export type CookieBlockedReason = "SecureOnly"|"NotOnPath"|"DomainMismatch"|"SameSiteStrict"|"SameSiteLax"|"SameSiteUnspecifiedTreatedAsLax"|"SameSiteNoneInsecure"|"UserPreferences"|"ThirdPartyPhaseout"|"UnknownError"|"SchemefulSameSiteStrict"|"SchemefulSameSiteLax"|"SchemefulSameSiteUnspecifiedTreatedAsLax"|"NameValuePairExceedsMaxSize"|"PortMismatch"|"SchemeMismatch"|"AnonymousContext";
     /**
      * Types of reasons why a cookie should have been blocked by 3PCD but is exempted for the request.
      */
@@ -13534,6 +13585,47 @@ Page reload is required before the new cookie behavior will be observed
     }
     export type ContrastAlgorithm = "aa"|"aaa"|"apca";
     /**
+     * Configuration for Inset-Modified Containing Block (IMCB) and CSS Anchor Positioning highlight.
+     */
+    export interface ImcbHighlightConfig {
+      /**
+       * Border color for the Inset-Modified Containing Block (default: transparent).
+       */
+      imcbBorderColor?: DOM.RGBA;
+      /**
+       * Background fill color for the Inset-Modified Containing Block (default: transparent).
+       */
+      imcbBackgroundColor?: DOM.RGBA;
+      /**
+       * Fill color for the inset modifiers area (difference between CB and IMCB).
+       */
+      insetsBackgroundColor?: DOM.RGBA;
+      /**
+       * Hatch color for the inset modifiers area.
+       */
+      insetsHatchColor?: DOM.RGBA;
+      /**
+       * Border color for the referenced target anchor element(s) (when element is anchor-positioned).
+       */
+      anchorBorderColor?: DOM.RGBA;
+      /**
+       * Background fill color for the referenced target anchor element(s) (when element is anchor-positioned).
+       */
+      anchorBackgroundColor?: DOM.RGBA;
+      /**
+       * Whether to render the 3x3 position-area grid lines when position-area is used.
+       */
+      showPositionAreaGrid?: boolean;
+      /**
+       * Line color for the 3x3 position-area grid lines.
+       */
+      positionAreaGridLineColor?: DOM.RGBA;
+      /**
+       * Fill color for the active region within the position-area grid.
+       */
+      positionAreaActiveRegionColor?: DOM.RGBA;
+    }
+    /**
      * Configuration data for the highlighting of page elements.
      */
     export interface HighlightConfig {
@@ -13613,6 +13705,10 @@ Page reload is required before the new cookie behavior will be observed
        * The container query container highlight configuration (default: all transparent).
        */
       containerQueryContainerHighlightConfig?: ContainerQueryContainerHighlightConfig;
+      /**
+       * The IMCB highlight configuration (default: all transparent).
+       */
+      imcbHighlightConfig?: ImcbHighlightConfig;
     }
     export type ColorFormat = "rgb"|"hsl"|"hwb"|"hex";
     /**
@@ -14473,7 +14569,7 @@ supported yet.
 in services/network/public/cpp/permissions_policy/permissions_policy_features.json5.
 LINT.IfChange(PermissionsPolicyFeature)
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"haptics"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"rewriter"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"tools"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"webnn"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"haptics"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"publickey-credentials-remote-client-data-json"|"rewriter"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"tools"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"webnn"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -14726,6 +14822,10 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        * Frame swap timestamp.
        */
       timestamp?: Network.TimeSinceEpoch;
+      /**
+       * Frame swap timestamp as monotonic time.
+       */
+      monotonicTimestamp?: Network.MonotonicTime;
     }
     /**
      * Javascript dialog type.
@@ -15063,6 +15163,24 @@ https://github.com/WICG/manifest-incubations/blob/gh-pages/scope_extensions-expl
       shortcuts?: Shortcut[];
       startUrl?: string;
       themeColor?: string;
+    }
+    export interface SubApp {
+      /**
+       * Display name of the sub-app.
+       */
+      name: string;
+      /**
+       * Scope of the sub-app.
+       */
+      scope: string;
+      /**
+       * Manifest id of the sub-app.
+       */
+      manifestId: string;
+      /**
+       * Start URL of the sub-app.
+       */
+      startUrl: string;
     }
     /**
      * The type of a frameNavigated event.
@@ -15748,7 +15866,7 @@ navigations when a new window context is created.
       primaryIcon?: binary;
     }
     /**
-     * Returns the unique (PWA) app id.
+     * Returns the unique (PWA) app id, along with IWA bundle ID and parent app info.
 Only returns values if the feature flag 'WebAppEnableManifestId' is enabled
      */
     export type getAppIdParameters = {
@@ -15762,6 +15880,30 @@ Only returns values if the feature flag 'WebAppEnableManifestId' is enabled
        * Recommendation for manifest's id attribute to match current id computed from start_url
        */
       recommendedId?: string;
+      /**
+       * The bundle ID for an Isolated Web App (IWA)
+       */
+      bundleId?: string;
+      /**
+       * The name of the parent app if this app is a Sub-App
+       */
+      parentAppName?: string;
+    }
+    /**
+     * Returns the list of installed child Sub-Apps for the inspected parent app.
+     */
+    export type getSubAppsParameters = {
+    }
+    export type getSubAppsReturnValue = {
+      subApps: SubApp[];
+    }
+    /**
+     * Returns the list of sibling Sub-Apps sharing the same parent app if the inspected context is a Sub-App.
+     */
+    export type getSiblingSubAppsParameters = {
+    }
+    export type getSiblingSubAppsReturnValue = {
+      subApps: SubApp[];
     }
     export type getAdScriptAncestryParameters = {
       frameId: FrameId;
@@ -16915,6 +17057,12 @@ filter out the ones that aren't necessary to the developers.
       key: PreloadingAttemptKey;
       pipelineId: PreloadPipelineId;
       status: PreloadingStatus;
+      /**
+       * The action currently performed by this attempt. This differs from
+`key.action` after a prerender-until-script attempt is upgraded in place
+to a full prerender.
+       */
+      effectiveAction?: SpeculationAction;
       prerenderStatus?: PrerenderFinalStatus;
       /**
        * This is used to give users more information about the name of Mojo interface
@@ -17846,6 +17994,52 @@ Tokens from that issuer.
       issuerOrigin: string;
       count: number;
     }
+    /**
+     * Details of a stored Private Verification Token.
+     */
+    export interface PrivateVerificationToken {
+      /**
+       * Unique identifier of the token in the database.
+       */
+      id: string;
+      /**
+       * Origin of the token issuer.
+       */
+      issuerOrigin: string;
+      /**
+       * Public key ID used to issue the token.
+       */
+      keyId: number;
+      /**
+       * Expiration timestamp in seconds since the epoch.
+       */
+      expiration: Network.TimeSinceEpoch;
+      /**
+       * Token creation timestamp in seconds since the epoch.
+       */
+      creationTime: Network.TimeSinceEpoch;
+      /**
+       * Token protocol version.
+       */
+      version: number;
+      /**
+       * Base64-encoded serialized token.
+       */
+      token: string;
+    }
+    /**
+     * Configuration for a Private Verification Tokens issuer.
+     */
+    export interface PrivateVerificationTokensIssuerConfig {
+      /**
+       * Origin of the token issuer.
+       */
+      issuerOrigin: string;
+      /**
+       * Origins authorized to redeem tokens from this issuer.
+       */
+      redeemerOrigins: string[];
+    }
     export type StorageBucketsDurability = "relaxed"|"strict";
     export interface StorageBucket {
       storageKey: SerializedStorageKey;
@@ -17864,23 +18058,6 @@ Tokens from that issuer.
       quota: number;
       persistent: boolean;
       durability: StorageBucketsDurability;
-    }
-    /**
-     * A single Related Website Set object.
-     */
-    export interface RelatedWebsiteSet {
-      /**
-       * The primary site of this set, along with the ccTLDs if there is any.
-       */
-      primarySites: string[];
-      /**
-       * The associated sites of this set, along with the ccTLDs if there is any.
-       */
-      associatedSites: string[];
-      /**
-       * The service sites of this set, along with the ccTLDs if there is any.
-       */
-      serviceSites: string[];
     }
     
     /**
@@ -17969,6 +18146,10 @@ Tokens from that issuer.
     export type storageBucketDeletedPayload = {
       bucketId: string;
     }
+    /**
+     * Private Verification Tokens have been stored or deleted.
+     */
+    export type privateVerificationTokensUpdatedPayload = void;
     
     /**
      * Returns a storage key given a frame id.
@@ -18220,6 +18401,48 @@ Leaves other stored data, including the issuer's Redemption Records, intact.
       didDeleteTokens: boolean;
     }
     /**
+     * Returns all stored Private Verification Tokens for the current browsing
+context.
+     */
+    export type getPrivateVerificationTokensParameters = {
+    }
+    export type getPrivateVerificationTokensReturnValue = {
+      tokens: PrivateVerificationToken[];
+    }
+    /**
+     * Returns the configured Private Verification Tokens issuers and their redeemer
+origins.
+     */
+    export type getPrivateVerificationTokensIssuerConfigsParameters = {
+    }
+    export type getPrivateVerificationTokensIssuerConfigsReturnValue = {
+      configs: PrivateVerificationTokensIssuerConfig[];
+    }
+    /**
+     * Removes all Private Verification Tokens issued by the provided issuerOrigin.
+     */
+    export type clearPrivateVerificationTokensParameters = {
+      issuerOrigin: string;
+    }
+    export type clearPrivateVerificationTokensReturnValue = {
+    }
+    /**
+     * Removes a specific Private Verification Token by its ID.
+     */
+    export type deletePrivateVerificationTokenParameters = {
+      tokenId: string;
+    }
+    export type deletePrivateVerificationTokenReturnValue = {
+    }
+    /**
+     * Set tracking for Private Verification Tokens.
+     */
+    export type setPrivateVerificationTokensTrackingParameters = {
+      enable: boolean;
+    }
+    export type setPrivateVerificationTokensTrackingReturnValue = {
+    }
+    /**
      * Set tracking for a storage key's buckets.
      */
     export type setStorageBucketTrackingParameters = {
@@ -18243,15 +18466,6 @@ Leaves other stored data, including the issuer's Redemption Records, intact.
     }
     export type runBounceTrackingMitigationsReturnValue = {
       deletedSites: string[];
-    }
-    /**
-     * Returns the effective Related Website Sets in use by this profile for the browser
-session. The effective Related Website Sets will not change during a browser session.
-     */
-    export type getRelatedWebsiteSetsParameters = {
-    }
-    export type getRelatedWebsiteSetsReturnValue = {
-      sets: RelatedWebsiteSet[];
     }
   }
   
@@ -19871,6 +20085,10 @@ See https://w3c.github.io/webauthn/#signature-counter
        */
       consequential?: boolean;
       /**
+       * If true, indicates that the tool is intended for debugging and developer tooling rather than end-user interactions.
+       */
+      debugging?: boolean;
+      /**
        * If the declarative tool was declared with the autosubmit attribute.
        */
       autosubmit?: boolean;
@@ -20226,7 +20444,7 @@ variables as its properties.
        */
       endLocation?: Location;
       /**
-       * True if the scope does not declare any variables or have a runtime context.
+       * True if the scope does not declare any variables.
 Only present if true.
 Empty scopes are retained in the scope chain because
 they can be targeted via `evaluateOnCallFrame` (using `scopeNumber`) or
@@ -22913,6 +23131,7 @@ Error was thrown.
     "Storage.indexedDBListUpdated": Storage.indexedDBListUpdatedPayload;
     "Storage.storageBucketCreatedOrUpdated": Storage.storageBucketCreatedOrUpdatedPayload;
     "Storage.storageBucketDeleted": Storage.storageBucketDeletedPayload;
+    "Storage.privateVerificationTokensUpdated": Storage.privateVerificationTokensUpdatedPayload;
     "Target.attachedToTarget": Target.attachedToTargetPayload;
     "Target.detachedFromTarget": Target.detachedFromTargetPayload;
     "Target.receivedMessageFromTarget": Target.receivedMessageFromTargetPayload;
@@ -23146,6 +23365,7 @@ Error was thrown.
     ["Storage.indexedDBListUpdated"]: [Storage.indexedDBListUpdatedPayload];
     ["Storage.storageBucketCreatedOrUpdated"]: [Storage.storageBucketCreatedOrUpdatedPayload];
     ["Storage.storageBucketDeleted"]: [Storage.storageBucketDeletedPayload];
+    ["Storage.privateVerificationTokensUpdated"]: [Storage.privateVerificationTokensUpdatedPayload];
     ["Target.attachedToTarget"]: [Target.attachedToTargetPayload];
     ["Target.detachedFromTarget"]: [Target.detachedFromTargetPayload];
     ["Target.receivedMessageFromTarget"]: [Target.receivedMessageFromTargetPayload];
@@ -23483,6 +23703,10 @@ Error was thrown.
     "Fetch.getResponseBody": Fetch.getResponseBodyParameters;
     "Fetch.takeResponseBodyAsStream": Fetch.takeResponseBodyAsStreamParameters;
     "FileSystem.getDirectory": FileSystem.getDirectoryParameters;
+    "FindInPage.findFirst": FindInPage.findFirstParameters;
+    "FindInPage.findNext": FindInPage.findNextParameters;
+    "FindInPage.findPrev": FindInPage.findPrevParameters;
+    "FindInPage.stop": FindInPage.stopParameters;
     "HeadlessExperimental.beginFrame": HeadlessExperimental.beginFrameParameters;
     "HeadlessExperimental.disable": HeadlessExperimental.disableParameters;
     "HeadlessExperimental.enable": HeadlessExperimental.enableParameters;
@@ -23629,6 +23853,8 @@ Error was thrown.
     "Page.getInstallabilityErrors": Page.getInstallabilityErrorsParameters;
     "Page.getManifestIcons": Page.getManifestIconsParameters;
     "Page.getAppId": Page.getAppIdParameters;
+    "Page.getSubApps": Page.getSubAppsParameters;
+    "Page.getSiblingSubApps": Page.getSiblingSubAppsParameters;
     "Page.getAdScriptAncestry": Page.getAdScriptAncestryParameters;
     "Page.getFrameTree": Page.getFrameTreeParameters;
     "Page.getLayoutMetrics": Page.getLayoutMetricsParameters;
@@ -23731,10 +23957,14 @@ Error was thrown.
     "Storage.untrackIndexedDBForStorageKey": Storage.untrackIndexedDBForStorageKeyParameters;
     "Storage.getTrustTokens": Storage.getTrustTokensParameters;
     "Storage.clearTrustTokens": Storage.clearTrustTokensParameters;
+    "Storage.getPrivateVerificationTokens": Storage.getPrivateVerificationTokensParameters;
+    "Storage.getPrivateVerificationTokensIssuerConfigs": Storage.getPrivateVerificationTokensIssuerConfigsParameters;
+    "Storage.clearPrivateVerificationTokens": Storage.clearPrivateVerificationTokensParameters;
+    "Storage.deletePrivateVerificationToken": Storage.deletePrivateVerificationTokenParameters;
+    "Storage.setPrivateVerificationTokensTracking": Storage.setPrivateVerificationTokensTrackingParameters;
     "Storage.setStorageBucketTracking": Storage.setStorageBucketTrackingParameters;
     "Storage.deleteStorageBucket": Storage.deleteStorageBucketParameters;
     "Storage.runBounceTrackingMitigations": Storage.runBounceTrackingMitigationsParameters;
-    "Storage.getRelatedWebsiteSets": Storage.getRelatedWebsiteSetsParameters;
     "SystemInfo.getInfo": SystemInfo.getInfoParameters;
     "SystemInfo.getFeatureState": SystemInfo.getFeatureStateParameters;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoParameters;
@@ -24149,6 +24379,10 @@ Error was thrown.
     "Fetch.getResponseBody": Fetch.getResponseBodyReturnValue;
     "Fetch.takeResponseBodyAsStream": Fetch.takeResponseBodyAsStreamReturnValue;
     "FileSystem.getDirectory": FileSystem.getDirectoryReturnValue;
+    "FindInPage.findFirst": FindInPage.findFirstReturnValue;
+    "FindInPage.findNext": FindInPage.findNextReturnValue;
+    "FindInPage.findPrev": FindInPage.findPrevReturnValue;
+    "FindInPage.stop": FindInPage.stopReturnValue;
     "HeadlessExperimental.beginFrame": HeadlessExperimental.beginFrameReturnValue;
     "HeadlessExperimental.disable": HeadlessExperimental.disableReturnValue;
     "HeadlessExperimental.enable": HeadlessExperimental.enableReturnValue;
@@ -24295,6 +24529,8 @@ Error was thrown.
     "Page.getInstallabilityErrors": Page.getInstallabilityErrorsReturnValue;
     "Page.getManifestIcons": Page.getManifestIconsReturnValue;
     "Page.getAppId": Page.getAppIdReturnValue;
+    "Page.getSubApps": Page.getSubAppsReturnValue;
+    "Page.getSiblingSubApps": Page.getSiblingSubAppsReturnValue;
     "Page.getAdScriptAncestry": Page.getAdScriptAncestryReturnValue;
     "Page.getFrameTree": Page.getFrameTreeReturnValue;
     "Page.getLayoutMetrics": Page.getLayoutMetricsReturnValue;
@@ -24397,10 +24633,14 @@ Error was thrown.
     "Storage.untrackIndexedDBForStorageKey": Storage.untrackIndexedDBForStorageKeyReturnValue;
     "Storage.getTrustTokens": Storage.getTrustTokensReturnValue;
     "Storage.clearTrustTokens": Storage.clearTrustTokensReturnValue;
+    "Storage.getPrivateVerificationTokens": Storage.getPrivateVerificationTokensReturnValue;
+    "Storage.getPrivateVerificationTokensIssuerConfigs": Storage.getPrivateVerificationTokensIssuerConfigsReturnValue;
+    "Storage.clearPrivateVerificationTokens": Storage.clearPrivateVerificationTokensReturnValue;
+    "Storage.deletePrivateVerificationToken": Storage.deletePrivateVerificationTokenReturnValue;
+    "Storage.setPrivateVerificationTokensTracking": Storage.setPrivateVerificationTokensTrackingReturnValue;
     "Storage.setStorageBucketTracking": Storage.setStorageBucketTrackingReturnValue;
     "Storage.deleteStorageBucket": Storage.deleteStorageBucketReturnValue;
     "Storage.runBounceTrackingMitigations": Storage.runBounceTrackingMitigationsReturnValue;
-    "Storage.getRelatedWebsiteSets": Storage.getRelatedWebsiteSetsReturnValue;
     "SystemInfo.getInfo": SystemInfo.getInfoReturnValue;
     "SystemInfo.getFeatureState": SystemInfo.getFeatureStateReturnValue;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoReturnValue;
