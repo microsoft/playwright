@@ -882,21 +882,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._frame.selectors.queryAll(selector, this);
   }
 
-  override async evaluateExpression(progress: Progress, expression: string, options: { isFunction?: boolean, world?: types.World }, arg: any): Promise<any> {
-    return await progress.race(this.internalEvaluateExpression(expression, options, arg));
+  async evalOnSelector(progress: Progress, target: types.SelectorTarget, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+    return this._frame.evalOnSelector(progress, { ...target, scope: this }, expression, isFunction, arg);
   }
 
-  override async internalEvaluateExpression(expression: string, options: { isFunction?: boolean, world?: types.World }, arg: any): Promise<any> {
-    const context = options.world ? await this._frame.context(options.world) : this._context;
-    return await js.evaluateExpression(context, expression, { isFunction: options.isFunction, returnByValue: true }, this, arg);
-  }
-
-  async evalOnSelector(progress: Progress, target: types.SelectorTarget, expression: string, options: { isFunction?: boolean, world?: types.World }, arg: any): Promise<any> {
-    return this._frame.evalOnSelector(progress, { ...target, scope: this }, expression, options, arg);
-  }
-
-  async evalOnSelectorAll(progress: Progress, selector: string, expression: string, options: { isFunction?: boolean, world?: types.World }, arg: any): Promise<any> {
-    return this._frame.evalOnSelectorAll(progress, selector, expression, options, arg, this);
+  async evalOnSelectorAll(progress: Progress, selector: string, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+    return this._frame.evalOnSelectorAll(progress, selector, expression, isFunction, arg, this);
   }
 
   async isVisible(progress: Progress): Promise<boolean> {

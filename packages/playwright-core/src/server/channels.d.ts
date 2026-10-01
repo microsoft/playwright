@@ -2345,12 +2345,10 @@ export type FrameEvalOnSelectorParams = {
   expression: string,
   isFunction?: boolean,
   arg: SerializedArgument,
-  world?: 'main' | 'utility',
 };
 export type FrameEvalOnSelectorOptions = {
   strict?: boolean,
   isFunction?: boolean,
-  world?: 'main' | 'utility',
 };
 export type FrameEvalOnSelectorResult = {
   value: SerializedValue,
@@ -2360,11 +2358,9 @@ export type FrameEvalOnSelectorAllParams = {
   expression: string,
   isFunction?: boolean,
   arg: SerializedArgument,
-  world?: 'main' | 'utility',
 };
 export type FrameEvalOnSelectorAllOptions = {
   isFunction?: boolean,
-  world?: 'main' | 'utility',
 };
 export type FrameEvalOnSelectorAllResult = {
   value: SerializedValue,
@@ -2575,11 +2571,9 @@ export type FrameEvaluateExpressionParams = {
   expression: string,
   isFunction?: boolean,
   arg: SerializedArgument,
-  world?: 'main' | 'utility',
 };
 export type FrameEvaluateExpressionOptions = {
   isFunction?: boolean,
-  world?: 'main' | 'utility',
 };
 export type FrameEvaluateExpressionResult = {
   value: SerializedValue,
@@ -3065,11 +3059,9 @@ export type JSHandleEvaluateExpressionParams = {
   expression: string,
   isFunction?: boolean,
   arg: SerializedArgument,
-  world?: 'main' | 'utility',
 };
 export type JSHandleEvaluateExpressionOptions = {
   isFunction?: boolean,
-  world?: 'main' | 'utility',
 };
 export type JSHandleEvaluateExpressionResult = {
   value: SerializedValue,
@@ -3161,12 +3153,10 @@ export type ElementHandleEvalOnSelectorParams = {
   expression: string,
   isFunction?: boolean,
   arg: SerializedArgument,
-  world?: 'main' | 'utility',
 };
 export type ElementHandleEvalOnSelectorOptions = {
   strict?: boolean,
   isFunction?: boolean,
-  world?: 'main' | 'utility',
 };
 export type ElementHandleEvalOnSelectorResult = {
   value: SerializedValue,
@@ -3176,11 +3166,9 @@ export type ElementHandleEvalOnSelectorAllParams = {
   expression: string,
   isFunction?: boolean,
   arg: SerializedArgument,
-  world?: 'main' | 'utility',
 };
 export type ElementHandleEvalOnSelectorAllOptions = {
   isFunction?: boolean,
-  world?: 'main' | 'utility',
 };
 export type ElementHandleEvalOnSelectorAllResult = {
   value: SerializedValue,

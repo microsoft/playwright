@@ -50,7 +50,7 @@ import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 import { mkdirIfNeeded } from './fileUtils';
 import { ConsoleMessage } from './consoleMessage';
 import type { BrowserContext } from './browserContext';
-import type { EvaluateOptions, ExposeFunctionsOptions, WorldOptions } from './jsHandle';
+import type { EvaluateOptions, ExposeFunctionsOptions } from './jsHandle';
 import type { Clock } from './clock';
 import type { APIRequestContext } from './fetch';
 import type { WaitForNavigationOptions } from './frame';
@@ -341,19 +341,19 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._mainFrame.dispatchEvent(selector, type, eventInit, options);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: ExposeFunctionsOptions): Promise<structs.SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: EvaluateOptions): Promise<structs.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 3);
     return await this._mainFrame.evaluateHandle(pageFunction, arg, options);
   }
 
-  async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg, options?: WorldOptions): Promise<R> {
-    assertMaxArguments(arguments.length, 4);
-    return await this._mainFrame.$eval(selector, pageFunction, arg, options);
+  async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg): Promise<R> {
+    assertMaxArguments(arguments.length, 3);
+    return await this._mainFrame.$eval(selector, pageFunction, arg);
   }
 
-  async $$eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg, options?: WorldOptions): Promise<R> {
-    assertMaxArguments(arguments.length, 4);
-    return await this._mainFrame.$$eval(selector, pageFunction, arg, options);
+  async $$eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
+    assertMaxArguments(arguments.length, 3);
+    return await this._mainFrame.$$eval(selector, pageFunction, arg);
   }
 
   async $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]> {
