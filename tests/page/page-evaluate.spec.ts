@@ -894,10 +894,11 @@ it('should work with Array.from/map', async ({ page }) => {
   })).toBe('([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})');
 });
 
-it('should work with a using declaration', async ({ page, nodeVersion, browserName }) => {
+it('should work with a using declaration', async ({ page, nodeVersion, browserName, browserMajorVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41511' });
   it.skip(nodeVersion.major < 24, 'using is lowered to a module-scope helper that does not survive evaluate serialization on Node < 24');
   it.skip(browserName === 'webkit', 'WebKit does not support using declarations');
+  it.skip(browserName === 'chromium' && browserMajorVersion < 134, 'Chromium supports using declarations since 134');
   const disposed = await page.evaluate(() => {
     let disposed = false;
     {
