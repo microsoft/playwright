@@ -16,7 +16,6 @@
 
 /* eslint-disable no-console */
 
-import '../bootstrap';
 import { program } from 'commander';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { getPackageManagerExecCommand } from '@utils/env';

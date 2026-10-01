@@ -28,7 +28,6 @@ export * from './hostPlatform';
 export * from './httpServer';
 export * from './network';
 export * from './processLauncher';
-export * from './profiler';
 export * from './serializedFS';
 export * from './socksProxy';
 export * from './stackTrace';

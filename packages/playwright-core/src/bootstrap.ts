@@ -31,6 +31,47 @@ if (major < minimumMajorNodeVersion) {
   process.exit(1);
 }
 
+let stopProfiling = (callback: () => void) => callback();
+
+if (process.env.PW_PROFILE_DIR) {
+  const fs: typeof import('fs') = require('fs');
+  const path: typeof import('path') = require('path');
+  const { Session }: typeof import('inspector') = require('inspector');
+
+  const profileDir = path.resolve(process.env.PW_PROFILE_DIR);
+  const script = process.argv[1] ? path.basename(process.argv[1], path.extname(process.argv[1])) : 'node';
+  const command = /^[a-z][\w-]*$/i.test(process.argv[2] ?? '') ? process.argv[2] : undefined;
+  const profileName = [script, command, process.pid].filter(Boolean).join('-');
+
+  const session = new Session();
+  session.connect();
+  session.post('Profiler.enable');
+  session.post('Profiler.start');
+
+  stopProfiling = callback => {
+    stopProfiling = callback => callback();
+    session.post('Profiler.stop', (error, result) => {
+      try {
+        if (!error) {
+          fs.mkdirSync(profileDir, { recursive: true });
+          fs.writeFileSync(path.join(profileDir, profileName + '.cpuprofile'), JSON.stringify(result.profile));
+        }
+      } finally {
+        callback();
+      }
+    });
+  };
+  process.on('beforeExit', () => stopProfiling(() => {}));
+}
+
+export function processExit(code?: number): never {
+  stopProfiling(() => {
+    // eslint-disable-next-line no-restricted-properties
+    process.exit(code);
+  });
+  return undefined as never;
+}
+
 if (process.env.PW_INSTRUMENT_MODULES) {
   const Module = require('module');
   const originalLoad = Module._load;

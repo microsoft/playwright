@@ -21,6 +21,7 @@ import * as readline from 'readline';
 
 import { removeFolders } from './fileUtils';
 import { isUnderTest } from './debug';
+import { processExit } from '../playwright-core/src/bootstrap';
 
 import type { SpawnOptions } from 'child_process';
 
@@ -60,8 +61,8 @@ export async function gracefullyCloseAll() {
 export function gracefullyProcessExitDoNotHang(code: number, onExit?: () => Promise<void>) {
   // Force exit after 30 seconds.
   const beforeExit = onExit ? () => onExit().catch(() => {}) : () => Promise.resolve();
-  // eslint-disable-next-line no-restricted-properties
-  const callback = () => beforeExit().then(() => process.exit(code));
+  // eslint-disable-next-line no-restricted-syntax
+  const callback = () => beforeExit().then(() => processExit(code));
 
   setTimeout(callback, 30000);
   // Meanwhile, try to gracefully close all browsers.
@@ -78,11 +79,11 @@ function sigintHandler() {
   const exitWithCode130 = () => {
     // Give tests a chance to see that launched process did exit and dispatch any async calls.
     if (isUnderTest()) {
-      // eslint-disable-next-line no-restricted-properties
-      setTimeout(() => process.exit(130), 1000);
+      // eslint-disable-next-line no-restricted-syntax
+      setTimeout(() => processExit(130), 1000);
     } else {
-      // eslint-disable-next-line no-restricted-properties
-      process.exit(130);
+      // eslint-disable-next-line no-restricted-syntax
+      processExit(130);
     }
   };
 

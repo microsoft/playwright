@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-/* eslint-disable no-restricted-properties */
-
 import { execSync, spawn } from 'child_process';
 
 import crypto from 'crypto';
@@ -29,6 +27,7 @@ import { Session } from './session';
 import { libPath } from '../../package';
 import { serverRegistry } from '../../serverRegistry';
 import { minimist } from './minimist';
+import { processExit } from '../../bootstrap';
 
 import type { ListData, ListedBrowser, Output } from './output';
 import type { ClientInfo, SessionFile } from './registry';
@@ -97,7 +96,8 @@ export async function program(options?: { embedderVersion?: string}) {
 
   if (args.version || args.v) {
     output.version(options?.embedderVersion ?? clientInfo.version);
-    process.exit(0);
+    // eslint-disable-next-line no-restricted-syntax
+    processExit(0);
   }
 
   const command = commandName && help.commands[commandName];
@@ -111,7 +111,8 @@ export async function program(options?: { embedderVersion?: string}) {
       lines.push(help.global);
       output.help(lines.join('\n\n'));
     }
-    process.exit(0);
+    // eslint-disable-next-line no-restricted-syntax
+    processExit(0);
   }
 
   if (!command)

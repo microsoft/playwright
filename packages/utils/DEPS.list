@@ -13,6 +13,9 @@ node_modules/ws
 node_modules/yauzl
 node_modules/yazl
 
+[processLauncher.ts]
+../playwright-core/src/bootstrap.ts
+
 [comparators.ts]
 ./image_tools
 ./third_party/pixelmatch

@@ -58,7 +58,6 @@ export type SerializedConfig = {
 
 export type ProcessInitParams = {
   timeOrigin: number;
-  processName: string;
 };
 
 export type WorkerInitParams = {

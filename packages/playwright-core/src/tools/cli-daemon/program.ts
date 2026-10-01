@@ -29,6 +29,7 @@ import * as configUtils from '../mcp/config';
 import { createClientInfo } from '../cli-client/registry';
 import { installSkills } from '../utils/installSkills';
 import { registry as browserRegistry } from '../../server/registry/index';
+import { processExit } from '../../bootstrap';
 import type { Command } from 'commander';
 
 export function decorateProgram(program: Command) {
@@ -102,8 +103,8 @@ export async function initWorkspace(initSkills: string | undefined, initSkillsGl
       await installSkills(['playwright-cli'], target, { global: globalSkills });
     } catch (error) {
       console.error('❌', error instanceof Error ? error.message : error);
-      // eslint-disable-next-line no-restricted-properties
-      process.exit(1);
+      // eslint-disable-next-line no-restricted-syntax
+      processExit(1);
     }
   }
 

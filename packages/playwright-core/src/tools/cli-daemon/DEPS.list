@@ -1,4 +1,5 @@
 [*]
+../../bootstrap.ts
 ../../package.ts
 ../utils/socketConnection.ts
 ../utils/installSkills.ts

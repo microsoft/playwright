@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { startProfiling, stopProfiling } from '@utils/profiler';
 import { debugLogger } from '@utils/debugLogger';
 import { monotonicTime } from '@isomorphic/time';
 import { Semaphore } from '@isomorphic/semaphore';
@@ -39,13 +38,11 @@ export class PlaywrightConnection {
   private _id: string;
   private _onDisconnectPromise: Promise<void> | undefined;
   private _root: DispatcherScope;
-  private _profileName: string;
 
   constructor(semaphore: Semaphore, transport: ServerTransport, controller: boolean, playwright: Playwright, initialize: () => Promise<PlaywrightInitializeResult>, id: string) {
     this._transport = transport;
     this._semaphore = semaphore;
     this._id = id;
-    this._profileName = new Date().toISOString();
 
     const lock = this._semaphore.acquire();
 
@@ -89,8 +86,6 @@ export class PlaywrightConnection {
     }
 
     this._root = new RootDispatcher(this._dispatcherConnection, async (scope, params) => {
-      await startProfiling();
-
       const options = await initialize();
       if (options.preLaunchedBrowser) {
         const browser = options.preLaunchedBrowser;
@@ -130,7 +125,6 @@ export class PlaywrightConnection {
     debugLogger.log('server', `[${this._id}] starting cleanup`);
     for (const cleanup of this._cleanups)
       await cleanup().catch(() => {});
-    await stopProfiling(this._profileName);
     this._semaphore.release();
     debugLogger.log('server', `[${this._id}] finished cleanup`);
   }

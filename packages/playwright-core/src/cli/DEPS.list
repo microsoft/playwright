@@ -10,7 +10,6 @@
 ../tools/cli-client/program.ts
 ../tools/mcp/program.ts
 ../tools/trace/traceCli.ts
-../bootstrap.ts
 node_modules/commander
 node_modules/debug
 node_modules/dotenv

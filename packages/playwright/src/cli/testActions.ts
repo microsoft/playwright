@@ -18,7 +18,6 @@ import fs from 'fs';
 import path from 'path';
 
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
-import { startProfiling, stopProfiling } from '@utils/profiler';
 
 import { builtInReporters, configLoader, ipc } from '../common';
 import { base, projectUtils, testServer, watchMode, testRunner, runnerReporters } from '../runner';
@@ -26,7 +25,6 @@ import type { ReporterDescription } from '../../types/test';
 import type { TestRunOptions } from '../runner/tasks';
 
 export async function runTests(args: string[], opts: { [key: string]: any }) {
-  await startProfiling();
   const cliOverrides = overridesFromOptions(opts);
   cliOverrides.argv = process.argv;
 
@@ -62,7 +60,6 @@ export async function runTests(args: string[], opts: { [key: string]: any }) {
       project: opts.project || undefined,
       reporter: Array.isArray(opts.reporter) ? opts.reporter : opts.reporter ? [opts.reporter] : undefined,
     });
-    await stopProfiling('runner');
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
     gracefullyProcessExitDoNotHang(exitCode);
     return;
@@ -80,14 +77,12 @@ export async function runTests(args: string[], opts: { [key: string]: any }) {
           grep: opts.grep
         }
     );
-    await stopProfiling('runner');
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
     gracefullyProcessExitDoNotHang(exitCode);
     return;
   }
 
   const status = await testRunner.runAllTestsWithConfig(config, options);
-  await stopProfiling('runner');
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
 }

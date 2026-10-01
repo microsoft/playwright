@@ -1,5 +1,11 @@
+[cli.ts]
+"strict"
+../../bootstrap.ts
+./program.ts
+
 [program.ts]
 "strict"
+../../bootstrap.ts
 ../../package.ts
 ../../serverRegistry.ts
 ./channelSessions.ts
@@ -10,6 +16,7 @@
 
 [output.ts]
 "strict"
+../../bootstrap.ts
 ../utils/extension.ts
 ./channelSessions.ts
 
