@@ -80,6 +80,66 @@ it('addCookies should validate cookies', async ({ request }) => {
   expect(error.message).toContain('Cookie should have a url or a domain/path pair');
 });
 
+it('cookies should return cookies filtered by urls', async ({ request, server }) => {
+  await request.addCookies([
+    { name: 'a', value: 'b', domain: 'localhost', path: '/' },
+    { name: 'c', value: 'd', domain: 'localhost', path: '/input' },
+    { name: 'e', value: 'f', domain: 'one.com', path: '/' },
+    { name: 'g', value: 'h', domain: 'two.com', path: '/', secure: true },
+  ]);
+  expect((await request.cookies()).map(c => c.name)).toEqual(['a', 'c', 'e', 'g']);
+  expect((await request.cookies(server.EMPTY_PAGE)).map(c => c.name)).toEqual(['a']);
+  expect((await request.cookies(`${server.PREFIX}/input/button.html`)).map(c => c.name)).toEqual(['a', 'c']);
+  expect((await request.cookies(['http://sub.one.com/', 'http://two.com/'])).map(c => c.name)).toEqual(['e']);
+  expect((await request.cookies(['http://sub.one.com/', 'https://two.com/'])).map(c => c.name)).toEqual(['e', 'g']);
+  expect(await request.cookies('http://other.com/')).toEqual([]);
+});
+
+it('cookies should include cookies from Set-Cookie header', async ({ request, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=b; HttpOnly; SameSite=Strict', 'c=d; path=/input']);
+    res.end();
+  });
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  expect(await request.cookies()).toEqual([
+    { name: 'a', value: 'b', domain: 'localhost', path: '/', expires: -1, httpOnly: true, secure: false, sameSite: 'Strict' },
+    { name: 'c', value: 'd', domain: 'localhost', path: '/input', expires: -1, httpOnly: false, secure: false, sameSite: 'Lax' },
+  ]);
+});
+
+it('clearCookies should remove all cookies', async ({ request, server }) => {
+  await request.addCookies([
+    { name: 'a', value: 'b', url: server.EMPTY_PAGE },
+    { name: 'c', value: 'd', domain: 'one.com', path: '/' },
+  ]);
+  await request.clearCookies();
+  expect(await request.cookies()).toEqual([]);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(server.EMPTY_PAGE),
+  ]);
+  expect(serverRequest.headers.cookie).toBeUndefined();
+});
+
+it('clearCookies should filter by name, domain and path', async ({ request }) => {
+  await request.addCookies([
+    { name: 'session', value: '1', domain: 'one.com', path: '/' },
+    { name: 'session', value: '2', domain: 'two.com', path: '/' },
+    { name: 'session', value: '3', domain: 'two.com', path: '/api' },
+    { name: 'other', value: '4', domain: 'one.com', path: '/' },
+  ]);
+  const values = async () => (await request.cookies()).map(c => c.value).sort();
+
+  await request.clearCookies({ name: 'session', domain: 'two.com', path: '/api' });
+  expect(await values()).toEqual(['1', '2', '4']);
+
+  await request.clearCookies({ domain: /one\.com$/ });
+  expect(await values()).toEqual(['2']);
+
+  await request.clearCookies({ name: /^sess/ });
+  expect(await values()).toEqual([]);
+});
+
 it('should filter outgoing cookies by path', async ({ request, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v; path=/input/subfolder', 'b=v; path=/input', 'c=v;']);

@@ -22,7 +22,7 @@ import { TracingDispatcher } from './tracingDispatcher';
 import { Request } from '../network';
 
 import type { APIRequestContext } from '../fetch';
-import type { Response, Route } from '../network';
+import type { ClearCookiesOptions, Response, Route } from '../network';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { RootDispatcher } from './dispatcher';
 import type { PageDispatcher } from './pageDispatcher';
@@ -215,6 +215,14 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
     await progress.race(this._object.addCookies(params.cookies));
   }
 
+  async cookies(params: channels.APIRequestContextCookiesParams, progress: Progress): Promise<channels.APIRequestContextCookiesResult> {
+    return { cookies: await this._object.cookies(progress, params.urls) };
+  }
+
+  async clearCookies(params: channels.APIRequestContextClearCookiesParams, progress: Progress): Promise<void> {
+    await progress.race(this._object.clearCookies(parseClearCookiesParams(params)));
+  }
+
   async storageState(params: channels.APIRequestContextStorageStateParams, progress: Progress): Promise<channels.APIRequestContextStorageStateResult> {
     return await this._object.storageState(progress, params);
   }
@@ -240,4 +248,15 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
   async disposeAPIResponse(params: channels.APIRequestContextDisposeAPIResponseParams, progress: Progress): Promise<void> {
     this._object.disposeResponse(progress, params.fetchUid);
   }
+}
+
+export function parseClearCookiesParams(params: channels.BrowserContextClearCookiesParams | channels.APIRequestContextClearCookiesParams): ClearCookiesOptions {
+  const nameRe = params.nameRegexSource !== undefined && params.nameRegexFlags !== undefined ? new RegExp(params.nameRegexSource, params.nameRegexFlags) : undefined;
+  const domainRe = params.domainRegexSource !== undefined && params.domainRegexFlags !== undefined ? new RegExp(params.domainRegexSource, params.domainRegexFlags) : undefined;
+  const pathRe = params.pathRegexSource !== undefined && params.pathRegexFlags !== undefined ? new RegExp(params.pathRegexSource, params.pathRegexFlags) : undefined;
+  return {
+    name: nameRe || params.name,
+    domain: domainRe || params.domain,
+    path: pathRe || params.path,
+  };
 }

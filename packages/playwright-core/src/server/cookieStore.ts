@@ -68,20 +68,22 @@ export class CookieStore {
       this._addCookie(new Cookie(cookie));
   }
 
-  cookies(url: URL): channels.NetworkCookie[] {
-    const result = [];
-    for (const cookie of this._cookiesIterator()) {
-      if (cookie.matches(url))
-        result.push(cookie._networkCookie());
-    }
-    return result;
-  }
-
   allCookies(): channels.NetworkCookie[] {
     const result = [];
     for (const cookie of this._cookiesIterator())
       result.push(cookie._networkCookie());
     return result;
+  }
+
+  removeCookies(predicate: (cookie: channels.NetworkCookie) => boolean) {
+    for (const [name, cookies] of this._nameToCookies) {
+      for (const cookie of cookies) {
+        if (predicate(cookie._networkCookie()))
+          cookies.delete(cookie);
+      }
+      if (cookies.size === 0)
+        this._nameToCookies.delete(name);
+    }
   }
 
   private _addCookie(cookie: Cookie) {

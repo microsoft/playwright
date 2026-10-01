@@ -76,6 +76,32 @@ APIRequestContext:
           type: array
           items: SetNetworkCookie
 
+    clearCookies:
+      title: Clear cookies
+      group: configuration
+      parameters:
+        name: string?
+        nameRegexSource: string?
+        nameRegexFlags: string?
+        domain: string?
+        domainRegexSource: string?
+        domainRegexFlags: string?
+        path: string?
+        pathRegexSource: string?
+        pathRegexFlags: string?
+
+    cookies:
+      title: Get cookies
+      group: getter
+      parameters:
+        urls:
+          type: array
+          items: string
+      returns:
+        cookies:
+          type: array
+          items: NetworkCookie
+
     storageState:
       title: Get storage state
       group: configuration

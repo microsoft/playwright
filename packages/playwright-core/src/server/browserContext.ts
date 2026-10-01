@@ -311,29 +311,14 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     return await this.doGetCookies(urls as string[]);
   }
 
-  async clearCookies(options: {name?: string | RegExp, domain?: string | RegExp, path?: string | RegExp}): Promise<void> {
-    const hasFilter = options.name !== undefined || options.domain !== undefined || options.path !== undefined;
-    if (!hasFilter) {
+  async clearCookies(options: network.ClearCookiesOptions): Promise<void> {
+    if (!network.hasClearCookiesFilter(options)) {
       await this.doClearCookies();
       return;
     }
 
-    const matches = (cookie: channels.NetworkCookie, prop: 'name' | 'domain' | 'path', value: string | RegExp | undefined) => {
-      if (!value)
-        return true;
-      if (value instanceof RegExp) {
-        value.lastIndex = 0;
-        return value.test(cookie[prop]);
-      }
-      return cookie[prop] === value;
-    };
-
     const currentCookies = await this._cookies();
-    const cookiesToExpire = currentCookies.filter(cookie => {
-      return matches(cookie, 'name', options.name)
-        && matches(cookie, 'domain', options.domain)
-        && matches(cookie, 'path', options.path);
-    });
+    const cookiesToExpire = currentCookies.filter(cookie => network.cookieMatchesClearFilter(cookie, options));
 
     if (!cookiesToExpire.length)
       return;

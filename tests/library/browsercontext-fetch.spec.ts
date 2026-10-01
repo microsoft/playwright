@@ -379,6 +379,32 @@ it('page.request.addCookies should add cookies to the browser context', async ({
   expect((await page.evaluate(() => document.cookie)).split(';').map(s => s.trim()).sort()).toEqual(['a=b', 'c=d']);
 });
 
+it('page.request.cookies should return browser context cookies', async ({ context, page, server }) => {
+  await context.addCookies([
+    { name: 'a', value: 'b', url: server.EMPTY_PAGE },
+    { name: 'c', value: 'd', domain: 'example.com', path: '/' },
+  ]);
+  expect((await page.request.cookies()).map(c => c.name).sort()).toEqual(['a', 'c']);
+  expect((await page.request.cookies(server.EMPTY_PAGE)).map(c => c.name)).toEqual(['a']);
+  expect(await page.request.cookies(server.EMPTY_PAGE)).toEqual(await context.cookies(server.EMPTY_PAGE));
+});
+
+it('page.request.clearCookies should clear browser context cookies', async ({ context, page, server }) => {
+  await context.addCookies([
+    { name: 'a', value: 'b', url: server.EMPTY_PAGE },
+    { name: 'c', value: 'd', url: server.EMPTY_PAGE },
+  ]);
+  await page.request.clearCookies({ name: 'a' });
+  expect((await context.cookies()).map(c => c.name)).toEqual(['c']);
+  await page.request.clearCookies();
+  expect(await context.cookies()).toEqual([]);
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.request.get(server.EMPTY_PAGE),
+  ]);
+  expect(req.headers.cookie).toBeUndefined();
+});
+
 it('should preserve cookie order from Set-Cookie header', async ({ context, page, server, browserName, isLinux }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23390' });
   server.setRoute('/setcookie.html', (req, res) => {

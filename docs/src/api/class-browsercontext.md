@@ -537,23 +537,14 @@ await context.ClearCookiesAsync(new() { Path = "/api/v1" });
 await context.ClearCookiesAsync(new() { Name = "session-id", Domain = "my-origin.com" });
 ```
 
-### option: BrowserContext.clearCookies.name
+### option: BrowserContext.clearCookies.name = %%-clear-cookies-option-name-%%
 * since: v1.43
-- `name` <[string]|[RegExp]>
 
-Only removes cookies with the given name.
-
-### option: BrowserContext.clearCookies.domain
+### option: BrowserContext.clearCookies.domain = %%-clear-cookies-option-domain-%%
 * since: v1.43
-- `domain` <[string]|[RegExp]>
 
-Only removes cookies with the given domain.
-
-### option: BrowserContext.clearCookies.path
+### option: BrowserContext.clearCookies.path = %%-clear-cookies-option-path-%%
 * since: v1.43
-- `path` <[string]|[RegExp]>
-
-Only removes cookies with the given path.
 
 ## async method: BrowserContext.clearPermissions
 * since: v1.8
@@ -626,11 +617,8 @@ The default browser context cannot be closed.
 If no URLs are specified, this method returns all cookies. If URLs are specified, only cookies that affect those URLs
 are returned.
 
-### param: BrowserContext.cookies.urls
+### param: BrowserContext.cookies.urls = %%-cookies-param-urls-%%
 * since: v1.8
-- `urls` ?<[string]|[Array]<[string]>>
-
-Optional list of URLs.
 
 ## async method: BrowserContext.exposeBinding
 * since: v1.8

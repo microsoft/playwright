@@ -333,6 +333,24 @@ scheme.APIRequestContextAddCookiesParams = tObject({
   cookies: tArray(tType('SetNetworkCookie')),
 });
 scheme.APIRequestContextAddCookiesResult = tOptional(tObject({}));
+scheme.APIRequestContextClearCookiesParams = tObject({
+  name: tOptional(tString),
+  nameRegexSource: tOptional(tString),
+  nameRegexFlags: tOptional(tString),
+  domain: tOptional(tString),
+  domainRegexSource: tOptional(tString),
+  domainRegexFlags: tOptional(tString),
+  path: tOptional(tString),
+  pathRegexSource: tOptional(tString),
+  pathRegexFlags: tOptional(tString),
+});
+scheme.APIRequestContextClearCookiesResult = tOptional(tObject({}));
+scheme.APIRequestContextCookiesParams = tObject({
+  urls: tArray(tString),
+});
+scheme.APIRequestContextCookiesResult = tObject({
+  cookies: tArray(tType('NetworkCookie')),
+});
 scheme.APIRequestContextStorageStateParams = tObject({
   indexedDB: tOptional(tBoolean),
   opfs: tOptional(tBoolean),

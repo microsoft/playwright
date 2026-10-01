@@ -21,7 +21,7 @@ import { headersObjectToArray } from '@isomorphic/headers';
 import { resolveGlobToRegexPattern, serializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
 import { LongStandingScope, ManualPromise } from '@isomorphic/manualPromise';
 import { MultiMap } from '@isomorphic/multimap';
-import { isString } from '@isomorphic/rtti';
+import { isRegExp, isString } from '@isomorphic/rtti';
 import { rewriteErrorMessage } from '@utils/stackTrace';
 import { getMimeTypeForPath } from '@isomorphic/mimeType';
 import { currentZone } from '@utils/zones';
@@ -72,6 +72,20 @@ export type ClearNetworkCookieOptions = {
   domain?: string | RegExp,
   path?: string | RegExp,
 };
+
+export function toClearCookiesParams(options: ClearNetworkCookieOptions): channels.BrowserContextClearCookiesParams {
+  return {
+    name: isString(options.name) ? options.name : undefined,
+    nameRegexSource: isRegExp(options.name) ? options.name.source : undefined,
+    nameRegexFlags: isRegExp(options.name) ? options.name.flags : undefined,
+    domain: isString(options.domain) ? options.domain : undefined,
+    domainRegexSource: isRegExp(options.domain) ? options.domain.source : undefined,
+    domainRegexFlags: isRegExp(options.domain) ? options.domain.flags : undefined,
+    path: isString(options.path) ? options.path : undefined,
+    pathRegexSource: isRegExp(options.path) ? options.path.source : undefined,
+    pathRegexFlags: isRegExp(options.path) ? options.path.flags : undefined,
+  };
+}
 
 type SerializedFallbackOverrides = {
   url?: string;
