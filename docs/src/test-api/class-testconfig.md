@@ -267,6 +267,22 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.lastRunOutputFile
+* since: v1.64
+- type: ?<[string]>
+
+Path to write the last run file to, relative to the config file. This file lists the tests that failed and can be passed to the `--last-failed=<file>` CLI option to re-run them. Defaults to `.last-run.json` inside the [`property: TestProject.outputDir`] of the first project being run. The `--last-run-output-file` CLI option and the `PLAYWRIGHT_LAST_RUN_OUTPUT_FILE` environment variable take precedence over this value.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  lastRunOutputFile: './.cache/last-run.json',
+});
+```
+
 ## property: TestConfig.maxFailures
 * since: v1.10
 - type: ?<[int]>

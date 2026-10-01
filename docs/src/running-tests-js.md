@@ -91,7 +91,7 @@ To run only the tests that failed in the last test run, first run your tests and
 npx playwright test --last-failed
 ```
 
-Playwright stores the list of failed tests from the previous run in `<outputDir>/.last-run.json` (see [`property: TestConfig.outputDir`](./test-configuration.md)). To write it to a different file, pass `--last-run-output-file=<path>` or set `PLAYWRIGHT_LAST_RUN_OUTPUT_FILE`.
+Playwright stores the list of failed tests from the previous run in `<outputDir>/.last-run.json` (see [`property: TestConfig.outputDir`](./test-configuration.md)). To write it to a different file, set [`property: TestConfig.lastRunOutputFile`] in the config, pass `--last-run-output-file=<path>` or set `PLAYWRIGHT_LAST_RUN_OUTPUT_FILE`.
 
 ```bash
 npx playwright test --last-run-output-file=.cache/last-run-shard-1.json

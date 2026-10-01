@@ -43,12 +43,12 @@ export class LastRunReporter implements ReporterV2 {
   private _suite: Suite | undefined;
   private _listMode: boolean;
 
-  constructor(filteredProjects: commonConfig.FullProjectInternal[], options: { listMode?: boolean, inputFile?: string, outputFile?: string }) {
+  constructor(config: commonConfig.FullConfigInternal, filteredProjects: commonConfig.FullProjectInternal[], options: { listMode?: boolean, inputFile?: string, outputFile?: string }) {
     this._listMode = !!options.listMode;
     const [project] = filteredProjects;
     const defaultFile = project ? path.join(project.project.outputDir, '.last-run.json') : undefined;
     const outputFile = options.outputFile ?? process.env.PLAYWRIGHT_LAST_RUN_OUTPUT_FILE;
-    this._outputFile = outputFile ? path.resolve(process.cwd(), outputFile) : defaultFile;
+    this._outputFile = outputFile ? path.resolve(process.cwd(), outputFile) : config.lastRunOutputFile ?? defaultFile;
     this._inputFile = options.inputFile ? path.resolve(process.cwd(), options.inputFile) : defaultFile;
     this._isDefaultInputFile = !options.inputFile;
   }

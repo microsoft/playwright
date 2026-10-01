@@ -1104,3 +1104,29 @@ test('should resolve --last-failed and --last-run-output-file against cwd', asyn
   expect(result2.passed).toBe(0);
   expect(result2.failed).toBe(1);
 });
+
+test('should write last run file to lastRunOutputFile from config', async ({ runInlineTest }, testInfo) => {
+  const workspace = {
+    'dir/playwright.config.ts': `
+      export default { lastRunOutputFile: '.cache/last-run.json' };
+    `,
+    'dir/a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {});
+      test('fail', async () => {
+        expect(1).toBe(2);
+      });
+    `,
+  };
+  const result1 = await runInlineTest(workspace, { config: 'dir/playwright.config.ts' });
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(1);
+  expect(result1.failed).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('dir', '.cache', 'last-run.json'))).toBe(true);
+
+  const result2 = await runInlineTest(workspace, { config: 'dir/playwright.config.ts' }, {}, { additionalArgs: ['--last-failed=dir/.cache/last-run.json'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(0);
+  expect(result2.failed).toBe(1);
+  expect(result2.output).toContain('a.spec.js:4:11 › fail');
+});

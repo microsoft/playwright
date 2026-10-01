@@ -49,6 +49,7 @@ export class FullConfigInternal {
   readonly singleTSConfigPath?: string;
   readonly captureGitInfo: Config['captureGitInfo'];
   readonly retryStrategy: 'immediate' | 'isolated';
+  readonly lastRunOutputFile?: string;
   defineConfigWasUsed = false;
 
   globalSetups: string[] = [];
@@ -69,6 +70,7 @@ export class FullConfigInternal {
     this.singleTSConfigPath = pathResolve(configDir, userConfig.tsconfig);
     this.captureGitInfo = userConfig.captureGitInfo;
     this.retryStrategy = takeFirst(userConfig.retryStrategy, 'immediate');
+    this.lastRunOutputFile = pathResolve(configDir, userConfig.lastRunOutputFile);
 
     this.globalSetups = (Array.isArray(userConfig.globalSetup) ? userConfig.globalSetup : [userConfig.globalSetup]).map(s => resolveScript(s, configDir)).filter(script => script !== undefined);
     this.globalTeardowns = (Array.isArray(userConfig.globalTeardown) ? userConfig.globalTeardown : [userConfig.globalTeardown]).map(s => resolveScript(s, configDir)).filter(script => script !== undefined);
