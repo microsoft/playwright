@@ -6,10 +6,10 @@
 
 Create `packages/playwright-core/src/tools/backend/<your-tool>.ts`.
 
-Import zod from the MCP bundle and use `defineTool` or `defineTabTool`:
+Import zod and use `defineTool` or `defineTabTool`:
 
 ```typescript
-import { z } from '../../zodBundle';
+import * as z from 'zod';
 import { defineTool, defineTabTool } from './tool';
 ```
 
@@ -201,7 +201,7 @@ Implement the corresponding MCP tool first (see section above). CLI commands cal
 In `packages/playwright-core/src/tools/cli-daemon/commands.ts`, use `declareCommand()`:
 
 ```typescript
-import { z } from '../../zodBundle';
+import * as z from 'zod';
 import { declareCommand } from './command';
 
 const myCommand = declareCommand({
@@ -275,8 +275,8 @@ To add a new category:
 
 ### Step 3: Update SKILL File
 
-Update `packages/playwright/src/skill/SKILL.md` with the new command documentation.
-Add reference docs in `packages/playwright/src/skill/references/` if the feature is complex.
+Update `packages/playwright-core/src/tools/skills/playwright-cli/SKILL.md` with the new command documentation.
+Add reference docs in `packages/playwright-core/src/tools/skills/playwright-cli/references/` if the feature is complex.
 
 Run `npm run playwright-cli -- --help` to verify the help output includes your new command.
 
@@ -398,9 +398,9 @@ If the option is nested, update `mergeConfig()` in `config.ts` to deep-merge it.
 
 ## SKILL File
 
-The skill file is located at `packages/playwright/src/skill/SKILL.md`. It contains documentation for all available CLI commands and MCP tools. Update it whenever you add new commands or tools.
+The skill file is located at `packages/playwright-core/src/tools/skills/playwright-cli/SKILL.md`. It contains documentation for all available CLI commands and MCP tools. Update it whenever you add new commands or tools.
 
-Reference docs live in `packages/playwright/src/skill/references/`:
+Reference docs live in `packages/playwright-core/src/tools/skills/playwright-cli/references/`:
 - `request-mocking.md` — network mocking patterns
 - `running-code.md` — code execution
 - `session-management.md` — session handling
@@ -481,12 +481,10 @@ packages/playwright-core/src/tools/
 │       ├── server.ts         # MCP server wrapper
 │       ├── tool.ts           # ToolSchema type, toMcpTool()
 │       └── http.ts           # HTTP utilities
-└── exports.ts                # Public exports
-
-packages/playwright/src/
-└── skill/
-    ├── SKILL.md              # Skill documentation
-    └── references/           # Reference docs
+└── skills/
+    └── playwright-cli/
+        ├── SKILL.md          # Skill documentation
+        └── references/       # Reference docs
 
 tests/mcp/
 ├── fixtures.ts               # MCP test fixtures (client, startClient, server)
