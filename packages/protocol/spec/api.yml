@@ -68,6 +68,14 @@ APIRequestContext:
           type: array
           items: string
 
+    addCookies:
+      title: Add cookies
+      group: configuration
+      parameters:
+        cookies:
+          type: array
+          items: SetNetworkCookie
+
     storageState:
       title: Get storage state
       group: configuration

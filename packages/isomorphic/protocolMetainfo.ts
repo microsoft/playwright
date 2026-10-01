@@ -49,6 +49,7 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['APIRequestContext.fetch', { title: '{method}', subtitle: '{url}', renderParams: ['url', 'method'], }],
   ['APIRequestContext.fetchResponseBody', { title: 'Get response body', group: 'getter', }],
   ['APIRequestContext.fetchLog', { internal: true, }],
+  ['APIRequestContext.addCookies', { title: 'Add cookies', group: 'configuration', }],
   ['APIRequestContext.storageState', { title: 'Get storage state', group: 'configuration', }],
   ['APIRequestContext.disposeAPIResponse', { internal: true, }],
   ['APIRequestContext.dispose', { internal: true, }],

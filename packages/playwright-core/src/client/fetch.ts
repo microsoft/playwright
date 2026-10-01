@@ -30,7 +30,7 @@ import { mkdirIfNeeded } from './fileUtils';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 
 import type { Playwright } from './playwright';
-import type { ResourceTiming } from './network';
+import type { ResourceTiming, SetNetworkCookieParam } from './network';
 import type { ClientCertificate, FilePayload, Headers, RemoteAddr, SecurityDetails, SetStorageState, StorageState, TimeoutOptions } from './types';
 import type { HttpCredentials } from '@protocol/structs';
 import type { Serializable } from '../../types/structs';
@@ -126,6 +126,10 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     }
     this.tracing._resetStackCounter();
     this._request?._contexts.delete(this);
+  }
+
+  async addCookies(cookies: SetNetworkCookieParam[]): Promise<void> {
+    await this._channel.addCookies({ cookies }, kNoTimeout);
   }
 
   async delete(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {

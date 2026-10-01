@@ -124,6 +124,49 @@ with sync_playwright() as p:
     assert await response.body() == '{"status": "ok"}'
 ```
 
+## async method: APIRequestContext.addCookies
+* since: v1.64
+
+Adds cookies into this request context. They will be sent with matching subsequent requests. For [`property: BrowserContext.request`]
+and [`property: Page.request`], this is equivalent to calling [`method: BrowserContext.addCookies`] on the corresponding browser context.
+
+**Usage**
+
+```js
+await request.addCookies([cookieObject1, cookieObject2]);
+```
+
+```java
+request.addCookies(Arrays.asList(cookieObject1, cookieObject2));
+```
+
+```python async
+await request.add_cookies([cookie_object1, cookie_object2])
+```
+
+```python sync
+request.add_cookies([cookie_object1, cookie_object2])
+```
+
+```csharp
+await request.AddCookiesAsync(new[] { cookie1, cookie2 });
+```
+
+### param: APIRequestContext.addCookies.cookies
+* since: v1.64
+- `cookies` <[Array]<[Object]>>
+  * alias-java: Cookie
+  - `name` <[string]>
+  - `value` <[string]>
+  - `url` ?<[string]> Either `url` or both `domain` and `path` are required. Optional.
+  - `domain` ?<[string]> For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com". Either `url` or both `domain` and `path` are required. Optional.
+  - `path` ?<[string]> Either `url` or both `domain` and `path` are required. Optional.
+  - `expires` ?<[float]> Unix time in seconds. Optional.
+  - `httpOnly` ?<[boolean]> Optional.
+  - `secure` ?<[boolean]> Optional.
+  - `sameSite` ?<[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional.
+  - `partitionKey` ?<[string]> For partitioned third-party cookies (aka [CHIPS](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies)), the partition key. Optional.
+
 ## method: APIRequestContext.createFormData
 * since: v1.23
 * langs: csharp

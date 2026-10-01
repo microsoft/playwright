@@ -30,6 +30,7 @@ import { getUserAgent } from './userAgent';
 import { BrowserContext, findMatchingHttpCredentials, verifyClientCertificates } from './browserContext';
 import { Cookie, CookieStore, domainMatches, parseRawCookie } from './cookieStore';
 import { MultipartFormData } from './formData';
+import { rewriteCookies } from './network';
 import { TargetClosedError } from './errors';
 import { SdkObject } from './instrumentation';
 import { isAbortError } from './progress';
@@ -153,7 +154,7 @@ export abstract class APIRequestContext extends SdkObject {
   abstract dispose(options: { reason?: string }): Promise<void>;
 
   abstract _defaultOptions(): FetchRequestOptions;
-  abstract addCookies(cookies: channels.NetworkCookie[]): Promise<void>;
+  abstract addCookies(cookies: channels.SetNetworkCookie[]): Promise<void>;
   abstract cookies(progress: Progress, url: URL): Promise<channels.NetworkCookie[]>;
 
   protected _disposeImpl() {
@@ -728,7 +729,7 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     };
   }
 
-  async addCookies(cookies: channels.NetworkCookie[]): Promise<void> {
+  async addCookies(cookies: channels.SetNetworkCookie[]): Promise<void> {
     await this._context.addCookies(cookies);
   }
 
@@ -784,8 +785,16 @@ export class GlobalAPIRequestContext extends APIRequestContext {
     return this._options;
   }
 
-  async addCookies(cookies: channels.NetworkCookie[]): Promise<void> {
-    this._cookieStore.addCookies(cookies);
+  async addCookies(cookies: channels.SetNetworkCookie[]): Promise<void> {
+    this._cookieStore.addCookies(rewriteCookies(cookies).map(c => ({
+      expires: -1,
+      httpOnly: false,
+      secure: false,
+      sameSite: 'Lax',
+      ...c,
+      domain: c.domain!,
+      path: c.path!,
+    })));
   }
 
   async cookies(progress: Progress, url: URL): Promise<channels.NetworkCookie[]> {

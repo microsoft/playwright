@@ -589,6 +589,7 @@ export interface APIRequestContextChannel extends APIRequestContextEventTarget, 
   fetch(params: APIRequestContextFetchParams, options: TimeoutOptions): Promise<APIRequestContextFetchResult>;
   fetchResponseBody(params: APIRequestContextFetchResponseBodyParams, options: TimeoutOptions): Promise<APIRequestContextFetchResponseBodyResult>;
   fetchLog(params: APIRequestContextFetchLogParams, options: TimeoutOptions): Promise<APIRequestContextFetchLogResult>;
+  addCookies(params: APIRequestContextAddCookiesParams, options: TimeoutOptions): Promise<APIRequestContextAddCookiesResult>;
   storageState(params: APIRequestContextStorageStateParams, options: TimeoutOptions): Promise<APIRequestContextStorageStateResult>;
   disposeAPIResponse(params: APIRequestContextDisposeAPIResponseParams, options: TimeoutOptions): Promise<APIRequestContextDisposeAPIResponseResult>;
   dispose(params: APIRequestContextDisposeParams, options: TimeoutOptions): Promise<APIRequestContextDisposeResult>;
@@ -643,6 +644,13 @@ export type APIRequestContextFetchLogOptions = {
 export type APIRequestContextFetchLogResult = {
   log: string[],
 };
+export type APIRequestContextAddCookiesParams = {
+  cookies: SetNetworkCookie[],
+};
+export type APIRequestContextAddCookiesOptions = {
+
+};
+export type APIRequestContextAddCookiesResult = void;
 export type APIRequestContextStorageStateParams = {
   indexedDB?: boolean,
   opfs?: boolean,
