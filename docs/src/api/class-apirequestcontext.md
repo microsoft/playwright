@@ -124,6 +124,37 @@ with sync_playwright() as p:
     assert await response.body() == '{"status": "ok"}'
 ```
 
+## async method: APIRequestContext.addCookies
+* since: v1.64
+
+Adds cookies into this request context. They will be sent with matching subsequent requests. For [`property: BrowserContext.request`]
+and [`property: Page.request`], this is equivalent to calling [`method: BrowserContext.addCookies`] on the corresponding browser context.
+
+**Usage**
+
+```js
+await request.addCookies([cookieObject1, cookieObject2]);
+```
+
+```java
+request.addCookies(Arrays.asList(cookieObject1, cookieObject2));
+```
+
+```python async
+await request.add_cookies([cookie_object1, cookie_object2])
+```
+
+```python sync
+request.add_cookies([cookie_object1, cookie_object2])
+```
+
+```csharp
+await request.AddCookiesAsync(new[] { cookie1, cookie2 });
+```
+
+### param: APIRequestContext.addCookies.cookies = %%-add-cookies-param-%%
+* since: v1.64
+
 ## method: APIRequestContext.createFormData
 * since: v1.23
 * langs: csharp

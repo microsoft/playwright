@@ -56,6 +56,30 @@ it('should store cookie from Set-Cookie header', async ({ request, server }) => 
   expect(serverRequest.headers.cookie).toBe('c=d');
 });
 
+it('addCookies should add cookies to the cookie jar', async ({ request, server }) => {
+  await request.addCookies([
+    { name: 'a', value: 'b', url: server.EMPTY_PAGE },
+    { name: 'c', value: 'd', domain: 'localhost', path: '/input', httpOnly: true, sameSite: 'Strict' },
+    { name: 'e', value: 'f', domain: 'other.com', path: '/' },
+  ]);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/input/button.html'),
+    request.get(`${server.PREFIX}/input/button.html`)
+  ]);
+  expect(serverRequest.headers.cookie).toBe('a=b; c=d');
+  const state = await request.storageState();
+  expect(state.cookies).toEqual([
+    { name: 'a', value: 'b', domain: 'localhost', path: '/', expires: -1, httpOnly: false, secure: false, sameSite: 'Lax' },
+    { name: 'c', value: 'd', domain: 'localhost', path: '/input', expires: -1, httpOnly: true, secure: false, sameSite: 'Strict' },
+    { name: 'e', value: 'f', domain: 'other.com', path: '/', expires: -1, httpOnly: false, secure: false, sameSite: 'Lax' },
+  ]);
+});
+
+it('addCookies should validate cookies', async ({ request }) => {
+  const error = await request.addCookies([{ name: 'a', value: 'b' }]).catch(e => e);
+  expect(error.message).toContain('Cookie should have a url or a domain/path pair');
+});
+
 it('should filter outgoing cookies by path', async ({ request, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v; path=/input/subfolder', 'b=v; path=/input', 'c=v;']);

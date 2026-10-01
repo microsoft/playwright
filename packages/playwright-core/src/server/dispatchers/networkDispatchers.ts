@@ -211,6 +211,10 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
     this.adopt(tracing);
   }
 
+  async addCookies(params: channels.APIRequestContextAddCookiesParams, progress: Progress): Promise<void> {
+    await progress.race(this._object.addCookies(params.cookies));
+  }
+
   async storageState(params: channels.APIRequestContextStorageStateParams, progress: Progress): Promise<channels.APIRequestContextStorageStateResult> {
     return await this._object.storageState(progress, params);
   }

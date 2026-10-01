@@ -19719,6 +19719,70 @@ export interface APIRequest {
  */
 export interface APIRequestContext {
   /**
+   * Adds cookies into this request context. They will be sent with matching subsequent requests. For
+   * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) and
+   * [page.request](https://playwright.dev/docs/api/class-page#page-request), this is equivalent to calling
+   * [browserContext.addCookies(cookies)](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-cookies)
+   * on the corresponding browser context.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await request.addCookies([cookieObject1, cookieObject2]);
+   * ```
+   *
+   * @param cookies
+   */
+  addCookies(cookies: ReadonlyArray<{
+    name: string;
+
+    value: string;
+
+    /**
+     * Either `url` or both `domain` and `path` are required. Optional.
+     */
+    url?: string;
+
+    /**
+     * For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com". Either
+     * `url` or both `domain` and `path` are required. Optional.
+     */
+    domain?: string;
+
+    /**
+     * Either `url` or both `domain` and `path` are required. Optional.
+     */
+    path?: string;
+
+    /**
+     * Unix time in seconds. Optional.
+     */
+    expires?: number;
+
+    /**
+     * Optional.
+     */
+    httpOnly?: boolean;
+
+    /**
+     * Optional.
+     */
+    secure?: boolean;
+
+    /**
+     * Optional.
+     */
+    sameSite?: "Strict"|"Lax"|"None";
+
+    /**
+     * For partitioned third-party cookies (aka
+     * [CHIPS](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies)), the
+     * partition key. Optional.
+     */
+    partitionKey?: string;
+  }>): Promise<void>;
+
+  /**
    * Sends HTTP(S) [DELETE](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE) request and returns its
    * response. The method will populate request cookies from the context and update context cookies from the response.
    * The method will automatically follow redirects.
