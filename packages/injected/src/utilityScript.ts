@@ -65,7 +65,7 @@ export class UtilityScript {
       (global as any).builtins = this.builtins;
   }
 
-  evaluate(isFunction: boolean | undefined, returnByValue: boolean, serialize: ('Map' | 'Set')[] | undefined, expression: string, argCount: number, ...argsAndHandles: any[]) {
+  evaluate(isFunction: boolean | undefined, returnByValue: boolean, expression: string, argCount: number, ...argsAndHandles: any[]) {
     const args = argsAndHandles.slice(0, argCount);
     const handles = argsAndHandles.slice(argCount);
     const parameters = [];
@@ -82,20 +82,20 @@ export class UtilityScript {
       if (typeof result === 'function')
         result = result(...parameters);
     }
-    return returnByValue ? this._promiseAwareJsonValueNoThrow(result, serialize) : result;
+    return returnByValue ? this._promiseAwareJsonValueNoThrow(result) : result;
   }
 
-  jsonValue(returnByValue: true, value: any, serialize?: ('Map' | 'Set')[]) {
+  jsonValue(returnByValue: true, value: any) {
     // Special handling of undefined to work-around multi-step returnByValue handling in WebKit.
     if (value === undefined)
       return undefined;
-    return serializeAsCallArgument(value, (value: any) => ({ fallThrough: value }), { serialize });
+    return serializeAsCallArgument(value, (value: any) => ({ fallThrough: value }));
   }
 
-  private _promiseAwareJsonValueNoThrow(value: any, serialize?: ('Map' | 'Set')[]) {
+  private _promiseAwareJsonValueNoThrow(value: any) {
     const safeJson = (value: any) => {
       try {
-        return this.jsonValue(true, value, serialize);
+        return this.jsonValue(true, value);
       } catch (e) {
         return undefined;
       }

@@ -297,11 +297,6 @@ export type SerializedValue = {
     k: string,
     v: SerializedValue,
   }[],
-  me?: {
-    k: SerializedValue,
-    v: SerializedValue,
-  }[],
-  se?: SerializedValue[],
   h?: number,
   fn?: string,
   id?: number,
