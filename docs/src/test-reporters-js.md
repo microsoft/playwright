@@ -357,7 +357,7 @@ Blob report supports following configuration options and environment variables:
 
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
-| `PLAYWRIGHT_BLOB_OUTPUT_DIR` | `outputDir` | Directory to save the output. Existing content is deleted before writing the new report. | `blob-report`
+| `PLAYWRIGHT_BLOB_OUTPUT_DIR` | `outputDir` | Directory to save the output. Existing reports with other names are preserved, a report with the same name is overwritten. | `blob-report`
 | `PLAYWRIGHT_BLOB_OUTPUT_NAME` | `fileName` | Report file name. | `report-<hash>-<shard_number>.zip`
 | `PLAYWRIGHT_BLOB_OUTPUT_FILE` | `outputFile` | Full path to the output file. If defined, `outputDir` and `fileName` will be ignored. | `undefined`
 
