@@ -32,10 +32,10 @@ export type VirtualCredential = {
   userHandle: string;  // base64url
   privateKey: string;  // base64url(DER PKCS#8)
   publicKey: string;   // base64url(DER SPKI)
+  signCount: number;
 };
 
 type CredentialRecord = VirtualCredential & {
-  signCount: number;
   isResident: boolean;
 };
 
@@ -55,7 +55,11 @@ export class Credentials {
     userHandle?: string,
     privateKey?: string,
     publicKey?: string,
+    signCount?: number,
   }): Promise<VirtualCredential> {
+    const signCount = options.signCount ?? 0;
+    if (signCount < 0 || signCount > 0xffffffff)
+      throw new Error(`signCount must be between 0 and 4294967295, got ${signCount}`);
     let privateKey = options.privateKey;
     let publicKey = options.publicKey;
     if (!privateKey || !publicKey) {
@@ -69,7 +73,7 @@ export class Credentials {
       userHandle: options.userHandle || randomBase64Url(16),
       privateKey,
       publicKey,
-      signCount: 0,
+      signCount,
       isResident: true,
     };
     this._registry.set(record.id, record);
@@ -227,7 +231,7 @@ export class Credentials {
 }
 
 function toPublic(r: CredentialRecord): VirtualCredential {
-  return { id: r.id, rpId: r.rpId, userHandle: r.userHandle, privateKey: r.privateKey, publicKey: r.publicKey };
+  return { id: r.id, rpId: r.rpId, userHandle: r.userHandle, privateKey: r.privateKey, publicKey: r.publicKey, signCount: r.signCount };
 }
 
 function randomBase64Url(bytes: number): string {

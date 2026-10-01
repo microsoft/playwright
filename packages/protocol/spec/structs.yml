@@ -28,6 +28,17 @@ VirtualCredential:
     userHandle: string
     privateKey: string
     publicKey: string
+    signCount: int
+
+SetVirtualCredential:
+  type: object
+  properties:
+    id: string
+    rpId: string
+    userHandle: string
+    privateKey: string
+    publicKey: string
+    signCount: int?
 
 Point:
   type: object

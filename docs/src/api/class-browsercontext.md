@@ -1602,7 +1602,7 @@ OPFS is currently not supported in ephemeral WebKit contexts.
 - `credentials` ?<boolean>
 
 Set to `true` to include the context's virtual WebAuthn [`property: BrowserContext.credentials`] (passkeys) in the storage
-state snapshot. The captured credentials carry their private keys, so they can be re-seeded into a later context via the
+state snapshot. The captured credentials carry their private keys and signature counters, so they can be re-seeded into a later context via the
 [`option: Browser.newContext.storageState`] option or [`method: BrowserContext.setStorageState`].
 Note that restoring the storage state that contains credentials will automatically install the virtual WebAuthn authenticator (see [`method: Credentials.install`]), and prevent all real authenticators from working in this context.
 
