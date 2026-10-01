@@ -1,0 +1,33 @@
+name: List available Copilot models
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/check_copilot_models.yml
+
+permissions: {}
+
+jobs:
+  list-models:
+    runs-on: ubuntu-latest
+    permissions:
+      copilot-requests: write
+    steps:
+      - name: Query the Copilot models endpoint
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          status=$(curl -sS -o models.json -w '%{http_code}' \
+            https://api.githubcopilot.com/models \
+            -H "Authorization: Bearer $COPILOT_GITHUB_TOKEN")
+          echo "HTTP $status"
+          cat models.json
+          if [[ "$status" != "200" ]]; then
+            exit 1
+          fi
+
+      - name: List model IDs
+        run: |
+          echo "available models:"
+          jq -er '.data[].id' models.json | sort
