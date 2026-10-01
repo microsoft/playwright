@@ -40,7 +40,8 @@ const tracingStart = defineTool({
       live: true,
     });
     response.addTextResult(`Trace recording started`);
-    response.addFileLink('Action log', `${tracesDir}/${name}.trace`);
+    response.addFileLink('Action log', `${tracesDir}/${name}.actions`);
+    response.addFileLink('Trace', `${tracesDir}/${name}.trace`);
     response.addFileLink('Network log', `${tracesDir}/${name}.network`);
     response.addFileLink('Resources', `${tracesDir}/resources`);
     // eslint-disable-next-line no-restricted-syntax
@@ -70,6 +71,7 @@ const tracingStop = defineTool({
     delete (browserContext.tracing as any)[traceLegendSymbol];
 
     response.addTextResult(`Trace recording stopped.`);
+    response.addFileLink('Action log', `${traceLegend.tracesDir}/${traceLegend.name}.actions`);
     response.addFileLink('Trace', `${traceLegend.tracesDir}/${traceLegend.name}.trace`);
     response.addFileLink('Network log', `${traceLegend.tracesDir}/${traceLegend.name}.network`);
     response.addFileLink('Resources', `${traceLegend.tracesDir}/resources`);

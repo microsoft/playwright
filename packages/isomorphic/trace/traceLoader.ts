@@ -39,12 +39,13 @@ export class TraceLoader {
   async load(backend: TraceLoaderBackend, traceFile?: string, unzipProgress?: (done: number, total: number) => void) {
     this._backend = backend;
 
-    const prefix = traceFile?.match(/(.+)\.trace$/)?.[1];
+    const requestedPrefix = traceFile?.match(/(.+)\.trace$/)?.[1];
     const prefixes: string[] = [];
+    const entryNames = await this._backend.entryNames();
     let hasSource = false;
-    for (const entryName of await this._backend.entryNames()) {
+    for (const entryName of entryNames) {
       const match = entryName.match(/(.+)\.trace$/);
-      if (match && (!prefix || prefix  === match[1]))
+      if (match && (!requestedPrefix || requestedPrefix === match[1]))
         prefixes.push(match[1] || '');
       if (entryName.startsWith('src/') || entryName.includes('src@'))
         hasSource = true;
@@ -54,21 +55,19 @@ export class TraceLoader {
 
     this._snapshotStorage = new SnapshotStorage();
 
-    // 3 * ordinals progress increments below.
-    const total = prefixes.length * 3;
+    const traceFilesByPrefix = new Map(prefixes.map(prefix => [prefix, traceFileNames(entryNames, prefix)]));
+    const total = prefixes.length + [...traceFilesByPrefix.values()].reduce((sum, files) => sum + files.length, 0);
     let done = 0;
     for (const prefix of prefixes) {
       const contextEntry = createEmptyContext();
       contextEntry.hasSource = hasSource;
       const modernizer = new TraceModernizer(contextEntry, this._snapshotStorage);
 
-      const trace = await this._backend.readText(prefix + '.trace') || '';
-      modernizer.appendTrace(trace);
-      unzipProgress?.(++done, total);
-
-      const network = await this._backend.readText(prefix + '.network') || '';
-      modernizer.appendTrace(network);
-      unzipProgress?.(++done, total);
+      for (const traceFileName of traceFilesByPrefix.get(prefix)!) {
+        const trace = await this._backend.readText(traceFileName) || '';
+        modernizer.appendTrace(trace);
+        unzipProgress?.(++done, total);
+      }
 
       const stacks = await this._backend.readText(prefix + '.stacks');
       if (stacks)
@@ -120,6 +119,32 @@ export class TraceLoader {
   storage(): SnapshotStorage {
     return this._snapshotStorage!;
   }
+}
+
+// The ".meta" file carries the trace version required to read everything else, and actions
+// are referenced by the events in the ".trace" file, hence the order. Files with an unknown
+// extension come last. The ".stacks" file is not a trace stream and is read separately.
+const kTraceFileExtensions = ['.meta', '.actions', '.trace', '.network'];
+const kNonTraceFileExtensions = ['.stacks'];
+
+function traceFileNames(entryNames: string[], prefix: string): string[] {
+  const remaining = new Set<string>();
+  for (const entryName of entryNames) {
+    if (!entryName.startsWith(prefix))
+      continue;
+    // Only take "<prefix>.<extension>" files, e.g. neither "<prefix>-chunk1.trace" nor "<prefix>.trace.zip".
+    const extension = entryName.substring(prefix.length);
+    if (/^\.[a-z]+$/.test(extension) && !kNonTraceFileExtensions.includes(extension))
+      remaining.add(entryName);
+  }
+
+  const result: string[] = [];
+  for (const extension of kTraceFileExtensions) {
+    if (remaining.delete(prefix + extension))
+      result.push(prefix + extension);
+  }
+  result.push(...remaining);
+  return result;
 }
 
 function stripEncodingFromContentType(contentType: string) {
