@@ -152,20 +152,8 @@ request.add_cookies([cookie_object1, cookie_object2])
 await request.AddCookiesAsync(new[] { cookie1, cookie2 });
 ```
 
-### param: APIRequestContext.addCookies.cookies
+### param: APIRequestContext.addCookies.cookies = %%-add-cookies-param-%%
 * since: v1.64
-- `cookies` <[Array]<[Object]>>
-  * alias-java: Cookie
-  - `name` <[string]>
-  - `value` <[string]>
-  - `url` ?<[string]> Either `url` or both `domain` and `path` are required. Optional.
-  - `domain` ?<[string]> For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com". Either `url` or both `domain` and `path` are required. Optional.
-  - `path` ?<[string]> Either `url` or both `domain` and `path` are required. Optional.
-  - `expires` ?<[float]> Unix time in seconds. Optional.
-  - `httpOnly` ?<[boolean]> Optional.
-  - `secure` ?<[boolean]> Optional.
-  - `sameSite` ?<[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional.
-  - `partitionKey` ?<[string]> For partitioned third-party cookies (aka [CHIPS](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies)), the partition key. Optional.
 
 ## method: APIRequestContext.createFormData
 * since: v1.23

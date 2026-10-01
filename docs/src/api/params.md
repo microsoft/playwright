@@ -330,6 +330,20 @@ obtained via [`method: BrowserContext.storageState`].
 Populates context with given storage state. This option can be used to initialize context with logged-in information
 obtained via [`method: BrowserContext.storageState`]. Path to the file with saved storage state.
 
+## add-cookies-param
+- `cookies` <[Array]<[Object]>>
+  * alias-java: Cookie
+  - `name` <[string]>
+  - `value` <[string]>
+  - `url` ?<[string]> Either `url` or both `domain` and `path` are required. Optional.
+  - `domain` ?<[string]> For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com". Either `url` or both `domain` and `path` are required. Optional.
+  - `path` ?<[string]> Either `url` or both `domain` and `path` are required. Optional.
+  - `expires` ?<[float]> Unix time in seconds. Optional.
+  - `httpOnly` ?<[boolean]> Optional.
+  - `secure` ?<[boolean]> Optional.
+  - `sameSite` ?<[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional.
+  - `partitionKey` ?<[string]> For partitioned third-party cookies (aka [CHIPS](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies)), the partition key. Optional.
+
 ## storagestate-option-path
 - `path` <[path]>
 
