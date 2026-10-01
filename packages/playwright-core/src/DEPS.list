@@ -49,6 +49,9 @@ node_modules/stoppable
 node_modules/ws
 node_modules/yaml
 
+[bootstrap.ts]
+"strict"
+
 [package.ts]
 "strict"
 

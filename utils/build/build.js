@@ -710,6 +710,10 @@ steps.push(new EsbuildStep({
     name: 'externalize-utilsBundle',
     setup: build => build.onResolve({ filter: /utilsBundle/ },
         () => ({ path: './utilsBundle', external: true })),
+  }, {
+    name: 'externalize-bootstrap',
+    setup: build => build.onResolve({ filter: /\/bootstrap$/ },
+        args => path.resolve(args.resolveDir, args.path) === filePath('packages/playwright-core/src/bootstrap') ? { path: './bootstrap', external: true } : undefined),
   }, dynamicImportToRequirePlugin],
 }, [playwrightCoreSrc, ...commonUtilsSrc, filePath('packages/injected')]));
 

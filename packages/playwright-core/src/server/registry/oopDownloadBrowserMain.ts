@@ -22,6 +22,7 @@ import { getAsBooleanFromENV } from '@utils/env';
 import { httpRequest } from '@utils/network';
 import { removeFolders } from '@utils/fileUtils';
 import { extractZip } from '@utils/third_party/extractZip';
+import { processExit } from '../../bootstrap';
 
 export type DownloadParams = {
   title: string;
@@ -133,17 +134,17 @@ export function runOopDownloadBrowserMain() {
     if (method === 'download') {
       try {
         await main(params);
-        // eslint-disable-next-line no-restricted-properties
-        process.exit(0);
+        // eslint-disable-next-line no-restricted-syntax
+        processExit(0);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error(e);
-        // eslint-disable-next-line no-restricted-properties
-        process.exit(1);
+        // eslint-disable-next-line no-restricted-syntax
+        processExit(1);
       }
     }
   });
 
-  // eslint-disable-next-line no-restricted-properties
-  process.on('disconnect', () => { process.exit(0); });
+  // eslint-disable-next-line no-restricted-syntax
+  process.on('disconnect', () => { processExit(0); });
 }

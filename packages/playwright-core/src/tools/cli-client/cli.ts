@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
+import { processExit } from '../../bootstrap';
 import { program } from './program';
 
 program().catch(e => {
   /* eslint-disable no-console */
   console.error(e.message);
-  /* eslint-disable no-restricted-properties */
-  process.exit(1);
+  // eslint-disable-next-line no-restricted-syntax
+  processExit(1);
 });

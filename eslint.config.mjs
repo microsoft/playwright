@@ -296,6 +296,11 @@ const reactFiles = [
   `packages/web/src/**/*.tsx`,
 ];
 
+const noProcessExitSyntax = {
+  selector: "CallExpression[callee.name='processExit']",
+  message: "Please use gracefullyProcessExitDoNotHang function to exit the process.",
+};
+
 function reactPackageSection(packageName) {
   return {
     files: [
@@ -347,6 +352,10 @@ export default [
         },
         { object: "process", property: "stdout" },
         { object: "process", property: "stderr" },
+      ],
+      "no-restricted-syntax": [
+        "error",
+        noProcessExitSyntax,
       ],
     },
   },
@@ -424,6 +433,7 @@ export default [
       ],
       "no-restricted-syntax": [
         "error",
+        noProcessExitSyntax,
         {
           selector: "TSAsExpression > TSAnyKeyword",
           message: "Avoid 'as any' — risk of accidentally casting to client interfaces. Use a precise type or add an eslint-disable with justification.",

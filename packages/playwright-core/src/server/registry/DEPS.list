@@ -1,6 +1,7 @@
 [*]
 @utils/**
 @isomorphic/**
+../../bootstrap.ts
 ../../package.ts
 ../utils.ts
 ../userAgent.ts

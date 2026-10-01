@@ -128,7 +128,6 @@ export class ProcessHost extends EventEmitter {
       return error;
 
     const processParams: ipc.ProcessInitParams = {
-      processName: this._processName,
       timeOrigin: timeOrigin(),
     };
 

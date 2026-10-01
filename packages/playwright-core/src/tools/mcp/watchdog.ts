@@ -16,6 +16,7 @@
 
 import { gracefullyCloseAll, gracefullyCloseSet } from '@utils/processLauncher';
 import { testDebug } from './log';
+import { processExit } from '../../bootstrap';
 
 export function setupExitWatchdog() {
   let isExiting = false;
@@ -23,12 +24,12 @@ export function setupExitWatchdog() {
     if (isExiting)
       return;
     isExiting = true;
-    // eslint-disable-next-line no-restricted-properties
-    setTimeout(() => process.exit(0), 15000);
+    // eslint-disable-next-line no-restricted-syntax
+    setTimeout(() => processExit(0), 15000);
     testDebug('gracefully closing ' + gracefullyCloseSet.size);
     await gracefullyCloseAll();
-    // eslint-disable-next-line no-restricted-properties
-    process.exit(0);
+    // eslint-disable-next-line no-restricted-syntax
+    processExit(0);
   };
 
   process.stdin.on('close', () => handleExit('close'));
