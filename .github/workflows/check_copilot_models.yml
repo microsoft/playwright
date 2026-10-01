@@ -1,0 +1,67 @@
+name: List available Copilot models
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/check_copilot_models.yml
+
+permissions: {}
+
+jobs:
+  list-models:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      copilot-requests: write
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Query models through Copilot CLI
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          cat > list-models.mjs <<'EOF'
+          import { spawn } from 'node:child_process';
+          import fs from 'node:fs';
+          import readline from 'node:readline';
+
+          const child = spawn('copilot', ['--acp', '--no-auto-update'], { stdio: ['pipe', 'pipe', 'inherit'] });
+          const send = (id, method, params) => child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+          const finish = (response, exitCode) => {
+            const text = JSON.stringify(response, null, 2);
+            fs.writeFileSync('models.json', text + '\n');
+            console.log(text);
+            child.kill();
+            process.exit(exitCode);
+          };
+
+          readline.createInterface({ input: child.stdout }).on('line', line => {
+            const message = JSON.parse(line);
+            // Skip notifications and requests coming from the CLI, we only need responses.
+            if (message.method)
+              return;
+            if (message.error)
+              finish(message, 1);
+            else if (message.id === 1)
+              send(2, 'session/new', { cwd: process.cwd(), mcpServers: [] });
+            else if (message.id === 2)
+              finish(message, 0);
+          });
+          child.on('exit', code => finish({ error: `copilot exited with code ${code} before responding` }, 1));
+          setTimeout(() => finish({ error: 'timed out waiting for copilot' }, 1), 60_000);
+
+          send(1, 'initialize', { protocolVersion: 1, clientCapabilities: {} });
+          EOF
+          node list-models.mjs
+
+      - name: List model IDs
+        run: |
+          echo "available models:"
+          jq -er '.result.models.availableModels[].modelId' models.json | sort
