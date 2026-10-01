@@ -115,7 +115,8 @@ export class BlobReporter extends TeleReporterEmitter {
       if (this._config.shard) {
         // Sharded runs share the output dir. Only remove this shard's own report
         // so reports from other shards are preserved (issue #43013).
-        await fs.promises.rm(outputFile, { force: true });
+        // Best-effort, like removeFolders: the write below truncates the file anyway.
+        await fs.promises.rm(outputFile, { force: true, maxRetries: 10 }).catch(() => {});
       } else {
         await removeFolders([outputDir!]);
       }
