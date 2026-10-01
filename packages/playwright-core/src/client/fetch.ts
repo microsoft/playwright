@@ -24,13 +24,13 @@ import { isString } from '@isomorphic/rtti';
 import { toClientCertificatesProtocol, toHttpCredentialsProtocol } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { TargetClosedError, isTargetClosedError } from './errors';
-import { RawHeaders } from './network';
+import { RawHeaders, toClearCookiesParams } from './network';
 import { Tracing } from './tracing';
 import { mkdirIfNeeded } from './fileUtils';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 
 import type { Playwright } from './playwright';
-import type { ResourceTiming, SetNetworkCookieParam } from './network';
+import type { ClearNetworkCookieOptions, NetworkCookie, ResourceTiming, SetNetworkCookieParam } from './network';
 import type { ClientCertificate, FilePayload, Headers, RemoteAddr, SecurityDetails, SetStorageState, StorageState, TimeoutOptions } from './types';
 import type { HttpCredentials } from '@protocol/structs';
 import type { Serializable } from '../../types/structs';
@@ -128,8 +128,20 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     this._request?._contexts.delete(this);
   }
 
+  async cookies(urls?: string | string[]): Promise<NetworkCookie[]> {
+    if (!urls)
+      urls = [];
+    if (typeof urls === 'string')
+      urls = [urls];
+    return (await this._channel.cookies({ urls }, kNoTimeout)).cookies;
+  }
+
   async addCookies(cookies: SetNetworkCookieParam[]): Promise<void> {
     await this._channel.addCookies({ cookies }, kNoTimeout);
+  }
+
+  async clearCookies(options: ClearNetworkCookieOptions = {}): Promise<void> {
+    await this._channel.clearCookies(toClearCookiesParams(options), kNoTimeout);
   }
 
   async delete(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {

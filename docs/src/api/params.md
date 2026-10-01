@@ -344,6 +344,26 @@ obtained via [`method: BrowserContext.storageState`]. Path to the file with save
   - `sameSite` ?<[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional.
   - `partitionKey` ?<[string]> For partitioned third-party cookies (aka [CHIPS](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies)), the partition key. Optional.
 
+## clear-cookies-option-name
+- `name` <[string]|[RegExp]>
+
+Only removes cookies with the given name.
+
+## clear-cookies-option-domain
+- `domain` <[string]|[RegExp]>
+
+Only removes cookies with the given domain.
+
+## clear-cookies-option-path
+- `path` <[string]|[RegExp]>
+
+Only removes cookies with the given path.
+
+## cookies-param-urls
+- `urls` ?<[string]|[Array]<[string]>>
+
+Optional list of URLs.
+
 ## storagestate-option-path
 - `path` <[path]>
 

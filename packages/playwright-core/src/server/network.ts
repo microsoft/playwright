@@ -119,6 +119,25 @@ export function applyHeadersOverrides(original: HeadersArray, overrides: Headers
 // 253402300800 == Sat,  1 Jan 1000 00:00:00 +0000 (UTC)
 export const kMaxCookieExpiresDateInSeconds = 253402300799;
 
+export type ClearCookiesOptions = { name?: string | RegExp, domain?: string | RegExp, path?: string | RegExp };
+
+export function hasClearCookiesFilter(options: ClearCookiesOptions): boolean {
+  return options.name !== undefined || options.domain !== undefined || options.path !== undefined;
+}
+
+export function cookieMatchesClearFilter(cookie: channels.NetworkCookie, options: ClearCookiesOptions): boolean {
+  const matches = (prop: 'name' | 'domain' | 'path', value: string | RegExp | undefined) => {
+    if (!value)
+      return true;
+    if (value instanceof RegExp) {
+      value.lastIndex = 0;
+      return value.test(cookie[prop]);
+    }
+    return cookie[prop] === value;
+  };
+  return matches('name', options.name) && matches('domain', options.domain) && matches('path', options.path);
+}
+
 export function rewriteCookies(cookies: channels.SetNetworkCookie[]): channels.SetNetworkCookie[] {
   return cookies.map(c => {
     assert(c.url || (c.domain && c.path), 'Cookie should have a url or a domain/path pair');

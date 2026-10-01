@@ -155,6 +155,88 @@ await request.AddCookiesAsync(new[] { cookie1, cookie2 });
 ### param: APIRequestContext.addCookies.cookies = %%-add-cookies-param-%%
 * since: v1.64
 
+## async method: APIRequestContext.clearCookies
+* since: v1.64
+
+Removes cookies from this request context. Accepts optional filter. For [`property: BrowserContext.request`]
+and [`property: Page.request`], this is equivalent to calling [`method: BrowserContext.clearCookies`] on the corresponding browser context.
+
+**Usage**
+
+```js
+await request.clearCookies();
+await request.clearCookies({ name: 'session-id' });
+await request.clearCookies({ domain: 'my-origin.com' });
+await request.clearCookies({ domain: /.*my-origin\.com/ });
+await request.clearCookies({ path: '/api/v1' });
+await request.clearCookies({ name: 'session-id', domain: 'my-origin.com' });
+```
+
+```java
+request.clearCookies();
+request.clearCookies(new APIRequestContext.ClearCookiesOptions().setName("session-id"));
+request.clearCookies(new APIRequestContext.ClearCookiesOptions().setDomain("my-origin.com"));
+request.clearCookies(new APIRequestContext.ClearCookiesOptions().setPath("/api/v1"));
+request.clearCookies(new APIRequestContext.ClearCookiesOptions()
+                         .setName("session-id")
+                         .setDomain("my-origin.com"));
+```
+
+```python async
+await request.clear_cookies()
+await request.clear_cookies(name="session-id")
+await request.clear_cookies(domain="my-origin.com")
+await request.clear_cookies(path="/api/v1")
+await request.clear_cookies(name="session-id", domain="my-origin.com")
+```
+
+```python sync
+request.clear_cookies()
+request.clear_cookies(name="session-id")
+request.clear_cookies(domain="my-origin.com")
+request.clear_cookies(path="/api/v1")
+request.clear_cookies(name="session-id", domain="my-origin.com")
+```
+
+```csharp
+await request.ClearCookiesAsync();
+await request.ClearCookiesAsync(new() { Name = "session-id" });
+await request.ClearCookiesAsync(new() { Domain = "my-origin.com" });
+await request.ClearCookiesAsync(new() { Path = "/api/v1" });
+await request.ClearCookiesAsync(new() { Name = "session-id", Domain = "my-origin.com" });
+```
+
+### option: APIRequestContext.clearCookies.name = %%-clear-cookies-option-name-%%
+* since: v1.64
+
+### option: APIRequestContext.clearCookies.domain = %%-clear-cookies-option-domain-%%
+* since: v1.64
+
+### option: APIRequestContext.clearCookies.path = %%-clear-cookies-option-path-%%
+* since: v1.64
+
+## async method: APIRequestContext.cookies
+* since: v1.64
+- returns: <[Array]<[Object]>>
+  * alias: Cookie
+  * alias-csharp: BrowserContextCookiesResult
+  - `name` <[string]>
+  - `value` <[string]>
+  - `domain` <[string]>
+  - `path` <[string]>
+  - `expires` <[float]> Unix time in seconds.
+  - `httpOnly` <[boolean]>
+  - `secure` <[boolean]>
+  - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">>
+  - `partitionKey` ?<[string]>
+
+If no URLs are specified, this method returns all cookies. If URLs are specified, only cookies that affect those URLs
+are returned. For [`property: BrowserContext.request`] and [`property: Page.request`], this is equivalent to calling
+[`method: BrowserContext.cookies`] on the corresponding browser context.
+
+### param: APIRequestContext.cookies.urls = %%-cookies-param-urls-%%
+* since: v1.64
+
 ## method: APIRequestContext.createFormData
 * since: v1.23
 * langs: csharp

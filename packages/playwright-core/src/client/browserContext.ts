@@ -20,7 +20,6 @@ import path from 'path';
 
 import { headersObjectToArray } from '@isomorphic/headers';
 import { urlMatchesEqual } from '@isomorphic/urlMatch';
-import { isRegExp, isString } from '@isomorphic/rtti';
 import { rewriteErrorMessage } from '@utils/stackTrace';
 import { Browser } from './browser';
 import { CDPSession } from './cdpSession';
@@ -331,17 +330,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async clearCookies(options: network.ClearNetworkCookieOptions = {}): Promise<void> {
-    await this._channel.clearCookies({
-      name: isString(options.name) ? options.name : undefined,
-      nameRegexSource: isRegExp(options.name) ? options.name.source : undefined,
-      nameRegexFlags: isRegExp(options.name) ? options.name.flags : undefined,
-      domain: isString(options.domain) ? options.domain : undefined,
-      domainRegexSource: isRegExp(options.domain) ? options.domain.source : undefined,
-      domainRegexFlags: isRegExp(options.domain) ? options.domain.flags : undefined,
-      path: isString(options.path) ? options.path : undefined,
-      pathRegexSource: isRegExp(options.path) ? options.path.source : undefined,
-      pathRegexFlags: isRegExp(options.path) ? options.path.flags : undefined,
-    }, kNoTimeout);
+    await this._channel.clearCookies(network.toClearCookiesParams(options), kNoTimeout);
   }
 
   async grantPermissions(permissions: string[], options?: { origin?: string }): Promise<void> {

@@ -50,6 +50,8 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['APIRequestContext.fetchResponseBody', { title: 'Get response body', group: 'getter', }],
   ['APIRequestContext.fetchLog', { internal: true, }],
   ['APIRequestContext.addCookies', { title: 'Add cookies', group: 'configuration', }],
+  ['APIRequestContext.clearCookies', { title: 'Clear cookies', group: 'configuration', }],
+  ['APIRequestContext.cookies', { title: 'Get cookies', group: 'getter', }],
   ['APIRequestContext.storageState', { title: 'Get storage state', group: 'configuration', }],
   ['APIRequestContext.disposeAPIResponse', { internal: true, }],
   ['APIRequestContext.dispose', { internal: true, }],

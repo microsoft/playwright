@@ -19785,6 +19785,75 @@ export interface APIRequestContext {
   }>): Promise<void>;
 
   /**
+   * Removes cookies from this request context. Accepts optional filter. For
+   * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) and
+   * [page.request](https://playwright.dev/docs/api/class-page#page-request), this is equivalent to calling
+   * [browserContext.clearCookies([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-clear-cookies)
+   * on the corresponding browser context.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await request.clearCookies();
+   * await request.clearCookies({ name: 'session-id' });
+   * await request.clearCookies({ domain: 'my-origin.com' });
+   * await request.clearCookies({ domain: /.*my-origin\.com/ });
+   * await request.clearCookies({ path: '/api/v1' });
+   * await request.clearCookies({ name: 'session-id', domain: 'my-origin.com' });
+   * ```
+   *
+   * @param options
+   */
+  clearCookies(options?: {
+    /**
+     * Only removes cookies with the given domain.
+     */
+    domain?: string|RegExp;
+
+    /**
+     * Only removes cookies with the given name.
+     */
+    name?: string|RegExp;
+
+    /**
+     * Only removes cookies with the given path.
+     */
+    path?: string|RegExp;
+  }): Promise<void>;
+
+  /**
+   * If no URLs are specified, this method returns all cookies. If URLs are specified, only cookies that affect those
+   * URLs are returned. For
+   * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) and
+   * [page.request](https://playwright.dev/docs/api/class-page#page-request), this is equivalent to calling
+   * [browserContext.cookies([urls])](https://playwright.dev/docs/api/class-browsercontext#browser-context-cookies) on
+   * the corresponding browser context.
+   * @param urls Optional list of URLs.
+   */
+  cookies(urls?: string|ReadonlyArray<string>): Promise<Array<{
+    name: string;
+
+    value: string;
+
+    domain: string;
+
+    path: string;
+
+    /**
+     * Unix time in seconds.
+     */
+    expires: number;
+
+    httpOnly: boolean;
+
+    secure: boolean;
+
+    sameSite: "Strict"|"Lax"|"None";
+
+    partitionKey?: string;
+  }>>;
+
+  /**
    * Sends HTTP(S) [DELETE](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE) request and returns its
    * response. The method will populate request cookies from the context and update context cookies from the response.
    * The method will automatically follow redirects.

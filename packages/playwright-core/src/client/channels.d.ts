@@ -590,6 +590,8 @@ export interface APIRequestContextChannel extends APIRequestContextEventTarget, 
   fetchResponseBody(params: APIRequestContextFetchResponseBodyParams, options: TimeoutOptions): Promise<APIRequestContextFetchResponseBodyResult>;
   fetchLog(params: APIRequestContextFetchLogParams, options: TimeoutOptions): Promise<APIRequestContextFetchLogResult>;
   addCookies(params: APIRequestContextAddCookiesParams, options: TimeoutOptions): Promise<APIRequestContextAddCookiesResult>;
+  clearCookies(params: APIRequestContextClearCookiesParams, options: TimeoutOptions): Promise<APIRequestContextClearCookiesResult>;
+  cookies(params: APIRequestContextCookiesParams, options: TimeoutOptions): Promise<APIRequestContextCookiesResult>;
   storageState(params: APIRequestContextStorageStateParams, options: TimeoutOptions): Promise<APIRequestContextStorageStateResult>;
   disposeAPIResponse(params: APIRequestContextDisposeAPIResponseParams, options: TimeoutOptions): Promise<APIRequestContextDisposeAPIResponseResult>;
   dispose(params: APIRequestContextDisposeParams, options: TimeoutOptions): Promise<APIRequestContextDisposeResult>;
@@ -651,6 +653,38 @@ export type APIRequestContextAddCookiesOptions = {
 
 };
 export type APIRequestContextAddCookiesResult = void;
+export type APIRequestContextClearCookiesParams = {
+  name?: string,
+  nameRegexSource?: string,
+  nameRegexFlags?: string,
+  domain?: string,
+  domainRegexSource?: string,
+  domainRegexFlags?: string,
+  path?: string,
+  pathRegexSource?: string,
+  pathRegexFlags?: string,
+};
+export type APIRequestContextClearCookiesOptions = {
+  name?: string,
+  nameRegexSource?: string,
+  nameRegexFlags?: string,
+  domain?: string,
+  domainRegexSource?: string,
+  domainRegexFlags?: string,
+  path?: string,
+  pathRegexSource?: string,
+  pathRegexFlags?: string,
+};
+export type APIRequestContextClearCookiesResult = void;
+export type APIRequestContextCookiesParams = {
+  urls: string[],
+};
+export type APIRequestContextCookiesOptions = {
+
+};
+export type APIRequestContextCookiesResult = {
+  cookies: NetworkCookie[],
+};
 export type APIRequestContextStorageStateParams = {
   indexedDB?: boolean,
   opfs?: boolean,
