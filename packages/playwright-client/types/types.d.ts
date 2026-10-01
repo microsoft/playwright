@@ -134,7 +134,7 @@ export interface Page {
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-option-expression).
    * @param options
    */
-  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean, world?: 'main'|'utility' }): Promise<R>;
+  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<R>;
   /**
    * Returns the value of the
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-option-expression) invocation.
@@ -187,7 +187,7 @@ export interface Page {
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-evaluate-option-expression).
    * @param options
    */
-  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean, world?: 'main'|'utility' }): Promise<R>;
+  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<R>;
 
   /**
    * Returns the value of the
@@ -400,7 +400,7 @@ export interface Page {
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-option-expression).
    * @param options
    */
-  $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass actionability checks and therefore can lead to the flaky tests.
    * Use
@@ -433,7 +433,7 @@ export interface Page {
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-option-expression).
    * @param options
    */
-  $eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass actionability checks and therefore can lead to the flaky tests.
    * Use
@@ -466,7 +466,7 @@ export interface Page {
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-option-expression).
    * @param options
    */
-  $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass actionability checks and therefore can lead to the flaky tests.
    * Use
@@ -499,11 +499,11 @@ export interface Page {
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-option-expression).
    * @param options
    */
-  $eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, void, R>, arg?: any, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, void, R>, arg?: any): Promise<R>;
 
   /**
    * **NOTE** In most cases,
-   * [locator.evaluateAll(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
    * other [Locator](https://playwright.dev/docs/api/class-locator) helper methods and web-first assertions do a better
    * job.
    *
@@ -516,7 +516,7 @@ export interface Page {
    *
    * If [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all-option-expression) returns
    * a [Promise], then
-   * [page.$$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all)
+   * [page.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -529,12 +529,11 @@ export interface Page {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all-option-expression).
-   * @param options
    */
-  $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** In most cases,
-   * [locator.evaluateAll(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
    * other [Locator](https://playwright.dev/docs/api/class-locator) helper methods and web-first assertions do a better
    * job.
    *
@@ -547,7 +546,7 @@ export interface Page {
    *
    * If [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all-option-expression) returns
    * a [Promise], then
-   * [page.$$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all)
+   * [page.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -560,12 +559,11 @@ export interface Page {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all-option-expression).
-   * @param options
    */
-  $$eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], Arg, R>, arg: Arg, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $$eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** In most cases,
-   * [locator.evaluateAll(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
    * other [Locator](https://playwright.dev/docs/api/class-locator) helper methods and web-first assertions do a better
    * job.
    *
@@ -578,7 +576,7 @@ export interface Page {
    *
    * If [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all-option-expression) returns
    * a [Promise], then
-   * [page.$$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all)
+   * [page.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -591,12 +589,11 @@ export interface Page {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all-option-expression).
-   * @param options
    */
-  $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any): Promise<R>;
   /**
    * **NOTE** In most cases,
-   * [locator.evaluateAll(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
    * other [Locator](https://playwright.dev/docs/api/class-locator) helper methods and web-first assertions do a better
    * job.
    *
@@ -609,7 +606,7 @@ export interface Page {
    *
    * If [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all-option-expression) returns
    * a [Promise], then
-   * [page.$$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all)
+   * [page.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -622,9 +619,8 @@ export interface Page {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-page#page-eval-on-selector-all-option-expression).
-   * @param options
    */
-  $$eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], void, R>, arg?: any, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $$eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], void, R>, arg?: any): Promise<R>;
 
   /**
    * Returns when the
@@ -5988,7 +5984,7 @@ export interface Frame {
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-option-expression).
    * @param options
    */
-  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean, world?: 'main'|'utility' }): Promise<R>;
+  evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: { exposeFunctions?: boolean }): Promise<R>;
   /**
    * Returns the return value of
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-option-expression).
@@ -6037,7 +6033,7 @@ export interface Frame {
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-evaluate-option-expression).
    * @param options
    */
-  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean, world?: 'main'|'utility' }): Promise<R>;
+  evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: { exposeFunctions?: boolean }): Promise<R>;
 
   /**
    * Returns the return value of
@@ -6230,7 +6226,7 @@ export interface Frame {
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-option-expression).
    * @param options
    */
-  $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass the actionability checks and therefore can lead to the flaky
    * tests. Use
@@ -6263,7 +6259,7 @@ export interface Frame {
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-option-expression).
    * @param options
    */
-  $eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass the actionability checks and therefore can lead to the flaky
    * tests. Use
@@ -6296,7 +6292,7 @@ export interface Frame {
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-option-expression).
    * @param options
    */
-  $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass the actionability checks and therefore can lead to the flaky
    * tests. Use
@@ -6329,11 +6325,11 @@ export interface Frame {
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-option-expression).
    * @param options
    */
-  $eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, void, R>, arg?: any, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, void, R>, arg?: any): Promise<R>;
 
   /**
    * **NOTE** In most cases,
-   * [locator.evaluateAll(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
    * other [Locator](https://playwright.dev/docs/api/class-locator) helper methods and web-first assertions do a better
    * job.
    *
@@ -6346,7 +6342,7 @@ export interface Frame {
    *
    * If [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all-option-expression)
    * returns a [Promise], then
-   * [frame.$$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all)
+   * [frame.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -6359,12 +6355,11 @@ export interface Frame {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all-option-expression).
-   * @param options
    */
-  $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** In most cases,
-   * [locator.evaluateAll(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
    * other [Locator](https://playwright.dev/docs/api/class-locator) helper methods and web-first assertions do a better
    * job.
    *
@@ -6377,7 +6372,7 @@ export interface Frame {
    *
    * If [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all-option-expression)
    * returns a [Promise], then
-   * [frame.$$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all)
+   * [frame.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -6390,12 +6385,11 @@ export interface Frame {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all-option-expression).
-   * @param options
    */
-  $$eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], Arg, R>, arg: Arg, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $$eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** In most cases,
-   * [locator.evaluateAll(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
    * other [Locator](https://playwright.dev/docs/api/class-locator) helper methods and web-first assertions do a better
    * job.
    *
@@ -6408,7 +6402,7 @@ export interface Frame {
    *
    * If [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all-option-expression)
    * returns a [Promise], then
-   * [frame.$$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all)
+   * [frame.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -6421,12 +6415,11 @@ export interface Frame {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all-option-expression).
-   * @param options
    */
-  $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any): Promise<R>;
   /**
    * **NOTE** In most cases,
-   * [locator.evaluateAll(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
    * other [Locator](https://playwright.dev/docs/api/class-locator) helper methods and web-first assertions do a better
    * job.
    *
@@ -6439,7 +6432,7 @@ export interface Frame {
    *
    * If [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all-option-expression)
    * returns a [Promise], then
-   * [frame.$$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all)
+   * [frame.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -6452,9 +6445,8 @@ export interface Frame {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-frame#frame-eval-on-selector-all-option-expression).
-   * @param options
    */
-  $$eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], void, R>, arg?: any, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $$eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], void, R>, arg?: any): Promise<R>;
 
   /**
    * Returns when the
@@ -12500,7 +12492,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * If
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-option-expression)
    * returns a [Promise], then
-   * [elementHandle.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector)
+   * [elementHandle.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -12515,9 +12507,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-option-expression).
-   * @param options
    */
-  $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass actionability checks and therefore can lead to the flaky tests.
    * Use
@@ -12535,7 +12526,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * If
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-option-expression)
    * returns a [Promise], then
-   * [elementHandle.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector)
+   * [elementHandle.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -12550,9 +12541,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-option-expression).
-   * @param options
    */
-  $eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass actionability checks and therefore can lead to the flaky tests.
    * Use
@@ -12570,7 +12560,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * If
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-option-expression)
    * returns a [Promise], then
-   * [elementHandle.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector)
+   * [elementHandle.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -12585,9 +12575,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-option-expression).
-   * @param options
    */
-  $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], void, R>, arg?: any): Promise<R>;
   /**
    * **NOTE** This method does not wait for the element to pass actionability checks and therefore can lead to the flaky tests.
    * Use
@@ -12605,7 +12594,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * If
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-option-expression)
    * returns a [Promise], then
-   * [elementHandle.$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector)
+   * [elementHandle.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -12620,13 +12609,12 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-option-expression).
-   * @param options
    */
-  $eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, void, R>, arg?: any, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E, void, R>, arg?: any): Promise<R>;
 
   /**
    * **NOTE** In most cases,
-   * [locator.evaluateAll(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
    * other [Locator](https://playwright.dev/docs/api/class-locator) helper methods and web-first assertions do a better
    * job.
    *
@@ -12640,7 +12628,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * If
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all-option-expression)
    * returns a [Promise], then
-   * [elementHandle.$$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all)
+   * [elementHandle.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -12663,12 +12651,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all-option-expression).
-   * @param options
    */
-  $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** In most cases,
-   * [locator.evaluateAll(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
    * other [Locator](https://playwright.dev/docs/api/class-locator) helper methods and web-first assertions do a better
    * job.
    *
@@ -12682,7 +12669,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * If
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all-option-expression)
    * returns a [Promise], then
-   * [elementHandle.$$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all)
+   * [elementHandle.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -12705,12 +12692,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all-option-expression).
-   * @param options
    */
-  $$eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], Arg, R>, arg: Arg, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $$eval<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], Arg, R>, arg: Arg): Promise<R>;
   /**
    * **NOTE** In most cases,
-   * [locator.evaluateAll(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
    * other [Locator](https://playwright.dev/docs/api/class-locator) helper methods and web-first assertions do a better
    * job.
    *
@@ -12724,7 +12710,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * If
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all-option-expression)
    * returns a [Promise], then
-   * [elementHandle.$$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all)
+   * [elementHandle.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -12747,12 +12733,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all-option-expression).
-   * @param options
    */
-  $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any): Promise<R>;
   /**
    * **NOTE** In most cases,
-   * [locator.evaluateAll(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
+   * [locator.evaluateAll(pageFunction[, arg])](https://playwright.dev/docs/api/class-locator#locator-evaluate-all),
    * other [Locator](https://playwright.dev/docs/api/class-locator) helper methods and web-first assertions do a better
    * job.
    *
@@ -12766,7 +12751,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * If
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all-option-expression)
    * returns a [Promise], then
-   * [elementHandle.$$eval(selector, pageFunction[, arg, options])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all)
+   * [elementHandle.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all)
    * would wait for the promise to resolve and return its value.
    *
    * **Usage**
@@ -12789,9 +12774,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-elementhandle#element-handle-eval-on-selector-all-option-expression).
-   * @param options
    */
-  $$eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], void, R>, arg?: any, options?: { world?: 'main'|'utility' }): Promise<R>;
+  $$eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], void, R>, arg?: any): Promise<R>;
 
   /**
    * **NOTE** Use web assertions that assert visibility or a locator-based
@@ -14366,7 +14350,7 @@ export interface Locator {
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression).
    * @param options
    */
-  evaluate<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal, exposeFunctions?: boolean, world?: 'main'|'utility' }): Promise<R>;
+  evaluate<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal, exposeFunctions?: boolean }): Promise<R>;
   /**
    * Execute JavaScript code in the page, taking the matching element as an argument, and return a
    * [JSHandle](https://playwright.dev/docs/api/class-jshandle) with the result.
@@ -14427,9 +14411,8 @@ export interface Locator {
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression).
-   * @param options
    */
-  evaluateAll<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E[], Arg, R>, arg?: Arg, options?: { world?: 'main'|'utility' }): Promise<R>;
+  evaluateAll<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E[], Arg, R>, arg?: Arg): Promise<R>;
   /**
    * Returns when
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-expression) returns

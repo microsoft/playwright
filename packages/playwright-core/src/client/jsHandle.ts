@@ -40,19 +40,14 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
     this._channel.on('previewUpdated', ({ preview }) => this._preview = preview);
   }
 
-  async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg, options?: ExposeFunctionsOptions): Promise<R> {
-    assertEvaluateOptions(options);
-    return await this._evaluate(pageFunction, arg, { exposeFunctions: options?.exposeFunctions });
-  }
-
-  async _evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg, options?: EvaluateOptions): Promise<R> {
+  async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg, options?: EvaluateOptions): Promise<R> {
     assertEvaluateOptions(options);
     const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._parentOfType('Page') as Page | undefined, arg) : serializeArgument(arg);
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg, world: options?.world }, kNoTimeout);
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg }, kNoTimeout);
     return parseResult(result.value);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg, options?: ExposeFunctionsOptions): Promise<structs.SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg, options?: EvaluateOptions): Promise<structs.SmartHandle<R>> {
     assertEvaluateOptions(options);
     const serializedArg = options?.exposeFunctions ? await serializeArgumentWithCallbacks(this, this._parentOfType('Page') as Page | undefined, arg) : serializeArgument(arg);
     const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializedArg }, kNoTimeout);
@@ -116,9 +111,8 @@ export function serializeArgument(arg: any, registerCallback?: (callback: Functi
   return { value, handles };
 }
 
-export type WorldOptions = { world?: 'main' | 'utility' };
 export type ExposeFunctionsOptions = { exposeFunctions?: boolean };
-export type EvaluateOptions = ExposeFunctionsOptions & WorldOptions;
+export type EvaluateOptions = ExposeFunctionsOptions;
 
 export async function serializeArgumentWithCallbacks(owner: ChannelOwner<any>, page: Page | undefined, arg: any): Promise<channels.SerializedArgument> {
   return await owner._wrapApiCall(async () => {
@@ -147,6 +141,4 @@ export function assertMaxArguments(count: number, max: number): asserts count {
 export function assertEvaluateOptions(options: any) {
   if (options !== undefined && (typeof options !== 'object' || options === null || Array.isArray(options)))
     throw new Error('Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object.');
-  if (options?.exposeFunctions && options?.world === 'utility')
-    throw new Error('Option "exposeFunctions" is not supported in the "utility" world.');
 }
