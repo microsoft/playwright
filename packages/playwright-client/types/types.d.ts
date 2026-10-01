@@ -17393,11 +17393,7 @@ export interface Locator {
 
   /**
    * Returns a locator that matches this locator's elements inside each element matched by
-   * [`locator`](https://playwright.dev/docs/api/class-locator#locator-within-option-locator). This is the same as
-   * calling
-   * [locator.locator(selectorOrLocator[, options])](https://playwright.dev/docs/api/class-locator#locator-locator) on
-   * [`locator`](https://playwright.dev/docs/api/class-locator#locator-within-option-locator) with this locator as an
-   * argument, but reads in the natural order.
+   * [`locator`](https://playwright.dev/docs/api/class-locator#locator-within-option-locator).
    *
    * Note that relative locators, such as
    * [locator.nth(index)](https://playwright.dev/docs/api/class-locator#locator-nth) or

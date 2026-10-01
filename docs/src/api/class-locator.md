@@ -3061,7 +3061,7 @@ Optional argument to pass to [`param: expression`].
 * since: v1.64
 - returns: <[Locator]>
 
-Returns a locator that matches this locator's elements inside each element matched by [`param: locator`]. This is the same as calling [`method: Locator.locator`] on [`param: locator`] with this locator as an argument, but reads in the natural order.
+Returns a locator that matches this locator's elements inside each element matched by [`param: locator`].
 
 Note that relative locators, such as [`method: Locator.nth`] or [`method: Locator.first`], are resolved separately inside each matched parent. In the example below, `page.getByRole('cell').nth(2)` picks the third cell of every row, not the third cell in the whole table.
 

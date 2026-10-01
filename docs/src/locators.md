@@ -1159,27 +1159,27 @@ await product
     .ClickAsync();
 ```
 
-You can also chain two locators together, for example to find a "Save" button inside a particular dialog:
+You can also combine two locators with [`method: Locator.within`], for example to find a "Save" button inside a particular dialog:
 
 ```js
 const saveButton = page.getByRole('button', { name: 'Save' });
 // ...
 const dialog = page.getByTestId('settings-dialog');
-await dialog.locator(saveButton).click();
+await saveButton.within(dialog).click();
 ```
 
 ```python async
 save_button = page.get_by_role("button", name="Save")
 # ...
 dialog = page.get_by_test_id("settings-dialog")
-await dialog.locator(save_button).click()
+await save_button.within(dialog).click()
 ```
 
 ```python sync
 save_button = page.get_by_role("button", name="Save")
 # ...
 dialog = page.get_by_test_id("settings-dialog")
-dialog.locator(save_button).click()
+save_button.within(dialog).click()
 ```
 
 ```java
@@ -1187,14 +1187,14 @@ Locator saveButton = page.getByRole(AriaRole.BUTTON,
                                     new Page.GetByRoleOptions().setName("Save"));
 // ...
 Locator dialog = page.getByTestId("settings-dialog");
-dialog.locator(saveButton).click();
+saveButton.within(dialog).click();
 ```
 
 ```csharp
 var saveButton = page.GetByRole(AriaRole.Button, new() { Name = "Save" });
 // ...
 var dialog = page.GetByTestId("settings-dialog");
-await dialog.Locator(saveButton).ClickAsync();
+await saveButton.Within(dialog).ClickAsync();
 ```
 
 ### Matching two locators simultaneously
