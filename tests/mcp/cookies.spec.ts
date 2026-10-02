@@ -334,3 +334,44 @@ test('browser_cookie_clear removes all cookies', async ({ startClient, server })
     result: 'No cookies found',
   });
 });
+
+test('browser_cookie_set and browser_cookie_get use the current tab context', async ({ startClient, server }) => {
+  const { client } = await startClient({
+    config: { capabilities: ['storage'] },
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.EMPTY_PAGE },
+  });
+  await client.callTool({
+    name: 'browser_cookie_set',
+    arguments: { name: 'user', value: 'default' },
+  });
+
+  await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'new', url: server.EMPTY_PAGE, isolatedContext: 'alice' },
+  });
+  await client.callTool({
+    name: 'browser_cookie_set',
+    arguments: { name: 'user', value: 'alice' },
+  });
+  expect(await client.callTool({
+    name: 'browser_cookie_get',
+    arguments: { name: 'user' },
+  })).toHaveResponse({
+    result: expect.stringContaining('user=alice'),
+  });
+
+  await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'select', index: 0 },
+  });
+  expect(await client.callTool({
+    name: 'browser_cookie_get',
+    arguments: { name: 'user' },
+  })).toHaveResponse({
+    result: expect.stringContaining('user=default'),
+  });
+});

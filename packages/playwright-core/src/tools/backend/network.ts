@@ -276,7 +276,7 @@ const networkStateSet = defineTool({
   },
 
   handle: async (context, params, response) => {
-    const browserContext = await context.ensureBrowserContext();
+    const browserContext = await context.currentBrowserContext();
     const offline = params.state === 'offline';
     await browserContext.setOffline(offline);
     response.addTextResult(`Network is now ${params.state}`);

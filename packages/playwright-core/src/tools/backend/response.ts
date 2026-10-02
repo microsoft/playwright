@@ -354,6 +354,8 @@ export function renderTabMarkdown(tab: TabHeader): string[] {
   const lines = [`- Page URL: ${tab.url}`];
   if (tab.title)
     lines.push(`- Page Title: ${tab.title}`);
+  if (tab.isolatedContext)
+    lines.push(`- Isolated context: ${tab.isolatedContext}`);
   if (tab.crashed)
     lines.push(`- Page status: crashed`);
   const status = tab.mainDocumentStatus;
@@ -375,7 +377,8 @@ export function renderTabsMarkdown(tabs: TabHeader[]): string[] {
     const tab = tabs[i];
     const current = tab.current ? ' (current)' : '';
     const crashed = tab.crashed ? ' [crashed]' : '';
-    lines.push(`- ${i}:${current} [${tab.title}](${tab.url})${crashed}`);
+    const isolatedContext = tab.isolatedContext ? ` [isolatedContext: ${tab.isolatedContext}]` : '';
+    lines.push(`- ${i}:${current} [${tab.title}](${tab.url})${crashed}${isolatedContext}`);
   }
   return lines;
 }

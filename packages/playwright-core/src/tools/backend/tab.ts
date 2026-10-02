@@ -83,6 +83,7 @@ export type TabHeader = {
   mainDocumentStatus?: { status: number, statusText: string };
   console: { total: number, warnings: number, errors: number };
   webmcpToolCount?: number;
+  isolatedContext?: string;
 };
 
 type TabSnapshot = {
@@ -96,6 +97,7 @@ type TabSnapshot = {
 export class Tab extends EventEmitter<TabEventsInterface> {
   readonly context: Context;
   readonly page: playwright.Page;
+  readonly isolatedContext: string | undefined;
   private _lastHeader: TabHeader = { title: 'about:blank', url: 'about:blank', current: false, crashed: false, console: { total: 0, warnings: 0, errors: 0 } };
   private _downloads: Download[] = [];
   private _requests: playwright.Request[] = [];
@@ -112,10 +114,11 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   readonly navigationTimeoutOptions: { timeout?: number; };
   readonly expectTimeoutOptions: { timeout?: number; };
 
-  constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
+  constructor(context: Context, page: playwright.Page, isolatedContext: string | undefined, onPageClose: (tab: Tab) => void) {
     super();
     this.context = context;
     this.page = page;
+    this.isolatedContext = isolatedContext;
     this._onPageClose = onPageClose;
     const p = page;
     this._disposables = [
@@ -310,6 +313,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       mainDocumentStatus: this._mainDocumentStatus,
       console: consoleCounts,
       webmcpToolCount: this._webmcpTools?.tools.length,
+      isolatedContext: this.isolatedContext,
     };
 
     if (!tabHeaderEquals(this._lastHeader, newHeader)) {
@@ -672,5 +676,6 @@ function tabHeaderEquals(a: TabHeader, b: TabHeader): boolean {
       a.console.errors === b.console.errors &&
       a.console.warnings === b.console.warnings &&
       a.console.total === b.console.total &&
-      a.webmcpToolCount === b.webmcpToolCount;
+      a.webmcpToolCount === b.webmcpToolCount &&
+      a.isolatedContext === b.isolatedContext;
 }

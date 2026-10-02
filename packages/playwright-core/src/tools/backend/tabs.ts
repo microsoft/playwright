@@ -29,6 +29,7 @@ const browserTabs = defineTool({
       action: z.enum(['list', 'new', 'close', 'select']).describe('Operation to perform'),
       index: z.number().optional().describe('Tab index, used for close/select. If omitted for close, current tab is closed.'),
       url: z.string().optional().describe('URL to navigate to in the new tab, used for new.'),
+      isolatedContext: z.string().optional().describe('Name of an isolated browser context to create the new tab in, used for new. Tabs in the same isolated context share cookies and storage, tabs in different contexts are fully isolated. If omitted or "default", the tab is created in the default context.'),
     }),
     type: 'action',
   },
@@ -40,7 +41,7 @@ const browserTabs = defineTool({
         break;
       }
       case 'new': {
-        const tab = await context.newTab();
+        const tab = await context.newTab(params.isolatedContext);
         if (params.url) {
           const url = await tab.checkUrlAndNavigate(params.url);
           response.setIncludeSnapshot();

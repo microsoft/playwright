@@ -58,6 +58,12 @@ test('tab-new with url', async ({ cli, server }) => {
   expect(output).toContain(`- 1: (current) [Title](${server.HELLO_WORLD})`);
 });
 
+test('tab-new with isolated context', async ({ cli, server }) => {
+  await cli('open');
+  const { output } = await cli('tab-new', server.HELLO_WORLD, '--isolated-context=alice');
+  expect(output).toContain(`- 1: (current) [Title](${server.HELLO_WORLD}) [isolatedContext: alice]`);
+});
+
 test('run-code', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
   const { output } = await cli('run-code', '() => page.title()');

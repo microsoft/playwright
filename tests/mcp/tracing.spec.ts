@@ -86,6 +86,31 @@ test('check that trace is saved with browser_start_tracing (no output dir)', asy
   ]);
 });
 
+test('browser_start_tracing traces isolated contexts', async ({ startClient, server }, testInfo) => {
+  const outputDir = testInfo.outputPath('output');
+
+  const { client } = await startClient({ args: [`--output-dir=${outputDir}`, '--caps=tracing'] });
+
+  await client.callTool({
+    name: 'browser_start_tracing',
+  });
+
+  await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'new', url: server.HELLO_WORLD, isolatedContext: 'alice' },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_stop_tracing',
+  })).toHaveResponse({
+    result: expect.stringMatching(/- \[Trace\]\(.*trace-\d+\.trace\)\n[^]*- \[Trace \(isolatedContext: alice\)\]\(.*trace-\d+-alice\.trace\)/),
+  });
+
+  const tracesDir = path.join(outputDir, 'traces');
+  const aliceTrace = (await fs.promises.readdir(tracesDir)).find(file => /^trace-\d+-alice\.trace$/.test(file));
+  expect(await fs.promises.readFile(path.join(tracesDir, aliceTrace!), 'utf-8')).toContain(server.HELLO_WORLD);
+});
+
 test('browser_stop_tracing without start returns error', async ({ startClient }) => {
   const { client } = await startClient({
     args: ['--caps=tracing'],

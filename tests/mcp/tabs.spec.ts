@@ -149,3 +149,56 @@ test('reuse first tab when navigating', async ({ startClient, cdpServer, server 
   expect(pages.length).toBe(1);
   expect(await pages[0].title()).toBe('Title');
 });
+
+test('create new tab in isolated context', async ({ client, server }) => {
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: {
+      action: 'new',
+      url: server.HELLO_WORLD,
+      isolatedContext: 'alice',
+    },
+  })).toHaveResponse({
+    result: `- 0: [](about:blank)
+- 1: (current) [Title](${server.HELLO_WORLD}) [isolatedContext: alice]`,
+    page: expect.stringContaining('- Isolated context: alice'),
+  });
+});
+
+test('tabs in the same isolated context share storage', async ({ client, server }) => {
+  const newTab = (isolatedContext?: string) => client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'new', url: server.EMPTY_PAGE, isolatedContext },
+  });
+  const selectTab = (index: number) => client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'select', index },
+  });
+  const setCookie = (value: string) => client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: `() => document.cookie = 'user=${value}'` },
+  });
+  const getCookie = () => client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: '() => document.cookie' },
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.EMPTY_PAGE },
+  });
+  await setCookie('default');
+  await newTab('alice');
+  await setCookie('alice');
+  await newTab('bob');
+  await setCookie('bob');
+  await newTab('alice');
+
+  expect(await getCookie()).toHaveResponse({ result: `"user=alice"` });
+  await selectTab(0);
+  expect(await getCookie()).toHaveResponse({ result: `"user=default"` });
+  await selectTab(2);
+  expect(await getCookie()).toHaveResponse({ result: `"user=bob"` });
+  await newTab('default');
+  expect(await getCookie()).toHaveResponse({ result: `"user=default"` });
+});

@@ -32,7 +32,7 @@ const storageState = defineTool({
   },
 
   handle: async (context, params, response) => {
-    const browserContext = await context.ensureBrowserContext();
+    const browserContext = await context.currentBrowserContext();
     const state = await browserContext.storageState();
     const serializedState = JSON.stringify(state, null, 2);
     const resolvedFile = await response.resolveClientOutputFile({ prefix: 'storage-state', ext: 'json', suggestedFilename: params.filename }, 'Storage state');
@@ -55,7 +55,7 @@ const setStorageState = defineTool({
   },
 
   handle: async (context, params, response) => {
-    const browserContext = await context.ensureBrowserContext();
+    const browserContext = await context.currentBrowserContext();
     const resolvedFilename = await response.resolveClientFilename(params.filename);
     await browserContext.setStorageState(resolvedFilename);
     response.addTextResult(`Storage state restored from ${params.filename}`);

@@ -15,7 +15,7 @@ import { defineTool, defineTabTool } from './tool';
 
 **Choose `defineTabTool` vs `defineTool`:**
 - `defineTabTool` — most tools use this. Receives a `Tab` object, auto-handles modal state (dialogs/file choosers).
-- `defineTool` — receives the full `Context`. Use when you need `context.ensureBrowserContext()` without a specific tab, or need custom tab management.
+- `defineTool` — receives the full `Context`. Use when you need `context.currentBrowserContext()` (the current tab's browser context) without a specific tab, or need custom tab management.
 
 **Tool definition pattern:**
 
@@ -81,7 +81,7 @@ const myContextTool = defineTool({
   schema: { /* ... */ type: 'readOnly' },
 
   handle: async (context, params, response) => {
-    const browserContext = await context.ensureBrowserContext();
+    const browserContext = await context.currentBrowserContext();
     const cookies = await browserContext.cookies();
     response.addTextResult(cookies.map(c => `${c.name}=${c.value}`).join('\n'));
   },

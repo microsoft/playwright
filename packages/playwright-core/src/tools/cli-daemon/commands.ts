@@ -610,8 +610,11 @@ const tabNew = declareCommand({
   args: z.object({
     url: z.string().optional().describe('The URL to navigate to in the new tab. If omitted, the new tab will be blank.'),
   }),
+  options: z.object({
+    ['isolated-context']: z.string().optional().describe('Name of an isolated browser context to create the tab in. Tabs in the same isolated context share cookies and storage.'),
+  }),
   toolName: 'browser_tabs',
-  toolParams: ({ url }) => ({ action: 'new', url }),
+  toolParams: ({ url, ['isolated-context']: isolatedContext }) => ({ action: 'new', url, isolatedContext }),
 });
 
 const tabClose = declareCommand({
