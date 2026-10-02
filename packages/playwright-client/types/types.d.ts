@@ -11343,10 +11343,8 @@ export interface Browser {
      * with an exact match to the request origin that the certificate is valid for.
      *
      * Client certificate authentication is only active when at least one client certificate is provided. If you want to
-     * reject all client certificates sent by the server for an origin you visit, set `noCertificate` to `true` for that
-     * origin instead of omitting it: omitting the origin entirely leaves the connection unintercepted, so the server's
-     * own certificate request still reaches the browser and may trigger a native certificate-selection prompt on some
-     * platforms. `noCertificate` forces interception for that origin while still presenting no client certificate.
+     * reject all client certificates sent by the server, you need to provide a client certificate with an `origin` that
+     * does not match any of the domains you plan to visit.
      *
      * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
      * work by replacing `localhost` with `local.playwright`.
@@ -11392,11 +11390,6 @@ export interface Browser {
        * Passphrase for the private key (PEM or PFX).
        */
       passphrase?: string;
-
-      /**
-       * Explicitly send no client certificate for this origin. Must be the only field set besides `origin`.
-       */
-      noCertificate?: boolean;
     }>;
 
     /**
@@ -17688,10 +17681,8 @@ export interface BrowserType<Unused = {}> {
      * with an exact match to the request origin that the certificate is valid for.
      *
      * Client certificate authentication is only active when at least one client certificate is provided. If you want to
-     * reject all client certificates sent by the server for an origin you visit, set `noCertificate` to `true` for that
-     * origin instead of omitting it: omitting the origin entirely leaves the connection unintercepted, so the server's
-     * own certificate request still reaches the browser and may trigger a native certificate-selection prompt on some
-     * platforms. `noCertificate` forces interception for that origin while still presenting no client certificate.
+     * reject all client certificates sent by the server, you need to provide a client certificate with an `origin` that
+     * does not match any of the domains you plan to visit.
      *
      * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
      * work by replacing `localhost` with `local.playwright`.
@@ -17737,11 +17728,6 @@ export interface BrowserType<Unused = {}> {
        * Passphrase for the private key (PEM or PFX).
        */
       passphrase?: string;
-
-      /**
-       * Explicitly send no client certificate for this origin. Must be the only field set besides `origin`.
-       */
-      noCertificate?: boolean;
     }>;
 
     /**
@@ -19486,10 +19472,8 @@ export interface APIRequest {
      * with an exact match to the request origin that the certificate is valid for.
      *
      * Client certificate authentication is only active when at least one client certificate is provided. If you want to
-     * reject all client certificates sent by the server for an origin you visit, set `noCertificate` to `true` for that
-     * origin instead of omitting it: omitting the origin entirely leaves the connection unintercepted, so the server's
-     * own certificate request still reaches the browser and may trigger a native certificate-selection prompt on some
-     * platforms. `noCertificate` forces interception for that origin while still presenting no client certificate.
+     * reject all client certificates sent by the server, you need to provide a client certificate with an `origin` that
+     * does not match any of the domains you plan to visit.
      *
      * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
      * work by replacing `localhost` with `local.playwright`.
@@ -19535,11 +19519,6 @@ export interface APIRequest {
        * Passphrase for the private key (PEM or PFX).
        */
       passphrase?: string;
-
-      /**
-       * Explicitly send no client certificate for this origin. Must be the only field set besides `origin`.
-       */
-      noCertificate?: boolean;
     }>;
 
     /**
@@ -26692,10 +26671,8 @@ export interface BrowserContextOptions {
    * with an exact match to the request origin that the certificate is valid for.
    *
    * Client certificate authentication is only active when at least one client certificate is provided. If you want to
-   * reject all client certificates sent by the server for an origin you visit, set `noCertificate` to `true` for that
-   * origin instead of omitting it: omitting the origin entirely leaves the connection unintercepted, so the server's
-   * own certificate request still reaches the browser and may trigger a native certificate-selection prompt on some
-   * platforms. `noCertificate` forces interception for that origin while still presenting no client certificate.
+   * reject all client certificates sent by the server, you need to provide a client certificate with an `origin` that
+   * does not match any of the domains you plan to visit.
    *
    * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
    * work by replacing `localhost` with `local.playwright`.
@@ -26741,11 +26718,6 @@ export interface BrowserContextOptions {
      * Passphrase for the private key (PEM or PFX).
      */
     passphrase?: string;
-
-    /**
-     * Explicitly send no client certificate for this origin. Must be the only field set besides `origin`.
-     */
-    noCertificate?: boolean;
   }>;
 
   /**
