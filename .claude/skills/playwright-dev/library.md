@@ -5,8 +5,12 @@ Playwright uses a client-server architecture connected by a protocol layer. The 
 ## Package Layout
 
 ```
-packages/protocol/src/
-  protocol.yml              — RPC protocol definition (source of truth)
+packages/protocol/
+  spec/*.yml                — RPC protocol definition (source of truth)
+  src/                      — validators (generated + primitives)
+
+packages/isomorphic/        — shared code used by both client and server
+  protocolMetainfo.ts       — generated method metadata (flags, titles)
 
 packages/playwright-core/src/
   client/                   — public API objects (ChannelOwner subclasses)
@@ -14,9 +18,6 @@ packages/playwright-core/src/
   server/                   — browser automation implementation (SdkObject subclasses)
     channels.d.ts           — generated server channel interfaces
   server/dispatchers/       — protocol bridge (Dispatcher subclasses)
-  protocol/                 — validators (generated + primitives)
-  utils/isomorphic/         — shared code used by both client and server
-    protocolMetainfo.ts     — generated method metadata (flags, titles)
 ```
 
 ## Dependency Rules (DEPS.list)
@@ -26,17 +27,16 @@ Each directory has a `DEPS.list` constraining its imports. These are enforced by
 Entries can be relative paths, alias paths (`@isomorphic/**`, `@utils/**`), or `node_modules/<pkg>` to allow a specific npm package import. The `"strict"` marker disables inheritance from parent folders. Section headers like `[filename.ts]` scope rules to a single file.
 
 **client/** can import from:
-- `../protocol/` — validators and channel types
-- `../utils/isomorphic` — shared utilities
+- `@protocol/**` — validators and channel types
+- `@isomorphic/**` — shared utilities
 
 **server/** can import from:
-- `../protocol/`, `../utils/`, `../utils/isomorphic/`, `../utilsBundle.ts`
-- `./` (own directory), `./codegen/`, `./isomorphic/`, `./har/`, `./recorder/`, `./registry/`, `./utils/`
+- `@protocol/**`, `@utils/**`, `@isomorphic/**`
+- `./` (own directory), `./har/`, `./recorder/`, `./registry/`
 - Only `playwright.ts` can import browser engines (`./chromium/`, `./firefox/`, `./webkit/`, `./bidi/`, `./android/`, `./electron/`)
-- Only `devtoolsController.ts` can additionally import `./chromium/`
 
 **server/dispatchers/** can import from:
-- `../../protocol/`, `../../utils/`, `../../utils/isomorphic/`
+- `@protocol/**`, `@utils/**`, `@isomorphic/**`
 - `../**` — all server modules
 
 **Key rule:** Client code NEVER imports server code. Server code NEVER imports client code. They communicate only through the protocol.
@@ -45,9 +45,9 @@ Entries can be relative paths, alias paths (`@isomorphic/**`, `@utils/**`), or `
 
 ## Protocol Layer
 
-### protocol.yml
+### packages/protocol/spec/*.yml
 
-Defines all RPC interfaces, commands (methods), events, and types. Example:
+These files define all RPC interfaces, commands (methods), events, and types, one file per domain (`page.yml`, `frame.yml`, ...). Example:
 
 ```yaml
 Page:
@@ -74,9 +74,9 @@ Page:
 ### Code Generation
 
 Running `node utils/generate_channels.js` (or via watch) produces:
-- `packages/protocol/src/channels.d.ts` — TypeScript types: `PageChannel`, `PageGotoParams`, `PageGotoResult`, `PageInitializer`, event types
-- `packages/playwright-core/src/protocol/validator.ts` — runtime validators: `scheme.PageGotoParams = tObject({...})`
-- `packages/playwright-core/src/utils/isomorphic/protocolMetainfo.ts` — method flags (slowMo, snapshot, etc.)
+- `packages/playwright-core/src/client/channels.d.ts` and `packages/playwright-core/src/server/channels.d.ts` (plus shared `packages/protocol/src/structs.d.ts`) — TypeScript types: `PageChannel`, `PageGotoParams`, `PageGotoResult`, `PageInitializer`, event types
+- `packages/protocol/src/validator.ts` — runtime validators: `scheme.PageGotoParams = tObject({...})`
+- `packages/isomorphic/protocolMetainfo.ts` — method flags (slowMo, snapshot, etc.)
 
 ### Wire Format
 
@@ -408,9 +408,9 @@ it('should click button', async ({ page, server }) => {
 
 Examples:
 ```bash
-npm run ctest tests/library/browser-context-cookies.spec.ts
+npm run ctest tests/library/browsercontext-cookies.spec.ts
 npm run ctest tests/page/locator-click.spec.ts
-npm run test tests/library/browser-context-cookies.spec.ts
+npm run test tests/library/browsercontext-cookies.spec.ts
 ```
 
 ### Configuration

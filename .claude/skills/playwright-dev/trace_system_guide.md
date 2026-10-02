@@ -323,7 +323,7 @@ traces-dir/
 
 ## 7. Trace Recording (tracing.ts)
 
-Located: `/home/pfeldman/code/playwright/packages/playwright-core/src/server/trace/recorder/tracing.ts`
+Located: `packages/playwright-core/src/server/trace/recorder/tracing.ts`
 
 ### Tracing Class Architecture
 
@@ -429,7 +429,7 @@ type RecordingState = {
 
 ## 8. Trace Loading (traceLoader.ts)
 
-Located: `/home/pfeldman/code/playwright/packages/playwright-core/src/utils/isomorphic/trace/traceLoader.ts`
+Located: `packages/isomorphic/trace/traceLoader.ts`
 
 ### TraceLoaderBackend Interface
 ```typescript
@@ -494,7 +494,7 @@ type ContextEntry = {
 
 ## 9. Trace Model (traceModel.ts)
 
-Located: `/home/pfeldman/code/playwright/packages/playwright-core/src/utils/isomorphic/trace/traceModel.ts`
+Located: `packages/isomorphic/trace/traceModel.ts`
 
 ### TraceModel Class
 High-level data model for trace viewer:
@@ -553,7 +553,7 @@ type ActionTraceEventInContext = ActionEntry & {
 
 ## 10. Trace Modernizer (traceModernizer.ts)
 
-Located: `/home/pfeldman/code/playwright/packages/playwright-core/src/utils/isomorphic/trace/traceModernizer.ts`
+Located: `packages/isomorphic/trace/traceModernizer.ts`
 
 ### Version Support
 - **Latest:** Version 8
@@ -585,7 +585,7 @@ class TraceModernizer {
 
 ## 11. Trace Viewer
 
-Located: `/home/pfeldman/code/playwright/packages/trace-viewer/src/`
+Located: `packages/trace-viewer/src/`
 
 ### Structure
 ```
@@ -624,7 +624,7 @@ trace-viewer/src/
 
 ## 12. CLI Commands
 
-Located: `/home/pfeldman/code/playwright/packages/playwright-core/src/cli/program.ts`
+Located: `packages/playwright-core/src/cli/program.ts`
 
 ### show-trace Command
 ```bash
@@ -918,9 +918,9 @@ Every action uses a unique `callId` to correlate:
 | `playwright-core/.../tracing.ts` | 700+ lines | Recording engine |
 | `playwright-core/.../traceParser.ts` | 62 lines | ZIP backend |
 | `playwright-core/.../traceViewer.ts` | 288 lines | Viewer server |
-| `playwright-core/.../traceLoader.ts` | 158 lines | Load traces |
-| `playwright-core/.../traceModel.ts` | 300+ lines | Data model |
-| `playwright-core/.../traceModernizer.ts` | 500+ lines | Version upgrades |
+| `isomorphic/trace/traceLoader.ts` | 158 lines | Load traces |
+| `isomorphic/trace/traceModel.ts` | 300+ lines | Data model |
+| `isomorphic/trace/traceModernizer.ts` | 500+ lines | Version upgrades |
 | `trace-viewer/src/index.tsx` | 48 lines | Viewer entry |
 | `trace-viewer/src/ui/workbench.tsx` | Main UI | Display |
 

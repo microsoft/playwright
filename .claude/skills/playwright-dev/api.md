@@ -97,7 +97,7 @@ async goto(url: string, options: channels.FrameGotoOptions = {}): Promise<networ
 
 ## Step 3: Define Protocol Channel
 
-Define (or update) channel for the API in `packages/protocol/src/protocol.yml` as needed.
+Define (or update) channel for the API in the matching `packages/protocol/spec/*.yml` file (e.g. `page.yml`) as needed.
 
 ### Protocol YAML Format
 
@@ -153,9 +153,9 @@ Page:
 **Flags:** `slowMo`, `snapshot`, `pausesBeforeAction`, `pausesBeforeInput`
 
 Watch will kick in and auto-generate:
-- `packages/protocol/src/channels.d.ts` — channel TypeScript interfaces
-- `packages/playwright-core/src/protocol/validator.ts` — runtime validators
-- `packages/playwright-core/src/utils/isomorphic/protocolMetainfo.ts` — method metadata
+- `packages/playwright-core/src/client/channels.d.ts`, `packages/playwright-core/src/server/channels.d.ts` — channel TypeScript interfaces
+- `packages/protocol/src/validator.ts` — runtime validators
+- `packages/isomorphic/protocolMetainfo.ts` — method metadata
 
 ## Step 4: Implement Dispatcher
 
@@ -283,7 +283,7 @@ npm run ctest -- --grep "should do something" # Filter by name
 docs/src/api/class-xxx.md          (API documentation — source of truth for public types)
   → auto-generates → types.d.ts, test.d.ts
 
-packages/protocol/src/protocol.yml  (RPC protocol definition)
+packages/protocol/spec/*.yml       (RPC protocol definition)
   → auto-generates → channels.d.ts, validator.ts, protocolMetainfo.ts
 
 Client call chain:
