@@ -153,6 +153,10 @@ export function parseRawCookie(header: string): RawCookie | null {
     name,
     value,
   };
+  // Per https://datatracker.ietf.org/doc/html/rfc6265#section-5.3 step 3,
+  // Max-Age takes precedence over Expires regardless of the attribute order.
+  let maxAgeExpires: number | undefined;
+  let dateExpires: number | undefined;
   for (let i = 1; i < pairs.length; i++) {
     const [name, value] = pairs[i];
     switch (name.toLowerCase()) {
@@ -161,21 +165,23 @@ export function parseRawCookie(header: string): RawCookie | null {
         // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.1
         if (isFinite(expiresMs)) {
           if (expiresMs <= 0)
-            cookie.expires = 0;
+            dateExpires = 0;
           else
-            cookie.expires = Math.min(expiresMs / 1000, kMaxCookieExpiresDateInSeconds);
+            dateExpires = Math.min(expiresMs / 1000, kMaxCookieExpiresDateInSeconds);
         }
         break;
       case 'max-age':
-        const maxAgeSec = parseInt(value, 10);
-        if (isFinite(maxAgeSec)) {
-          // From https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.2
+        // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.2
+        // If the value is not all digits (optionally preceded by a '-'),
+        // the attribute is ignored.
+        if (/^-?\d+$/.test(value)) {
+          const maxAgeSec = parseInt(value, 10);
           // If delta-seconds is less than or equal to zero (0), let expiry-time
           // be the earliest representable date and time.
           if (maxAgeSec <= 0)
-            cookie.expires = 0;
+            maxAgeExpires = 0;
           else
-            cookie.expires = Math.min(Date.now() / 1000 + maxAgeSec, kMaxCookieExpiresDateInSeconds);
+            maxAgeExpires = Math.min(Date.now() / 1000 + maxAgeSec, kMaxCookieExpiresDateInSeconds);
         }
         break;
       case 'domain':
@@ -207,6 +213,10 @@ export function parseRawCookie(header: string): RawCookie | null {
         break;
     }
   }
+  if (maxAgeExpires !== undefined)
+    cookie.expires = maxAgeExpires;
+  else if (dateExpires !== undefined)
+    cookie.expires = dateExpires;
   return cookie;
 }
 

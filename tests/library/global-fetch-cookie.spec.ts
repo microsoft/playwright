@@ -266,6 +266,63 @@ it('should remove expired cookies', async ({ request, server }) => {
   expect(serverRequest.headers.cookie).toBe('a=v');
 });
 
+it('should honor max-age over expires regardless of attribute order', async ({ request, server }) => {
+  // https://datatracker.ietf.org/doc/html/rfc6265#section-5.3 step 3:
+  // Max-Age takes precedence over Expires regardless of the attribute order.
+  const past = 'Thu, 01 Jan 1970 00:00:00 GMT';
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', [
+      `a=v; max-age=3600; expires=${past}`,
+      `b=v; expires=${past}; max-age=3600`,
+    ]);
+    res.end();
+  });
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  const state = await request.storageState();
+  const now = Date.now() / 1000;
+  for (const cookie of state.cookies) {
+    // The max-age value must win over the past expires date.
+    expect(cookie.expires).toBeGreaterThan(now + 3500);
+    expect(cookie.expires).toBeLessThan(now + 3700);
+  }
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(server.EMPTY_PAGE)
+  ]);
+  expect(serverRequest.headers.cookie).toBe('a=v; b=v');
+});
+
+it('should honor max-age=0 over a future expires regardless of attribute order', async ({ request, server }) => {
+  const future = 'Fri, 01 Jan 2100 00:00:00 GMT';
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=v', 'b=v']);
+    res.end();
+  });
+  server.setRoute('/removecookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', [
+      `a=v; max-age=0; expires=${future}`,
+      `b=v; expires=${future}; max-age=0`,
+    ]);
+    res.end();
+  });
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  await request.get(`${server.PREFIX}/removecookie.html`);
+  const state = await request.storageState();
+  expect(state.cookies.filter(c => c.name === 'a' || c.name === 'b')).toEqual([]);
+});
+
+it('should ignore non-numeric max-age', async ({ request, server }) => {
+  // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.2: a max-age
+  // whose value is not all digits is ignored and the cookie stays a session cookie.
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=v; max-age=10abc']);
+    res.end();
+  });
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  const state = await request.storageState();
+  expect(state.cookies.map(c => c.expires)).toEqual([-1]);
+});
+
 it('should remove cookie with negative max-age', async ({ request, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v; max-age=100000', `b=v; max-age=100000`, 'c=v']);
