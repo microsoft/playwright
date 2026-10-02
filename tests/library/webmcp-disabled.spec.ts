@@ -20,7 +20,7 @@ test.skip(({ browserName }) => browserName === 'webkit', 'WebKit does not implem
 test.skip(({ isBidi }) => isBidi, 'WebMCP is not implemented over BiDi');
 
 test('should throw when the browser was launched without WebMCP', async ({ page, browserName }) => {
-  const error = await page.webmcp.enable().catch(e => e);
+  const error = await page.webmcp.tools().catch(e => e);
   expect(error.message).toContain('WebMCP is not enabled.');
   expect(error.message).toContain(browserName === 'firefox' ? 'dom.modelcontext.enabled' : '--enable-features=WebMCP');
 });

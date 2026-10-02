@@ -63,7 +63,7 @@ export type WebMCPListing = {
 
 export async function listWebMCPTools(tab: Tab): Promise<WebMCPListing> {
   const frames = tab.page.frames();
-  // Frames that are not enabled or are stuck report no tools.
+  // Frames that are stuck or belong to a browser without WebMCP report no tools.
   const toolsPerFrame = await Promise.all(frames.map(frame => frame.webmcp.tools({ timeout: kListTimeout }).catch(() => [])));
   // Several frames can share a URL, for example a widget embedded twice, and each one has its
   // own model context that can register the same tool name. Fall back to the frame's position
