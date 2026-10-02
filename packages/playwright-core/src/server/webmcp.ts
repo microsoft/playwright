@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { kBindingsControllerProperty } from '@isomorphic/utilityScriptSerializers';
 import * as rawWebMCPSource from '../generated/webMCPSource';
-import { Frame } from './frames';
 
-import type { InitScript, Page, PageBinding } from './page';
+import type { Frame } from './frames';
+import type { WebMCPToolDescription } from '@injected/webMCP';
+import type { Page } from './page';
 import type { Progress } from './progress';
 
 export type WebMCPToolAnnotations = {
@@ -34,210 +34,35 @@ export type WebMCPToolInfo = {
   annotations?: WebMCPToolAnnotations;
 };
 
-export type RawWebMCPTool = {
-  name: string;
-  description: string;
-  inputSchema?: unknown;
-  annotations?: WebMCPToolAnnotations;
-};
-
-const kToolsChangedBinding = '__pw_webmcpToolsChanged';
-const kScriptProperty = '__pw_webmcp';
-
-const kScriptOptions = JSON.stringify({
-  property: kScriptProperty,
-  bindingName: kToolsChangedBinding,
-  bindingsControllerProperty: kBindingsControllerProperty,
-});
-
-const kInstallSource = `(() => {
+const kScriptSource = `(() => {
   const module = {};
   ${rawWebMCPSource.source}
-  return module.exports.WebMCPScript().install(globalThis, ${kScriptOptions});
+  return new (module.exports.WebMCPScript())(globalThis);
 })()`;
 
 export class WebMCP {
   private _frame: Frame;
-  private _tools = new Map<string, WebMCPToolInfo>();
-  private _enabled: Promise<boolean> | undefined;
-  private _lastSignature: string | undefined;
-  private _changeScheduled = false;
 
   constructor(frame: Frame) {
     this._frame = frame;
-    frame.on(Frame.Events.InternalNavigation, event => {
-      if (event.newDocument && !event.error)
-        this.toolsReported([]);
-    });
-  }
-
-  async enable(progress: Progress) {
-    if (!this._enabled) {
-      assertBrowserSupport(this._frame._page);
-      const enabled = this._enable(progress);
-      this._enabled = enabled;
-      enabled.catch(() => {
-        if (this._enabled === enabled)
-          this._enabled = undefined;
-      });
-    }
-    await progress.race(this._enabled);
-  }
-
-  async disable(progress: Progress) {
-    const enabled = this._enabled;
-    if (!enabled)
-      return;
-    try {
-      await progress.race(enabled);
-    } catch {
-    }
-    if (this._enabled !== enabled)
-      return;
-    this._enabled = undefined;
-    this._lastSignature = undefined;
-    await this._frame._page.webmcpInstrumentation.release(progress, this._frame);
   }
 
   async tools(progress: Progress): Promise<WebMCPToolInfo[]> {
-    await progress.race(this._enabledPromise());
-    return this._snapshot();
+    assertBrowserSupport(this._frame._page);
+    const tools: WebMCPToolDescription[] = await this._frame.evaluateExpression(progress, `${kScriptSource}.tools()`, { world: 'utility' });
+    return tools.map(normalizeTool);
   }
 
   async callTool(progress: Progress, name: string, input: unknown): Promise<unknown> {
-    const native = await progress.race(this._enabledPromise());
-    if (!this._tools.has(name)) {
-      const available = [...this._tools.keys()];
+    const tools = await this.tools(progress);
+    if (!tools.some(tool => tool.name === name)) {
+      const available = tools.map(tool => tool.name);
       throw new Error(`No WebMCP tool named "${name}".` +
         (available.length ? ` Available tools: ${available.join(', ')}.` : ' The frame does not register any WebMCP tools.'));
     }
-    if (native)
-      return await this._frame._page.delegate.callWebMCPTool!(progress, this._frame, name, input ?? {});
-    return await this._callToolInPage(progress, name, input ?? {});
-  }
-
-  toolsAdded(tools: RawWebMCPTool[]) {
-    for (const tool of tools)
-      this._tools.set(tool.name, normalizeTool(tool));
-    this._scheduleChanged();
-  }
-
-  toolsRemoved(names: string[]) {
-    for (const name of names)
-      this._tools.delete(name);
-    this._scheduleChanged();
-  }
-
-  toolsReported(tools: RawWebMCPTool[]) {
-    this._tools = new Map(tools.map(tool => [tool.name, normalizeTool(tool)]));
-    this._scheduleChanged();
-  }
-
-  private _enabledPromise(): Promise<boolean> {
-    if (!this._enabled)
-      throw new Error('WebMCP is not enabled. Call webmcp.enable() first.');
-    return this._enabled;
-  }
-
-  private async _enable(progress: Progress): Promise<boolean> {
-    const page = this._frame._page;
-    const native = await progress.race(page.delegate.enableWebMCP?.() ?? Promise.resolve(false));
-    if (!native)
-      this.toolsReported(await page.webmcpInstrumentation.acquire(progress, this._frame));
-    this._lastSignature = this._signature(this._snapshot());
-    return native;
-  }
-
-  private _scheduleChanged() {
-    if (this._changeScheduled)
-      return;
-    this._changeScheduled = true;
-    queueMicrotask(() => {
-      this._changeScheduled = false;
-      this._emitIfChanged();
-    });
-  }
-
-  private _emitIfChanged() {
-    if (this._lastSignature === undefined)
-      return;
-    const tools = this._snapshot();
-    const signature = this._signature(tools);
-    if (signature === this._lastSignature)
-      return;
-    this._lastSignature = signature;
-    this._frame.emit(Frame.Events.WebMCPToolsChanged, tools);
-  }
-
-  private _signature(tools: WebMCPToolInfo[]): string {
-    return JSON.stringify(tools.map(tool => [tool.name, tool.description, tool.inputSchema ?? null, tool.annotations ?? null]));
-  }
-
-  private _snapshot(): WebMCPToolInfo[] {
-    return [...this._tools.values()].map(tool => ({ ...tool }));
-  }
-
-  private async _callToolInPage(progress: Progress, name: string, input: unknown): Promise<unknown> {
-    const resultJson: string = await this._frame.evaluateExpression(progress, `params => {
-      const script = globalThis[params.property];
-      if (!script)
-        throw new Error('WebMCP is not available in this frame');
-      return script.callTool(params.name, params.inputJson);
-    }`, { isFunction: true }, { property: kScriptProperty, name, inputJson: JSON.stringify(input) });
-    return JSON.parse(resultJson);
-  }
-}
-
-// Page-wide hooks for browsers that do not report tool registrations natively.
-// Init scripts and bindings cover every frame, the frames pick out their own reports.
-export class WebMCPInstrumentation {
-  private _page: Page;
-  private _frames = new Set<Frame>();
-  private _installed: Promise<{ binding: PageBinding, initScript: InitScript }> | undefined;
-
-  constructor(page: Page) {
-    this._page = page;
-  }
-
-  async acquire(progress: Progress, frame: Frame): Promise<RawWebMCPTool[]> {
-    if (!this._installed) {
-      const installed = this._install(progress);
-      this._installed = installed;
-      installed.catch(() => {
-        if (this._installed === installed)
-          this._installed = undefined;
-      });
-    }
-    await progress.race(this._installed);
-    this._frames.add(frame);
-    // The current document registered its tools before the hooks were in place, or while nobody listened.
-    return await progress.race(frame.nonStallingEvaluateInExistingContext(kInstallSource, 'main').catch(() => []));
-  }
-
-  async release(progress: Progress, frame: Frame) {
-    this._frames.delete(frame);
-    if (this._frames.size || !this._installed)
-      return;
-    const installed = this._installed;
-    this._installed = undefined;
-    let hooks: { binding: PageBinding, initScript: InitScript };
-    try {
-      hooks = await progress.race(installed);
-    } catch {
-      return;
-    }
-    await progress.race(Promise.all([hooks.binding.dispose(), hooks.initScript.dispose()]));
-  }
-
-  private async _install(progress: Progress) {
-    const binding = await this._page.exposeBinding(progress, kToolsChangedBinding, ({ frame }, tools: RawWebMCPTool[]) => frame.webmcp.toolsReported(tools), true);
-    try {
-      const initScript = await this._page.addInitScript(progress, kInstallSource);
-      return { binding, initScript };
-    } catch (error) {
-      binding.dispose().catch(() => {});
-      throw error;
-    }
+    // Firefox denies the page access to objects created in the utility world, so the input is passed in the main world.
+    const world = this._frame._page.browserContext._browser.options.browserType === 'firefox' ? 'main' : 'utility';
+    return await this._frame.evaluateExpression(progress, `params => ${kScriptSource}.callTool(params.name, params.input)`, { isFunction: true, world }, { name, input: input ?? {} });
   }
 }
 
@@ -254,12 +79,15 @@ function assertBrowserSupport(page: Page) {
         .flatMap(arg => arg.substring('--enable-features='.length).split(','));
     if (!features.includes('WebMCP'))
       throw new Error('WebMCP is not enabled. Launch the browser with the "--enable-features=WebMCP" argument.');
-  } else if (originalLaunchOptions.firefoxUserPrefs?.['dom.modelcontext.enabled'] !== true) {
-    throw new Error('WebMCP is not enabled. Launch the browser with the "dom.modelcontext.enabled" preference set to true.');
+  } else {
+    // The testing preference gates getTools() and invokeTool().
+    const prefs = originalLaunchOptions.firefoxUserPrefs;
+    if (prefs?.['dom.modelcontext.enabled'] !== true || prefs?.['dom.modelcontext.testing.enabled'] !== true)
+      throw new Error('WebMCP is not enabled. Launch the browser with the "dom.modelcontext.enabled" and "dom.modelcontext.testing.enabled" preferences set to true.');
   }
 }
 
-function normalizeTool(tool: RawWebMCPTool): WebMCPToolInfo {
+function normalizeTool(tool: WebMCPToolDescription): WebMCPToolInfo {
   const annotations: WebMCPToolAnnotations = {};
   if (tool.annotations?.readOnly)
     annotations.readOnly = true;

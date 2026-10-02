@@ -70,7 +70,6 @@ test('should list tools registered by the page', async ({ page, server }) => {
       async execute() {},
     });
   `));
-  await page.webmcp.enable();
   await page.goto(server.PREFIX + '/');
 
   // Browsers list tools in their own order.
@@ -90,14 +89,12 @@ test('should list tools registered by the page', async ({ page, server }) => {
 });
 
 test('should report no tools when the page registers none', async ({ page, server }) => {
-  await page.webmcp.enable();
   await page.goto(server.EMPTY_PAGE);
   expect(await page.webmcp.tools()).toEqual([]);
 });
 
 test('should call a tool', async ({ page, server }) => {
   serve(server, '/', registerScript(kAdd));
-  await page.webmcp.enable();
   await page.goto(server.PREFIX + '/');
 
   expect(await page.webmcp.callTool('add', { a: 2, b: 40 })).toEqual({ content: [{ type: 'text', text: '42' }] });
@@ -111,13 +108,12 @@ test('should return isError results as is', async ({ page, server }) => {
       async execute() { return { content: [{ type: 'text', text: 'nope' }], isError: true }; },
     });
   `));
-  await page.webmcp.enable();
   await page.goto(server.PREFIX + '/');
 
   expect(await page.webmcp.callTool('broken')).toEqual({ content: [{ type: 'text', text: 'nope' }], isError: true });
 });
 
-test('should throw when the tool throws', async ({ page, server }) => {
+test('should throw when the tool throws', async ({ page, server, browserName }) => {
   serve(server, '/', registerScript(`
     modelContext.registerTool({
       name: 'throwing',
@@ -125,16 +121,15 @@ test('should throw when the tool throws', async ({ page, server }) => {
       async execute() { throw new Error('boom'); },
     });
   `));
-  await page.webmcp.enable();
   await page.goto(server.PREFIX + '/');
 
   const error = await page.webmcp.callTool('throwing').catch(e => e);
-  expect(error.message).toContain('boom');
+  // Chromium does not report the error that the tool threw.
+  expect(error.message).toContain(browserName === 'chromium' ? 'the invocation failed' : 'boom');
 });
 
 test('should throw for an unknown tool', async ({ page, server }) => {
   serve(server, '/', registerScript(kAdd));
-  await page.webmcp.enable();
   await page.goto(server.PREFIX + '/');
 
   const error = await page.webmcp.callTool('missing').catch(e => e);
@@ -150,7 +145,6 @@ test('should time out when the tool does not settle', async ({ page, server }) =
       execute() { return new Promise(() => {}); },
     });
   `));
-  await page.webmcp.enable();
   await page.goto(server.PREFIX + '/');
 
   const error = await page.webmcp.callTool('stuck', {}, { timeout: 500 }).catch(e => e);
@@ -159,7 +153,6 @@ test('should time out when the tool does not settle', async ({ page, server }) =
 
 test('should drop tools after navigation', async ({ page, server }) => {
   serve(server, '/', registerScript(kAdd));
-  await page.webmcp.enable();
   await page.goto(server.PREFIX + '/');
   expect(await page.webmcp.tools()).toHaveLength(1);
 
@@ -169,84 +162,34 @@ test('should drop tools after navigation', async ({ page, server }) => {
   expect(error.message).toContain('The frame does not register any WebMCP tools');
 });
 
-test('should emit toolschanged when navigating away from the tools', async ({ page, server }) => {
+test('should list a tool registered after load', async ({ page, server }) => {
   serve(server, '/', registerScript(kAdd));
-  await page.webmcp.enable();
   await page.goto(server.PREFIX + '/');
   expect(await page.webmcp.tools()).toHaveLength(1);
 
-  const changed = page.webmcp.waitForEvent('toolschanged');
-  await page.goto(server.EMPTY_PAGE);
-  expect(await changed).toEqual([]);
-});
-
-test('should list tools registered before enable', async ({ page, server }) => {
-  serve(server, '/', registerScript(kAdd));
-  await page.goto(server.PREFIX + '/');
-
-  await page.webmcp.enable();
-  expect(await page.webmcp.tools()).toEqual([expect.objectContaining({ name: 'add' })]);
-  expect(await page.webmcp.callTool('add', { a: 1, b: 2 })).toEqual({ content: [{ type: 'text', text: '3' }] });
-});
-
-test('should throw when used before enable', async ({ page }) => {
-  const error = await page.webmcp.tools().catch(e => e);
-  expect(error.message).toContain('WebMCP is not enabled. Call webmcp.enable() first.');
-});
-
-test('should stop after disable and resume after enable', async ({ page, server }) => {
-  serve(server, '/', registerScript(kAdd));
-  const disposable = await page.webmcp.enable();
-  await page.goto(server.PREFIX + '/');
-  expect(await page.webmcp.tools()).toHaveLength(1);
-
-  const events: string[][] = [];
-  page.webmcp.on('toolschanged', tools => events.push(tools.map(tool => tool.name)));
-  await disposable.dispose();
-  const error = await page.webmcp.tools().catch(e => e);
-  expect(error.message).toContain('WebMCP is not enabled.');
   await page.evaluate(() => {
     const modelContext = (document as any).modelContext || (navigator as any).modelContext;
     modelContext.registerTool({ name: 'late', description: 'Registered later', async execute() {} });
   });
-  await page.goto(server.EMPTY_PAGE);
-  await page.goto(server.PREFIX + '/');
-  expect(events).toEqual([]);
-
-  await page.webmcp.enable();
-  expect((await page.webmcp.tools()).map(tool => tool.name)).toEqual(['add']);
-  const changed = page.webmcp.waitForEvent('toolschanged');
-  await page.goto(server.EMPTY_PAGE);
-  expect(await changed).toEqual([]);
-});
-
-test('should emit toolschanged when the page unregisters a tool', async ({ page, server, browserName }) => {
-  test.skip(browserName !== 'firefox', 'Chromium does not implement unregisterTool');
-  serve(server, '/', registerScript(kAdd));
-  await page.webmcp.enable();
-  await page.goto(server.PREFIX + '/');
-  expect(await page.webmcp.tools()).toHaveLength(1);
-
-  const changed = page.webmcp.waitForEvent('toolschanged');
-  await page.evaluate(() => (navigator as any).modelContext.unregisterTool('add'));
-  expect(await changed).toEqual([]);
-});
-
-test('should emit toolschanged when the page registers a tool', async ({ page, server }) => {
-  serve(server, '/', registerScript(kAdd));
-  await page.webmcp.enable();
-  await page.goto(server.PREFIX + '/');
-
-  const events: string[][] = [];
-  page.webmcp.on('toolschanged', tools => events.push(tools.map(tool => tool.name)));
-  const changed = page.webmcp.waitForEvent('toolschanged');
-  await page.evaluate(() => {
-    const modelContext = (document as any).modelContext || (navigator as any).modelContext;
-    modelContext.registerTool({ name: 'late', description: 'Registered later', async execute() {} });
-  });
-  const tools = await changed;
+  const tools = (await page.webmcp.tools()).sort((a, b) => a.name.localeCompare(b.name));
   expect(tools.map(tool => tool.name)).toEqual(['add', 'late']);
-  expect(events).toEqual([['add', 'late']]);
+});
+
+test('should list tools while a tool is running', async ({ page, server }) => {
+  serve(server, '/', registerScript(kAdd + `
+    modelContext.registerTool({
+      name: 'gated',
+      description: 'Resolves when released',
+      execute() { return new Promise(resolve => window.release = () => resolve({ content: [{ type: 'text', text: 'released' }] })); },
+    });
+  `));
+  await page.goto(server.PREFIX + '/');
+
+  const result = page.webmcp.callTool('gated');
+  await page.waitForFunction(() => !!(window as any).release);
+  expect(await page.webmcp.tools()).toHaveLength(2);
+  await page.evaluate(() => (window as any).release());
+  expect(await result).toEqual({ content: [{ type: 'text', text: 'released' }] });
 });
 
 test('should list declarative tools', async ({ page, server, browserName }) => {
@@ -257,7 +200,6 @@ test('should list declarative tools', async ({ page, server, browserName }) => {
       <button>Subscribe</button>
     </form>
   `);
-  await page.webmcp.enable();
   await page.goto(server.PREFIX + '/');
 
   expect(await page.webmcp.tools()).toEqual([expect.objectContaining({
@@ -269,10 +211,6 @@ test('should list declarative tools', async ({ page, server, browserName }) => {
   // A declarative tool waits for the user to submit the form.
   const error = await page.webmcp.callTool('subscribe', { email: 'me@example.com' }, { timeout: 500 }).catch(e => e);
   expect(error.message).toContain('Timeout 500ms exceeded');
-
-  const changed = page.webmcp.waitForEvent('toolschanged');
-  await page.evaluate(() => document.querySelector('form')!.remove());
-  expect(await changed).toEqual([]);
 });
 
 test('should scope tools to their frame', async ({ page, server, browserName }) => {
@@ -285,11 +223,9 @@ test('should scope tools to their frame', async ({ page, server, browserName }) 
       async execute() { return { content: [{ type: 'text', text: 'subscribed' }] }; },
     });
   `));
-  await page.webmcp.enable();
   await page.goto(server.PREFIX + '/');
 
   const childFrame = page.frames()[1];
-  await childFrame.webmcp.enable();
   expect(await page.webmcp.tools()).toEqual([expect.objectContaining({ name: 'add' })]);
   expect(await childFrame.webmcp.tools()).toEqual([expect.objectContaining({ name: 'subscribe' })]);
   expect(await childFrame.webmcp.callTool('subscribe')).toEqual({ content: [{ type: 'text', text: 'subscribed' }] });
@@ -310,11 +246,31 @@ test('should call same-name tools in their own frame', async ({ page, server, br
   `);
   serve(server, '/', registerEcho('main') + `<iframe src="/frame.html"></iframe>`);
   serve(server, '/frame.html', registerEcho('frame'));
-  await page.webmcp.enable();
   await page.goto(server.PREFIX + '/');
   const childFrame = page.frames()[1];
-  await childFrame.webmcp.enable();
 
   expect(await page.webmcp.callTool('echo')).toEqual({ content: [{ type: 'text', text: 'main' }] });
   expect(await childFrame.webmcp.callTool('echo')).toEqual({ content: [{ type: 'text', text: 'frame' }] });
+});
+
+test('should list and call tools in cross-origin and nested frames', async ({ page, server, browserName }) => {
+  test.skip(browserName === 'firefox', 'Firefox does not support registering WebMCP tools in iframes yet, https://bugzilla.mozilla.org/show_bug.cgi?id=2019743');
+  const registerEcho = (text: string) => registerScript(`
+    modelContext.registerTool({
+      name: 'echo-${text}',
+      description: 'Echoes ${text}',
+      async execute() { return { content: [{ type: 'text', text: '${text}' }] }; },
+    });
+  `);
+  serve(server, '/', registerEcho('main') + `<iframe allow="tools" src="${server.CROSS_PROCESS_PREFIX}/frame.html"></iframe>`);
+  serve(server, '/frame.html', registerEcho('frame') + `<iframe src="/nested.html"></iframe>`);
+  serve(server, '/nested.html', registerEcho('nested'));
+  await page.goto(server.PREFIX + '/');
+
+  const [mainFrame, frame, nested] = page.frames();
+  expect(await mainFrame.webmcp.tools()).toEqual([{ name: 'echo-main', description: 'Echoes main' }]);
+  expect(await frame.webmcp.tools()).toEqual([{ name: 'echo-frame', description: 'Echoes frame' }]);
+  expect(await nested.webmcp.tools()).toEqual([{ name: 'echo-nested', description: 'Echoes nested' }]);
+  expect(await frame.webmcp.callTool('echo-frame')).toEqual({ content: [{ type: 'text', text: 'frame' }] });
+  expect(await nested.webmcp.callTool('echo-nested')).toEqual({ content: [{ type: 'text', text: 'nested' }] });
 });
