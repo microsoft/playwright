@@ -616,6 +616,5 @@ export async function toClientCertificatesProtocol(certs?: BrowserContextOptions
     key: await bufferizeContent(cert.key, cert.keyPath),
     pfx: await bufferizeContent(cert.pfx, cert.pfxPath),
     passphrase: cert.passphrase,
-    noCertificate: cert.noCertificate,
   })));
 }
