@@ -20,6 +20,7 @@ import os from 'os';
 
 import dotenv from 'dotenv';
 import { isSystemDirectory } from '@utils/fileUtils';
+import { proxySettingsFromString } from '@utils/network';
 import { playwright } from '../../inprocess';
 import { configFromIniFile } from './configIni';
 
@@ -328,7 +329,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
   const contextOptions: playwrightTypes.BrowserContextOptions = device ? playwright.devices[device] : {};
 
   if (cliOptions.proxyServer) {
-    const proxy: playwrightTypes.LaunchOptions['proxy'] = { server: cliOptions.proxyServer };
+    const proxy: playwrightTypes.LaunchOptions['proxy'] = proxySettingsFromString(cliOptions.proxyServer);
     if (cliOptions.proxyBypass)
       proxy.bypass = cliOptions.proxyBypass;
     // Set on both to ensure CLI takes precedence over any proxy set in the config file

@@ -129,6 +129,22 @@ function normalizeProxyURL(proxy: string): URL {
   return new URL(proxy);
 }
 
+// Moves credentials from the proxy string, e.g. "http://user:pass@myproxy:3128", into explicit fields.
+export function proxySettingsFromString(proxy: string): ProxySettings {
+  try {
+    const url = normalizeProxyURL(proxy);
+    if (url.username || url.password) {
+      return {
+        server: url.protocol + '//' + url.host,
+        username: decodeURIComponent(url.username),
+        password: decodeURIComponent(url.password),
+      };
+    }
+  } catch {
+  }
+  return { server: proxy };
+}
+
 export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
   if (!proxy)
     return;
