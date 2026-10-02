@@ -97,3 +97,24 @@ it('should work with CSP', async ({ page, context, server }) => {
   await page.evaluate(() => (window as any).hi());
   expect(called).toBe(true);
 });
+
+it('should call binding from pagehide handler when navigating away', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43064' },
+}, async ({ context, page, server, browserName }) => {
+  it.fixme(browserName === 'chromium', 'Chromium drops CDP events from the old document after the frame host swap');
+  const calls: string[] = [];
+  await context.exposeBinding('reportFromPage', (_source, message: string) => { calls.push(message); });
+  const html = (body: string) => `<!doctype html>${body}<script>addEventListener('pagehide', () => window.reportFromPage('pagehide of ' + location.pathname));</script>`;
+  server.setRoute('/a.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(html(`<a id="next" href="/b.html">next</a>`));
+  });
+  server.setRoute('/b.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(html(`<p>b</p>`));
+  });
+  await page.goto(server.PREFIX + '/a.html');
+  await page.click('#next');
+  await page.waitForURL('**/b.html');
+  await expect.poll(() => calls).toContain('pagehide of /a.html');
+});
