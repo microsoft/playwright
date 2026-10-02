@@ -112,7 +112,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `SM` | Strict mode | `page/page-strict`<br>`library/browsercontext-strict` | 14 |
 | `SO` | Select option | `page/page-select-option` | 33 |
 | `SQ` | Sequence | `library/unit/sequence` | 16 |
-| `SS` | Screenshot | `page/page-screenshot`<br>`library/screenshot` | 94 |
+| `SS` | Screenshot | `page/page-screenshot`<br>`library/screenshot` | 95 |
 | `ST` | Storage | `library/browsercontext-storage-state`<br>`page/{page-localstorage, page-cache-storage}` | 32 |
 | `TA` | Tap | `library/{tap, locator-dispatchevent-touch}` | 10 |
 | `TO` | Timeout runner | `library/unit/timeout-runner` | 1 |
@@ -4979,6 +4979,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `SS-092` | `library/screenshot.spec.ts` | element screenshot › should capture full element when larger than viewport with device scale factor |
 | `SS-093` | `library/screenshot.spec.ts` | element screenshot › should capture full element when larger than viewport with device scale factor and scale:css |
 | `SS-094` | `library/screenshot.spec.ts` | element screenshot › page screenshot should capture css transform with device pixels |
+| `SS-095` | `page/page-screenshot.spec.ts` | page screenshot › should capture webgl canvas after its drawing buffer is resized |
 
 ### ST — Storage
 
