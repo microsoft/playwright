@@ -19,6 +19,7 @@
 import { test as baseTest, expect } from './ui-mode-fixtures';
 import { TestServerConnection } from '../../packages/playwright/lib/isomorphic';
 import ws from 'ws';
+import path from 'path';
 import type { TestChildProcess } from '../config/commonFixtures';
 
 class WSTransport {
@@ -148,6 +149,66 @@ test('should list tests with testIdAttribute', async ({ startTestServer, writeFi
   const onProject = events.report.find(e => e.method === 'onProject').params.project;
   expect(onProject.name).toBe('chromium');
   expect(onProject.use.testIdAttribute).toBe('testId');
+});
+
+test('should list files with source maps', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42364' },
+}, async ({ startTestServer, writeFiles }) => {
+  const testSpecJs = (sourceMappingURL?: string) => [
+    `const { test } = require('@playwright/test');`,
+    `test('one', async ({}) => {});`,
+    ...(sourceMappingURL ? [`//# sourceMappingURL=${sourceMappingURL}`] : []),
+  ].join('\n');
+  // Maps the test from the line 2 in the generated file to the line 5 in the source.
+  const sourceMap = (source: string) => JSON.stringify({ version: 3, sources: [source], mappings: 'AAAA;AAIA', names: [] });
+
+  await writeFiles({
+    'playwright.config.ts': `
+      module.exports = { testDir: 'build' };
+    `,
+    'build/inline.spec.js': testSpecJs(`data:application/json;charset=utf-8;base64,${Buffer.from(sourceMap('../src/inline.spec.ts')).toString('base64')}`),
+    'build/external.spec.js': testSpecJs('external.spec.js.map'),
+    'build/external.spec.js.map': sourceMap('../src/external.spec.ts'),
+    'build/missing.spec.js': testSpecJs('missing.spec.js.map'),
+    'build/nomap.spec.js': testSpecJs(),
+  });
+
+  // Locations are relative to the rootDir, which is "build".
+  const rootDir = test.info().outputPath('build');
+  const externalSpecTs = path.join('..', 'src', 'external.spec.ts');
+  const inlineSpecTs = path.join('..', 'src', 'inline.spec.ts');
+  const testsByFile = {
+    [externalSpecTs]: [`${externalSpecTs}:5`],
+    [inlineSpecTs]: [`${inlineSpecTs}:5`],
+    'missing.spec.js': ['missing.spec.js:2'],
+    'nomap.spec.js': ['nomap.spec.js:2'],
+  };
+  const collectTestsByFile = (report: any[]) => {
+    const onProject = report.find(e => e.method === 'onProject').params.project;
+    const fileSuites = [...onProject.suites].sort((a, b) => a.location.file.localeCompare(b.location.file));
+    return Object.fromEntries(fileSuites.map(suite => [suite.location.file, suite.entries.map(test => `${test.location.file}:${test.location.line}`)]));
+  };
+
+  const testServerConnection = await startTestServer();
+  await testServerConnection.initialize({});
+
+  const listFilesResult = await testServerConnection.listFiles({});
+  const files = Object.keys(collectTestsByFile(listFilesResult.report));
+  expect(files).toEqual(Object.keys(testsByFile));
+
+  // Listed files should be usable as locations, both one by one and all together.
+  const toLocation = (file: string) => path.resolve(rootDir, file).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  for (const file of files) {
+    const listTestsResult = await testServerConnection.listTests({ locations: [toLocation(file)] });
+    expect(collectTestsByFile(listTestsResult.report)).toEqual({ [file]: testsByFile[file] });
+  }
+  const listTestsResult = await testServerConnection.listTests({ locations: files.map(toLocation) });
+  expect(collectTestsByFile(listTestsResult.report)).toEqual(testsByFile);
+
+  expect(await testServerConnection.runTests({ locations: files.map(toLocation) })).toEqual({ status: 'passed' });
+  const runTestsReport = testServerConnection.events.filter(e => e[0] === 'report').map(e => e[1]);
+  expect(collectTestsByFile(runTestsReport)).toEqual(testsByFile);
+  expect(runTestsReport.filter(e => e.method === 'onTestEnd').map(e => e.params.result.status)).toEqual(['passed', 'passed', 'passed', 'passed']);
 });
 
 test('should list non-default projects', async ({ startTestServer, writeFiles }) => {

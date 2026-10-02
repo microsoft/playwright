@@ -24,7 +24,7 @@ import { monotonicTime } from '@isomorphic/time';
 import { removeFolders } from '@utils/fileUtils';
 
 import { Dispatcher  } from './dispatcher';
-import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook, loadTestList } from './loadUtils';
+import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook, loadTestList, sourceMapSources } from './loadUtils';
 import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
 import { applySuggestedRebaselines, clearSuggestedRebaselines } from './rebase';
 import { TaskRunner } from './taskRunner';
@@ -269,11 +269,14 @@ export function createListFilesTask(): Task<TestRun> {
     setup: async (testRun, errors) => {
       await createRootSuite(testRun, errors, false);
       await collectProjectsAndTestFiles(testRun, false);
+      const sourceMapCache = new Map<string, string[]>();
       for (const [project, files] of testRun.projectFiles) {
         const projectSuite = new testNs.Suite(project.project.name, 'project');
         projectSuite._fullProject = project;
         testRun.rootSuite!._addSuite(projectSuite);
-        const suites = files.map(file => {
+        // Report original sources instead of the generated files, to match the locations of loaded tests.
+        const sources = new Set(files.flatMap(file => sourceMapSources(file, sourceMapCache)));
+        const suites = [...sources].map(file => {
           const title = path.relative(testRun.config.config.rootDir, file);
           const suite =  new testNs.Suite(title, 'file');
           suite.location = { file, line: 0, column: 0 };
