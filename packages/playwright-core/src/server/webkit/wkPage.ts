@@ -248,6 +248,22 @@ export class WKPage implements PageDelegate {
     this._provisionalPage.dispose();
     this._provisionalPage = null;
     this._setSession(newSession);
+    this._failRequestsFromDisposedSessions();
+  }
+
+  // A provisional page replaced before committing never reports the outcome of its in-flight
+  // requests. Requests the new process continues have been adopted by now, so the rest are dead.
+  private _failRequestsFromDisposedSessions() {
+    for (const [requestId, request] of this._requestIdToRequest) {
+      if (request.session().isDisposed()) {
+        this._onLoadingFailed(request.session(), {
+          requestId,
+          errorText: 'Provisional navigation canceled.',
+          timestamp: request._timestamp,
+          canceled: true,
+        });
+      }
+    }
   }
 
   private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {

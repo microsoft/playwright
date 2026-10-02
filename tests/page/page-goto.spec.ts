@@ -103,6 +103,9 @@ it('should work with cross-process redirect chain through visited sites', async 
   await page.waitForURL(server.CROSS_PROCESS_PREFIX + '/link-to-a.html');
   await page.click('a');
   await page.waitForURL(thirdSitePrefix + '/form.html');
+  const settledUrls = new Set<string>();
+  page.on('requestfinished', r => settledUrls.add(r.url()));
+  page.on('requestfailed', r => settledUrls.add(r.url()));
   const [response] = await Promise.all([
     page.waitForNavigation({ url: server.EMPTY_PAGE }),
     page.click('button'),
@@ -110,6 +113,7 @@ it('should work with cross-process redirect chain through visited sites', async 
   expect(page.url()).toBe(server.EMPTY_PAGE);
   expect(response.url()).toBe(server.EMPTY_PAGE);
   expect(response.status()).toBe(200);
+  expect(settledUrls).toContain(server.CROSS_PROCESS_PREFIX + '/hop');
 });
 
 it('should work with Cross-Origin-Opener-Policy', async ({ page, server }) => {
