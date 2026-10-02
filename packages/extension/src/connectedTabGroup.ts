@@ -76,7 +76,7 @@ export class ConnectedTabGroup {
   private _isTabReserved: (tabId: number) => boolean;
   private _groupId: number | null = null;
   private _groupTabIds: Set<number> = new Set();
-  private _onTabUpdatedListener: (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => void;
+  private _onTabUpdatedListener: (tabId: number, changeInfo: chrome.tabs.OnUpdatedInfo, tab: chrome.tabs.Tab) => void;
   private _onTabRemovedListener: (tabId: number) => void;
 
   onclose?: () => void;
@@ -116,7 +116,7 @@ export class ConnectedTabGroup {
     this._connection.detachTab(tabId);
   }
 
-  private _onTabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): void {
+  private _onTabUpdated(tabId: number, changeInfo: chrome.tabs.OnUpdatedInfo, tab: chrome.tabs.Tab): void {
     if (changeInfo.groupId !== undefined)
       this._onTabGroupChanged(tabId, tab);
     if (changeInfo.url === undefined)
@@ -217,8 +217,10 @@ export class ConnectedTabGroup {
 }
 
 export async function ungroupTabs(tabIds: number[]): Promise<void> {
+  if (!tabIds.length)
+    return;
   try {
-    await retryOnDrag(() => chrome.tabs.ungroup(tabIds));
+    await retryOnDrag(() => chrome.tabs.ungroup(tabIds as [number, ...number[]]));
   } catch (error: any) {
     debugLog('Error ungrouping tabs:', error);
   }
