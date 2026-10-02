@@ -355,7 +355,12 @@ export class WKPage implements PageDelegate {
       this._page.reportAsNew(this._opener?._page, pageOrError instanceof Page ? undefined : pageOrError);
     } else {
       assert(targetInfo.isProvisional);
-      assert(!this._provisionalPage);
+      // WebKit may swap processes again before the provisional page commits (e.g. a cross-site
+      // redirect on Linux), creating the new provisional target before destroying the old one.
+      if (this._provisionalPage) {
+        this._provisionalPage._session.dispose();
+        this._provisionalPage.dispose();
+      }
       this._provisionalPage = new WKProvisionalPage(session, this);
       if (targetInfo.isPaused) {
         this._provisionalPage.initializationPromise.then(() => {
