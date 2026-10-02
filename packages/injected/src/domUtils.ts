@@ -148,12 +148,21 @@ export function isElementVisible(element: Element): boolean {
   return computeBox(element).visible;
 }
 
+const kTextNodeRange = Symbol('playwrightTextNodeRange');
+
 export function isVisibleTextNode(node: Text) {
   // https://stackoverflow.com/questions/1461059/is-there-an-equivalent-to-getboundingclientrect-for-text-nodes
-  const range = node.ownerDocument.createRange();
+  // Reuse a single range per document. Browsers update every live range upon each DOM mutation
+  // until the range is garbage collected, so creating a range per text node slows the page down.
+  const document = node.ownerDocument as Document & { [kTextNodeRange]?: Range };
+  const range = (document[kTextNodeRange] ??= document.createRange());
   range.selectNode(node);
   const rect = range.getBoundingClientRect();
-  return rect.width > 0 && rect.height > 0;
+  const result = rect.width > 0 && rect.height > 0;
+  // Collapse the range back to the document, so that it does not retain the node.
+  range.setStart(document, 0);
+  range.collapse(true);
+  return result;
 }
 
 export function elementSafeTagName(element: Element) {
