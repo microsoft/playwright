@@ -506,12 +506,6 @@ class FrameSession {
   }
 
   async _initialize(hasUIWindow: boolean) {
-    let inspectorEnabled: Promise<any> | undefined;
-    if (this._isMainFrame() && this._crPage._browserContext._skipCrashedPages) {
-      // Get notified with Inspector.targetCrashed right away, so we can skip pages without a renderer.
-      inspectorEnabled = this._client._sendMayFail('Inspector.enable');
-    }
-
     const browserOptions = this._crPage._browserContext._browser.options;
     if (!this._page.isStorageStatePage && hasUIWindow &&
       !this._crPage._browserContext._browser.isClank() &&
@@ -629,8 +623,12 @@ class FrameSession {
       for (const initScript of this._crPage._page.allInitScripts())
         promises.push(this._evaluateOnNewDocument(initScript, 'main', true /* runImmediately */));
     }
-    if (inspectorEnabled)
-      promises.push(inspectorEnabled);
+    if (this._isMainFrame() && this._crPage._browserContext._browser._isConnecting) {
+      // An existing page without a renderer, e.g. crashed or discarded, never responds to the commands above.
+      // Get notified with Inspector.targetCrashed right away, so that such a page is reported as closed,
+      // and we do not stall while connecting to the browser.
+      promises.push(this._client._sendMayFail('Inspector.enable'));
+    }
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);
     await Promise.all(promises);
@@ -993,9 +991,14 @@ class FrameSession {
     this._page.addPageError(exceptionToError(exceptionDetails), stackTraceToLocation(exceptionDetails.stackTrace));
   }
 
-  async _onTargetCrashed() {
+  _onTargetCrashed() {
     this._client._markAsCrashed();
     this._page._didCrash();
+    if (this._crPage._browserContext._browser._isConnecting && !this._page.initializedOrUndefined()) {
+      // When connecting, any crashed/discarded/unloaded page is reported as closed right away.
+      this._crPage._browserContext._browser._crPages.delete(this._crPage._targetId);
+      this._crPage.didClose();
+    }
   }
 
   _onLogEntryAdded(event: Protocol.Log.entryAddedPayload) {

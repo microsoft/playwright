@@ -49,6 +49,7 @@ export class CRBrowser extends Browser {
   _crPages = new Map<string, CRPage>();
   _serviceWorkers = new Map<string, CRServiceWorker>();
   _devtools?: CRDevTools;
+  _isConnecting = false;
   private _version = '';
   private _majorVersion = 0;
   _revision = '';
@@ -85,7 +86,7 @@ export class CRBrowser extends Browser {
       return browser;
     }
     browser._defaultContext = new CRBrowserContext(browser, undefined, options.persistent);
-    browser._defaultContext._skipCrashedPages = true;
+    browser._isConnecting = true;
     try {
       await Promise.all([
         session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }).then(async () => {
@@ -98,7 +99,7 @@ export class CRBrowser extends Browser {
       ]);
       await browser._waitForAllPagesToBeInitialized();
     } finally {
-      browser._defaultContext._skipCrashedPages = false;
+      browser._isConnecting = false;
     }
     return browser;
   }
