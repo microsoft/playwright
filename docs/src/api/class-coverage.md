@@ -49,7 +49,7 @@ Returns coverage is started
 :::note
 Anonymous scripts are ones that don't have an associated url. These are scripts that are dynamically created
 on the page using `eval` or `new Function`. If [`option: reportAnonymousScripts`] is set to `true`, anonymous scripts
-will have `__playwright_evaluation_script__` as their URL.
+will have an empty string as their URL.
 :::
 
 ### option: Coverage.startJSCoverage.resetOnNavigation

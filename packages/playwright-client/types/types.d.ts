@@ -21047,7 +21047,7 @@ export interface Coverage {
    * **NOTE** Anonymous scripts are ones that don't have an associated url. These are scripts that are dynamically
    * created on the page using `eval` or `new Function`. If
    * [`reportAnonymousScripts`](https://playwright.dev/docs/api/class-coverage#coverage-start-js-coverage-option-report-anonymous-scripts)
-   * is set to `true`, anonymous scripts will have `__playwright_evaluation_script__` as their URL.
+   * is set to `true`, anonymous scripts will have an empty string as their URL.
    *
    * @param options
    */
