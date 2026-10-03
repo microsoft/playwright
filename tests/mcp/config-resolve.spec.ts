@@ -390,6 +390,156 @@ test.describe('merge order', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Shared behavior — proxy
+// ---------------------------------------------------------------------------
+
+test.describe('proxy', () => {
+  test('--proxy-server moves credentials from the URL into username and password', async () => {
+    const config = await resolveCLIConfigForMCP({ proxyServer: 'http://alice:s%40cret@proxy.example.com:3128', proxyBypass: '.internal' }, emptyEnv);
+    const proxy = { server: 'http://proxy.example.com:3128', username: 'alice', password: 's@cret', bypass: '.internal' };
+    expect(config.browser.launchOptions.proxy).toEqual(proxy);
+    expect(config.browser.contextOptions.proxy).toEqual(proxy);
+  });
+
+  test('--proxy-server keeps a URL without credentials as is', async () => {
+    const config = await resolveCLIConfigForMCP({ proxyServer: 'socks5://proxy.example.com:1080' }, emptyEnv);
+    expect(config.browser.launchOptions.proxy).toEqual({ server: 'socks5://proxy.example.com:1080' });
+  });
+
+  test('--proxy-server keeps the short form without a scheme as is', async () => {
+    const config = await resolveCLIConfigForMCP({ proxyServer: 'proxy.example.com:3128' }, emptyEnv);
+    expect(config.browser.launchOptions.proxy).toEqual({ server: 'proxy.example.com:3128' });
+  });
+
+  test('HTTPS_PROXY from the environment is used when no proxy is configured', async () => {
+    const config = await resolveCLIConfigForMCP({}, { HTTPS_PROXY: 'http://bob:pw@proxy.example.com:8080', HTTP_PROXY: 'http://other:1', NO_PROXY: 'localhost, .example.com' });
+    const proxy = { server: 'http://proxy.example.com:8080', username: 'bob', password: 'pw', bypass: 'localhost,.example.com' };
+    expect(config.browser.launchOptions.proxy).toEqual(proxy);
+    expect(config.browser.contextOptions.proxy).toEqual(proxy);
+  });
+
+  test('HTTP_PROXY from the environment is used when HTTPS_PROXY is not set', async () => {
+    const config = await resolveCLIConfigForMCP({}, { http_proxy: 'http://proxy.example.com:8080' });
+    expect(config.browser.launchOptions.proxy).toEqual({ server: 'http://proxy.example.com:8080' });
+  });
+
+  test('no proxy without environment variables', async () => {
+    const config = await resolveCLIConfigForMCP({}, emptyEnv);
+    expect(config.browser.launchOptions.proxy).toBeUndefined();
+    expect(config.browser.contextOptions.proxy).toBeUndefined();
+  });
+
+  test('config file proxy wins over HTTPS_PROXY', async ({}, testInfo) => {
+    const configFile = testInfo.outputPath('config.json');
+    const fileConfig: Config = {
+      browser: { contextOptions: { proxy: { server: 'http://from-config:1' } } },
+    };
+    await fs.promises.writeFile(configFile, JSON.stringify(fileConfig));
+    const config = await resolveCLIConfigForMCP({ config: configFile }, { HTTPS_PROXY: 'http://from-env:2' });
+    expect(config.browser.contextOptions.proxy).toEqual({ server: 'http://from-config:1' });
+    expect(config.browser.launchOptions.proxy).toBeUndefined();
+  });
+
+  test('--proxy-server wins over HTTPS_PROXY', async () => {
+    const config = await resolveCLIConfigForMCP({ proxyServer: 'http://from-flag:1' }, { HTTPS_PROXY: 'http://from-env:2' });
+    expect(config.browser.launchOptions.proxy).toEqual({ server: 'http://from-flag:1' });
+  });
+
+  test('PLAYWRIGHT_MCP_PROXY_SERVER wins over HTTPS_PROXY', async () => {
+    const config = await resolveCLIConfigForMCP({}, { PLAYWRIGHT_MCP_PROXY_SERVER: 'http://from-mcp-env:1', HTTPS_PROXY: 'http://from-env:2' });
+    expect(config.browser.launchOptions.proxy).toEqual({ server: 'http://from-mcp-env:1' });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Shared behavior — extensions
+// ---------------------------------------------------------------------------
+
+test.describe('extensions', () => {
+  async function createExtension(dir: string) {
+    await fs.promises.mkdir(dir, { recursive: true });
+    await fs.promises.writeFile(path.join(dir, 'manifest.json'), JSON.stringify({ name: 'ext', version: '1', manifest_version: 3 }));
+    return dir;
+  }
+
+  test('--load-extension defaults to the bundled chromium and adds the launch arguments', async ({}, testInfo) => {
+    const extension = await createExtension(testInfo.outputPath('ext'));
+    const config = await resolveCLIConfigForMCP({ loadExtension: [extension] }, emptyEnv);
+    expect(config.browser.browserName).toBe('chromium');
+    expect(config.browser.launchOptions.channel).toBe('chromium');
+    expect(config.browser.extensions).toEqual([extension]);
+    expect(config.browser.launchOptions.args).toEqual(expect.arrayContaining([`--disable-extensions-except=${extension}`, `--load-extension=${extension}`]));
+    expect(config.browser.launchOptions.ignoreDefaultArgs).toEqual(['--disable-extensions']);
+  });
+
+  test('--load-extension can be repeated', async ({}, testInfo) => {
+    const a = await createExtension(testInfo.outputPath('a'));
+    const b = await createExtension(testInfo.outputPath('b'));
+    const config = await resolveCLIConfigForMCP({ loadExtension: [a, b] }, emptyEnv);
+    expect(config.browser.launchOptions.args).toContain(`--load-extension=${a},${b}`);
+  });
+
+  test('--load-extension keeps an explicit chromium browser', async ({}, testInfo) => {
+    const extension = await createExtension(testInfo.outputPath('ext'));
+    const config = await resolveCLIConfigForMCP({ loadExtension: [extension], browser: 'chromium' }, emptyEnv);
+    expect(config.browser.launchOptions.channel).toBe('chrome-for-testing');
+  });
+
+  test('--load-extension with browserName chromium and no channel picks the full build over the headless shell', async ({}, testInfo) => {
+    const extension = await createExtension(testInfo.outputPath('ext'));
+    const configFile = testInfo.outputPath('config.json');
+    await fs.promises.writeFile(configFile, JSON.stringify({ browser: { browserName: 'chromium' } }));
+    const config = await resolveCLIConfigForMCP({ config: configFile, loadExtension: [extension] }, emptyEnv);
+    expect(config.browser.launchOptions.channel).toBe('chromium');
+  });
+
+  test('--load-extension is rejected with chrome', async ({}, testInfo) => {
+    const extension = await createExtension(testInfo.outputPath('ext'));
+    await expect(resolveCLIConfigForMCP({ loadExtension: [extension], browser: 'chrome' }, emptyEnv))
+        .rejects.toThrow('Google Chrome does not load unpacked extensions, use --browser=chromium instead of chrome.');
+  });
+
+  test('--load-extension is rejected in isolated mode', async ({}, testInfo) => {
+    const extension = await createExtension(testInfo.outputPath('ext'));
+    await expect(resolveCLIConfigForMCP({ loadExtension: [extension], isolated: true }, emptyEnv))
+        .rejects.toThrow('Extensions only load into a persistent browser profile');
+  });
+
+  test('--load-extension is rejected with firefox', async ({}, testInfo) => {
+    const extension = await createExtension(testInfo.outputPath('ext'));
+    await expect(resolveCLIConfigForMCP({ loadExtension: [extension], browser: 'firefox' }, emptyEnv))
+        .rejects.toThrow('Extensions are only supported in Chromium-based browsers');
+  });
+
+  test('--load-extension rejects a missing directory', async ({}, testInfo) => {
+    await expect(resolveCLIConfigForMCP({ loadExtension: [testInfo.outputPath('missing')] }, emptyEnv))
+        .rejects.toThrow('Extension directory does not exist');
+  });
+
+  test('--load-extension rejects a directory without a manifest', async ({}, testInfo) => {
+    const dir = testInfo.outputPath('no-manifest');
+    await fs.promises.mkdir(dir, { recursive: true });
+    await expect(resolveCLIConfigForMCP({ loadExtension: [dir] }, emptyEnv))
+        .rejects.toThrow('Extension directory has no manifest.json');
+  });
+
+  test('PLAYWRIGHT_MCP_LOAD_EXTENSION resolves against cwd', async ({}, testInfo) => {
+    const extension = await createExtension(testInfo.outputPath('ext'));
+    const config = await resolveCLIConfigForMCP({}, { PLAYWRIGHT_MCP_LOAD_EXTENSION: path.relative(process.cwd(), extension) });
+    expect(config.browser.extensions).toEqual([extension]);
+  });
+
+  test('config file extensions resolve against the config directory', async ({}, testInfo) => {
+    await createExtension(testInfo.outputPath('ext'));
+    const configFile = testInfo.outputPath('config.json');
+    await fs.promises.writeFile(configFile, JSON.stringify({ browser: { extensions: ['./ext'] } }));
+    const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv);
+    expect(config.browser.extensions).toEqual([testInfo.outputPath('ext')]);
+    expect(config.browser.launchOptions.channel).toBe('chromium');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Shared behavior — validation
 // ---------------------------------------------------------------------------
 
@@ -671,5 +821,54 @@ test.describe('resolveCLIConfigForCLI - extension', () => {
     const config = await resolveCLI(testInfo.outputPath('profiles'), 'default', { extension: true }) as any;
     expect(config.extension).toBe(true);
     expect(config.browser.isolated).toBe(false);
+  });
+});
+
+test.describe('resolveCLIConfigForCLI - launch options', () => {
+  test('daemon options map onto the config', async ({}, testInfo) => {
+    const initScript = testInfo.outputPath('init.js');
+    await fs.promises.writeFile(initScript, 'window.injected = true;');
+    const extension = testInfo.outputPath('ext');
+    await fs.promises.mkdir(extension, { recursive: true });
+    await fs.promises.writeFile(path.join(extension, 'manifest.json'), '{}');
+    const config = await resolveCLI(testInfo.outputPath('profiles'), 'default', {
+      proxyServer: 'http://user:pass@proxy.example.com:3128',
+      proxyBypass: '.local',
+      ignoreHttpsErrors: true,
+      userAgent: 'Agent/1.0',
+      executablePath: '/path/to/browser',
+      initScript: [initScript],
+      loadExtension: [extension],
+      storageState: 'state.json',
+      allowedOrigins: ['https://example.com', 'http://localhost:*'],
+      blockedOrigins: ['https://ads.example.com'],
+    }) as any;
+    const proxy = { server: 'http://proxy.example.com:3128', username: 'user', password: 'pass', bypass: '.local' };
+    expect(config.browser.launchOptions.proxy).toEqual(proxy);
+    expect(config.browser.contextOptions.proxy).toEqual(proxy);
+    expect(config.browser.contextOptions.ignoreHTTPSErrors).toBe(true);
+    expect(config.browser.contextOptions.userAgent).toBe('Agent/1.0');
+    expect(config.browser.contextOptions.storageState).toBe('state.json');
+    expect(config.browser.launchOptions.executablePath).toBe('/path/to/browser');
+    expect(config.browser.initScript).toEqual([initScript]);
+    expect(config.browser.extensions).toEqual([extension]);
+    expect(config.browser.launchOptions.channel).toBe('chromium');
+    expect(config.network.allowedOrigins).toEqual(['https://example.com', 'http://localhost:*']);
+    expect(config.network.blockedOrigins).toEqual(['https://ads.example.com']);
+  });
+
+  test('--load-extension uses the persistent session profile', async ({}, testInfo) => {
+    const extension = testInfo.outputPath('ext');
+    await fs.promises.mkdir(extension, { recursive: true });
+    await fs.promises.writeFile(path.join(extension, 'manifest.json'), '{}');
+    const profilesDir = testInfo.outputPath('profiles');
+    const config = await resolveCLI(profilesDir, 'default', { loadExtension: [extension] });
+    expect(config.browser.isolated).toBe(false);
+    expect(config.browser.userDataDir).toBe(path.resolve(profilesDir, 'ud-default-chromium'));
+  });
+
+  test('HTTPS_PROXY from the environment applies to the CLI', async ({}, testInfo) => {
+    const config = await resolveCLIConfigForCLI(testInfo.outputPath('profiles'), 'default', {}, { HTTPS_PROXY: 'http://proxy.example.com:8080' });
+    expect(config.browser.launchOptions.proxy).toEqual({ server: 'http://proxy.example.com:8080' });
   });
 });

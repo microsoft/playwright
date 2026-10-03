@@ -294,7 +294,28 @@ playwright-cli attach --cdp=msedge
 # Connect to a running browser via CDP endpoint
 playwright-cli attach --cdp=http://localhost:9222
 
-# Start with config file
+# Route traffic through a proxy, credentials in the URL are supported.
+# HTTPS_PROXY / HTTP_PROXY / NO_PROXY from the environment are used when --proxy is not given.
+playwright-cli open --proxy=http://user:pass@proxy.example.com:3128 --proxy-bypass=.internal.example.com
+# Accept self-signed certificates, for example from a local dev server
+playwright-cli open --ignore-https-errors https://localhost:8443
+# Custom user agent
+playwright-cli open --user-agent="MyAgent/1.0"
+# Use a specific browser binary
+playwright-cli open --executable-path=/path/to/chromium
+# Evaluate a script in every page before the page's own scripts (repeatable)
+playwright-cli open --init-script=./mock-geolocation.js
+# Load an unpacked extension (repeatable). Chrome no longer loads unpacked extensions,
+# so this runs the bundled Chromium unless --browser picks another Chromium-based browser.
+# Extensions need a profile on disk, so this implies --persistent.
+playwright-cli open --extension=./my-extension
+# Start with cookies and localStorage saved by state-save
+playwright-cli open --state=auth.json
+# Restrict which origins the browser may request (everything else is blocked), or block specific ones
+playwright-cli open --allowed-origins="https://app.example.com;http://localhost:*"
+playwright-cli open --blocked-origins="https://ads.example.com"
+
+# Start with config file (only needed for options that have no flag)
 playwright-cli open --config=my-config.json
 
 # Close the browser
@@ -303,6 +324,36 @@ playwright-cli close
 playwright-cli -s=msedge detach
 # Delete user data for the default session
 playwright-cli delete-data
+```
+
+## Environment variables
+
+Every `open` option above can be set through the environment instead of a flag, so an agent
+can be configured once without writing a config file. Flags win over environment variables,
+which win over the config file.
+
+| Flag | Environment variable |
+| --- | --- |
+| `--browser` | `PLAYWRIGHT_MCP_BROWSER` |
+| `--headed` | `PLAYWRIGHT_MCP_HEADLESS=false` |
+| `--device` | `PLAYWRIGHT_MCP_DEVICE` |
+| `--proxy` | `PLAYWRIGHT_MCP_PROXY_SERVER`, or `HTTPS_PROXY` / `HTTP_PROXY` |
+| `--proxy-bypass` | `PLAYWRIGHT_MCP_PROXY_BYPASS`, or `NO_PROXY` |
+| `--ignore-https-errors` | `PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS=1` |
+| `--user-agent` | `PLAYWRIGHT_MCP_USER_AGENT` |
+| `--executable-path` | `PLAYWRIGHT_MCP_EXECUTABLE_PATH` |
+| `--init-script` | `PLAYWRIGHT_MCP_INIT_SCRIPT` |
+| `--extension` | `PLAYWRIGHT_MCP_LOAD_EXTENSION` |
+| `--state` | `PLAYWRIGHT_MCP_STORAGE_STATE` |
+| `--allowed-origins` | `PLAYWRIGHT_MCP_ALLOWED_ORIGINS` |
+| `--blocked-origins` | `PLAYWRIGHT_MCP_BLOCKED_ORIGINS` |
+| `--idle-timeout` | `PLAYWRIGHT_MCP_IDLE_TIMEOUT` |
+| `-s` / `--session` | `PLAYWRIGHT_CLI_SESSION` |
+
+```bash
+export HTTPS_PROXY=http://proxy.example.com:3128
+export PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS=1
+playwright-cli open https://localhost:8443
 ```
 
 ## URLs with `&` on Windows

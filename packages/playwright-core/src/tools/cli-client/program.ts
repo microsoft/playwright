@@ -56,6 +56,16 @@ type OpenOptions = {
   mobile?: boolean;
   persistent?: boolean;
   profile?: string;
+  proxy?: string;
+  'proxy-bypass'?: string;
+  'ignore-https-errors'?: boolean;
+  'user-agent'?: string;
+  'executable-path'?: string;
+  'init-script'?: string | string[];
+  extension?: string | string[];
+  state?: string;
+  'allowed-origins'?: string;
+  'blocked-origins'?: string;
 };
 
 const globalOptions: (keyof (GlobalOptions & OpenOptions & AttachOptions))[] = [

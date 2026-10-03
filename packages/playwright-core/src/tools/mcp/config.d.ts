@@ -100,6 +100,13 @@ export type Config = {
      * The scripts will be evaluated in every page before any of the page's scripts.
      */
     initScript?: string[];
+
+    /**
+     * Paths to unpacked extension directories to load into the browser. Chromium only.
+     * Google Chrome no longer loads unpacked extensions, so the bundled Chromium build is used
+     * unless a browser is picked explicitly.
+     */
+    extensions?: string[];
   },
 
   /**

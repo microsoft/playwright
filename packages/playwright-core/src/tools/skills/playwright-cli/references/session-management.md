@@ -176,12 +176,9 @@ playwright-cli close  # Stops default browser
 
 ## Browser Session Configuration
 
-Configure a browser session with specific settings when opening:
+Configure a browser session with specific settings when opening. Every launch option is a flag, so no config file is needed:
 
 ```bash
-# Open with config file
-playwright-cli open https://example.com --config=.playwright/my-cli.json
-
 # Open with specific browser
 playwright-cli open https://example.com --browser=firefox
 
@@ -190,7 +187,37 @@ playwright-cli open https://example.com --headed
 
 # Open with persistent profile
 playwright-cli open https://example.com --persistent
+
+# Route traffic through a proxy (credentials in the URL are supported);
+# HTTPS_PROXY / HTTP_PROXY / NO_PROXY from the environment are used when --proxy is not given
+playwright-cli open https://example.com --proxy=http://user:pass@proxy.example.com:3128 --proxy-bypass=.internal.example.com
+
+# Accept self-signed certificates from a local dev server
+playwright-cli open https://localhost:8443 --ignore-https-errors
+
+# Custom user agent or browser binary
+playwright-cli open https://example.com --user-agent="MyAgent/1.0"
+playwright-cli open https://example.com --executable-path=/path/to/chromium
+
+# Run a script in every page before the page's own scripts (repeatable)
+playwright-cli open https://example.com --init-script=./mock-geolocation.js
+
+# Load an unpacked extension (repeatable, Chromium only; runs the bundled Chromium
+# because Chrome no longer loads unpacked extensions, and implies --persistent)
+playwright-cli open https://example.com --extension=./my-extension
+
+# Start with cookies and localStorage saved by state-save
+playwright-cli open https://example.com --state=auth.json
+
+# Restrict which origins the browser may request
+playwright-cli open https://example.com --allowed-origins="https://example.com;http://localhost:*"
+playwright-cli open https://example.com --blocked-origins="https://ads.example.com"
+
+# Open with config file, for options that have no flag
+playwright-cli open https://example.com --config=.playwright/my-cli.json
 ```
+
+Each flag has an environment variable counterpart (`PLAYWRIGHT_MCP_PROXY_SERVER`, `PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS`, `PLAYWRIGHT_MCP_USER_AGENT`, `PLAYWRIGHT_MCP_EXECUTABLE_PATH`, `PLAYWRIGHT_MCP_INIT_SCRIPT`, `PLAYWRIGHT_MCP_LOAD_EXTENSION`, `PLAYWRIGHT_MCP_STORAGE_STATE`, `PLAYWRIGHT_MCP_ALLOWED_ORIGINS`, `PLAYWRIGHT_MCP_BLOCKED_ORIGINS`), see the environment variables table in the skill.
 
 ## Best Practices
 

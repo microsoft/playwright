@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 
 import { chromium } from 'playwright';
 
@@ -262,6 +263,66 @@ test('--proxy-server overrides contextOptions.proxy from config file', {
     arguments: { url: 'http://non-existent.com/target.html' },
   })).toHaveResponse({
     page: expect.stringContaining('Served by CLI proxy'),
+  });
+});
+
+test('--proxy-server sends credentials embedded in the URL', async ({ startClient, server }) => {
+  server.setRoute('/target.html', (req, res) => {
+    const auth = req.headers['proxy-authorization'];
+    if (!auth) {
+      res.writeHead(407, { 'Proxy-Authenticate': 'Basic realm="proxy"' });
+      res.end();
+      return;
+    }
+    const [user, password] = Buffer.from(auth.split(' ')[1], 'base64').toString().split(':');
+    res.end(`<html><title>Proxy user ${user} password ${password}</title></html>`);
+  });
+  const { client } = await startClient({
+    args: [`--proxy-server=http://alice:s3cret@${server.HOST}`],
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: 'http://non-existent.com/target.html' },
+  })).toHaveResponse({
+    page: expect.stringContaining('Proxy user alice password s3cret'),
+  });
+});
+
+test('HTTPS_PROXY from the environment routes browser traffic through the proxy', async ({ startClient, server }) => {
+  server.setRoute('/target.html', (_req, res) => {
+    res.end('<html><title>Served by the environment proxy</title></html>');
+  });
+  const { client } = await startClient({
+    env: { HTTPS_PROXY: `http://${server.HOST}` },
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: 'http://non-existent.com/target.html' },
+  })).toHaveResponse({
+    page: expect.stringContaining('Served by the environment proxy'),
+  });
+});
+
+test('--load-extension loads an unpacked extension', async ({ startClient, server, mcpBrowser }, testInfo) => {
+  test.skip(mcpBrowser !== 'chrome' && mcpBrowser !== 'chromium', 'Unpacked extensions are a Chromium feature.');
+  const extension = testInfo.outputPath('ext');
+  await fs.promises.mkdir(extension, { recursive: true });
+  await fs.promises.writeFile(path.join(extension, 'manifest.json'), JSON.stringify({
+    name: 'Marker extension',
+    version: '1.0',
+    manifest_version: 3,
+    content_scripts: [{ matches: ['<all_urls>'], js: ['content.js'], run_at: 'document_start' }],
+  }));
+  await fs.promises.writeFile(path.join(extension, 'content.js'), `document.documentElement.setAttribute('data-extension', 'loaded');`);
+  server.setContent('/', `<body></body><script>document.body.textContent = 'Extension: ' + document.documentElement.getAttribute('data-extension');</script>`, 'text/html');
+  const { client } = await startClient({
+    args: ['--browser=chromium', `--load-extension=${extension}`],
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining('Extension: loaded'),
   });
 });
 

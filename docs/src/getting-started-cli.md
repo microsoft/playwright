@@ -287,9 +287,29 @@ playwright-cli open --browser=webkit
 playwright-cli open --browser=msedge
 ```
 
+### Launch options
+
+Every launch option is available as an `open` flag, so proxies, self-signed dev servers and extensions take one command and no config file:
+
+```bash
+playwright-cli open --proxy=http://user:pass@proxy.example.com:3128 --proxy-bypass=.internal.example.com
+playwright-cli open --ignore-https-errors https://localhost:8443
+playwright-cli open --user-agent="MyAgent/1.0"
+playwright-cli open --executable-path=/path/to/chromium
+playwright-cli open --init-script=./mock-geolocation.js   # runs in every page, repeatable
+playwright-cli open --extension=./my-extension            # unpacked extension, Chromium only, repeatable, implies --persistent
+playwright-cli open --state=auth.json                     # cookies and storage saved by state-save
+playwright-cli open --allowed-origins="https://app.example.com;http://localhost:*"
+playwright-cli open --blocked-origins="https://ads.example.com"
+```
+
+When `--proxy` is not given, the `HTTPS_PROXY`, `HTTP_PROXY` and `NO_PROXY` environment variables are honored, the same way `curl`, `npm` and `git` honor them. Google Chrome no longer loads unpacked extensions, so `--extension` runs the bundled Chromium unless `--browser` picks another Chromium-based browser.
+
+Each flag has an environment variable counterpart, for example `PLAYWRIGHT_MCP_PROXY_SERVER`, `PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS`, `PLAYWRIGHT_MCP_USER_AGENT`, `PLAYWRIGHT_MCP_EXECUTABLE_PATH`, `PLAYWRIGHT_MCP_INIT_SCRIPT`, `PLAYWRIGHT_MCP_LOAD_EXTENSION`, `PLAYWRIGHT_MCP_STORAGE_STATE`, `PLAYWRIGHT_MCP_ALLOWED_ORIGINS` and `PLAYWRIGHT_MCP_BLOCKED_ORIGINS`. Flags win over environment variables, which win over the config file. Run `playwright-cli open --help` for the full list.
+
 ### Configuration file
 
-For advanced settings, use a JSON config file:
+For settings that have no flag, use a JSON config file:
 
 ```bash
 playwright-cli --config path/to/config.json open example.com
@@ -320,6 +340,7 @@ This requires the [Playwright Extension](https://github.com/microsoft/playwright
 | **Get page snapshot**     | `playwright-cli snapshot`                           |
 | **Run headed**            | `playwright-cli open https://example.com --headed`  |
 | **Use Firefox**           | `playwright-cli open --browser=firefox`             |
+| **Use a proxy**           | `playwright-cli open --proxy=http://proxy:3128`     |
 | **Monitor sessions**      | `playwright-cli show`                               |
 | **List page WebMCP tools** | `playwright-cli webmcp-list`                       |
 
