@@ -443,6 +443,41 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         expect(lines[firstIndex + i]).toContain(expected[i]);
     });
 
+    test('preserve multi-byte characters split across stdio chunks', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.ts': `
+          import { test } from '@playwright/test';
+          test('passes', async ({}) => {
+            // "€\\n" = e2 82 ac 0a, written in two chunks
+            await new Promise(resolve => process.stdout.write(Buffer.from([0xe2, 0x82]), () => resolve()));
+            await new Promise(resolve => process.stdout.write(Buffer.from([0xac, 0x0a]), () => resolve()));
+          });
+        `,
+      }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PLAYWRIGHT_FORCE_TTY: '80' });
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain('€');
+      expect(result.output).not.toContain('\uFFFD');
+    });
+
+    test('preserve multi-byte characters split across stdio chunks with printWorkerIndex', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = { reporter: [['list', { printWorkerIndex: true }]] };
+        `,
+        'a.test.ts': `
+          import { test } from '@playwright/test';
+          test('passes', async ({}) => {
+            // "€\\n" = e2 82 ac 0a, written in two chunks
+            await new Promise(resolve => process.stdout.write(Buffer.from([0xe2, 0x82]), () => resolve()));
+            await new Promise(resolve => process.stdout.write(Buffer.from([0xac, 0x0a]), () => resolve()));
+          });
+        `,
+      }, { workers: 1 }, { PW_TEST_DEBUG_REPORTERS: '1', PLAYWRIGHT_FORCE_TTY: '80' });
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain('[0] €');
+      expect(result.output).not.toContain('\uFFFD');
+    });
+
     test('should update test status row only when TTY has not scrolled', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.ts': `

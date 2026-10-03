@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { StringDecoder } from 'string_decoder';
+
 import { msToString } from '@isomorphic/formatUtils';
 import { getAsBooleanFromENV } from '@utils/env';
 
@@ -42,6 +44,7 @@ class ListReporter extends TerminalReporter {
   private _printWorkerIndex: boolean;
   private _failureIndex = new Map<TestCase, number>();
   private _paused = new Set<TestResult>();
+  private _decoders = new Map<string, StringDecoder>();
 
   constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
     const printFailuresInline = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_FAILURES_INLINE', options?.printFailuresInline);
@@ -164,14 +167,29 @@ class ListReporter extends TerminalReporter {
     }
   }
 
+  private _getDecoder(stream: NodeJS.WriteStream, result: TestResult | undefined): StringDecoder {
+    const key = (stream === this.screen.stdout ? 'out' : 'err') + ':' + (result?.workerIndex ?? -1);
+    let decoder = this._decoders.get(key);
+    if (!decoder) {
+      decoder = new StringDecoder('utf-8');
+      this._decoders.set(key, decoder);
+    }
+    return decoder;
+  }
+
   private _dumpToStdio(chunk: string | Buffer, stream: NodeJS.WriteStream, result: TestResult | undefined) {
     if (this.config.quiet)
       return;
-    let text = chunk.toString('utf-8');
-    if (result)
-      text = this._prefixLines(text, this._workerPrefix(result), !this._needNewLine);
-    this._updateLineCountAndNewLineFlagForOutput(text);
-    stream.write(text);
+    const text = typeof chunk === 'string' ? chunk : this._getDecoder(stream, result).write(chunk);
+    if (!text) {
+      if (chunk.length === 0)
+        this._updateLineCountAndNewLineFlagForOutput('');
+      return;
+    }
+    const prefix = result ? this._workerPrefix(result) : '';
+    const formatted = prefix ? this._prefixLines(text, prefix, !this._needNewLine) : text;
+    this._updateLineCountAndNewLineFlagForOutput(formatted);
+    stream.write(formatted);
   }
 
   private _prefixLines(text: string, prefix: string, atLineStart: boolean) {
@@ -330,6 +348,14 @@ class ListReporter extends TerminalReporter {
   }
 
   override async onEnd(result: FullResult) {
+    for (const [key, decoder] of this._decoders) {
+      const text = decoder.end();
+      if (text) {
+        const stream = key.startsWith('out') ? this.screen.stdout : this.screen.stderr;
+        this._updateLineCountAndNewLineFlagForOutput(text);
+        stream.write(text);
+      }
+    }
     await super.onEnd(result);
     this.screen.stdout.write('\n');
     this.epilogue(!this._printFailuresInline);
