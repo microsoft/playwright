@@ -248,6 +248,22 @@ export class WKPage implements PageDelegate {
     this._provisionalPage.dispose();
     this._provisionalPage = null;
     this._setSession(newSession);
+    this._failRequestsFromDisposedSessions();
+  }
+
+  // A provisional page replaced before committing never reports the outcome of its in-flight
+  // requests. Requests the new process continues have been adopted by now, so the rest are dead.
+  private _failRequestsFromDisposedSessions() {
+    for (const [requestId, request] of this._requestIdToRequest) {
+      if (request.session().isDisposed()) {
+        this._onLoadingFailed(request.session(), {
+          requestId,
+          errorText: 'Provisional navigation canceled.',
+          timestamp: request._timestamp,
+          canceled: true,
+        });
+      }
+    }
   }
 
   private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
@@ -355,7 +371,12 @@ export class WKPage implements PageDelegate {
       this._page.reportAsNew(this._opener?._page, pageOrError instanceof Page ? undefined : pageOrError);
     } else {
       assert(targetInfo.isProvisional);
-      assert(!this._provisionalPage);
+      // WebKit may swap processes again before the provisional page commits (e.g. a cross-site
+      // redirect on Linux), creating the new provisional target before destroying the old one.
+      if (this._provisionalPage) {
+        this._provisionalPage._session.dispose();
+        this._provisionalPage.dispose();
+      }
       this._provisionalPage = new WKProvisionalPage(session, this);
       if (targetInfo.isPaused) {
         this._provisionalPage.initializationPromise.then(() => {

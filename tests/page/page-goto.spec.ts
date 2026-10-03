@@ -87,6 +87,35 @@ it('should work with cross-process that fails before committing', async ({ page,
   expect(error instanceof Error).toBeTruthy();
 });
 
+it('should work with cross-process redirect chain through visited sites', async ({ page, server }) => {
+  const thirdSitePrefix = `http://[::1]:${server.PORT}`;
+  server.setRedirect('/go', server.CROSS_PROCESS_PREFIX + '/hop');
+  server.setRedirect('/hop', server.EMPTY_PAGE);
+  const html = (body: string) => (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(body);
+  };
+  server.setRoute('/link-to-b.html', html(`<a href="${server.CROSS_PROCESS_PREFIX}/link-to-a.html">next</a>`));
+  server.setRoute('/link-to-a.html', html(`<a href="${thirdSitePrefix}/form.html">next</a>`));
+  server.setRoute('/form.html', html(`<form method="post" action="/go"><button>go</button></form>`));
+  await page.goto(server.PREFIX + '/link-to-b.html');
+  await page.click('a');
+  await page.waitForURL(server.CROSS_PROCESS_PREFIX + '/link-to-a.html');
+  await page.click('a');
+  await page.waitForURL(thirdSitePrefix + '/form.html');
+  const settledUrls = new Set<string>();
+  page.on('requestfinished', r => settledUrls.add(r.url()));
+  page.on('requestfailed', r => settledUrls.add(r.url()));
+  const [response] = await Promise.all([
+    page.waitForNavigation({ url: server.EMPTY_PAGE }),
+    page.click('button'),
+  ]);
+  expect(page.url()).toBe(server.EMPTY_PAGE);
+  expect(response.url()).toBe(server.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
+  expect(settledUrls).toContain(server.CROSS_PROCESS_PREFIX + '/hop');
+});
+
 it('should work with Cross-Origin-Opener-Policy', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
