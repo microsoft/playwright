@@ -335,7 +335,7 @@ export function loadReporter(config: FullConfigInternal | null, file: string): P
   return requireOrImportDefaultFunction(config ? path.resolve(config.config.rootDir, file) : file, true);
 }
 
-function sourceMapSources(file: string, cache: Map<string, string[]>): string[] {
+export function sourceMapSources(file: string, cache: Map<string, string[]>): string[] {
   let sources = [file];
   if (!file.endsWith('.js'))
     return sources;
@@ -345,7 +345,7 @@ function sourceMapSources(file: string, cache: Map<string, string[]>): string[] 
   try {
     const sourceMap = sourceMapSupport.retrieveSourceMap(file);
     const sourceMapData: RawSourceMap | undefined = typeof sourceMap?.map === 'string' ? JSON.parse(sourceMap.map) : sourceMap?.map;
-    if (sourceMapData?.sources)
+    if (sourceMapData?.sources?.length)
       sources = sourceMapData.sources.map(source => path.resolve(path.dirname(file), source));
   } finally {
     cache.set(file, sources);
