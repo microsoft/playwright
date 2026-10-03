@@ -80,8 +80,19 @@ export const browserTools: Tool<any>[] = [
   ...webstorage,
 ];
 
-export function filteredTools(config: Pick<ContextConfig, 'capabilities'>) {
-  return browserTools.filter(tool => tool.capability.startsWith('core') || config.capabilities?.includes(tool.capability)).filter(tool => !tool.skillOnly).map(tool => ({
+function validateToolNames(option: string, names: string[] | undefined) {
+  const knownNames = new Set(browserTools.filter(tool => !tool.skillOnly).map(tool => tool.schema.name));
+  for (const name of names ?? []) {
+    if (!knownNames.has(name))
+      throw new Error(`Unknown tool in ${option}: ${name}`);
+  }
+}
+
+export function filteredTools(config: Pick<ContextConfig, 'capabilities' | 'allowedTools' | 'blockedTools'>) {
+  validateToolNames('--allowed-tools', config.allowedTools);
+  validateToolNames('--blocked-tools', config.blockedTools);
+  const isEnabled = (tool: Tool<any>) => tool.capability.startsWith('core') || config.capabilities?.includes(tool.capability) || config.allowedTools?.includes(tool.schema.name);
+  return browserTools.filter(tool => !tool.skillOnly && isEnabled(tool) && !config.blockedTools?.includes(tool.schema.name)).map(tool => ({
     ...tool,
     schema: {
       ...tool.schema,

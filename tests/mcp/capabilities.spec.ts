@@ -87,3 +87,39 @@ test('legacy --vision option combined with --caps', async ({ startClient }) => {
   expect(toolNames).toContain('browser_mouse_move_xy');
   expect(toolNames).toContain('browser_pdf_save');
 });
+
+test('--blocked-tools removes tools and rejects their calls', async ({ startClient }) => {
+  const { client } = await startClient({
+    args: ['--blocked-tools=browser_run_code_unsafe,browser_evaluate'],
+  });
+  const toolNames = (await client.listTools()).tools.map(t => t.name);
+  expect(toolNames).not.toContain('browser_run_code_unsafe');
+  expect(toolNames).not.toContain('browser_evaluate');
+  expect(toolNames).toContain('browser_navigate');
+  expect(await client.callTool({
+    name: 'browser_run_code_unsafe',
+    arguments: { code: 'async () => 42' },
+  })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining('Tool "browser_run_code_unsafe" not found'),
+  });
+});
+
+test('--allowed-tools adds tools from capabilities that are not enabled', async ({ startClient }) => {
+  const { client } = await startClient({
+    args: ['--allowed-tools=browser_pdf_save'],
+  });
+  const toolNames = (await client.listTools()).tools.map(t => t.name);
+  expect(toolNames).toContain('browser_pdf_save');
+  expect(toolNames).toContain('browser_navigate');
+  expect(toolNames).not.toContain('browser_mouse_click_xy');
+});
+
+test('blockedTools takes precedence over allowedTools', async ({ startClient }) => {
+  const { client } = await startClient({
+    config: { allowedTools: ['browser_pdf_save', 'browser_mouse_click_xy'], blockedTools: ['browser_pdf_save'] },
+  });
+  const toolNames = (await client.listTools()).tools.map(t => t.name);
+  expect(toolNames).not.toContain('browser_pdf_save');
+  expect(toolNames).toContain('browser_mouse_click_xy');
+});

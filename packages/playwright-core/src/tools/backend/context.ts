@@ -41,6 +41,8 @@ const testDebug = debug('pw:mcp:test');
 export type ContextConfig = {
   allowUnrestrictedFileAccess?: boolean;
   capabilities?: ToolCapability[];
+  allowedTools?: string[];
+  blockedTools?: string[];
   codegen?: 'typescript' | 'python' | 'java' | 'csharp' | 'none';
   console?: { level?: 'error' | 'warning' | 'info' | 'debug' };
   imageResponses?: 'allow' | 'omit' | 'only';
