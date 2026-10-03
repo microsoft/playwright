@@ -17,6 +17,9 @@
 import * as z from 'zod';
 import { defineTool } from './tool';
 
+import type { Context, TraceInfo } from './context';
+import type { Response } from './response';
+
 
 const tracingStart = defineTool({
   capability: 'devtools',
@@ -30,21 +33,9 @@ const tracingStart = defineTool({
   },
 
   handle: async (context, params, response) => {
-    const browserContext = await context.ensureBrowserContext();
-    const tracesDir = await context.outputFile({ prefix: '', suggestedFilename: `traces`, ext: '' }, { origin: 'code' });
-    const name = 'trace-' + Date.now();
-    await browserContext.tracing.start({
-      name,
-      screenshots: true,
-      snapshots: true,
-      live: true,
-    });
+    const traces = await context.startTracing();
     response.addTextResult(`Trace recording started`);
-    response.addFileLink('Action log', `${tracesDir}/${name}.trace`);
-    response.addFileLink('Network log', `${tracesDir}/${name}.network`);
-    response.addFileLink('Resources', `${tracesDir}/resources`);
-    // eslint-disable-next-line no-restricted-syntax
-    (browserContext.tracing as any)[traceLegendSymbol] = { tracesDir, name };
+    await addTraceLinks(context, response, traces, 'Action log');
   },
 });
 
@@ -60,25 +51,25 @@ const tracingStop = defineTool({
   },
 
   handle: async (context, params, response) => {
-    const browserContext = await context.ensureBrowserContext();
-    // eslint-disable-next-line no-restricted-syntax
-    const traceLegend = (browserContext.tracing as any)[traceLegendSymbol];
-    if (!traceLegend)
+    const traces = await context.stopTracing();
+    if (!traces)
       throw new Error('Tracing is not started');
-    await browserContext.tracing.stop();
-    // eslint-disable-next-line no-restricted-syntax
-    delete (browserContext.tracing as any)[traceLegendSymbol];
-
     response.addTextResult(`Trace recording stopped.`);
-    response.addFileLink('Trace', `${traceLegend.tracesDir}/${traceLegend.name}.trace`);
-    response.addFileLink('Network log', `${traceLegend.tracesDir}/${traceLegend.name}.network`);
-    response.addFileLink('Resources', `${traceLegend.tracesDir}/resources`);
+    await addTraceLinks(context, response, traces, 'Trace');
   },
 });
+
+async function addTraceLinks(context: Context, response: Response, traces: TraceInfo[], traceTitle: string) {
+  const tracesDir = await context.outputFile({ prefix: '', suggestedFilename: `traces`, ext: '' }, { origin: 'code' });
+  for (const trace of traces) {
+    const suffix = trace.isolatedContext ? ` (isolatedContext: ${trace.isolatedContext})` : '';
+    response.addFileLink(traceTitle + suffix, `${tracesDir}/${trace.name}.trace`);
+    response.addFileLink('Network log' + suffix, `${tracesDir}/${trace.name}.network`);
+  }
+  response.addFileLink('Resources', `${tracesDir}/resources`);
+}
 
 export default [
   tracingStart,
   tracingStop,
 ];
-
-const traceLegendSymbol = Symbol('tracesDir');

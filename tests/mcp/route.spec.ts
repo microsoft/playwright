@@ -257,3 +257,30 @@ test('browser_unroute removes all routes', async ({ client, server }) => {
   }));
   expect(list.result).toContain('No active routes');
 });
+
+test('browser_route applies to isolated contexts', async ({ client, server }) => {
+  server.setContent('/', `<body>Original</body>`, 'text/html');
+
+  await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'new', isolatedContext: 'alice' },
+  });
+  await client.callTool({
+    name: 'browser_route',
+    arguments: { pattern: '**/', body: '<body>Mocked</body>', contentType: 'text/html' },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining('Mocked'),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'new', url: server.PREFIX, isolatedContext: 'bob' },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining('Mocked'),
+  });
+});

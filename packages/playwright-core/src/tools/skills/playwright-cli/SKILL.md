@@ -113,6 +113,7 @@ playwright-cli pdf --filename=page.pdf
 playwright-cli tab-list
 playwright-cli tab-new
 playwright-cli tab-new https://example.com/page
+playwright-cli tab-new https://example.com/page --isolated-context=user-b
 playwright-cli tab-close
 playwright-cli tab-close 2
 playwright-cli tab-select 0
