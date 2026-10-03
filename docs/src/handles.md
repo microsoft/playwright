@@ -62,7 +62,7 @@ APIs wait for the element to be attached and visible.
 
 ```js
 // Get the element handle
-const elementHandle = page.waitForSelector('#box');
+const elementHandle = await page.waitForSelector('#box');
 
 // Assert bounding box for the element
 const boundingBox = await elementHandle.boundingBox();
@@ -89,11 +89,11 @@ assertTrue(classNames.contains("highlighted"));
 
 ```python async
 # Get the element handle
-element_handle = page.wait_for_selector('#box')
+element_handle = await page.wait_for_selector('#box')
 
 # Assert bounding box for the element
 bounding_box = await element_handle.bounding_box()
-assert bounding_box.width == 100
+assert bounding_box["width"] == 100
 
 # Assert attribute for the element
 class_names = await element_handle.get_attribute('class')
@@ -106,7 +106,7 @@ element_handle = page.wait_for_selector('#box')
 
 # Assert bounding box for the element
 bounding_box = element_handle.bounding_box()
-assert bounding_box.width == 100
+assert bounding_box["width"] == 100
 
 # Assert attribute for the element
 class_names = element_handle.get_attribute('class')
