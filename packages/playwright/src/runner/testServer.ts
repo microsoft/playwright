@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-import util from 'util';
 import debug from 'debug';
+import fs from 'fs';
 import open from 'open';
+import util from 'util';
 
 import { server as coreServer } from 'playwright-core/lib/coreBundle';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { isUnderTest } from '@utils/debug';
+import { isPathInside } from '@utils/fileUtils';
 import { HttpServer } from '@utils/httpServer';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 
@@ -35,7 +37,7 @@ import { wrapReporterAsV2 } from '../reporters/reporterV2';
 import type { Transport } from '@utils/httpServer';
 import type * as reporterTypes from '../../types/testReporter';
 import type { ConfigLocation } from '../common';
-import type { ReportEntry, TestServerInterface, TestServerInterfaceEventEmitters } from '../isomorphic/testServerInterface';
+import type { ReportEntry, TestServerInterface, TestServerInterfaceEventEmitters, UpdateSnapshotParams } from '../isomorphic/testServerInterface';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 type TraceViewerRedirectOptions = coreServer.TraceViewerRedirectOptions;
@@ -48,6 +50,27 @@ const originalStdoutWrite = process.stdout.write;
 const originalStderrWrite = process.stderr.write;
 
 const originalStdinIsTTY = process.stdin.isTTY;
+
+function allowedFileRoots(configLocation: ConfigLocation, testRunner?: TestRunner): string[] {
+  const roots = new Set<string>([process.cwd(), configLocation.configDir]);
+  const config = testRunner?.lastLoadedConfig();
+  if (config) {
+    for (const project of config.projects) {
+      roots.add(project.project.outputDir);
+      roots.add(project.project.snapshotDir);
+      roots.add(project.project.testDir);
+    }
+  }
+  return [...roots];
+}
+
+function testResultKey(testId: string, resultId: string): string {
+  return JSON.stringify([testId, resultId]);
+}
+
+function attachmentKey(attachment: UpdateSnapshotParams['actual']): string {
+  return JSON.stringify([attachment.name, attachment.contentType]);
+}
 
 class TestServer {
   private _configLocation: ConfigLocation;
@@ -70,15 +93,7 @@ class TestServer {
   }
 
   private _allowedFileRoots(): string[] {
-    const roots = new Set<string>([process.cwd(), this._configLocation.configDir]);
-    const config = this._dispatcher?._testRunner.lastLoadedConfig();
-    if (config) {
-      for (const project of config.projects) {
-        roots.add(project.project.outputDir);
-        roots.add(project.project.testDir);
-      }
-    }
-    return [...roots];
+    return allowedFileRoots(this._configLocation, this._dispatcher?._testRunner);
   }
 
   async stop() {
@@ -112,13 +127,17 @@ export type RunTestsParams = {
 
 export class TestServerDispatcher implements TestServerInterface {
   readonly transport: Transport;
+  private _configLocation: ConfigLocation;
   private _serializer: string | undefined;
   private _closeOnDisconnect = false;
+  private _testResultIdForTestId = new Map<string, string>();
+  private _pathForAttachmentForTestResult = new Map</* testResultKey */ string, Map</* attachmentKey */ string, string | null | undefined>>();
   _testRunner: TestRunner;
   private _globalSetupReport: ReportEntry[] | undefined;
   readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
 
   constructor(configLocation: ConfigLocation, configCLIOverrides: ipc.ConfigCLIOverrides) {
+    this._configLocation = configLocation;
     this._testRunner = new TestRunner(configLocation, configCLIOverrides);
     this.transport = {
       onconnect: () => {},
@@ -134,8 +153,41 @@ export class TestServerDispatcher implements TestServerInterface {
     this._testRunner.on(TestRunnerEvent.TestPaused, params => this._dispatchEvent('testPaused', { errors: params.errors }));
   }
 
-  private async _wireReporter(messageSink: (message: any) => void) {
-    return await createReporterForTestServer(this._serializer, messageSink);
+  private async _wireReporter(messageSink: (message: ReportEntry) => void) {
+    return await createReporterForTestServer(this._serializer, message => {
+      this._trackAttachmentPaths(message);
+      messageSink(message);
+    });
+  }
+
+  private _trackAttachmentPaths(message: ReportEntry) {
+    switch (message.method) {
+      case 'onTestBegin': {
+        const { testId, result } = message.params;
+        const previousResultId = this._testResultIdForTestId.get(testId);
+        if (previousResultId)
+          this._pathForAttachmentForTestResult.delete(testResultKey(testId, previousResultId));
+        this._testResultIdForTestId.set(testId, result.id);
+        return;
+      }
+
+      case 'onAttach': {
+        if (this._testResultIdForTestId.get(message.params.testId) !== message.params.resultId)
+          throw new Error(`Unknown test result: ${message.params.resultId}`);
+        const resultKey = testResultKey(message.params.testId, message.params.resultId);
+        let paths = this._pathForAttachmentForTestResult.get(resultKey);
+        if (!paths) {
+          paths = new Map();
+          this._pathForAttachmentForTestResult.set(resultKey, paths);
+        }
+        for (const attachment of message.params.attachments) {
+          // Attachments without paths can also make a name ambiguous.
+          const key = attachmentKey(attachment);
+          paths.set(key, paths.has(key) ? null : attachment.path);
+        }
+        return;
+      }
+    }
   }
 
   private async _collectingReporter(): Promise<{ reporter: ReporterV2, report: ReportEntry[] }> {
@@ -193,6 +245,26 @@ export class TestServerDispatcher implements TestServerInterface {
 
   async clearCache(params: Parameters<TestServerInterface['clearCache']>[0]): ReturnType<TestServerInterface['clearCache']> {
     await this._testRunner.clearCache();
+  }
+
+  async updateSnapshot(params: Parameters<TestServerInterface['updateSnapshot']>[0]): ReturnType<TestServerInterface['updateSnapshot']> {
+    const config = this._testRunner.lastLoadedConfig();
+    if (!config)
+      throw new Error('Cannot update snapshot before loading the configuration');
+    const actualName = params.actual.name.match(/^(.*)-actual\.png$/)?.[1];
+    const expectedName = params.expected.name.match(/^(.*)-expected\.png$/)?.[1];
+    if (!actualName || actualName !== expectedName)
+      throw new Error('Actual and expected attachments do not form a snapshot pair');
+    const pathForAttachment = this._pathForAttachmentForTestResult.get(testResultKey(params.testId, params.resultId));
+    const actualPath = pathForAttachment?.get(attachmentKey(params.actual));
+    const expectedPath = pathForAttachment?.get(attachmentKey(params.expected));
+    if (!actualPath || !expectedPath)
+      throw new Error('Snapshot attachments are not registered or have duplicates for this test result');
+    if (!config.projects.some(project => isPathInside(project.project.outputDir, actualPath)))
+      throw new Error('Actual snapshot path is outside of the configured output directories');
+    if (!allowedFileRoots(this._configLocation, this._testRunner).some(root => isPathInside(root, expectedPath)))
+      throw new Error('Expected snapshot path is outside of the allowed file roots');
+    await fs.promises.copyFile(actualPath, expectedPath);
   }
 
   async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {
@@ -348,7 +420,7 @@ function chunkToPayload(type: 'stdout' | 'stderr', chunk: Buffer | string): Stdi
   return { type, text: chunk };
 }
 
-async function createReporterForTestServer(file: string | undefined, messageSink: (message: any) => void): Promise<ReporterV2> {
+async function createReporterForTestServer(file: string | undefined, messageSink: (message: ReportEntry) => void): Promise<ReporterV2> {
   const reporterConstructor = file ? await loadReporter(null, file) : UIModeReporter;
   return wrapReporterAsV2(new reporterConstructor({
     _send: messageSink,

@@ -22,6 +22,19 @@ import type * as reporterTypes from '../../types/testReporter';
 
 export type ReportEntry = JsonEvent;
 
+export type UpdateSnapshotParams = {
+  testId: string;
+  resultId: string;
+  actual: {
+    name: string;
+    contentType: string;
+  };
+  expected: {
+    name: string;
+    contentType: string;
+  };
+};
+
 export interface TestServerInterface {
   initialize(params: {
     serializer?: string,
@@ -56,6 +69,8 @@ export interface TestServerInterface {
   }>;
 
   clearCache(params: {}): Promise<void>;
+
+  updateSnapshot(params: UpdateSnapshotParams): Promise<void>;
 
   listFiles(params: {
     projects?: string[];
