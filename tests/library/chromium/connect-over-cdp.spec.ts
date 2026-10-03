@@ -77,6 +77,43 @@ test('should connect when an existing page has no renderer', {
   }
 });
 
+test('should connect when the opener of an existing page has no renderer', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41714' },
+}, async ({ browserType, server }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    // The popup should be in a different process to survive the crash of the opener.
+    args: ['--remote-debugging-port=' + port, '--site-per-process']
+  });
+  try {
+    const cdpBrowser1 = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+    });
+    const crashedPage1 = await cdpBrowser1.contexts()[0].newPage();
+    await crashedPage1.goto(server.EMPTY_PAGE);
+    const [popup1] = await Promise.all([
+      crashedPage1.waitForEvent('popup'),
+      crashedPage1.evaluate(url => { window.open(url); }, server.CROSS_PROCESS_PREFIX + '/title.html'),
+    ]);
+    await popup1.waitForLoadState();
+    crashedPage1.goto('chrome://crash').catch(() => {});
+    await crashedPage1.waitForEvent('crash');
+    await cdpBrowser1.close();
+
+    // Connecting again should not report the opener, and should not wait for it.
+    const cdpBrowser2 = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+    });
+    const pages = cdpBrowser2.contexts()[0].pages();
+    expect(pages.map(page => page.url())).toEqual([server.CROSS_PROCESS_PREFIX + '/title.html']);
+    expect(await pages[0].title()).toBe('Woof-Woof');
+    expect(await pages[0].opener()).toBe(null);
+    await cdpBrowser2.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
 test('should connect when an existing page has been discarded', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41714' },
 }, async ({ browserType, createUserDataDir, server }, testInfo) => {

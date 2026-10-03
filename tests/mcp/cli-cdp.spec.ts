@@ -141,3 +141,30 @@ test('tracing-start-stop over cdp', async ({ cdpServer, cli, server }, testInfo)
   expect(fs.existsSync(testInfo.outputPath('.playwright-cli', 'traces', `trace-${timestamp}.trace`))).toBeTruthy();
   expect(fs.existsSync(testInfo.outputPath('.playwright-cli', 'traces', `trace-${timestamp}.network`))).toBeTruthy();
 });
+
+test('attach via cdp with a crashed page', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41714' },
+}, async ({ cdpServer, cli, server }) => {
+  const browserContext = await cdpServer.start();
+  const [page] = browserContext.pages();
+  await page.goto(server.HELLO_WORLD);
+  const crashedPage = await browserContext.newPage();
+  await crashedPage.goto(server.PREFIX + '/title.html');
+  crashedPage.goto('chrome://crash').catch(() => {});
+  await crashedPage.waitForEvent('crash');
+
+  // Attaching should not hang on the crashed page, and should not list it.
+  const { output: attachOutput, exitCode } = await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  expect(exitCode).toBe(0);
+  expect(attachOutput).toContain(`### Page
+- Page URL: ${server.HELLO_WORLD}
+- Page Title: Title`);
+  expect(attachOutput).not.toContain('### Open tabs');
+
+  const { output: listOutput } = await cli('tab-list');
+  expect(listOutput).toBe(`### Result
+- 0: (current) [Title](${server.HELLO_WORLD})`);
+
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).toContain(`- generic [active] [ref=e1]: Hello, world!`);
+});
