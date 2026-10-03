@@ -2169,6 +2169,40 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.test-file-test .test-file-title')).toHaveText('Error Pages › @GCC-1510 fails');
       });
 
+      test('should filter by label from the keyboard', async ({ runInlineTest, showReport, page }) => {
+        const result = await runInlineTest({
+          'a.test.js': `
+            const { expect, test } = require('@playwright/test');
+            test('@smoke passes', async ({}) => {
+              expect(1).toBe(1);
+            });
+            test('@regression passes', async ({}) => {
+              expect(1).toBe(1);
+            });
+          `,
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+        expect(result.exitCode).toBe(0);
+        expect(result.passed).toBe(2);
+
+        await showReport();
+
+        const smokeLabel = page.locator('.test-file-test', { has: page.getByText('@smoke passes', { exact: true }) }).getByRole('button', { name: 'smoke' });
+        await smokeLabel.focus();
+        await expect(smokeLabel).toBeFocused();
+        await smokeLabel.press('Enter');
+        await expect(page.getByPlaceholder('Search tests')).toHaveValue('@smoke ');
+        await expect(page.locator('.test-file-test')).toHaveCount(1);
+
+        await page.getByPlaceholder('Search tests').clear();
+        const regressionLabel = page.locator('.test-file-test', { has: page.getByText('@regression passes', { exact: true }) }).getByRole('button', { name: 'regression' });
+        await regressionLabel.focus();
+        await expect(regressionLabel).toBeFocused();
+        await regressionLabel.press('Space');
+        await expect(page.getByPlaceholder('Search tests')).toHaveValue('@regression ');
+        await expect(page.locator('.test-file-test')).toHaveCount(1);
+      });
+
       test('tags with special symbols', async ({ runInlineTest, showReport, page }) => {
         const result = await runInlineTest({
           'a.test.js': `

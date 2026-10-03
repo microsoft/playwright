@@ -30,6 +30,16 @@
   cursor: pointer;
 }
 
+.label-button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.label-button:focus-visible {
+  outline: 1px solid var(--color-accent-fg);
+  outline-offset: -1px;
+}
+
 .label-anchor {
   text-decoration: none;
   color: var(--color-fg-default);
