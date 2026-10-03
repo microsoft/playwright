@@ -57,3 +57,30 @@ it('should work with number input', async ({ page, browserName }) => {
   await page.press('input', '1');
   expect(await page.$eval('input', input => input.value)).toBe('12');
 });
+
+it('should not press into an unrelated field when the target is inert', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42967' });
+  await page.setContent('<div inert><input id=target></div><input id=outside>');
+  await page.locator('#outside').focus();
+  await expect(page.locator('#target').press('a')).rejects.toThrow('Element is inert and cannot be focused');
+  await expect(page.locator('#target')).toHaveValue('');
+  await expect(page.locator('#outside')).toHaveValue('');
+});
+
+it('should not type into an unrelated field when the target is inert', async ({ page }) => {
+  await page.setContent('<div inert><input id=target></div><input id=outside>');
+  await page.locator('#outside').focus();
+  await expect(page.locator('#target').type('hello')).rejects.toThrow('Element is inert and cannot be focused');
+  await expect(page.locator('#target')).toHaveValue('');
+  await expect(page.locator('#outside')).toHaveValue('');
+});
+
+it('should press after the inert ancestor is removed', async ({ page }) => {
+  await page.setContent('<div id=container inert><input id=target></div><input id=outside>');
+  await page.locator('#outside').focus();
+  await expect(page.locator('#target').press('a')).rejects.toThrow('Element is inert and cannot be focused');
+  await page.locator('#container').evaluate(element => element.removeAttribute('inert'));
+  await page.locator('#target').press('a');
+  await expect(page.locator('#target')).toHaveValue('a');
+  await expect(page.locator('#outside')).toHaveValue('');
+});
