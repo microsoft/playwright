@@ -139,12 +139,35 @@ export class Session {
       args.push(`--config=${cliArgs.config}`);
     if (cliArgs['idle-timeout'] !== undefined)
       args.push(`--idle-timeout=${cliArgs['idle-timeout']}`);
-    if (cliArgs.extension)
+    if (mode === 'open') {
+      // `open --extension=<dir>` loads an unpacked extension, unlike `attach --extension` that connects through the Playwright Extension.
+      for (const dir of flagValues(cliArgs, 'extension'))
+        args.push(`--load-extension=${dir}`);
+      for (const script of flagValues(cliArgs, 'init-script'))
+        args.push(`--init-script=${script}`);
+      if (cliArgs['ignore-https-errors'])
+        args.push('--ignore-https-errors');
+      const singleValueFlags: [flag: string, daemonFlag: string][] = [
+        ['proxy', 'proxy-server'],
+        ['proxy-bypass', 'proxy-bypass'],
+        ['user-agent', 'user-agent'],
+        ['executable-path', 'executable-path'],
+        ['state', 'storage-state'],
+        ['allowed-origins', 'allowed-origins'],
+        ['blocked-origins', 'blocked-origins'],
+      ];
+      for (const [flag, daemonFlag] of singleValueFlags) {
+        const value = flagValues(cliArgs, flag).at(-1);
+        if (value !== undefined)
+          args.push(`--${daemonFlag}=${value}`);
+      }
+    } else if (cliArgs.extension) {
       args.push('--extension');
-    else if (cliArgs.cdp)
+    } else if (cliArgs.cdp) {
       args.push(`--cdp=${cliArgs.cdp}`);
-    else if (cliArgs.endpoint)
+    } else if (cliArgs.endpoint) {
       args.push(`--endpoint=${cliArgs.endpoint}`);
+    }
 
     const child = spawn(process.execPath, args, {
       detached: true,
@@ -204,6 +227,16 @@ export class Session {
   async deleteSessionConfig() {
     await fs.promises.rm(this._sessionFile.file).catch(() => {});
   }
+}
+
+// Minimist yields `true` for a flag without a value, a string for one occurrence and an array for a repeated one.
+function flagValues(cliArgs: MinimistArgs, flag: string): string[] {
+  const value = cliArgs[flag];
+  if (value === undefined || value === false)
+    return [];
+  if (value === true)
+    throw new Error(`error: '--${flag}' option requires a value`);
+  return Array.isArray(value) ? value.map(String) : [String(value)];
 }
 
 class SocketConnectionClient {

@@ -30,6 +30,10 @@ async function fileExistsAsync(resolved: string) {
   try { return (await fs.promises.stat(resolved)).isFile(); } catch { return false; }
 }
 
+async function directoryExistsAsync(resolved: string) {
+  try { return (await fs.promises.stat(resolved)).isDirectory(); } catch { return false; }
+}
+
 type ViewportSize = { width: number; height: number };
 
 export type CLIOptions = {
@@ -60,6 +64,7 @@ export type CLIOptions = {
   isolated?: boolean;
   idleTimeout?: number;
   imageResponses?: 'allow' | 'omit' | 'only';
+  loadExtension?: string[];
   mobile?: boolean;
   sandbox?: boolean;
   outputDir?: string;
@@ -138,6 +143,7 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJ
   result = mergeConfig(result, resolveConfigPaths(configInFile, configDir));
   result = mergeConfig(result, resolveConfigPaths(envOverrides, process.cwd()));
   result = mergeConfig(result, resolveConfigPaths(cliOverrides, process.cwd()));
+  applyProxyFromEnvironment(result, env);
 
   const browser = await validateBrowserConfig(result.browser);
   if (browser.launchOptions.headless === undefined)
@@ -175,6 +181,16 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
     extension: options.extension,
     userDataDir: options.profile,
     idleTimeout: options.idleTimeout,
+    allowedOrigins: options.allowedOrigins,
+    blockedOrigins: options.blockedOrigins,
+    executablePath: options.executablePath,
+    ignoreHttpsErrors: options.ignoreHttpsErrors,
+    initScript: options.initScript,
+    loadExtension: options.loadExtension,
+    proxyBypass: options.proxyBypass,
+    proxyServer: options.proxyServer,
+    storageState: options.storageState,
+    userAgent: options.userAgent,
     snapshotMode: 'full',
   });
 
@@ -192,9 +208,11 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   result = mergeConfig(result, resolveConfigPaths(configInFile, configDir));
   result = mergeConfig(result, resolveConfigPaths(envOverrides, process.cwd()));
   result = mergeConfig(result, resolveConfigPaths(daemonOverrides, process.cwd()));
+  applyProxyFromEnvironment(result, env);
 
+  // Extensions only load into a persistent profile, so they use the session's on-disk profile like --persistent does.
   if (result.browser.isolated === undefined)
-    result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.browser.cdpEndpoint && !result.extension;
+    result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.browser.cdpEndpoint && !result.extension && !result.browser.extensions?.length;
 
   if (result.browser.launchOptions.headless === undefined)
     result.browser.launchOptions.headless = true;
@@ -222,12 +240,38 @@ export function resolveExtensionOptions(cliOptions: CLIOptions): { channel: stri
 }
 
 async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<FullConfig['browser']> {
+  const extensions = browser.extensions?.length ? browser.extensions : undefined;
   let browserName = browser.browserName;
   if (!browserName) {
     browserName = 'chromium';
     // Assign channel only if the browserName is not provided, otherwise assume full control to the user.
+    // Google Chrome no longer loads unpacked extensions, so they get the bundled Chromium build instead.
     if (browser.launchOptions.channel === undefined)
-      browser.launchOptions.channel = 'chrome';
+      browser.launchOptions.channel = extensions ? 'chromium' : 'chrome';
+  }
+
+  if (extensions) {
+    if (browserName !== 'chromium')
+      throw new Error(`Extensions are only supported in Chromium-based browsers, cannot load them into ${browserName}.`);
+    if (browser.isolated)
+      throw new Error('Extensions only load into a persistent browser profile, do not combine them with isolated mode.');
+    const { channel } = browser.launchOptions;
+    if (channel?.startsWith('chrome') && channel !== 'chrome-for-testing')
+      throw new Error(`Google Chrome does not load unpacked extensions, use --browser=chromium instead of ${channel}.`);
+    // The headless shell that runs without a channel has no extension support, the full build does.
+    if (channel === undefined)
+      browser.launchOptions.channel = 'chromium';
+    for (const extension of extensions) {
+      if (!await directoryExistsAsync(extension))
+        throw new Error(`Extension directory does not exist: ${extension}`);
+      if (!await fileExistsAsync(path.join(extension, 'manifest.json')))
+        throw new Error(`Extension directory has no manifest.json: ${extension}`);
+    }
+    const list = extensions.join(',');
+    browser.launchOptions.args = [...(browser.launchOptions.args ?? []), `--disable-extensions-except=${list}`, `--load-extension=${list}`];
+    const ignoreDefaultArgs = browser.launchOptions.ignoreDefaultArgs;
+    if (ignoreDefaultArgs !== true)
+      browser.launchOptions.ignoreDefaultArgs = [...(Array.isArray(ignoreDefaultArgs) ? ignoreDefaultArgs : []), '--disable-extensions'];
   }
 
   if (browserName === 'chromium' && browser.launchOptions.chromiumSandbox === undefined) {
@@ -328,9 +372,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
   const contextOptions: playwrightTypes.BrowserContextOptions = device ? playwright.devices[device] : {};
 
   if (cliOptions.proxyServer) {
-    const proxy: playwrightTypes.LaunchOptions['proxy'] = { server: cliOptions.proxyServer };
-    if (cliOptions.proxyBypass)
-      proxy.bypass = cliOptions.proxyBypass;
+    const proxy = proxyFromServer(cliOptions.proxyServer, cliOptions.proxyBypass);
     // Set on both to ensure CLI takes precedence over any proxy set in the config file
     // (launchOptions.proxy applies at browser launch, contextOptions.proxy at context creation).
     launchOptions.proxy = proxy;
@@ -367,6 +409,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       cdpTimeout: cliOptions.cdpTimeout,
       initPage: cliOptions.initPage,
       initScript: cliOptions.initScript,
+      extensions: cliOptions.loadExtension,
       remoteEndpoint: cliOptions.endpoint,
     },
     extension: cliOptions.extension,
@@ -448,6 +491,9 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   if (initScript)
     options.initScript = [initScript];
   options.isolated = envToBoolean(e.PLAYWRIGHT_MCP_ISOLATED);
+  const loadExtension = envToString(e.PLAYWRIGHT_MCP_LOAD_EXTENSION);
+  if (loadExtension)
+    options.loadExtension = [loadExtension];
   if (e.PLAYWRIGHT_MCP_IMAGE_RESPONSES)
     options.imageResponses = enumParser<'allow' | 'omit' | 'only'>('--image-responses', ['allow', 'omit', 'only'], e.PLAYWRIGHT_MCP_IMAGE_RESPONSES);
   options.mobile = envToBoolean(e.PLAYWRIGHT_MCP_MOBILE);
@@ -493,16 +539,58 @@ export async function loadConfig(configFile: string | undefined): Promise<Config
   }
 }
 
-// initPage/initScript paths are resolved against a per-source base dir
+// initPage/initScript/extensions paths are resolved against a per-source base dir
 // (config-file dir for entries loaded from a --config file, cwd for entries
-// supplied via CLI flags or PLAYWRIGHT_MCP_INIT_* env vars) so they keep
+// supplied via CLI flags or PLAYWRIGHT_MCP_* env vars) so they keep
 // working when the CLI is invoked from a different cwd.
 function resolveConfigPaths(config: Config, baseDir: string): Config {
   if (config.browser?.initPage)
     config.browser.initPage = config.browser.initPage.map(p => path.resolve(baseDir, p));
   if (config.browser?.initScript)
     config.browser.initScript = config.browser.initScript.map(p => path.resolve(baseDir, p));
+  if (config.browser?.extensions)
+    config.browser.extensions = config.browser.extensions.map(p => path.resolve(baseDir, p));
   return config;
+}
+
+// Browsers ignore credentials embedded in the proxy URL, for example
+// http://user:pass@proxy:3128, so move them into the username/password fields.
+function proxyFromServer(server: string, bypass?: string): NonNullable<playwrightTypes.LaunchOptions['proxy']> {
+  const proxy: NonNullable<playwrightTypes.LaunchOptions['proxy']> = { server };
+  if (bypass)
+    proxy.bypass = bypass;
+  // Short forms like "myproxy:3128" are not URLs, leave them to the browser.
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(server))
+    return proxy;
+  let url: URL;
+  try {
+    url = new URL(server);
+  } catch {
+    return proxy;
+  }
+  if (!url.username && !url.password)
+    return proxy;
+  proxy.server = `${url.protocol}//${url.host}`;
+  proxy.username = decodeURIComponent(url.username);
+  proxy.password = decodeURIComponent(url.password);
+  return proxy;
+}
+
+// Fall back to the HTTPS_PROXY / HTTP_PROXY / NO_PROXY variables that curl, npm and git
+// honor, so a proxied environment works without flags or a config file. Anything
+// configured explicitly, in a file, env var or flag, takes precedence.
+function applyProxyFromEnvironment(config: MergedConfig, env?: NodeJS.ProcessEnv) {
+  if (config.browser.launchOptions.proxy || config.browser.contextOptions.proxy)
+    return;
+  const e = env ?? process.env;
+  const server = envToString(e.HTTPS_PROXY ?? e.https_proxy ?? e.HTTP_PROXY ?? e.http_proxy);
+  if (!server)
+    return;
+  // NO_PROXY is a comma- or space-separated host list, Playwright wants it comma-separated.
+  const bypass = envToString(e.NO_PROXY ?? e.no_proxy)?.split(/[\s,]+/).filter(Boolean).join(',');
+  const proxy = proxyFromServer(server, bypass);
+  config.browser.launchOptions.proxy = proxy;
+  config.browser.contextOptions.proxy = proxy;
 }
 
 function pickDefined<T extends object>(obj: T | undefined): Partial<T> {
