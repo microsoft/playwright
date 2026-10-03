@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isLocalHostname, kMaxCookieExpiresDateInSeconds } from './network';
+import { domainMatches, isLocalHostname, kMaxCookieExpiresDateInSeconds, pathMatches } from './network';
 
 import type * as channels from './channels';
 
@@ -210,22 +210,4 @@ export function parseRawCookie(header: string): RawCookie | null {
   return cookie;
 }
 
-export function domainMatches(value: string, domain: string): boolean {
-  if (value === domain)
-    return true;
-  // Only strict match is allowed if domain doesn't start with '.' (host-only-flag is true in the spec)
-  if (!domain.startsWith('.'))
-    return false;
-  value = '.' + value;
-  return value.endsWith(domain);
-}
-
-function pathMatches(value: string, path: string): boolean {
-  if (value === path)
-    return true;
-  if (!value.endsWith('/'))
-    value = value + '/';
-  if (!path.endsWith('/'))
-    path = path + '/';
-  return value.startsWith(path);
-}
+export { domainMatches, pathMatches };

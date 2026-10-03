@@ -32,6 +32,29 @@ import type * as channels from './channels';
 import type { Progress } from './progress';
 
 
+export function domainMatches(value: string, domain: string): boolean {
+  value = value.toLowerCase();
+  domain = domain.toLowerCase();
+  if (value === domain)
+    return true;
+  // Only strict match is allowed if domain doesn't start with '.' (host-only-flag is true in the spec)
+  if (!domain.startsWith('.'))
+    return false;
+  value = '.' + value;
+  return value.endsWith(domain);
+}
+
+// https://datatracker.ietf.org/doc/html/rfc6265#section-5.1.4
+export function pathMatches(requestPath: string, cookiePath: string): boolean {
+  if (requestPath === cookiePath)
+    return true;
+  if (!requestPath.startsWith(cookiePath))
+    return false;
+  if (cookiePath.endsWith('/'))
+    return true;
+  return requestPath[cookiePath.length] === '/';
+}
+
 export function filterCookies(cookies: channels.NetworkCookie[], urls: string[]): channels.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
   // Chromiums's cookies are missing sameSite when it is 'None'
@@ -39,12 +62,9 @@ export function filterCookies(cookies: channels.NetworkCookie[], urls: string[])
     if (!parsedURLs.length)
       return true;
     for (const parsedURL of parsedURLs) {
-      let domain = c.domain;
-      if (!domain.startsWith('.'))
-        domain = '.' + domain;
-      if (!('.' + parsedURL.hostname).endsWith(domain))
+      if (!domainMatches(parsedURL.hostname, c.domain))
         continue;
-      if (!parsedURL.pathname.startsWith(c.path))
+      if (!pathMatches(parsedURL.pathname, c.path))
         continue;
       if (parsedURL.protocol !== 'https:' && !isLocalHostname(parsedURL.hostname) && c.secure)
         continue;

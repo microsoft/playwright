@@ -244,6 +244,19 @@ it('should work with subdomain cookie', async ({ context, browserName, isWindows
   }]);
 });
 
+it('cookies(urls) should not match subdomains for host-only cookies or prefix-only paths', async ({ context }) => {
+  await context.addCookies([{
+    domain: 'foo.com',
+    path: '/api',
+    name: 'host_only',
+    value: '1',
+  }]);
+  expect((await context.cookies('https://foo.com/api/x')).map(c => c.name)).toEqual(['host_only']);
+  expect((await context.cookies('https://foo.com/api')).map(c => c.name)).toEqual(['host_only']);
+  expect(await context.cookies('https://sub.foo.com/api/x')).toEqual([]);
+  expect(await context.cookies('https://foo.com/apiv2')).toEqual([]);
+});
+
 it('should return cookies with empty value', async ({ context, page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=;Path=/');

@@ -84,7 +84,7 @@ it('cookies should return cookies filtered by urls', async ({ request, server })
   await request.addCookies([
     { name: 'a', value: 'b', domain: 'localhost', path: '/' },
     { name: 'c', value: 'd', domain: 'localhost', path: '/input' },
-    { name: 'e', value: 'f', domain: 'one.com', path: '/' },
+    { name: 'e', value: 'f', domain: '.one.com', path: '/' },
     { name: 'g', value: 'h', domain: 'two.com', path: '/', secure: true },
   ]);
   expect((await request.cookies()).map(c => c.name)).toEqual(['a', 'c', 'e', 'g']);
@@ -93,6 +93,31 @@ it('cookies should return cookies filtered by urls', async ({ request, server })
   expect((await request.cookies(['http://sub.one.com/', 'http://two.com/'])).map(c => c.name)).toEqual(['e']);
   expect((await request.cookies(['http://sub.one.com/', 'https://two.com/'])).map(c => c.name)).toEqual(['e', 'g']);
   expect(await request.cookies('http://other.com/')).toEqual([]);
+});
+
+it('cookies should not match subdomains for host-only cookies or prefix-only paths', async ({ request }) => {
+  await request.addCookies([
+    { name: 'a', value: '1', domain: 'example.com', path: '/api' },
+  ]);
+  expect((await request.cookies('https://example.com/api/x')).map(c => c.name)).toEqual(['a']);
+  expect(await request.cookies('https://sub.example.com/api/x')).toEqual([]);
+  expect(await request.cookies('https://example.com/apiv2')).toEqual([]);
+});
+
+it('should not send Path=/foo/ cookie to /foo', async ({ request, server }) => {
+  server.setRoute('/foo/set', (req, res) => {
+    res.setHeader('Set-Cookie', 'b=1; Path=/foo/');
+    res.end();
+  });
+  await request.get(`${server.PREFIX}/foo/set`);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/foo'),
+    request.get(`${server.PREFIX}/foo`)
+  ]);
+  expect(serverRequest.headers.cookie).toBeUndefined();
+  expect(await request.cookies(`${server.PREFIX}/foo`)).toEqual([]);
+  expect((await request.cookies(`${server.PREFIX}/foo/`)).map(c => c.name)).toEqual(['b']);
+  expect((await request.cookies(`${server.PREFIX}/foo/bar`)).map(c => c.name)).toEqual(['b']);
 });
 
 it('cookies should include cookies from Set-Cookie header', async ({ request, server }) => {
