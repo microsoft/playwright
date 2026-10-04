@@ -197,7 +197,7 @@ export default defineConfig({
 });
 ```
 
-When connect options are specified, default [`property: Fixtures.browser`], [`property: Fixtures.context`] and [`property: Fixtures.page`] use the remote browser instead of launching a browser locally. Launch options like [`property: TestOptions.headless`] or [`property: TestOptions.channel`] are ignored when connecting to a browser started with [`method: BrowserType.launchServer`]. A server started with `npx playwright run-server` launches a new browser for each connection and applies [`property: TestOptions.headless`], [`property: TestOptions.channel`] and the `proxy`, `slowMo` and `timeout` fields of [`property: TestOptions.launchOptions`].
+When connect options are specified, default [`property: Fixtures.browser`], [`property: Fixtures.context`] and [`property: Fixtures.page`] use the remote browser instead of launching a browser locally. Launch options like [`property: TestOptions.headless`] or [`property: TestOptions.channel`] are ignored when connecting to a browser started with [`method: BrowserType.launchServer`]. A server started with `npx playwright run-server` launches a new browser for each connection and applies some launch options, such as [`property: TestOptions.headless`] and [`property: TestOptions.channel`].
 
 ## property: TestOptions.contextOptions
 * since: v1.10

@@ -7148,11 +7148,10 @@ export interface PlaywrightWorkerOptions {
    * [testOptions.channel](https://playwright.dev/docs/api/class-testoptions#test-options-channel) are ignored when
    * connecting to a browser started with
    * [browserType.launchServer([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-server).
-   * A server started with `npx playwright run-server` launches a new browser for each connection and applies
-   * [testOptions.headless](https://playwright.dev/docs/api/class-testoptions#test-options-headless),
-   * [testOptions.channel](https://playwright.dev/docs/api/class-testoptions#test-options-channel) and the `proxy`,
-   * `slowMo` and `timeout` fields of
-   * [testOptions.launchOptions](https://playwright.dev/docs/api/class-testoptions#test-options-launch-options).
+   * A server started with `npx playwright run-server` launches a new browser for each connection and applies some
+   * launch options, such as
+   * [testOptions.headless](https://playwright.dev/docs/api/class-testoptions#test-options-headless) and
+   * [testOptions.channel](https://playwright.dev/docs/api/class-testoptions#test-options-channel).
    */
   connectOptions: ConnectOptions | undefined;
   /**
