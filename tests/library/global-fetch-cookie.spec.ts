@@ -238,6 +238,22 @@ it('should send secure cookie over http for subdomains of localhost', async ({ r
   expect(serverRequest.headers.cookie).toBe('a=v; b=v');
 });
 
+it('should send secure cookie over http for loopback addresses', async ({ request, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=v; secure', 'b=v']);
+    res.end();
+  });
+  for (const host of ['127.0.0.1', '[::1]']) {
+    const prefix = `http://${host}:${server.PORT}`;
+    await request.get(`${prefix}/setcookie.html`);
+    const [serverRequest] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      request.get(`${prefix}/empty.html`)
+    ]);
+    expect(serverRequest.headers.cookie).toBe('a=v; b=v');
+  }
+});
+
 it('should send not expired cookies', async ({ request, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     const tomorrow = new Date();

@@ -55,7 +55,7 @@ export function filterCookies(cookies: channels.NetworkCookie[], urls: string[])
 }
 
 export function isLocalHostname(hostname: string): boolean {
-  return hostname === 'localhost' || hostname.endsWith('.localhost');
+  return hostname === 'localhost' || hostname.endsWith('.localhost') || hostname === '[::1]' || /^127\.\d+\.\d+\.\d+$/.test(hostname);
 }
 
 // Forbidden request headers according to https://developer.mozilla.org/en-US/docs/Glossary/Forbidden_request_header
