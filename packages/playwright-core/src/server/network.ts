@@ -127,7 +127,7 @@ export function hasClearCookiesFilter(options: ClearCookiesOptions): boolean {
 
 export function cookieMatchesClearFilter(cookie: channels.NetworkCookie, options: ClearCookiesOptions): boolean {
   const matches = (prop: 'name' | 'domain' | 'path', value: string | RegExp | undefined) => {
-    if (!value)
+    if (value === undefined)
       return true;
     if (value instanceof RegExp) {
       value.lastIndex = 0;

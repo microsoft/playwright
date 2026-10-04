@@ -140,6 +140,15 @@ it('clearCookies should filter by name, domain and path', async ({ request }) =>
   expect(await values()).toEqual([]);
 });
 
+it('clearCookies should filter by empty name', async ({ request }) => {
+  await request.addCookies([
+    { name: '', value: '1', domain: 'one.com', path: '/' },
+    { name: 'session', value: '2', domain: 'one.com', path: '/' },
+  ]);
+  await request.clearCookies({ name: '' });
+  expect((await request.cookies()).map(c => c.value)).toEqual(['2']);
+});
+
 it('should filter outgoing cookies by path', async ({ request, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v; path=/input/subfolder', 'b=v; path=/input', 'c=v;']);
