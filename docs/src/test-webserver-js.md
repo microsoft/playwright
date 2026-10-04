@@ -100,7 +100,7 @@ test('test', async ({ page }) => {
 
 ## Multiple web servers
 
-Multiple web servers (or background processes) can be launched simultaneously by providing an array of `webServer` configurations. See [`property: TestConfig.webServer`] for more info.
+Multiple web servers (or background processes) can be launched by providing an array of `webServer` configurations. They are started one after another, in array order: each one starts once the previous one is ready. See [`property: TestConfig.webServer`] for more info.
 
 
 ```js title="playwright.config.ts"

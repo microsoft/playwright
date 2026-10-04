@@ -1034,7 +1034,8 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * });
    * ```
    *
-   * Multiple web servers (or background processes) can be launched:
+   * Multiple web servers (or background processes) can be launched. They are started one after another, in array order:
+   * each one starts once the previous one is ready.
    *
    * ```js
    * // playwright.config.ts

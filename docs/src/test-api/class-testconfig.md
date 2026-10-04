@@ -776,7 +776,7 @@ test('test', async ({ page }) => {
 });
 ```
 
-Multiple web servers (or background processes) can be launched:
+Multiple web servers (or background processes) can be launched. They are started one after another, in array order: each one starts once the previous one is ready.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
