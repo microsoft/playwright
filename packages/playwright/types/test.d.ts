@@ -7584,6 +7584,19 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
+   * When passing an array of credentials to [test.use(options)](https://playwright.dev/docs/api/class-test#test-use),
+   * wrap it into an extra array, see [fixture options](https://playwright.dev/docs/test-fixtures#fixtures-options).
+   *
+   * ```js
+   * // example.spec.ts
+   * test.use({
+   *   httpCredentials: [[
+   *     { username: 'alice', password: 'alice-pass', origin: 'https://a.example.com' },
+   *     { username: 'bob', password: 'bob-pass', origin: 'https://b.example.com' },
+   *   ], { scope: 'test' }],
+   * });
+   * ```
+   *
    */
   httpCredentials: HTTPCredentials | HTTPCredentials[] | undefined;
   /**
