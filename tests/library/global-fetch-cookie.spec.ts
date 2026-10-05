@@ -140,6 +140,17 @@ it('clearCookies should filter by name, domain and path', async ({ request }) =>
   expect(await values()).toEqual([]);
 });
 
+it('clearCookies should remove nameless cookies by empty name', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43112' },
+}, async ({ request }) => {
+  await request.addCookies([
+    { name: '', value: 'nameless', domain: 'one.com', path: '/' },
+    { name: 'session', value: 'secret', domain: 'one.com', path: '/' },
+  ]);
+  await request.clearCookies({ name: '' });
+  expect((await request.cookies()).map(c => c.name)).toEqual(['session']);
+});
+
 it('should filter outgoing cookies by path', async ({ request, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v; path=/input/subfolder', 'b=v; path=/input', 'c=v;']);
