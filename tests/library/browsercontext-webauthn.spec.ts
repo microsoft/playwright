@@ -273,3 +273,81 @@ it('should preserve signCount via the storageState option', async ({ contextFact
   await legacyPage.goto(server.EMPTY_PAGE);
   expect(await assertAndGetSignCount(legacyPage, server.HOSTNAME)).toBe(1);
 });
+
+it('should serialize credentials with toJSON', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43093' },
+}, async ({ contextFactory, server }) => {
+  const context = await contextFactory();
+  await context.credentials.install();
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+
+  const { registration, authentication, expected } = await page.evaluate(async ({ rpId }) => {
+    const toB64Url = (buf: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const created = await navigator.credentials.create({
+      publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        rp: { id: rpId, name: 'Test RP' },
+        user: { id: new Uint8Array([1, 2, 3, 4]), name: 'u', displayName: 'User' },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+        authenticatorSelection: { residentKey: 'required' },
+      },
+    }) as PublicKeyCredential;
+    const attestation = created.response as AuthenticatorAttestationResponse;
+    const got = await navigator.credentials.get({
+      publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), rpId },
+    }) as PublicKeyCredential;
+    const assertion = got.response as AuthenticatorAssertionResponse;
+    return {
+      registration: JSON.parse(JSON.stringify(created)),
+      authentication: JSON.parse(JSON.stringify(got)),
+      expected: {
+        id: created.id,
+        attestation: {
+          clientDataJSON: toB64Url(attestation.clientDataJSON),
+          authenticatorData: toB64Url(attestation.getAuthenticatorData()),
+          publicKey: toB64Url(attestation.getPublicKey()!),
+          attestationObject: toB64Url(attestation.attestationObject),
+        },
+        assertion: {
+          clientDataJSON: toB64Url(assertion.clientDataJSON),
+          authenticatorData: toB64Url(assertion.authenticatorData),
+          signature: toB64Url(assertion.signature),
+          userHandle: toB64Url(assertion.userHandle!),
+        },
+      },
+    };
+  }, { rpId: server.HOSTNAME });
+
+  expect(registration).toEqual({
+    id: expected.id,
+    rawId: expected.id,
+    response: {
+      ...expected.attestation,
+      transports: ['internal'],
+      publicKeyAlgorithm: -7,
+    },
+    authenticatorAttachment: 'platform',
+    clientExtensionResults: {},
+    type: 'public-key',
+  });
+  expect(authentication).toEqual({
+    id: expected.id,
+    rawId: expected.id,
+    response: expected.assertion,
+    authenticatorAttachment: 'platform',
+    clientExtensionResults: {},
+    type: 'public-key',
+  });
+
+  const [credential] = await context.credentials.get();
+  expect(registration.response.publicKey).toBe(credential.publicKey);
+  expect(authentication.response.userHandle).toBe(credential.userHandle);
+  expect(JSON.parse(Buffer.from(registration.response.clientDataJSON, 'base64url').toString()).type).toBe('webauthn.create');
+  expect(JSON.parse(Buffer.from(authentication.response.clientDataJSON, 'base64url').toString()).type).toBe('webauthn.get');
+
+  // Registration authenticator data is embedded in the attestation object and carries attested credential data (AT flag).
+  const authData = Buffer.from(registration.response.authenticatorData, 'base64url');
+  expect(Buffer.from(registration.response.attestationObject, 'base64url').includes(authData)).toBe(true);
+  expect(authData[32] & 0x40).toBe(0x40);
+});
