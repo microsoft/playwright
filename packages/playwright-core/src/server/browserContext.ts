@@ -322,9 +322,9 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     if (!cookiesToExpire.length)
       return;
 
+    // Keep the original value: browsers reject or ignore cookies with both empty name and value.
     await this.addCookies(cookiesToExpire.map(cookie => ({
       ...cookie,
-      value: '',
       expires: 0,
     })));
   }

@@ -239,3 +239,14 @@ it('should remove partitioned cookies by name', {
   ]);
   await context.close();
 });
+
+it('should remove nameless cookies by empty name', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43112' },
+}, async ({ context }) => {
+  await context.addCookies([
+    { name: '', value: 'nameless', domain: 'example.com', path: '/' },
+    { name: 'session', value: 'secret', domain: 'example.com', path: '/' },
+  ]);
+  await context.clearCookies({ name: '' });
+  expect((await context.cookies()).map(cookie => cookie.name)).toEqual(['session']);
+});
