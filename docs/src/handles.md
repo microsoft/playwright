@@ -115,8 +115,7 @@ assert 'highlighted' in class_names
 
 ```csharp
 // Get the element handle
-var jsHandle = await page.WaitForSelectorAsync("#box");
-var elementHandle = jsHandle as ElementHandle;
+var elementHandle = await page.WaitForSelectorAsync("#box");
 
 // Assert bounding box for the element
 var boundingBox = await elementHandle.BoundingBoxAsync();
