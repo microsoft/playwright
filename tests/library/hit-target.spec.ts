@@ -464,3 +464,54 @@ it('should click in custom element', async ({ page }) => {
   await page.locator('input').click();
   expect(await page.evaluate('window.__clicked')).toBe(true);
 });
+
+it('should click in nested custom elements', async ({ page }) => {
+  await page.setContent(`
+    <html>
+      <body>
+        <outer-host></outer-host>
+        <script>
+          customElements.define('inner-input', class extends HTMLElement {
+            connectedCallback() {
+              this.attachShadow({mode:'open'});
+              this.shadowRoot.innerHTML = '<div><input type="text" /></div>';
+              this.shadowRoot.querySelector('input').addEventListener('click', () => window.__clicked = true);
+            }
+          });
+          customElements.define('middle-host', class extends HTMLElement {
+            connectedCallback() {
+              this.attachShadow({mode:'open'});
+              this.shadowRoot.innerHTML = '<inner-input></inner-input>';
+            }
+          });
+          customElements.define('outer-host', class extends HTMLElement {
+            connectedCallback() {
+              this.attachShadow({mode:'open'});
+              this.shadowRoot.innerHTML = '<middle-host></middle-host>';
+            }
+          });
+        </script>
+      </body>
+    </html>
+  `);
+  await page.locator('input').click();
+  expect(await page.evaluate('window.__clicked')).toBe(true);
+});
+
+it('should click an element inside nested closed shadow roots', async ({ page }) => {
+  await page.setContent(`
+    <div id=container></div>
+    <script>
+      const outer = document.getElementById('container').attachShadow({ mode: 'closed' });
+      outer.innerHTML = '<div></div>';
+      const inner = outer.querySelector('div').attachShadow({ mode: 'closed' });
+      inner.innerHTML = '<input type="text" />';
+      const input = inner.querySelector('input');
+      input.addEventListener('click', () => window.__clicked = true);
+      window.__target = input;
+    </script>
+  `);
+  const handle = await page.evaluateHandle('window.__target');
+  await (handle as any as ElementHandle).click();
+  expect(await page.evaluate('window.__clicked')).toBe(true);
+});

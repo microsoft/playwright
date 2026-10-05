@@ -1054,13 +1054,15 @@ export class InjectedScript {
           elements.unshift(singleElement);
         }
       }
-      if (elements[0] && elements[0].shadowRoot === root && elements[1] === singleElement) {
-        // Workaround webkit but where first two elements are swapped:
-        // <host>
+      if (elements[0] && elements[1] === singleElement && roots.slice(index, -1).some(r => (r as ShadowRoot).host === elements[0])) {
+        // Workaround webkit bug where the outermost shadow host comes first:
+        // <outer-host>
         //   #shadow root
-        //     <target>
-        // elementsFromPoint produces [<host>, <target>], while it should be [<target>, <host>]
-        // In this case, just ignore <host>.
+        //     <inner-host>
+        //       #shadow root
+        //         <target>
+        // elementsFromPoint on any of these shadow roots produces [<outer-host>, <target>, ...],
+        // while it should be [<target>, ..., <outer-host>]. In this case, just ignore <outer-host>.
         elements.shift();
       }
       const innerElement = elements[0] as Element | undefined;
