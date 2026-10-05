@@ -69,6 +69,27 @@ export function gracefullyProcessExitDoNotHang(code: number, onExit?: () => Prom
   gracefullyCloseAll().then(callback);
 }
 
+// Calls back when the parent process exits. The parent owns the write end of the stdin pipe,
+// so the pipe closes when the parent exits. Returns a function that stops watching.
+//
+// stdin only emits 'close' once it has been read to the end, so this keeps stdin flowing.
+// Call it after any other reader of stdin has attached, otherwise data that arrives before
+// that reader attaches is lost. While watching, a flowing stdin keeps the process alive, so a
+// process that is done with its work must stop watching in order to exit.
+//
+// Does nothing when stdin is a terminal: the terminal outlives the parent, and a background
+// process that reads from the terminal gets stopped by the operating system.
+export function onParentProcessExit(callback: () => void): () => void {
+  if (process.stdin.isTTY)
+    return () => {};
+  process.stdin.on('close', callback);
+  process.stdin.resume();
+  return () => {
+    process.stdin.off('close', callback);
+    process.stdin.pause();
+  };
+}
+
 function exitHandler() {
   for (const kill of killSet)
     kill();

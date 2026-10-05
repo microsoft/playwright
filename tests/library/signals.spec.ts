@@ -19,6 +19,7 @@ import { playwrightTest as test, expect } from '../config/browserTest';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
+import path from 'path';
 
 test.slow();
 
@@ -141,4 +142,14 @@ test.describe('signals', () => {
     expect(await remoteServer.childExitCode()).toBe(null);
     expect(await remoteServer.childSignal()).toBe('SIGTERM');
   });
+});
+
+test('should exit run-server when stdin closes', async ({ childProcess }) => {
+  const child = childProcess({
+    command: ['node', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'cli.js'), 'run-server', '--port=0'],
+  });
+  await child.waitForOutput('Listening on');
+  // This is what the parent process exit looks like to the server.
+  child.process.stdin!.end();
+  expect(await child.exitCode).toBe(0);
 });

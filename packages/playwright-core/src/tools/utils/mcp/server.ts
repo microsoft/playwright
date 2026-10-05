@@ -188,9 +188,6 @@ function addServerListener(server: ServerType, event: 'close' | 'initialized', l
 export async function start(serverBackendFactory: ServerBackendFactory, options: { host?: string; port?: number, allowedHosts?: string[], socketPath?: string } = {}) {
   if (options.port === undefined) {
     const transport = new StdioServerTransport();
-    // The SDK's StdioServerTransport doesn't detect peer disconnect — it never listens for stdin
-    // end-of-stream. Wire it up so callTool requests can be cancelled when the client goes away.
-    process.stdin.on('end', () => void transport.close());
     await connect(serverBackendFactory, transport, Promise.resolve(), false);
     return;
   }

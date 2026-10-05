@@ -364,3 +364,11 @@ test('runGlobalSetup returns env', async ({ startTestServer, writeFiles }) => {
   expect(result2.env).toContainEqual(['MAGIC_BEFORE', null]);
   expect(result2.env).toContainEqual(['MAGIC_AFTER', '43']);
 });
+
+test('should exit when stdin closes', async ({ startCLICommand }) => {
+  const testServerProcess = await startCLICommand({}, 'test-server');
+  await testServerProcess.waitForOutput('Listening on');
+  // This is what the parent process exit looks like to the server.
+  testServerProcess.process.stdin!.end();
+  expect(await testServerProcess.exitCode).toBe(0);
+});

@@ -27,7 +27,7 @@ import { inheritAndCleanEnv } from '../config/utils';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
 import { ListRootsRequestSchema, PingRequestSchema } from 'playwright-core/lib/utilsBundle';
 
-const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noPort?: boolean, env?: Record<string, string> }) => Promise<{ url: URL, stderr: () => string }> }>({
+const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noPort?: boolean, env?: Record<string, string> }) => Promise<{ url: URL, stderr: () => string, child: ChildProcess }> }>({
   serverEndpoint: async ({ mcpHeadless }, use, testInfo) => {
     let cp: ChildProcess | undefined;
     const userDataDir = testInfo.outputPath('user-data-dir');
@@ -59,7 +59,7 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
           resolve(match[1]);
       }));
 
-      return { url: new URL(url), stderr: () => stderr };
+      return { url: new URL(url), stderr: () => stderr, child: cp };
     });
     cp?.kill('SIGTERM');
   },
@@ -71,6 +71,14 @@ test('http transport', async ({ serverEndpoint }) => {
   const client = new Client({ name: 'test', version: '1.0.0' });
   await client.connect(transport);
   await client.ping();
+});
+
+test('http transport exits when stdin closes', async ({ serverEndpoint }) => {
+  const { child } = await serverEndpoint({ args: ['--isolated'] });
+  // This is what the parent process exit looks like to the server.
+  child.stdin!.end();
+  const exitCode = await new Promise(resolve => child.once('exit', resolve));
+  expect(exitCode).toBe(0);
 });
 
 test('http transport (config)', async ({ serverEndpoint }) => {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { gracefullyCloseAll, gracefullyCloseSet } from '@utils/processLauncher';
+import { gracefullyCloseAll, gracefullyCloseSet, onParentProcessExit } from '@utils/processLauncher';
 import { testDebug } from './log';
 import { processExit } from '../../bootstrap';
 
@@ -32,7 +32,7 @@ export function setupExitWatchdog() {
     processExit(0);
   };
 
-  process.stdin.on('close', () => handleExit('close'));
+  onParentProcessExit(() => handleExit('close'));
   process.on('SIGINT', () => handleExit('SIGINT'));
   process.on('SIGTERM', () => handleExit('SIGTERM'));
 }

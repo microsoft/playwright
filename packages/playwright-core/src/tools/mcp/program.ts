@@ -86,8 +86,6 @@ export function decorateMCPCommand(command: Command) {
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, '--viewport-size'))
       .addOption(new ProgramOption('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
       .action(async options => {
-        setupExitWatchdog();
-
         if (options.vision) {
           // eslint-disable-next-line no-console
           console.error('The --vision option is deprecated, use --caps=vision instead');
@@ -187,5 +185,8 @@ export function decorateMCPCommand(command: Command) {
           },
         };
         await mcpServer.start(factory, config.server);
+        // The watchdog reads stdin to notice the parent exit. Set it up after the stdio transport
+        // has attached, so that it does not take the client's first messages.
+        setupExitWatchdog();
       });
 }

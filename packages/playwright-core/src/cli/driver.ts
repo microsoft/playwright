@@ -19,7 +19,7 @@
 import fs from 'fs';
 
 import { PipeTransport } from '@utils/pipeTransport';
-import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { gracefullyProcessExitDoNotHang, onParentProcessExit } from '@utils/processLauncher';
 import { playwright } from '../inprocess';
 import { PlaywrightServer } from '../remote/playwrightServer';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from '../server';
@@ -82,7 +82,7 @@ export async function runServer(options: RunServerOptions) {
   const wsEndpoint = await server.listen(port, host);
   process.on('exit', () => server.close().catch(console.error));
   console.log('Listening on ' + wsEndpoint);
-  process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
+  onParentProcessExit(() => gracefullyProcessExitDoNotHang(0));
 }
 
 export async function launchBrowserServer(browserName: string, configFile?: string) {

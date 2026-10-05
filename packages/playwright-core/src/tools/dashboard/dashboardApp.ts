@@ -21,7 +21,7 @@ import http from 'http';
 
 import { HttpServer } from '@utils/httpServer';
 import { makeSocketPath } from '@utils/fileUtils';
-import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { gracefullyProcessExitDoNotHang, onParentProcessExit } from '@utils/processLauncher';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { libPath } from '../../package';
 import { playwright } from '../../inprocess';
@@ -396,7 +396,7 @@ async function runKillClient(): Promise<void> {
 }
 
 async function runAnnotateClient(options: DashboardOptions): Promise<void> {
-  selfDestructOnParentGone();
+  const stopSelfDestruct = selfDestructOnParentGone();
 
   const socketPath = dashboardSocketPath();
   const tryConnect = () => new Promise<net.Socket | undefined>(resolve => {
@@ -427,6 +427,8 @@ async function runAnnotateClient(options: DashboardOptions): Promise<void> {
     socket!.on('error', reject);
   });
   socket.destroy();
+  // Done talking to the dashboard. Stop watching stdin so that the process can exit.
+  stopSelfDestruct();
   const text = Buffer.concat(chunks).toString();
   if (!text)
     return;
@@ -435,7 +437,5 @@ async function runAnnotateClient(options: DashboardOptions): Promise<void> {
 }
 
 function selfDestructOnParentGone(): () => void {
-  const onClose = () => gracefullyProcessExitDoNotHang(0);
-  process.stdin.on('close', onClose);
-  return () => process.stdin.off('close', onClose);
+  return onParentProcessExit(() => gracefullyProcessExitDoNotHang(0));
 }

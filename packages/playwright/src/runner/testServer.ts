@@ -22,7 +22,7 @@ import { server as coreServer } from 'playwright-core/lib/coreBundle';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { isUnderTest } from '@utils/debug';
 import { HttpServer } from '@utils/httpServer';
-import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { gracefullyProcessExitDoNotHang, onParentProcessExit } from '@utils/processLauncher';
 
 import { configLoader, ipc } from '../common';
 import ListReporter from '../reporters/list';
@@ -323,7 +323,7 @@ async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverr
   const testServer = new TestServer(configLocation, configCLIOverrides);
   const cancelPromise = new ManualPromise<void>();
   const sigintWatcher = new SigIntWatcher();
-  process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
+  onParentProcessExit(() => gracefullyProcessExitDoNotHang(0));
   void sigintWatcher.promise().then(() => cancelPromise.resolve());
   try {
     const server = await testServer.start(options);

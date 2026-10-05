@@ -145,7 +145,6 @@ function addTestMCPServerCommand(program: Command) {
   command.option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.');
   command.option('--port <port>', 'port to listen on for SSE transport.');
   command.action(async options => {
-    tools.setupExitWatchdog();
     const factory: tools.ServerBackendFactory = {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
@@ -155,6 +154,9 @@ function addTestMCPServerCommand(program: Command) {
     };
     // TODO: add all options from mcp.startHttpServer.
     await tools.start(factory, { port: options.port === undefined ? undefined : +options.port, host: options.host });
+    // The watchdog reads stdin to notice the parent exit. Set it up after the stdio transport
+    // has attached, so that it does not take the client's first messages.
+    tools.setupExitWatchdog();
   });
 }
 

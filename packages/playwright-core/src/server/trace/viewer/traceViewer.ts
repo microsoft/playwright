@@ -20,7 +20,7 @@ import url from 'url';
 
 import open from 'open';
 import { HttpServer } from '@utils/httpServer';
-import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { gracefullyProcessExitDoNotHang, onParentProcessExit } from '@utils/processLauncher';
 import { isUnderTest } from '@utils/debug';
 import { isCodingAgent } from '@utils/env';
 import { isPathInside } from '@utils/fileUtils';
@@ -284,7 +284,7 @@ class StdinServer implements Transport {
       else
         this._loadTrace(url);
     });
-    process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
+    onParentProcessExit(() => gracefullyProcessExitDoNotHang(0));
   }
 
   onconnect() {
