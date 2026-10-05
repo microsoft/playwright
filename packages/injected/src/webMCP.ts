@@ -72,7 +72,7 @@ export class WebMCPScript {
       return await modelContext.executeTool!(tool, input);
     } catch (e) {
       // Chromium before 155 takes the input as a JSON string.
-      if (!String((e as Error)?.message).includes('Failed to parse input arguments'))
+      if (!String((e as Error)?.message).includes('Failed to parse input'))
         throw e;
       return await modelContext.executeTool!(tool, JSON.stringify(input));
     }
