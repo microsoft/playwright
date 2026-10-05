@@ -114,4 +114,14 @@ it.describe('block', () => {
     await page.goto('about:blank');
     expect(errors).toEqual([]);
   });
+
+  it('should not throw error in opaque sandboxed iframe', async ({ page, server }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43113' });
+    const errors = [];
+    page.on('pageerror', error => errors.push(error));
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<iframe sandbox="allow-scripts" srcdoc="<p>Preview</p>"></iframe>');
+    await expect(page.frameLocator('iframe').locator('p')).toHaveText('Preview');
+    expect(errors).toEqual([]);
+  });
 });
