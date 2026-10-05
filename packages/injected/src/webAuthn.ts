@@ -41,6 +41,8 @@ export type CreateResponse = {
   id: string,
   clientDataJSON: string,
   attestationObject: string,
+  authenticatorData: string,
+  publicKey: string,
 } | { ok: false, name: string, message: string };
 
 export type GetResponse = {
@@ -98,17 +100,13 @@ export function inject(globalThis: GlobalThis) {
       Object.defineProperty(target, k, { value: props[k], enumerable: true, configurable: true });
   }
 
-  function makeAttestationResponse(clientDataJSON: ArrayBuffer, attestationObject: ArrayBuffer) {
+  function makeAttestationResponse(clientDataJSON: ArrayBuffer, attestationObject: ArrayBuffer, authenticatorData: ArrayBuffer, publicKey: ArrayBuffer) {
     const proto = AuthAttestationResponseCtor?.prototype || Object.prototype;
     const r = Object.create(proto);
     defineReadonly(r, { clientDataJSON, attestationObject });
     r.getTransports = () => ['internal'];
-    r.getAuthenticatorData = () => {
-      // Extract authData from attestationObject (CBOR: { fmt, attStmt, authData }).
-      // For simplicity, return the whole attestationObject — callers rarely use this in tests.
-      return attestationObject;
-    };
-    r.getPublicKey = () => null;
+    r.getAuthenticatorData = () => authenticatorData;
+    r.getPublicKey = () => publicKey;
     r.getPublicKeyAlgorithm = () => -7;
     return r;
   }
@@ -120,7 +118,7 @@ export function inject(globalThis: GlobalThis) {
     return r;
   }
 
-  function makePublicKeyCredential(id: string, response: any) {
+  function makePublicKeyCredential(id: string, response: any, responseToJSON: () => Record<string, any>) {
     const proto = PublicKeyCredentialCtor?.prototype || Object.prototype;
     const cred = Object.create(proto);
     defineReadonly(cred, {
@@ -131,7 +129,15 @@ export function inject(globalThis: GlobalThis) {
       response,
     });
     cred.getClientExtensionResults = () => ({});
-    cred.toJSON = () => ({ id, rawId: id, type: 'public-key', response: {} });
+    // https://w3c.github.io/webauthn/#dom-publickeycredential-tojson
+    cred.toJSON = () => ({
+      id,
+      rawId: id,
+      response: responseToJSON(),
+      authenticatorAttachment: 'platform',
+      clientExtensionResults: {},
+      type: 'public-key',
+    });
     return cred;
   }
 
@@ -176,8 +182,20 @@ export function inject(globalThis: GlobalThis) {
     const result: CreateResponse = await binding(req);
     if (!result.ok)
       failure(result.name, result.message);
-    const resp = makeAttestationResponse(fromBase64Url(result.clientDataJSON), fromBase64Url(result.attestationObject));
-    return makePublicKeyCredential(result.id, resp);
+    const resp = makeAttestationResponse(
+        fromBase64Url(result.clientDataJSON),
+        fromBase64Url(result.attestationObject),
+        fromBase64Url(result.authenticatorData),
+        fromBase64Url(result.publicKey),
+    );
+    return makePublicKeyCredential(result.id, resp, () => ({
+      clientDataJSON: result.clientDataJSON,
+      authenticatorData: result.authenticatorData,
+      transports: resp.getTransports(),
+      publicKey: result.publicKey,
+      publicKeyAlgorithm: resp.getPublicKeyAlgorithm(),
+      attestationObject: result.attestationObject,
+    }));
   };
 
   globalThis.navigator.credentials.get = async function(options?: CredentialRequestOptions): Promise<Credential | null> {
@@ -201,7 +219,12 @@ export function inject(globalThis: GlobalThis) {
         fromBase64Url(result.signature),
         result.userHandle ? fromBase64Url(result.userHandle) : null,
     );
-    return makePublicKeyCredential(result.id, resp);
+    return makePublicKeyCredential(result.id, resp, () => ({
+      clientDataJSON: result.clientDataJSON,
+      authenticatorData: result.authenticatorData,
+      signature: result.signature,
+      ...(result.userHandle ? { userHandle: result.userHandle } : {}),
+    }));
   };
 
   if (PublicKeyCredentialCtor) {

@@ -178,6 +178,8 @@ export class Credentials {
       id: credentialIdB64,
       clientDataJSON: bufToB64Url(clientDataJSON),
       attestationObject: bufToB64Url(attestationObject),
+      authenticatorData: bufToB64Url(authData),
+      publicKey,
     };
   }
 
