@@ -346,6 +346,17 @@ export default defineConfig({
 });
 ```
 
+When passing an array of credentials to [`method: Test.use`], wrap it into an extra array, see [fixture options](../test-fixtures.md#fixtures-options).
+
+```js title="example.spec.ts"
+test.use({
+  httpCredentials: [[
+    { username: 'alice', password: 'alice-pass', origin: 'https://a.example.com' },
+    { username: 'bob', password: 'bob-pass', origin: 'https://b.example.com' },
+  ], { scope: 'test' }],
+});
+```
+
 ## property: TestOptions.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
 * since: v1.10
 
