@@ -724,3 +724,34 @@ test('should expose protocols on server-side route', async ({ page, server }) =>
   expect(pageRoute.protocols()).toEqual(['chat.v2', 'chat.v1']);
   expect(serverRoute.protocols()).toEqual(['chat.v2', 'chat.v1']);
 });
+
+test('should emit page websocket event for a fully mocked WebSocket', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43104' },
+}, async ({ page, server }) => {
+  const log: string[] = [];
+  page.on('websocket', ws => {
+    log.push(`open<${ws.url()}>`);
+    ws.on('framesent', frame => log.push(`sent<${frame.payload}>`));
+    ws.on('framereceived', frame => log.push(`received<${frame.payload}>`));
+    ws.on('close', () => log.push('close'));
+  });
+  const { promise, resolve } = withResolvers<WebSocketRoute>();
+  await page.routeWebSocket(/.*/, ws => {
+    ws.onMessage(message => ws.send('echo-' + message));
+    resolve(ws);
+  });
+
+  await setupWS(page, server, 'blob');
+  await page.evaluate(async () => {
+    await window.wsOpened;
+    window.ws.send('hi');
+  });
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual([
+    'open',
+    `message: data=echo-hi origin=ws://${server.HOST} lastEventId=`,
+  ]);
+
+  const route = await promise;
+  await route.close();
+  await expect.poll(() => log).toEqual([`open<ws://${server.HOST}/ws>`, 'sent<hi>', 'received<echo-hi>', 'close']);
+});

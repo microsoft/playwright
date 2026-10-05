@@ -17,6 +17,7 @@
 import { deserializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
 import { eventsHelper } from '@utils/eventsHelper';
 import { Page } from '../page';
+import { WebSocket } from '../network';
 import { Dispatcher } from './dispatcher';
 import { PageDispatcher } from './pageDispatcher';
 import * as rawWebSocketMockSource from '../../generated/webSocketMockSource';
@@ -35,12 +36,15 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
   _type_WebSocketRoute = true;
   private _id: string;
   private _frame: Frame;
+  // A fully mocked WebSocket never reaches the browser's network stack, so we report it ourselves.
+  private _webSocket: WebSocket | undefined;
   private static _idToDispatcher = new Map<string, WebSocketRouteDispatcher>();
 
   constructor(scope: PageDispatcher | BrowserContextDispatcher, id: string, url: string, protocols: string[], frame: Frame) {
     super(scope, new SdkObject(scope._object, 'webSocketRoute'), 'WebSocketRoute', { url, protocols });
     this._id = id;
     this._frame = frame;
+    this._webSocket = new WebSocket(frame._page, url);
     this._eventListeners.push(
         // When the frame navigates or detaches, there will be no more communication
         // from the mock websocket, so pretend like it was closed.
@@ -85,8 +89,10 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
         }
 
         const dispatcher = WebSocketRouteDispatcher._idToDispatcher.get(payload.id);
-        if (payload.type === 'onMessageFromPage')
+        if (payload.type === 'onMessageFromPage') {
+          dispatcher?._webSocket?.frameSent(payload.data.isBase64 ? 2 : 1, payload.data.data, Date.now());
           dispatcher?._dispatchEvent('messageFromPage', { message: payload.data.data, isBase64: payload.data.isBase64 });
+        }
         if (payload.type === 'onMessageFromServer')
           dispatcher?._dispatchEvent('messageFromServer', { message: payload.data.data, isBase64: payload.data.isBase64 });
         if (payload.type === 'onClosePage')
@@ -120,14 +126,18 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
   }
 
   async connect(params: channels.WebSocketRouteConnectParams, progress: Progress) {
+    // The native WebSocket reports itself.
+    this._webSocket = undefined;
     await this._evaluateAPIRequest(progress, { id: this._id, type: 'connect' });
   }
 
   async ensureOpened(params: channels.WebSocketRouteEnsureOpenedParams, progress: Progress) {
+    this._reportWebSocket();
     await this._evaluateAPIRequest(progress, { id: this._id, type: 'ensureOpened' });
   }
 
   async sendToPage(params: channels.WebSocketRouteSendToPageParams, progress: Progress) {
+    this._reportWebSocket()?.frameReceived(params.isBase64 ? 2 : 1, params.message, Date.now());
     await this._evaluateAPIRequest(progress, { id: this._id, type: 'sendToPage', data: { data: params.message, isBase64: params.isBase64 } });
   }
 
@@ -137,6 +147,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
 
   async closePage(params: channels.WebSocketRouteClosePageParams, progress: Progress) {
     await this._evaluateAPIRequest(progress, { id: this._id, type: 'closePage', code: params.code, reason: params.reason, wasClean: params.wasClean });
+    this._closeWebSocket();
   }
 
   async closeServer(params: channels.WebSocketRouteCloseServerParams, progress: Progress) {
@@ -145,6 +156,17 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
 
   private async _evaluateAPIRequest(progress: Progress, request: ws.APIRequest) {
     await this._frame.evaluateExpression(progress, `globalThis.__pwWebSocketDispatch(${JSON.stringify(request)})`).catch(() => {});
+  }
+
+  private _reportWebSocket(): WebSocket | undefined {
+    if (this._webSocket?.markAsNotified())
+      this._frame._page.emit(Page.Events.WebSocket, this._webSocket);
+    return this._webSocket;
+  }
+
+  private _closeWebSocket() {
+    this._reportWebSocket()?.closed();
+    this._webSocket = undefined;
   }
 
   override _onDispose() {
@@ -158,6 +180,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
     if (!this._disposed) {
       this._dispatchEvent('closePage', { wasClean: true });
       this._dispatchEvent('closeServer', { wasClean: true });
+      this._closeWebSocket();
     }
   }
 }
