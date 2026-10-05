@@ -54,8 +54,9 @@ export function filterCookies(cookies: channels.NetworkCookie[], urls: string[])
   });
 }
 
+// Mirrors Chromium's net::IsLocalhost(): localhost, *.localhost, 127.0.0.0/8 and [::1].
 export function isLocalHostname(hostname: string): boolean {
-  return hostname === 'localhost' || hostname.endsWith('.localhost');
+  return hostname === 'localhost' || hostname.endsWith('.localhost') || hostname === '[::1]' || /^127\.\d+\.\d+\.\d+$/.test(hostname);
 }
 
 // Forbidden request headers according to https://developer.mozilla.org/en-US/docs/Glossary/Forbidden_request_header
