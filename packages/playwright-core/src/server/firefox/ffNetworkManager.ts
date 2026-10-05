@@ -16,11 +16,11 @@
  */
 
 import { eventsHelper } from '@utils/eventsHelper';
+import { splitSetCookieHeader } from '@isomorphic/headers';
 import * as network from '../network';
 
 import type { FFSession } from './ffConnection';
 import type { FFPage } from './ffPage';
-import type { HeadersArray } from '../../server/types';
 import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as frames from '../frames';
 import type * as types from '../types';
@@ -115,7 +115,7 @@ export class FFNetworkManager {
       requestStart: relativeToStart(event.timing.requestStart),
       responseStart: relativeToStart(event.timing.responseStart),
     };
-    const response = new network.Response(request.request, event.status, event.statusText, parseMultivalueHeaders(event.headers), timing, getResponseBody, event.fromServiceWorker);
+    const response = new network.Response(request.request, event.status, event.statusText, event.headers, timing, getResponseBody, event.fromServiceWorker);
     if (event?.remoteIPAddress && typeof event?.remotePort === 'number') {
       response._serverAddrFinished({
         ipAddress: event.remoteIPAddress,
@@ -264,7 +264,7 @@ class FFRouteImpl implements network.RouteDelegate {
       requestId: this._request._id,
       status: response.status,
       statusText: network.statusText(response.status),
-      headers: response.headers,
+      headers: splitSetCookieHeader(response.headers),
       base64body,
     });
   }
@@ -275,15 +275,4 @@ class FFRouteImpl implements network.RouteDelegate {
       errorCode,
     });
   }
-}
-
-function parseMultivalueHeaders(headers: HeadersArray) {
-  const result: HeadersArray = [];
-  for (const header of headers) {
-    const separator = header.name.toLowerCase() === 'set-cookie' ? '\n' : ',';
-    const tokens = header.value.split(separator).map(s => s.trim());
-    for (const token of tokens)
-      result.push({ name: header.name, value: token });
-  }
-  return result;
 }
