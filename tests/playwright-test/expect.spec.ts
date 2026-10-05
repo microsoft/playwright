@@ -1341,6 +1341,28 @@ test('should support arrayOf', async ({ runInlineTest }) => {
   expect(result.output).toContain('ArrayOf Any<Number>');
 });
 
+test('should support arrayOf with constructor', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      class Example {}
+      test('pass', () => {
+        expect(['a', 'b', 'c']).toEqual(expect.arrayOf(String));
+        expect([1, 2, 3]).toEqual(expect.arrayOf(Number));
+        expect([new Example(), new Example()]).toEqual(expect.arrayOf(Example));
+        expect(['a', 1]).toEqual(expect.not.arrayOf(String));
+      });
+      test('fail', () => {
+        expect(['a', 'b', 3]).toEqual(expect.arrayOf(String));
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('ArrayOf Any<String>');
+});
+
 test('should account for undefined matcherResult', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'example.spec.ts': `

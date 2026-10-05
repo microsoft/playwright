@@ -333,6 +333,10 @@ class ArrayContaining extends AsymmetricMatcher<Array<unknown>> {
 }
 
 class ArrayOf extends AsymmetricMatcher<unknown> {
+  constructor(sample: unknown, inverse = false) {
+    super(typeof sample === 'function' ? new Any(sample) : sample, inverse);
+  }
+
   asymmetricMatch(other: unknown) {
     const matcherContext = this.getMatcherContext();
     const result =
