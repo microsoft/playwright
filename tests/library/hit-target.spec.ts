@@ -464,3 +464,51 @@ it('should click in custom element', async ({ page }) => {
   await page.locator('input').click();
   expect(await page.evaluate('window.__clicked')).toBe(true);
 });
+
+it('should click in nested custom elements', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43118' },
+}, async ({ page }) => {
+  await page.setContent(`
+    <outer-host></outer-host>
+    <script>
+      customElements.define('inner-host', class extends HTMLElement {
+        connectedCallback() {
+          this.attachShadow({ mode: 'open' }).innerHTML = '<inner-most></inner-most>';
+        }
+      });
+      customElements.define('inner-most', class extends HTMLElement {
+        connectedCallback() {
+          this.attachShadow({ mode: 'open' }).innerHTML = '<input>';
+          this.shadowRoot.querySelector('input').addEventListener('click', () => window.__clicked = true);
+        }
+      });
+      customElements.define('outer-host', class extends HTMLElement {
+        connectedCallback() {
+          this.attachShadow({ mode: 'open' }).innerHTML = '<inner-host></inner-host>';
+        }
+      });
+    </script>
+  `);
+  await page.locator('input').click();
+  expect(await page.evaluate('window.__clicked')).toBe(true);
+});
+
+it('should click an element inside nested closed shadow roots', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43118' },
+}, async ({ page }) => {
+  await page.setContent(`
+    <div id=container></div>
+    <script>
+      const input = document.createElement('input');
+      input.addEventListener('click', () => window.__clicked = true);
+      const outer = document.getElementById('container').attachShadow({ mode: 'closed' });
+      const inner = document.createElement('div');
+      outer.appendChild(inner);
+      inner.attachShadow({ mode: 'closed' }).appendChild(input);
+      window.__target = input;
+    </script>
+  `);
+  const handle = await page.evaluateHandle('window.__target');
+  await (handle as any as ElementHandle).click();
+  expect(await page.evaluate('window.__clicked')).toBe(true);
+});
