@@ -7143,15 +7143,7 @@ export interface PlaywrightWorkerOptions {
    * [fixtures.browser](https://playwright.dev/docs/api/class-fixtures#fixtures-browser),
    * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) and
    * [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page) use the remote browser instead of
-   * launching a browser locally. Launch options like
-   * [testOptions.headless](https://playwright.dev/docs/api/class-testoptions#test-options-headless) or
-   * [testOptions.channel](https://playwright.dev/docs/api/class-testoptions#test-options-channel) are ignored when
-   * connecting to a browser started with
-   * [browserType.launchServer([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-server).
-   * A server started with `npx playwright run-server` launches a new browser for each connection and applies some
-   * launch options, such as
-   * [testOptions.headless](https://playwright.dev/docs/api/class-testoptions#test-options-headless) and
-   * [testOptions.channel](https://playwright.dev/docs/api/class-testoptions#test-options-channel).
+   * launching a browser locally.
    */
   connectOptions: ConnectOptions | undefined;
   /**
