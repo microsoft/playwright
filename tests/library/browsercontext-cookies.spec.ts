@@ -305,6 +305,13 @@ it('should return secure cookies based on HTTP(S) protocol', async ({ context, b
   }]);
 });
 
+for (const host of ['127.0.0.1', '[::1]']) {
+  it(`should return secure cookies for http ${host}`, { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43115' } }, async ({ context }) => {
+    await context.addCookies([{ name: 'a', value: 'v', domain: host, path: '/', secure: true }]);
+    expect((await context.cookies(`http://${host}/`)).map(c => c.name)).toEqual(['a']);
+  });
+}
+
 it('should add cookies with an expiration', async ({ context }) => {
   const expires = Math.floor((Date.now() / 1000)) + 3600;
   await context.addCookies([{
