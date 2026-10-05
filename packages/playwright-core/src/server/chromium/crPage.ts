@@ -487,8 +487,6 @@ class FrameSession {
       startAutomaticVideoRecording(this._crPage._page);
 
     let lifecycleEventsEnabled: Promise<any>;
-    if (!this._isMainFrame())
-      this._addRendererListeners();
     this._addBrowserListeners();
 
     // Buffer attachedToTarget events until we receive the frame tree.
@@ -500,10 +498,9 @@ class FrameSession {
     const promises: Promise<any>[] = [
       this._client.send('Page.enable'),
       this._client.send('Page.getFrameTree').then(({ frameTree }) => {
-        if (this._isMainFrame()) {
-          this._handleFrameTree(frameTree);
-          this._addRendererListeners();
-        }
+        const localFrames: frames.Frame[] = [];
+        this._handleFrameTree(frameTree, localFrames);
+        this._addRendererListeners();
 
         // Now that we have the frame tree, it is possible to insert oopif targets at the right place.
         const attachedToTargetEvents = this._bufferedAttachedToTargetEvents || [];
@@ -511,7 +508,6 @@ class FrameSession {
         for (const event of attachedToTargetEvents)
           this._onAttachedToTarget(this._client, event);
 
-        const localFrames = this._isMainFrame() ? this._page.frames() : [this._page.frameManager.frame(this._targetId)!];
         for (const frame of localFrames) {
           // Note: frames might be removed before we send these.
           this._client._sendMayFail('Page.createIsolatedWorld', {
@@ -636,14 +632,24 @@ class FrameSession {
       this._page.frameManager.frameLifecycleEvent(event.frameId, 'domcontentloaded');
   }
 
-  _handleFrameTree(frameTree: Protocol.Page.FrameTree) {
-    this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
-    this._onFrameNavigated(frameTree.frame, true);
-    if (!frameTree.childFrames)
+  _handleFrameTree(frameTree: Protocol.Page.FrameTree, collectedLocalFrames: frames.Frame[]) {
+    const isOopif = !this._isMainFrame() && frameTree.frame.id === this._targetId;
+    // Note: OOPIF frame has been already attached in the parent session, so skip it.
+    if (!isOopif)
+      this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
+
+    const isInitialOopifDocument = isOopif && (frameTree.frame.url === '' || frameTree.frame.url === ':');
+    // Note: do not fake an empty document commit in a newly created OOPIF.
+    if (!isInitialOopifDocument)
+      this._onFrameNavigated(frameTree.frame, true);
+
+    const frame = this._page.frameManager.frame(frameTree.frame.id);
+    if (!frame)
       return;
 
-    for (const child of frameTree.childFrames)
-      this._handleFrameTree(child);
+    collectedLocalFrames.push(frame);
+    for (const child of frameTree.childFrames || [])
+      this._handleFrameTree(child, collectedLocalFrames);
   }
 
   private _eventBelongsToStaleFrame(frameId: string)  {
@@ -765,7 +771,8 @@ class FrameSession {
       if (!frame && event.targetInfo.parentFrameId) {
         // When connecting to an existing page with an iframe, there is an "iframe" target,
         // but no local frame is reported in getFrameTree. We can create a remote frame here.
-        frame = this._page.frameManager.frameAttached(targetId, event.targetInfo.parentFrameId);
+        const parentFrame = this._page.frameManager.frame(event.targetInfo.parentFrameId) ?? this._page.mainFrame();
+        frame = this._page.frameManager.frameAttached(targetId, parentFrame._id);
       }
       if (!frame)
         return; // Subtree may be already gone due to renderer/browser race.
