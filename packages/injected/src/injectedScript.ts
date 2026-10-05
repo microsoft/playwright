@@ -1054,15 +1054,19 @@ export class InjectedScript {
           elements.unshift(singleElement);
         }
       }
-      if (elements[0] && elements[0].shadowRoot === root && elements[1] === singleElement) {
-        // Workaround webkit but where first two elements are swapped:
-        // <host>
-        //   #shadow root
-        //     <target>
-        // elementsFromPoint produces [<host>, <target>], while it should be [<target>, <host>]
-        // In this case, just ignore <host>.
+      // Workaround webkit bug: elementsFromPoint() puts the outermost shadow host first (seen with <input>).
+      //
+      //   DOM                  root.elementsFromPoint() in WebKit
+      //   <outer-host>
+      //     #shadow-root       [<outer-host>, <inner-host>, ...]
+      //       <inner-host>      ^^^^^^^^^^^^ bogus
+      //         #shadow-root   [<outer-host>, <input>, <inner-host>, ...]
+      //           <input>       ^^^^^^^^^^^^ bogus
+      //
+      // elementFromPoint() is correct. Drop elements[0] when elements[1] matches it and elements[0]
+      // is the host of this or any enclosing root. Using `roots` makes it work for closed shadow roots.
+      if (elements[0] && elements[1] === singleElement && roots.slice(index).some(r => (r as ShadowRoot).host === elements[0]))
         elements.shift();
-      }
       const innerElement = elements[0] as Element | undefined;
       if (!innerElement)
         break;
