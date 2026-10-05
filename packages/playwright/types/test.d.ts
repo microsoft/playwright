@@ -7143,9 +7143,7 @@ export interface PlaywrightWorkerOptions {
    * [fixtures.browser](https://playwright.dev/docs/api/class-fixtures#fixtures-browser),
    * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) and
    * [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page) use the remote browser instead of
-   * launching a browser locally, and any launch options like
-   * [testOptions.headless](https://playwright.dev/docs/api/class-testoptions#test-options-headless) or
-   * [testOptions.channel](https://playwright.dev/docs/api/class-testoptions#test-options-channel) are ignored.
+   * launching a browser locally.
    */
   connectOptions: ConnectOptions | undefined;
   /**
