@@ -108,7 +108,8 @@ class SocksProxyConnection {
     this.uid = uid;
     this.host = host;
     this.port = port;
-    this._serverCloseEventListener = () => {
+    this._serverCloseEventListener = async () => {
+      await this._brorwserDecrypted?.catch(() => {});
       this._browserEncrypted.destroy();
     };
     this._browserEncrypted = new stream.Duplex({
