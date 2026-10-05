@@ -32,6 +32,7 @@ type TestOptions = {
     http2?: boolean;
     enableHTTP1FallbackWhenUsingHttp2?: boolean;
     useFakeLocalhost?: boolean;
+    rejectUnauthorized?: boolean;
   }): Promise<string>,
 };
 
@@ -47,7 +48,7 @@ const test = base.extend<TestOptions>({
           fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
         ],
         requestCert: true,
-        rejectUnauthorized: false,
+        rejectUnauthorized: options?.rejectUnauthorized ?? false,
         allowHTTP1: options?.enableHTTP1FallbackWhenUsingHttp2,
       }, (req: (http2.Http2ServerRequest | http.IncomingMessage), res: http2.Http2ServerResponse | http.ServerResponse) => {
         const tlsSocket = req.socket as import('tls').TLSSocket;
@@ -388,6 +389,23 @@ test.describe('browser', () => {
     });
     await page.goto(serverURL);
     await expect(page.getByTestId('message')).toHaveText('Sorry Bob, certificates from Bob are not welcome here.');
+    await page.close();
+  });
+
+  test('should complete browser TLS handshake when server rejects client certificate after it', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43092' },
+  }, async ({ browser, startCCServer, asset, browserName, isMac }) => {
+    const serverURL = await startCCServer({ rejectUnauthorized: true, useFakeLocalhost: browserName === 'webkit' && isMac });
+    const page = await browser.newPage({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/self-signed/cert.pem'),
+        keyPath: asset('client-certificates/client/self-signed/key.pem'),
+      }],
+    });
+    const error = await page.goto(serverURL).catch(e => e);
+    expect(error.message).toMatch(/net::ERR_EMPTY_RESPONSE|NS_ERROR_NET_RESET|Connection terminated unexpectedly|The network connection was lost/);
     await page.close();
   });
 
