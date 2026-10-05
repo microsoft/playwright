@@ -230,3 +230,48 @@ it('should fire illegal character error', {
   else
     expect(error.message).toContain('illegal character');
 });
+
+it('should not report requests refused by a pending navigation as page errors', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43120' });
+  it.fail(browserName === 'webkit', 'Fixed in WebKit builds after r2372, see https://github.com/microsoft/playwright/issues/43120');
+
+  server.setRoute('/api', (req, res) => res.end('ok'));
+  let releaseSignal: () => void;
+  server.setRoute('/signal', (req, res) => releaseSignal = () => res.end('go'));
+  let releaseReplacement: () => void;
+  const replacementReleased = new Promise<void>(f => releaseReplacement = f);
+  server.setRoute('/replacement', async (req, res) => {
+    releaseSignal();
+    await replacementReleased;
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end('<title>replacement</title>');
+  });
+
+  const errors: Error[] = [];
+  page.on('pageerror', error => errors.push(error));
+  await page.goto(server.EMPTY_PAGE);
+
+  // The old document issues requests while the navigation is pending: the long-poll
+  // is answered once the server receives the navigation request, and WebKit cancels
+  // it even earlier when the navigation stops the old document's loads.
+  const signalRequest = server.waitForRequest('/signal');
+  await page.evaluate(() => {
+    fetch('/signal').catch(() => {}).then(() => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api');
+      xhr.send('body');
+      fetch('/api', { method: 'POST', body: 'body' }).catch(() => {});
+      console.log('requests issued');
+    });
+  });
+  await signalRequest;
+
+  const requestsIssued = page.waitForEvent('console', message => message.text() === 'requests issued');
+  const navigation = page.goto(server.PREFIX + '/replacement');
+  await requestsIssued;
+  releaseReplacement();
+  await navigation;
+
+  // WebKit refuses the requests, which must surface as a cancellation rather than an access control error.
+  expect(errors.map(error => error.message)).toEqual([]);
+});
