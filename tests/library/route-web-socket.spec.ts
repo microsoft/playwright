@@ -475,6 +475,27 @@ test('should work without server', async ({ page, server }) => {
   ]);
 });
 
+test('should route WebSockets in already loaded documents', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43105' },
+}, async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await page.routeWebSocket(/.*/, ws => {
+    ws.onMessage(message => ws.send('mock-' + message));
+  });
+
+  for (const target of [page.mainFrame(), frame]) {
+    await target.evaluate(({ host }) => {
+      window.log = [];
+      window.ws = new WebSocket('ws://' + host + '/ws');
+      window.ws.addEventListener('message', event => window.log.push(event.data));
+      window.ws.addEventListener('close', () => window.log.push('close'));
+      window.ws.addEventListener('open', () => window.ws.send('hi'));
+    }, { host: server.HOST });
+    await expect.poll(() => target.evaluate(() => window.log)).toEqual(['mock-hi']);
+  }
+});
+
 test('should emit close upon frame navigation', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<WebSocketRoute>();
   await page.routeWebSocket(/.*/, async ws => {

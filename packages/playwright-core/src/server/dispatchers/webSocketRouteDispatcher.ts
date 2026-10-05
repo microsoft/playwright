@@ -97,13 +97,16 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
     }
     ++data.counter;
 
-    return await target.addInitScript(progress, `
+    const initScript = await target.addInitScript(progress, `
       (() => {
         const module = {};
         ${rawWebSocketMockSource.source}
         (module.exports.inject())(globalThis);
       })();
     `);
+    // Also inject into already loaded documents, so that WebSockets created there are routed.
+    await progress.race(target.safeNonStallingEvaluateInAllFrames(initScript.source, 'main'));
+    return initScript;
   }
 
   static async uninstall(connection: DispatcherConnection, target: Page | BrowserContext, initScript: InitScript) {
