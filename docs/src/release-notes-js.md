@@ -6,6 +6,185 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.64
+
+### 🧰 WebMCP
+
+New [`property: Page.webmcp`] and [`property: Frame.webmcp`] give access to the tools that a page registers through
+the experimental [WebMCP](https://webmachinelearning.github.io/webmcp/) browser API, so you can test them like
+any other part of your app:
+
+```js
+const browser = await chromium.launch({ args: ['--enable-features=WebMCP'] });
+const page = await browser.newPage();
+await page.goto('https://example.com');
+
+for (const tool of await page.webmcp.tools())
+  console.log(tool.name, tool.description);
+
+const result = await page.webmcp.callTool('add', { a: 2, b: 40 });
+console.log(result.content[0].text); // "42"
+```
+
+[Playwright MCP](./getting-started-mcp.md) also supports WebMCP by default, with page-defined tools offered to the agent as `webmcp_<tool>`. Pass `--no-webmcp` to opt out.
+
+[`playwright-cli`](./getting-started-cli.md) exposes them as well:
+
+```bash
+playwright-cli webmcp-list
+playwright-cli webmcp-call search_catalog --params '{"query":"cats"}'
+```
+
+### 🎬 Better videos
+
+Videos can now be recorded at a custom frame rate, and the decorations for actions are styled with plain CSS:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    video: {
+      mode: 'on',
+      size: { width: 1920, height: 1080 },
+      fps: 60,
+      show: {
+        actions: {
+          style: {
+            point: 'width: 20px; height: 20px; border-radius: 50%; background: red',
+            highlight: 'outline: 2px solid #333; background: rgba(0, 128, 255, .15)',
+            title: 'font-size: 16px',
+          },
+        },
+      },
+    },
+  },
+});
+```
+
+- New `fps` option in [`property: TestOptions.video`], [`option: Browser.newContext.recordVideo`] and
+  [`method: Screencast.start`]. Firefox and WebKit currently capture up to 25 frames per second.
+- New [`option: Screencast.showActions.style`] option takes CSS declarations for the `point` marker, the target
+  `highlight` and the action `title`. It replaces the `fontSize` option, which is now deprecated.
+- The cursor stays visible at the last action point, survives navigations and travels along a natural, eased path.
+- Videos are encoded with VP9 instead of VP8, which takes less CPU and produces smaller files of the same or better
+  quality.
+- All video options are also available in [Playwright MCP](./getting-started-mcp.md) and [`playwright-cli`](./getting-started-cli.md).
+
+### 🎯 Test runner
+
+- New [`property: TestProject.default`] option keeps a project in the config without running it by default. You can configure every browser you care about, and let a plain `npx playwright test` run just your favourite one:
+
+  ```js title="playwright.config.ts"
+  import { defineConfig, devices } from '@playwright/test';
+
+  export default defineConfig({
+    projects: [
+      { name: 'chromium', use: devices['Desktop Chrome'] },
+      { name: 'firefox', use: devices['Desktop Firefox'], default: false },
+      { name: 'webkit', use: devices['Desktop Safari'], default: false },
+    ],
+  });
+  ```
+
+  ```bash
+  npx playwright test                     # runs chromium only
+  npx playwright test --project=firefox   # runs firefox
+  npx playwright test --project="*"       # runs all three, for example on CI
+  ```
+
+- New `--shuffle` command line option schedules tests in a random order, which helps to find tests that accidentally depend on each other.
+
+  ```bash
+  npx playwright test --shuffle
+  # Running 42 tests using 4 workers, shuffle seed 271828182
+  # ...
+
+  # Pass the seed to reproduce the same order.
+  npx playwright test --shuffle 271828182
+  ```
+
+- New `lock` option in [`method: Test.describe.configure`] adds [test locks](./test-parallel.md#test-locks) to all tests in a file or a group:
+
+  ```js
+  test.describe.configure({ lock: 'user-settings' });
+  ```
+
+- New `type` option of `toHaveScreenshot` in [`property: TestConfig.expect`] stores all unnamed screenshots as WebP:
+
+  ```js title="playwright.config.ts"
+  export default defineConfig({
+    expect: {
+      toHaveScreenshot: { type: 'webp' },
+    },
+  });
+  ```
+
+### 🪆 Locator.within()
+
+New [`method: Locator.within`] combines two locators that you already have, reading in the natural order —
+"this button, within that dialog":
+
+```js
+const saveButton = page.getByRole('button', { name: 'Save' });
+const dialog = page.getByTestId('settings-dialog');
+
+await saveButton.within(dialog).click();
+```
+
+Relative locators such as [`method: Locator.nth`] or [`method: Locator.first`] are resolved inside each parent
+separately, which makes column-like queries straightforward:
+
+```js
+// The third cell of every row, not the third cell in the table.
+const thirdColumn = page.getByRole('cell').nth(2).within(page.getByRole('row'));
+await expect(thirdColumn).toHaveText(['Apple', 'Banana', 'Cherry']);
+```
+
+### New APIs
+
+- New [`method: Page.getByRef`] locates an element by its aria ref, such as `e2`, reported by [`method: Page.ariaSnapshot`] in the `'ai'` mode.
+- New option [`option: Page.content.includeShadow`] in [`method: Page.content`] and [`method: Frame.content`] serializes open shadow roots as [declarative shadow DOM](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM#declaratively_with_html).
+- New option [`option: Credentials.create.signCount`] sets the initial signature counter of a virtual credential. [`method: Credentials.create`] and [`method: Credentials.get`] return the current `signCount`, and it is saved and restored together with the credentials in the storage state.
+- New [`property: FullConfig.filteredProjects`] lists the projects that were selected to run after applying the `--project` filter. It is available in global setup and reporters.
+- New [`method: APIRequestContext.addCookies`], [`method: APIRequestContext.cookies`] and [`method: APIRequestContext.clearCookies`] manage cookies of a request context, mirroring the [BrowserContext] methods:
+
+  ```js
+  await request.addCookies([{ name: 'session-id', value: '42', url: 'https://example.com' }]);
+  console.log(await request.cookies('https://example.com'));
+  await request.clearCookies({ name: 'session-id' });
+  ```
+
+### Breaking changes ⚠️
+
+- `screen` property is now forwarded from the [device descriptors](./emulation.md#devices). If you use `...devices['Desktop Chrome']` and alike, `window.screen` and media queries now see the emulated screen size. You can opt-out by explicitly setting `screen` to `undefined`:
+
+  ```js title="playwright.config.ts"
+  export default defineConfig({
+    use: {
+      ...devices['Desktop Chrome'],
+      screen: undefined,
+    },
+  });
+  ```
+
+- JSX in your test files now follows your `tsconfig.json`. Playwright compiles JSX in test files according to the `jsx`, `jsxFactory`, `jsxFragmentFactory` and `jsxImportSource` [tsconfig options](./test-typescript.md#tsconfig-jsx-options), and defaults to the automatic runtime from `react/jsx-runtime`.
+
+- `--update-snapshots=missing` now passes the test run. Tests that only create missing snapshots now pass in the `'missing'` mode of [`property: TestConfig.updateSnapshots`], so that CI can generate new snapshots and verify the existing ones in a single run. The mode used when the option is not specified is now called `'default'` and behaves as before: missing snapshots are written and the test fails.
+
+- Elements inside hidden iframes are considered hidden. Elements inside an iframe that is not visible, for example with `visibility: hidden`, are now considered hidden by actions, [`method: Locator.isVisible`] and [`method: LocatorAssertions.toBeVisible`].
+
+### Browser Versions
+
+- Chromium 156.0.8078.4
+- Mozilla Firefox 157.0
+- WebKit 27.2
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 155
+- Microsoft Edge 155
+
 ## Version 1.63
 
 ### 🔒 Test locks
