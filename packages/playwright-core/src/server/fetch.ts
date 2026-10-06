@@ -289,7 +289,9 @@ export abstract class APIRequestContext extends SdkObject {
       return;
     const cookies = await this.cookies(progress, [url.toString()]);
     if (cookies.length) {
-      const valueArray = cookies.map(c => `${c.name}=${c.value}`);
+      // Nameless cookies are sent as just the value, see
+      // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-22#section-5.8.3
+      const valueArray = cookies.map(c => c.name ? `${c.name}=${c.value}` : c.value);
       setHeader(headers, 'cookie', valueArray.join('; '));
     }
   }
@@ -331,8 +333,9 @@ export abstract class APIRequestContext extends SdkObject {
 
     const requestCookies = getHeader(options.headers, 'cookie')?.split(';').map(p => {
       const indexOfEquals = p.indexOf('=');
-      const name = indexOfEquals !== -1 ? p.substring(0, indexOfEquals).trim() : p.trim();
-      const value = indexOfEquals !== -1 ? p.substring(indexOfEquals + 1).trim() : '';
+      // A pair without "=" is a nameless cookie.
+      const name = indexOfEquals !== -1 ? p.substring(0, indexOfEquals).trim() : '';
+      const value = indexOfEquals !== -1 ? p.substring(indexOfEquals + 1).trim() : p.trim();
       return { name, value };
     }) || [];
     const requestEvent: APIRequestEvent = {

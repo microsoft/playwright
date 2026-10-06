@@ -194,6 +194,38 @@ it('clearCookies should remove nameless cookies by empty name', {
   expect((await request.cookies()).map(c => c.name)).toEqual(['session']);
 });
 
+it('should send nameless cookie as just its value', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43155' },
+}, async ({ request, server }) => {
+  await request.addCookies([
+    { name: '', value: 'nameless', url: server.EMPTY_PAGE },
+    { name: 'a', value: 'b', url: server.EMPTY_PAGE },
+  ]);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(server.EMPTY_PAGE),
+  ]);
+  expect(serverRequest.headers.cookie).toBe('nameless; a=b');
+});
+
+it('should store Set-Cookie header without equals sign as a nameless cookie', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43155' },
+}, async ({ request, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['token; HttpOnly']);
+    res.end();
+  });
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  expect(await request.cookies()).toEqual([
+    { name: '', value: 'token', domain: 'localhost', path: '/', expires: -1, httpOnly: true, secure: false, sameSite: 'Lax' },
+  ]);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(server.EMPTY_PAGE),
+  ]);
+  expect(serverRequest.headers.cookie).toBe('token');
+});
+
 it('should filter outgoing cookies by path', async ({ request, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v; path=/input/subfolder', 'b=v; path=/input', 'c=v;']);

@@ -785,8 +785,9 @@ function parseCookie(c: string): har.Cookie {
     const value = indexOfEquals !== -1 ? pair.substr(indexOfEquals + 1, pair.length).trim() : '';
     if (first) {
       first = false;
-      cookie.name = name;
-      cookie.value = value;
+      // A pair without "=" is a nameless cookie.
+      cookie.name = indexOfEquals !== -1 ? name : '';
+      cookie.value = indexOfEquals !== -1 ? value : name;
       continue;
     }
 

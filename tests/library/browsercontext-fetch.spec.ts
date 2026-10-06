@@ -448,6 +448,20 @@ it('should support cookie with empty value', async ({ context, page, server }) =
   ]);
 });
 
+it('should send nameless cookie the same way as the page', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43155' },
+}, async ({ context, page, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['nameless']);
+    res.end();
+  });
+  server.setRoute('/echo', (req, res) => res.end(req.headers.cookie ?? ''));
+  await page.goto(server.PREFIX + '/setcookie.html');
+  const pageResponse = await page.goto(server.PREFIX + '/echo');
+  const apiResponse = await context.request.get(server.PREFIX + '/echo');
+  expect(await apiResponse.text()).toBe(await pageResponse!.text());
+});
+
 it('should not lose body while handling Set-Cookie header', async ({ context, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['session=value', 'foo=bar; max-age=3600']);
