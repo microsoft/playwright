@@ -213,6 +213,7 @@ const NSActivityOptions ActivityOptions =
             [configuration _setWebSQLDatabaseDirectory:webSqlDirectory];
         }
         [configuration setProxyConfiguration:[self proxyConfiguration:_proxyServer WithBypassList:_proxyBypassList]];
+        [configuration setPreventsSystemHTTPProxyAuthentication:YES];
         dataStore = [[WKWebsiteDataStore alloc] _initWithConfiguration:configuration];
     }
 
@@ -334,6 +335,10 @@ const NSActivityOptions ActivityOptions =
     NSRect windowRect = firstScreen ? NSOffsetRect(rect, -10000, [firstScreen frame].size.height - rect.size.height + 10000) : rect;
     NSWindow* window = [[NSWindow alloc] initWithContentRect:windowRect styleMask:NSWindowStyleMaskBorderless backing:(NSBackingStoreType)_NSBackingStoreUnbuffered defer:YES];
 
+    // Mission Control scales its layout to the bounding box of all normal windows,
+    // including this off-screen one. https://github.com/microsoft/playwright/issues/42265
+    window.collectionBehavior = NSWindowCollectionBehaviorTransient | NSWindowCollectionBehaviorIgnoresCycle;
+
     WKWebView* webView = [[WKWebView alloc] initWithFrame:[window.contentView bounds] configuration:configuration];
     if (!webView)
         return nil;
@@ -366,6 +371,7 @@ const NSActivityOptions ActivityOptions =
     if (!proxyBypassList || ![proxyBypassList length])
         proxyBypassList = _proxyBypassList;
     [dataStoreConfiguration setProxyConfiguration:[self proxyConfiguration:proxyServer WithBypassList:proxyBypassList]];
+    [dataStoreConfiguration setPreventsSystemHTTPProxyAuthentication:YES];
     browserContext.dataStore = [[[WKWebsiteDataStore alloc] _initWithConfiguration:dataStoreConfiguration] autorelease];
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wdeprecated-declarations"
