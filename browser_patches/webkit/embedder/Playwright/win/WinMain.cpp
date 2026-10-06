@@ -34,6 +34,7 @@
 #include "PlaywrightLibResource.h"
 #include "PlaywrightReplace.h"
 #include <WebKit/WKContext.h>
+#include <WebCore/PlatformPasteboard.h>
 #include <WebKit/WKWebsiteDataStoreConfigurationRef.h>
 #include <WebKit/WKWebsiteDataStoreRef.h>
 #include <WebKit/WKWebsiteDataStoreRefCurl.h>
@@ -86,6 +87,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     InitCommonControlsEx(&InitCtrlEx);
 
     g_options = parseCommandLine();
+    WebCore::PlatformPasteboard::setIsolated(g_options.headless);
     if (g_options.inspectorPipe) {
         WKInspectorInitializeRemoteInspectorPipe(
             configureDataStore,
