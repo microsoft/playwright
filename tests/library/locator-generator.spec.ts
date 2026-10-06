@@ -768,6 +768,12 @@ it('reverse engineer regex flags', async () => {
   });
 });
 
+it('parse javascript string escapes and regex literals', () => {
+  expect.soft(parseLocator('javascript', String.raw`getByText("\x41")`)).toBe('internal:text="A"i');
+  expect.soft(parseLocator('javascript', String.raw`getByText("\u{1F600}")`)).toBe('internal:text="\u{1F600}"i');
+  expect.soft(parseLocator('javascript', 'getByText(/[/]/)')).toBe('internal:text=/[/]/');
+});
+
 it('parseLocator rejects malformed locators', async () => {
   const locators = [
     ['javascript', `locator('div').nth(0))`],
@@ -777,6 +783,9 @@ it('parseLocator rejects malformed locators', async () => {
     ['javascript', `getByRole('button', { name: 'ok', exct: true })`],
     ['javascript', `getByText('foo', { exact: 'true' })`],
     ['javascript', `locator('div').filter({ hasText: 'foo' }})`],
+    ['javascript', String.raw`getByText("\x4")`],
+    ['javascript', String.raw`getByText("\u{}")`],
+    ['javascript', String.raw`getByText("\u{110000}")`],
     ['python', `get_by_role("checkbox", cheked=True)`],
     ['python', `locator("div").filter(has_text=="foo")`],
     ['python', `locator("div").nth(0))`],

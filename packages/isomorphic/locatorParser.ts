@@ -46,6 +46,7 @@ type ParserOptions = {
   quotes: string;
   rawStrings?: boolean;
   regexLiterals?: boolean;
+  javascriptEscapes?: boolean;
   booleans?: [string, string];
 };
 
@@ -53,6 +54,9 @@ const kEscapes = new Map([['n', '\n'], ['r', '\r'], ['t', '\t'], ['b', '\b'], ['
 const kIdentifierRegex = /[A-Za-z_$][\w$]*/y;
 const kNumberRegex = /-?\d+(\.\d+)?/y;
 const kRegexFlagsRegex = /[a-z]*/y;
+const kHexEscapeRegex = /[\da-f]{2}/iy;
+const kUnicodeEscapeRegex = /[\da-f]{4}/iy;
+const kUnicodeCodePointEscapeRegex = /\{[\da-f]{1,6}\}/iy;
 
 function tokenize(source: string, options: ParserOptions): Token[] {
   const tokens: Token[] = [];
@@ -67,27 +71,39 @@ function tokenize(source: string, options: ParserOptions): Token[] {
   };
 
   // In raw strings, backslash only escapes the closing quote and is preserved otherwise.
-  const readString = (quote: string, raw: boolean) => {
+  const readString = (quote: string, raw: boolean, regexLiteral = false) => {
     let text = '';
+    let inCharacterClass = false;
     ++pos;
-    while (pos < source.length && source[pos] !== quote) {
+    while (pos < source.length && (source[pos] !== quote || inCharacterClass)) {
       if (source[pos] !== '\\') {
-        text += source[pos++];
+        const char = source[pos++];
+        if (regexLiteral) {
+          if (char === '[')
+            inCharacterClass = true;
+          else if (char === ']')
+            inCharacterClass = false;
+        }
+        text += char;
         continue;
       }
       const next = source[pos + 1] ?? '';
       pos += 2;
       if (raw) {
         text += next === quote ? next : '\\' + next;
-      } else if (next === 'u') {
-        text += String.fromCharCode(parseInt(source.substring(pos, pos + 4), 16));
-        pos += 4;
+      } else if (next === 'u' || (options.javascriptEscapes && next === 'x')) {
+        const braced = next === 'u' && !!options.javascriptEscapes && source[pos] === '{';
+        const hex = match(next === 'x' ? kHexEscapeRegex : braced ? kUnicodeCodePointEscapeRegex : kUnicodeEscapeRegex);
+        const codePoint = parseInt((braced ? hex?.slice(1, -1) : hex) || '', 16);
+        if (Number.isNaN(codePoint) || codePoint > 0x10FFFF)
+          throw new Error(`Invalid escape sequence in ${source}`);
+        text += String.fromCodePoint(codePoint);
       } else {
         text += kEscapes.get(next) ?? next;
       }
     }
     if (pos >= source.length)
-      throw new Error(`Unterminated string in ${source}`);
+      throw new Error(`Unterminated ${regexLiteral ? 'regular expression' : 'string'} in ${source}`);
     ++pos;
     return text;
   };
@@ -102,7 +118,7 @@ function tokenize(source: string, options: ParserOptions): Token[] {
     } else if (options.rawStrings && char === 'r' && options.quotes.includes(source[pos + 1])) {
       tokens.push({ kind: 'string', value: readString(source[++pos], true) });
     } else if (options.regexLiterals && char === '/') {
-      const regexSource = readString('/', true);
+      const regexSource = readString('/', true, true);
       tokens.push({ kind: 'regex', value: new RegExp(regexSource, match(kRegexFlagsRegex)) });
     } else if ('(){}.,:=|'.includes(char)) {
       tokens.push({ kind: 'punctuation', value: char });
@@ -295,7 +311,7 @@ abstract class LocatorParser {
 // getByRole('button', { name: /submit/i, exact: true })
 class JavaScriptLocatorParser extends LocatorParser {
   constructor(source: string, testIdAttributeName: string) {
-    super(source, { methods: kJavaScriptMethods, quotes: '\'"`', regexLiterals: true }, testIdAttributeName);
+    super(source, { methods: kJavaScriptMethods, quotes: '\'"`', regexLiterals: true, javascriptEscapes: true }, testIdAttributeName);
   }
 
   protected parseArgument(call: CallArguments) {
