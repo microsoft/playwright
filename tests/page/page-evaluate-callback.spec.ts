@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 
 it('should throw without the exposeFunctions option', async ({ page }) => {
   await expect(page.evaluate(({ cb }) => cb(), { cb: () => {} }))
-      .rejects.toThrow(/Attempting to serialize unexpected value at position "cb": \(\) => {}/);
+      .rejects.toThrow(/Attempting to serialize unexpected value at position "cb": \(\) => {\s*}/);
 });
 
 it('should call a function passed as an argument', async ({ page }) => {
