@@ -243,7 +243,7 @@ for (const [name, literals] of enumTypes)
  * @param {string} name
  */
 function toArgumentName(name) {
-  return name === 'event' ? `@${name}` : name;
+  return ['event', 'ref'].includes(name) ? `@${name}` : name;
 }
 
 /**
