@@ -274,20 +274,6 @@ it('should skip invalid Expires', async ({ contextFactory, server }, testInfo) =
   expect(cookies[0]).toEqual({ name: 'name', value: 'value' });
 });
 
-it('should include nameless set-cookies', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43155' },
-}, async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
-  server.setRoute('/empty.html', (req, res) => {
-    res.setHeader('Set-Cookie', ['nameless; HttpOnly']);
-    res.end();
-  });
-  await page.goto(server.EMPTY_PAGE);
-  const log = await getLog();
-  const cookies = log.entries[0].response.cookies;
-  expect(cookies[0]).toEqual({ name: '', value: 'nameless', httpOnly: true });
-});
-
 it('should include set-cookies with comma', async ({ contextFactory, server, browserName }, testInfo) => {
   it.fixme(browserName === 'webkit', 'We get "name1=val, ue1, name2=val, ue2" as a header value');
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);

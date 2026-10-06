@@ -120,14 +120,17 @@ type RawCookie = {
 };
 
 export function parseRawCookie(header: string): RawCookie | null {
-  const parts = header.split(';').filter(s => s.trim().length > 0);
-  const pairs = parts.map(p => {
+  const pairs = header.split(';').filter(s => s.trim().length > 0).map((p, index) => {
     let key = '';
     let value = '';
     const separatorPos = p.indexOf('=');
     if (separatorPos === -1) {
-      // If only a key is specified, the value is left undefined.
-      key = p.trim();
+      // Name-value pair without "=" is a nameless cookie, attribute without "=" has no value.
+      // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-22#section-5.6
+      if (index === 0)
+        value = p.trim();
+      else
+        key = p.trim();
     } else {
       // Otherwise we assume that the key is the element before the first `=`
       key = p.slice(0, separatorPos).trim();
@@ -138,11 +141,7 @@ export function parseRawCookie(header: string): RawCookie | null {
   });
   if (!pairs.length)
     return null;
-  let [name, value] = pairs[0];
-  // A name-value pair without "=" is a nameless cookie, see
-  // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-22#section-5.6
-  if (!parts[0].includes('='))
-    [name, value] = ['', name];
+  const [name, value] = pairs[0];
   const cookie: RawCookie = {
     name,
     value,

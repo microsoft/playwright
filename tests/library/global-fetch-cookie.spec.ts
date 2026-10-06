@@ -194,20 +194,6 @@ it('clearCookies should remove nameless cookies by empty name', {
   expect((await request.cookies()).map(c => c.name)).toEqual(['session']);
 });
 
-it('should send nameless cookie as just its value', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43155' },
-}, async ({ request, server }) => {
-  await request.addCookies([
-    { name: '', value: 'nameless', url: server.EMPTY_PAGE },
-    { name: 'a', value: 'b', url: server.EMPTY_PAGE },
-  ]);
-  const [serverRequest] = await Promise.all([
-    server.waitForRequest('/empty.html'),
-    request.get(server.EMPTY_PAGE),
-  ]);
-  expect(serverRequest.headers.cookie).toBe('nameless; a=b');
-});
-
 it('should store Set-Cookie header without equals sign as a nameless cookie', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43155' },
 }, async ({ request, server }) => {

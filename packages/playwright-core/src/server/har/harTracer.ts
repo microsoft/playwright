@@ -213,9 +213,7 @@ export class HarTracer {
       return;
     const harEntry = createHarEntry(undefined, event.method, event.url, undefined, this._options);
     harEntry._apiRequestRef = this._context.guid;
-    if (!this._options.omitCookies)
-      harEntry.request.cookies = event.cookies;
-    harEntry.request.headers = Object.entries(event.headers).map(([name, value]) => ({ name, value }));
+    this._recordRequestHeadersAndCookies(harEntry, Object.entries(event.headers).map(([name, value]) => ({ name, value })));
     const contentType = Object.entries(event.headers).find(([name]) => name.toLowerCase() === 'content-type')?.[1];
     harEntry.request.postData = this._postDataForBuffer(event.postData || null, contentType, this._options.content);
     if (!this._options.omitSizes)
