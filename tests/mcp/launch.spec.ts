@@ -317,3 +317,23 @@ exit 1
     error: expect.not.stringContaining(`Browser is already in use`),
   });
 });
+
+test('should gracefully close the browser once on stdin end', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43098' }
+}, async ({ startClient, server }, testInfo) => {
+  const { client, stderr } = await startClient({
+    args: [`--user-data-dir=${testInfo.outputPath('user-data-dir')}`],
+    env: { DEBUG: 'pw:browser' },
+  });
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  await client.close();
+
+  await expect.poll(() => stderr()).toContain('<gracefully close end>');
+  expect(stderr()).toContain('<gracefully close start>');
+  expect(stderr()).not.toContain('<forcefully close>');
+  expect(stderr()).not.toContain('<will force kill>');
+});

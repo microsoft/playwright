@@ -397,6 +397,9 @@ async function runKillClient(): Promise<void> {
 
 async function runAnnotateClient(options: DashboardOptions): Promise<void> {
   selfDestructOnParentGone();
+  // stdin is a pipe from the process that started this client. It emits 'close' only after it
+  // has been read to the end, so read it. Unref it, so that it does not keep the process alive.
+  process.stdin.resume().unref();
 
   const socketPath = dashboardSocketPath();
   const tryConnect = () => new Promise<net.Socket | undefined>(resolve => {
