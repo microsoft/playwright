@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { StringDecoder } from 'string_decoder';
+
 import { msToString } from '@isomorphic/formatUtils';
 import { getAsBooleanFromENV } from '@utils/env';
 
@@ -42,6 +44,7 @@ class ListReporter extends TerminalReporter {
   private _printWorkerIndex: boolean;
   private _failureIndex = new Map<TestCase, number>();
   private _paused = new Set<TestResult>();
+  private _stringDecoders = new Map<string, StringDecoder>();
 
   constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
     const printFailuresInline = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_FAILURES_INLINE', options?.printFailuresInline);
@@ -167,11 +170,28 @@ class ListReporter extends TerminalReporter {
   private _dumpToStdio(chunk: string | Buffer, stream: NodeJS.WriteStream, result: TestResult | undefined) {
     if (this.config.quiet)
       return;
-    let text = chunk.toString('utf-8');
-    if (result)
-      text = this._prefixLines(text, this._workerPrefix(result), !this._needNewLine);
-    this._updateLineCountAndNewLineFlagForOutput(text);
-    stream.write(text);
+    if (chunk.length === 0) {
+      this._updateLineCountAndNewLineFlagForOutput('');
+      return;
+    }
+    const decoder = this._getStringDecoder(stream, result);
+    const text = decoder.write(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+    if (!text)
+      return;
+    const prefix = result ? this._workerPrefix(result) : '';
+    const prefixedText = this._prefixLines(text, prefix, !this._needNewLine);
+    this._updateLineCountAndNewLineFlagForOutput(prefixedText);
+    stream.write(prefixedText);
+  }
+
+  private _getStringDecoder(stream: NodeJS.WriteStream, result: TestResult | undefined): StringDecoder {
+    const key = `${result?.workerIndex ?? -1}:${stream === this.screen.stdout ? 'out' : 'err'}`;
+    let decoder = this._stringDecoders.get(key);
+    if (!decoder) {
+      decoder = new StringDecoder('utf-8');
+      this._stringDecoders.set(key, decoder);
+    }
+    return decoder;
   }
 
   private _prefixLines(text: string, prefix: string, atLineStart: boolean) {
@@ -305,10 +325,14 @@ class ListReporter extends TerminalReporter {
   }
 
   private _workerPrefix(result: TestResult) {
+    return this._workerPrefixFromIndex(result.workerIndex);
+  }
+
+  private _workerPrefixFromIndex(workerIndex: number | undefined) {
     if (!this._printWorkerIndex)
       return '';
-    const workerIndex = result.workerIndex >= 0 ? String(result.workerIndex) : ' ';
-    return this.screen.colors.dim(`[${workerIndex}]`) + ' ';
+    const indexStr = workerIndex !== undefined && workerIndex >= 0 ? String(workerIndex) : ' ';
+    return this.screen.colors.dim(`[${indexStr}]`) + ' ';
   }
 
   private _testPrefix(result: TestResult, index: string, statusMark: string) {
@@ -330,6 +354,23 @@ class ListReporter extends TerminalReporter {
   }
 
   override async onEnd(result: FullResult) {
+    for (const [key, decoder] of this._stringDecoders) {
+      const remaining = decoder.end();
+      if (remaining) {
+        const stream = key.endsWith(':out') ? this.screen.stdout : this.screen.stderr;
+        if (this._printWorkerIndex) {
+          const workerIndex = Number(key.split(':')[0]);
+          const prefix = this._workerPrefixFromIndex(workerIndex);
+          const prefixed = this._prefixLines(remaining, prefix, !this._needNewLine);
+          this._updateLineCountAndNewLineFlagForOutput(prefixed);
+          stream.write(prefixed);
+        } else {
+          this._updateLineCountAndNewLineFlagForOutput(remaining);
+          stream.write(remaining);
+        }
+      }
+    }
+    this._stringDecoders.clear();
     await super.onEnd(result);
     this.screen.stdout.write('\n');
     this.epilogue(!this._printFailuresInline);

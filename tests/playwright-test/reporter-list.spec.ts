@@ -443,6 +443,41 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         expect(lines[firstIndex + i]).toContain(expected[i]);
     });
 
+    test('print stdio with split multi-byte characters', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.ts': `
+          import { test } from '@playwright/test';
+          test('passes', async ({}) => {
+            await new Promise(resolve => process.stdout.write(Buffer.from([0xe2, 0x82]), () => resolve()));
+            await new Promise(resolve => process.stdout.write(Buffer.from([0xac, 0x0a]), () => resolve()));
+          });
+        `,
+      }, { reporter: 'list' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+      expect(result.output).toContain('€');
+      expect(result.output).not.toContain('�');
+    });
+
+    test('print worker index with split multi-byte characters', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = { reporter: [['list', { printWorkerIndex: true }]] };
+        `,
+        'a.test.ts': `
+          import { test } from '@playwright/test';
+          test('passes', async ({}) => {
+            await new Promise(resolve => process.stdout.write(Buffer.from([0xe2, 0x82]), () => resolve()));
+            await new Promise(resolve => process.stdout.write(Buffer.from([0xac, 0x0a]), () => resolve()));
+          });
+        `,
+      }, { workers: 1 });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+      expect(result.output).toContain('[0] €');
+      expect(result.output).not.toContain('�');
+    });
+
     test('should update test status row only when TTY has not scrolled', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.ts': `
