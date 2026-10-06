@@ -362,6 +362,23 @@ function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element): boolean
   return hidden;
 }
 
+// Text nodes are usually hidden together with their parent element, with the exception of
+// a few cases where the parent is rendered, but the text node itself is not.
+// Such text nodes are neither visible nor exposed to aria.
+export function isTextNodeNotRendered(text: Text): boolean {
+  const parent = text.parentElement;
+  if (!parent)
+    return false;
+  if (parent.shadowRoot && !text.assignedSlot)
+    return true;
+  // Closed <details> only renders the <summary> element.
+  // It is actually the same shadowRoot scenario as above, but user-agent shadow roots
+  // are not acessible to JavaScript, so we manually check only the most common scenario.
+  if (elementSafeTagName(parent) === 'DETAILS' && !(parent as HTMLDetailsElement).open)
+    return true;
+  return false;
+}
+
 function getIdRefs(element: Element, ref: string | null): Element[] {
   if (!ref)
     return [];
@@ -697,13 +714,8 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
   // Not part of an aria-labelledby or aria-describedby traversal, where the node directly referenced by that relation was hidden.
   // Nor part of a native host language text alternative element (e.g. label in HTML) or attribute traversal, where the root of that traversal was hidden.
   if (!options.includeHidden) {
-    const isEmbeddedInHiddenReferenceTraversal =
-      !!options.embeddedInLabelledBy?.hidden ||
-      !!options.embeddedInDescribedBy?.hidden ||
-      !!options.embeddedInNativeTextAlternative?.hidden ||
-      !!options.embeddedInLabel?.hidden;
     if (isElementIgnoredForAria(element) ||
-      (!isEmbeddedInHiddenReferenceTraversal && isElementHiddenForAria(element))) {
+      (!isEmbeddedInHiddenReferenceTraversal(options) && isElementHiddenForAria(element))) {
       options.visitedElements.add(element);
       return emptyCompositeString();
     }
@@ -1015,8 +1027,17 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
   return emptyCompositeString();
 }
 
+function isEmbeddedInHiddenReferenceTraversal(options: AccessibleNameOptions): boolean {
+  return !!options.embeddedInLabelledBy?.hidden ||
+    !!options.embeddedInDescribedBy?.hidden ||
+    !!options.embeddedInNativeTextAlternative?.hidden ||
+    !!options.embeddedInLabel?.hidden;
+}
+
 function innerAccumulatedElementText(element: Element, options: AccessibleNameOptions): CompositeString {
   const tokens: string[] = [];
+  // Similarly to step 2a, text nodes that are not rendered are skipped unless explicitly referenced.
+  const skipNotRenderedText = !options.includeHidden && !isEmbeddedInHiddenReferenceTraversal(options);
   const elements = options.collectElements ? new Set<Element>() : undefined;
   const visit = (node: Node, skipSlotted: boolean) => {
     if (skipSlotted && (node as Element | Text).assignedSlot)
@@ -1035,6 +1056,8 @@ function innerAccumulatedElementText(element: Element, options: AccessibleNameOp
         token = ' ' + token + ' ';
       tokens.push(token);
     } else if (node.nodeType === 3 /* Node.TEXT_NODE */) {
+      if (skipNotRenderedText && isTextNodeNotRendered(node as Text))
+        return;
       // step 2g.
       tokens.push(node.textContent || '');
     }

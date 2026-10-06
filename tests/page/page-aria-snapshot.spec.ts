@@ -115,6 +115,43 @@ it('should snapshot details visibility', async ({ page }) => {
   `);
 });
 
+it('should not snapshot text directly inside closed details', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43019' });
+
+  await page.setContent(`
+    <details>
+      <summary>Summary</summary>
+      Details
+    </details>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - group: Summary
+  `);
+
+  await page.$eval('details', details => details.open = true);
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - group: Summary Details
+  `);
+});
+
+it('should not snapshot text that is not assigned to a slot', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43019' });
+
+  await page.setContent(`
+    <div role=button>Light</div>
+    <script>
+      document.querySelector('div').attachShadow({ mode: 'open' }).innerHTML = '<p>Shadow</p>';
+    </script>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - button "Shadow":
+      - paragraph: Shadow
+  `);
+  await expect(page.getByRole('button', { name: 'Shadow', exact: true })).toBeVisible();
+});
+
 it('should snapshot integration', async ({ page }) => {
   await page.setContent(`
     <h1>Microsoft</h1>
