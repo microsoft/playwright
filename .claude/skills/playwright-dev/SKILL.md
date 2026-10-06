@@ -5,7 +5,7 @@ description: Explains how to develop Playwright - add APIs, MCP tools, CLI comma
 
 # Playwright Development Guide
 
-See [CLAUDE.md](../../../CLAUDE.md) for monorepo structure, build/test/lint commands, and coding conventions.
+See [AGENTS.md](../../../AGENTS.md) for monorepo structure, build/test/lint commands, and coding conventions.
 
 ## Detailed Guides
 
