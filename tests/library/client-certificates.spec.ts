@@ -404,8 +404,15 @@ test.describe('browser', () => {
         keyPath: asset('client-certificates/client/self-signed/key.pem'),
       }],
     });
-    const error = await page.goto(serverURL).catch(e => e);
-    expect(error.message).toMatch(/net::ERR_EMPTY_RESPONSE|NS_ERROR_NET_RESET|Connection terminated unexpectedly|The network connection was lost/);
+    const result = await page.goto(serverURL).catch(e => e);
+    if (result instanceof Error) {
+      // The server closed the connection with FIN after the TLS handshake.
+      expect(result.message).toMatch(/net::ERR_EMPTY_RESPONSE|NS_ERROR_NET_RESET|Connection terminated unexpectedly|The network connection was lost/);
+    } else {
+      // The server reset the connection, which the proxy reports as a client certificate error.
+      expect(result.status()).toBe(503);
+      await expect(page.getByText('Playwright client-certificate error')).toBeVisible();
+    }
     await page.close();
   });
 
