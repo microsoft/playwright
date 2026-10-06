@@ -432,7 +432,7 @@ test('should show params and return value', async ({ showTraceViewer }) => {
     /Evaluate/,
     /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
-    /expression:"\({↵    a↵  }\) => {↵    console\.log\(\'Info\'\);↵    console\.warn\(\'Warning\'\);↵    console/,
+    /expression:"\({[↵\s]*a[↵\s]*}\) => {↵\s*console\.log\(['"]Info['"]\);↵\s*console\.warn\(['"]Warning['"]\);↵\s*console/,
     'isFunction:true',
     'arg:{"a":"paramA","b":4}',
     'value:"return paramA"'
