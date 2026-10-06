@@ -84,7 +84,7 @@ it('cookies should return cookies filtered by urls', async ({ request, server })
   await request.addCookies([
     { name: 'a', value: 'b', domain: 'localhost', path: '/' },
     { name: 'c', value: 'd', domain: 'localhost', path: '/input' },
-    { name: 'e', value: 'f', domain: 'one.com', path: '/' },
+    { name: 'e', value: 'f', domain: '.one.com', path: '/' },
     { name: 'g', value: 'h', domain: 'two.com', path: '/', secure: true },
   ]);
   expect((await request.cookies()).map(c => c.name)).toEqual(['a', 'c', 'e', 'g']);
@@ -93,6 +93,49 @@ it('cookies should return cookies filtered by urls', async ({ request, server })
   expect((await request.cookies(['http://sub.one.com/', 'http://two.com/'])).map(c => c.name)).toEqual(['e']);
   expect((await request.cookies(['http://sub.one.com/', 'https://two.com/'])).map(c => c.name)).toEqual(['e', 'g']);
   expect(await request.cookies('http://other.com/')).toEqual([]);
+});
+
+it('cookies should only return cookies that apply to the url', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43078' },
+}, async ({ request }) => {
+  await request.addCookies([
+    { name: 'hostonly', value: 'v', domain: 'one.com', path: '/api' },
+    { name: 'subdomains', value: 'v', domain: '.one.com', path: '/api' },
+    { name: 'slash', value: 'v', domain: 'one.com', path: '/foo/' },
+  ]);
+  const names = async (url: string) => (await request.cookies(url)).map(c => c.name);
+  expect(await names('http://one.com/api')).toEqual(['hostonly', 'subdomains']);
+  expect(await names('http://one.com/api/x')).toEqual(['hostonly', 'subdomains']);
+  expect(await names('http://one.com/apiv2')).toEqual([]);
+  expect(await names('http://sub.one.com/api')).toEqual(['subdomains']);
+  expect(await names('http://notone.com/api')).toEqual([]);
+  expect(await names('http://one.com/foo')).toEqual([]);
+  expect(await names('http://one.com/foo/')).toEqual(['slash']);
+  expect(await names('http://one.com/foo/bar')).toEqual(['slash']);
+});
+
+it('should only send cookies that apply to the url', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43078' },
+}, async ({ request, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['hostonly=v; path=/api', 'subdomains=v; domain=one.com; path=/api', 'slash=v; path=/foo/']);
+    res.end();
+  });
+  await request.get(`http://one.com:${server.PORT}/setcookie.html`, { __testHookLookup } as any);
+  const sent = async (host: string, path: string) => {
+    const [serverRequest] = await Promise.all([
+      server.waitForRequest(path),
+      request.get(`http://${host}:${server.PORT}${path}`, { __testHookLookup } as any),
+    ]);
+    return serverRequest.headers.cookie;
+  };
+  expect(await sent('one.com', '/api')).toBe('hostonly=v; subdomains=v');
+  expect(await sent('one.com', '/api/x')).toBe('hostonly=v; subdomains=v');
+  expect(await sent('one.com', '/apiv2')).toBe(undefined);
+  expect(await sent('sub.one.com', '/api')).toBe('subdomains=v');
+  expect(await sent('one.com', '/foo')).toBe(undefined);
+  expect(await sent('one.com', '/foo/')).toBe('slash=v');
+  expect(await sent('one.com', '/foo/bar')).toBe('slash=v');
 });
 
 it('cookies should include cookies from Set-Cookie header', async ({ request, server }) => {
