@@ -169,7 +169,7 @@ Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress
 **Usage**
 
 ```js
-page.keyboard.insertText('嗨');
+await page.keyboard.insertText('嗨');
 ```
 
 ```java
@@ -185,7 +185,7 @@ page.keyboard.insert_text("嗨")
 ```
 
 ```csharp
-await page.Keyboard.PressAsync("嗨");
+await page.Keyboard.InsertTextAsync("嗨");
 ```
 
 :::note

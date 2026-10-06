@@ -22247,7 +22247,7 @@ export interface Keyboard {
    * **Usage**
    *
    * ```js
-   * page.keyboard.insertText('嗨');
+   * await page.keyboard.insertText('嗨');
    * ```
    *
    * **NOTE** Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not type the text in upper

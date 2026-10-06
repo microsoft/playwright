@@ -1215,7 +1215,7 @@ span = div.wait_for_selector("span", state="attached")
 await page.SetContentAsync("<div><span></span></div>");
 var div = await page.QuerySelectorAsync("div");
 // Waiting for the "span" selector relative to the div.
-var span = await page.WaitForSelectorAsync("span", WaitForSelectorState.Attached);
+var span = await div.WaitForSelectorAsync("span", new() { State = WaitForSelectorState.Attached });
 ```
 
 :::note
