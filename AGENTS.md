@@ -1,3 +1,8 @@
+### Language
+
+- Use 80% of the way to ASD-STE100 when talking to me
+- No jargon, metaphors, or invented shorthands in replies
+
 ### Monorepo Packages
 
 | Package | npm name | Purpose |
