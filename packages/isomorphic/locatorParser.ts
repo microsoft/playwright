@@ -570,6 +570,8 @@ function getByRoleParts(call: CallArguments): ParsedSelectorPart[] {
       body += `[${name}=${escapeForAttributeSelector(option(call, name, isText)!, exact)}]`;
     else if (name === 'level')
       body += `[level=${option(call, name, isNumber)}]`;
+    else if (name === 'checked' || name === 'pressed')
+      body += `[${name}=${option(call, name, isBooleanOrMixed)}]`;
     else if (name !== 'exact')
       body += `[${name === 'includeHidden' ? 'include-hidden' : name}=${option(call, name, isBoolean)}]`;
   }
@@ -625,6 +627,10 @@ function isNumber(value: Value): value is number {
 
 function isBoolean(value: Value): value is boolean {
   return typeof value === 'boolean';
+}
+
+function isBooleanOrMixed(value: Value): value is boolean | 'mixed' {
+  return isBoolean(value) || value === 'mixed';
 }
 
 function isSelector(value: Value): value is ParsedSelector {
