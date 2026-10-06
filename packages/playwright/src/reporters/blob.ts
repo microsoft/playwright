@@ -22,7 +22,7 @@ import mime from 'mime';
 import * as yazl from 'yazl';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { calculateSha1, createGuid } from '@utils/crypto';
-import { sanitizeForFilePath } from '@utils/fileUtils';
+import { removeFolders, sanitizeForFilePath } from '@utils/fileUtils';
 import { getUserAgent } from 'playwright-core/lib/coreBundle';
 
 import { resolveOutputFile, CommonReporterOptions } from './base';
@@ -104,13 +104,15 @@ export class BlobReporter extends TeleReporterEmitter {
   }
 
   private async _prepareOutputFile() {
-    const { outputFile } = resolveOutputFile('BLOB', {
+    const { outputFile, outputDir } = resolveOutputFile('BLOB', {
       ...this._options,
       default: {
         fileName: this._defaultReportName(this._config),
         outputDir: 'blob-report',
       }
     })!;
+    if (!process.env.PWTEST_BLOB_DO_NOT_REMOVE)
+      await removeFolders([outputDir!]);
     await fs.promises.mkdir(path.dirname(outputFile), { recursive: true });
     return outputFile;
   }
