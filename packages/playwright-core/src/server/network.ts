@@ -38,20 +38,41 @@ export function filterCookies(cookies: channels.NetworkCookie[], urls: string[])
   return cookies.filter(c => {
     if (!parsedURLs.length)
       return true;
-    for (const parsedURL of parsedURLs) {
-      let domain = c.domain;
-      if (!domain.startsWith('.'))
-        domain = '.' + domain;
-      if (!('.' + parsedURL.hostname).endsWith(domain))
-        continue;
-      if (!parsedURL.pathname.startsWith(c.path))
-        continue;
-      if (parsedURL.protocol !== 'https:' && !isLocalHostname(parsedURL.hostname) && c.secure)
-        continue;
-      return true;
-    }
-    return false;
+    return parsedURLs.some(parsedURL => cookieMatchesURL(c, parsedURL));
   });
+}
+
+// Whether the cookie is sent with a request to the given url.
+// https://datatracker.ietf.org/doc/html/rfc6265#section-5.4
+function cookieMatchesURL(cookie: channels.NetworkCookie, url: URL): boolean {
+  if (!domainMatches(url.hostname, cookie.domain))
+    return false;
+  if (!pathMatches(url.pathname, cookie.path))
+    return false;
+  if (cookie.secure && url.protocol !== 'https:' && !isLocalHostname(url.hostname))
+    return false;
+  return true;
+}
+
+// Cookie domain without a leading dot denotes a host-only cookie, see host-only-flag in
+// https://datatracker.ietf.org/doc/html/rfc6265#section-5.3
+// Such a cookie requires the host to be identical to the domain, others follow domain-match from
+// https://datatracker.ietf.org/doc/html/rfc6265#section-5.1.3
+export function domainMatches(hostname: string, cookieDomain: string): boolean {
+  if (hostname === cookieDomain)
+    return true;
+  if (!cookieDomain.startsWith('.'))
+    return false;
+  return ('.' + hostname).endsWith(cookieDomain);
+}
+
+// Implements path-match from https://datatracker.ietf.org/doc/html/rfc6265#section-5.1.4
+function pathMatches(requestPath: string, cookiePath: string): boolean {
+  if (requestPath === cookiePath)
+    return true;
+  if (!requestPath.startsWith(cookiePath))
+    return false;
+  return cookiePath.endsWith('/') || requestPath[cookiePath.length] === '/';
 }
 
 // Mirrors Chromium's net::IsLocalhost(): localhost, *.localhost, 127.0.0.0/8 and [::1].

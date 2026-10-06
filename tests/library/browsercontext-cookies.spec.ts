@@ -244,6 +244,25 @@ it('should work with subdomain cookie', async ({ context, browserName, isWindows
   }]);
 });
 
+it('should only return cookies that apply to the url', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43078' },
+}, async ({ context }) => {
+  await context.addCookies([
+    { name: 'hostonly', value: 'v', domain: 'foo.com', path: '/api' },
+    { name: 'subdomains', value: 'v', domain: '.foo.com', path: '/api' },
+    { name: 'slash', value: 'v', domain: 'foo.com', path: '/foo/' },
+  ]);
+  const names = async (url: string) => (await context.cookies(url)).map(c => c.name).sort();
+  expect(await names('http://foo.com/api')).toEqual(['hostonly', 'subdomains']);
+  expect(await names('http://foo.com/api/x')).toEqual(['hostonly', 'subdomains']);
+  expect(await names('http://foo.com/apiv2')).toEqual([]);
+  expect(await names('http://sub.foo.com/api')).toEqual(['subdomains']);
+  expect(await names('http://notfoo.com/api')).toEqual([]);
+  expect(await names('http://foo.com/foo')).toEqual([]);
+  expect(await names('http://foo.com/foo/')).toEqual(['slash']);
+  expect(await names('http://foo.com/foo/bar')).toEqual(['slash']);
+});
+
 it('should return cookies with empty value', async ({ context, page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=;Path=/');
