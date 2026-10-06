@@ -39,7 +39,6 @@ class ListReporter extends TerminalReporter {
   private _needNewLine = false;
   private _printSteps: boolean;
   private _printFailuresInline: boolean;
-  private _printWorkerIndex: boolean;
   private _failureIndex = new Map<TestCase, number>();
   private _paused = new Set<TestResult>();
 
@@ -48,7 +47,6 @@ class ListReporter extends TerminalReporter {
     super({ ...options, omitTags: getAsBooleanFromENV('PLAYWRIGHT_LIST_OMIT_TAGS', options?.omitTags), lastResult: printFailuresInline });
     this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options?.printSteps);
     this._printFailuresInline = printFailuresInline;
-    this._printWorkerIndex = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_WORKER_INDEX', options?.printWorkerIndex);
   }
 
   override onBegin(suite: Suite) {
@@ -68,19 +66,19 @@ class ListReporter extends TerminalReporter {
       return;
     this._maybeWriteNewLine();
     this._testRows.set(test, this._lastRow);
-    const prefix = this._testPrefix(result, index, '');
+    const prefix = this._testPrefix(index, '');
     const line = this.screen.colors.dim(this.formatTestTitle(test)) + this._retrySuffix(result);
     this._appendLine(line, prefix);
   }
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdOut(chunk, test, result);
-    this._dumpToStdio(chunk, this.screen.stdout, result);
+    this._dumpToStdio(test, chunk, this.screen.stdout, 'out');
   }
 
   override onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdErr(chunk, test, result);
-    this._dumpToStdio(chunk, this.screen.stderr, result);
+    this._dumpToStdio(test, chunk, this.screen.stderr, 'err');
   }
 
   private getStepIndex(testIndex: string, result: TestResult, step: TestStep): string {
@@ -105,11 +103,11 @@ class ListReporter extends TerminalReporter {
     if (this._printSteps) {
       this._maybeWriteNewLine();
       this._stepRows.set(step, this._lastRow);
-      const prefix = this._testPrefix(result, this.getStepIndex(testIndex, result, step), '');
+      const prefix = this._testPrefix(this.getStepIndex(testIndex, result, step), '');
       const line = test.title + this.screen.colors.dim(stepSuffix(step));
       this._appendLine(line, prefix);
     } else {
-      this._updateOrAppendLine(this._testRows, test, this.screen.colors.dim(this.formatTestTitle(test, step)) + this._retrySuffix(result), this._testPrefix(result, testIndex, ''));
+      this._updateOrAppendLine(this._testRows, test, this.screen.colors.dim(this.formatTestTitle(test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
     }
   }
 
@@ -120,13 +118,13 @@ class ListReporter extends TerminalReporter {
     const testIndex = this._resultIndex.get(result) || '';
     if (!this._printSteps) {
       if (this.screen.isTTY)
-        this._updateOrAppendLine(this._testRows, test, this.screen.colors.dim(this.formatTestTitle(test, step.parent)) + this._retrySuffix(result), this._testPrefix(result, testIndex, ''));
+        this._updateOrAppendLine(this._testRows, test, this.screen.colors.dim(this.formatTestTitle(test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
       return;
     }
 
     const index = this.getStepIndex(testIndex, result, step);
     const title = this.screen.isTTY ? test.title + this.screen.colors.dim(stepSuffix(step)) : this.formatTestTitle(test, step);
-    const prefix = this._testPrefix(result, index, '');
+    const prefix = this._testPrefix(index, '');
     let text = '';
     if (step.error)
       text = this.screen.colors.red(title);
@@ -164,25 +162,12 @@ class ListReporter extends TerminalReporter {
     }
   }
 
-  private _dumpToStdio(chunk: string | Buffer, stream: NodeJS.WriteStream, result: TestResult | undefined) {
+  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream, stdio: 'out' | 'err') {
     if (this.config.quiet)
       return;
-    let text = chunk.toString('utf-8');
-    if (result)
-      text = this._prefixLines(text, this._workerPrefix(result), !this._needNewLine);
+    const text = chunk.toString('utf-8');
     this._updateLineCountAndNewLineFlagForOutput(text);
-    stream.write(text);
-  }
-
-  private _prefixLines(text: string, prefix: string, atLineStart: boolean) {
-    if (!prefix)
-      return text;
-    const lines = text.split('\n');
-    return lines.map((line, i) => {
-      if (!line || (i === 0 && !atLineStart))
-        return line;
-      return prefix + line;
-    }).join('\n');
+    stream.write(chunk);
   }
 
   async onTestPaused(test: TestCase, result: TestResult) {
@@ -195,12 +180,12 @@ class ListReporter extends TerminalReporter {
     this._updateTestLine(test, result);
     this._maybeWriteNewLine();
     if (test.outcome() === 'unexpected') {
-      const errors = this._prefixLines(this.formatResultErrors(test, result), this._workerPrefix(result), true);
+      const errors = this.formatResultErrors(test, result);
       this.writeLine(errors);
       this._updateLineCountAndNewLineFlagForOutput(errors);
       markErrorsAsReported(result);
     }
-    this._appendLine(this.screen.colors.yellow(`Paused ${test.outcome() === 'unexpected' ? 'on error' : 'at test end'}. Press Ctrl+C to end.`), this._testPrefix(result, '', ''));
+    this._appendLine(this.screen.colors.yellow(`Paused ${test.outcome() === 'unexpected' ? 'on error' : 'at test end'}. Press Ctrl+C to end.`), this._testPrefix('', ''));
 
     await new Promise<void>(() => {});
   }
@@ -212,10 +197,10 @@ class ListReporter extends TerminalReporter {
       this._updateTestLine(test, result);
     const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
     if (!wasPaused && this._printFailuresInline && isFailure)
-      this._printFailure(test, result);
+      this._printFailure(test);
   }
 
-  private _printFailure(test: TestCase, result: TestResult) {
+  private _printFailure(test: TestCase) {
     this._maybeWriteNewLine();
     // Retries of the same test share one failure index.
     let index = this._failureIndex.get(test);
@@ -223,7 +208,7 @@ class ListReporter extends TerminalReporter {
       index = this._failureIndex.size + 1;
       this._failureIndex.set(test, index);
     }
-    const message = this._prefixLines('\n' + this.formatFailure(test, index) + '\n', this._workerPrefix(result), true);
+    const message = '\n' + this.formatFailure(test, index) + '\n';
     this._updateLineCountAndNewLineFlagForOutput(message);
     this.screen.stdout.write(message);
   }
@@ -242,16 +227,16 @@ class ListReporter extends TerminalReporter {
     }
 
     if (result.status === 'skipped') {
-      prefix = this._testPrefix(result, index, this.screen.colors.green('-'));
+      prefix = this._testPrefix(index, this.screen.colors.green('-'));
       // Do not show duration for skipped.
       text = this.screen.colors.cyan(title) + this._retrySuffix(result);
     } else {
       const statusMark = result.status === 'passed' ? POSITIVE_STATUS_MARK : NEGATIVE_STATUS_MARK;
       if (result.status === test.expectedStatus) {
-        prefix = this._testPrefix(result, index, this.screen.colors.green(statusMark));
+        prefix = this._testPrefix(index, this.screen.colors.green(statusMark));
         text = title;
       } else {
-        prefix = this._testPrefix(result, index, this.screen.colors.red(statusMark));
+        prefix = this._testPrefix(index, this.screen.colors.red(statusMark));
         text = this.screen.colors.red(title);
       }
       text += this._retrySuffix(result) + this.screen.colors.dim(` (${msToString(result.duration)})`);
@@ -304,17 +289,10 @@ class ListReporter extends TerminalReporter {
       this.screen.stdout.write(`\u001B[${this._lastRow - row}E`);
   }
 
-  private _workerPrefix(result: TestResult) {
-    if (!this._printWorkerIndex)
-      return '';
-    const workerIndex = result.workerIndex >= 0 ? String(result.workerIndex) : ' ';
-    return this.screen.colors.dim(`[${workerIndex}]`) + ' ';
-  }
-
-  private _testPrefix(result: TestResult, index: string, statusMark: string) {
+  private _testPrefix(index: string, statusMark: string) {
     const statusMarkLength = stripAnsiEscapes(statusMark).length;
     const indexLength = Math.ceil(Math.log10(this.totalTestCount + 1));
-    return this._workerPrefix(result) + '  ' + statusMark + ' '.repeat(3 - statusMarkLength) + this.screen.colors.dim(index.padStart(indexLength) + ' ');
+    return '  ' + statusMark + ' '.repeat(3 - statusMarkLength) + this.screen.colors.dim(index.padStart(indexLength) + ' ');
   }
 
   private _retrySuffix(result: TestResult) {
