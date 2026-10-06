@@ -155,6 +155,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
       rootSuite._addSuite(buildProjectSuite(project, filteredProjectSuites.get(project)!));
     }
   }
+  testRun.testCountBeforeSharding = rootSuite.allTests().length;
 
   // Complain about only.
   if (config.config.forbidOnly) {

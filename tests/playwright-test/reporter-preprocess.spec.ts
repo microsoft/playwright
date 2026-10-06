@@ -369,6 +369,30 @@ test('skipSharding disables the built-in shard filter; preprocess sees the full 
   expect(result.outputLines).toContain('begin: t0,t2');
 });
 
+test('custom sharding may produce an empty shard', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      class R {
+        async preprocess({ suite, testRun }) {
+          testRun.skipSharding();
+          for (const t of suite.allTests())
+            testRun.exclude(t);
+        }
+      }
+      module.exports = R;
+    `,
+    'playwright.config.ts': `module.exports = { reporter: './reporter.ts', shard: { current: 2, total: 2 } };`,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('t0', async () => {});
+    `,
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(0);
+  expect(result.output).not.toContain('No tests found');
+});
+
 test('multiple reporters declaring custom sharding throws', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter-a.ts': `

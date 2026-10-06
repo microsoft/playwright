@@ -91,6 +91,7 @@ export class TestRun {
   topLevelProjects: commonConfig.FullProjectInternal[] = [];
   hasWorkerErrors = false;
   failedTestCount = 0;
+  testCountBeforeSharding = 0;
   readonly loadFileFilters: Matcher[] = [];
   readonly preOnlyTestFilters: TestCaseFilter[] = [];
   readonly postShardTestFilters: TestCaseFilter[] = [];
@@ -335,9 +336,10 @@ export function createLoadTask(mode: 'out-of-process' | 'in-process', options: {
 
       await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly);
       // Fail when no tests.
-      if (options.failOnLoadErrors && !testRun.rootSuite?.allTests().length
+      const testCount = testRun.config.config.shard ? testRun.testCountBeforeSharding : testRun.rootSuite?.allTests().length;
+      if (options.failOnLoadErrors && !testCount
           && !testRun.options.passWithNoTests
-          && !testRun.config.config.shard && !testRun.options.onlyChanged
+          && !testRun.options.onlyChanged
           && !testRun.options.testList && !testRun.options.testListInvert) {
         if (testRun.options.locations?.length) {
           throw new Error([
