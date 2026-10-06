@@ -313,6 +313,45 @@ it('should remove cookie with negative max-age', async ({ request, server }) => 
   expect(serverRequest.headers.cookie).toBe('c=v');
 });
 
+it('should prefer max-age over expires regardless of the order', async ({ request, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43077' });
+
+  const past = 'Thu, 01 Jan 1970 00:00:00 GMT';
+  const future = new Date(Date.now() + 3600_000).toUTCString();
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', [
+      `a=v; max-age=3600; expires=${past}`,
+      `b=v; expires=${past}; max-age=3600`,
+      `c=v; max-age=-1; expires=${future}`,
+      `d=v; expires=${future}; max-age=-1`,
+    ]);
+    res.end();
+  });
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(server.EMPTY_PAGE)
+  ]);
+  expect(serverRequest.headers.cookie).toBe('a=v; b=v');
+});
+
+it('should ignore max-age that is not a number', async ({ request, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43077' });
+
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=v; max-age=-1abc', 'b=v; max-age=3600abc', 'c=v; max-age=']);
+    res.end();
+  });
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(server.EMPTY_PAGE)
+  ]);
+  expect(serverRequest.headers.cookie).toBe('a=v; b=v; c=v');
+  const { cookies } = await request.storageState();
+  expect(cookies.map(c => c.expires)).toEqual([-1, -1, -1]);
+});
+
 it('should remove cookie with expires far in the past', async ({ request, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=v; max-age=1000000']);
