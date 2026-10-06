@@ -875,3 +875,19 @@ it('asLocatorDescription invalid input', async () => {
   expect.soft(asLocatorDescription('javascript', `following-sibling::*[1]`)).toBe(`following-sibling::*[1]`);
   expect.soft(asLocatorDescription('javascript', `body >> internal:describe="desc" >> div`)).toBe(`locator('body').locator('div')`);
 });
+
+it('resolveSelector returns locatorCode for sdkLanguage', async ({ page }) => {
+  await page.setContent(`<button id="submit">Submit</button>`);
+  expect(await page.ariaSnapshot({ mode: 'ai' })).toContain(`button "Submit" [ref=e2]`);
+  const channel = (page.mainFrame() as any)._channel;
+  const selector = 'aria-ref=e2';
+
+  const noLanguage = await channel.resolveSelector({ selector });
+  expect(noLanguage.resolvedSelector).toBe(`internal:role=button[name="Submit"i]`);
+  expect(noLanguage.locatorCode).toBe(undefined);
+
+  expect((await channel.resolveSelector({ selector, sdkLanguage: 'javascript' })).locatorCode).toBe(`getByRole('button', { name: 'Submit' })`);
+  expect((await channel.resolveSelector({ selector, sdkLanguage: 'python' })).locatorCode).toBe(`get_by_role("button", name="Submit")`);
+  expect((await channel.resolveSelector({ selector, sdkLanguage: 'java' })).locatorCode).toBe(`getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit"))`);
+  expect((await channel.resolveSelector({ selector, sdkLanguage: 'csharp' })).locatorCode).toBe(`GetByRole(AriaRole.Button, new() { Name = "Submit" })`);
+});

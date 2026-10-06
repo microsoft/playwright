@@ -1433,9 +1433,11 @@ scheme.FrameFrameElementResult = tObject({
 });
 scheme.FrameResolveSelectorParams = tObject({
   selector: tString,
+  sdkLanguage: tOptional(tType('SDKLanguage')),
 });
 scheme.FrameResolveSelectorResult = tObject({
   resolvedSelector: tString,
+  locatorCode: tOptional(tString),
 });
 scheme.FrameHighlightParams = tObject({
   selector: tString,

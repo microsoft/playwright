@@ -385,8 +385,10 @@ Frame:
       internal: true
       parameters:
         selector: string
+        sdkLanguage: SDKLanguage?
       returns:
         resolvedSelector: string
+        locatorCode: string?
 
     highlight:
       internal: true

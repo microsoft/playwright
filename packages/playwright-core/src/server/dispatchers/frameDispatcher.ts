@@ -15,6 +15,7 @@
  */
 
 import { renderFullTitleForCall } from '@isomorphic/protocolFormatter';
+import { asLocator } from '@isomorphic/locatorGenerators';
 import { ExpectError, Frame } from '../frames';
 import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
@@ -188,7 +189,9 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async resolveSelector(params: channels.FrameResolveSelectorParams, progress: Progress): Promise<channels.FrameResolveSelectorResult> {
-    return await this._frame.resolveSelector(progress, params.selector);
+    const { resolvedSelector } = await this._frame.resolveSelector(progress, params.selector);
+    const locatorCode = params.sdkLanguage ? asLocator(params.sdkLanguage, resolvedSelector) : undefined;
+    return { resolvedSelector, locatorCode };
   }
 
   async getAttribute(params: channels.FrameGetAttributeParams, progress: Progress): Promise<channels.FrameGetAttributeResult> {
