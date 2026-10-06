@@ -154,7 +154,7 @@ abstract class LocatorParser {
   protected abstract parseRegex(): RegExp | undefined;
 
   protected parseLocator(): ParsedSelector {
-    const parts: ParsedSelectorPart[] = [];
+    let parts: ParsedSelectorPart[] = [];
     // FrameLocator enters the frame lazily, so that first(), last() and nth() apply to the frame element.
     let inFrameLocator = false;
     do {
@@ -163,7 +163,11 @@ abstract class LocatorParser {
         parts.push(selectorPart('internal:control', 'enter-frame'));
         inFrameLocator = false;
       }
-      parts.push(...handler(call, this._testIdAttributeName));
+      const callParts = handler(call, this._testIdAttributeName);
+      if (handler === withinParts)
+        parts = [...callParts, nestedSelectorPart('internal:chain', { parts })];
+      else
+        parts.push(...callParts);
       if (handler === contentFrameParts || (handler === frameLocatorParts && call.args.length))
         inFrameLocator = true;
     } while (this.eat('.'));
@@ -421,6 +425,11 @@ function filterParts(call: CallArguments): ParsedSelectorPart[] {
   return filterSelectorParts(call);
 }
 
+function withinParts(call: CallArguments): ParsedSelectorPart[] {
+  checkArguments(call, 1, []);
+  return arg(call, 0, isSelector).parts;
+}
+
 function nestedParts(name: string): CallHandler {
   return call => {
     checkArguments(call, 1, []);
@@ -461,6 +470,11 @@ function getByTestIdParts(call: CallArguments, testIdAttributeName: string): Par
   return parseSelector(getByTestIdSelector(testIdAttributeName, arg(call, 0, isText))).parts;
 }
 
+function getByRefParts(call: CallArguments): ParsedSelectorPart[] {
+  checkArguments(call, 1, []);
+  return [selectorPart('aria-ref', arg(call, 0, isString))];
+}
+
 function textParts(toSelector: (text: string | RegExp, options: { exact?: boolean }) => string): CallHandler {
   return call => {
     checkArguments(call, 1, ['exact']);
@@ -484,6 +498,7 @@ const kFrameElementHandlers = new Set<CallHandler>([firstParts, lastParts, nthPa
 const kJavaScriptMethods = new Map<string, CallHandler>([
   ['locator', locatorParts],
   ['filter', filterParts],
+  ['within', withinParts],
   ['and', andParts],
   ['or', orParts],
   ['frameLocator', frameLocatorParts],
@@ -496,6 +511,7 @@ const kJavaScriptMethods = new Map<string, CallHandler>([
   ['getByText', getByTextParts],
   ['getByLabel', getByLabelParts],
   ['getByTestId', getByTestIdParts],
+  ['getByRef', getByRefParts],
   ['getByAltText', getByAltTextParts],
   ['getByPlaceholder', getByPlaceholderParts],
   ['getByTitle', getByTitleParts],
@@ -504,6 +520,7 @@ const kJavaScriptMethods = new Map<string, CallHandler>([
 const kPythonMethods = new Map<string, CallHandler>([
   ['locator', locatorParts],
   ['filter', filterParts],
+  ['within', withinParts],
   ['and_', andParts],
   ['or_', orParts],
   ['frame_locator', frameLocatorParts],
@@ -516,6 +533,7 @@ const kPythonMethods = new Map<string, CallHandler>([
   ['get_by_text', getByTextParts],
   ['get_by_label', getByLabelParts],
   ['get_by_test_id', getByTestIdParts],
+  ['get_by_ref', getByRefParts],
   ['get_by_alt_text', getByAltTextParts],
   ['get_by_placeholder', getByPlaceholderParts],
   ['get_by_title', getByTitleParts],
@@ -524,6 +542,7 @@ const kPythonMethods = new Map<string, CallHandler>([
 const kCSharpMethods = new Map<string, CallHandler>([
   ['Locator', locatorParts],
   ['Filter', filterParts],
+  ['Within', withinParts],
   ['And', andParts],
   ['Or', orParts],
   ['FrameLocator', frameLocatorParts],
@@ -536,6 +555,7 @@ const kCSharpMethods = new Map<string, CallHandler>([
   ['GetByText', getByTextParts],
   ['GetByLabel', getByLabelParts],
   ['GetByTestId', getByTestIdParts],
+  ['GetByRef', getByRefParts],
   ['GetByAltText', getByAltTextParts],
   ['GetByPlaceholder', getByPlaceholderParts],
   ['GetByTitle', getByTitleParts],

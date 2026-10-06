@@ -636,6 +636,25 @@ it('parseLocator nested and, or, locator', {
   });
 });
 
+it('parseLocator within', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43159' }
+}, async () => {
+  const selector = `internal:role=row >> internal:chain="internal:role=cell >> nth=2"`;
+  expect.soft(parseLocator('javascript', `getByRole('cell').nth(2).within(getByRole('row'))`)).toBe(selector);
+  expect.soft(parseLocator('python', `get_by_role("cell").nth(2).within(get_by_role("row"))`)).toBe(selector);
+  expect.soft(parseLocator('java', `getByRole(AriaRole.CELL).nth(2).within(getByRole(AriaRole.ROW))`)).toBe(selector);
+  expect.soft(parseLocator('csharp', `GetByRole(AriaRole.Cell).Nth(2).Within(GetByRole(AriaRole.Row))`)).toBe(selector);
+});
+
+it('parseLocator getByRef', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43159' }
+}, async () => {
+  expect.soft(parseLocator('javascript', `getByRef('e5')`)).toBe('aria-ref=e5');
+  expect.soft(parseLocator('python', `get_by_ref("e5")`)).toBe('aria-ref=e5');
+  expect.soft(parseLocator('java', `getByRef("e5")`)).toBe('aria-ref=e5');
+  expect.soft(parseLocator('csharp', `GetByRef("e5")`)).toBe('aria-ref=e5');
+});
+
 it('asLocator xpath', async () => {
   const selector = `//*[contains(normalizer-text(), 'foo']`;
   expect.soft(asLocator('javascript', selector)).toBe(`locator('//*[contains(normalizer-text(), \\'foo\\']')`);
