@@ -153,6 +153,7 @@ export function parseRawCookie(header: string): RawCookie | null {
     name,
     value,
   };
+  let maxAgeExpires: number | undefined;
   for (let i = 1; i < pairs.length; i++) {
     const [name, value] = pairs[i];
     switch (name.toLowerCase()) {
@@ -167,15 +168,16 @@ export function parseRawCookie(header: string): RawCookie | null {
         }
         break;
       case 'max-age':
-        const maxAgeSec = parseInt(value, 10);
-        if (isFinite(maxAgeSec)) {
-          // From https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.2
+        // From https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.2
+        // If the attribute-value is not an optional "-" followed by digits, ignore the cookie-av.
+        if (/^-?\d+$/.test(value)) {
+          const maxAgeSec = parseInt(value, 10);
           // If delta-seconds is less than or equal to zero (0), let expiry-time
           // be the earliest representable date and time.
           if (maxAgeSec <= 0)
-            cookie.expires = 0;
+            maxAgeExpires = 0;
           else
-            cookie.expires = Math.min(Date.now() / 1000 + maxAgeSec, kMaxCookieExpiresDateInSeconds);
+            maxAgeExpires = Math.min(Date.now() / 1000 + maxAgeSec, kMaxCookieExpiresDateInSeconds);
         }
         break;
       case 'domain':
@@ -207,6 +209,10 @@ export function parseRawCookie(header: string): RawCookie | null {
         break;
     }
   }
+  // https://datatracker.ietf.org/doc/html/rfc6265#section-5.3
+  // Max-Age takes precedence over Expires, regardless of the order of attributes.
+  if (maxAgeExpires !== undefined)
+    cookie.expires = maxAgeExpires;
   return cookie;
 }
 
