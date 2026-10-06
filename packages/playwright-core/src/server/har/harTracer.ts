@@ -25,6 +25,7 @@ import { isTextualMimeType } from '@isomorphic/mimeType';
 import { urlMatches } from '@isomorphic/urlMatch';
 import { getPlaywrightVersion } from '../userAgent';
 import { BrowserContext } from '../browserContext';
+import { parseCookieNameValue } from '../cookieStore';
 import { APIRequestContext } from '../fetch';
 import { Frame } from '../frames';
 import { helper } from '../helper';
@@ -774,22 +775,12 @@ function createHarEntry(pageRef: string | undefined, method: string, url: URL, f
 }
 
 function parseCookie(c: string): har.Cookie {
-  const cookie: har.Cookie = {
-    name: '',
-    value: ''
-  };
-  let first = true;
-  for (const pair of c.split(/; */)) {
+  const [nameValue, ...attributes] = c.split(/; */);
+  const cookie: har.Cookie = parseCookieNameValue(nameValue);
+  for (const pair of attributes) {
     const indexOfEquals = pair.indexOf('=');
     const name = indexOfEquals !== -1 ? pair.substr(0, indexOfEquals).trim() : pair.trim();
     const value = indexOfEquals !== -1 ? pair.substr(indexOfEquals + 1, pair.length).trim() : '';
-    if (first) {
-      first = false;
-      cookie.name = name;
-      cookie.value = value;
-      continue;
-    }
-
     switch (name.toLowerCase()) {
       case 'domain':
         cookie.domain = value;

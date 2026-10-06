@@ -119,8 +119,25 @@ type RawCookie = {
   sameSite?: 'Strict' | 'Lax' | 'None',
 };
 
+// https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis#section-5.6
+export function parseCookieNameValue(pair: string): { name: string, value: string } {
+  const separatorPos = pair.indexOf('=');
+  if (separatorPos === -1)
+    return { name: '', value: pair.trim() };
+  return { name: pair.slice(0, separatorPos).trim(), value: pair.slice(separatorPos + 1).trim() };
+}
+
+// https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis#section-5.8.3
+export function serializeCookieNameValue(cookie: { name: string, value: string }): string {
+  return cookie.name ? `${cookie.name}=${cookie.value}` : cookie.value;
+}
+
 export function parseRawCookie(header: string): RawCookie | null {
-  const pairs = header.split(';').filter(s => s.trim().length > 0).map(p => {
+  const [nameValue, ...attributes] = header.split(';');
+  const cookie: RawCookie = parseCookieNameValue(nameValue);
+  if (!cookie.name && !cookie.value)
+    return null;
+  const pairs = attributes.filter(s => s.trim().length > 0).map(p => {
     let key = '';
     let value = '';
     const separatorPos = p.indexOf('=');
@@ -135,16 +152,8 @@ export function parseRawCookie(header: string): RawCookie | null {
     }
     return [key, value];
   });
-  if (!pairs.length)
-    return null;
-  const [name, value] = pairs[0];
-  const cookie: RawCookie = {
-    name,
-    value,
-  };
   let maxAgeExpires: number | undefined;
-  for (let i = 1; i < pairs.length; i++) {
-    const [name, value] = pairs[i];
+  for (const [name, value] of pairs) {
     switch (name.toLowerCase()) {
       case 'expires':
         const expiresMs = (+new Date(value));

@@ -28,7 +28,7 @@ import { monotonicTime } from '@isomorphic/time';
 import { createProxyAgent, flattenAggregateError, happyEyeballsOptions } from '@utils/network';
 import { getUserAgent } from './userAgent';
 import { BrowserContext, findMatchingHttpCredentials, verifyClientCertificates } from './browserContext';
-import { CookieStore, parseRawCookie } from './cookieStore';
+import { CookieStore, parseCookieNameValue, parseRawCookie, serializeCookieNameValue } from './cookieStore';
 import { MultipartFormData } from './formData';
 import { cookieMatchesClearFilter, domainMatches, filterCookies, rewriteCookies } from './network';
 import { TargetClosedError } from './errors';
@@ -289,7 +289,7 @@ export abstract class APIRequestContext extends SdkObject {
       return;
     const cookies = await this.cookies(progress, [url.toString()]);
     if (cookies.length) {
-      const valueArray = cookies.map(c => `${c.name}=${c.value}`);
+      const valueArray = cookies.map(serializeCookieNameValue);
       setHeader(headers, 'cookie', valueArray.join('; '));
     }
   }
@@ -329,12 +329,7 @@ export abstract class APIRequestContext extends SdkObject {
     };
     await this._updateRequestCookieHeader(progress, url, options.headers);
 
-    const requestCookies = getHeader(options.headers, 'cookie')?.split(';').map(p => {
-      const indexOfEquals = p.indexOf('=');
-      const name = indexOfEquals !== -1 ? p.substring(0, indexOfEquals).trim() : p.trim();
-      const value = indexOfEquals !== -1 ? p.substring(indexOfEquals + 1).trim() : '';
-      return { name, value };
-    }) || [];
+    const requestCookies = getHeader(options.headers, 'cookie')?.split(';').map(parseCookieNameValue) || [];
     const requestEvent: APIRequestEvent = {
       url,
       method: options.method!,

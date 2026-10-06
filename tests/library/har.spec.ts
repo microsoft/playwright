@@ -248,6 +248,19 @@ it('should include set-cookies', async ({ contextFactory, server }, testInfo) =>
   expect(new Date(cookies[2].expires!).valueOf()).toBeGreaterThan(Date.now());
 });
 
+it('should include set-cookies without equals sign as nameless', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43155' },
+}, async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['token; HttpOnly']);
+    res.end();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const log = await getLog();
+  expect(log.entries[0].response.cookies).toEqual([{ name: '', value: 'token', httpOnly: true }]);
+});
+
 it('should include set-cookies with lowercase attributes', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.setRoute('/empty.html', (req, res) => {
@@ -838,6 +851,24 @@ it('should correctly record API request cookies with equals sign in value', asyn
   const log = JSON.parse(fs.readFileSync(harPath).toString()).log as Log;
   expect(log.entries[0].request.cookies).toEqual([
     { name: 'token', value: 'abc=xyz' },
+    { name: 'other', value: 'val' },
+  ]);
+});
+
+it('should record nameless API request cookies', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43155' },
+}, async ({ contextFactory, server }, testInfo) => {
+  const context = await contextFactory();
+  const harPath = testInfo.outputPath('request.har');
+  await context.request.tracing.startHar(harPath);
+  await context.request.get(server.PREFIX + '/simple.json', {
+    headers: { cookie: 'nameless; other=val' },
+  });
+  await context.request.tracing.stopHar();
+  await context.close();
+  const log = JSON.parse(fs.readFileSync(harPath).toString()).log as Log;
+  expect(log.entries[0].request.cookies).toEqual([
+    { name: '', value: 'nameless' },
     { name: 'other', value: 'val' },
   ]);
 });
