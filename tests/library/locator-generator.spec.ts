@@ -714,6 +714,15 @@ it('parseLocator role options', async () => {
   expect.soft(parseLocator('javascript', `getByRole('button', { nme: 'foo' })`, '')).toBe(``);
 });
 
+it('parseLocator round-trips mixed role options', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43158' }
+}, async () => {
+  for (const selector of ['internal:role=checkbox[checked=mixed]', 'internal:role=button[pressed=mixed]']) {
+    for (const lang of ['javascript', 'python', 'java', 'csharp'] as const)
+      expect.soft(parseLocator(lang, asLocator(lang, selector), 'data-testid'), `${lang}: ${selector}`).toBe(selector);
+  }
+});
+
 it('parseLocator round-trips selectors', async () => {
   const selectors = [
     'div',
