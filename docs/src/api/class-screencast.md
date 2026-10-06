@@ -156,6 +156,7 @@ a mouse pointer that animates from the previous action point to the next one.
 * since: v1.64
 - `style` ?<[Object]>
   * alias-csharp: ScreencastActionStyle
+  * alias-java: ScreencastActionStyle
   - `point` ?<[string]> CSS declarations for the marker at the action point. The marker is positioned at the action point, has zero size and is centered on the point, so its size and look come from this style. Not shown when omitted.
   - `highlight` ?<[string]> CSS declarations for the box that covers the target element. The box is positioned and sized to the element bounds. Not shown when omitted.
   - `title` ?<[string]> CSS declarations for the action title, for example `'font-size: 32px; background: #333'`. The title is placed according to [`option: Screencast.showActions.position`].
