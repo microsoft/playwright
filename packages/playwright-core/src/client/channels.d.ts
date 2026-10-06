@@ -2626,12 +2626,14 @@ export type FrameFrameElementResult = {
 };
 export type FrameResolveSelectorParams = {
   selector: string,
+  sdkLanguage?: SDKLanguage,
 };
 export type FrameResolveSelectorOptions = {
-
+  sdkLanguage?: SDKLanguage,
 };
 export type FrameResolveSelectorResult = {
   resolvedSelector: string,
+  locatorCode?: string,
 };
 export type FrameHighlightParams = {
   selector: string,

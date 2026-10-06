@@ -16495,6 +16495,24 @@ export interface Locator {
    * Returns a new locator that uses best practices for referencing the matched element, prioritizing test ids, aria
    * roles, and other user-facing attributes over CSS selectors. This is useful for converting implementation-detail
    * selectors into more resilient, human-readable locators.
+   *
+   * **Usage**
+   *
+   * An agent can pick an element by its ref from an
+   * [page.ariaSnapshot([options])](https://playwright.dev/docs/api/class-page#page-aria-snapshot) taken in the `"ai"`
+   * mode. Refs only work for the latest snapshot. Normalize the ref locator and convert it to a string to get resilient
+   * locator code in your language, the same way `codegen` does.
+   *
+   * Consider the following aria snapshot.
+   *
+   * You can turn the ref into locator code:
+   *
+   * ```js
+   * const normalized = await page.getByRef('e2').normalize();
+   * console.log(normalized.toString());
+   * // getByRole('button', { name: 'Submit' })
+   * ```
+   *
    */
   normalize(): Promise<Locator>;
 
