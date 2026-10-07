@@ -100,6 +100,10 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
     if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
       if (!parentElementVisible)
         return;
+      // Text nodes that are not rendered are neither visible nor exposed to aria,
+      // so they are skipped regardless of the visibility option.
+      if (roleUtils.isTextNodeNotRendered(node as Text))
+        return;
 
       const text = node.nodeValue;
       // <textarea>AAA</textarea> should not report AAA as a child of the textarea.
