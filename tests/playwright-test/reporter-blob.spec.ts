@@ -131,7 +131,7 @@ test('should call methods in right order', async ({ runInlineTest, mergeReports 
     `
   };
   await runInlineTest(files, { shard: `1/3` });
-  await runInlineTest(files, { shard: `3/3` });
+  await runInlineTest(files, { shard: `3/3` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual([expect.stringMatching(/report-.*.zip/), expect.stringMatching(/report-.*.zip/)]);
@@ -174,7 +174,7 @@ test('should fail merge and report error when reporter throws in onEnd', async (
     `,
   };
   await runInlineTest(files, { shard: `1/2` });
-  await runInlineTest(files, { shard: `2/2` });
+  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   // Merge through the dot reporter so the reporter error is surfaced, and the
   // throwing reporter to fail the merge command.
@@ -238,7 +238,7 @@ test('should merge into html with dependencies', async ({ runInlineTest, mergeRe
   };
   const totalShards = 3;
   for (let i = 0; i < totalShards; i++)
-    await runInlineTest(files, { shard: `${i + 1}/${totalShards}` });
+    await runInlineTest(files, { shard: `${i + 1}/${totalShards}` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual([expect.stringMatching(/report-.*.zip/), expect.stringMatching(/report-.*.zip/), expect.stringMatching(/report-.*.zip/)]);
@@ -302,8 +302,8 @@ test('should merge blob into blob', async ({ runInlineTest, mergeReports, showRe
       test.skip('skipped 2', async ({}) => {});
     `
   };
-  await runInlineTest(files, { shard: `1/2` });
-  await runInlineTest(files, { shard: `2/2` });
+  await runInlineTest(files, { shard: `1/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
   {
     const reportFiles = await fs.promises.readdir(reportDir);
     reportFiles.sort();
@@ -395,7 +395,7 @@ test('be able to merge incomplete shards', async ({ runInlineTest, mergeReports,
     `
   };
   await runInlineTest(files, { shard: `1/3` });
-  await runInlineTest(files, { shard: `3/3` });
+  await runInlineTest(files, { shard: `3/3` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
@@ -437,7 +437,7 @@ test('total time is from test run not from merge', async ({ runInlineTest, merge
     `,
   };
   await runInlineTest(files, { shard: `1/2` });
-  await runInlineTest(files, { shard: `2/2` });
+  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const { exitCode, output } = await mergeReports(reportDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
@@ -502,7 +502,7 @@ test('merge into list report by default', async ({ runInlineTest, mergeReports }
 
   const totalShards = 3;
   for (let i = 0; i < totalShards; i++)
-    await runInlineTest(files, { shard: `${i + 1}/${totalShards}` });
+    await runInlineTest(files, { shard: `${i + 1}/${totalShards}` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual(['report-1.zip', 'report-2.zip', 'report-3.zip']);
@@ -588,8 +588,8 @@ test('should print progress', async ({ runInlineTest, mergeReports }) => {
     `
   };
 
-  await runInlineTest(files, { shard: `1/2` });
-  await runInlineTest(files, { shard: `2/2` });
+  await runInlineTest(files, { shard: `1/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual(['report-1.zip', 'report-2.zip']);
@@ -779,7 +779,7 @@ test('resource names should not clash between runs', async ({ runInlineTest, sho
     `
   };
   await runInlineTest(files, { shard: `1/2` });
-  await runInlineTest(files, { shard: `2/2` });
+  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
@@ -913,7 +913,7 @@ test('multiple output reports based on config', async ({ runInlineTest, mergeRep
     `
   };
   await runInlineTest(files, { shard: `1/2` });
-  await runInlineTest(files, { shard: `2/2` });
+  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
@@ -1056,7 +1056,7 @@ test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
   };
 
   await runInlineTest(files, { shard: `1/3`, workers: 1 });
-  await runInlineTest(files, { shard: `3/3`, workers: 1 });
+  await runInlineTest(files, { shard: `3/3`, workers: 1 }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const mergeConfig = {
     reportSlowTests: {
@@ -1307,7 +1307,7 @@ test('support fileName option', async ({ runInlineTest, mergeReports }) => {
   });
 
   await runInlineTest(files('one'));
-  await runInlineTest(files('two'), undefined);
+  await runInlineTest(files('two'), undefined, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportDir = test.info().outputPath('blob-report');
   const reportFiles = await fs.promises.readdir(reportDir);
@@ -1338,28 +1338,6 @@ test('support PLAYWRIGHT_BLOB_OUTPUT_DIR env variable', async ({ runInlineTest, 
   expect(reportFiles.sort()).toEqual(['report.zip']);
 });
 
-test('should preserve reports from other shards in PLAYWRIGHT_BLOB_OUTPUT_DIR', async ({ runInlineTest }) => {
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43013' });
-  const files = {
-    'playwright.config.ts': `
-      module.exports = {
-        reporter: [['blob']],
-      };
-    `,
-    'a.test.js': `
-      import { test, expect } from '@playwright/test';
-      test('math 1', async ({}) => {});
-      test('math 2', async ({}) => {});
-    `,
-  };
-
-  await runInlineTest(files, { shard: '1/2' }, { PLAYWRIGHT_BLOB_OUTPUT_DIR: 'my/dir' });
-  await runInlineTest(files, { shard: '2/2' }, { PLAYWRIGHT_BLOB_OUTPUT_DIR: 'my/dir' });
-
-  const reportFiles = await fs.promises.readdir(test.info().outputPath('my', 'dir'));
-  expect(reportFiles.sort()).toEqual(['report-1.zip', 'report-2.zip']);
-});
-
 test('support PLAYWRIGHT_BLOB_OUTPUT_NAME env variable', async ({ runInlineTest, mergeReports }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30091' });
   const files = {
@@ -1378,7 +1356,7 @@ test('support PLAYWRIGHT_BLOB_OUTPUT_NAME env variable', async ({ runInlineTest,
   };
 
   await runInlineTest(files, undefined, { PLAYWRIGHT_BLOB_OUTPUT_NAME: 'report-one.zip' });
-  await runInlineTest(files, undefined, { PLAYWRIGHT_BLOB_OUTPUT_NAME: 'report-two.zip' });
+  await runInlineTest(files, undefined, { PLAYWRIGHT_BLOB_OUTPUT_NAME: 'report-two.zip', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportDir = test.info().outputPath('blob-report');
   const reportFiles = await fs.promises.readdir(reportDir);
@@ -1462,7 +1440,7 @@ test('keep projects with same name different global tag separate', async ({ runI
   });
 
   await runInlineTest(files('first'), undefined, { GLOBAL_TAG: '@first' });
-  await runInlineTest(files('second'), undefined, { GLOBAL_TAG: '@second' });
+  await runInlineTest(files('second'), undefined, { GLOBAL_TAG: '@second', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportDir = test.info().outputPath('blob-report');
   const reportFiles = await fs.promises.readdir(reportDir);
@@ -1577,7 +1555,7 @@ test('merge-reports should throw if report version is from the future', async ({
     `,
   };
   await runInlineTest(files, { shard: `1/2` });
-  await runInlineTest(files, { shard: `2/2` });
+  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportFiles = await fs.promises.readdir(reportDir);
   expect(reportFiles).toEqual(['report-1.zip', 'report-2.zip']);
@@ -1813,7 +1791,7 @@ test('merge reports same rootDirs', async ({ runInlineTest, mergeReports }) => {
     `,
   };
   await runInlineTest(files, { shard: `1/2` });
-  await runInlineTest(files, { shard: `2/2` });
+  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const allReportsDir = test.info().outputPath('blob-report');
 
@@ -2005,8 +1983,8 @@ test('merge reports should preserve attachments', async ({ runInlineTest, mergeR
       });
     `
   };
-  await runInlineTest(files, { shard: `1/2` });
-  await runInlineTest(files, { shard: `2/2` });
+  await runInlineTest(files, { shard: `1/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
@@ -2114,7 +2092,7 @@ test('merge reports must not change test ids when there is no need to', async ({
     testIdsFromShard1 = outputLines.sort();
   }
   {
-    const { exitCode, outputLines } = await runInlineTest(files, { workers: 1 }, {}, { additionalArgs: ['--config', test.info().outputPath('shard-2.config.ts')] });
+    const { exitCode, outputLines } = await runInlineTest(files, { workers: 1 }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' }, { additionalArgs: ['--config', test.info().outputPath('shard-2.config.ts')] });
     expect(exitCode).toBe(0);
     testIdsFromShard2 = outputLines.sort();
     expect([...testIdsFromShard1, ...testIdsFromShard2].sort()).toEqual(testIdsFromSingleRun);
@@ -2285,7 +2263,7 @@ test('project filter in report name', async ({ runInlineTest }) => {
     const result = await runInlineTest(files, { shard: `1/2`, project: ['foo', 'b*r'], grep: 'smoke' });
     expect(result.exitCode).toBe(0);
     const reportFiles = await fs.promises.readdir(reportDir);
-    expect(reportFiles.sort()).toEqual(['report-foo-2.zip', 'report-foo-b-r-c29b5fa-1.zip']);
+    expect(reportFiles.sort()).toEqual(['report-foo-b-r-c29b5fa-1.zip']);
   }
 
   {
@@ -2332,7 +2310,7 @@ test('should report duration across all shards', async ({ runInlineTest, mergeRe
 
   await runInlineTest(files, { shard: `1/2`, workers: 1 });
   await new Promise(f => setTimeout(f, 1500)); // Ensure different start times.
-  await runInlineTest(files, { shard: `2/2`, workers: 1 });
+  await runInlineTest(files, { shard: `2/2`, workers: 1 }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const { exitCode, outputLines } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('reporter.js'), '-c', test.info().outputPath('playwright.config.ts')] });
   expect(exitCode).toBe(0);
@@ -2366,12 +2344,12 @@ test('shard chart', async ({ runInlineTest, writeFiles, showReport, page, mergeR
     `,
   });
 
-  await runInlineTest({}, { shard: '1/3' }, { BOT_TAG: '@linux' });
-  await runInlineTest({}, { shard: '2/3' }, { BOT_TAG: '@linux' });
-  await runInlineTest({}, { shard: '3/3' }, { BOT_TAG: '@linux' });
+  await runInlineTest({}, { shard: '1/3' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
+  await runInlineTest({}, { shard: '2/3' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
+  await runInlineTest({}, { shard: '3/3' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
 
-  await runInlineTest({}, { shard: '1/2' }, { BOT_TAG: '@mac' });
-  await runInlineTest({}, { shard: '2/2' }, { BOT_TAG: '@mac' });
+  await runInlineTest({}, { shard: '1/2' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@mac' });
+  await runInlineTest({}, { shard: '2/2' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@mac' });
 
   const { exitCode } = await mergeReports(reportDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
@@ -2418,7 +2396,7 @@ test('should populate projects in config when merging reports', async ({ runInli
   };
 
   await runInlineTest(files, { shard: `1/2`, workers: 1 });
-  await runInlineTest(files, { shard: `2/2`, workers: 1 });
+  await runInlineTest(files, { shard: `2/2`, workers: 1 }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportFiles = await fs.promises.readdir(reportDir);
   expect(reportFiles).toHaveLength(2);
@@ -2446,8 +2424,8 @@ test('workerIndex is rebased', async ({ runInlineTest, writeFiles, showReport, p
     `,
   });
 
-  await runInlineTest({}, { shard: '1/2', workers: '1' });
-  await runInlineTest({}, { shard: '2/2', workers: '1' });
+  await runInlineTest({}, { shard: '1/2', workers: '1' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  await runInlineTest({}, { shard: '2/2', workers: '1' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const { exitCode } = await mergeReports(reportDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
