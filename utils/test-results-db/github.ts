@@ -23,10 +23,27 @@ export type Artifact = {
   name: string;
 };
 
+export type ArtifactScan = {
+  artifacts: Artifact[];
+  // Runs created inside the lookback window.
+  runCount: number;
+  // Runs whose artifacts we actually listed.
+  listedRunCount: number;
+};
+
 type ListOptions = {
   ingested: Set<string>;
   lookbackDays: number;
-  stopAfterSeen: number;
+  // Completed runs last updated before this time (epoch ms) are not listed.
+  rescanSince: number;
+  concurrency: number;
+};
+
+type RawRun = {
+  id: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
 };
 
 type RawArtifact = {
@@ -36,8 +53,15 @@ type RawArtifact = {
   created_at: string;
 };
 
-// Thin GitHub REST client over global fetch. Only the three endpoints this CLI
-// needs: list artifacts, list by name, and download an artifact zip.
+// A single runs query returns at most this many results, no matter how you
+// page it. Larger windows have to be split into several queries.
+const RUNS_QUERY_CAP = 1000;
+
+const FETCH_ATTEMPTS = 3;
+
+// Thin GitHub REST client over global fetch. Only the endpoints this CLI
+// needs: list runs, list a run's artifacts, list artifacts by name, and
+// download an artifact zip.
 export class GitHubClient {
   private _base: string;
   private _headers: Record<string, string>;
@@ -53,56 +77,46 @@ export class GitHubClient {
     };
   }
 
-  // Return the not-yet-ingested artifacts matching `prefix`, walking the list
-  // from the top and stopping early once we're safely into the already-ingested
-  // region.
+  // Return the not-yet-ingested artifacts matching `prefix` from the runs
+  // created in the last `lookbackDays`.
   //
-  // The list is ordered by descending artifact id, and GitHub assigns ids as a
-  // monotonic creation-order sequence (verified: no inversions across a 1000-
-  // artifact sample). So the newest artifacts are always at the head. An artifact
-  // gets its id when its upload *starts* but only appears in the list once the
-  // upload *finalizes*, so the single way one can surface below where a prior
-  // scan stopped is a still-in-flight upload finalizing late -- a window bounded
-  // by one artifact's upload+list latency (seconds, for these KB parquet files).
-  // We therefore keep scanning `stopAfterSeen` artifacts past the newest
-  // already-ingested one as a cushion; any new (un-ingested) artifact resets the
-  // counter. To bury a late finalizer we'd need `stopAfterSeen` newer artifacts
-  // ingested above it while it uploads, i.e. an upload outlasting a whole cron
-  // interval -- impossible here, so this misses nothing in practice.
+  // We walk run by run: list the recent runs, then each run's artifacts. The
+  // repo-wide artifact listing (GET /actions/artifacts without a name filter)
+  // returns 500 for large repositories, so it cannot be used here.
   //
-  // `lookbackDays` is the absolute backstop for the first run, when nothing is
-  // ingested yet and the cushion never triggers.
-  async listArtifacts(prefix: string, options: ListOptions): Promise<Artifact[]> {
-    const { ingested, lookbackDays, stopAfterSeen } = options;
+  // Listing every run on each cron tick would be expensive, so a run is only
+  // listed when it can still hold artifacts we have not seen. Artifacts are
+  // uploaded by jobs, and a run's `updated_at` moves whenever a job finishes,
+  // so a run that completed before `rescanSince` was already final the last
+  // time we looked and everything it has is ingested. In-progress runs are
+  // always listed.
+  async listArtifacts(prefix: string, options: ListOptions): Promise<ArtifactScan> {
+    const { ingested, lookbackDays, rescanSince, concurrency } = options;
     const cutoff = Date.now() - lookbackDays * 24 * 60 * 60 * 1000;
-    const out: Artifact[] = [];
+    const runs = await this._listRecentRuns(cutoff);
+    const toList = runs.filter(run => run.status !== 'completed' || Date.parse(run.updated_at) >= rescanSince);
+
+    const artifacts: Artifact[] = [];
     const queued = new Set<string>();
-    let seen = 0;
-    for await (const artifact of this._paginateArtifacts('/actions/artifacts?per_page=100')) {
-      const createdAt = artifact.created_at ? Date.parse(artifact.created_at) : 0;
-      if (createdAt && createdAt < cutoff)
-        return out;
-      if (artifact.expired || !artifact.name.startsWith(prefix))
-        continue;
-      const id = String(artifact.id);
-      if (queued.has(id))
-        continue;
-      if (ingested.has(id)) {
-        if (++seen >= stopAfterSeen)
-          return out;
-        continue;
+    for (const batch of chunk(toList, concurrency)) {
+      const lists = await Promise.all(batch.map(run => this._listRunArtifacts(run.id)));
+      for (const artifact of lists.flat()) {
+        if (artifact.expired || !artifact.name.startsWith(prefix))
+          continue;
+        const id = String(artifact.id);
+        if (ingested.has(id) || queued.has(id))
+          continue;
+        queued.add(id);
+        artifacts.push({ id, name: artifact.name });
       }
-      seen = 0;
-      queued.add(id);
-      out.push({ id, name: artifact.name });
     }
-    return out;
+    return { artifacts, runCount: runs.length, listedRunCount: toList.length };
   }
 
   // The newest non-expired artifact with the exact name, or null if none.
   async findLatestArtifact(name: string): Promise<string | null> {
     const query = `/actions/artifacts?name=${encodeURIComponent(name)}&per_page=100`;
-    for await (const artifact of this._paginateArtifacts(query)) {
+    for await (const artifact of this._paginate<RawArtifact>(query, 'artifacts')) {
       if (!artifact.expired)
         return String(artifact.id);
     }
@@ -112,24 +126,77 @@ export class GitHubClient {
   async downloadArtifactZip(id: string): Promise<Buffer> {
     // 302 -> blob storage; fetch follows it and strips the Authorization header
     // on the cross-origin redirect, as required by the signed URL.
-    const response = await fetch(`${this._base}/actions/artifacts/${id}/zip`, { headers: this._headers });
+    const response = await this._fetch(`${this._base}/actions/artifacts/${id}/zip`);
     if (!response.ok)
       throw new Error(`Failed to download artifact ${id}: ${response.status} ${response.statusText}`);
     return Buffer.from(await response.arrayBuffer());
   }
 
-  private async * _paginateArtifacts(path: string): AsyncGenerator<RawArtifact> {
+  // All runs created at or after `cutoff`, newest first. The `created` filter
+  // takes an inclusive `from..to` range; when a range hits the result cap we
+  // issue the next query ending at the oldest run seen so far.
+  private async _listRecentRuns(cutoff: number): Promise<RawRun[]> {
+    const runs: RawRun[] = [];
+    const seen = new Set<number>();
+    const from = isoSeconds(cutoff);
+    let to = isoSeconds(Date.now() + 60 * 60 * 1000);
+    while (true) {
+      const query = `/actions/runs?created=${from}..${to}&per_page=100`;
+      let count = 0;
+      let oldest = to;
+      for await (const run of this._paginate<RawRun>(query, 'workflow_runs')) {
+        count++;
+        oldest = run.created_at;
+        if (seen.has(run.id))
+          continue;
+        seen.add(run.id);
+        runs.push(run);
+      }
+      if (count < RUNS_QUERY_CAP || oldest === to)
+        return runs;
+      to = oldest;
+    }
+  }
+
+  private async _listRunArtifacts(runId: number): Promise<RawArtifact[]> {
+    const artifacts: RawArtifact[] = [];
+    for await (const artifact of this._paginate<RawArtifact>(`/actions/runs/${runId}/artifacts?per_page=100`, 'artifacts'))
+      artifacts.push(artifact);
+    return artifacts;
+  }
+
+  private async * _paginate<T>(path: string, key: string): AsyncGenerator<T> {
     let url: string | null = `${this._base}${path}`;
     while (url) {
-      const response = await fetch(url, { headers: this._headers });
+      const response = await this._fetch(url);
       if (!response.ok)
         throw new Error(`GitHub API error: ${response.status} ${response.statusText} for ${url}`);
-      const body = await response.json() as { artifacts?: RawArtifact[] };
-      for (const artifact of body.artifacts ?? [])
-        yield artifact;
+      const body = await response.json() as Record<string, T[] | undefined>;
+      for (const item of body[key] ?? [])
+        yield item;
       url = nextPageUrl(response.headers.get('link'));
     }
   }
+
+  // GET with a few retries on network errors and 5xx/429 responses.
+  private async _fetch(url: string): Promise<Response> {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        const response = await fetch(url, { headers: this._headers });
+        if (attempt >= FETCH_ATTEMPTS || (response.status < 500 && response.status !== 429))
+          return response;
+      } catch (error) {
+        if (attempt >= FETCH_ATTEMPTS)
+          throw error;
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
+  }
+}
+
+// ISO 8601 without milliseconds, the form GitHub's `created` filter accepts.
+function isoSeconds(epochMs: number): string {
+  return new Date(epochMs).toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
 
 // Parse the `rel="next"` target out of a GitHub Link header, or null if absent.
