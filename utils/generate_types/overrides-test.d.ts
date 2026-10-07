@@ -160,12 +160,14 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
   skip(title: string, body: TestBody<TestArgs & WorkerArgs>): void;
   skip(title: string, details: TestDetails, body: TestBody<TestArgs & WorkerArgs>): void;
   skip(): void;
+  skip(description: string): void;
   skip(condition: boolean, description?: string): void;
   skip(callback: ConditionBody<TestArgs & WorkerArgs>, description?: string): void;
 
   fixme(title: string, body: TestBody<TestArgs & WorkerArgs>): void;
   fixme(title: string, details: TestDetails, body: TestBody<TestArgs & WorkerArgs>): void;
   fixme(): void;
+  fixme(description: string): void;
   fixme(condition: boolean, description?: string): void;
   fixme(callback: ConditionBody<TestArgs & WorkerArgs>, description?: string): void;
 
@@ -175,6 +177,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
     (condition: boolean, description?: string): void;
     (callback: ConditionBody<TestArgs & WorkerArgs>, description?: string): void;
     (): void;
+    (description: string): void;
 
     only(title: string, body: TestBody<TestArgs & WorkerArgs>): void;
     only(title: string, details: TestDetails, body: TestBody<TestArgs & WorkerArgs>): void;
@@ -183,6 +186,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
   abort(message?: string): never;
 
   slow(): void;
+  slow(description: string): void;
   slow(condition: boolean, description?: string): void;
   slow(callback: ConditionBody<TestArgs & WorkerArgs>, description?: string): void;
 

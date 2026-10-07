@@ -114,13 +114,13 @@ test('test modifiers should work', async ({ runInlineTest }) => {
   expectTest('passed4', 'passed', 'passed', []);
   expectTest('passed5', 'passed', 'passed', []);
   expectTest('skipped1', 'skipped', 'skipped', [{ type: 'skip', location: { file: expect.any(String), line: 20, column: 14 } }]);
-  expectTest('skipped2', 'skipped', 'skipped', [{ type: 'skip', location: { file: expect.any(String), line: 23, column: 14 } }]);
+  expectTest('skipped2', 'skipped', 'skipped', [{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 23, column: 14 } }]);
   expectTest('skipped3', 'skipped', 'skipped', [{ type: 'skip', location: { file: expect.any(String), line: 26, column: 14 } }]);
   expectTest('skipped4', 'skipped', 'skipped', [{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 29, column: 14 } }]);
   expectTest('skipped5', 'skipped', 'skipped', [{ type: 'fixme', location: { file: expect.any(String), line: 32, column: 14 } }]);
   expectTest('skipped6', 'skipped', 'skipped', [{ type: 'fixme', description: 'reason', location: { file: expect.any(String), line: 35, column: 14 } }]);
   expectTest('failed1', 'failed', 'failed', [{ type: 'fail', location: { file: expect.any(String), line: 39, column: 14 } }]);
-  expectTest('failed2', 'failed', 'failed', [{ type: 'fail', location: { file: expect.any(String), line: 43, column: 14 } }]);
+  expectTest('failed2', 'failed', 'failed', [{ type: 'fail', description: 'reason', location: { file: expect.any(String), line: 43, column: 14 } }]);
   expectTest('failed3', 'failed', 'failed', [{ type: 'fail', location: { file: expect.any(String), line: 47, column: 14 } }]);
   expectTest('failed4', 'failed', 'failed', [{ type: 'fail', description: 'reason', location: { file: expect.any(String), line: 51, column: 14 } }]);
   expectTest('suite1', 'skipped', 'skipped', [{ type: 'skip', location: { file: expect.any(String), line: 56, column: 14 } }]);
@@ -362,6 +362,12 @@ test('test modifiers should check types', async ({ runTSC }) => {
         test.skip(({foo}) => foo, 'reason');
       });
       test('passed3', async ({foo}) => {
+        test.skip('reason');
+        test.fixme('reason');
+        test.fail('reason');
+        test.slow('reason');
+      });
+      test('passed3', async ({foo}) => {
         // @ts-expect-error
         test.skip('foo', 'bar');
       });
@@ -388,6 +394,40 @@ test('test modifiers should check types', async ({ runTSC }) => {
     `,
   });
   expect(result.exitCode).toBe(0);
+});
+
+test('test modifiers should accept a description only', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+
+      test('skipped', async () => {
+        test.skip('skip reason');
+      });
+      test('fixme', async () => {
+        test.fixme('fixme reason');
+      });
+      test('slow', async () => {
+        test.slow('slow reason');
+      });
+      test.describe('suite', () => {
+        test.skip('suite reason');
+        test('in suite', async () => {});
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.skipped).toBe(3);
+  const annotations = (title: string) => {
+    const spec = result.report.suites[0].specs.find(s => s.title === title) ||
+        result.report.suites[0].suites!.find(s => s.specs[0].title === title)!.specs[0];
+    return spec.tests[0].annotations;
+  };
+  expect(annotations('skipped')).toEqual([{ type: 'skip', description: 'skip reason', location: expect.anything() }]);
+  expect(annotations('fixme')).toEqual([{ type: 'fixme', description: 'fixme reason', location: expect.anything() }]);
+  expect(annotations('slow')).toEqual([{ type: 'slow', description: 'slow reason', location: expect.anything() }]);
+  expect(annotations('in suite')).toEqual([{ type: 'skip', description: 'suite reason', location: expect.anything() }]);
 });
 
 test('should skip inside fixture', async ({ runInlineTest }) => {

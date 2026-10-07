@@ -258,7 +258,8 @@ export class TestInfoImpl implements TestInfo {
     if (modifierArgs.length >= 1 && !modifierArgs[0])
       return;
 
-    const description = modifierArgs[1];
+    // Support for test.{skip,fixme,fail,slow}(description)
+    const description = modifierArgs.length === 1 && typeof modifierArgs[0] === 'string' ? modifierArgs[0] : modifierArgs[1];
     this.annotations.push({ type, description, location });
     if (type === 'slow') {
       this._timeoutManager.slow();
