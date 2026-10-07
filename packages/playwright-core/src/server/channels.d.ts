@@ -3557,6 +3557,7 @@ export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, progress: Progress): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
   traceDiscarded(params: LocalUtilsTraceDiscardedParams, progress: Progress): Promise<LocalUtilsTraceDiscardedResult>;
   globToRegex(params: LocalUtilsGlobToRegexParams, progress: Progress): Promise<LocalUtilsGlobToRegexResult>;
+  asLocatorDescription(params: LocalUtilsAsLocatorDescriptionParams, progress: Progress): Promise<LocalUtilsAsLocatorDescriptionResult>;
 }
 export type LocalUtilsZipParams = {
   zipFile: string,
@@ -3670,6 +3671,16 @@ export type LocalUtilsGlobToRegexOptions = {
 };
 export type LocalUtilsGlobToRegexResult = {
   regex: string,
+};
+export type LocalUtilsAsLocatorDescriptionParams = {
+  selector: string,
+  sdkLanguage: SDKLanguage,
+};
+export type LocalUtilsAsLocatorDescriptionOptions = {
+
+};
+export type LocalUtilsAsLocatorDescriptionResult = {
+  description: string,
 };
 
 export interface LocalUtilsEvents {

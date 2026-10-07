@@ -16,6 +16,7 @@
 
 import net from 'net';
 import { resolveGlobToRegexPattern } from '@isomorphic/urlMatch';
+import { asLocatorDescription } from '@isomorphic/locatorGenerators';
 import { deviceDescriptors as descriptors }  from '@isomorphic/deviceDescriptors';
 import { fetchData } from '../utils';
 import { getUserAgent } from '../userAgent';
@@ -159,6 +160,11 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
   async globToRegex(params: channels.LocalUtilsGlobToRegexParams, progress: Progress): Promise<channels.LocalUtilsGlobToRegexResult> {
     const regex = resolveGlobToRegexPattern(params.baseURL, params.glob, params.webSocketUrl);
     return { regex };
+  }
+
+  async asLocatorDescription(params: channels.LocalUtilsAsLocatorDescriptionParams, progress: Progress): Promise<channels.LocalUtilsAsLocatorDescriptionResult> {
+    const description = asLocatorDescription(params.sdkLanguage, params.selector);
+    return { description };
   }
 }
 

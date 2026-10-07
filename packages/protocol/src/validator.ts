@@ -2080,6 +2080,13 @@ scheme.LocalUtilsGlobToRegexParams = tObject({
 scheme.LocalUtilsGlobToRegexResult = tObject({
   regex: tString,
 });
+scheme.LocalUtilsAsLocatorDescriptionParams = tObject({
+  selector: tString,
+  sdkLanguage: tType('SDKLanguage'),
+});
+scheme.LocalUtilsAsLocatorDescriptionResult = tObject({
+  description: tString,
+});
 scheme.HttpCredentials = tObject({
   username: tString,
   password: tString,

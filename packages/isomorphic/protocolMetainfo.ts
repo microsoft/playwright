@@ -235,6 +235,7 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['LocalUtils.addStackToTracingNoReply', { internal: true, }],
   ['LocalUtils.traceDiscarded', { internal: true, }],
   ['LocalUtils.globToRegex', { internal: true, }],
+  ['LocalUtils.asLocatorDescription', { internal: true, }],
   ['Request.response', { internal: true, }],
   ['Request.rawRequestHeaders', { internal: true, }],
   ['Route.redirectNavigationRequest', { internal: true, }],
