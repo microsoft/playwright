@@ -2421,7 +2421,6 @@ await frame.WaitForURLAsync("**/target.html");
 
 ## property: Frame.webmcp
 * since: v1.64
-* langs: js
 - type: <[WebMCP]>
 
 Tools that the frame registers through the experimental [WebMCP](https://webmachinelearning.github.io/webmcp/) browser API. See [WebMCP] for details.
