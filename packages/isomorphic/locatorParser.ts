@@ -176,8 +176,14 @@ abstract class LocatorParser {
     do {
       const { handler, call } = this.parseCall();
       if (inFrameLocator && !kFrameElementHandlers.has(handler)) {
-        parts.push(selectorPart('internal:control', 'enter-frame'));
-        inFrameLocator = false;
+        if (handler === ownerParts) {
+          inFrameLocator = false;
+        } else {
+          parts.push(selectorPart('internal:control', 'enter-frame'));
+          inFrameLocator = false;
+        }
+      } else if (!inFrameLocator && handler === ownerParts) {
+        throw new Error(`owner() can only be called on a FrameLocator`);
       }
       const callParts = handler(call, this._testIdAttributeName);
       if (handler === withinParts)
@@ -464,6 +470,11 @@ function contentFrameParts(call: CallArguments): ParsedSelectorPart[] {
   return [];
 }
 
+function ownerParts(call: CallArguments): ParsedSelectorPart[] {
+  checkArguments(call, 0, []);
+  return [];
+}
+
 function fixedNthParts(index: string): CallHandler {
   return call => {
     checkArguments(call, 0, []);
@@ -519,6 +530,7 @@ const kJavaScriptMethods = new Map<string, CallHandler>([
   ['or', orParts],
   ['frameLocator', frameLocatorParts],
   ['contentFrame', contentFrameParts],
+  ['owner', ownerParts],
   ['first', firstParts],
   ['last', lastParts],
   ['nth', nthParts],
@@ -541,6 +553,7 @@ const kPythonMethods = new Map<string, CallHandler>([
   ['or_', orParts],
   ['frame_locator', frameLocatorParts],
   ['content_frame', contentFrameParts],
+  ['owner', ownerParts],
   ['first', firstParts],
   ['last', lastParts],
   ['nth', nthParts],
@@ -563,6 +576,7 @@ const kCSharpMethods = new Map<string, CallHandler>([
   ['Or', orParts],
   ['FrameLocator', frameLocatorParts],
   ['ContentFrame', contentFrameParts],
+  ['Owner', ownerParts],
   ['First', firstParts],
   ['Last', lastParts],
   ['Nth', nthParts],

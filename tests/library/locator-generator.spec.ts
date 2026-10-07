@@ -824,6 +824,10 @@ it('parseLocator rejects malformed locators', async () => {
     ['csharp', `GetByRole(AriaRole.Button, new() { Nme = "ok" })`],
     ['csharp', `Locator('div')`],
     ['csharp', `Locator("div").Nth(0))`],
+    ['javascript', `locator('div').owner()`],
+    ['javascript', `frameLocator().owner()`],
+    ['python', `locator("div").owner`],
+    ['csharp', `Locator("div").Owner`],
   ] as const;
   for (const [lang, locator] of locators)
     expect.soft(parseLocator(lang, locator, 'data-testid'), `${lang}: ${locator}`).toBe('');
@@ -880,6 +884,24 @@ it('parseLocator frames', async () => {
 
   expect.soft(parseLocator('java', `locator("iframe").contentFrame().getByText("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
   expect.soft(parseLocator('java', `frameLocator("iframe").getByText("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+
+  expect.soft(parseLocator('javascript', `frameLocator('iframe').owner()`)).toBe('iframe');
+  expect.soft(parseLocator('javascript', `frameLocator('iframe').first().owner()`)).toBe('iframe >> nth=0');
+  expect.soft(parseLocator('javascript', `locator('iframe').contentFrame().owner()`)).toBe('iframe');
+  expect.soft(parseLocator('javascript', `frameLocator('iframe1').frameLocator('iframe2').owner()`)).toBe('iframe1 >> internal:control=enter-frame >> iframe2');
+  expect.soft(parseLocator('javascript', `frameLocator('iframe').owner().locator('.btn')`)).toBe('iframe >> .btn');
+
+  expect.soft(parseLocator('python', `frame_locator("iframe").owner`)).toBe('iframe');
+  expect.soft(parseLocator('python', `frame_locator("iframe").first.owner`)).toBe('iframe >> nth=0');
+  expect.soft(parseLocator('python', `locator("iframe").content_frame.owner`)).toBe('iframe');
+
+  expect.soft(parseLocator('csharp', `FrameLocator("iframe").Owner`)).toBe('iframe');
+  expect.soft(parseLocator('csharp', `FrameLocator("iframe").First.Owner`)).toBe('iframe >> nth=0');
+  expect.soft(parseLocator('csharp', `Locator("iframe").ContentFrame.Owner`)).toBe('iframe');
+
+  expect.soft(parseLocator('java', `frameLocator("iframe").owner()`)).toBe('iframe');
+  expect.soft(parseLocator('java', `frameLocator("iframe").first().owner()`)).toBe('iframe >> nth=0');
+  expect.soft(parseLocator('java', `locator("iframe").contentFrame().owner()`)).toBe('iframe');
 });
 
 it('should not oom in locator parser', async ({ page }) => {
