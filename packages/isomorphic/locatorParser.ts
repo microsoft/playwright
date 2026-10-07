@@ -491,6 +491,11 @@ function getByRefParts(call: CallArguments): ParsedSelectorPart[] {
   return [selectorPart('aria-ref', arg(call, 0, isString))];
 }
 
+function describeParts(call: CallArguments): ParsedSelectorPart[] {
+  checkArguments(call, 1, []);
+  return [selectorPart('internal:describe', JSON.stringify(arg(call, 0, isString)))];
+}
+
 function textParts(toSelector: (text: string | RegExp, options: { exact?: boolean }) => string): CallHandler {
   return call => {
     checkArguments(call, 1, ['exact']);
@@ -523,6 +528,7 @@ const kJavaScriptMethods = new Map<string, CallHandler>([
   ['last', lastParts],
   ['nth', nthParts],
   ['visible', visibleParts],
+  ['describe', describeParts],
   ['getByRole', getByRoleParts],
   ['getByText', getByTextParts],
   ['getByLabel', getByLabelParts],
@@ -545,6 +551,7 @@ const kPythonMethods = new Map<string, CallHandler>([
   ['last', lastParts],
   ['nth', nthParts],
   ['visible', visibleParts],
+  ['describe', describeParts],
   ['get_by_role', getByRoleParts],
   ['get_by_text', getByTextParts],
   ['get_by_label', getByLabelParts],
@@ -567,6 +574,7 @@ const kCSharpMethods = new Map<string, CallHandler>([
   ['Last', lastParts],
   ['Nth', nthParts],
   ['Visible', visibleParts],
+  ['Describe', describeParts],
   ['GetByRole', getByRoleParts],
   ['GetByText', getByTextParts],
   ['GetByLabel', getByLabelParts],

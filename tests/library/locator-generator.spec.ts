@@ -655,6 +655,21 @@ it('parseLocator getByRef', {
   expect.soft(parseLocator('csharp', `GetByRef("e5")`)).toBe('aria-ref=e5');
 });
 
+it('parseLocator describe', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43181' }
+}, async () => {
+  const selector = `internal:role=button[name="Submit"i] >> internal:describe="Submit button"`;
+  expect.soft(parseLocator('javascript', `getByRole('button', { name: 'Submit' }).describe('Submit button')`)).toBe(selector);
+  expect.soft(parseLocator('python', `get_by_role("button", name="Submit").describe("Submit button")`)).toBe(selector);
+  expect.soft(parseLocator('java', `getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).describe("Submit button")`)).toBe(selector);
+  expect.soft(parseLocator('csharp', `GetByRole(AriaRole.Button, new() { Name = "Submit" }).Describe("Submit button")`)).toBe(selector);
+
+  expect.soft(parseLocator('javascript', `locator('body').describe('main').locator('div')`)).toBe(`body >> internal:describe="main" >> div`);
+  expect.soft(parseLocator('python', `locator("body").describe("main").locator("div")`)).toBe(`body >> internal:describe="main" >> div`);
+  expect.soft(parseLocator('java', `locator("body").describe("main").locator("div")`)).toBe(`body >> internal:describe="main" >> div`);
+  expect.soft(parseLocator('csharp', `Locator("body").Describe("main").Locator("div")`)).toBe(`body >> internal:describe="main" >> div`);
+});
+
 it('asLocator xpath', async () => {
   const selector = `//*[contains(normalizer-text(), 'foo']`;
   expect.soft(asLocator('javascript', selector)).toBe(`locator('//*[contains(normalizer-text(), \\'foo\\']')`);
@@ -824,6 +839,11 @@ it('parseLocator rejects malformed locators', async () => {
     ['csharp', `GetByRole(AriaRole.Button, new() { Nme = "ok" })`],
     ['csharp', `Locator('div')`],
     ['csharp', `Locator("div").Nth(0))`],
+    ['javascript', `getByText('foo').describe()`],
+    ['javascript', `getByText('foo').describe(12)`],
+    ['javascript', `getByText('foo').describe('a', 'b')`],
+    ['python', `get_by_text("foo").describe()`],
+    ['csharp', `GetByText("foo").Describe()`],
   ] as const;
   for (const [lang, locator] of locators)
     expect.soft(parseLocator(lang, locator, 'data-testid'), `${lang}: ${locator}`).toBe('');
