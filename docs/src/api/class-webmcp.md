@@ -1,6 +1,5 @@
 # class: WebMCP
 * since: v1.64
-* langs: js
 
 [WebMCP] exposes the tools that a frame registers through the experimental [WebMCP](https://webmachinelearning.github.io/webmcp/) browser API, `navigator.modelContext`. It lists the tools and calls them.
 
@@ -46,6 +45,9 @@ Name of the tool, as reported by [`method: WebMCP.tools`].
 
 Input for the tool, matching its `inputSchema`. Defaults to an empty object.
 
+### option: WebMCP.callTool.timeout = %%-input-timeout-%%
+* since: v1.64
+
 ### option: WebMCP.callTool.timeout = %%-input-timeout-js-%%
 * since: v1.64
 
@@ -64,6 +66,9 @@ Input for the tool, matching its `inputSchema`. Defaults to an empty object.
 Returns the tools currently registered by the frame. Throws if the browser was launched without WebMCP support, see the note above for the launch options that enable it.
 
 [`property: Page.webmcp`] covers the main frame only, child frames list their tools through their own [`property: Frame.webmcp`].
+
+### option: WebMCP.tools.timeout = %%-input-timeout-%%
+* since: v1.64
 
 ### option: WebMCP.tools.timeout = %%-input-timeout-js-%%
 * since: v1.64

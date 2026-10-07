@@ -5955,7 +5955,6 @@ Receives the [Worker] object and resolves to truthy value when the waiting shoul
 
 ## property: Page.webmcp
 * since: v1.64
-* langs: js
 - type: <[WebMCP]>
 
 Tools that the main frame registers through the experimental [WebMCP](https://webmachinelearning.github.io/webmcp/) browser API. Shortcut for [`property: Frame.webmcp`] of [`method: Page.mainFrame`], see [WebMCP] for details.
