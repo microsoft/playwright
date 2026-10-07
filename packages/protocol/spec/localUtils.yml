@@ -154,3 +154,11 @@ LocalUtils:
         webSocketUrl: boolean?
       returns:
         regex: string
+
+    asLocatorDescription:
+      internal: true
+      parameters:
+        selector: string
+        sdkLanguage: SDKLanguage
+      returns:
+        description: string
