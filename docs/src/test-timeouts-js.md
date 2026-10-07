@@ -19,7 +19,7 @@ Timed out test produces the following error:
 ```txt
 example.spec.ts:3:1 › basic test ===========================
 
-Timeout of 30000ms exceeded.
+Test timeout of 30000ms exceeded.
 ```
 
 Additional separate timeout, of the same value, is shared between fixture teardowns and `afterEach` hooks, after the test function has finished.
@@ -133,7 +133,7 @@ Running 1000 tests using 10 workers
 
   514 skipped
   486 passed
-  Timed out waiting 3600s for the entire test run
+  Timed out waiting 3600s for the test suite to run
 ```
 
 You can set global timeout in the config.
