@@ -221,7 +221,7 @@ export default globalSetup;
 Tests have access to the `process.env` properties set in the global setup.
 
 ```js
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
   // environment variables which are set in globalSetup are only available inside test().
@@ -231,7 +231,7 @@ test('test', async ({ page }) => {
   expect(FOO).toEqual('some data');
 
   const complexData = JSON.parse(BAR);
-  expect(BAR).toEqual({ some: 'data' });
+  expect(complexData).toEqual({ some: 'data' });
 });
 ```
 
