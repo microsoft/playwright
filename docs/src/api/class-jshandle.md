@@ -170,7 +170,7 @@ handle.dispose()
 ```
 
 ```csharp
-var handle = await page.EvaluateHandleAsync("() => ({ window, document }");
+var handle = await page.EvaluateHandleAsync("() => ({ window, document })");
 var properties = await handle.GetPropertiesAsync();
 var windowHandle = properties["window"];
 var documentHandle = properties["document"];
