@@ -1221,6 +1221,10 @@ export namespace Protocol {
        */
       canvasId: CanvasId;
     }
+    export type canvasNameChangedPayload = {
+      canvasId: CanvasId;
+      name: string;
+    }
     export type canvasSizeChangedPayload = {
       /**
        * Identifier of canvas that changed.
@@ -1288,6 +1292,10 @@ export namespace Protocol {
     }
     export type programDeletedPayload = {
       programId: ProgramId;
+    }
+    export type programNameChangedPayload = {
+      programId: ProgramId;
+      name: string;
     }
     
     /**
@@ -9208,6 +9216,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "CSS.nodeLayoutFlagsChanged": CSS.nodeLayoutFlagsChangedPayload;
     "Canvas.canvasAdded": Canvas.canvasAddedPayload;
     "Canvas.canvasRemoved": Canvas.canvasRemovedPayload;
+    "Canvas.canvasNameChanged": Canvas.canvasNameChangedPayload;
     "Canvas.canvasSizeChanged": Canvas.canvasSizeChangedPayload;
     "Canvas.canvasMemoryChanged": Canvas.canvasMemoryChangedPayload;
     "Canvas.extensionEnabled": Canvas.extensionEnabledPayload;
@@ -9219,6 +9228,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Canvas.recordingFinished": Canvas.recordingFinishedPayload;
     "Canvas.programCreated": Canvas.programCreatedPayload;
     "Canvas.programDeleted": Canvas.programDeletedPayload;
+    "Canvas.programNameChanged": Canvas.programNameChangedPayload;
     "Console.messageAdded": Console.messageAddedPayload;
     "Console.messageRepeatCountUpdated": Console.messageRepeatCountUpdatedPayload;
     "Console.messagesCleared": Console.messagesClearedPayload;
@@ -9338,6 +9348,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     ["CSS.nodeLayoutFlagsChanged"]: [CSS.nodeLayoutFlagsChangedPayload];
     ["Canvas.canvasAdded"]: [Canvas.canvasAddedPayload];
     ["Canvas.canvasRemoved"]: [Canvas.canvasRemovedPayload];
+    ["Canvas.canvasNameChanged"]: [Canvas.canvasNameChangedPayload];
     ["Canvas.canvasSizeChanged"]: [Canvas.canvasSizeChangedPayload];
     ["Canvas.canvasMemoryChanged"]: [Canvas.canvasMemoryChangedPayload];
     ["Canvas.extensionEnabled"]: [Canvas.extensionEnabledPayload];
@@ -9349,6 +9360,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     ["Canvas.recordingFinished"]: [Canvas.recordingFinishedPayload];
     ["Canvas.programCreated"]: [Canvas.programCreatedPayload];
     ["Canvas.programDeleted"]: [Canvas.programDeletedPayload];
+    ["Canvas.programNameChanged"]: [Canvas.programNameChangedPayload];
     ["Console.messageAdded"]: [Console.messageAddedPayload];
     ["Console.messageRepeatCountUpdated"]: [Console.messageRepeatCountUpdatedPayload];
     ["Console.messagesCleared"]: [Console.messagesClearedPayload];
