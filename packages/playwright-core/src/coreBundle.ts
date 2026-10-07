@@ -26,3 +26,4 @@ export * as registry from './server/registry/index';
 export * as server from './server/index';
 export * as tools from './tools';
 export { getUserAgent, getPlaywrightVersion } from './server/userAgent';
+export { packageJSON } from './package';

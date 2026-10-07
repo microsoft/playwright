@@ -21,6 +21,7 @@ import { RecentLogsCollector } from '@utils/debugLogger';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId } from './bidiConnection';
+import { connectBidiOverCdp } from './bidiOverCdp';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import { profileInUseError, waitForReadyState } from '../chromium/chromium';
 import { shouldProxyLoopback } from '../chromium/crBrowser';
@@ -38,10 +39,7 @@ export class BidiChromium extends BrowserType {
 
   override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<BidiBrowser> {
     // Chrome doesn't support Bidi, we create Bidi over CDP which is used by Chrome driver.
-    // bidiOverCdp depends on chromium-bidi which we only have in devDependencies, so
-    // we load bidiOverCdp dynamically.
-    const bidiOverCdp = require('./bidiOverCdp');
-    const bidiTransport = await bidiOverCdp.connectBidiOverCdp(transport);
+    const bidiTransport = await connectBidiOverCdp(transport);
     (transport as any)[kBidiOverCdpWrapper] = bidiTransport;
     try {
       return BidiBrowser.connect(this.attribution.playwright, bidiTransport, options);

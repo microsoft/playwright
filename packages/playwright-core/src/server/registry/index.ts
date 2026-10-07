@@ -34,7 +34,8 @@ import { getEmbedderName } from '../userAgent';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { dockerVersion, readDockerVersionSync, transformCommandsForRoot } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
-import { packageRoot, binPath } from '../../package';
+import { packageJSON, packageRoot, binPath } from '../../package';
+import browsersJSON from '../../../browsers.json';
 
 import type { DependencyGroup } from './dependencies';
 import type { HostPlatform } from '@utils/hostPlatform';
@@ -43,6 +44,13 @@ export { writeDockerVersion } from './dependencies';
 
 const PACKAGE_PATH = packageRoot;
 const BIN_PATH = binPath;
+
+// Every installation's browser cleanup reads browsers.json from registered directories; a single-file bundle has no package directory.
+function installationLinkTarget(): string {
+  if (fs.existsSync(path.join(PACKAGE_PATH, 'browsers.json')))
+    return PACKAGE_PATH;
+  return path.join(process.cwd(), '.playwright');
+}
 
 const PLAYWRIGHT_CDN_MIRRORS = [
   'https://cdn.playwright.dev/dbazure/download/playwright', // ESRP CDN
@@ -505,9 +513,11 @@ interface ExecutableImpl extends Executable {
 }
 
 export class Registry {
+  private _browsersJSON: BrowsersJSON;
   private _executables: ExecutableImpl[];
 
   constructor(browsersJSON: BrowsersJSON) {
+    this._browsersJSON = browsersJSON;
     const descriptors = readDescriptors(browsersJSON);
     const findExecutablePath = (dir: string, name: keyof typeof EXECUTABLE_PATHS) => {
       const tokens = EXECUTABLE_PATHS[name][shortPlatform];
@@ -953,8 +963,9 @@ export class Registry {
         lockfilePath,
       });
       // Create a link first, so that cache validation does not remove our own browsers.
+      const linkTarget = await this._prepareLinkTarget();
       await fs.promises.mkdir(linksDir, { recursive: true });
-      await fs.promises.writeFile(path.join(linksDir, calculateSha1(PACKAGE_PATH)), PACKAGE_PATH);
+      await fs.promises.writeFile(path.join(linksDir, calculateSha1(linkTarget)), linkTarget);
 
       // Remove stale browsers.
       if (options?.gc !== false && !getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_GC'))
@@ -1013,6 +1024,17 @@ export class Registry {
     }
   }
 
+  private async _prepareLinkTarget(): Promise<string> {
+    const linkTarget = installationLinkTarget();
+    if (linkTarget !== PACKAGE_PATH) {
+      await fs.promises.mkdir(linkTarget, { recursive: true });
+      await fs.promises.writeFile(path.join(linkTarget, 'browsers.json'), JSON.stringify(this._browsersJSON, null, 2) + '\n');
+      // install --list reads the version of every registered installation.
+      await fs.promises.writeFile(path.join(linkTarget, 'package.json'), JSON.stringify({ version: packageJSON.version }, null, 2) + '\n');
+    }
+    return linkTarget;
+  }
+
   async uninstall(all: boolean): Promise<{ numberOfBrowsersLeft: number }> {
     const linksDir = path.join(registryDirectory, '.links');
     if (all) {
@@ -1020,7 +1042,7 @@ export class Registry {
       for (const link of links)
         await fs.promises.unlink(path.join(linksDir, link));
     } else {
-      await fs.promises.unlink(path.join(linksDir, calculateSha1(PACKAGE_PATH))).catch(() => {});
+      await fs.promises.unlink(path.join(linksDir, calculateSha1(installationLinkTarget()))).catch(() => {});
     }
 
     // Remove stale browsers.
@@ -1393,6 +1415,6 @@ function lowercaseAllKeys(json: any): any {
   return result;
 }
 
-export const registry = new Registry(require(path.join(packageRoot, 'browsers.json')));
+export const registry = new Registry(browsersJSON);
 
 export { runOopDownloadBrowserMain } from './oopDownloadBrowserMain';

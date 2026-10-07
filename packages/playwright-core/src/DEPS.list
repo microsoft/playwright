@@ -54,6 +54,7 @@ node_modules/yaml
 
 [package.ts]
 "strict"
+../package.json
 
 [serverRegistry.ts]
 "strict"

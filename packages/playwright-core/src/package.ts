@@ -16,10 +16,11 @@
 
 import path from 'path';
 
-// Use a dynamic path so esbuild does not statically resolve and inline
-// package.json into coreBundle.js.
+// Bundles inline this, so the version must be final before the build: see utils/publish_all_packages.sh.
+import packageJSON from '../package.json';
+
+export { packageJSON };
 export const packageRoot = path.join(__dirname, '..');
-export const packageJSON = require(path.join(packageRoot, 'package.json'));
 export const binPath = path.join(packageRoot, 'bin');
 
 export function libPath(...parts: string[]): string {

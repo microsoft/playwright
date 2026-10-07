@@ -7,3 +7,6 @@
 ../userAgent.ts
 node_modules/colors/safe
 node_modules/progress
+
+[index.ts]
+../../../browsers.json

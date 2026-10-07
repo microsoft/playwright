@@ -20,3 +20,6 @@ node_modules/minimatch
 ./mcp/test/
 
 [errorContext.ts]
+
+[package.ts]
+../package.json

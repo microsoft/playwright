@@ -254,7 +254,7 @@ async function innerCheckDeps(root) {
       return true;
 
     if (strict)
-      return mergedDeps.includes(to) && calculateDeps(to).includes('"strict"');
+      return mergedDeps.includes(to) && (to.endsWith('.json') || calculateDeps(to).includes('"strict"'));
 
     for (const dep of mergedDeps) {
       if (dep === '***')

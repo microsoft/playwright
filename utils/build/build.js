@@ -668,7 +668,7 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright-core/src/serverRegistry.js')],
   outfile: filePath('packages/playwright-core/lib/serverRegistry.js'),
-}, [filePath('packages/playwright-core/src/*')]));
+}, [filePath('packages/playwright-core/src/*'), filePath('packages/playwright-core/package.json')]));
 
 const playwrightCoreSrc = filePath('packages/playwright-core/src');
 const commonUtilsSrc = [filePath('packages/protocol/src'), filePath('packages/utils'), filePath('packages/isomorphic')];
@@ -683,6 +683,30 @@ steps.push(new EsbuildStep({
     'raw-body': filePath('utils/build/raw-body.ts'),
   },
 }, [filePath('packages/playwright-core/src/utilsBundle.ts'), filePath('utils/build/raw-body.ts')]));
+
+// coreBundle embeds browsers.json, so watch mode installs browsers after a rebuild that picked up a change to it.
+function installBrowsersPlugin() {
+  const browsersJSONPath = filePath('packages/playwright-core/browsers.json');
+  let bundledBrowsersJSON;
+  let installedBrowsersJSON;
+  return {
+    name: 'install-browsers',
+    setup: build => {
+      build.onLoad({ filter: /browsers\.json$/ }, async args => {
+        if (args.path !== browsersJSONPath)
+          return;
+        bundledBrowsersJSON = await fs.promises.readFile(args.path, 'utf8');
+        return { contents: bundledBrowsersJSON, loader: 'json' };
+      });
+      build.onEnd(result => {
+        if (result.errors.length || bundledBrowsersJSON === installedBrowsersJSON)
+          return;
+        installedBrowsersJSON = bundledBrowsersJSON;
+        new ProgramStep({ command: 'node', args: [filePath('packages/playwright-core/cli.js'), 'install'], shell: false }).run().catch(e => console.error(e));
+      });
+    },
+  };
+}
 
 // Build playwright-core as a single bundle.
 steps.push(new EsbuildStep({
@@ -714,8 +738,8 @@ steps.push(new EsbuildStep({
     name: 'externalize-bootstrap',
     setup: build => build.onResolve({ filter: /\/bootstrap$/ },
         args => path.resolve(args.resolveDir, args.path) === filePath('packages/playwright-core/src/bootstrap') ? { path: './bootstrap', external: true } : undefined),
-  }, dynamicImportToRequirePlugin],
-}, [playwrightCoreSrc, ...commonUtilsSrc, filePath('packages/injected')]));
+  }, dynamicImportToRequirePlugin, ...(watchMode && !disableInstall ? [installBrowsersPlugin()] : [])],
+}, [playwrightCoreSrc, filePath('packages/playwright-core/package.json'), filePath('packages/playwright-core/browsers.json'), ...commonUtilsSrc, filePath('packages/injected')]));
 
 function assertCoreBundleHasNoNodeModules() {
   const bundlePath = filePath('packages/playwright-core/lib/coreBundle.js');
@@ -1041,15 +1065,6 @@ onChanges.push({
   ],
   script: 'utils/generate_types/index.js',
 });
-
-if (watchMode && !disableInstall) {
-  // Keep browser installs up to date.
-  onChanges.push({
-    inputs: ['packages/playwright-core/browsers.json'],
-    command: 'npx',
-    args: ['playwright', 'install'],
-  });
-}
 
 // The recorder and trace viewer have an app_icon.png that needs to be copied.
 copyFiles.push({

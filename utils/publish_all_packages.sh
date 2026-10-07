@@ -75,6 +75,14 @@ fi
 
 echo "==================== Publishing version ${VERSION} ================"
 node ./utils/workspace.js --ensure-consistent
+
+# Bundles inline package.json, so they must be built after the version is final.
+npm run build
+if ! grep -qF "\"${VERSION}\"" packages/playwright-core/lib/coreBundle.js; then
+  echo "ERROR: packages/playwright-core/lib/coreBundle.js does not embed version ${VERSION}. The build must run after the version is set."
+  exit 1
+fi
+
 node ./utils/workspace.js --list-public-package-paths | while read package
 do
   npm publish --access=public ${package} --tag="${NPM_PUBLISH_TAG}"

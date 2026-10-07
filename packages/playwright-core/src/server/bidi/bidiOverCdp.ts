@@ -14,21 +14,43 @@
  * limitations under the License.
  */
 
-import * as bidiMapper from 'chromium-bidi/lib/cjs/bidiMapper/BidiMapper';
-import * as bidiCdpConnection from 'chromium-bidi/lib/cjs/cdp/CdpConnection';
-
+import { wrapInASCIIBox } from '@utils/ascii';
 import { debugLogger } from '@utils/debugLogger';
 
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
+import type { BidiServer, BidiTransport } from 'chromium-bidi/lib/cjs/bidiMapper/BidiMapper';
 import type { ChromiumBidi } from 'chromium-bidi/lib/cjs/protocol/protocol';
 import type * as bidiTransport from 'chromium-bidi/lib/cjs/utils/transport';
+
+type BidiMapperModule = typeof import('chromium-bidi/lib/cjs/bidiMapper/BidiMapper');
+type CdpConnectionModule = typeof import('chromium-bidi/lib/cjs/cdp/CdpConnection');
 
 const bidiServerLogger = (prefix: string, ...args: unknown[]): void => {
   debugLogger.log(prefix as any, args);
 };
 
+function requireChromiumBidi(): { bidiMapper: BidiMapperModule, bidiCdpConnection: CdpConnectionModule } {
+  let bidiMapper: BidiMapperModule;
+  let bidiCdpConnection: CdpConnectionModule;
+  try {
+    // chromium-bidi is a dev dependency; bundlers leave a require() inside try/catch unresolved instead of failing the build.
+    bidiMapper = require('chromium-bidi/lib/cjs/bidiMapper/BidiMapper');
+    bidiCdpConnection = require('chromium-bidi/lib/cjs/cdp/CdpConnection');
+  } catch (error: any) {
+    if (error?.code === 'MODULE_NOT_FOUND') {
+      throw new Error('\n' + wrapInASCIIBox([
+        'BiDi over CDP requires the chromium-bidi package!',
+        'Please install it using `npm install -D chromium-bidi`.',
+      ].join('\n'), 1));
+    }
+    throw error;
+  }
+  return { bidiMapper, bidiCdpConnection };
+}
+
 export async function connectBidiOverCdp(cdp: ConnectionTransport): Promise<ConnectionTransport> {
-  let server: bidiMapper.BidiServer | undefined = undefined;
+  const { bidiMapper, bidiCdpConnection } = requireChromiumBidi();
+  let server: BidiServer | undefined = undefined;
   const bidiTransport = new BidiTransportImpl();
   const bidiConnection = new BidiConnection(bidiTransport, () => server?.close());
   const cdpTransportImpl = new CdpTransportImpl(cdp);
@@ -45,7 +67,7 @@ export async function connectBidiOverCdp(cdp: ConnectionTransport): Promise<Conn
   return bidiConnection;
 }
 
-class BidiTransportImpl implements bidiMapper.BidiTransport {
+class BidiTransportImpl implements BidiTransport {
   _handler?: (message: ChromiumBidi.Command) => Promise<void> | void;
   _bidiConnection!: BidiConnection;
 
