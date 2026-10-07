@@ -69,6 +69,10 @@ export class Firefox extends BrowserType {
   override amendEnvironment(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
     if (!path.isAbsolute(os.homedir()))
       throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
+    env = {
+      'MOZ_DISABLE_SAFE_MODE_KEY': '1',
+      ...env,
+    };
     if (os.platform() === 'linux') {
       // Always remove SNAP_NAME and SNAP_INSTANCE_NAME env variables since they
       // confuse Firefox: in our case, builds never come from SNAP.

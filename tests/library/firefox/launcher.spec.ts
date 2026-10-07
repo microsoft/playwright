@@ -73,3 +73,21 @@ it('should support custom firefox policies', async ({ browserType, mode, asset, 
   await browser.close();
   await server.stop();
 });
+
+it('should disable safe mode key in firefox environment', () => {
+  const { server } = require('../../../packages/playwright-core/lib/coreBundle');
+  const playwright = server.createPlaywright({ sdkLanguage: 'javascript', isInternalPlaywright: true });
+
+  const defaultEnv = playwright.firefox.amendEnvironment({});
+  expect(defaultEnv.MOZ_DISABLE_SAFE_MODE_KEY).toBe('1');
+
+  const customEnv = playwright.firefox.amendEnvironment({ MOZ_DISABLE_SAFE_MODE_KEY: '0' });
+  expect(customEnv.MOZ_DISABLE_SAFE_MODE_KEY).toBe('0');
+
+  const bidiFirefox = (playwright.firefox as any)._bidiFirefox;
+  const bidiDefaultEnv = bidiFirefox.amendEnvironment({});
+  expect(bidiDefaultEnv.MOZ_DISABLE_SAFE_MODE_KEY).toBe('1');
+
+  const bidiCustomEnv = bidiFirefox.amendEnvironment({ MOZ_DISABLE_SAFE_MODE_KEY: '0' });
+  expect(bidiCustomEnv.MOZ_DISABLE_SAFE_MODE_KEY).toBe('0');
+});
