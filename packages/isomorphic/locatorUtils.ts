@@ -17,7 +17,7 @@
 import { escapeForAttributeSelector, escapeForTextSelector } from './stringUtils';
 
 export type ByRoleOptions = {
-  checked?: boolean;
+  checked?: boolean | 'mixed';
   description?: string | RegExp;
   disabled?: boolean;
   exact?: boolean;
@@ -25,7 +25,7 @@ export type ByRoleOptions = {
   includeHidden?: boolean;
   level?: number;
   name?: string | RegExp;
-  pressed?: boolean;
+  pressed?: boolean | 'mixed';
   selected?: boolean;
 };
 
