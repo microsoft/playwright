@@ -80,6 +80,17 @@ export class TestResultsDb {
     await this._conn.run(`INSERT INTO ${TABLE_NAME} BY NAME ${INGEST_SELECT}`, params);
   }
 
+  // When the previous ingest ran: the newest `ingested_at` stamp as epoch ms,
+  // or 0 on a fresh db.
+  async lastIngestedAt(): Promise<number> {
+    if (!await this._tableExists())
+      return 0;
+    const reader = await this._conn.runAndReadAll(
+        `SELECT epoch_ms(max(ingested_at)) FROM ${TABLE_NAME}`);
+    const value = reader.getRows()[0][0];
+    return value === null ? 0 : Number(value);
+  }
+
   async runCount(): Promise<number> {
     if (!await this._tableExists())
       return 0;
