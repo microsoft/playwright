@@ -295,7 +295,9 @@ export class Response {
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1)
         addSection('Open tabs', renderTabsMarkdown(tabHeaders));
-      addSection('Page', renderTabMarkdown(tabHeaders.find(h => h.current) ?? tabHeaders[0]));
+      const currentOrFirst = tabHeaders.find(h => h.current) ?? tabHeaders[0];
+      if (currentOrFirst)
+        addSection('Page', renderTabMarkdown(currentOrFirst));
     }
 
     // Handle modal states.
@@ -350,7 +352,9 @@ export class Response {
   }
 }
 
-export function renderTabMarkdown(tab: TabHeader): string[] {
+export function renderTabMarkdown(tab?: TabHeader): string[] {
+  if (!tab)
+    return [];
   const lines = [`- Page URL: ${tab.url}`];
   if (tab.title)
     lines.push(`- Page Title: ${tab.title}`);

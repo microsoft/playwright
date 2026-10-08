@@ -486,12 +486,47 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
   });
 
   expect(await navigateResponse).toHaveResponse({
-    snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
+    snapshot: expect.stringMatching(/- generic \[active\] \[ref=(?:f1)?e1\]: Hello, world!/),
   });
+
+  expect(browserContext.pages().some(p => p.url().includes('connect.html'))).toBe(false);
 
   const page = await browserContext.newPage();
   await page.goto(`chrome-extension://${extensionId}/status.html`);
   await expect(page.locator('.client-info')).toContainText(`Connected to "${clientName}"`);
+});
+
+test(`bypass connection dialog with token does not attach to connect.html`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43230' },
+}, async ({ browserWithExtension, startClient, server }) => {
+  const browserContext = await browserWithExtension.launch();
+  const token = await readExtensionToken(browserContext);
+
+  const clientName = 'token-tabs-client';
+  const { client } = await startClient({
+    clientName,
+    args: [`--extension`],
+    env: {
+      PLAYWRIGHT_MCP_EXTENSION_TOKEN: token,
+      PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
+    },
+  });
+
+  const listResponse = await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'list' },
+  });
+  expect(listResponse).toHaveResponse({
+    result: expect.not.stringContaining('connect.html'),
+  });
+
+  const navigateResponse = await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+  expect(navigateResponse).toHaveResponse({
+    snapshot: expect.stringMatching(/- generic \[active\] \[ref=(?:f1)?e1\]: Hello, world!/),
+  });
 });
 
 test(`times out when the extension rejects the token`, {

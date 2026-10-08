@@ -69,12 +69,10 @@ class PlaywrightExtension {
             (error: any) => sendResponse({ success: false, error: error.message }));
         return true;
       case 'connectToTab': {
-        // Token-bypass (no specific pick) falls back to the connect page itself
-        // so `ConnectedTabGroup` always has a concrete tab to start from. Both
-        // sender.tab and UI-supplied tabs come from chrome.tabs.query / runtime
-        // message sender, where `id` is always defined.
-        const selectedTab = (message.tab ?? sender.tab!) as chrome.tabs.Tab & { id: number };
-        this._connectTab(sender.tab!.id!, selectedTab, message.clientName).then(
+        const selectorTabId = sender.tab!.id!;
+        this._resolveTabToConnect(selectorTabId, message.tab).then(
+            selectedTab => this._connectTab(selectorTabId, selectedTab, message.clientName),
+        ).then(
             () => sendResponse({ success: true }),
             (error: any) => sendResponse({ success: false, error: error.message }));
         return true; // Return true to indicate that the response will be sent asynchronously
@@ -97,6 +95,31 @@ class PlaywrightExtension {
         // the MV3 service worker idle timer and keeps the relay WebSocket alive.
         return false;
     }
+  }
+
+  private async _resolveTabToConnect(selectorTabId: number, messageTab?: chrome.tabs.Tab): Promise<chrome.tabs.Tab & { id: number }> {
+    if (messageTab && messageTab.id !== undefined)
+      return messageTab as chrome.tabs.Tab & { id: number };
+
+    // Token-bypass path (no specific tab selected): find an existing debuggable tab
+    // or create a fresh one. The connect page itself is never attached as the target.
+    const tabs = await chrome.tabs.query({});
+    const connectedTabIds = this._connectedTabIds();
+    const candidateTabs = tabs.filter(tab =>
+      tab.id !== undefined &&
+      tab.id !== selectorTabId &&
+      !this._pendingConnections.has(tab.id) &&
+      !connectedTabIds.has(tab.id) &&
+      !isNonDebuggableUrl(tab.url) &&
+      !tab.url?.startsWith('chrome-extension://')
+    );
+
+    const activeCandidate = candidateTabs.find(tab => tab.active) ?? candidateTabs[0];
+    if (activeCandidate)
+      return activeCandidate as chrome.tabs.Tab & { id: number };
+
+    const newTab = await chrome.tabs.create({ url: 'about:blank', active: true });
+    return newTab as chrome.tabs.Tab & { id: number };
   }
 
   private async _connectTab(selectorTabId: number, tab: chrome.tabs.Tab & { id: number }, clientName: string | undefined): Promise<void> {
