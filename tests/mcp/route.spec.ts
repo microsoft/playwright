@@ -136,6 +136,45 @@ test('browser_route modifies request headers', async ({ client, server }) => {
   expect(receivedHeaders['x-custom-header']).toBe('test-value');
 });
 
+for (const { title, headers, removeHeaders, expected } of [
+  { title: 'removes added header regardless of case', headers: ['X-Custom-Header: replacement'], removeHeaders: 'x-custom-header', expected: undefined },
+  { title: 'lets the last of duplicate header names win', headers: ['X-Custom-Header: first', 'x-custom-header: last'], removeHeaders: undefined, expected: 'last' },
+]) {
+  test(`browser_route ${title}`, {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43215' },
+  }, async ({ client, server }) => {
+    let receivedHeaders: Record<string, string> = {};
+    server.setRoute('/api/check', (req, res) => {
+      receivedHeaders = req.headers as Record<string, string>;
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ received: true }));
+    });
+
+    server.setContent('/', `
+      <button onclick="fetch('/api/check', { headers: { 'X-Custom-Header': 'original' } }).then(() => document.body.textContent = 'Done')">Fetch</button>
+    `, 'text/html');
+
+    await client.callTool({
+      name: 'browser_navigate',
+      arguments: { url: server.PREFIX },
+    });
+
+    await client.callTool({
+      name: 'browser_route',
+      arguments: { pattern: '**/api/check', headers, removeHeaders },
+    });
+
+    const requestPromise = server.waitForRequest('/api/check');
+    await client.callTool({
+      name: 'browser_click',
+      arguments: { element: 'Fetch button', target: 'e2' },
+    });
+
+    await requestPromise;
+    expect(receivedHeaders['x-custom-header']).toBe(expected);
+  });
+}
+
 test('browser_route errors on header lines without a colon', async ({ client, server }) => {
   await client.callTool({
     name: 'browser_navigate',
