@@ -181,7 +181,8 @@ test('should cleanup artifacts dir after connectOverCDP disconnects due to ws cl
 
 test('should reject pending CDPSession calls when the browser is killed', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43200' },
-}, async ({ browserType }, testInfo) => {
+}, async ({ browserType, mode }, testInfo) => {
+  test.skip(mode !== 'default', 'launchServer is only available in-process');
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launchServer({
     args: ['--remote-debugging-port=' + port]
