@@ -36,8 +36,15 @@ import type { BidiSession } from './bidiConnection';
 import type * as channels from '../channels';
 
 
+export type BidiBrowserOptions = {
+  // Authenticate against a proxy with a Proxy-Authorization header on every request,
+  // or by answering the proxy's auth challenge with the credentials.
+  proxyAuthentication: 'header' | 'credentials',
+};
+
 export class BidiBrowser extends Browser {
   private readonly _connection: BidiConnection;
+  readonly _bidiOptions: BidiBrowserOptions;
   readonly _browserSession: BidiSession;
   private _bidiSessionInfo!: bidi.Session.NewResult;
   readonly _contexts = new Map<string, BidiBrowserContext>();
@@ -45,8 +52,8 @@ export class BidiBrowser extends Browser {
   private readonly _eventListeners: RegisteredListener[];
   private _cacheBehavior: bidi.Network.SetCacheBehaviorParameters['cacheBehavior'] = 'default';
 
-  static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions): Promise<BidiBrowser> {
-    const browser = new BidiBrowser(parent, transport, options);
+  static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions, bidiOptions: BidiBrowserOptions): Promise<BidiBrowser> {
+    const browser = new BidiBrowser(parent, transport, options, bidiOptions);
     if ((options as any).__testHookOnConnectToBrowser)
       await (options as any).__testHookOnConnectToBrowser();
 
@@ -95,8 +102,9 @@ export class BidiBrowser extends Browser {
     return browser;
   }
 
-  constructor(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions) {
+  constructor(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions, bidiOptions: BidiBrowserOptions) {
     super(parent, options);
+    this._bidiOptions = bidiOptions;
     this._connection = new BidiConnection(transport, this._onDisconnect.bind(this), options.protocolLogger, options.browserLogsCollector);
     this._browserSession = this._connection.browserSession;
     this._eventListeners = [
@@ -217,7 +225,10 @@ export class BidiBrowserContext extends BrowserContext {
 
   constructor(browser: BidiBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
-    this.authenticateProxyViaHeader();
+    if (browser._bidiOptions.proxyAuthentication === 'credentials')
+      this.authenticateProxyViaCredentials();
+    else
+      this.authenticateProxyViaHeader();
   }
 
   private _bidiPages() {
@@ -591,7 +602,6 @@ function getProxyConfiguration(proxySettings?: types.ProxySettings): bidi.Sessio
   const bypass = proxySettings.bypass ?? process.env.PLAYWRIGHT_PROXY_BYPASS_FOR_TESTING;
   if (bypass)
     proxy.noProxy = bypass.split(',');
-  // TODO: support authentication.
 
   return proxy;
 }

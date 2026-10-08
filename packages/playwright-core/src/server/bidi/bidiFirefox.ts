@@ -41,7 +41,7 @@ export class BidiFirefox extends BrowserType {
   }
 
   override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BidiBrowser> {
-    return BidiBrowser.connect(this.attribution.playwright, transport, options);
+    return BidiBrowser.connect(this.attribution.playwright, transport, options, { proxyAuthentication: 'header' });
   }
 
   override doRewriteStartupLog(logs: string): string {
