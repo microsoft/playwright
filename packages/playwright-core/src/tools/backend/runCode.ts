@@ -67,7 +67,7 @@ const runCode = defineTabTool({
     // surfacing on the response.
     const unsubscribe = tab.context.onUnhandledRejection(reason => {
       if (!__end__.isDone())
-        __end__.reject(reason instanceof Error ? reason : new Error(String(reason)));
+        __end__.reject(reason as Error);
     });
     try {
       await tab.waitForCompletion(async () => {
