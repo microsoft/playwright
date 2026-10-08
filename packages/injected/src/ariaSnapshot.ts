@@ -120,8 +120,9 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
       visible = isElementVisibleForAria && isElementVisible(element);
 
     // Optimization: if we only consider aria visibility, we can skip child elements because
-    // they will not be visible for aria as well.
-    if (options.visibility === 'aria' && !visible)
+    // they will not be visible for aria as well. The only exception is the topmost modal dialog
+    // that escapes inertness of its ancestors.
+    if (options.visibility === 'aria' && !visible && !roleUtils.containsTopmostModalDialog(element))
       return;
 
     const ariaChildren: Element[] = [];

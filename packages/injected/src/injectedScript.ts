@@ -26,7 +26,7 @@ import { beginDOMCaches, enclosingShadowRootOrDocument, endDOMCaches, isElementV
 import { Highlight } from './highlight';
 import { kLayoutSelectorNames, layoutSelectorScore } from './layoutSelectorUtils';
 import { createRoleEngine } from './roleSelectorEngine';
-import { beginAriaCaches, endAriaCaches, getAriaDisabled, getAriaRole, getCheckedAllowMixed, getCheckedWithoutMixed, getElementAccessibleDescription, getElementAccessibleErrorMessage, getElementAccessibleNameText, getReadonly } from './roleUtils';
+import { beginAriaCaches, endAriaCaches, getAriaDisabled, getAriaRole, getCheckedAllowMixed, getCheckedWithoutMixed, getElementAccessibleDescription, getElementAccessibleErrorMessage, getElementAccessibleNameText, getReadonly, isElementInert } from './roleUtils';
 import { SelectorEvaluatorImpl, sortInDOMOrder } from './selectorEvaluator';
 import { generateSelector } from './selectorGenerator';
 import { elementMatchesText, elementText, getElementLabels } from './selectorUtils';
@@ -59,7 +59,7 @@ export type FrameExpectParams = {
   isNot: boolean,
 };
 
-export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'indeterminate' | 'stable';
+export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'indeterminate' | 'stable' | 'non-inert';
 export type ElementStateWithoutStable = Exclude<ElementState, 'stable'>;
 export type ElementStateQueryResult = { matches: boolean, received?: string | 'error:notconnected', isRadio?: boolean };
 export type ExpectReceived = { value?: any, ariaSnapshot?: string };
@@ -87,6 +87,8 @@ export type InjectedScriptOptions = {
   shouldPrependErrorPrefix?: boolean;
   isUtilityWorld?: boolean;
   customEngines: { name: string, source: string }[];
+  skipInertCheck?: boolean;
+  skipDialogCheck?: boolean;
 };
 
 export class InjectedScript {
@@ -252,7 +254,11 @@ export class InjectedScript {
     this._browserName = options.browserName;
     this._shouldPrependErrorPrefix = !!options.shouldPrependErrorPrefix;
     this._isUtilityWorld = !!options.isUtilityWorld;
-    setGlobalOptions({ browserNameForWorkarounds: options.browserName });
+    setGlobalOptions({
+      browserNameForWorkarounds: options.browserName,
+      skipInertCheck: options.skipInertCheck,
+      skipDialogCheck: options.skipDialogCheck,
+    });
 
     this._setupGlobalListenersRemovalDetection();
     this._setupHitTargetInterceptors();
@@ -801,6 +807,14 @@ export class InjectedScript {
       return {
         matches: state === 'disabled' ? disabled : !disabled,
         received: disabled ? 'disabled' : 'enabled'
+      };
+    }
+
+    if (state === 'non-inert') {
+      const inert = isElementInert(element);
+      return {
+        matches: !inert,
+        received: inert ? 'inert' : 'non-inert'
       };
     }
 

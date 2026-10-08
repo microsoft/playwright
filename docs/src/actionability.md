@@ -14,31 +14,32 @@ For example, for [`method: Locator.click`], Playwright will ensure that:
 - element is [Stable], as in not animating or completed animation
 - element [Receives Events], as in not obscured by other elements
 - element is [Enabled]
+- element is [Not Inert]
 
 Here is the complete list of actionability checks performed for each action:
 
-| Action | [Visible] | [Stable] | [Receives Events] | [Enabled] | [Editable] |
-| :- | :-: | :-: | :-: | :-: | :-: |
-| [`method: Locator.check`] | Yes | Yes | Yes | Yes | - |
-| [`method: Locator.click`] | Yes | Yes | Yes | Yes | - |
-| [`method: Locator.dblclick`] | Yes | Yes | Yes | Yes | - |
-| [`method: Locator.setChecked`] | Yes | Yes | Yes | Yes | - |
-| [`method: Locator.tap`] | Yes | Yes | Yes | Yes | - |
-| [`method: Locator.uncheck`] | Yes | Yes | Yes | Yes | - |
-| [`method: Locator.hover`] | Yes | Yes | Yes | - | - |
-| [`method: Locator.dragTo`] | Yes | Yes | Yes | - | - |
-| [`method: Locator.screenshot`] | Yes | Yes | - | - | - |
-| [`method: Locator.fill`] | Yes | - | - | Yes | Yes |
-| [`method: Locator.clear`] | Yes | - | - | Yes | Yes |
-| [`method: Locator.selectOption`] | Yes | - | - | Yes | - |
-| [`method: Locator.selectText`] | Yes | - | - | - | - |
-| [`method: Locator.scrollIntoViewIfNeeded`] | - | Yes | - | - | - |
-| [`method: Locator.blur`] | - | - | - | - | - |
-| [`method: Locator.dispatchEvent`] | - | - | - | - | - |
-| [`method: Locator.focus`] | - | - | - | - | - |
-| [`method: Locator.press`] | - | - | - | - | - |
-| [`method: Locator.pressSequentially`] | - | - | - | - | - |
-| [`method: Locator.setInputFiles`] | - | - | - | - | - |
+| Action | [Visible] | [Stable] | [Receives Events] | [Enabled] | [Editable] | [Not Inert] |
+| :- | :-: | :-: | :-: | :-: | :-: | :-: |
+| [`method: Locator.check`] | Yes | Yes | Yes | Yes | - | Yes |
+| [`method: Locator.click`] | Yes | Yes | Yes | Yes | - | Yes |
+| [`method: Locator.dblclick`] | Yes | Yes | Yes | Yes | - | Yes |
+| [`method: Locator.setChecked`] | Yes | Yes | Yes | Yes | - | Yes |
+| [`method: Locator.tap`] | Yes | Yes | Yes | Yes | - | Yes |
+| [`method: Locator.uncheck`] | Yes | Yes | Yes | Yes | - | Yes |
+| [`method: Locator.hover`] | Yes | Yes | Yes | - | - | - |
+| [`method: Locator.dragTo`] | Yes | Yes | Yes | - | - | - |
+| [`method: Locator.screenshot`] | Yes | Yes | - | - | - | - |
+| [`method: Locator.fill`] | Yes | - | - | Yes | Yes | Yes |
+| [`method: Locator.clear`] | Yes | - | - | Yes | Yes | Yes |
+| [`method: Locator.selectOption`] | Yes | - | - | Yes | - | - |
+| [`method: Locator.selectText`] | Yes | - | - | - | - | - |
+| [`method: Locator.scrollIntoViewIfNeeded`] | - | Yes | - | - | - | - |
+| [`method: Locator.blur`] | - | - | - | - | - | - |
+| [`method: Locator.dispatchEvent`] | - | - | - | - | - | - |
+| [`method: Locator.focus`] | - | - | - | - | - | - |
+| [`method: Locator.press`] | - | - | - | - | - | - |
+| [`method: Locator.pressSequentially`] | - | - | - | - | - | - |
+| [`method: Locator.setInputFiles`] | - | - | - | - | - | - |
 
 ## Forcing actions
 
@@ -108,6 +109,14 @@ Element is **readonly** when:
 - it is a `<select>`, `<input>` or `<textarea>` with a `[readonly]` attribute;
 - it has an `[aria-readonly=true]` attribute and an aria role that [supports it](https://w3c.github.io/aria/#aria-readonly).
 
+## Not Inert
+
+Element is considered not inert when it is **not** a part of an inert subtree. Inert elements cannot be focused, clicked or otherwise interacted with, and are excluded from the accessibility tree.
+
+Element is **inert** when:
+- it is an element with the [`inert`](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/inert) attribute, or a descendant of such an element;
+- a modal `<dialog>` is open, and the element is not a part of that dialog.
+
 ## Receives Events
 
 Element is considered receiving pointer events when it is the hit target of the pointer event at the action point. For example, when clicking at the point `(10;10)`, Playwright checks whether some other element (usually an overlay) will instead capture the click at `(10;10)`.
@@ -122,3 +131,4 @@ For example, consider a scenario where Playwright will click `Sign Up` button re
 [Enabled]: #enabled "Enabled"
 [Editable]: #editable "Editable"
 [Receives Events]: #receives-events "Receives Events"
+[Not Inert]: #not-inert "Not Inert"

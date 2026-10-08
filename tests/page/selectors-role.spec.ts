@@ -589,3 +589,169 @@ test('should not match scope by default', async ({ page }) => {
   await expect(children).toHaveCount(2);
   await expect(children).toHaveText(['child 1', 'child 2']);
 });
+
+test('should not match inert elements, unless explicitly asked for', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+  await page.setContent(`
+    <button>Hi</button>
+    <button inert>Hello</button>
+    <div inert id=container>
+      <button>Yay</button>
+      <div><button>Nay</button></div>
+    </div>
+    <button><span inert>Save</span></button>
+    <div id=host></div>
+    <div inert id=inert-host></div>
+    <script>
+      function addButton(host, text) {
+        const root = host.attachShadow({ mode: 'open' });
+        const button = document.createElement('button');
+        button.textContent = text;
+        root.appendChild(button);
+      }
+      addButton(document.getElementById('host'), 'Shadow1');
+      addButton(document.getElementById('inert-host'), 'Shadow2');
+    </script>
+  `);
+  expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Hi</button>`,
+    `<button><span inert="">Save</span></button>`,
+    `<button>Shadow1</button>`,
+  ]);
+  expect(await page.getByRole('button', { includeHidden: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Hi</button>`,
+    `<button inert="">Hello</button>`,
+    `<button>Yay</button>`,
+    `<button>Nay</button>`,
+    `<button><span inert="">Save</span></button>`,
+    `<button>Shadow1</button>`,
+    `<button>Shadow2</button>`,
+  ]);
+  await expect(page.getByRole('button', { name: 'Yay' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Yay', includeHidden: true })).toHaveCount(1);
+
+  // Inert content does not contribute to the accessible name.
+  await expect(page.getByRole('button', { name: 'Save' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Save', includeHidden: true })).toHaveCount(1);
+
+  await page.locator('#container').evaluate(e => e.removeAttribute('inert'));
+  expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Hi</button>`,
+    `<button>Yay</button>`,
+    `<button>Nay</button>`,
+    `<button><span inert="">Save</span></button>`,
+    `<button>Shadow1</button>`,
+  ]);
+});
+
+test('should not match elements outside of a modal dialog', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+  await page.setContent(`
+    <button>Outside</button>
+    <dialog id=dialog>
+      <button>Inside</button>
+      <div inert><button>Inert inside</button></div>
+    </dialog>
+    <dialog id=non-modal><button>Non-modal</button></dialog>
+    <script>
+      document.getElementById('dialog').showModal();
+      document.getElementById('non-modal').show();
+    </script>
+  `);
+  expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Inside</button>`,
+  ]);
+  expect(await page.getByRole('button', { includeHidden: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Outside</button>`,
+    `<button>Inside</button>`,
+    `<button>Inert inside</button>`,
+    `<button>Non-modal</button>`,
+  ]);
+  await expect(page.getByRole('dialog')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Outside' })).toHaveCount(0);
+
+  await page.locator('#dialog').evaluate((e: HTMLDialogElement) => e.close());
+  expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Outside</button>`,
+    `<button>Non-modal</button>`,
+  ]);
+});
+
+test('should match the topmost modal dialog', async ({ page }) => {
+  await page.setContent(`
+    <button>Outside</button>
+    <dialog id=outer>
+      <button>Outer</button>
+      <dialog id=inner><button>Inner</button></dialog>
+    </dialog>
+    <div inert>
+      <dialog id=escaping><button>Escaping</button></dialog>
+    </div>
+    <script>
+      document.getElementById('outer').showModal();
+      document.getElementById('inner').showModal();
+    </script>
+  `);
+  expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Inner</button>`,
+  ]);
+
+  await page.locator('#inner').evaluate((e: HTMLDialogElement) => e.close());
+  expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Outer</button>`,
+  ]);
+
+  // Modal dialog inside an inert subtree is not inert.
+  await page.locator('#outer').evaluate((e: HTMLDialogElement) => e.close());
+  await page.locator('#escaping').evaluate((e: HTMLDialogElement) => e.showModal());
+  expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Escaping</button>`,
+  ]);
+});
+
+test('should respect PLAYWRIGHT_SKIP_INERT_CHECK', async ({ page, mode }) => {
+  test.skip(mode !== 'default', 'Env variable is read by the in-process server');
+  process.env.PLAYWRIGHT_SKIP_INERT_CHECK = '1';
+  try {
+    // New page gets a fresh injected script that reads the env variable.
+    const newPage = await page.context().newPage();
+    await newPage.setContent(`
+      <button>Outside</button>
+      <div inert><button>Inert</button></div>
+      <dialog id=dialog><button>Inside</button></dialog>
+      <script>
+        document.getElementById('dialog').showModal();
+      </script>
+    `);
+    expect(await newPage.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+      `<button>Outside</button>`,
+      `<button>Inert</button>`,
+      `<button>Inside</button>`,
+    ]);
+    await newPage.close();
+  } finally {
+    delete process.env.PLAYWRIGHT_SKIP_INERT_CHECK;
+  }
+});
+
+test('should respect PLAYWRIGHT_SKIP_DIALOG_CHECK', async ({ page, mode }) => {
+  test.skip(mode !== 'default', 'Env variable is read by the in-process server');
+  process.env.PLAYWRIGHT_SKIP_DIALOG_CHECK = '1';
+  try {
+    // New page gets a fresh injected script that reads the env variable.
+    const newPage = await page.context().newPage();
+    await newPage.setContent(`
+      <button>Outside</button>
+      <div inert><button>Inert</button></div>
+      <dialog id=dialog><button>Inside</button></dialog>
+      <script>
+        document.getElementById('dialog').showModal();
+      </script>
+    `);
+    expect(await newPage.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+      `<button>Outside</button>`,
+      `<button>Inside</button>`,
+    ]);
+    await newPage.close();
+  } finally {
+    delete process.env.PLAYWRIGHT_SKIP_DIALOG_CHECK;
+  }
+});

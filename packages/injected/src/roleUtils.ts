@@ -16,7 +16,7 @@
 
 import * as css from '@isomorphic/cssTokenizer';
 
-import { beginDOMCaches, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, endDOMCaches, getElementComputedStyle, isElementStyleVisibilityVisible, isListBoxSelect, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
+import { beginDOMCaches, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, endDOMCaches, getElementComputedStyle, getGlobalOptions, isElementStyleVisibilityVisible, isListBoxSelect, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
 
 import type { AriaRole } from '@isomorphic/ariaSnapshot';
 
@@ -331,7 +331,68 @@ export function isElementHiddenForAria(element: Element): boolean {
   const isOptionInsideSelect = element.nodeName === 'OPTION' && !!element.closest('select');
   if (!isOptionInsideSelect && !isSlot && !isElementStyleVisibilityVisible(element, style))
     return true;
-  return belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element);
+  return belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element) || isElementInert(element);
+}
+
+// https://html.spec.whatwg.org/multipage/interaction.html#inert-subtrees
+// Inert elements cannot be focused, clicked or otherwise interacted with,
+// and are excluded from the accessibility tree.
+export function isElementInert(element: Element): boolean {
+  if (getGlobalOptions().skipInertCheck)
+    return false;
+  let inert = cacheIsInert?.get(element);
+  if (inert === undefined) {
+    if (element.hasAttribute('inert')) {
+      inert = true;
+    } else if (element === topmostModalDialog(element.ownerDocument)?.dialog) {
+      // The topmost modal dialog escapes inertness of its ancestors.
+      inert = false;
+    } else {
+      // Inert applies to all flat tree descendants, so we look up the hierarchy.
+      const parent = parentElementOrShadowHost(element);
+      if (parent) {
+        inert = isElementInert(parent);
+      } else {
+        // While a modal dialog is open, everything in the document, except for the dialog
+        // itself and its descendants, is inert.
+        inert = element.isConnected && !!topmostModalDialog(element.ownerDocument);
+      }
+    }
+    cacheIsInert?.set(element, inert);
+  }
+  return inert;
+}
+
+// Returns true for ancestors of the topmost modal dialog. Such ancestors are inert,
+// but still contain the non-inert dialog in their subtree.
+export function containsTopmostModalDialog(element: Element): boolean {
+  return !!topmostModalDialog(element.ownerDocument)?.ancestors.has(element);
+}
+
+function topmostModalDialog(document: Document): ModalDialogInfo | undefined {
+  if (getGlobalOptions().skipInertCheck || getGlobalOptions().skipDialogCheck)
+    return;
+  let info = cacheModalDialog?.get(document);
+  if (info === undefined) {
+    info = null;
+    try {
+      // There is no way to determine the top layer order, so we assume that the last modal
+      // dialog in the document order is the topmost one. Note that this does not pierce
+      // shadow roots.
+      const dialogs = document.querySelectorAll('dialog:modal');
+      if (dialogs.length) {
+        const dialog = dialogs[dialogs.length - 1];
+        const ancestors = new Set<Element>();
+        for (let e = parentElementOrShadowHost(dialog); e; e = parentElementOrShadowHost(e))
+          ancestors.add(e);
+        info = { dialog, ancestors };
+      }
+    } catch {
+      // Older browsers might not support the :modal pseudo-class.
+    }
+    cacheModalDialog?.set(document, info);
+  }
+  return info || undefined;
 }
 
 function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element): boolean {
@@ -1234,6 +1295,8 @@ function getAccessibleNameFromAssociatedLabels(labels: Iterable<HTMLLabelElement
 }
 
 export function receivesPointerEvents(element: Element): boolean {
+  if (isElementInert(element))
+    return false;
   const cache = cachePointerEvents!;
   let e: Element | undefined = element;
   let result: boolean | undefined;
@@ -1275,6 +1338,9 @@ let cacheAccessibleDescription: Map<Element, AccessibleDescription> | undefined;
 let cacheAccessibleDescriptionHidden: Map<Element, AccessibleDescription> | undefined;
 let cacheAccessibleErrorMessage: Map<Element, string> | undefined;
 let cacheIsHidden: Map<Element, boolean> | undefined;
+let cacheIsInert: Map<Element, boolean> | undefined;
+type ModalDialogInfo = { dialog: Element, ancestors: Set<Element> };
+let cacheModalDialog: Map<Document, ModalDialogInfo | null> | undefined;
 let cachePseudoContent: Map<Element, string | undefined> | undefined;
 let cachePseudoContentBefore: Map<Element, string | undefined> | undefined;
 let cachePseudoContentAfter: Map<Element, string | undefined> | undefined;
@@ -1296,6 +1362,8 @@ export function beginAriaCaches() {
   cacheAccessibleDescriptionHidden ??= new Map();
   cacheAccessibleErrorMessage ??= new Map();
   cacheIsHidden ??= new Map();
+  cacheIsInert ??= new Map();
+  cacheModalDialog ??= new Map();
   cachePseudoContent ??= new Map();
   cachePseudoContentBefore ??= new Map();
   cachePseudoContentAfter ??= new Map();
@@ -1312,6 +1380,8 @@ export function endAriaCaches() {
     cacheAccessibleDescriptionHidden = undefined;
     cacheAccessibleErrorMessage = undefined;
     cacheIsHidden = undefined;
+    cacheIsInert = undefined;
+    cacheModalDialog = undefined;
     cachePseudoContent = undefined;
     cachePseudoContentBefore = undefined;
     cachePseudoContentAfter = undefined;
