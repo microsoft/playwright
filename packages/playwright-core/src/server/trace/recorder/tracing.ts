@@ -133,7 +133,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       assert(tracesDir, 'tracesDir must be specified for BrowserContext');
       this._contextCreatedEvent.browserName = context._browser.options.name;
       this._contextCreatedEvent.channel = context._browser.options.channel;
-      this._contextCreatedEvent.options = context._options;
+      const { baseURL, viewport, deviceScaleFactor, isMobile, userAgent } = context._options;
+      this._contextCreatedEvent.options = { baseURL, viewport, deviceScaleFactor, isMobile, userAgent };
     }
   }
 

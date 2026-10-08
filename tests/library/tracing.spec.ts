@@ -95,6 +95,38 @@ test('should use the correct title for event driven callbacks', async ({ context
   ]);
 });
 
+browserTest('should not store secrets in context options', async ({ browser, server }, testInfo) => {
+  const context = await browser.newContext({
+    baseURL: server.PREFIX,
+    viewport: { width: 500, height: 600 },
+    deviceScaleFactor: 2,
+    isMobile: false,
+    userAgent: 'custom-ua',
+    httpCredentials: { username: 'user', password: 'secret-password' },
+    extraHTTPHeaders: { 'x-secret': 'secret-header' },
+    storageState: { cookies: [{ name: 'session', value: 'secret-cookie', domain: 'localhost', path: '/', expires: -1, httpOnly: false, secure: false, sameSite: 'Lax' }], origins: [] },
+  });
+  await context.tracing.start();
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+  await context.close();
+
+  const { events } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  expect(events[0].type).toBe('context-options');
+  expect(events[0].options).toEqual({
+    baseURL: server.PREFIX,
+    viewport: { width: 500, height: 600 },
+    deviceScaleFactor: 2,
+    isMobile: false,
+    userAgent: 'custom-ua',
+  });
+  const traceText = fs.readFileSync(testInfo.outputPath('trace.zip')).toString('latin1');
+  expect(traceText).not.toContain('secret-password');
+  expect(traceText).not.toContain('secret-header');
+  expect(traceText).not.toContain('secret-cookie');
+});
+
 test('should not collect snapshots by default', async ({ context, page, server }, testInfo) => {
   await context.tracing.start();
   await page.goto(server.EMPTY_PAGE);
