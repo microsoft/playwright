@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import * as bidiMapper from 'chromium-bidi/lib/cjs/bidiMapper/BidiMapper';
-import * as bidiCdpConnection from 'chromium-bidi/lib/cjs/cdp/CdpConnection';
-
 import { debugLogger } from '@utils/debugLogger';
 
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
+import type * as bidiMapper from 'chromium-bidi/lib/cjs/bidiMapper/BidiMapper';
+import type * as bidiCdpConnection from 'chromium-bidi/lib/cjs/cdp/CdpConnection';
 import type { ChromiumBidi } from 'chromium-bidi/lib/cjs/protocol/protocol';
 import type * as bidiTransport from 'chromium-bidi/lib/cjs/utils/transport';
 
@@ -28,14 +27,24 @@ const bidiServerLogger = (prefix: string, ...args: unknown[]): void => {
 };
 
 export async function connectBidiOverCdp(cdp: ConnectionTransport): Promise<ConnectionTransport> {
+  // chromium-bidi is not in our dependencies. Bundlers do not fail on a
+  // missing module if its require() is inside a try block.
+  let bidiMapperModule: typeof bidiMapper;
+  let bidiCdpConnectionModule: typeof bidiCdpConnection;
+  try {
+    bidiMapperModule = require('chromium-bidi/lib/cjs/bidiMapper/BidiMapper');
+    bidiCdpConnectionModule = require('chromium-bidi/lib/cjs/cdp/CdpConnection');
+  } catch (error) {
+    throw error;
+  }
   let server: bidiMapper.BidiServer | undefined = undefined;
   const bidiTransport = new BidiTransportImpl();
   const bidiConnection = new BidiConnection(bidiTransport, () => server?.close());
   const cdpTransportImpl = new CdpTransportImpl(cdp);
-  const cdpConnection = new bidiCdpConnection.MapperCdpConnection(cdpTransportImpl, bidiServerLogger);
+  const cdpConnection = new bidiCdpConnectionModule.MapperCdpConnection(cdpTransportImpl, bidiServerLogger);
   // Make sure onclose event is propagated.
   cdp.onclose = () => bidiConnection.onclose?.();
-  server = await bidiMapper.BidiServer.createAndStart(
+  server = await bidiMapperModule.BidiServer.createAndStart(
       bidiTransport,
       cdpConnection,
       await cdpConnection.createBrowserSession(),
