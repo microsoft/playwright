@@ -421,6 +421,10 @@ export namespace Protocol {
        * Matches of CSS rules applicable to the pseudo style.
        */
       matches: RuleMatch[];
+      /**
+       * The rules of all <code>@keyframes</code> referenced by the computed <code>animation-name</code> list.
+       */
+      keyframes?: CSSRule[];
     }
     /**
      * CSS rule collection for a single pseudo style.
@@ -732,9 +736,9 @@ export namespace Protocol {
      */
     export interface Grouping {
       /**
-       * Source of the media query: "media-rule" if specified by a @media rule, "media-import-rule" if specified by an @import rule, "media-link-node" if specified by a "media" attribute in a linked style sheet's LINK tag, "media-style-node" if specified by a "media" attribute in an inline style sheet's STYLE tag, "supports-rule" if specified by an @supports rule, "layer-rule" if specified by an @layer rule, "container-rule" if specified by an @container rule, "scope-rule" if specified by a @scope rule, "starting-style-rule" if specified by a @starting-style rule, "style-rule" if specified by a CSSStyleRule containing the rule inside this grouping.
+       * Source of the media query: "media-rule" if specified by a @media rule, "media-import-rule" if specified by an @import rule, "media-link-node" if specified by a "media" attribute in a linked style sheet's LINK tag, "media-style-node" if specified by a "media" attribute in an inline style sheet's STYLE tag, "supports-rule" if specified by an @supports rule, "layer-rule" if specified by an @layer rule, "container-rule" if specified by an @container rule, "scope-rule" if specified by a @scope rule, "starting-style-rule" if specified by a @starting-style rule, "style-rule" if specified by a CSSStyleRule containing the rule inside this grouping, "keyframes-rule" if specified by a CSSKeyframesRule containing the rules inside this grouping.
        */
-      type: "media-rule"|"media-import-rule"|"media-link-node"|"media-style-node"|"supports-rule"|"layer-rule"|"layer-import-rule"|"container-rule"|"scope-rule"|"starting-style-rule"|"style-rule";
+      type: "media-rule"|"media-import-rule"|"media-link-node"|"media-style-node"|"supports-rule"|"layer-rule"|"layer-import-rule"|"container-rule"|"scope-rule"|"starting-style-rule"|"style-rule"|"keyframes-rule";
       /**
        * The CSS rule identifier for the `@rule` (absent for non-editable grouping rules) or the nesting parent style rule's selector. In CSSOM terms, this is the parent rule of either the previous Grouping for a CSSRule, or of a CSSRule itself.
        */
@@ -876,6 +880,10 @@ export namespace Protocol {
        * Whether to include inherited styles (default: true).
        */
       includeInherited?: boolean;
+      /**
+       * Whether to include <code>@keyframes</code> rules (default: true).
+       */
+      includeKeyframes?: boolean;
     }
     export type getMatchedStylesForNodeReturnValue = {
       /**
@@ -890,6 +898,10 @@ export namespace Protocol {
        * A chain of inherited styles (from the immediate node parent up to the DOM tree root).
        */
       inherited?: InheritedStyleEntry[];
+      /**
+       * The rules of all <code>@keyframes</code> referenced by the computed <code>animation-name</code> list.
+       */
+      keyframes?: CSSRule[];
     }
     /**
      * Returns the styles defined inline (explicitly in the "style" attribute and implicitly, using DOM attributes) for a DOM node identified by <code>nodeId</code>.
@@ -2927,7 +2939,7 @@ export namespace Protocol {
     export type setInspectModeEnabledReturnValue = {
     }
     /**
-     * Highlights given rectangle. Coordinates are absolute with respect to the main frame viewport.
+     * Highlights given rectangle. Coordinates are absolute with respect to the target's viewport: the main frame viewport for a page target, or the frame's own viewport for a frame target.
      */
     export type highlightRectParameters = {
       /**
@@ -2962,7 +2974,7 @@ export namespace Protocol {
     export type highlightRectReturnValue = {
     }
     /**
-     * Highlights given quad. Coordinates are absolute with respect to the main frame viewport.
+     * Highlights given quad. Coordinates are absolute with respect to the target's viewport: the main frame viewport for a page target, or the frame's own viewport for a frame target.
      */
     export type highlightQuadParameters = {
       /**
