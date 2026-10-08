@@ -72,18 +72,36 @@ export function loadTsConfig(configPath: string): LoadedTsConfig[] {
 }
 
 function resolveConfigFile(baseConfigFile: string, referencedConfigFile: string) {
-  if (!referencedConfigFile.endsWith('.json'))
-    referencedConfigFile += '.json';
   const currentDir = path.dirname(baseConfigFile);
-  let resolvedConfigFile = path.resolve(currentDir, referencedConfigFile);
-  if (referencedConfigFile.includes('/') && referencedConfigFile.includes('.') && !fs.existsSync(resolvedConfigFile))
-    resolvedConfigFile = path.join(currentDir, 'node_modules', referencedConfigFile);
+  const referencedFile = referencedConfigFile.endsWith('.json') ? referencedConfigFile : referencedConfigFile + '.json';
+  const resolvedConfigFile = path.resolve(currentDir, referencedFile);
+  if (fs.existsSync(resolvedConfigFile) || referencedConfigFile.startsWith('.') || path.isAbsolute(referencedConfigFile))
+    return resolvedConfigFile;
+
+  // A bare specifier names a package in the config's node_modules, like tsc resolves it:
+  // a file inside the package, or the package itself through the "tsconfig" field of its
+  // package.json or the tsconfig.json at its root.
+  const packageDir = path.join(currentDir, 'node_modules', referencedConfigFile);
+  const candidates = [path.join(currentDir, 'node_modules', referencedFile)];
+  const packageTsconfig = packageJsonTsconfigField(path.join(packageDir, 'package.json'));
+  if (packageTsconfig)
+    candidates.push(path.resolve(packageDir, packageTsconfig));
+  candidates.push(path.join(packageDir, 'tsconfig.json'));
   // Note: this function may return a non-existing file, and the caller silently ignores it.
   // We deliberately do not throw in this case, because we do not want to repeat the whole
   // resolution process that tsc has, e.g. node_modules walk-up and package.json "exports".
   // See https://github.com/microsoft/playwright/issues/41989.
   // TODO: implement tsc-compatible resolution and start throwing on invalid "extends"/"references".
-  return resolvedConfigFile;
+  return candidates.find(candidate => fs.existsSync(candidate)) ?? resolvedConfigFile;
+}
+
+function packageJsonTsconfigField(packageJsonFile: string): string | undefined {
+  try {
+    const tsconfig = JSON.parse(fs.readFileSync(packageJsonFile, 'utf8')).tsconfig;
+    return typeof tsconfig === 'string' ? tsconfig : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function innerLoadTsConfig(

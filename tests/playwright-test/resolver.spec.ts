@@ -625,6 +625,77 @@ test('should resolve extends from an explicit node_modules subpath', async ({ ru
   expect(result.exitCode).toBe(0);
 });
 
+test('should resolve extends from a bare package name', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43234' });
+
+  // The @tsconfig/* base packages are documented as "extends": "@tsconfig/node20".
+  // tsc resolves a bare package name to the tsconfig.json at the package root.
+  const result = await runInlineTest({
+    'package.json': JSON.stringify({ name: 'test-project' }),
+    'node_modules/@tsconfig/base/package.json': JSON.stringify({ name: '@tsconfig/base', version: '1.0.0' }),
+    'node_modules/@tsconfig/base/tsconfig.json': `{
+      "compilerOptions": {
+        "paths": {
+          "util/*": ["./mapped/*"],
+        },
+      },
+    }`,
+    'tsconfig.json': `{
+      "extends": "@tsconfig/base",
+      "compilerOptions": {
+        "baseUrl": ".",
+      },
+    }`,
+    'a.test.ts': `
+      import { foo } from 'util/file';
+      import { test, expect } from '@playwright/test';
+      test('test', () => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'mapped/file.ts': `
+      export const foo = 'foo';
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
+test('should resolve extends from the "tsconfig" field in package.json', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43234' });
+
+  const result = await runInlineTest({
+    'package.json': JSON.stringify({ name: 'test-project' }),
+    'node_modules/@my/tsconfig-base/package.json': JSON.stringify({ name: '@my/tsconfig-base', version: '1.0.0', tsconfig: './base.json' }),
+    'node_modules/@my/tsconfig-base/base.json': `{
+      "compilerOptions": {
+        "paths": {
+          "util/*": ["./mapped/*"],
+        },
+      },
+    }`,
+    'tsconfig.json': `{
+      "extends": "@my/tsconfig-base",
+      "compilerOptions": {
+        "baseUrl": ".",
+      },
+    }`,
+    'a.test.ts': `
+      import { foo } from 'util/file';
+      import { test, expect } from '@playwright/test';
+      test('test', () => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'mapped/file.ts': `
+      export const foo = 'foo';
+    `,
+  });
+
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+});
+
 test('should ignore extends bare specifier resolvable only via node_modules walk-up', async ({ runInlineTest }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41989' });
 
