@@ -217,7 +217,12 @@ export class BidiBrowserContext extends BrowserContext {
 
   constructor(browser: BidiBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
-    this.authenticateProxyViaHeader();
+    // Chromium rejects Proxy-Authorization as an unsafe header, so answer the proxy's
+    // auth challenge with the credentials instead, like the CDP-based Chromium does.
+    if (browser.options.name === 'chromium')
+      this.authenticateProxyViaCredentials();
+    else
+      this.authenticateProxyViaHeader();
   }
 
   private _bidiPages() {
@@ -591,7 +596,6 @@ function getProxyConfiguration(proxySettings?: types.ProxySettings): bidi.Sessio
   const bypass = proxySettings.bypass ?? process.env.PLAYWRIGHT_PROXY_BYPASS_FOR_TESTING;
   if (bypass)
     proxy.noProxy = bypass.split(',');
-  // TODO: support authentication.
 
   return proxy;
 }
