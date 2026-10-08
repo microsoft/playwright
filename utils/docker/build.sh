@@ -45,8 +45,24 @@ fi
 # Keep each arch image a plain single-platform manifest without the unknown/unknown platform entry.
 export BUILDX_NO_DEFAULT_ATTESTATIONS=1
 
-docker build --platform "${PLATFORM}" \
-  --build-arg ACR_CACHE_PREFIX="${ACR_CACHE_PREFIX}" \
-  --build-arg UBUNTU_MIRROR_PREFIX="${UBUNTU_MIRROR_PREFIX}" \
-  "${SECRET_ARGS[@]}" \
-  -t "$3" -f "Dockerfile.$2" .
+# Docker builds fail intermittently: arm64 images are cross-built under QEMU
+# user-mode emulation, where ldconfig segfaults at startup (tonistiigi/binfmt#298,
+# every binfmt build since QEMU 8.1.4), and both archs can hit transient network
+# errors while downloading packages. Retry: BuildKit keeps the layers that already
+# succeeded, so a retry re-runs only the failed RUN step.
+MAX_ATTEMPTS=3
+
+for ((attempt = 1; attempt <= MAX_ATTEMPTS; attempt++)); do
+  if docker build --platform "${PLATFORM}" \
+      --build-arg ACR_CACHE_PREFIX="${ACR_CACHE_PREFIX}" \
+      --build-arg UBUNTU_MIRROR_PREFIX="${UBUNTU_MIRROR_PREFIX}" \
+      "${SECRET_ARGS[@]}" \
+      -t "$3" -f "Dockerfile.$2" .; then
+    exit 0
+  fi
+  if (( attempt < MAX_ATTEMPTS )); then
+    echo "docker build failed (attempt ${attempt}/${MAX_ATTEMPTS}), retrying..." >&2
+  fi
+done
+echo "ERROR: docker build failed after ${MAX_ATTEMPTS} attempt(s)" >&2
+exit 1
