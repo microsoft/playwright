@@ -46,6 +46,19 @@ async function socketExists(socketPath: string): Promise<boolean> {
   return false;
 }
 
+// A stop request, the context closing and the socket going away all end the daemon, and
+// one shutdown usually triggers several of them. Exit only once: calling
+// gracefullyProcessExitDoNotHang again while the browser is closing force-kills it.
+let exiting = false;
+function exitDaemon(onExit?: () => Promise<void>) {
+  if (exiting) {
+    onExit?.().catch(() => {});
+    return;
+  }
+  exiting = true;
+  gracefullyProcessExitDoNotHang(0, onExit);
+}
+
 async function monitorSocketPath(socketPath: string): Promise<void> {
   if (process.platform === 'win32')
     return;
@@ -55,7 +68,7 @@ async function monitorSocketPath(socketPath: string): Promise<void> {
   async function checkSocketPath() {
     const currentStat = await fs.promises.stat(socketPath).catch(() => undefined);
     if (!currentStat || !currentStat.isSocket() || currentStat.dev !== socketStat.dev || currentStat.ino !== socketStat.ino) {
-      gracefullyProcessExitDoNotHang(0);
+      exitDaemon();
       return;
     }
     scheduleSocketCheck();
@@ -112,7 +125,7 @@ export async function startCliDaemonServer(
           await deleteSessionFile(clientInfo, sessionConfig);
           const sendAck = async () => connection.send({ id, result: 'ok' }).catch(() => {});
           if (options?.exitOnClose)
-            gracefullyProcessExitDoNotHang(0, () => sendAck());
+            exitDaemon(sendAck);
           else
             await sendAck();
         } else if (method === 'run') {
@@ -134,7 +147,7 @@ export async function startCliDaemonServer(
   browserContext.on('close', () => Promise.resolve().then(async () => {
     await deleteSessionFile(clientInfo, sessionConfig);
     if (options?.exitOnClose)
-      gracefullyProcessExitDoNotHang(0);
+      exitDaemon();
   }));
 
   await new Promise<void>((resolve, reject) => {
