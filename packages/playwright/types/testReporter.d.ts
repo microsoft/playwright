@@ -92,6 +92,8 @@ export interface FullResult {
  * });
  * ```
  *
+ * When `--reporter-only-failures` is set, custom reporters receive `onlyFailures: true` in their constructor options.
+ *
  * Here is a typical order of reporter calls:
  * - [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin) is called
  *   once with a root suite that contains all other suites and tests. Learn more about

@@ -19,13 +19,15 @@ export * from 'playwright-core';
 
 export type BlobReporterOptions = { outputDir?: string, fileName?: string };
 export type DotReporterOptions = { omitTags?: boolean };
+export type FailuresReporterOptions = { omitTags?: boolean };
 export type LineReporterOptions = { omitTags?: boolean };
 export type ListReporterOptions = { printSteps?: boolean, printFailuresInline?: boolean, omitTags?: boolean };
 export type GitHubReporterOptions = { omitTags?: boolean };
-export type JUnitReporterOptions = { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean, includeRetries?: boolean, omitTags?: boolean };
-export type JsonReporterOptions = { outputFile?: string };
+export type JUnitReporterOptions = { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean, includeRetries?: boolean, omitTags?: boolean, onlyFailures?: boolean };
+export type JsonReporterOptions = { outputFile?: string, onlyFailures?: boolean };
 export type PerfettoReporterOptions = { outputFile?: string };
 export type HtmlReporterOptions = {
+  onlyFailures?: boolean;
   outputFolder?: string;
   open?: 'always' | 'never' | 'on-failure';
   host?: string;
@@ -41,6 +43,7 @@ export type HtmlReporterOptions = {
 export type ReporterDescription = Readonly<
   ['blob'] | ['blob', BlobReporterOptions] |
   ['dot'] | ['dot', DotReporterOptions] |
+  ['failures'] | ['failures', FailuresReporterOptions] |
   ['line'] | ['line', LineReporterOptions] |
   ['list'] | ['list', ListReporterOptions] |
   ['github'] | ['github', GitHubReporterOptions] |
@@ -69,7 +72,7 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   projects?: Project<TestArgs, WorkerArgs>[];
-  reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html'|'blob'|'perfetto', string> | ReporterDescription[];
+  reporter?: LiteralUnion<'list'|'dot'|'failures'|'line'|'github'|'json'|'junit'|'null'|'html'|'blob'|'perfetto', string> | ReporterDescription[];
   use?: UseOptions<TestArgs, WorkerArgs>;
   webServer?: TestConfigWebServer | TestConfigWebServer[];
 }

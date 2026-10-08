@@ -29,7 +29,8 @@ export async function showReport(report: string | undefined, host: string, port:
 
 export async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {
   const configFile = opts.config;
-  const config = configFile ? await configLoader.loadConfigFromFile(configFile) : await configLoader.loadEmptyConfigForMergeReports();
+  const overrides = { reporterOnlyFailures: opts.reporterOnlyFailures ? true : undefined };
+  const config = configFile ? await configLoader.loadConfigFromFile(configFile, overrides) : await configLoader.loadEmptyConfigForMergeReports(overrides);
 
   const dir = path.resolve(process.cwd(), reportDir || '');
   const dirStat = await fs.promises.stat(dir).catch(e => null);
