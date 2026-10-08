@@ -213,7 +213,10 @@ export abstract class APIRequestContext extends SdkObject {
 
     const requestUrl = new URL(constructURLBasedOnBaseURL(defaults.baseURL, params.url));
     if (params.encodedParams) {
-      requestUrl.search = params.encodedParams;
+      // Append to the query that the URL already has, like the object form does.
+      const encodedParams = params.encodedParams.replace(/^\?/, '');
+      if (encodedParams)
+        requestUrl.search = requestUrl.search ? requestUrl.search + '&' + encodedParams : encodedParams;
     } else if (params.params) {
       for (const { name, value } of params.params)
         requestUrl.searchParams.append(name, value);
