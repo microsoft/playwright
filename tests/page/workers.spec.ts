@@ -50,6 +50,22 @@ it('should emit created and destroyed events', async function({ page }) {
   expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 
+it('should reject in-flight evaluate and emit close when page closes', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43204' },
+}, async function({ page, server }) {
+  await page.goto(server.EMPTY_PAGE);
+  const [worker] = await Promise.all([
+    page.waitForEvent('worker'),
+    page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['1'], { type: 'application/javascript' })))),
+  ]);
+  const closePromise = new Promise(x => worker.once('close', x));
+  const evalPromise = worker.evaluate(() => new Promise(() => {})).catch((e: Error) => e);
+  await page.close();
+  const error = await evalPromise as Error;
+  expect(error.message).toContain('worker.evaluate');
+  expect(await closePromise).toBe(worker);
+});
+
 it('should report console logs', async function({ page }) {
   const [message] = await Promise.all([
     page.waitForEvent('console'),

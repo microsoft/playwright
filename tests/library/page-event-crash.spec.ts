@@ -114,15 +114,21 @@ test('should be able to close page after crash', {
   expect(page.context().pages()).toEqual([]);
 });
 
-test.fixme('should reject in-flight worker.evaluate when page crashes', async ({ page, crash, server }) => {
+test('should reject in-flight worker.evaluate when page crashes', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43204' },
+}, async ({ page, crash, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),
     page.evaluate(() => new Worker(URL.createObjectURL(
         new Blob(['self.onmessage = () => {}'], { type: 'application/javascript' })))),
   ]);
+  const closePromise = new Promise(f => worker.once('close', f));
   const evalPromise = worker.evaluate(() => new Promise(() => {})).catch((e: Error) => e); // never resolves in-worker
   crash();
   const error = await evalPromise as Error;
-  expect(error.message).toContain('crash');
+  // Chromium may detach the worker before it reports the crash.
+  expect(error.message).toMatch(/Page crashed|Target page, context or browser has been closed/);
+  await closePromise;
+  expect(page.workers()).toEqual([]);
 });
