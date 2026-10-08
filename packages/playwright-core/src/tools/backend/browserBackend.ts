@@ -129,7 +129,7 @@ export class BrowserBackend extends EventEmitter<{ disconnected: [], dynamictool
       responseObject = await response.serialize();
       this._sessionLog?.logResponse(name, parsedArguments, responseObject);
     } catch (error: any) {
-      const messages = [String(error), ...context.drainPendingUnhandledRejections().map(formatRejectionReason)];
+      const messages = [String(error), ...context.drainPendingUnhandledRejections().filter(reason => reason !== error).map(formatRejectionReason)];
       responseObject = formatError(messages.join('\n\n'));
     } finally {
       context.setRunningTool(undefined);
