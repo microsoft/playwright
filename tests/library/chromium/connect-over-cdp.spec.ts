@@ -179,6 +179,25 @@ test('should cleanup artifacts dir after connectOverCDP disconnects due to ws cl
   expect(exists2).toBe(false);
 });
 
+test('should reject pending CDPSession calls when the browser is killed', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43200' },
+}, async ({ browserType }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launchServer({
+    args: ['--remote-debugging-port=' + port]
+  });
+  const cdpBrowser = await browserType.connectOverCDP({
+    endpointURL: `http://127.0.0.1:${port}/`,
+  });
+  const context = cdpBrowser.contexts()[0];
+  const page = await context.newPage();
+  const session = await context.newCDPSession(page);
+  const sendPromise = session.send('Runtime.evaluate', { expression: 'new Promise(() => {})', awaitPromise: true }).catch(e => e);
+  await browserServer.kill();
+  const error = await sendPromise;
+  expect(error.message).toContain('Target page, context or browser has been closed');
+});
+
 test('should write traces to provided artifactsDir on connectOverCDP', async ({ browserType, toImpl, trace }, testInfo) => {
   test.skip(trace === 'on');
 

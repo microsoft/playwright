@@ -89,7 +89,8 @@ export class CRConnection extends SdkObject {
     this._transport.onmessage = undefined;
     this._transport.onclose = undefined;
     this._browserDisconnectedLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs(), reason);
-    this.rootSession.dispose();
+    for (const session of [...this._sessions.values()])
+      session.dispose();
     Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
   }
 
