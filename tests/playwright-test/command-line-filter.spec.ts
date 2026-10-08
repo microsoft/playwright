@@ -85,7 +85,7 @@ test('should filter by line and column', async ({ runInlineTest }) => {
   test('no-match', () => { expect(1).toBe(1); });
       test('yes-full-match-with-dirname', () => { expect(1).toBe(1); });
       `,
-  }, undefined, undefined, { additionalArgs: ['x.spec.ts:3:11', 'x.spec.ts:4:99999', 'x.spec.ts:5', 'foo/x.spec.ts:7:11'] });
+  }, undefined, undefined, { additionalArgs: ['x.spec.ts:3:7', 'x.spec.ts:4:99999', 'x.spec.ts:5', 'foo/x.spec.ts:7:7'] });
   expect(result.exitCode).toBe(0);
   expect(result.skipped).toBe(0);
   expect(result.passed).toBe(3);

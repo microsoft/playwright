@@ -121,6 +121,22 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
 
   if (!isModule) {
     plugins.push([require('@babel/plugin-transform-modules-commonjs')]);
+    plugins.push([
+      (): PluginObj => ({
+        name: 'map-interop-calls-to-callee-start',
+        visitor: {},
+        post(file) {
+          // Otherwise V8 reports test('foo') in (0, _test.test)('foo') at the paren instead of the callee.
+          file.path.traverse({
+            CallExpression(path) {
+              const callee = path.node.callee;
+              if (callee.type === 'SequenceExpression' && !callee.loc)
+                callee.expressions[callee.expressions.length - 1].loc = null;
+            }
+          });
+        }
+      })
+    ]);
     // Note: we used to include '@babel/plugin-transform-dynamic-import' to convert async imports
     // into require(), so that pirates can intercept them. With the ESM loader enabled by default,
     // there is no need for this.

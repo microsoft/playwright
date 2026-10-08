@@ -52,14 +52,14 @@ test('test_run', async ({ startClient }) => {
   expect(text).toContain(`1 skipped`);
   expect(text).toContain(`4 passed`);
 
-  expect(text).toContain(`a.test.ts:3:11 › passes`);
-  expect(text).toContain(`c.test.ts:3:11 › passes`);
+  expect(text).toContain(`a.test.ts:3:7 › passes`);
+  expect(text).toContain(`c.test.ts:3:7 › passes`);
   expect(text).toContain(`c.test.ts:4:12 › skipped`);
-  expect(text).toContain(`b.test.ts:3:11 › passes`);
-  expect(text).toContain(`a.test.ts:4:11 › fails`);
-  expect(text).toContain(`b.test.ts:4:11 › fails`);
-  expect(text).toContain(`a.test.ts:6:13 › suite › inner passes`);
-  expect(text).toContain(`a.test.ts:7:13 › suite › inner fails`);
+  expect(text).toContain(`b.test.ts:3:7 › passes`);
+  expect(text).toContain(`a.test.ts:4:7 › fails`);
+  expect(text).toContain(`b.test.ts:4:7 › fails`);
+  expect(text).toContain(`a.test.ts:6:9 › suite › inner passes`);
+  expect(text).toContain(`a.test.ts:7:9 › suite › inner fails`);
 
   expect(text).not.toContain(`../../test-results`);
 });
@@ -118,8 +118,8 @@ test('test_run filters', async ({ startClient }) => {
     },
   })).toHaveTextResponse(`
 Running 2 tests using 1 worker
-  ok 1 [id=<ID>] [project=foo] › b.test.ts:3:11 › example1 (XXms)
-  ok 2 [id=<ID>] [project=foo] › b.test.ts:6:11 › example2 (XXms)
+  ok 1 [id=<ID>] [project=foo] › b.test.ts:3:7 › example1 (XXms)
+  ok 2 [id=<ID>] [project=foo] › b.test.ts:6:7 › example2 (XXms)
   2 passed (XXms)`);
 });
 
@@ -197,8 +197,8 @@ test('test_run should include dependencies', async ({ startClient }) => {
     },
   })).toHaveTextResponse(`
 Running 3 tests using 1 worker
-  ok 1 [id=<ID>] [project=setup] › auth.setup.ts:3:12 › auth (XXms)
-  ok 2 [id=<ID>] [project=chromium] › example.test.ts:3:11 › example1 (XXms)
-  ok 3 [id=<ID>] [project=chromium] › example.test.ts:6:11 › example2 (XXms)
+  ok 1 [id=<ID>] [project=setup] › auth.setup.ts:3:7 › auth (XXms)
+  ok 2 [id=<ID>] [project=chromium] › example.test.ts:3:7 › example1 (XXms)
+  ok 3 [id=<ID>] [project=chromium] › example.test.ts:6:7 › example2 (XXms)
   3 passed (XXms)`);
 });

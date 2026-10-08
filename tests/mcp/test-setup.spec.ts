@@ -96,7 +96,7 @@ global setup
 Running 1 test using 1 worker
 test
 [err] test
-  ok 1 [id=<ID>] [project=chromium] › a.test.ts:3:9 › test (XXms)
+  ok 1 [id=<ID>] [project=chromium] › a.test.ts:3:5 › test (XXms)
   1 passed (XXms)
 global teardown
 [err] global teardown`);
@@ -124,7 +124,7 @@ global setup
 Running 1 test using 1 worker
 test
 [err] test
-  ok 1 [id=<ID>] [project=chromium] › a.test.ts:3:9 › test (XXms)
+  ok 1 [id=<ID>] [project=chromium] › a.test.ts:3:5 › test (XXms)
   1 passed (XXms)
 global teardown
 [err] global teardown`);

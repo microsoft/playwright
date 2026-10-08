@@ -764,15 +764,15 @@ test('should contain only one slow modifier', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
   expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([
     { type: 'fixme', location: { file: expect.any(String), line: 3, column: 12 } },
-    { type: 'issue', description: 'my-value', location: { file: expect.any(String), line: 4, column: 11 } }
+    { type: 'issue', description: 'my-value', location: { file: expect.any(String), line: 4, column: 7 } }
   ]);
   expect(result.report.suites[1].specs[0].tests[0].annotations).toEqual([
     { type: 'skip', location: { file: expect.any(String), line: 3, column: 12 } },
-    { type: 'issue', description: 'my-value', location: { file: expect.any(String), line: 4, column: 11 } }
+    { type: 'issue', description: 'my-value', location: { file: expect.any(String), line: 4, column: 7 } }
   ]);
   expect(result.report.suites[2].specs[0].tests[0].annotations).toEqual([
     { type: 'slow', location: { file: expect.any(String), line: 3, column: 12 } },
-    { type: 'issue', description: 'my-value', location: { file: expect.any(String), line: 4, column: 11 } }
+    { type: 'issue', description: 'my-value', location: { file: expect.any(String), line: 4, column: 7 } }
   ]);
 });
 
