@@ -266,6 +266,18 @@ for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] 
     expect(responseParams.get('парам2')).toBe('знач2');
   });
 
+  it(`${method} should append string and URLSearchParams params to the URL query`, {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43210' },
+  }, async ({ context, server }) => {
+    for (const params of ['q=cat', '?q=cat', new URLSearchParams({ q: 'cat' })]) {
+      const [request] = await Promise.all([
+        server.waitForRequest('/empty.html?page=2&q=cat'),
+        context.request[method](server.EMPTY_PAGE + '?page=2', { params }),
+      ]);
+      expect(request.url).toBe('/empty.html?page=2&q=cat');
+    }
+  });
+
   it(`${method} should support failOnStatusCode`, async ({ context, server }) => {
     const error = await context.request[method](server.PREFIX + '/does-not-exist.html', {
       failOnStatusCode: true
