@@ -662,6 +662,39 @@ it('should wait for button to be enabled', async ({ page }) => {
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
+it('should wait for element to become non-inert', async ({ page }) => {
+  await page.setContent('<div inert id=container><button onclick="window.__CLICKED=true;"><span>Click target</span></button></div>');
+  let done = false;
+  const clickPromise = page.click('text=Click target').then(() => done = true);
+  await giveItAChanceToClick(page);
+  expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
+  expect(done).toBe(false);
+  await page.evaluate(() => document.getElementById('container').removeAttribute('inert'));
+  await clickPromise;
+  expect(await page.evaluate('__CLICKED')).toBe(true);
+});
+
+it('should wait for modal dialog to close', async ({ page }) => {
+  await page.setContent(`
+    <button onclick="window.__CLICKED=true;">Click target</button>
+    <dialog id=dialog><button onclick="window.__DIALOG_CLICKED=true;">Inside</button></dialog>
+    <script>
+      document.getElementById('dialog').showModal();
+    </script>
+  `);
+  await page.click('text=Inside');
+  expect(await page.evaluate('__DIALOG_CLICKED')).toBe(true);
+
+  let done = false;
+  const clickPromise = page.click('text=Click target').then(() => done = true);
+  await giveItAChanceToClick(page);
+  expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
+  expect(done).toBe(false);
+  await page.evaluate(() => (document.getElementById('dialog') as HTMLDialogElement).close());
+  await clickPromise;
+  expect(await page.evaluate('__CLICKED')).toBe(true);
+});
+
 it('should wait for input to be enabled', async ({ page }) => {
   await page.setContent('<input onclick="window.__CLICKED=true;" disabled>');
   let done = false;

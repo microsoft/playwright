@@ -986,3 +986,42 @@ it('should not include hidden iframes', async ({ page }) => {
   expect(snapshot).not.toContain('Hidden');
   expect(snapshot).not.toContain('None');
 });
+
+it('should not generate refs for inert elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+  await page.setContent(`
+    <button>with-ref</button>
+    <button inert>no-ref</button>
+    <div inert>
+      <button>no-ref</button>
+    </div>
+  `);
+
+  const snapshot = await snapshotForAI(page);
+  expect(snapshot).toContainYaml(`
+    - generic [active] [ref=e1]:
+      - button "with-ref" [ref=e2]
+      - button: no-ref
+      - generic:
+        - button: no-ref
+  `);
+});
+
+it('should not generate refs for elements outside of a modal dialog', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+  await page.setContent(`
+    <button>Outside</button>
+    <dialog id=dialog>
+      <button>Inside</button>
+    </dialog>
+    <script>
+      document.getElementById('dialog').showModal();
+    </script>
+  `);
+
+  const snapshot = await snapshotForAI(page);
+  expect(snapshot).toContainYaml(`
+    - generic:
+      - button: Outside
+      - dialog [ref=e1]:
+        - button "Inside" [active] [ref=e2]
+  `);
+});

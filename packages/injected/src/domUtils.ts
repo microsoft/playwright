@@ -16,10 +16,15 @@
 
 type GlobalOptions = {
   browserNameForWorkarounds?: string;
+  skipInertCheck?: boolean;
+  skipDialogCheck?: boolean;
 };
 let globalOptions: GlobalOptions = {};
 export function setGlobalOptions(options: GlobalOptions) {
   globalOptions = options;
+}
+export function getGlobalOptions(): GlobalOptions {
+  return globalOptions;
 }
 
 export function isInsideScope(scope: Node, element: Element | undefined): boolean {

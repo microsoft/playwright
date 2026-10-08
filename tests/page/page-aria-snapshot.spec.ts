@@ -861,3 +861,49 @@ it('should not include hidden iframes', async ({ page }) => {
     - iframe
   `));
 });
+
+it('should not include inert elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+  await page.setContent(`
+    <button>Hi</button>
+    <button inert>Hello</button>
+    <div inert>
+      <button>Yay</button>
+      <p>Some text</p>
+    </div>
+    <p>Visible <span inert>inert</span> text</p>
+    <button><span inert>Save</span></button>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - button "Hi"
+    - paragraph: Visible text
+    - button
+  `);
+});
+
+it('should only include the modal dialog content', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+  await page.setContent(`
+    <h1>Title</h1>
+    <button>Outside</button>
+    <dialog id=dialog>
+      <h2>Dialog</h2>
+      <button>Inside</button>
+      <div inert><button>Inert inside</button></div>
+    </dialog>
+    <script>
+      document.getElementById('dialog').showModal();
+    </script>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - dialog:
+      - heading "Dialog" [level=2]
+      - button "Inside"
+  `);
+
+  await page.locator('#dialog').evaluate((e: HTMLDialogElement) => e.close());
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - heading "Title" [level=1]
+    - button "Outside"
+  `);
+});
