@@ -57,6 +57,7 @@ export class BidiFirefox extends BrowserType {
       throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
 
     env = {
+      'MOZ_DISABLE_SAFE_MODE_KEY': '1',
       ...env,
       'MOZ_CRASHREPORTER': '1',
       'MOZ_CRASHREPORTER_NO_REPORT': '1',
