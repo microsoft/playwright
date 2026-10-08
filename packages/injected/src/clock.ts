@@ -242,6 +242,10 @@ export class ClockController {
       callAt,
       promise: undefined,
       cancel: this._embedder.setTimeout(() => {
+        // Apply the log before the real time moves the clock.
+        this._replayLogOnce();
+        if (this._currentRealTimeTimer !== realTimeTimer)
+          return;
         this._syncRealTime();
         // eslint-disable-next-line no-console
         realTimeTimer.promise = this._runTo(this._now.ticks).catch(e => console.error(e));
@@ -441,7 +445,9 @@ export class ClockController {
       return;
 
     let lastLogTime = -1;
-    let isPaused = false;
+    // The log can be replayed in parts, when an init script reads the time
+    // in between the clock's init scripts. Continue from the current state.
+    let isPaused = !this._realTime;
 
     for (const { type, time, param } of this._log) {
       if (!isPaused && lastLogTime !== -1)

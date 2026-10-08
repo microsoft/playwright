@@ -518,6 +518,29 @@ it.describe('while on pause', () => {
     await page.clock.runFor(1);
     expect(calls).toEqual([{ params: ['outer'] }, { params: ['inner'] }]);
   });
+
+  it('should stay paused on the next page when an init script reads the time', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43214' },
+  }, async ({ page, server }) => {
+    await page.clock.install({ time: 0 });
+    await page.clock.pauseAt(1000);
+    await page.addInitScript(() => Date.now());
+    await page.goto(server.EMPTY_PAGE);
+    await page.clock.runFor(1000);
+    await page.goto(server.PREFIX + '/title.html');
+    expect(await page.evaluate(() => Date.now())).toBe(2000);
+    await page.waitForTimeout(500);
+    expect(await page.evaluate(() => Date.now())).toBe(2000);
+  });
+
+  it('should not advance performance.now() before the first clock call on a new page', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43214' },
+  }, async ({ page, server }) => {
+    await page.clock.pauseAt(1000);
+    await page.goto(server.EMPTY_PAGE);
+    await page.waitForTimeout(500);
+    expect(await page.evaluate(() => [performance.now(), Date.now()])).toEqual([0, 1000]);
+  });
 });
 
 it.describe('Date.now', () => {
