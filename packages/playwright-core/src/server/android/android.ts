@@ -230,15 +230,12 @@ export class AndroidDevice extends SdkObject {
   }
 
   async send(progress: Progress, method: string, params: any = {}): Promise<any> {
-    return await progress.race(this._send(method, params));
+    // The driver waits for the selector for "timeout" ms, use the timeout of the call.
+    return await progress.race(this._send(method, { ...params, timeout: progress.timeout }));
   }
 
   private async _send(method: string, params: any = {}): Promise<any> {
-    params = {
-      ...params,
-      // Patch the timeout in, just in case it's missing in one of the commands.
-      timeout: params.timeout || 0,
-    };
+    params = { ...params };
     if (params.androidSelector) {
       params.selector = params.androidSelector;
       delete params.androidSelector;

@@ -58,3 +58,17 @@ test('androidDevice.fill', async function({ androidDevice }) {
   await androidDevice.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'Hello', { timeout: test.info().timeout });
   expect((await androidDevice.info({ res: 'org.chromium.webview_shell:id/url_field' })).text).toBe('Hello');
 });
+
+test('androidDevice.wait should wait for the default timeout', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43218' },
+}, async function({ androidDevice }) {
+  androidDevice.setDefaultTimeout(10000);
+  try {
+    const start = Date.now();
+    const error = await androidDevice.wait({ res: 'org.chromium.webview_shell:id/does_not_exist' }).catch(e => e);
+    expect(error.message).toContain('androidDevice.wait');
+    expect(Date.now() - start).toBeGreaterThan(9000);
+  } finally {
+    androidDevice.setDefaultTimeout(90000);
+  }
+});
