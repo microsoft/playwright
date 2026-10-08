@@ -46,7 +46,7 @@ async function socketExists(socketPath: string): Promise<boolean> {
   return false;
 }
 
-async function monitorSocketPath(socketPath: string): Promise<void> {
+async function monitorSocketPath(socketPath: string, onGone: () => void): Promise<void> {
   if (process.platform === 'win32')
     return;
 
@@ -55,7 +55,7 @@ async function monitorSocketPath(socketPath: string): Promise<void> {
   async function checkSocketPath() {
     const currentStat = await fs.promises.stat(socketPath).catch(() => undefined);
     if (!currentStat || !currentStat.isSocket() || currentStat.dev !== socketStat.dev || currentStat.ino !== socketStat.ino) {
-      gracefullyProcessExitDoNotHang(0);
+      onGone();
       return;
     }
     scheduleSocketCheck();
@@ -79,7 +79,6 @@ export async function startCliDaemonServer(
   options: {
     ownership?: 'attached' | 'own',
     persistent?: boolean,
-    exitOnClose?: boolean,
     idleTimer?: IdleTimer,
   }
 ): Promise<string> {
@@ -109,12 +108,7 @@ export async function startCliDaemonServer(
       const { id, method, params } = message;
       try {
         if (method === 'stop') {
-          await deleteSessionFile(clientInfo, sessionConfig);
-          const sendAck = async () => connection.send({ id, result: 'ok' }).catch(() => {});
-          if (options?.exitOnClose)
-            gracefullyProcessExitDoNotHang(0, () => sendAck());
-          else
-            await sendAck();
+          await exit(async () => connection.send({ id, result: 'ok' }).catch(() => {}));
         } else if (method === 'run') {
           const { toolName, toolParams } = parseCliCommand(params.args);
           toolParams._meta = { cwd: params.cwd, raw: params.raw || params.json, json: !!params.json };
@@ -131,11 +125,19 @@ export async function startCliDaemonServer(
   });
 
   decorateServer(server);
-  browserContext.on('close', () => Promise.resolve().then(async () => {
+
+  // A stop request, the browser closing and the socket going away all end the daemon, and
+  // exiting itself closes the browser and removes the socket. Exit only once: closing the
+  // browser again while it is closing force-kills it.
+  let exiting = false;
+  async function exit(onExit?: () => Promise<void>) {
+    if (exiting)
+      return;
+    exiting = true;
     await deleteSessionFile(clientInfo, sessionConfig);
-    if (options?.exitOnClose)
-      gracefullyProcessExitDoNotHang(0);
-  }));
+    gracefullyProcessExitDoNotHang(0, onExit);
+  }
+  browserContext.on('close', () => void exit());
 
   await new Promise<void>((resolve, reject) => {
     server.on('error', reject);
@@ -144,7 +146,7 @@ export async function startCliDaemonServer(
 
   await saveSessionFile(clientInfo, sessionConfig);
   options.idleTimer?.poke();
-  await monitorSocketPath(socketPath);
+  await monitorSocketPath(socketPath, () => void exit());
   return socketPath;
 }
 
@@ -182,7 +184,6 @@ function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
 function createSessionConfig(clientInfo: ClientInfo, sessionName: string, browserInfo: BrowserInfo, options: {
   ownership?: 'attached' | 'own',
   persistent?: boolean,
-  exitOnStop?: boolean,
 } = {}): SessionConfig {
   return {
     name: sessionName,
