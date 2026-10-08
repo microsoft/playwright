@@ -373,3 +373,79 @@ test('should trigger listener added before navigation', async ({ page, server, b
   ]);
   expect(chooser).toBeTruthy();
 });
+
+test.describe('user activation', () => {
+  // Each test navigates to a fresh document, because transient activation
+  // (including the one granted by page.evaluate in all browsers) sticks to
+  // the document for several seconds.
+  const html = `
+    <button id="once">once</button>
+    <button id="twice">twice</button>
+    <input type=file>
+    <script>
+      const input = document.querySelector('input');
+      document.querySelector('#once').addEventListener('click', () => input.click());
+      document.querySelector('#twice').addEventListener('click', () => { input.click(); input.click(); });
+      window.showPicker = () => {
+        try {
+          input.showPicker();
+          return 'ok';
+        } catch (e) {
+          return e.name;
+        }
+      };
+      if (location.search === '?click')
+        setTimeout(() => input.click(), 0);
+      if (location.search === '?showPicker')
+        setTimeout(() => window.showPickerResult = window.showPicker(), 0);
+    </script>
+  `;
+
+  test.beforeEach(async ({ page, server }) => {
+    await page.route(server.PREFIX + '/activation.html*', route => route.fulfill({ contentType: 'text/html', body: html }));
+  });
+
+  test('should not open file chooser without user activation', async ({ page, server, browserName }) => {
+    test.fixme(browserName === 'webkit', 'WebKit opens the file chooser from input.click() without user activation');
+    let choosers = 0;
+    page.on('filechooser', () => choosers++);
+
+    await page.goto(server.PREFIX + '/activation.html?click');
+    await page.waitForTimeout(500);
+    expect(choosers).toBe(0);
+
+    await page.goto(server.PREFIX + '/activation.html?showPicker');
+    await page.waitForFunction(() => !!(window as any).showPickerResult);
+    expect(await page.evaluate(() => (window as any).showPickerResult)).toBe('NotAllowedError');
+    expect(choosers).toBe(0);
+  });
+
+  test('should open file chooser with user activation', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/activation.html');
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      page.click('#once'),
+    ]);
+    expect(chooser).toBeTruthy();
+
+    // page.evaluate grants transient user activation in all browsers.
+    await page.goto(server.PREFIX + '/activation.html');
+    const [chooser2] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      page.evaluate(() => document.querySelector('input').click()),
+    ]);
+    expect(chooser2).toBeTruthy();
+    await page.goto(server.PREFIX + '/activation.html');
+    expect(await page.evaluate(() => (window as any).showPicker())).toBe('ok');
+  });
+
+  test('should consume user activation when opening file chooser', async ({ page, server, browserName }) => {
+    test.fixme(browserName === 'webkit', 'WebKit does not consume user activation when opening the file chooser');
+    let choosers = 0;
+    page.on('filechooser', () => choosers++);
+    await page.goto(server.PREFIX + '/activation.html');
+    await page.click('#twice');
+    await page.waitForTimeout(500);
+    expect(choosers).toBe(1);
+  });
+});
