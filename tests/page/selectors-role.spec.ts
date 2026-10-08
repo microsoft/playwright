@@ -707,13 +707,13 @@ test('should match the topmost modal dialog', async ({ page }) => {
   ]);
 });
 
-test('should respect PLAYWRIGHT_SKIP_INERT_CHECK', async ({ page, mode }) => {
+test('should respect PLAYWRIGHT_SKIP_INERT_CHECK', async ({ page, server, mode }) => {
   test.skip(mode !== 'default', 'Env variable is read by the in-process server');
   process.env.PLAYWRIGHT_SKIP_INERT_CHECK = '1';
   try {
-    // New page gets a fresh injected script that reads the env variable.
-    const newPage = await page.context().newPage();
-    await newPage.setContent(`
+    // Navigation creates a fresh injected script that reads the env variable.
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent(`
       <button>Outside</button>
       <div inert><button>Inert</button></div>
       <dialog id=dialog><button>Inside</button></dialog>
@@ -721,24 +721,23 @@ test('should respect PLAYWRIGHT_SKIP_INERT_CHECK', async ({ page, mode }) => {
         document.getElementById('dialog').showModal();
       </script>
     `);
-    expect(await newPage.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
       `<button>Outside</button>`,
       `<button>Inert</button>`,
       `<button>Inside</button>`,
     ]);
-    await newPage.close();
   } finally {
     delete process.env.PLAYWRIGHT_SKIP_INERT_CHECK;
   }
 });
 
-test('should respect PLAYWRIGHT_SKIP_DIALOG_CHECK', async ({ page, mode }) => {
+test('should respect PLAYWRIGHT_SKIP_DIALOG_CHECK', async ({ page, server, mode }) => {
   test.skip(mode !== 'default', 'Env variable is read by the in-process server');
   process.env.PLAYWRIGHT_SKIP_DIALOG_CHECK = '1';
   try {
-    // New page gets a fresh injected script that reads the env variable.
-    const newPage = await page.context().newPage();
-    await newPage.setContent(`
+    // Navigation creates a fresh injected script that reads the env variable.
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent(`
       <button>Outside</button>
       <div inert><button>Inert</button></div>
       <dialog id=dialog><button>Inside</button></dialog>
@@ -746,11 +745,10 @@ test('should respect PLAYWRIGHT_SKIP_DIALOG_CHECK', async ({ page, mode }) => {
         document.getElementById('dialog').showModal();
       </script>
     `);
-    expect(await newPage.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
       `<button>Outside</button>`,
       `<button>Inside</button>`,
     ]);
-    await newPage.close();
   } finally {
     delete process.env.PLAYWRIGHT_SKIP_DIALOG_CHECK;
   }
