@@ -100,6 +100,49 @@ test('browser_route mocks response with custom status', async ({ client, server 
   });
 });
 
+test('browser_route mocks response with custom headers', async ({ client, server }) => {
+  server.setContent('/', `
+    <button onclick="fetch('/api/custom').then(r => {
+      document.body.textContent = 'Header: ' + r.headers.get('x-custom-res') + ', CORS: ' + r.headers.get('access-control-allow-origin');
+    })">Fetch</button>
+  `, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  await client.callTool({
+    name: 'browser_route',
+    arguments: {
+      pattern: '**/api/custom',
+      status: 200,
+      body: 'OK',
+      headers: [
+        'X-Custom-Res: test-response-header',
+        'Access-Control-Allow-Origin: *',
+      ],
+    },
+  });
+
+  await client.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Fetch button', target: 'e2' },
+  });
+
+  await client.callTool({
+    name: 'browser_wait_for',
+    arguments: { text: 'Header: test-response-header, CORS: *' },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+    arguments: {},
+  })).toHaveResponse({
+    inlineSnapshot: expect.stringContaining('Header: test-response-header, CORS: *'),
+  });
+});
+
 test('browser_route modifies request headers', async ({ client, server }) => {
   let receivedHeaders: Record<string, string> = {};
   server.setRoute('/api/check', (req, res) => {
