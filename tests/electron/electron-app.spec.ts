@@ -334,6 +334,16 @@ test('should be able to get the first window when with a delayed navigation', as
   await expect(page.locator('h1')).toHaveText('Foobar');
 });
 
+test('should be able to get the first window with a delayed navigation when launched via executablePath', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43247' },
+}, async ({ launchElectronApp }) => {
+  // Like a packaged app: without our loader, the window is created while Playwright is still connecting.
+  const app = await launchElectronApp('electron-window-app-delayed-loadURL.js', [], { executablePath: require('electron/index.js') });
+  const page = await app.firstWindow();
+  await expect(page).toHaveURL('data:text/html,<h1>Foobar</h1>');
+  await expect(page.locator('h1')).toHaveText('Foobar');
+});
+
 test('should detach debugger on app-initiated exit', async ({ launchElectronApp }) => {
   const electronApp = await launchElectronApp('electron-app.js');
   const closePromise = new Promise(f => electronApp.process().on('close', f));
