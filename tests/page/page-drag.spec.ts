@@ -228,6 +228,50 @@ it.describe('Drag and drop', () => {
       return await page.evaluate('dropped');
     }
   });
+  it('should report the drop effect in dragend', async ({ page }) => {
+    expect(await dropEffectInDragEnd(page, 'copy')).toBe('copy');
+    expect(await dropEffectInDragEnd(page, 'move')).toBe('move');
+    expect(await dropEffectInDragEnd(page, 'link')).toBe('link');
+    expect(await dropEffectInDragEnd(page, 'none')).toBe('none');
+  });
+
+  it('should report none drop effect in dragend when canceled', async ({ page, browserName }) => {
+    it.fixme(browserName === 'firefox', 'Firefox reports the last drop effect after the drag is canceled.');
+
+    expect(await dropEffectInDragEnd(page, 'copy', { cancel: true })).toBe('none');
+  });
+
+  async function dropEffectInDragEnd(page: Page, dropEffect: string, options: { cancel?: boolean } = {}) {
+    await page.setContent(`
+      <div draggable="true">drag target</div>
+      <drop-target>this is the drop target</drop-target>
+    `);
+    await page.evaluate(dropEffect => {
+      window['dragEndDropEffect'] = undefined;
+
+      const source = document.querySelector('div');
+      source.addEventListener('dragstart', event => {
+        event.dataTransfer.setData('text/plain', 'drag data');
+      });
+      source.addEventListener('dragend', event => {
+        window['dragEndDropEffect'] = event.dataTransfer.dropEffect;
+      });
+
+      const dropTarget: HTMLElement = document.querySelector('drop-target');
+      dropTarget.addEventListener('dragover', event => {
+        event.dataTransfer.dropEffect = dropEffect as any;
+        event.preventDefault();
+      });
+    }, dropEffect);
+    await page.hover('div');
+    await page.mouse.down();
+    await page.hover('drop-target');
+    if (options.cancel)
+      await page.keyboard.press('Escape');
+    await page.mouse.up();
+    return await page.evaluate('dragEndDropEffect');
+  }
+
   it('should work if the drag is canceled', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     await page.evaluate(() => {
