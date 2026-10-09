@@ -39,10 +39,10 @@ test('test_list', async ({ startClient }) => {
     name: 'test_list',
     arguments: {},
   })).toHaveTextResponse(`Listing tests:
-  [id=<ID>] [project=foo] › a.test.ts:3:11 › example1
-  [id=<ID>] [project=foo] › a.test.ts:6:11 › example2
-  [id=<ID>] a.test.ts:3:11 › example1
-  [id=<ID>] a.test.ts:6:11 › example2
+  [id=<ID>] [project=foo] › a.test.ts:3:7 › example1
+  [id=<ID>] [project=foo] › a.test.ts:6:7 › example2
+  [id=<ID>] a.test.ts:3:7 › example1
+  [id=<ID>] a.test.ts:6:7 › example2
 Total: 4 tests in 1 file`);
 });
 
@@ -60,6 +60,6 @@ test('test_list config in cwd', async ({ startClient }) => {
   expect(await client.callTool({
     name: 'test_list',
   })).toHaveTextResponse(`Listing tests:
-  [id=<ID>] a.test.ts:3:11 › passes
+  [id=<ID>] a.test.ts:3:7 › passes
 Total: 1 test in 1 file`);
 });

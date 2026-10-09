@@ -110,7 +110,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.failed).toBe(1);
       const output = result.output;
       expect(output).toContain('Error: Assertion error');
-      expect(output).toContain('a.spec.ts:4:15 › fail');
+      expect(output).toContain('a.spec.ts:4:11 › fail');
       expect(output).toContain(`  4 |           test('fail', async ({}) => {`);
       expect(output).toContain(`> 5 |             assert(false);`);
       expect(output).toContain(`    |             ^`);

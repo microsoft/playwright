@@ -231,7 +231,7 @@ test('should allow root testDir and use it for relative paths', async ({ runInli
   expect(result.passed).toBe(0);
   expect(result.skipped).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain(`1) ${path.join('dir', 'a.test.ts')}:3:11 › fails`);
+  expect(result.output).toContain(`1) ${path.join('dir', 'a.test.ts')}:3:7 › fails`);
 });
 
 test('should throw when test() is called in config file', async ({ runInlineTest }) => {

@@ -226,7 +226,7 @@ test('should update test locations', async ({ runUITest, writeFiles }) => {
       location: {
         file: expect.stringContaining('a.test.ts'),
         line: 3,
-        column: 11,
+        column: 7,
       }
     },
   }]);
@@ -257,7 +257,7 @@ test('should update test locations', async ({ runUITest, writeFiles }) => {
       location: {
         file: expect.stringContaining('a.test.ts'),
         line: 5,
-        column: 11,
+        column: 7,
       }
     },
   }]);

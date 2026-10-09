@@ -121,7 +121,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       }, { reporter: 'line' });
       expect(result.exitCode).toBe(0);
       expect(result.output).toContain([
-        'a.spec.ts:3:15 › foobar',
+        'a.spec.ts:3:11 › foobar',
         'one',
         '',
         'two',
@@ -148,7 +148,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         `,
       }, { reporter: 'line' }, { PLAYWRIGHT_FORCE_TTY: '1' });
       const text = result.output;
-      expect(text).toContain('[1/1] a.test.ts:3:15 › passes › outer › inner');
+      expect(text).toContain('[1/1] a.test.ts:3:11 › passes › outer › inner');
       expect(result.exitCode).toBe(0);
     });
 
@@ -166,7 +166,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         `,
       }, { reporter: 'line' });
       const text = result.output;
-      expect(text).toContain('1) a.test.ts:3:15 › passes › outer 1.0 › inner 1.1 ──');
+      expect(text).toContain('1) a.test.ts:3:11 › passes › outer 1.0 › inner 1.1 ──');
       expect(result.exitCode).toBe(1);
     });
 
@@ -187,7 +187,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         `,
       }, { reporter: 'line' });
       const text = result.output;
-      expect(text).toContain('1) a.test.ts:3:15 › passes › outer 1.0 ──');
+      expect(text).toContain('1) a.test.ts:3:11 › passes › outer 1.0 ──');
       expect(result.exitCode).toBe(1);
     });
 
@@ -206,7 +206,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         `,
       }, { reporter: 'line' });
       const text = result.output;
-      expect(text).toContain('1) a.test.ts:3:15 › passes ──');
+      expect(text).toContain('1) a.test.ts:3:11 › passes ──');
       expect(result.exitCode).toBe(1);
     });
 
@@ -239,7 +239,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           });
         `,
       }, { reporter: 'line' });
-      expect(result.output).toContain('[1/1] a.test.ts:3:15 › passes\n');
+      expect(result.output).toContain('[1/1] a.test.ts:3:11 › passes\n');
       expect(result.output).not.toContain('@global');
       expect(result.exitCode).toBe(0);
     });
@@ -269,22 +269,22 @@ test.describe('onTestPaused', () => {
     expect(stripAnsi(runner.output)).toEqual(`
 Running 1 test using 1 worker
 
-[1/1] a.test.ts:3:13 › foo
-  a.test.ts:3:13 › foo ─────────────────────────────────────────────────────────────────────────────
+[1/1] a.test.ts:3:9 › foo
+  a.test.ts:3:9 › foo ──────────────────────────────────────────────────────────────────────────────
     Paused at test end. Press Ctrl+C to end.
 
 
-[1/1] a.test.ts:3:13 › foo
-a.test.ts:3:13 › foo
+[1/1] a.test.ts:3:9 › foo
+a.test.ts:3:9 › foo
 Running teardown
 
-  1) a.test.ts:3:13 › foo ──────────────────────────────────────────────────────────────────────────
+  1) a.test.ts:3:9 › foo ───────────────────────────────────────────────────────────────────────────
 
     Test was interrupted.
 
 
   1 interrupted
-    a.test.ts:3:13 › foo ───────────────────────────────────────────────────────────────────────────
+    a.test.ts:3:9 › foo ────────────────────────────────────────────────────────────────────────────
 `);
   });
 
@@ -308,13 +308,13 @@ Running teardown
     expect(stripAnsi(runner.output)).toEqual(`
 Running 1 test using 1 worker
 
-[1/1] a.test.ts:3:13 › foo
-  a.test.ts:3:13 › foo ─────────────────────────────────────────────────────────────────────────────
+[1/1] a.test.ts:3:9 › foo
+  a.test.ts:3:9 › foo ──────────────────────────────────────────────────────────────────────────────
     Paused at test end. Press Ctrl+C to end.
 
 
-[1/1] a.test.ts:3:13 › foo
-  1) a.test.ts:3:13 › foo ──────────────────────────────────────────────────────────────────────────
+[1/1] a.test.ts:3:9 › foo
+  1) a.test.ts:3:9 › foo ───────────────────────────────────────────────────────────────────────────
 
     Test was interrupted.
 
@@ -332,7 +332,7 @@ Running 1 test using 1 worker
 
 
   1 interrupted
-    a.test.ts:3:13 › foo ───────────────────────────────────────────────────────────────────────────
+    a.test.ts:3:9 › foo ────────────────────────────────────────────────────────────────────────────
 `);
   });
 
@@ -354,8 +354,8 @@ Running 1 test using 1 worker
     expect(stripAnsi(runner.output)).toEqual(`
 Running 1 test using 1 worker
 
-[1/1] a.test.ts:3:13 › fails
-  1) a.test.ts:3:13 › fails ────────────────────────────────────────────────────────────────────────
+[1/1] a.test.ts:3:9 › fails
+  1) a.test.ts:3:9 › fails ─────────────────────────────────────────────────────────────────────────
 
     Error: expect(received).toBe(expected) // Object.is equality
 
@@ -387,11 +387,11 @@ Running 1 test using 1 worker
     Paused on error. Press Ctrl+C to end.
 
 
-[1/1] a.test.ts:3:13 › fails
+[1/1] a.test.ts:3:9 › fails
 
 
   1 failed
-    a.test.ts:3:13 › fails ─────────────────────────────────────────────────────────────────────────
+    a.test.ts:3:9 › fails ──────────────────────────────────────────────────────────────────────────
 `);
   });
 });

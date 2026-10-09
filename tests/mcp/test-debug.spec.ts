@@ -41,7 +41,7 @@ test('test_debug (passed)', async ({ startClient }) => {
     },
   })).toHaveTextResponse(`
 Running 1 test using 1 worker
-  ok 1 [id=<ID>] a.test.ts:3:11 › pass (XXms)
+  ok 1 [id=<ID>] a.test.ts:3:7 › pass (XXms)
   1 passed (XXms)`);
 });
 
@@ -84,7 +84,7 @@ Try recovering from the error prior to continuing`);
     arguments: {
       locations: ['a.test.ts'],
     },
-  })).toHaveTextResponse(expect.stringContaining(`1) [id=<ID>] a.test.ts:3:11 › fail`));
+  })).toHaveTextResponse(expect.stringContaining(`1) [id=<ID>] a.test.ts:3:7 › fail`));
 });
 
 test('test_debug (browser_snapshot/network/console)', async ({ startClient, server }) => {
@@ -209,7 +209,7 @@ Try recovering from the error prior to continuing`);
     arguments: {
       locations: ['a.test.ts'],
     },
-  })).toHaveTextResponse(expect.stringContaining(`1) [id=<ID>] a.test.ts:3:11 › fail`));
+  })).toHaveTextResponse(expect.stringContaining(`1) [id=<ID>] a.test.ts:3:7 › fail`));
 });
 
 test('test_debug / evaluate', async ({ startClient }) => {

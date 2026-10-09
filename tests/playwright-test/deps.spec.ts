@@ -207,7 +207,7 @@ test('should not filter dependency by file name', async ({ runInlineTest }) => {
   }, undefined, undefined, { additionalArgs: ['two.spec.ts'] });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('1) [A] › one.spec.ts:3:11 › fails');
+  expect(result.output).toContain('1) [A] › one.spec.ts:3:7 › fails');
 });
 
 test('should filter dependency by only', async ({ runInlineTest }) => {

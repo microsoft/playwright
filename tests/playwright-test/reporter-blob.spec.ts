@@ -513,32 +513,32 @@ test('merge into list report by default', async ({ runInlineTest, mergeReports }
   expect(text).toContain('Running 10 tests using 3 workers');
   const lines = text.split('\n').filter(l => l.match(/^#.* :/)).map(l => l.replace(/[.\d]+m?s/, 'Xms'));
   expect(lines).toEqual([
-    `#0 :       1 a.test.js:3:11 › math 1`,
-    `#0 :   ${POSITIVE_STATUS_MARK}  1 a.test.js:3:11 › math 1 (Xms)`,
-    `#1 :       2 a.test.js:6:11 › failing 1`,
-    `#1 :   ${NEGATIVE_STATUS_MARK}  2 a.test.js:6:11 › failing 1 (Xms)`,
-    `#2 :       3 a.test.js:6:11 › failing 1 (retry #1)`,
-    `#2 :   ${NEGATIVE_STATUS_MARK}  3 a.test.js:6:11 › failing 1 (retry #1) (Xms)`,
-    `#3 :       4 a.test.js:9:11 › flaky 1`,
-    `#3 :   ${NEGATIVE_STATUS_MARK}  4 a.test.js:9:11 › flaky 1 (Xms)`,
-    `#4 :       5 a.test.js:9:11 › flaky 1 (retry #1)`,
-    `#4 :   ${POSITIVE_STATUS_MARK}  5 a.test.js:9:11 › flaky 1 (retry #1) (Xms)`,
+    `#0 :       1 a.test.js:3:7 › math 1`,
+    `#0 :   ${POSITIVE_STATUS_MARK}  1 a.test.js:3:7 › math 1 (Xms)`,
+    `#1 :       2 a.test.js:6:7 › failing 1`,
+    `#1 :   ${NEGATIVE_STATUS_MARK}  2 a.test.js:6:7 › failing 1 (Xms)`,
+    `#2 :       3 a.test.js:6:7 › failing 1 (retry #1)`,
+    `#2 :   ${NEGATIVE_STATUS_MARK}  3 a.test.js:6:7 › failing 1 (retry #1) (Xms)`,
+    `#3 :       4 a.test.js:9:7 › flaky 1`,
+    `#3 :   ${NEGATIVE_STATUS_MARK}  4 a.test.js:9:7 › flaky 1 (Xms)`,
+    `#4 :       5 a.test.js:9:7 › flaky 1 (retry #1)`,
+    `#4 :   ${POSITIVE_STATUS_MARK}  5 a.test.js:9:7 › flaky 1 (retry #1) (Xms)`,
     `#5 :       6 a.test.js:12:12 › skipped 1`,
     `#5 :   -   6 a.test.js:12:12 › skipped 1`,
-    `#6 :       7 b.test.js:3:11 › math 2`,
-    `#6 :   ${POSITIVE_STATUS_MARK}  7 b.test.js:3:11 › math 2 (Xms)`,
-    `#7 :       8 b.test.js:6:11 › failing 2`,
-    `#7 :   ${NEGATIVE_STATUS_MARK}  8 b.test.js:6:11 › failing 2 (Xms)`,
-    `#8 :       9 b.test.js:6:11 › failing 2 (retry #1)`,
-    `#8 :   ${NEGATIVE_STATUS_MARK}  9 b.test.js:6:11 › failing 2 (retry #1) (Xms)`,
+    `#6 :       7 b.test.js:3:7 › math 2`,
+    `#6 :   ${POSITIVE_STATUS_MARK}  7 b.test.js:3:7 › math 2 (Xms)`,
+    `#7 :       8 b.test.js:6:7 › failing 2`,
+    `#7 :   ${NEGATIVE_STATUS_MARK}  8 b.test.js:6:7 › failing 2 (Xms)`,
+    `#8 :       9 b.test.js:6:7 › failing 2 (retry #1)`,
+    `#8 :   ${NEGATIVE_STATUS_MARK}  9 b.test.js:6:7 › failing 2 (retry #1) (Xms)`,
     `#9 :      10 b.test.js:9:12 › skipped 2`,
     `#9 :   -  10 b.test.js:9:12 › skipped 2`,
-    `#10 :      11 c.test.js:3:11 › math 3`,
-    `#10 :   ${POSITIVE_STATUS_MARK} 11 c.test.js:3:11 › math 3 (Xms)`,
-    `#11 :      12 c.test.js:6:11 › flaky 2`,
-    `#11 :   ${NEGATIVE_STATUS_MARK} 12 c.test.js:6:11 › flaky 2 (Xms)`,
-    `#12 :      13 c.test.js:6:11 › flaky 2 (retry #1)`,
-    `#12 :   ${POSITIVE_STATUS_MARK} 13 c.test.js:6:11 › flaky 2 (retry #1) (Xms)`,
+    `#10 :      11 c.test.js:3:7 › math 3`,
+    `#10 :   ${POSITIVE_STATUS_MARK} 11 c.test.js:3:7 › math 3 (Xms)`,
+    `#11 :      12 c.test.js:6:7 › flaky 2`,
+    `#11 :   ${NEGATIVE_STATUS_MARK} 12 c.test.js:6:7 › flaky 2 (Xms)`,
+    `#12 :      13 c.test.js:6:7 › flaky 2 (retry #1)`,
+    `#12 :   ${POSITIVE_STATUS_MARK} 13 c.test.js:6:7 › flaky 2 (retry #1) (Xms)`,
     `#13 :      14 c.test.js:9:12 › skipped 3`,
     `#13 :   -  14 c.test.js:9:12 › skipped 3`,
   ]);
@@ -863,8 +863,8 @@ test('multiple output reports', async ({ runInlineTest, mergeReports, showReport
   // Check that line reporter was called.
   const text = stripAnsi(output);
   expect(text).toContain('Running 3 tests using 1 worker');
-  expect(text).toContain('[1/3] a.test.js:5:11 › first');
-  expect(text).toContain('a.test.js:13:11 › failing 1 (retry #1)');
+  expect(text).toContain('[1/3] a.test.js:5:7 › first');
+  expect(text).toContain('a.test.js:13:7 › failing 1 (retry #1)');
 
   // Check html report presence.
   await showReport();
@@ -927,8 +927,8 @@ test('multiple output reports based on config', async ({ runInlineTest, mergeRep
   // Check that line reporter was called.
   const text = stripAnsi(output);
   expect(text).toContain('Running 6 tests using 2 workers');
-  expect(text).toContain('[1/6] a.test.js:5:11 › first');
-  expect(text).toContain('a.test.js:13:11 › failing 1 (retry #1)');
+  expect(text).toContain('[1/6] a.test.js:5:7 › first');
+  expect(text).toContain('a.test.js:13:7 › failing 1 (retry #1)');
 
   // Check html report presence.
   expect((await fs.promises.stat(test.info().outputPath('merged/html/index.html'))).isFile).toBeTruthy();

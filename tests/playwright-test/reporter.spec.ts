@@ -640,7 +640,7 @@ test('should report annotations from test declaration', async ({ runInlineTest }
         expect(test.info().annotations).toEqual([]);
       });
       test('foo', { annotation: { type: 'foo' } }, () => {
-        expect(test.info().annotations).toEqual([{ type: 'foo', location: { file: expect.any(String), line: 6, column: 11 } }]);
+        expect(test.info().annotations).toEqual([{ type: 'foo', location: { file: expect.any(String), line: 6, column: 7 } }]);
       });
       test('foo-bar', {
         annotation: [
@@ -649,8 +649,8 @@ test('should report annotations from test declaration', async ({ runInlineTest }
         ],
       }, () => {
         expect(test.info().annotations).toEqual([
-          { type: 'foo', description: 'desc', location: { file: expect.any(String), line: 9, column: 11 } },
-          { type: 'bar', location: { file: expect.any(String), line: 9, column: 11 } },
+          { type: 'foo', description: 'desc', location: { file: expect.any(String), line: 9, column: 7 } },
+          { type: 'bar', location: { file: expect.any(String), line: 9, column: 7 } },
         ]);
       });
       test.skip('skip-foo', { annotation: { type: 'foo' } }, () => {
@@ -691,8 +691,8 @@ test('should report annotations from test declaration', async ({ runInlineTest }
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual([
     `title=none, annotations=`,
-    `title=foo, annotations=foo(6:11)`,
-    `title=foo-bar, annotations=foo=desc(9:11),bar(9:11)`,
+    `title=foo, annotations=foo(6:7)`,
+    `title=foo-bar, annotations=foo=desc(9:7),bar(9:7)`,
     `title=skip-foo, annotations=foo(20:12),skip(20:12)`,
     `title=fixme-bar, annotations=bar(22:12),fixme(22:12)`,
     `title=fail-foo-bar, annotations=foo(24:12),bar=desc(24:12),fail(24:12)`,

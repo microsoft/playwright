@@ -936,15 +936,15 @@ test('should run last failed tests in a shard', async ({ runInlineTest }) => {
   expect(result1.exitCode).toBe(1);
   expect(result1.passed).toBe(1);
   expect(result1.failed).toBe(1);
-  expect(result1.output).toContain('b.spec.js:3:11 › pass-b');
-  expect(result1.output).toContain('b.spec.js:4:11 › fail-b');
+  expect(result1.output).toContain('b.spec.js:3:7 › pass-b');
+  expect(result1.output).toContain('b.spec.js:4:7 › fail-b');
 
   const result2 = await runInlineTest(workspace, { shard: '2/2' }, {}, { additionalArgs: ['--last-failed'] });
   expect(result2.exitCode).toBe(1);
   expect(result2.passed).toBe(0);
   expect(result2.failed).toBe(1);
-  expect(result2.output).not.toContain('b.spec.js:3:11 › pass-b');
-  expect(result2.output).toContain('b.spec.js:4:11 › fail-b');
+  expect(result2.output).not.toContain('b.spec.js:3:7 › pass-b');
+  expect(result2.output).toContain('b.spec.js:4:7 › fail-b');
 });
 
 test('should run last failed tests in a shard with PLAYWRIGHT_LAST_RUN_OUTPUT_FILE', async ({ runInlineTest }, testInfo) => {
@@ -974,15 +974,15 @@ test('should run last failed tests in a shard with PLAYWRIGHT_LAST_RUN_OUTPUT_FI
   expect(result1.failed).toBe(1);
   expect(fs.existsSync(customAbs)).toBe(true);
   expect(fs.existsSync(defaultLastRun)).toBe(false);
-  expect(result1.output).toContain('b.spec.js:3:11 › pass-b');
-  expect(result1.output).toContain('b.spec.js:4:11 › fail-b');
+  expect(result1.output).toContain('b.spec.js:3:7 › pass-b');
+  expect(result1.output).toContain('b.spec.js:4:7 › fail-b');
 
   const result2 = await runInlineTest(workspace, { shard: '2/2' }, env, { additionalArgs: ['--last-failed'] });
   expect(result2.exitCode).toBe(1);
   expect(result2.passed).toBe(0);
   expect(result2.failed).toBe(1);
-  expect(result2.output).not.toContain('b.spec.js:3:11 › pass-b');
-  expect(result2.output).toContain('b.spec.js:4:11 › fail-b');
+  expect(result2.output).not.toContain('b.spec.js:3:7 › pass-b');
+  expect(result2.output).toContain('b.spec.js:4:7 › fail-b');
 });
 
 test('should run last failed tests in a shard with --last-failed-file', async ({ runInlineTest }, testInfo) => {
@@ -1012,13 +1012,13 @@ test('should run last failed tests in a shard with --last-failed-file', async ({
   expect(result1.failed).toBe(1);
   expect(fs.existsSync(customAbs)).toBe(true);
   expect(fs.existsSync(defaultLastRun)).toBe(false);
-  expect(result1.output).toContain('b.spec.js:3:11 › pass-b');
-  expect(result1.output).toContain('b.spec.js:4:11 › fail-b');
+  expect(result1.output).toContain('b.spec.js:3:7 › pass-b');
+  expect(result1.output).toContain('b.spec.js:4:7 › fail-b');
 
   const result2 = await runInlineTest(workspace, { shard: '2/2' }, {}, { additionalArgs: lastRunArgs });
   expect(result2.exitCode).toBe(1);
   expect(result2.passed).toBe(0);
   expect(result2.failed).toBe(1);
-  expect(result2.output).not.toContain('b.spec.js:3:11 › pass-b');
-  expect(result2.output).toContain('b.spec.js:4:11 › fail-b');
+  expect(result2.output).not.toContain('b.spec.js:3:7 › pass-b');
+  expect(result2.output).toContain('b.spec.js:4:7 › fail-b');
 });
