@@ -41,6 +41,7 @@ type ParsedTsConfigData = {
   paths: { key: string, values: string[] }[];
   allowJs: boolean;
   jsx?: JsxOptions;
+  useDefineForClassFields?: boolean;
 };
 const cachedTSConfigs = new Map<string, ParsedTsConfigData[]>();
 
@@ -86,7 +87,14 @@ function validateTsConfig(tsconfig: LoadedTsConfig): ParsedTsConfigData {
       jsxFragmentFactory: tsconfig.jsxFragmentFactory,
       jsxImportSource: tsconfig.jsxImportSource,
     } : undefined,
+    useDefineForClassFields: tsconfig.useDefineForClassFields ?? (tsconfig.target ? targetUsesDefineForClassFields(tsconfig.target) : undefined),
   };
+}
+
+function targetUsesDefineForClassFields(target: string): boolean {
+  const normalized = target.toLowerCase();
+  const year = normalized.match(/^es(\d{4})$/)?.[1];
+  return normalized === 'esnext' || (!!year && +year >= 2022);
 }
 
 function loadAndValidateTsconfigsForFile(file: string): ParsedTsConfigData[] {
@@ -221,8 +229,11 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
     process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
     process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
   const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
-  const jsx = loadAndValidateTsconfigsForFile(filename).find(tsconfig => tsconfig.jsx)?.jsx;
-  const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsEpilogue, jsx);
+  const tsconfigs = loadAndValidateTsconfigsForFile(filename);
+  const jsx = tsconfigs.find(tsconfig => tsconfig.jsx)?.jsx;
+  // Without "target", tsc defaults to the latest one, which defines class fields.
+  const useDefineForClassFields = tsconfigs.find(tsconfig => tsconfig.useDefineForClassFields !== undefined)?.useDefineForClassFields ?? true;
+  const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsEpilogue, useDefineForClassFields, jsx);
   const { cachedCode, addToCache, serializedCache } = cc.getFromCompilationCache(filename, hash, moduleUrl);
   if (cachedCode !== undefined)
     return { code: cachedCode, serializedCache };
@@ -232,7 +243,7 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
 
   const { babelTransform }: { babelTransform: BabelTransformFunction } = require(libPath('transform', 'babelBundle'));
-  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, pluginsEpilogue, jsx);
+  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, pluginsEpilogue, useDefineForClassFields, jsx);
   if (!babelResult?.code)
     return { code: originalCode, serializedCache };
   const { code, map } = babelResult;
@@ -240,13 +251,14 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   return { code, serializedCache: added.serializedCache };
 }
 
-function calculateHash(content: string, filePath: string, isModule: boolean, pluginsEpilogue: BabelPlugin[], jsx: JsxOptions | undefined): string {
+function calculateHash(content: string, filePath: string, isModule: boolean, pluginsEpilogue: BabelPlugin[], useDefineForClassFields: boolean, jsx: JsxOptions | undefined): string {
   const hash = crypto.createHash('sha1')
       .update(isModule ? 'esm' : 'no_esm')
       .update(content)
       .update(filePath)
       .update(version)
       .update(pluginsEpilogue.map(p => p[0]).join(','))
+      .update(useDefineForClassFields ? 'define' : 'assign')
       .update(jsx ? JSON.stringify(jsx) : '')
       .digest('hex');
   return hash;

@@ -28,7 +28,7 @@ npx tsc -p tsconfig.json --noEmit -w
 
 ## tsconfig.json
 
-Playwright will pick up `tsconfig.json` for each source file it loads. Note that Playwright **only supports** the following tsconfig options: `allowJs`, `baseUrl`, `paths`, `jsx`, `jsxFactory`, `jsxFragmentFactory`, `jsxImportSource`, `references` and `extends`.
+Playwright will pick up `tsconfig.json` for each source file it loads. Note that Playwright **only supports** the following tsconfig options: `allowJs`, `baseUrl`, `paths`, `jsx`, `jsxFactory`, `jsxFragmentFactory`, `jsxImportSource`, `useDefineForClassFields`, `references` and `extends`. The `target` option is only used to determine `useDefineForClassFields`.
 
 We recommend setting up a separate `tsconfig.json` in the tests directory so that you can change some preferences specifically for the tests. Here is an example directory structure.
 
@@ -82,6 +82,20 @@ Playwright compiles JSX in `.tsx` and `.jsx` files according to the `jsx`, `jsxF
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "preact"
+  }
+}
+```
+
+### tsconfig class fields
+
+Playwright compiles TypeScript class fields according to the `useDefineForClassFields` option in the `tsconfig.json`. Just like `tsc`, when it is not specified, it is enabled for `ES2022` and later targets, and when `target` is not specified.
+
+With `useDefineForClassFields` enabled, class fields follow the JavaScript semantics, so field initializers run before the constructor body and can not access constructor parameter properties. Disable it to keep the legacy TypeScript semantics.
+
+```json title="tsconfig.json"
+{
+  "compilerOptions": {
+    "useDefineForClassFields": false
   }
 }
 ```
