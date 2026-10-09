@@ -74,11 +74,17 @@ export class DragManager {
     function setupDragListeners() {
       let didStartDrag = Promise.resolve(false);
       let dragEvent: Event|null = null;
-      const dragListener = (event: Event) => dragEvent = event;
+      let dragEnded = false;
+      const dragListener = (event: Event) => {
+        dragEvent = event;
+        // Blink can still cancel the drag after dragstart, for example when the source is no longer
+        // under the pointer. It then dispatches dragend to the source right away, even if it was removed.
+        event.composedPath()[0].addEventListener('dragend', () => dragEnded = true, { once: true });
+      };
       const mouseListener = () => {
         didStartDrag = new Promise<boolean>(callback => {
           window.addEventListener('dragstart', dragListener, { once: true, capture: true });
-          setTimeout(() => callback(dragEvent ? !dragEvent.defaultPrevented : false), 0);
+          setTimeout(() => callback(dragEvent ? !dragEvent.defaultPrevented && !dragEnded : false), 0);
         });
       };
       window.addEventListener('mousemove', mouseListener, { once: true, capture: true });
@@ -105,7 +111,7 @@ export class DragManager {
         client.off('Input.dragIntercepted', onDragIntercepted!);
         await progress.race(client.send('Input.setInterceptDrags', { enabled: false }));
       }
-      this._dragState = expectingDrag ? (await dragInterceptedPromise).data : null;
+      this._dragState = expectingDrag ? (await progress.race(dragInterceptedPromise)).data : null;
     } catch (error) {
       // Cleanup without blocking, it will be done before the next playwright action.
       this._crPage._page.safeNonStallingEvaluateInAllFrames('window.__cleanupDrag?.()', 'utility').catch(() => {});
