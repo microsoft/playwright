@@ -97,7 +97,6 @@ export class PageAgent {
     this._eventListeners = [
       helper.addObserver(this._linkClicked.bind(this, false), 'juggler-link-click'),
       helper.addObserver(this._linkClicked.bind(this, true), 'juggler-link-click-sync'),
-      helper.addObserver(this._onWindowOpenInNewContext.bind(this), 'juggler-window-open-in-new-context'),
       helper.addObserver(this._filePickerShown.bind(this), 'juggler-file-picker-shown'),
       helper.addObserver(this._onDocumentOpenLoad.bind(this), 'juggler-document-open-loaded'),
       helper.on(this._frameTree, 'frameattached', this._onFrameAttached.bind(this)),
@@ -221,14 +220,6 @@ export class PageAgent {
     if (anchorElement.documentGlobal.docShell !== this._docShell)
       return;
     this._browserPage.emit('pageLinkClicked', { phase: sync ? 'after' : 'before' });
-  }
-
-  _onWindowOpenInNewContext(docShell) {
-    // TODO: unify this with _onWindowOpen if possible.
-    const frame = this._frameTree.frameForDocShell(docShell);
-    if (!frame)
-      return;
-    this._browserPage.emit('pageWillOpenNewWindowAsynchronously');
   }
 
   _filePickerShown(inputElement) {
