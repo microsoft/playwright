@@ -193,26 +193,10 @@ index 7d9ac5fbccfd345498c5878019d4702bb27532bd..731929432af47d79dc8ad31a0658922c
  }
  
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 48be2ce822c12f18f0b54daaef7009e549beb280..e3ccf17bb8e1a2b1c60bf14a1660b99db7e754d3 100644
+index 48be2ce822c12f18f0b54daaef7009e549beb280..809c1ca227ccc04826501107346be073546d77fa 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
-@@ -51,6 +51,7 @@
- #include "mozilla/Telemetry.h"
- 
- #include "mozilla/WidgetUtils.h"
-+#include "mozilla/GeolocationService.h"
- 
- #include "mozilla/dom/AutoEntryScript.h"
- #include "mozilla/dom/ChildProcessChannelListener.h"
-@@ -64,6 +65,7 @@
- #include "mozilla/dom/DocGroup.h"
- #include "mozilla/dom/Element.h"
- #include "mozilla/dom/FragmentDirective.h"
-+#include "mozilla/dom/Geolocation.h"
- #include "mozilla/dom/HTMLAnchorElement.h"
- #include "mozilla/dom/HTMLIFrameElement.h"
- #include "mozilla/dom/Navigation.h"
-@@ -356,6 +358,14 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -356,6 +356,10 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mAllowDNSPrefetch(true),
        mAllowWindowControl(true),
        mCSSErrorReportingEnabled(false),
@@ -220,14 +204,10 @@ index 48be2ce822c12f18f0b54daaef7009e549beb280..e3ccf17bb8e1a2b1c60bf14a1660b99d
 +      mOverrideHasFocus(false),
 +      mBypassCSPEnabled(false),
 +      mForceActiveState(false),
-+      mDisallowBFCache(false),
-+      mReducedMotionOverride(REDUCED_MOTION_OVERRIDE_NONE),
-+      mForcedColorsOverride(FORCED_COLORS_OVERRIDE_NO_OVERRIDE),
-+      mContrastOverride(CONTRAST_OVERRIDE_NONE),
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mDisableMetaRefreshWhenInactive(false),
-@@ -2981,6 +2991,174 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -2981,6 +2985,89 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -264,19 +244,6 @@ index 48be2ce822c12f18f0b54daaef7009e549beb280..e3ccf17bb8e1a2b1c60bf14a1660b99d
 +nsDocShell::SetForceActiveState(bool aEnabled) {
 +  mForceActiveState = aEnabled;
 +  ActivenessMaybeChanged();
-+  return NS_OK;
-+}
-+
-+NS_IMETHODIMP
-+nsDocShell::GetDisallowBFCache(bool* aEnabled) {
-+  MOZ_ASSERT(aEnabled);
-+  *aEnabled = mDisallowBFCache;
-+  return NS_OK;
-+}
-+
-+NS_IMETHODIMP
-+nsDocShell::SetDisallowBFCache(bool aEnabled) {
-+  mDisallowBFCache = aEnabled;
 +  return NS_OK;
 +}
 +
@@ -325,84 +292,12 @@ index 48be2ce822c12f18f0b54daaef7009e549beb280..e3ccf17bb8e1a2b1c60bf14a1660b99d
 +      ToSupports(element), "juggler-file-picker-shown", nullptr);
 +}
 +
-+RefPtr<GeolocationService> nsDocShell::GetGeolocationServiceOverride() {
-+  return GetRootDocShell()->mGeolocationServiceOverride;
-+}
-+
-+NS_IMETHODIMP
-+nsDocShell::SetGeolocationOverride(nsIDOMGeoPosition* aGeolocationOverride) {
-+  if (aGeolocationOverride) {
-+    if (!mGeolocationServiceOverride) {
-+      mGeolocationServiceOverride = new GeolocationService();
-+      mGeolocationServiceOverride->Init(true /* isOverride */);
-+    }
-+    mGeolocationServiceOverride->Update(aGeolocationOverride);
-+  } else {
-+    mGeolocationServiceOverride = nullptr;
-+  }
-+  return NS_OK;
-+}
-+
-+NS_IMETHODIMP
-+nsDocShell::GetReducedMotionOverride(ReducedMotionOverride* aReducedMotionOverride) {
-+  *aReducedMotionOverride = GetRootDocShell()->mReducedMotionOverride;
-+  return NS_OK;
-+}
-+
-+NS_IMETHODIMP
-+nsDocShell::SetReducedMotionOverride(ReducedMotionOverride aReducedMotionOverride) {
-+  mReducedMotionOverride = aReducedMotionOverride;
-+  RefPtr<nsPresContext> presContext = GetPresContext();
-+  if (presContext) {
-+    presContext->MediaFeatureValuesChanged(
-+        {MediaFeatureChangeReason::SystemMetricsChange},
-+        MediaFeatureChangePropagation::JustThisDocument);
-+  }
-+  return NS_OK;
-+}
-+
-+NS_IMETHODIMP
-+nsDocShell::GetForcedColorsOverride(ForcedColorsOverride* aForcedColorsOverride) {
-+  *aForcedColorsOverride = GetRootDocShell()->mForcedColorsOverride;
-+  return NS_OK;
-+}
-+
-+NS_IMETHODIMP
-+nsDocShell::SetForcedColorsOverride(ForcedColorsOverride aForcedColorsOverride) {
-+  mForcedColorsOverride = aForcedColorsOverride;
-+  RefPtr<nsPresContext> presContext = GetPresContext();
-+  if (presContext) {
-+    presContext->MediaFeatureValuesChanged(
-+        {MediaFeatureChangeReason::SystemMetricsChange},
-+        MediaFeatureChangePropagation::JustThisDocument);
-+  }
-+  return NS_OK;
-+}
-+
-+NS_IMETHODIMP
-+nsDocShell::GetContrastOverride(ContrastOverride* aContrastOverride) {
-+  *aContrastOverride = GetRootDocShell()->mContrastOverride;
-+  return NS_OK;
-+}
-+
-+NS_IMETHODIMP
-+nsDocShell::SetContrastOverride(ContrastOverride aContrastOverride) {
-+  mContrastOverride = aContrastOverride;
-+  RefPtr<nsPresContext> presContext = GetPresContext();
-+  if (presContext) {
-+    presContext->MediaFeatureValuesChanged(
-+        {MediaFeatureChangeReason::SystemMetricsChange},
-+        MediaFeatureChangePropagation::JustThisDocument);
-+  }
-+  return NS_OK;
-+}
-+
 +// =============== Juggler End =======================
 +
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -4720,7 +4898,7 @@ nsDocShell::GetVisibility(bool* aVisibility) {
+@@ -4720,7 +4807,7 @@ nsDocShell::GetVisibility(bool* aVisibility) {
  }
  
  void nsDocShell::ActivenessMaybeChanged() {
@@ -411,20 +306,7 @@ index 48be2ce822c12f18f0b54daaef7009e549beb280..e3ccf17bb8e1a2b1c60bf14a1660b99d
    if (RefPtr<PresShell> presShell = GetPresShell()) {
      presShell->ActivenessMaybeChanged();
    }
-@@ -7737,6 +7915,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
-                      true,  // aForceNoOpener
-                      getter_AddRefs(newBC));
-       MOZ_ASSERT(!newBC);
-+      if (rv == NS_OK) {
-+        nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
-+        if (observerService) {
-+          observerService->NotifyObservers(GetAsSupports(this), "juggler-window-open-in-new-context", nullptr);
-+        }
-+      }
-       return rv;
-     }
- 
-@@ -9014,6 +9198,16 @@ nsresult nsDocShell::InternalLoad(nsDocShellLoadState* aLoadState,
+@@ -9014,6 +9101,16 @@ nsresult nsDocShell::InternalLoad(nsDocShellLoadState* aLoadState,
    attrs.SetFirstPartyDomain(isTopLevelDoc, aLoadState->URI());
  
    nsCOMPtr<nsIRequest> req;
@@ -441,7 +323,7 @@ index 48be2ce822c12f18f0b54daaef7009e549beb280..e3ccf17bb8e1a2b1c60bf14a1660b99d
    rv = DoURILoad(aLoadState, aCacheKey, getter_AddRefs(req));
  
    if (NS_SUCCEEDED(rv)) {
-@@ -12139,6 +12333,9 @@ class OnLinkClickEvent : public CancelableRunnable, public SupportsWeakPtr {
+@@ -12139,6 +12236,9 @@ class OnLinkClickEvent : public CancelableRunnable, public SupportsWeakPtr {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -451,7 +333,7 @@ index 48be2ce822c12f18f0b54daaef7009e549beb280..e3ccf17bb8e1a2b1c60bf14a1660b99d
      return NS_OK;
    }
  
-@@ -12210,6 +12407,11 @@ nsresult nsDocShell::OnFormSubmit(HTMLFormElement* aForm,
+@@ -12210,6 +12310,11 @@ nsresult nsDocShell::OnFormSubmit(HTMLFormElement* aForm,
      return OnLinkClickSync(aForm, aLoadState, false, aForm->NodePrincipal());
    }
  
@@ -463,7 +345,7 @@ index 48be2ce822c12f18f0b54daaef7009e549beb280..e3ccf17bb8e1a2b1c60bf14a1660b99d
    auto result = OnLinkClickWithLoadState(aForm, aLoadState, false,
                                           aForm->NodePrincipal());
    if (result.isErr()) {
-@@ -12348,6 +12550,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12348,6 +12453,8 @@ nsresult nsDocShell::OnLinkClick(
        ownerDoc->GetScriptTrackingFlags());
    loadState->SetHistoryBehavior(NavigationHistoryBehavior::Auto);
  
@@ -473,7 +355,7 @@ index 48be2ce822c12f18f0b54daaef7009e549beb280..e3ccf17bb8e1a2b1c60bf14a1660b99d
                                           aTriggeringPrincipal);
    return result.isErr() ? result.unwrapErr() : NS_OK;
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index 0568cbf7f78bc3711275773037fd5ba254f083e7..2a89a16b07c2391a65987de6df529c2907d73249 100644
+index 0568cbf7f78bc3711275773037fd5ba254f083e7..1140bddd23a988db4f2a403388423eb44f0ab217 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
 @@ -16,6 +16,7 @@
@@ -484,15 +366,7 @@ index 0568cbf7f78bc3711275773037fd5ba254f083e7..2a89a16b07c2391a65987de6df529c29
  #include "mozilla/dom/WindowProxyHolder.h"
  #include "nsCOMPtr.h"
  #include "nsCharsetSource.h"
-@@ -42,6 +43,7 @@
- 
- namespace mozilla {
- class Encoding;
-+class GeolocationService;
- class HTMLEditor;
- class ObservedDocShell;
- class ScrollContainerFrame;
-@@ -383,6 +385,15 @@ class nsDocShell final : public nsDocLoader,
+@@ -383,6 +384,13 @@ class nsDocShell final : public nsDocLoader,
    void SetWillChangeProcess() { mWillChangeProcess = true; }
    bool WillChangeProcess() { return mWillChangeProcess; }
  
@@ -503,12 +377,10 @@ index 0568cbf7f78bc3711275773037fd5ba254f083e7..2a89a16b07c2391a65987de6df529c29
 +
 +  bool IsBypassCSPEnabled();
 +
-+  RefPtr<mozilla::GeolocationService> GetGeolocationServiceOverride();
-+
    // Creates a real network channel (not a DocumentChannel) using the specified
    // parameters.
    // Used by nsDocShell when not using DocumentChannel, by DocumentLoadListener
-@@ -1000,6 +1011,8 @@ class nsDocShell final : public nsDocLoader,
+@@ -1000,6 +1008,8 @@ class nsDocShell final : public nsDocLoader,
  
    bool CSSErrorReportingEnabled() const { return mCSSErrorReportingEnabled; }
  
@@ -517,7 +389,7 @@ index 0568cbf7f78bc3711275773037fd5ba254f083e7..2a89a16b07c2391a65987de6df529c29
    // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
    // load is requested in a subframe of the current DocShell, the subframe
    // loadType may need to reflect the loadType of the parent document, or in
-@@ -1332,6 +1345,16 @@ class nsDocShell final : public nsDocLoader,
+@@ -1332,6 +1342,11 @@ class nsDocShell final : public nsDocLoader,
    bool mAllowDNSPrefetch : 1;
    bool mAllowWindowControl : 1;
    bool mCSSErrorReportingEnabled : 1;
@@ -525,28 +397,15 @@ index 0568cbf7f78bc3711275773037fd5ba254f083e7..2a89a16b07c2391a65987de6df529c29
 +  bool mOverrideHasFocus : 1;
 +  bool mBypassCSPEnabled : 1;
 +  bool mForceActiveState : 1;
-+  bool mDisallowBFCache : 1;
-+  RefPtr<mozilla::GeolocationService> mGeolocationServiceOverride;
-+  ReducedMotionOverride mReducedMotionOverride;
-+  ForcedColorsOverride mForcedColorsOverride;
-+  ContrastOverride mContrastOverride;
 +
    bool mAllowAuth : 1;
    bool mAllowKeywordFixup : 1;
    bool mDisableMetaRefreshWhenInactive : 1;
 diff --git a/docshell/base/nsIDocShell.idl b/docshell/base/nsIDocShell.idl
-index 7cbed1af77c94e97f9f5bda8f6c63c54517300bc..ddc131ca38e8c575b3cd67362104d8824f0eea54 100644
+index 7cbed1af77c94e97f9f5bda8f6c63c54517300bc..77ff86d6594864c2894d03abdc63378919eb53d8 100644
 --- a/docshell/base/nsIDocShell.idl
 +++ b/docshell/base/nsIDocShell.idl
-@@ -43,6 +43,7 @@ interface nsIURI;
- interface nsIChannel;
- interface nsIPolicyContainer;
- interface nsIDocumentViewer;
-+interface nsIDOMGeoPosition;
- interface nsIEditor;
- interface nsIEditingSession;
- interface nsIInputStream;
-@@ -684,6 +685,41 @@ interface nsIDocShell : nsIDocShellTreeItem
+@@ -684,6 +684,14 @@ interface nsIDocShell : nsIDocShellTreeItem
     */
    void synchronizeLayoutHistoryState();
  
@@ -557,33 +416,6 @@ index 7cbed1af77c94e97f9f5bda8f6c63c54517300bc..ddc131ca38e8c575b3cd67362104d882
 +  attribute boolean bypassCSPEnabled;
 +
 +  attribute boolean forceActiveState;
-+
-+  attribute boolean disallowBFCache;
-+
-+  cenum ReducedMotionOverride : 8 {
-+    REDUCED_MOTION_OVERRIDE_REDUCE,
-+    REDUCED_MOTION_OVERRIDE_NO_PREFERENCE,
-+    REDUCED_MOTION_OVERRIDE_NONE, /* This clears the override. */
-+  };
-+  [infallible] attribute nsIDocShell_ReducedMotionOverride reducedMotionOverride;
-+
-+  cenum ForcedColorsOverride : 8 {
-+    FORCED_COLORS_OVERRIDE_ACTIVE,
-+    FORCED_COLORS_OVERRIDE_NONE,
-+    FORCED_COLORS_OVERRIDE_NO_OVERRIDE, /* This clears the override. */
-+  };
-+  [infallible] attribute nsIDocShell_ForcedColorsOverride forcedColorsOverride;
-+
-+  cenum ContrastOverride : 8 {
-+    CONTRAST_OVERRIDE_LESS,
-+    CONTRAST_OVERRIDE_MORE,
-+    CONTRAST_OVERRIDE_CUSTOM,
-+    CONTRAST_OVERRIDE_NO_PREFERENCE,
-+    CONTRAST_OVERRIDE_NONE, /* This clears the override. */
-+  };
-+  [infallible] attribute nsIDocShell_ContrastOverride contrastOverride;
-+
-+  void setGeolocationOverride(in nsIDOMGeoPosition position);
 +
    /**
     * This attempts to save any applicable layout history state (like
@@ -737,63 +569,6 @@ index 6e736f9f7267846a44ecc92222888a4d9443790e..313d34c5f208a7942fd01d5d76c6ccd0
      // In test mode, emulate raising the window. WindowRaised takes
      // care of lowering the present active window. This happens in
      // a separate runnable to avoid touching multiple windows in
-diff --git a/dom/base/nsGlobalWindowOuter.cpp b/dom/base/nsGlobalWindowOuter.cpp
-index 98d6cf28fe13595ce9904b6a2887a57d9f86296f..de7c5c9496446b06fd14f4cbbb41f48bb342a5fe 100644
---- a/dom/base/nsGlobalWindowOuter.cpp
-+++ b/dom/base/nsGlobalWindowOuter.cpp
-@@ -2548,10 +2548,16 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
-     }();
- 
-     if (!isAboutBlankInChromeDocshell) {
--      newInnerWindow->mHasNotifiedGlobalCreated = true;
--      nsContentUtils::AddScriptRunner(NewRunnableMethod(
--          "nsGlobalWindowOuter::DispatchDOMWindowCreated", this,
--          &nsGlobalWindowOuter::DispatchDOMWindowCreated));
-+      if (!newInnerWindow->mHasNotifiedGlobalCreated) {
-+        newInnerWindow->mHasNotifiedGlobalCreated = true;
-+        nsContentUtils::AddScriptRunner(NewRunnableMethod(
-+            "nsGlobalWindowOuter::DispatchDOMWindowCreated", this,
-+            &nsGlobalWindowOuter::DispatchDOMWindowCreated));
-+      } else if (!reUseInnerWindow) {
-+        nsContentUtils::AddScriptRunner(NewRunnableMethod(
-+            "nsGlobalWindowOuter::JugglerDispatchDOMWindowReused", this,
-+            &nsGlobalWindowOuter::JugglerDispatchDOMWindowReused));
-+      }
-     }
-   }
- 
-@@ -2672,6 +2678,19 @@ void nsGlobalWindowOuter::DispatchDOMWindowCreated() {
-   }
- }
- 
-+void nsGlobalWindowOuter::JugglerDispatchDOMWindowReused() {
-+  nsCOMPtr<nsIObserverService> observerService =
-+      mozilla::services::GetObserverService();
-+  if (observerService && mDoc) {
-+    nsIPrincipal* principal = mDoc->NodePrincipal();
-+    if (!principal->IsSystemPrincipal()) {
-+      observerService->NotifyObservers(static_cast<nsIDOMWindow*>(this),
-+                                      "juggler-dom-window-reused",
-+                                      nullptr);
-+    }
-+  }
-+}
-+
- void nsGlobalWindowOuter::ClearStatus() { SetStatusOuter(u""_ns); }
- 
- void nsGlobalWindowOuter::SetDocShell(nsDocShell* aDocShell) {
-diff --git a/dom/base/nsGlobalWindowOuter.h b/dom/base/nsGlobalWindowOuter.h
-index 6958d974b4416151d1327f98d162c32f84e65e8e..42a5a1d32bde15acc707b2cad06bbb1362c2f74a 100644
---- a/dom/base/nsGlobalWindowOuter.h
-+++ b/dom/base/nsGlobalWindowOuter.h
-@@ -303,6 +303,7 @@ class nsGlobalWindowOuter final : public mozilla::dom::EventTarget,
- 
-   // Outer windows only.
-   MOZ_CAN_RUN_SCRIPT void DispatchDOMWindowCreated();
-+  void JugglerDispatchDOMWindowReused();
- 
-   // Outer windows only.
-   virtual void EnsureSizeAndPositionUpToDate() override;
 diff --git a/dom/base/nsINode.cpp b/dom/base/nsINode.cpp
 index 5c684f392c8c717be78ea168d2224800d2453e9e..86594f1aae3cacc9e61208a897365082cbaf3f53 100644
 --- a/dom/base/nsINode.cpp
@@ -1370,22 +1145,6 @@ index 6ea3f0a9ed4f1e31a36e9657010b694177bd79d3..496b805f198f266751f0cc9fc64035ba
    }
  
    bool IsDebuggerScript() const { return mWorkerScriptType == DebuggerScript; }
-diff --git a/js/src/debugger/Object.cpp b/js/src/debugger/Object.cpp
-index 29e128ec723f557292f8ed0a2fc338503002f238..270ee326e169889ef5bb42dff4c3ac6eda6f0f01 100644
---- a/js/src/debugger/Object.cpp
-+++ b/js/src/debugger/Object.cpp
-@@ -2623,7 +2623,11 @@ Maybe<Completion> DebuggerObject::call(JSContext* cx,
-         invokeArgs[i].set(args2[i]);
-       }
- 
-+      // Disable CSP for the scope of the call.
-+      const JSSecurityCallbacks* securityCallbacks = JS_GetSecurityCallbacks(cx);
-+      JS_SetSecurityCallbacks(cx, nullptr);
-       ok = js::Call(cx, calleev, thisv, invokeArgs, &result);
-+      JS_SetSecurityCallbacks(cx, securityCallbacks);
-     }
-   }
- 
 diff --git a/layout/base/GeometryUtils.cpp b/layout/base/GeometryUtils.cpp
 index eaaf69687f669a4859a37f3f97b99e6ca519c420..6f965a110db3a1c86466d72f09ead23bef767e5e 100644
 --- a/layout/base/GeometryUtils.cpp
