@@ -66,6 +66,8 @@ export type BrowserOptions = {
   userDataDir?: string;
   noDefaults?: boolean;
   isWebView?: boolean;
+  // Do not send Inspector.enable to detect pages without a renderer while connecting.
+  noInspectorEnableOnConnect?: boolean;
 };
 
 export abstract class Browser extends SdkObject {

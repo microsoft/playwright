@@ -197,10 +197,7 @@ export class CRBrowser extends Browser {
 
     if (targetInfo.type === 'page' || treatOtherAsPage) {
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
-      // A page that has never navigated, e.g. an Electron window before its first loadURL(),
-      // has no renderer yet either, but it is not crashed and initializes once it navigates.
-      const mayHaveLostRenderer = this._isConnecting && !!targetInfo.url;
-      const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: targetInfo.type === 'page', mayHaveLostRenderer });
+      const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: targetInfo.type === 'page' });
       this._crPages.set(targetInfo.targetId, crPage);
       return;
     }
