@@ -92,7 +92,7 @@ export class CRPage implements PageDelegate {
     return crPage._mainFrameSession;
   }
 
-  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, bits: { hasUIWindow: boolean }) {
+  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, bits: { hasUIWindow: boolean, mayHaveLostRenderer: boolean }) {
     this._targetId = targetId;
     this._opener = opener;
     const dragManager = new DragManager(this);
@@ -122,7 +122,7 @@ export class CRPage implements PageDelegate {
         this._page.setEmulatedSizeFromWindowOpen({ viewport: viewportSize, screen: viewportSize });
     }
 
-    this._mainFrameSession._initialize(bits.hasUIWindow).then(
+    this._mainFrameSession._initialize(bits.hasUIWindow, bits.mayHaveLostRenderer).then(
         () => this._page.reportAsNew(this._opener?._page, undefined),
         error => this._page.reportAsNew(this._opener?._page, error));
   }
@@ -469,7 +469,7 @@ class FrameSession {
     ]);
   }
 
-  async _initialize(hasUIWindow: boolean) {
+  async _initialize(hasUIWindow: boolean, mayHaveLostRenderer: boolean) {
     const browserOptions = this._crPage._browserContext._browser.options;
     if (!this._page.isStorageStatePage && hasUIWindow &&
       !this._crPage._browserContext._browser.isClank() &&
@@ -576,7 +576,7 @@ class FrameSession {
       for (const initScript of this._crPage._page.allInitScripts())
         promises.push(this._evaluateOnNewDocument(initScript, 'main', true /* runImmediately */));
     }
-    if (this._isMainFrame() && this._crPage._browserContext._browser._isConnecting) {
+    if (mayHaveLostRenderer) {
       // An existing page without a renderer, e.g. crashed or discarded, never responds to the commands above.
       // Get notified with Inspector.targetCrashed right away, so that such a page is reported as closed,
       // and we do not stall while connecting to the browser.
@@ -783,7 +783,7 @@ class FrameSession {
       }
       const frameSession = new FrameSession(this._crPage, session, targetId, this);
       this._crPage._sessions.set(targetId, frameSession);
-      frameSession._initialize(false).catch(e => e);
+      frameSession._initialize(false, false).catch(e => e);
       return;
     }
 
