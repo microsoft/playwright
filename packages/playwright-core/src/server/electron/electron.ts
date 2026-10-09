@@ -307,6 +307,8 @@ export class Electron extends SdkObject {
         downloadsPath: artifactsDir,
         tracesDir: options.tracesDir || artifactsDir,
         originalLaunchOptions: {},
+        // A window that has not navigated yet has no renderer, but it is not crashed.
+        noInspectorEnableOnConnect: true,
       };
       validateBrowserContextOptions(contextOptions, browserOptions);
       const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions));

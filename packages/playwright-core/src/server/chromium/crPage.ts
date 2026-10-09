@@ -576,7 +576,7 @@ class FrameSession {
       for (const initScript of this._crPage._page.allInitScripts())
         promises.push(this._evaluateOnNewDocument(initScript, 'main', true /* runImmediately */));
     }
-    if (this._isMainFrame() && this._crPage._browserContext._browser._isConnecting) {
+    if (this._isMainFrame() && this._crPage._browserContext._browser._isConnecting && !browserOptions.noInspectorEnableOnConnect) {
       // An existing page without a renderer, e.g. crashed or discarded, never responds to the commands above.
       // Get notified with Inspector.targetCrashed right away, so that such a page is reported as closed,
       // and we do not stall while connecting to the browser.
