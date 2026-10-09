@@ -494,6 +494,31 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
   await expect(page.locator('.client-info')).toContainText(`Connected to "${clientName}"`);
 });
 
+test(`does not expose the token in the connect page url`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1791' },
+}, async ({ browserWithExtension, startClient }) => {
+  const browserContext = await browserWithExtension.launch();
+  const token = await readExtensionToken(browserContext);
+
+  const { client } = await startClient({
+    args: [`--extension`],
+    env: {
+      PLAYWRIGHT_MCP_EXTENSION_TOKEN: token,
+      PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
+    },
+  });
+
+  // With the token bypass, the connect page itself becomes the connected tab.
+  const response = await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'list' },
+  });
+  expect(response).toHaveResponse({
+    result: expect.stringContaining(`chrome-extension://${extensionId}/connect.html?`),
+  });
+  expect(JSON.stringify(response)).not.toContain(token);
+});
+
 test(`times out when the extension rejects the token`, {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1732' },
 }, async ({ startExtensionClient, server }) => {

@@ -95,6 +95,12 @@ const ConnectApp: React.FC = () => {
 
       const expectedToken = getOrCreateAuthToken();
       const token = params.get('token');
+      // With the token bypass, this page becomes the connected tab; do not expose the token in its URL.
+      if (token) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('token');
+        window.history.replaceState(null, '', url);
+      }
       if (token === expectedToken) {
         await handleConnectToTab();
         return;
