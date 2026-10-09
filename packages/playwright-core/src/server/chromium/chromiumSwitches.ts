@@ -37,6 +37,9 @@ const disabledFeatures = [
   // Chromium 149 rejects re-applying the `origin` header on a redirect (as request interception
   // does) with net::ERR_INVALID_ARGUMENT. See https://github.com/microsoft/playwright/issues/41690
   'BlockOriginHeaderModificationOnRedirect',
+  // Chromium 155 aborts preflighted cross-origin redirects with net::ERR_ABORTED while
+  // Fetch interception is enabled. See https://github.com/microsoft/playwright/issues/43242
+  'AvoidCorsURLLoaderRestartOnRedirect',
   // See https://github.com/microsoft/playwright/issues/16126
   'Translate',
   // See https://issues.chromium.org/u/1/issues/435410220
