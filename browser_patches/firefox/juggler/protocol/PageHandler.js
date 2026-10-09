@@ -115,7 +115,6 @@ export class PageHandler {
         pageFrameAttached: this._onFrameAttached.bind(this),
         pageFrameDetached: emitProtocolEvent('Page.frameDetached'),
         pageLinkClicked: emitProtocolEvent('Page.linkClicked'),
-        pageWillOpenNewWindowAsynchronously: emitProtocolEvent('Page.willOpenNewWindowAsynchronously'),
         pageNavigationAborted: emitProtocolEvent('Page.navigationAborted'),
         pageNavigationCommitted: emitProtocolEvent('Page.navigationCommitted'),
         pageNavigationStarted: emitProtocolEvent('Page.navigationStarted'),

@@ -52,7 +52,6 @@ export function initialize(browsingContext, docShell) {
   // Enforce focused state for all top level documents.
   docShell.overrideHasFocus = true;
   docShell.forceActiveState = true;
-  docShell.disallowBFCache = true;
   data.frameTree = new FrameTree(browsingContext);
   for (const [name, value] of Object.entries(contextCrossProcessCookie.settings)) {
     if (value !== undefined)

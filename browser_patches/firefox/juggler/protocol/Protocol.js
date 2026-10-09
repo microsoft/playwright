@@ -681,7 +681,6 @@ const Page = {
     'linkClicked': {
       phase: t.Enum(['before', 'after']),
     },
-    'willOpenNewWindowAsynchronously': {},
     'fileChooserOpened': {
       executionContextId: t.String,
       element: runtimeTypes.RemoteObject

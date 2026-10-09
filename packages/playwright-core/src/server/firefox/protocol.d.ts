@@ -451,8 +451,6 @@ export namespace Protocol {
     export type linkClickedPayload = {
       phase: ("before"|"after");
     }
-    export type willOpenNewWindowAsynchronouslyPayload = {
-    }
     export type fileChooserOpenedPayload = {
       executionContextId: string;
       element: {
@@ -1022,7 +1020,6 @@ export namespace Protocol {
     ["Page.dialogClosed"]: [Page.dialogClosedPayload];
     ["Page.bindingCalled"]: [Page.bindingCalledPayload];
     ["Page.linkClicked"]: [Page.linkClickedPayload];
-    ["Page.willOpenNewWindowAsynchronously"]: [Page.willOpenNewWindowAsynchronouslyPayload];
     ["Page.fileChooserOpened"]: [Page.fileChooserOpenedPayload];
     ["Page.workerCreated"]: [Page.workerCreatedPayload];
     ["Page.workerDestroyed"]: [Page.workerDestroyedPayload];
