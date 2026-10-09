@@ -319,3 +319,48 @@ test('alert dialog during navigation', async ({ client, server }) => {
     inlineSnapshot: expect.stringContaining(`- button "Button"`),
   });
 });
+
+test('dialog during navigate back', async ({ client, server }) => {
+  server.setContent('/page1', `<title>Page 1</title><button>Button 1</button>`, 'text/html');
+  server.setContent('/page2', `<title>Page 2</title><button id="btn">Click me</button><script>
+    window.addEventListener('beforeunload', (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    });
+  </script>`, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX + '/page1' },
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX + '/page2' },
+  });
+
+  // User interaction is required for beforeunload to trigger
+  await client.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Click me', target: 'e2' },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate_back',
+    arguments: {},
+  })).toHaveResponse({
+    modalState: expect.stringMatching(/- \["beforeunload" dialog.*\]: can be handled by browser_handle_dialog/),
+  });
+
+  await client.callTool({
+    name: 'browser_handle_dialog',
+    arguments: { accept: true },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+    arguments: {},
+  })).toHaveResponse({
+    inlineSnapshot: expect.stringContaining(`- button "Button 1"`),
+  });
+});

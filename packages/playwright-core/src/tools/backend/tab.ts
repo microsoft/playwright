@@ -385,6 +385,21 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     });
   }
 
+  async goBack() {
+    await this._initializedPromise;
+    await this._raceAgainstModalStates(async () => {
+      await this.page.goBack({ waitUntil: 'commit', ...this.navigationTimeoutOptions });
+    });
+  }
+
+  async goForward() {
+    await this._initializedPromise;
+    await this._raceAgainstModalStates(async () => {
+      await this.page.goForward({ waitUntil: 'commit', ...this.navigationTimeoutOptions });
+    });
+  }
+
+
   async consoleMessageCount(): Promise<{ total: number, errors: number, warnings: number }> {
     await this._initializedPromise;
     const messages = await this.page.consoleMessages({ filter: 'since-navigation' });
