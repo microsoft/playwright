@@ -69,6 +69,7 @@ export type CLIOptions = {
   profileDirName?: string;
   proxyBypass?: string;
   proxyServer?: string;
+  redactUrlParams?: string[];
   remoteHeader?: Record<string, string>;
   saveSession?: boolean;
   secrets?: Record<string, string>;
@@ -388,6 +389,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
     codegen: cliOptions.codegen,
     saveSession: cliOptions.saveSession,
     secrets: cliOptions.secrets,
+    redactUrlParams: cliOptions.redactUrlParams,
     sharedBrowserContext: cliOptions.sharedBrowserContext,
     snapshot: cliOptions.snapshotMode || cliOptions.snapshotBoxes !== undefined ? { mode: cliOptions.snapshotMode, boxes: cliOptions.snapshotBoxes } : undefined,
     outputDir: cliOptions.outputDir,
@@ -458,6 +460,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.port = numberParser(e.PLAYWRIGHT_MCP_PORT);
   options.proxyBypass = envToString(e.PLAYWRIGHT_MCP_PROXY_BYPASS);
   options.proxyServer = envToString(e.PLAYWRIGHT_MCP_PROXY_SERVER);
+  options.redactUrlParams = commaSeparatedList(e.PLAYWRIGHT_MCP_REDACT_URL_PARAMS);
   options.remoteHeader = headerParser(envToString(e.PLAYWRIGHT_MCP_REMOTE_HEADERS));
   options.secrets = dotenvFileLoader(e.PLAYWRIGHT_MCP_SECRETS_FILE);
   options.storageState = envToString(e.PLAYWRIGHT_MCP_STORAGE_STATE);
