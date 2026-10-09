@@ -506,3 +506,28 @@ it('what happens when dragging element is destroyed', async ({ page, browserName
   await page.locator('button').dragTo(page.locator('div'));
   await expect(page.locator('div')).toHaveText('drop here');
 });
+
+for (const [name, mutation] of [['hides', `source.style.display = 'none'`], ['removes', 'source.remove()']]) {
+  it(`should not hang when dragstart ${name} the drag source`, {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43256' },
+  }, async ({ page, browserName }) => {
+    await page.setContent(`
+      <div id="source" draggable="true" style="width:200px;height:60px">drag me</div>
+      <script>
+        window.events = [];
+        const source = document.getElementById('source');
+        source.addEventListener('dragstart', () => {
+          window.events.push('dragstart');
+          ${mutation};
+        });
+        source.addEventListener('dragend', () => window.events.push('dragend'));
+      </script>
+    `);
+    await page.hover('#source');
+    await page.mouse.down();
+    await page.mouse.move(100, 200, { steps: 5 });
+    await page.mouse.up();
+    // Firefox does not dispatch dragend to a removed source.
+    expect(await page.evaluate('window.events')).toEqual(browserName === 'firefox' && name === 'removes' ? ['dragstart'] : ['dragstart', 'dragend']);
+  });
+}
