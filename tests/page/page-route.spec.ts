@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import type * as http from 'http';
 import type { Route } from 'playwright-core';
 import { test as it, expect } from './pageTest';
 
@@ -868,6 +869,42 @@ it('should support cors with credentials', async ({ page, server }) => {
     return response.json();
   });
   expect(resp).toEqual(['electric', 'gas']);
+});
+
+it('should not abort preflighted cross-origin redirect when a route is registered', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43242' },
+}, async ({ page, server, isAndroid }) => {
+  it.skip(isAndroid, 'No cross-process on Android');
+
+  const allowCors = (request: http.IncomingMessage, response: http.ServerResponse) => {
+    response.setHeader('Access-Control-Allow-Origin', request.headers.origin || '*');
+    response.setHeader('Access-Control-Allow-Credentials', 'true');
+    response.setHeader('Access-Control-Allow-Headers', 'x-app-version');
+    if (request.method !== 'OPTIONS')
+      return false;
+    response.writeHead(204);
+    response.end();
+    return true;
+  };
+  server.setRoute('/download', (request, response) => {
+    if (allowCors(request, response))
+      return;
+    response.writeHead(302, { location: `${server.PREFIX}/file` });
+    response.end();
+  });
+  server.setRoute('/file', (request, response) => {
+    if (allowCors(request, response))
+      return;
+    response.end('file contents');
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  await page.route('**/never-matches', route => route.continue());
+  const result = await page.evaluate(async url => {
+    const response = await fetch(url, { credentials: 'include', headers: { 'X-App-Version': '1.2.3' } });
+    return `${response.status} ${await response.text()}`;
+  }, server.CROSS_PROCESS_PREFIX + '/download');
+  expect(result).toBe('200 file contents');
 });
 
 it('should reject cors with disallowed credentials', async ({ page, server }) => {
