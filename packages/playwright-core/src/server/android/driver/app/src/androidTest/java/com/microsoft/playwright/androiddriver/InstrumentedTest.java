@@ -110,8 +110,8 @@ public class InstrumentedTest {
       JSONObject object = selector.getJSONObject("hasDescendant");
       BySelector value = parseSelector(object);
       int maxDepth = 10000;
-      if (selector.has("maxDepth"))
-        maxDepth = selector.getInt("maxDepth");
+      if (object.has("maxDepth"))
+        maxDepth = object.getInt("maxDepth");
       result = result != null ? result.hasDescendant(value, maxDepth) : By.hasDescendant(value, maxDepth);
     }
     if (selector.has("longClickable")) {
