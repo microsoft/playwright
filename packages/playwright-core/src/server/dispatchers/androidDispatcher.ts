@@ -111,15 +111,13 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async inputType(params: channels.AndroidDeviceInputTypeParams, progress: Progress) {
-    const text = params.text;
-    const keyCodes: number[] = [];
-    for (let i = 0; i < text.length; ++i) {
-      const code = keyMap.get(text[i].toUpperCase());
-      if (code === undefined)
-        throw new Error('No mapping for ' + text[i] + ' found');
-      keyCodes.push(code);
-    }
-    await progress.race(Promise.all(keyCodes.map(keyCode => this._object.send(progress, 'inputPress', { keyCode }))));
+    // `input text` keeps order and characters such as ":" that have no Android key code.
+    // "%" is an escape for that command, and spaces are written as "%s".
+    const encoded = params.text.replace(/%/g, '%%').replace(/ /g, '%s');
+    const quoted = `'${encoded.replace(/'/g, `'\\''`)}'`;
+    const output = (await this._object.shell(progress, `input text ${quoted}`)).toString().trim();
+    if (/unknown command|error:/i.test(output))
+      throw new Error(output);
   }
 
   async inputPress(params: channels.AndroidDeviceInputPressParams, progress: Progress) {
