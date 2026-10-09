@@ -36,7 +36,7 @@ export type JsxOptions = {
   jsxFragmentFactory?: string;
   jsxImportSource?: string;
 };
-export type BabelTransformFunction = (code: string, filename: string, isModule: boolean, pluginsSuffix: BabelPlugin[], jsx?: JsxOptions) => BabelFileResult | null;
+export type BabelTransformFunction = (code: string, filename: string, isModule: boolean, pluginsSuffix: BabelPlugin[], useDefineForClassFields: boolean, jsx?: JsxOptions) => BabelFileResult | null;
 
 const nodeMajorVersion = +process.versions.node.split('.')[0];
 
@@ -57,25 +57,29 @@ function jsxPlugin(jsx: JsxOptions | undefined): [any, any] {
   }];
 }
 
-function babelTransformOptions(isTypeScript: boolean, isModule: boolean, pluginsEpilogue: [string, any?][], jsx?: JsxOptions): TransformOptions {
+function babelTransformOptions(isTypeScript: boolean, isModule: boolean, pluginsEpilogue: [string, any?][], useDefineForClassFields: boolean, jsx?: JsxOptions): TransformOptions {
   const plugins = [
     [require('@babel/plugin-syntax-import-attributes'), { deprecatedAssertSyntax: true }],
   ];
 
   if (isTypeScript) {
     plugins.push(
-        // Strip "declare" class fields before these plugins run:
+        // Strip "declare" class fields, and uninitialized ones that tsc omits without
+        // "useDefineForClassFields", before these plugins run:
         // - plugin-proposal-decorators
         // - plugin-transform-class-properties
         // - plugin-transform-private-methods
         // See https://github.com/microsoft/playwright/issues/38586
         [
           (): PluginObj => ({
-            name: 'strip-declare-class-fields',
+            name: 'strip-type-only-class-fields',
             visitor: {
               Class(path) {
                 for (const member of path.get('body.body')) {
-                  if (member.isClassProperty() && member.node.declare)
+                  if (!member.isClassProperty())
+                    continue;
+                  const { declare, value, decorators } = member.node;
+                  if (declare || (!useDefineForClassFields && !value && !decorators?.length))
                     member.remove();
                 }
               }
@@ -83,13 +87,20 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
           })
         ],
         [require('@babel/plugin-proposal-decorators'), { version: '2023-05' }],
-        [require('@babel/plugin-transform-class-properties')],
+    );
+    // With "useDefineForClassFields", Node defines class fields natively.
+    if (!useDefineForClassFields) {
+      plugins.push(
+          [require('@babel/plugin-transform-class-properties')],
+          [require('@babel/plugin-transform-private-methods')],
+      );
+    }
+    plugins.push(
         [require('@babel/plugin-transform-class-static-block')],
         [require('@babel/plugin-transform-numeric-separator')],
         [require('@babel/plugin-transform-logical-assignment-operators')],
         [require('@babel/plugin-transform-nullish-coalescing-operator')],
         [require('@babel/plugin-transform-optional-chaining')],
-        [require('@babel/plugin-transform-private-methods')],
         [require('@babel/plugin-syntax-json-strings')],
         [require('@babel/plugin-syntax-optional-catch-binding')],
         [require('@babel/plugin-syntax-async-generators')],
@@ -163,7 +174,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
       setPublicClassFields: true,
     },
     presets: isTypeScript ? [
-      [require('@babel/preset-typescript'), { onlyRemoveTypeImports: false }],
+      [require('@babel/preset-typescript'), { onlyRemoveTypeImports: false, allowDeclareFields: useDefineForClassFields }],
     ] : [],
     plugins: [
       ...plugins,
@@ -180,14 +191,14 @@ function isTypeScript(filename: string) {
   return filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
 }
 
-export function babelTransform(code: string, filename: string, isModule: boolean, pluginsEpilogue: [string, any?][], jsx?: JsxOptions): BabelFileResult | null {
+export function babelTransform(code: string, filename: string, isModule: boolean, pluginsEpilogue: [string, any?][], useDefineForClassFields: boolean, jsx?: JsxOptions): BabelFileResult | null {
   if (isTransforming)
     return null;
 
   // Prevent reentry while requiring plugins lazily.
   isTransforming = true;
   try {
-    const options = babelTransformOptions(isTypeScript(filename), isModule, pluginsEpilogue, jsx);
+    const options = babelTransformOptions(isTypeScript(filename), isModule, pluginsEpilogue, useDefineForClassFields, jsx);
     return babel.transform(code, { filename, ...options });
   } finally {
     isTransforming = false;
@@ -195,6 +206,6 @@ export function babelTransform(code: string, filename: string, isModule: boolean
 }
 
 export function babelParse(code: string, filename: string, isModule: boolean): babel.ParseResult {
-  const options = babelTransformOptions(isTypeScript(filename), isModule, []);
+  const options = babelTransformOptions(isTypeScript(filename), isModule, [], true);
   return babel.parse(code, { filename, ...options })!;
 }
