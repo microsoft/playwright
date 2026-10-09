@@ -62,6 +62,22 @@ export interface SocketBackend extends EventEmitter {
   close(): void;
 }
 
+function androidSelectorForDriver(selector: any): any {
+  if (!selector || typeof selector !== 'object')
+    return selector;
+  const copy = { ...selector };
+  if (copy.hasChild?.androidSelector) {
+    copy.hasChild = { selector: androidSelectorForDriver(copy.hasChild.androidSelector) };
+  }
+  if (copy.hasDescendant?.androidSelector) {
+    copy.hasDescendant = {
+      selector: androidSelectorForDriver(copy.hasDescendant.androidSelector),
+      maxDepth: copy.hasDescendant.maxDepth,
+    };
+  }
+  return copy;
+}
+
 export class Android extends SdkObject {
   private _backend: Backend;
   private _devices = new Map<string, AndroidDevice>();
@@ -240,7 +256,7 @@ export class AndroidDevice extends SdkObject {
       timeout: params.timeout || 0,
     };
     if (params.androidSelector) {
-      params.selector = params.androidSelector;
+      params.selector = androidSelectorForDriver(params.androidSelector);
       delete params.androidSelector;
     }
     const driver = await this._driver();
