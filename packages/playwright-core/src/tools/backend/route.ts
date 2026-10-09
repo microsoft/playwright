@@ -60,6 +60,7 @@ const route = defineTool({
         await route.fulfill({
           status: params.status ?? 200,
           contentType: params.contentType,
+          headers: addHeaders,
           body: params.body,
         });
         return;
