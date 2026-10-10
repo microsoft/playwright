@@ -289,6 +289,26 @@ test('accessible name with closed details', async ({ page }) => {
   expect.soft(await getNameAndRole(page, 'button')).toEqual({ role: 'button', name: 'Summary Details' });
 });
 
+test('accessible name with closed details content made visible by CSS', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43270' });
+
+  await page.setContent(`
+    <style>details::details-content { content-visibility: visible; }</style>
+    <button aria-labelledby="details"></button>
+    <details id="details">
+      <summary>Summary</summary>
+      Details
+    </details>
+  `);
+  expect.soft(await getNameAndRole(page, 'button')).toEqual({ role: 'button', name: 'Summary Details' });
+
+  await page.$eval('details', details => details.innerHTML = '<summary style="display:inline">Summary</summary> <span>Wrapped</span> Details');
+  expect.soft(await getNameAndRole(page, 'button')).toEqual({ role: 'button', name: 'Summary Wrapped Details' });
+
+  await page.addStyleTag({ content: 'details::details-content { content-visibility: hidden; }' });
+  expect.soft(await getNameAndRole(page, 'button')).toEqual({ role: 'button', name: 'Summary' });
+});
+
 test('accessible name nested treeitem', async ({ page }) => {
   await page.setContent(`
     <div role=treeitem id=target>

@@ -16,7 +16,7 @@
 
 import * as css from '@isomorphic/cssTokenizer';
 
-import { beginDOMCaches, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, endDOMCaches, getElementComputedStyle, getGlobalOptions, isElementStyleVisibilityVisible, isListBoxSelect, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
+import { beginDOMCaches, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, endDOMCaches, getElementComputedStyle, getGlobalOptions, hasTextNodeClientRects, isElementStyleVisibilityVisible, isListBoxSelect, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
 
 import type { AriaRole } from '@isomorphic/ariaSnapshot';
 
@@ -432,11 +432,17 @@ export function isTextNodeNotRendered(text: Text): boolean {
     return false;
   if (parent.shadowRoot && !text.assignedSlot)
     return true;
-  // Closed <details> only renders the <summary> element.
-  // It is actually the same shadowRoot scenario as above, but user-agent shadow roots
-  // are not acessible to JavaScript, so we manually check only the most common scenario.
-  if (elementSafeTagName(parent) === 'DETAILS' && !(parent as HTMLDetailsElement).open)
-    return true;
+  // <details> hides its content through a user-agent shadow root, but CSS can override
+  // this even when the details is closed. Check the style of its content slot.
+  if (elementSafeTagName(parent) === 'DETAILS') {
+    if (getElementComputedStyle(parent, '::details-content')?.contentVisibility === 'hidden')
+      return true;
+    // Older WebKit returns the element's style for ::details-content, but omits
+    // client rects for hidden text. Do not require a non-zero size for aria,
+    // and retain whitespace that can separate inline children.
+    if (getGlobalOptions().browserNameForWorkarounds === 'webkit' && text.nodeValue?.trim() && !hasTextNodeClientRects(text))
+      return true;
+  }
   return false;
 }
 
