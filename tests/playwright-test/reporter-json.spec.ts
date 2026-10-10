@@ -119,6 +119,35 @@ test('should report projects and stats', async ({ runInlineTest }, testInfo) => 
   expect(result.report.stats.duration).toEqual(expect.any(Number));
 });
 
+test('should merge specs from all projects when testDir is not cwd', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        testDir: 'tests',
+        projects: [{ name: 'p1' }, { name: 'p2' }],
+      };
+    `,
+    'tests/a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math works!', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+      test.describe('suite', () => {
+        test('nested math works!', async ({}) => {
+          expect(1 + 1).toBe(2);
+        });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  const fileSuite = result.report.suites[0];
+  expect(fileSuite.specs.length).toBe(1);
+  expect(fileSuite.specs[0].tests.map(t => t.projectName)).toEqual(['p1', 'p2']);
+  expect(fileSuite.suites!.length).toBe(1);
+  expect(fileSuite.suites![0].specs.length).toBe(1);
+  expect(fileSuite.suites![0].specs[0].tests.map(t => t.projectName)).toEqual(['p1', 'p2']);
+});
+
 test('should show steps', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `

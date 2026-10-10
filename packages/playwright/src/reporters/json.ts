@@ -156,7 +156,7 @@ class JSONReporter implements ReporterV2 {
     }
 
     for (const spec of from.specs || []) {
-      const toSpec = to.specs.find(s => s.title === spec.title && s.file === toPosixPath(path.relative(this.config.rootDir, spec.file)) && s.line === spec.line && s.column === spec.column);
+      const toSpec = to.specs.find(s => s.title === spec.title && this._locationMatches(s, spec));
       if (toSpec)
         toSpec.tests.push(...spec.tests);
       else
