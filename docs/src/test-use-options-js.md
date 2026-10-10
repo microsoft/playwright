@@ -65,9 +65,12 @@ export default defineConfig({
 | Option | Description |
 | :- | :- |
 | [`property: TestOptions.colorScheme`] | [Emulates](./emulation.md#color-scheme-and-media) `'prefers-colors-scheme'` media feature, supported values are `'light'` and `'dark'` |
+| [`property: TestOptions.contrast`] | [Emulates](./emulation.md#color-scheme-and-media) `'prefers-contrast'` media feature, supported values are `'no-preference'` and `'more'` |
+| [`property: TestOptions.forcedColors`] | [Emulates](./emulation.md#color-scheme-and-media) `'forced-colors'` media feature, supported values are `'active'` and `'none'` |
 | [`property: TestOptions.geolocation`] | Context [geolocation](./emulation.md#geolocation). |
 | [`property: TestOptions.locale`] | [Emulates](./emulation.md#locale--timezone) the user locale, for example `en-GB`, `de-DE`, etc. |
 | [`property: TestOptions.permissions`] | A list of [permissions](./emulation.md#permissions) to grant to all pages in the context. |
+| [`property: TestOptions.reducedMotion`] | [Emulates](./emulation.md#color-scheme-and-media) `'prefers-reduced-motion'` media feature, supported values are `'reduce'` and `'no-preference'` |
 | [`property: TestOptions.timezoneId`] | Changes the [timezone](./emulation.md#locale--timezone) of the context. |
 | [`property: TestOptions.viewport`] | [Viewport](./emulation.md#viewport) used for all pages in the context. |
 
@@ -112,11 +115,13 @@ export default defineConfig({
 | Option | Description |
 | :- | :- |
 | [`property: TestOptions.acceptDownloads`] | Whether to automatically download all the attachments, defaults to `true`. [Learn more](./downloads.md) about working with downloads. |
+| [`property: TestOptions.clientCertificates`] | TLS Client Authentication allows the server to request a client certificate and verify it. |
 | [`property: TestOptions.extraHTTPHeaders`] | An object containing additional HTTP headers to be sent with every request. All header values must be strings. |
 | [`property: TestOptions.httpCredentials`] | Credentials for [HTTP authentication](./network.md#http-authentication). |
 | [`property: TestOptions.ignoreHTTPSErrors`] | Whether to ignore HTTPS errors during navigation. |
 | [`property: TestOptions.offline`] | Whether to emulate network being offline. |
 | [`property: TestOptions.proxy`] | [Proxy settings](./network.md#http-proxy) used for all pages in the test. |
+| [`property: TestOptions.serviceWorkers`] | Whether to allow sites to register Service workers, defaults to `'allow'`. [Learn more](./network.md#missing-network-events-and-service-workers) about Service Workers and network mocking. |
 
 
 :::note
@@ -239,6 +244,7 @@ export default defineConfig({
 | [`property: TestOptions.bypassCSP`] |Toggles bypassing Content-Security-Policy. Useful when CSP includes the production origin. Defaults to `false`. |
 | [`property: TestOptions.channel`] | Browser channel to use. [Learn more](./browsers.md) about different browsers and channels. |
 | [`property: TestOptions.headless`] | Whether to run the browser in headless mode meaning no browser is shown when running tests. Defaults to `true`. |
+| [`property: TestOptions.navigationTimeout`] | Timeout for each navigation action in milliseconds. Defaults to `0` (no timeout). Learn more about [timeouts](./test-timeouts.md). |
 | [`property: TestOptions.testIdAttribute`] | Changes the default [`data-testid` attribute](./locators.md#locate-by-test-id) used by Playwright locators. |
 
 ### More browser and context options
