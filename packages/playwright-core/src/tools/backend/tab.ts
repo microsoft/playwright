@@ -333,10 +333,9 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   async checkUrlAndNavigate(url: string): Promise<string> {
-    try {
-      new URL(url);
-    } catch (e) {
-      if (url.startsWith('localhost'))
+    const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url) || /^(about|data|blob|javascript):/i.test(url);
+    if (!hasScheme) {
+      if (url.startsWith('localhost') || url.startsWith('127.0.0.1') || url.startsWith('0.0.0.0') || url.startsWith('[::1]'))
         url = 'http://' + url;
       else
         url = 'https://' + url;

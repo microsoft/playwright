@@ -51,6 +51,16 @@ test('open without url opens about:blank', async ({ cli }) => {
   expect(output).toContain('- Page URL: about:blank');
 });
 
+test('open with bare 127.0.0.1 and port', async ({ cli, server }) => {
+  const { output } = await cli('open', '127.0.0.1:' + server.PORT);
+  expect(output).toContain(`- Page URL: http://127.0.0.1:${server.PORT}/`);
+});
+
+test('open with bare localhost and port', async ({ cli, server }) => {
+  const { output } = await cli('open', 'localhost:' + server.PORT);
+  expect(output).toContain(`- Page URL: http://localhost:${server.PORT}/`);
+});
+
 test('tab-new with url', async ({ cli, server }) => {
   await cli('open');
   const { output } = await cli('tab-new', server.HELLO_WORLD);

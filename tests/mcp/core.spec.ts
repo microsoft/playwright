@@ -30,6 +30,19 @@ test('browser_navigate', async ({ client, server }) => {
   });
 });
 
+test('browser_navigate with bare host', async ({ client, server }) => {
+  const urlWithoutScheme = server.HELLO_WORLD.replace(/^https?:\/\//, '');
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: urlWithoutScheme },
+  })).toHaveResponse({
+    code: `await page.goto('${server.HELLO_WORLD}');`,
+    page: `- Page URL: ${server.HELLO_WORLD}
+- Page Title: Title`,
+    snapshot: `- generic [active] [ref=e1]: Hello, world!`,
+  });
+});
+
 test('browser_navigate surfaces non-2xx HTTP status', async ({ client, server }) => {
   server.setRoute('/locked', (req, res) => {
     res.writeHead(402, { 'Content-Type': 'text/html' });
