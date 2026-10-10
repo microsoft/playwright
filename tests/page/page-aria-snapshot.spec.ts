@@ -135,6 +135,42 @@ it('should not snapshot text directly inside closed details', async ({ page }) =
   `);
 });
 
+it('should snapshot text directly inside details made visible by CSS', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43270' });
+
+  await page.setContent(`
+    <style>details::details-content { content-visibility: visible; }</style>
+    <details>
+      <summary>Summary</summary>
+      Details
+    </details>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - group: Summary Details
+  `);
+
+  await page.$eval('details', details => details.style.fontSize = '0px');
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - group: Summary Details
+  `);
+
+  await page.$eval('details', details => details.innerHTML = '<summary style="display:inline">Summary</summary> <span>Wrapped</span> Details');
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - group: Summary Wrapped Details
+  `);
+
+  await page.$eval('style', style => style.textContent = 'details::details-content { content-visibility: hidden; }');
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - group: Summary
+  `);
+
+  await page.$eval('details', details => details.open = true);
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - group: Summary
+  `);
+});
+
 it('should not snapshot text that is not assigned to a slot', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43019' });
 

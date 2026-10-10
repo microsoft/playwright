@@ -78,7 +78,7 @@ export function closestCrossShadow(element: Element | undefined, css: string, sc
 }
 
 export function getElementComputedStyle(element: Element, pseudo?: string): CSSStyleDeclaration | undefined {
-  const cache = pseudo === '::before' ? cacheStyleBefore : pseudo === '::after' ? cacheStyleAfter : cacheStyle;
+  const cache = pseudo === '::before' ? cacheStyleBefore : pseudo === '::after' ? cacheStyleAfter : pseudo === '::details-content' ? cacheStyleDetailsContent : cacheStyle;
   if (cache && cache.has(element))
     return cache.get(element);
   const style = element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element, pseudo) : undefined;
@@ -170,6 +170,16 @@ export function isVisibleTextNode(node: Text) {
   return result;
 }
 
+export function hasTextNodeClientRects(node: Text): boolean {
+  const document = node.ownerDocument as Document & { [kTextNodeRange]?: Range };
+  const range = (document[kTextNodeRange] ??= document.createRange());
+  range.selectNode(node);
+  const result = range.getClientRects().length > 0;
+  range.setStart(document, 0);
+  range.collapse(true);
+  return result;
+}
+
 export function elementSafeTagName(element: Element) {
   const tagName = element.tagName;
   if (typeof tagName === 'string') {  // Fast path.
@@ -192,6 +202,7 @@ export function elementSafeTagName(element: Element) {
 let cacheStyle: Map<Element, CSSStyleDeclaration | undefined> | undefined;
 let cacheStyleBefore: Map<Element, CSSStyleDeclaration | undefined> | undefined;
 let cacheStyleAfter: Map<Element, CSSStyleDeclaration | undefined> | undefined;
+let cacheStyleDetailsContent: Map<Element, CSSStyleDeclaration | undefined> | undefined;
 let cacheStyleVisibility: Map<Element, boolean> | undefined;
 let cachesCounter = 0;
 
@@ -200,6 +211,7 @@ export function beginDOMCaches() {
   cacheStyle ??= new Map();
   cacheStyleBefore ??= new Map();
   cacheStyleAfter ??= new Map();
+  cacheStyleDetailsContent ??= new Map();
   cacheStyleVisibility ??= new Map();
 }
 
@@ -208,6 +220,7 @@ export function endDOMCaches() {
     cacheStyle = undefined;
     cacheStyleBefore = undefined;
     cacheStyleAfter = undefined;
+    cacheStyleDetailsContent = undefined;
     cacheStyleVisibility = undefined;
   }
 }
