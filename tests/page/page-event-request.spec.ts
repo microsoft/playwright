@@ -278,6 +278,23 @@ it('should finish 204 request', {
   expect(await reqPromise).toBe('requestfinished');
 });
 
+it('should fail 204 navigation request', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43279' },
+}, async ({ page, server }) => {
+  server.setRoute('/204', (req, res) => {
+    res.statusCode = 204;
+    res.end();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const reqPromise = Promise.race([
+    page.waitForEvent('requestfailed', r => r.url().endsWith('/204')).then(() => 'requestfailed'),
+    page.waitForEvent('requestfinished', r => r.url().endsWith('/204')).then(() => 'requestfinished'),
+  ]);
+  await page.setContent(`<a href="${server.PREFIX}/204">link</a>`);
+  await page.click('a', { noWaitAfter: true });
+  expect(await reqPromise).toBe('requestfailed');
+});
+
 it('<picture> resource should have type image', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33148' });
   const [request] = await Promise.all([

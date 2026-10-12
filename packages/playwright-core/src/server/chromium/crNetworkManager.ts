@@ -520,8 +520,9 @@ export class CRNetworkManager {
       request.request.setRawRequestHeaders(null);
     }
     this._deleteRequest(request);
-    // Chromium aborts 204 responses, other browsers finish them.
-    if (response?.status() === 204) {
+    // Chromium aborts 204 subresource responses, other browsers finish them.
+    // A 204 navigation never commits, so it must fail to abort the pending navigation.
+    if (response?.status() === 204 && !request.request.isNavigationRequest()) {
       (this._page?.frameManager || this._serviceWorker)!.reportRequestFinished(request.request, response);
       return;
     }
