@@ -101,10 +101,15 @@ const cookieSet = defineTool({
 
     // Get the current page URL to determine default domain
     const url = new URL(tab.page.url());
+    const domain = params.domain || url.hostname;
+    if (!domain) {
+      response.addError(`Cannot infer cookie domain from current page URL "${url}". Please specify "domain".`);
+      return;
+    }
     const cookie: any = {
       name: params.name,
       value: params.value,
-      domain: params.domain || url.hostname,
+      domain,
       path: params.path || '/',
     };
 

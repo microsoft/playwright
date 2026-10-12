@@ -79,6 +79,20 @@ test('browser_cookie_set and browser_cookie_get', async ({ startClient, server }
   });
 });
 
+test('browser_cookie_set without domain on blank page', async ({ startClient }) => {
+  const { client } = await startClient({
+    config: { capabilities: ['storage'] },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_cookie_set',
+    arguments: { name: 'testCookie', value: 'testValue' },
+  })).toHaveResponse({
+    error: 'Cannot infer cookie domain from current page URL "about:blank". Please specify "domain".',
+    isError: true,
+  });
+});
+
 test('browser_cookie_list shows cookies', async ({ startClient, server }) => {
   const { client } = await startClient({
     config: { capabilities: ['storage'] },
