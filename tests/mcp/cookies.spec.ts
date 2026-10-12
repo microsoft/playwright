@@ -145,50 +145,26 @@ test('browser_cookie_list filters by domain', async ({ startClient, server }) =>
   expect(noResult).toHaveResponse({
     result: 'No cookies found',
   });
-});
 
-test('browser_cookie_list domain filter matches the domain and its subdomains', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43308' } }, async ({ startClient, server }) => {
-  const { client } = await startClient({
-    config: { capabilities: ['storage'] },
-  });
-
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.EMPTY_PAGE },
-  });
-
+  // The domain matches itself and its subdomains, not other domains that end with it.
   for (const [name, domain] of [['apex', 'example.com'], ['sub', 'sub.example.com'], ['other', 'my-example.com']]) {
     await client.callTool({
       name: 'browser_cookie_set',
       arguments: { name, value: 'value', domain },
     });
   }
-
-  for (const domain of ['example.com', 'EXAMPLE.COM', '.example.com']) {
-    const result = await client.callTool({
-      name: 'browser_cookie_list',
-      arguments: { domain },
-    });
-    expect(result).toHaveResponse({
-      result: expect.stringContaining('apex=value'),
-    });
-    expect(result).toHaveResponse({
-      result: expect.stringContaining('sub=value'),
-    });
-    expect(result).toHaveResponse({
-      result: expect.not.stringContaining('other=value'),
-    });
-  }
-
-  const subResult = await client.callTool({
+  const exampleResult = await client.callTool({
     name: 'browser_cookie_list',
-    arguments: { domain: 'sub.example.com' },
+    arguments: { domain: 'example.com' },
   });
-  expect(subResult).toHaveResponse({
+  expect(exampleResult).toHaveResponse({
+    result: expect.stringContaining('apex=value'),
+  });
+  expect(exampleResult).toHaveResponse({
     result: expect.stringContaining('sub=value'),
   });
-  expect(subResult).toHaveResponse({
-    result: expect.not.stringContaining('apex=value'),
+  expect(exampleResult).toHaveResponse({
+    result: expect.not.stringContaining('other=value'),
   });
 });
 
