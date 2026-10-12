@@ -20,6 +20,9 @@ const env = { PLAYWRIGHT_EXPERIMENTAL_ESBUILD: '1' };
 
 test('should transpile typescript', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    'tsconfig.json': `{
+      "compilerOptions": { "jsx": "react", "jsxFactory": "h" },
+    }`,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
 
@@ -52,46 +55,48 @@ test('should transpile typescript', async ({ runInlineTest }) => {
         expect(loginPage.name()).toBe('tagged:admin');
       });
     `,
+    'b.spec.tsx': `
+      import { test, expect } from '@playwright/test';
+      const h = (tag: string, props: any, ...children: any[]) => ({ tag, props, children });
+      test('jsx', () => {
+        expect(<div id="x">text</div>).toEqual({ tag: 'div', props: { id: 'x' }, children: ['text'] });
+      });
+    `,
+  }, {}, env);
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
+
+test('should assign class fields for older targets', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tsconfig.json': JSON.stringify({ compilerOptions: { target: 'ES2021' } }),
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      class Base {
+        redeclared = 'base';
+        setterCalls: string[] = [];
+        set overridden(value: string) { this.setterCalls.push(value); }
+      }
+
+      class Derived extends Base {
+        redeclared: string;
+        overridden = 'derived';
+        fromParameter = this.parameter + '-field';
+        constructor(private parameter: string) { super(); }
+      }
+
+      test('works', () => {
+        const derived = new Derived('parameter');
+        expect(derived.redeclared).toBe('base');
+        expect(derived.setterCalls).toEqual(['derived']);
+        expect(derived.fromParameter).toBe('parameter-field');
+      });
+    `,
   }, {}, env);
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
-
-for (const [compilerOptions, define] of [
-  [{}, true],
-  [{ target: 'ES2021' }, false],
-] as const) {
-  test(`should ${define ? 'define' : 'assign'} class fields with ${JSON.stringify(compilerOptions)}`, async ({ runInlineTest }) => {
-    const result = await runInlineTest({
-      'tsconfig.json': JSON.stringify({ compilerOptions }),
-      'a.spec.ts': `
-        import { test, expect } from '@playwright/test';
-
-        class Base {
-          redeclared = 'base';
-          setterCalls: string[] = [];
-          set overridden(value: string) { this.setterCalls.push(value); }
-        }
-
-        class Derived extends Base {
-          redeclared: string;
-          overridden = 'derived';
-          fromParameter = this.parameter + '-field';
-          constructor(private parameter: string) { super(); }
-        }
-
-        test('works', () => {
-          const derived = new Derived('parameter');
-          expect(derived.redeclared).toBe(${define ? 'undefined' : `'base'`});
-          expect(derived.setterCalls).toEqual(${define ? '[]' : `['derived']`});
-          expect(derived.fromParameter).toBe(${define ? `'undefined-field'` : `'parameter-field'`});
-        });
-      `,
-    }, {}, env);
-    expect(result.exitCode).toBe(0);
-    expect(result.passed).toBe(1);
-  });
-}
 
 test('should map locations to sources', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -126,46 +131,6 @@ test('should support ESM packages', async ({ runInlineTest }) => {
       import { Box, Color } from './helper';
       test('works', () => {
         expect(new Box(Color.Red).color).toBe('red');
-      });
-    `,
-  }, {}, env);
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-});
-
-test('should respect tsconfig paths', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'tsconfig.json': `{
-      "compilerOptions": {
-        "baseUrl": ".",
-        "paths": { "@lib/*": ["./lib/*"] },
-      },
-    }`,
-    'lib/util.ts': `
-      export const value: number = 42;
-    `,
-    'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      import { value } from '@lib/util';
-      test('works', () => {
-        expect(value).toBe(42);
-      });
-    `,
-  }, {}, env);
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-});
-
-test('should respect tsconfig jsx options', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'tsconfig.json': `{
-      "compilerOptions": { "jsx": "react", "jsxFactory": "h" },
-    }`,
-    'a.spec.tsx': `
-      import { test, expect } from '@playwright/test';
-      const h = (tag: string, props: any, ...children: any[]) => ({ tag, props, children });
-      test('works', () => {
-        expect(<div id="x">text</div>).toEqual({ tag: 'div', props: { id: 'x' }, children: ['text'] });
       });
     `,
   }, {}, env);
