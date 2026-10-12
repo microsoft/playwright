@@ -46,6 +46,22 @@ test('should support golden', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should match text snapshot with trailing newline difference', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot1.txt': 'Hello world\n',
+    'a.spec.js-snapshots/snapshot2.txt': 'Hello world',
+    'a.spec.js': `
+      const { test, expect } = require('./helper');
+      test('is a test', ({}) => {
+        expect('Hello world').toMatchSnapshot('snapshot1.txt');
+        expect('Hello world\\n').toMatchSnapshot('snapshot2.txt');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
 test('should work with non-txt extensions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,

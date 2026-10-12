@@ -126,13 +126,13 @@ function compareText(actual: Buffer | string, expectedBuffer: Buffer): Comparato
   if (typeof actual !== 'string')
     return { errorMessage: 'Actual result should be a string' };
   let expected = expectedBuffer.toString('utf-8');
-  if (expected === actual)
-    return null;
   // Eliminate '\\ No newline at end of file'
   if (!actual.endsWith('\n'))
     actual += '\n';
   if (!expected.endsWith('\n'))
     expected += '\n';
+  if (expected === actual)
+    return null;
 
   const lines = diff.createPatch('file', expected, actual, undefined, undefined, { context: 5 }).split('\n');
   const coloredLines = lines.slice(4).map(line => {
