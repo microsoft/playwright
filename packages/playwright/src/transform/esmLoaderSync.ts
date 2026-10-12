@@ -18,7 +18,7 @@ import fs from 'fs';
 import url from 'url';
 
 import { currentFileDepsCollector } from './compilationCache';
-import { resolveHook, shouldTransform, transformHook } from './transform';
+import { isStyleFile, resolveHook, shouldTransform, transformHook } from './transform';
 import { fileIsModule } from '../util';
 
 export function resolve(specifier: string, context: { parentURL?: string, conditions?: string[] | Set<string> }, nextResolve: Function) {
@@ -66,6 +66,9 @@ export function load(moduleUrl: string, context: { format?: string, conditions?:
     return nextLoad(moduleUrl, context);
 
   const filename = url.fileURLToPath(moduleUrl);
+
+  if (isStyleFile(filename))
+    return { format: 'commonjs', source: '', shortCircuit: true };
 
   // Bail for node_modules.
   if (!shouldTransform(filename))

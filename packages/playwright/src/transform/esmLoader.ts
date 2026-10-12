@@ -19,7 +19,7 @@ import url from 'url';
 
 import { addToCompilationCache, currentFileDepsCollector, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
 import { PortTransport } from './portTransport';
-import { resolveHook, setSingleTSConfig, setTransformConfig, shouldTransform, transformHook } from './transform';
+import { isStyleFile, resolveHook, setSingleTSConfig, setTransformConfig, shouldTransform, transformHook } from './transform';
 import { fileIsModule } from '../util';
 
 // Before each import of the ESM module, a preflight request with the .esm.preflight extension is issued.
@@ -72,6 +72,9 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
 
   const filename = url.fileURLToPath(moduleUrl);
   const isPreflight = moduleUrl.endsWith(esmPreflightExtension);
+
+  if (isStyleFile(filename))
+    return { format: 'commonjs', source: '', shortCircuit: true };
 
   // Bail for node_modules.
   if (!shouldTransform(filename))

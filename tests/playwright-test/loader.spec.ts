@@ -1226,8 +1226,11 @@ test('should allow test.extend.ts and test.ts files', async ({ runInlineTest }) 
   expect(result.passed).toBe(1);
 });
 
-test('should remove import css', async ({ runInlineTest }) => {
+test('should load css imports as empty modules', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    'index.css': `
+      body { color: red; }
+    `,
     'a.test.ts': `
       import './index.css';
       import foo from './index.css';
@@ -1235,6 +1238,26 @@ test('should remove import css', async ({ runInlineTest }) => {
 
       import { test, expect } from '@playwright/test';
       test('pass', async () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should load css imports as empty modules in esm', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'index.css': `
+      body { color: red; }
+    `,
+    'a.test.ts': `
+      import './index.css';
+      import styles from './index.css';
+
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {
+        expect(styles).toEqual({});
+      });
     `,
   });
   expect(result.exitCode).toBe(0);

@@ -19,7 +19,7 @@ import traverseFunction from '@babel/traverse';
 
 import type { BabelFileResult, NodePath, PluginObj, TransformOptions } from '@babel/core';
 import type { TemplateBuilder } from '@babel/template';
-import type { ImportDeclaration, TSExportAssignment } from '@babel/types';
+import type { TSExportAssignment } from '@babel/types';
 
 export { codeFrameColumns } from '@babel/code-frame';
 export { declare } from '@babel/helper-plugin-utils';
@@ -140,17 +140,6 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
     // Note: we used to include '@babel/plugin-transform-dynamic-import' to convert async imports
     // into require(), so that pirates can intercept them. With the ESM loader enabled by default,
     // there is no need for this.
-    plugins.push([
-      (): PluginObj => ({
-        name: 'css-to-identity-obj-proxy',
-        visitor: {
-          ImportDeclaration(path: NodePath<ImportDeclaration>) {
-            if (path.node.source.value.match(/\.(css|less|scss)$/))
-              path.remove();
-          }
-        }
-      })
-    ]);
   }
 
   return {
