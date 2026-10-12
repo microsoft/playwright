@@ -220,7 +220,7 @@ export default defineConfig({
 ```
 
 ## property: TestOptions.contrast = %%-context-option-contrast-%%
-* since: v1.50
+* since: v1.63
 
 **Usage**
 
@@ -268,7 +268,7 @@ export default defineConfig({
 ```
 
 ## property: TestOptions.forcedColors = %%-context-option-forcedColors-%%
-* since: v1.50
+* since: v1.63
 
 **Usage**
 
@@ -522,7 +522,7 @@ export default defineConfig({
 ```
 
 ## property: TestOptions.reducedMotion = %%-context-option-reducedMotion-%%
-* since: v1.50
+* since: v1.63
 
 **Usage**
 

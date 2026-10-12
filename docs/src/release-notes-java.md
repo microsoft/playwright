@@ -67,6 +67,7 @@ Kotlin code, can catch missing null checks at compile time.
 
 ### Announcements
 
+* ⚠️ `playwright install firefox-beta` and `playwright install chromium-tip-of-tree` are no longer supported.
 * ⚠️ Ubuntu 20.04 is not supported anymore.
 * 🐧 On Linux arm64, Playwright now downloads the [Chrome for Testing](https://developer.chrome.com/blog/chrome-for-testing) build of Chromium, the same build used on all other platforms.
 

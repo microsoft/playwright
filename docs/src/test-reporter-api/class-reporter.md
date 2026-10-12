@@ -303,7 +303,7 @@ Whether this reporter uses stdio for reporting. When it does not, Playwright Tes
 ## optional async method: Reporter.preprocess
 * since: v1.62
 
-Called after the configuration has been resolved and before [`method: Reporter.onBegin`]. Allows a reporter to mark individual tests as skipped, excluded, fixed or failing.
+Called after the configuration has been resolved and before [`method: Reporter.onBegin`]. Allows a reporter to mark individual tests as skipped, excluded, fixme or failing.
 
 ### param: Reporter.preprocess.params
 * since: v1.62

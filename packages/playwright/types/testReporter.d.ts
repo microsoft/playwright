@@ -232,7 +232,7 @@ export interface Reporter {
   /**
    * Called after the configuration has been resolved and before
    * [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin). Allows a
-   * reporter to mark individual tests as skipped, excluded, fixed or failing.
+   * reporter to mark individual tests as skipped, excluded, fixme or failing.
    * @param params The suite reflects `--project`, `--grep`/`--grep-invert` and `.only` filtering, so it only contains tests that
    * match the current invocation. Setup and dependency projects are readonly and cannot be changed through
    * [TestRun](https://playwright.dev/docs/api/class-testrun).

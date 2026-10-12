@@ -62,6 +62,7 @@ side by side with the aria snapshot, and hovering an aria node highlights it on 
 
 ### Announcements
 
+* ⚠️ `playwright install firefox-beta` and `playwright install chromium-tip-of-tree` are no longer supported.
 * ⚠️ Ubuntu 20.04 is not supported anymore.
 * 🐧 On Linux arm64, Playwright now downloads the [Chrome for Testing](https://developer.chrome.com/blog/chrome-for-testing) build of Chromium, the same build used on all other platforms.
 

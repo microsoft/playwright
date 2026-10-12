@@ -16,7 +16,7 @@ test('basic test', async ({ page, browserName }) => {
 ```
 
 ## property: TestStepInfo.annotations
-* since: v1.58
+* since: v1.63
 - type: <[Array]<[Object]>>
   - `type` <[string]> Annotation type, for example `'skip'`.
   - `description` ?<[string]> Optional description.

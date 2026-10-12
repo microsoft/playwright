@@ -232,6 +232,8 @@ The options object can contain the URL so that only requests with the URL matchi
 
 Setting `update` option to true will create or update the HAR file with the actual network information instead of serving the requests from the HAR file. Use it when creating a test to populate the HAR with real data.
 
+To omit WebSocket frames from the HAR recording, set the `PLAYWRIGHT_HAR_NO_WEBSOCKET_FRAMES` environment variable.
+
 ####
 * langs: js
 

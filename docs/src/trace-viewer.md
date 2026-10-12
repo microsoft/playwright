@@ -127,7 +127,7 @@ Available options to record a trace:
 
 You can also use `trace: 'retain-on-failure'` if you do not enable retries but still want traces for failed tests.
 
-There are more granular options available, see [`property: TestOptions.trace`].
+There are more granular options available, see [`property: TestOptions.trace`]. To omit WebSocket frames from trace recordings, set the `PLAYWRIGHT_TRACING_NO_WEBSOCKET_FRAMES` environment variable.
 
 If you are not using Playwright as a Test Runner, use the [`property: BrowserContext.tracing`] API instead.
 

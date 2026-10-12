@@ -237,7 +237,7 @@ await test.step('Login', async () => {
 
 Reporters receive them via [`property: TestStep.subtitle`] and [`property: TestStep.params`]. For Playwright API
 steps, the subtitle is the locator or the navigation url — for example, `Click` with subtitle `getByRole('button')`.
-Both are rendered next to the step title in the trace viewer and the HTML report.
+Both are rendered next to the step title in the trace viewer, while the HTML report shows the subtitle. Params are available to custom reporters.
 
 ### 🖼️ Aria and screen snapshots in traces
 
@@ -295,6 +295,7 @@ const user = await response.json(); // typed as User
 ### Announcements
 
 * ⚠️ The experimental `@playwright/experimental-ct-react`, `@playwright/experimental-ct-react17` and `@playwright/experimental-ct-vue` packages will no longer be updated. Follow the [migration guide](./test-components.md#migration-from-the-experimental-packages) to move to the stories model introduced in 1.62. Story ids passed to [`method: Fixtures.mount`] can now be typed through the generated `Stories` registry.
+* ⚠️ `npx playwright install firefox-beta` and `npx playwright install chromium-tip-of-tree` are no longer supported.
 * ⚠️ Ubuntu 20.04 is not supported anymore.
 * 🐧 On Linux arm64, Playwright now downloads the [Chrome for Testing](https://developer.chrome.com/blog/chrome-for-testing) build of Chromium, the same build used on all other platforms.
 
@@ -365,7 +366,7 @@ where quality `100` (the default) is lossless and lower values use lossy compres
 
 New [`method: Reporter.preprocess`] hook runs after the configuration is resolved and before
 [`method: Reporter.onBegin`], letting a reporter mark individual tests as skipped, excluded,
-fixed, or failing through a [TestRun] object:
+fixme, or failing through a [TestRun] object:
 
 ```js
 class MyReporter {
@@ -425,9 +426,15 @@ export default defineConfig({
 });
 ```
 
+#### Miscellaneous
+
+- `PLAYWRIGHT_HAR_NO_WEBSOCKET_FRAMES`: when set, HAR recording omits WebSocket frames.
+- `PLAYWRIGHT_TRACING_NO_WEBSOCKET_FRAMES`: when set, tracing omits WebSocket frames.
+
 ### Announcements
 
 * 📋 The clipboard is now isolated from the operating system in headless mode, so tests that use `navigator.clipboard` no longer read or overwrite the clipboard of the machine running them.
+* ⚠️ Node.js 18 is not supported anymore, Node.js 20 is the new minimum.
 * ⚠️ Debian 11 is not supported anymore.
 
 ### Browser Versions
