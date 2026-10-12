@@ -1226,8 +1226,11 @@ test('should allow test.extend.ts and test.ts files', async ({ runInlineTest }) 
   expect(result.passed).toBe(1);
 });
 
-test('should remove import css', async ({ runInlineTest }) => {
+test('should load css imports as empty modules', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    'index.css': `
+      body { color: red; }
+    `,
     'a.test.ts': `
       import './index.css';
       import foo from './index.css';

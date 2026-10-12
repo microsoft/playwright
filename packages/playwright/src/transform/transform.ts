@@ -209,6 +209,12 @@ export function resolveHook(filename: string, specifier: string): string | undef
   }
 }
 
+const kStyleExtensions = ['.css', '.less', '.scss'];
+
+export function isStyleFile(filename: string): boolean {
+  return kStyleExtensions.includes(path.extname(filename));
+}
+
 export function shouldTransform(filename: string): boolean {
   if (_externalMatcher(filename))
     return false;
@@ -335,6 +341,10 @@ function installCJSHooks() {
   addHook((code, filename) => {
     return transformHook(code, filename).code;
   }, shouldTransform, ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts', '.cjs', '.cts']);
+
+  const extensions = (Module as any)._extensions;
+  for (const ext of kStyleExtensions)
+    extensions[ext] = () => {};
 }
 
 const collectCJSDependencies = (module: Module, dependencies: Set<string>) => {
