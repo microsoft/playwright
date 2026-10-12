@@ -1244,6 +1244,26 @@ test('should load css imports as empty modules', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
+test('should load css imports as empty modules in esm', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'index.css': `
+      body { color: red; }
+    `,
+    'a.test.ts': `
+      import './index.css';
+      import styles from './index.css';
+
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {
+        expect(styles).toEqual({});
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should dynamically import re-exported cjs namespace', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35812' },
 }, async ({ runInlineTest }) => {
