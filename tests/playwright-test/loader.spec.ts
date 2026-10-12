@@ -1244,19 +1244,37 @@ test('should load css imports as empty modules', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('should load css imports as empty modules in esm', async ({ runInlineTest }) => {
+test('should load css imports as empty modules in esm', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43295' },
+}, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'package.json': `{ "type": "module" }`,
     'index.css': `
       body { color: red; }
     `,
+    // Extensions Playwright does not transform are left to the loaders registered in the config.
+    'playwright.config.ts': `
+      import { register } from 'node:module';
+      register('./txt-loader.mjs', import.meta.url);
+      export default {};
+    `,
+    'txt-loader.mjs': `
+      export async function load(url, context, nextLoad) {
+        if (!url.endsWith('.txt'))
+          return nextLoad(url, context);
+        return { format: 'module', source: 'export default "hello"', shortCircuit: true };
+      }
+    `,
+    'hello.txt': `hello`,
     'a.test.ts': `
       import './index.css';
       import styles from './index.css';
+      import text from './hello.txt';
 
       import { test, expect } from '@playwright/test';
       test('pass', async () => {
         expect(styles).toEqual({});
+        expect(text).toBe('hello');
       });
     `,
   });
@@ -1494,35 +1512,4 @@ test('preflight should survive faulty ESM loader ahead of playwright', {
   expect(result.passed).toBe(1);
   expect(result.output).toContain('Failed to load preflight');
   expect(result.output).toContain('what the heck is preflight');
-});
-
-test('should let a registered loader load files with unknown extensions', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43295' },
-}, async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.mjs': `
-      import { register } from 'node:module';
-      register('./txt-loader.mjs', import.meta.url);
-      export default {};
-    `,
-    'txt-loader.mjs': `
-      import fs from 'node:fs';
-      export async function load(url, context, nextLoad) {
-        if (!url.endsWith('.txt'))
-          return nextLoad(url, context);
-        const text = fs.readFileSync(new URL(url), 'utf-8');
-        return { format: 'module', source: 'export default ' + JSON.stringify(text), shortCircuit: true };
-      }
-    `,
-    'hello.txt': `# Hello world`,
-    'a.spec.mjs': `
-      import { test, expect } from '@playwright/test';
-      import text from './hello.txt';
-      test('pass', () => {
-        expect(text).toBe('# Hello world');
-      });
-    `,
-  });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
 });
