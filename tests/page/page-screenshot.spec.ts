@@ -452,6 +452,15 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('white.jpg');
   });
 
+  it('path option should detect uppercase extension', async ({ page, server }, testInfo) => {
+    await page.setViewportSize({ width: 300, height: 300 });
+    await page.goto(server.EMPTY_PAGE);
+    const outputPath = testInfo.outputPath('screenshot.JPG');
+    const screenshot = await page.screenshot({ omitBackground: true, path: outputPath });
+    expect(await fs.promises.readFile(outputPath)).toMatchSnapshot('white.jpg');
+    expect(screenshot).toMatchSnapshot('white.jpg');
+  });
+
   it('path option should throw for unsupported mime type', async ({ page }) => {
     const error = await page.screenshot({ path: 'file.txt' }).catch(e => e);
     expect(error.message).toContain('path: unsupported mime type "text/plain"');
