@@ -349,6 +349,19 @@ it('should click links which cause navigation', async ({ page, server }) => {
   await page.click('a');
 });
 
+it('should not wait for navigation after clicking a link answered with 204', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43279' },
+}, async ({ page, server }) => {
+  server.setRoute('/204', (req, res) => {
+    res.statusCode = 204;
+    res.end();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<a href="${server.PREFIX}/204">link</a>`);
+  await page.click('a', { timeout: 5000 });
+  expect(page.url()).toBe(server.EMPTY_PAGE);
+});
+
 it('should click the button inside an iframe', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<div style="width:100px;height:100px">spacer</div>');
