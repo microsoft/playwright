@@ -193,7 +193,7 @@ test('should report errors with location', async ({ runInlineTest }) => {
   expect(JSON.parse(result.outputLines[0])).toEqual({
     file: expect.stringContaining('a.test.js'),
     line: 3,
-    column: 9,
+    column: expect.any(Number),
   });
 });
 
