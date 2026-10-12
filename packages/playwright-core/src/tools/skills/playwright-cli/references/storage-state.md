@@ -99,6 +99,9 @@ playwright-cli cookie-set remember_me token123 --expires=1893456000
 
 ```bash
 playwright-cli cookie-delete session_id
+
+# Only on one domain, other domains keep their session_id
+playwright-cli cookie-delete session_id --domain=example.com
 ```
 
 ### Clear All Cookies

@@ -128,17 +128,21 @@ const cookieDelete = defineTool({
   schema: {
     name: 'browser_cookie_delete',
     title: 'Delete cookie',
-    description: 'Delete a specific cookie',
+    description: 'Delete a specific cookie (optionally only on a given domain/path)',
     inputSchema: z.object({
       name: z.string().describe('Cookie name to delete'),
+      domain: z.string().optional().describe('Only delete the cookie on this domain'),
+      path: z.string().optional().describe('Only delete the cookie on this path'),
     }),
     type: 'action',
   },
 
   handle: async (context, params, response) => {
     const browserContext = await context.currentBrowserContext();
-    await browserContext.clearCookies({ name: params.name });
-    response.addCode(`await page.context().clearCookies({ name: ${escapeWithQuotes(params.name)} });`);
+    const filter = { name: params.name, domain: params.domain, path: params.path };
+    await browserContext.clearCookies(filter);
+    const options = Object.entries(filter).filter(([, value]) => value !== undefined).map(([key, value]) => `${key}: ${escapeWithQuotes(value!)}`);
+    response.addCode(`await page.context().clearCookies({ ${options.join(', ')} });`);
   },
 });
 
