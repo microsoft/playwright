@@ -235,7 +235,7 @@ const SnapshotWrapper: React.FunctionComponent<React.PropsWithChildren<{
   };
 
   const renderedBrowserFrameSize = {
-    width: Math.max(snapshotContainerSize.width, 480),
+    width: Math.max(snapshotContainerSize.width, 320),
     height: Math.max(snapshotContainerSize.height + windowHeaderHeight, 320),
   };
 
