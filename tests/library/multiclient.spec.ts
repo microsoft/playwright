@@ -419,3 +419,26 @@ test('should stop tracing upon disconnect', async ({ twoPages, trace }) => {
 
   await pageB.context().tracing.start();
 });
+
+test('should not deliver an action buffered before the second recording started', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43282' },
+}, async ({ twoPages }) => {
+  const { pageA, pageB } = twoPages;
+  await pageA.setContent(`<button>Before</button><button>After</button>`);
+
+  const recorder = () => {
+    const selectors: string[] = [];
+    return { selectors, actionAdded: (page, action) => selectors.push(action.selector), actionUpdated: () => {}, signalAdded: () => {} };
+  };
+  const recorderA = recorder();
+  const recorderB = recorder();
+  await (pageA.context() as any)._startRecording({}, recorderA);
+  await pageA.getByRole('button', { name: 'Before' }).click();
+  await (pageB.context() as any)._startRecording({}, recorderB);
+  await (pageA.context() as any)._stopRecording();
+  await pageB.getByRole('button', { name: 'After' }).click();
+  await (pageB.context() as any)._stopRecording();
+
+  expect(recorderA.selectors).toEqual(['internal:role=button[name="Before"i]']);
+  expect(recorderB.selectors).toEqual(['internal:role=button[name="After"i]']);
+});
