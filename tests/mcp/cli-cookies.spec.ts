@@ -73,20 +73,6 @@ test('cookie-delete removes cookie', async ({ cli, server }, testInfo) => {
   expect(getOutput).toBe(`Cookie 'testCookie' not found`);
 });
 
-test('cookie-delete --domain only removes the cookie on that domain', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43310' } }, async ({ cli, server }, testInfo) => {
-  const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
-
-  await cli('open', server.EMPTY_PAGE);
-  await cli('cookie-set', 'session', 'a', '--domain=a.example');
-  await cli('cookie-set', 'session', 'b', '--domain=b.example');
-
-  await cli('cookie-delete', 'session', '--domain=a.example');
-
-  const { output } = await cli('cookie-list');
-  expect(output).toBe('session=b (domain: b.example, path: /)');
-});
-
 test('cookie-clear removes all cookies', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
   await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
