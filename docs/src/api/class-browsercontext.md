@@ -1574,7 +1574,7 @@ OPFS is currently not supported in ephemeral WebKit contexts.
 :::
 
 ### option: BrowserContext.storageState.credentials
-* since: v1.61
+* since: v1.62
 - `credentials` ?<boolean>
 
 Set to `true` to include the context's virtual WebAuthn [`property: BrowserContext.credentials`] (passkeys) in the storage
