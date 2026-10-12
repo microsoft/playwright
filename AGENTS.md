@@ -88,6 +88,13 @@ npm run ctest-mcp snapshot                             # By file name part
 
 **Decision rule**: Does the test need `browser`/`browserType`/`context` → `tests/library/`. Just needs `page` + `server` → `tests/page/`.
 
+### Test Scope
+
+Keep tests minimal.
+
+- **New features**: cover the mainstream scenario and the important edge cases only. Do not create matrices of tests for every scenario, option, or aspect.
+- **Regressions**: generalize the provided regression cases into meaningful tests, and stop there. Do not add more tests around them.
+
 ## DEPS System
 
 Import boundaries are enforced via `DEPS.list` files (52+ across the repo), checked by `npm run flint`.
