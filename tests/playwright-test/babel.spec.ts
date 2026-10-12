@@ -110,6 +110,7 @@ test('should treat enums equally', async ({ runInlineTest }) => {
 test('should be able to access |this| inside class properties', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21794' });
   const result = await runInlineTest({
+    'tsconfig.json': `{ "compilerOptions": { "useDefineForClassFields": false } }`,
     'example.spec.ts': `
       import { test, expect } from '@playwright/test';
 
@@ -126,6 +127,45 @@ test('should be able to access |this| inside class properties', async ({ runInli
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+for (const [compilerOptions, define] of [
+  [{}, true],
+  [{ target: 'ES2022' }, true],
+  [{ target: 'ES2021' }, false],
+  [{ target: 'ES2021', useDefineForClassFields: true }, true],
+  [{ target: 'ESNext', useDefineForClassFields: false }, false],
+] as const) {
+  test(`should ${define ? 'define' : 'assign'} class fields with ${JSON.stringify(compilerOptions)}`, async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'tsconfig.json': JSON.stringify({ compilerOptions }),
+      'example.spec.ts': `
+        import { test, expect } from '@playwright/test';
+
+        class Base {
+          redeclared = 'base';
+          setterCalls: string[] = [];
+          set overridden(value: string) { this.setterCalls.push(value); }
+        }
+
+        class Derived extends Base {
+          redeclared: string;
+          overridden = 'derived';
+          fromParameter = this.parameter + '-field';
+          constructor(private parameter: string) { super(); }
+        }
+
+        test('works', () => {
+          const derived = new Derived('parameter');
+          expect(derived.redeclared).toBe(${define ? 'undefined' : `'base'`});
+          expect(derived.setterCalls).toEqual(${define ? '[]' : `['derived']`});
+          expect(derived.fromParameter).toBe(${define ? `'undefined-field'` : `'parameter-field'`});
+        });
+      `,
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+  });
+}
 
 test('should work with |const| Type Parameters', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21900' });
