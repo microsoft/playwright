@@ -31,8 +31,8 @@ export function loadEsbuild(): Esbuild {
   }
 }
 
-export function esbuildTransform(esbuild: Esbuild, code: string, filename: string, isModule: boolean, jsx: JsxOptions | undefined): { code: string, map: any } {
-  const options = transformOptions(filename, isModule, jsx);
+export function esbuildTransform(esbuild: Esbuild, code: string, filename: string, isModule: boolean, useDefineForClassFields: boolean, jsx: JsxOptions | undefined): { code: string, map: any } {
+  const options = transformOptions(filename, isModule, useDefineForClassFields, jsx);
   let result: esbuild.TransformResult;
   try {
     result = transformSync(esbuild, code, options);
@@ -42,7 +42,7 @@ export function esbuildTransform(esbuild: Esbuild, code: string, filename: strin
   return { code: result.code, map: JSON.parse(result.map) };
 }
 
-function transformOptions(filename: string, isModule: boolean, jsx: JsxOptions | undefined): esbuild.TransformOptions {
+function transformOptions(filename: string, isModule: boolean, useDefineForClassFields: boolean, jsx: JsxOptions | undefined): esbuild.TransformOptions {
   const ext = path.extname(filename);
   const jsxMode = jsx?.jsx ?? 'react-jsx';
   return {
@@ -59,7 +59,7 @@ function transformOptions(filename: string, isModule: boolean, jsx: JsxOptions |
     jsxImportSource: jsx?.jsxImportSource,
     tsconfigRaw: {
       compilerOptions: {
-        useDefineForClassFields: false,
+        useDefineForClassFields,
         alwaysStrict: true,
       },
     },

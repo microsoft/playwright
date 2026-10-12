@@ -242,7 +242,7 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
     return { code: cachedCode, serializedCache };
 
   if (esbuild) {
-    const { code, map } = esbuildTransform(esbuild, originalCode, filename, !!moduleUrl, jsx);
+    const { code, map } = esbuildTransform(esbuild, originalCode, filename, !!moduleUrl, useDefineForClassFields, jsx);
     const added = addToCache!(code, map);
     return { code, serializedCache: added.serializedCache };
   }
