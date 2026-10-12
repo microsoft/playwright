@@ -234,8 +234,11 @@ const SnapshotWrapper: React.FunctionComponent<React.PropsWithChildren<{
     height: snapshotInfo.viewport.height,
   };
 
+  // The frame keeps a minimum size so its header stays readable around tiny snapshots. The minimum
+  // width fits the narrowest phones: a mobile snapshot fills the frame instead of leaving a
+  // checkerboard strip beside it.
   const renderedBrowserFrameSize = {
-    width: Math.max(snapshotContainerSize.width, 480),
+    width: Math.max(snapshotContainerSize.width, 320),
     height: Math.max(snapshotContainerSize.height + windowHeaderHeight, 320),
   };
 

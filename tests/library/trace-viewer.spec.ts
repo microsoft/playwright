@@ -496,6 +496,24 @@ test('should have correct snapshot size', async ({ showTraceViewer }, testInfo) 
   await expect(traceViewer.snapshotContainer).toHaveCSS('height', '600px');
 });
 
+test('should not pad a phone-sized snapshot with a checkerboard', async ({ page, runAndTrace }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setViewportSize({ width: 390, height: 664 });
+    await page.setViewportSize({ width: 200, height: 300 });
+  });
+  const browserFrame = traceViewer.page.locator('.snapshot-container');
+
+  await traceViewer.selectAction('Set viewport', 0);
+  await traceViewer.selectSnapshot('After');
+  await expect(traceViewer.snapshotContainer).toHaveCSS('width', '390px');
+  await expect(browserFrame).toHaveCSS('width', '390px');
+
+  await traceViewer.selectAction('Set viewport', 1);
+  await traceViewer.selectSnapshot('After');
+  await expect(traceViewer.snapshotContainer).toHaveCSS('width', '200px');
+  await expect(browserFrame).toHaveCSS('width', '320px');
+});
+
 test('should have correct stack trace', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
 
