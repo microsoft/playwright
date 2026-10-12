@@ -79,6 +79,31 @@ test('browser_cookie_set and browser_cookie_get', async ({ startClient, server }
   });
 });
 
+test('browser_cookie_set without domain on a blank page asks for a domain', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43309' } }, async ({ startClient }) => {
+  const { client } = await startClient({
+    config: { capabilities: ['storage'] },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_cookie_set',
+    arguments: { name: 'testCookie', value: 'testValue' },
+  })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining(`Cannot infer the cookie domain from the page URL "about:blank", specify "domain".`),
+  });
+
+  await client.callTool({
+    name: 'browser_cookie_set',
+    arguments: { name: 'testCookie', value: 'testValue', domain: 'example.com' },
+  });
+  expect(await client.callTool({
+    name: 'browser_cookie_get',
+    arguments: { name: 'testCookie' },
+  })).toHaveResponse({
+    result: expect.stringContaining('testCookie=testValue (domain: example.com'),
+  });
+});
+
 test('browser_cookie_list shows cookies', async ({ startClient, server }) => {
   const { client } = await startClient({
     config: { capabilities: ['storage'] },
