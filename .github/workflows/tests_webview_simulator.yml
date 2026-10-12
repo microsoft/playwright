@@ -81,7 +81,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Boot iOS Simulator
-        uses: futureware-tech/simulator-action@e89aa8f93d3aec35083ff49d2854d07f7186f7f5 # v5
+        uses: futureware-tech/simulator-action@c768f52966d5f70335ec77881f9806b24a52f80e # v6
         with:
           # Per wiki/Devices-macos-15.md only iPhone 16/17 series ship pre-installed; iPhone 15 isn't.
           model: 'iPhone 16'
