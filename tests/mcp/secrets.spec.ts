@@ -189,3 +189,28 @@ test('empty secret value is ignored', async ({ startClient, server }) => {
     snapshot: expect.stringContaining(`<secret>X-PASSWORD</secret>`),
   });
 });
+
+test('redacts url parameter values', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1791' } }, async ({ startClient, server }) => {
+  const { client } = await startClient({
+    args: ['--redact-url-params=code,access_token'],
+  });
+
+  server.setRedirect('/login', '/app?code=abc123&state=s1#access_token=jwt.payload.sig&token_type=bearer');
+  server.setContent('/app?code=abc123&state=s1', `<title>App</title><a href="/next?code=def456">Next</a>`, 'text/html');
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX + '/login' },
+  })).toHaveResponse({
+    page: `- Page URL: ${server.PREFIX}/app?code=<redacted>&state=s1#access_token=<redacted>&token_type=bearer
+- Page Title: App`,
+    snapshot: expect.stringContaining(`/url: /next?code=<redacted>`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'list' },
+  })).toHaveResponse({
+    result: `- 0: (current) [App](${server.PREFIX}/app?code=<redacted>&state=s1#access_token=<redacted>&token_type=bearer)`,
+  });
+});

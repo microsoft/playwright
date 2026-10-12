@@ -19,7 +19,7 @@ import os from 'os';
 import path from 'path';
 
 import debug from 'debug';
-import { escapeWithQuotes } from '@isomorphic/stringUtils';
+import { escapeRegExp, escapeWithQuotes } from '@isomorphic/stringUtils';
 import { disposeAll } from '@isomorphic/disposable';
 import { eventsHelper } from '@utils/eventsHelper';
 import { isPathInside, isSystemDirectory, isWritable, resolveSymlinks, sanitizeForFilePath } from '@utils/fileUtils';
@@ -53,6 +53,7 @@ export type ContextConfig = {
   outputMaxSize?: number;
   saveSession?: boolean;
   secrets?: Record<string, string>;
+  redactUrlParams?: string[];
   sharedBrowserContext?: boolean;
   snapshot?: {
     mode?: 'full' | 'none';
@@ -132,6 +133,7 @@ export class Context {
   private _disposables: Disposable[] = [];
 
   private _webmcpToolsSignature = '';
+  private _redactUrlParamsRegex: RegExp | undefined;
 
   private _runningToolName: string | undefined;
   private _pendingUnhandledRejections: unknown[] = [];
@@ -149,6 +151,11 @@ export class Context {
     this._defaultBrowserContext = browserContext;
     if (this.config.testIdAttribute)
       playwright.selectors.setTestIdAttribute(this.config.testIdAttribute);
+    const redactUrlParams = this.config.redactUrlParams?.filter(Boolean);
+    // Matches `name=value` after `?`, `&` or `#`, so that both query and fragment parameters are covered.
+    // The value ends where a URL would end inside markdown, YAML or JSON.
+    if (redactUrlParams?.length)
+      this._redactUrlParamsRegex = new RegExp(`([?&#](?:${redactUrlParams.map(escapeRegExp).join('|')})=)[^&#\\s"'<>()\\[\\]\`\\\\]+`, 'gi');
     testDebug('create context');
     process.on('unhandledRejection', this._onUnhandledRejection);
   }
@@ -511,6 +518,8 @@ export class Context {
         continue;
       text = text.replaceAll(secretValue, `<secret>${secretName}</secret>`);
     }
+    if (this._redactUrlParamsRegex)
+      text = text.replace(this._redactUrlParamsRegex, '$1<redacted>');
     return text;
   }
 }

@@ -160,6 +160,14 @@ export type Config = {
   secrets?: Record<string, string>;
 
   /**
+   * Names of URL query and fragment parameters, for example `access_token` or `code`, whose values
+   * are replaced with `<redacted>` in the tool responses. Use it for session and grant values that
+   * are minted at runtime and cannot be listed in `secrets`. Like `secrets`, it is a convenience
+   * and not a security feature.
+   */
+  redactUrlParams?: string[];
+
+  /**
    * The directory for automatically named output files, for example a screenshot taken without an
    * explicit file name. Files with an explicit name are resolved against the workspace root instead
    * and are not affected by this option.
