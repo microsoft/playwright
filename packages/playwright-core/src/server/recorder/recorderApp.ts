@@ -366,6 +366,8 @@ export class ProgrammaticRecorderApp {
     if ((context as any)[recorderAppSymbol])
       throw new Error('Recorder is shown, close it before starting a recording.');
     const recorder = await Recorder.forContext(context, { language: params.language, mode: 'recording', recorderMode: 'api', omitCallTracking: true });
+    // Deliver the buffered action to the existing recordings only, it happened before this one started.
+    recorder.flushPendingActions();
     const app = new ProgrammaticRecorderApp(context, recorder, params, onEvent);
     programmaticRecorderApps(context).add(app);
     await recorder.setMode('recording');
