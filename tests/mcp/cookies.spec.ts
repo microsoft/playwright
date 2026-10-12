@@ -147,6 +147,51 @@ test('browser_cookie_list filters by domain', async ({ startClient, server }) =>
   });
 });
 
+test('browser_cookie_list domain filter matches the domain and its subdomains', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43308' } }, async ({ startClient, server }) => {
+  const { client } = await startClient({
+    config: { capabilities: ['storage'] },
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.EMPTY_PAGE },
+  });
+
+  for (const [name, domain] of [['apex', 'example.com'], ['sub', 'sub.example.com'], ['other', 'my-example.com']]) {
+    await client.callTool({
+      name: 'browser_cookie_set',
+      arguments: { name, value: 'value', domain },
+    });
+  }
+
+  for (const domain of ['example.com', 'EXAMPLE.COM', '.example.com']) {
+    const result = await client.callTool({
+      name: 'browser_cookie_list',
+      arguments: { domain },
+    });
+    expect(result).toHaveResponse({
+      result: expect.stringContaining('apex=value'),
+    });
+    expect(result).toHaveResponse({
+      result: expect.stringContaining('sub=value'),
+    });
+    expect(result).toHaveResponse({
+      result: expect.not.stringContaining('other=value'),
+    });
+  }
+
+  const subResult = await client.callTool({
+    name: 'browser_cookie_list',
+    arguments: { domain: 'sub.example.com' },
+  });
+  expect(subResult).toHaveResponse({
+    result: expect.stringContaining('sub=value'),
+  });
+  expect(subResult).toHaveResponse({
+    result: expect.not.stringContaining('apex=value'),
+  });
+});
+
 test('browser_cookie_get returns not found for missing cookie', async ({ startClient, server }) => {
   const { client } = await startClient({
     config: { capabilities: ['storage'] },

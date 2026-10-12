@@ -36,8 +36,13 @@ const cookieList = defineTool({
     const browserContext = await context.currentBrowserContext();
     let cookies = await browserContext.cookies();
 
-    if (params.domain)
-      cookies = cookies.filter(c => c.domain.includes(params.domain!));
+    if (params.domain) {
+      const domain = normalizeDomain(params.domain);
+      cookies = cookies.filter(c => {
+        const cookieDomain = normalizeDomain(c.domain);
+        return cookieDomain === domain || cookieDomain.endsWith('.' + domain);
+      });
+    }
     if (params.path)
       cookies = cookies.filter(c => c.path.startsWith(params.path!));
 
@@ -159,6 +164,10 @@ const cookieClear = defineTool({
     response.addCode(`await page.context().clearCookies();`);
   },
 });
+
+function normalizeDomain(domain: string): string {
+  return domain.replace(/^\./, '').toLowerCase();
+}
 
 export default [
   cookieList,
