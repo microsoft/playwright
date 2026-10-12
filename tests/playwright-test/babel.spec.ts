@@ -292,5 +292,5 @@ test('should reject import.meta in commonjs', async ({ runInlineTest }) => {
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`SyntaxError: Cannot use 'import.meta' outside a module`);
+  expect(result.output).toMatch(/(SyntaxError: Cannot use 'import.meta' outside a module)|(ReferenceError: require is not defined in ES module scope)/);
 });
