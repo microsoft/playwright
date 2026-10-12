@@ -419,6 +419,22 @@ it('should keep the name when the contributing wrapper collapses into repeating 
   `);
 });
 
+it('should keep the name when an icon wrapper only contributes whitespace to it', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43315' } }, async ({ page }) => {
+  const icon = `<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"></path></svg>`;
+  const styledIcon = `<svg aria-hidden="true" viewBox="0 0 24 24" style="width: 1em; height: 1em; display: inline-block"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"></path></svg>`;
+  await page.setContent(`
+    <button><span>\n  ${icon}</span>New survey</button>
+    <button><span>${styledIcon}</span>Edit survey</button>
+  `);
+
+  const snapshot = await snapshotForAI(page);
+  expect(snapshot).toContainYaml(`
+    - generic [active] [ref=e1]:
+      - button "New survey" [ref=e2]
+      - button "Edit survey" [ref=e6]
+  `);
+});
+
 it('should keep names not derived from printed nodes', async ({ page }) => {
   await page.setContent(`
     <h3 aria-label="Clipboard API issue"><a style="cursor: pointer" href="/issues/1">Clipboard API</a></h3>
