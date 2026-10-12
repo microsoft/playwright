@@ -1495,3 +1495,34 @@ test('preflight should survive faulty ESM loader ahead of playwright', {
   expect(result.output).toContain('Failed to load preflight');
   expect(result.output).toContain('what the heck is preflight');
 });
+
+test('should let a registered loader load files with unknown extensions', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43295' },
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.mjs': `
+      import { register } from 'node:module';
+      register('./txt-loader.mjs', import.meta.url);
+      export default {};
+    `,
+    'txt-loader.mjs': `
+      import fs from 'node:fs';
+      export async function load(url, context, nextLoad) {
+        if (!url.endsWith('.txt'))
+          return nextLoad(url, context);
+        const text = fs.readFileSync(new URL(url), 'utf-8');
+        return { format: 'module', source: 'export default ' + JSON.stringify(text), shortCircuit: true };
+      }
+    `,
+    'hello.txt': `# Hello world`,
+    'a.spec.mjs': `
+      import { test, expect } from '@playwright/test';
+      import text from './hello.txt';
+      test('pass', () => {
+        expect(text).toBe('# Hello world');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

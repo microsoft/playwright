@@ -19,7 +19,7 @@ import url from 'url';
 
 import { addToCompilationCache, currentFileDepsCollector, serializeCompilationCache, startCollectingFileDeps, stopCollectingFileDeps } from './compilationCache';
 import { PortTransport } from './portTransport';
-import { isStyleFile, resolveHook, setSingleTSConfig, setTransformConfig, shouldTransform, transformHook } from './transform';
+import { hasTransformedExtension, isStyleFile, resolveHook, setSingleTSConfig, setTransformConfig, shouldTransform, transformHook } from './transform';
 import { fileIsModule } from '../util';
 
 // Before each import of the ESM module, a preflight request with the .esm.preflight extension is issued.
@@ -82,6 +82,10 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
 
   const originalModuleUrl = isPreflight ? moduleUrl.slice(0, -esmPreflightExtension.length) : moduleUrl;
   const originalFilename = isPreflight ? url.fileURLToPath(originalModuleUrl) : filename;
+
+  // Bail for files that registered loaders should handle.
+  if (!hasTransformedExtension(originalFilename))
+    return defaultLoad(moduleUrl, context, defaultLoad);
 
   const code = fs.readFileSync(originalFilename, 'utf-8');
   const transformed = transformHook(code, originalFilename, originalModuleUrl);

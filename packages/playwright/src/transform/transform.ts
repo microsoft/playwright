@@ -229,6 +229,14 @@ export function shouldTransform(filename: string): boolean {
   return !cc.belongsToNodeModules(filename);
 }
 
+const kTransformedExtensions = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts', '.cjs', '.cts'];
+
+// Files with other extensions are left to Node.js and the loaders registered by the user.
+export function hasTransformedExtension(filename: string): boolean {
+  const extension = path.extname(filename);
+  return !extension || kTransformedExtensions.includes(extension);
+}
+
 export function transformHook(originalCode: string, filename: string, moduleUrl?: string): { code: string, serializedCache?: any } {
   const hasPreprocessor =
     process.env.PW_TEST_SOURCE_TRANSFORM &&
@@ -352,7 +360,7 @@ function installCJSHooks() {
 
   addHook((code, filename) => {
     return transformHook(code, filename).code;
-  }, shouldTransform, ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts', '.cjs', '.cts']);
+  }, shouldTransform, kTransformedExtensions);
 
   const extensions = (Module as any)._extensions;
   for (const ext of kStyleExtensions)
