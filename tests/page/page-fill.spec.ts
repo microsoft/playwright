@@ -51,10 +51,17 @@ it('should fill different input types', async ({ page, server }) => {
   }
 });
 
-it('should fill range input', async ({ page }) => {
+it('should fill range input', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43328' },
+}, async ({ page }) => {
   await page.setContent('<input type=range min=0 max=100 value=50>');
   await page.fill('input', '42');
   expect(await page.$eval('input', input => input.value)).toBe('42');
+  // Valid numbers that the browser may serialize differently.
+  for (const [value, expected] of [['42.0', 42], ['1e1', 10]] as const) {
+    await page.fill('input', value);
+    expect(await page.$eval('input', (input: HTMLInputElement) => input.valueAsNumber)).toBe(expected);
+  }
 });
 
 it('should throw on incorrect range value', async ({ page }) => {
