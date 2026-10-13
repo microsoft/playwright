@@ -443,13 +443,18 @@ it.describe('page screenshot', () => {
     expect(await fs.promises.readFile(outputPath)).toMatchSnapshot('screenshot-sanity.png');
   });
 
-  it('path option should detect jpeg', async ({ page, server, isElectron }, testInfo) => {
+  it('path option should detect jpeg', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43323' },
+  }, async ({ page, server, isElectron }, testInfo) => {
     await page.setViewportSize({ width: 300, height: 300 });
     await page.goto(server.EMPTY_PAGE);
     const outputPath = testInfo.outputPath('screenshot.jpg');
     const screenshot = await page.screenshot({ omitBackground: true, path: outputPath });
     expect(await fs.promises.readFile(outputPath)).toMatchSnapshot('white.jpg');
     expect(screenshot).toMatchSnapshot('white.jpg');
+    const upperCasePath = testInfo.outputPath('screenshot.JPG');
+    await page.screenshot({ omitBackground: true, path: upperCasePath });
+    expect(await fs.promises.readFile(upperCasePath)).toMatchSnapshot('white.jpg');
   });
 
   it('path option should throw for unsupported mime type', async ({ page }) => {

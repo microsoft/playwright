@@ -29,7 +29,7 @@ export function getMimeTypeForPath(path: string): string | null {
   const dotIndex = path.lastIndexOf('.');
   if (dotIndex === -1)
     return null;
-  const extension = path.substring(dotIndex + 1);
+  const extension = path.substring(dotIndex + 1).toLowerCase();
   return types.get(extension) || null;
 }
 
