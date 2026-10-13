@@ -407,7 +407,7 @@ test.describe('browser', () => {
     const result = await page.goto(serverURL).catch(e => e);
     if (result instanceof Error) {
       // The server closed the connection with FIN after the TLS handshake.
-      expect(result.message).toMatch(/net::ERR_EMPTY_RESPONSE|NS_ERROR_NET_RESET|Connection terminated unexpectedly|The network connection was lost/);
+      expect(result.message).toMatch(/net::ERR_EMPTY_RESPONSE|NS_ERROR_NET_RESET|Connection terminated unexpectedly|The network connection was lost|Failure when receiving data from the peer/);
     } else {
       // The server reset the connection, which the proxy reports as a client certificate error.
       expect(result.status()).toBe(503);
