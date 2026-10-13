@@ -28,6 +28,9 @@ Tracing:
         screencast: boolean?
         coverage: boolean?
         live: boolean?
+        secrets:
+          type: array?
+          items: NameValue
 
     tracingStartChunk:
       title: Start tracing

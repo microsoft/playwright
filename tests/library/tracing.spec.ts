@@ -421,6 +421,40 @@ test('should record network failures', async ({ context, page, server }, testInf
   expect(requestEvent.snapshot.time).toBeGreaterThanOrEqual(0);
 });
 
+test('should redact secrets', async ({ context, page, server }, testInfo) => {
+  const password = 'password123';
+  server.setRoute('/post', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ password: req.headers['x-secret'] }));
+  });
+
+  await (context.tracing as any).start({ snapshots: true, _secrets: { PASSWORD: password, EMPTY: '' } });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<input>');
+  await page.locator('input').fill(password);
+  await page.evaluate(password => console.log('console ' + password), password);
+  await page.evaluate(async password => {
+    const response = await fetch('/post', { method: 'POST', headers: { 'x-secret': password }, body: 'body ' + password });
+    await response.text();
+  }, password);
+  await page.locator('input').click();
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+
+  const { events, resources, actions } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  for (const [name, buffer] of resources)
+    expect(buffer.includes(password), `resource ${name} contains the secret`).toBe(false);
+
+  expect(actions).toContain(`Fill "<secret>PASSWORD</secret>" locator('input')`);
+  expect(events.filter(e => e.type === 'console').map(e => e.text)).toContain('console <secret>PASSWORD</secret>');
+  const traceFile = [...resources.keys()].find(name => name.endsWith('.trace'))!;
+  expect(resources.get(traceFile)!.toString()).toContain('"__playwright_value_":"<secret>PASSWORD</secret>"');
+  const networkFile = [...resources.keys()].find(name => name.endsWith('.network'))!;
+  expect(resources.get(networkFile)!.toString()).toContain('"x-secret","value":"<secret>PASSWORD</secret>"');
+  const bodies = [...resources.values()].map(buffer => buffer.toString());
+  expect(bodies).toContain('body <secret>PASSWORD</secret>');
+  expect(bodies).toContain('{"password":"<secret>PASSWORD</secret>"}');
+});
+
 test('should recover tracing after a failed stop', async ({ context, page, server }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42423' });
   await context.tracing.start();

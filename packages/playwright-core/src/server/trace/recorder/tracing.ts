@@ -22,6 +22,7 @@ import { getMetainfo } from '@isomorphic/protocolMetainfo';
 import { assert } from '@isomorphic/assert';
 import { monotonicTime } from '@isomorphic/time';
 import { ManualPromise } from '@isomorphic/manualPromise';
+import { redactSecrets, redactSecretsInBuffer, redactSecretsInJSON } from '@isomorphic/secrets';
 import { eventsHelper  } from '@utils/eventsHelper';
 import { createGuid } from '@utils/crypto';
 import { removeFolders  } from '@utils/fileUtils';
@@ -41,6 +42,7 @@ import { isAbortError, nullProgress } from '../../progress';
 
 import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import type { NameValue } from '@isomorphic/types';
+import type { Secrets } from '@isomorphic/secrets';
 import type { RegisteredListener } from '@utils/eventsHelper';
 import type { ConsoleMessage } from '../../console';
 import type { Dialog } from '../../dialog';
@@ -66,10 +68,12 @@ export type TracerOptions = {
   screencast?: boolean;
   coverage?: boolean;
   live?: boolean;
+  secrets?: NameValue[];
 };
 
 type RecordingState = {
   options: TracerOptions,
+  secrets: Secrets,
   traceName: string,
   networkFile: string,
   traceFile: string,
@@ -165,6 +169,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     // Init the state synchronously.
     this._state = {
       options,
+      secrets: Object.fromEntries((options.secrets ?? []).map(({ name, value }) => [name, value])),
       traceName,
       tracesDir,
       traceFile: path.join(tracesDir, traceName + '.trace'),
@@ -636,7 +641,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._pendingHarEntries.delete(entry);
     const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
     const visited = visitTraceEvent(event);
-    this._fs.appendFile(this._state!.networkFile, JSON.stringify(visited) + '\n', true /* flush */);
+    this._fs.appendFile(this._state!.networkFile, redactSecretsInJSON(JSON.stringify(visited), this._state!.secrets) + '\n', true /* flush */);
   }
 
   flushHarEntries() {
@@ -644,7 +649,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     for (const entry of this._pendingHarEntries) {
       const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
       const visited = visitTraceEvent(event);
-      harLines.push(JSON.stringify(visited));
+      harLines.push(redactSecretsInJSON(JSON.stringify(visited), this._state!.secrets));
     }
     this._pendingHarEntries.clear();
     if (harLines.length)
@@ -663,7 +668,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._state!.crossChunkFiles.add(file);
     if (!this._allResources.has(file))
       this._allResources.add(file);
-    this._fs.appendFile(path.join(this._state!.tracesDir, file), text, this._state!.options.live /* flush */);
+    this._fs.appendFile(path.join(this._state!.tracesDir, file), redactSecrets(text, this._state!.secrets), this._state!.options.live /* flush */);
     return file;
   }
 
@@ -794,7 +799,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const visited = visitTraceEvent(event);
     // Do not flush (console) events, they are too noisy, unless we are in ui mode (live).
     const flush = this._state!.options.live || (event.type !== 'event' && event.type !== 'console' && event.type !== 'log');
-    this._fs.appendFile(this._state!.traceFile, JSON.stringify(visited) + '\n', flush);
+    this._fs.appendFile(this._state!.traceFile, redactSecretsInJSON(JSON.stringify(visited), this._state!.secrets) + '\n', flush);
   }
 
   private _appendResource(file: string, buffer: Buffer) {
@@ -802,7 +807,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       return;
     this._allResources.add(file);
     const resourcePath = path.join(this._state!.tracesDir, file);
-    this._fs.writeFile(resourcePath, buffer, true /* skipIfExists */);
+    this._fs.writeFile(resourcePath, redactSecretsInBuffer(buffer, this._state!.secrets), true /* skipIfExists */);
   }
 }
 

@@ -5220,6 +5220,7 @@ export type TracingTracingStartParams = {
   screencast?: boolean,
   coverage?: boolean,
   live?: boolean,
+  secrets?: NameValue[],
 };
 export type TracingTracingStartOptions = {
   name?: string,
@@ -5229,6 +5230,7 @@ export type TracingTracingStartOptions = {
   screencast?: boolean,
   coverage?: boolean,
   live?: boolean,
+  secrets?: NameValue[],
 };
 export type TracingTracingStartResult = void;
 export type TracingTracingStartChunkParams = {

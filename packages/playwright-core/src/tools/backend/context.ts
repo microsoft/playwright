@@ -20,6 +20,7 @@ import path from 'path';
 
 import debug from 'debug';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
+import { redactSecrets } from '@isomorphic/secrets';
 import { disposeAll } from '@isomorphic/disposable';
 import { eventsHelper } from '@utils/eventsHelper';
 import { isPathInside, isSystemDirectory, isWritable, resolveSymlinks, sanitizeForFilePath } from '@utils/fileUtils';
@@ -506,12 +507,7 @@ export class Context {
   }
 
   redactSecrets(text: string): string {
-    for (const [secretName, secretValue] of Object.entries(this.config.secrets ?? {})) {
-      if (!secretValue)
-        continue;
-      text = text.replaceAll(secretValue, `<secret>${secretName}</secret>`);
-    }
-    return text;
+    return redactSecrets(text, this.config.secrets);
   }
 }
 

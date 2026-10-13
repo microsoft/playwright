@@ -3155,6 +3155,7 @@ scheme.TracingTracingStartParams = tObject({
   screencast: tOptional(tBoolean),
   coverage: tOptional(tBoolean),
   live: tOptional(tBoolean),
+  secrets: tOptional(tArray(tType('NameValue'))),
 });
 scheme.TracingTracingStartResult = tOptional(tObject({}));
 scheme.TracingTracingStartChunkParams = tObject({

@@ -30,6 +30,7 @@ export * from './multimap';
 export * from './protocolFormatter';
 export * from './protocolMetainfo';
 export * from './rtti';
+export * from './secrets';
 export * from './semaphore';
 export * from './stringUtils';
 export * from './formatUtils';
