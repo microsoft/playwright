@@ -907,3 +907,23 @@ it('should only include the modal dialog content', { annotation: { type: 'issue'
     - button "Outside"
   `);
 });
+
+it('should snapshot elements with quotes in accessible name', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43346' } }, async ({ page }) => {
+  await page.setContent(`
+    <button>Say "hello"</button>
+    <button>It's 'single'</button>
+    <button>Both "double" and 'single'</button>
+    <button aria-label='Say: "hello"'>Say: "hello"</button>
+    <div role="region" aria-label='Section "1"'>
+      <button>Inner "button"</button>
+    </div>
+  `);
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - button "Say \\"hello\\""
+    - button "It's 'single'"
+    - button "Both \\"double\\" and 'single'"
+    - 'button "Say: \\"hello\\""'
+    - region "Section \\"1\\"":
+      - button "Inner \\"button\\""
+  `);
+});
