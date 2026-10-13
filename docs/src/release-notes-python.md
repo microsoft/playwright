@@ -6,6 +6,111 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.64
+
+### 🧰 WebMCP
+
+New [`property: Page.webmcp`] and [`property: Frame.webmcp`] give access to the tools that a page registers through
+the experimental [WebMCP](https://webmachinelearning.github.io/webmcp/) browser API, so you can test them like
+any other part of your app:
+
+```python
+browser = chromium.launch(args=["--enable-features=WebMCP"])
+page = browser.new_page()
+page.goto("https://example.com")
+
+for tool in page.webmcp.tools():
+    print(tool["name"], tool["description"])
+
+result = page.webmcp.call_tool("add", {"a": 2, "b": 40})
+print(result["content"][0]["text"])  # "42"
+```
+
+[Playwright MCP](./getting-started-mcp.md) also supports WebMCP by default, with page-defined tools offered to the agent as `webmcp_<tool>`. Pass `--no-webmcp` to opt out.
+
+[`playwright-cli`](./getting-started-cli.md) exposes them as well:
+
+```bash
+playwright-cli webmcp-list
+playwright-cli webmcp-call search_catalog --params '{"query":"cats"}'
+```
+
+### 🎬 Better videos
+
+Videos can now be recorded at a custom frame rate, and the decorations for actions are styled with plain CSS:
+
+```python
+page.screencast.start(path="video.webm", size={"width": 1920, "height": 1080}, fps=60)
+page.screencast.show_actions(
+    style={
+        "point": "width: 20px; height: 20px; border-radius: 50%; background: red",
+        "highlight": "outline: 2px solid #333; background: rgba(0, 128, 255, .15)",
+        "title": "font-size: 16px",
+    }
+)
+```
+
+- New [`option: Browser.newContext.recordVideoFps`] option and new [`option: Screencast.start.fps`] option in
+  [`method: Screencast.start`]. Firefox and WebKit currently capture up to 25 frames per second.
+- New [`option: Screencast.showActions.style`] option takes CSS declarations for the `point` marker, the target
+  `highlight` and the action `title`. It replaces the `font_size` option, which is now deprecated.
+- The cursor stays visible at the last action point, survives navigations and travels along a natural, eased path.
+- Videos are encoded with VP9 instead of VP8, which takes less CPU and produces smaller files of the same or better
+  quality.
+- All video options are also available in [Playwright MCP](./getting-started-mcp.md) and [`playwright-cli`](./getting-started-cli.md).
+
+### 🪆 Locator.within()
+
+New [`method: Locator.within`] combines two locators that you already have, reading in the natural order —
+"this button, within that dialog":
+
+```python
+save_button = page.get_by_role("button", name="Save")
+dialog = page.get_by_test_id("settings-dialog")
+
+save_button.within(dialog).click()
+```
+
+Relative locators such as [`method: Locator.nth`] or [`method: Locator.first`] are resolved inside each parent
+separately, which makes column-like queries straightforward:
+
+```python
+# The third cell of every row, not the third cell in the table.
+third_column = page.get_by_role("cell").nth(2).within(page.get_by_role("row"))
+expect(third_column).to_have_text(["Apple", "Banana", "Cherry"])
+```
+
+### New APIs
+
+- New [`method: Page.getByRef`] locates an element by its aria ref, such as `e2`, reported by [`method: Page.ariaSnapshot`] in the `"ai"` mode.
+- New option [`option: Page.content.includeShadow`] in [`method: Page.content`] and [`method: Frame.content`] serializes open shadow roots as [declarative shadow DOM](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM#declaratively_with_html).
+- New option [`option: Credentials.create.signCount`] sets the initial signature counter of a virtual credential. [`method: Credentials.create`] and [`method: Credentials.get`] return the current `sign_count`, and it is saved and restored together with the credentials in the storage state.
+- New [`method: APIRequestContext.addCookies`], [`method: APIRequestContext.cookies`] and [`method: APIRequestContext.clearCookies`] manage cookies of a request context, mirroring the [BrowserContext] methods:
+
+  ```python
+  request.add_cookies(
+      [{"name": "session-id", "value": "42", "url": "https://example.com"}]
+  )
+  print(request.cookies("https://example.com"))
+  request.clear_cookies(name="session-id")
+  ```
+
+### Breaking Changes ⚠️
+
+- Elements inside hidden iframes are considered hidden. Elements inside an iframe that is not visible, for example with `visibility: hidden`, are now considered hidden by actions, [`method: Locator.isVisible`] and [`method: LocatorAssertions.toBeVisible`].
+
+### Browser Versions
+
+- Chromium 156.0.8078.4
+- Mozilla Firefox 157.0
+- WebKit 27.2
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 155
+- Microsoft Edge 155
+
+
 ## Version 1.63
 
 ### 🪟 Locate across frames
