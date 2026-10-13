@@ -190,6 +190,18 @@ it('should work with javascript: iframe', async ({ page, server, browserName }) 
   await page.waitForLoadState('networkidle');
 });
 
+it('should wait for load state of network error page', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43341' },
+}, async ({ page, server, browserName }) => {
+  it.skip(browserName === 'webkit', 'WebKit does not commit an error page.');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<a href="http://localhost:44123/non-existing-url">link</a>`);
+  const navigated = page.waitForEvent('framenavigated');
+  await page.click('a');
+  await navigated;
+  await page.waitForLoadState('load');
+});
+
 it('should work with broken data-url iframe', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<iframe src="data:text/html"></iframe>`, { waitUntil: 'commit' });
