@@ -399,6 +399,7 @@ test('native controls labelled-by', async ({ page }) => {
     <label id="for-button2">BUTTON2</label><button aria-labelledby="for-button2 button2" id="button2">MORE2</button>
     <label id="for-button3" for="button3">BUTTON3</label><button aria-labelledby="for-button3 button3" id="button3">MORE3</button>
     <label id="for-button4" for="button4">BUTTON4</label><button aria-labelledby="for-button4" id="button4">MORE4</button>
+    <label id="for-button5">BUTTON5</label><button aria-labelledby="for-button5\n\tbutton5" id="button5">MORE5</button>
 
     <label id="for-textarea1" for="textarea1">TEXTAREA1</label><textarea aria-labelledby="for-textarea1 textarea1" id="textarea1" placeholder="MORE1">MORE2</textarea>
   `);
@@ -413,6 +414,7 @@ test('native controls labelled-by', async ({ page }) => {
   expect.soft(await getNameAndRole(page, '#button2')).toEqual({ role: 'button', name: 'BUTTON2 MORE2' });
   expect.soft(await getNameAndRole(page, '#button3')).toEqual({ role: 'button', name: 'BUTTON3 MORE3' });
   expect.soft(await getNameAndRole(page, '#button4')).toEqual({ role: 'button', name: 'BUTTON4' });
+  expect.soft(await getNameAndRole(page, '#button5')).toEqual({ role: 'button', name: 'BUTTON5 MORE5' });
   expect.soft(await getNameAndRole(page, '#textarea1')).toEqual({ role: 'textbox', name: 'TEXTAREA1 MORE2' });
 });
 

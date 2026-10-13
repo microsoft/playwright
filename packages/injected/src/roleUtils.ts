@@ -447,7 +447,7 @@ function getIdRefs(element: Element, ref: string | null): Element[] {
   if (!root)
     return [];
   try {
-    const ids = ref.split(' ').filter(id => !!id);
+    const ids = ref.split(/\s+/).filter(id => !!id);
     const result: Element[] = [];
     for (const id of ids) {
       // https://www.w3.org/TR/wai-aria-1.2/#mapping_additional_relations_error_processing
