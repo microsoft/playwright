@@ -1071,7 +1071,9 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       if (options.outDerivedFromContent && insideTargetElement(options) && trimFlatString(accessibleName.text))
         options.outDerivedFromContent.value = true;
       // This element owns the accumulated content - record it alongside the descendants it was computed from.
-      accessibleName.elements?.add(element);
+      // Whitespace alone is not content, e.g. the spacing around an inline-block icon.
+      if (trimFlatString(accessibleName.text))
+        accessibleName.elements?.add(element);
       return accessibleName;
     }
   }

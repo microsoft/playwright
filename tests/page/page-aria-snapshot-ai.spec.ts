@@ -397,9 +397,12 @@ it('should omit redundant name when a contributor is a skipped leaf generic', as
 
 it('should keep the name when the contributing wrapper collapses into repeating text', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41985' });
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43315' });
   // The outer span is marked as represented while it still wraps the icon. Once the nameless
   // image is dropped, the span collapses into a lone text repeating the button's name and removes
   // itself, so the button must keep the name derived from it.
+  // A wrapper that only adds whitespace to the name - a stray text node, or the spacing around an
+  // inline-block icon - is not where the name comes from.
   await page.setContent(`
     <button>
       <span>
@@ -411,11 +414,16 @@ it('should keep the name when the contributing wrapper collapses into repeating 
         <span>Add New Item</span>
       </span>
     </button>
+    <button><span>\n  <svg aria-hidden="true"></svg></span>New survey</button>
+    <button><span><svg aria-hidden="true" style="width: 1em; height: 1em; display: inline-block"></svg></span>Edit survey</button>
   `);
 
   const snapshot = await snapshotForAI(page);
   expect(snapshot).toContainYaml(`
-    - button "Add New Item" [ref=e2]
+    - generic [active] [ref=e1]:
+      - button "Add New Item" [ref=e2]
+      - button "New survey" [ref=e7]
+      - button "Edit survey" [ref=e10]
   `);
 });
 
