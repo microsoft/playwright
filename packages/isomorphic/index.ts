@@ -18,7 +18,6 @@ export * from './ariaSnapshot';
 export * from './ariaSnapshotRenderer';
 export * from './assert';
 export * from './base64';
-export * from './codeFrame';
 export * from './colors';
 export * from './headers';
 export * from './imageUtils';

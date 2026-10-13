@@ -16,12 +16,12 @@
 
 import fs from 'fs';
 
-import { codeFrame } from '@isomorphic/codeFrame';
 import { monotonicTime } from '@isomorphic/time';
 
 import { internalScreen, prepareErrorStack, relativeFilePath } from './base';
 import { Multiplexer } from './multiplexer';
 import { test as testNs } from '../common';
+import * as babel from '../transform/babelBundle';
 import { wrapReporterAsV2 } from './reporterV2';
 
 import type { AnyReporter, ReporterPreprocessParams, ReporterV2 } from './reporterV2';
@@ -142,13 +142,13 @@ export function addLocationAndSnippetToError(config: FullConfig, error: TestErro
   try {
     const tokens = [];
     const source = fs.readFileSync(location.file, 'utf8');
-    const frame = codeFrame(source, location, { colors: internalScreen.colors });
+    const codeFrame = babel.codeFrameColumns(source, { start: location }, { highlightCode: true });
     // Convert /var/folders to /private/var/folders on Mac.
     if (!file || fs.realpathSync(file) !== location.file) {
       tokens.push(internalScreen.colors.gray(`   at `) + `${relativeFilePath(internalScreen, config, location.file)}:${location.line}`);
       tokens.push('');
     }
-    tokens.push(frame);
+    tokens.push(codeFrame);
     error.snippet = tokens.join('\n');
   } catch (e) {
     // Failed to read the source file - that's ok.
