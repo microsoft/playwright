@@ -135,3 +135,24 @@ test('browser_hide_highlight all', async ({ boundBrowser, startClient }) => {
   });
   await expect(page.locator('x-pw-highlight')).toHaveCount(0);
 });
+
+test('browser_resume with location accepts Windows paths', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43340' },
+}, async ({ boundBrowser, startClient }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button>`);
+  const context = boundBrowser.contexts()[0];
+
+  await context.debugger.requestPause();
+  const clickPromise = page.click('button');
+  await new Promise<void>(resolve => context.debugger.once('pausedstatechanged', resolve));
+
+  const { client } = await startClient({ args: [`--endpoint=default`] });
+  const resumePromise = client.callTool({ name: 'browser_resume', arguments: { location: 'C:\\tests\\example.spec.ts:42' } });
+
+  // The click only completes if the location was accepted and execution resumed.
+  const error = await Promise.race([clickPromise.then(() => null), resumePromise]);
+  expect(error).toBe(null);
+  await context.close();
+  await resumePromise;
+});

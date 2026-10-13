@@ -55,7 +55,9 @@ const resume = defineTool({
     });
 
     if (params.location) {
-      const [file, lineStr] = params.location.split(':');
+      // Split at the last colon, but not at the drive letter of a Windows path like "C:\tests\example.spec.ts".
+      const separator = params.location.lastIndexOf(':');
+      const [file, lineStr] = separator > 1 ? [params.location.slice(0, separator), params.location.slice(separator + 1)] : [params.location, ''];
       let location;
       if (lineStr) {
         const line = Number(lineStr);
