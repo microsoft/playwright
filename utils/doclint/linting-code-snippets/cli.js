@@ -26,7 +26,7 @@ const { ESLint } = require('eslint')
 const child_process = require('child_process');
 const os = require('os');
 
-const { codeFrameColumns } = require('@babel/code-frame');
+const { codeFrame, webColors } = require('../../../packages/playwright-core/lib/coreBundle').iso;
 
 /** @typedef {import('../documentation').Type} Type */
 /** @typedef {import('../../markdown').MarkdownNode} MarkdownNode */
@@ -201,7 +201,7 @@ class JSLintingService extends LintingService {
     if (!results || !results.length || !results[0].messages.length)
       return { status: 'ok' };
     const result = results[0];
-    const error = result.source ? results[0].messages[0].message + '\n\n' + codeFrameColumns(result.source, { start: result.messages[0] }, { highlightCode: true }) : results[0].messages[0].message;
+    const error = result.source ? results[0].messages[0].message + '\n\n' + codeFrame(result.source, result.messages[0], { colors: webColors }) : results[0].messages[0].message;
     return { status: 'error', error };
   }
 

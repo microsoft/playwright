@@ -23,6 +23,7 @@ import colors from 'colors/safe';
 import mime from 'mime';
 import open from 'open';
 import * as yazl from 'yazl';
+import { codeFrame } from '@isomorphic/codeFrame';
 import { MultiMap } from '@isomorphic/multimap';
 import { calculateSha1 } from '@utils/crypto';
 import { copyFileAndMakeWritable, removeFolders, sanitizeForFilePath, toPosixPath } from '@utils/fileUtils';
@@ -37,7 +38,6 @@ import { extractZip } from '@utils/third_party/extractZip';
 declare const __PW_HMR__: boolean;
 
 import { createTestFilter, filterTests, formatError, formatResultFailure, internalScreen } from './base';
-import * as babel from '../transform/babelBundle';
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
 import type { ReportConfigureParams, ReportEndParams, ReporterV2 } from './reporterV2';
@@ -803,7 +803,7 @@ function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
       continue;
     }
     const lines = source.split('\n').length;
-    const highlighted = babel.codeFrameColumns(source, { start: { line: lines, column: 1 } }, { highlightCode: true, linesAbove: lines, linesBelow: 0 });
+    const highlighted = codeFrame(source, { line: lines, column: 1 }, { colors: internalScreen.colors, linesAbove: lines, linesBelow: 0 });
     const highlightedLines = highlighted.split('\n');
     const lineWithArrow = highlightedLines[highlightedLines.length - 1];
     for (const step of stepsInFile.get(file)) {
@@ -830,16 +830,13 @@ function createErrorCodeframe(message: string, location: Location) {
     return;
   }
 
-  return babel.codeFrameColumns(
+  return codeFrame(
       source,
       {
-        start: {
-          line: location.line,
-          column: location.column,
-        },
+        line: location.line,
+        column: location.column,
       },
       {
-        highlightCode: false,
         linesAbove: 100,
         linesBelow: 100,
         message: stripAnsiEscapes(message).split('\n')[0] || undefined,

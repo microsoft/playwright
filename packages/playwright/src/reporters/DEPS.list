@@ -12,9 +12,3 @@ node_modules/yazl
 
 [merge.ts]
 ../runner/reporters.ts
-
-[internalReporter.ts]
-../transform/babelBundle.ts
-
-[html.ts]
-../transform/babelBundle.ts

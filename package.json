@@ -57,7 +57,6 @@
   "devDependencies": {
     "@actions/core": "3.0.1",
     "@actions/github": "9.1.1",
-    "@babel/code-frame": "7.29.7",
     "@babel/core": "7.29.7",
     "@babel/helper-plugin-utils": "7.29.7",
     "@babel/parser": "7.29.7",
@@ -87,7 +86,6 @@
     "@jest/expect-utils": "30.4.1",
     "@modelcontextprotocol/sdk": "1.31.0",
     "@stylistic/eslint-plugin": "5.10.0",
-    "@types/babel__code-frame": "7.27.0",
     "@types/babel__core": "7.20.5",
     "@types/babel__helper-plugin-utils": "7.10.3",
     "@types/babel__traverse": "7.28.0",
