@@ -212,6 +212,15 @@ function validateConfig(file: string, config: Config) {
       config.reporter.forEach((item, index) => {
         if (!Array.isArray(item) || item.length <= 0 || item.length > 2 || typeof item[0] !== 'string')
           throw errorWithFile(file, `config.reporter[${index}] must be a tuple [name, optionalArgument]`);
+        const secrets = (item[1] as any)?.secrets;
+        if (secrets !== undefined) {
+          if (!secrets || typeof secrets !== 'object' || Array.isArray(secrets))
+            throw errorWithFile(file, `config.reporter[${index}] secrets must be an object`);
+          for (const [name, value] of Object.entries(secrets)) {
+            if (typeof value !== 'string')
+              throw errorWithFile(file, `config.reporter[${index}] secret "${name}" must be a string`);
+          }
+        }
       });
     } else if (typeof config.reporter !== 'string') {
       throw errorWithFile(file, `config.reporter must be a string`);

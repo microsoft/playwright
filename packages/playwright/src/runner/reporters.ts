@@ -31,6 +31,7 @@ import LineReporter from '../reporters/line';
 import ListReporter from '../reporters/list';
 import ListModeReporter from '../reporters/listModeReporter';
 import PerfettoReporter from '../reporters/perfetto';
+import { SecretsRedactor, RedactingReporter } from '../reporters/redactingReporter';
 import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
 import type { ReporterDescription } from '../../types/test';
@@ -38,6 +39,7 @@ import type { TestError } from '../../types/testReporter';
 import type { config as commonConfig, FullConfigInternal } from '../common';
 import type { CommonReporterOptions, Screen } from '../reporters/base';
 import type { ReporterV2 } from '../reporters/reporterV2';
+import type { Secrets } from '@isomorphic/secrets';
 import type { TestRunOptions } from './tasks';
 
 export async function createReporters(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', descriptions?: ReporterDescription[], runOptions?: TestRunOptions): Promise<ReporterV2[]> {
@@ -56,17 +58,40 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     'coverage': CoverageReporter,
   };
   const reporters: ReporterV2[] = [];
-  descriptions ??= config.config.reporter;
+  descriptions ??= config.reporterDescriptions;
   const reportOptions = reporterCommandOptions(config, mode, runOptions);
+  // Reporters with the same secrets share one redactor, and therefore the same redacted objects.
+  const redactors = new Map<string, SecretsRedactor>();
+  const redactorFor = (secrets: Secrets) => {
+    const key = SecretsRedactor.key(secrets);
+    let redactor = redactors.get(key);
+    if (!redactor) {
+      redactor = new SecretsRedactor(secrets);
+      redactors.set(key, redactor);
+    }
+    return redactor;
+  };
+  // When every configured reporter has secrets, the convenience reporter added below redacts all of them.
+  let allSecrets: Secrets | undefined = {};
   for (const r of descriptions) {
     const [name, arg] = r;
-    const options = resolveReporterOptions(reportOptions, { ...reportOptions, ...arg });
+    const { secrets, ...reporterArg } = arg ?? {};
+    const options = resolveReporterOptions(reportOptions, { ...reportOptions, ...reporterArg });
+    let reporter: ReporterV2;
     if (name in defaultReporters) {
-      reporters.push(new defaultReporters[name as commonConfig.BuiltInReporter](options));
+      reporter = new defaultReporters[name as commonConfig.BuiltInReporter](options);
     } else {
       const reporterConstructor = await loadReporter(config, name);
-      reporters.push(wrapReporterAsV2(new reporterConstructor(options)));
+      reporter = wrapReporterAsV2(new reporterConstructor(options));
     }
+    if (secrets) {
+      reporter = new RedactingReporter(reporter, redactorFor(secrets));
+      if (allSecrets)
+        allSecrets = { ...allSecrets, ...secrets };
+    } else {
+      allSecrets = undefined;
+    }
+    reporters.push(reporter);
   }
   if (process.env.PW_TEST_REPORTER) {
     const name = process.env.PW_TEST_REPORTER;
@@ -82,10 +107,15 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   if (reporters.length && !someReporterPrintsToStdio) {
     // Add a line/dot/list-mode reporter for convenience.
     // Important to put it first, just in case some other reporter stalls onEnd.
+    let reporter: ReporterV2 | undefined;
     if (mode === 'list')
-      reporters.unshift(new ListModeReporter());
+      reporter = new ListModeReporter();
     else if (mode !== 'merge')
-      reporters.unshift(!process.env.CI ? new LineReporter() : new DotReporter());
+      reporter = !process.env.CI ? new LineReporter() : new DotReporter();
+    if (reporter && allSecrets && descriptions.length)
+      reporter = new RedactingReporter(reporter, redactorFor(allSecrets));
+    if (reporter)
+      reporters.unshift(reporter);
   }
   return reporters;
 }

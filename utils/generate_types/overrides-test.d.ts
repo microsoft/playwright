@@ -17,16 +17,17 @@
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
-export type BlobReporterOptions = { outputDir?: string, fileName?: string };
-export type DotReporterOptions = { omitTags?: boolean };
-export type FailuresReporterOptions = { omitTags?: boolean };
-export type LineReporterOptions = { omitTags?: boolean };
-export type ListReporterOptions = { printSteps?: boolean, printFailuresInline?: boolean, omitTags?: boolean };
-export type GitHubReporterOptions = { omitTags?: boolean };
-export type JUnitReporterOptions = { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean, includeRetries?: boolean, omitTags?: boolean, onlyFailures?: boolean };
-export type JsonReporterOptions = { outputFile?: string, onlyFailures?: boolean };
-export type PerfettoReporterOptions = { outputFile?: string };
-export type HtmlReporterOptions = {
+export type ReporterSecretsOptions = { secrets?: { [name: string]: string } };
+export type BlobReporterOptions = ReporterSecretsOptions & { outputDir?: string, fileName?: string };
+export type DotReporterOptions = ReporterSecretsOptions & { omitTags?: boolean };
+export type FailuresReporterOptions = ReporterSecretsOptions & { omitTags?: boolean };
+export type LineReporterOptions = ReporterSecretsOptions & { omitTags?: boolean };
+export type ListReporterOptions = ReporterSecretsOptions & { printSteps?: boolean, printFailuresInline?: boolean, omitTags?: boolean };
+export type GitHubReporterOptions = ReporterSecretsOptions & { omitTags?: boolean };
+export type JUnitReporterOptions = ReporterSecretsOptions & { outputFile?: string, stripANSIControlSequences?: boolean, includeProjectInTestName?: boolean, includeRetries?: boolean, omitTags?: boolean, onlyFailures?: boolean };
+export type JsonReporterOptions = ReporterSecretsOptions & { outputFile?: string, onlyFailures?: boolean };
+export type PerfettoReporterOptions = ReporterSecretsOptions & { outputFile?: string };
+export type HtmlReporterOptions = ReporterSecretsOptions & {
   onlyFailures?: boolean;
   outputFolder?: string;
   open?: 'always' | 'never' | 'on-failure';
@@ -51,7 +52,7 @@ export type ReporterDescription = Readonly<
   ['json'] | ['json', JsonReporterOptions] |
   ['perfetto'] | ['perfetto', PerfettoReporterOptions] |
   ['html'] | ['html', HtmlReporterOptions] |
-  ['null'] |
+  ['null'] | ['null', ReporterSecretsOptions] |
   [string] | [string, any]
 >;
 

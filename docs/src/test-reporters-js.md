@@ -79,6 +79,25 @@ export default defineConfig({
 });
 ```
 
+### Redacting secrets
+
+Pass a `secrets` object to any reporter, built-in or custom, to hide sensitive values in its output. Each key is a name, and each value is the sensitive text. The reporter sees `<secret>NAME</secret>` in place of the value in test and step titles, errors, console output, attachment names and attachment bodies.
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [
+    ['list'],
+    ['html', { secrets: { PASSWORD: process.env.PASSWORD } }],
+  ],
+});
+```
+
+In this example, the terminal output is not changed, while the HTML report never contains the password. Reporters that receive the same `secrets` object share the redacted data.
+
+Values are matched as plain text, so a short value could match unrelated text. Screenshots, videos, trace files, and attachments referenced by path are not changed.
+
 ## Built-in reporters
 
 All built-in reporters show detailed information about failures, and mostly differ in verbosity for successful runs.
