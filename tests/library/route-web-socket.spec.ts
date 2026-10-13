@@ -724,3 +724,95 @@ test('should expose protocols on server-side route', async ({ page, server }) =>
   expect(pageRoute.protocols()).toEqual(['chat.v2', 'chat.v1']);
   expect(serverRoute.protocols()).toEqual(['chat.v2', 'chat.v1']);
 });
+
+test('page.on("websocket") fires for a socket answered by routeWebSocket', async ({ page, server }) => {
+  const sentFrames: string[] = [];
+  const receivedFrames: string[] = [];
+  let closed = false;
+
+  const [ws] = await Promise.all([
+    page.waitForEvent('websocket', ws => {
+      ws.on('framesent', frame => sentFrames.push(frame.payload as string));
+      ws.on('framereceived', frame => receivedFrames.push(frame.payload as string));
+      ws.on('close', () => closed = true);
+      return true;
+    }),
+    (async () => {
+      await page.routeWebSocket('**/live', ws => {
+        ws.onMessage(msg => {
+          if (msg === 'ping')
+            ws.send('pong');
+        });
+      });
+      await page.goto(server.EMPTY_PAGE);
+      await page.evaluate(() => new Promise<string>(resolve => {
+        const socket = new WebSocket('ws://example.test/live');
+        socket.onopen = () => socket.send('ping');
+        socket.onmessage = event => {
+          socket.close();
+          resolve(event.data);
+        };
+      }));
+    })(),
+  ]);
+
+  expect(ws.url()).toBe('ws://example.test/live');
+  await expect.poll(() => sentFrames).toEqual(['ping']);
+  await expect.poll(() => receivedFrames).toEqual(['pong']);
+  await expect.poll(() => closed).toBe(true);
+  expect(ws.isClosed()).toBe(true);
+});
+
+test('page.on("websocket") fires when connectToServer is used', async ({ page, server }) => {
+  const events: string[] = [];
+  page.on('websocket', ws => events.push(ws.url()));
+  await page.routeWebSocket('**/ws', ws => {
+    const s = ws.connectToServer();
+    ws.onMessage(m => s.send(m));
+  });
+
+  const wsPromise = server.waitForWebSocket();
+  const upgradePromise = server.waitForUpgrade();
+  await setupWS(page, server, 'blob');
+  const { doUpgrade } = await upgradePromise;
+  doUpgrade();
+  await wsPromise;
+
+  await page.waitForTimeout(500);
+  await expect.poll(() => events).toEqual(['ws://' + server.HOST + '/ws']);
+});
+
+test('page.on("websocket") fires for context.routeWebSocket with binary frames', async ({ context, page, server }) => {
+  const sentFrames: (string | Buffer)[] = [];
+  const receivedFrames: (string | Buffer)[] = [];
+
+  const [ws] = await Promise.all([
+    page.waitForEvent('websocket', ws => {
+      ws.on('framesent', frame => sentFrames.push(frame.payload));
+      ws.on('framereceived', frame => receivedFrames.push(frame.payload));
+      return true;
+    }),
+    (async () => {
+      await context.routeWebSocket('**/binary', ws => {
+        ws.onMessage(msg => {
+          if (Buffer.isBuffer(msg))
+            ws.send(Buffer.from([0x04, 0x05, 0x06]));
+        });
+      });
+      await page.goto(server.EMPTY_PAGE);
+      await page.evaluate(() => new Promise<void>(resolve => {
+        const socket = new WebSocket('ws://example.test/binary');
+        socket.binaryType = 'arraybuffer';
+        socket.onopen = () => socket.send(new Uint8Array([1, 2, 3]));
+        socket.onmessage = () => {
+          socket.close();
+          resolve();
+        };
+      }));
+    })(),
+  ]);
+
+  expect(ws.url()).toBe('ws://example.test/binary');
+  await expect.poll(() => sentFrames).toEqual([Buffer.from([1, 2, 3])]);
+  await expect.poll(() => receivedFrames).toEqual([Buffer.from([4, 5, 6])]);
+});

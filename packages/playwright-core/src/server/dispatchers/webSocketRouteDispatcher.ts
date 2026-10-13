@@ -21,6 +21,7 @@ import { Dispatcher } from './dispatcher';
 import { PageDispatcher } from './pageDispatcher';
 import * as rawWebSocketMockSource from '../../generated/webSocketMockSource';
 import { SdkObject } from '../instrumentation';
+import { WebSocket as NetworkWebSocket } from '../network';
 
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { BrowserContext } from '../browserContext';
@@ -35,11 +36,15 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
   _type_WebSocketRoute = true;
   private _id: string;
   private _frame: Frame;
+  private _url: string;
+  private _connectedToServer = false;
+  private _webSocket: NetworkWebSocket | undefined;
   private static _idToDispatcher = new Map<string, WebSocketRouteDispatcher>();
 
   constructor(scope: PageDispatcher | BrowserContextDispatcher, id: string, url: string, protocols: string[], frame: Frame) {
     super(scope, new SdkObject(scope._object, 'webSocketRoute'), 'WebSocketRoute', { url, protocols });
     this._id = id;
+    this._url = url;
     this._frame = frame;
     this._eventListeners.push(
         // When the frame navigates or detaches, there will be no more communication
@@ -57,6 +62,17 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
     );
     WebSocketRouteDispatcher._idToDispatcher.set(this._id, this);
     (scope as any)._dispatchEvent('webSocketRoute', { webSocketRoute: this });
+  }
+
+  private _ensureWebSocket(): NetworkWebSocket | undefined {
+    if (this._connectedToServer)
+      return undefined;
+    if (!this._webSocket) {
+      this._webSocket = new NetworkWebSocket(this._frame._page, this._url);
+      if (this._webSocket.markAsNotified())
+        this._frame._page.emit(Page.Events.WebSocket, this._webSocket);
+    }
+    return this._webSocket;
   }
 
   static async install(progress: Progress, connection: DispatcherConnection, target: Page | BrowserContext): Promise<InitScript> {
@@ -85,12 +101,16 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
         }
 
         const dispatcher = WebSocketRouteDispatcher._idToDispatcher.get(payload.id);
-        if (payload.type === 'onMessageFromPage')
+        if (payload.type === 'onMessageFromPage') {
+          dispatcher?._ensureWebSocket()?.frameSent(payload.data.isBase64 ? 2 : 1, payload.data.data, Date.now());
           dispatcher?._dispatchEvent('messageFromPage', { message: payload.data.data, isBase64: payload.data.isBase64 });
+        }
         if (payload.type === 'onMessageFromServer')
           dispatcher?._dispatchEvent('messageFromServer', { message: payload.data.data, isBase64: payload.data.isBase64 });
-        if (payload.type === 'onClosePage')
+        if (payload.type === 'onClosePage') {
+          dispatcher?._ensureWebSocket()?.closed();
           dispatcher?._dispatchEvent('closePage', { code: payload.code, reason: payload.reason, wasClean: payload.wasClean });
+        }
         if (payload.type === 'onCloseServer')
           dispatcher?._dispatchEvent('closeServer', { code: payload.code, reason: payload.reason, wasClean: payload.wasClean });
       }, data);
@@ -120,14 +140,17 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
   }
 
   async connect(params: channels.WebSocketRouteConnectParams, progress: Progress) {
+    this._connectedToServer = true;
     await this._evaluateAPIRequest(progress, { id: this._id, type: 'connect' });
   }
 
   async ensureOpened(params: channels.WebSocketRouteEnsureOpenedParams, progress: Progress) {
+    this._ensureWebSocket();
     await this._evaluateAPIRequest(progress, { id: this._id, type: 'ensureOpened' });
   }
 
   async sendToPage(params: channels.WebSocketRouteSendToPageParams, progress: Progress) {
+    this._ensureWebSocket()?.frameReceived(params.isBase64 ? 2 : 1, params.message, Date.now());
     await this._evaluateAPIRequest(progress, { id: this._id, type: 'sendToPage', data: { data: params.message, isBase64: params.isBase64 } });
   }
 
@@ -136,6 +159,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
   }
 
   async closePage(params: channels.WebSocketRouteClosePageParams, progress: Progress) {
+    this._ensureWebSocket()?.closed();
     await this._evaluateAPIRequest(progress, { id: this._id, type: 'closePage', code: params.code, reason: params.reason, wasClean: params.wasClean });
   }
 
@@ -152,6 +176,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
   }
 
   private _executionContextGone() {
+    this._webSocket?.closed();
     // We could enter here after being disposed upon page closure:
     // - first from the recursive dispose inintiated by PageDispatcher;
     // - then from our own page.on('close') listener.
