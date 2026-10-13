@@ -29,9 +29,6 @@ jobs:
         # Arm64: *-xlarge
         os: [macos-15-large, macos-15-xlarge]
         browser: [chromium, firefox, webkit]
-        include:
-        - os: macos-14-xlarge
-          browser: chromium
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -66,8 +63,6 @@ jobs:
       matrix:
         include:
         - os: ubuntu-latest
-          node_version: 20
-        - os: ubuntu-latest
           node_version: 24
         - os: ubuntu-latest
           node_version: 26
@@ -89,35 +84,75 @@ jobs:
         command: npm run itest
         bot-name: "package-installations-${{ matrix.os }}-node${{ matrix.node_version }}"
 
-  driver_linux:
-    name: "Driver"
+  test_linux:
+    name: ${{ matrix.os }} (${{ matrix.browser }} - Node.js ${{ matrix.node-version }})
+    if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
     strategy:
       fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            node-version: 24
+            browser: chromium
+          - os: ubuntu-22.04
+            node-version: 26
+            browser: chromium
+          - os: ubuntu-22.04-arm
+            node-version: 22
+            browser: chromium
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: ./.github/actions/run-test
+      with:
+        node-version: ${{ matrix.node-version }}
+        browsers-to-install: ${{ matrix.browser }} chromium
+        command: npm run test -- --project=${{ matrix.browser }}-*
+        bot-name: "${{ matrix.browser }}-${{ matrix.os }}-node${{ matrix.node-version }}"
+
+  test_clock_frozen_time_linux:
+    name: time library - ${{ matrix.clock }}
+    if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        clock: [frozen, realtime]
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - uses: ./.github/actions/run-test
       with:
+        node-version: 22
         browsers-to-install: chromium
-        command: npm run ctest
-        bot-name: "driver"
+        command: npm run test -- --project=chromium-*
+        bot-name: "${{ matrix.clock }}-time-library-chromium-linux"
       env:
-        PWTEST_MODE: driver
+        PW_CLOCK: ${{ matrix.clock }}
+
+  test_test_runner:
+    name: Test Runner
+    if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [playwright-x64-ubuntu24-64-core]
+        node-version: [24, 26]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: ./.github/actions/run-test
+      with:
+        node-version: ${{matrix.node-version}}
+        command: npm run ttest
+        bot-name: "${{ matrix.os }}-node${{ matrix.node-version }}"
 
   tracing_linux:
     name: Tracing ${{ matrix.browser }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - browser: chromium
-            runs-on: ubuntu-22.04
-          - browser: firefox
-            runs-on: ubuntu-22.04
-          # See https://github.com/microsoft/playwright/issues/35586
-          - browser: webkit
-            runs-on: ubuntu-24.04
-    runs-on: ${{ matrix.runs-on }}
+        browser: [chromium, firefox]
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - uses: ./.github/actions/run-test
@@ -183,25 +218,6 @@ jobs:
         browsers-to-install: android
         command: npm run atest
         bot-name: "android"
-
-  test_clock_frozen_time_test_runner:
-    name: time test runner - ${{ matrix.clock }}
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: read    # This is required for actions/checkout to succeed
-    strategy:
-      fail-fast: false
-      matrix:
-        clock: [frozen, realtime]
-    steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-    - uses: ./.github/actions/run-test
-      with:
-        node-version: 22
-        command: npm run ttest
-        bot-name: "${{ matrix.clock }}-time-runner-chromium-linux"
-      env:
-        PW_CLOCK: ${{ matrix.clock }}
 
   test_electron:
     name: Electron - ${{ matrix.os }}

@@ -1107,7 +1107,6 @@ test('PWDEBUG=console should opt-in to exposing window.playwright', async ({ run
 });
 
 test('init script should not observe playwright internals', async ({ server, runInlineTest }) => {
-  test.skip(!!process.env.PW_CLOCK, 'clock installs globalThis.__pwClock');
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
