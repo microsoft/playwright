@@ -21,7 +21,6 @@ import type { BabelFileResult, NodePath, PluginObj, TransformOptions } from '@ba
 import type { TemplateBuilder } from '@babel/template';
 import type { TSExportAssignment } from '@babel/types';
 
-export { codeFrameColumns } from '@babel/code-frame';
 export { declare } from '@babel/helper-plugin-utils';
 export { types } from '@babel/core';
 export const traverse = traverseFunction;

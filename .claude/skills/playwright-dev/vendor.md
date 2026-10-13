@@ -38,7 +38,7 @@ export key lives in `utils/build/utilsBundleMapping.js`.
 
 | Output | Entry | Purpose |
 |---|---|---|
-| `lib/transform/babelBundle.js` | `src/transform/babelBundle.ts` | Wraps `@babel/core`, `@babel/traverse`, `@babel/code-frame`, plugins. Shared by every consumer that needs babel. |
+| `lib/transform/babelBundle.js` | `src/transform/babelBundle.ts` | Wraps `@babel/core`, `@babel/traverse`, plugins. Shared by every consumer that needs babel. |
 | `lib/transform/esmLoader.js` | `src/transform/esmLoader.ts` | Node ESM loader registered via `node:module.register()`. Output sits next to `babelBundle.js` so its `./babelBundle` sibling require resolves correctly. |
 | `lib/common/index.js` | `src/common/index.ts` | Barrel of `common/*` + `transform/*` (compilationCache, test, configLoader, fixtures, globals, …). State-holding singletons (currentTestInfo, memoryCache, …) live here. |
 | `lib/runner/index.js` | `src/runner/index.ts` | Barrel of `runner/*` + `reporters/*` + `plugins/*`. |
