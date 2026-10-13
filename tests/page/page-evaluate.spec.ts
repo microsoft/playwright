@@ -482,22 +482,22 @@ it('should throw for too deep reference chain 2', {
 
 it('should throw usable message for unserializable shallow function', async ({ page }) => {
   await expect(() => page.evaluate(arg => arg, () => { }))
-      .rejects.toThrow(/Attempting to serialize unexpected value: \(\) => {}/);
+      .rejects.toThrow(/Attempting to serialize unexpected value: \(\) => {\s*}/);
 });
 
 it('should throw usable message for unserializable object one deep function', async ({ page }) => {
   await expect(() => page.evaluate(arg => arg, { aProperty: () => { } }))
-      .rejects.toThrow(/Attempting to serialize unexpected value at position "aProperty": \(\) => {}/);
+      .rejects.toThrow(/Attempting to serialize unexpected value at position "aProperty": \(\) => {\s*}/);
 });
 
 it('should throw usable message for unserializable object nested function', async ({ page }) => {
   await expect(() => page.evaluate(arg => arg, { a: { inner: { property: () => { } } } }))
-      .rejects.toThrow(/Attempting to serialize unexpected value at position "a\.inner\.property": \(\) => {}/);
+      .rejects.toThrow(/Attempting to serialize unexpected value at position "a\.inner\.property": \(\) => {\s*}/);
 });
 
 it('should throw usable message for unserializable array nested function', async ({ page }) => {
   await expect(() => page.evaluate(arg => arg, { a: { inner: ['firstValue', { property: () => { } }] } }))
-      .rejects.toThrow(/Attempting to serialize unexpected value at position "a\.inner\[1\]\.property": \(\) => {}/);
+      .rejects.toThrow(/Attempting to serialize unexpected value at position "a\.inner\[1\]\.property": \(\) => {\s*}/);
 });
 
 it('should alias Window, Document and Node', async ({ page }) => {
