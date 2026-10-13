@@ -57,6 +57,15 @@ test('browser_cookie_set and browser_cookie_get', async ({ startClient, server }
     config: { capabilities: ['storage'] },
   });
 
+  // A blank page has no host to take the cookie domain from.
+  expect(await client.callTool({
+    name: 'browser_cookie_set',
+    arguments: { name: 'testCookie', value: 'testValue' },
+  })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining(`Cannot infer the cookie domain from the page URL "about:blank", specify "domain".`),
+  });
+
   await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.EMPTY_PAGE },

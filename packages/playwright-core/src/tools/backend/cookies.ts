@@ -100,11 +100,13 @@ const cookieSet = defineTool({
     const tab = await context.ensureTab();
 
     // Get the current page URL to determine default domain
-    const url = new URL(tab.page.url());
+    const domain = params.domain || new URL(tab.page.url()).hostname;
+    if (!domain)
+      throw new Error(`Cannot infer the cookie domain from the page URL "${tab.page.url()}", specify "domain".`);
     const cookie: any = {
       name: params.name,
       value: params.value,
-      domain: params.domain || url.hostname,
+      domain,
       path: params.path || '/',
     };
 
