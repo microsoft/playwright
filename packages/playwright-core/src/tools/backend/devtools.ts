@@ -55,16 +55,21 @@ const resume = defineTool({
     });
 
     if (params.location) {
-      const [file, lineStr] = params.location.split(':');
-      let location;
-      if (lineStr) {
-        const line = Number(lineStr);
-        if (isNaN(line))
-          throw new Error(`Invalid location "${params.location}", expected format is <file>:<line>, e.g. "example.spec.ts:42"`);
-        location = { file, line };
-      } else {
-        location = { file: params.location };
+      let file = params.location;
+      let line: number | undefined;
+      const lastColon = params.location.lastIndexOf(':');
+      const isWindowsDrive = lastColon === 1 && /^[a-zA-Z]:[/\\]/.test(params.location);
+      if (lastColon > 0 && !isWindowsDrive) {
+        const lineStr = params.location.slice(lastColon + 1);
+        if (lineStr) {
+          const parsedLine = Number(lineStr);
+          if (isNaN(parsedLine))
+            throw new Error(`Invalid location "${params.location}", expected format is <file>:<line>, e.g. "example.spec.ts:42"`);
+          file = params.location.slice(0, lastColon);
+          line = parsedLine;
+        }
       }
+      const location = line !== undefined ? { file, line } : { file };
       await browserContext.debugger.runTo(location);
     } else if (params.step) {
       await browserContext.debugger.next();

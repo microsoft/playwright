@@ -135,3 +135,25 @@ test('browser_hide_highlight all', async ({ boundBrowser, startClient }) => {
   });
   await expect(page.locator('x-pw-highlight')).toHaveCount(0);
 });
+
+test('browser_resume with location accepts Windows paths', async ({ boundBrowser, startClient }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button>`);
+  const context = boundBrowser.contexts()[0];
+
+  await context.debugger.requestPause();
+  const clickPromise = page.click('button');
+  await new Promise<void>(resolve => context.debugger.once('pausedstatechanged', resolve));
+  expect(context.debugger.pausedDetails()).toBeTruthy();
+
+  const { client } = await startClient({ args: [`--endpoint=default`] });
+  const resumePromise = client.callTool({
+    name: 'browser_resume',
+    arguments: { location: 'C:\\tests\\example.spec.ts:42' },
+  });
+
+  await clickPromise;
+  await context.close();
+  const response = await resumePromise;
+  expect(response).not.toHaveResponse({ error: /Invalid location/ });
+});
