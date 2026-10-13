@@ -154,6 +154,27 @@ test('browser_cookie_list filters by domain', async ({ startClient, server }) =>
   expect(noResult).toHaveResponse({
     result: 'No cookies found',
   });
+
+  // The domain matches itself and its subdomains, not other domains that end with it.
+  for (const [name, domain] of [['apex', 'example.com'], ['sub', 'sub.example.com'], ['other', 'my-example.com']]) {
+    await client.callTool({
+      name: 'browser_cookie_set',
+      arguments: { name, value: 'value', domain },
+    });
+  }
+  const exampleResult = await client.callTool({
+    name: 'browser_cookie_list',
+    arguments: { domain: 'example.com' },
+  });
+  expect(exampleResult).toHaveResponse({
+    result: expect.stringContaining('apex=value'),
+  });
+  expect(exampleResult).toHaveResponse({
+    result: expect.stringContaining('sub=value'),
+  });
+  expect(exampleResult).toHaveResponse({
+    result: expect.not.stringContaining('other=value'),
+  });
 });
 
 test('browser_cookie_get returns not found for missing cookie', async ({ startClient, server }) => {
