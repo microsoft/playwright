@@ -76,7 +76,7 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
     page.waitForResponse(server.PREFIX + '/frames/frame.html'),
     page.waitForTimeout(200).then(() => page.goto(server.PREFIX + '/frames/frame.html'))
   ]);
-  await page.setViewportSize({ width: 500, height: 600 });
+  await page.setViewportSize({ width: 390, height: 600 });
 
   // Go through instrumentation to exercise reentrant stack traces.
   const csi = {
@@ -486,14 +486,17 @@ test('should truncate long return values with ellipsis but copy full value', asy
 });
 
 test('should have correct snapshot size', async ({ showTraceViewer }, testInfo) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43313' });
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('SET VIEWPORT');
   await traceViewer.selectSnapshot('Before');
   await expect(traceViewer.snapshotContainer).toHaveCSS('width', '1280px');
   await expect(traceViewer.snapshotContainer).toHaveCSS('height', '720px');
   await traceViewer.selectSnapshot('After');
-  await expect(traceViewer.snapshotContainer).toHaveCSS('width', '500px');
+  await expect(traceViewer.snapshotContainer).toHaveCSS('width', '390px');
   await expect(traceViewer.snapshotContainer).toHaveCSS('height', '600px');
+  // A phone-sized snapshot fills the browser frame.
+  await expect(traceViewer.page.locator('.snapshot-container')).toHaveCSS('width', '390px');
 });
 
 test('should have correct stack trace', async ({ showTraceViewer }) => {
