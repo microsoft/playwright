@@ -252,6 +252,12 @@ export class PageAgent {
       frameId: frame.id(),
       name: event.type,
     });
+    if (event.type === 'DOMContentLoaded' && event.target.documentURI && event.target.documentURI.startsWith('about:neterror')) {
+      this._browserPage.emit('pageEventFired', {
+        frameId: frame.id(),
+        name: 'load',
+      });
+    }
   }
 
   _onRuntimeError({ executionContext, message, stack, location }) {

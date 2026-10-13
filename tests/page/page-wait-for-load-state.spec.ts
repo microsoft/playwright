@@ -205,3 +205,12 @@ it('should work with broken blob-url iframe', async ({ page, server, browserName
   await page.waitForLoadState('load');
   await page.waitForLoadState('networkidle');
 });
+
+it('should resolve load state for network error page', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  const navigated = page.waitForEvent('framenavigated');
+  // Navigate to an unreachable port to trigger browser error page
+  await page.evaluate(url => { window.location.href = url; }, 'http://127.0.0.1:1/');
+  await navigated;
+  await page.waitForLoadState('load');
+});
