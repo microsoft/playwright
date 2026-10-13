@@ -47,7 +47,7 @@ export class CRNetworkManager {
   private _serviceWorker: CRServiceWorker | null;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _requestIdToRequestWillBeSentEvent = new Map<string, { sessionInfo: SessionInfo, event: Protocol.Network.requestWillBeSentPayload }>();
-  private _credentials: HttpCredentials[] | null = null;
+  private _credentials: HttpCredentials[] | undefined;
   private _proxyCredentials: HttpCredentials | undefined;
   private _attemptedAuthentications = new Set<string>();
   private _userRequestInterceptionEnabled = false;
@@ -123,7 +123,7 @@ export class CRNetworkManager {
     }));
   }
 
-  async authenticate(credentials: HttpCredentials[] | null, proxyCredentials: HttpCredentials | undefined) {
+  async authenticate(credentials: HttpCredentials[] | undefined, proxyCredentials: HttpCredentials | undefined) {
     this._credentials = credentials;
     this._proxyCredentials = proxyCredentials;
     await this._updateProtocolRequestInterception();
@@ -231,7 +231,7 @@ export class CRNetworkManager {
     let response: 'Default' | 'CancelAuth' | 'ProvideCredentials' = 'Default';
     // Proxy credentials only answer the proxy's challenge, never the website's.
     const isProxy = event.authChallenge.source === 'Proxy';
-    const credentials = isProxy ? this._proxyCredentials : findMatchingHttpCredentials(this._credentials || undefined, event.request.url);
+    const credentials = isProxy ? this._proxyCredentials : findMatchingHttpCredentials(this._credentials, event.request.url);
     const attemptKey = authAttemptKey(event.requestId, isProxy);
     if (this._attemptedAuthentications.has(attemptKey)) {
       response = 'CancelAuth';
