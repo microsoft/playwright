@@ -252,6 +252,26 @@ test('browser_cookie_delete removes cookie', async ({ startClient, server }) => 
   expect(afterDelete).toHaveResponse({
     result: expect.stringContaining('not found'),
   });
+
+  // Domain and path narrow it down to one of the same-named cookies.
+  for (const domain of ['a.example', 'b.example']) {
+    await client.callTool({
+      name: 'browser_cookie_set',
+      arguments: { name: 'session', value: domain, domain },
+    });
+  }
+  expect(await client.callTool({
+    name: 'browser_cookie_delete',
+    arguments: { name: 'session', domain: 'a.example', path: '/' },
+  })).toHaveResponse({
+    code: `await page.context().clearCookies({ name: 'session', domain: 'a.example', path: '/' });`,
+  });
+  expect(await client.callTool({
+    name: 'browser_cookie_get',
+    arguments: { name: 'session' },
+  })).toHaveResponse({
+    result: expect.stringContaining('session=b.example (domain: b.example'),
+  });
 });
 
 test('browser_cookie_delete for nonexistent cookie does not error', async ({ startClient, server }) => {

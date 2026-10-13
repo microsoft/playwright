@@ -713,13 +713,17 @@ const cookieSet = declareCommand({
 
 const cookieDelete = declareCommand({
   name: 'cookie-delete',
-  description: 'Delete a specific cookie',
+  description: 'Delete a specific cookie (optionally only on a given domain/path)',
   category: 'storage',
   args: z.object({
     name: z.string().describe('Cookie name'),
   }),
+  options: z.object({
+    domain: z.string().optional().describe('Only delete the cookie on this domain'),
+    path: z.string().optional().describe('Only delete the cookie on this path'),
+  }),
   toolName: 'browser_cookie_delete',
-  toolParams: ({ name }) => ({ name }),
+  toolParams: ({ name, domain, path }) => ({ name, domain, path }),
 });
 
 const cookieClear = declareCommand({
