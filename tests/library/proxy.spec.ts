@@ -141,7 +141,9 @@ for (const host of ['localhost', '127.0.0.1']) {
   });
 }
 
-it('should authenticate', async ({ browserType, server }) => {
+it('should authenticate', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43326' },
+}, async ({ browserType, server }) => {
   server.setRoute('/target.html', async (req, res) => {
     const auth = req.headers['proxy-authorization'];
     if (!auth) {
@@ -153,12 +155,25 @@ it('should authenticate', async ({ browserType, server }) => {
       res.end(`<html><title>${auth}</title></html>`);
     }
   });
+  server.setRoute('/protected.html', async (req, res) => {
+    if (!req.headers['proxy-authorization']) {
+      res.writeHead(407, { 'Proxy-Authenticate': 'Basic realm="Access to internal site"' });
+      res.end();
+      return;
+    }
+    res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="site"' });
+    res.end(req.headers['authorization'] || 'no credentials');
+  });
   const browser = await browserType.launch({
     proxy: { server: server.HOST, username: 'user', password: 'secret' }
   });
   const page = await browser.newPage();
   await page.goto('http://non-existent.com/target.html');
   expect(await page.title()).toBe('Basic ' + Buffer.from('user:secret').toString('base64'));
+  // Proxy credentials must not be sent to the website's own auth challenge.
+  const response = await page.goto('http://non-existent.com/protected.html');
+  expect(response.status()).toBe(401);
+  expect(await page.locator('body').textContent()).toBe('no credentials');
   await browser.close();
 });
 
