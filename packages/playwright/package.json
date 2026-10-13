@@ -1,6 +1,6 @@
 {
   "name": "playwright",
-  "version": "1.64.0",
+  "version": "1.64.1",
   "description": "A high-level API to automate web browsers",
   "repository": {
     "type": "git",
@@ -45,6 +45,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "playwright-core": "1.64.0"
+    "playwright-core": "1.64.1"
   }
 }
