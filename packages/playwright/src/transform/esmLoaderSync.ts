@@ -18,7 +18,7 @@ import fs from 'fs';
 import url from 'url';
 
 import { currentFileDepsCollector } from './compilationCache';
-import { isStyleFile, resolveHook, shouldTransform, transformHook } from './transform';
+import { hasTransformedExtension, isStyleFile, resolveHook, shouldTransform, transformHook } from './transform';
 import { fileIsModule } from '../util';
 
 export function resolve(specifier: string, context: { parentURL?: string, conditions?: string[] | Set<string> }, nextResolve: Function) {
@@ -70,8 +70,8 @@ export function load(moduleUrl: string, context: { format?: string, conditions?:
   if (isStyleFile(filename))
     return { format: 'commonjs', source: '', shortCircuit: true };
 
-  // Bail for node_modules.
-  if (!shouldTransform(filename))
+  // Bail for node_modules and for files that registered loaders should handle.
+  if (!shouldTransform(filename) || !hasTransformedExtension(filename))
     return nextLoad(moduleUrl, context);
 
   // A file reached via `require` is loaded as CommonJS. Files reached via `import` keep real ESM semantics.
