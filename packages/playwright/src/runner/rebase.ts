@@ -22,11 +22,8 @@ import * as diff from 'diff';
 import { MultiMap } from '@isomorphic/multimap';
 
 import { config as commonConfig, FullConfigInternal } from '../common';
-import * as babel from '../transform/babelBundle';
 
 import type { InternalReporter } from '../reporters/internalReporter';
-import type { T } from '../transform/babelBundle';
-const t: typeof T = babel.types;
 
 type Location = {
   file: string;
@@ -67,42 +64,28 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
 
   for (const fileName of [...suggestedRebaselines.keys()].sort()) {
     const source = await fs.promises.readFile(fileName, 'utf8');
-    const lines = source.split('\n');
+    const lineStarts = [0];
+    for (const match of source.matchAll(kLineBreak))
+      lineStarts.push(match.index + match[0].length);
     const replacements = suggestedRebaselines.get(fileName);
-    const fileNode = babel.babelParse(source, fileName, true);
-    const ranges: { start: number, end: number, oldText: string, newText: string }[] = [];
+    const ranges: { start: number, end: number, newText: string }[] = [];
 
-    babel.traverse(fileNode, {
-      CallExpression: path => {
-        const node = path.node;
-        if (node.arguments.length < 1)
-          return;
-        if (!t.isMemberExpression(node.callee))
-          return;
-        const argument = node.arguments[0];
-        if (!t.isStringLiteral(argument) && !t.isTemplateLiteral(argument))
-          return;
-        const prop = node.callee.property;
-        if (!prop.loc || !argument.start || !argument.end)
-          return;
-        // Replacements are anchored by the location of the call expression.
-        // However, replacement text is meant to only replace the first argument.
-        for (const replacement of replacements) {
-          // In Babel, rows are 1-based, columns are 0-based.
-          if (prop.loc.start.line !== replacement.location.line)
-            continue;
-          if (prop.loc.start.column + 1 !== replacement.location.column)
-            continue;
-          const indent = lines[prop.loc.start.line - 1].match(/^\s*/)![0];
-          const newText = replacement.code.replace(/\{indent\}/g, indent);
-          ranges.push({ start: argument.start, end: argument.end, oldText: source.substring(argument.start, argument.end), newText });
-          // We can have multiple, hopefully equal, replacements for the same location,
-          // for example when a single test runs multiple times because of projects or retries.
-          // Do not apply multiple replacements for the same assertion.
-          break;
-        }
-      }
-    });
+    for (const replacement of replacements) {
+      const lineStart = lineStarts[replacement.location.line - 1];
+      if (lineStart === undefined)
+        continue;
+      // Replacements are anchored by the location of the matcher name in the call expression.
+      // However, replacement text is meant to only replace the first argument.
+      const calleeStart = lineStart + replacement.location.column - 1;
+      const argument = firstArgumentRange(source, calleeStart);
+      // We can have multiple, hopefully equal, replacements for the same location,
+      // for example when a single test runs multiple times because of projects or retries.
+      // Do not apply multiple replacements for the same assertion.
+      if (!argument || ranges.some(range => range.start === argument.start))
+        continue;
+      const indent = source.substring(lineStart, calleeStart).match(/^\s*/)![0];
+      ranges.push({ ...argument, newText: replacement.code.replace(/\{indent\}/g, indent) });
+    }
 
     ranges.sort((a, b) => b.start - a.start);
     let result = source;
@@ -130,6 +113,75 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
     await fs.promises.writeFile(patchFile, patches.join('\n'));
     reporter.onStdErr(`\n  ` + colors.cyan('git apply ' + path.relative(process.cwd(), patchFile)) + '\n');
   }
+}
+
+const kLineBreak = /\r\n|[\n\r\u2028\u2029]/g;
+const kName = /[\p{ID_Start}$_][\p{ID_Continue}$]*/uy;
+const kSpaceAndComments = /(?:\s+|\/\/.*|\/\*[\s\S]*?\*\/)*/y;
+const kQuotedString = /'(?:[^'\\\n\r]|\\[\s\S])*'|"(?:[^"\\\n\r]|\\[\s\S])*"/y;
+
+function matchEnd(regex: RegExp, source: string, index: number): number {
+  regex.lastIndex = index;
+  return regex.test(source) ? regex.lastIndex : -1;
+}
+
+function skipSpaceAndComments(source: string, index: number): number {
+  return matchEnd(kSpaceAndComments, source, index);
+}
+
+function firstArgumentRange(source: string, calleeStart: number): { start: number, end: number } | undefined {
+  const calleeEnd = matchEnd(kName, source, calleeStart);
+  if (calleeEnd === -1)
+    return;
+  const parenthesis = skipSpaceAndComments(source, calleeEnd);
+  if (source[parenthesis] !== '(')
+    return;
+  const start = skipSpaceAndComments(source, parenthesis + 1);
+  const end = literalEnd(source, start);
+  if (end === -1)
+    return;
+  const next = source[skipSpaceAndComments(source, end)];
+  if (next !== ',' && next !== ')')
+    return;
+  return { start, end };
+}
+
+function literalEnd(source: string, index: number): number {
+  if (source[index] === '`')
+    return templateEnd(source, index);
+  return matchEnd(kQuotedString, source, index);
+}
+
+function templateEnd(source: string, index: number): number {
+  for (let i = index + 1; i < source.length; i++) {
+    if (source[i] === '\\') {
+      i++;
+    } else if (source[i] === '`') {
+      return i + 1;
+    } else if (source[i] === '$' && source[i + 1] === '{') {
+      i = substitutionEnd(source, i + 2) - 1;
+      if (i < 0)
+        return -1;
+    }
+  }
+  return -1;
+}
+
+function substitutionEnd(source: string, index: number): number {
+  let depth = 0;
+  for (let i = index; i < source.length;) {
+    const end = Math.max(skipSpaceAndComments(source, i), literalEnd(source, i));
+    if (end > i) {
+      i = end;
+      continue;
+    }
+    if (source[i] === '{')
+      depth++;
+    else if (source[i] === '}' && depth-- === 0)
+      return i + 1;
+    i++;
+  }
+  return -1;
 }
 
 function createPatch(fileName: string, before: string, after: string) {

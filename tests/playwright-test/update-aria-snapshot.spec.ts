@@ -480,6 +480,8 @@ test('should update when options are specified', async ({ runInlineTest }, testI
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<input value="hello world">\`);
+        await expect(page.locator('body'))
+          .toMatchAriaSnapshot(/* empty */ \`\${\`\`}\`);
         await expect(page.locator('body')).toMatchAriaSnapshot(\`\`, { timeout: 2500 });
         await expect(page.locator('body')).toMatchAriaSnapshot('',
           {
@@ -495,12 +497,16 @@ test('should update when options are specified', async ({ runInlineTest }, testI
   expect(trimPatch(data)).toBe(`diff --git a/a.spec.ts b/a.spec.ts
 --- a/a.spec.ts
 +++ b/a.spec.ts
-@@ -2,8 +2,12 @@
-       import { test, expect } from '@playwright/test';
+@@ -3,9 +3,15 @@
        test('test', async ({ page }) => {
          await page.setContent(\`<input value="hello world">\`);
+         await expect(page.locator('body'))
+-          .toMatchAriaSnapshot(/* empty */ \`\${\`\`}\`);
 -        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`, { timeout: 2500 });
 -        await expect(page.locator('body')).toMatchAriaSnapshot('',
++          .toMatchAriaSnapshot(/* empty */ \`
++            - textbox: hello world
++          \`);
 +        await expect(page.locator('body')).toMatchAriaSnapshot(\`
 +          - textbox: hello world
 +        \`, { timeout: 2500 });

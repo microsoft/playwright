@@ -15,7 +15,6 @@
  */
 
 import * as babel from '@babel/core';
-import traverseFunction from '@babel/traverse';
 
 import type { BabelFileResult, NodePath, PluginObj, TransformOptions } from '@babel/core';
 import type { TemplateBuilder } from '@babel/template';
@@ -23,10 +22,8 @@ import type { TSExportAssignment } from '@babel/types';
 
 export { codeFrameColumns } from '@babel/code-frame';
 export { declare } from '@babel/helper-plugin-utils';
-export { types } from '@babel/core';
-export const traverse = traverseFunction;
 
-export type { NodePath, PluginObj, types as T } from '@babel/core';
+export type { NodePath, PluginObj } from '@babel/core';
 export type { BabelAPI } from '@babel/helper-plugin-utils';
 
 export type BabelPlugin = [string, any?];
@@ -192,9 +189,4 @@ export function babelTransform(code: string, filename: string, isModule: boolean
   } finally {
     isTransforming = false;
   }
-}
-
-export function babelParse(code: string, filename: string, isModule: boolean): babel.ParseResult {
-  const options = babelTransformOptions(isTypeScript(filename), isModule, [], true);
-  return babel.parse(code, { filename, ...options })!;
 }
