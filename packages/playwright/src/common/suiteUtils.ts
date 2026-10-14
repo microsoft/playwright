@@ -15,6 +15,7 @@
 */
 
 import path from 'path';
+import fs from 'fs';
 
 import { calculateSha1 } from '@utils/crypto';
 import { sanitizeForFilePath, toPosixPath, trimLongString } from '@utils/fileUtils';
@@ -46,6 +47,38 @@ export function filterTestsRemoveEmptySuites(suite: Suite, filter: TestCaseFilte
   return !!suite._entries.length;
 }
 
+function isCaseSensitiveFileSystem(filePath: string, cache: Map<number, boolean>): boolean {
+  let existingPath = path.resolve(filePath);
+  let stats = fs.statSync(existingPath, { throwIfNoEntry: false });
+  while (!stats) {
+    const parent = path.dirname(existingPath);
+    if (parent === existingPath)
+      throw new Error(`Could not find an existing path to determine case sensitivity for "${filePath}"`);
+    existingPath = parent;
+    stats = fs.statSync(existingPath, { throwIfNoEntry: false });
+  }
+
+  const cachedValue = cache.get(stats.dev);
+  if (cachedValue !== undefined)
+    return cachedValue;
+
+  for (let probePath = existingPath; path.dirname(probePath) !== probePath; probePath = path.dirname(probePath)) {
+    const name = path.basename(probePath);
+    const letterIndex = name.search(/[a-z]/i);
+    if (letterIndex === -1)
+      continue;
+    const letter = name[letterIndex];
+    const swappedLetter = letter === letter.toLowerCase() ? letter.toUpperCase() : letter.toLowerCase();
+    const alternatePath = path.join(path.dirname(probePath), name.substring(0, letterIndex) + swappedLetter + name.substring(letterIndex + 1));
+    const alternateStats = fs.statSync(alternatePath, { throwIfNoEntry: false });
+    const caseSensitive = !alternateStats || alternateStats.dev !== stats.dev || alternateStats.ino !== stats.ino;
+    cache.set(stats.dev, caseSensitive);
+    return caseSensitive;
+  }
+
+  throw new Error(`Could not find a path component to determine case sensitivity for "${filePath}"`);
+}
+
 export function assignTestOutputDirSuffixes(projectSuites: Map<FullProjectInternal, Suite>) {
   const tests: { test: TestCase, project: FullProjectInternal }[] = [];
   const testKeys = new Map<TestCase, string>();
@@ -75,11 +108,21 @@ export function assignTestOutputDirSuffixes(projectSuites: Map<FullProjectIntern
   }
 
   const suffixes = new Map<TestCase, string>();
-  const normalizePath = (outputDir: string) => {
+  const caseSensitivityByDevice = new Map<number, boolean>();
+  const caseSensitivityByProject = new Map<FullProjectInternal, boolean>();
+  if (process.platform === 'darwin') {
+    for (const [project, suite] of projectSuites) {
+      if (suite.allTests().length)
+        caseSensitivityByProject.set(project, isCaseSensitiveFileSystem(project.project.outputDir, caseSensitivityByDevice));
+    }
+  }
+  const normalizePath = (outputDir: string, project: FullProjectInternal) => {
     if (process.platform === 'win32')
       return outputDir.toLowerCase();
-    if (process.platform === 'darwin')
-      return outputDir.normalize('NFD').toLowerCase();
+    if (process.platform === 'darwin') {
+      const normalizedPath = outputDir.normalize('NFD');
+      return caseSensitivityByProject.get(project) ? normalizedPath : normalizedPath.toLowerCase();
+    }
     return outputDir;
   };
   for (let attempt = 0; ; attempt++) {
@@ -94,7 +137,7 @@ export function assignTestOutputDirSuffixes(projectSuites: Map<FullProjectIntern
               testOutputDir += '-retry' + retry;
             if (repeatEachIndex)
               testOutputDir += '-repeat' + repeatEachIndex;
-            const outputDir = normalizePath(path.resolve(project.project.outputDir, testOutputDir));
+            const outputDir = normalizePath(path.resolve(project.project.outputDir, testOutputDir), project);
             const testsInOutputDir = testsByOutputDir.get(outputDir) || new Set<TestCase>();
             testsInOutputDir.add(test);
             testsByOutputDir.set(outputDir, testsInOutputDir);
