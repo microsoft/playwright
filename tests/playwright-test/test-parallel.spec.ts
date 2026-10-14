@@ -121,7 +121,7 @@ test('test.describe.parallel should work in describe', async ({ runInlineTest })
 test('config.fullyParallel should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { fullyParallel: true };
+      export default { fullyParallel: true };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -151,7 +151,7 @@ test('config.fullyParallel should work', async ({ runInlineTest }) => {
 test('project.fullyParallel should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { projects: [ { fullyParallel: true } ] };
+      export default { projects: [ { fullyParallel: true } ] };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';

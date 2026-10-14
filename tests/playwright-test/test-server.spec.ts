@@ -132,7 +132,7 @@ test('should list tests with testIdAttribute', async ({ startTestServer, writeFi
       test('foo', () => {});
       `,
     'playwright.config.ts': `
-        module.exports = {
+        export default {
         projects: [{
           name: 'chromium',
           use: {
@@ -157,7 +157,7 @@ test('should list non-default projects', async ({ startTestServer, writeFiles })
       test('foo', () => {});
       `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         projects: [
           { name: 'default' },
           { name: 'non-default', default: false },

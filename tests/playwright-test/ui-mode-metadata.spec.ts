@@ -19,7 +19,7 @@ import { test, expect } from './ui-mode-fixtures';
 test('should render html report git info metadata', async ({ runUITest }) => {
   const { page } = await runUITest({
     'reporter.ts': `
-      module.exports = class Reporter {
+      export default class Reporter {
         onBegin(config, suite) {
           console.log('ci.link:', config.metadata['ci'].commitHref);
         }

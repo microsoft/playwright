@@ -91,7 +91,7 @@ test('should call methods in right order', async ({ runInlineTest, mergeReports 
   const files = {
     'echo-reporter.js': echoReporterJs,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
@@ -162,7 +162,7 @@ test('should fail merge and report error when reporter throws in onEnd', async (
       module.exports = ThrowingReporter;
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
     `,
@@ -187,7 +187,7 @@ test('should merge into html with dependencies', async ({ runInlineTest, mergeRe
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]],
         projects: [
@@ -273,7 +273,7 @@ test('should merge blob into blob', async ({ runInlineTest, mergeReports, showRe
   const reportDir = test.info().outputPath('blob-report-orig');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
@@ -330,7 +330,7 @@ test('should produce consistent step ids', {
 }, async ({ runInlineTest, mergeReports, showReport, page }) => {
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         reporter: [
           ['blob', { outputFile: 'blob-report/report-1.zip' }],
@@ -361,7 +361,7 @@ test('be able to merge incomplete shards', async ({ runInlineTest, mergeReports,
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
@@ -416,7 +416,7 @@ test('total time is from test run not from merge', async ({ runInlineTest, merge
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
@@ -460,7 +460,7 @@ test('merge into list report by default', async ({ runInlineTest, mergeReports }
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
@@ -548,7 +548,7 @@ test('should print progress', async ({ runInlineTest, mergeReports }) => {
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
@@ -607,7 +607,7 @@ test('preserve attachments', async ({ runInlineTest, mergeReports, showReport, p
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
@@ -667,7 +667,7 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         use: {
           trace: 'on'
@@ -751,7 +751,7 @@ test('resource names should not clash between runs', async ({ runInlineTest, sho
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
     `,
@@ -820,7 +820,7 @@ test('multiple output reports', async ({ runInlineTest, mergeReports, showReport
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
@@ -875,12 +875,12 @@ test('multiple output reports based on config', async ({ runInlineTest, mergeRep
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'merged/playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['blob', { outputDir: 'merged-blob' }], ['html', { outputFolder: 'html', open: 'never' }], ['line']]
       };
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
@@ -942,7 +942,7 @@ test('onError in the report', async ({ runInlineTest, mergeReports, showReport, 
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         tag: process.env.GLOBAL_TAG,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
@@ -1033,7 +1033,7 @@ test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
       module.exports = EchoReporter;
     `,
     'playwright.config.ts': `
-      module.exports = ${JSON.stringify(config, null, 2)};
+      export default ${JSON.stringify(config, null, 2)};
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -1207,7 +1207,7 @@ test('preserve steps in html report', async ({ runInlineTest, mergeReports, show
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['blob']]
       };
     `,
@@ -1269,7 +1269,7 @@ test('preserve step params', async ({ runInlineTest, mergeReports }) => {
       module.exports = ParamsReporter;
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['blob']]
       };
     `,
@@ -1293,7 +1293,7 @@ test('preserve step params', async ({ runInlineTest, mergeReports }) => {
 test('support fileName option', async ({ runInlineTest, mergeReports }) => {
   const files = (fileSuffix: string) => ({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['blob', { fileName: 'report-${fileSuffix}.zip' }]],
         projects: [
           { name: 'foo' },
@@ -1318,7 +1318,7 @@ test('support PLAYWRIGHT_BLOB_OUTPUT_DIR env variable', async ({ runInlineTest, 
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30091' });
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['blob']],
         projects: [
           { name: 'foo' },
@@ -1342,7 +1342,7 @@ test('support PLAYWRIGHT_BLOB_OUTPUT_NAME env variable', async ({ runInlineTest,
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30091' });
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['blob']],
         projects: [
           { name: 'foo' },
@@ -1367,7 +1367,7 @@ test('support outputFile option', async ({ runInlineTest, mergeReports }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30091' });
   const files = (fileSuffix: string) => ({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['blob', { outputDir: 'should-be-ignored', outputFile: 'my-reports/report-${fileSuffix}.zip' }]],
         projects: [
           { name: 'foo' },
@@ -1392,7 +1392,7 @@ test('support PLAYWRIGHT_BLOB_OUTPUT_FILE environment variable', async ({ runInl
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30091' });
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: 'blob',
         projects: [
           { name: 'foo' },
@@ -1425,7 +1425,7 @@ test('support PLAYWRIGHT_BLOB_OUTPUT_FILE environment variable', async ({ runInl
 test('keep projects with same name different global tag separate', async ({ runInlineTest, mergeReports, showReport, page }) => {
   const files = (reportName: string) => ({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['blob']],
         tag: process.env.GLOBAL_TAG,
         projects: [
@@ -1493,7 +1493,7 @@ test('blob report should include version', async ({ runInlineTest }) => {
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['blob']]
       };
     `,
@@ -1541,7 +1541,7 @@ test('merge-reports should throw if report version is from the future', async ({
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['blob']]
       };
     `,
@@ -1583,7 +1583,7 @@ test('merge-reports should merge old attachments (pre-1.53)', async ({ runInline
 
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['blob']]
       };
     `,
@@ -1591,7 +1591,7 @@ test('merge-reports should merge old attachments (pre-1.53)', async ({ runInline
       import { test, expect } from '@playwright/test';
       test('test 1', async ({}) => {});
     `,
-    'merge.config.ts': `module.exports = {
+    'merge.config.ts': `export default {
       testDir: 'mergeRoot',
      };`,
   };
@@ -1614,7 +1614,7 @@ test('merge-reports should merge old attachments (pre-1.53)', async ({ runInline
 test('should merge blob reports with same name', async ({ runInlineTest, mergeReports, showReport, page }) => {
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         reporter: 'blob'
       };
@@ -1672,7 +1672,7 @@ test('reporter list in the custom config', async ({ runInlineTest, mergeReports 
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = { reporter: 'blob' };
+      export default { reporter: 'blob' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -1690,7 +1690,7 @@ test('reporter list in the custom config', async ({ runInlineTest, mergeReports 
       module.exports = TestReporter;
     `,
     'merged/playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         reporter: [['./testReporter.js', { myOpt: 1 }]]
       };
@@ -1719,11 +1719,11 @@ test('merge reports with different rootDirs', async ({ runInlineTest, mergeRepor
         }
       };
     `,
-    'merge.config.ts': `module.exports = {
+    'merge.config.ts': `export default {
       testDir: 'mergeRoot',
       reporter: './echo-reporter.js'
      };`,
-    'dir1/playwright.config.ts': `module.exports = {
+    'dir1/playwright.config.ts': `export default {
       testDir: 'tests1',
       reporter: [['blob', { outputDir: 'blob-report' }]]
     };`,
@@ -1735,7 +1735,7 @@ test('merge reports with different rootDirs', async ({ runInlineTest, mergeRepor
   await runInlineTest(files1, { workers: 1 }, undefined, { additionalArgs: ['--config', test.info().outputPath('dir1/playwright.config.ts')] });
 
   const files2 = {
-    'dir2/playwright.config.ts': `module.exports = {
+    'dir2/playwright.config.ts': `export default {
       reporter: [['blob', { outputDir: 'blob-report' }]]
     };`,
     'dir2/tests2/b.test.js': `
@@ -1777,7 +1777,7 @@ test('merge reports same rootDirs', async ({ runInlineTest, mergeReports }) => {
         }
       };
     `,
-    'playwright.config.ts': `module.exports = {
+    'playwright.config.ts': `export default {
       testDir: 'tests',
       reporter: [['blob', { outputDir: 'blob-report' }]]
     };`,
@@ -1836,11 +1836,11 @@ test('merge reports with different rootDirs and path separators', async ({ runIn
         }
       };
     `,
-    'merge.config.ts': `module.exports = {
+    'merge.config.ts': `export default {
       testDir: 'mergeRoot',
       reporter: './echo-reporter.js'
      };`,
-    'dir1/playwright.config.ts': `module.exports = {
+    'dir1/playwright.config.ts': `export default {
       reporter: [['blob', { outputDir: 'blob-report' }]]
     };`,
     'dir1/tests1/a.test.js': `
@@ -1851,7 +1851,7 @@ test('merge reports with different rootDirs and path separators', async ({ runIn
   await runInlineTest(files1, { workers: 1 }, undefined, { additionalArgs: ['--config', test.info().outputPath('dir1/playwright.config.ts')] });
 
   const files2 = {
-    'dir2/playwright.config.ts': `module.exports = {
+    'dir2/playwright.config.ts': `export default {
       reporter: [['blob', { outputDir: 'blob-report' }]]
     };`,
     'dir2/tests2/b.test.js': `
@@ -1908,7 +1908,7 @@ test('merge reports without --config preserves path separators', async ({ runInl
         }
       };
     `,
-    'dir1/playwright.config.ts': `module.exports = {
+    'dir1/playwright.config.ts': `export default {
       reporter: [['blob', { outputDir: 'blob-report' }]]
     };`,
     'dir1/tests1/a.test.js': `
@@ -1952,7 +1952,7 @@ test('merge reports should preserve attachments', async ({ runInlineTest, mergeR
   const reportDir = test.info().outputPath('blob-report-orig');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
@@ -2043,12 +2043,12 @@ test('merge reports must not change test ids when there is no need to', async ({
         }
       };
     `,
-    'single-run.config.ts': `module.exports = {
+    'single-run.config.ts': `export default {
       reporter: [
         ['./echo-test-id-reporter.js'],
       ]
     };`,
-    'shard-1.config.ts': `module.exports = {
+    'shard-1.config.ts': `export default {
       fullyParallel: true,
       shard: { total: 2, current: 1 },
       reporter: [
@@ -2056,7 +2056,7 @@ test('merge reports must not change test ids when there is no need to', async ({
         ['blob', { outputDir: 'blob-report' }],
       ]
     };`,
-    'shard-2.config.ts': `module.exports = {
+    'shard-2.config.ts': `export default {
       fullyParallel: true,
       shard: { total: 2, current: 2 },
       reporter: [
@@ -2064,7 +2064,7 @@ test('merge reports must not change test ids when there is no need to', async ({
         ['blob', { outputDir: 'blob-report' }],
       ]
     };`,
-    'merge.config.ts': `module.exports = {
+    'merge.config.ts': `export default {
       reporter: [
         ['./echo-test-id-reporter.js'],
       ]
@@ -2115,11 +2115,11 @@ test('TestSuite.project() should return owning project', async ({ runInlineTest,
         }
       };
     `,
-    'merge.config.ts': `module.exports = {
+    'merge.config.ts': `export default {
       testDir: 'mergeRoot',
       reporter: './echo-reporter.js'
      };`,
-    'playwright.config.ts': `module.exports = {
+    'playwright.config.ts': `export default {
       testDir: 'tests',
       reporter: [['blob', { outputDir: 'blob-report' }]],
       projects: [{name: 'my-project'}]
@@ -2150,7 +2150,7 @@ test('open blob-1.42', async ({ runInlineTest, mergeReports }) => {
         }
       };
     `,
-    'merge.config.ts': `module.exports = {
+    'merge.config.ts': `export default {
       testDir: 'mergeRoot',
       reporter: './echo-reporter.js'
      };`,
@@ -2190,7 +2190,7 @@ test('preserve static annotations when tests did not run', async ({ runInlineTes
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: 'blob',
         projects: [
           { name: 'setup', testMatch: 'setup.js' },
@@ -2235,7 +2235,7 @@ test('preserve static annotations when tests did not run', async ({ runInlineTes
 test('project filter in report name', async ({ runInlineTest }) => {
   const files = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: 'blob',
         projects: [
           { name: 'foo' },
@@ -2291,7 +2291,7 @@ test('should report duration across all shards', async ({ runInlineTest, mergeRe
   }
   const files = {
     'playwright.config.ts': `
-      module.exports = ${JSON.stringify(config, null, 2)};
+      export default ${JSON.stringify(config, null, 2)};
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -2323,7 +2323,7 @@ test('shard chart', async ({ runInlineTest, writeFiles, showReport, page, mergeR
   const reportDir = test.info().outputPath('blob-reports');
   await writeFiles({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         fullyParallel: true,
         tag: process.env.BOT_TAG,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
@@ -2380,7 +2380,7 @@ test('should populate projects in config when merging reports', async ({ runInli
   const files = {
     'reporter.js': `module.exports = ${CustomReporter.toString()};`,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]],
         projects: [
           { name: 'setup' },
@@ -2412,7 +2412,7 @@ test('workerIndex is rebased', async ({ runInlineTest, writeFiles, showReport, p
   const reportDir = test.info().outputPath('blob-reports');
   await writeFiles({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         fullyParallel: true,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };

@@ -117,7 +117,7 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -162,7 +162,7 @@ test('should report before hooks step error', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -192,7 +192,7 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -242,7 +242,7 @@ test('should report test.step from fixtures', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': expectReporterJS,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -290,7 +290,7 @@ test('should report expect step locations', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -314,7 +314,7 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['./reporter']],
       };
     `,
@@ -485,7 +485,7 @@ test('should mark step as failed when soft expect fails', async ({ runInlineTest
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -522,7 +522,7 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -598,7 +598,7 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -645,7 +645,7 @@ fixture   |  Fixture "browser"
 test('should not propagate errors from within toPass', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'playwright.config.ts': `export default { reporter: './reporter', };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('pass', async () => {
@@ -673,7 +673,7 @@ hook      |After Hooks
 test('should show final toPass error', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'playwright.config.ts': `export default { reporter: './reporter', };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('fail', async () => {
@@ -700,7 +700,7 @@ hook      |Worker Cleanup
 test('should propagate nested soft errors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'playwright.config.ts': `export default { reporter: './reporter', };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('fail', async () => {
@@ -744,7 +744,7 @@ hook      |Worker Cleanup
 test('should not propagate nested hard errors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
+    'playwright.config.ts': `export default { reporter: './reporter', };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('fail', async () => {
@@ -788,7 +788,7 @@ hook      |Worker Cleanup
 test('should step w/o box', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: [['./reporter', { printErrorLocation: true }]], };`,
+    'playwright.config.ts': `export default { reporter: [['./reporter', { printErrorLocation: true }]], };`,
     'a.test.ts':
     ` /*1*/ import { test, expect } from '@playwright/test';
       /*2*/ test('fail', async () => {
@@ -821,7 +821,7 @@ hook      |Worker Cleanup
 test('should step w/ box', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: [['./reporter', { printErrorLocation: true }]], };`,
+    'playwright.config.ts': `export default { reporter: [['./reporter', { printErrorLocation: true }]], };`,
     'a.test.ts':
     ` /*1*/ import { test, expect } from '@playwright/test';
       /*2*/ test('fail', async () => {
@@ -854,7 +854,7 @@ hook      |Worker Cleanup
 test('should soft step w/ box', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: [['./reporter', { printErrorLocation: true }]], };`,
+    'playwright.config.ts': `export default { reporter: [['./reporter', { printErrorLocation: true }]], };`,
     'a.test.ts':
     ` /*1*/ import { test, expect } from '@playwright/test';
       /*2*/ test('fail', async () => {
@@ -888,7 +888,7 @@ test('should not generate dupes for named expects', async ({ runInlineTest }) =>
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -925,7 +925,7 @@ test('step inside toPass', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -973,7 +973,7 @@ test('library API call inside toPass', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -1022,7 +1022,7 @@ test('library API call inside expect.poll', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -1075,7 +1075,7 @@ test('web assertion inside expect.poll', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -1127,7 +1127,7 @@ test('should report expect steps', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -1179,7 +1179,7 @@ test('should report api steps', async ({ runInlineTest, server }) => {
   });
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: [['./reporter', { skipErrorMessage: true }]] };`,
+    'playwright.config.ts': `export default { reporter: [['./reporter', { skipErrorMessage: true }]] };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('pass', async ({ page, request }) => {
@@ -1266,7 +1266,7 @@ test('should report api step failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -1304,7 +1304,7 @@ fixture   |  Fixture "browser"
 test('should show nice stacks for locators', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: [['./reporter', { printErrorLocation: true }]] };`,
+    'playwright.config.ts': `export default { reporter: [['./reporter', { printErrorLocation: true }]] };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
@@ -1350,7 +1350,7 @@ test('should allow passing location to test.step', async ({ runInlineTest, runTS
       }
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter',
       };
     `,
@@ -1387,7 +1387,7 @@ hook      |After Hooks
 test('should show tracing.group nested inside test.step', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: [['./reporter', { printErrorLocation: true }]] };`,
+    'playwright.config.ts': `export default { reporter: [['./reporter', { printErrorLocation: true }]] };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
@@ -1430,7 +1430,7 @@ test('calls from waitForEvent callback should be under its parent step', {
 }, async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'playwright.config.ts': `export default { reporter: './reporter' };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('waitForResponse step nesting', async ({ page }) => {
@@ -1485,7 +1485,7 @@ test('reading network request / response should not be listed as step', {
 }, async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'playwright.config.ts': `export default { reporter: './reporter' };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('waitForResponse step nesting', async ({ page }) => {
@@ -1524,7 +1524,7 @@ test('calls from page.route callback should be under its parent step', {
 }, async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'playwright.config.ts': `export default { reporter: './reporter' };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('waitForResponse step nesting', async ({ page }) => {
@@ -1567,7 +1567,7 @@ pw:api    |    Close context
 test('test.step.skip should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'playwright.config.ts': `export default { reporter: './reporter' };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ }) => {
@@ -1605,7 +1605,7 @@ hook      |After Hooks
 test('skip test.step.skip body', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'playwright.config.ts': `export default { reporter: './reporter' };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ }) => {
@@ -1634,7 +1634,7 @@ hook      |After Hooks
 test('step.skip should work at runtime', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'playwright.config.ts': `export default { reporter: './reporter' };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ }) => {
@@ -1709,7 +1709,7 @@ test('step.titlePath works in custom matcher', { annotation: { type: 'issue', de
 test('should differentiate test.skip and step.skip', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'playwright.config.ts': `export default { reporter: './reporter' };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ }) => {
@@ -1729,7 +1729,7 @@ test('should differentiate test.skip and step.skip', async ({ runInlineTest }) =
 test('show api calls inside expects', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'playwright.config.ts': `export default { reporter: './reporter' };`,
     'a.test.ts': `
       import { test, expect as baseExpect } from '@playwright/test';
 
@@ -1793,7 +1793,7 @@ pw:api    |    Close context
 test('should box fixtures', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'playwright.config.ts': `export default { reporter: './reporter' };`,
     'a.test.ts': `
       import { test as baseTest, expect, type Page } from '@playwright/test';
 
@@ -1875,7 +1875,7 @@ test('should report step params', async ({ runInlineTest }) => {
       }
     `,
     'playwright.config.ts': `
-      module.exports = { reporter: './reporter' };
+      export default { reporter: './reporter' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -1911,7 +1911,7 @@ test('should report step subtitle', async ({ runInlineTest }) => {
       }
     `,
     'playwright.config.ts': `
-      module.exports = { reporter: './reporter' };
+      export default { reporter: './reporter' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -1943,7 +1943,7 @@ test('should report input step params', async ({ runInlineTest }) => {
       }
     `,
     'playwright.config.ts': `
-      module.exports = { reporter: './reporter' };
+      export default { reporter: './reporter' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -1995,7 +1995,7 @@ test('should truncate long step params', async ({ runInlineTest }) => {
       }
     `,
     'playwright.config.ts': `
-      module.exports = { reporter: './reporter' };
+      export default { reporter: './reporter' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';

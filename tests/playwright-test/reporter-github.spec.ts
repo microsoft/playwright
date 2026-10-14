@@ -62,7 +62,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('print GitHub annotations for slow tests', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reportSlowTests: { max: 0, threshold: 100 }
           };
         `,

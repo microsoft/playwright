@@ -21,7 +21,7 @@ import fs from 'fs';
 test('should list tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { projects: [{ name: 'foo' }, {}] };
+      export default { projects: [{ name: 'foo' }, {}] };
     `,
     'a.test.js': `
       const { test, expect } = require('@playwright/test');
@@ -47,7 +47,7 @@ test('should list tests', async ({ runInlineTest }) => {
 test('should list tests to stdout when JSON reporter outputs to a file', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { projects: [{ name: 'foo' }, {}] };
+      export default { projects: [{ name: 'foo' }, {}] };
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -71,18 +71,18 @@ test('globalSetup and globalTeardown should not run', async ({ runInlineTest }) 
   const result = await runInlineTest({
     'playwright.config.ts': `
       import * as path from 'path';
-      module.exports = {
+      export default {
         globalSetup: './globalSetup',
         globalTeardown: './globalTeardown.ts',
       };
     `,
     'globalSetup.ts': `
-      module.exports = () => {
+      export default () => {
         console.log('Running globalSetup');
       };
     `,
     'globalTeardown.ts': `
-      module.exports = () => {
+      export default () => {
         console.log('Running globalTeardown');
       };
     `,
@@ -113,7 +113,7 @@ test('outputDir should not be removed', async ({ runInlineTest }, testInfo) => {
 
   const result1 = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { outputDir: ${JSON.stringify(outputDir)} };
+      export default { outputDir: ${JSON.stringify(outputDir)} };
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -128,7 +128,7 @@ test('outputDir should not be removed', async ({ runInlineTest }, testInfo) => {
 
   const result2 = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { outputDir: ${JSON.stringify(outputDir)} };
+      export default { outputDir: ${JSON.stringify(outputDir)} };
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -175,14 +175,14 @@ test('should ignore .only', async ({ runInlineTest }) => {
 
 test('should report errors with location', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'playwright.config.ts': `export default { reporter: './reporter' };`,
     'reporter.ts': `
       class Reporter {
         onError(error) {
           console.log('%% ' + JSON.stringify(error.location));
         }
       }
-      module.exports = Reporter;
+      export default Reporter;
     `,
     'a.test.js': `
       const oh = '';
@@ -201,7 +201,7 @@ test('should list tests once', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27087' });
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { };
+      export default { };
     `,
     'a.test.js': `
       const { test, expect } = require('@playwright/test');

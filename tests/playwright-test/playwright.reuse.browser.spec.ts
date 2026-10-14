@@ -114,7 +114,7 @@ test('should produce correct test steps', async ({ runInlineTest, runServer }) =
             console.log('%% onStepEnd [' + step.category + '] ' + this.stepTitle(step));
         }
       }
-      module.exports = Reporter;
+      export default Reporter;
     `,
     'src/a.test.ts': `
       import { test, expect } from '@playwright/test';

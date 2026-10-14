@@ -272,7 +272,7 @@ test('should print web server output', async ({ runUITest }, { workerIndex }) =>
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(serverPath)} ${port}',
           port: ${port},

@@ -187,7 +187,7 @@ test('max-failures should still run teardown project', async ({ runInlineTest })
 
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         maxFailures: 1,
         projects: [
           { name: 'setup', testMatch: '**/setup.ts', teardown: 'teardown' },

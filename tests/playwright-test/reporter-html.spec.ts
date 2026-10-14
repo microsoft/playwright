@@ -59,7 +59,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     test('should generate report', async ({ runInlineTest, showReport, page }) => {
       await runInlineTest({
         'playwright.config.ts': `
-          module.exports = { name: 'project-name' };
+          export default { name: 'project-name' };
         `,
         'a.test.js': `
           import { test, expect } from '@playwright/test';
@@ -151,7 +151,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       const invalidOption = 'invalid-option';
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = { preserveOutput: 'failures-only' };
+          export default { preserveOutput: 'failures-only' };
         `,
         'a.test.js': `
           import { test, expect } from '@playwright/test';
@@ -167,7 +167,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     test('should not throw when attachment is missing', async ({ runInlineTest, page, showReport }, testInfo) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = { preserveOutput: 'failures-only' };
+          export default { preserveOutput: 'failures-only' };
         `,
         'a.test.js': `
           import { test, expect } from '@playwright/test';
@@ -190,7 +190,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       const expected = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAAAXNSR0IArs4c6QAAAhVJREFUeJzt07ERwCAQwLCQ/Xd+FuDcQiFN4MZrZuYDjv7bAfAyg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAiEDVPZBYx6ffy+AAAAAElFTkSuQmCC', 'base64');
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = { use: { viewport: { width: 200, height: 200 }} };
+          export default { use: { viewport: { width: 200, height: 200 }} };
         `,
         'a.test.js-snapshots/expected-linux.png': expected,
         'a.test.js-snapshots/expected-darwin.png': expected,
@@ -264,7 +264,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
             use: { viewport: { width: ${IMG_WIDTH}, height: ${IMG_HEIGHT} }}
           };
@@ -301,7 +301,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       const expected = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAAAXNSR0IArs4c6QAAAhVJREFUeJzt07ERwCAQwLCQ/Xd+FuDcQiFN4MZrZuYDjv7bAfAyg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAiEDVPZBYx6ffy+AAAAAElFTkSuQmCC', 'base64');
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = { use: { viewport: { width: 200, height: 200 }} };
+          export default { use: { viewport: { width: 200, height: 200 }} };
         `,
         'a.test.js-snapshots/expected-linux.png': expected,
         'a.test.js-snapshots/expected-darwin.png': expected,
@@ -338,7 +338,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       const expected = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAAAXNSR0IArs4c6QAAAhVJREFUeJzt07ERwCAQwLCQ/Xd+FuDcQiFN4MZrZuYDjv7bAfAyg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAgEg0AwCASDQDAIBINAMAiEDVPZBYx6ffy+AAAAAElFTkSuQmCC', 'base64');
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = { use: { viewport: { width: 200, height: 200 }} };
+          export default { use: { viewport: { width: 200, height: 200 }} };
         `,
         'a.test.js-snapshots/expected-linux': expected,
         'a.test.js-snapshots/expected-darwin': expected,
@@ -366,7 +366,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     test('should include screenshot on failure', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             use: {
               viewport: { width: 200, height: 200 },
               screenshot: 'only-on-failure',
@@ -395,7 +395,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     test('should use different path if attachments base url option is provided', async ({ runInlineTest, page, showReport }, testInfo) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             use: {
               viewport: { width: 200, height: 200 },
               screenshot: 'on',
@@ -431,7 +431,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     test('should display report title if provided', async ({ runInlineTest, page, showReport }, testInfo) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reporter: [['html', { title: 'Custom report title' }], ['line']]
           };
         `,
@@ -452,7 +452,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     test('should process URLs as links in report title', async ({ runInlineTest, page, showReport }, testInfo) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reporter: [['html', { title: 'Custom report title https://playwright.dev separator http://microsoft.com end' }], ['line']]
           };
         `,
@@ -479,7 +479,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             globalTeardown: './global-teardown.js',
           };
         `,
@@ -1751,7 +1751,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       test.skip(useIntermediateMergeReport);
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reporter: [['html', { outputFolder: 'test-results/html-report' }]]
           }
         `,
@@ -1771,7 +1771,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       test.skip(useIntermediateMergeReport);
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reporter: [['html', { outputFolder: 'test-results-html' }]]
           }
         `,
@@ -1791,7 +1791,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         test.skip(useIntermediateMergeReport);
         const result = await runInlineTest({
           'nested/project/playwright.config.ts': `
-            module.exports = { reporter: [['html', { outputFolder: '../my-report/' }]] };
+            export default { reporter: [['html', { outputFolder: '../my-report/' }]] };
           `,
           'nested/project/a.test.js': `
             import { test, expect } from '@playwright/test';
@@ -3221,7 +3221,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     test('should print a user-friendly warning when opening a trace via file:// protocol', async ({ runInlineTest, showReport, page }) => {
       await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             projects: [{
               name: 'chromium',
               use: {
@@ -3561,7 +3561,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     test('should support keyboard shortcuts', async ({ runInlineTest, showReport, page }) => {
       await runInlineTest({
         'playwright.config.ts': `
-          module.exports = { name: 'project-name' };
+          export default { name: 'project-name' };
         `,
         'a.test.js': `
           import { test, expect } from '@playwright/test';
@@ -3648,7 +3648,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       test('clicking on label should not exit speedboard', async ({ runInlineTest, showReport, page }) => {
         await runInlineTest({
           'playwright.config.ts': `
-          module.exports = {
+          export default {
             projects: [{ name: 'foo' }, { name: 'bar' }],
           };
         `,
@@ -3711,7 +3711,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       test('next/prev buttons should follow speed', async ({ runInlineTest, showReport, page }) => {
         await runInlineTest({
           'playwright.config.ts': `
-          module.exports = {};
+          export default {};
         `,
           'a.test.js': `
             import { test, expect } from '@playwright/test';

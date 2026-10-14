@@ -73,7 +73,7 @@ test('should not report skipped due to sharding', async ({ runInlineTest }) => {
 test('should report projects and stats', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 2,
         projects: [
           {
@@ -122,7 +122,7 @@ test('should report projects and stats', async ({ runInlineTest }, testInfo) => 
 test('should merge specs from all projects when testDir is not cwd', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         testDir: 'tests',
         projects: [{ name: 'p1' }, { name: 'p2' }],
       };
@@ -236,7 +236,7 @@ test('should have error position in results', async ({
 test('should add dot in addition to file json with CI', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { reporter: [['json', { outputFile: 'a.json' }]] };
+      export default { reporter: [['json', { outputFile: 'a.json' }]] };
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -253,7 +253,7 @@ test('should add dot in addition to file json with CI', async ({ runInlineTest }
 test('should add line in addition to file json without CI', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { reporter: [['json', { outputFile: 'a.json' }]] };
+      export default { reporter: [['json', { outputFile: 'a.json' }]] };
     `,
     'a.test.js': `
       const { test, expect } = require('@playwright/test');
@@ -284,7 +284,7 @@ test.describe('report location', () => {
   test('with config should create report relative to config', async ({ runInlineTest }, testInfo) => {
     const result = await runInlineTest({
       'nested/project/playwright.config.ts': `
-        module.exports = { reporter: [['json', { outputFile: '../my-report/a.json' }]] };
+        export default { reporter: [['json', { outputFile: '../my-report/a.json' }]] };
       `,
       'nested/project/a.test.js': `
         import { test, expect } from '@playwright/test';

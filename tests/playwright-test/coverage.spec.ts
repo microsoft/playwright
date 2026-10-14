@@ -43,7 +43,7 @@ const coverageHelper = `
 test('should collect istanbul coverage into the trace', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: { trace: { mode: 'on', _coverage: true } },
       };
     `,
@@ -85,7 +85,7 @@ test('should collect istanbul coverage into the trace', async ({ runInlineTest }
 test('should aggregate coverage with the coverage reporter', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: { trace: { mode: 'on', _coverage: true } },
         reporter: [['dot'], ['coverage', { outputDir: 'coverage-report' }]],
       };
@@ -132,7 +132,7 @@ test('should aggregate coverage with the coverage reporter', async ({ runInlineT
 test('should warn when no coverage was collected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: { trace: { mode: 'on', _coverage: true } },
         reporter: [['dot'], ['coverage', { outputDir: 'coverage-report' }]],
       };

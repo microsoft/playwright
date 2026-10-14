@@ -222,7 +222,7 @@ for (const fileName of ['trace.json', 'trace.json.gz']) {
     await fs.promises.mkdir(outputFile);
     const result = await runInlineTest({
       'playwright.config.ts': `
-        module.exports = { reporter: [['perfetto', { outputFile: ${JSON.stringify(outputFile)} }]] };
+        export default { reporter: [['perfetto', { outputFile: ${JSON.stringify(outputFile)} }]] };
       `,
       'a.test.ts': `
         import { test } from '@playwright/test';
@@ -238,7 +238,7 @@ for (const fileName of ['trace.json', 'trace.json.gz']) {
 test('should respect outputFile option', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { reporter: [['perfetto', { outputFile: 'reports/my-trace.json' }]] };
+      export default { reporter: [['perfetto', { outputFile: 'reports/my-trace.json' }]] };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -252,7 +252,7 @@ test('should respect outputFile option', async ({ runInlineTest }, testInfo) => 
 test('should gzip the report when output file ends with .gz', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { reporter: [['perfetto', { outputFile: 'perfetto.json.gz' }]] };
+      export default { reporter: [['perfetto', { outputFile: 'perfetto.json.gz' }]] };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';

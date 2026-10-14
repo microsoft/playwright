@@ -60,7 +60,7 @@ test('test.extend should work', async ({ runInlineTest }) => {
       export const test2 = base.extend(createDerivedFixtures('e2'));
     `,
     'playwright.config.ts': `
-      module.exports = { projects: [
+      export default { projects: [
         { use: { suffix: 'base1' } },
         { use: { suffix: 'base2' } },
       ] };
@@ -125,7 +125,7 @@ test('test.extend should work', async ({ runInlineTest }) => {
 test('config should override options but not fixtures', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: { param: 'config' },
       };
     `,
@@ -163,7 +163,7 @@ test('config should override options but not fixtures', async ({ runInlineTest }
 test('mergeTests should be able to merge', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: { param: 'from-config' },
       };
     `,
@@ -234,7 +234,7 @@ test('mergeTests should print nice message when used as extend', async ({ runInl
 test('test.use() with undefined should not be ignored', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: { option1: 'config' },
       };
     `,
@@ -286,7 +286,7 @@ test('test.use() with undefined should not be ignored', async ({ runInlineTest }
 test('undefined values in config and test.use should be reverted to default', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: { option1: undefined, option2: undefined, option4: 'from-config' },
       };
     `,

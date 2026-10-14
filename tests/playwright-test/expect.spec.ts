@@ -472,7 +472,7 @@ test('should support toHaveURL with baseURL from webServer', async ({ runInlineT
       });
       `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port}',
           port: ${port},

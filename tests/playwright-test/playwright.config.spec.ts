@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should fall back to launchOptions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: {
           launchOptions: {
             headless: false,
@@ -44,7 +44,7 @@ test('should fall back to launchOptions', async ({ runInlineTest }) => {
 test('should override launchOptions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: {
           headless: false,
           channel: 'chrome',
@@ -71,7 +71,7 @@ test('should override launchOptions', async ({ runInlineTest }) => {
 test('should respect contextOptions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: {
           contextOptions: {
             acceptDownloads: false,
@@ -122,7 +122,7 @@ test('should respect contextOptions', async ({ runInlineTest }) => {
 test('should override contextOptions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: {
         acceptDownloads: false,
         bypassCSP: true,
@@ -197,7 +197,7 @@ test('should override contextOptions', async ({ runInlineTest }) => {
 test('should respect testIdAttribute', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: {
           testIdAttribute: 'data-pw',
         }
@@ -219,7 +219,7 @@ test('should respect testIdAttribute', async ({ runInlineTest }) => {
 test('should respect testIdAttribute with multiple comma-separated names', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: {
           testIdAttribute: 'data-pw,data-ti',
         }

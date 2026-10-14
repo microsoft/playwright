@@ -19,7 +19,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('config.grep should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { grep: /test1/ };
+      export default { grep: /test1/ };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -35,7 +35,7 @@ test('config.grep should work', async ({ runInlineTest }) => {
 test('config.grepInvert should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { grepInvert: /test1/ };
+      export default { grepInvert: /test1/ };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -51,7 +51,7 @@ test('config.grepInvert should work', async ({ runInlineTest }) => {
 test('project.grep should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { projects: [ { grep: /test1/ } ] };
+      export default { projects: [ { grep: /test1/ } ] };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -67,7 +67,7 @@ test('project.grep should work', async ({ runInlineTest }) => {
 test('project.grepInvert should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { projects: [ { grepInvert: /test1/ } ] };
+      export default { projects: [ { grepInvert: /test1/ } ] };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -83,7 +83,7 @@ test('project.grepInvert should work', async ({ runInlineTest }) => {
 test('config.grep should intersect with --grep and --grepInvert', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { grep: /test./, grepInvert: /test4/ };
+      export default { grep: /test./, grepInvert: /test4/ };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';

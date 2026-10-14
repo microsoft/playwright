@@ -35,9 +35,9 @@ test('preprocess sees the filtered corpus, can skip tests, and records the calle
           console.log('%% end ' + test.title + ' status=' + result.status + ' expected=' + test.expectedStatus + ' ann=' + test.annotations.map(a => a.type + ':' + (a.description || '')).join(',') + ' loc=' + loc);
         }
       }
-      module.exports = Reporter;
+      export default Reporter;
     `,
-    'playwright.config.ts': `module.exports = { reporter: './reporter.ts' };`,
+    'playwright.config.ts': `export default { reporter: './reporter.ts' };`,
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('ignored-by-only', async () => {});
@@ -63,9 +63,9 @@ test('preprocess sees the filtered corpus, can skip tests, and records the calle
           console.log('%% plan: ' + suite.allTests().map(t => t.title).join(','));
         }
       }
-      module.exports = Reporter;
+      export default Reporter;
     `,
-    'playwright.config.ts': `module.exports = { reporter: './reporter.ts' };`,
+    'playwright.config.ts': `export default { reporter: './reporter.ts' };`,
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('foo-one', async () => {});
@@ -83,10 +83,10 @@ test('preprocess sees the filtered corpus, can skip tests, and records the calle
           console.log('%% plan projects: ' + suite.suites.map(s => s.title).join(','));
         }
       }
-      module.exports = Reporter;
+      export default Reporter;
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter.ts',
         projects: [{ name: 'one' }, { name: 'two' }],
       };
@@ -120,9 +120,9 @@ test('TestCase.exclude and Suite.exclude remove entries from the run and report'
           console.log('%% ran ' + test.title);
         }
       }
-      module.exports = Reporter;
+      export default Reporter;
     `,
-    'playwright.config.ts': `module.exports = { reporter: './reporter.ts' };`,
+    'playwright.config.ts': `export default { reporter: './reporter.ts' };`,
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('kept', async () => {});
@@ -155,9 +155,9 @@ test('Suite.skip cascades to all descendants', async ({ runInlineTest }) => {
           console.log('%% ' + test.title + ':' + result.status + ':' + test.expectedStatus);
         }
       }
-      module.exports = Reporter;
+      export default Reporter;
     `,
-    'playwright.config.ts': `module.exports = { reporter: './reporter.ts' };`,
+    'playwright.config.ts': `export default { reporter: './reporter.ts' };`,
     'a.test.ts': `
       import { test } from '@playwright/test';
       test.describe('doomed', () => {
@@ -205,9 +205,9 @@ test('TestRun methods throw outside preprocess, and the root suite cannot be exc
           }
         }
       }
-      module.exports = Reporter;
+      export default Reporter;
     `,
-    'playwright.config.ts': `module.exports = { reporter: './reporter.ts' };`,
+    'playwright.config.ts': `export default { reporter: './reporter.ts' };`,
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('t', async () => {});
@@ -242,9 +242,9 @@ test('preprocess throwing aborts the run before onBegin', async ({ runInlineTest
           console.log('%% error: ' + err.message);
         }
       }
-      module.exports = Reporter;
+      export default Reporter;
     `,
-    'playwright.config.ts': `module.exports = { reporter: './reporter.ts' };`,
+    'playwright.config.ts': `export default { reporter: './reporter.ts' };`,
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('one', async () => {});
@@ -272,7 +272,7 @@ test('multiple reporters: preprocess called in order, annotations accumulate, ex
           console.log('%% first onTestEnd: ' + test.expectedStatus + ' ann=' + test.annotations.map(a => a.type).join(','));
         }
       }
-      module.exports = R;
+      export default R;
     `,
     'second.ts': `
       class R {
@@ -281,9 +281,9 @@ test('multiple reporters: preprocess called in order, annotations accumulate, ex
           testRun.skip(suite.allTests()[0], 'second reason');
         }
       }
-      module.exports = R;
+      export default R;
     `,
-    'playwright.config.ts': `module.exports = { reporter: [['./first.ts'], ['./second.ts']] };`,
+    'playwright.config.ts': `export default { reporter: [['./first.ts'], ['./second.ts']] };`,
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('kept', async () => {});
@@ -308,7 +308,7 @@ test('multiple reporters: a later reporter observes an earlier reporter Suite.sk
           testRun.skip(suite.allTests()[0].parent, 'first reason');
         }
       }
-      module.exports = R;
+      export default R;
     `,
     'second.ts': `
       class R {
@@ -317,9 +317,9 @@ test('multiple reporters: a later reporter observes an earlier reporter Suite.sk
           console.log('%% second sees skipped: ' + skipped.join(','));
         }
       }
-      module.exports = R;
+      export default R;
     `,
-    'playwright.config.ts': `module.exports = { reporter: [['./first.ts'], ['./second.ts']] };`,
+    'playwright.config.ts': `export default { reporter: [['./first.ts'], ['./second.ts']] };`,
     'a.test.ts': `
       import { test } from '@playwright/test';
       test.describe('group', () => {
@@ -351,9 +351,9 @@ test('skipSharding disables the built-in shard filter; preprocess sees the full 
           console.log('%% begin: ' + suite.allTests().map(t => t.title).join(','));
         }
       }
-      module.exports = R;
+      export default R;
     `,
-    'playwright.config.ts': `module.exports = { reporter: './reporter.ts', shard: { current: 1, total: 2 } };`,
+    'playwright.config.ts': `export default { reporter: './reporter.ts', shard: { current: 1, total: 2 } };`,
     'a.test.ts': `
       import { test } from '@playwright/test';
       for (let i = 0; i < 4; i++)
@@ -379,9 +379,9 @@ test('custom sharding may produce an empty shard', async ({ runInlineTest }) => 
             testRun.exclude(t);
         }
       }
-      module.exports = R;
+      export default R;
     `,
-    'playwright.config.ts': `module.exports = { reporter: './reporter.ts', shard: { current: 2, total: 2 } };`,
+    'playwright.config.ts': `export default { reporter: './reporter.ts', shard: { current: 2, total: 2 } };`,
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('t0', async () => {});
@@ -400,13 +400,13 @@ test('multiple reporters declaring custom sharding throws', async ({ runInlineTe
         preprocess({ testRun }) { testRun.skipSharding(); }
         onError(err) { console.log('%% error: ' + err.message); }
       }
-      module.exports = A;
+      export default A;
     `,
     'reporter-b.ts': `
       class B { preprocess({ testRun }) { testRun.skipSharding(); } }
-      module.exports = B;
+      export default B;
     `,
-    'playwright.config.ts': `module.exports = { reporter: [['./reporter-a.ts'], ['./reporter-b.ts']] };`,
+    'playwright.config.ts': `export default { reporter: [['./reporter-a.ts'], ['./reporter-b.ts']] };`,
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('t', async () => {});
@@ -457,10 +457,10 @@ test('plan.suite exposes setup/teardown dependency projects but they are read-on
           console.log('%% ran ' + test.parent.project().name + '/' + test.title);
         }
       }
-      module.exports = Reporter;
+      export default Reporter;
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter.ts',
         projects: [
           { name: 'setup', testMatch: /a\\.setup\\.ts/, teardown: 'teardown' },
@@ -512,10 +512,10 @@ test('plan.suite temporarily exposes dependencies without changing final project
           console.log('%% ran ' + test.parent.project().name + '/' + test.title);
         }
       }
-      module.exports = Reporter;
+      export default Reporter;
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: './reporter.ts',
         projects: [
           { name: 'setup', testMatch: /setup\\.spec\\.ts/ },
@@ -556,9 +556,9 @@ test('serial suites expose a serial annotation for custom sharding', async ({ ru
             console.log('%% ' + t.title + ':' + t.annotations.filter(a => a.type === 'serial').length);
         }
       }
-      module.exports = Reporter;
+      export default Reporter;
     `,
-    'playwright.config.ts': `module.exports = { reporter: './reporter.ts' };`,
+    'playwright.config.ts': `export default { reporter: './reporter.ts' };`,
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('plain', async () => {});

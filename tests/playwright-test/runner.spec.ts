@@ -62,7 +62,7 @@ test('it should not allow multiple tests with the same name in multiple files', 
 test('it should not allow a focused test when forbid-only is used', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         forbidOnly: true,
       };
     `,
@@ -340,7 +340,7 @@ test('should teardown workers that are redundant', async ({ runInlineTest }) => 
 test('should not hang if test suites in worker are inconsistent with runner', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { name: 'project-name' };
+      export default { name: 'project-name' };
     `,
     'names.js': `
     exports.getNames = () => {
@@ -371,7 +371,7 @@ test('should not hang if test suites in worker are inconsistent with runner', as
 test('should throw in serial mode if test suites in worker are inconsistent with runner', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { name: 'project-name' };
+      export default { name: 'project-name' };
     `,
     'a.spec.js': `
       import { test, expect } from "@playwright/test";
@@ -402,20 +402,20 @@ test('sigint should stop global setup', async ({ interactWithTestRunner }) => {
 
   const testProcess = await interactWithTestRunner({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         globalSetup: './globalSetup',
         globalTeardown: './globalTeardown.ts',
       };
     `,
     'globalSetup.ts': `
-      module.exports = () => {
+      export default () => {
         console.log('Global setup');
         console.log('%%SEND-SIGINT%%');
         return new Promise(f => setTimeout(f, 30000));
       };
     `,
     'globalTeardown.ts': `
-      module.exports = () => {
+      export default () => {
         console.log('Global teardown');
       };
     `,
@@ -460,7 +460,7 @@ test('sigint should stop plugins', async ({ interactWithTestRunner }) => {
           console.log('Plugin2 teardown');
         }
       }));
-      module.exports = {
+      export default {
         '@playwright/test': { plugins }
       };
     `,
@@ -510,7 +510,7 @@ test('sigint should stop plugins 2', async ({ interactWithTestRunner }) => {
           console.log('Plugin2 teardown');
         }
       }));
-      module.exports = { '@playwright/test': { plugins } };
+      export default { '@playwright/test': { plugins } };
     `,
     'a.spec.js': `
       import { test, expect } from '@playwright/test';

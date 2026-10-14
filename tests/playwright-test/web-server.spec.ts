@@ -37,7 +37,7 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
@@ -48,7 +48,7 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
     `,
     'globalSetup.ts': `
       import { expect } from '@playwright/test';
-      module.exports = async (config) => {
+      export default async (config) => {
         expect(config.webServer.port, "For backwards compatibility reasons, we ensure this shows up.").toBe(${port});
 
         const response = await fetch("http://localhost:${port}/hello");
@@ -62,7 +62,7 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
       };
     `,
     'globalTeardown.ts': `
-      module.exports = async () => {
+      export default async () => {
         const response = await fetch("http://localhost:${port}/hello");
         console.log('globalTeardown-status-' + response.status)
         await response.text();
@@ -99,7 +99,7 @@ test('should create a server with environment variables', async ({ runInlineTest
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
@@ -132,7 +132,7 @@ test('should run web server with PLAYWRIGHT_TEST=1 environment variable', {
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
@@ -161,7 +161,7 @@ test('should allow to unset PLAYWRIGHT_TEST environment variable', {
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
@@ -191,7 +191,7 @@ test('should default cwd to config directory', async ({ runInlineTest }, testInf
       });
     `,
     'foo/playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(relativeSimpleServerPath)} ${port}',
           port: ${port},
@@ -219,7 +219,7 @@ test('should resolve cwd wrt config directory', async ({ runInlineTest }, testIn
       });
     `,
     'foo/playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(relativeSimpleServerPath)} ${port}',
           port: ${port},
@@ -249,7 +249,7 @@ test('should create a server with url', async ({ runInlineTest }, { workerIndex 
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server-with-ready-route.js'))} ${port}',
           url: 'http://localhost:${port}/ready'
@@ -274,7 +274,7 @@ test('should time out waiting for a server', async ({ runInlineTest }, { workerI
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port} 1000',
           port: ${port},
@@ -299,7 +299,7 @@ test('should time out waiting for a server with url', async ({ runInlineTest }, 
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server-with-ready-route.js'))} ${port}',
           url: 'http://localhost:${port}/ready',
@@ -328,7 +328,7 @@ test('should be able to specify the baseURL without the server', async ({ runInl
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: {
           baseURL: 'http://localhost:${port}',
         }
@@ -358,7 +358,7 @@ test('should be able to specify a custom baseURL with the server', async ({ runI
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${webServerPort}',
           port: ${webServerPort},
@@ -392,7 +392,7 @@ test('should be able to use an existing server when reuseExistingServer:true', a
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
@@ -425,7 +425,7 @@ test('should throw when a server is already running on the given port and strict
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
@@ -456,7 +456,7 @@ for (const host of ['localhost', '127.0.0.1', '0.0.0.0']) {
       });
     `,
         'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node -e "process.exit(1)"',
           port: ${port},
@@ -508,7 +508,7 @@ test('should send Accept header', async ({ runInlineTest, server }) => {
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${server.PORT}',
           url: 'http://localhost:${server.PORT}/hello',
@@ -535,7 +535,7 @@ test('should follow redirects', async ({ runInlineTest, server }) => {
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${server.PORT}',
           url: 'http://localhost:${server.PORT}/redirect',
@@ -562,7 +562,7 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
         });
       `,
     'playwright.config.ts': `
-        module.exports = {
+        export default {
           webServer: [
             {
               command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
@@ -579,7 +579,7 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
         `,
     'globalSetup.ts': `
         import { expect } from '@playwright/test';
-        module.exports = async (config) => {
+        export default async (config) => {
           expect(config.webServer, "The public API defines this type as singleton or null, so if using array style we fallback to null to avoid having the type lie to the user.").toBe(null);
           const response = await fetch("http://localhost:${port}/hello");
           console.log('globalSetup-status-' + response.status);
@@ -592,7 +592,7 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
         };
         `,
     'globalTeardown.ts': `
-        module.exports = async () => {
+        export default async () => {
           const response = await fetch("http://localhost:${port}/hello");
           console.log('globalTeardown-status-' + response.status);
           await response.text();
@@ -625,7 +625,7 @@ test.describe('baseURL with plugins', () => {
       `,
       'playwright.config.ts': `
         import { webServer } from 'playwright/lib/runner';
-        module.exports = {
+        export default {
           _plugins: [
             webServer({
               command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
@@ -650,7 +650,7 @@ test.describe('baseURL with plugins', () => {
       `,
       'playwright.config.ts': `
         import { webServer } from 'playwright/lib/runner';
-        module.exports = {
+        export default {
           webServer: {
             command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
             port: ${port},
@@ -677,7 +677,7 @@ test('should treat 3XX as available server', async ({ runInlineTest }, { workerI
       test('pass', async ({}) => {});
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           url: 'http://localhost:${port}/redirect',
@@ -700,7 +700,7 @@ test('should check ipv4 and ipv6 with happy eyeballs when URL is passed', async 
       test('pass', async ({}) => {});
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node -e "require(\\'http\\').createServer((req, res) => res.end()).listen(${port}, \\'127.0.0.1\\')"',
           url: 'http://localhost:${port}/',
@@ -723,7 +723,7 @@ test('should forward stdout when set to "pipe"', async ({ runInlineTest }, { wor
       test('pass', async ({}) => {});
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
@@ -746,7 +746,7 @@ test('should be able to ignore "stderr"', async ({ runInlineTest }, { workerInde
       test('pass', async ({}) => {});
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
@@ -774,7 +774,7 @@ test('should forward stdout when set to "pipe" before server is ready', async ({
       test('pass', async ({}) => {});
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node web-server.js',
           port: 12345,
@@ -823,7 +823,7 @@ test.describe('gracefulShutdown option', () => {
         test('pass', async ({}) => {});
       `,
       'playwright.config.ts': `
-        module.exports = {
+        export default {
           webServer: {
             command: 'echo some-precondition && node web-server.js ${port}',
             port: ${port},
@@ -869,7 +869,7 @@ test.describe('name option', () => {
       test('pass', async ({}) => {});
     `,
       'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: [
           {
             command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
@@ -900,7 +900,7 @@ test.describe('name option', () => {
       test('pass', async ({}) => {});
     `,
       'playwright.config.ts': `
-      module.exports = {
+      export default {
         webServer: {
           command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
@@ -920,7 +920,7 @@ test('should throw helpful error when command is empty', async ({ runInlineTest 
       test('pass', async ({}) => {});
     `,
     'playwright.config.ts': `
-    module.exports = {
+    export default {
       webServer: [
         {
           command: '',
@@ -946,7 +946,7 @@ for (const stdio of ['stdout', 'stderr']) {
         setTimeout(() => {}, 100000);
       `,
       'playwright.config.ts': `
-        module.exports = {
+        export default {
           webServer: [
             {
               command: 'node server.js',
@@ -973,7 +973,7 @@ for (const stdio of ['stdout', 'stderr']) {
         setTimeout(() => {}, 100000);
       `,
       'playwright.config.ts': `
-        module.exports = {
+        export default {
           webServer: [
             {
               command: 'node server.js',
@@ -1001,7 +1001,7 @@ for (const stdio of ['stdout', 'stderr']) {
         setTimeout(() => {}, 100000);
       `,
       'playwright.config.ts': `
-        module.exports = {
+        export default {
           webServer: [
             {
               command: 'node server.js',

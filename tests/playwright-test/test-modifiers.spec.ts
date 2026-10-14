@@ -659,7 +659,7 @@ test('should report skipped tests in-order with correct properties', async ({ ru
       export default Reporter;
     `,
     'playwright.config.ts': `
-      module.exports = { reporter: [['./reporter.ts']] };
+      export default { reporter: [['./reporter.ts']] };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';

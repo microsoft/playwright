@@ -65,7 +65,7 @@ test('should get stdio from worker fixture teardown', async ({ runInlineTest }) 
 test('should ignore stdio when quiet', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { quiet: true };
+      export default { quiet: true };
     `,
     'a.spec.js': `
       import { test, expect } from '@playwright/test';

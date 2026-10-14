@@ -169,7 +169,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should render stdout without ansi escapes', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reporter: [ ['junit', { stripANSIControlSequences: true }] ],
           };
         `,
@@ -191,7 +191,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should render, by default, character data as CDATA sections', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reporter: [ ['junit'] ],
           };
         `,
@@ -262,7 +262,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should not render projects if they dont exist', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = { };
+          export default { };
         `,
         'a.test.js': `
           import { test, expect } from '@playwright/test';
@@ -288,7 +288,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should render projects', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = { projects: [ { name: 'project1' }, { name: 'project2' } ] };
+          export default { projects: [ { name: 'project1' }, { name: 'project2' } ] };
         `,
         'a.test.js': `
           import { test, expect } from '@playwright/test';
@@ -323,7 +323,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should includeProjectInTestName', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             projects: [ { name: 'project1' }, { name: 'project2' } ],
             reporter: [['junit', { includeProjectInTestName: true }]]
           };
@@ -378,7 +378,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       test.skip(useIntermediateMergeReport, 'Blob report hashes attachment paths');
       const result = await runInlineTest({
         'project/playwright.config.ts': `
-            module.exports = { reporter: [['junit', { outputFile: '../my-report/junit/a.xml' }]] };
+            export default { reporter: [['junit', { outputFile: '../my-report/junit/a.xml' }]] };
         `,
         'project/a.test.js': `
           import { test, expect } from '@playwright/test';
@@ -414,7 +414,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
     test('should render annotations to custom testcase properties', async ({ runInlineTest }) => {
       const result = await runInlineTest({
-        'playwright.config.ts': `module.exports = { reporter: 'junit' };`,
+        'playwright.config.ts': `export default { reporter: 'junit' };`,
         'a.test.js': `
           import { test, expect } from '@playwright/test';
           test('one', async ({}, testInfo) => {
@@ -433,7 +433,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
 
     test('should render built-in annotations to testcase properties', async ({ runInlineTest }) => {
       const result = await runInlineTest({
-        'playwright.config.ts': `module.exports = { reporter: 'junit' };`,
+        'playwright.config.ts': `export default { reporter: 'junit' };`,
         'a.test.js': `
           import { test, expect } from '@playwright/test';
           test('one', async ({}, testInfo) => {
@@ -456,7 +456,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           const xrayOptions = {
             embedAnnotationsAsProperties: true
           }
-          module.exports = {
+          export default {
             reporter: [ ['junit', xrayOptions] ],
           };
         `,
@@ -511,7 +511,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         test.skip(useIntermediateMergeReport);
         const result = await runInlineTest({
           'nested/project/playwright.config.ts': `
-            module.exports = { reporter: [['junit', { outputFile: '../my-report/a.xml' }]] };
+            export default { reporter: [['junit', { outputFile: '../my-report/a.xml' }]] };
           `,
           'nested/project/a.test.js': `
             import { test, expect } from '@playwright/test';
@@ -637,7 +637,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should emit flakyFailure for flaky tests when includeRetries is enabled', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             retries: 2,
             reporter: [['junit', { includeRetries: true }]]
           };
@@ -688,7 +688,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should emit rerunFailure for permanent failures when includeRetries is enabled', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             retries: 1,
             reporter: [['junit', { includeRetries: true }]]
           };

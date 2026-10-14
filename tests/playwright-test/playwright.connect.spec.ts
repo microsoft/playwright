@@ -41,7 +41,7 @@ test('should work with connectOptions', async ({ runInlineTest }) => {
     `,
     'global-setup.ts': `
       import { chromium } from '@playwright/test';
-      module.exports = async () => {
+      export default async () => {
         process.env.DEBUG = 'pw:browser';
         process.env.PWTEST_SERVER_WS_HEADERS =
           'x-playwright-debug-log: a-debug-log-string\\r\\n' +
@@ -145,7 +145,7 @@ test('should print debug log when failed to connect', async ({ runInlineTest }) 
       import { chromium } from '@playwright/test';
       import ws from 'ws';
       import http from 'http';
-      module.exports = async () => {
+      export default async () => {
         const server = http.createServer(() => {});
         server.on('upgrade', async (request, socket, head) => {
           socket.write('HTTP/1.1 401 Unauthorized\\r\\nx-playwright-debug-log: b-debug-log-string\\r\\n\\r\\nUnauthorized body');
@@ -189,7 +189,7 @@ test('should record trace', async ({ runInlineTest }) => {
     `,
     'global-setup.ts': `
       import { chromium } from '@playwright/test';
-      module.exports = async () => {
+      export default async () => {
         const server = await chromium.launchServer();
         process.env.CONNECT_WS_ENDPOINT = server.wsEndpoint();
         process.env.DEBUG = 'pw:channel';

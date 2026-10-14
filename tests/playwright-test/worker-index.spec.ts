@@ -178,7 +178,7 @@ test('should use new worker after test failure', async ({ runInlineTest }) => {
 test('should not reuse worker for different suites', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { projects: [{}, {}, {}] };
+      export default { projects: [{}, {}, {}] };
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
