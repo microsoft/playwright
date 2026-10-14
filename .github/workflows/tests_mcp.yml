@@ -34,17 +34,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         project: [chrome, chromium, firefox, webkit]
         include:
-          - os: windows-latest
+          - os: macos-latest
             project: chrome
           - os: windows-latest
-            project: chromium
-          - os: windows-latest
-            project: firefox
-          - os: windows-latest
-            project: webkit
+            project: chrome
           - os: windows-latest
             project: msedge
     runs-on: ${{ matrix.os }}

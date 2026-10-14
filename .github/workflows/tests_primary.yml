@@ -31,12 +31,12 @@ env:
 
 jobs:
   test_linux:
-    name: ${{ matrix.os }} (${{ matrix.browser }} - Node.js ${{ matrix.node-version }})
+    name: ubuntu-large - ${{ matrix.browser }}
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        os: [ubuntu-22.04]
+        os: [playwright-x64-ubuntu24-64-core]
         node-version: [22]
     runs-on: ${{ matrix.os }}
     permissions:
@@ -51,12 +51,17 @@ jobs:
         bot-name: "${{ matrix.browser }}-${{ matrix.os }}-node${{ matrix.node-version }}"
 
   test_test_runner:
-    name: Test Runner
+    name: Test Runner - ${{ matrix.os-name }}
     strategy:
       fail-fast: false
       matrix:
         os: [playwright-x64-ubuntu24-64-core, playwright-x64-server2025-64-core]
         node-version: [22]
+        include:
+          - os: playwright-x64-ubuntu24-64-core
+            os-name: ubuntu-large
+          - os: playwright-x64-server2025-64-core
+            os-name: windows-large
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read    # This is required for actions/checkout to succeed
@@ -65,11 +70,11 @@ jobs:
     - uses: ./.github/actions/run-test
       with:
         node-version: ${{matrix.node-version}}
-        command: npm run ttest
+        command: npm run ttest -- ${{ matrix.os == 'playwright-x64-server2025-64-core' && '--workers 16' || '' }}
         bot-name: "${{ matrix.os }}-node${{ matrix.node-version }}"
 
   test_test_runner_mac:
-    name: Test Runner
+    name: Test Runner - ${{ matrix.os }} (${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
     strategy:
       fail-fast: false
       matrix:
