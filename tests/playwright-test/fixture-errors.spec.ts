@@ -793,7 +793,7 @@ test('should report fixture teardown error after test error', async ({ runInline
 test('should throw when overriding non-option fixture in config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: {
           foo: 'overridden',
           headless: true,
@@ -820,7 +820,7 @@ test('should throw when overriding non-option fixture in config', async ({ runIn
 test('should throw when overriding option fixture with non-option', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {};
+      export default {};
     `,
     'a.spec.ts': `
       import { test as base, expect } from '@playwright/test';
@@ -842,7 +842,7 @@ test('should throw when overriding option fixture with non-option', async ({ run
 test('should allow overriding option both in config and in test.use block', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         use: {
           headless: true,
         },

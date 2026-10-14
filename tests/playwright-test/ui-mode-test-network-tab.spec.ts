@@ -362,7 +362,7 @@ test('should not duplicate network entries from beforeAll', {
 }, async ({ runUITest, server }) => {
   const { page } = await runUITest({
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on' } };
+      export default { use: { trace: 'on' } };
     `,
     'a.spec.ts': `
       import { test as base, expect, request, type APIRequestContext } from '@playwright/test';

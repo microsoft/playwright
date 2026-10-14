@@ -589,7 +589,7 @@ test('should understand worker fixture params in overrides calling base', async 
       });
     `,
     'playwright.config.ts': `
-      module.exports = { projects: [
+      export default { projects: [
         { use: { param: 'p1' } },
         { use: { param: 'p2' } },
         { use: { param: 'p3' } },

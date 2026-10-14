@@ -562,7 +562,7 @@ test('should match snapshots from multiple projects', async ({ runInlineTest }) 
     ...files,
     'playwright.config.ts': `
       import * as path from 'path';
-      module.exports = { projects: [
+      export default { projects: [
         { testDir: path.join(__dirname, 'p1') },
         { testDir: path.join(__dirname, 'p2') },
       ]};
@@ -666,7 +666,7 @@ test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
   expect((await runInlineTest({
     ...files,
     'playwright.config.ts': `
-      module.exports = { projects: [
+      export default { projects: [
         { expect: { toMatchSnapshot: { maxDiffPixels: ${BAD_PIXELS} } } },
       ]};
     `,
@@ -715,7 +715,7 @@ test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
   expect((await runInlineTest({
     ...files,
     'playwright.config.ts': `
-      module.exports = { projects: [
+      export default { projects: [
         { expect: { toMatchSnapshot: { maxDiffPixelRatio: ${BAD_RATIO} } } },
       ]};
     `,
@@ -876,7 +876,7 @@ test('should respect project threshold', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'playwright.config.ts': `
-      module.exports = { projects: [
+      export default { projects: [
         { expect: { toMatchSnapshot: { threshold: 0.2 } } },
       ]};
     `,
@@ -930,7 +930,7 @@ test('should respect comparator in config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
         projects: [
           {
@@ -1019,7 +1019,7 @@ test('should use snapshotDir as snapshot base directory', async ({ runInlineTest
   const result = await runInlineTest({
     ...files,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         snapshotDir: 'snaps',
       };
     `,
@@ -1038,7 +1038,7 @@ test('should use snapshotDir with path segments as snapshot directory', async ({
   const result = await runInlineTest({
     ...files,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         snapshotDir: 'snaps',
       };
     `,
@@ -1057,7 +1057,7 @@ test('should use snapshotDir with nested test suite and path segments', async ({
   const result = await runInlineTest({
     ...files,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         snapshotDir: 'snaps',
       };
     `,
@@ -1085,7 +1085,7 @@ test('should use project snapshotDir over base snapshotDir', async ({ runInlineT
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         projects: [
           {
             name: 'foo',
@@ -1249,7 +1249,7 @@ test('should fail with missing expectations and retries', async ({ runInlineTest
   const result = await runInlineTest({
     ...files,
     'playwright.config.ts': `
-      module.exports = { retries: 1 };
+      export default { retries: 1 };
     `,
     'a.spec.js': `
       const { test, expect } = require('./helper');
@@ -1271,7 +1271,7 @@ test('should update expectations with retries', async ({ runInlineTest }, testIn
   const result = await runInlineTest({
     ...files,
     'playwright.config.ts': `
-      module.exports = { retries: 1 };
+      export default { retries: 1 };
     `,
     'a.spec.js': `
       const { test, expect } = require('./helper');

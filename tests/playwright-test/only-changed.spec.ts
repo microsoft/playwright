@@ -247,7 +247,7 @@ test('should run project dependencies of changed tests', {
 }, async ({ runInlineTest, git, writeFiles }) => {
   await writeFiles({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         projects: [
           { name: 'setup', testMatch: 'setup.spec.ts', },
           { name: 'main', dependencies: ['setup'] },

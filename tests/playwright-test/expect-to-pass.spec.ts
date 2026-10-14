@@ -117,7 +117,7 @@ test('should respect interval', async ({ runInlineTest }) => {
 test('should not consume the shared toPass intervals across tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { expect: { toPass: { intervals: [0, 0, 0] } } };
+      export default { expect: { toPass: { intervals: [0, 0, 0] } } };
     `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';

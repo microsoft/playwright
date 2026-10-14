@@ -71,7 +71,7 @@ test('should access annotations in fixture', async ({ runInlineTest }) => {
 test('should report projectName in result', async ({ runInlineTest }) => {
   const { exitCode, report } = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         projects: [
           { name: 'foo' },
           {},

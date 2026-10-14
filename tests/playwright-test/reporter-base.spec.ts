@@ -193,7 +193,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should print slow tests', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             projects: [
               { name: 'foo' },
               { name: 'bar' },
@@ -232,7 +232,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should print if maxFailures is reached', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             maxFailures: 1,
           };
         `,
@@ -260,7 +260,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29768' });
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             globalTimeout: 3000,
           };
         `,
@@ -286,7 +286,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should not print slow parallel tests', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reportSlowTests: { max: 0, threshold: 500 },
           };
         `,
@@ -310,7 +310,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should not print slow tests', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             projects: [
               { name: 'baz' },
               { name: 'qux' },
@@ -490,7 +490,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should omit tags when omitTags is set', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reporter: [['list', { omitTags: true }]],
           };
         `,
@@ -522,7 +522,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should omit tags from failures when omitTags is set', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reporter: [['list', { omitTags: true }]],
           };
         `,
@@ -544,7 +544,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should omit tags via the PLAYWRIGHT_LIST_OMIT_TAGS environment variable', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reporter: [['list']],
           };
         `,
@@ -571,7 +571,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should let PLAYWRIGHT_LIST_OMIT_TAGS override the omitTags option', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reporter: [['list', { omitTags: true }]],
           };
         `,

@@ -250,7 +250,7 @@ test('should focus test from one project', async ({ runInlineTest }) => {
   const { exitCode, passed, skipped, failed } = await runInlineTest({
     'playwright.config.ts': `
       import * as path from 'path';
-      module.exports = { projects: [
+      export default { projects: [
         { testDir: path.join(__dirname, 'a') },
         { testDir: path.join(__dirname, 'b') },
       ] };

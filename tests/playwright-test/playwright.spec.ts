@@ -41,7 +41,7 @@ export class VideoPlayer {
 test('should respect screen option', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { viewport: { width: 500, height: 500 }, screen: { width: 1000, height: 1000 } } };
+      export default { use: { viewport: { width: 500, height: 500 }, screen: { width: 1000, height: 1000 } } };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -67,7 +67,7 @@ test('should respect screen option', async ({ runInlineTest }) => {
 test('should respect viewport option', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { viewport: { width: 800, height: 800 } } };
+      export default { use: { viewport: { width: 800, height: 800 } } };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -91,7 +91,7 @@ test('should respect viewport option', async ({ runInlineTest }) => {
 test('should run in three browsers with --browser', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { viewport: { width: 800, height: 800 } } };
+      export default { use: { viewport: { width: 800, height: 800 } } };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -113,7 +113,7 @@ test('should run in three browsers with --browser', async ({ runInlineTest }) =>
 test('should run in one browser with --browser', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { viewport: { width: 800, height: 800 } } };
+      export default { use: { viewport: { width: 800, height: 800 } } };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -133,7 +133,7 @@ test('should run in one browser with --browser', async ({ runInlineTest }) => {
 test('should complain with projects and --browser', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { projects: [ {} ] };
+      export default { projects: [ {} ] };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -150,7 +150,7 @@ test('should complain with projects and --browser', async ({ runInlineTest }) =>
 test('should override any headless option with --headed', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { projects: [
+      export default { projects: [
         { name: 'a', use: { headless: true } }
       ] };
     `,
@@ -169,7 +169,7 @@ test('should override any headless option with --headed', async ({ runInlineTest
 test('should not override use:browserName without projects', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { browserName: 'webkit' } };
+      export default { use: { browserName: 'webkit' } };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -189,7 +189,7 @@ test('should not override use:browserName without projects', async ({ runInlineT
 test('should override use:browserName with --browser', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { browserName: 'webkit' } };
+      export default { use: { browserName: 'webkit' } };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -209,7 +209,7 @@ test('should override use:browserName with --browser', async ({ runInlineTest })
 test('should respect context options in various contexts', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { viewport: { width: 500, height: 500 } } };
+      export default { use: { viewport: { width: 500, height: 500 } } };
     `,
     'a.test.ts': `
       import fs from 'fs';
@@ -276,7 +276,7 @@ test('should respect context options in various contexts', async ({ runInlineTes
 test('should respect headless in launchPersistent', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { headless: false } };
+      export default { use: { headless: false } };
     `,
     'a.test.ts': `
       import fs from 'fs';
@@ -303,7 +303,7 @@ test('should respect headless in launchPersistent', async ({ runInlineTest }) =>
 test('should respect headless in modifiers that run before tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { headless: false } };
+      export default { use: { headless: false } };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -481,7 +481,7 @@ test('should report click error on sigint', async ({ interactWithTestRunner }) =
 test('should work with video: retain-on-failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: 'retain-on-failure' }, name: 'chromium' };
+      export default { use: { video: 'retain-on-failure' }, name: 'chromium' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -513,7 +513,7 @@ test('should work with video: retain-on-failure', async ({ runInlineTest }) => {
 test('should work with video: on-first-retry', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: 'on-first-retry' }, retries: 1, name: 'chromium' };
+      export default { use: { video: 'on-first-retry' }, retries: 1, name: 'chromium' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -556,7 +556,7 @@ test('should work with video: on-first-retry', async ({ runInlineTest }) => {
 test('should work with video: on-all-retries', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: 'on-all-retries' }, retries: 2, name: 'chromium' };
+      export default { use: { video: 'on-all-retries' }, retries: 2, name: 'chromium' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -584,7 +584,7 @@ test('should work with video: on-all-retries', async ({ runInlineTest }) => {
 test('should work with video: retain-on-first-failure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: 'retain-on-first-failure' }, retries: 1, name: 'chromium' };
+      export default { use: { video: 'retain-on-first-failure' }, retries: 1, name: 'chromium' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -621,7 +621,7 @@ test('should work with video: retain-on-first-failure', async ({ runInlineTest }
 test('should show a single test overlay when a step starts right after page creation', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: { mode: 'on', show: { test: { level: 'step' } } } }, name: 'chromium' };
+      export default { use: { video: { mode: 'on', show: { test: { level: 'step' } } } }, name: 'chromium' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -641,7 +641,7 @@ test('should show a single test overlay when a step starts right after page crea
 test('should work with video: retain-on-failure-and-retries', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: 'retain-on-failure-and-retries' }, retries: 1, name: 'chromium' };
+      export default { use: { video: 'retain-on-failure-and-retries' }, retries: 1, name: 'chromium' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -766,7 +766,7 @@ test('should pass fixture defaults to tests', async ({ runInlineTest }) => {
 test('should not throw with many fixtures set to undefined', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: {
+      export default { use: {
         browserName: undefined,
         headless: undefined,
         channel: undefined,

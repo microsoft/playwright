@@ -177,7 +177,7 @@ test('test.extend options should check types', async ({ runTSC }) => {
         // @ts-expect-error
         use: { unknown: true },
       });
-      module.exports = configs;
+      export default configs;
     `,
     'a.spec.ts': `
       import { test, test1, test2, test3, test4, test6 } from './helper';

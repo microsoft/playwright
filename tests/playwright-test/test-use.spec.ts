@@ -151,7 +151,7 @@ test('should use options from the config', async ({ runInlineTest }) => {
       });
     `,
     'playwright.config.ts': `
-      module.exports = { use: { foo: 'bar' } };
+      export default { use: { foo: 'bar' } };
     `,
     'a.test.ts': `
       import { test, expect } from './helper';

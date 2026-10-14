@@ -35,7 +35,7 @@ test('should expose request fixture', async ({ runInlineTest, server }) => {
 test('should use baseURL in request fixture', async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { baseURL: '${server.PREFIX}' } };
+      export default { use: { baseURL: '${server.PREFIX}' } };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -60,7 +60,7 @@ test('should stop tracing on requestContext.dispose()', async ({ runInlineTest, 
   });
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         reporter: [['html', { open: 'never' }]],
         use: {
           trace:'retain-on-failure'

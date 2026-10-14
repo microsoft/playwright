@@ -20,7 +20,7 @@ import { test, expect } from './playwright-test-fixtures';
 
 const varietyWorkspace = {
   'playwright.config.ts': `
-    module.exports = { projects: [{ name: 'p1' }, { name: 'p2' }], testDir: 'tests', };
+    export default { projects: [{ name: 'p1' }, { name: 'p2' }], testDir: 'tests', };
   `,
   'dir/test.list': `
       # this is a multiline comment
@@ -230,7 +230,7 @@ test('--test-list with nested group entry should run only tests in that nested g
 test('--test-list should not load files not in the list', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { testDir: '.' };
+      export default { testDir: '.' };
     `,
     'test.list': `
       compiles.test.ts

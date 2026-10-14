@@ -329,7 +329,7 @@ test('should report toHaveScreenshot step with expectation name in title', async
           console.log('%% end [' + step.category + '] ' + step.title);
         }
       }
-      module.exports = Reporter;
+      export default Reporter;
     `,
     ...playwrightConfig({ reporter: './reporter' }),
     'a.spec.js': `
@@ -908,7 +908,7 @@ test('should attach missing expectations to right step', async ({ runInlineTest 
             console.log(\`%%[\${step.category}] \${step.title}: \${step.attachments.map(a => a.name).join(", ")}\`);
         }
       }
-      module.exports = Reporter;
+      export default Reporter;
     `,
     ...playwrightConfig({
       reporter: [['dot'], ['./reporter']],

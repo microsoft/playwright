@@ -27,7 +27,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('render each test with project name', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = { projects: [
+          export default { projects: [
             { name: 'foo' },
             { name: 'bar' },
           ] };
@@ -198,7 +198,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should truncate long test names', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = { projects: [
+          export default { projects: [
             { name: 'foo' },
           ] };
         `,
@@ -262,7 +262,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('print failures inline with option', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reporter: [['list', { printFailuresInline: true }]],
             workers: 1,
           };
@@ -293,7 +293,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       // still print the failure inline, even though the retry budget is not exhausted.
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reporter: [['list', { printFailuresInline: true }]],
             retries: 1,
             workers: 1,
@@ -319,7 +319,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('print failures inline with retries', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reporter: [['list', { printFailuresInline: true }]],
             retries: 2,
             workers: 1,
@@ -350,7 +350,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('print failures inline for a flaky test', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = {
+          export default {
             reporter: [['list', { printFailuresInline: true }]],
             retries: 1,
             workers: 1,

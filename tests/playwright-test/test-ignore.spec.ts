@@ -42,7 +42,7 @@ test('should ignore a test', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...tests,
     'playwright.config.ts': `
-      module.exports = { testIgnore: 'b.test.ts' };
+      export default { testIgnore: 'b.test.ts' };
     `,
   });
   expect(result.passed).toBe(2);
@@ -52,7 +52,7 @@ test('should ignore a test', async ({ runInlineTest }) => {
 test('should ignore a folder', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { testIgnore: 'folder/**' };
+      export default { testIgnore: 'folder/**' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -102,7 +102,7 @@ test('should filter tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...tests,
     'playwright.config.ts': `
-      module.exports = { testIgnore: 'c.test.*' };
+      export default { testIgnore: 'c.test.*' };
     `,
   });
   expect(result.passed).toBe(2);
@@ -113,7 +113,7 @@ test('should use a different test match', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...tests,
     'playwright.config.ts': `
-      module.exports = { testMatch: '[a|b].test.ts' };
+      export default { testMatch: '[a|b].test.ts' };
     `,
   });
   expect(result.passed).toBe(2);
@@ -123,7 +123,7 @@ test('should use a different test match', async ({ runInlineTest }) => {
 test('should use an array for testMatch', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { testMatch: ['b.test.ts', /\\${path.sep}a.[tes]{4}.TS$/i] };
+      export default { testMatch: ['b.test.ts', /\\${path.sep}a.[tes]{4}.TS$/i] };
     `,
     'dir/a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -147,7 +147,7 @@ test('should match absolute path', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       import * as path from 'path';
-      module.exports = { testDir: path.join(__dirname, 'dir'), testMatch: /dir\\${path.sep}a/ };
+      export default { testDir: path.join(__dirname, 'dir'), testMatch: /dir\\${path.sep}a/ };
     `,
     'dir/a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -171,7 +171,7 @@ test('should match cli string argument', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       import * as path from 'path';
-      module.exports = { testDir: path.join(__dirname, 'dir') };
+      export default { testDir: path.join(__dirname, 'dir') };
     `,
     'dir/a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -275,7 +275,7 @@ test('should match by directory', async ({ runInlineTest }) => {
 test('should ignore node_modules even with custom testIgnore', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { testIgnore: 'a.test.ts' };
+      export default { testIgnore: 'a.test.ts' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -301,7 +301,7 @@ test('should ignore node_modules even with custom testIgnore', async ({ runInlin
 test('should only match files with JS/TS file extensions', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { testMatch: /foobar/ };
+      export default { testMatch: /foobar/ };
     `,
     'foobar.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -352,7 +352,7 @@ test('should always work with unix separators', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       import * as path from 'path';
-      module.exports = { testDir: path.join(__dirname, 'dir') };
+      export default { testDir: path.join(__dirname, 'dir') };
     `,
     'dir/a.test.ts': `
       import { test, expect } from '@playwright/test';

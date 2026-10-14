@@ -1120,18 +1120,16 @@ test('should complain when one test file imports another', async ({ runInlineTes
 test('should support dynamic imports and requires of js, ts from js, ts and cjs', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      const foo: string = 'foo';
-      module.exports.foo = foo;
+      export const foo: string = 'foo';
     `,
     'helper2.ts': `
-      module.exports.bar = 'bar';
+      export const bar = 'bar';
     `,
     'helper3.js': `
       module.exports.baz = 'baz';
     `,
     'helper4.ts': `
-      const foo: string = 'foo';
-      module.exports.foo = foo;
+      export const foo: string = 'foo';
     `,
     'passthrough.cjs': `
       module.exports.load = () => import('./helper2');

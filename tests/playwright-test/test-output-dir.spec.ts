@@ -21,7 +21,7 @@ import { test, expect } from './playwright-test-fixtures';
 test('should work and remove non-failures', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         name: 'chromium',
         preserveOutput: 'failures-only',
         testDir: 'dir',
@@ -150,7 +150,7 @@ test('should include the project name', async ({ runInlineTest }) => {
       });
     `,
     'playwright.config.ts': `
-      module.exports = { projects: [
+      export default { projects: [
         {},
         { name: 'foo' },
         { name: 'foo' },
@@ -228,7 +228,7 @@ test('should include path option in snapshot', async ({ runInlineTest }) => {
       });
     `,
     'playwright.config.ts': `
-      module.exports = { projects: [
+      export default { projects: [
         { name: 'foo' },
       ] };
     `,
@@ -257,7 +257,7 @@ test('should error if outputPath is resolved to outside of parent', async ({ run
       });
     `,
     'playwright.config.ts': `
-      module.exports = { projects: [
+      export default { projects: [
         { name: 'foo' },
       ] };
     `,

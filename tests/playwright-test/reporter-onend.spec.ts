@@ -28,7 +28,7 @@ module.exports = Reporter;
 test('should override exit code', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': reporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'playwright.config.ts': `export default { reporter: './reporter' };`,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test('fail', async ({}) => {
@@ -48,7 +48,7 @@ test('should fail run and report error when reporter throws in onEnd', async ({ 
         }
       }
     `,
-    'playwright.config.ts': `module.exports = { reporter: [['dot'], ['./reporter.ts']] };`,
+    'playwright.config.ts': `export default { reporter: [['dot'], ['./reporter.ts']] };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('passing', async () => {});
@@ -68,7 +68,7 @@ test('should fail run and report error when reporter throws in onTestEnd', async
         }
       }
     `,
-    'playwright.config.ts': `module.exports = { reporter: [['dot'], ['./reporter.ts']] };`,
+    'playwright.config.ts': `export default { reporter: [['dot'], ['./reporter.ts']] };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('passing', async () => {});

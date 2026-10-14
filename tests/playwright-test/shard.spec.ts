@@ -220,7 +220,7 @@ test('should work with workers=1 and --fully-parallel', async ({ runInlineTest }
 test('should skip dependency when project is sharded out', async ({ runInlineTest }) => {
   const tests = {
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         projects: [
           { name: 'setup1', testMatch: /setup.ts/ },
           { name: 'tests1', dependencies: ['setup1'] },

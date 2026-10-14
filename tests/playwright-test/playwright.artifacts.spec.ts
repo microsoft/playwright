@@ -128,7 +128,7 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { screenshot: 'on' } };
+      export default { use: { screenshot: 'on' } };
     `,
   }, { workers: 1 }, { PLAYWRIGHT_NO_COPY_PROMPT: 'true' });
 
@@ -171,7 +171,7 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { screenshot: 'only-on-failure' } };
+      export default { use: { screenshot: 'only-on-failure' } };
     `,
   }, { workers: 1 }, { PLAYWRIGHT_NO_COPY_PROMPT: 'true' });
 
@@ -209,7 +209,7 @@ test('should work with screenshot: on-first-failure', async ({ runInlineTest }, 
       });
     `,
     'playwright.config.ts': `
-      module.exports = {
+      export default {
         retries: 1,
         use: { screenshot: 'on-first-failure' }
       };
@@ -241,7 +241,7 @@ test('should work with screenshot: only-on-failure & fullPage', async ({ runInli
     });
     `,
     'playwright.config.ts': `
-      module.exports = { use: { screenshot: { mode: 'only-on-failure', fullPage: true } } };
+      export default { use: { screenshot: { mode: 'only-on-failure', fullPage: true } } };
     `,
   }, { workers: 1 }, { PLAYWRIGHT_NO_COPY_PROMPT: 'true' });
   expect(result.exitCode).toBe(1);
@@ -295,7 +295,7 @@ test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on' } };
+      export default { use: { trace: 'on' } };
     `,
   }, { workers: 1 }, { PLAYWRIGHT_NO_COPY_PROMPT: 'true' });
 
@@ -336,7 +336,7 @@ test('should work with trace: retain-on-failure', async ({ runInlineTest }, test
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'retain-on-failure' } };
+      export default { use: { trace: 'retain-on-failure' } };
     `,
   }, { workers: 1 }, { PLAYWRIGHT_NO_COPY_PROMPT: 'true' });
 
@@ -367,7 +367,7 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on-first-retry' } };
+      export default { use: { trace: 'on-first-retry' } };
     `,
   }, { workers: 1, retries: 1 }, { PLAYWRIGHT_NO_COPY_PROMPT: 'true' });
 
@@ -408,7 +408,7 @@ test('should work with trace: on-all-retries', async ({ runInlineTest }, testInf
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on-all-retries' } };
+      export default { use: { trace: 'on-all-retries' } };
     `,
   }, { workers: 1, retries: 2 }, { PLAYWRIGHT_NO_COPY_PROMPT: 'true' });
 
@@ -464,7 +464,7 @@ test('should work with trace: retain-on-first-failure', async ({ runInlineTest }
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'retain-on-first-failure' } };
+      export default { use: { trace: 'retain-on-first-failure' } };
     `,
   }, { workers: 1, retries: 2 }, { PLAYWRIGHT_NO_COPY_PROMPT: 'true' });
 
@@ -515,7 +515,7 @@ test('should work with trace: retain-on-failure-and-retries', async ({ runInline
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'retain-on-failure-and-retries' } };
+      export default { use: { trace: 'retain-on-failure-and-retries' } };
     `,
   }, { workers: 1, retries: 2 }, { PLAYWRIGHT_NO_COPY_PROMPT: 'true' });
 
@@ -596,7 +596,7 @@ test('error-context should use relative path in location', async ({ runInlineTes
 test('should take screenshot when page is closed in afterEach', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { screenshot: 'on' } };
+      export default { use: { screenshot: 'on' } };
     `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';

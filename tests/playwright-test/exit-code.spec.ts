@@ -174,7 +174,7 @@ test('should respect global timeout', async ({ runInlineTest }) => {
 test('should exit with code 1 if the specified folder does not exist', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { testDir: '111111111111.js' };
+      export default { testDir: '111111111111.js' };
     `,
   });
   expect(result.exitCode).toBe(1);
@@ -184,7 +184,7 @@ test('should exit with code 1 if the specified folder does not exist', async ({ 
 test('should exit with code 1 if passed a file name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { testDir: 'test.spec.js' };
+      export default { testDir: 'test.spec.js' };
     `,
     'test.spec.js': `
     `,
@@ -196,7 +196,7 @@ test('should exit with code 1 if passed a file name', async ({ runInlineTest }) 
 test('should exit with code 0 with --pass-with-no-tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { testDir: 'unknown' };
+      export default { testDir: 'unknown' };
     `,
   }, undefined, undefined, { additionalArgs: ['--pass-with-no-tests'] });
   expect(result.exitCode).toBe(0);

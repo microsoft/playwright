@@ -82,7 +82,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     test('should work from config', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          module.exports = { reporter: 'dot' };
+          export default { reporter: 'dot' };
         `,
         'a.test.js': `
           import { test, expect } from '@playwright/test';

@@ -371,7 +371,7 @@ test('test.describe.serial should work inside test.describe.parallel', async ({ 
 test('test.describe.serial should work with fullyParallel', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { fullyParallel: true };
+      export default { fullyParallel: true };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
