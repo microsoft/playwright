@@ -29,6 +29,15 @@ it('should work', async function({ page }) {
   expect(foo).toBe('bar');
 });
 
+it('should respect timeout option', async function({ page, playwright }) {
+  const client = await page.context().newCDPSession(page);
+  const evalResponse = await client.send('Runtime.evaluate', { expression: '1 + 2', returnByValue: true }, { timeout: 5000 });
+  expect(evalResponse.result.value).toBe(3);
+  const error = await client.send('Runtime.evaluate', { expression: 'new Promise(() => {})', awaitPromise: true }, { timeout: 500 }).catch(e => e);
+  expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+  expect(error.message).toContain('Timeout 500ms exceeded');
+});
+
 it('should send events', async function({ page, server }) {
   const client = await page.context().newCDPSession(page);
   await client.send('Network.enable');

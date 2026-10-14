@@ -140,6 +140,12 @@ Optional method parameters.
 
 Optional method parameters.
 
+### option: CDPSession.send.timeout
+* since: v1.65
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the response. Defaults to `0` - no timeout.
+
 ## method: CDPSession.event
 * since: v1.30
 * langs: csharp
