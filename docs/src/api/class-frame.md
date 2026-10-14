@@ -1596,7 +1596,7 @@ frame.selectOption('select#colors', 'blue');
 frame.selectOption('select#colors', { label: 'Blue' });
 
 // multiple selection
-frame.selectOption('select#colors', 'red', 'green', 'blue');
+frame.selectOption('select#colors', ['red', 'green', 'blue']);
 ```
 
 ```java

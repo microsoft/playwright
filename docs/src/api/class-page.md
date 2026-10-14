@@ -4067,10 +4067,11 @@ Handler function to route the WebSocket.
 **Usage**
 
 ```js
-page.screencast.on('screencastFrame', data => {
-  console.log('received frame, jpeg size:', data.length);
+await page.screencast.start({
+  onFrame: ({ data }) => {
+    console.log('received frame, jpeg size:', data.length);
+  },
 });
-await page.screencast.start();
 // ... perform actions ...
 await page.screencast.stop();
 ```
