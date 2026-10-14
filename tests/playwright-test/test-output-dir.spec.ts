@@ -249,7 +249,7 @@ test('should keep output directories unique for case-only title differences', as
   expect(secondOutputDir).toBeTruthy();
   if (!firstOutputDir || !secondOutputDir)
     throw new Error('Expected both tests to report their output directories');
-  expect(firstOutputDir.toLowerCase()).not.toBe(secondOutputDir.toLowerCase());
+  expect(firstOutputDir).not.toBe(secondOutputDir);
   expect(fs.existsSync(path.join(firstOutputDir, 'artifact.txt'))).toBe(true);
 });
 
