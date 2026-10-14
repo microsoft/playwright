@@ -59,6 +59,7 @@ export class PageAgent {
     this._runtime = frameTree.runtime();
 
     this._workerData = new Map();
+    this._interceptFileChooserDialog = false;
 
     const docShell = frameTree.mainFrame().docShell();
     this._docShell = docShell;
@@ -97,7 +98,7 @@ export class PageAgent {
     this._eventListeners = [
       helper.addObserver(this._linkClicked.bind(this, false), 'juggler-link-click'),
       helper.addObserver(this._linkClicked.bind(this, true), 'juggler-link-click-sync'),
-      helper.addObserver(this._filePickerShown.bind(this), 'juggler-file-picker-shown'),
+      helper.addObserver(this._filePickerShown.bind(this), 'file-input-picker-opening'),
       helper.addObserver(this._onDocumentOpenLoad.bind(this), 'juggler-document-open-loaded'),
       helper.on(this._frameTree, 'frameattached', this._onFrameAttached.bind(this)),
       helper.on(this._frameTree, 'framedetached', this._onFrameDetached.bind(this)),
@@ -222,7 +223,16 @@ export class PageAgent {
     this._browserPage.emit('pageLinkClicked', { phase: sync ? 'after' : 'before' });
   }
 
+  setInterceptFileChooserDialog(enabled) {
+    this._interceptFileChooserDialog = enabled;
+  }
+
   _filePickerShown(inputElement) {
+    // Fired by HTMLInputElement::InitFilePicker right before the native picker is opened.
+    // When intercepting, the parent process replaces the native picker with one that
+    // cancels immediately (see FilePickerOverride in TargetRegistry.js).
+    if (!this._interceptFileChooserDialog)
+      return;
     const frame = this._findFrameForNode(inputElement);
     if (!frame)
       return;

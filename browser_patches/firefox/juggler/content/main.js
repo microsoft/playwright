@@ -62,7 +62,7 @@ export function initialize(browsingContext, docShell) {
   data.frameTree.setInitScripts([...contextCrossProcessCookie.initScripts, ...pageCrossProcessCookie.initScripts]);
   data.channel = new SimpleChannel('', 'process-' + Services.appinfo.processID + '-' + helper.generateId());
   data.pageAgent = new PageAgent(data.channel, data.frameTree);
-  docShell.fileInputInterceptionEnabled = !!pageCrossProcessCookie.interceptFileChooserDialog;
+  data.pageAgent.setInterceptFileChooserDialog(!!pageCrossProcessCookie.interceptFileChooserDialog);
 
   data.channel.register('', {
     setInitScripts(scripts) {
@@ -78,7 +78,7 @@ export function initialize(browsingContext, docShell) {
     },
 
     setInterceptFileChooserDialog(enabled) {
-      docShell.fileInputInterceptionEnabled = !!enabled;
+      data.pageAgent.setInterceptFileChooserDialog(!!enabled);
     },
 
     ensurePermissions() {
@@ -90,7 +90,11 @@ export function initialize(browsingContext, docShell) {
         const listeners = [];
         const check = () => {
           helper.removeListeners(listeners);
-          if (docShell.domWindow.innerWidth === width && docShell.domWindow.innerHeight === height) {
+          // Note: innerWidth/innerHeight are not rounded for system callers (Firefox 156+),
+          // and the actual size may be fractional, e.g. with a fractional device scale factor.
+          // Web content observes the rounded values, so wait for approximately the same size.
+          const { innerWidth, innerHeight } = docShell.domWindow;
+          if (Math.abs(innerWidth - width) < 1 && Math.abs(innerHeight - height) < 1) {
             resolve();
             return;
           }

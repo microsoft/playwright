@@ -107,6 +107,81 @@ class DownloadInterceptor {
 
 const screencastService = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
 
+const FILE_PICKER_CONTRACT_ID = '@mozilla.org/filepicker;1';
+
+// Replaces the "@mozilla.org/filepicker;1" factory in the parent process, the same way
+// WebDriver's FilePickerHandler and MockFilePicker do. Content processes always use
+// nsFilePickerProxy, which asks the parent (FilePickerParent) to create the real picker,
+// so a parent-side override covers all pages. Pages that intercept file choosers get a
+// picker that cancels immediately; everything else is forwarded to the original picker.
+class FilePickerOverride {
+  constructor(registry) {
+    this._registry = registry;
+    this._registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
+    const originalCID = this._registrar.contractIDToCID(FILE_PICKER_CONTRACT_ID);
+    this._originalFactory = Components.manager.getClassObject(originalCID, Ci.nsIFactory);
+    this._cid = Services.uuid.generateUUID();
+    this._factory = {
+      createInstance: iid => this._createPicker().QueryInterface(iid),
+      QueryInterface: ChromeUtils.generateQI(['nsIFactory']),
+    };
+    this._registrar.registerFactory(this._cid, 'Juggler file picker', FILE_PICKER_CONTRACT_ID, this._factory);
+  }
+
+  _createPicker() {
+    let original = null;
+    const state = {};
+    const picker = {
+      QueryInterface: ChromeUtils.generateQI(['nsIFilePicker']),
+      init: (browsingContext, title, mode, global) => {
+        const target = this._registry.targetForBrowserId(browsingContext.browserId);
+        if (target && target.crossProcessCookie.interceptFileChooserDialog) {
+          state.mode = mode;
+          return;
+        }
+        original = this._originalFactory.createInstance(Ci.nsIFilePicker);
+        original.init(browsingContext, title, mode, global);
+      },
+      open: callback => {
+        if (original)
+          original.open(callback);
+        else
+          callback.done(Ci.nsIFilePicker.returnCancel);
+      },
+      isModeSupported: mode => original ? original.isModeSupported(mode) : Promise.resolve(true),
+      appendFilters: filterMask => original?.appendFilters(filterMask),
+      appendFilter: (title, filter) => original?.appendFilter(title, filter),
+      appendRawFilter: filter => original?.appendRawFilter(filter),
+
+      get defaultString() { return original ? original.defaultString : state.defaultString; },
+      set defaultString(value) { if (original) original.defaultString = value; else state.defaultString = value; },
+      get defaultExtension() { return original ? original.defaultExtension : state.defaultExtension; },
+      set defaultExtension(value) { if (original) original.defaultExtension = value; else state.defaultExtension = value; },
+      get filterIndex() { return original ? original.filterIndex : state.filterIndex; },
+      set filterIndex(value) { if (original) original.filterIndex = value; else state.filterIndex = value; },
+      get displayDirectory() { return original ? original.displayDirectory : state.displayDirectory; },
+      set displayDirectory(value) { if (original) original.displayDirectory = value; else state.displayDirectory = value; },
+      get displaySpecialDirectory() { return original ? original.displaySpecialDirectory : state.displaySpecialDirectory; },
+      set displaySpecialDirectory(value) { if (original) original.displaySpecialDirectory = value; else state.displaySpecialDirectory = value; },
+      get addToRecentDocs() { return original ? original.addToRecentDocs : state.addToRecentDocs; },
+      set addToRecentDocs(value) { if (original) original.addToRecentDocs = value; else state.addToRecentDocs = value; },
+      get okButtonLabel() { return original ? original.okButtonLabel : state.okButtonLabel; },
+      set okButtonLabel(value) { if (original) original.okButtonLabel = value; else state.okButtonLabel = value; },
+      get capture() { return original ? original.capture : state.capture; },
+      set capture(value) { if (original) original.capture = value; else state.capture = value; },
+
+      get mode() { return original ? original.mode : state.mode; },
+      get file() { return original ? original.file : null; },
+      get fileURL() { return original ? original.fileURL : null; },
+      get files() { return original ? original.files : null; },
+      get domFileOrDirectory() { return original ? original.domFileOrDirectory : null; },
+      get domFileOrDirectoryEnumerator() { return original ? original.domFileOrDirectoryEnumerator : null; },
+      get domFilesInWebKitDirectory() { return original ? original.domFilesInWebKitDirectory : null; },
+    };
+    return picker;
+  }
+}
+
 export class TargetRegistry {
   static instance() {
     return TargetRegistry._instance || null;
@@ -125,6 +200,7 @@ export class TargetRegistry {
 
     this._proxiesWithClashingAuthCacheKeys = new Set();
     this._browserProxy = null;
+    this._filePickerOverride = new FilePickerOverride(this);
 
     // Cleanup containers from previous runs (if any)
     for (const identity of ContextualIdentityService.getPublicIdentities()) {
