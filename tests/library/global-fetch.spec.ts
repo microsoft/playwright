@@ -520,6 +520,55 @@ it(`should accept already serialized data as Buffer when content-type is applica
   await request.dispose();
 });
 
+it('should json stringify string body when content-type is application/json with parameters', async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.post(server.EMPTY_PAGE, {
+      headers: {
+        'content-type': 'application/json; charset=utf-8'
+      },
+      data: 'hello'
+    })
+  ]);
+  const body = await req.postBody;
+  expect(body.toString()).toEqual(JSON.stringify('hello'));
+  await request.dispose();
+});
+
+it('should not double stringify string body when content-type is application/json with parameters', async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  const value = JSON.stringify({ 'foo': 'bar' });
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.post(server.EMPTY_PAGE, {
+      headers: {
+        'content-type': 'application/json; charset=utf-8'
+      },
+      data: value
+    })
+  ]);
+  const body = await req.postBody;
+  expect(body.toString()).toEqual(value);
+  await request.dispose();
+});
+
+it('should json stringify string body when media type in content-type is uppercase', async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.post(server.EMPTY_PAGE, {
+      headers: {
+        'content-type': 'Application/JSON; charset=utf-8'
+      },
+      data: 'hello'
+    })
+  ]);
+  const body = await req.postBody;
+  expect(body.toString()).toEqual(JSON.stringify('hello'));
+  await request.dispose();
+});
+
 it(`should have nice toString`, async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
   const response = await request.post(server.EMPTY_PAGE, {
