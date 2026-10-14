@@ -338,6 +338,11 @@ function installTransformIfNeeded() {
     return;
   transformInstalled = true;
 
+  // Transpilation in `bun` is not necessary, and trying to register a hook would cause issues.
+  // https://github.com/oven-sh/bun/issues/8222#issuecomment-3665364677
+  if ('Bun' in globalThis)
+    return;
+
   registerESMLoader();
   cc.installSourceMapSupport();
 
@@ -389,25 +394,41 @@ const collectCJSDependencies = (module: Module, dependencies: Set<string>) => {
 export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Location, ...args: A) => R): (...args: A) => R {
   return (...args) => {
     const oldPrepareStackTrace = Error.prepareStackTrace;
-    Error.prepareStackTrace = (error, stackFrames) => {
-      const frame = sourceMapSupport.wrapCallSite(stackFrames[1] as any) as NodeJS.CallSite;
-      const fileName = frame.getFileName();
-      // Node error stacks for modules use file:// urls instead of paths.
-      const file = (fileName && fileName.startsWith('file://')) ? url.fileURLToPath(fileName) : fileName;
-      return {
-        file,
-        line: frame.getLineNumber(),
-        column: frame.getColumnNumber(),
-      };
-    };
     const oldStackTraceLimit = Error.stackTraceLimit;
+    Error.prepareStackTrace = 'Bun' in globalThis ? bunCallerLocation : nodeCallerLocation;
     Error.stackTraceLimit = 2;
     const obj: { stack: Location } = {} as any;
-    Error.captureStackTrace(obj);
-    const location = obj.stack;
-    Error.stackTraceLimit = oldStackTraceLimit;
-    Error.prepareStackTrace = oldPrepareStackTrace;
+    let location: Location;
+    try {
+      Error.captureStackTrace(obj);
+      location = obj.stack;
+    } finally {
+      Error.stackTraceLimit = oldStackTraceLimit;
+      Error.prepareStackTrace = oldPrepareStackTrace;
+    }
     return func(location, ...args);
+  };
+}
+
+function nodeCallerLocation(error: Error, stackFrames: NodeJS.CallSite[]) {
+  const frame = sourceMapSupport.wrapCallSite(stackFrames[1] as any) as NodeJS.CallSite;
+  const fileName = frame.getFileName();
+  // Node error stacks for modules use file:// urls instead of paths.
+  const file = (fileName && fileName.startsWith('file://')) ? url.fileURLToPath(fileName) : fileName;
+  return {
+    file,
+    line: frame.getLineNumber(),
+    column: frame.getColumnNumber(),
+  };
+}
+
+function bunCallerLocation(error: Error, stackFrames: NodeJS.CallSite[]) {
+  const frame = stackFrames[1];
+  return {
+    file: frame.getFileName(),
+    line: frame.getLineNumber(),
+    // Bun's CallSite.getColumnNumber() is 0-based.
+    column: frame.getColumnNumber()! + 1,
   };
 }
 
@@ -424,11 +445,6 @@ let loaderChannel: PortTransport | undefined;
 function registerESMLoader() {
   // Opt-out switch.
   if (process.env.PW_DISABLE_TS_ESM)
-    return;
-
-  // Transpilation in `bun` is not necessary, and trying to register a hook would cause issues.
-  // https://github.com/oven-sh/bun/issues/8222#issuecomment-3665364677
-  if ('Bun' in globalThis)
     return;
 
   const nodeModule = require('node:module');

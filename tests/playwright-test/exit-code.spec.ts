@@ -27,17 +27,17 @@ test('should collect stdio', async ({ runInlineTest }) => {
       import { test, expect } from '@playwright/test';
       test('stdio', () => {
         process.stdout.write('stdout text');
-        process.stdout.write(Buffer.from('stdout buffer'));
+        process.stdout.write(Buffer.from('\\x1b[31mstdout buffer 😀\\x1b[0m'));
         process.stderr.write('stderr text');
-        process.stderr.write(Buffer.from('stderr buffer'));
+        process.stderr.write(Buffer.from('stderr café', 'latin1'));
       });
     `
   });
   expect(exitCode).toBe(0);
   const testResult = report.suites[0].specs[0].tests[0].results[0];
   const { stdout, stderr } = testResult;
-  expect(stdout).toEqual([{ text: 'stdout text' }, { buffer: Buffer.from('stdout buffer').toString('base64') }]);
-  expect(stderr).toEqual([{ text: 'stderr text' }, { buffer: Buffer.from('stderr buffer').toString('base64') }]);
+  expect(stdout).toEqual([{ text: 'stdout text' }, { text: '\x1b[31mstdout buffer 😀\x1b[0m' }]);
+  expect(stderr).toEqual([{ text: 'stderr text' }, { buffer: Buffer.from('stderr café', 'latin1').toString('base64') }]);
 });
 
 test('should collect stdio from forked process', async ({ runInlineTest }) => {
@@ -60,8 +60,8 @@ test('should collect stdio from forked process', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
   const testResult = report.suites[0].specs[0].tests[0].results[0];
   const { stdout, stderr } = testResult;
-  expect(stdout.map(e => Buffer.from((e as any).buffer, 'base64').toString()).join('')).toEqual('stdout textstdout buffer');
-  expect(stderr.map(e => Buffer.from((e as any).buffer, 'base64').toString()).join('')).toEqual('stderr textstderr buffer');
+  expect(stdout.map(e => (e as any).text).join('')).toEqual('stdout textstdout buffer');
+  expect(stderr.map(e => (e as any).text).join('')).toEqual('stderr textstderr buffer');
 });
 
 test('should work with not defined errors', async ({ runInlineTest }) => {

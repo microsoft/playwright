@@ -16,8 +16,6 @@
 
 import path from 'path';
 
-import { libPath } from '../package';
-
 import type * as esbuild from 'esbuild';
 import type { JsxOptions } from './babelBundle';
 
@@ -37,7 +35,7 @@ export function esbuildTransform(esbuild: Esbuild, code: string, filename: strin
   try {
     result = transformSync(esbuild, code, options);
   } catch (error) {
-    throw toSyntaxError(error, code, filename);
+    throw toSyntaxError(error, filename);
   }
   return { code: result.code, map: JSON.parse(result.map) };
 }
@@ -79,14 +77,12 @@ function transformSync(esbuild: Esbuild, code: string, options: esbuild.Transfor
   }
 }
 
-function toSyntaxError(error: any, code: string, filename: string): Error {
+function toSyntaxError(error: any, filename: string): Error {
   const message: esbuild.Message | undefined = error?.errors?.[0];
   if (!message?.location)
     return error;
   const { line, column } = message.location;
-  const { codeFrameColumns } = require(libPath('transform', 'babelBundle'));
-  const codeFrame = codeFrameColumns(code, { start: { line, column: column + 1 } });
-  const syntaxError = new SyntaxError(`${filename}: ${message.text} (${line}:${column})\n\n${codeFrame}`);
-  (syntaxError as any).loc = { line, column };
+  const syntaxError = new SyntaxError(`${filename}: ${message.text} (${line}:${column})`);
+  (syntaxError as any).loc = { file: filename, line, column: column + 1 };
   return syntaxError;
 }

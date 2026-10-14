@@ -15,14 +15,13 @@
  */
 
 import path from 'path';
-import util from 'util';
 
 import { isWorkerProcess, setCurrentlyLoadingFileSuite } from '../globals';
 import { Suite } from './test';
 import { requireOrImport, startCollectingFileDeps, stopCollectingFileDeps } from '../transform/transform';
-import { filterStackTrace } from '../util';
+import { serializeError } from '../util';
 
-import type { TestError } from '../../types/testReporter';
+import type { Location, TestError } from '../../types/testReporter';
 import type { FullConfigInternal } from './config';
 
 export const defaultTimeout = 30000;
@@ -48,7 +47,7 @@ export async function loadTestFile(file: string, config: FullConfigInternal, tes
   } catch (e) {
     if (!testErrors)
       throw e;
-    testErrors.push(serializeLoadError(file, e));
+    testErrors.push(...serializeLoadErrors(e));
   } finally {
     setCurrentlyLoadingFileSuite(undefined);
     if (!isWorkerProcess())
@@ -78,17 +77,19 @@ export async function loadTestFile(file: string, config: FullConfigInternal, tes
   return suite;
 }
 
-function serializeLoadError(file: string, error: Error | any): TestError {
-  if (error instanceof Error) {
-    const result: TestError = filterStackTrace(error);
-    // Babel parse errors have location.
-    const loc = (error as any).loc;
-    result.location = loc ? {
-      file,
-      line: loc.line || 0,
-      column: loc.column || 0,
-    } : undefined;
-    return result;
-  }
-  return { value: util.inspect(error) };
+function serializeLoadErrors(error: Error | any): TestError[] {
+  if (error instanceof AggregateError)
+    return error.errors.flatMap(serializeLoadErrors);
+  const result: TestError = serializeError(error);
+  if (error instanceof Error)
+    result.location = parseErrorLocation(error);
+  return [result];
+}
+
+// Transform syntax errors have loc, bun parse errors have position.
+type ParseError = Error & { loc?: Location, position?: Location };
+
+function parseErrorLocation(error: ParseError): Location | undefined {
+  const location = error.loc ?? error.position;
+  return location && { file: location.file, line: location.line, column: location.column };
 }

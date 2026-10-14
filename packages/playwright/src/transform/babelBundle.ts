@@ -188,9 +188,20 @@ export function babelTransform(code: string, filename: string, isModule: boolean
   try {
     const options = babelTransformOptions(isTypeScript(filename), isModule, pluginsEpilogue, useDefineForClassFields, jsx);
     return babel.transform(code, { filename, ...options });
+  } catch (error) {
+    throw toSyntaxError(error, filename);
   } finally {
     isTransforming = false;
   }
+}
+
+function toSyntaxError(error: any, filename: string): Error {
+  if (!error?.loc)
+    return error;
+  // Drop babel's code frame, the reporter draws one from the location.
+  const syntaxError = new SyntaxError(error.message.split('\n\n')[0]);
+  (syntaxError as any).loc = { file: filename, line: error.loc.line, column: error.loc.column + 1 };
+  return syntaxError;
 }
 
 export function babelParse(code: string, filename: string, isModule: boolean): babel.ParseResult {

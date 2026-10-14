@@ -40,6 +40,7 @@ export default defineConfig({
     trace: process.env.PWTEST_COVERAGE ? { mode: 'on', snapshots: false, screenshots: false, _coverage: true } as any : 'off',
   },
   forbidOnly: !!process.env.CI,
+  globalSetup: process.env.PW_BUN ? './current-test-runner/globalSetup.ts' : undefined,
   workers: undefined,
   snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
   projects: [

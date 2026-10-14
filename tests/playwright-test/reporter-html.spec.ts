@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import url from 'url';
 import * as yazl from 'yazl';
-import { test as baseTest, expect as baseExpect, cliEntrypoint, createImage } from './playwright-test-fixtures';
+import { test as baseTest, expect as baseExpect, cliCommand, createImage } from './playwright-test-fixtures';
 import { iso, utils } from '../../packages/playwright-core/lib/coreBundle';
 import { mergeServiceWorkerCoverage } from '../config/serviceWorkerCoverage';
 
@@ -3840,7 +3840,7 @@ test.describe('show-report .zip support', () => {
 
     const port = await findFreePort();
     const proc = childProcess({
-      command: ['node', cliEntrypoint, 'show-report', zipPath, `--port=${port}`],
+      command: [...cliCommand, 'show-report', zipPath, `--port=${port}`],
       cwd: testInfo.outputPath(),
       env: { ...process.env, PLAYWRIGHT_HTML_OPEN: 'never' },
     });
@@ -3854,7 +3854,7 @@ test.describe('show-report .zip support', () => {
     const filePath = testInfo.outputPath('not-a-report.txt');
     await fs.promises.writeFile(filePath, 'hello');
     const proc = childProcess({
-      command: ['node', cliEntrypoint, 'show-report', filePath],
+      command: [...cliCommand, 'show-report', filePath],
       cwd: testInfo.outputPath(),
     });
     const { exitCode } = await proc.exited;
@@ -3871,7 +3871,7 @@ test.describe('show-report .zip support', () => {
     await finished;
 
     const proc = childProcess({
-      command: ['node', cliEntrypoint, 'show-report', zipPath],
+      command: [...cliCommand, 'show-report', zipPath],
       cwd: testInfo.outputPath(),
     });
     const { exitCode } = await proc.exited;
