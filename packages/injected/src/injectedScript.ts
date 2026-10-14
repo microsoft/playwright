@@ -925,13 +925,12 @@ export class InjectedScript {
         value = value.trim();
         input.focus();
         input.value = value;
-        // The browser may serialize the value in canonical form, e.g. range "0.850" becomes "0.85" and
-        // datetime-local "2020-03-02T05:15:00" becomes "2020-03-02T05:15". It replaces an invalid value:
-        // range with its default, color with "#000000", dates and times with "".
+        // The browser serializes some values in canonical form, e.g. range "0.850" becomes "0.85" and
+        // datetime-local "2020-03-02T05:15:00" becomes "2020-03-02T05:15". Invalid datetime-local values become "".
         let accepted = input.value === value;
         if (!accepted && type === 'range')
           accepted = Number(input.value) === Number(value);
-        else if (!accepted && type !== 'color')
+        else if (!accepted && type === 'datetime-local')
           accepted = !!input.value;
         if (!accepted)
           throw this.createStacklessError('Malformed value');
