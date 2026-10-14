@@ -46,6 +46,50 @@ export function filterTestsRemoveEmptySuites(suite: Suite, filter: TestCaseFilte
   return !!suite._entries.length;
 }
 
+export function assignTestOutputDirSuffixes(projectSuites: Map<FullProjectInternal, Suite>) {
+  const tests: { test: TestCase, project: FullProjectInternal, order: number }[] = [];
+  for (const [project, suite] of projectSuites) {
+    for (const test of suite.allTests()) {
+      test._outputDirSuffix = '';
+      tests.push({ test, project, order: tests.length });
+    }
+  }
+
+  const suffixes = new Map<TestCase, string>();
+  const testOrder = new Map(tests.map(({ test, order }) => [test, order]));
+  const normalizePath = (outputDir: string) => process.platform === 'win32' || process.platform === 'darwin' ? outputDir.toLowerCase() : outputDir;
+  for (let attempt = 0; ; attempt++) {
+    const testsByOutputDir = new Map<string, Set<TestCase>>();
+    for (const { test, project } of tests) {
+      const repeatEach = Math.max(project.project.repeatEach, project.fullConfig.configCLIOverrides.repeatEach ?? 1);
+      for (let retry = 0; retry <= test.retries; retry++) {
+        for (let repeatEachIndex = 0; repeatEachIndex < repeatEach; repeatEachIndex++) {
+          let testOutputDir = testOutputDirBase(test._requireFile, test.titlePath(), project.project.testDir, project.id, suffixes.get(test));
+          if (retry)
+            testOutputDir += '-retry' + retry;
+          if (repeatEachIndex)
+            testOutputDir += '-repeat' + repeatEachIndex;
+          const outputDir = normalizePath(path.resolve(project.project.outputDir, testOutputDir));
+          const testsInOutputDir = testsByOutputDir.get(outputDir) || new Set<TestCase>();
+          testsInOutputDir.add(test);
+          testsByOutputDir.set(outputDir, testsInOutputDir);
+        }
+      }
+    }
+
+    const collisions = [...testsByOutputDir.values()].filter(testsInOutputDir => testsInOutputDir.size > 1);
+    if (!collisions.length)
+      break;
+    for (const testsInOutputDir of collisions) {
+      for (const test of testsInOutputDir)
+        suffixes.set(test, `${test.id.slice(-12)}-${testOrder.get(test)! + 1}-${attempt + 1}`);
+    }
+  }
+
+  for (const [test, suffix] of suffixes)
+    test._outputDirSuffix = suffix;
+}
+
 export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suite): Suite {
   const relativeFile = path.relative(project.project.testDir, suite.location!.file);
   const fileId = calculateSha1(toPosixPath(relativeFile)).slice(0, 20);
@@ -91,30 +135,6 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
       test._workerHash = `${project.id}-${test._poolDigest}-0`;
     test._outputDirSuffix = '';
   });
-
-  const testsByOutputDir = new Map<string, TestCase[]>();
-  for (const test of result.allTests()) {
-    const outputDir = testOutputDirBase(test._requireFile, test.titlePath(), project.project.testDir, project.id);
-    const tests = testsByOutputDir.get(outputDir) || [];
-    tests.push(test);
-    testsByOutputDir.set(outputDir, tests);
-  }
-  for (const tests of testsByOutputDir.values()) {
-    if (tests.length < 2)
-      continue;
-    const testsByIdSuffix = new Map<string, TestCase[]>();
-    for (const test of tests) {
-      const idSuffix = test.id.slice(-12);
-      const testsWithIdSuffix = testsByIdSuffix.get(idSuffix) || [];
-      testsWithIdSuffix.push(test);
-      testsByIdSuffix.set(idSuffix, testsWithIdSuffix);
-    }
-    for (const [idSuffix, testsWithIdSuffix] of testsByIdSuffix) {
-      testsWithIdSuffix.forEach((test, index) => {
-        test._outputDirSuffix = testsWithIdSuffix.length > 1 ? `${idSuffix}-${index + 1}` : idSuffix;
-      });
-    }
-  }
 
   return result;
 }

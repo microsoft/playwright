@@ -147,6 +147,7 @@ export type TestEntry = {
   testId: string;
   retry: number;
   planAnnotations: TestAnnotation[];
+  outputDirSuffix: string;
 };
 
 export type RunPayload = {
