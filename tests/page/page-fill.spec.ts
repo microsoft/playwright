@@ -197,10 +197,15 @@ it('should throw on incorrect time', async ({ page, browserName }) => {
   expect(error.message).toContain('Malformed value');
 });
 
-it('should fill datetime-local input', async ({ page, server }) => {
+it('should fill datetime-local input', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43370' },
+}, async ({ page, server }) => {
   await page.setContent('<input type=datetime-local>');
   await page.fill('input', '2020-03-02T05:15');
   expect(await page.$eval('input', input => input.value)).toBe('2020-03-02T05:15');
+  // The browser omits zero seconds.
+  await page.fill('input', '2020-03-02T06:20:00');
+  expect(await page.$eval('input', input => input.value)).toBe('2020-03-02T06:20');
 });
 
 it('should throw on incorrect datetime-local', async ({ page, server, browserName }) => {
