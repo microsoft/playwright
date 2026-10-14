@@ -47,16 +47,34 @@ export function filterTestsRemoveEmptySuites(suite: Suite, filter: TestCaseFilte
 }
 
 export function assignTestOutputDirSuffixes(projectSuites: Map<FullProjectInternal, Suite>) {
-  const tests: { test: TestCase, project: FullProjectInternal, order: number }[] = [];
+  const tests: { test: TestCase, project: FullProjectInternal }[] = [];
+  const testKeys = new Map<TestCase, string>();
+  const testsByIdSuffix = new Map<string, TestCase[]>();
   for (const [project, suite] of projectSuites) {
     for (const test of suite.allTests()) {
       test._outputDirSuffix = '';
-      tests.push({ test, project, order: tests.length });
+      tests.push({ test, project });
+      testKeys.set(test, JSON.stringify([project.id, toPosixPath(path.relative(project.project.testDir, test._requireFile)), test.titlePath()]));
+      const idSuffix = test.id.slice(-12);
+      const testsWithIdSuffix = testsByIdSuffix.get(idSuffix) || [];
+      testsWithIdSuffix.push(test);
+      testsByIdSuffix.set(idSuffix, testsWithIdSuffix);
     }
   }
 
+  const collisionSuffixes = new Map<TestCase, string>();
+  for (const [idSuffix, testsWithIdSuffix] of testsByIdSuffix) {
+    testsWithIdSuffix.sort((a, b) => {
+      const aKey = testKeys.get(a)!;
+      const bKey = testKeys.get(b)!;
+      return aKey < bKey ? -1 : aKey > bKey ? 1 : 0;
+    });
+    testsWithIdSuffix.forEach((test, index) => {
+      collisionSuffixes.set(test, testsWithIdSuffix.length > 1 ? `${idSuffix}-${index + 1}` : idSuffix);
+    });
+  }
+
   const suffixes = new Map<TestCase, string>();
-  const testOrder = new Map(tests.map(({ test, order }) => [test, order]));
   const normalizePath = (outputDir: string) => {
     if (process.platform === 'win32')
       return outputDir.toLowerCase();
@@ -90,7 +108,7 @@ export function assignTestOutputDirSuffixes(projectSuites: Map<FullProjectIntern
       break;
     for (const testsInOutputDir of collisions) {
       for (const test of testsInOutputDir)
-        suffixes.set(test, `${test.id.slice(-12)}-${testOrder.get(test)! + 1}-${attempt + 1}`);
+        suffixes.set(test, `${collisionSuffixes.get(test)}${attempt ? '-' + attempt : ''}`);
     }
   }
 
