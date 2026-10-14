@@ -462,7 +462,7 @@ function isJsonContentType(headers?: HeadersArray): boolean {
     return false;
   for (const { name, value } of headers) {
     if (name.toLocaleLowerCase() === 'content-type')
-      return value === 'application/json';
+      return value.split(';')[0].trim().toLowerCase() === 'application/json';
   }
   return false;
 }

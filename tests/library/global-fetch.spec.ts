@@ -470,19 +470,23 @@ const serialization: [string, any][] = [
 ];
 for (const [type, value] of serialization) {
   const stringifiedValue = JSON.stringify(value);
-  it(`should json stringify ${type} body when content-type is application/json`, async ({ playwright, server }) => {
+  it(`should json stringify ${type} body when content-type is application/json`, {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43388' },
+  }, async ({ playwright, server }) => {
     const request = await playwright.request.newContext();
-    const [req] = await Promise.all([
-      server.waitForRequest('/empty.html'),
-      request.post(server.EMPTY_PAGE, {
-        headers: {
-          'content-type': 'application/json'
-        },
-        data: value
-      })
-    ]);
-    const body = await req.postBody;
-    expect(body.toString()).toEqual(stringifiedValue);
+    for (const contentType of ['application/json', 'Application/JSON; charset=utf-8']) {
+      const [req] = await Promise.all([
+        server.waitForRequest('/empty.html'),
+        request.post(server.EMPTY_PAGE, {
+          headers: {
+            'content-type': contentType
+          },
+          data: value
+        })
+      ]);
+      const body = await req.postBody;
+      expect(body.toString()).toEqual(stringifiedValue);
+    }
     await request.dispose();
   });
 
