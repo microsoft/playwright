@@ -3637,9 +3637,16 @@ await page.AddLocatorHandlerAsync(page.GetByText("Sign up to the newsletter"), a
 Locator that triggers the handler.
 
 ### param: Page.addLocatorHandler.handler
-* langs: js, python
+* langs: js
 * since: v1.42
 - `handler` <[function]\([Locator]\): [Promise<any>]>
+
+Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
+
+### param: Page.addLocatorHandler.handler
+* langs: python
+* since: v1.42
+- `handler` <[function]\([Locator]\)|[function]\(\): [Promise<any>]>
 
 Function that should be run once [`param: locator`] appears. This function should get rid of the element that blocks actions like click.
 
@@ -3905,8 +3912,15 @@ A glob pattern, regex pattern, or predicate that receives a [URL] to match durin
 
 ### param: Page.route.handler
 * since: v1.8
-* langs: js, python
+* langs: js
 - `handler` <[function]\([Route], [Request]\): [Promise<any>|any]>
+
+handler function to route the request.
+
+### param: Page.route.handler
+* since: v1.8
+* langs: python
+- `handler` <[function]\([Route]\)|[function]\([Route], [Request]\)>
 
 handler function to route the request.
 
@@ -4695,8 +4709,15 @@ A glob pattern, regex pattern, or predicate receiving [URL] to match while routi
 
 ### param: Page.unroute.handler
 * since: v1.8
-* langs: js, python
+* langs: js
 - `handler` ?<[function]\([Route], [Request]\): [Promise<any>|any]>
+
+Optional handler function to route the request.
+
+### param: Page.unroute.handler
+* since: v1.8
+* langs: python
+- `handler` ?<[function]\([Route]\)|[function]\([Route], [Request]\)>
 
 Optional handler function to route the request.
 

@@ -704,9 +704,13 @@ function parseTypeExpression(type) {
     }
   }
   let union = null;
-  if (type[firstTypeLength] === '|')
+  if (type[firstTypeLength] === '|') {
     union = parseTypeExpression(type.substring(firstTypeLength + 1));
-  else if (type[firstTypeLength] === ',')
+    // In `[A]|[B], [C]`, the union ends at the comma: `[C]` is the next item
+    // of the list, not a part of the union.
+    next = union.next;
+    union.next = null;
+  } else if (type[firstTypeLength] === ',')
     next = parseTypeExpression(type.substring(firstTypeLength + 1));
 
   if (template && !template.unionName && isStringUnion(template)) {
