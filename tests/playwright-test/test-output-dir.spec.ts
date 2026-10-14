@@ -83,6 +83,34 @@ test('should include repeat token', async ({ runInlineTest }) => {
   expect(result.passed).toBe(3);
 });
 
+test('should keep output directories unique for titles that sanitize identically', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      import { test } from '@playwright/test';
+      test('offset (x +1)', ({}, testInfo) => {
+        require('fs').writeFileSync(testInfo.outputPath('artifact.txt'), 'content');
+        console.log('%%first:' + testInfo.outputDir);
+        throw new Error('Keep the output directory');
+      });
+      test('offset (x 1)', ({}, testInfo) => {
+        console.log('%%second:' + testInfo.outputDir);
+      });
+    `,
+    'playwright.config.ts': `export default { fullyParallel: true };`,
+  }, { workers: 2 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.outputLines).toHaveLength(2);
+  const firstOutputDir = result.outputLines.find(line => line.startsWith('first:'))?.substring('first:'.length);
+  const secondOutputDir = result.outputLines.find(line => line.startsWith('second:'))?.substring('second:'.length);
+  expect(firstOutputDir).toBeTruthy();
+  expect(secondOutputDir).toBeTruthy();
+  if (!firstOutputDir || !secondOutputDir)
+    throw new Error('Expected both tests to report their output directories');
+  expect(firstOutputDir).not.toBe(secondOutputDir);
+  expect(fs.existsSync(path.join(firstOutputDir, 'artifact.txt'))).toBe(true);
+});
+
 test('should default to package.json directory', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'foo/package.json': `{ "name": "foo" }`,
