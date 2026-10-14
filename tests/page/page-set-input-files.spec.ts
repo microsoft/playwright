@@ -68,6 +68,20 @@ test('should upload a folder', async ({ page, server, isFrozenWebkit, isAndroid 
   }
 });
 
+test('should upload a folder via label', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43367' },
+}, async ({ page, isFrozenWebkit, isAndroid }) => {
+  test.skip(isAndroid);
+  test.skip(isFrozenWebkit);
+
+  await page.setContent(`<label for="folder">Folder</label><input id="folder" type="file" webkitdirectory>`);
+  const dir = path.join(test.info().outputDir, 'file-upload-test');
+  await fs.promises.mkdir(dir, { recursive: true });
+  await fs.promises.writeFile(path.join(dir, 'file1.txt'), 'file1 content');
+  await page.getByText('Folder').setInputFiles(dir);
+  expect(await page.locator('input').evaluate((e: HTMLInputElement) => [...e.files].map(f => f.webkitRelativePath))).toEqual(['file-upload-test/file1.txt']);
+});
+
 test('should upload a folder and throw for multiple directories', async ({ page, server, isAndroid, isFrozenWebkit }) => {
   test.skip(isAndroid);
   test.skip(isFrozenWebkit);
