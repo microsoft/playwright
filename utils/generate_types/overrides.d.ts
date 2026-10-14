@@ -239,7 +239,7 @@ export interface CDPSession {
   send<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T],
-    options?: { timeout?: number }
+    options?: { timeout?: number, signal?: AbortSignal }
   ): Promise<Protocol.CommandReturnValues[T]>;
 }
 

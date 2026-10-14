@@ -48,9 +48,9 @@ export class CDPSession extends ChannelOwner<channels.CDPSessionChannel> impleme
   async send<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T],
-    options: { timeout?: number } = {}
+    options: { timeout?: number, signal?: AbortSignal } = {}
   ): Promise<Protocol.CommandReturnValues[T]> {
-    const result = await this._channel.send({ method, params }, { signal: undefined, timeout: options.timeout ?? 0 });
+    const result = await this._channel.send({ method, params }, { signal: options.signal, timeout: options.timeout ?? 0 });
     return result.result as Protocol.CommandReturnValues[T];
   }
 

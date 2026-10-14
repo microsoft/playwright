@@ -18421,7 +18421,7 @@ export interface CDPSession {
   send<T extends keyof Protocol.CommandParameters>(
     method: T,
     params?: Protocol.CommandParameters[T],
-    options?: { timeout?: number }
+    options?: { timeout?: number, signal?: AbortSignal }
   ): Promise<Protocol.CommandReturnValues[T]>;
   /**
    * Emitted when the session is closed, either because the target was closed or `session.detach()` was called.
