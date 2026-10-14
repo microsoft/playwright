@@ -37,17 +37,7 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
         os: [ubuntu-22.04]
-        node-version: [20]
-        include:
-          - os: ubuntu-22.04
-            node-version: 22
-            browser: chromium
-          - os: ubuntu-22.04
-            node-version: 24
-            browser: chromium
-          - os: ubuntu-22.04-arm
-            node-version: 20
-            browser: chromium
+        node-version: [22]
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read    # This is required for actions/checkout to succeed
@@ -65,57 +55,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [playwright-x64-ubuntu24-64-core, playwright-x64-server2025-64-core]
+        node-version: [22]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read    # This is required for actions/checkout to succeed
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: ./.github/actions/run-test
+      with:
+        node-version: ${{matrix.node-version}}
+        command: npm run ttest
+        bot-name: "${{ matrix.os }}-node${{ matrix.node-version }}"
+
+  test_test_runner_mac:
+    name: Test Runner
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
         node-version: [22]
         shardIndex: [1, 2]
         shardTotal: [2]
         shardWeights: ['58:42']
-        include:
-          - os: windows-latest
-            node-version: 22
-            shardIndex: 1
-            shardTotal: 3
-            shardWeights: '44:33:23'
-          - os: windows-latest
-            node-version: 22
-            shardIndex: 2
-            shardTotal: 3
-            shardWeights: '44:33:23'
-          - os: windows-latest
-            node-version: 22
-            shardIndex: 3
-            shardTotal: 3
-            shardWeights: '44:33:23'
-          - os: ubuntu-latest
-            node-version: 20
-            shardIndex: 1
-            shardTotal: 2
-            shardWeights: '58:42'
-          - os: ubuntu-latest
-            node-version: 20
-            shardIndex: 2
-            shardTotal: 2
-            shardWeights: '58:42'
-          - os: ubuntu-latest
-            node-version: 24
-            shardIndex: 1
-            shardTotal: 2
-            shardWeights: '58:42'
-          - os: ubuntu-latest
-            node-version: 24
-            shardIndex: 2
-            shardTotal: 2
-            shardWeights: '58:42'
-          - os: ubuntu-latest
-            node-version: 26
-            shardIndex: 1
-            shardTotal: 2
-            shardWeights: '58:42'
-          - os: ubuntu-latest
-            node-version: 26
-            shardIndex: 2
-            shardTotal: 2
-            shardWeights: '58:42'
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read    # This is required for actions/checkout to succeed
@@ -143,7 +105,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - uses: ./.github/actions/run-test
       with:
-        node-version: 20
+        node-version: 22
         browsers-to-install: chromium
         command: npm run test-${{ matrix.package }}
         bot-name: "web-components-${{ matrix.package }}"
@@ -155,7 +117,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
       with:
-        node-version: 20
+        node-version: 22
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -214,23 +176,3 @@ jobs:
         node-version: 22
         bot-name: "package-installations-${{ matrix.os }}"
         shell: ${{ matrix.os == 'windows-latest' && 'pwsh' || 'bash' }}
-
-  test_clock_frozen_time_linux:
-    name: time library - ${{ matrix.clock }}
-    permissions:
-      contents: read    # This is required for actions/checkout to succeed
-    strategy:
-      fail-fast: false
-      matrix:
-        clock: [frozen, realtime]
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-    - uses: ./.github/actions/run-test
-      with:
-        node-version: 22
-        browsers-to-install: chromium
-        command: npm run test -- --project=chromium-*
-        bot-name: "${{ matrix.clock }}-time-library-chromium-linux"
-      env:
-        PW_CLOCK: ${{ matrix.clock }}
