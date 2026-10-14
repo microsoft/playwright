@@ -73,3 +73,14 @@ it('should support custom firefox policies', async ({ browserType, mode, asset, 
   await browser.close();
   await server.stop();
 });
+
+it('should resize viewport with fractional device scale factor', async ({ browserType }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43028' });
+  // A fractional device scale factor makes the viewport size fractional in CSS pixels,
+  // e.g. 400.27x799.9 instead of 400x800. Web content still sees rounded values.
+  const browser = await browserType.launch({ firefoxUserPrefs: { 'layout.css.devPixelsPerPx': '1.1' } });
+  const page = await browser.newPage();
+  await page.setViewportSize({ width: 400, height: 800 });
+  expect(await page.evaluate(() => [window.innerWidth, window.innerHeight])).toEqual([400, 800]);
+  await browser.close();
+});
