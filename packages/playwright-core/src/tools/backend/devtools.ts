@@ -24,6 +24,14 @@ import { elementSchema, optionalElementSchema } from './snapshot';
 
 import type { AnnotateResult } from '../dashboard/dashboardController';
 
+export function parseResumeLocation(location: string): { file: string, line?: number } {
+  // Split at the last colon if followed only by digits, but not at the drive letter of a Windows path like "C:\tests\example.spec.ts".
+  const match = location.match(/^(.+):(\d+)$/);
+  if (match && match[1].length > 1)
+    return { file: match[1], line: Number(match[2]) };
+  return { file: location };
+}
+
 const resume = defineTool({
   capability: 'devtools',
 
@@ -54,25 +62,12 @@ const resume = defineTool({
       });
     });
 
-    if (params.location) {
-      // Split at the last colon, but not at the drive letter of a Windows path like "C:\tests\example.spec.ts".
-      const separator = params.location.lastIndexOf(':');
-      const [file, lineStr] = separator > 1 ? [params.location.slice(0, separator), params.location.slice(separator + 1)] : [params.location, ''];
-      let location;
-      if (lineStr) {
-        const line = Number(lineStr);
-        if (isNaN(line))
-          throw new Error(`Invalid location "${params.location}", expected format is <file>:<line>, e.g. "example.spec.ts:42"`);
-        location = { file, line };
-      } else {
-        location = { file: params.location };
-      }
-      await browserContext.debugger.runTo(location);
-    } else if (params.step) {
+    if (params.location)
+      await browserContext.debugger.runTo(parseResumeLocation(params.location));
+    else if (params.step)
       await browserContext.debugger.next();
-    } else {
+    else
       await browserContext.debugger.resume();
-    }
     await pausedPromise;
   },
 });

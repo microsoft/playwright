@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from './cli-fixtures';
+import { parseResumeLocation } from '../../packages/playwright-core/src/tools/backend/devtools';
 
 test.use({ mcpCaps: ['devtools'] });
 
@@ -134,4 +135,12 @@ test('browser_hide_highlight all', async ({ boundBrowser, startClient }) => {
     result: 'Hid page highlight',
   });
   await expect(page.locator('x-pw-highlight')).toHaveCount(0);
+});
+
+test('browser_resume parses location correctly', () => {
+  expect(parseResumeLocation('http://localhost:3000/app.js')).toEqual({ file: 'http://localhost:3000/app.js' });
+  expect(parseResumeLocation('http://localhost:3000/app.js:42')).toEqual({ file: 'http://localhost:3000/app.js', line: 42 });
+  expect(parseResumeLocation('example.spec.ts:15')).toEqual({ file: 'example.spec.ts', line: 15 });
+  expect(parseResumeLocation('C:\\tests\\example.spec.ts:25')).toEqual({ file: 'C:\\tests\\example.spec.ts', line: 25 });
+  expect(parseResumeLocation('C:\\tests\\example.spec.ts')).toEqual({ file: 'C:\\tests\\example.spec.ts' });
 });
