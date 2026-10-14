@@ -773,11 +773,17 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         fs.promises.access(localPath, fs.constants.F_OK)
       ))));
       // Browsers traverse the given directory asynchronously and we want to ensure all files are uploaded.
-      const waitForInputEvent = localDirectory ? this.evaluate(node => new Promise<any>(fulfill => {
-        node.addEventListener('input', fulfill, { once: true });
-      })).catch(() => {}) : Promise.resolve();
-      await this._page.delegate.setInputFilePaths(progress, retargeted, localPathsOrDirectory);
-      await progress.race(waitForInputEvent);
+      // Install the listener on the input itself before setting the files, so that the event is not missed.
+      const inputEvent = localDirectory ? await progress.race(retargeted.evaluateHandle(node => ({
+        promise: new Promise<void>(fulfill => node.addEventListener('input', () => fulfill(), { once: true })),
+      })).catch(() => undefined)) : undefined;
+      try {
+        await this._page.delegate.setInputFilePaths(progress, retargeted, localPathsOrDirectory);
+        if (inputEvent)
+          await progress.race(inputEvent.evaluate(event => event.promise).catch(() => {}));
+      } finally {
+        inputEvent?.dispose();
+      }
     } else {
       await progress.race(retargeted.evaluateInUtility(([injected, node, files]) =>
         injected.setInputFiles(node, files), filePayloads!));
