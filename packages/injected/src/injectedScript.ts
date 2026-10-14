@@ -919,16 +919,10 @@ export class InjectedScript {
         if (isNaN(Number(value)))
           throw this.createStacklessError('Cannot type text into input[type=number]');
       }
-      if (type === 'color')
-        value = value.toLowerCase();
       if (kInputTypesToSetValue.has(type)) {
         value = value.trim();
         input.focus();
         input.value = value;
-        // The browser serializes range values in canonical form, e.g. "0.850" becomes "0.85".
-        const accepted = type === 'range' ? Number(input.value) === Number(value) : input.value === value;
-        if (!accepted)
-          throw this.createStacklessError('Malformed value');
         element.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
         element.dispatchEvent(new Event('change', { bubbles: true }));
         return 'done';  // We have already changed the value, no need to input it.
