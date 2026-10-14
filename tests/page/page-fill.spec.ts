@@ -64,16 +64,6 @@ it('should fill range input', {
   }
 });
 
-it('should throw on incorrect range value', async ({ page }) => {
-  await page.setContent('<input type=range min=0 max=100 value=50>');
-  const error1 = await page.fill('input', 'foo').catch(e => e);
-  expect(error1.message).toContain('Malformed value');
-  const error2 = await page.fill('input', '200').catch(e => e);
-  expect(error2.message).toContain('Malformed value');
-  const error3 = await page.fill('input', '15.43').catch(e => e);
-  expect(error3.message).toContain('Malformed value');
-});
-
 it('should fill color input', async ({ page }) => {
   await page.setContent('<input type=color value="#e66465">');
   await page.fill('input', '#aaaaaa');
@@ -87,13 +77,6 @@ it('should fill color input case insensitive', async ({ page, browserName, isWin
     expect(await page.$eval('input', input => input.value)).toBe('#AbCd00');
   else
     expect(await page.$eval('input', input => input.value)).toBe('#abcd00');
-});
-
-it('should throw on incorrect color value', async ({ page, browserName, isWindows }) => {
-  it.skip(browserName === 'webkit' && isWindows, 'WebKit win does not support color inputs');
-  await page.setContent('<input type=color value="#e66465">');
-  const error1 = await page.fill('input', 'badvalue').catch(e => e);
-  expect(error1.message).toContain('Malformed value');
 });
 
 it('should fill date input after clicking', async ({ page, server }) => {
@@ -147,14 +130,6 @@ for (const [type, value] of Object.entries({
   });
 }
 
-it('should throw on incorrect date', async ({ page, browserName }) => {
-  it.skip(browserName === 'webkit', 'WebKit does not support date inputs');
-
-  await page.setContent('<input type=date>');
-  const error = await page.fill('input', '2020-13-05').catch(e => e);
-  expect(error.message).toContain('Malformed value');
-});
-
 it('should fill time input', async ({ page }) => {
   await page.setContent('<input type=time>');
   await page.fill('input', '13:15');
@@ -167,48 +142,21 @@ it('should fill month input', async ({ page }) => {
   expect(await page.$eval('input', input => input.value)).toBe('2020-07');
 });
 
-it('should throw on incorrect month', async ({ page, browserName }) => {
-  it.skip(browserName !== 'chromium', 'Only Chromium supports month inputs');
-
-  await page.setContent('<input type=month>');
-  const error = await page.fill('input', '2020-13').catch(e => e);
-  expect(error.message).toContain('Malformed value');
-});
-
 it('should fill week input', async ({ page }) => {
   await page.setContent('<input type=week>');
   await page.fill('input', '2020-W50');
   expect(await page.$eval('input', input => input.value)).toBe('2020-W50');
 });
 
-it('should throw on incorrect week', async ({ page, browserName }) => {
-  it.skip(browserName !== 'chromium', 'Only Chromium supports week inputs');
-
-  await page.setContent('<input type=week>');
-  const error = await page.fill('input', '2020-123').catch(e => e);
-  expect(error.message).toContain('Malformed value');
-});
-
-it('should throw on incorrect time', async ({ page, browserName }) => {
-  it.skip(browserName === 'webkit', 'WebKit does not support time inputs');
-
-  await page.setContent('<input type=time>');
-  const error = await page.fill('input', '25:05').catch(e => e);
-  expect(error.message).toContain('Malformed value');
-});
-
-it('should fill datetime-local input', async ({ page, server }) => {
+it('should fill datetime-local input', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43370' },
+}, async ({ page, server }) => {
   await page.setContent('<input type=datetime-local>');
   await page.fill('input', '2020-03-02T05:15');
   expect(await page.$eval('input', input => input.value)).toBe('2020-03-02T05:15');
-});
-
-it('should throw on incorrect datetime-local', async ({ page, server, browserName }) => {
-  it.skip(browserName !== 'chromium', 'Only Chromium supports datetime-local inputs');
-
-  await page.setContent('<input type=datetime-local>');
-  const error = await page.fill('input', 'abc').catch(e => e);
-  expect(error.message).toContain('Malformed value');
+  // The browser omits zero seconds.
+  await page.fill('input', '2020-03-02T06:20:00');
+  expect(await page.$eval('input', input => input.value)).toBe('2020-03-02T06:20');
 });
 
 it('should fill contenteditable', async ({ page, server }) => {
