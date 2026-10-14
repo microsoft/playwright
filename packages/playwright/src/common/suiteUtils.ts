@@ -57,22 +57,30 @@ export function assignTestOutputDirSuffixes(projectSuites: Map<FullProjectIntern
 
   const suffixes = new Map<TestCase, string>();
   const testOrder = new Map(tests.map(({ test, order }) => [test, order]));
-  const normalizePath = (outputDir: string) => process.platform === 'win32' || process.platform === 'darwin' ? outputDir.toLowerCase() : outputDir;
+  const normalizePath = (outputDir: string) => {
+    if (process.platform === 'win32')
+      return outputDir.toLowerCase();
+    if (process.platform === 'darwin')
+      return outputDir.normalize('NFD').toLowerCase();
+    return outputDir;
+  };
   for (let attempt = 0; ; attempt++) {
     const testsByOutputDir = new Map<string, Set<TestCase>>();
     for (const { test, project } of tests) {
-      const repeatEach = Math.max(project.project.repeatEach, project.fullConfig.configCLIOverrides.repeatEach ?? 1);
-      for (let retry = 0; retry <= test.retries; retry++) {
-        for (let repeatEachIndex = 0; repeatEachIndex < repeatEach; repeatEachIndex++) {
-          let testOutputDir = testOutputDirBase(test._requireFile, test.titlePath(), project.project.testDir, project.id, suffixes.get(test));
-          if (retry)
-            testOutputDir += '-retry' + retry;
-          if (repeatEachIndex)
-            testOutputDir += '-repeat' + repeatEachIndex;
-          const outputDir = normalizePath(path.resolve(project.project.outputDir, testOutputDir));
-          const testsInOutputDir = testsByOutputDir.get(outputDir) || new Set<TestCase>();
-          testsInOutputDir.add(test);
-          testsByOutputDir.set(outputDir, testsInOutputDir);
+      const repeatEachCounts = new Set([project.project.repeatEach, project.fullConfig.configCLIOverrides.repeatEach ?? project.project.repeatEach]);
+      for (const repeatEach of repeatEachCounts) {
+        for (let retry = 0; retry <= test.retries; retry++) {
+          for (let repeatEachIndex = 0; repeatEachIndex < repeatEach; repeatEachIndex++) {
+            let testOutputDir = testOutputDirBase(test._requireFile, test.titlePath(), project.project.testDir, project.id, suffixes.get(test));
+            if (retry)
+              testOutputDir += '-retry' + retry;
+            if (repeatEachIndex)
+              testOutputDir += '-repeat' + repeatEachIndex;
+            const outputDir = normalizePath(path.resolve(project.project.outputDir, testOutputDir));
+            const testsInOutputDir = testsByOutputDir.get(outputDir) || new Set<TestCase>();
+            testsInOutputDir.add(test);
+            testsByOutputDir.set(outputDir, testsInOutputDir);
+          }
         }
       }
     }
