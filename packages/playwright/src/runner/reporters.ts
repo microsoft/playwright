@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 import fs from 'fs';
+import { secretsKey } from '@isomorphic/secrets';
 import { calculateSha1 } from '@utils/crypto';
 
 import { loadReporter } from './loadUtils';
+import { config as commonConfig } from '../common';
 import { formatError } from '../reporters/base';
 import { BlobReporter } from '../reporters/blob';
 import CoverageReporter from '../reporters/coverage';
@@ -31,13 +33,15 @@ import LineReporter from '../reporters/line';
 import ListReporter from '../reporters/list';
 import ListModeReporter from '../reporters/listModeReporter';
 import PerfettoReporter from '../reporters/perfetto';
+import { SecretsRedactor, RedactingReporter } from '../reporters/redactingReporter';
 import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
 import type { ReporterDescription } from '../../types/test';
 import type { TestError } from '../../types/testReporter';
-import type { config as commonConfig, FullConfigInternal } from '../common';
+import type { FullConfigInternal } from '../common';
 import type { CommonReporterOptions, Screen } from '../reporters/base';
 import type { ReporterV2 } from '../reporters/reporterV2';
+import type { Secrets } from '@isomorphic/secrets';
 import type { TestRunOptions } from './tasks';
 
 export async function createReporters(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', descriptions?: ReporterDescription[], runOptions?: TestRunOptions): Promise<ReporterV2[]> {
@@ -56,10 +60,10 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     'coverage': CoverageReporter,
   };
   const reporters: ReporterV2[] = [];
-  descriptions ??= config.config.reporter;
+  descriptions ??= config.reporterDescriptions;
   const reportOptions = reporterCommandOptions(config, mode, runOptions);
   for (const r of descriptions) {
-    const [name, arg] = r;
+    const [name, arg] = commonConfig.stripReporterSecrets(r);
     const options = resolveReporterOptions(reportOptions, { ...reportOptions, ...arg });
     if (name in defaultReporters) {
       reporters.push(new defaultReporters[name as commonConfig.BuiltInReporter](options));
@@ -68,6 +72,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
       reporters.push(wrapReporterAsV2(new reporterConstructor(options)));
     }
   }
+  const allSecretsRedactor = wrapReportersWithSecrets(reporters, descriptions);
   if (process.env.PW_TEST_REPORTER) {
     const name = process.env.PW_TEST_REPORTER;
     if (name in defaultReporters) {
@@ -82,12 +87,39 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   if (reporters.length && !someReporterPrintsToStdio) {
     // Add a line/dot/list-mode reporter for convenience.
     // Important to put it first, just in case some other reporter stalls onEnd.
+    let reporter: ReporterV2 | undefined;
     if (mode === 'list')
-      reporters.unshift(new ListModeReporter());
+      reporter = new ListModeReporter();
     else if (mode !== 'merge')
-      reporters.unshift(!process.env.CI ? new LineReporter() : new DotReporter());
+      reporter = !process.env.CI ? new LineReporter() : new DotReporter();
+    if (reporter)
+      reporters.unshift(allSecretsRedactor ? new RedactingReporter(reporter, allSecretsRedactor) : reporter);
   }
   return reporters;
+}
+
+function wrapReportersWithSecrets(reporters: ReporterV2[], descriptions: ReporterDescription[]): SecretsRedactor | undefined {
+  const redactors = new Map<string, SecretsRedactor>();
+  const redactorFor = (secrets: Secrets) => {
+    const key = secretsKey(secrets);
+    let redactor = redactors.get(key);
+    if (!redactor) {
+      redactor = new SecretsRedactor(secrets);
+      redactors.set(key, redactor);
+    }
+    return redactor;
+  };
+  let allSecrets: Secrets | undefined = reporters.length ? [] : undefined;
+  for (let i = 0; i < reporters.length; i++) {
+    const secrets: Secrets | undefined = descriptions[i][1]?.secrets;
+    if (secrets) {
+      reporters[i] = new RedactingReporter(reporters[i], redactorFor(secrets));
+      allSecrets = allSecrets ? [...allSecrets, ...secrets] : undefined;
+    } else {
+      allSecrets = undefined;
+    }
+  }
+  return allSecrets ? redactorFor(allSecrets) : undefined;
 }
 
 interface ErrorCollectingReporter extends ReporterV2 {
