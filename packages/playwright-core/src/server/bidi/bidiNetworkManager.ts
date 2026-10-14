@@ -402,7 +402,7 @@ export function bidiBytesValueToString(value: bidi.Network.BytesValue): string {
   if (value.type === 'string')
     return value.value;
   if (value.type === 'base64')
-    return Buffer.from(value.type, 'base64').toString('binary');
+    return Buffer.from(value.value, 'base64').toString('binary');
   return 'unknown value type: ' + (value as any).type;
 
 }
