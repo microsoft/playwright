@@ -91,6 +91,9 @@ export const chromiumSwitches = (options?: { android?: boolean }) => [
   '--unsafely-disable-devtools-self-xss-warnings',
   // Edge can potentially restart on Windows (msRelaunchNoCompatLayer) which looses its file descriptors (stdout/stderr) and CDP (3/4). Disable until fixed upstream.
   '--edge-skip-compat-layer-relaunch',
+  // Chrome for Testing enables the stack sampling profiler, which crashes the browser on Windows
+  // when it unwinds the main thread. See https://github.com/microsoft/playwright/issues/43327
+  '--disable-stack-profiler',
   // This disables Chrome for Testing infobar that is visible in the persistent context.
   // The switch is ignored everywhere else, including Chromium/Chrome/Edge.
   '--disable-infobars',
