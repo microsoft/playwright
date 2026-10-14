@@ -52,11 +52,18 @@ export const TraceView: React.FC<{
       return;
     }
 
+    let canceled = false;
+
     // Test finished.
     const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
-      loadSingleTraceFile(attachment.path, result.startTime.getTime()).then(model => setModel({ model, isLive: false }));
-      return;
+      loadSingleTraceFile(attachment.path, result.startTime.getTime()).then(model => {
+        if (!canceled)
+          setModel({ model, isLive: false });
+      });
+      return () => {
+        canceled = true;
+      };
     }
 
     if (!outputDir) {
@@ -72,18 +79,21 @@ export const TraceView: React.FC<{
     ].join(pathSeparator);
     // Start polling running test.
     pollTimer.current = setTimeout(async () => {
+      let newModel: { model: TraceModel, isLive: boolean };
       try {
-        const model = await loadSingleTraceFile(traceLocation, Date.now());
-        setModel({ model, isLive: true });
+        newModel = { model: await loadSingleTraceFile(traceLocation, Date.now()), isLive: true };
       } catch {
         const model = new TraceModel('', []);
         model.errorDescriptors.push(...result.errors.flatMap(error => !!error.message ? [{ message: error.message }] : []));
-        setModel({ model, isLive: false });
-      } finally {
-        setCounter(counter + 1);
+        newModel = { model, isLive: false };
       }
+      if (canceled)
+        return;
+      setModel(newModel);
+      setCounter(counter + 1);
     }, 500);
     return () => {
+      canceled = true;
       if (pollTimer.current)
         clearTimeout(pollTimer.current);
     };
