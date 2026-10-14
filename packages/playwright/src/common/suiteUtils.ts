@@ -80,7 +80,15 @@ function isCaseSensitiveFileSystem(filePath: string, cache: Map<number, boolean>
     const alternateName = name.substring(0, letterIndex) + swappedLetter + name.substring(letterIndex + 1);
     const alternatePath = path.join(parentPath, alternateName);
     const alternateStats = fs.lstatSync(alternatePath, { throwIfNoEntry: false });
-    const alternateEntryExists = fs.readdirSync(parentPath).includes(alternateName);
+    let alternateEntryExists = false;
+    try {
+      alternateEntryExists = fs.readdirSync(parentPath).includes(alternateName);
+    } catch (error) {
+      const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+      if (code !== 'EACCES' && code !== 'EPERM')
+        throw error;
+      // If listing is denied, prefer a possible false collision over failing test discovery.
+    }
     const caseSensitive = alternateEntryExists || !alternateStats || alternateStats.dev !== originalStats.dev || alternateStats.ino !== originalStats.ino;
     cache.set(stats.dev, caseSensitive);
     return caseSensitive;
