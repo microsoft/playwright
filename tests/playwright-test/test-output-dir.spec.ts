@@ -115,6 +115,23 @@ test('should keep output directories unique for titles that sanitize identically
   expect(filteredResult.exitCode).toBe(1);
   const filteredOutputDir = filteredResult.outputLines.find(line => line.startsWith('first:'))?.substring('first:'.length);
   expect(filteredOutputDir).toBe(firstOutputDir);
+
+  const reorderedResult = await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      import { test } from '@playwright/test';
+      test('unrelated test', () => {});
+      test('offset (x +1)', ({}, testInfo) => {
+        console.log('%%first:' + testInfo.outputDir);
+      });
+      test('offset (x 1)', ({}, testInfo) => {
+        console.log('%%second:' + testInfo.outputDir);
+      });
+    `,
+  }, { workers: 2 });
+  expect(reorderedResult.exitCode).toBe(0);
+  const reorderedOutputDir = reorderedResult.outputLines.find(line => line.startsWith('first:'))?.substring('first:'.length);
+  expect(reorderedOutputDir).toBe(firstOutputDir);
 });
 
 test('should keep output directories unique for colliding test file paths', async ({ runInlineTest }) => {
