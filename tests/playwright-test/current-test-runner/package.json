@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "dependencies": {
+    "@playwright/test": "file:.staging/playwright-test.tgz",
+    "playwright": "file:.staging/playwright.tgz",
+    "playwright-core": "file:.staging/playwright-core.tgz"
+  }
+}

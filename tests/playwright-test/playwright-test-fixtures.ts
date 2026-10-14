@@ -90,7 +90,9 @@ export async function writeFiles(testInfo: TestInfo, files: Files, initial: bool
   return baseDir;
 }
 
-export const cliEntrypoint = path.join(__dirname, '../../packages/playwright-test/cli.js');
+export const cliCommand = process.env.PW_BUN
+  ? ['bun', path.join(__dirname, 'current-test-runner/node_modules/@playwright/test/cli.js')]
+  : ['node', path.join(__dirname, '../../packages/playwright-test/cli.js')];
 
 const configFile = (baseDir: string, files: Files): string | undefined => {
   for (const [name, content] of Object.entries(files)) {
@@ -133,7 +135,7 @@ function startPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseD
 
 function startPlaywrightChildProcess(childProcess: CommonFixtures['childProcess'], baseDir: string, args: string[], env: NodeJS.ProcessEnv, options: RunOptions): TestChildProcess {
   return childProcess({
-    command: ['node', cliEntrypoint, ...args],
+    command: [...cliCommand, ...args],
     env: inheritAndCleanEnv(env),
     cwd: options.cwd ? path.resolve(baseDir, options.cwd) : baseDir,
   });
@@ -208,7 +210,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
 
 async function runPlaywrightCLI(childProcess: CommonFixtures['childProcess'], args: string[], baseDir: string, env: NodeJS.ProcessEnv): Promise<{ output: string, stdout: string, stderr: string, exitCode: number }> {
   const testProcess = childProcess({
-    command: ['node', cliEntrypoint, ...args],
+    command: [...cliCommand, ...args],
     env: inheritAndCleanEnv(env),
     cwd: baseDir,
   });
@@ -320,7 +322,7 @@ export const test = base
 
       mergeReports: async ({ childProcess }, use) => {
         await use(async (reportFolder: string, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
-          const command = ['node', cliEntrypoint, 'merge-reports', reportFolder];
+          const command = [...cliCommand, 'merge-reports', reportFolder];
           if (options.additionalArgs)
             command.push(...options.additionalArgs);
 

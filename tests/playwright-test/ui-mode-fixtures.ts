@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import type { TestChildProcess } from '../config/commonFixtures';
-import { cliEntrypoint, test as base, writeFiles, removeFolders } from './playwright-test-fixtures';
+import { cliCommand, test as base, writeFiles, removeFolders } from './playwright-test-fixtures';
 import type { Files, RunOptions } from './playwright-test-fixtures';
 import type { Browser, Page, TestInfo } from './stable-test-runner';
 import { chromium, expect as baseExpect } from './stable-test-runner';
@@ -99,7 +99,7 @@ export const test = base
         await use(async (files: Files, env: NodeJS.ProcessEnv = {}, options: UIModeOptions = {}) => {
           const baseDir = await writeFiles(testInfo, files, true);
           testProcess = childProcess({
-            command: ['node', cliEntrypoint, 'test', (options.useWeb ? '--ui-host=127.0.0.1' : '--ui'), '--workers=1', ...(options.additionalArgs || [])],
+            command: [...cliCommand, 'test', (options.useWeb ? '--ui-host=127.0.0.1' : '--ui'), '--workers=1', ...(options.additionalArgs || [])],
             env: inheritAndCleanEnv({
               ...env,
               PWTEST_CACHE_DIR: cacheDir,

@@ -582,9 +582,6 @@ test('should ignore repeatEach', async ({ runUITest }) => {
 
 test('should remove output folder before test run', async ({ runUITest }) => {
   const { page } = await runUITest({
-    'playwright.config.ts': `
-      import { defineConfig } from '@playwright/test';
-    `,
     'a.test.ts': `
       import fs from 'fs';
       import { test, expect } from '@playwright/test';

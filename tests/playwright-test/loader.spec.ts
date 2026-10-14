@@ -32,6 +32,7 @@ test('should return the location of a syntax error', async ({ runInlineTest }) =
   expect(result.failed).toBe(0);
   expect(result.output).toContain('error.spec.js');
   expect(result.output).toContain('(3:18)');
+  expect(result.output).toContain(`> 3 |         foo: 'bar';\n    |                   ^`);
 });
 
 test('should return the location of a syntax error with deep stack', async ({ runInlineTest }) => {
@@ -63,6 +64,7 @@ test('should return the location of a syntax error with deep stack', async ({ ru
     `,
   });
   expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('at error.ts:3');
   expect(result.output).toContain('qux.ts:2:');
   expect(result.output).toContain('baz.ts:2:');
   expect(result.output).toContain('bar.ts:2:');
@@ -80,6 +82,21 @@ test('should print an improper error', async ({ runInlineTest }) => {
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
   expect(result.output).toContain('123');
+});
+
+test('should spread AggregateError sub-errors', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'error.spec.js': `
+      throw new AggregateError([
+        new AggregateError([new Error('a'), new Error('b')], 'inner'),
+        new Error('c'),
+      ], 'outer');
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Error: a');
+  expect(result.output).toContain('Error: b');
+  expect(result.output).toContain('Error: c');
 });
 
 test('should print a null error', async ({ runInlineTest }) => {

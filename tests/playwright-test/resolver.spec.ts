@@ -19,6 +19,8 @@ import path from 'path';
 
 import { test, expect } from './playwright-test-fixtures';
 
+test.skip(!!process.env.PW_BUN, 'bun resolves modules and tsconfig itself');
+
 test('should print tsconfig parsing error', async ({ runInlineTest }) => {
   const files = {
     'a.spec.ts': `

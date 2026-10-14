@@ -16,6 +16,8 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
+test.skip(!!process.env.PW_BUN, 'bun transpiles test files itself');
+
 test('should succeed', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'one-success.spec.ts': `

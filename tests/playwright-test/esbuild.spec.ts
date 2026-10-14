@@ -16,6 +16,8 @@
 
 import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures';
 
+test.skip(!!process.env.PW_BUN, 'bun transpiles test files itself');
+
 const env = { PLAYWRIGHT_EXPERIMENTAL_ESBUILD: '1' };
 
 test('should transpile typescript', async ({ runInlineTest }) => {

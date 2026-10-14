@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { isUtf8 } from 'buffer';
+
 import colors from 'colors/safe';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper } from '@utils/eventsHelper';
@@ -700,5 +702,6 @@ class JobDispatcher {
 function chunkFromParams(params: ipc.TestOutputPayload): string | Buffer {
   if (typeof params.text === 'string')
     return params.text;
-  return Buffer.from(params.buffer!, 'base64');
+  const buffer = Buffer.from(params.buffer!, 'base64');
+  return isUtf8(buffer) ? buffer.toString('utf8') : buffer;
 }

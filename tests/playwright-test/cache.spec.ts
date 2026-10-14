@@ -19,6 +19,8 @@ import * as path from 'path';
 
 import { test, expect } from './playwright-test-fixtures';
 
+test.skip(!!process.env.PW_BUN, 'bun transpiles test files itself, there is no compilation cache');
+
 test('should clear cache with type:module', async ({ runCLICommand }) => {
   const result = await runCLICommand({
     'playwright.config.ts': `
