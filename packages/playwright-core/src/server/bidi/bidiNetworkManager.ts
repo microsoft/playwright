@@ -38,6 +38,7 @@ export class BidiNetworkManager {
   private _userRequestInterceptionEnabled: boolean = false;
   private _protocolRequestInterceptionEnabled: boolean = false;
   private _credentials: HttpCredentials[] | undefined;
+  private _proxyCredentials: HttpCredentials | undefined;
   private _attemptedAuthentications = new Set<string>();
   private _intercepId: bidi.Network.Intercept | undefined;
 
@@ -199,15 +200,21 @@ export class BidiNetworkManager {
 
   private _onAuthRequired(params: bidi.Network.AuthRequiredParameters) {
     // Don't look at params.response.authChallenges: Chromium does not report them.
-    const credentials = findMatchingHttpCredentials(this._page.browserContext._options.httpCredentials, params.request.url);
+    // Proxy credentials only answer the proxy's challenge, never the website's.
+    // Chromium does not report the status either, so the challenge may come from the proxy or the website.
+    const siteCredentials = findMatchingHttpCredentials(this._credentials, params.request.url);
+    const status = params.response.status;
+    const isProxy = status === 407 || (status !== 401 && !siteCredentials);
+    const credentials = isProxy ? this._proxyCredentials : siteCredentials;
+    const attemptKey = authAttemptKey(params.request.request, isProxy);
     if (credentials) {
-      if (this._attemptedAuthentications.has(params.request.request)) {
+      if (this._attemptedAuthentications.has(attemptKey)) {
         this._session.sendMayFail('network.continueWithAuth', {
           request: params.request.request,
           action: 'cancel',
         });
       } else {
-        this._attemptedAuthentications.add(params.request.request);
+        this._attemptedAuthentications.add(attemptKey);
         this._session.sendMayFail('network.continueWithAuth', {
           request: params.request.request,
           action: 'provideCredentials',
@@ -228,7 +235,8 @@ export class BidiNetworkManager {
 
   _deleteRequest(requestId: string) {
     this._requests.delete(requestId);
-    this._attemptedAuthentications.delete(requestId);
+    this._attemptedAuthentications.delete(authAttemptKey(requestId, true));
+    this._attemptedAuthentications.delete(authAttemptKey(requestId, false));
   }
 
   async setRequestInterception(value: boolean) {
@@ -236,13 +244,14 @@ export class BidiNetworkManager {
     await this._updateProtocolRequestInterception();
   }
 
-  async setCredentials(credentials: HttpCredentials[] | undefined) {
+  async setCredentials(credentials: HttpCredentials[] | undefined, proxyCredentials: HttpCredentials | undefined) {
     this._credentials = credentials;
+    this._proxyCredentials = proxyCredentials;
     await this._updateProtocolRequestInterception();
   }
 
   async _updateProtocolRequestInterception(initial?: boolean) {
-    const enabled = this._userRequestInterceptionEnabled || !!this._credentials?.length;
+    const enabled = this._userRequestInterceptionEnabled || !!this._credentials?.length || !!this._proxyCredentials;
     if (enabled === this._protocolRequestInterceptionEnabled)
       return;
     this._protocolRequestInterceptionEnabled = enabled;
@@ -436,4 +445,8 @@ function resourceTypeFromBidi(requestDestination: string, requestInitiatorType: 
       }
     default: return 'other';
   }
+}
+
+function authAttemptKey(requestId: string, isProxy: boolean) {
+  return `${requestId}:${isProxy ? 'proxy' : 'server'}`;
 }
