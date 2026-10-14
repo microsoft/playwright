@@ -24,9 +24,11 @@ test('should detect roles', async ({ page }) => {
     <h3>Heading</h3>
     <details><summary>Hello</summary></details>
     <div role="dialog">I am a dialog</div>
+    <div role="fallback-role\n\tbutton">I am a button</div>
   `);
   expect(await page.locator(`role=button`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button>Hello</button>`,
+    `<div role="fallback-role\n\tbutton">I am a button</div>`,
   ]);
   expect(await page.locator(`role=listbox`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<select multiple="" size="2"></select>`,

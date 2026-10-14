@@ -52,7 +52,7 @@ export function matchesAttributePart(value: any, attr: AttributeSelectorPart) {
   if (attr.op === '|=')
     return objValue === attrValue || objValue.startsWith(attrValue + '-');
   if (attr.op === '~=')
-    return objValue.split(' ').includes(attrValue);
+    return objValue.split(/[ \t\n\f\r]+/).includes(attrValue);
   return false;
 }
 

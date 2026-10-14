@@ -178,12 +178,14 @@ it('should work with comma inside text', async ({ page }) => {
 });
 
 it('should work with attribute selectors', async ({ page }) => {
-  await page.setContent(`<div attr="hello world" attr2="hello-''>>foo=bar[]" attr3="] span"><span></span></div>`);
+  await page.setContent(`<div attr="hello world" attr2="hello-''>>foo=bar[]" attr3="] span" attr4="hello\t\nworld"><span></span></div>`);
   await page.evaluate(() => (window as any)['div'] = document.querySelector('div'));
   const selectors = [
     `[attr="hello world"]`,
     `[attr = "hello world"]`,
     `[attr ~= world]`,
+    `[attr4 ~= world]`,
+    `[attr4 ~= hello]`,
     `[attr ^=hello ]`,
     `[attr $= world ]`,
     `[attr *= "llo wor" ]`,

@@ -269,7 +269,7 @@ const validRoles: AriaRole[] = ['alert', 'alertdialog', 'application', 'article'
 
 function getExplicitAriaRole(element: Element): AriaRole | null {
   // https://www.w3.org/TR/wai-aria-1.2/#document-handling_author-errors_roles
-  const roles = (element.getAttribute('role') || '').split(' ').map(role => role.trim());
+  const roles = (element.getAttribute('role') || '').split(/[ \t\n\f\r]+/).filter(role => !!role);
   return roles.find(role => validRoles.includes(role as any)) as AriaRole || null;
 }
 
