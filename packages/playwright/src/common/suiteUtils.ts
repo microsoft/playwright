@@ -58,22 +58,44 @@ function isCaseSensitiveFileSystem(filePath: string, cache: Map<number, boolean>
     stats = fs.statSync(existingPath, { throwIfNoEntry: false });
   }
 
+  existingPath = fs.realpathSync(existingPath);
+  stats = fs.statSync(existingPath)!;
   const cachedValue = cache.get(stats.dev);
   if (cachedValue !== undefined)
     return cachedValue;
 
-  for (let probePath = existingPath; path.dirname(probePath) !== probePath; probePath = path.dirname(probePath)) {
+  const probeCaseSensitivity = (probePath: string): boolean | undefined => {
     const name = path.basename(probePath);
     const letterIndex = name.search(/[a-z]/i);
     if (letterIndex === -1)
-      continue;
+      return;
+    const parentPath = path.dirname(probePath);
+    if (fs.statSync(parentPath).dev !== stats.dev)
+      return;
     const letter = name[letterIndex];
     const swappedLetter = letter === letter.toLowerCase() ? letter.toUpperCase() : letter.toLowerCase();
-    const alternatePath = path.join(path.dirname(probePath), name.substring(0, letterIndex) + swappedLetter + name.substring(letterIndex + 1));
-    const alternateStats = fs.statSync(alternatePath, { throwIfNoEntry: false });
-    const caseSensitive = !alternateStats || alternateStats.dev !== stats.dev || alternateStats.ino !== stats.ino;
+    const originalStats = fs.lstatSync(probePath, { throwIfNoEntry: false });
+    if (!originalStats)
+      return;
+    const alternateName = name.substring(0, letterIndex) + swappedLetter + name.substring(letterIndex + 1);
+    const alternatePath = path.join(parentPath, alternateName);
+    const alternateStats = fs.lstatSync(alternatePath, { throwIfNoEntry: false });
+    const alternateEntryExists = fs.readdirSync(parentPath).includes(alternateName);
+    const caseSensitive = alternateEntryExists || !alternateStats || alternateStats.dev !== originalStats.dev || alternateStats.ino !== originalStats.ino;
     cache.set(stats.dev, caseSensitive);
     return caseSensitive;
+  };
+
+  for (let probePath = existingPath; path.dirname(probePath) !== probePath; probePath = path.dirname(probePath)) {
+    const caseSensitive = probeCaseSensitivity(probePath);
+    if (caseSensitive !== undefined)
+      return caseSensitive;
+  }
+
+  for (const name of fs.readdirSync(existingPath)) {
+    const caseSensitive = probeCaseSensitivity(path.join(existingPath, name));
+    if (caseSensitive !== undefined)
+      return caseSensitive;
   }
 
   throw new Error(`Could not find a path component to determine case sensitivity for "${filePath}"`);
