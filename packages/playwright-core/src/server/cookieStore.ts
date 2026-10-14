@@ -179,7 +179,7 @@ export function parseRawCookie(header: string): RawCookie | null {
         }
         break;
       case 'domain':
-        cookie.domain = value.toLocaleLowerCase() || '';
+        cookie.domain = value.toLowerCase() || '';
         if (cookie.domain && !cookie.domain.startsWith('.') && cookie.domain.includes('.'))
           cookie.domain = '.' + cookie.domain;
         break;

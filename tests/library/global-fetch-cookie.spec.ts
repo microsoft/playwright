@@ -37,7 +37,8 @@ type StorageStateType = PromiseArg<ReturnType<APIRequestContext['storageState']>
 it.skip(({ mode }) => mode !== 'default');
 
 const __testHookLookup = (hostname: string): LookupAddress[] => {
-  if (hostname.endsWith('localhost') || hostname.endsWith('one.com') || hostname.endsWith('two.com'))
+  if (hostname.endsWith('localhost') || hostname.endsWith('one.com') || hostname.endsWith('two.com') ||
+      hostname === 'identity.com')
     return [{ address: '127.0.0.1', family: 4 }];
   else
     throw new Error(`Failed to resolve hostname: ${hostname}`);
@@ -270,6 +271,21 @@ it('should do case-insensitive match of cookie domain', async ({ request, server
     request.get(`http://www.b.one.com:${server.PORT}/empty.html`, {  __testHookLookup } as any)
   ]);
   expect(serverRequest.headers.cookie).toBe('a=v; b=v');
+});
+
+it('should parse cookie domain without locale-sensitive casing', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43386' },
+}, async ({ request, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', 'a=v; domain=IDENTITY.COM');
+    res.end();
+  });
+  await request.get(`http://identity.com:${server.PORT}/setcookie.html`, { __testHookLookup } as any);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(`http://identity.com:${server.PORT}/empty.html`, { __testHookLookup } as any)
+  ]);
+  expect(serverRequest.headers.cookie).toBe('a=v');
 });
 
 it('should do case-insensitive match of request domain', async ({ request, server }) => {
