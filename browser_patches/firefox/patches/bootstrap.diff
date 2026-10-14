@@ -164,22 +164,34 @@ index e910da61612ded9b45d85baa00dfe34e4fec9332..aae5b2a016e053fb7ad2bfa96c1c0cff
    void WalkPresContexts(Callback&&);
    void PresContextAffectingFieldChanged();
 diff --git a/docshell/base/CanonicalBrowsingContext.cpp b/docshell/base/CanonicalBrowsingContext.cpp
-index 7d9ac5fbccfd345498c5878019d4702bb27532bd..731929432af47d79dc8ad31a0658922ca9f0bb48 100644
+index 7d9ac5fbccfd345498c5878019d4702bb27532bd..563c76e5df82a53aa201d7c358d023613253891d 100644
 --- a/docshell/base/CanonicalBrowsingContext.cpp
 +++ b/docshell/base/CanonicalBrowsingContext.cpp
-@@ -316,6 +316,11 @@ void CanonicalBrowsingContext::ReplacedBy(
+@@ -316,6 +316,23 @@ void CanonicalBrowsingContext::ReplacedBy(
    txn.SetInnerSizeSpoofedForRFP(GetInnerSizeSpoofedForRFP());
    txn.SetIPAddressSpace(GetIPAddressSpace());
    txn.SetParentalControlsEnabled(GetParentalControlsEnabled());
++  // Playwright: propagate emulation overrides to the replacement context,
++  // e.g. on a cross-origin-opener-policy navigation. Touch events override
++  // is tracked in https://bugzilla.mozilla.org/show_bug.cgi?id=2014330
 +  txn.SetPrefersReducedMotionOverride(GetPrefersReducedMotionOverride());
 +  txn.SetForcedColorsOverride(GetForcedColorsOverride());
-+  // Playwright: make sure touch events override is propagated to the nested
-+  // browsing context. See https://bugzilla.mozilla.org/show_bug.cgi?id=2014330
++  txn.SetPrefersColorSchemeOverride(GetPrefersColorSchemeOverride());
++  txn.SetPrefersContrastOverride(GetPrefersContrastOverride());
++  txn.SetMediumOverride(GetMediumOverride());
++  txn.SetOverrideDPPX(GetOverrideDPPX());
 +  txn.SetTouchEventsOverrideInternal(GetTouchEventsOverrideInternal());
++  txn.SetInRDMPane(GetInRDMPane());
++  txn.SetHasScreenAreaOverride(GetHasScreenAreaOverride());
++  txn.SetScreenWidthOverride(GetScreenWidthOverride());
++  txn.SetScreenHeightOverride(GetScreenHeightOverride());
++  txn.SetHasOrientationOverride(GetHasOrientationOverride());
++  txn.SetCurrentOrientationType(GetCurrentOrientationType());
++  txn.SetCurrentOrientationAngle(GetCurrentOrientationAngle());
  
    if (!GetLanguageOverride().IsEmpty()) {
      // Reapply language override to update the corresponding realm.
-@@ -1976,6 +1981,12 @@ void CanonicalBrowsingContext::LoadURI(nsIURI* aURI,
+@@ -1976,6 +1993,12 @@ void CanonicalBrowsingContext::LoadURI(nsIURI* aURI,
      (void)SetIsCaptivePortalTab(true);
    }
  
@@ -193,21 +205,20 @@ index 7d9ac5fbccfd345498c5878019d4702bb27532bd..731929432af47d79dc8ad31a0658922c
  }
  
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 48be2ce822c12f18f0b54daaef7009e549beb280..809c1ca227ccc04826501107346be073546d77fa 100644
+index 48be2ce822c12f18f0b54daaef7009e549beb280..62182f1cb148a15879353a57a879a20ce0196d66 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
-@@ -356,6 +356,10 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -356,6 +356,9 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mAllowDNSPrefetch(true),
        mAllowWindowControl(true),
        mCSSErrorReportingEnabled(false),
-+      mFileInputInterceptionEnabled(false),
 +      mOverrideHasFocus(false),
 +      mBypassCSPEnabled(false),
 +      mForceActiveState(false),
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mDisableMetaRefreshWhenInactive(false),
-@@ -2981,6 +2985,89 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -2981,6 +2984,65 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -268,36 +279,12 @@ index 48be2ce822c12f18f0b54daaef7009e549beb280..809c1ca227ccc04826501107346be073
 +  return GetRootDocShell()->mOverrideHasFocus;
 +}
 +
-+NS_IMETHODIMP
-+nsDocShell::GetFileInputInterceptionEnabled(bool* aEnabled) {
-+  MOZ_ASSERT(aEnabled);
-+  *aEnabled = GetRootDocShell()->mFileInputInterceptionEnabled;
-+  return NS_OK;
-+}
-+
-+NS_IMETHODIMP
-+nsDocShell::SetFileInputInterceptionEnabled(bool aEnabled) {
-+  mFileInputInterceptionEnabled = aEnabled;
-+  return NS_OK;
-+}
-+
-+bool nsDocShell::IsFileInputInterceptionEnabled() {
-+  return GetRootDocShell()->mFileInputInterceptionEnabled;
-+}
-+
-+void nsDocShell::FilePickerShown(mozilla::dom::Element* element) {
-+  nsCOMPtr<nsIObserverService> observerService =
-+      mozilla::services::GetObserverService();
-+  observerService->NotifyObservers(
-+      ToSupports(element), "juggler-file-picker-shown", nullptr);
-+}
-+
 +// =============== Juggler End =======================
 +
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -4720,7 +4807,7 @@ nsDocShell::GetVisibility(bool* aVisibility) {
+@@ -4720,7 +4782,7 @@ nsDocShell::GetVisibility(bool* aVisibility) {
  }
  
  void nsDocShell::ActivenessMaybeChanged() {
@@ -306,7 +293,7 @@ index 48be2ce822c12f18f0b54daaef7009e549beb280..809c1ca227ccc04826501107346be073
    if (RefPtr<PresShell> presShell = GetPresShell()) {
      presShell->ActivenessMaybeChanged();
    }
-@@ -9014,6 +9101,16 @@ nsresult nsDocShell::InternalLoad(nsDocShellLoadState* aLoadState,
+@@ -9014,6 +9076,16 @@ nsresult nsDocShell::InternalLoad(nsDocShellLoadState* aLoadState,
    attrs.SetFirstPartyDomain(isTopLevelDoc, aLoadState->URI());
  
    nsCOMPtr<nsIRequest> req;
@@ -323,7 +310,7 @@ index 48be2ce822c12f18f0b54daaef7009e549beb280..809c1ca227ccc04826501107346be073
    rv = DoURILoad(aLoadState, aCacheKey, getter_AddRefs(req));
  
    if (NS_SUCCEEDED(rv)) {
-@@ -12139,6 +12236,9 @@ class OnLinkClickEvent : public CancelableRunnable, public SupportsWeakPtr {
+@@ -12139,6 +12211,9 @@ class OnLinkClickEvent : public CancelableRunnable, public SupportsWeakPtr {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -333,7 +320,7 @@ index 48be2ce822c12f18f0b54daaef7009e549beb280..809c1ca227ccc04826501107346be073
      return NS_OK;
    }
  
-@@ -12210,6 +12310,11 @@ nsresult nsDocShell::OnFormSubmit(HTMLFormElement* aForm,
+@@ -12210,6 +12285,11 @@ nsresult nsDocShell::OnFormSubmit(HTMLFormElement* aForm,
      return OnLinkClickSync(aForm, aLoadState, false, aForm->NodePrincipal());
    }
  
@@ -345,7 +332,7 @@ index 48be2ce822c12f18f0b54daaef7009e549beb280..809c1ca227ccc04826501107346be073
    auto result = OnLinkClickWithLoadState(aForm, aLoadState, false,
                                           aForm->NodePrincipal());
    if (result.isErr()) {
-@@ -12348,6 +12453,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12348,6 +12428,8 @@ nsresult nsDocShell::OnLinkClick(
        ownerDoc->GetScriptTrackingFlags());
    loadState->SetHistoryBehavior(NavigationHistoryBehavior::Auto);
  
@@ -355,24 +342,13 @@ index 48be2ce822c12f18f0b54daaef7009e549beb280..809c1ca227ccc04826501107346be073
                                           aTriggeringPrincipal);
    return result.isErr() ? result.unwrapErr() : NS_OK;
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index 0568cbf7f78bc3711275773037fd5ba254f083e7..1140bddd23a988db4f2a403388423eb44f0ab217 100644
+index 0568cbf7f78bc3711275773037fd5ba254f083e7..ceba5ebbdf0c900ed0376dd4405f557841a03490 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
-@@ -16,6 +16,7 @@
- #include "mozilla/dom/BrowsingContext.h"
- #include "mozilla/dom/NavigationBinding.h"
- #include "mozilla/dom/SessionHistoryEntry.h"
-+#include "mozilla/dom/Element.h"
- #include "mozilla/dom/WindowProxyHolder.h"
- #include "nsCOMPtr.h"
- #include "nsCharsetSource.h"
-@@ -383,6 +384,13 @@ class nsDocShell final : public nsDocLoader,
+@@ -383,6 +383,10 @@ class nsDocShell final : public nsDocLoader,
    void SetWillChangeProcess() { mWillChangeProcess = true; }
    bool WillChangeProcess() { return mWillChangeProcess; }
  
-+  bool IsFileInputInterceptionEnabled();
-+  void FilePickerShown(mozilla::dom::Element* element);
-+
 +  bool ShouldOverrideHasFocus();
 +
 +  bool IsBypassCSPEnabled();
@@ -380,7 +356,7 @@ index 0568cbf7f78bc3711275773037fd5ba254f083e7..1140bddd23a988db4f2a403388423eb4
    // Creates a real network channel (not a DocumentChannel) using the specified
    // parameters.
    // Used by nsDocShell when not using DocumentChannel, by DocumentLoadListener
-@@ -1000,6 +1008,8 @@ class nsDocShell final : public nsDocLoader,
+@@ -1000,6 +1004,8 @@ class nsDocShell final : public nsDocLoader,
  
    bool CSSErrorReportingEnabled() const { return mCSSErrorReportingEnabled; }
  
@@ -389,11 +365,10 @@ index 0568cbf7f78bc3711275773037fd5ba254f083e7..1140bddd23a988db4f2a403388423eb4
    // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
    // load is requested in a subframe of the current DocShell, the subframe
    // loadType may need to reflect the loadType of the parent document, or in
-@@ -1332,6 +1342,11 @@ class nsDocShell final : public nsDocLoader,
+@@ -1332,6 +1338,10 @@ class nsDocShell final : public nsDocLoader,
    bool mAllowDNSPrefetch : 1;
    bool mAllowWindowControl : 1;
    bool mCSSErrorReportingEnabled : 1;
-+  bool mFileInputInterceptionEnabled: 1;
 +  bool mOverrideHasFocus : 1;
 +  bool mBypassCSPEnabled : 1;
 +  bool mForceActiveState : 1;
@@ -402,15 +377,13 @@ index 0568cbf7f78bc3711275773037fd5ba254f083e7..1140bddd23a988db4f2a403388423eb4
    bool mAllowKeywordFixup : 1;
    bool mDisableMetaRefreshWhenInactive : 1;
 diff --git a/docshell/base/nsIDocShell.idl b/docshell/base/nsIDocShell.idl
-index 7cbed1af77c94e97f9f5bda8f6c63c54517300bc..77ff86d6594864c2894d03abdc63378919eb53d8 100644
+index 7cbed1af77c94e97f9f5bda8f6c63c54517300bc..5ec074932b2fcb018314df5530e187ce36225202 100644
 --- a/docshell/base/nsIDocShell.idl
 +++ b/docshell/base/nsIDocShell.idl
-@@ -684,6 +684,14 @@ interface nsIDocShell : nsIDocShellTreeItem
+@@ -684,6 +684,12 @@ interface nsIDocShell : nsIDocShellTreeItem
     */
    void synchronizeLayoutHistoryState();
  
-+  attribute boolean fileInputInterceptionEnabled;
-+
 +  attribute boolean overrideHasFocus;
 +
 +  attribute boolean bypassCSPEnabled;
@@ -780,32 +753,6 @@ index 51efcf97c062e106575b88232a14f1702470fddf..1c68b997e4efd8896ec182e962c9e085
    bool canUseCache = false;
    CachedPositionAndAccuracy lastPosition = gs->GetCachedPosition();
    if (lastPosition.position) {
-diff --git a/dom/html/HTMLInputElement.cpp b/dom/html/HTMLInputElement.cpp
-index a516105b516c34eef58a6152c5303548fc64e5ce..5f7b15626a4e2d93a34507fe50f50785aa2c02a7 100644
---- a/dom/html/HTMLInputElement.cpp
-+++ b/dom/html/HTMLInputElement.cpp
-@@ -61,6 +61,7 @@
- #include "nsBaseCommandController.h"
- #include "nsCRTGlue.h"
- #include "nsColorControlFrame.h"
-+#include "nsDocShell.h"
- #include "nsError.h"
- #include "nsFileControlFrame.h"
- #include "nsFocusManager.h"
-@@ -925,6 +926,13 @@ nsresult HTMLInputElement::InitFilePicker(FilePickerType aType) {
-     return NS_ERROR_FAILURE;
-   }
- 
-+  nsCOMPtr<nsPIDOMWindowOuter> win = doc->GetWindow();
-+  nsDocShell* docShell = win ? static_cast<nsDocShell*>(win->GetDocShell()) : nullptr;
-+  if (docShell && docShell->IsFileInputInterceptionEnabled()) {
-+    docShell->FilePickerShown(this);
-+    return NS_OK;
-+  }
-+
-   if (IsPickerBlocked(doc)) {
-     return NS_OK;
-   }
 diff --git a/dom/media/systemservices/video_engine/desktop_capture_impl.cc b/dom/media/systemservices/video_engine/desktop_capture_impl.cc
 index 9e1086527c293e95f92bd60b7f39de5e955a36ed..7b3b482cf10e87eb8e9f2423aef7b6ac7f8696bc 100644
 --- a/dom/media/systemservices/video_engine/desktop_capture_impl.cc
