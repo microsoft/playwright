@@ -925,9 +925,14 @@ export class InjectedScript {
         value = value.trim();
         input.focus();
         input.value = value;
-        // The browser serializes some values in canonical form, e.g. range "0.850" becomes "0.85" and
-        // datetime-local "2020-03-02T05:15:00" becomes "2020-03-02T05:15". Invalid dates and times become "".
-        const accepted = input.value === value || (type === 'range' ? Number(input.value) === Number(value) : type !== 'color' && !!input.value);
+        // The browser may serialize the value in canonical form, e.g. range "0.850" becomes "0.85" and
+        // datetime-local "2020-03-02T05:15:00" becomes "2020-03-02T05:15". It replaces an invalid value:
+        // range with its default, color with "#000000", dates and times with "".
+        let accepted = input.value === value;
+        if (!accepted && type === 'range')
+          accepted = Number(input.value) === Number(value);
+        else if (!accepted && type !== 'color')
+          accepted = !!input.value;
         if (!accepted)
           throw this.createStacklessError('Malformed value');
         element.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
