@@ -29,7 +29,7 @@ import { TimeoutManager, TimeoutManagerError } from './timeoutManager';
 import { addSuffixToFilePath, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
-import { ipc, transform } from '../common';
+import { ipc, suiteUtils, transform } from '../common';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestInfoError, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
@@ -204,13 +204,7 @@ export class TestInfoImpl implements TestInfo {
       this._setIgnoreTimeouts(true);
 
     this.outputDir = (() => {
-      const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile.replace(/\.(spec|test)\.(js|ts|jsx|tsx|mjs|mts|cjs|cts)$/, ''));
-      const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
-      const fullTitleWithoutSpec = this.titlePath.slice(1).join(' ');
-
-      let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec), windowsFilesystemFriendlyLength);
-      if (projectInternal.id)
-        testOutputDir += '-' + sanitizeForFilePath(projectInternal.id);
+      let testOutputDir = suiteUtils.testOutputDirBase(this._requireFile, this.titlePath, this.project.testDir, projectInternal.id, test?._outputDirSuffix);
       if (this.retry)
         testOutputDir += '-retry' + this.retry;
       if (this.repeatEachIndex)

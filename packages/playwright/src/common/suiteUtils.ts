@@ -17,13 +17,26 @@
 import path from 'path';
 
 import { calculateSha1 } from '@utils/crypto';
-import { toPosixPath } from '@utils/fileUtils';
+import { sanitizeForFilePath, toPosixPath, trimLongString } from '@utils/fileUtils';
 
-import { createFileMatcher, forceRegExp, parseLocationArg } from '../util';
+import { createFileMatcher, forceRegExp, parseLocationArg, windowsFilesystemFriendlyLength } from '../util';
 
 import type { FullProjectInternal } from './config';
 import type { Suite, TestCase } from './test';
 import type { Matcher, TestCaseFilter } from '../util';
+
+export function testOutputDirBase(requireFile: string, titlePath: string[], testDir: string, projectId: string, collisionSuffix = '') {
+  const relativeTestFilePath = path.relative(testDir, requireFile.replace(/\.(spec|test)\.(js|ts|jsx|tsx|mjs|mts|cjs|cts)$/, ''));
+  const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
+  const fullTitleWithoutSpec = titlePath.slice(1).join(' ');
+  const maxLength = windowsFilesystemFriendlyLength - (collisionSuffix ? collisionSuffix.length + 1 : 0);
+  let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec), maxLength);
+  if (collisionSuffix)
+    testOutputDir += '-' + collisionSuffix;
+  if (projectId)
+    testOutputDir += '-' + sanitizeForFilePath(projectId);
+  return testOutputDir;
+}
 
 export function filterTestsRemoveEmptySuites(suite: Suite, filter: TestCaseFilter): boolean {
   const filteredSuites = suite.suites.filter(child => filterTestsRemoveEmptySuites(child, filter));
@@ -76,7 +89,32 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     // We only compute / set digest in the runner.
     if (test._poolDigest)
       test._workerHash = `${project.id}-${test._poolDigest}-0`;
+    test._outputDirSuffix = '';
   });
+
+  const testsByOutputDir = new Map<string, TestCase[]>();
+  for (const test of result.allTests()) {
+    const outputDir = testOutputDirBase(test._requireFile, test.titlePath(), project.project.testDir, project.id);
+    const tests = testsByOutputDir.get(outputDir) || [];
+    tests.push(test);
+    testsByOutputDir.set(outputDir, tests);
+  }
+  for (const tests of testsByOutputDir.values()) {
+    if (tests.length < 2)
+      continue;
+    const testsByIdSuffix = new Map<string, TestCase[]>();
+    for (const test of tests) {
+      const idSuffix = test.id.slice(-12);
+      const testsWithIdSuffix = testsByIdSuffix.get(idSuffix) || [];
+      testsWithIdSuffix.push(test);
+      testsByIdSuffix.set(idSuffix, testsWithIdSuffix);
+    }
+    for (const [idSuffix, testsWithIdSuffix] of testsByIdSuffix) {
+      testsWithIdSuffix.forEach((test, index) => {
+        test._outputDirSuffix = testsWithIdSuffix.length > 1 ? `${idSuffix}-${index + 1}` : idSuffix;
+      });
+    }
+  }
 
   return result;
 }

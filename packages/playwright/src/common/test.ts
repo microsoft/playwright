@@ -284,6 +284,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _poolDigest = '';
   _workerHash = '';
   _projectId = '';
+  _outputDirSuffix = '';
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
   _locks: string[] = [];
@@ -348,6 +349,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       tags: this._tags.slice(),
       locks: this._locks.slice(),
       projectId: this._projectId,
+      outputDirSuffix: this._outputDirSuffix,
     };
   }
 
@@ -365,6 +367,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     test._tags = data.tags;
     test._locks = data.locks;
     test._projectId = data.projectId;
+    test._outputDirSuffix = data.outputDirSuffix || '';
     return test;
   }
 
