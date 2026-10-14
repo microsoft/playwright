@@ -503,6 +503,24 @@ for (const [type, value] of serialization) {
   });
 }
 
+it('should json stringify string body when content-type has parameters', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43388' },
+}, async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.post(server.EMPTY_PAGE, {
+      headers: {
+        'content-type': 'Application/JSON; charset=utf-8'
+      },
+      data: 'foo'
+    })
+  ]);
+  const body = await req.postBody;
+  expect(body.toString()).toEqual('"foo"');
+  await request.dispose();
+});
+
 it(`should accept already serialized data as Buffer when content-type is application/json`, async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
   const value = JSON.stringify(JSON.stringify({ 'foo': 'bar' }));
