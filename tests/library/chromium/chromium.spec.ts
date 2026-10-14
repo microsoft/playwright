@@ -298,6 +298,26 @@ test('should intercept service worker importScripts', async ({ context, page, se
   await expect(sw.evaluate(() => self['importedValue'])).resolves.toBe(47);
 });
 
+test('should not crash when reading service worker response body after the worker stopped', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43374' },
+}, async ({ context, page, server }) => {
+  const [response] = await Promise.all([
+    context.waitForEvent('response', r => r.url().endsWith('/sw.js')),
+    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+  ]);
+  await page.evaluate(() => window['registrationPromise']);
+  const client = await context.newCDPSession(page);
+  await client.send('ServiceWorker.enable');
+  const stopped = new Promise<void>(resolve => client.on('ServiceWorker.workerVersionUpdated', event => {
+    if (event.versions.some(v => v.runningStatus === 'stopped'))
+      resolve();
+  }));
+  await client.send('ServiceWorker.stopAllWorkers');
+  await stopped;
+  await expect(response.body()).rejects.toThrow('service worker has stopped');
+  expect(await page.evaluate(() => 1 + 1)).toBe(2);
+});
+
 test('should report intercepted service worker requests in HAR', async ({ pageWithHar, server }) => {
   const { context, page, getLog } = await pageWithHar();
   await context.route('**/request-from-within-worker', route =>

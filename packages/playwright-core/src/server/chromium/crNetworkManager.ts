@@ -599,6 +599,9 @@ class InterceptableRequest {
       const interceptable = InterceptableRequest.from(request);
       if (!interceptable)
         throw new Error('Response body is unavailable');
+      // Chromium crashes when the body is read from a service worker that has stopped.
+      if ((request.serviceWorker() as CRServiceWorker | null)?.isStopped())
+        throw new Error('Response body is unavailable because the service worker has stopped');
       const contentLength = request._existingResponse()?.headerValue('content-length');
       const expectedLength = contentLength ? +contentLength : undefined;
 

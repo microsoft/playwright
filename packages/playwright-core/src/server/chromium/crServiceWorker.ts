@@ -30,6 +30,7 @@ export class CRServiceWorker extends Worker {
   readonly browserContext: CRBrowserContext;
   private readonly _networkManager?: CRNetworkManager;
   private _session: CRSession;
+  private _stopped = false;
 
   constructor(browserContext: CRBrowserContext, session: CRSession, url: string) {
     super(browserContext, url);
@@ -38,7 +39,10 @@ export class CRServiceWorker extends Worker {
     if (!process.env.PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK)
       this._networkManager = new CRNetworkManager(null, this);
 
-    session.on('Inspector.targetCrashed', () => this.destroyExecutionContext('Service worker restarted'));
+    session.on('Inspector.targetCrashed', () => {
+      this._stopped = true;
+      this.destroyExecutionContext('Service worker restarted');
+    });
 
     session.on('Runtime.executionContextCreated', (event: Protocol.Runtime.executionContextCreatedPayload) => {
       this.createExecutionContext(new CRExecutionContext(session, event.context));
@@ -70,8 +74,13 @@ export class CRServiceWorker extends Worker {
     session.send('Runtime.runIfWaitingForDebugger').catch(e => {});
     session.on('Inspector.targetReloadedAfterCrash', () => {
       // Resume service worker after restart.
+      this._stopped = false;
       session._sendMayFail('Runtime.runIfWaitingForDebugger', {});
     });
+  }
+
+  isStopped() {
+    return this._stopped;
   }
 
   override didClose() {
