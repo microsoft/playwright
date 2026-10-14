@@ -33,7 +33,7 @@ logger name
 
 ### param: Logger.isEnabled.severity
 * since: v1.8
-- `severity` <[LogSeverity]<"verbose"|"info"|"warning"|"error">>
+- `severity` "LogSeverity" <"verbose"|"info"|"warning"|"error">
 
 ## method: Logger.log
 * since: v1.8
@@ -46,7 +46,7 @@ logger name
 
 ### param: Logger.log.severity
 * since: v1.8
-- `severity` <[LogSeverity]<"verbose"|"info"|"warning"|"error">>
+- `severity` "LogSeverity" <"verbose"|"info"|"warning"|"error">
 
 ### param: Logger.log.message
 * since: v1.8

@@ -57,8 +57,7 @@ An object with all the response HTTP headers associated with this response.
 
 ## method: APIResponse.headersArray
 * since: v1.16
-- returns: <[Array]<[Object]>>
-  * alias: HttpHeader
+- returns: "HttpHeader" <[Array]<[Object]>>
   * alias-csharp: Header
   - `name` <[string]> Name of the header.
   - `value` <[string]> Value of the header.

@@ -113,8 +113,7 @@ You can use [`method: Request.allHeaders`] for complete list of headers that inc
 
 ## async method: Request.headersArray
 * since: v1.15
-- returns: <[Array]<[Object]>>
-  * alias: HttpHeader
+- returns: "HttpHeader" <[Array]<[Object]>>
   * alias-csharp: Header
   - `name` <[string]> Name of the header.
   - `value` <[string]> Value of the header.
@@ -312,7 +311,7 @@ Requests originated in a Service Worker do not have a [`method: Request.frame`] 
 
 ## async method: Request.sizes
 * since: v1.15
-- returns: <[Object]>
+- returns: "RequestSizes" <[Object]>
   * alias-csharp: RequestSizesResult
   * alias-java: Sizes
   - `requestBodySize` <[int]> Size of the request body (POST data payload) in bytes. Set to 0 if there was no body.

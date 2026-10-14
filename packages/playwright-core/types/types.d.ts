@@ -5685,6 +5685,9 @@ export interface Page {
    * ```
    *
    * @param urlOrPredicate Request URL string, regex or predicate receiving [Request](https://playwright.dev/docs/api/class-request) object.
+   * When a [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the
+   * context options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param options
    */
   waitForRequest(urlOrPredicate: string|RegExp|((request: Request) => boolean|Promise<boolean>), options?: {

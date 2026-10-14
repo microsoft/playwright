@@ -37,7 +37,7 @@ test.beforeAll(async ({ browser }) => {
 
 ## property: Fixtures.browserName
 * since: v1.10
-- type: <[BrowserName]<"chromium"|"firefox"|"webkit">>
+- type: "BrowserName" <"chromium"|"firefox"|"webkit">
 
 Name of the browser that runs tests. Defaults to `'chromium'`. Useful to [annotate tests](../test-annotations.md) based on the browser.
 

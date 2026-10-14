@@ -1411,6 +1411,7 @@ Returns whether the element is hidden, the opposite of [visible](../actionabilit
 
 ### option: Frame.isHidden.timeout
 * since: v1.8
+* langs: js, java, csharp
 * deprecated: This option is ignored. [`method: Frame.isHidden`] does not wait for the element to become hidden and returns immediately.
 - `timeout` <[float]>
 
@@ -1429,6 +1430,7 @@ Returns whether the element is [visible](../actionability.md#visible). [`param: 
 
 ### option: Frame.isVisible.timeout
 * since: v1.8
+* langs: js, java, csharp
 * deprecated: This option is ignored. [`method: Frame.isVisible`] does not wait for the element to become visible and returns immediately.
 - `timeout` <[float]>
 
@@ -1656,16 +1658,16 @@ await frame.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" })
 
 ### option: Frame.selectOption.signal = %%-input-signal-%%
 
-### param: Frame.selectOption.element = %%-python-select-options-element-%%
+### option: Frame.selectOption.element = %%-python-select-options-element-%%
 * since: v1.8
 
-### param: Frame.selectOption.index = %%-python-select-options-index-%%
+### option: Frame.selectOption.index = %%-python-select-options-index-%%
 * since: v1.8
 
 ### param: Frame.selectOption.value = %%-python-select-options-value-%%
 * since: v1.8
 
-### param: Frame.selectOption.label = %%-python-select-options-label-%%
+### option: Frame.selectOption.label = %%-python-select-options-label-%%
 * since: v1.8
 
 ## async method: Frame.setChecked
@@ -2066,6 +2068,14 @@ await page.MainFrame.WaitForFunctionAsync("selector => !!document.querySelector(
 
 ### param: Frame.waitForFunction.arg
 * since: v1.8
+* langs: js, java, csharp
+- `arg` ?<[EvaluationArgument]>
+
+Optional argument to pass to [`param: expression`].
+
+### option: Frame.waitForFunction.arg
+* since: v1.8
+* langs: python
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].

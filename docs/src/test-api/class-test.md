@@ -575,7 +575,7 @@ Additional named locks for all tests in the enclosing scope, including nested gr
 
 ### option: Test.describe.configure.mode
 * since: v1.10
-- `mode` <[TestMode]<"default"|"parallel"|"serial">>
+- `mode` "TestMode" <"default"|"parallel"|"serial">
 
 Execution mode. Learn more about the execution modes [here](../test-parallel.md).
 

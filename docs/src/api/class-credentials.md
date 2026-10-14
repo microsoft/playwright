@@ -299,8 +299,7 @@ page will never see those credentials.
 
 ## async method: Credentials.create
 * since: v1.61
-- returns: <[Object]>
-  * alias: VirtualCredential
+- returns: "VirtualCredential" <[Object]>
   - `id` <[string]> Base64url-encoded credential id.
   - `rpId` <[string]> Relying party id.
   - `userHandle` <[string]> Base64url-encoded user handle.
@@ -372,8 +371,7 @@ Base64url-encoded credential id.
 
 ## async method: Credentials.get
 * since: v1.61
-- returns: <[Array]<[Object]>>
-  * alias: VirtualCredential
+- returns: "VirtualCredential" <[Array]<[Object]>>
   - `id` <[string]>
   - `rpId` <[string]>
   - `userHandle` <[string]>

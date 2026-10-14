@@ -89,7 +89,7 @@ See [`property: TestConfig.metadata`].
 
 ## property: FullConfig.preserveOutput
 * since: v1.10
-- type: <[PreserveOutput]<"always"|"never"|"failures-only">>
+- type: "PreserveOutput" <"always"|"never"|"failures-only">
 
 See [`property: TestConfig.preserveOutput`].
 
@@ -107,7 +107,7 @@ See [`property: TestConfig.quiet`].
 
 ## property: FullConfig.reporter
 * since: v1.10
-- type: <[string]|[Array]<[Object]>|[BuiltInReporter]<"list"|"dot"|"failures"|"line"|"github"|"json"|"junit"|"null"|"html"|"blob"|"perfetto">>
+- type: "BuiltInReporter" <[string]|[Array]<[Object]>|"list"|"dot"|"failures"|"line"|"github"|"json"|"junit"|"null"|"html"|"blob"|"perfetto">
   - `0` <[string]> Reporter name or module or file path
   - `1` <[Object]> An object with reporter options if any
 
@@ -143,13 +143,13 @@ Resolved global tags. See [`property: TestConfig.tag`].
 
 ## property: FullConfig.updateSnapshots
 * since: v1.10
-- type: <[UpdateSnapshots]<"all"|"changed"|"missing"|"none"|"default">>
+- type: "UpdateSnapshots" <"all"|"changed"|"missing"|"none"|"default">
 
 See [`property: TestConfig.updateSnapshots`].
 
 ## property: FullConfig.updateSourceMethod
 * since: v1.50
-- type: <[UpdateSourceMethod]<"overwrite"|"3way"|"patch">>
+- type: "UpdateSourceMethod" <"overwrite"|"3way"|"patch">
 
 See [`property: TestConfig.updateSourceMethod`].
 

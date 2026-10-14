@@ -82,7 +82,7 @@ Selector to fling.
 
 ### param: AndroidDevice.fling.direction
 * since: v1.9
-- `direction` <[AndroidFlingDirection]<"down"|"up"|"left"|"right">>
+- `direction` "AndroidFlingDirection" <"down"|"up"|"left"|"right">
 
 Fling direction.
 
@@ -303,7 +303,7 @@ Selector to scroll.
 
 ### param: AndroidDevice.scroll.direction
 * since: v1.9
-- `direction` <[AndroidScrollDirection]<"down"|"up"|"left"|"right">>
+- `direction` "AndroidScrollDirection" <"down"|"up"|"left"|"right">
 
 Scroll direction.
 
@@ -364,7 +364,7 @@ Selector to swipe.
 
 ### param: AndroidDevice.swipe.direction
 * since: v1.9
-- `direction` <[AndroidSwipeDirection]<"down"|"up"|"left"|"right">>
+- `direction` "AndroidSwipeDirection" <"down"|"up"|"left"|"right">
 
 Swipe direction.
 
@@ -416,7 +416,7 @@ Selector to wait for.
 
 ### option: AndroidDevice.wait.state
 * since: v1.9
-- `state` <[AndroidDeviceState]<"gone">>
+- `state` "AndroidDeviceState" <"gone">
 
 Optional state. Can be either:
 * default - wait for element to be present.

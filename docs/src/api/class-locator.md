@@ -213,7 +213,7 @@ An AI-optimized snapshot, controlled by [`option: Locator.ariaSnapshot.mode`], i
 
 ### option: Locator.ariaSnapshot.mode
 * since: v1.59
-- `mode` <[AriaSnapshotMode]<"ai"|"default">>
+- `mode` "AriaSnapshotMode" <"ai"|"default">
 
 When set to `"ai"`, returns a snapshot optimized for AI consumption. Defaults to `"default"`. See details for more information.
 
@@ -268,7 +268,7 @@ The result is a list of nodes, each node being an object with the following prop
 
 ### option: Locator.ariaSnapshotJSON.mode
 * since: v1.63
-- `mode` <[AriaSnapshotMode]<"ai"|"default">>
+- `mode` "AriaSnapshotMode" <"ai"|"default">
 
 When set to `"ai"`, returns a snapshot optimized for AI consumption. Defaults to `"default"`. See details in [`method: Locator.ariaSnapshot`].
 
@@ -309,9 +309,9 @@ Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) 
 
 ## async method: Locator.boundingBox
 * since: v1.14
-- returns: <[null]|[Object]>
-  * alias: BoundingBox
+- returns: "BoundingBox" <[null]|[Object]>
   * alias-csharp: LocatorBoundingBoxResult
+  * alias-python: FloatRect
   - `x` <[float]> the x coordinate of the element in pixels.
   - `y` <[float]> the y coordinate of the element in pixels.
   - `width` <[float]> the width of the element in pixels.
@@ -2546,16 +2546,16 @@ await element.SelectOptionAsync(new[] { "red", "green", "blue" });
 
 ### option: Locator.selectOption.signal = %%-input-signal-%%
 
-### param: Locator.selectOption.element = %%-python-select-options-element-%%
+### option: Locator.selectOption.element = %%-python-select-options-element-%%
 * since: v1.14
 
-### param: Locator.selectOption.index = %%-python-select-options-index-%%
+### option: Locator.selectOption.index = %%-python-select-options-index-%%
 * since: v1.14
 
 ### param: Locator.selectOption.value = %%-python-select-options-value-%%
 * since: v1.14
 
-### param: Locator.selectOption.label = %%-python-select-options-label-%%
+### option: Locator.selectOption.label = %%-python-select-options-label-%%
 * since: v1.14
 
 ## async method: Locator.selectText
@@ -3076,6 +3076,14 @@ await page.getByTestId('status').waitForFunction((element, value) => {
 
 ### param: Locator.waitForFunction.arg
 * since: v1.62
+* langs: js, java, csharp
+- `arg` ?<[EvaluationArgument]>
+
+Optional argument to pass to [`param: expression`].
+
+### option: Locator.waitForFunction.arg
+* since: v1.62
+* langs: python
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].

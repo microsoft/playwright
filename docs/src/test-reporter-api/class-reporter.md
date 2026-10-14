@@ -123,7 +123,7 @@ The root suite that contains all projects, files and test cases.
 ## optional async method: Reporter.onEnd
 * since: v1.10
 - `result` ?<[Object]>
-  - `status` ?<[FullStatus]<"passed"|"failed"|"timedout"|"interrupted">>
+  - `status` "FullStatus" ?<"passed"|"failed"|"timedout"|"interrupted">
 
 Called after all tests have been run, or testing has been interrupted. Note that this method may return a [Promise] and Playwright Test will await it.
 Reporter is allowed to override the status and hence affect the exit code of the test runner.
@@ -131,7 +131,7 @@ Reporter is allowed to override the status and hence affect the exit code of the
 ### param: Reporter.onEnd.result
 * since: v1.10
 - `result` <[Object]>
-  - `status` <[FullStatus]<"passed"|"failed"|"timedout"|"interrupted">> Test run status.
+  - `status` "FullStatus" <"passed"|"failed"|"timedout"|"interrupted"> Test run status.
   - `startTime` <[Date]> Test run start wall time.
   - `duration` <[int]> Test run duration in milliseconds.
 

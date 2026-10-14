@@ -381,13 +381,13 @@ Path on the filesystem to write the HAR file to. If the file name ends with `.zi
 
 ### option: Tracing.startHar.content
 * since: v1.60
-- `content` <[HarContentPolicy]<"omit"|"embed"|"attach">>
+- `content` "HarContentPolicy" <"omit"|"embed"|"attach">
 
 Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for all other file extensions.
 
 ### option: Tracing.startHar.mode
 * since: v1.60
-- `mode` <[HarMode]<"full"|"minimal">>
+- `mode` "HarMode" <"full"|"minimal">
 
 When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
 
@@ -468,8 +468,7 @@ Group name shown in the trace viewer.
 
 ### option: Tracing.group.location
 * since: v1.49
-- `location` ?<[Object]>
-  * alias: Location
+- `location` "Location" ?<[Object]>
   - `file` <[string]>
   - `line` ?<[int]>
   - `column` ?<[int]>

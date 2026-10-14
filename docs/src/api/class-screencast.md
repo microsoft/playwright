@@ -41,8 +41,7 @@ Higher frame rates make animations and scrolling smoother at the cost of more CP
 
 ### option: Screencast.start.onFrame
 * since: v1.59
-- `onFrame` <[function]\([Object]\): [Promise]>
-  * alias: ScreencastFrame
+- `onFrame` "ScreencastFrame" <[function]\([Object]\): [Promise]>
   - `data` <[Buffer]> JPEG-encoded frame data.
   - `timestamp` <[float]> The timestamp of when the frame was presented by the browser, in milliseconds since the Unix epoch.
   - `viewportWidth` <[int]> Width of the page viewport at the time the frame was captured.
@@ -64,8 +63,8 @@ The quality of the image, between 0-100.
 
 ### option: Screencast.start.size
 * since: v1.59
-- `size` ?<[Object]>
-  * alias-csharp: ScreencastSize
+- `size` "ScreencastSize" ?<[Object]>
+  * alias-java: Size
   - `width` <[int]> Max frame width in pixels.
   - `height` <[int]> Max frame height in pixels.
 
@@ -133,7 +132,7 @@ How long each annotation is displayed in milliseconds. Defaults to `500`.
 
 ### option: Screencast.showActions.position
 * since: v1.59
-- `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">>
+- `position` "AnnotatePosition" ?<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">
 
 Position of the action title overlay. Defaults to `"top-right"`.
 
@@ -146,7 +145,7 @@ Font size of the action title in pixels. Defaults to `24`.
 
 ### option: Screencast.showActions.cursor
 * since: v1.61
-- `cursor` ?<[ScreencastCursor]<"none"|"pointer">>
+- `cursor` "ScreencastCursor" ?<"none"|"pointer">
 
 Cursor decoration shown for pointer actions. `"pointer"` (the default) renders
 a mouse pointer that animates from the previous action point to the next one.
@@ -154,8 +153,7 @@ a mouse pointer that animates from the previous action point to the next one.
 
 ### option: Screencast.showActions.style
 * since: v1.64
-- `style` ?<[Object]>
-  * alias: ScreencastActionStyle
+- `style` "ScreencastActionStyle" ?<[Object]>
   - `point` ?<[string]> CSS declarations for the marker at the action point. The marker is positioned at the action point, has zero size and is centered on the point, so its size and look come from this style. Not shown when omitted.
   - `highlight` ?<[string]> CSS declarations for the box that covers the target element. The box is positioned and sized to the element bounds. Not shown when omitted.
   - `title` ?<[string]> CSS declarations for the action title, for example `'font-size: 32px; background: #333'`. The title is placed according to [`option: Screencast.showActions.position`].

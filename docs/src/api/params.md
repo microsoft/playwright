@@ -1,5 +1,5 @@
 ## navigation-wait-until
-- `waitUntil` <[WaitUntilState]<"load"|"domcontentloaded"|"networkidle"|"commit">>
+- `waitUntil` "WaitUntilState" <"load"|"domcontentloaded"|"networkidle"|"commit">
 
 When to consider operation succeeded, defaults to `load`. Events can be either:
 * `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
@@ -87,7 +87,7 @@ This option has no effect.
 Whether to bypass the [actionability](../actionability.md) checks. Defaults to `false`.
 
 ## input-scroll
-- `scroll` <[ScrollMode]<"auto"|"none">>
+- `scroll` "ScrollMode" <"auto"|"none">
 
 Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`,
 which scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
@@ -110,8 +110,7 @@ A selector to search for an element to drag. If there are multiple elements sati
 A selector to search for an element to drop onto. If there are multiple elements satisfying the selector, the first will be used.
 
 ## input-position
-- `position` <[Object]>
-  * alias: Position
+- `position` "Position" <[Object]>
   - `x` <[float]>
   - `y` <[float]>
 
@@ -129,29 +128,26 @@ Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel bet
 Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup` of the drag. When set to 1, emits a single `mousemove` event at the destination location.
 
 ## input-modifiers
-- `modifiers` <[Array]<[KeyboardModifier]<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">>>
+- `modifiers` "KeyboardModifier" <[Array]<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">>
 
 Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current
 modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to "Control" on Windows
 and Linux and to "Meta" on macOS.
 
 ## input-button
-- `button` <[MouseButton]<"left"|"right"|"middle">>
+- `button` "MouseButton" <"left"|"right"|"middle">
 
 Defaults to `left`.
 
 ## input-files
-- `files` <[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
-  * alias: FilePayload
+- `files` "FilePayload" <[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
 
 ## drop-payload
-- `payload` <[Object]>
-  * alias: DropPayload
-  - `files` ?<[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
-    * alias: FilePayload
+- `payload` "DropPayload" <[Object]>
+  - `files` "FilePayload" ?<[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
     - `name` <[string]> File name
     - `mimeType` <[string]> File type
     - `buffer` <[Buffer]> File content
@@ -182,16 +178,16 @@ When set, this method only performs the [actionability](../actionability.md) che
 When set, this method only performs the [actionability](../actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys are pressed.
 
 ## input-source-position
-- `sourcePosition` <[Object]>
-  * alias-java: Position
+- `sourcePosition` "Position" <[Object]>
+  * alias-csharp: SourcePosition
   - `x` <[float]>
   - `y` <[float]>
 
 Clicks on the source element at this point relative to the top-left corner of the element's padding box. If not specified, some visible point of the element is used.
 
 ## input-target-position
-- `targetPosition` <[Object]>
-  * alias-java: Position
+- `targetPosition` "Position" <[Object]>
+  * alias-csharp: TargetPosition
   - `x` <[float]>
   - `y` <[float]>
 
@@ -220,7 +216,7 @@ A selector to use when resolving DOM element.
 A selector or locator to use when resolving DOM element.
 
 ## wait-for-selector-state
-- `state` <[WaitForSelectorState]<"attached"|"detached"|"visible"|"hidden">>
+- `state` "WaitForSelectorState" <"attached"|"detached"|"visible"|"hidden">
 
 Defaults to `'visible'`. Can be either:
 * `'attached'` - wait for element to be present in DOM.
@@ -266,8 +262,8 @@ If `true`, Playwright does not pass its own configurations args and only uses th
 Dangerous option; use with care. Defaults to `false`.
 
 ## browser-option-proxy
-- `proxy` <[Object]>
-  * alias: Proxy
+- `proxy` "Proxy" <[Object]>
+  * alias-python: ProxySettings
   - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
     `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP
     proxy.
@@ -296,8 +292,8 @@ Specify environment variables that will be visible to the browser. Defaults to `
 
 ## js-python-context-option-storage-state
 * langs: js, python
-- `storageState` <[path]|[Object]>
-  - `cookies` <[Array]<[Object]>> Cookies to set for context
+- `storageState` "StorageState" <[path]|[Object]>
+  - `cookies` "StorageStateCookie" <[Array]<[Object]>> Cookies to set for context
     - `name` <[string]>
     - `value` <[string]>
     - `domain` <[string]> Domain and path are required. For the cookie to apply to all subdomains as well, prefix domain with a dot, like this: ".example.com"
@@ -305,10 +301,10 @@ Specify environment variables that will be visible to the browser. Defaults to `
     - `expires` <[float]> Unix time in seconds.
     - `httpOnly` <[boolean]>
     - `secure` <[boolean]>
-    - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">> sameSite flag
-  - `origins` <[Array]<[Object]>>
+    - `sameSite` "SameSiteAttribute" <"Strict"|"Lax"|"None"> sameSite flag
+  - `origins` "OriginState" <[Array]<[Object]>>
     - `origin` <[string]>
-    - `localStorage` <[Array]<[Object]>> localStorage to set for context
+    - `localStorage` "LocalStorageEntry" <[Array]<[Object]>> localStorage to set for context
       - `name` <[string]>
       - `value` <[string]>
 
@@ -331,8 +327,8 @@ Populates context with given storage state. This option can be used to initializ
 obtained via [`method: BrowserContext.storageState`]. Path to the file with saved storage state.
 
 ## add-cookies-param
-- `cookies` <[Array]<[Object]>>
-  * alias-java: Cookie
+- `cookies` "Cookie" <[Array]<[Object]>>
+  * alias-python: SetCookieParam
   - `name` <[string]>
   - `value` <[string]>
   - `url` ?<[string]> Either `url` or both `domain` and `path` are required. Optional.
@@ -341,7 +337,7 @@ obtained via [`method: BrowserContext.storageState`]. Path to the file with save
   - `expires` ?<[float]> Unix time in seconds. Optional.
   - `httpOnly` ?<[boolean]> Optional.
   - `secure` ?<[boolean]> Optional.
-  - `sameSite` ?<[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional.
+  - `sameSite` "SameSiteAttribute" ?<"Strict"|"Lax"|"None"> Optional.
   - `partitionKey` ?<[string]> For partitioned third-party cookies (aka [CHIPS](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Privacy_sandbox/Partitioned_cookies)), the partition key. Optional.
 
 ## clear-cookies-option-name
@@ -397,8 +393,7 @@ When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitFor
 ## context-option-viewport
 * langs: js, java
   - alias-java: viewportSize
-- `viewport` <[null]|[Object]>
-  * alias: ViewportSize
+- `viewport` "ViewportSize" <[null]|[Object]>
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
@@ -431,8 +426,7 @@ It makes the execution of the tests non-deterministic.
 * langs:
   - alias-java: screenSize
   - alias-csharp: screenSize
-- `screen` <[Object]>
-  * alias: ScreenSize
+- `screen` "ScreenSize" <[Object]>
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
@@ -565,7 +559,7 @@ or as file-like object containing file name, mime-type and its content.
 
 ## python-fetch-option-multipart
 * langs: python
-- `multipart` <[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>|[FormData]>
+- `multipart` "FilePayload" <[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>|[FormData]>
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
@@ -662,7 +656,7 @@ Function to be evaluated in the main Electron process.
 
 ## python-context-option-viewport
 * langs: python
-- `viewport` <[null]|[Object]>
+- `viewport` "ViewportSize" <[null]|[Object]>
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
@@ -675,8 +669,7 @@ Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `no_
 Does not enforce fixed viewport, allows resizing window in the headed mode.
 
 ## context-option-clientCertificates
-- `clientCertificates` <[Array]<[Object]>>
-  * alias: ClientCertificate
+- `clientCertificates` "ClientCertificate" <[Array]<[Object]>>
   - `origin` <[string]> Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
   - `certPath` ?<[path]> Path to the file with the certificate in PEM format.
   - `cert` ?<[Buffer]> Direct value of the certificate in PEM format.
@@ -730,8 +723,7 @@ Changes the timezone of the context. See [ICU's metaZones.txt](https://cs.chromi
 for a list of supported timezone IDs. Defaults to the system timezone.
 
 ## context-option-geolocation
-- `geolocation` <[Object]>
-  * alias: Geolocation
+- `geolocation` "Geolocation" <[Object]>
   - `latitude` <[float]> Latitude between -90 and 90.
   - `longitude` <[float]> Longitude between -180 and 180.
   - `accuracy` ?<[float]> Non-negative accuracy value. Defaults to `0`.
@@ -758,12 +750,11 @@ An object containing additional HTTP headers to be sent with every request. Defa
 Whether to emulate network being offline. Defaults to `false`. Learn more about [network emulation](../emulation.md#offline).
 
 ## context-option-httpcredentials
-- `httpCredentials` <[Object]|[Array]<[Object]>>
-  * alias: HttpCredentials
+- `httpCredentials` "HttpCredentials" <[Object]|[Array]<[Object]>>
   - `username` <[string]>
   - `password` <[string]>
   - `origin` ?<[string]> Restrain sending http credentials on specific origin (scheme://host:port).
-  - `send` ?<[HttpCredentialsSend]<"unauthorized"|"always">> This option only applies to the requests sent from corresponding [APIRequestContext] and does not affect requests sent from the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+  - `send` "HttpCredentialsSend" ?<"unauthorized"|"always"> This option only applies to the requests sent from corresponding [APIRequestContext] and does not affect requests sent from the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
 
 Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
 If no origin is specified, the username and password are sent to any servers upon unauthorized responses.
@@ -772,51 +763,51 @@ Pass an array to use different credentials for different origins. The first entr
 
 ## context-option-colorscheme
 * langs: js, java
-- `colorScheme` <null|[ColorScheme]<"light"|"dark"|"no-preference">>
+- `colorScheme` "ColorScheme" <null|"light"|"dark"|"no-preference">
 
 Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) media feature, supported values are `'light'` and `'dark'`. See
 [`method: Page.emulateMedia`] for more details. Passing `null` resets emulation to system defaults. Defaults to `'light'`.
 
 ## context-option-colorscheme-csharp-python
 * langs: csharp, python
-- `colorScheme` <[ColorScheme]<"light"|"dark"|"no-preference"|"null">>
+- `colorScheme` "ColorScheme" <"light"|"dark"|"no-preference"|"null">
 
 Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) media feature, supported values are `'light'` and `'dark'`. See
 [`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'light'`.
 
 ## context-option-reducedMotion
 * langs: js, java
-- `reducedMotion` <null|[ReducedMotion]<"reduce"|"no-preference">>
+- `reducedMotion` "ReducedMotion" <null|"reduce"|"no-preference">
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See [`method: Page.emulateMedia`] for more details. Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
 
 ## context-option-reducedMotion-csharp-python
 * langs: csharp, python
-- `reducedMotion` <[ReducedMotion]<"reduce"|"no-preference"|"null">>
+- `reducedMotion` "ReducedMotion" <"reduce"|"no-preference"|"null">
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See [`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'no-preference'`.
 
 ## context-option-forcedColors
 * langs: js, java
-- `forcedColors` <null|[ForcedColors]<"active"|"none">>
+- `forcedColors` "ForcedColors" <null|"active"|"none">
 
 Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See [`method: Page.emulateMedia`] for more details. Passing `null` resets emulation to system defaults. Defaults to `'none'`.
 
 ## context-option-forcedColors-csharp-python
 * langs: csharp, python
-- `forcedColors` <[ForcedColors]<"active"|"none"|"null">>
+- `forcedColors` "ForcedColors" <"active"|"none"|"null">
 
 Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See [`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'none'`.
 
 ## context-option-contrast
 * langs: js, java
-- `contrast` <null|[Contrast]<"no-preference"|"more">>
+- `contrast` "Contrast" <null|"no-preference"|"more">
 
 Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See [`method: Page.emulateMedia`] for more details. Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
 
 ## context-option-contrast-csharp-python
 * langs: csharp, python
-- `contrast` <[Contrast]<"no-preference"|"more"|"null">>
+- `contrast` "Contrast" <"no-preference"|"more"|"null">
 
 Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See [`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'no-preference'`.
 
@@ -832,9 +823,9 @@ Logger sink for Playwright logging.
 - `recordHar` <[Object]>
   - `omitContent` ?<[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to
     `false`. Deprecated, use `content` policy instead.
-  - `content` ?<[HarContentPolicy]<"omit"|"embed"|"attach">> Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for all other file extensions.
+  - `content` "HarContentPolicy" ?<"omit"|"embed"|"attach"> Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for all other file extensions.
   - `path` <[path]> Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by default.
-  - `mode` ?<[HarMode]<"full"|"minimal">> When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+  - `mode` "HarMode" ?<"full"|"minimal"> When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
   - `urlFilter` ?<[string]|[RegExp]> A glob or regex pattern to filter requests that are stored in the HAR. When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path, it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
 
 Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
@@ -860,14 +851,14 @@ Optional setting to control whether to omit request content from the HAR. Defaul
 ## context-option-recordhar-content
 * langs: csharp, java, python
   - alias-python: record_har_content
-- `recordHarContent` ?<[HarContentPolicy]<"omit"|"embed"|"attach">>
+- `recordHarContent` "HarContentPolicy" ?<"omit"|"embed"|"attach">
 
 Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files and all of these files are archived along with the HAR file. Defaults to `embed`, which stores content inline the HAR file as per HAR specification.
 
 ## context-option-recordhar-mode
 * langs: csharp, java, python
   - alias-python: record_har_mode
-- `recordHarMode` ?<[HarMode]<"full"|"minimal">>
+- `recordHarMode` "HarMode" ?<"full"|"minimal">
 
 When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
 
@@ -888,9 +879,9 @@ When set to `minimal`, only record information necessary for routing from HAR. T
   - `fps` ?<[int]> Frame rate of the recorded videos in frames per second. Defaults to `25`. Firefox and WebKit currently capture up to 25 frames per second.
   - `showActions` ?<[Object]> If specified, enables visual annotations on interacted elements during video recording.
     - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
-    - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the action title overlay. Defaults to `"top-right"`.
+    - `position` "AnnotatePosition" ?<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right"> Position of the action title overlay. Defaults to `"top-right"`.
     - `fontSize` ?<[int]> Font size of the action title in pixels. Defaults to `24`. Deprecated, use `style.title` instead.
-    - `cursor` ?<[ScreencastCursor]<"none"|"pointer">> Cursor decoration shown for pointer actions. `"pointer"` (the default) renders a mouse pointer that animates from the previous action point to the next one. `"none"` disables the cursor decoration.
+    - `cursor` "ScreencastCursor" ?<"none"|"pointer"> Cursor decoration shown for pointer actions. `"pointer"` (the default) renders a mouse pointer that animates from the previous action point to the next one. `"none"` disables the cursor decoration.
     - `style` ?<[Object]> Styles of the action decorations.
       - `point` ?<[string]> CSS declarations for the zero-sized marker centered on the action point. Not shown when omitted.
       - `highlight` ?<[string]> CSS declarations for the box that covers the target element. Not shown when omitted.
@@ -910,8 +901,7 @@ not recorded. Make sure to call [`method: BrowserContext.close`] for videos to b
 ## context-option-recordvideo-size
 * langs: csharp, java, python
   - alias-python: record_video_size
-- `recordVideoSize` <[Object]>
-  * alias-java: RecordVideoSize
+- `recordVideoSize` "RecordVideoSize" <[Object]>
   - `width` <[int]> Video frame width.
   - `height` <[int]> Video frame height.
 
@@ -927,8 +917,8 @@ Actual picture of each page will be scaled down if necessary to fit the specifie
 Frame rate of the recorded videos in frames per second. Defaults to `25`. Firefox and WebKit currently capture up to 25 frames per second.
 
 ## context-option-proxy
-- `proxy` <[Object]>
-  * alias: Proxy
+- `proxy` "Proxy" <[Object]>
+  * alias-python: ProxySettings
   - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
     `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
   - `bypass` ?<[string]> Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
@@ -946,7 +936,7 @@ This option does not affect any Locator APIs (Locators are always strict). Defau
 See [Locator] to learn more about the strict mode.
 
 ## context-option-service-worker-policy
-- `serviceWorkers` <[ServiceWorkerPolicy]<"allow"|"block">>
+- `serviceWorkers` "ServiceWorkerPolicy" <"allow"|"block">
 
 Whether to allow sites to register Service workers. Defaults to `'allow'`.
 * `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered.
@@ -955,7 +945,7 @@ Whether to allow sites to register Service workers. Defaults to `'allow'`.
 ## remove-all-listeners-options-behavior
 * langs: js
 * since: v1.47
-- `behavior` <[RemoveAllListenersBehavior]<"wait"|"ignoreErrors"|"default">>
+- `behavior` "RemoveAllListenersBehavior" <"wait"|"ignoreErrors"|"default">
 
 Specifies whether to wait for already running listeners and what to do if they throw errors:
 * `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result in unhandled error
@@ -965,7 +955,7 @@ Specifies whether to wait for already running listeners and what to do if they t
 ## unroute-all-options-behavior
 * langs: js, csharp, python
 * since: v1.41
-- `behavior` <[UnrouteBehavior]<"wait"|"ignoreErrors"|"default">>
+- `behavior` "UnrouteBehavior" <"wait"|"ignoreErrors"|"default">
 
 Specifies whether to wait for already running handlers and what to do if they throw errors:
 * `'default'` - do not wait for current handler calls (if any) to finish, if unrouted handler throws, it may result in unhandled error
@@ -1008,7 +998,7 @@ equal to the string.
 Event name, same one typically passed into `*.on(event)`.
 
 ## wait-for-load-state-state
-- `state` ?<[LoadState]<"load"|"domcontentloaded"|"networkidle">>
+- `state` "LoadState" ?<"load"|"domcontentloaded"|"networkidle">
 
 Optional load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the
 method resolves immediately. Can be one of:
@@ -1344,7 +1334,7 @@ Only matches visible or invisible elements. Prefer the [`method: Locator.visible
 - %%-locator-option-has-%%
 
 ## screenshot-option-animations
-- `animations` <[ScreenshotAnimations]<"disabled"|"allow">>
+- `animations` "ScreenshotAnimations" <"disabled"|"allow">
 
 When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
 * finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
@@ -1353,7 +1343,7 @@ When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animatio
 Defaults to `"allow"` that leaves animations untouched.
 
 ## screenshot-option-animations-default-disabled
-- `animations` <[ScreenshotAnimations]<"disabled"|"allow">>
+- `animations` "ScreenshotAnimations" <"disabled"|"allow">
 
 When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
 * finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
@@ -1381,7 +1371,7 @@ relative path, then it is resolved relative to the current working directory. If
 saved to the disk.
 
 ## screenshot-option-type
-- `type` <[ScreenshotType]<"png"|"jpeg"|"webp">>
+- `type` "ScreenshotType" <"png"|"jpeg"|"webp">
 
 Specify screenshot type, defaults to `png`.
 
@@ -1405,8 +1395,7 @@ When true, takes a screenshot of the full scrollable page, instead of the curren
 `false`.
 
 ## screenshot-option-clip
-- `clip` <[Object]>
-  * alias-java: Clip
+- `clip` "Clip" <[Object]>
   - `x` <[float]> x-coordinate of top-left corner of clip area
   - `y` <[float]> y-coordinate of top-left corner of clip area
   - `width` <[float]> width of clipping area
@@ -1415,21 +1404,21 @@ When true, takes a screenshot of the full scrollable page, instead of the curren
 An object which specifies clipping of the resulting image.
 
 ## screenshot-option-scale
-- `scale` <[ScreenshotScale]<"css"|"device">>
+- `scale` "ScreenshotScale" <"css"|"device">
 
 When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenshots of high-dpi devices will be twice as large or even larger.
 
 Defaults to `"device"`.
 
 ## screenshot-option-scale-default-css
-- `scale` <[ScreenshotScale]<"css"|"device">>
+- `scale` "ScreenshotScale" <"css"|"device">
 
 When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenshots of high-dpi devices will be twice as large or even larger.
 
 Defaults to `"css"`.
 
 ## screenshot-option-caret
-- `caret` <[ScreenshotCaret]<"hide"|"initial">>
+- `caret` "ScreenshotCaret" <"hide"|"initial">
 
 When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.  Defaults to `"hide"`.
 
@@ -1474,7 +1463,7 @@ Text to locate the element for.
 Whether to find an exact match: case-sensitive and whole-string. Default to false. Ignored when locating by a regular expression. Note that exact match still trims whitespace.
 
 ## get-by-role-to-have-role-role
-- `role` <[AriaRole]<"alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem">>
+- `role` "AriaRole" <"alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem">
 
 Required aria role.
 
@@ -2068,8 +2057,7 @@ In this config:
 1. Forward slashes `"/"` can be used as path separators on any platform.
 
 ## response-security-details
-- returns: <[null]|[Object]>
-  * alias: SecurityDetails
+- returns: "SecurityDetails" <[null]|[Object]>
   * alias-csharp: ResponseSecurityDetailsResult
   - `issuer` ?<[string]> Common Name component of the Issuer field.
     from the certificate. This should only be used for informational purposes. Optional.
@@ -2082,14 +2070,14 @@ In this config:
     when this cert becomes invalid. Optional.
 
 ## response-server-addr
-- returns: <[null]|[Object]>
+- returns: "RemoteAddr" <[null]|[Object]>
   * alias-csharp: ResponseServerAddrResult
   * alias-java: ServerAddr
   - `ipAddress` <[string]> IPv4 or IPV6 address of the server.
   - `port` <[int]>
 
 ## resource-timing
-- returns: <[Object]>
+- returns: "ResourceTiming" <[Object]>
   * alias-csharp: RequestTimingResult
   * alias-java: Timing
   - `startTime` <[float]> Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC

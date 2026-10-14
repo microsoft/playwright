@@ -65,7 +65,7 @@ Start time of this particular test run.
 
 ## property: TestResult.status
 * since: v1.10
-- type: <[TestStatus]<"passed"|"failed"|"timedOut"|"skipped"|"interrupted">>
+- type: "TestStatus" <"passed"|"failed"|"timedOut"|"skipped"|"interrupted">
 
 The status of this test result. See also [`property: TestCase.expectedStatus`].
 

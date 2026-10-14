@@ -210,10 +210,7 @@ class ApiParser {
     const text = /** @type {string}*/(param.text);
     if (text.substring(text.lastIndexOf('>') + 1).trim())
       throw new Error(`Extra information after type while processing "${memberName}".\nYou probably need an extra empty line before the description.\n================\n${text}`);
-    let typeStart = text.indexOf('<');
-    while ('?e'.includes(text[typeStart - 1]))
-      typeStart--;
-    const name = text.substring(0, typeStart).replace(/\`/g, '').trim();
+    const { name } = parseVariable(text);
     const comments = extractComments(spec);
     const metainfo = extractMetainfo(spec);
     if (metainfo.hidden)
@@ -229,14 +226,28 @@ class ApiParser {
    */
   parseType(spec, since) {
     const arg = parseVariable(spec.text);
+    if (!arg.alias && /\[\w+\]<"/.test(arg.type))
+      throw new Error(`Write the enum name before the type, for example: \`sameSite\` "SameSiteAttribute" <"Strict"|"Lax"|"None">\nin: ${spec.text}`);
+    let expression = arg.type;
     const properties = [];
     /** @type {Object<string, string>} */
     const langAliases = {};
+    if (arg.alias) {
+      // The name before the type names the enum, if the type has one.
+      // Otherwise, it is the default alias of the type.
+      const named = nameStringUnion(expression, arg.alias);
+      if (named)
+        expression = named;
+      else
+        langAliases.default = arg.alias;
+    }
     for (const child of /** @type {MarkdownLiNode[]} */ (spec.children) || []) {
       const childText = /** @type {string} */(child.text);
       const aliasMatch = childText.match(/^alias(?:-(\w+))?\s*:\s*(.*)$/);
       if (aliasMatch) {
-        langAliases[aliasMatch[1] || 'default'] = aliasMatch[2].trim();
+        if (!aliasMatch[1])
+          throw new Error(`Write the alias before the type, for example: \`cookies\` "Cookie" <[Array]<[Object]>>\nin: ${spec.text}`);
+        langAliases[aliasMatch[1]] = aliasMatch[2].trim();
         continue;
       }
       const { name, text } = parseVariable(childText);
@@ -244,14 +255,33 @@ class ApiParser {
       const childType = this.parseType(child, since);
       properties.push(docs.Member.createProperty({ langs: {}, since, deprecated: undefined, discouraged: undefined }, name, childType.type, comments, !childType.optional));
     }
-    const type = docs.Type.parse(arg.type, properties, langAliases);
+    const type = docs.Type.parse(expression, properties, langAliases);
     return { type, optional: arg.optional };
   }
 }
 
 /**
+ * Names the string union in a type expression: `null|"a"|"b"` named `E`
+ * becomes `null|[E]<"a"|"b">`.
+ * @param {string} expression
+ * @param {string} name
+ * @returns {string | null} null if the expression has no string union
+ */
+function nameStringUnion(expression, name) {
+  const unions = [...expression.matchAll(/"[^"]*"(?:\|"[^"]*")*/g)];
+  if (!unions.length)
+    return null;
+  if (unions.length > 1)
+    throw new Error(`Cannot name "${name}" in "${expression}": it has more than one string union`);
+  const [union] = unions;
+  const start = /** @type {number} */ (union.index);
+  return expression.substring(0, start) + `[${name}]<${union[0]}>` + expression.substring(start + union[0].length);
+}
+
+/**
+ * Parses a type line: `` `name` "Alias" ?<type> text ``. The alias and `?` are optional.
  * @param {string} line
- * @returns {{ name: string, type: string, text: string, optional: boolean }}
+ * @returns {{ name: string, type: string, text: string, optional: boolean, alias: string | undefined }}
  */
 function parseVariable(line) {
   let match = line.match(/^`([^`]+)` (.*)/);
@@ -265,6 +295,12 @@ function parseVariable(line) {
     throw new Error('Invalid argument: ' + line);
   const name = match[1];
   let remainder = match[2];
+  let alias;
+  const aliasMatch = remainder.match(/^"([^"]+)"\s+/);
+  if (aliasMatch) {
+    alias = aliasMatch[1];
+    remainder = remainder.substring(aliasMatch[0].length);
+  }
   let optional = false;
   while ('?'.includes(remainder[0])) {
     if (remainder[0] === '?')
@@ -281,7 +317,7 @@ function parseVariable(line) {
     if (c === '>')
       --depth;
     if (depth === 0)
-      return { name, type: remainder.substring(1, i), text: remainder.substring(i + 2), optional };
+      return { name, type: remainder.substring(1, i), text: remainder.substring(i + 2), optional, alias };
   }
   throw new Error('Should not be reached, line: ' + line);
 }
