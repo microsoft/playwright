@@ -1226,8 +1226,15 @@ A glob pattern, regex pattern, or predicate that receives a [URL] to match durin
 
 ### param: BrowserContext.route.handler
 * since: v1.8
-* langs: js, python
+* langs: js
 - `handler` <[function]\([Route], [Request]\): [Promise<any>|any]>
+
+handler function to route the request.
+
+### param: BrowserContext.route.handler
+* since: v1.8
+* langs: python
+- `handler` <[function]\([Route]\)|[function]\([Route], [Request]\)>
 
 handler function to route the request.
 
@@ -1656,8 +1663,15 @@ A glob pattern, regex pattern, or predicate receiving [URL] used to register a r
 
 ### param: BrowserContext.unroute.handler
 * since: v1.8
-* langs: js, python
+* langs: js
 - `handler` ?<[function]\([Route], [Request]\): [Promise<any>|any]>
+
+Optional handler function used to register a routing with [`method: BrowserContext.route`].
+
+### param: BrowserContext.unroute.handler
+* since: v1.8
+* langs: python
+- `handler` ?<[function]\([Route]\)|[function]\([Route], [Request]\)>
 
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
 
