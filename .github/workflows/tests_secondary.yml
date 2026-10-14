@@ -85,7 +85,7 @@ jobs:
         bot-name: "package-installations-${{ matrix.os }}-node${{ matrix.node_version }}"
 
   test_linux:
-    name: ${{ matrix.os }} (${{ matrix.browser }} - Node.js ${{ matrix.node-version }})
+    name: ${{ matrix.os }} (${{ matrix.browser }}${{ matrix.node-version != 22 && format(' - Node.js {0}', matrix.node-version) || '' }})
     if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
     strategy:
       fail-fast: false
@@ -130,7 +130,7 @@ jobs:
         PW_CLOCK: ${{ matrix.clock }}
 
   test_test_runner:
-    name: Test Runner
+    name: Test Runner - ubuntu-large - Node.js ${{ matrix.node-version }}
     if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
     strategy:
       fail-fast: false
@@ -193,7 +193,7 @@ jobs:
         PWTEST_CHANNEL: ${{ matrix.channel }}
 
   test_android:
-    name: Android
+    name: Android - ubuntu-large
     runs-on: playwright-x64-ubuntu24-64-core
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
