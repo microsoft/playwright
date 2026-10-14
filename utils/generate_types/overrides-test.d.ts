@@ -17,7 +17,7 @@
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
-export type ReporterSecretsOptions = { secrets?: { [name: string]: string } };
+export type ReporterSecretsOptions = { secrets?: { name?: string, value: string }[] };
 export type BlobReporterOptions = ReporterSecretsOptions & { outputDir?: string, fileName?: string };
 export type DotReporterOptions = ReporterSecretsOptions & { omitTags?: boolean };
 export type FailuresReporterOptions = ReporterSecretsOptions & { omitTags?: boolean };

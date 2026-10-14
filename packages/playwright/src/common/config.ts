@@ -104,7 +104,7 @@ export class FullConfigInternal {
       projects: [],
       filteredProjects: [],
       quiet: takeFirst(configCLIOverrides.quiet, userConfig.quiet, false),
-      reporter: this.reporterDescriptions.map(([name, options]) => stripReporterSecrets(name, options)),
+      reporter: this.reporterDescriptions.map(description => stripReporterSecrets(description)),
       reportSlowTests: takeFirst(userConfig.reportSlowTests, { max: 5, threshold: 300_000 /* 5 minutes */ }),
       shard: takeFirst(configCLIOverrides.shard, userConfig.shard, null),
       tags: globalTags,
@@ -223,10 +223,10 @@ function pathResolve(baseDir: string, relative: string | undefined): string | un
   return path.resolve(baseDir, relative);
 }
 
-// Secrets are only used to wrap the reporter, they are not exposed through FullConfig.
-function stripReporterSecrets(name: string, options: any): ReporterDescription {
+export function stripReporterSecrets(description: ReporterDescription): ReporterDescription {
+  const [name, options] = description;
   if (!options || typeof options !== 'object' || !('secrets' in options))
-    return options === undefined ? [name] : [name, options];
+    return description;
   const rest = { ...options };
   delete rest.secrets;
   return [name, rest];

@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 import fs from 'fs';
+import { secretsKey } from '@isomorphic/secrets';
 import { calculateSha1 } from '@utils/crypto';
 
 import { loadReporter } from './loadUtils';
+import { config as commonConfig } from '../common';
 import { formatError } from '../reporters/base';
 import { BlobReporter } from '../reporters/blob';
 import CoverageReporter from '../reporters/coverage';
@@ -36,7 +38,7 @@ import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
 import type { ReporterDescription } from '../../types/test';
 import type { TestError } from '../../types/testReporter';
-import type { config as commonConfig, FullConfigInternal } from '../common';
+import type { FullConfigInternal } from '../common';
 import type { CommonReporterOptions, Screen } from '../reporters/base';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import type { Secrets } from '@isomorphic/secrets';
@@ -60,39 +62,17 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   const reporters: ReporterV2[] = [];
   descriptions ??= config.reporterDescriptions;
   const reportOptions = reporterCommandOptions(config, mode, runOptions);
-  // Reporters with the same secrets share one redactor, and therefore the same redacted objects.
-  const redactors = new Map<string, SecretsRedactor>();
-  const redactorFor = (secrets: Secrets) => {
-    const key = SecretsRedactor.key(secrets);
-    let redactor = redactors.get(key);
-    if (!redactor) {
-      redactor = new SecretsRedactor(secrets);
-      redactors.set(key, redactor);
-    }
-    return redactor;
-  };
-  // When every configured reporter has secrets, the convenience reporter added below redacts all of them.
-  let allSecrets: Secrets | undefined = {};
   for (const r of descriptions) {
-    const [name, arg] = r;
-    const { secrets, ...reporterArg } = arg ?? {};
-    const options = resolveReporterOptions(reportOptions, { ...reportOptions, ...reporterArg });
-    let reporter: ReporterV2;
+    const [name, arg] = commonConfig.stripReporterSecrets(r);
+    const options = resolveReporterOptions(reportOptions, { ...reportOptions, ...arg });
     if (name in defaultReporters) {
-      reporter = new defaultReporters[name as commonConfig.BuiltInReporter](options);
+      reporters.push(new defaultReporters[name as commonConfig.BuiltInReporter](options));
     } else {
       const reporterConstructor = await loadReporter(config, name);
-      reporter = wrapReporterAsV2(new reporterConstructor(options));
+      reporters.push(wrapReporterAsV2(new reporterConstructor(options)));
     }
-    if (secrets) {
-      reporter = new RedactingReporter(reporter, redactorFor(secrets));
-      if (allSecrets)
-        allSecrets = { ...allSecrets, ...secrets };
-    } else {
-      allSecrets = undefined;
-    }
-    reporters.push(reporter);
   }
+  const allSecretsRedactor = wrapReportersWithSecrets(reporters, descriptions);
   if (process.env.PW_TEST_REPORTER) {
     const name = process.env.PW_TEST_REPORTER;
     if (name in defaultReporters) {
@@ -112,12 +92,34 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
       reporter = new ListModeReporter();
     else if (mode !== 'merge')
       reporter = !process.env.CI ? new LineReporter() : new DotReporter();
-    if (reporter && allSecrets && descriptions.length)
-      reporter = new RedactingReporter(reporter, redactorFor(allSecrets));
     if (reporter)
-      reporters.unshift(reporter);
+      reporters.unshift(allSecretsRedactor ? new RedactingReporter(reporter, allSecretsRedactor) : reporter);
   }
   return reporters;
+}
+
+function wrapReportersWithSecrets(reporters: ReporterV2[], descriptions: ReporterDescription[]): SecretsRedactor | undefined {
+  const redactors = new Map<string, SecretsRedactor>();
+  const redactorFor = (secrets: Secrets) => {
+    const key = secretsKey(secrets);
+    let redactor = redactors.get(key);
+    if (!redactor) {
+      redactor = new SecretsRedactor(secrets);
+      redactors.set(key, redactor);
+    }
+    return redactor;
+  };
+  let allSecrets: Secrets | undefined = reporters.length ? [] : undefined;
+  for (let i = 0; i < reporters.length; i++) {
+    const secrets: Secrets | undefined = descriptions[i][1]?.secrets;
+    if (secrets) {
+      reporters[i] = new RedactingReporter(reporters[i], redactorFor(secrets));
+      allSecrets = allSecrets ? [...allSecrets, ...secrets] : undefined;
+    } else {
+      allSecrets = undefined;
+    }
+  }
+  return allSecrets ? redactorFor(allSecrets) : undefined;
 }
 
 interface ErrorCollectingReporter extends ReporterV2 {

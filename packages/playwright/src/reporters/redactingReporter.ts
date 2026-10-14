@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { redactSecrets, redactSecretsInBuffer } from '@isomorphic/secrets';
+import { normalizeSecrets, redactSecrets, redactSecretsInBuffer } from '@isomorphic/secrets';
 
 import type { ReportConfigureParams, ReportEndParams, ReporterPreprocessParams, ReporterV2 } from './reporterV2';
 import type { FullConfig, FullResult, Suite, TestCase, TestError, TestResult, TestStep, WorkerInfo } from '../../types/testReporter';
@@ -22,16 +22,12 @@ import type { Secrets } from '@isomorphic/secrets';
 
 export class SecretsRedactor {
   private _secrets: Secrets;
-  private _views = new WeakMap<object, any>();
-  private _buffers = new WeakMap<Buffer, Buffer>();
+  private _views = new Map<object, any>();
+  private _buffers = new Map<Buffer, Buffer>();
   private _handler: ProxyHandler<any>;
 
-  static key(secrets: Secrets): string {
-    return JSON.stringify(Object.entries(secrets).sort());
-  }
-
   constructor(secrets: Secrets) {
-    this._secrets = secrets;
+    this._secrets = normalizeSecrets(secrets);
     this._handler = {
       get: (target, property, receiver) => {
         const value = Reflect.get(target, property, receiver);

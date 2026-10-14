@@ -78,7 +78,7 @@ test('should redact secrets for reporters with the option only', async ({ runInl
     'playwright.config.ts': `
       module.exports = {
         reporter: [
-          ['./reporter.ts', { prefix: 'redacted', secrets: { PASSWORD: process.env.PASSWORD, EMPTY: '' } }],
+          ['./reporter.ts', { prefix: 'redacted', secrets: [{ name: 'PASSWORD', value: process.env.PASSWORD }, { name: 'EMPTY', value: '' }] }],
           ['./reporter.ts', { prefix: 'raw' }],
         ],
       };
@@ -118,9 +118,9 @@ test('should redact secrets in built-in reporters', async ({ runInlineTest }, te
     'playwright.config.ts': `
       module.exports = {
         reporter: [
-          ['list', { secrets: { PASSWORD: process.env.PASSWORD } }],
-          ['json', { secrets: { PASSWORD: process.env.PASSWORD }, outputFile: 'secrets-report.json' }],
-          ['html', { secrets: { PASSWORD: process.env.PASSWORD }, open: 'never' }],
+          ['list', { secrets: [{ name: 'PASSWORD', value: process.env.PASSWORD }] }],
+          ['json', { secrets: [{ name: 'PASSWORD', value: process.env.PASSWORD }], outputFile: 'secrets-report.json' }],
+          ['html', { secrets: [{ name: 'PASSWORD', value: process.env.PASSWORD }], open: 'never' }],
         ],
       };
     `,
@@ -163,8 +163,8 @@ test('should redact secrets in the convenience reporter when all reporters have 
     'playwright.config.ts': `
       module.exports = {
         reporter: [
-          ['json', { secrets: { PASSWORD: process.env.PASSWORD }, outputFile: 'secrets-report.json' }],
-          ['null', { secrets: { OTHER: 'stdout' } }],
+          ['json', { secrets: [{ name: 'PASSWORD', value: process.env.PASSWORD }], outputFile: 'secrets-report.json' }],
+          ['null', { secrets: [{ value: 'stdout' }] }],
         ],
       };
     `,
@@ -174,5 +174,5 @@ test('should redact secrets in the convenience reporter when all reporters have 
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).not.toContain('password123');
   expect(stripAnsi(result.output)).toContain('fails <secret>PASSWORD</secret>');
-  expect(stripAnsi(result.output)).toContain('<secret>OTHER</secret> <secret>PASSWORD</secret>');
+  expect(stripAnsi(result.output)).toContain('<secret/> <secret>PASSWORD</secret>');
 });

@@ -14,36 +14,33 @@
  * limitations under the License.
  */
 
+export type Secrets = { name?: string, value: string }[];
 
-export type Secrets = Record<string, string>;
-
-type SecretEntry = { name: string, value: string };
-
-// Longer values go first, so that a secret that contains another secret
-// is replaced as a whole.
-function secretEntries(secrets: Secrets | undefined): SecretEntry[] {
+// Longer values go first, so that a secret that contains another secret is replaced as a whole.
+export function normalizeSecrets(secrets: Secrets | undefined): Secrets {
   if (!secrets)
     return [];
-  return Object.entries(secrets)
-      .filter(([, value]) => typeof value === 'string' && value.length > 0)
-      .map(([name, value]) => ({ name, value }))
+  return secrets
+      .filter(secret => typeof secret?.value === 'string' && secret.value.length > 0)
       .sort((a, b) => b.value.length - a.value.length);
 }
 
-export function secretPlaceholder(name: string): string {
-  return `<secret>${name}</secret>`;
+export function secretsKey(secrets: Secrets | undefined): string {
+  return JSON.stringify(normalizeSecrets(secrets).map(secret => JSON.stringify([secret.name ?? null, secret.value])).sort());
 }
 
-export function redactSecrets(text: string, secrets: Secrets | undefined): string {
-  for (const { name, value } of secretEntries(secrets))
+export function secretPlaceholder(name: string | undefined): string {
+  return name ? `<secret>${name}</secret>` : `<secret/>`;
+}
+
+export function redactSecrets(text: string, secrets: Secrets): string {
+  for (const { name, value } of secrets)
     text = text.replaceAll(value, secretPlaceholder(name));
   return text;
 }
 
-// Replaces secrets in a string produced by JSON.stringify(), where the secret
-// value may have been escaped.
-export function redactSecretsInJSON(json: string, secrets: Secrets | undefined): string {
-  for (const { name, value } of secretEntries(secrets)) {
+export function redactSecretsInJSON(json: string, secrets: Secrets): string {
+  for (const { name, value } of secrets) {
     const escapedValue = JSON.stringify(value).slice(1, -1);
     const escapedPlaceholder = JSON.stringify(secretPlaceholder(name)).slice(1, -1);
     json = json.replaceAll(escapedValue, escapedPlaceholder);
@@ -51,11 +48,9 @@ export function redactSecretsInJSON(json: string, secrets: Secrets | undefined):
   return json;
 }
 
-// Replaces secret bytes in a buffer, without decoding it. The buffer may be
-// binary or not a valid utf-8 string. The same buffer is returned when
-// nothing was replaced.
-export function redactSecretsInBuffer(buffer: Buffer, secrets: Secrets | undefined): Buffer {
-  for (const { name, value } of secretEntries(secrets)) {
+// The buffer is not decoded, because it may not be a valid utf-8 string.
+export function redactSecretsInBuffer(buffer: Buffer, secrets: Secrets): Buffer {
+  for (const { name, value } of secrets) {
     const needle = Buffer.from(value, 'utf8');
     let index = buffer.indexOf(needle);
     if (index === -1)
