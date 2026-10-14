@@ -84,7 +84,7 @@ test('should include repeat token', async ({ runInlineTest }) => {
 });
 
 test('should keep output directories unique for titles that sanitize identically', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
+  const files = {
     'a.spec.js': `
       import { test } from '@playwright/test';
       test('offset (x +1)', ({}, testInfo) => {
@@ -93,6 +93,43 @@ test('should keep output directories unique for titles that sanitize identically
         throw new Error('Keep the output directory');
       });
       test('offset (x 1)', ({}, testInfo) => {
+        console.log('%%second:' + testInfo.outputDir);
+      });
+    `,
+    'playwright.config.ts': `export default { fullyParallel: true };`,
+  };
+  const result = await runInlineTest(files, { workers: 2 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.outputLines).toHaveLength(2);
+  const firstOutputDir = result.outputLines.find(line => line.startsWith('first:'))?.substring('first:'.length);
+  const secondOutputDir = result.outputLines.find(line => line.startsWith('second:'))?.substring('second:'.length);
+  expect(firstOutputDir).toBeTruthy();
+  expect(secondOutputDir).toBeTruthy();
+  if (!firstOutputDir || !secondOutputDir)
+    throw new Error('Expected both tests to report their output directories');
+  expect(firstOutputDir).not.toBe(secondOutputDir);
+  expect(fs.existsSync(path.join(firstOutputDir, 'artifact.txt'))).toBe(true);
+
+  const filteredResult = await runInlineTest(files, { workers: 1, grep: 'offset \\(x \\+1\\)' });
+  expect(filteredResult.exitCode).toBe(1);
+  const filteredOutputDir = filteredResult.outputLines.find(line => line.startsWith('first:'))?.substring('first:'.length);
+  expect(filteredOutputDir).toBe(firstOutputDir);
+});
+
+test('should keep output directories unique for colliding test file paths', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a/b.spec.js': `
+      import { test } from '@playwright/test';
+      test('same title', ({}, testInfo) => {
+        require('fs').writeFileSync(testInfo.outputPath('artifact.txt'), 'content');
+        console.log('%%first:' + testInfo.outputDir);
+        throw new Error('Keep the output directory');
+      });
+    `,
+    'a-b.spec.js': `
+      import { test } from '@playwright/test';
+      test('same title', ({}, testInfo) => {
         console.log('%%second:' + testInfo.outputDir);
       });
     `,
@@ -108,6 +145,35 @@ test('should keep output directories unique for titles that sanitize identically
   if (!firstOutputDir || !secondOutputDir)
     throw new Error('Expected both tests to report their output directories');
   expect(firstOutputDir).not.toBe(secondOutputDir);
+  expect(fs.existsSync(path.join(firstOutputDir, 'artifact.txt'))).toBe(true);
+});
+
+test('should keep output directories unique for case-only title differences', async ({ runInlineTest }) => {
+  test.skip(process.platform !== 'win32' && process.platform !== 'darwin');
+  const result = await runInlineTest({
+    'a.spec.js': `
+      import { test } from '@playwright/test';
+      test('Title', ({}, testInfo) => {
+        require('fs').writeFileSync(testInfo.outputPath('artifact.txt'), 'content');
+        console.log('%%first:' + testInfo.outputDir);
+        throw new Error('Keep the output directory');
+      });
+      test('title', ({}, testInfo) => {
+        console.log('%%second:' + testInfo.outputDir);
+      });
+    `,
+    'playwright.config.ts': `export default { fullyParallel: true };`,
+  }, { workers: 2 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.outputLines).toHaveLength(2);
+  const firstOutputDir = result.outputLines.find(line => line.startsWith('first:'))?.substring('first:'.length);
+  const secondOutputDir = result.outputLines.find(line => line.startsWith('second:'))?.substring('second:'.length);
+  expect(firstOutputDir).toBeTruthy();
+  expect(secondOutputDir).toBeTruthy();
+  if (!firstOutputDir || !secondOutputDir)
+    throw new Error('Expected both tests to report their output directories');
+  expect(firstOutputDir.toLowerCase()).not.toBe(secondOutputDir.toLowerCase());
   expect(fs.existsSync(path.join(firstOutputDir, 'artifact.txt'))).toBe(true);
 });
 
