@@ -1084,7 +1084,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * ```js
    * import { test, expect } from '@playwright/test';
    *
-   * test.use({ baseUrl: `http://localhost:${process.env.MY_SERVER_PORT ?? 3000}` });
+   * test.use({ baseURL: `http://localhost:${process.env.MY_SERVER_PORT ?? 3000}` });
    *
    * test('homepage', async ({ page }) => {
    *   await page.goto('/');

@@ -1306,61 +1306,61 @@ Below is an example of a simple handler that blocks some websocket messages.
 See [WebSocketRoute] for more details and examples.
 
 ```js
-await context.routeWebSocket('/ws', async ws => {
-  ws.routeSend(message => {
+await context.routeWebSocket('/ws', ws => {
+  const server = ws.connectToServer();
+  ws.onMessage(message => {
     if (message === 'to-be-blocked')
       return;
-    ws.send(message);
+    server.send(message);
   });
-  await ws.connect();
 });
 ```
 
 ```java
 context.routeWebSocket("/ws", ws -> {
-  ws.routeSend(message -> {
-    if ("to-be-blocked".equals(message))
+  WebSocketRoute server = ws.connectToServer();
+  ws.onMessage(frame -> {
+    if ("to-be-blocked".equals(frame.text()))
       return;
-    ws.send(message);
+    server.send(frame.text());
   });
-  ws.connect();
 });
 ```
 
 ```python async
-def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
+def message_handler(server: WebSocketRoute, message: Union[str, bytes]):
   if message == "to-be-blocked":
     return
-  ws.send(message)
+  server.send(message)
 
-async def handler(ws: WebSocketRoute):
-  ws.route_send(lambda message: message_handler(ws, message))
-  await ws.connect()
+def handler(ws: WebSocketRoute):
+  server = ws.connect_to_server()
+  ws.on_message(lambda message: message_handler(server, message))
 
 await context.route_web_socket("/ws", handler)
 ```
 
 ```python sync
-def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
+def message_handler(server: WebSocketRoute, message: Union[str, bytes]):
   if message == "to-be-blocked":
     return
-  ws.send(message)
+  server.send(message)
 
 def handler(ws: WebSocketRoute):
-  ws.route_send(lambda message: message_handler(ws, message))
-  ws.connect()
+  server = ws.connect_to_server()
+  ws.on_message(lambda message: message_handler(server, message))
 
 context.route_web_socket("/ws", handler)
 ```
 
 ```csharp
-await context.RouteWebSocketAsync("/ws", async ws => {
-  ws.RouteSend(message => {
-    if (message == "to-be-blocked")
+await context.RouteWebSocketAsync("/ws", ws => {
+  var server = ws.ConnectToServer();
+  ws.OnMessage(frame => {
+    if (frame.Text == "to-be-blocked")
       return;
-    ws.Send(message);
+    server.Send(frame.Text);
   });
-  await ws.ConnectAsync();
 });
 ```
 

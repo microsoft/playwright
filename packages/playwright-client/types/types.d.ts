@@ -5875,10 +5875,11 @@ export interface Page {
    * **Usage**
    *
    * ```js
-   * page.screencast.on('screencastFrame', data => {
-   *   console.log('received frame, jpeg size:', data.length);
+   * await page.screencast.start({
+   *   onFrame: ({ data }) => {
+   *     console.log('received frame, jpeg size:', data.length);
+   *   },
    * });
-   * await page.screencast.start();
    * // ... perform actions ...
    * await page.screencast.stop();
    * ```
@@ -8417,7 +8418,7 @@ export interface Frame {
    * frame.selectOption('select#colors', { label: 'Blue' });
    *
    * // multiple selection
-   * frame.selectOption('select#colors', 'red', 'green', 'blue');
+   * frame.selectOption('select#colors', ['red', 'green', 'blue']);
    * ```
    *
    * @param selector A selector to query for.
@@ -10524,13 +10525,13 @@ export interface BrowserContext {
    * [WebSocketRoute](https://playwright.dev/docs/api/class-websocketroute) for more details and examples.
    *
    * ```js
-   * await context.routeWebSocket('/ws', async ws => {
-   *   ws.routeSend(message => {
+   * await context.routeWebSocket('/ws', ws => {
+   *   const server = ws.connectToServer();
+   *   ws.onMessage(message => {
    *     if (message === 'to-be-blocked')
    *       return;
-   *     ws.send(message);
+   *     server.send(message);
    *   });
-   *   await ws.connect();
    * });
    * ```
    *
