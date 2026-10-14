@@ -55,18 +55,9 @@ const resume = defineTool({
     });
 
     if (params.location) {
-      // Split at the last colon, but not at the drive letter of a Windows path like "C:\tests\example.spec.ts".
-      const separator = params.location.lastIndexOf(':');
-      const [file, lineStr] = separator > 1 ? [params.location.slice(0, separator), params.location.slice(separator + 1)] : [params.location, ''];
-      let location;
-      if (lineStr) {
-        const line = Number(lineStr);
-        if (isNaN(line))
-          throw new Error(`Invalid location "${params.location}", expected format is <file>:<line>, e.g. "example.spec.ts:42"`);
-        location = { file, line };
-      } else {
-        location = { file: params.location };
-      }
+      // <file>:<line>[:<column>], where <file> may contain colons, e.g. "C:\tests\example.spec.ts:42". The column is ignored.
+      const match = /^(.+?):(\d+)(?::\d+)?$/.exec(params.location);
+      const location = match ? { file: match[1], line: Number(match[2]) } : { file: params.location };
       await browserContext.debugger.runTo(location);
     } else if (params.step) {
       await browserContext.debugger.next();
