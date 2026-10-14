@@ -64,7 +64,7 @@ export default defineConfig({
 
 ## property: TestOptions.browserName
 * since: v1.10
-- type: <[BrowserName]<"chromium"|"firefox"|"webkit">>
+- type: "BrowserName" <"chromium"|"firefox"|"webkit">
 
 Name of the browser that runs tests. Defaults to `'chromium'`. Most of the time you should set `browserName` in your [TestConfig]:
 
@@ -595,8 +595,8 @@ export default defineConfig({
 
 ## property: TestOptions.screenshot
 * since: v1.10
-- type: <[Object]|[ScreenshotMode]<"off"|"on"|"only-on-failure"|"on-first-failure">>
-  - `mode` <[ScreenshotMode]<"off"|"on"|"only-on-failure"|"on-first-failure">> Automatic screenshot mode.
+- type: "ScreenshotMode" <[Object]|"off"|"on"|"only-on-failure"|"on-first-failure">
+  - `mode` "ScreenshotMode" <"off"|"on"|"only-on-failure"|"on-first-failure"> Automatic screenshot mode.
   - `fullPage` ?<[boolean]> When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to `false`.
   - `omitBackground` ?<[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
 
@@ -697,8 +697,8 @@ export default defineConfig({
 
 ## property: TestOptions.trace
 * since: v1.10
-- type: <[Object]|[TraceMode]<"off"|"on"|"on-first-retry"|"on-all-retries"|"retain-on-failure"|"retain-on-first-failure"|"retain-on-failure-and-retries">>
-  - `mode` <[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries">> Trace recording mode.
+- type: "TraceMode" <[Object]|"off"|"on"|"on-first-retry"|"on-all-retries"|"retain-on-failure"|"retain-on-first-failure"|"retain-on-failure-and-retries">
+  - `mode` "TraceMode" <"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries"> Trace recording mode.
   - `attachments` ?<[boolean]> Whether to include test attachments. Defaults to true. Optional.
   - `screenshots` ?<[boolean]> Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview. Defaults to true. Optional.
   - `snapshots` ?<[boolean]|[Object]> Which snapshots to capture on every action. Passing `true` is a shortcut for `{ dom: true }`. Defaults to true. Optional.
@@ -751,8 +751,8 @@ export default defineConfig({
 
 ## property: TestOptions.video
 * since: v1.10
-- type: <[Object]|[VideoMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries">>
-  - `mode` <[VideoMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries">> Video recording mode.
+- type: "VideoMode" <[Object]|"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries">
+  - `mode` "VideoMode" <"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries"> Video recording mode.
   - `size` ?<[Object]> Size of the recorded video. Optional.
     - `width` <[int]>
     - `height` <[int]>
@@ -760,16 +760,16 @@ export default defineConfig({
   - `show` ?<[Object]> If specified, visually annotates the video with test information and action highlights.
     - `actions` ?<[Object]> Controls visual annotations on interacted elements.
       - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
-      - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the action title overlay. Defaults to `"top-right"`.
+      - `position` "AnnotatePosition" ?<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right"> Position of the action title overlay. Defaults to `"top-right"`.
       - `fontSize` ?<[int]> Font size of the action title in pixels. Defaults to `24`. Deprecated, use `style.title` instead.
-      - `cursor` ?<[ScreencastCursor]<"none"|"pointer">> Cursor decoration shown for pointer actions. `"pointer"` (the default) renders a mouse pointer that animates from the previous action point to the next one. `"none"` disables the cursor decoration.
+      - `cursor` "ScreencastCursor" ?<"none"|"pointer"> Cursor decoration shown for pointer actions. `"pointer"` (the default) renders a mouse pointer that animates from the previous action point to the next one. `"none"` disables the cursor decoration.
       - `style` ?<[Object]> Styles of the action decorations.
         - `point` ?<[string]> CSS declarations for the zero-sized marker centered on the action point. Not shown when omitted.
         - `highlight` ?<[string]> CSS declarations for the box that covers the target element. Not shown when omitted.
         - `title` ?<[string]> CSS declarations for the action title.
     - `test` ?<[Object]> Controls test information displayed as a status overlay in the video.
-      - `level` ?<[TestAnnotationLevel]<"file"|"title"|"step">> Level of the detail to include about the current test.
-      - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the test information overlay. Defaults to `"top-left"`.
+      - `level` "TestAnnotationLevel" ?<"file"|"title"|"step"> Level of the detail to include about the current test.
+      - `position` "AnnotatePosition" ?<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right"> Position of the test information overlay. Defaults to `"top-left"`.
       - `fontSize` ?<[int]> Font size of the test information in pixels. Defaults to `14`.
 
 Whether to record video for each test. Defaults to `'off'`. The initial run of a test is the "first run"; subsequent runs caused by [retries](../test-retries.md) are "retries".

@@ -53,13 +53,11 @@ Input for the tool, matching its `inputSchema`. Defaults to an empty object.
 
 ## async method: WebMCP.tools
 * since: v1.64
-- returns: <[Array]<[Object]>>
-  * alias: WebMCPTool
+- returns: "WebMCPTool" <[Array]<[Object]>>
   - `name` <[string]> Tool name, unique within the frame.
   - `description` <[string]> Tool description.
   - `inputSchema` ?<[Serializable]> JSON Schema of the tool input, when the page provides one.
-  - `annotations` ?<[Object]> Hints the page provides about the tool.
-    - alias: WebMCPToolAnnotations
+  - `annotations` "WebMCPToolAnnotations" ?<[Object]> Hints the page provides about the tool.
     - `readOnly` ?<[boolean]> The tool does not modify any state.
     - `untrustedContent` ?<[boolean]> The tool output may contain third-party content.
     - `consequential` ?<[boolean]> The tool takes a consequential action, such as placing an order.

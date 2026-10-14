@@ -309,9 +309,8 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 
 ## async method: Browser.bind
 * since: v1.59
-- returns: <[Object]>
-  * alias: BindResult
-  * alias-csharp: BrowserBindResult
+- returns: "BrowserBindResult" <[Object]>
+  * alias-java: BindResult
   - `endpoint` <[string]>
 
 Binds the browser to a named pipe or web socket, making it available for other clients to connect to.
@@ -401,6 +400,14 @@ browser.stop_tracing()
 
 ### param: Browser.startTracing.page
 * since: v1.11
+* langs: java, js
+- `page` ?<[Page]>
+
+Optional, if specified, tracing includes screenshots of the given page.
+
+### option: Browser.startTracing.page
+* since: v1.11
+* langs: python
 - `page` ?<[Page]>
 
 Optional, if specified, tracing includes screenshots of the given page.

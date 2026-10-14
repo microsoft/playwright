@@ -108,9 +108,9 @@ await locator.ClickAsync();
 
 ## async method: ElementHandle.boundingBox
 * since: v1.8
-- returns: <[null]|[Object]>
-  * alias: BoundingBox
+- returns: "BoundingBox" <[null]|[Object]>
   * alias-csharp: ElementHandleBoundingBoxResult
+  * alias-python: FloatRect
   - `x` <[float]> the x coordinate of the element in pixels.
   - `y` <[float]> the y coordinate of the element in pixels.
   - `width` <[float]> the width of the element in pixels.
@@ -912,16 +912,16 @@ await handle.SelectOptionAsync(new[] {
 
 ### option: ElementHandle.selectOption.signal = %%-input-signal-%%
 
-### param: ElementHandle.selectOption.element = %%-python-select-options-element-%%
+### option: ElementHandle.selectOption.element = %%-python-select-options-element-%%
 * since: v1.8
 
-### param: ElementHandle.selectOption.index = %%-python-select-options-index-%%
+### option: ElementHandle.selectOption.index = %%-python-select-options-index-%%
 * since: v1.8
 
 ### param: ElementHandle.selectOption.value = %%-python-select-options-value-%%
 * since: v1.8
 
-### param: ElementHandle.selectOption.label = %%-python-select-options-label-%%
+### option: ElementHandle.selectOption.label = %%-python-select-options-label-%%
 * since: v1.8
 
 ## async method: ElementHandle.selectText
@@ -1155,7 +1155,7 @@ If the element does not satisfy the condition for the [`option: timeout`] millis
 
 ### param: ElementHandle.waitForElementState.state
 * since: v1.8
-- `state` <[ElementState]<"visible"|"hidden"|"stable"|"enabled"|"disabled"|"editable">>
+- `state` "ElementState" <"visible"|"hidden"|"stable"|"enabled"|"disabled"|"editable">
 
 A state to wait for, see below for more details.
 

@@ -217,8 +217,7 @@ await request.ClearCookiesAsync(new() { Name = "session-id", Domain = "my-origin
 
 ## async method: APIRequestContext.cookies
 * since: v1.64
-- returns: <[Array]<[Object]>>
-  * alias: Cookie
+- returns: "Cookie" <[Array]<[Object]>>
   * alias-csharp: BrowserContextCookiesResult
   - `name` <[string]>
   - `value` <[string]>
@@ -227,7 +226,7 @@ await request.ClearCookiesAsync(new() { Name = "session-id", Domain = "my-origin
   - `expires` <[float]> Unix time in seconds.
   - `httpOnly` <[boolean]>
   - `secure` <[boolean]>
-  - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">>
+  - `sameSite` "SameSiteAttribute" <"Strict"|"Lax"|"None">
   - `partitionKey` ?<[string]>
 
 If no URLs are specified, this method returns all cookies. If URLs are specified, only cookies that affect those URLs
@@ -996,8 +995,8 @@ context cookies from the response. The method will automatically follow redirect
 
 ## async method: APIRequestContext.storageState
 * since: v1.16
-- returns: <[Object]>
-  - `cookies` <[Array]<[Object]>>
+- returns: "StorageState" <[Object]>
+  - `cookies` "StorageStateCookie" <[Array]<[Object]>>
     - `name` <[string]>
     - `value` <[string]>
     - `domain` <[string]>
@@ -1005,10 +1004,10 @@ context cookies from the response. The method will automatically follow redirect
     - `expires` <[float]> Unix time in seconds.
     - `httpOnly` <[boolean]>
     - `secure` <[boolean]>
-    - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">>
-  - `origins` <[Array]<[Object]>>
+    - `sameSite` "SameSiteAttribute" <"Strict"|"Lax"|"None">
+  - `origins` "OriginState" <[Array]<[Object]>>
     - `origin` <[string]>
-    - `localStorage` <[Array]<[Object]>>
+    - `localStorage` "LocalStorageEntry" <[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
 

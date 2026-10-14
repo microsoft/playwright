@@ -73,14 +73,14 @@ The structure of the git commit metadata is subject to change.
 - type: ?<[Object]>
   - `timeout` ?<[int]> Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
   - `toHaveScreenshot` ?<[Object]> Configuration for the [`method: PageAssertions.toHaveScreenshot#1`] method.
-    - `animations` ?<[ScreenshotAnimations]<"allow"|"disabled">> See [`option: Page.screenshot.animations`] in [`method: Page.screenshot`]. Defaults to `"disabled"`.
-    - `caret` ?<[ScreenshotCaret]<"hide"|"initial">> See [`option: Page.screenshot.caret`] in [`method: Page.screenshot`]. Defaults to `"hide"`.
+    - `animations` "ScreenshotAnimations" ?<"allow"|"disabled"> See [`option: Page.screenshot.animations`] in [`method: Page.screenshot`]. Defaults to `"disabled"`.
+    - `caret` "ScreenshotCaret" ?<"hide"|"initial"> See [`option: Page.screenshot.caret`] in [`method: Page.screenshot`]. Defaults to `"hide"`.
     - `maxDiffPixels` ?<[int]> An acceptable amount of pixels that could be different, unset by default. Note that `threshold` defines which pixels are considered different.
     - `maxDiffPixelRatio` ?<[float]> An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default. Note that `threshold` defines which pixels are considered different.
-    - `scale` ?<[ScreenshotScale]<"css"|"device">> See [`option: Page.screenshot.scale`] in [`method: Page.screenshot`]. Defaults to `"css"`.
+    - `scale` "ScreenshotScale" ?<"css"|"device"> See [`option: Page.screenshot.scale`] in [`method: Page.screenshot`]. Defaults to `"css"`.
     - `stylePath` ?<[string]|[Array]<[string]>> See [`option: Page.screenshot.style`] in [`method: Page.screenshot`].
     - `threshold` ?<[float]> An acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and `1` (lax). `"pixelmatch"` comparator computes color difference in [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
-    - `type` ?<[ScreenshotType]<"png"|"webp">> Format of the screenshots taken when the snapshot name is omitted, defaults to `"png"`. Snapshots with an explicit name use the format matching their `.png` or `.webp` extension.
+    - `type` "ScreenshotType" ?<"png"|"webp"> Format of the screenshots taken when the snapshot name is omitted, defaults to `"png"`. Snapshots with an explicit name use the format matching their `.png` or `.webp` extension.
     - `pathTemplate` ?<[string]> A template controlling location of the screenshots. See [`property: TestConfig.snapshotPathTemplate`] for details.
   - `toMatchAriaSnapshot` ?<[Object]> Configuration for the [`method: LocatorAssertions.toMatchAriaSnapshot#2`] method.
     - `pathTemplate` ?<[string]> A template controlling location of the aria snapshots. See [`property: TestConfig.snapshotPathTemplate`] for details.
@@ -378,7 +378,7 @@ This path will serve as the base directory for each test file snapshot directory
 
 ## property: TestConfig.preserveOutput
 * since: v1.10
-- type: ?<[PreserveOutput]<"always"|"never"|"failures-only">>
+- type: "PreserveOutput" ?<"always"|"never"|"failures-only">
 
 Whether to preserve test output in the [`property: TestConfig.outputDir`]. Defaults to `'always'`.
 * `'always'` - preserve output for all tests;
@@ -449,7 +449,7 @@ export default defineConfig({
 
 ## property: TestConfig.reporter
 * since: v1.10
-- type: ?<[string]|[Array]<[Object]>|[BuiltInReporter]<"list"|"dot"|"failures"|"line"|"github"|"json"|"junit"|"null"|"html"|"blob"|"perfetto">>
+- type: "BuiltInReporter" ?<[string]|[Array]<[Object]>|"list"|"dot"|"failures"|"line"|"github"|"json"|"junit"|"null"|"html"|"blob"|"perfetto">
   - `0` <[string]> Reporter name or module or file path
   - `1` <[Object]> An object with reporter options if any
 
@@ -518,7 +518,7 @@ export default defineConfig({
 
 ## property: TestConfig.retryStrategy
 * since: v1.62
-- type: ?<[RetryStrategy]<"immediate"|"isolated">>
+- type: "RetryStrategy" ?<"immediate"|"isolated">
 
 Controls when failed tests are retried. Defaults to `'immediate'`.
 * `'immediate'` - A failed test is retried as soon as a worker is available, interleaved with the rest of the run. This is the default.
@@ -665,7 +665,7 @@ export default defineConfig({
 
 ## property: TestConfig.updateSnapshots
 * since: v1.10
-- type: ?<[UpdateSnapshots]<"all"|"changed"|"missing"|"none"|"default">>
+- type: "UpdateSnapshots" ?<"all"|"changed"|"missing"|"none"|"default">
 
 Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'default'`.
 * `'all'` - All tests that are executed will update snapshots.
@@ -688,7 +688,7 @@ export default defineConfig({
 
 ## property: TestConfig.updateSourceMethod
 * since: v1.50
-- type: ?<[UpdateSourceMethod]<"overwrite"|"3way"|"patch">>
+- type: "UpdateSourceMethod" ?<"overwrite"|"3way"|"patch">
 
 Defines how to update snapshots in the source code.
 * `'patch'` - Create a unified diff file that can be used to update the source code later. This is the default.

@@ -135,7 +135,7 @@ Errors thrown during test execution, if any.
 
 ## property: TestInfo.expectedStatus
 * since: v1.10
-- type: <[TestStatus]<"passed"|"failed"|"timedOut"|"skipped"|"interrupted">>
+- type: "TestStatus" <"passed"|"failed"|"timedOut"|"skipped"|"interrupted">
 
 Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
 * `'skipped'` for skipped tests, e.g. with [`method: Test.skip`];
@@ -423,7 +423,7 @@ When passing [`option: kind`], multiple name segments are not supported.
 
 ### option: TestInfo.snapshotPath.kind
 * since: v1.53
-- `kind` <[SnapshotKind]<"snapshot"|"screenshot"|"aria">>
+- `kind` "SnapshotKind" <"snapshot"|"screenshot"|"aria">
 
 The snapshot kind controls which snapshot path template is used. See [`property: TestConfig.snapshotPathTemplate`] for more details. Defaults to `'snapshot'`.
 
@@ -440,7 +440,7 @@ Suffix used to differentiate snapshots between multiple test configurations. For
 
 ## property: TestInfo.status
 * since: v1.10
-- type: ?<[TestStatus]<"passed"|"failed"|"timedOut"|"skipped"|"interrupted">>
+- type: "TestStatus" ?<"passed"|"failed"|"timedOut"|"skipped"|"interrupted">
 
 Actual status for the currently running test. Available after the test has finished in [`method: Test.afterEach`] hook and fixtures.
 

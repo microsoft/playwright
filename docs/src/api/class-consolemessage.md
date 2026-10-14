@@ -113,7 +113,7 @@ List of arguments passed to a `console` function call. See also [`event: Page.co
 ## method: ConsoleMessage.location
 * since: v1.8
 * langs: js, python
-- returns: <[Object]>
+- returns: "SourceLocation" <[Object]>
   - `url` <[string]> URL of the resource.
   - `line` <[int]> 0-based line number in the resource.
   - `column` <[int]> 0-based column number in the resource.
@@ -148,7 +148,7 @@ The timestamp of the console message in milliseconds since the Unix epoch.
 ## method: ConsoleMessage.type
 * since: v1.8
 * langs: js, python
-- returns: <[ConsoleMessageType]<"log"|"debug"|"info"|"error"|"warning"|"dir"|"dirxml"|"table"|"trace"|"clear"|"startGroup"|"startGroupCollapsed"|"endGroup"|"assert"|"profile"|"profileEnd"|"count"|"time"|"timeEnd">>
+- returns: "ConsoleMessageType" <"log"|"debug"|"info"|"error"|"warning"|"dir"|"dirxml"|"table"|"trace"|"clear"|"startGroup"|"startGroupCollapsed"|"endGroup"|"assert"|"profile"|"profileEnd"|"count"|"time"|"timeEnd">
 
 ## method: ConsoleMessage.type
 * since: v1.8

@@ -643,7 +643,7 @@ Script to be evaluated in all pages in the browser context.
 
 Optional argument to pass to [`param: script`] (only supported when passing a function).
 
-### param: Page.addInitScript.path
+### option: Page.addInitScript.path
 * since: v1.8
 * langs: python
 - `path` ?<[path]>
@@ -1291,7 +1291,7 @@ await page.EvaluateAsync("matchMedia('(prefers-color-scheme: light)').matches");
 ### option: Page.emulateMedia.media
 * since: v1.9
 * langs: js, java
-- `media` <null|[Media]<"screen"|"print">>
+- `media` "Media" <null|"screen"|"print">
 
 Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`.
 Passing `null` disables CSS media emulation.
@@ -1299,7 +1299,7 @@ Passing `null` disables CSS media emulation.
 ### option: Page.emulateMedia.media
 * since: v1.9
 * langs: csharp, python
-- `media` <[Media]<"screen"|"print"|"null">>
+- `media` "Media" <"screen"|"print"|"null">
 
 Changes the CSS media type of the page. The only allowed values are `'Screen'`, `'Print'` and `'Null'`.
 Passing `'Null'` disables CSS media emulation.
@@ -1307,7 +1307,7 @@ Passing `'Null'` disables CSS media emulation.
 ### option: Page.emulateMedia.colorScheme
 * since: v1.9
 * langs: js, java
-- `colorScheme` <null|[ColorScheme]<"light"|"dark"|"no-preference">>
+- `colorScheme` "ColorScheme" <null|"light"|"dark"|"no-preference">
 
 Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) media feature, supported values are `'light'` and `'dark'`. Passing
 `null` disables color scheme emulation. `'no-preference'` is deprecated.
@@ -1315,7 +1315,7 @@ Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CS
 ### option: Page.emulateMedia.colorScheme
 * since: v1.9
 * langs: csharp, python
-- `colorScheme` <[ColorScheme]<"light"|"dark"|"no-preference"|"null">>
+- `colorScheme` "ColorScheme" <"light"|"dark"|"no-preference"|"null">
 
 Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) media feature, supported values are `'light'` and `'dark'`. Passing
 `'Null'` disables color scheme emulation. `'no-preference'` is deprecated.
@@ -1323,40 +1323,40 @@ Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CS
 ### option: Page.emulateMedia.reducedMotion
 * since: v1.12
 * langs: js, java
-- `reducedMotion` <null|[ReducedMotion]<"reduce"|"no-preference">>
+- `reducedMotion` "ReducedMotion" <null|"reduce"|"no-preference">
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing `null` disables reduced motion emulation.
 
 ### option: Page.emulateMedia.reducedMotion
 * since: v1.12
 * langs: csharp, python
-- `reducedMotion` <[ReducedMotion]<"reduce"|"no-preference"|"null">>
+- `reducedMotion` "ReducedMotion" <"reduce"|"no-preference"|"null">
 
 Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. Passing `null` disables reduced motion emulation.
 
 ### option: Page.emulateMedia.forcedColors
 * since: v1.15
 * langs: js, java
-- `forcedColors` <null|[ForcedColors]<"active"|"none">>
+- `forcedColors` "ForcedColors" <null|"active"|"none">
 
 Emulates `'forced-colors'` media feature, supported values are `'active'` and `'none'`. Passing `null` disables forced colors emulation.
 
 ### option: Page.emulateMedia.forcedColors
 * since: v1.15
 * langs: csharp, python
-- `forcedColors` <[ForcedColors]<"active"|"none"|"null">>
+- `forcedColors` "ForcedColors" <"active"|"none"|"null">
 
 ### option: Page.emulateMedia.contrast
 * since: v1.51
 * langs: js, java
-- `contrast` <null|[Contrast]<"no-preference"|"more">>
+- `contrast` "Contrast" <null|"no-preference"|"more">
 
 Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. Passing `null` disables contrast emulation.
 
 ### option: Page.emulateMedia.contrast
 * since: v1.51
 * langs: csharp, python
-- `contrast` <[Contrast]<"no-preference"|"more"|"null">>
+- `contrast` "Contrast" <"no-preference"|"more"|"null">
 
 ## async method: Page.evalOnSelector
 * since: v1.9
@@ -1868,8 +1868,7 @@ Name of the function on the window object.
 
 ### param: Page.exposeBinding.callback
 * since: v1.8
-- `callback` <[function]>
-  * alias: BindingCallback
+- `callback` "BindingCallback" <[function]>
 
 Callback function that will be called in the Playwright's context.
 
@@ -2062,8 +2061,7 @@ Name of the function on the window object
 
 ### param: Page.exposeFunction.callback
 * since: v1.8
-- `callback` <[function]>
-  * alias: FunctionCallback
+- `callback` "FunctionCallback" <[function]>
 
 Callback function which will be called in Playwright's context.
 
@@ -2181,7 +2179,7 @@ Frame name or other frame lookup options.
 
 Frame name specified in the `iframe`'s `name` attribute.
 
-### option: Page.frame.name
+### param: Page.frame.name
 * since: v1.8
 * langs: python
 - `name` ?<[string]>
@@ -2882,7 +2880,7 @@ Returns up to (currently) 200 last console messages from this page. See [`event:
 
 ### option: Page.consoleMessages.filter
 * since: v1.59
-- `filter` <[ConsoleMessagesFilter]<"all"|"since-navigation">>
+- `filter` "ConsoleMessagesFilter" <"all"|"since-navigation">
 
 Controls which messages are returned:
 - `'since-navigation'` (default) — returns only messages logged after the last committed main-frame navigation.
@@ -2905,7 +2903,7 @@ Returns up to (currently) 200 last page errors from this page. See [`event: Page
 
 ### option: Page.pageErrors.filter
 * since: v1.59
-- `filter` <[PageErrorsFilter]<"all"|"since-navigation">>
+- `filter` "PageErrorsFilter" <"all"|"since-navigation">
 
 Controls which errors are returned:
 - `'since-navigation'` (default) — returns only errors thrown after the last committed main-frame navigation.
@@ -3174,7 +3172,7 @@ Paper height, accepts values labeled with units.
 ### option: Page.pdf.margin
 * since: v1.8
 * langs: js, python
-- `margin` <[Object]>
+- `margin` "PdfMargins" <[Object]>
   - `top` ?<[string]|[float]> Top margin, accepts values labeled with units. Defaults to `0`.
   - `right` ?<[string]|[float]> Right margin, accepts values labeled with units. Defaults to `0`.
   - `bottom` ?<[string]|[float]> Bottom margin, accepts values labeled with units. Defaults to `0`.
@@ -3940,7 +3938,7 @@ Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerec
 
 ### option: Page.routeFromHAR.notFound
 * since: v1.23
-- `notFound` ?<[HarNotFound]<"abort"|"fallback">>
+- `notFound` "HarNotFound" ?<"abort"|"fallback">
 * If set to 'abort' any request not found in the HAR file will be aborted.
 * If set to 'fallback' missing requests will be sent to the network.
 
@@ -3960,13 +3958,13 @@ A glob pattern, regular expression or predicate to match the request URL. Only r
 
 ### option: Page.routeFromHAR.updateMode
 * since: v1.32
-- `updateMode` <[HarMode]<"full"|"minimal">>
+- `updateMode` "HarMode" <"full"|"minimal">
 
 When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `minimal`.
 
 ### option: Page.routeFromHAR.updateContent
 * since: v1.32
-- `updateContent` <[RouteFromHarUpdateContentPolicy]<"embed"|"attach">>
+- `updateContent` "RouteFromHarUpdateContentPolicy" <"embed"|"attach">
 
 Optional setting to control resource content management. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
 
@@ -4193,16 +4191,16 @@ await page.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
 
 ### option: Page.selectOption.signal = %%-input-signal-%%
 
-### param: Page.selectOption.element = %%-python-select-options-element-%%
+### option: Page.selectOption.element = %%-python-select-options-element-%%
 * since: v1.8
 
-### param: Page.selectOption.index = %%-python-select-options-index-%%
+### option: Page.selectOption.index = %%-python-select-options-index-%%
 * since: v1.8
 
 ### param: Page.selectOption.value = %%-python-select-options-value-%%
 * since: v1.8
 
-### param: Page.selectOption.label = %%-python-select-options-label-%%
+### option: Page.selectOption.label = %%-python-select-options-label-%%
 * since: v1.8
 
 ## async method: Page.setChecked
@@ -4408,7 +4406,7 @@ await page.GotoAsync("https://www.microsoft.com");
 ### param: Page.setViewportSize.viewportSize
 * since: v1.8
 * langs: js, python
-- `viewportSize` <[Object]>
+- `viewportSize` "ViewportSize" <[Object]>
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
@@ -4434,7 +4432,7 @@ Captures the aria snapshot of the page. Read more about [aria snapshots](../aria
 
 ### option: Page.ariaSnapshot.mode
 * since: v1.59
-- `mode` <[AriaSnapshotMode]<"ai"|"default">>
+- `mode` "AriaSnapshotMode" <"ai"|"default">
 
 When set to `"ai"`, returns a snapshot optimized for AI consumption: including element references like `[ref=e2]` and snapshots of `<iframe>`s. Defaults to `"default"`.
 
@@ -4471,7 +4469,7 @@ See [`method: Locator.ariaSnapshotJSON`] for the details of the format.
 
 ### option: Page.ariaSnapshotJSON.mode
 * since: v1.63
-- `mode` <[AriaSnapshotMode]<"ai"|"default">>
+- `mode` "AriaSnapshotMode" <"ai"|"default">
 
 When set to `"ai"`, returns a snapshot optimized for AI consumption: including element references like `[ref=e2]` and snapshots of `<iframe>`s. Defaults to `"default"`.
 
@@ -4720,8 +4718,7 @@ Video object associated with this page. Can be used to access the video file whe
 
 ## method: Page.viewportSize
 * since: v1.8
-- returns: <[null]|[Object]>
-  * alias: ViewportSize
+- returns: "ViewportSize" <[null]|[Object]>
   * alias-csharp: PageViewportSizeResult
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
@@ -5069,6 +5066,14 @@ await page.WaitForFunctionAsync("selector => !!document.querySelector(selector)"
 
 ### param: Page.waitForFunction.arg
 * since: v1.8
+* langs: js, java, csharp
+- `arg` ?<[EvaluationArgument]>
+
+Optional argument to pass to [`param: expression`].
+
+### option: Page.waitForFunction.arg
+* since: v1.8
+* langs: python
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
@@ -5414,10 +5419,12 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 
 ### param: Page.waitForRequest.urlOrPredicate
 * since: v1.8
-* langs: js
+* langs: js, python
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Request]\):[boolean]|[Promise]<[boolean]>>
 
 Request URL string, regex or predicate receiving [Request] object.
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
+it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### option: Page.waitForRequest.timeout
 * since: v1.8
@@ -5579,7 +5586,7 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 
 ### param: Page.waitForResponse.urlOrPredicate
 * since: v1.8
-* langs: js
+* langs: js, python
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]|[Promise]<[boolean]>>
 
 Request URL string, regex or predicate receiving [Response] object.

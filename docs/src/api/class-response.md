@@ -26,6 +26,11 @@ Waits for this response to finish, returns always `null`.
 * langs: js
 - returns: <[null]|[Error]>
 
+## async method: Response.finished
+* since: v1.8
+* langs: python
+- returns: <[void]>
+
 ## method: Response.frame
 * since: v1.8
 - returns: <[Frame]>
@@ -48,8 +53,7 @@ You can use [`method: Response.allHeaders`] for complete list of headers that in
 
 ## async method: Response.headersArray
 * since: v1.15
-- returns: <[Array]<[Object]>>
-  * alias: HttpHeader
+- returns: "HttpHeader" <[Array]<[Object]>>
   * alias-csharp: Header
   - `name` <[string]> Name of the header.
   - `value` <[string]> Value of the header.

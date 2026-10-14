@@ -351,7 +351,7 @@ Calling this method again will override the handler with a new one.
 ### param: WebSocketRoute.onMessage.handler
 * since: v1.48
 * langs: js, python
-- `handler` <[function]\([string]\): [Promise<any>|any]>
+- `handler` <[function]\([string]|[Buffer]\): [Promise<any>|any]>
 
 Function that will handle messages.
 

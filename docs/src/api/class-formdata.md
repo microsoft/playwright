@@ -114,8 +114,7 @@ Field name.
 
 ### param: FormData.append.value
 * since: v1.44
-- `value` <[string]|[boolean]|[int]|[path]|[Object]>
-  * alias: FilePayload
+- `value` "FilePayload" <[string]|[boolean]|[int]|[path]|[Object]>
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
@@ -125,8 +124,7 @@ Field value.
 ### param: FormData.append.value
 * since: v1.44
 * langs: csharp
-- `value` <[string]|[boolean]|[int]|[Object]>
-  * alias: FilePayload
+- `value` "FilePayload" <[string]|[boolean]|[int]|[Object]>
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
@@ -215,8 +213,7 @@ Field name.
 
 ### param: FormData.set.value
 * since: v1.18
-- `value` <[string]|[boolean]|[int]|[path]|[Object]>
-  * alias: FilePayload
+- `value` "FilePayload" <[string]|[boolean]|[int]|[path]|[Object]>
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
@@ -226,8 +223,7 @@ Field value.
 ### param: FormData.set.value
 * since: v1.18
 * langs: csharp
-- `value` <[string]|[boolean]|[int]|[Object]>
-  * alias: FilePayload
+- `value` "FilePayload" <[string]|[boolean]|[int]|[Object]>
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content

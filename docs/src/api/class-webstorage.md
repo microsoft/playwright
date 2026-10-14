@@ -53,8 +53,7 @@ await page.LocalStorage.ClearAsync();
 
 ## async method: WebStorage.items
 * since: v1.61
-- returns: <[Array]<[Object]>>
-  * alias: WebStorageItem
+- returns: "WebStorageItem" <[Array]<[Object]>>
   - `name` <[string]>
   - `value` <[string]>
 
