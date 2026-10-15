@@ -82,7 +82,13 @@ export class UtilityScript {
       if (typeof result === 'function')
         result = result(...parameters);
     }
-    return returnByValue ? this._promiseAwareJsonValueNoThrow(result) : result;
+    if (returnByValue)
+      return this._promiseAwareJsonValueNoThrow(result);
+    if (isThenable(result)) {
+      // Wrap into a native Promise, see _promiseAwareJsonValueNoThrow.
+      return (async () => await result)();
+    }
+    return result;
   }
 
   jsonValue(returnByValue: true, value: any) {
@@ -101,7 +107,7 @@ export class UtilityScript {
       }
     };
 
-    if (value && typeof value === 'object' && typeof value.then === 'function') {
+    if (isThenable(value)) {
       return (async () => {
         // By using async function we ensure that return value is a native Promise,
         // and not some overridden Promise in the page.
@@ -113,4 +119,8 @@ export class UtilityScript {
     }
     return safeJson(value);
   }
+}
+
+function isThenable(value: any): boolean {
+  return value && typeof value === 'object' && typeof value.then === 'function';
 }
