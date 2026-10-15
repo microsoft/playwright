@@ -69,7 +69,7 @@ export class StorageScript {
         this._isPlainObject(v)
         || Array.isArray(v)
         || typeof v === 'string'
-        || typeof v === 'number'
+        || (typeof v === 'number' && Number.isFinite(v))
         || typeof v === 'boolean'
         || Object.is(v, null)
       );
@@ -105,7 +105,7 @@ export class StorageScript {
 
           if (objectStore.keyPath === null) {
             const { encoded, trivial } = this._trySerialize(key);
-            if (trivial)
+            if (encoded === undefined)
               record.key = trivial;
             else
               record.keyEncoded = encoded;
@@ -113,7 +113,7 @@ export class StorageScript {
 
           const value = await this._idbRequestToPromise(objectStore.get(key));
           const { encoded, trivial } = this._trySerialize(value);
-          if (trivial)
+          if (encoded === undefined)
             record.value = trivial;
           else
             record.valueEncoded = encoded;
@@ -215,8 +215,8 @@ export class StorageScript {
         await Promise.all(store.records.map(async record => {
           await this._idbRequestToPromise(
               objectStore.add(
-                  record.value ?? parseEvaluationResultValue(record.valueEncoded),
-                  record.key ?? parseEvaluationResultValue(record.keyEncoded),
+                  'value' in record ? record.value : parseEvaluationResultValue(record.valueEncoded),
+                  'key' in record ? record.key : parseEvaluationResultValue(record.keyEncoded),
               )
           );
         }));
