@@ -19,7 +19,7 @@ import fs from 'fs';
 import type http from 'http';
 import type net from 'net';
 import * as path from 'path';
-import { utils, getUserAgent, getPlaywrightVersion } from '../../packages/playwright-core/lib/coreBundle';
+import { remote, utils, getUserAgent, getPlaywrightVersion } from '../../packages/playwright-core/lib/coreBundle';
 import WebSocket from 'ws';
 import { expect, playwrightTest } from '../config/browserTest';
 import { ensureSomeFrames, parseTraceRaw, suppressCertificateWarning } from '../config/utils';
@@ -1210,4 +1210,16 @@ test('should timeout after redirect when connecting over http', async ({ connect
   const error = await connect(`${server.PREFIX}/connect`, { timeout: 2000, headers: { 'Connection': 'Close' } }).catch(e => e);
   expect(error.message).toContain('Timeout 2000ms exceeded.');
   await expect.poll(() => aborted).toBe(true);
+});
+
+test('should not retain closed browsers in launch mode', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43421' } }, async ({ connect }) => {
+  const server = new remote.PlaywrightServer({ mode: 'default', path: '/' + utils.createGuid(), maxConnections: Number.MAX_VALUE });
+  const wsEndpoint = await server.listen();
+  try {
+    const browser = await connect(wsEndpoint);
+    await browser.close();
+    await expect.poll(() => (server as any)._dontReuseBrowsers.size).toBe(0);
+  } finally {
+    await server.close();
+  }
 });
