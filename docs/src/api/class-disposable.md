@@ -9,10 +9,12 @@
 * since: v1.59
 * langs: python
 
-Same as [`method: Disposable.dispose`].
+Removes the associated resource. For example, removes the init script installed via
+[`method: Page.addInitScript`] or [`method: BrowserContext.addInitScript`].
 
 ## async method: Disposable.dispose
 * since: v1.59
+* langs: js
 
 Removes the associated resource. For example, removes the init script installed via
 [`method: Page.addInitScript`] or [`method: BrowserContext.addInitScript`].
