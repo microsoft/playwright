@@ -1023,7 +1023,7 @@ test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
   };
   const files = {
     'echo-reporter.js': `
-      import fs from 'fs';
+      const fs = require('fs');
 
       class EchoReporter {
         onBegin(config, suite) {
@@ -1092,7 +1092,7 @@ test('preserve stdout and stderr', async ({ runInlineTest, mergeReports }) => {
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'echo-reporter.js': `
-      import fs from 'fs';
+      const fs = require('fs');
 
       class EchoReporter {
         log = [];
@@ -1134,7 +1134,7 @@ test('preserve stdout and stderr', async ({ runInlineTest, mergeReports }) => {
 
   const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
   expect(exitCode).toBe(0);
-  const log = fs.readFileSync(test.info().outputPath('log.txt')).toString();
+  const log = stripAnsi(fs.readFileSync(test.info().outputPath('log.txt')).toString());
   expect(log).toBe(`onStdOut: stdout text
 
 result.stdout: stdout text
@@ -1154,7 +1154,7 @@ test('encode inline attachments', async ({ runInlineTest, mergeReports }) => {
   const reportDir = test.info().outputPath('blob-report');
   const files = {
     'echo-reporter.js': `
-      import fs from 'fs';
+      const fs = require('fs');
 
       class EchoReporter {
         onTestEnd(test, result) {
@@ -1510,7 +1510,7 @@ test('blob report should include version', async ({ runInlineTest }) => {
   const events = await extractReport(test.info().outputPath('blob-report', 'report.zip'), test.info().outputPath('tmp'));
   const metadataEvent = events.find(e => e.method === 'onBlobReportMetadata');
   expect(metadataEvent.params.version).toBe(2);
-  expect(metadataEvent.params.userAgent).toBe(getUserAgent());
+  expect(metadataEvent.params.userAgent.split(' node/')[0]).toBe(getUserAgent().split(' node/')[0]);
 });
 
 async function extractReport(reportZipFile: string, unzippedReportDir: string): Promise<any[]> {
@@ -1574,7 +1574,7 @@ test('merge-reports should throw if report version is from the future', async ({
 
   const { exitCode, output } = await mergeReports(reportDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(1);
-  expect(output).toContain(`Error: Blob report report-2.zip was created with a newer version of Playwright.`);
+  expect(output).toContain(`Blob report report-2.zip was created with a newer version of Playwright.`);
 
 });
 
@@ -1703,7 +1703,7 @@ test('reporter list in the custom config', async ({ runInlineTest, mergeReports 
 
   const text = stripAnsi(output);
   expect(text).toContain('testReporter.js');
-  expect(text).toContain('{ myOpt: 1 }');
+  expect(text).toContain('myOpt: 1');
 });
 
 test('merge reports with different rootDirs', async ({ runInlineTest, mergeReports }) => {

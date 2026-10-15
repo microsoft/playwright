@@ -31,6 +31,8 @@ const reporters = () => {
   ];
   if (process.env.PWTEST_COVERAGE)
     result.push(['coverage', { outputDir: path.join(__dirname, '..', '..', 'coverage', 'html-reporter') }]);
+  if (process.env.PW_BUN)
+    result.push(['../config/expectationReporter', { expectationsFile: path.join(__dirname, 'bun-expectations.conf') }]);
   return result;
 };
 export default defineConfig({

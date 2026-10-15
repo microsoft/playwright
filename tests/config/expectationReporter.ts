@@ -20,10 +20,17 @@ import type {
 import fs from 'fs';
 import path from 'path';
 
-type TestExpectation = 'unknown' | 'flaky' | 'pass' | 'fail' | 'timeout';
+type TestOutcome = 'unknown' | 'flaky' | 'pass' | 'fail' | 'timeout';
+
+type Expectation = {
+  expectation: 'skip' | 'fixme' | 'fail';
+  reason?: string;
+};
 
 type ReporterOptions = {
   rebase?: boolean;
+  expectationsDir?: string;
+  expectationsFile?: string;
 };
 
 class ExpectationReporter implements Reporter {
@@ -36,17 +43,20 @@ class ExpectationReporter implements Reporter {
   }
 
   async preprocess({ suite, testRun }: Parameters<NonNullable<Reporter['preprocess']>>[0]) {
-    if (!process.env.PWTEST_USE_BIDI_EXPECTATIONS)
+    if (!this._options.expectationsFile && !process.env.PWTEST_USE_BIDI_EXPECTATIONS)
       return;
     if (this._options.rebase)
       return;
     for (const project of suite.suites) {
-      const expectations = await parseExpectations(project.title);
-      for (const test of project.allTests()) {
-        const expectation = expectations.get(expectationKey(test));
-        if (expectation && ['flaky', 'fail', 'timeout'].includes(expectation))
-          testRun.fixme(test, `marked as ${expectation} in bidi expectations`);
-      }
+      const expectations = await parseExpectations(this._expectationsPath(project.title));
+      const visit = (entry: Suite | TestCase) => {
+        const expectation = expectations.get(expectationKey(entry));
+        if (expectation)
+          testRun[expectation.expectation](entry, expectation.reason ?? `marked as ${expectation.expectation} in expectations`);
+        else if (entry.type !== 'test')
+          entry.entries().forEach(visit);
+      };
+      project.entries().forEach(visit);
     }
   }
 
@@ -66,19 +76,19 @@ class ExpectationReporter implements Reporter {
   }
 
   private async _updateProjectExpectations(project: Suite) {
-    const outputFile = projectExpectationPath(project.title);
-    const expectations = await parseExpectations(project.title);
+    const outputFile = this._expectationsPath(project.title);
+    const expectations = await parseExpectations(outputFile);
     for (const test of project.allTests()) {
       const outcome = getOutcome(test);
       const key = expectationKey(test);
       if (outcome === 'timeout')
-        expectations.set(key, outcome);
+        expectations.set(key, { expectation: 'fixme' });
       else if (expectations.has(key) && test.outcome() !== 'skipped')
         expectations.delete(key); // Remove tests that no longer timeout.
     }
     const keys = Array.from(expectations.keys());
     keys.sort();
-    const results = keys.map(key => `${key} [${expectations.get(key)}]`);
+    const results = keys.map(key => `${key} [${expectations.get(key)!.expectation}]`);
     console.log('Writing new expectations to', outputFile);
     await fs.promises.writeFile(outputFile, results.join('\n'));
   }
@@ -86,9 +96,13 @@ class ExpectationReporter implements Reporter {
   printsToStdio(): boolean {
     return false;
   }
+
+  private _expectationsPath(projectName: string): string {
+    return this._options.expectationsFile ?? path.join(this._options.expectationsDir!, projectName + '.conf');
+  }
 }
 
-function getOutcome(test: TestCase): TestExpectation {
+function getOutcome(test: TestCase): TestOutcome {
   if (test.results.length === 0)
     return 'unknown';
   if (test.results.every(r => r.status === 'timedOut'))
@@ -102,31 +116,34 @@ function getOutcome(test: TestCase): TestExpectation {
   return 'unknown';
 }
 
-function expectationKey(test: TestCase): string {
-  return test.titlePath().slice(2).join(' › ');
+function expectationKey(entry: Suite | TestCase): string {
+  return entry.titlePath().slice(2).join(' > ');
 }
 
-async function parseExpectations(projectName: string): Promise<Map<string, TestExpectation>> {
-  const filePath = projectExpectationPath(projectName);
+async function parseExpectations(filePath: string): Promise<Map<string, Expectation>> {
   try {
     await fs.promises.access(filePath);
   } catch (e) {
     return new Map();
   }
   const content = await fs.promises.readFile(filePath);
-  const pairs = content.toString().split('\n').map(line => {
-    const match = /(?<titlePath>.+) \[(?<expectation>[^\]]+)\]$/.exec(line);
+  const expectations = new Map<string, Expectation>();
+  let reason: string | undefined;
+  for (const line of content.toString().split('\n')) {
+    if (!line.trim())
+      continue;
+    if (line.startsWith('#')) {
+      reason = line.substring(1).trim();
+      continue;
+    }
+    const match = /^(?<titlePath>.+) \[(?<expectation>skip|fixme|fail)\]$/.exec(line);
     if (!match) {
       console.error('Bad expectation line: ' + line);
-      return undefined;
+      continue;
     }
-    return [match.groups!.titlePath, match.groups!.expectation];
-  }).filter(Boolean) as [string, TestExpectation][];
-  return new Map(pairs);
-}
-
-function projectExpectationPath(project: string): string {
-  return path.join(__dirname, 'expectations', project + '.txt');
+    expectations.set(match.groups!.titlePath, { expectation: match.groups!.expectation as Expectation['expectation'], reason });
+  }
+  return expectations;
 }
 
 export default ExpectationReporter;

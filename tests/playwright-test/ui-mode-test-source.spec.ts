@@ -122,7 +122,7 @@ test('should show top-level errors in file', async ({ runUITest }) => {
   await expect(
       page.locator('.CodeMirror-linewidget')
   ).toHaveText([
-    'TypeError: Assignment to constant variable.'
+    /TypeError: Assignment to constant variable.|This assignment will throw because "a" is a constant/
   ]);
 });
 
@@ -154,7 +154,7 @@ test('should show syntax errors in file', async ({ runUITest }) => {
   await expect(
       page.locator('.CodeMirror-linewidget')
   ).toHaveText([
-    /Missing semicolon./
+    /Missing semicolon.|Expected ";" but found "&"/
   ]);
 });
 

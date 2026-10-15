@@ -73,6 +73,23 @@ jobs:
         command: npm run ttest -- ${{ matrix.os == 'playwright-x64-server2025-64-core' && '--workers 16' || '' }}
         bot-name: "${{ matrix.os }}-node${{ matrix.node-version }}"
 
+  test_test_runner_bun:
+    name: Test Runner - ubuntu-large - bun
+    runs-on: playwright-x64-ubuntu24-64-core
+    permissions:
+      contents: read    # This is required for actions/checkout to succeed
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      with:
+        bun-version: 1.4.3
+    - uses: ./.github/actions/run-test
+      with:
+        command: npm run ttest
+        bot-name: "playwright-x64-ubuntu24-64-core-bun"
+      env:
+        PW_BUN: 1
+
   test_test_runner_mac:
     name: Test Runner - ${{ matrix.os }} (${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
     strategy:

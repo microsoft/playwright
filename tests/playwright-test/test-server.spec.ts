@@ -208,7 +208,7 @@ test('find related test files errors', async ({ startTestServer, writeFiles }) =
   const aSpecTs = test.info().outputPath('a.spec.ts');
   const result = await testServerConnection.findRelatedTestFiles({ files: [aSpecTs] });
   expect(result).toEqual({ testFiles: [], errors: [
-    expect.objectContaining({ message: expect.stringContaining(`Identifier 'a' has already been declared`) }),
+    expect.objectContaining({ message: expect.stringContaining(`has already been declared`) }),
     expect.objectContaining({ message: expect.stringContaining(`No tests found`) }),
   ] });
 

@@ -31,7 +31,6 @@ test('should return the location of a syntax error', async ({ runInlineTest }) =
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
   expect(result.output).toContain('error.spec.js');
-  expect(result.output).toContain('(3:18)');
   expect(result.output).toContain(`> 3 |         foo: 'bar';\n    |                   ^`);
 });
 

@@ -48,11 +48,11 @@ const reporters = () => {
     ['blob'],
     ['../config/parquetReporter.ts'],
     ['./csvReporter', { outputFile: path.join(outputDir, 'report.csv') }],
-    ['./expectationReporter', { rebase: false }],
+    ['../config/expectationReporter', { rebase: false, expectationsDir: path.join(__dirname, 'expectations') }],
   ] : [
     ['html', { open: 'on-failure' }],
     ['./csvReporter', { outputFile: path.join(outputDir, 'report.csv') }],
-    ['./expectationReporter', { rebase: false }],
+    ['../config/expectationReporter', { rebase: false, expectationsDir: path.join(__dirname, 'expectations') }],
   ];
   return result;
 };
