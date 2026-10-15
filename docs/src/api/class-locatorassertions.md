@@ -376,6 +376,12 @@ CSS property name.
 
 CSS property value.
 
+### option: LocatorAssertions.NotToHaveCSS.pseudo
+* since: v1.65
+- `pseudo` "PseudoElement" <"before"|"after">
+
+Pseudo-element to read computed styles from.
+
 ### option: LocatorAssertions.NotToHaveCSS.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
