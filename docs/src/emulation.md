@@ -707,6 +707,102 @@ await page.EmulateMediaAsync(new()
 ```
 
 <img height="1824" width="2788" alt="playwright web in dark mode" src="https://user-images.githubusercontent.com/13063165/220411638-55d2b051-4678-4da7-9f0b-ed22f5a3c47c.png" />
+
+The `"reducedMotion"`, `"forcedColors"` and `"contrast"` options emulate the `prefers-reduced-motion`, `forced-colors` and `prefers-contrast` media features the same way. Supported values are `'reduce'` and `'no-preference'` for reduced motion, `'active'` and `'none'` for forced colors, and `'more'` and `'no-preference'` for contrast. [`method: Page.emulateMedia`] changes them for a single page.
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    reducedMotion: 'reduce',
+    forcedColors: 'active',
+    contrast: 'more',
+  },
+});
+```
+
+```js tab=js-test title="tests/example.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test.use({
+  reducedMotion: 'reduce', // or 'no-preference'
+  forcedColors: 'active', // or 'none'
+  contrast: 'more', // or 'no-preference'
+});
+
+test('my test with reduced motion, forced colors and more contrast', async ({ page }) => {
+  // ...
+});
+```
+
+```js tab=js-library
+// Create context with reduced motion, forced colors and more contrast
+const context = await browser.newContext({
+  reducedMotion: 'reduce', // or 'no-preference'
+  forcedColors: 'active', // or 'none'
+  contrast: 'more', // or 'no-preference'
+});
+
+// Change the media features for the page
+await page.emulateMedia({ reducedMotion: 'reduce', forcedColors: 'active', contrast: 'more' });
+```
+
+```java
+// Create context with reduced motion, forced colors and more contrast
+BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+  .setReducedMotion(ReducedMotion.REDUCE) // or NO_PREFERENCE
+  .setForcedColors(ForcedColors.ACTIVE) // or NONE
+  .setContrast(Contrast.MORE)); // or NO_PREFERENCE
+
+// Change the media features for the page
+page.emulateMedia(new Page.EmulateMediaOptions()
+  .setReducedMotion(ReducedMotion.REDUCE)
+  .setForcedColors(ForcedColors.ACTIVE)
+  .setContrast(Contrast.MORE));
+```
+
+```python async
+# Create context with reduced motion, forced colors and more contrast
+context = await browser.new_context(
+  reduced_motion='reduce', # or 'no-preference'
+  forced_colors='active', # or 'none'
+  contrast='more' # or 'no-preference'
+)
+
+# Change the media features for the page
+await page.emulate_media(reduced_motion='reduce', forced_colors='active', contrast='more')
+```
+
+```python sync
+# Create context with reduced motion, forced colors and more contrast
+context = browser.new_context(
+  reduced_motion='reduce', # or 'no-preference'
+  forced_colors='active', # or 'none'
+  contrast='more' # or 'no-preference'
+)
+
+# Change the media features for the page
+page.emulate_media(reduced_motion='reduce', forced_colors='active', contrast='more')
+```
+
+```csharp
+// Create context with reduced motion, forced colors and more contrast
+await using var context = await browser.NewContextAsync(new()
+{
+    ReducedMotion = ReducedMotion.Reduce, // or NoPreference
+    ForcedColors = ForcedColors.Active, // or None
+    Contrast = Contrast.More // or NoPreference
+});
+
+// Change the media features for the page
+await page.EmulateMediaAsync(new()
+{
+    ReducedMotion = ReducedMotion.Reduce,
+    ForcedColors = ForcedColors.Active,
+    Contrast = Contrast.More
+});
+```
 ## User Agent
 
 The User Agent is included in the device and therefore you  will rarely need to change it however if you do need to test a different user agent you can override it with the `userAgent` property.
