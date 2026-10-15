@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
@@ -97,7 +98,7 @@ test(`testInfo.attach errors`, async ({ runInlineTest }) => {
     `,
   }, { reporter: 'line', workers: 1 });
   const text = result.output.replace(/\\/g, '/');
-  expect(text).toMatch(/Error: ENOENT: no such file or directory, copyfile '.*foo.txt.*'/);
+  expect(text).toMatch(/Error: ENOENT: no such file or directory, open '.*foo.txt.*'/);
   expect(text).toContain(`Exactly one of "path" and "body" must be specified`);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(2);
@@ -113,7 +114,7 @@ test(`testInfo.attach errors with empty path`, async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'line', workers: 1 });
-  expect(result.output).toMatch(/Error: ENOENT: no such file or directory, copyfile/);
+  expect(result.output).toMatch(/Error: ENOENT: no such file or directory, open/);
   expect(result.exitCode).toBe(1);
 });
 
@@ -132,13 +133,15 @@ test(`testInfo.attach error in fixture`, async ({ runInlineTest }) => {
     `,
   }, { reporter: 'line', workers: 1 });
   const text = result.output.replace(/\\/g, '/');
-  expect(text).toMatch(/Error: ENOENT: no such file or directory, copyfile '.*foo.txt.*'/);
+  expect(text).toMatch(/Error: ENOENT: no such file or directory, open '.*foo.txt.*'/);
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
 });
 
-test(`testInfo.attach success in fixture`, async ({ runInlineTest }) => {
+test(`testInfo.attach success in fixture`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43425' },
+}, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test as base, expect } from '@playwright/test';
@@ -146,7 +149,10 @@ test(`testInfo.attach success in fixture`, async ({ runInlineTest }) => {
         fixture: async ({}, use, testInfo) => {
           const filePath = testInfo.outputPath('foo.txt');
           require('fs').writeFileSync(filePath, 'hello');
+          await testInfo.attach('name', { path: filePath });
           await use();
+          // Attaching the same path again with different content keeps both copies.
+          require('fs').writeFileSync(filePath, 'world');
           await testInfo.attach('name', { path: filePath });
         },
       });
@@ -158,6 +164,9 @@ test(`testInfo.attach success in fixture`, async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('attachment #1: name (text/plain)');
+  expect(result.output).toContain('attachment #2: name (text/plain)');
+  const attachments = result.report.suites[0].specs[0].tests[0].results[0].attachments.filter(a => a.name === 'name');
+  expect(attachments.map(a => fs.readFileSync(a.path, 'utf8'))).toEqual(['hello', 'world']);
 });
 
 test(`testInfo.attach allow empty string body`, async ({ runInlineTest }) => {

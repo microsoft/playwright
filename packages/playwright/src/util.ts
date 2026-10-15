@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
@@ -21,7 +22,6 @@ import util from 'util';
 import debug from 'debug';
 import mime from 'mime';
 import { minimatch } from 'minimatch';
-import { calculateSha1 } from '@utils/crypto';
 import { sanitizeForFilePath } from '@utils/fileUtils';
 import { isRegExp } from '@isomorphic/rtti';
 import { stringifyStackFrames, filteredStackTrace } from '@utils/stackTrace';
@@ -220,10 +220,13 @@ export async function normalizeAndSaveAttachment(outputPath: string, name: strin
   if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1)
     throw new Error(`Exactly one of "path" and "body" must be specified`);
   if (options.path !== undefined) {
-    const hash = calculateSha1(options.path);
-
     if (!isString(name))
       throw new Error('"name" should be string.');
+
+    // Name the copy after the content, so that attaching the same path again
+    // with different content keeps each copy, see
+    // https://github.com/microsoft/playwright/issues/43425.
+    const hash = await calculateFileSha1(options.path);
 
     const sanitizedNamePrefix = sanitizeForFilePath(name) + '-';
     const dest = path.join(outputPath, 'attachments', sanitizedNamePrefix + hash + path.extname(options.path));
@@ -235,6 +238,13 @@ export async function normalizeAndSaveAttachment(outputPath: string, name: strin
     const contentType = options.contentType ?? (typeof options.body === 'string' ? 'text/plain' : 'application/octet-stream');
     return { name, contentType, body: typeof options.body === 'string' ? Buffer.from(options.body) : options.body };
   }
+}
+
+async function calculateFileSha1(filePath: string): Promise<string> {
+  const hash = crypto.createHash('sha1');
+  for await (const chunk of fs.createReadStream(filePath))
+    hash.update(chunk);
+  return hash.digest('hex');
 }
 
 export function fileIsModule(file: string): boolean {
