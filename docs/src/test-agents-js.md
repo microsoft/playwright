@@ -51,6 +51,13 @@ npx playwright init-agents --loop=opencode
 VS Code v1.105 (released October 9, 2025) is needed for the agentic experience to function properly in VS Code.
 :::
 
+The command takes these options:
+
+- `--loop <loop>`: the agentic loop to generate definitions for. One of `claude`, `codex`, `copilot`, `opencode`, `vscode` or `vscode-legacy`. `vscode` and `copilot` generate the same definitions for GitHub Copilot in VS Code, and `copilot` is the default when the option is omitted. `vscode-legacy` generates chat modes in `.github/chatmodes` for VS Code versions before v1.105.
+- `--prompts`: also install Playwright's prompt templates into the loop's prompts folder, for example `.claude/prompts`, `.codex/prompts`, `.opencode/prompts` or `.github/prompts`. Not available with `vscode-legacy`.
+- `-c, --config <file>`: the Playwright configuration file to use. By default, the command looks for one in the current directory.
+- `--project <project>`: the project from the configuration to use for the seed test that the agents start from. By default, the first top-level project is used.
+
 Once the agents have been generated, you can use your AI tool of choice to command these agents to build Playwright Tests. 
 
 
