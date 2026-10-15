@@ -1206,6 +1206,36 @@ it('should support multipart/form-data', async function({ context, server }) {
   expect(response.status()).toBe(200);
 });
 
+it('should escape quotes and newlines in multipart field and file names', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43422' } }, async function({ context, server }) {
+  const bodyReceived = new Promise<{ contentType: string, body: Buffer }>(resolve => {
+    server.setRoute('/empty.html', async (serverRequest, res) => {
+      const chunks: Buffer[] = [];
+      for await (const chunk of serverRequest)
+        chunks.push(chunk);
+      server.serveFile(serverRequest, res);
+      resolve({ contentType: serverRequest.headers['content-type'], body: Buffer.concat(chunks) });
+    });
+  });
+  const [{ contentType, body }] = await Promise.all([
+    bodyReceived,
+    context.request.post(server.EMPTY_PAGE, {
+      multipart: {
+        'say"hi\nthere': 'v1',
+        'file': { name: 'report "final"\r\n.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') },
+      },
+    }),
+  ]);
+  const headers = body.toString().split('\r\n').filter(line => line.startsWith('content-disposition'));
+  expect(headers).toEqual([
+    'content-disposition: form-data; name="say%22hi%0D%0Athere"',
+    'content-disposition: form-data; name="file"; filename="report %22final%22%0D%0A.txt"',
+  ]);
+  // Node's standard multipart parser expects that escaping.
+  const form = await new Request('http://localhost/', { method: 'POST', headers: { 'content-type': contentType }, body: new Uint8Array(body) }).formData();
+  expect(form.get('say"hi\r\nthere')).toBe('v1');
+  expect(await (form.get('file') as File).text()).toBe('hello');
+});
+
 it('should support multipart/form-data with ReadStream values', async function({ context, page, asset, server }) {
   const formReceived = new Promise<{error: any, fields: formidable.Fields, files: Record<string, formidable.File>, serverRequest: IncomingMessage}>(resolve => {
     server.setRoute('/empty.html', async (serverRequest, res) => {
