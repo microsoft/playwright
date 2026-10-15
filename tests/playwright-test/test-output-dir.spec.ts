@@ -144,7 +144,7 @@ test('should keep output directories unique for colliding test file paths', asyn
         throw new Error('Keep the output directory');
       });
     `,
-    'a-b.spec.js': `
+    'a-b.test.js': `
       import { test } from '@playwright/test';
       test('same title', ({}, testInfo) => {
         console.log('%%second:' + testInfo.outputDir);
@@ -163,6 +163,26 @@ test('should keep output directories unique for colliding test file paths', asyn
     throw new Error('Expected both tests to report their output directories');
   expect(firstOutputDir).not.toBe(secondOutputDir);
   expect(fs.existsSync(path.join(firstOutputDir, 'artifact.txt'))).toBe(true);
+});
+
+test('should not add a suffix for a colliding test file path that is not loaded', async ({ runInlineTest }) => {
+  // Without a-b.spec.ts in the run, nothing collides, so a/b.spec.ts keeps the plain name.
+  const result = await runInlineTest({
+    'a/b.spec.ts': `
+      import { test } from '@playwright/test';
+      test('same title', ({}, testInfo) => {
+        console.log('%%' + testInfo.outputDir);
+      });
+    `,
+    'a-b.spec.ts': `
+      import { test } from '@playwright/test';
+      test('same title', () => {});
+    `,
+  }, {}, {}, { additionalArgs: ['a/b.spec.ts'] });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.outputLines.map(line => path.basename(line))).toEqual(['a-b-same-title']);
 });
 
 test('should keep output directories unique across projects', async ({ runInlineTest }) => {
@@ -251,32 +271,6 @@ test('should keep output directories unique for case-only title differences', as
     throw new Error('Expected both tests to report their output directories');
   expect(firstOutputDir).not.toBe(secondOutputDir);
   expect(fs.existsSync(path.join(firstOutputDir, 'artifact.txt'))).toBe(true);
-});
-
-test('should detect case sensitivity through a symlinked output directory on macOS', async ({ runInlineTest }) => {
-  test.skip(process.platform !== 'darwin');
-  const result = await runInlineTest({
-    'a.spec.js': `
-      import { test } from '@playwright/test';
-      test('Title', ({}, testInfo) => {
-        console.log('%%first:' + testInfo.outputDir);
-      });
-      test('title', ({}, testInfo) => {
-        console.log('%%second:' + testInfo.outputDir);
-      });
-    `,
-    'playwright.config.ts': `
-      import fs from 'fs';
-      fs.mkdirSync('actual-results', { recursive: true });
-      fs.symlinkSync('actual-results', 'linked-results', 'dir');
-      export default { outputDir: 'linked-results', fullyParallel: true };
-    `,
-  }, { workers: 2 });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.outputLines).toHaveLength(2);
-  const outputDirs = result.outputLines.map(line => line.substring(line.indexOf(':') + 1));
-  expect(new Set(outputDirs).size).toBe(2);
 });
 
 test('should default to package.json directory', async ({ runInlineTest }, testInfo) => {

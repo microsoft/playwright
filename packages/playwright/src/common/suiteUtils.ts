@@ -15,7 +15,6 @@
 */
 
 import path from 'path';
-import fs from 'fs';
 
 import { calculateSha1 } from '@utils/crypto';
 import { sanitizeForFilePath, toPosixPath, trimLongString } from '@utils/fileUtils';
@@ -47,146 +46,96 @@ export function filterTestsRemoveEmptySuites(suite: Suite, filter: TestCaseFilte
   return !!suite._entries.length;
 }
 
-function isCaseSensitiveFileSystem(filePath: string, cache: Map<number, boolean>): boolean {
-  let existingPath = path.resolve(filePath);
-  let stats = fs.statSync(existingPath, { throwIfNoEntry: false });
-  while (!stats) {
-    const parent = path.dirname(existingPath);
-    if (parent === existingPath)
-      throw new Error(`Could not find an existing path to determine case sensitivity for "${filePath}"`);
-    existingPath = parent;
-    stats = fs.statSync(existingPath, { throwIfNoEntry: false });
-  }
+type OutputDirEntry = {
+  test: TestCase;
+  project: FullProjectInternal;
+  titlePath: string[];
+  repeatEach: number;
+  suffix: string;
+  outputDir: string;
+};
 
-  existingPath = fs.realpathSync(existingPath);
-  stats = fs.statSync(existingPath)!;
-  const cachedValue = cache.get(stats.dev);
-  if (cachedValue !== undefined)
-    return cachedValue;
-
-  const probeCaseSensitivity = (probePath: string): boolean | undefined => {
-    const name = path.basename(probePath);
-    const letterIndex = name.search(/[a-z]/i);
-    if (letterIndex === -1)
-      return;
-    const parentPath = path.dirname(probePath);
-    if (fs.statSync(parentPath).dev !== stats.dev)
-      return;
-    const letter = name[letterIndex];
-    const swappedLetter = letter === letter.toLowerCase() ? letter.toUpperCase() : letter.toLowerCase();
-    const originalStats = fs.lstatSync(probePath, { throwIfNoEntry: false });
-    if (!originalStats)
-      return;
-    const alternateName = name.substring(0, letterIndex) + swappedLetter + name.substring(letterIndex + 1);
-    const alternatePath = path.join(parentPath, alternateName);
-    const alternateStats = fs.lstatSync(alternatePath, { throwIfNoEntry: false });
-    let alternateEntryExists = false;
-    try {
-      alternateEntryExists = fs.readdirSync(parentPath).includes(alternateName);
-    } catch (error) {
-      const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
-      if (code !== 'EACCES' && code !== 'EPERM')
-        throw error;
-      // If listing is denied, prefer a possible false collision over failing test discovery.
-    }
-    const caseSensitive = alternateEntryExists || !alternateStats || alternateStats.dev !== originalStats.dev || alternateStats.ino !== originalStats.ino;
-    cache.set(stats.dev, caseSensitive);
-    return caseSensitive;
-  };
-
-  for (let probePath = existingPath; path.dirname(probePath) !== probePath; probePath = path.dirname(probePath)) {
-    const caseSensitive = probeCaseSensitivity(probePath);
-    if (caseSensitive !== undefined)
-      return caseSensitive;
-  }
-
-  for (const name of fs.readdirSync(existingPath)) {
-    const caseSensitive = probeCaseSensitivity(path.join(existingPath, name));
-    if (caseSensitive !== undefined)
-      return caseSensitive;
-  }
-
-  throw new Error(`Could not find a path component to determine case sensitivity for "${filePath}"`);
-}
+const maxOutputDirPasses = 3;
 
 export function assignTestOutputDirSuffixes(projectSuites: Map<FullProjectInternal, Suite>) {
-  const tests: { test: TestCase, project: FullProjectInternal }[] = [];
-  const testKeys = new Map<TestCase, string>();
-  const testsByIdSuffix = new Map<string, TestCase[]>();
+  const entries: OutputDirEntry[] = [];
   for (const [project, suite] of projectSuites) {
+    const repeatEach = Math.max(project.project.repeatEach, project.fullConfig.configCLIOverrides.repeatEach ?? 0);
     for (const test of suite.allTests()) {
-      test._outputDirSuffix = '';
-      tests.push({ test, project });
-      testKeys.set(test, JSON.stringify([project.id, toPosixPath(path.relative(project.project.testDir, test._requireFile)), test.titlePath()]));
-      const idSuffix = test.id.slice(-12);
-      const testsWithIdSuffix = testsByIdSuffix.get(idSuffix) || [];
-      testsWithIdSuffix.push(test);
-      testsByIdSuffix.set(idSuffix, testsWithIdSuffix);
+      // Workers build the title path without the project suite.
+      const entry = { test, project, titlePath: test.titlePath().slice(1), repeatEach, suffix: '', outputDir: '' };
+      entry.outputDir = normalizedOutputDir(entry);
+      entries.push(entry);
     }
   }
 
-  const collisionSuffixes = new Map<TestCase, string>();
-  for (const [idSuffix, testsWithIdSuffix] of testsByIdSuffix) {
-    testsWithIdSuffix.sort((a, b) => {
-      const aKey = testKeys.get(a)!;
-      const bKey = testKeys.get(b)!;
-      return aKey < bKey ? -1 : aKey > bKey ? 1 : 0;
-    });
-    testsWithIdSuffix.forEach((test, index) => {
-      collisionSuffixes.set(test, testsWithIdSuffix.length > 1 ? `${idSuffix}-${index + 1}` : idSuffix);
-    });
+  for (let pass = 1; pass <= maxOutputDirPasses; pass++) {
+    const collidingEntries = findCollidingEntries(entries);
+    if (!collidingEntries.size)
+      break;
+    // Test ids end with a 20-character hash that is unique per test. Use all of it on the last pass.
+    const hashLength = pass < maxOutputDirPasses ? 12 : 20;
+    for (const entry of collidingEntries) {
+      entry.suffix = entry.test.id.slice(-hashLength);
+      entry.outputDir = normalizedOutputDir(entry);
+    }
   }
 
-  const suffixes = new Map<TestCase, string>();
-  const caseSensitivityByDevice = new Map<number, boolean>();
-  const caseSensitivityByProject = new Map<FullProjectInternal, boolean>();
-  if (process.platform === 'darwin') {
-    for (const [project, suite] of projectSuites) {
-      if (suite.allTests().length)
-        caseSensitivityByProject.set(project, isCaseSensitiveFileSystem(project.project.outputDir, caseSensitivityByDevice));
-    }
+  for (const entry of entries)
+    entry.test._outputDirSuffix = entry.suffix;
+}
+
+function normalizedOutputDir(entry: OutputDirEntry): string {
+  const { test, project } = entry;
+  const outputDir = path.join(project.project.outputDir, testOutputDirBase(test._requireFile, entry.titlePath, project.project.testDir, project.id, entry.suffix));
+  if (process.platform === 'win32')
+    return outputDir.toLowerCase();
+  // Treat all macOS volumes as case-insensitive. On a case-sensitive volume, this only adds a suffix to titles that differ by case.
+  if (process.platform === 'darwin')
+    return outputDir.normalize('NFD').toLowerCase();
+  return outputDir;
+}
+
+function findCollidingEntries(entries: OutputDirEntry[]): Set<OutputDirEntry> {
+  const entriesByOutputDir = new Map<string, OutputDirEntry[]>();
+  for (const entry of entries) {
+    const sameOutputDir = entriesByOutputDir.get(entry.outputDir);
+    if (sameOutputDir)
+      sameOutputDir.push(entry);
+    else
+      entriesByOutputDir.set(entry.outputDir, [entry]);
   }
-  const normalizePath = (outputDir: string, project: FullProjectInternal) => {
-    if (process.platform === 'win32')
-      return outputDir.toLowerCase();
-    if (process.platform === 'darwin') {
-      const normalizedPath = outputDir.normalize('NFD');
-      return caseSensitivityByProject.get(project) ? normalizedPath : normalizedPath.toLowerCase();
-    }
-    return outputDir;
-  };
-  for (let attempt = 0; ; attempt++) {
-    const testsByOutputDir = new Map<string, Set<TestCase>>();
-    for (const { test, project } of tests) {
-      const repeatEachCounts = new Set([project.project.repeatEach, project.fullConfig.configCLIOverrides.repeatEach ?? project.project.repeatEach]);
-      for (const repeatEach of repeatEachCounts) {
-        for (let retry = 0; retry <= test.retries; retry++) {
-          for (let repeatEachIndex = 0; repeatEachIndex < repeatEach; repeatEachIndex++) {
-            let testOutputDir = testOutputDirBase(test._requireFile, test.titlePath(), project.project.testDir, project.id, suffixes.get(test));
-            if (retry)
-              testOutputDir += '-retry' + retry;
-            if (repeatEachIndex)
-              testOutputDir += '-repeat' + repeatEachIndex;
-            const outputDir = normalizePath(path.resolve(project.project.outputDir, testOutputDir), project);
-            const testsInOutputDir = testsByOutputDir.get(outputDir) || new Set<TestCase>();
-            testsInOutputDir.add(test);
-            testsByOutputDir.set(outputDir, testsInOutputDir);
-          }
+
+  const collidingEntries = new Set<OutputDirEntry>();
+  for (const entry of entries) {
+    if (entriesByOutputDir.get(entry.outputDir)!.length > 1)
+      collidingEntries.add(entry);
+
+    // Tests with different base dirs can only clash when the base dir of one test is a retry or repeat
+    // dir of the other test. For example, "a-same-retry1" is also the first retry of "a-same".
+    // Check this for each base dir, instead of listing all retry and repeat dirs of all tests.
+    for (const { baseDir, retry, repeat } of retryAndRepeatOrigins(entry.outputDir)) {
+      for (const other of entriesByOutputDir.get(baseDir) ?? []) {
+        if (retry <= other.test.retries && repeat < other.repeatEach) {
+          collidingEntries.add(entry);
+          collidingEntries.add(other);
         }
       }
     }
-
-    const collisions = [...testsByOutputDir.values()].filter(testsInOutputDir => testsInOutputDir.size > 1);
-    if (!collisions.length)
-      break;
-    for (const testsInOutputDir of collisions) {
-      for (const test of testsInOutputDir)
-        suffixes.set(test, `${collisionSuffixes.get(test)}${attempt ? '-' + attempt : ''}`);
-    }
   }
+  return collidingEntries;
+}
 
-  for (const [test, suffix] of suffixes)
-    test._outputDirSuffix = suffix;
+// "a-retry1-repeat2" is the dir of "a" for retry 1 and repeat 2, and the dir of "a-retry1" for repeat 2.
+function retryAndRepeatOrigins(outputDir: string): { baseDir: string, retry: number, repeat: number }[] {
+  const origins = [];
+  const retryMatch = /-retry([1-9]\d*)(?:-repeat([1-9]\d*))?$/.exec(outputDir);
+  if (retryMatch)
+    origins.push({ baseDir: outputDir.slice(0, retryMatch.index), retry: +retryMatch[1], repeat: +(retryMatch[2] ?? 0) });
+  const repeatMatch = /-repeat([1-9]\d*)$/.exec(outputDir);
+  if (repeatMatch)
+    origins.push({ baseDir: outputDir.slice(0, repeatMatch.index), retry: 0, repeat: +repeatMatch[1] });
+  return origins;
 }
 
 export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suite): Suite {
@@ -232,7 +181,6 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     // We only compute / set digest in the runner.
     if (test._poolDigest)
       test._workerHash = `${project.id}-${test._poolDigest}-0`;
-    test._outputDirSuffix = '';
   });
 
   return result;
