@@ -649,7 +649,12 @@ it('should support IndexedDB', async ({ page, server, contextFactory }) => {
 });
 
 for (const restore of ['newContext', 'setStorageState'] as const) {
-  it(`should roundtrip IndexedDB Map and Set with ${restore}`, { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42703' } }, async ({ page, server, contextFactory }, testInfo) => {
+  it(`should roundtrip IndexedDB values and keys with ${restore}`, {
+    annotation: [
+      { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42703' },
+      { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43418' },
+    ],
+  }, async ({ page, server, contextFactory }, testInfo) => {
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => new Promise<void>((resolve, reject) => {
       const request = indexedDB.open('collections', 1);
@@ -661,6 +666,13 @@ for (const restore of ['newContext', 'setStorageState'] as const) {
         const store = transaction.objectStore('store');
         store.put(new Map([['mk', 'mv']]), 'map');
         store.put(new Set([1, 2]), 'set');
+        store.put(0, 'zero');
+        store.put(false, 'false');
+        store.put('', 'empty');
+        store.put(null, 'null');
+        store.put(Infinity, 'infinity');
+        store.put('first', 0);
+        store.put('second', '');
         transaction.oncomplete = () => {
           db.close();
           resolve();
@@ -678,7 +690,7 @@ for (const restore of ['newContext', 'setStorageState'] as const) {
 
     const restoredPage = await context.newPage();
     await restoredPage.goto(server.EMPTY_PAGE);
-    const values = await restoredPage.evaluate(async () => {
+    const entries = await restoredPage.evaluate(async () => {
       const db = await new Promise<IDBDatabase>((resolve, reject) => {
         const request = indexedDB.open('collections', 1);
         request.onerror = () => reject(request.error);
@@ -687,24 +699,30 @@ for (const restore of ['newContext', 'setStorageState'] as const) {
       const transaction = db.transaction('store', 'readonly');
       const store = transaction.objectStore('store');
       transaction.oncomplete = () => db.close();
-      const [map, set] = await Promise.all(['map', 'set'].map(key => new Promise<any>((resolve, reject) => {
-        const request = store.get(key);
+      const [keys, values] = await Promise.all([store.getAllKeys(), store.getAll()].map(request => new Promise<any[]>((resolve, reject) => {
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       })));
-      return {
-        isMap: map instanceof Map,
-        map: [...map],
-        isSet: set instanceof Set,
-        set: [...set],
-      };
+      return keys.map((key, i) => {
+        const value = values[i];
+        if (value instanceof Map)
+          return [key, { map: [...value] }];
+        if (value instanceof Set)
+          return [key, { set: [...value] }];
+        return [key, value];
+      });
     });
-    expect(values).toEqual({
-      isMap: true,
-      map: [['mk', 'mv']],
-      isSet: true,
-      set: [1, 2],
-    });
+    expect(entries).toEqual([
+      [0, 'first'],
+      ['', 'second'],
+      ['empty', ''],
+      ['false', false],
+      ['infinity', Infinity],
+      ['map', { map: [['mk', 'mv']] }],
+      ['null', null],
+      ['set', { set: [1, 2] }],
+      ['zero', 0],
+    ]);
   });
 }
 
