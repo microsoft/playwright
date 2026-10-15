@@ -567,8 +567,8 @@ function createIntl(clock: ClockController, NativeIntl: Builtins['Intl']): Built
       formatRange: realFormatter.formatRange.bind(realFormatter),
       formatRangeToParts: realFormatter.formatRangeToParts.bind(realFormatter),
       resolvedOptions: realFormatter.resolvedOptions.bind(realFormatter),
-      format: date => realFormatter.format(date || clock.now()),
-      formatToParts: date => realFormatter.formatToParts(date || clock.now()),
+      format: date => realFormatter.format(date === undefined ? clock.now() : date),
+      formatToParts: date => realFormatter.formatToParts(date === undefined ? clock.now() : date),
     };
 
     return formatter;

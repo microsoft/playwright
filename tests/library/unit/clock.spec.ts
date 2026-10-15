@@ -1662,6 +1662,9 @@ it.describe('Intl API', () => {
     // June 1 04:00 UTC - Toronto is June 1 00:00
     install(Date.UTC(2022, 5, 1, 4));
     expect(isFirstOfMonth('America/Toronto')).toBeTruthy();
+    // A timestamp of 0 is the epoch, not "use the system time".
+    // https://github.com/microsoft/playwright/issues/43424
+    expect(isFirstOfMonth('America/Toronto', 0)).toBeFalsy();
   });
 
   it('formatToParts via isFirstOfMonth -> Returns false when passed no timestamp and system time is not first of the month', async ({ install }) => {
