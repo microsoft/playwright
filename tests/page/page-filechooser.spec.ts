@@ -407,6 +407,7 @@ test.describe('user activation', () => {
 
   test('should not open file chooser without user activation', async ({ page, server, browserName }) => {
     test.fixme(browserName === 'webkit', 'WebKit opens the file chooser from input.click() without user activation');
+    test.skip(process.env.PW_CLOCK === 'frozen', 'The fake clock fires page timers from evaluate calls, which carry user activation');
     let choosers = 0;
     page.on('filechooser', () => choosers++);
 
@@ -439,8 +440,9 @@ test.describe('user activation', () => {
     expect(await page.evaluate(() => (window as any).showPicker())).toBe('ok');
   });
 
-  test('should consume user activation when opening file chooser', async ({ page, server, browserName }) => {
+  test('should consume user activation when opening file chooser', async ({ page, server, browserName, isElectron, isAndroid }) => {
     test.fixme(browserName === 'webkit', 'WebKit does not consume user activation when opening the file chooser');
+    test.fixme(isElectron || isAndroid, 'Chromium 148 in Electron 42 and Chrome on the Android emulator do not consume user activation');
     let choosers = 0;
     page.on('filechooser', () => choosers++);
     await page.goto(server.PREFIX + '/activation.html');
