@@ -397,7 +397,7 @@ test.describe('user activation', () => {
       if (location.search === '?click')
         setTimeout(() => input.click(), 0);
       if (location.search === '?showPicker')
-        setTimeout(() => window.showPickerResult = window.showPicker(), 0);
+        setTimeout(() => console.log('showPicker:' + window.showPicker()), 0);
     </script>
   `;
 
@@ -407,7 +407,6 @@ test.describe('user activation', () => {
 
   test('should not open file chooser without user activation', async ({ page, server, browserName }) => {
     test.fixme(browserName === 'webkit', 'WebKit opens the file chooser from input.click() without user activation');
-    test.skip(process.env.PW_CLOCK === 'frozen', 'The fake clock fires page timers from evaluate calls, which carry user activation');
     let choosers = 0;
     page.on('filechooser', () => choosers++);
 
@@ -415,9 +414,10 @@ test.describe('user activation', () => {
     await page.waitForTimeout(500);
     expect(choosers).toBe(0);
 
+    // Wait for a console message instead of polling with waitForFunction, because evaluating in the page grants user activation.
+    const result = page.waitForEvent('console', msg => msg.text().startsWith('showPicker:'));
     await page.goto(server.PREFIX + '/activation.html?showPicker');
-    await page.waitForFunction(() => !!(window as any).showPickerResult);
-    expect(await page.evaluate(() => (window as any).showPickerResult)).toBe('NotAllowedError');
+    expect((await result).text()).toBe('showPicker:NotAllowedError');
     expect(choosers).toBe(0);
   });
 
