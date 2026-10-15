@@ -81,11 +81,12 @@ it('should have the correct responseBodySize for chunked request', async ({ page
   const content = fs.readFileSync(asset('simplezip.json'));
   const AMOUNT_OF_CHUNKS = 10;
   const CHUNK_SIZE = Math.ceil(content.length / AMOUNT_OF_CHUNKS);
-  server.setRoute('/chunked-simplezip.json', (req, resp) => {
+  server.setRoute('/chunked-simplezip.json', async (req, resp) => {
     resp.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Transfer-Encoding': 'chunked' });
     for (let start = 0; start < content.length; start += CHUNK_SIZE) {
       const end = Math.min(start + CHUNK_SIZE, content.length);
-      resp.write(content.slice(start, end));
+      // Wait for each chunk to be flushed, otherwise Node 26 merges synchronous writes into a single chunk.
+      await new Promise<void>(f => resp.write(content.slice(start, end), () => f()));
     }
     resp.end();
   });
