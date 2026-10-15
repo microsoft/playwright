@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { normalizeSecrets, redactSecrets, redactSecretsInBuffer } from '@isomorphic/secrets';
+import { normalizeSecrets, redactSecretsInBuffer, redactSecretsInText } from '@isomorphic/secrets';
 
 import type { ReportConfigureParams, ReportEndParams, ReporterPreprocessParams, ReporterV2 } from './reporterV2';
 import type { FullConfig, FullResult, Suite, TestCase, TestError, TestResult, TestStep, WorkerInfo } from '../../types/testReporter';
@@ -41,7 +41,7 @@ export class SecretsRedactor {
 
   redact<T>(value: T): T {
     if (typeof value === 'string')
-      return redactSecrets(value, this._secrets) as T;
+      return redactSecretsInText(value, this._secrets) as T;
     if (typeof value !== 'object' || value === null)
       return value;
     if (Buffer.isBuffer(value)) {

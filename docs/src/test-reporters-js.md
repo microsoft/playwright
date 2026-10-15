@@ -96,7 +96,7 @@ export default defineConfig({
 
 In this example, the terminal output is not changed, while the HTML report never contains the password.
 
-Values are matched as plain text, so a short value could match unrelated text. Screenshots, videos, trace files, and attachments referenced by path are not changed.
+Values are matched as plain text, so a short value could match unrelated text. Screenshots, videos, and attachments referenced by path, including trace files, are not changed. To hide secrets in traces, use the `secrets` option of [`property: TestOptions.trace`].
 
 ## Built-in reporters
 
