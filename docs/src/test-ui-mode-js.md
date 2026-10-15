@@ -7,7 +7,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Introduction
 
-UI Mode lets you explore, run, and debug tests with a time travel experience complete with a watch mode. All test files are displayed in the testing sidebar, allowing you to expand each file and describe block to individually run, view, watch, and debug each test. Filter tests by **name**, [**projects**](./test-projects) (set in your `playwright.config` file), **@tag**, or by the execution status of **passed**, **failed**, and **skipped**. See a full trace of your tests and hover back and forward over each action to see what was happening during each step. You can also pop out the DOM snapshot of a given moment into a separate window for a better debugging experience.
+UI Mode lets you explore, run, and debug tests with a time travel experience complete with a watch mode. All test files are displayed in the testing sidebar, allowing you to expand each file and describe block to individually run, view, watch, and debug each test. Filter tests by **name**, [**projects**](./test-projects) (set in your `playwright.config` file), **@tag**, or by the execution status of **passed**, **failed**, **skipped**, and **not run**. See a full trace of your tests and hover back and forward over each action to see what was happening during each step. You can also pop out the DOM snapshot of a given moment into a separate window for a better debugging experience.
 
 <LiteYouTube
     id="d0u6XhXknzU"
@@ -30,7 +30,7 @@ Once you launch UI Mode you will see a list of all your test files. You can run 
 
 ## Filtering tests
 
-Filter tests by text or `@tag` or by passed, failed or skipped tests. You can also filter by [projects](./test-projects) as set in your `playwright.config` file. If you are using project dependencies make sure to run your setup tests first before running the tests that depend on them. The UI mode will not take into consideration the setup tests and therefore you will have to manually run them first.
+Filter tests by text or `@tag` or by passed, failed, skipped or not run tests. You can also filter by [projects](./test-projects) as set in your `playwright.config` file. If you are using project dependencies make sure to run your setup tests first before running the tests that depend on them. The UI mode will not take into consideration the setup tests and therefore you will have to manually run them first.
 
 <img src="https://github.com/microsoft/playwright/assets/13063165/6f05e589-036d-45d5-9078-38134e1261e4" alt="filtering tests in ui mode" width="3960" height="2326" />
 

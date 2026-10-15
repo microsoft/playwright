@@ -91,9 +91,36 @@ test('should toggle filters from the keyboard', async ({ runUITest }) => {
   await expect(summary).toHaveAttribute('aria-expanded', 'false');
 });
 
-test('should filter by status', async ({ runUITest }) => {
+test('should filter by status', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43434' },
+}, async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
 
+  await page.getByText('a.test.ts').hover();
+  await page.getByRole('treeitem', { name: 'a.test.ts' }).getByRole('button', { name: 'Run' }).click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ❌ a.test.ts
+        ✅ passes
+        ❌ fails <=
+      ► ❌ suite
+    ▼ ◯ b.test.ts
+        ◯ passes
+        ◯ fails
+  `);
+
+  await page.getByText('Status:').click();
+  await page.getByLabel('not run').setChecked(true);
+  await expect(page.getByText('Status: not run')).toBeVisible();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ b.test.ts
+        ◯ passes
+        ◯ fails
+  `);
+
+  await page.getByLabel('not run').setChecked(false);
+  await page.getByText('Status:').click();
   await page.getByTitle('Run all').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`

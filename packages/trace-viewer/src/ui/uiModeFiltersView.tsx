@@ -40,7 +40,7 @@ export const FiltersView: React.FC<{
     inputRef.current?.focus();
   }, []);
 
-  const statusLine = [...statusFilters.entries()].filter(([_, v]) => v).map(([s]) => s).join(' ') || 'all';
+  const statusLine = [...statusFilters.entries()].filter(([_, v]) => v).map(([s]) => statusLabel(s)).join(' ') || 'all';
   const projectsLine = [...projectFilters.entries()].filter(([_, v]) => v).map(([p]) => p).join(' ') || 'all';
   return <div className='filters'>
     <Expandable
@@ -71,7 +71,7 @@ export const FiltersView: React.FC<{
                   copy.set(status, !copy.get(status));
                   setStatusFilters(copy);
                 }}/>
-                <div>{status}</div>
+                <div>{statusLabel(status)}</div>
               </label>
             </div>;
           })}
@@ -103,3 +103,7 @@ export const FiltersView: React.FC<{
     </>}
   </div>;
 };
+
+function statusLabel(status: string): string {
+  return status === 'none' ? 'not run' : status;
+}

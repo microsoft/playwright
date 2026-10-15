@@ -103,6 +103,7 @@ export const UIModeView: React.FC<{}> = ({
     ['passed', false],
     ['failed', false],
     ['skipped', false],
+    ['none', false],
   ]));
   const [projectFilters, setProjectFilters] = React.useState<Map<string, boolean>>(new Map());
   const [testModel, setTestModel] = React.useState<TeleSuiteUpdaterTestModel>();
