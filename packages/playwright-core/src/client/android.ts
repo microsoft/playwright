@@ -21,7 +21,7 @@ import { monotonicTime } from '@isomorphic/time';
 import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { EventEmitter } from './eventEmitter';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, apiCall } from './channelOwner';
 import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
 import { Waiter } from './waiter';
@@ -67,36 +67,35 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
     return await this._serverLauncher.launchServer(options);
   }
 
+  @apiCall()
   async connect(endpoint: string, options: Parameters<api.Android['connect']>[1] = {}): Promise<api.AndroidDevice> {
-    return await this._wrapApiCall(async () => {
-      const deadline = options.timeout ? monotonicTime() + options.timeout : 0;
-      const headers = { 'x-playwright-browser': 'android', ...options.headers };
-      const connectParams: channels.LocalUtilsConnectParams = { endpoint, headers, slowMo: options.slowMo };
-      const connection = await connectToEndpoint(this._connection, connectParams, { signal: undefined, timeout: options.timeout || 0 });
+    const deadline = options.timeout ? monotonicTime() + options.timeout : 0;
+    const headers = { 'x-playwright-browser': 'android', ...options.headers };
+    const connectParams: channels.LocalUtilsConnectParams = { endpoint, headers, slowMo: options.slowMo };
+    const connection = await connectToEndpoint(this._connection, connectParams, { signal: undefined, timeout: options.timeout || 0 });
 
-      let device: AndroidDevice;
-      connection.on('close', () => {
-        device?._didClose();
-      });
-
-      const result = await raceAgainstDeadline(async () => {
-        const playwright = await connection!.initializePlaywright();
-        if (!playwright._initializer.preConnectedAndroidDevice) {
-          connection.close();
-          throw new Error('Malformed endpoint. Did you use Android.launchServer method?');
-        }
-        device = AndroidDevice.from(playwright._initializer.preConnectedAndroidDevice!);
-        device._shouldCloseConnectionOnClose = true;
-        device.on(Events.AndroidDevice.Close, () => connection.close());
-        return device;
-      }, deadline);
-      if (!result.timedOut) {
-        return result.result;
-      } else {
-        connection.close();
-        throw new Error(`Timeout ${options.timeout}ms exceeded`);
-      }
+    let device: AndroidDevice;
+    connection.on('close', () => {
+      device?._didClose();
     });
+
+    const result = await raceAgainstDeadline(async () => {
+      const playwright = await connection!.initializePlaywright();
+      if (!playwright._initializer.preConnectedAndroidDevice) {
+        connection.close();
+        throw new Error('Malformed endpoint. Did you use Android.launchServer method?');
+      }
+      device = AndroidDevice.from(playwright._initializer.preConnectedAndroidDevice!);
+      device._shouldCloseConnectionOnClose = true;
+      device.on(Events.AndroidDevice.Close, () => connection.close());
+      return device;
+    }, deadline);
+    if (!result.timedOut) {
+      return result.result;
+    } else {
+      connection.close();
+      throw new Error(`Timeout ${options.timeout}ms exceeded`);
+    }
   }
 }
 
@@ -270,18 +269,17 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     return context;
   }
 
+  @apiCall()
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
-    return await this._wrapApiCall(async () => {
-      const timeoutOptions = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
-      const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const waiter = Waiter.createForEvent(this, event);
-      waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
-      if (event !== Events.AndroidDevice.Close)
-        waiter.rejectOnEvent(this, Events.AndroidDevice.Close, () => new TargetClosedError());
-      const result = await waiter.waitForEvent(this, event, predicate as any);
-      waiter.dispose();
-      return result;
-    });
+    const timeoutOptions = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+    const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+    const waiter = Waiter.createForEvent(this, event);
+    waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
+    if (event !== Events.AndroidDevice.Close)
+      waiter.rejectOnEvent(this, Events.AndroidDevice.Close, () => new TargetClosedError());
+    const result = await waiter.waitForEvent(this, event, predicate as any);
+    waiter.dispose();
+    return result;
   }
 }
 

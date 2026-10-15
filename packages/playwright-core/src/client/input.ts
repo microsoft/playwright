@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
+import { apiCall } from './channelOwner';
 import { kNoTimeout } from './timeoutSettings';
+import type { ApiCallOptions } from './channelOwner';
 import type { Page } from './page';
 import type * as api from '../../types/types';
 import type * as channels from './channels';
@@ -55,6 +57,10 @@ export class Mouse implements api.Mouse {
     this._page = page;
   }
 
+  async _wrapApiCall<R>(func: () => Promise<R>, options?: ApiCallOptions): Promise<R> {
+    return await this._page._wrapApiCall(func, options);
+  }
+
   async move(x: number, y: number, options: { steps?: number } = {}) {
     await this._page._channel.mouseMove({ x, y, ...options }, kNoTimeout);
   }
@@ -71,10 +77,9 @@ export class Mouse implements api.Mouse {
     await this._page._channel.mouseClick({ x, y, ...options }, kNoTimeout);
   }
 
+  @apiCall({ title: 'Double click' })
   async dblclick(x: number, y: number, options: Omit<channels.PageMouseClickOptions, 'clickCount'> = {}) {
-    await this._page._wrapApiCall(async () => {
-      await this.click(x, y, { ...options, clickCount: 2 });
-    }, { title: 'Double click' });
+    await this.click(x, y, { ...options, clickCount: 2 });
   }
 
   async wheel(deltaX: number, deltaY: number) {

@@ -16,7 +16,7 @@
 
 import { isRegExp, isString } from '@isomorphic/rtti';
 import { Artifact } from './artifact';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, apiCall, internal } from './channelOwner';
 import { DisposableStub } from './disposable';
 import { kNoTimeout } from './timeoutSettings';
 
@@ -42,31 +42,29 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     super(parent, type, guid, initializer);
   }
 
+  @apiCall()
   async start(options: { name?: string, title?: string, snapshots?: boolean | { dom?: boolean, aria?: boolean, screen?: boolean }, screenshots?: boolean, _coverage?: boolean, sources?: boolean, live?: boolean } = {}) {
-    await this._wrapApiCall(async () => {
-      this._includeSources = !!options.sources;
-      this._isLive = !!options.live;
-      const snapshots = typeof options.snapshots === 'object' ? options.snapshots : { dom: options.snapshots };
-      await this._channel.tracingStart({
-        name: options.name,
-        snapshotDom: snapshots.dom,
-        snapshotAria: snapshots.aria,
-        snapshotScreen: snapshots.screen,
-        screencast: options.screenshots,
-        coverage: options._coverage,
-        live: options.live,
-      }, kNoTimeout);
-      const { traceName } = await this._channel.tracingStartChunk({ name: options.name, title: options.title }, kNoTimeout);
-      await this._startCollectingStacks(traceName, this._isLive);
-    });
+    this._includeSources = !!options.sources;
+    this._isLive = !!options.live;
+    const snapshots = typeof options.snapshots === 'object' ? options.snapshots : { dom: options.snapshots };
+    await this._channel.tracingStart({
+      name: options.name,
+      snapshotDom: snapshots.dom,
+      snapshotAria: snapshots.aria,
+      snapshotScreen: snapshots.screen,
+      screencast: options.screenshots,
+      coverage: options._coverage,
+      live: options.live,
+    }, kNoTimeout);
+    const { traceName } = await this._channel.tracingStartChunk({ name: options.name, title: options.title }, kNoTimeout);
+    await this._startCollectingStacks(traceName, this._isLive);
     return new DisposableStub(() => this.stop());
   }
 
+  @apiCall()
   async startChunk(options: { name?: string, title?: string } = {}) {
-    await this._wrapApiCall(async () => {
-      const { traceName } = await this._channel.tracingStartChunk(options, kNoTimeout);
-      await this._startCollectingStacks(traceName, this._isLive);
-    });
+    const { traceName } = await this._channel.tracingStartChunk(options, kNoTimeout);
+    await this._startCollectingStacks(traceName, this._isLive);
     return new DisposableStub(() => this.stopChunk());
   }
 
@@ -90,46 +88,42 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     this._stacksId = result?.stacksId;
   }
 
+  @apiCall()
   async stopChunk(options: { path?: string } = {}) {
-    await this._wrapApiCall(async () => {
-      await this._doStopChunk(options.path);
-    });
+    await this._doStopChunk(options.path);
   }
 
+  @apiCall()
   async stop(options: { path?: string } = {}) {
-    await this._wrapApiCall(async () => {
-      const error = await this._doStopChunk(options.path).catch(e => e);
-      await this._channel.tracingStop({}, kNoTimeout);
-      if (error)
-        throw error;
-    });
+    const error = await this._doStopChunk(options.path).catch(e => e);
+    await this._channel.tracingStop({}, kNoTimeout);
+    if (error)
+      throw error;
   }
 
+  @apiCall()
   async startHar(path: string, options: { content?: 'embed' | 'attach' | 'omit', mode?: 'full' | 'minimal', urlFilter?: string | RegExp, resourcesDir?: string } = {}) {
-    await this._wrapApiCall(async () => {
-      if (this._harId)
-        throw new Error('HAR recording has already been started');
-      if (options.resourcesDir && path.endsWith('.zip'))
-        throw new Error('resourcesDir option is not compatible with a .zip har file');
-      const defaultContent = path.endsWith('.zip') ? 'attach' : 'embed';
-      this._harId = await this._recordIntoHAR(path, null, {
-        url: options.urlFilter,
-        updateContent: options.content ?? defaultContent,
-        updateMode: options.mode ?? 'full',
-        resourcesDir: options.resourcesDir,
-      });
+    if (this._harId)
+      throw new Error('HAR recording has already been started');
+    if (options.resourcesDir && path.endsWith('.zip'))
+      throw new Error('resourcesDir option is not compatible with a .zip har file');
+    const defaultContent = path.endsWith('.zip') ? 'attach' : 'embed';
+    this._harId = await this._recordIntoHAR(path, null, {
+      url: options.urlFilter,
+      updateContent: options.content ?? defaultContent,
+      updateMode: options.mode ?? 'full',
+      resourcesDir: options.resourcesDir,
     });
     return new DisposableStub(() => this.stopHar());
   }
 
+  @apiCall()
   async stopHar() {
-    await this._wrapApiCall(async () => {
-      const harId = this._harId;
-      if (!harId)
-        throw new Error('HAR recording has not been started');
-      this._harId = undefined;
-      await this._exportHAR(harId);
-    });
+    const harId = this._harId;
+    if (!harId)
+      throw new Error('HAR recording has not been started');
+    this._harId = undefined;
+    await this._exportHAR(harId);
   }
 
   async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, updateContent?: 'attach' | 'embed' | 'omit', updateMode?: 'minimal' | 'full', resourcesDir?: string } = {}): Promise<string> {
@@ -186,10 +180,9 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     await artifact.delete();
   }
 
+  @internal
   async _exportAllHars(): Promise<void> {
-    await this._wrapApiCall(async () => {
-      await Promise.all([...this._harRecorders.keys()].map(harId => this._exportHAR(harId)));
-    }, { internal: true });
+    await Promise.all([...this._harRecorders.keys()].map(harId => this._exportHAR(harId)));
   }
 
   private async _doStopChunk(filePath: string | undefined) {

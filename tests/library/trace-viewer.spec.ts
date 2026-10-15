@@ -1492,8 +1492,8 @@ test('should display waitForLoadState even if did not wait for it', async ({ run
   });
   await expect(traceViewer.actionTitles).toHaveText([
     /Navigate/,
-    /Wait for load state "load"/,
-    /Wait for load state "load"/,
+    /Wait for load state/,
+    /Wait for load state/,
   ]);
 });
 

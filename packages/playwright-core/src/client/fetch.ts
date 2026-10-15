@@ -22,13 +22,14 @@ import { assert } from '@isomorphic/assert';
 import { headersObjectToArray } from '@isomorphic/headers';
 import { isString } from '@isomorphic/rtti';
 import { toClientCertificatesProtocol, toHttpCredentialsProtocol } from './browserContext';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, apiCall, internal } from './channelOwner';
 import { TargetClosedError, isTargetClosedError } from './errors';
 import { RawHeaders, toClearCookiesParams } from './network';
 import { Tracing } from './tracing';
 import { mkdirIfNeeded } from './fileUtils';
 import { TimeoutSettings, kNoTimeout } from './timeoutSettings';
 
+import type { ApiCallOptions } from './channelOwner';
 import type { Playwright } from './playwright';
 import type { ClearNetworkCookieOptions, NetworkCookie, ResourceTiming, SetNetworkCookieParam } from './network';
 import type { ClientCertificate, FilePayload, Headers, RemoteAddr, SecurityDetails, SetStorageState, StorageState, TimeoutOptions } from './types';
@@ -186,6 +187,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     });
   }
 
+  @apiCall()
   async fetch(urlOrRequest: string | api.Request, options: FetchOptions = {}): Promise<APIResponse> {
     const url = isString(urlOrRequest) ? urlOrRequest : undefined;
     const request = isString(urlOrRequest) ? undefined : urlOrRequest;
@@ -193,96 +195,94 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
   }
 
   async _innerFetch(options: FetchOptions & { url?: string, request?: api.Request } = {}): Promise<APIResponse> {
-    return await this._wrapApiCall(async () => {
-      if (this._closeReason)
-        throw new TargetClosedError(this._closeReason);
-      assert(options.request || typeof options.url === 'string', 'First argument must be either URL string or Request');
-      assert((options.data === undefined ? 0 : 1) + (options.form === undefined ? 0 : 1) + (options.multipart === undefined ? 0 : 1) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
-      assert(options.maxRedirects === undefined || options.maxRedirects >= 0, `'maxRedirects' must be greater than or equal to '0'`);
-      assert(options.maxRetries === undefined || options.maxRetries >= 0, `'maxRetries' must be greater than or equal to '0'`);
-      const url = options.url !== undefined ? options.url : options.request!.url();
-      const method = options.method || options.request?.method();
-      let encodedParams = undefined;
-      if (typeof options.params === 'string')
-        encodedParams = options.params;
-      else if (options.params instanceof URLSearchParams)
-        encodedParams = options.params.toString();
-      // Cannot call allHeaders() here as the request may be paused inside route handler.
-      const headersObj = options.headers || options.request?.headers();
-      const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
-      let jsonData: any;
-      let formData: channels.NameValue[] | undefined;
-      let multipartData: channels.FormField[] | undefined;
-      let postDataBuffer: Buffer | undefined;
-      if (options.data !== undefined) {
-        if (isString(options.data)) {
-          if (isJsonContentType(headers))
-            jsonData = isJsonParsable(options.data) ? options.data : JSON.stringify(options.data);
-          else
-            postDataBuffer = Buffer.from(options.data, 'utf8');
-        } else if (Buffer.isBuffer(options.data)) {
-          postDataBuffer = options.data;
-        } else if (typeof options.data === 'object' || typeof options.data === 'number' || typeof options.data === 'boolean') {
-          jsonData = JSON.stringify(options.data);
-        } else {
-          throw new Error(`Unexpected 'data' type`);
-        }
-      } else if (options.form) {
-        if (globalThis.FormData && options.form instanceof FormData) {
-          formData = [];
-          for (const [name, value] of options.form.entries()) {
-            if (typeof value !== 'string')
-              throw new Error(`Expected string for options.form["${name}"], found File. Please use options.multipart instead.`);
-            formData.push({ name, value });
-          }
-        } else {
-          formData = objectToArray(options.form);
-        }
-      } else if (options.multipart) {
-        multipartData = [];
-        if (globalThis.FormData && options.multipart instanceof FormData) {
-          const form = options.multipart;
-          for (const [name, value] of form.entries()) {
-            if (isString(value)) {
-              multipartData.push({ name, value });
-            } else {
-              const file: ServerFilePayload = {
-                name: value.name,
-                mimeType: value.type,
-                buffer: Buffer.from(await value.arrayBuffer()),
-              };
-              multipartData.push({ name, file });
-            }
-          }
-        } else {
-          // Convert file-like values to ServerFilePayload structs.
-          for (const [name, value] of Object.entries(options.multipart))
-            multipartData.push(await toFormField(name, value));
-        }
+    if (this._closeReason)
+      throw new TargetClosedError(this._closeReason);
+    assert(options.request || typeof options.url === 'string', 'First argument must be either URL string or Request');
+    assert((options.data === undefined ? 0 : 1) + (options.form === undefined ? 0 : 1) + (options.multipart === undefined ? 0 : 1) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
+    assert(options.maxRedirects === undefined || options.maxRedirects >= 0, `'maxRedirects' must be greater than or equal to '0'`);
+    assert(options.maxRetries === undefined || options.maxRetries >= 0, `'maxRetries' must be greater than or equal to '0'`);
+    const url = options.url !== undefined ? options.url : options.request!.url();
+    const method = options.method || options.request?.method();
+    let encodedParams = undefined;
+    if (typeof options.params === 'string')
+      encodedParams = options.params;
+    else if (options.params instanceof URLSearchParams)
+      encodedParams = options.params.toString();
+    // Cannot call allHeaders() here as the request may be paused inside route handler.
+    const headersObj = options.headers || options.request?.headers();
+    const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
+    let jsonData: any;
+    let formData: channels.NameValue[] | undefined;
+    let multipartData: channels.FormField[] | undefined;
+    let postDataBuffer: Buffer | undefined;
+    if (options.data !== undefined) {
+      if (isString(options.data)) {
+        if (isJsonContentType(headers))
+          jsonData = isJsonParsable(options.data) ? options.data : JSON.stringify(options.data);
+        else
+          postDataBuffer = Buffer.from(options.data, 'utf8');
+      } else if (Buffer.isBuffer(options.data)) {
+        postDataBuffer = options.data;
+      } else if (typeof options.data === 'object' || typeof options.data === 'number' || typeof options.data === 'boolean') {
+        jsonData = JSON.stringify(options.data);
+      } else {
+        throw new Error(`Unexpected 'data' type`);
       }
-      if (postDataBuffer === undefined && jsonData === undefined && formData === undefined && multipartData === undefined)
-        postDataBuffer = options.request?.postDataBuffer() || undefined;
-      const fixtures = {
-        __testHookLookup: (options as any).__testHookLookup
-      };
-      const result = await this._channel.fetch({
-        url,
-        params: typeof options.params === 'object' ? objectToArray(options.params) : undefined,
-        encodedParams,
-        method,
-        headers,
-        postData: postDataBuffer,
-        jsonData,
-        formData,
-        multipartData,
-        failOnStatusCode: options.failOnStatusCode,
-        ignoreHTTPSErrors: options.ignoreHTTPSErrors,
-        maxRedirects: options.maxRedirects,
-        maxRetries: options.maxRetries,
-        ...fixtures
-      }, this._timeoutSettings.timeout(options));
-      return new APIResponse(this, result.response);
-    });
+    } else if (options.form) {
+      if (globalThis.FormData && options.form instanceof FormData) {
+        formData = [];
+        for (const [name, value] of options.form.entries()) {
+          if (typeof value !== 'string')
+            throw new Error(`Expected string for options.form["${name}"], found File. Please use options.multipart instead.`);
+          formData.push({ name, value });
+        }
+      } else {
+        formData = objectToArray(options.form);
+      }
+    } else if (options.multipart) {
+      multipartData = [];
+      if (globalThis.FormData && options.multipart instanceof FormData) {
+        const form = options.multipart;
+        for (const [name, value] of form.entries()) {
+          if (isString(value)) {
+            multipartData.push({ name, value });
+          } else {
+            const file: ServerFilePayload = {
+              name: value.name,
+              mimeType: value.type,
+              buffer: Buffer.from(await value.arrayBuffer()),
+            };
+            multipartData.push({ name, file });
+          }
+        }
+      } else {
+        // Convert file-like values to ServerFilePayload structs.
+        for (const [name, value] of Object.entries(options.multipart))
+          multipartData.push(await toFormField(name, value));
+      }
+    }
+    if (postDataBuffer === undefined && jsonData === undefined && formData === undefined && multipartData === undefined)
+      postDataBuffer = options.request?.postDataBuffer() || undefined;
+    const fixtures = {
+      __testHookLookup: (options as any).__testHookLookup
+    };
+    const result = await this._channel.fetch({
+      url,
+      params: typeof options.params === 'object' ? objectToArray(options.params) : undefined,
+      encodedParams,
+      method,
+      headers,
+      postData: postDataBuffer,
+      jsonData,
+      formData,
+      multipartData,
+      failOnStatusCode: options.failOnStatusCode,
+      ignoreHTTPSErrors: options.ignoreHTTPSErrors,
+      maxRedirects: options.maxRedirects,
+      maxRetries: options.maxRetries,
+      ...fixtures
+    }, this._timeoutSettings.timeout(options));
+    return new APIResponse(this, result.response);
   }
 
   async storageState(options: { path?: string, indexedDB?: boolean, opfs?: boolean } = {}): Promise<StorageState> {
@@ -338,6 +338,10 @@ export class APIResponse implements api.APIResponse {
       (this as any)[inspect.custom] = () => this._inspect();
   }
 
+  async _wrapApiCall<R>(func: () => Promise<R>, options?: ApiCallOptions): Promise<R> {
+    return await this._request._wrapApiCall(func, options);
+  }
+
   ok(): boolean {
     return this._initializer.status >= 200 && this._initializer.status <= 299;
   }
@@ -385,19 +389,18 @@ export class APIResponse implements api.APIResponse {
     };
   }
 
+  @internal
   async body(): Promise<Buffer> {
-    return await this._request._wrapApiCall(async () => {
-      try {
-        const result = await this._request._channel.fetchResponseBody({ fetchUid: this._fetchUid() }, kNoTimeout);
-        if (result.binary === undefined)
-          throw new Error('Response has been disposed');
-        return result.binary;
-      } catch (e) {
-        if (isTargetClosedError(e))
-          throw new Error('Response has been disposed');
-        throw e;
-      }
-    }, { internal: true });
+    try {
+      const result = await this._request._channel.fetchResponseBody({ fetchUid: this._fetchUid() }, kNoTimeout);
+      if (result.binary === undefined)
+        throw new Error('Response has been disposed');
+      return result.binary;
+    } catch (e) {
+      if (isTargetClosedError(e))
+        throw new Error('Response has been disposed');
+      throw e;
+    }
   }
 
   async text(): Promise<string> {

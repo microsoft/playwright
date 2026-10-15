@@ -186,7 +186,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     return channel;
   }
 
-  async _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, options?: { internal?: boolean, title?: string }): Promise<R> {
+  async _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, options?: ApiCallOptions): Promise<R> {
     const logger = this._logger;
     const existingApiZone = currentZone().data<ApiZone>('apiZone');
     if (existingApiZone)
@@ -233,6 +233,27 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       _guid: this._guid,
     };
   }
+}
+
+export type ApiCallOptions = { title?: string, internal?: boolean };
+type ApiCallScope = { _wrapApiCall<R>(func: () => Promise<R>, options?: ApiCallOptions): Promise<R> };
+type ApiCallMethod<This> = (this: This, ...args: any[]) => Promise<any>;
+
+export function apiCall(options?: { title?: string }) {
+  return wrapApiCallDecorator(options);
+}
+
+export const internal = wrapApiCallDecorator({ internal: true });
+
+function wrapApiCallDecorator(options: ApiCallOptions | undefined) {
+  return function<This extends ApiCallScope, T extends ApiCallMethod<This>>(method: T, context: ClassMethodDecoratorContext<This, T>): T {
+    const wrapper = function(this: This, ...args: any[]) {
+      return this._wrapApiCall(() => method.apply(this, args), options);
+    };
+    // Stack traces name the wrapper after the method, api name is derived from the stack.
+    Object.defineProperty(wrapper, 'name', { value: context.name });
+    return wrapper as T;
+  };
 }
 
 function logApiCall(logger: Logger | undefined, message: string) {
