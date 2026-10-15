@@ -341,11 +341,12 @@ it('should work with overwritten Promise', async ({ page }) => {
 
   // Now, the new promise should be awaitable.
   expect(await page.evaluate(() => Promise.resolve(42))).toBe(42);
-  const handle = await page.evaluateHandle(() => new Promise(f => setTimeout(() => f(42), 50)));
+  // No page timers below: the frozen-clock project never fires them.
+  const handle = await page.evaluateHandle(() => new Promise(f => queueMicrotask(() => f(42))));
   expect(await handle.jsonValue()).toBe(42);
   const error = await page.waitForFunction(() => false, undefined, { timeout: 500 }).catch(e => e);
   expect(error.message).toContain('Timeout 500ms exceeded');
-  await page.evaluate(() => setTimeout(() => (window as any).__done = true, 50));
+  await page.evaluate(() => (window as any).__done = true);
   await page.waitForFunction(() => (window as any).__done);
 });
 
