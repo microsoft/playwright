@@ -708,6 +708,88 @@ for (const restore of ['newContext', 'setStorageState'] as const) {
   });
 }
 
+for (const restore of ['newContext', 'setStorageState'] as const) {
+  it(`should roundtrip IndexedDB falsy values and keys with ${restore}`, { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43418' } }, async ({ page, server, contextFactory }, testInfo) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open('falsy', 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('store');
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const db = request.result;
+        const transaction = db.transaction('store', 'readwrite');
+        const store = transaction.objectStore('store');
+        // Out-of-line keys: the same layout idb-keyval and localForage use.
+        store.put(0, 'zero');
+        store.put(false, 'false');
+        store.put('', 'empty-string');
+        store.put(null, 'null');
+        store.put(42, 'answer');
+        store.put('first', 0);
+        store.put('second', 1);
+        store.put('empty', '');
+        transaction.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        transaction.onerror = () => reject(transaction.error);
+      };
+    }));
+
+    const path = testInfo.outputPath('storage-state.json');
+    const storageState = await page.context().storageState({ indexedDB: true, path });
+    // Falsy values and keys are recorded as-is instead of being dropped.
+    const records = storageState.origins[0].indexedDB![0].stores[0].records;
+    expect(records).toEqual(expect.arrayContaining([
+      { key: 'zero', value: 0 },
+      { key: 'false', value: false },
+      { key: 'empty-string', value: '' },
+      { key: 'null', value: null },
+      { key: 'answer', value: 42 },
+      { key: 0, value: 'first' },
+      { key: 1, value: 'second' },
+      { key: '', value: 'empty' },
+    ]));
+
+    const context = await contextFactory(restore === 'newContext' ? { storageState: path } : {});
+    if (restore === 'setStorageState')
+      await context.setStorageState(storageState);
+    expect(await context.storageState({ indexedDB: true })).toEqual(storageState);
+
+    const restoredPage = await context.newPage();
+    await restoredPage.goto(server.EMPTY_PAGE);
+    const entries = await restoredPage.evaluate(() => new Promise<any[]>((resolve, reject) => {
+      const request = indexedDB.open('falsy', 1);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const db = request.result;
+        const transaction = db.transaction('store', 'readonly');
+        const store = transaction.objectStore('store');
+        transaction.oncomplete = () => db.close();
+        const keys = store.getAllKeys();
+        const values = store.getAll();
+        Promise.all([keys, values].map(r => new Promise((resolve, reject) => {
+          r.onsuccess = () => resolve(r.result);
+          r.onerror = () => reject(r.error);
+        }))).then(([keys, values]: any) => {
+          const byKey = new Map(keys.map((key: any, i: number) => [key, values[i]]));
+          resolve([...byKey.entries()]);
+        }).catch(reject);
+      };
+    }));
+    expect(entries.sort()).toEqual([
+      ['', 'empty'],
+      [0, 'first'],
+      [1, 'second'],
+      ['answer', 42],
+      ['empty-string', ''],
+      ['false', false],
+      ['null', null],
+      ['zero', 0],
+    ].sort());
+  });
+}
+
 it('should support empty indexedDB', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35760' } }, async ({ page, server, contextFactory }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => new Promise<void>(resolve => {
