@@ -124,17 +124,19 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   const projectSuites = new Map<commonConfig.FullProjectInternal, testNs.Suite>();
   const filteredProjectSuites = new Map<commonConfig.FullProjectInternal, testNs.Suite>();
 
-  for (const [project, fileSuites] of testRun.projectSuites)
-    projectSuites.set(project, createProjectSuite(project, fileSuites));
+  // Filter all the projects using grep, testId, file names, etc.
+  {
+    for (const [project, fileSuites] of testRun.projectSuites) {
+      const projectSuite = createProjectSuite(project, fileSuites);
+      projectSuites.set(project, projectSuite);
+    }
 
-  suiteUtils.assignTestOutputDirSuffixes(projectSuites);
+    suiteUtils.assignTestOutputDirSuffixes(projectSuites);
 
-  for (const [project, projectSuite] of projectSuites) {
-    const filteredProjectSuite = filterProjectSuite(projectSuite, [
-      projectGrepMatcher(project),
-      ...testRun.preOnlyTestFilters,
-    ]);
-    filteredProjectSuites.set(project, filteredProjectSuite);
+    for (const [project, projectSuite] of projectSuites) {
+      const filteredProjectSuite = filterProjectSuite(projectSuite, testRun.preOnlyTestFilters);
+      filteredProjectSuites.set(project, filteredProjectSuite);
+    }
   }
 
   if (shouldFilterOnly) {
@@ -241,18 +243,15 @@ function createProjectSuite(project: commonConfig.FullProjectInternal, fileSuite
   for (const fileSuite of fileSuites)
     projectSuite._addSuite(suiteUtils.bindFileSuiteToProject(project, fileSuite));
 
-  return projectSuite;
-}
-
-function projectGrepMatcher(project: commonConfig.FullProjectInternal): TestCaseFilter {
   const grepMatcher = createTitleMatcher(project.project.grep);
   const grepInvertMatcher = project.project.grepInvert ? createTitleMatcher(project.project.grepInvert) : null;
-  return test => {
+  suiteUtils.filterTestsRemoveEmptySuites(projectSuite, (test: testNs.TestCase) => {
     const grepTitle = test._grepTitleWithTags();
     if (grepInvertMatcher?.(grepTitle))
       return false;
     return grepMatcher(grepTitle);
-  };
+  });
+  return projectSuite;
 }
 
 function filterProjectSuite(projectSuite: testNs.Suite, testFilters: TestCaseFilter[]): testNs.Suite {

@@ -667,6 +667,29 @@ test('should not run deps for projects filtered with grep', async ({ runInlineTe
   expect(result.outputLines).toEqual(['setupB', 'projectB', 'teardownB']);
 });
 
+test('should apply project grep to dependency projects', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        projects: [
+          { name: 'setup', grep: /@setup/ },
+          { name: 'main', dependencies: ['setup'], grepInvert: /@setup/ },
+        ],
+      };`,
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test('do setup @setup', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name + ':setup');
+      });
+      test('real test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name + ':real');
+      });
+    `,
+  }, { project: 'main' });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines.sort()).toEqual(['main:real', 'setup:setup']);
+});
+
 test('should allow only in dependent', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
