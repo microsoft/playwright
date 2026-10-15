@@ -755,7 +755,6 @@ steps.push(new CustomCallbackStep(assertCoreBundleHasNoNodeModules));
     external: [
       'playwright-core',
       'playwright-core/*',
-      'esbuild',
       '../package',
       '../globals',
       '../transform/esmLoader.js',
@@ -814,7 +813,6 @@ steps.push(new EsbuildStep({
     'playwright-core',
     'playwright-core/*',
     'playwright',
-    'esbuild',
     '../globals',
     '../package',
     '../utils',

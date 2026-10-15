@@ -24,7 +24,6 @@ import { loadTsConfig } from './tsconfig-loader';
 import { libPath, packageJSON } from '../package';
 import { createFileMatcher, debugTest, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
 import * as cc from './compilationCache';
-import { esbuildTransform, loadEsbuild } from './esbuildTransform';
 import * as esmLoaderSync from './esmLoaderSync';
 import { addHook } from './pirates';
 import { PortTransport } from './portTransport';
@@ -239,9 +238,7 @@ export function hasTransformedExtension(filename: string): boolean {
 }
 
 export function transformHook(originalCode: string, filename: string, moduleUrl?: string): { code: string, serializedCache?: any } {
-  const esbuild = process.env.PLAYWRIGHT_EXPERIMENTAL_ESBUILD ? loadEsbuild() : undefined;
   const hasPreprocessor =
-    !esbuild &&
     process.env.PW_TEST_SOURCE_TRANSFORM &&
     process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
     process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
@@ -250,16 +247,10 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   const jsx = tsconfigs.find(tsconfig => tsconfig.jsx)?.jsx;
   // Without "target", tsc defaults to the latest one, which defines class fields.
   const useDefineForClassFields = tsconfigs.find(tsconfig => tsconfig.useDefineForClassFields !== undefined)?.useDefineForClassFields ?? true;
-  const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsEpilogue, useDefineForClassFields, jsx, esbuild?.version);
+  const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsEpilogue, useDefineForClassFields, jsx);
   const { cachedCode, addToCache, serializedCache } = cc.getFromCompilationCache(filename, hash, moduleUrl);
   if (cachedCode !== undefined)
     return { code: cachedCode, serializedCache };
-
-  if (esbuild) {
-    const { code, map } = esbuildTransform(esbuild, originalCode, filename, !!moduleUrl, useDefineForClassFields, jsx);
-    const added = addToCache!(code, map);
-    return { code, serializedCache: added.serializedCache };
-  }
 
   // We don't use any browserslist data, but babel checks it anyway.
   // Silence the annoying warning.
@@ -274,7 +265,7 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   return { code, serializedCache: added.serializedCache };
 }
 
-function calculateHash(content: string, filePath: string, isModule: boolean, pluginsEpilogue: BabelPlugin[], useDefineForClassFields: boolean, jsx: JsxOptions | undefined, esbuildVersion: string | undefined): string {
+function calculateHash(content: string, filePath: string, isModule: boolean, pluginsEpilogue: BabelPlugin[], useDefineForClassFields: boolean, jsx: JsxOptions | undefined): string {
   const hash = crypto.createHash('sha1')
       .update(isModule ? 'esm' : 'no_esm')
       .update(content)
@@ -283,7 +274,6 @@ function calculateHash(content: string, filePath: string, isModule: boolean, plu
       .update(pluginsEpilogue.map(p => p[0]).join(','))
       .update(useDefineForClassFields ? 'define' : 'assign')
       .update(jsx ? JSON.stringify(jsx) : '')
-      .update(esbuildVersion ? 'esbuild@' + esbuildVersion : '')
       .digest('hex');
   return hash;
 }

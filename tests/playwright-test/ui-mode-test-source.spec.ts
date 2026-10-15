@@ -154,7 +154,7 @@ test('should show syntax errors in file', async ({ runUITest }) => {
   await expect(
       page.locator('.CodeMirror-linewidget')
   ).toHaveText([
-    process.env.PLAYWRIGHT_EXPERIMENTAL_ESBUILD ? /Expected ";" but found "&"/ : /Missing semicolon./
+    /Missing semicolon./
   ]);
 });
 
