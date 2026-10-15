@@ -236,7 +236,6 @@ for (const type of ['module', undefined]) {
       description: 'https://github.com/microsoft/playwright/issues/32659'
     }
   }, async ({ runInlineTest }) => {
-    test.skip(type === 'module' && !!process.env.PLAYWRIGHT_EXPERIMENTAL_ESBUILD, 'esbuild drops "assert" import attributes');
     const result = await runInlineTest({
       'playwright.config.ts': `
       import packageJSON from './package.json' assert { type: 'json' };
@@ -260,7 +259,6 @@ for (const type of ['module', undefined]) {
 }
 
 test('should allow overwriting exports of a transpiled module', async ({ runInlineTest }) => {
-  test.skip(!!process.env.PLAYWRIGHT_EXPERIMENTAL_ESBUILD, 'esbuild exports are getters');
   const result = await runInlineTest({
     'util.ts': `
       export function greet() { return 'real'; }
@@ -285,7 +283,6 @@ test('should allow overwriting exports of a transpiled module', async ({ runInli
 });
 
 test('should read undefined from an uninitialized import in a cycle', async ({ runInlineTest }) => {
-  test.skip(!!process.env.PLAYWRIGHT_EXPERIMENTAL_ESBUILD, 'esbuild throws on uninitialized imports');
   const result = await runInlineTest({
     'a.ts': `
       import './b';
@@ -311,7 +308,6 @@ test('should read undefined from an uninitialized import in a cycle', async ({ r
 });
 
 test('should parse generic arrow functions in tsx', async ({ runInlineTest }) => {
-  test.skip(!!process.env.PLAYWRIGHT_EXPERIMENTAL_ESBUILD, 'esbuild does not parse generic arrow functions in tsx');
   const result = await runInlineTest({
     'example.spec.tsx': `
       import { test, expect } from '@playwright/test';
@@ -328,7 +324,6 @@ test('should parse generic arrow functions in tsx', async ({ runInlineTest }) =>
 });
 
 test('should reject import.meta in commonjs', async ({ runInlineTest }) => {
-  test.skip(!!process.env.PLAYWRIGHT_EXPERIMENTAL_ESBUILD, 'esbuild replaces import.meta with {}');
   const result = await runInlineTest({
     'example.spec.ts': `
       import { test, expect } from '@playwright/test';

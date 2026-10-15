@@ -65,11 +65,11 @@ test('should return the location of a syntax error with deep stack', async ({ ru
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('at error.ts:3');
-  expect(result.output).toContain('qux.ts:2:');
-  expect(result.output).toContain('baz.ts:2:');
-  expect(result.output).toContain('bar.ts:2:');
-  expect(result.output).toContain('foo.ts:2:');
-  expect(result.output).toContain('test.spec.ts:2:');
+  expect(result.output).toContain('qux.ts:2:7');
+  expect(result.output).toContain('baz.ts:2:7');
+  expect(result.output).toContain('bar.ts:2:7');
+  expect(result.output).toContain('foo.ts:2:7');
+  expect(result.output).toContain('test.spec.ts:2:7');
 });
 
 test('should print an improper error', async ({ runInlineTest }) => {

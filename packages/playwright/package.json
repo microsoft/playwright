@@ -46,13 +46,5 @@
   "license": "Apache-2.0",
   "dependencies": {
     "playwright-core": "1.65.0-next"
-  },
-  "peerDependencies": {
-    "esbuild": ">=0.21.5"
-  },
-  "peerDependenciesMeta": {
-    "esbuild": {
-      "optional": true
-    }
   }
 }

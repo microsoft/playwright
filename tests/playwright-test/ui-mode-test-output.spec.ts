@@ -29,7 +29,7 @@ test('should print load errors', async ({ runUITest }) => {
     `,
   });
   await page.getByTitle('Toggle output').click();
-  await expect(page.getByTestId('output')).toContainText(process.env.PLAYWRIGHT_EXPERIMENTAL_ESBUILD ? `"await" can only be used inside an "async" function` : `Unexpected reserved word 'await'`);
+  await expect(page.getByTestId('output')).toContainText(`Unexpected reserved word 'await'`);
 });
 
 test('should work after theme switch', async ({ runUITest, writeFiles }) => {
@@ -190,12 +190,12 @@ test('should format console messages in page', async ({ runUITest }, testInfo) =
 
   await expect(page.locator('.console-tab')).toMatchAriaSnapshot(`
     - listbox:
-      - option /<anonymous>:\\d+ Object/
-      - option /<anonymous>:\\d+ Date/
-      - option /<anonymous>:\\d+ Regex/
-      - option /<anonymous>:\\d+ Number 0 one 2/
-      - option /<anonymous>:\\d+ Download the React DevTools/
-      - option /<anonymous>:\\d+ Array of values/
+      - option /<anonymous>:1 Object/
+      - option /<anonymous>:4 Date/
+      - option /<anonymous>:5 Regex/
+      - option /<anonymous>:6 Number 0 one 2/
+      - option /<anonymous>:7 Download the React DevTools/
+      - option /<anonymous>:8 Array of values/
       - option /Failed to load resource/
   `);
 
