@@ -397,7 +397,7 @@ test.describe('user activation', () => {
       if (location.search === '?click')
         setTimeout(() => input.click(), 0);
       if (location.search === '?showPicker')
-        setTimeout(() => window.showPickerResult = window.showPicker(), 0);
+        setTimeout(() => console.log('showPicker:' + window.showPicker()), 0);
     </script>
   `;
 
@@ -414,9 +414,11 @@ test.describe('user activation', () => {
     await page.waitForTimeout(500);
     expect(choosers).toBe(0);
 
+    // Do not poll with waitForFunction: each poll evaluates in the page with a user gesture,
+    // which grants transient user activation and would let showPicker() succeed.
+    const result = page.waitForEvent('console', msg => msg.text().startsWith('showPicker:'));
     await page.goto(server.PREFIX + '/activation.html?showPicker');
-    await page.waitForFunction(() => !!(window as any).showPickerResult);
-    expect(await page.evaluate(() => (window as any).showPickerResult)).toBe('NotAllowedError');
+    expect((await result).text()).toBe('showPicker:NotAllowedError');
     expect(choosers).toBe(0);
   });
 
@@ -439,8 +441,9 @@ test.describe('user activation', () => {
     expect(await page.evaluate(() => (window as any).showPicker())).toBe('ok');
   });
 
-  test('should consume user activation when opening file chooser', async ({ page, server, browserName }) => {
+  test('should consume user activation when opening file chooser', async ({ page, server, browserName, isElectron, isAndroid }) => {
     test.fixme(browserName === 'webkit', 'WebKit does not consume user activation when opening the file chooser');
+    test.fixme(isElectron || isAndroid, 'Chromium 148 in Electron 42 and Chrome on the Android emulator do not consume user activation');
     let choosers = 0;
     page.on('filechooser', () => choosers++);
     await page.goto(server.PREFIX + '/activation.html');
