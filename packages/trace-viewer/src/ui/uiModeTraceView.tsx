@@ -35,7 +35,6 @@ export const TraceView: React.FC<{
 }> = ({ item, rootDir, onOpenExternally, revealSource, pathSeparator, onModelChange }) => {
   const [model, setModel] = React.useState<{ model: TraceModel, isLive: boolean } | undefined>(undefined);
   const [counter, setCounter] = React.useState(0);
-  const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
   const { outputDir } = React.useMemo(() => {
     const outputDir = item.testCase ? outputDirForTestCase(item.testCase) : undefined;
@@ -43,20 +42,23 @@ export const TraceView: React.FC<{
   }, [item]);
 
   React.useEffect(() => {
-    if (pollTimer.current)
-      clearTimeout(pollTimer.current);
-
     const result = item.testCase?.results[0];
     if (!result || item.treeItem?.status === 'scheduled') {
       setModel(undefined);
       return;
     }
 
+    const abortController = new AbortController();
+    const { signal } = abortController;
+
     // Test finished.
     const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
-      loadSingleTraceFile(attachment.path, result.startTime.getTime()).then(model => setModel({ model, isLive: false }));
-      return;
+      loadSingleTraceFile(attachment.path, result.startTime.getTime(), signal).then(model => setModel({ model, isLive: false })).catch(e => {
+        if (!signal.aborted)
+          throw e;
+      });
+      return () => abortController.abort();
     }
 
     if (!outputDir) {
@@ -71,21 +73,22 @@ export const TraceView: React.FC<{
       `${item.testCase?.id}.json`
     ].join(pathSeparator);
     // Start polling running test.
-    pollTimer.current = setTimeout(async () => {
+    const pollTimer = setTimeout(async () => {
       try {
-        const model = await loadSingleTraceFile(traceLocation, Date.now());
+        const model = await loadSingleTraceFile(traceLocation, Date.now(), signal);
         setModel({ model, isLive: true });
       } catch {
+        if (signal.aborted)
+          return;
         const model = new TraceModel('', []);
         model.errorDescriptors.push(...result.errors.flatMap(error => !!error.message ? [{ message: error.message }] : []));
         setModel({ model, isLive: false });
-      } finally {
-        setCounter(counter + 1);
       }
+      setCounter(counter + 1);
     }, 500);
     return () => {
-      if (pollTimer.current)
-        clearTimeout(pollTimer.current);
+      clearTimeout(pollTimer);
+      abortController.abort();
     };
   }, [outputDir, item, setModel, counter, setCounter, pathSeparator]);
 
@@ -115,11 +118,11 @@ const outputDirForTestCase = (testCase: reporterTypes.TestCase): string | undefi
   return undefined;
 };
 
-async function loadSingleTraceFile(absolutePath: string, timestamp: number): Promise<TraceModel> {
+async function loadSingleTraceFile(absolutePath: string, timestamp: number, signal: AbortSignal): Promise<TraceModel> {
   const traceUri = `file?path=${encodeURIComponent(absolutePath)}&timestamp=${timestamp}`;
   const params = new URLSearchParams();
   params.set('trace', traceUri);
-  const response = await fetch(`contexts?${params.toString()}`);
+  const response = await fetch(`contexts?${params.toString()}`, { signal });
   const contextEntries = await response.json() as ContextEntry[];
   return new TraceModel(traceUri, contextEntries);
 }
