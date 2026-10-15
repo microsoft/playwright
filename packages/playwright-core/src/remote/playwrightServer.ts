@@ -296,7 +296,7 @@ export class PlaywrightServer {
     const browserType = this._playwright[browserName as 'chromium'];
     const controller = new ProgressController();
     const browser = await controller.run(progress => browserType.launch(progress, launchOptions), launchOptions.timeout);
-    this._dontReuseBrowsers.add(browser);
+    this._dontReuse(browser);
     return {
       preLaunchedBrowser: browser,
       socksProxy,
