@@ -150,13 +150,16 @@ it('should fill week input', async ({ page }) => {
 
 it('should fill datetime-local input', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43370' },
-}, async ({ page, server }) => {
+}, async ({ page, server, browserName, isWindows, channel }) => {
   await page.setContent('<input type=datetime-local>');
   await page.fill('input', '2020-03-02T05:15');
   expect(await page.$eval('input', input => input.value)).toBe('2020-03-02T05:15');
-  // The browser omits zero seconds.
+  // The browser omits zero seconds. WebKit on Windows does not implement datetime-local inputs and keeps the value as is.
   await page.fill('input', '2020-03-02T06:20:00');
-  expect(await page.$eval('input', input => input.value)).toBe('2020-03-02T06:20');
+  if (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl')
+    expect(await page.$eval('input', input => input.value)).toBe('2020-03-02T06:20:00');
+  else
+    expect(await page.$eval('input', input => input.value)).toBe('2020-03-02T06:20');
 });
 
 it('should fill contenteditable', async ({ page, server }) => {
