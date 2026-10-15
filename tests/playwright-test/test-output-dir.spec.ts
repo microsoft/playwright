@@ -135,7 +135,7 @@ test('should keep output directories unique for titles that sanitize identically
 });
 
 test('should keep output directories unique for colliding test file paths', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
+  const files = {
     'a/b.spec.js': `
       import { test } from '@playwright/test';
       test('same title', ({}, testInfo) => {
@@ -151,7 +151,8 @@ test('should keep output directories unique for colliding test file paths', asyn
       });
     `,
     'playwright.config.ts': `export default { fullyParallel: true };`,
-  }, { workers: 2 });
+  };
+  const result = await runInlineTest(files, { workers: 2 });
 
   expect(result.exitCode).toBe(1);
   expect(result.outputLines).toHaveLength(2);
@@ -163,26 +164,11 @@ test('should keep output directories unique for colliding test file paths', asyn
     throw new Error('Expected both tests to report their output directories');
   expect(firstOutputDir).not.toBe(secondOutputDir);
   expect(fs.existsSync(path.join(firstOutputDir, 'artifact.txt'))).toBe(true);
-});
 
-test('should not add a suffix for a colliding test file path that is not loaded', async ({ runInlineTest }) => {
-  // Without a-b.spec.ts in the run, nothing collides, so a/b.spec.ts keeps the plain name.
-  const result = await runInlineTest({
-    'a/b.spec.ts': `
-      import { test } from '@playwright/test';
-      test('same title', ({}, testInfo) => {
-        console.log('%%' + testInfo.outputDir);
-      });
-    `,
-    'a-b.spec.ts': `
-      import { test } from '@playwright/test';
-      test('same title', () => {});
-    `,
-  }, {}, {}, { additionalArgs: ['a/b.spec.ts'] });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-  expect(result.outputLines.map(line => path.basename(line))).toEqual(['a-b-same-title']);
+  // Without a-b.test.js in the run, nothing collides, so a/b.spec.js keeps the plain name.
+  const singleFileResult = await runInlineTest(files, { workers: 1 }, {}, { additionalArgs: ['a/b.spec.js'] });
+  expect(singleFileResult.exitCode).toBe(1);
+  expect(singleFileResult.outputLines).toEqual(['first:' + path.join(path.dirname(firstOutputDir), 'a-b-same-title')]);
 });
 
 test('should keep output directories unique across projects', async ({ runInlineTest }) => {
@@ -202,46 +188,28 @@ test('should keep output directories unique across projects', async ({ runInline
   expect(new Set(outputDirs).size).toBe(2);
 });
 
-test('should keep output directories unique across retry suffixes', async ({ runInlineTest }) => {
+test('should keep output directories unique across retry and repeat suffixes', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
       import { test } from '@playwright/test';
       test('same', ({}, testInfo) => {
-        console.log('%%retry:' + testInfo.outputDir);
+        console.log('%%' + testInfo.outputDir);
         if (!testInfo.retry)
           throw new Error('Retry this test');
       });
       test('same-retry1', ({}, testInfo) => {
-        console.log('%%other:' + testInfo.outputDir);
+        console.log('%%' + testInfo.outputDir);
+      });
+      test('same-repeat1', ({}, testInfo) => {
+        console.log('%%' + testInfo.outputDir);
       });
     `,
     'playwright.config.ts': `export default { retries: 1, fullyParallel: true };`,
-  }, { workers: 2 });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.outputLines).toHaveLength(3);
-  const outputDirs = result.outputLines.map(line => line.substring(line.indexOf(':') + 1));
-  expect(new Set(outputDirs).size).toBe(3);
-});
-
-test('should keep output directories unique across repeat suffixes', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.spec.js': `
-      import { test } from '@playwright/test';
-      test('same', ({}, testInfo) => {
-        console.log('%%first:' + testInfo.outputDir);
-      });
-      test('same-repeat1', ({}, testInfo) => {
-        console.log('%%second:' + testInfo.outputDir);
-      });
-    `,
-    'playwright.config.ts': `export default { fullyParallel: true };`,
   }, { 'repeat-each': 2, 'workers': 2 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.outputLines).toHaveLength(4);
-  const outputDirs = result.outputLines.map(line => line.substring(line.indexOf(':') + 1));
-  expect(new Set(outputDirs).size).toBe(4);
+  expect(result.outputLines).toHaveLength(8);
+  expect(new Set(result.outputLines).size).toBe(8);
 });
 
 test('should keep output directories unique for case-only title differences', async ({ runInlineTest }) => {
