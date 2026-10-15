@@ -38,7 +38,7 @@ export class MultipartFormData {
 
   addFileField(name: string, value: NonNullable<channels.FormField['file']>) {
     this._beginMultiPartHeader(name);
-    this._chunks.push(Buffer.from(`; filename="${value.name}"`));
+    this._chunks.push(Buffer.from(`; filename="${escapeName(value.name)}"`));
     this._chunks.push(Buffer.from(`\r\ncontent-type: ${value.mimeType || mime.getType(value.name) || 'application/octet-stream'}`));
     this._finishMultiPartHeader();
     this._chunks.push(value.buffer);
@@ -52,7 +52,7 @@ export class MultipartFormData {
 
   private _beginMultiPartHeader(name: string) {
     this._addBoundary();
-    this._chunks.push(Buffer.from(`content-disposition: form-data; name="${name}"`));
+    this._chunks.push(Buffer.from(`content-disposition: form-data; name="${escapeName(normalizeLineEndings(name))}"`));
   }
 
   private _finishMultiPartHeader() {
@@ -69,6 +69,17 @@ export class MultipartFormData {
       this._chunks.push(Buffer.from('--'));
     this._chunks.push(Buffer.from('\r\n'));
   }
+}
+
+// Escaping from the multipart/form-data encoding algorithm, see
+// https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#multipart-form-data.
+// Field names get their line endings normalized to CRLF first, file names do not.
+function escapeName(name: string): string {
+  return name.replace(/\r/g, '%0D').replace(/\n/g, '%0A').replace(/"/g, '%22');
+}
+
+function normalizeLineEndings(name: string): string {
+  return name.replace(/\r\n|\r|\n/g, '\r\n');
 }
 
 const alphaNumericEncodingMap = [
