@@ -17,8 +17,6 @@
 import timers from 'timers/promises';
 import { test, expect } from './playwright-test-fixtures';
 
-test.skip(!!process.env.PW_BUN, 'bun does not report module dependencies');
-
 test.describe.configure({ mode: 'parallel' });
 
 test('should print dependencies in CJS mode', async ({ runInlineTest }) => {

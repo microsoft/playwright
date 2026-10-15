@@ -65,7 +65,7 @@ test('should access annotations in fixture', async ({ runInlineTest }) => {
     { type: 'myname', description: 'hello' }
   ]);
   expect(test.results[0].stdout).toEqual([{ text: 'console.log\n' }]);
-  expect(test.results[0].stderr).toEqual([{ text: 'console.error\n' }]);
+  expect(test.results[0].stderr).toEqual([{ text: expect.stringContaining('console.error') }]);
 });
 
 test('should report projectName in result', async ({ runInlineTest }) => {

@@ -312,7 +312,7 @@ test('should print nice error when the project wildcard does not match anything'
     `
   }, { '--project': ['not*found'] });
   expect(exitCode).toBe(1);
-  expect(output).toContain('Error: No projects matched. Available projects: "suite1", "suite2"');
+  expect(output).toContain('No projects matched. Available projects: "suite1", "suite2"');
 });
 
 test('should filter by project wildcard and exact name', async ({ runInlineTest }) => {

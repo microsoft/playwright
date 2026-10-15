@@ -414,11 +414,12 @@ function nodeCallerLocation(error: Error, stackFrames: NodeJS.CallSite[]) {
 
 function bunCallerLocation(error: Error, stackFrames: NodeJS.CallSite[]) {
   const frame = stackFrames[1];
+  // Bun's CallSite.getColumnNumber() is 0-based, and Bun does not apply source maps of .js files.
+  const position = sourceMapSupport.mapSourcePosition({ source: frame.getFileName()!, line: frame.getLineNumber()!, column: frame.getColumnNumber()! });
   return {
-    file: frame.getFileName(),
-    line: frame.getLineNumber(),
-    // Bun's CallSite.getColumnNumber() is 0-based.
-    column: frame.getColumnNumber()! + 1,
+    file: position.source,
+    line: position.line,
+    column: position.column + 1,
   };
 }
 

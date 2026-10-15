@@ -16,8 +16,6 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test.skip(!!process.env.PW_BUN, 'bun loads and resolves modules itself');
-
 test('should load nested as esm when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `

@@ -94,8 +94,8 @@ export async function deserializeConfig(data: SerializedConfig): Promise<FullCon
 
 async function loadUserConfig(location: ConfigLocation): Promise<Config> {
   let object = location.resolvedConfigFile ? await requireOrImport(location.resolvedConfigFile) : {};
-  if (object && typeof object === 'object' && ('default' in object))
-    object = object['default'];
+  if (object && typeof object === 'object')
+    object = ('default' in object) ? object['default'] : { ...object };
   return object as Config;
 }
 

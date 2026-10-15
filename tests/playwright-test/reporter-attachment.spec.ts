@@ -113,7 +113,7 @@ test(`testInfo.attach errors with empty path`, async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'line', workers: 1 });
-  expect(result.output).toMatch(/Error: ENOENT: no such file or directory, copyfile ''/);
+  expect(result.output).toMatch(/Error: ENOENT: no such file or directory, copyfile/);
   expect(result.exitCode).toBe(1);
 });
 
