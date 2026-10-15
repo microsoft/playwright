@@ -401,6 +401,31 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-webgl.png');
   });
 
+  it('should capture webgl canvas after its drawing buffer is resized', async ({ page, browserName, platform }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42885' });
+    it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'WebGL is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
+
+    await page.setViewportSize({ width: 200, height: 200 });
+    await page.setContent(`<body style="margin:0"><div style="width:100px;height:100px;background:rgb(0,255,0)"></div></body>`);
+    const expected = await page.screenshot();
+
+    await page.setContent(`<body style="margin:0"><canvas style="width:100px;height:100px"></canvas><script>
+      const gl = document.querySelector('canvas').getContext('webgl');
+      window.draw = size => {
+        gl.canvas.width = size;
+        gl.canvas.height = size;
+        gl.viewport(0, 0, size, size);
+        gl.clearColor(0, 1, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+      };
+      draw(100);
+    </script></body>`);
+    await rafraf(page);
+    await page.evaluate(() => (window as any).draw(50));
+    await rafraf(page);
+    expect(comparePNGs(await page.screenshot(), expected)).toBe(null);
+  });
+
   it('should work for translateZ', async ({ page, server }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/screenshots/translateZ.html');
