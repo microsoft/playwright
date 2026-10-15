@@ -85,10 +85,9 @@ jobs:
         bun-version: 1.4.3
     - uses: ./.github/actions/run-test
       with:
-        command: npm run ttest
+        setup-command: npm run stage-bun-runner
+        command: npm run ttest-bun
         bot-name: "playwright-x64-ubuntu24-64-core-bun"
-      env:
-        PW_BUN: 1
 
   test_test_runner_mac:
     name: Test Runner - ${{ matrix.os }} (${{ matrix.shardIndex }}/${{ matrix.shardTotal }})

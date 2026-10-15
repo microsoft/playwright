@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { utils } from '../../../packages/playwright-core/lib/coreBundle';
-
-import type { FullConfig } from '../stable-test-runner';
+const fs = require('fs');
+const path = require('path');
+const { utils } = require('../../packages/playwright-core/lib/coreBundle');
 
 const { spawnAsync, removeFolders } = utils;
 
-const PACKAGE_BUILDER_SCRIPT = path.join(__dirname, '..', '..', '..', 'utils', 'pack_package.js');
+const PACKAGE_BUILDER_SCRIPT = path.join(__dirname, '..', '..', 'utils', 'pack_package.js');
 
-async function globalSetup(config: FullConfig) {
+async function stage() {
   const stagingDir = path.join(__dirname, '.staging');
-  const nodeModulesDir = path.join(__dirname, 'node_modules');
-  await removeFolders([stagingDir, nodeModulesDir]);
+  await removeFolders([stagingDir, path.join(__dirname, 'node_modules')]);
   await fs.promises.mkdir(stagingDir, { recursive: true });
 
   await Promise.all(['playwright-core', 'playwright', 'playwright-test'].map(async packageName => {
@@ -39,11 +36,9 @@ async function globalSetup(config: FullConfig) {
   const { code, stderr, stdout } = await spawnAsync('npm', ['install', '--package-lock=false', '--fund=false', '--audit=false'], { cwd: __dirname, shell: process.platform === 'win32' });
   if (code)
     throw new Error(`Failed to install current test runner:\n${stderr}\n${stdout}`);
-
-  for (const outputDir of new Set(config.projects.map(p => p.outputDir))) {
-    await fs.promises.mkdir(outputDir, { recursive: true });
-    await fs.promises.symlink(nodeModulesDir, path.join(outputDir, 'node_modules'), 'junction');
-  }
 }
 
-export default globalSetup;
+stage().catch(e => {
+  console.error(e);
+  process.exit(1);
+});

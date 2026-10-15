@@ -91,7 +91,7 @@ export async function writeFiles(testInfo: TestInfo, files: Files, initial: bool
 }
 
 export const cliCommand = process.env.PW_BUN
-  ? ['bun', path.join(__dirname, 'current-test-runner/node_modules/@playwright/test/cli.js')]
+  ? ['bun', path.join(__dirname, '../bun-runner/node_modules/@playwright/test/cli.js')]
   : ['node', path.join(__dirname, '../../packages/playwright-test/cli.js')];
 
 const configFile = (baseDir: string, files: Files): string | undefined => {

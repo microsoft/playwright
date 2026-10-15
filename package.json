@@ -17,6 +17,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "ctest": "playwright test --config=tests/library/playwright.config.ts --project=chromium-*",
+    "ctest-bun": "node tests/bun-runner/run.js test --config=tests/library/playwright.config.ts --project=chromium-*",
     "ftest": "playwright test --config=tests/library/playwright.config.ts --project=firefox-*",
     "wtest": "playwright test --config=tests/library/playwright.config.ts --project=webkit-*",
     "wvtest": "playwright test --config=tests/webview/playwright.config.ts",
@@ -28,6 +29,8 @@
     "test-html-reporter": "playwright test --config=packages/html-reporter",
     "test-web": "playwright test --config=packages/web",
     "ttest": "node ./tests/playwright-test/stable-test-runner/node_modules/@playwright/test/cli test --config=tests/playwright-test/playwright.config.ts",
+    "ttest-bun": "cross-env PW_BUN=1 node ./tests/playwright-test/stable-test-runner/node_modules/@playwright/test/cli test --config=tests/playwright-test/playwright.config.ts",
+    "stage-bun-runner": "node tests/bun-runner/stage.js",
     "test": "playwright test --config=tests/library/playwright.config.ts",
     "test-mcp": "playwright test --config=tests/mcp/playwright.config.ts",
     "ctest-mcp": "playwright test --config=tests/mcp/playwright.config.ts --project=chrome",
