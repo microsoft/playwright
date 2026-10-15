@@ -15,7 +15,7 @@
  */
 
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, apiCall } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { ConsoleMessage } from './consoleMessage';
 import { TargetClosedError, isTargetClosedError } from './errors';
@@ -139,18 +139,17 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     }
   }
 
+  @apiCall()
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return await this._wrapApiCall(async () => {
-      const timeoutOptions = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
-      const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const waiter = Waiter.createForEvent(this, event);
-      waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
-      if (event !== Events.ElectronApplication.Close)
-        waiter.rejectOnEvent(this, Events.ElectronApplication.Close, () => new TargetClosedError());
-      const result = await waiter.waitForEvent(this, event, predicate as any);
-      waiter.dispose();
-      return result;
-    });
+    const timeoutOptions = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+    const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+    const waiter = Waiter.createForEvent(this, event);
+    waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
+    if (event !== Events.ElectronApplication.Close)
+      waiter.rejectOnEvent(this, Events.ElectronApplication.Close, () => new TargetClosedError());
+    const result = await waiter.waitForEvent(this, event, predicate as any);
+    waiter.dispose();
+    return result;
   }
 
   async browserWindow(page: Page): Promise<JSHandle<BrowserWindow>> {

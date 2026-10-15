@@ -26,7 +26,9 @@ import { ElementHandle } from './elementHandle';
 import { serializeArgument } from './jsHandle';
 import { DisposableStub } from './disposable';
 import { kNoTimeout } from './timeoutSettings';
+import { apiCall } from './channelOwner';
 
+import type { ApiCallOptions } from './channelOwner';
 import type { ExpectResult, Frame } from './frame';
 import type { EvaluateOptions } from './jsHandle';
 import type { DropPayload, FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
@@ -81,21 +83,23 @@ export class Locator implements api.Locator {
       (this as any)[inspect.custom] = () => this._inspect();
   }
 
-  private async _withElement<R>(task: (handle: ElementHandle<SVGElement | HTMLElement>, timeout?: number) => Promise<R>, options: { title: string, internal?: boolean, timeout?: number, signal?: AbortSignal }): Promise<R> {
+  async _wrapApiCall<R>(func: () => Promise<R>, options?: ApiCallOptions): Promise<R> {
+    return await this._frame._wrapApiCall(func, options);
+  }
+
+  private async _withElement<R>(task: (handle: ElementHandle<SVGElement | HTMLElement>, timeout?: number) => Promise<R>, options: { timeout?: number, signal?: AbortSignal }): Promise<R> {
     const timeout = this._frame._timeout({ timeout: options.timeout }).timeout;
     const deadline = timeout ? monotonicTime() + timeout : 0;
 
-    return await this._frame._wrapApiCall<R>(async () => {
-      const result = await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, state: 'attached' }, { signal: options.signal, timeout });
-      const handle = ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
-      if (!handle)
-        throw new Error(`Could not resolve ${this._selector} to DOM Element`);
-      try {
-        return await task(handle, deadline ? deadline - monotonicTime() : 0);
-      } finally {
-        await handle.dispose();
-      }
-    }, { title: options.title, internal: options.internal });
+    const result = await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, state: 'attached' }, { signal: options.signal, timeout });
+    const handle = ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
+    if (!handle)
+      throw new Error(`Could not resolve ${this._selector} to DOM Element`);
+    try {
+      return await task(handle, deadline ? deadline - monotonicTime() : 0);
+    } finally {
+      await handle.dispose();
+    }
   }
 
   _equals(locator: Locator) {
@@ -106,8 +110,9 @@ export class Locator implements api.Locator {
     return this._frame.page();
   }
 
+  @apiCall({ title: 'Bounding box' })
   async boundingBox(options?: TimeoutOptions): Promise<Rect | null> {
-    return await this._withElement(h => h.boundingBox(), { title: 'Bounding box', timeout: options?.timeout, signal: options?.signal });
+    return await this._withElement(h => h.boundingBox(), { timeout: options?.timeout, signal: options?.signal });
   }
 
   async check(options: channels.ElementHandleCheckOptions & TimeoutOptions = {}) {
@@ -137,24 +142,27 @@ export class Locator implements api.Locator {
     await this._frame._drop(this._selector, payload, { strict: true, ...options });
   }
 
+  @apiCall({ title: 'Evaluate' })
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions & EvaluateOptions): Promise<R> {
-    return await this._withElement(h => h.evaluate(pageFunction, arg, options), { title: 'Evaluate', timeout: options?.timeout, signal: options?.signal });
+    return await this._withElement(h => h.evaluate(pageFunction, arg, options), { timeout: options?.timeout, signal: options?.signal });
   }
 
   async evaluateAll<R, Arg>(pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
     return await this._frame.$$eval(this._selector, pageFunction, arg);
   }
 
+  @apiCall({ title: 'Evaluate' })
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<any, Arg, R>, arg?: Arg, options?: TimeoutOptions & EvaluateOptions): Promise<structs.SmartHandle<R>> {
-    return await this._withElement(h => h.evaluateHandle(pageFunction, arg, options), { title: 'Evaluate', timeout: options?.timeout, signal: options?.signal });
+    return await this._withElement(h => h.evaluateHandle(pageFunction, arg, options), { timeout: options?.timeout, signal: options?.signal });
   }
 
   async fill(value: string, options: channels.ElementHandleFillOptions & TimeoutOptions = {}): Promise<void> {
     return await this._frame.fill(this._selector, value, { strict: true, ...options });
   }
 
+  @apiCall({ title: 'Clear' })
   async clear(options: channels.ElementHandleFillOptions = {}): Promise<void> {
-    await this._frame._wrapApiCall(() => this.fill('', options), { title: 'Clear' });
+    await this.fill('', options);
   }
 
   async _highlight() {
@@ -333,9 +341,10 @@ export class Locator implements api.Locator {
     return await this._frame.press(this._selector, key, { strict: true, ...options });
   }
 
+  @apiCall({ title: 'Screenshot' })
   async screenshot(options: Omit<channels.ElementHandleScreenshotOptions, 'mask'> & TimeoutOptions & { path?: string, mask?: api.Locator[] } = {}): Promise<Buffer> {
     const mask = options.mask as Locator[] | undefined;
-    return await this._withElement((h, timeout) => h.screenshot({ ...options, mask, timeout }), { title: 'Screenshot', timeout: options.timeout, signal: options.signal });
+    return await this._withElement((h, timeout) => h.screenshot({ ...options, mask, timeout }), { timeout: options.timeout, signal: options.signal });
   }
 
   async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<string> {
@@ -348,16 +357,18 @@ export class Locator implements api.Locator {
     return result.snapshot;
   }
 
+  @apiCall({ title: 'Scroll into view' })
   async scrollIntoViewIfNeeded(options: channels.ElementHandleScrollIntoViewIfNeededOptions & TimeoutOptions = {}) {
-    return await this._withElement((h, timeout) => h.scrollIntoViewIfNeeded({ ...options, timeout }), { title: 'Scroll into view', timeout: options.timeout, signal: options.signal });
+    return await this._withElement((h, timeout) => h.scrollIntoViewIfNeeded({ ...options, timeout }), { timeout: options.timeout, signal: options.signal });
   }
 
   async selectOption(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
     return await this._frame.selectOption(this._selector, values, { strict: true, ...options });
   }
 
+  @apiCall({ title: 'Select text' })
   async selectText(options: channels.ElementHandleSelectTextOptions & TimeoutOptions = {}): Promise<void> {
-    return await this._withElement((h, timeout) => h.selectText({ ...options, timeout }), { title: 'Select text', timeout: options.timeout, signal: options.signal });
+    return await this._withElement((h, timeout) => h.selectText({ ...options, timeout }), { timeout: options.timeout, signal: options.signal });
   }
 
   async setChecked(checked: boolean, options?: channels.ElementHandleCheckOptions & TimeoutOptions) {

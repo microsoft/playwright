@@ -23,7 +23,7 @@ import { urlMatchesEqual } from '@isomorphic/urlMatch';
 import { rewriteErrorMessage } from '@utils/stackTrace';
 import { Browser } from './browser';
 import { CDPSession } from './cdpSession';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, apiCall, internal } from './channelOwner';
 import { evaluationScript } from './clientHelper';
 import { Clock } from './clock';
 import { ConsoleMessage } from './consoleMessage';
@@ -256,7 +256,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         this._routes.splice(index, 1);
       const handled = await routeHandler.handle(route);
       if (!this._routes.length)
-        this._updateInterceptionPatterns({ internal: true }).catch(() => {});
+        this._disableInterception().catch(() => {});
       if (handled)
         return;
     }
@@ -385,15 +385,17 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     return DisposableObject.from(result.disposable);
   }
 
+  @apiCall({ title: 'Route requests' })
   async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<DisposableStub> {
     this._routes.unshift(new network.RouteHandler(this._options.baseURL, url, handler, options.times));
-    await this._updateInterceptionPatterns({ title: 'Route requests' });
+    await this._updateInterceptionPatterns();
     return new DisposableStub(() => this.unroute(url, handler));
   }
 
+  @apiCall({ title: 'Route WebSockets' })
   async routeWebSocket(url: URLMatch, handler: network.WebSocketRouteHandlerCallback): Promise<void> {
     this._webSocketRoutes.unshift(new network.WebSocketRouteHandler(this._options.baseURL, url, handler));
-    await this._updateWebSocketInterceptionPatterns({ title: 'Route WebSockets' });
+    await this._updateWebSocketInterceptionPatterns();
   }
 
   async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full' } = {}): Promise<void> {
@@ -414,11 +416,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._harRouters = [];
   }
 
+  @apiCall({ title: 'Unroute requests' })
   async unrouteAll(options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
     await this._unrouteInternal(this._routes, [], options?.behavior);
     this._disposeHarRouters();
   }
 
+  @apiCall({ title: 'Unroute requests' })
   async unroute(url: URLMatch, handler?: network.RouteHandlerCallback): Promise<void> {
     const removed = [];
     const remaining = [];
@@ -437,35 +441,39 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       const promises = removed.map(routeHandler => routeHandler.stop(behavior));
       await Promise.all(promises);
     }
-    await this._updateInterceptionPatterns({ title: 'Unroute requests' });
+    await this._updateInterceptionPatterns();
   }
 
-  private async _updateInterceptionPatterns(options: { internal: true } | { title: string }) {
+  @internal
+  private async _disableInterception() {
+    await this._updateInterceptionPatterns();
+  }
+
+  private async _updateInterceptionPatterns() {
     const patterns = network.RouteHandler.prepareInterceptionPatterns(this._routes);
-    await this._wrapApiCall(() => this._channel.setNetworkInterceptionPatterns({ patterns }, kNoTimeout), options);
+    await this._channel.setNetworkInterceptionPatterns({ patterns }, kNoTimeout);
   }
 
-  private async _updateWebSocketInterceptionPatterns(options: { internal: true } | { title: string }) {
+  private async _updateWebSocketInterceptionPatterns() {
     const patterns = network.WebSocketRouteHandler.prepareInterceptionPatterns(this._webSocketRoutes);
-    await this._wrapApiCall(() => this._channel.setWebSocketInterceptionPatterns({ patterns }, kNoTimeout), options);
+    await this._channel.setWebSocketInterceptionPatterns({ patterns }, kNoTimeout);
   }
 
   _effectiveCloseReason(): string | undefined {
     return this._closeReason || this._browser?._closeReason;
   }
 
+  @apiCall()
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return await this._wrapApiCall(async () => {
-      const timeoutOptions = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function'  ? {} : optionsOrPredicate);
-      const predicate = typeof optionsOrPredicate === 'function'  ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const waiter = Waiter.createForEvent(this, event);
-      waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
-      if (event !== Events.BrowserContext.Close)
-        waiter.rejectOnEvent(this, Events.BrowserContext.Close, () => new TargetClosedError(this._effectiveCloseReason()));
-      const result = await waiter.waitForEvent(this, event, predicate as any);
-      waiter.dispose();
-      return result;
-    });
+    const timeoutOptions = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function'  ? {} : optionsOrPredicate);
+    const predicate = typeof optionsOrPredicate === 'function'  ? optionsOrPredicate : optionsOrPredicate.predicate;
+    const waiter = Waiter.createForEvent(this, event);
+    waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
+    if (event !== Events.BrowserContext.Close)
+      waiter.rejectOnEvent(this, Events.BrowserContext.Close, () => new TargetClosedError(this._effectiveCloseReason()));
+    const result = await waiter.waitForEvent(this, event, predicate as any);
+    waiter.dispose();
+    return result;
   }
 
   async storageState(options: { path?: string, indexedDB?: boolean, opfs?: boolean, credentials?: boolean } = {}): Promise<StorageState> {

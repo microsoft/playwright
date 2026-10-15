@@ -23,7 +23,7 @@ import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, get
 import { kAnyFrameSelector } from '@isomorphic/selectorParser';
 import { urlMatches } from '@isomorphic/urlMatch';
 import { EventEmitter } from './eventEmitter';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, apiCall } from './channelOwner';
 import { addSourceUrlToScript } from './clientHelper';
 import { ElementHandle, convertInputFiles, convertSelectOptionValues } from './elementHandle';
 import { AbortError, PlaywrightError } from './errors';
@@ -143,59 +143,57 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return waiter;
   }
 
+  @apiCall({ title: 'Wait for navigation' })
   async waitForNavigation(options: WaitForNavigationOptions = {}): Promise<network.Response | null> {
-    return await this._page!._wrapApiCall(async () => {
-      const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      const waiter = this._setupNavigationWaiter(options);
+    const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
+    const waiter = this._setupNavigationWaiter(options);
 
-      const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
-      waiter.log(`waiting for navigation${toUrl} until "${waitUntil}"`);
+    const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
+    waiter.log(`waiting for navigation${toUrl} until "${waitUntil}"`);
 
-      const navigatedEvent = await waiter.waitForEvent<channels.FrameNavigatedEvent>(this._eventEmitter, 'navigated', event => {
-        // Any failed navigation results in a rejection.
-        if (event.error)
-          return true;
-        waiter.log(`  navigated to "${event.url}"`);
-        return urlMatches(this._page?.context()._options.baseURL, event.url, options.url);
+    const navigatedEvent = await waiter.waitForEvent<channels.FrameNavigatedEvent>(this._eventEmitter, 'navigated', event => {
+      // Any failed navigation results in a rejection.
+      if (event.error)
+        return true;
+      waiter.log(`  navigated to "${event.url}"`);
+      return urlMatches(this._page?.context()._options.baseURL, event.url, options.url);
+    });
+    if (navigatedEvent.error) {
+      const e = new Error(navigatedEvent.error);
+      e.stack = '';
+      await waiter.waitForPromise(Promise.reject(e));
+    }
+
+    if (!this._loadStates.has(waitUntil)) {
+      await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
+        waiter.log(`  "${s}" event fired`);
+        return s === waitUntil;
       });
-      if (navigatedEvent.error) {
-        const e = new Error(navigatedEvent.error);
-        e.stack = '';
-        await waiter.waitForPromise(Promise.reject(e));
-      }
+    }
 
-      if (!this._loadStates.has(waitUntil)) {
-        await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
-          waiter.log(`  "${s}" event fired`);
-          return s === waitUntil;
-        });
-      }
-
-      const request = navigatedEvent.newDocument ? network.Request.fromNullable(navigatedEvent.newDocument.request) : null;
-      const response = request ? await waiter.waitForPromise(request._finalRequest()._internalResponse()) : null;
-      waiter.dispose();
-      return response;
-    }, { title: 'Wait for navigation' });
+    const request = navigatedEvent.newDocument ? network.Request.fromNullable(navigatedEvent.newDocument.request) : null;
+    const response = request ? await waiter.waitForPromise(request._finalRequest()._internalResponse()) : null;
+    waiter.dispose();
+    return response;
   }
 
+  @apiCall({ title: 'Wait for load state' })
   async waitForLoadState(state: LifecycleEvent = 'load', options?: TimeoutOptions): Promise<void> {
     state = verifyLoadState('state', state);
-    return await this._page!._wrapApiCall(async () => {
-      const waiter = this._setupNavigationWaiter(options ?? {});
-      try {
-        if (this._loadStates.has(state)) {
-          waiter.log(`  not waiting, "${state}" event already fired`);
-          waiter.throwIfImmediatelyRejected();
-        } else {
-          await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
-            waiter.log(`  "${s}" event fired`);
-            return s === state;
-          });
-        }
-      } finally {
-        waiter.dispose();
+    const waiter = this._setupNavigationWaiter(options ?? {});
+    try {
+      if (this._loadStates.has(state)) {
+        waiter.log(`  not waiting, "${state}" event already fired`);
+        waiter.throwIfImmediatelyRejected();
+      } else {
+        await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
+          waiter.log(`  "${s}" event fired`);
+          return s === state;
+        });
       }
-    }, { title: `Wait for load state "${state}"` });
+    } finally {
+      waiter.dispose();
+    }
   }
 
   async waitForURL(url: URLMatch, options?: { waitUntil?: LifecycleEvent } & TimeoutOptions): Promise<void> {

@@ -19,7 +19,7 @@ import fs from 'fs';
 import { Artifact } from './artifact';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { CDPSession } from './cdpSession';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, apiCall } from './channelOwner';
 import { isTargetClosedError } from './errors';
 import { Events } from './events';
 import { mkdirIfNeeded } from './fileUtils';
@@ -142,14 +142,13 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     await this._channel.stopServer({}, kNoTimeout);
   }
 
+  @apiCall({ title: 'Create page' })
   async newPage(options: BrowserContextOptions = {}): Promise<Page> {
-    return await this._wrapApiCall(async () => {
-      const context = await this.newContext(options);
-      const page = await context.newPage();
-      page._ownedContext = context;
-      context._ownerPage = page;
-      return page;
-    }, { title: 'Create page' });
+    const context = await this.newContext(options);
+    const page = await context.newPage();
+    page._ownedContext = context;
+    context._ownerPage = page;
+    return page;
   }
 
   isConnected(): boolean {

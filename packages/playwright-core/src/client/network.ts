@@ -31,7 +31,7 @@ import { Frame } from './frame';
 import { APIResponse } from './fetch';
 import { Events } from './events';
 import { isTargetClosedError } from './errors';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, apiCall, internal } from './channelOwner';
 import { kNoTimeout } from './timeoutSettings';
 
 import type { BrowserContext } from './browserContext';
@@ -192,22 +192,22 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     if (this._fallbackOverrides.headers)
       return RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers);
 
-    if (!this._actualHeadersPromise) {
-      this._actualHeadersPromise = this._wrapApiCall(async () => {
-        return new RawHeaders((await this._channel.rawRequestHeaders({}, kNoTimeout)).headers);
-      }, { internal: true });
-    }
+    if (!this._actualHeadersPromise)
+      this._actualHeadersPromise = this._channel.rawRequestHeaders({}, kNoTimeout).then(result => new RawHeaders(result.headers));
     return await this._actualHeadersPromise;
   }
 
+  @internal
   async allHeaders(): Promise<Headers> {
     return (await this._actualHeaders()).headers();
   }
 
+  @internal
   async headersArray(): Promise<HeadersArray> {
     return (await this._actualHeaders()).headersArray();
   }
 
+  @internal
   async headerValue(name: string): Promise<string | null> {
     return (await this._actualHeaders()).get(name);
   }
@@ -361,10 +361,9 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     });
   }
 
+  @apiCall()
   async fetch(options: FallbackOverrides & { maxRedirects?: number, maxRetries?: number, timeout?: number, signal?: AbortSignal } = {}): Promise<APIResponse> {
-    return await this._wrapApiCall(async () => {
-      return await this._context.request._innerFetch({ request: this.request(), data: options.postData, ...options });
-    });
+    return await this._context.request._innerFetch({ request: this.request(), data: options.postData, ...options });
   }
 
   async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, json?: any, path?: string } = {}) {
@@ -816,21 +815,20 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implement
     return this._isClosed;
   }
 
+  @apiCall()
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return await this._wrapApiCall(async () => {
-      const timeoutOptions = this._page._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
-      const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const waiter = Waiter.createForEvent(this, event);
-      waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
-      if (event !== Events.WebSocket.Error)
-        waiter.rejectOnEvent(this, Events.WebSocket.Error, new Error('Socket error'));
-      if (event !== Events.WebSocket.Close)
-        waiter.rejectOnEvent(this, Events.WebSocket.Close, new Error('Socket closed'));
-      waiter.rejectOnEvent(this._page, Events.Page.Close, () => this._page._closeErrorWithReason());
-      const result = await waiter.waitForEvent(this, event, predicate as any);
-      waiter.dispose();
-      return result;
-    });
+    const timeoutOptions = this._page._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+    const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+    const waiter = Waiter.createForEvent(this, event);
+    waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
+    if (event !== Events.WebSocket.Error)
+      waiter.rejectOnEvent(this, Events.WebSocket.Error, new Error('Socket error'));
+    if (event !== Events.WebSocket.Close)
+      waiter.rejectOnEvent(this, Events.WebSocket.Close, new Error('Socket closed'));
+    waiter.rejectOnEvent(this._page, Events.Page.Close, () => this._page._closeErrorWithReason());
+    const result = await waiter.waitForEvent(this, event, predicate as any);
+    waiter.dispose();
+    return result;
   }
 }
 

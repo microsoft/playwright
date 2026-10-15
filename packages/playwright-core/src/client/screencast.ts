@@ -15,10 +15,12 @@
  */
 
 import { Artifact } from './artifact';
+import { apiCall } from './channelOwner';
 import { DisposableStub } from './disposable';
 import { kNoTimeout } from './timeoutSettings';
 
 import type * as api from '../../types/types';
+import type { ApiCallOptions } from './channelOwner';
 import type { Page } from './page';
 
 export class Screencast implements api.Screencast {
@@ -37,6 +39,10 @@ export class Screencast implements api.Screencast {
         await this._page._channel.screencastFrameAck({ frameId }, kNoTimeout).catch(() => {});
       }
     });
+  }
+
+  async _wrapApiCall<R>(func: () => Promise<R>, options?: ApiCallOptions): Promise<R> {
+    return await this._page._wrapApiCall(func, options);
   }
 
   async start(options: { onFrame?: (frame: { data: Buffer, timestamp: number, viewportWidth: number, viewportHeight: number }) => Promise<any>|any, path?: string, size?: { width: number, height: number }, quality?: number, fps?: number } = {}): Promise<DisposableStub> {
@@ -59,16 +65,15 @@ export class Screencast implements api.Screencast {
     return new DisposableStub(() => this.stop());
   }
 
+  @apiCall()
   async stop(): Promise<void> {
-    await this._page._wrapApiCall(async () => {
-      this._started = false;
-      this._onFrame = null;
-      await this._page._channel.screencastStop({}, kNoTimeout);
-      if (this._savePath)
-        await this._artifact?.saveAs(this._savePath);
-      this._artifact = undefined;
-      this._savePath = undefined;
-    });
+    this._started = false;
+    this._onFrame = null;
+    await this._page._channel.screencastStop({}, kNoTimeout);
+    if (this._savePath)
+      await this._artifact?.saveAs(this._savePath);
+    this._artifact = undefined;
+    this._savePath = undefined;
   }
 
   async showActions(options?: { duration?: number, position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right', fontSize?: number, cursor?: 'none' | 'pointer', style?: { point?: string, highlight?: string, title?: string } }): Promise<DisposableStub> {

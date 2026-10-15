@@ -20,7 +20,7 @@ import { assert } from '@isomorphic/assert';
 import { headersObjectToArray } from '@isomorphic/headers';
 import { Browser } from './browser';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, apiCall } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { connectToBrowser } from './connect';
 import { TimeoutSettings } from './timeoutSettings';
@@ -63,6 +63,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     return this._initializer.name;
   }
 
+  @apiCall()
   async launch(options: LaunchOptions = {}): Promise<Browser> {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
@@ -75,11 +76,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
     };
-    return await this._wrapApiCall(async () => {
-      const browser = Browser.from((await this._channel.launch(launchOptions, new TimeoutSettings().launchTimeout(options))).browser);
-      browser._connectToBrowserType(this, options, logger);
-      return browser;
-    });
+    const browser = Browser.from((await this._channel.launch(launchOptions, new TimeoutSettings().launchTimeout(options))).browser);
+    browser._connectToBrowserType(this, options, logger);
+    return browser;
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<api.BrowserServer> {
@@ -89,6 +88,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     return await this._serverLauncher.launchServer(options);
   }
 
+  @apiCall()
   async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = this._playwright.selectors._withSelectorOptions({
@@ -107,20 +107,18 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       channel: options.channel,
       userDataDir: (path.isAbsolute(userDataDir) || !userDataDir) ? userDataDir : path.resolve(userDataDir),
     };
-    const context = await this._wrapApiCall(async () => {
-      const result = await this._channel.launchPersistentContext(persistentParams, new TimeoutSettings().launchTimeout(options));
-      const browser = Browser.from(result.browser);
-      browser._connectToBrowserType(this, options, logger);
-      const context = BrowserContext.from(result.context);
-      await context._initializeHarFromOptions(options.recordHar);
-      return context;
-    });
+    const result = await this._channel.launchPersistentContext(persistentParams, new TimeoutSettings().launchTimeout(options));
+    const browser = Browser.from(result.browser);
+    browser._connectToBrowserType(this, options, logger);
+    const context = BrowserContext.from(result.context);
+    await context._initializeHarFromOptions(options.recordHar);
     await this._instrumentation.runAfterCreateBrowserContext(context);
     return context;
   }
 
   connect(options: api.ConnectOptions & { wsEndpoint: string }): Promise<Browser>;
   connect(endpoint: string, options?: api.ConnectOptions): Promise<Browser>;
+  @apiCall()
   async connect(optionsOrEndpoint: string | (api.ConnectOptions & { wsEndpoint?: string }), options?: api.ConnectOptions): Promise<Browser>{
     if (typeof optionsOrEndpoint === 'string')
       return await this._connect({ ...options, endpoint: optionsOrEndpoint });
@@ -129,11 +127,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   }
 
   async _connect(params: ConnectOptions): Promise<Browser> {
-    return await this._wrapApiCall(async () => {
-      const browser = await connectToBrowser(this._playwright, { browserName: this.name(), ...params });
-      browser._connectToBrowserType(this, {}, undefined);
-      return browser;
-    });
+    const browser = await connectToBrowser(this._playwright, { browserName: this.name(), ...params });
+    browser._connectToBrowserType(this, {}, undefined);
+    return browser;
   }
 
   async connectOverCDP(options: api.ConnectOverCDPOptions  & { wsEndpoint?: string }): Promise<api.Browser>;

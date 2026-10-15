@@ -15,7 +15,7 @@
  */
 
 import { LongStandingScope } from '@isomorphic/manualPromise';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, apiCall } from './channelOwner';
 import { ConsoleMessage } from './consoleMessage';
 import { isTargetClosedError, TargetClosedError } from './errors';
 import { Events } from './events';
@@ -86,19 +86,18 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 
+  @apiCall()
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
-    return await this._wrapApiCall(async () => {
-      const timeoutSettings = this._page?._timeoutSettings ?? this._context?._timeoutSettings ?? new TimeoutSettings();
-      const timeoutOptions = timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
-      const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const waiter = Waiter.createForEvent(this, event);
-      waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
-      if (event !== Events.Worker.Close)
-        waiter.rejectOnEvent(this, Events.Worker.Close, () => this._closeErrorWithReason());
-      const result = await waiter.waitForEvent(this, event, predicate as any);
-      waiter.dispose();
-      return result;
-    });
+    const timeoutSettings = this._page?._timeoutSettings ?? this._context?._timeoutSettings ?? new TimeoutSettings();
+    const timeoutOptions = timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+    const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+    const waiter = Waiter.createForEvent(this, event);
+    waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
+    if (event !== Events.Worker.Close)
+      waiter.rejectOnEvent(this, Events.Worker.Close, () => this._closeErrorWithReason());
+    const result = await waiter.waitForEvent(this, event, predicate as any);
+    waiter.dispose();
+    return result;
   }
 
   async _disconnect(options: { reason?: string } = {}): Promise<void> {

@@ -27,7 +27,7 @@ import { urlMatches, urlMatchesEqual } from '@isomorphic/urlMatch';
 import { LongStandingScope } from '@isomorphic/manualPromise';
 import { isObject, isRegExp, isString } from '@isomorphic/rtti';
 import { Artifact } from './artifact';
-import { ChannelOwner } from './channelOwner';
+import { ChannelOwner, apiCall, internal } from './channelOwner';
 import { evaluationScript, initScriptSourceWithExposedFunctions } from './clientHelper';
 import { Coverage } from './coverage';
 import { DisposableObject, DisposableStub } from './disposable';
@@ -225,7 +225,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
         this._routes.splice(index, 1);
       const handled = await routeHandler.handle(route);
       if (!this._routes.length)
-        this._updateInterceptionPatterns({ internal: true }).catch(() => {});
+        this._disableInterception().catch(() => {});
       if (handled)
         return;
     }
@@ -473,6 +473,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._mainFrame.waitForURL(url, options);
   }
 
+  @apiCall()
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean | Promise<boolean>), options: TimeoutOptions = {}): Promise<Request> {
     const predicate = async (request: Request) => {
       if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
@@ -484,6 +485,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout, signal: options.signal }, logLine);
   }
 
+  @apiCall()
   async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean | Promise<boolean>), options: TimeoutOptions = {}): Promise<Response> {
     const predicate = async (response: Response) => {
       if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
@@ -495,6 +497,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout, signal: options.signal }, logLine);
   }
 
+  @apiCall()
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     return await this._waitForEvent(event, optionsOrPredicate, `waiting for event "${event}"`);
   }
@@ -504,21 +507,19 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, logLine?: string): Promise<any> {
-    return await this._wrapApiCall(async () => {
-      const timeoutOptions = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
-      const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const waiter = Waiter.createForEvent(this, event);
-      if (logLine)
-        waiter.log(logLine);
-      waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
-      if (event !== Events.Page.Crash)
-        waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
-      if (event !== Events.Page.Close)
-        waiter.rejectOnEvent(this, Events.Page.Close, () => this._closeErrorWithReason());
-      const result = await waiter.waitForEvent(this, event, predicate as any);
-      waiter.dispose();
-      return result;
-    });
+    const timeoutOptions = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+    const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+    const waiter = Waiter.createForEvent(this, event);
+    if (logLine)
+      waiter.log(logLine);
+    waiter.rejectOnTimeout(timeoutOptions, `Timeout ${timeoutOptions.timeout}ms exceeded while waiting for event "${event}"`);
+    if (event !== Events.Page.Crash)
+      waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
+    if (event !== Events.Page.Close)
+      waiter.rejectOnEvent(this, Events.Page.Close, () => this._closeErrorWithReason());
+    const result = await waiter.waitForEvent(this, event, predicate as any);
+    waiter.dispose();
+    return result;
   }
 
   async goBack(options: channels.PageGoBackOptions & TimeoutOptions = {}): Promise<Response | null> {
@@ -567,9 +568,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return DisposableObject.from((await this._channel.addInitScript({ source }, kNoTimeout)).disposable);
   }
 
+  @apiCall({ title: 'Route requests' })
   async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<DisposableStub> {
     this._routes.unshift(new RouteHandler(this._browserContext._options.baseURL, url, handler, options.times));
-    await this._updateInterceptionPatterns({ title: 'Route requests' });
+    await this._updateInterceptionPatterns();
     return new DisposableStub(() => this.unroute(url, handler));
   }
 
@@ -586,9 +588,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await harRouter.addPageRoute(this);
   }
 
+  @apiCall({ title: 'Route WebSockets' })
   async routeWebSocket(url: URLMatch, handler: WebSocketRouteHandlerCallback): Promise<void> {
     this._webSocketRoutes.unshift(new WebSocketRouteHandler(this._browserContext._options.baseURL, url, handler));
-    await this._updateWebSocketInterceptionPatterns({ title: 'Route WebSockets' });
+    await this._updateWebSocketInterceptionPatterns();
   }
 
   private _disposeHarRouters() {
@@ -596,11 +599,13 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._harRouters = [];
   }
 
+  @apiCall({ title: 'Unroute requests' })
   async unrouteAll(options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void> {
     await this._unrouteInternal(this._routes, [], options?.behavior);
     this._disposeHarRouters();
   }
 
+  @apiCall({ title: 'Unroute requests' })
   async unroute(url: URLMatch, handler?: RouteHandlerCallback): Promise<void> {
     const removed = [];
     const remaining = [];
@@ -619,17 +624,22 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       const promises = removed.map(routeHandler => routeHandler.stop(behavior));
       await Promise.all(promises);
     }
-    await this._updateInterceptionPatterns({ title: 'Unroute requests' });
+    await this._updateInterceptionPatterns();
   }
 
-  private async _updateInterceptionPatterns(options: { internal: true } | { title: string }) {
+  @internal
+  private async _disableInterception() {
+    await this._updateInterceptionPatterns();
+  }
+
+  private async _updateInterceptionPatterns() {
     const patterns = RouteHandler.prepareInterceptionPatterns(this._routes);
-    await this._wrapApiCall(() => this._channel.setNetworkInterceptionPatterns({ patterns }, kNoTimeout), options);
+    await this._channel.setNetworkInterceptionPatterns({ patterns }, kNoTimeout);
   }
 
-  private async _updateWebSocketInterceptionPatterns(options: { internal: true } | { title: string }) {
+  private async _updateWebSocketInterceptionPatterns() {
     const patterns = WebSocketRouteHandler.prepareInterceptionPatterns(this._webSocketRoutes);
-    await this._wrapApiCall(() => this._channel.setWebSocketInterceptionPatterns({ patterns }, kNoTimeout), options);
+    await this._channel.setWebSocketInterceptionPatterns({ patterns }, kNoTimeout);
   }
 
   async screenshot(options: Omit<channels.PageScreenshotOptions, 'mask'> & TimeoutOptions & { path?: string, mask?: api.Locator[] } = {}): Promise<Buffer> {
