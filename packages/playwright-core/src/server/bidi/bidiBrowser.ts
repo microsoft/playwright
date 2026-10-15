@@ -225,7 +225,9 @@ export class BidiBrowserContext extends BrowserContext {
 
   constructor(browser: BidiBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
-    if (browser._bidiOptions.proxyAuthentication === 'header')
+    if (browser._bidiOptions.proxyAuthentication === 'credentials')
+      this.authenticateProxyViaCredentials();
+    else
       this.authenticateProxyViaHeader();
   }
 

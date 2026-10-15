@@ -47,8 +47,7 @@ export class CRNetworkManager {
   private _serviceWorker: CRServiceWorker | null;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _requestIdToRequestWillBeSentEvent = new Map<string, { sessionInfo: SessionInfo, event: Protocol.Network.requestWillBeSentPayload }>();
-  private _credentials: HttpCredentials[] | undefined;
-  private _proxyCredentials: HttpCredentials | undefined;
+  private _credentials: HttpCredentials[] | null = null;
   private _attemptedAuthentications = new Set<string>();
   private _userRequestInterceptionEnabled = false;
   private _protocolRequestInterceptionEnabled = false;
@@ -123,9 +122,8 @@ export class CRNetworkManager {
     }));
   }
 
-  async authenticate(credentials: HttpCredentials[] | undefined, proxyCredentials: HttpCredentials | undefined) {
+  async authenticate(credentials: HttpCredentials[] | null) {
     this._credentials = credentials;
-    this._proxyCredentials = proxyCredentials;
     await this._updateProtocolRequestInterception();
   }
 
@@ -157,7 +155,7 @@ export class CRNetworkManager {
   }
 
   async _updateProtocolRequestInterception() {
-    const enabled = this._userRequestInterceptionEnabled || !!this._credentials?.length || !!this._proxyCredentials;
+    const enabled = this._userRequestInterceptionEnabled || !!this._credentials?.length;
     if (enabled === this._protocolRequestInterceptionEnabled)
       return;
     this._protocolRequestInterceptionEnabled = enabled;
@@ -229,15 +227,12 @@ export class CRNetworkManager {
 
   _onAuthRequired(sessionInfo: SessionInfo, event: Protocol.Fetch.authRequiredPayload) {
     let response: 'Default' | 'CancelAuth' | 'ProvideCredentials' = 'Default';
-    // Proxy credentials only answer the proxy's challenge, never the website's.
-    const isProxy = event.authChallenge.source === 'Proxy';
-    const credentials = isProxy ? this._proxyCredentials : findMatchingHttpCredentials(this._credentials, event.request.url);
-    const attemptKey = authAttemptKey(event.requestId, isProxy);
-    if (this._attemptedAuthentications.has(attemptKey)) {
+    const credentials = findMatchingHttpCredentials(this._credentials || undefined, event.request.url);
+    if (this._attemptedAuthentications.has(event.requestId)) {
       response = 'CancelAuth';
     } else if (credentials) {
       response = 'ProvideCredentials';
-      this._attemptedAuthentications.add(attemptKey);
+      this._attemptedAuthentications.add(event.requestId);
     }
     const { username, password } = credentials || { username: undefined, password: undefined };
     sessionInfo.session._sendMayFail('Fetch.continueWithAuth', {
@@ -433,10 +428,8 @@ export class CRNetworkManager {
 
   _deleteRequest(request: InterceptableRequest) {
     this._requestIdToRequest.delete(request._requestId);
-    if (request._interceptionId) {
-      this._attemptedAuthentications.delete(authAttemptKey(request._interceptionId, true));
-      this._attemptedAuthentications.delete(authAttemptKey(request._interceptionId, false));
-    }
+    if (request._interceptionId)
+      this._attemptedAuthentications.delete(request._interceptionId);
   }
 
   _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number, hasExtraInfo: boolean) {
@@ -942,8 +935,4 @@ function toResourceType(type: Protocol.Network.ResourceType): network.ResourceTy
     default:
       return 'other';
   }
-}
-
-function authAttemptKey(interceptionId: string, isProxy: boolean) {
-  return `${interceptionId}:${isProxy ? 'proxy' : 'server'}`;
 }

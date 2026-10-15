@@ -197,7 +197,7 @@ export class CRPage implements PageDelegate {
   }
 
   async updateHttpCredentials(): Promise<void> {
-    await this._networkManager.authenticate(this._browserContext._options.httpCredentials, this._browserContext.proxyCredentials());
+    await this._networkManager.authenticate(this._browserContext._options.httpCredentials || null);
   }
 
   async updateEmulatedViewportSize(preserveWindowBoundaries?: boolean): Promise<void> {

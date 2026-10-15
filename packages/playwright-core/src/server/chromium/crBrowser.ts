@@ -352,6 +352,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
 
   constructor(browser: CRBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
+    this.authenticateProxyViaCredentials();
   }
 
   override async initialize() {
