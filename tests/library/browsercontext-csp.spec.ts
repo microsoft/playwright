@@ -111,3 +111,17 @@ it('should bypass CSP in iframes as well', async ({ browser, server }) => {
     await context.close();
   }
 });
+
+it('should not crash on javascript: navigation', async ({ browser, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43213' });
+  const context = await browser.newContext({ bypassCSP: true });
+  const page = await context.newPage();
+  let crashed = false;
+  page.on('crash', () => crashed = true);
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<a id="a" href="javascript:window.__clicked = true">click</a>`);
+  await page.click('#a');
+  await expect.poll(() => page.evaluate(() => window['__clicked'])).toBe(true);
+  expect(crashed).toBe(false);
+  await context.close();
+});
