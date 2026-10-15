@@ -82,7 +82,17 @@ export class UtilityScript {
       if (typeof result === 'function')
         result = result(...parameters);
     }
-    return returnByValue ? this._promiseAwareJsonValueNoThrow(result) : result;
+    if (isThenable(result)) {
+      return (async () => {
+        // By using async function we ensure that return value is a native Promise,
+        // and not some overridden Promise in the page.
+        // This makes Firefox and WebKit debugging protocols recognize it as a Promise,
+        // properly await and return the value.
+        const value = await result;
+        return returnByValue ? this._jsonValueNoThrow(value) : value;
+      })();
+    }
+    return returnByValue ? this._jsonValueNoThrow(result) : result;
   }
 
   jsonValue(returnByValue: true, value: any) {
@@ -92,25 +102,15 @@ export class UtilityScript {
     return serializeAsCallArgument(value, (value: any) => ({ fallThrough: value }));
   }
 
-  private _promiseAwareJsonValueNoThrow(value: any) {
-    const safeJson = (value: any) => {
-      try {
-        return this.jsonValue(true, value);
-      } catch (e) {
-        return undefined;
-      }
-    };
-
-    if (value && typeof value === 'object' && typeof value.then === 'function') {
-      return (async () => {
-        // By using async function we ensure that return value is a native Promise,
-        // and not some overridden Promise in the page.
-        // This makes Firefox and WebKit debugging protocols recognize it as a Promise,
-        // properly await and return the value.
-        const promiseValue = await value;
-        return safeJson(promiseValue);
-      })();
+  private _jsonValueNoThrow(value: any) {
+    try {
+      return this.jsonValue(true, value);
+    } catch (e) {
+      return undefined;
     }
-    return safeJson(value);
   }
+}
+
+function isThenable(value: any): boolean {
+  return value && typeof value === 'object' && typeof value.then === 'function';
 }
