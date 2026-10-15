@@ -341,6 +341,18 @@ it('should work with overwritten Promise', async ({ page }) => {
 
   // Now, the new promise should be awaitable.
   expect(await page.evaluate(() => Promise.resolve(42))).toBe(42);
+  const handle = await page.evaluateHandle(() => Promise.resolve(42));
+  expect(await handle.jsonValue()).toBe(42);
+
+  await page.evaluate(() => {
+    (window as any).__counter = 0;
+    setTimeout(() => (window as any).__counter = 1, 50);
+  });
+  await page.waitForFunction(() => (window as any).__counter === 1);
+  expect(await page.evaluate(() => (window as any).__counter)).toBe(1);
+
+  const error = await page.waitForFunction(() => false, undefined, { timeout: 100 }).catch(e => e);
+  expect(error.message).toContain('page.waitForFunction: Timeout 100ms exceeded');
 });
 
 it('should throw when passed more than one parameter', async ({ page }) => {

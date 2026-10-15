@@ -82,7 +82,18 @@ export class UtilityScript {
       if (typeof result === 'function')
         result = result(...parameters);
     }
-    return returnByValue ? this._promiseAwareJsonValueNoThrow(result) : result;
+    if (returnByValue)
+      return this._promiseAwareJsonValueNoThrow(result);
+    if (result && typeof result === 'object' && typeof result.then === 'function') {
+      return (async () => {
+        // By using async function we ensure that return value is a native Promise,
+        // and not some overridden Promise in the page.
+        // This makes Firefox and WebKit debugging protocols recognize it as a Promise,
+        // properly await and return the value.
+        return await result;
+      })();
+    }
+    return result;
   }
 
   jsonValue(returnByValue: true, value: any) {
