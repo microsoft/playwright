@@ -414,7 +414,8 @@ test.describe('user activation', () => {
     await page.waitForTimeout(500);
     expect(choosers).toBe(0);
 
-    // Wait for a console message instead of polling with waitForFunction, because evaluating in the page grants user activation.
+    // Do not poll with waitForFunction: each poll evaluates in the page with a user gesture,
+    // which grants transient user activation and would let showPicker() succeed.
     const result = page.waitForEvent('console', msg => msg.text().startsWith('showPicker:'));
     await page.goto(server.PREFIX + '/activation.html?showPicker');
     expect((await result).text()).toBe('showPicker:NotAllowedError');
