@@ -293,8 +293,9 @@ function renderConstructors(name, type, out) {
 /**
  * @param {Documentation.Member} member
  * @param {string[]} out
+ * @param {{trimRunAndPrefix?: boolean}} [options]
  */
-function renderMemberDoc(member, out) {
+function renderMemberDoc(member, out, options) {
   /** @type {Documentation.MarkdownNode[]} */
   const nodes = [];
   if (member.deprecated)
@@ -302,8 +303,27 @@ function renderMemberDoc(member, out) {
   if (member.discouraged)
     nodes.push({ type: 'text', text: member.discouraged });
   if (member.spec)
-    nodes.push(...member.spec);
+    nodes.push(...(options?.trimRunAndPrefix ? withoutUsageExamples(member.spec) : member.spec));
   out.push(...XmlDoc.renderXmlDoc(nodes, maxDocumentationColumnWidth));
+}
+
+/**
+ * The usage examples of a `RunAnd*` method call the variant that performs the
+ * action, so they don't apply to the `WaitFor*` variant without it.
+ * @param {Documentation.MarkdownNode[]} spec
+ * @returns {Documentation.MarkdownNode[]}
+ */
+function withoutUsageExamples(spec) {
+  return spec.filter((node, index) => {
+    if (node.type === 'code')
+      return false;
+    if (node.type !== 'text')
+      return true;
+    if (node.text === '**Usage**')
+      return false;
+    // The sentence introducing an example, e.g. "Consider this example:".
+    return !(node.text.endsWith(':') && spec[index + 1]?.type === 'code');
+  });
 }
 
 /**
@@ -324,7 +344,7 @@ function renderMember(member, parent, options, out) {
     if (!member.type)
       throw new Error(`No Event Type for ${name} in ${parent.name}`);
     out.push('');
-    renderMemberDoc(member, out);
+    renderMemberDoc(member, out, options);
     if (member.deprecated)
       out.push(`[System.Obsolete]`);
     if (type === 'void')
@@ -344,7 +364,7 @@ function renderMember(member, parent, options, out) {
       const { name, jsonName } = overload;
       let { type } = overload;
       out.push('');
-      renderMemberDoc(member, out);
+      renderMemberDoc(member, out, options);
       if (!member.clazz)
         out.push(`${member.required ? '[Required]\n' : ''}[JsonPropertyName("${jsonName}")]`);
       if (member.deprecated)
@@ -646,7 +666,7 @@ function renderMethod(member, parent, name, options, out) {
 
   if (!explodedArgs.length) {
     if (!options.nodocs) {
-      renderMemberDoc(member, out);
+      renderMemberDoc(member, out, options);
       paramDocs.forEach((value, i) => printArgDoc(i, value, out));
     }
     if (member.deprecated)
@@ -656,7 +676,7 @@ function renderMethod(member, parent, name, options, out) {
     let containsOptionalExplodedArgs = false;
     explodedArgs.forEach((explodedArg, argIndex) => {
       if (!options.nodocs)
-        renderMemberDoc(member, out);
+        renderMemberDoc(member, out, options);
       const overloadedArgs = [];
       for (let i = 0; i < args.length; i++) {
         const arg = args[i];
@@ -685,7 +705,7 @@ function renderMethod(member, parent, name, options, out) {
     if (containsOptionalExplodedArgs) {
       const filteredArgs = args.filter(x => x !== 'OPTIONAL_EXPLODED_ARG');
       if (!options.nodocs)
-        renderMemberDoc(member, out);
+        renderMemberDoc(member, out, options);
       filteredArgs.forEach(arg => {
         if (arg === 'EXPLODED_ARG')
           throw new Error(`Unsupported required union arg combined an optional union inside ${member.name}`);
