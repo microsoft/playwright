@@ -238,7 +238,8 @@ export interface CDPSession {
   once<T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void): this;
   send<T extends keyof Protocol.CommandParameters>(
     method: T,
-    params?: Protocol.CommandParameters[T]
+    params?: Protocol.CommandParameters[T],
+    options?: { timeout?: number, signal?: AbortSignal }
   ): Promise<Protocol.CommandReturnValues[T]>;
 }
 

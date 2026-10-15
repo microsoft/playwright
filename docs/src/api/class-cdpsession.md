@@ -140,6 +140,19 @@ Optional method parameters.
 
 Optional method parameters.
 
+### option: CDPSession.send.timeout
+* since: v1.65
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the response. Defaults to `0` - no timeout.
+
+### option: CDPSession.send.signal
+* since: v1.65
+* langs: js
+- `signal` <[AbortSignal]>
+
+Allows to cancel the operation using an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the operation will be aborted and throw an error.
+
 ## method: CDPSession.event
 * since: v1.30
 * langs: csharp
