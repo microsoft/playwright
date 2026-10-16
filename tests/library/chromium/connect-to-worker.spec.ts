@@ -16,7 +16,7 @@
 
 import { playwrightTest as test, expect } from '../../config/browserTest';
 
-test('should connect, evaluate, receive console and disconnect', async ({ browserType, childProcess }) => {
+test('CR-043 should connect, evaluate, receive console and disconnect', async ({ browserType, childProcess }) => {
   const child = childProcess({ command: [process.execPath, '--inspect-brk=0', '-e', 'console.log("hello from node"); setTimeout(() => {}, 1e9)'] });
   await child.waitForOutput('Debugger listening on ws://');
   const endpoint = child.output.match(/Debugger listening on (ws:\/\/\S+)/)![1];
@@ -34,7 +34,7 @@ test('should connect, evaluate, receive console and disconnect', async ({ browse
   await closePromise;
 });
 
-test('should receive close when node process exits', async ({ browserType, childProcess }) => {
+test('CR-044 should receive close when node process exits', async ({ browserType, childProcess }) => {
   const child = childProcess({ command: [process.execPath, '--inspect-brk=0', '-e', 'setTimeout(() => {}, 1e9)'] });
   await child.waitForOutput('Debugger listening on ws://');
   const endpoint = child.output.match(/Debugger listening on (ws:\/\/\S+)/)![1];

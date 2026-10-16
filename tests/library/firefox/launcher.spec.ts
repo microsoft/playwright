@@ -19,7 +19,7 @@ import { playwrightTest as it, expect } from '../../config/browserTest';
 import { TestServer } from '../../config/testserver';
 import { inheritAndCleanEnv } from '../../config/utils';
 
-it('should pass firefox user preferences', async ({ browserType, mode }) => {
+it('FF-001 should pass firefox user preferences', async ({ browserType, mode }) => {
   const browser = await browserType.launch({
     firefoxUserPrefs: {
       'network.proxy.type': 1,
@@ -33,7 +33,7 @@ it('should pass firefox user preferences', async ({ browserType, mode }) => {
   await browser.close();
 });
 
-it('should pass firefox user preferences in persistent', async ({ mode, launchPersistent }) => {
+it('FF-002 should pass firefox user preferences in persistent', async ({ mode, launchPersistent }) => {
   const { page } = await launchPersistent({
     firefoxUserPrefs: {
       'network.proxy.type': 1,
@@ -45,7 +45,7 @@ it('should pass firefox user preferences in persistent', async ({ mode, launchPe
   expect(error.message).toContain('NS_ERROR_PROXY_CONNECTION_REFUSED');
 });
 
-it('should support custom firefox policies', async ({ browserType, mode, asset, loopback }, testInfo) => {
+it('FF-003 should support custom firefox policies', async ({ browserType, mode, asset, loopback }, testInfo) => {
   const policies = {
     'policies': {
       'Certificates': {
@@ -74,7 +74,7 @@ it('should support custom firefox policies', async ({ browserType, mode, asset, 
   await server.stop();
 });
 
-it('should resize viewport with fractional device scale factor', async ({ browserType }) => {
+it('FF-004 should resize viewport with fractional device scale factor', async ({ browserType }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43028' });
   // A fractional device scale factor makes the viewport size fractional in CSS pixels,
   // e.g. 400.27x799.9 instead of 400x800. Web content still sees rounded values.

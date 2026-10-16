@@ -23,7 +23,7 @@
 import { EventEmitter } from './utils';
 import { test, expect } from '@playwright/test';
 
-test('should work', () => {
+test('EE-027 should work', () => {
   const e = new EventEmitter();
   const num_args_emitted = [];
 

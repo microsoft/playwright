@@ -23,14 +23,14 @@ async function checkAndMatchSnapshot(locator: Locator, snapshot: string) {
   await expect.soft(locator).toMatchAriaSnapshot(snapshot);
 }
 
-it('should snapshot', async ({ page }) => {
+it('AR-001 should snapshot', async ({ page }) => {
   await page.setContent(`<h1>title</h1>`);
   await checkAndMatchSnapshot(page.locator('body'), `
     - heading "title" [level=1]
   `);
 });
 
-it('should snapshot list', async ({ page }) => {
+it('AR-002 should snapshot list', async ({ page }) => {
   await page.setContent(`
     <h1>title</h1>
     <h1>title 2</h1>
@@ -41,7 +41,7 @@ it('should snapshot list', async ({ page }) => {
   `);
 });
 
-it('should snapshot list with accessible name', async ({ page }) => {
+it('AR-003 should snapshot list with accessible name', async ({ page }) => {
   await page.setContent(`
     <ul aria-label="my list">
       <li>one</li>
@@ -55,7 +55,7 @@ it('should snapshot list with accessible name', async ({ page }) => {
   `);
 });
 
-it('should quote names that look like regexes', async ({ page }) => {
+it('AR-004 should quote names that look like regexes', async ({ page }) => {
   await page.setContent(`
     <nav>
       <a href="/">/</a>
@@ -74,7 +74,7 @@ it('should quote names that look like regexes', async ({ page }) => {
   `);
 });
 
-it('should snapshot complex', async ({ page }) => {
+it('AR-005 should snapshot complex', async ({ page }) => {
   await page.setContent(`
     <ul>
       <li>
@@ -90,7 +90,7 @@ it('should snapshot complex', async ({ page }) => {
   `);
 });
 
-it('should allow text nodes', async ({ page }) => {
+it('AR-006 should allow text nodes', async ({ page }) => {
   await page.setContent(`
     <h1>Microsoft</h1>
     <div>Open source projects and samples from Microsoft</div>
@@ -102,7 +102,7 @@ it('should allow text nodes', async ({ page }) => {
   `);
 });
 
-it('should snapshot details visibility', async ({ page }) => {
+it('AR-007 should snapshot details visibility', async ({ page }) => {
   await page.setContent(`
     <details>
       <summary>Summary</summary>
@@ -115,7 +115,7 @@ it('should snapshot details visibility', async ({ page }) => {
   `);
 });
 
-it('should not snapshot text directly inside closed details', async ({ page }) => {
+it('AR-008 should not snapshot text directly inside closed details', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43019' });
 
   await page.setContent(`
@@ -135,7 +135,7 @@ it('should not snapshot text directly inside closed details', async ({ page }) =
   `);
 });
 
-it('should not snapshot text that is not assigned to a slot', async ({ page }) => {
+it('AR-009 should not snapshot text that is not assigned to a slot', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43019' });
 
   await page.setContent(`
@@ -152,7 +152,7 @@ it('should not snapshot text that is not assigned to a slot', async ({ page }) =
   await expect(page.getByRole('button', { name: 'Shadow', exact: true })).toBeVisible();
 });
 
-it('should snapshot integration', async ({ page }) => {
+it('AR-010 should snapshot integration', async ({ page }) => {
   await page.setContent(`
     <h1>Microsoft</h1>
     <div>Open source projects and samples from Microsoft</div>
@@ -198,7 +198,7 @@ it('should snapshot integration', async ({ page }) => {
   `);
 });
 
-it('should support multiline text', async ({ page }) => {
+it('AR-011 should support multiline text', async ({ page }) => {
   await page.setContent(`
     <p>
       Line 1
@@ -218,7 +218,7 @@ it('should support multiline text', async ({ page }) => {
   `);
 });
 
-it('should concatenate span text', async ({ page }) => {
+it('AR-012 should concatenate span text', async ({ page }) => {
   await page.setContent(`
     <span>One</span> <span>Two</span> <span>Three</span>
   `);
@@ -228,7 +228,7 @@ it('should concatenate span text', async ({ page }) => {
   `);
 });
 
-it('should concatenate span text 2', async ({ page }) => {
+it('AR-013 should concatenate span text 2', async ({ page }) => {
   await page.setContent(`
     <span>One </span><span>Two </span><span>Three</span>
   `);
@@ -238,7 +238,7 @@ it('should concatenate span text 2', async ({ page }) => {
   `);
 });
 
-it('should concatenate div text with spaces', async ({ page }) => {
+it('AR-014 should concatenate div text with spaces', async ({ page }) => {
   await page.setContent(`
     <div>One</div><div>Two</div><div>Three</div>
   `);
@@ -248,7 +248,7 @@ it('should concatenate div text with spaces', async ({ page }) => {
   `);
 });
 
-it('should include pseudo in text', async ({ page }) => {
+it('AR-015 should include pseudo in text', async ({ page }) => {
   await page.setContent(`
     <style>
       span:before {
@@ -270,7 +270,7 @@ it('should include pseudo in text', async ({ page }) => {
   `);
 });
 
-it('should not include hidden pseudo in text', async ({ page }) => {
+it('AR-016 should not include hidden pseudo in text', async ({ page }) => {
   await page.setContent(`
     <style>
       span:before {
@@ -294,7 +294,7 @@ it('should not include hidden pseudo in text', async ({ page }) => {
   `);
 });
 
-it('should include new line for block pseudo', async ({ page }) => {
+it('AR-017 should include new line for block pseudo', async ({ page }) => {
   await page.setContent(`
     <style>
       span:before {
@@ -318,7 +318,7 @@ it('should include new line for block pseudo', async ({ page }) => {
   `);
 });
 
-it('should work with slots', async ({ page }) => {
+it('AR-018 should work with slots', async ({ page }) => {
   // Text "foo" is assigned to the slot, should not be used twice.
   await page.setContent(`
     <button><div>foo</div></button>
@@ -378,7 +378,7 @@ it('should work with slots', async ({ page }) => {
   `);
 });
 
-it('should snapshot inner text', async ({ page }) => {
+it('AR-019 should snapshot inner text', async ({ page }) => {
   await page.setContent(`
     <div role="listitem">
       <div>
@@ -421,7 +421,7 @@ it('should snapshot inner text', async ({ page }) => {
   `);
 });
 
-it('should include pseudo codepoints', async ({ page, server }) => {
+it('AR-020 should include pseudo codepoints', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
     <link href="codicon.css" rel="stylesheet" />
@@ -433,7 +433,7 @@ it('should include pseudo codepoints', async ({ page, server }) => {
   `);
 });
 
-it('check aria-hidden text', async ({ page }) => {
+it('AR-021 check aria-hidden text', async ({ page }) => {
   await page.setContent(`
     <p>
       <span>hello</span>
@@ -446,7 +446,7 @@ it('check aria-hidden text', async ({ page }) => {
   `);
 });
 
-it('should ignore presentation and none roles', async ({ page }) => {
+it('AR-022 should ignore presentation and none roles', async ({ page }) => {
   await page.setContent(`
     <ul>
       <li role='presentation'>hello</li>
@@ -459,7 +459,7 @@ it('should ignore presentation and none roles', async ({ page }) => {
   `);
 });
 
-it('should treat input value as text in templates, but not for checkbox/radio/file', async ({ page }) => {
+it('AR-023 should treat input value as text in templates, but not for checkbox/radio/file', async ({ page }) => {
   await page.setContent(`
     <input value='hello world'>
     <input type=file>
@@ -475,7 +475,7 @@ it('should treat input value as text in templates, but not for checkbox/radio/fi
   `);
 });
 
-it('should not use on as checkbox value', async ({ page }) => {
+it('AR-024 should not use on as checkbox value', async ({ page }) => {
   await page.setContent(`
     <input type='checkbox'>
     <input type='radio'>
@@ -487,7 +487,7 @@ it('should not use on as checkbox value', async ({ page }) => {
   `);
 });
 
-it('should respect aria-owns', async ({ page }) => {
+it('AR-025 should respect aria-owns', async ({ page }) => {
   await page.setContent(`
     <a href='about:blank' aria-owns='input p'>
       <div role='region'>Link 1</div>
@@ -514,7 +514,7 @@ it('should respect aria-owns', async ({ page }) => {
   `);
 });
 
-it('should be ok with circular ownership', async ({ page }) => {
+it('AR-026 should be ok with circular ownership', async ({ page }) => {
   await page.setContent(`
     <a href='about:blank' id='parent'>
       <div role='region' aria-owns='parent'>Hello</div>
@@ -528,7 +528,7 @@ it('should be ok with circular ownership', async ({ page }) => {
   `);
 });
 
-it('should escape yaml text in text nodes', async ({ page }) => {
+it('AR-027 should escape yaml text in text nodes', async ({ page }) => {
   await page.setContent(`
     <details>
       <summary>one: <a href="#">link1</a> "two <a href="#">link2</a> 'three <a href="#">link3</a> \`four</summary>
@@ -574,7 +574,7 @@ it('should escape yaml text in text nodes', async ({ page }) => {
   `);
 });
 
-it('should normalize whitespace', async ({ page }) => {
+it('AR-028 should normalize whitespace', async ({ page }) => {
   await page.setContent(`
     <details>
       <summary> one  \n two <a href="#"> link &nbsp;\n  1 </a> </summary>
@@ -605,7 +605,7 @@ it('should normalize whitespace', async ({ page }) => {
   `);
 });
 
-it('should handle long strings', async ({ page }) => {
+it('AR-029 should handle long strings', async ({ page }) => {
   const s = 'a'.repeat(10000);
   await page.setContent(`
     <a href='about:blank'>
@@ -620,7 +620,7 @@ it('should handle long strings', async ({ page }) => {
   `);
 });
 
-it('should escape special yaml characters', async ({ page }) => {
+it('AR-030 should escape special yaml characters', async ({ page }) => {
   await page.setContent(`
     <a href="#">@hello</a>@hello
     <a href="#">]hello</a>]hello
@@ -648,7 +648,7 @@ it('should escape special yaml characters', async ({ page }) => {
   `);
 });
 
-it('should escape special yaml values', {
+it('AR-031 should escape special yaml values', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43451' },
 }, async ({ page }) => {
   await page.setContent(`
@@ -700,7 +700,7 @@ it('should escape special yaml values', {
   `);
 });
 
-it('should not report textarea textContent', async ({ page }) => {
+it('AR-032 should not report textarea textContent', async ({ page }) => {
   await page.setContent(`<textarea>Before</textarea>`);
   await checkAndMatchSnapshot(page.locator('body'), `
     - textbox: Before
@@ -713,7 +713,7 @@ it('should not report textarea textContent', async ({ page }) => {
   `);
 });
 
-it('should not show visible children of hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {
+it('AR-033 should not show visible children of hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {
   await page.setContent(`
     <div style="visibility: hidden;">
       <div style="visibility: visible;">
@@ -725,7 +725,7 @@ it('should not show visible children of hidden elements', { annotation: { type: 
   expect(await page.locator('body').ariaSnapshot()).toBe('');
 });
 
-it('should not show unhidden children of aria-hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {
+it('AR-034 should not show unhidden children of aria-hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {
   await page.setContent(`
     <div aria-hidden="true">
       <div aria-hidden="false">
@@ -737,7 +737,7 @@ it('should not show unhidden children of aria-hidden elements', { annotation: { 
   expect(await page.locator('body').ariaSnapshot()).toBe('');
 });
 
-it('should snapshot placeholder when different from the name', async ({ page }) => {
+it('AR-035 should snapshot placeholder when different from the name', async ({ page }) => {
   await page.setContent(`
     <input placeholder="Placeholder">
   `);
@@ -754,7 +754,7 @@ it('should snapshot placeholder when different from the name', async ({ page }) 
   `);
 });
 
-it('match values both against regex and string', async ({ page }) => {
+it('AR-036 match values both against regex and string', async ({ page }) => {
   await page.setContent(`<a href="/auth?r=/">Log in</a>`);
   await checkAndMatchSnapshot(page.locator('body'), `
     - link "Log in":
@@ -762,7 +762,7 @@ it('match values both against regex and string', async ({ page }) => {
   `);
 });
 
-it('auto-waits the locator and does not include iframes', async ({ page }) => {
+it('AR-037 auto-waits the locator and does not include iframes', async ({ page }) => {
   await page.setContent(`
     <div>Hello</div>
   `);
@@ -780,7 +780,7 @@ it('auto-waits the locator and does not include iframes', async ({ page }) => {
   `);
 });
 
-it('should limit depth', async ({ page }) => {
+it('AR-038 should limit depth', async ({ page }) => {
   await page.setContent(`
     <ul id=target>
       <li>item2</li>
@@ -800,7 +800,7 @@ it('should limit depth', async ({ page }) => {
   `);
 });
 
-it('should snapshot a locator inside an iframe', async ({ page }) => {
+it('AR-039 should snapshot a locator inside an iframe', async ({ page }) => {
   await page.setContent(`
     <h1>Main Page</h1>
     <iframe srcdoc="<ul><li>Item 1</li><li>Item 2</li></ul>"></iframe>
@@ -815,7 +815,7 @@ it('should snapshot a locator inside an iframe', async ({ page }) => {
   `);
 });
 
-it('should include frames on frameset pages', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41784' } }, async ({ page, server }) => {
+it('AR-040 should include frames on frameset pages', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41784' } }, async ({ page, server }) => {
   server.setRoute('/frameset.html', (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     res.end(`<frameset cols="50%,50%"><frame src="/frames/frame.html"><frame src="/frames/frame.html"></frameset>`);
@@ -828,14 +828,14 @@ it('should include frames on frameset pages', { annotation: { type: 'issue', des
   `));
 });
 
-it('should snapshot a locator inside a frameset frame', async ({ page, server }) => {
+it('AR-041 should snapshot a locator inside a frameset frame', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/frameset.html');
   await checkAndMatchSnapshot(page.frameLocator('frame').first().locator('body'), `
     - text: Hi, I'm frame
   `);
 });
 
-it('should snapshot with box from page', async ({ page }) => {
+it('AR-042 should snapshot with box from page', async ({ page }) => {
   await page.setContent(`
     <button style="position:absolute;left:100px;top:50px;width:80px;height:40px;margin:0;padding:0;border:0;">click</button>
   `);
@@ -844,7 +844,7 @@ it('should snapshot with box from page', async ({ page }) => {
   expect(snapshot).toBe(`- button "click" [box=100,50,80,40]`);
 });
 
-it('should snapshot with box from locator', async ({ page }) => {
+it('AR-043 should snapshot with box from locator', async ({ page }) => {
   await page.setContent(`
     <div style="position:absolute;left:10px;top:20px;width:200px;height:100px;">
       <button style="position:absolute;left:5px;top:5px;width:60px;height:30px;margin:0;padding:0;border:0;">ok</button>
@@ -855,13 +855,13 @@ it('should snapshot with box from locator', async ({ page }) => {
   expect(snapshot).toBe(`- button "ok" [box=15,25,60,30]`);
 });
 
-it('should not include box when option is omitted', async ({ page }) => {
+it('AR-044 should not include box when option is omitted', async ({ page }) => {
   await page.setContent(`<button>click</button>`);
   const snapshot = await page.ariaSnapshot();
   expect(snapshot).not.toMatch(/\[box=/);
 });
 
-it('should not include hidden iframes', async ({ page }) => {
+it('AR-045 should not include hidden iframes', async ({ page }) => {
   await page.setContent(`
     <iframe name="visible" srcdoc="<button>Visible</button>"></iframe>
     <iframe name="hidden" style="visibility: hidden" srcdoc="<button>Hidden</button>"></iframe>
@@ -872,7 +872,7 @@ it('should not include hidden iframes', async ({ page }) => {
   `));
 });
 
-it('should not include inert elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+it('AR-046 should not include inert elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
   await page.setContent(`
     <button>Hi</button>
     <button inert>Hello</button>
@@ -891,7 +891,7 @@ it('should not include inert elements', { annotation: { type: 'issue', descripti
   `);
 });
 
-it('should only include the modal dialog content', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+it('AR-047 should only include the modal dialog content', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
   await page.setContent(`
     <h1>Title</h1>
     <button>Outside</button>

@@ -16,14 +16,14 @@
 
 import { test as it, expect } from './pageTest';
 
-it('getByTestId should work', async ({ page }) => {
+it('SE-071 getByTestId should work', async ({ page }) => {
   await page.setContent('<div><div data-testid="Hello">Hello world</div></div>');
   await expect(page.getByTestId('Hello')).toHaveText('Hello world');
   await expect(page.mainFrame().getByTestId('Hello')).toHaveText('Hello world');
   await expect(page.locator('div').getByTestId('Hello')).toHaveText('Hello world');
 });
 
-it('getByTestId with custom testId should work', async ({ page, playwright }) => {
+it('SE-072 getByTestId with custom testId should work', async ({ page, playwright }) => {
   await page.setContent('<div><div data-my-custom-testid="Hello">Hello world</div></div>');
   playwright.selectors.setTestIdAttribute('data-my-custom-testid');
   await expect(page.getByTestId('Hello')).toHaveText('Hello world');
@@ -31,7 +31,7 @@ it('getByTestId with custom testId should work', async ({ page, playwright }) =>
   await expect(page.locator('div').getByTestId('Hello')).toHaveText('Hello world');
 });
 
-it('getByTestId with comma-separated testIdAttributes should match any', async ({ page, playwright }) => {
+it('SE-073 getByTestId with comma-separated testIdAttributes should match any', async ({ page, playwright }) => {
   await page.setContent(`
     <section>
       <div data-pw="Hello">first</div>
@@ -46,19 +46,19 @@ it('getByTestId with comma-separated testIdAttributes should match any', async (
   await expect(page.locator('section').getByTestId('Hello')).toHaveCount(2);
 });
 
-it('getByTestId should escape id', async ({ page }) => {
+it('SE-074 getByTestId should escape id', async ({ page }) => {
   await page.setContent(`<div><div data-testid='He"llo'>Hello world</div></div>`);
   await expect(page.getByTestId('He"llo')).toHaveText('Hello world');
 });
 
-it('getByTestId should work for regex', async ({ page }) => {
+it('SE-075 getByTestId should work for regex', async ({ page }) => {
   await page.setContent('<div><div data-testid="Hello">Hello world</div></div>');
   await expect(page.getByTestId(/He[l]*o/)).toHaveText('Hello world');
   await expect(page.mainFrame().getByTestId('Hello')).toHaveText('Hello world');
   await expect(page.locator('div').getByTestId('Hello')).toHaveText('Hello world');
 });
 
-it('getByText should work', async ({ page }) => {
+it('SE-076 getByText should work', async ({ page }) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
   expect(await page.getByText('ye').evaluate(e => e.outerHTML)).toContain('>\nye  </div>');
   expect(await page.getByText(/ye/).evaluate(e => e.outerHTML)).toContain('>\nye  </div>');
@@ -71,7 +71,7 @@ it('getByText should work', async ({ page }) => {
   expect(await page.getByText('Hello', { exact: true }).evaluate(e => e.outerHTML)).toContain('>Hello</div>');
 });
 
-it('getByLabel should work', async ({ page }) => {
+it('SE-077 getByLabel should work', async ({ page }) => {
   await page.setContent(`<div><label for=target>Name</label><input id=target type=text></div>`);
   expect(await page.getByText('Name').evaluate(e => e.nodeName)).toBe('LABEL');
   expect(await page.getByLabel('Name').evaluate(e => e.nodeName)).toBe('INPUT');
@@ -79,7 +79,7 @@ it('getByLabel should work', async ({ page }) => {
   expect(await page.locator('div').getByLabel('Name').evaluate(e => e.nodeName)).toBe('INPUT');
 });
 
-it('getByLabel should work with nested elements', async ({ page }) => {
+it('SE-078 getByLabel should work with nested elements', async ({ page }) => {
   await page.setContent(`<label for=target>Last <span>Name</span></label><input id=target type=text>`);
 
   await expect(page.getByLabel('last name')).toHaveAttribute('id', 'target');
@@ -95,18 +95,18 @@ it('getByLabel should work with nested elements', async ({ page }) => {
   expect(await page.getByLabel(/last name/).elementHandles()).toEqual([]);
 });
 
-it('getByLabel should work with multiply-labelled input', async ({ page }) => {
+it('SE-079 getByLabel should work with multiply-labelled input', async ({ page }) => {
   await page.setContent(`<label for=target>Name</label><input id=target type=text><label for=target>First or Last</label>`);
   expect(await page.getByLabel('Name').evaluate(e => e.id)).toBe('target');
   expect(await page.getByLabel('First or Last').evaluate(e => e.id)).toBe('target');
 });
 
-it('getByLabel should work with ancestor label and multiple controls', async ({ page }) => {
+it('SE-080 getByLabel should work with ancestor label and multiple controls', async ({ page }) => {
   await page.setContent(`<label>Name<button id=target>Click me</button><input type=text></label>`);
   expect(await page.getByLabel('Name').evaluate(e => e.id)).toBe('target');
 });
 
-it('getByLabel should work with ancestor label and for', async ({ page }) => {
+it('SE-081 getByLabel should work with ancestor label and for', async ({ page }) => {
   await page.setContent(`
     <label for=target>Name<input type=text id=nontarget></label>
     <input type=text id=target>
@@ -114,12 +114,12 @@ it('getByLabel should work with ancestor label and for', async ({ page }) => {
   expect(await page.getByLabel('Name').evaluate(e => e.id)).toBe('target');
 });
 
-it('getByLabel should work with aria-labelledby', async ({ page }) => {
+it('SE-082 getByLabel should work with aria-labelledby', async ({ page }) => {
   await page.setContent(`<label id=name-label>Name</label><button aria-labelledby=name-label>Click me</button>`);
   expect(await page.getByLabel('Name').evaluate(e => e.textContent)).toBe('Click me');
 });
 
-it('getByLabel should prioritize aria-labelledby over native label', async ({ page }) => {
+it('SE-083 getByLabel should prioritize aria-labelledby over native label', async ({ page }) => {
   await page.setContent(`
     <label id=name-label>Name</label>
     <label>Wrong<button aria-labelledby=name-label>Click me</button></label>
@@ -127,22 +127,22 @@ it('getByLabel should prioritize aria-labelledby over native label', async ({ pa
   expect(await page.getByLabel('Name').evaluate(e => e.textContent)).toBe('Click me');
 });
 
-it('getByLabel should work with aria-label', async ({ page }) => {
+it('SE-084 getByLabel should work with aria-label', async ({ page }) => {
   await page.setContent(`<input id=target aria-label="Name">`);
   expect(await page.getByLabel('Name').evaluate(e => e.id)).toBe('target');
 });
 
-it('getByLabel should ignore empty aria-label', async ({ page }) => {
+it('SE-085 getByLabel should ignore empty aria-label', async ({ page }) => {
   await page.setContent(`<label for=target>Last Name</label><input id=target type=text aria-label>`);
   expect(await page.getByLabel('Last Name').evaluate(e => e.id)).toBe('target');
 });
 
-it('getByLabel should prioritize aria-labelledby over aria-label', async ({ page }) => {
+it('SE-086 getByLabel should prioritize aria-labelledby over aria-label', async ({ page }) => {
   await page.setContent(`<label id=other-label>Other</label><input id=target aria-label="Name" aria-labelledby=other-label>`);
   expect(await page.getByLabel('Other').evaluate(e => e.id)).toBe('target');
 });
 
-it('getByPlaceholder should work', async ({ page }) => {
+it('SE-087 getByPlaceholder should work', async ({ page }) => {
   await page.setContent(`<div>
     <input placeholder='Hello'>
     <input placeholder='Hello World'>
@@ -156,7 +156,7 @@ it('getByPlaceholder should work', async ({ page }) => {
   await expect(page.locator('div').getByPlaceholder('hello')).toHaveCount(2);
 });
 
-it('getByAltText should work', async ({ page }) => {
+it('SE-088 getByAltText should work', async ({ page }) => {
   await page.setContent(`<div>
     <input alt='Hello'>
     <input alt='Hello World'>
@@ -170,7 +170,7 @@ it('getByAltText should work', async ({ page }) => {
   await expect(page.locator('div').getByAltText('hello')).toHaveCount(2);
 });
 
-it('getByTitle should work', async ({ page }) => {
+it('SE-089 getByTitle should work', async ({ page }) => {
   await page.setContent(`<div>
     <input title='Hello'>
     <input title='Hello World'>
@@ -184,7 +184,7 @@ it('getByTitle should work', async ({ page }) => {
   await expect(page.locator('div').getByTitle('hello')).toHaveCount(2);
 });
 
-it('getBy escaping', async ({ page }) => {
+it('SE-090 getBy escaping', async ({ page }) => {
   await page.setContent(`<label id=label for=control>Hello my
 wo"rld</label><input id=control />`);
   await page.$eval('input', input => {
@@ -240,7 +240,7 @@ world</label><input id=control />`);
   await expect.soft(page.getByTitle(/foo >> bar/)).toHaveAttribute('id', 'target');
 });
 
-it('getByRole escaping', async ({ page }) => {
+it('SE-091 getByRole escaping', async ({ page }) => {
   await page.setContent(`
     <a href="https://playwright.dev">issues 123</a>
     <a href="https://playwright.dev">he llo 56</a>
@@ -286,7 +286,7 @@ it('getByRole escaping', async ({ page }) => {
   ]);
 });
 
-it('getByRole should accept regexp with v flag', async ({ page }) => {
+it('SE-092 getByRole should accept regexp with v flag', async ({ page }) => {
   // Regression test for https://github.com/microsoft/playwright/issues/41457
   await page.setContent(`<button>Click me</button><button>Submit</button>`);
   await expect(page.getByRole('button', { name: /Click me/v })).toHaveCount(1);
@@ -294,7 +294,7 @@ it('getByRole should accept regexp with v flag', async ({ page }) => {
   await expect(page.getByRole('button', { name: /Missing/v })).toHaveCount(0, { timeout: 1000 });
 });
 
-it('getByRole with description', async ({ page }) => {
+it('SE-093 getByRole with description', async ({ page }) => {
   await page.setContent(`
     <div role="alert" aria-label="Upload successful" aria-description="File doc-2025.pdf was uploaded successfully">Alert 1</div>
     <div role="alert" aria-label="Upload successful" aria-description="File report-2026.pdf was uploaded successfully">Alert 2</div>
@@ -336,7 +336,7 @@ it('getByRole with description', async ({ page }) => {
   ]);
 });
 
-it('getByRole with description via aria-describedby', async ({ page }) => {
+it('SE-094 getByRole with description via aria-describedby', async ({ page }) => {
   await page.setContent(`
     <button aria-describedby="desc1">Submit</button>
     <span id="desc1">Submits the form data</span>
@@ -352,7 +352,7 @@ it('getByRole with description via aria-describedby', async ({ page }) => {
   ]);
 });
 
-it('getByRole with description via title fallback', async ({ page }) => {
+it('SE-095 getByRole with description via title fallback', async ({ page }) => {
   await page.setContent(`
     <button title="Submits the form">Submit</button>
     <button title="Resets the form">Reset</button>
@@ -366,7 +366,7 @@ it('getByRole with description via title fallback', async ({ page }) => {
   ]);
 });
 
-it('getByRole with description whitespace normalization', async ({ page }) => {
+it('SE-096 getByRole with description whitespace normalization', async ({ page }) => {
   await page.setContent(`
     <div role="alert" aria-description="File  doc-2025.pdf   was uploaded   successfully">Alert</div>
   `);
@@ -376,7 +376,7 @@ it('getByRole with description whitespace normalization', async ({ page }) => {
   ]);
 });
 
-it('locators should not be affected by global and sticky regex flags', async ({ page }) => {
+it('SE-097 locators should not be affected by global and sticky regex flags', async ({ page }) => {
   await page.setContent(`
     <div>foo</div><div>foo</div><div>foo</div>
     <label>foo<input></label><label>foo<input></label><label>foo<input></label>

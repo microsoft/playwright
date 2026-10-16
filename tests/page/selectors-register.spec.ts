@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 
 it.skip(!!process.env.PW_TEST_CONNECT_WS_ENDPOINT, 'selectors.register does not support reuse');
 
-it('textContent should be atomic', async ({ playwright, page }) => {
+it('SE-154 textContent should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     query(root, selector) {
       const result = root.querySelector(selector);
@@ -41,7 +41,7 @@ it('textContent should be atomic', async ({ playwright, page }) => {
   expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('modified');
 });
 
-it('innerText should be atomic', async ({ playwright, page }) => {
+it('SE-155 innerText should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     query(root: HTMLElement, selector: string) {
       const result = root.querySelector(selector);
@@ -63,7 +63,7 @@ it('innerText should be atomic', async ({ playwright, page }) => {
   expect(await page.evaluate(() => document.querySelector('div').innerText)).toBe('modified');
 });
 
-it('innerHTML should be atomic', async ({ playwright, page }) => {
+it('SE-156 innerHTML should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     query(root, selector) {
       const result = root.querySelector(selector);
@@ -85,7 +85,7 @@ it('innerHTML should be atomic', async ({ playwright, page }) => {
   expect(await page.evaluate(() => document.querySelector('div').innerHTML)).toBe('modified');
 });
 
-it('getAttribute should be atomic', async ({ playwright, page }) => {
+it('SE-157 getAttribute should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     query(root: HTMLElement, selector: string) {
       const result = root.querySelector(selector);
@@ -107,7 +107,7 @@ it('getAttribute should be atomic', async ({ playwright, page }) => {
   expect(await page.evaluate(() => document.querySelector('div').getAttribute('foo'))).toBe('modified');
 });
 
-it('isVisible should be atomic', async ({ playwright, page }) => {
+it('SE-158 isVisible should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     query(root, selector) {
       const result = root.querySelector(selector);
@@ -129,7 +129,7 @@ it('isVisible should be atomic', async ({ playwright, page }) => {
   expect(await page.evaluate(() => document.querySelector('div').style.display)).toBe('none');
 });
 
-it('should take java-style string', async ({ playwright, page }) => {
+it('SE-159 should take java-style string', async ({ playwright, page }) => {
   const createDummySelector = `{
     query(root, selector) {
       return root.querySelector(selector);

@@ -23,7 +23,7 @@ const style = {
   highlight: 'outline: 2px solid #333',
 };
 
-test('should show annotation on click', async ({ browser, server }) => {
+test('SC-016 should show annotation on click', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
@@ -40,7 +40,7 @@ test('should show annotation on click', async ({ browser, server }) => {
   await context.close();
 });
 
-test('should render annotation styles', async ({ browser, server }) => {
+test('SC-017 should render annotation styles', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
@@ -93,7 +93,7 @@ for (const { position, expected } of [
   { position: 'bottom' as const, expected: { bottom: '6px', left: '50%' } },
   { position: 'bottom-right' as const, expected: { bottom: '6px', right: '6px' } },
 ] as const) {
-  test(`should position title at ${position}`, async ({ browser, server }) => {
+  test(`SC-018 should position title at ${position}`, async ({ browser, server }) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/input/button.html');
@@ -118,7 +118,7 @@ for (const { position, expected } of [
   });
 }
 
-test('should clear annotation after duration', async ({ browser, server }) => {
+test('SC-019 should clear annotation after duration', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
@@ -133,7 +133,7 @@ test('should clear annotation after duration', async ({ browser, server }) => {
   await context.close();
 });
 
-test('should annotate fill action', async ({ browser, server }) => {
+test('SC-020 should annotate fill action', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/textarea.html');
@@ -148,7 +148,7 @@ test('should annotate fill action', async ({ browser, server }) => {
   await context.close();
 });
 
-test('should stop showing actions after dispose', async ({ browser, server }) => {
+test('SC-021 should stop showing actions after dispose', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
@@ -165,7 +165,7 @@ test('should stop showing actions after dispose', async ({ browser, server }) =>
   await context.close();
 });
 
-test('should stop showing actions after hideActions', async ({ browser, server }) => {
+test('SC-022 should stop showing actions after hideActions', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
@@ -182,7 +182,7 @@ test('should stop showing actions after hideActions', async ({ browser, server }
   await context.close();
 });
 
-test('should render an action cursor that animates to the click point', async ({ browser, server }) => {
+test('SC-023 should render an action cursor that animates to the click point', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
@@ -203,7 +203,7 @@ test('should render an action cursor that animates to the click point', async ({
   await context.close();
 });
 
-test('cursor moves between two pointer actions', async ({ browser, server }) => {
+test('SC-024 cursor moves between two pointer actions', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.setContent(`
@@ -226,7 +226,7 @@ test('cursor moves between two pointer actions', async ({ browser, server }) => 
   await context.close();
 });
 
-test('cursor: "none" suppresses the action cursor decoration', async ({ browser, server }) => {
+test('SC-025 cursor: "none" suppresses the action cursor decoration', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
@@ -241,7 +241,7 @@ test('cursor: "none" suppresses the action cursor decoration', async ({ browser,
   await context.close();
 });
 
-test('cursor stays at the last action point until hideActions', async ({ browser, server }) => {
+test('SC-026 cursor stays at the last action point until hideActions', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
@@ -263,7 +263,7 @@ test('cursor stays at the last action point until hideActions', async ({ browser
   await context.close();
 });
 
-test('should survive navigation', async ({ browser, server }) => {
+test('SC-027 should survive navigation', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');

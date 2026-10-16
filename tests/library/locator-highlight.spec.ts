@@ -18,7 +18,7 @@ import { expect, browserTest as test } from '../config/browserTest';
 
 test.skip(({ mode }) => mode !== 'default', 'Highlight overlay uses an open shadow root only in default mode');
 
-test('highlight should accept a CSS string style', async ({ browser, server, browserName, isFrozenWebkit }) => {
+test('LO-193 highlight should accept a CSS string style', async ({ browser, server, browserName, isFrozenWebkit }) => {
   test.skip(isFrozenWebkit);
 
   const context = await browser.newContext();
@@ -42,7 +42,7 @@ test('highlight should accept a CSS string style', async ({ browser, server, bro
   await context.close();
 });
 
-test('highlight should accept an object style (JS only)', async ({ browser, server, browserName, isFrozenWebkit }) => {
+test('LO-194 highlight should accept an object style (JS only)', async ({ browser, server, browserName, isFrozenWebkit }) => {
   test.skip(isFrozenWebkit);
 
   const context = await browser.newContext();
@@ -71,7 +71,7 @@ test('highlight should accept an object style (JS only)', async ({ browser, serv
   await context.close();
 });
 
-test('hideHighlight removes a styled highlight', async ({ browser, server }) => {
+test('LO-195 hideHighlight removes a styled highlight', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
@@ -86,7 +86,7 @@ test('hideHighlight removes a styled highlight', async ({ browser, server }) => 
   await context.close();
 });
 
-test('highlight should survive navigation', async ({ browser, server }) => {
+test('LO-196 highlight should survive navigation', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.setContent(`<button onclick="console.log(1)">Clicker</button>`);
@@ -104,7 +104,7 @@ test('highlight should survive navigation', async ({ browser, server }) => {
   await context.close();
 });
 
-test('Page.hideHighlight clears all locator highlights', async ({ browser, server }) => {
+test('LO-197 Page.hideHighlight clears all locator highlights', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.setContent(`<button>One</button><button>Two</button>`);
@@ -119,7 +119,7 @@ test('Page.hideHighlight clears all locator highlights', async ({ browser, serve
   await context.close();
 });
 
-test('highlight should work with a custom selector engine that runs in the main world', async ({ playwright, browser }) => {
+test('LO-198 highlight should work with a custom selector engine that runs in the main world', async ({ playwright, browser }) => {
   // Engines registered without "contentScript" run in the main world and can see page globals.
   const createEngine = () => ({
     query(root, selector) {
@@ -152,7 +152,7 @@ test('highlight should work with a custom selector engine that runs in the main 
   await context.close();
 });
 
-test('highlight should resolve relative to the frame of the locator', async ({ browser }) => {
+test('LO-199 highlight should resolve relative to the frame of the locator', async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.setContent('<iframe name="frame" srcdoc="<button>foo</button>"></iframe><button>bar</button>');

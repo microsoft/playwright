@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work @smoke', async ({ page, server, isAndroid }) => {
+it('EH-093 should work @smoke', async ({ page, server, isAndroid }) => {
   it.fixme(isAndroid);
 
   await page.goto(server.PREFIX + '/offscreenbuttons.html');
@@ -36,7 +36,7 @@ it('should work @smoke', async ({ page, server, isAndroid }) => {
   }
 });
 
-it('should throw for detached element', async ({ page, server }) => {
+it('EH-094 should throw for detached element', async ({ page, server }) => {
   await page.setContent('<div>Hello</div>');
   const div = await page.$('div');
   await div.evaluate(div => div.remove());
@@ -55,12 +55,12 @@ async function testWaiting(page, after) {
   expect(done).toBe(true);
 }
 
-it('should wait for display:none to become visible', async ({ page, server }) => {
+it('EH-095 should wait for display:none to become visible', async ({ page, server }) => {
   await page.setContent('<div style="display:none">Hello</div>');
   await testWaiting(page, div => div.style.display = 'block');
 });
 
-it('should scroll display:contents into view', async ({ page, browserName, browserMajorVersion }) => {
+it('EH-096 should scroll display:contents into view', async ({ page, browserName, browserMajorVersion }) => {
   it.skip(browserName === 'chromium' && browserMajorVersion < 105, 'Needs https://chromium-review.googlesource.com/c/chromium/src/+/3758670');
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15034' });
 
@@ -85,24 +85,24 @@ it('should scroll display:contents into view', async ({ page, browserName, brows
   expect(Math.abs(scrollTop - 350)).toBeLessThan(1);
 });
 
-it('should work for visibility:hidden element', async ({ page }) => {
+it('EH-097 should work for visibility:hidden element', async ({ page }) => {
   await page.setContent('<div style="visibility:hidden">Hello</div>');
   const div = await page.$('div');
   await div.scrollIntoViewIfNeeded();
 });
 
-it('should work for zero-sized element', async ({ page }) => {
+it('EH-098 should work for zero-sized element', async ({ page }) => {
   await page.setContent('<div style="height:0">Hello</div>');
   const div = await page.$('div');
   await div.scrollIntoViewIfNeeded();
 });
 
-it('should wait for nested display:none to become visible', async ({ page, server }) => {
+it('EH-099 should wait for nested display:none to become visible', async ({ page, server }) => {
   await page.setContent('<span style="display:none"><div>Hello</div></span>');
   await testWaiting(page, div => div.parentElement.style.display = 'block');
 });
 
-it('should wait for element to stop moving', async ({ page, server }) => {
+it('EH-100 should wait for element to stop moving', async ({ page, server }) => {
   await page.setContent(`
     <style>
       @keyframes move {
@@ -118,7 +118,7 @@ it('should wait for element to stop moving', async ({ page, server }) => {
   await testWaiting(page, div => div.classList.remove('animated'));
 });
 
-it('should timeout waiting for visible', async ({ page, server }) => {
+it('EH-101 should timeout waiting for visible', async ({ page, server }) => {
   await page.setContent('<div style="display:none">Hello</div>');
   const div = await page.$('div');
   const error = await div.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(e => e);

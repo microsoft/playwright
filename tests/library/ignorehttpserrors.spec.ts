@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 
-it('should work @smoke', async ({ browser, httpsServer }) => {
+it('NE-136 should work @smoke', async ({ browser, httpsServer }) => {
   let error = null;
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
@@ -27,7 +27,7 @@ it('should work @smoke', async ({ browser, httpsServer }) => {
   await context.close();
 });
 
-it('should isolate contexts', async ({ browser, httpsServer }) => {
+it('NE-137 should isolate contexts', async ({ browser, httpsServer }) => {
   {
     let error = null;
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
@@ -47,7 +47,7 @@ it('should isolate contexts', async ({ browser, httpsServer }) => {
   }
 });
 
-it('should isolated contexts that share network process', {
+it('NE-138 should isolated contexts that share network process', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35870' }
 }, async ({ browser, httpsServer, browserName, isLinux }) => {
   it.fixme(browserName === 'webkit' && isLinux, 'See https://bugs.webkit.org/show_bug.cgi?id=293148');
@@ -70,7 +70,7 @@ it('should isolated contexts that share network process', {
   }
 });
 
-it('should work with mixed content', async ({ browser, server, httpsServer }) => {
+it('NE-139 should work with mixed content', async ({ browser, server, httpsServer }) => {
   httpsServer.setRoute('/mixedcontent.html', (req, res) => {
     res.end(`<iframe src=${server.EMPTY_PAGE}></iframe>`);
   });
@@ -85,7 +85,7 @@ it('should work with mixed content', async ({ browser, server, httpsServer }) =>
   await context.close();
 });
 
-it('should work with WebSocket', async ({ browser, httpsServer }) => {
+it('NE-140 should work with WebSocket', async ({ browser, httpsServer }) => {
   httpsServer.sendOnWebSocketConnection('incoming');
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
@@ -101,7 +101,7 @@ it('should work with WebSocket', async ({ browser, httpsServer }) => {
   await context.close();
 });
 
-it('should fail with WebSocket if not ignored', async ({ browser, httpsServer }) => {
+it('NE-141 should fail with WebSocket if not ignored', async ({ browser, httpsServer }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   const value = await page.evaluate(endpoint => {
@@ -116,7 +116,7 @@ it('should fail with WebSocket if not ignored', async ({ browser, httpsServer })
   await context.close();
 });
 
-it('serviceWorker should intercept document request', async ({ browser, httpsServer, browserName }) => {
+it('NE-142 serviceWorker should intercept document request', async ({ browser, httpsServer, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27768' });
   it.fixme(browserName === 'chromium', 'Failed to register a ServiceWorker: An SSL certificate error occurred when fetching the script.');
   const context = await browser.newContext({ ignoreHTTPSErrors: true });

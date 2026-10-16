@@ -23,13 +23,13 @@ const { compare } = utils;
 it.skip(({ headless }) => headless, 'avoid popping windows in headless mode');
 it.skip(({ channel }) => channel === 'chromium-headless-shell', 'shell is never headed');
 
-it('should have default url when launching browser @smoke', async ({ launchPersistent }) => {
+it('HE-001 should have default url when launching browser @smoke', async ({ launchPersistent }) => {
   const { context } = await launchPersistent();
   const urls = context.pages().map(page => page.url());
   expect(urls).toEqual(['about:blank']);
 });
 
-it('should close browser with beforeunload page', async ({ launchPersistent, server }) => {
+it('HE-002 should close browser with beforeunload page', async ({ launchPersistent, server }) => {
   it.slow();
 
   const { context } = await launchPersistent();
@@ -41,7 +41,7 @@ it('should close browser with beforeunload page', async ({ launchPersistent, ser
   await context.close();
 });
 
-it('should close browsercontext with pending beforeunload dialog', async ({ server, context }) => {
+it('HE-003 should close browsercontext with pending beforeunload dialog', async ({ server, context }) => {
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/beforeunload.html');
   // We have to interact with a page so that 'beforeunload' handlers
@@ -55,7 +55,7 @@ it('should close browsercontext with pending beforeunload dialog', async ({ serv
 });
 
 
-it('should not crash when creating second context', async ({ browser }) => {
+it('HE-004 should not crash when creating second context', async ({ browser }) => {
   {
     const browserContext = await browser.newContext();
     await browserContext.newPage();
@@ -68,7 +68,7 @@ it('should not crash when creating second context', async ({ browser }) => {
   }
 });
 
-it('should click when viewport size is larger than screen', async ({ page }) => {
+it('HE-005 should click when viewport size is larger than screen', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22082' });
   await page.setViewportSize({
     width: 3000,
@@ -83,7 +83,7 @@ it('should click when viewport size is larger than screen', async ({ page }) => 
   await page.locator('button').click();
 });
 
-it('should dispatch click events to oversized viewports', async ({ page }) => {
+it('HE-006 should dispatch click events to oversized viewports', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22082' });
   // Some prime numbers for width/height.
   const width = 2971;
@@ -107,13 +107,13 @@ it('should dispatch click events to oversized viewports', async ({ page }) => {
   expect(expectedEvents).toEqual(actualEvents);
 });
 
-it('should click background tab', async ({ page, server }) => {
+it('HE-007 should click background tab', async ({ page, server }) => {
   await page.setContent(`<button>Hello</button><a target=_blank href="${server.EMPTY_PAGE}">empty.html</a>`);
   await page.click('a');
   await page.click('button');
 });
 
-it('should close browser after context menu was triggered', async ({ browserType, server }) => {
+it('HE-008 should close browser after context menu was triggered', async ({ browserType, server }) => {
   const browser = await browserType.launch();
   const page = await browser.newPage();
   await page.goto(server.PREFIX + '/grid.html');
@@ -121,7 +121,7 @@ it('should close browser after context menu was triggered', async ({ browserType
   await browser.close();
 });
 
-it('should(not) block third party cookies', async ({ page, server, allowsThirdParty, defaultSameSiteCookieValue }) => {
+it('HE-009 should(not) block third party cookies', async ({ page, server, allowsThirdParty, defaultSameSiteCookieValue }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(src => {
     let fulfill;
@@ -157,7 +157,7 @@ it('should(not) block third party cookies', async ({ page, server, allowsThirdPa
   }
 });
 
-it('should not block third party SameSite=None cookies', async ({ httpsServer, browserName, browser }) => {
+it('HE-010 should not block third party SameSite=None cookies', async ({ httpsServer, browserName, browser }) => {
   it.skip(browserName === 'webkit', 'No third party cookies in WebKit');
   it.skip(process.env.PW_CLOCK === 'frozen');
   const page = await browser.newPage({
@@ -194,7 +194,7 @@ it('should not block third party SameSite=None cookies', async ({ httpsServer, b
   await page.close();
 });
 
-it('should not override viewport size when passed null', async function({ browserName, server, browser }) {
+it('HE-011 should not override viewport size when passed null', async function({ browserName, server, browser }) {
   it.skip(browserName === 'webkit', 'Our WebKit embedder does not respect window features');
 
   const context = await browser.newContext({ viewport: null });
@@ -212,7 +212,7 @@ it('should not override viewport size when passed null', async function({ browse
   await context.close();
 });
 
-it('Page.bringToFront should work', async ({ browser }) => {
+it('HE-012 Page.bringToFront should work', async ({ browser }) => {
   const page1 = await browser.newPage();
   await page1.setContent('Page1');
   const page2 = await browser.newPage();
@@ -232,7 +232,7 @@ it('Page.bringToFront should work', async ({ browser }) => {
   await page2.close();
 });
 
-it('should click in OOPIF', async ({ browserName, launchPersistent, server }) => {
+it('HE-013 should click in OOPIF', async ({ browserName, launchPersistent, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<iframe src="${server.CROSS_PROCESS_PREFIX}/iframe.html"></iframe>`);
@@ -251,7 +251,7 @@ it('should click in OOPIF', async ({ browserName, launchPersistent, server }) =>
   expect(consoleLog).toContain('ok');
 });
 
-it('should click bottom row w/ infobar in OOPIF', async ({ browserName, launchPersistent, server }) => {
+it('HE-014 should click bottom row w/ infobar in OOPIF', async ({ browserName, launchPersistent, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`
@@ -290,7 +290,7 @@ it('should click bottom row w/ infobar in OOPIF', async ({ browserName, launchPe
   expect(await page.frames()[1].evaluate('window._clicked')).toBe(true);
 });
 
-it('headless and headful should use same default fonts', async ({ page, browserName, browserType, isBidi }) => {
+it('HE-015 headless and headful should use same default fonts', async ({ page, browserName, browserType, isBidi }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11177' });
   it.skip(browserName === 'firefox' && !isBidi, 'Text is misaligned in headed vs headless');
 
@@ -320,7 +320,7 @@ it('headless and headful should use same default fonts', async ({ page, browserN
   await headlessBrowser.close();
 });
 
-it('should have the same hyphen rendering on headless and headed', {
+it('HE-016 should have the same hyphen rendering on headless and headed', {
   annotation: {
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/33590'

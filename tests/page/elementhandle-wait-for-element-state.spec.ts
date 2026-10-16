@@ -20,7 +20,7 @@ import { test as it, expect, rafraf } from './pageTest';
 
 const giveItAChanceToResolve = (page: Page) => rafraf(page, 5);
 
-it('should wait for visible', async ({ page }) => {
+it('EH-112 should wait for visible', async ({ page }) => {
   await page.setContent(`<div style='display:none'>content</div>`);
   const div = await page.$('div');
   let done = false;
@@ -31,20 +31,20 @@ it('should wait for visible', async ({ page }) => {
   await promise;
 });
 
-it('should wait for already visible', async ({ page }) => {
+it('EH-113 should wait for already visible', async ({ page }) => {
   await page.setContent(`<div>content</div>`);
   const div = await page.$('div');
   await div.waitForElementState('visible');
 });
 
-it('should timeout waiting for visible', async ({ page }) => {
+it('EH-114 should timeout waiting for visible', async ({ page }) => {
   await page.setContent(`<div style='display:none'>content</div>`);
   const div = await page.$('div');
   const error = await div.waitForElementState('visible', { timeout: 1000 }).catch(e => e);
   expect(error.message).toContain('Timeout 1000ms exceeded');
 });
 
-it('should throw waiting for visible when detached', async ({ page }) => {
+it('EH-115 should throw waiting for visible when detached', async ({ page }) => {
   await page.setContent(`<div style='display:none'>content</div>`);
   const div = await page.$('div');
   const promise = div.waitForElementState('visible').catch(e => e);
@@ -53,7 +53,7 @@ it('should throw waiting for visible when detached', async ({ page }) => {
   expect(error.message).toContain('Element is not attached to the DOM');
 });
 
-it('should wait for hidden', async ({ page }) => {
+it('EH-116 should wait for hidden', async ({ page }) => {
   await page.setContent(`<div>content</div>`);
   const div = await page.$('div');
   let done = false;
@@ -64,13 +64,13 @@ it('should wait for hidden', async ({ page }) => {
   await promise;
 });
 
-it('should wait for already hidden', async ({ page }) => {
+it('EH-117 should wait for already hidden', async ({ page }) => {
   await page.setContent(`<div></div>`);
   const div = await page.$('div');
   await div.waitForElementState('hidden');
 });
 
-it('should wait for hidden when detached', async ({ page }) => {
+it('EH-118 should wait for hidden when detached', async ({ page }) => {
   await page.setContent(`<div>content</div>`);
   const div = await page.$('div');
   let done = false;
@@ -81,7 +81,7 @@ it('should wait for hidden when detached', async ({ page }) => {
   await promise;
 });
 
-it('should throw waiting for enabled when detached', async ({ page }) => {
+it('EH-119 should throw waiting for enabled when detached', async ({ page }) => {
   await page.setContent(`<button disabled>Target</button>`);
   const button = await page.$('button');
   const promise = button.waitForElementState('enabled').catch(e => e);
@@ -90,7 +90,7 @@ it('should throw waiting for enabled when detached', async ({ page }) => {
   expect(error.message).toContain('Element is not attached to the DOM');
 });
 
-it('should wait for aria enabled button', async ({ page }) => {
+it('EH-120 should wait for aria enabled button', async ({ page }) => {
   await page.setContent('<button aria-disabled=true><span>Target</span></button>');
   const span = await page.$('text=Target');
   let done = false;
@@ -101,7 +101,7 @@ it('should wait for aria enabled button', async ({ page }) => {
   await promise;
 });
 
-it('should wait for button with an aria-disabled parent', async ({ page }) => {
+it('EH-121 should wait for button with an aria-disabled parent', async ({ page }) => {
   await page.setContent('<div role="group" aria-disabled=true><button><span>Target</span></button></div>');
   const span = await page.$('text=Target');
   let done = false;
@@ -112,7 +112,7 @@ it('should wait for button with an aria-disabled parent', async ({ page }) => {
   await promise;
 });
 
-it('should wait for stable position', async ({ page, server, browserName, platform }) => {
+it('EH-122 should wait for stable position', async ({ page, server, browserName, platform }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');
   await page.$eval('button', button => {
@@ -129,7 +129,7 @@ it('should wait for stable position', async ({ page, server, browserName, platfo
   await promise;
 });
 
-it('should wait for editable input', async ({ page, server }) => {
+it('EH-123 should wait for editable input', async ({ page, server }) => {
   await page.setContent('<input readonly>');
   const input = await page.$('input');
   let done = false;

@@ -22,7 +22,7 @@ const { ManualPromise } = iso;
 
 // This test is mostly for type checking, the actual tests are in the library/events.
 
-it('should not throw with ignoreErrors', async ({ page }) => {
+it('EE-001 should not throw with ignoreErrors', async ({ page }) => {
   const reachedHandler = new ManualPromise();
   const releaseHandler = new ManualPromise();
   page.on('console', async () => {
@@ -37,7 +37,7 @@ it('should not throw with ignoreErrors', async ({ page }) => {
   await page.waitForTimeout(1000);
 });
 
-it('should wait', async ({ page }) => {
+it('EE-002 should wait', async ({ page }) => {
   const reachedHandler = new ManualPromise();
   const releaseHandler = new ManualPromise();
   let value = 0;
@@ -53,7 +53,7 @@ it('should wait', async ({ page }) => {
   expect(value).toBe(42);
 });
 
-it('wait should throw', async ({ page }) => {
+it('EE-003 wait should throw', async ({ page }) => {
   const reachedHandler = new ManualPromise();
   const releaseHandler = new ManualPromise();
   page.on('console', async () => {

@@ -23,7 +23,7 @@
 import { EventEmitter } from './utils';
 import { test, expect } from '@playwright/test';
 
-test('should support symbols', () => {
+test('EE-056 should support symbols', () => {
   const ee = new EventEmitter();
   const foo = Symbol('foo');
   const listener = () => {};

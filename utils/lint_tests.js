@@ -20,7 +20,7 @@ const path = require('path');
 
 // Note: we ignore stdout for smaller output.
 try {
-  execSync('npm run test -- --list --forbid-only', {
+  execSync('npm run test -- --list --forbid-only --reporter=./tests/config/registryReporter.ts', {
     stdio: ['ignore', 'ignore', 'inherit'],
     cwd: path.join(__dirname, '..'),
   });

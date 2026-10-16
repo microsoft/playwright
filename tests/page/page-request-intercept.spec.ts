@@ -33,7 +33,7 @@ const it = base.extend<{ rewriteAndroidLoopbackURL(url: string): string }>({
   })
 });
 
-it('should fulfill intercepted response', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
+it('RO-134 should fulfill intercepted response', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   await page.route('**/*', async route => {
@@ -55,7 +55,7 @@ it('should fulfill intercepted response', async ({ page, server, isElectron, ele
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should fulfill response with empty body', async ({ page, server, isAndroid, isElectron, electronMajorVersion, browserName, browserMajorVersion }) => {
+it('RO-135 should fulfill response with empty body', async ({ page, server, isAndroid, isElectron, electronMajorVersion, browserName, browserMajorVersion }) => {
   it.skip(browserName === 'chromium' && browserMajorVersion <= 91, 'Fails in Electron that uses old Chromium');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
@@ -73,7 +73,7 @@ it('should fulfill response with empty body', async ({ page, server, isAndroid, 
   expect(await response.text()).toBe('');
 });
 
-it('should override with defaults when intercepted response not provided', async ({ page, server, browserName, isElectron, electronMajorVersion, isAndroid }) => {
+it('RO-136 should override with defaults when intercepted response not provided', async ({ page, server, browserName, isElectron, electronMajorVersion, isAndroid }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   server.setRoute('/empty.html', (req, res) => {
@@ -95,7 +95,7 @@ it('should override with defaults when intercepted response not provided', async
     expect(response.headers()).toEqual({ });
 });
 
-it('should fulfill with any response', async ({ page, server, isElectron, electronMajorVersion, rewriteAndroidLoopbackURL }) => {
+it('RO-137 should fulfill with any response', async ({ page, server, isElectron, electronMajorVersion, rewriteAndroidLoopbackURL }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
 
   server.setRoute('/sample', (req, res) => {
@@ -117,7 +117,7 @@ it('should fulfill with any response', async ({ page, server, isElectron, electr
   expect(response.headers()['foo']).toBe('bar');
 });
 
-it('should support fulfill after intercept', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
+it('RO-138 should support fulfill after intercept', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   const requestPromise = server.waitForRequest('/title.html');
@@ -132,7 +132,7 @@ it('should support fulfill after intercept', async ({ page, server, isElectron, 
   expect(await response.text()).toBe(original);
 });
 
-it('should give access to the intercepted response', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
+it('RO-139 should give access to the intercepted response', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   await page.goto(server.EMPTY_PAGE);
@@ -156,7 +156,7 @@ it('should give access to the intercepted response', async ({ page, server, isEl
   await Promise.all([route.fulfill({ response }), evalPromise]);
 });
 
-it('should give access to the intercepted response body', async ({ page, server, isAndroid, isElectron, electronMajorVersion }) => {
+it('RO-140 should give access to the intercepted response body', async ({ page, server, isAndroid, isElectron, electronMajorVersion }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   await page.goto(server.EMPTY_PAGE);
@@ -175,7 +175,7 @@ it('should give access to the intercepted response body', async ({ page, server,
   await Promise.all([route.fulfill({ response }), evalPromise]);
 });
 
-it('should intercept multipart/form-data request body', async ({ page, server, asset, browserName }) => {
+it('RO-141 should intercept multipart/form-data request body', async ({ page, server, asset, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14624' });
   it.fixme(browserName !== 'firefox');
   await page.goto(server.PREFIX + '/input/fileupload.html');
@@ -194,7 +194,7 @@ it('should intercept multipart/form-data request body', async ({ page, server, a
   expect(request.postData()).toContain(fs.readFileSync(filePath, 'utf8'));
 });
 
-it('should fulfill intercepted response using alias', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
+it('RO-142 should fulfill intercepted response using alias', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   await page.route('**/*', async route => {
@@ -206,7 +206,7 @@ it('should fulfill intercepted response using alias', async ({ page, server, isE
   expect(response.headers()['content-type']).toContain('text/html');
 });
 
-it('should support timeout option in route.fetch', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
+it('RO-143 should support timeout option in route.fetch', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
 
@@ -224,7 +224,7 @@ it('should support timeout option in route.fetch', async ({ page, server, isElec
   expect(error.message).toContain(`Timeout 2000ms exceeded`);
 });
 
-it('should not follow redirects when maxRedirects is set to 0 in route.fetch', async ({ page, server, isAndroid, isElectron, electronMajorVersion }) => {
+it('RO-144 should not follow redirects when maxRedirects is set to 0 in route.fetch', async ({ page, server, isAndroid, isElectron, electronMajorVersion }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
 
@@ -239,7 +239,7 @@ it('should not follow redirects when maxRedirects is set to 0 in route.fetch', a
   expect(await page.content()).toContain('hello');
 });
 
-it('should intercept with url override', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
+it('RO-145 should intercept with url override', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   await page.route('**/*.html', async route => {
@@ -251,7 +251,7 @@ it('should intercept with url override', async ({ page, server, isElectron, elec
   expect((await response.body()).toString()).toContain('one-style.css');
 });
 
-it('should intercept with post data override', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
+it('RO-146 should intercept with post data override', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   const requestPromise = server.waitForRequest('/empty.html');
@@ -266,7 +266,7 @@ it('should intercept with post data override', async ({ page, server, isElectron
   expect((await request.postBody).toString()).toBe(JSON.stringify({ 'foo': 'bar' }));
 });
 
-it('request.postData is not null when fetching FormData with a Blob', {
+it('RO-147 request.postData is not null when fetching FormData with a Blob', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24077' }
 }, async ({ server, page, browserName, isElectron, electronMajorVersion, isAndroid }) => {
   it.skip(isElectron && electronMajorVersion < 31);
@@ -303,7 +303,7 @@ it('request.postData is not null when fetching FormData with a Blob', {
   expect(postData).toContain('\r\nhello\r\n');
 });
 
-it('should abort favicon requests if interception is enabled', async ({ page, server, browserName }) => {
+it('RO-148 should abort favicon requests if interception is enabled', async ({ page, server, browserName }) => {
   let requestCount = 0;
   server.setRoute('/favicon.ico', (req, res) => {
     ++requestCount;

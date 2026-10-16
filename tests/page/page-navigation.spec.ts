@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work with _blank target', async ({ page, server }) => {
+it('NA-067 should work with _blank target', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.end(`<a href="${server.EMPTY_PAGE}" target="_blank">Click me</a>`);
   });
@@ -25,7 +25,7 @@ it('should work with _blank target', async ({ page, server }) => {
   await page.click('"Click me"');
 });
 
-it('should work with cross-process _blank target', async ({ page, server }) => {
+it('NA-068 should work with cross-process _blank target', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.end(`<a href="${server.CROSS_PROCESS_PREFIX}/empty.html" target="_blank">Click me</a>`);
   });
@@ -33,7 +33,7 @@ it('should work with cross-process _blank target', async ({ page, server }) => {
   await page.click('"Click me"');
 });
 
-it('should work with _blank target in form', async ({ page, server }) => {
+it('NA-069 should work with _blank target in form', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18392' });
   server.setRoute('/done.html?', (req, res) => {
     res.end(`Done`);
@@ -60,7 +60,7 @@ it('should work with _blank target in form', async ({ page, server }) => {
   ]);
 });
 
-it('should not throw TargetClosedException on cross-origin redirect after click', async ({ page, server }) => {
+it('NA-070 should not throw TargetClosedException on cross-origin redirect after click', async ({ page, server }) => {
   server.setRoute('/target.html', (req, res) => res.end('<title>final page</title>'));
   server.setRedirect('/redirect', server.CROSS_PROCESS_PREFIX + '/target.html');
   await page.goto(server.PREFIX + '/empty.html');

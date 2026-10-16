@@ -17,7 +17,7 @@
 import url from 'url';
 import { contextTest as it, expect } from '../config/browserTest';
 
-it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer }) {
+it('CA-001 SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer }) {
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   httpsServer.setRoute('/sharedarraybuffer', (req, res) => {
@@ -34,12 +34,12 @@ it('SharedArrayBuffer should work @smoke', async function({ contextFactory, http
   expect(await page.evaluate(() => typeof SharedArrayBuffer)).toBe('function');
 });
 
-it('Web Assembly should work @smoke', async ({ page, server }) => {
+it('CA-002 Web Assembly should work @smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/wasm/table2.html');
   expect(await page.evaluate('loadTable()')).toBe('42, 83');
 });
 
-it('WebSocket should work @smoke', async ({ page, server }) => {
+it('CA-003 WebSocket should work @smoke', async ({ page, server }) => {
   server.sendOnWebSocketConnection('incoming');
   const value = await page.evaluate(host => {
     let cb;
@@ -52,7 +52,7 @@ it('WebSocket should work @smoke', async ({ page, server }) => {
   expect(value).toBe('incoming');
 });
 
-it('should respect CSP @smoke', async ({ page, server }) => {
+it('CA-004 should respect CSP @smoke', async ({ page, server }) => {
   server.setRoute('/empty.html', async (req, res) => {
     res.setHeader('Content-Security-Policy', `script-src 'unsafe-inline';`);
     res.end(`
@@ -66,7 +66,7 @@ it('should respect CSP @smoke', async ({ page, server }) => {
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it('should play video @smoke', async ({ page, asset, browserName, isWindows, isLinux, mode }) => {
+it('CA-005 should play video @smoke', async ({ page, asset, browserName, isWindows, isLinux, mode }) => {
   it.skip(browserName === 'webkit' && isWindows, 'passes locally but fails on GitHub Action bot, apparently due to a Media Pack issue in the Windows Server');
 
   // Safari only plays mp4 so we test WebKit with an .mp4 clip.
@@ -79,7 +79,7 @@ it('should play video @smoke', async ({ page, asset, browserName, isWindows, isL
   await page.$eval('video', v => v.pause());
 });
 
-it('should play webm video @smoke', async ({ page, asset, browserName, platform, macVersion, mode }) => {
+it('CA-006 should play webm video @smoke', async ({ page, asset, browserName, platform, macVersion, mode }) => {
   it.skip(browserName === 'webkit' && platform === 'win32', 'not supported');
 
   const absolutePath = asset('video_webm.html');
@@ -90,7 +90,7 @@ it('should play webm video @smoke', async ({ page, asset, browserName, platform,
   await page.$eval('video', v => v.pause());
 });
 
-it('should play audio @smoke', async ({ page, server, browserName, platform, macVersion }) => {
+it('CA-007 should play audio @smoke', async ({ page, server, browserName, platform, macVersion }) => {
   it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/10892');
   it.skip(browserName === 'webkit' && platform === 'darwin' && macVersion === 15, 'audio output is unreliable on hosted macOS 15 runners');
 
@@ -102,7 +102,7 @@ it('should play audio @smoke', async ({ page, server, browserName, platform, mac
   expect(await page.$eval('audio', e => e.currentTime)).toBeGreaterThan(0.1);
 });
 
-it('should support webgl @smoke', async ({ page }) => {
+it('CA-008 should support webgl @smoke', async ({ page }) => {
   const hasWebGL = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     return !!canvas.getContext('webgl');
@@ -110,7 +110,7 @@ it('should support webgl @smoke', async ({ page }) => {
   expect(hasWebGL).toBe(true);
 });
 
-it('should support webgl 2 @smoke', async ({ page, browserName, isWindows }) => {
+it('CA-009 should support webgl 2 @smoke', async ({ page, browserName, isWindows }) => {
   it.fixme(browserName === 'firefox' && isWindows);
 
   const hasWebGL2 = await page.evaluate(() => {
@@ -120,13 +120,13 @@ it('should support webgl 2 @smoke', async ({ page, browserName, isWindows }) => 
   expect(hasWebGL2).toBe(true);
 });
 
-it('should not crash on page with mp4 @smoke', async ({ page, server, platform, browserName }) => {
+it('CA-010 should not crash on page with mp4 @smoke', async ({ page, server, platform, browserName }) => {
   it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/11009, times out in setContent');
   await page.setContent(`<video><source src="${server.PREFIX}/movie.mp4"/></video>`);
   await page.waitForTimeout(1000);
 });
 
-it('should not crash on showDirectoryPicker', async ({ page, server, browserName, browserMajorVersion }) => {
+it('CA-011 should not crash on showDirectoryPicker', async ({ page, server, browserName, browserMajorVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/7339' });
   it.skip(browserName !== 'chromium', 'showDirectoryPicker is only available in Chromium');
   await page.goto(server.EMPTY_PAGE);
@@ -142,7 +142,7 @@ it('should not crash on showDirectoryPicker', async ({ page, server, browserName
   await page.waitForTimeout(3_000);
 });
 
-it('should not crash on storage.getDirectory()', {
+it('CA-012 should not crash on storage.getDirectory()', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18235' }
 }, async ({ page, server, browserName }) => {
   await page.goto(server.EMPTY_PAGE);
@@ -156,13 +156,13 @@ it('should not crash on storage.getDirectory()', {
     expect(error).toBeFalsy();
 });
 
-it('navigator.clipboard should be present', async ({ page, server }) => {
+it('CA-013 navigator.clipboard should be present', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18901' });
   await page.goto(server.EMPTY_PAGE);
   expect(await page.evaluate(() => navigator.clipboard)).toBeTruthy();
 });
 
-it('should set CloseEvent.wasClean to false when the server terminates a WebSocket connection', async ({ page, server }) => {
+it('CA-014 should set CloseEvent.wasClean to false when the server terminates a WebSocket connection', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12353' });
   server.onceWebSocketConnection(socket => {
     socket.terminate();
@@ -174,7 +174,7 @@ it('should set CloseEvent.wasClean to false when the server terminates a WebSock
   expect(wasClean).toBe(false);
 });
 
-it('serviceWorker should intercept document request', async ({ page, server }) => {
+it('CA-015 serviceWorker should intercept document request', async ({ page, server }) => {
   server.setRoute('/sw.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
     res.end(`
@@ -195,7 +195,7 @@ it('serviceWorker should intercept document request', async ({ page, server }) =
   expect(await page.textContent('body')).toBe('intercepted');
 });
 
-it('webkit should define window.safari', async ({ page, server, browserName }) => {
+it('CA-016 webkit should define window.safari', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21037' });
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29032' });
   it.skip(browserName !== 'webkit');
@@ -206,7 +206,7 @@ it('webkit should define window.safari', async ({ page, server, browserName }) =
   expect(await page.evaluate(() => (window as any).safari.pushNotification.toString())).toBe('[object SafariRemoteNotification]');
 });
 
-it('make sure that XMLHttpRequest upload events are emitted correctly', async ({ page, server }) => {
+it('CA-017 make sure that XMLHttpRequest upload events are emitted correctly', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21489' });
 
   await page.goto(server.EMPTY_PAGE);
@@ -225,14 +225,14 @@ it('make sure that XMLHttpRequest upload events are emitted correctly', async ({
   expect(events).toEqual(['loadstart', 'progress', 'load', 'loadend']);
 });
 
-it('loading in HTMLImageElement.prototype', async ({ page, server }) => {
+it('CA-018 loading in HTMLImageElement.prototype', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22738' });
   await page.goto(server.EMPTY_PAGE);
   const defined = await page.evaluate(() => 'loading' in HTMLImageElement.prototype);
   expect(defined).toBeTruthy();
 });
 
-it('window.GestureEvent in WebKit', async ({ page, server, browserName }) => {
+it('CA-019 window.GestureEvent in WebKit', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22735' });
   await page.goto(server.EMPTY_PAGE);
   const defined = await page.evaluate(() => 'GestureEvent' in window);
@@ -241,7 +241,7 @@ it('window.GestureEvent in WebKit', async ({ page, server, browserName }) => {
   expect(type).toBe(browserName === 'webkit' ? 'function' : 'undefined');
 });
 
-it('requestFullscreen', async ({ page, server, browserName, headless }) => {
+it('CA-020 requestFullscreen', async ({ page, server, browserName, headless }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22832' });
   it.fixme(browserName === 'firefox' && !headless, 'Error: Request for fullscreen was denied because requesting element is not in the currently focused tab');
   await page.goto(server.EMPTY_PAGE);
@@ -259,7 +259,7 @@ it('requestFullscreen', async ({ page, server, browserName, headless }) => {
   expect(await page.evaluate(() => !!document.fullscreenElement)).toBeFalsy();
 });
 
-it('should send no Content-Length header for GET requests with a Content-Type', async ({ page, server }) => {
+it('CA-021 should send no Content-Length header for GET requests with a Content-Type', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22569' });
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
@@ -272,7 +272,7 @@ it('should send no Content-Length header for GET requests with a Content-Type', 
   expect(request.headers['content-length']).toBe(undefined);
 });
 
-it('Intl.ListFormat should work', async ({ page, server, browserName }) => {
+it('CA-022 Intl.ListFormat should work', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23978' });
   await page.goto(server.EMPTY_PAGE);
   const formatted = await page.evaluate(() => {
@@ -286,7 +286,7 @@ it('Intl.ListFormat should work', async ({ page, server, browserName }) => {
   expect(formatted).toBe('first, second, or third');
 });
 
-it('service worker should cover the iframe', async ({ page, server }) => {
+it('CA-023 service worker should cover the iframe', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29267' });
 
   server.setRoute('/sw.html', (req, res) => {
@@ -334,7 +334,7 @@ it('service worker should cover the iframe', async ({ page, server }) => {
   await expect(page.frameLocator('iframe').locator('div')).toHaveText('from the service worker');
 });
 
-it('service worker should register in an iframe', async ({ page, server }) => {
+it('CA-024 service worker should register in an iframe', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29267' });
 
   server.setRoute('/main.html', (req, res) => {
@@ -383,7 +383,7 @@ it('service worker should register in an iframe', async ({ page, server }) => {
   expect(response).toBe('responseFromServiceWorker');
 });
 
-it('should be able to render avif images', {
+it('CA-025 should be able to render avif images', {
   annotation: {
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/32673',
@@ -400,7 +400,7 @@ it('should be able to render avif images', {
   expect(await page.evaluate(() => (window as any).error)).toBe(undefined);
 });
 
-it('should not crash when clicking a label with a <input type="file"/>', {
+it('CA-026 should not crash when clicking a label with a <input type="file"/>', {
   annotation: {
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/33257'
@@ -420,7 +420,7 @@ it('should not crash when clicking a label with a <input type="file"/>', {
   expect(fileChooser.page()).toBe(page);
 });
 
-it('should not crash when clicking a color input', {
+it('CA-027 should not crash when clicking a color input', {
   annotation: {
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/33864'
@@ -435,7 +435,7 @@ it('should not crash when clicking a color input', {
   await expect(input).toBeVisible();
 });
 
-it('should not auto play audio', {
+it('CA-028 should not auto play audio', {
   annotation: {
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/33590'
@@ -474,7 +474,7 @@ it('should not auto play audio', {
     await expect(page.locator('#log')).toHaveText('State: suspended');
 });
 
-it('should not crash on feature detection for PublicKeyCredential', {
+it('CA-029 should not crash on feature detection for PublicKeyCredential', {
   annotation: {
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/35433'

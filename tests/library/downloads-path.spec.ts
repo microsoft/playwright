@@ -29,7 +29,7 @@ it.describe('downloads path', () => {
     });
   });
 
-  it('should keep downloadsPath folder', async ({ browserType, server }, testInfo)  => {
+  it('DO-039 should keep downloadsPath folder', async ({ browserType, server }, testInfo)  => {
     const downloadsBrowser = await browserType.launch({ downloadsPath: testInfo.outputPath('') });
     const page = await downloadsBrowser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
@@ -45,7 +45,7 @@ it.describe('downloads path', () => {
     expect(fs.existsSync(testInfo.outputPath(''))).toBeTruthy();
   });
 
-  it('should delete downloads when context closes', async ({ browserType, server }, testInfo) => {
+  it('DO-040 should delete downloads when context closes', async ({ browserType, server }, testInfo) => {
     const downloadsBrowser = await browserType.launch({ downloadsPath: testInfo.outputPath('') });
     const page = await downloadsBrowser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
@@ -60,7 +60,7 @@ it.describe('downloads path', () => {
     await downloadsBrowser.close();
   });
 
-  it('should report downloads in downloadsPath folder', async ({ browserType, server }, testInfo) => {
+  it('DO-041 should report downloads in downloadsPath folder', async ({ browserType, server }, testInfo) => {
     const downloadsBrowser = await browserType.launch({ downloadsPath: testInfo.outputPath('') });
     const page = await downloadsBrowser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
@@ -74,7 +74,7 @@ it.describe('downloads path', () => {
     await downloadsBrowser.close();
   });
 
-  it('should report downloads in downloadsPath folder with a relative path', async ({ browserType, server }, testInfo) => {
+  it('DO-042 should report downloads in downloadsPath folder with a relative path', async ({ browserType, server }, testInfo) => {
     const downloadsBrowser = await browserType.launch({ downloadsPath: path.relative(process.cwd(), testInfo.outputPath('')) });
     const page = await downloadsBrowser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
@@ -88,7 +88,7 @@ it.describe('downloads path', () => {
     await downloadsBrowser.close();
   });
 
-  it('should accept downloads in persistent context', async ({ launchPersistent, server }, testInfo)  => {
+  it('DO-043 should accept downloads in persistent context', async ({ launchPersistent, server }, testInfo)  => {
     const { context, page } = await launchPersistent({ downloadsPath: testInfo.outputPath('') });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [download] = await Promise.all([
@@ -102,7 +102,7 @@ it.describe('downloads path', () => {
     await context.close();
   });
 
-  it('should delete downloads when persistent context closes', async ({ launchPersistent, server }, testInfo) => {
+  it('DO-044 should delete downloads when persistent context closes', async ({ launchPersistent, server }, testInfo) => {
     const { context, page } = await launchPersistent({ downloadsPath: testInfo.outputPath('') });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [download] = await Promise.all([

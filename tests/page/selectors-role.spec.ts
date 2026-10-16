@@ -16,7 +16,7 @@
 
 import { test, expect } from './pageTest';
 
-test('should detect roles', async ({ page }) => {
+test('SE-050 should detect roles', async ({ page }) => {
   await page.setContent(`
     <button>Hello</button>
     <select multiple="" size="2"></select>
@@ -49,7 +49,7 @@ test('should detect roles', async ({ page }) => {
   ]);
 });
 
-test('should support selected', async ({ page }) => {
+test('SE-051 should support selected', async ({ page }) => {
   await page.setContent(`
     <select>
       <option>Hi</option>
@@ -84,7 +84,7 @@ test('should support selected', async ({ page }) => {
   ]);
 });
 
-test('should support checked', async ({ page }) => {
+test('SE-052 should support checked', async ({ page }) => {
   await page.setContent(`
     <input type=checkbox>
     <input type=checkbox checked>
@@ -132,7 +132,7 @@ test('should support checked', async ({ page }) => {
   ]);
 });
 
-test('should support pressed', async ({ page }) => {
+test('SE-053 should support pressed', async ({ page }) => {
   await page.setContent(`
     <button>Hi</button>
     <button aria-pressed="true">Hello</button>
@@ -167,7 +167,7 @@ test('should support pressed', async ({ page }) => {
   ]);
 });
 
-test('should support expanded', async ({ page }) => {
+test('SE-054 should support expanded', async ({ page }) => {
   await page.setContent(`
     <div role="treeitem">Hi</div>
     <div role="treeitem" aria-expanded="true">Hello</div>
@@ -208,7 +208,7 @@ test('should support expanded', async ({ page }) => {
   ]);
 });
 
-test('should support disabled', async ({ page }) => {
+test('SE-055 should support disabled', async ({ page }) => {
   await page.setContent(`
     <button>Hi</button>
     <button disabled>Bye</button>
@@ -264,7 +264,7 @@ test('should support disabled', async ({ page }) => {
   ]);
 });
 
-test('should inherit disabled from the ancestor', async ({ page }) => {
+test('SE-056 should inherit disabled from the ancestor', async ({ page }) => {
   await page.setContent(`
     <span aria-disabled="true">
       <button>Click me!</button>
@@ -280,7 +280,7 @@ test('should inherit disabled from the ancestor', async ({ page }) => {
   await expect(page.locator('h1')).not.toBeDisabled();
 });
 
-test('should support disabled fieldset', async ({ page }) => {
+test('SE-057 should support disabled fieldset', async ({ page }) => {
   await page.setContent(`
     <fieldset disabled>
       <input></input>
@@ -322,7 +322,7 @@ test('should support disabled fieldset', async ({ page }) => {
   await expect.soft(page.getByTestId('deep-button')).toBeDisabled();
 });
 
-test('should support level', async ({ page }) => {
+test('SE-058 should support level', async ({ page }) => {
   await page.setContent(`
     <h1>Hello</h1>
     <h3>Hi</h3>
@@ -345,7 +345,7 @@ test('should support level', async ({ page }) => {
   ]);
 });
 
-test('should filter hidden, unless explicitly asked for', async ({ page }) => {
+test('SE-059 should filter hidden, unless explicitly asked for', async ({ page }) => {
   await page.setContent(`
     <button>Hi</button>
     <button hidden>Hello</button>
@@ -433,7 +433,7 @@ test('should filter hidden, unless explicitly asked for', async ({ page }) => {
   ]);
 });
 
-test('should support name', async ({ page }) => {
+test('SE-060 should support name', async ({ page }) => {
   await page.setContent(`
     <div role="button" aria-label=" Hello "></div>
     <div role="button" aria-label="Hallo"></div>
@@ -497,7 +497,7 @@ test('should support name', async ({ page }) => {
   ]);
 });
 
-test('should support option name with html whitespace', async ({ page }) => {
+test('SE-061 should support option name with html whitespace', async ({ page }) => {
   await page.setContent(`
     <select>
       <option value="html">&nbsp;HTML</option>
@@ -506,7 +506,7 @@ test('should support option name with html whitespace', async ({ page }) => {
   await expect(page.getByRole('option', { name: 'HTML' })).toHaveCount(1);
 });
 
-test('errors', async ({ page }) => {
+test('SE-062 errors', async ({ page }) => {
   const e0 = await page.$('role=[bar]').catch(e => e);
   expect(e0.message).toContain(`Role must not be empty`);
 
@@ -535,7 +535,7 @@ test('errors', async ({ page }) => {
   expect(e8.message).toContain(`"expanded" must be one of true, false`);
 });
 
-test('hidden with shadow dom slots', async ({ page }) => {
+test('SE-063 hidden with shadow dom slots', async ({ page }) => {
   await page.setContent(`
     <div make-hidden>
       <button>hidden1</button>
@@ -568,12 +568,12 @@ test('hidden with shadow dom slots', async ({ page }) => {
   ]);
 });
 
-test('should support output accessible name', async ({ page }) => {
+test('SE-064 should support output accessible name', async ({ page }) => {
   await page.setContent(`<label>Output1<output>output</output></label>`);
   await expect(page.getByRole('status', { name: 'Output1' })).toBeVisible();
 });
 
-test('should not match scope by default', async ({ page }) => {
+test('SE-065 should not match scope by default', async ({ page }) => {
   await page.setContent(`
     <ul>
       <li aria-label="Parent list">
@@ -590,7 +590,7 @@ test('should not match scope by default', async ({ page }) => {
   await expect(children).toHaveText(['child 1', 'child 2']);
 });
 
-test('should not match inert elements, unless explicitly asked for', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+test('SE-066 should not match inert elements, unless explicitly asked for', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
   await page.setContent(`
     <button>Hi</button>
     <button inert>Hello</button>
@@ -643,7 +643,7 @@ test('should not match inert elements, unless explicitly asked for', { annotatio
   ]);
 });
 
-test('should not match elements outside of a modal dialog', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+test('SE-067 should not match elements outside of a modal dialog', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
   await page.setContent(`
     <button>Outside</button>
     <dialog id=dialog>
@@ -675,7 +675,7 @@ test('should not match elements outside of a modal dialog', { annotation: { type
   ]);
 });
 
-test('should match the topmost modal dialog', async ({ page }) => {
+test('SE-068 should match the topmost modal dialog', async ({ page }) => {
   await page.setContent(`
     <button>Outside</button>
     <dialog id=outer>
@@ -707,7 +707,7 @@ test('should match the topmost modal dialog', async ({ page }) => {
   ]);
 });
 
-test('should respect PLAYWRIGHT_SKIP_INERT_CHECK', async ({ page, server, mode }) => {
+test('SE-069 should respect PLAYWRIGHT_SKIP_INERT_CHECK', async ({ page, server, mode }) => {
   test.skip(mode !== 'default', 'Env variable is read by the in-process server');
   process.env.PLAYWRIGHT_SKIP_INERT_CHECK = '1';
   try {
@@ -731,7 +731,7 @@ test('should respect PLAYWRIGHT_SKIP_INERT_CHECK', async ({ page, server, mode }
   }
 });
 
-test('should respect PLAYWRIGHT_SKIP_DIALOG_CHECK', async ({ page, server, mode }) => {
+test('SE-070 should respect PLAYWRIGHT_SKIP_DIALOG_CHECK', async ({ page, server, mode }) => {
   test.skip(mode !== 'default', 'Env variable is read by the in-process server');
   process.env.PLAYWRIGHT_SKIP_DIALOG_CHECK = '1';
   try {

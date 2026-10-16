@@ -32,7 +32,7 @@ async function checkFeatures(name: string, context: BrowserContext, server: Test
   }
 }
 
-it('Safari Desktop', async ({ browser, browserName, platform, httpsServer, channel, isFrozenWebkit }) => {
+it('CA-030 Safari Desktop', async ({ browser, browserName, platform, httpsServer, channel, isFrozenWebkit }) => {
   it.skip(browserName !== 'webkit');
   it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'Modernizr uses WebGL which is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
   it.skip(isFrozenWebkit);
@@ -88,7 +88,7 @@ it('Safari Desktop', async ({ browser, browserName, platform, httpsServer, chann
   expect(actual).toEqual(expected);
 });
 
-it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsServer, channel, isFrozenWebkit }) => {
+it('CA-031 Mobile Safari', async ({ playwright, browser, browserName, platform, httpsServer, channel, isFrozenWebkit }) => {
   it.skip(browserName !== 'webkit');
   it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'Modernizr uses WebGL which is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
   it.skip(isFrozenWebkit);

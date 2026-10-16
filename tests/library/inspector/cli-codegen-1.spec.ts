@@ -18,7 +18,7 @@ import { test, expect } from './inspectorTest';
 import type { ConsoleMessage } from 'playwright';
 
 test.describe('cli codegen', () => {
-  test('should click', async ({ openRecorder }) => {
+  test('CG-001 should click', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`);
@@ -50,7 +50,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`)
     expect(message.text()).toBe('click');
   });
 
-  test('should double click', async ({ openRecorder }) => {
+  test('CG-002 should double click', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<button onclick="console.log('click ' + event.detail)" ondblclick="console.log('dblclick ' + event.detail)">Submit</button>`);
@@ -91,7 +91,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).DblClickAsync()
     ]);
   });
 
-  test('should click twice', async ({ openRecorder }) => {
+  test('CG-003 should click twice', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`);
@@ -116,7 +116,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).DblClickAsync()
   await page.getByRole('button', { name: 'Submit' }).click();`);
   });
 
-  test('should type after clicking twice', async ({ openRecorder }) => {
+  test('CG-004 should type after clicking twice', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input type="text" value="foo"/>`);
@@ -144,7 +144,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).DblClickAsync()
   await page.getByRole('textbox').fill('foobar');`);
   });
 
-  test('should ignore programmatic events', async ({ openRecorder }) => {
+  test('CG-005 should ignore programmatic events', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`);
@@ -164,7 +164,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).DblClickAsync()
     expect(clicks.length).toBe(1);
   });
 
-  test('should click after same-document navigation', async ({ openRecorder, server }) => {
+  test('CG-006 should click after same-document navigation', async ({ openRecorder, server }) => {
     const { page, recorder } = await openRecorder();
 
     server.setRoute('/foo.html', (req, res) => {
@@ -194,7 +194,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).DblClickAsync()
     expect(message.text()).toBe('click');
   });
 
-  test('should make a positioned click on a canvas', async ({ openRecorder }) => {
+  test('CG-007 should make a positioned click on a canvas', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -247,7 +247,7 @@ await page.Locator("canvas").ClickAsync(new()
     expect(message.text()).toBe('click 250 250');
   });
 
-  test('should work with TrustedTypes', async ({ openRecorder }) => {
+  test('CG-008 should work with TrustedTypes', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -285,7 +285,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`)
     expect(message.text()).toBe('click');
   });
 
-  test('should not target selector preview by text regexp', async ({ openRecorder }) => {
+  test('CG-009 should not target selector preview by text regexp', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<span>dummy</span>`);
@@ -316,7 +316,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`)
     expect(message.text()).toBe('click');
   });
 
-  test('should fill', async ({ openRecorder }) => {
+  test('CG-010 should fill', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input id="input" name="name" oninput="console.log(input.value)"></input>`);
@@ -346,7 +346,7 @@ await page.Locator("#input").FillAsync(\"John\");`);
     expect(message.text()).toBe('John');
   });
 
-  test('should fill japanese text', async ({ openRecorder }) => {
+  test('CG-011 should fill japanese text', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     // In Japanese, "てすと" or "テスト" means "test".
@@ -380,7 +380,7 @@ await page.Locator("#input").FillAsync(\"てすと\");`);
     expect(message.text()).toBe('てすと');
   });
 
-  test('should fill textarea', async ({ openRecorder }) => {
+  test('CG-012 should fill textarea', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<textarea id="textarea" name="name" oninput="console.log(textarea.value)"></textarea>`);
@@ -397,7 +397,7 @@ await page.Locator("#input").FillAsync(\"てすと\");`);
     expect(message.text()).toBe('John');
   });
 
-  test('should fill textarea with new lines at the end', async ({ openRecorder }) => {
+  test('CG-013 should fill textarea with new lines at the end', async ({ openRecorder }) => {
     test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23774' });
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<textarea id="textarea"></textarea>`);
@@ -412,7 +412,7 @@ await page.Locator("#input").FillAsync(\"てすと\");`);
     expect(sources.get('JavaScript')!.text).not.toContain(`Enter`);
   });
 
-  test('should fill [contentEditable]', async ({ openRecorder }) => {
+  test('CG-014 should fill [contentEditable]', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<div id="content" contenteditable="" oninput="console.log(content.innerText)"/>`);
@@ -429,7 +429,7 @@ await page.Locator("#input").FillAsync(\"てすと\");`);
     expect(message.text()).toBe('John Doe');
   });
 
-  test('should fill [contentEditable] with initial text', async ({ openRecorder }) => {
+  test('CG-015 should fill [contentEditable] with initial text', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -449,7 +449,7 @@ await page.Locator("#input").FillAsync(\"てすと\");`);
     expect(message.text()).toBe('John Doe');
   });
 
-  test('should press', async ({ openRecorder }) => {
+  test('CG-016 should press', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input name="name" onkeypress="console.log('press')"></input>`);
@@ -483,7 +483,7 @@ await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
     expect(messages.map(m => m.text())).toContain('press');
   });
 
-  test('should update selected element after pressing Tab', async ({ openRecorder }) => {
+  test('CG-017 should update selected element after pressing Tab', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -529,7 +529,7 @@ await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
   await page.locator('input[name="two"]').fill('barfoo321');`);
   });
 
-  test('should record ArrowDown', async ({ openRecorder }) => {
+  test('CG-018 should record ArrowDown', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input name="name" onkeydown="console.log('press:' + event.key)"></input>`);
@@ -551,7 +551,7 @@ await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
     expect(messages.map(m => m.text())).toContain('press:ArrowDown');
   });
 
-  test('should emit single keyup on ArrowDown', async ({ openRecorder }) => {
+  test('CG-019 should emit single keyup on ArrowDown', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input name="name" onkeydown="console.log('down:' + event.key)" onkeyup="console.log('up:' + event.key)"></input>`);
@@ -576,7 +576,7 @@ await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
     expect(messages[1].text()).toBe('up:ArrowDown');
   });
 
-  test('should not record a click on Enter press', async ({ openRecorder }) => {
+  test('CG-020 should not record a click on Enter press', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<button onclick="console.log('clicked')">Submit</button>`);
@@ -602,7 +602,7 @@ await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
     expect(sources.get('JavaScript')!.text).not.toContain(`click()`);
   });
 
-  test('should check', async ({ openRecorder }) => {
+  test('CG-021 should check', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="console.log(checkbox.checked)"></input>`);
@@ -634,7 +634,7 @@ await page.Locator("#checkbox").CheckAsync();`);
     expect(message.text()).toBe('true');
   });
 
-  test('should check a radio button', async ({ openRecorder }) => {
+  test('CG-022 should check a radio button', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input id="checkbox" type="radio" name="accept" onchange="console.log(checkbox.checked)"></input>`);
@@ -653,7 +653,7 @@ await page.Locator("#checkbox").CheckAsync();`);
     expect(message.text()).toBe('true');
   });
 
-  test('should check with keyboard', async ({ openRecorder }) => {
+  test('CG-023 should check with keyboard', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="console.log(checkbox.checked)"></input>`);
@@ -672,7 +672,7 @@ await page.Locator("#checkbox").CheckAsync();`);
     expect(message.text()).toBe('true');
   });
 
-  test('should check with keyboard after hover', async ({ openRecorder }) => {
+  test('CG-024 should check with keyboard after hover', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="console.log(checkbox.checked)"></input>`);
@@ -694,7 +694,7 @@ await page.Locator("#checkbox").CheckAsync();`);
   await page.locator('#checkbox').check();`);
   });
 
-  test('should uncheck', async ({ openRecorder }) => {
+  test('CG-025 should uncheck', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" checked name="accept" onchange="console.log(checkbox.checked)"></input>`);
@@ -726,7 +726,7 @@ await page.Locator("#checkbox").UncheckAsync();`);
     expect(message.text()).toBe('false');
   });
 
-  test('should select', async ({ openRecorder }) => {
+  test('CG-026 should select', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait('<select id="age" onchange="console.log(age.selectedOptions[0].value)"><option value="1"><option value="2"></select>');
@@ -759,7 +759,7 @@ await page.Locator("#age").SelectOptionAsync(new[] { "2" });`);
     expect(message.text()).toBe('2');
   });
 
-  test('should select with size attribute', async ({ openRecorder }) => {
+  test('CG-027 should select with size attribute', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -800,7 +800,7 @@ await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
     expect(message.text()).toBe('2');
   });
 
-  test('should await popup', async ({ openRecorder, server }) => {
+  test('CG-028 should await popup', async ({ openRecorder, server }) => {
     test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36461' });
 
     const { page, recorder } = await openRecorder();
@@ -860,7 +860,7 @@ await page1.GetByRole(AriaRole.Button, new() { Name = \"Click me\" }).ClickAsync
         await page1.GetByRole(AriaRole.Button, new() { Name = \"Click me\" }).ClickAsync();`);
   });
 
-  test('should attribute navigation to click', async ({ openRecorder }) => {
+  test('CG-029 should attribute navigation to click', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<a onclick="window.location.href='about:blank#foo'">link</a>`);
@@ -915,7 +915,7 @@ await page.GetByText("link").ClickAsync();`);
     expect(page.url()).toContain('about:blank#foo');
   });
 
-  test('should attribute navigation to press/fill', async ({ openRecorder }) => {
+  test('CG-030 should attribute navigation to press/fill', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input /><script>document.querySelector('input').addEventListener('input', () => window.location.href = 'about:blank#foo');</script>`);
@@ -979,7 +979,7 @@ await page.GetByRole(AriaRole.Textbox).FillAsync("h");`);
     expect(page.url()).toContain('about:blank#foo');
   });
 
-  test('should ignore AltGraph', async ({ openRecorder, browserName }) => {
+  test('CG-031 should ignore AltGraph', async ({ openRecorder, browserName }) => {
     test.skip(browserName === 'firefox', 'The TextInputProcessor in Firefox does not work with AltGraph.');
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<input></input>`);
@@ -993,7 +993,7 @@ await page.GetByRole(AriaRole.Textbox).FillAsync("h");`);
     expect(recorder.sources().get('JavaScript')!.text).toContain(`await page.getByRole('textbox').fill('playwright@example.com');`);
   });
 
-  test('should middle click', async ({ openRecorder, server }) => {
+  test('CG-032 should middle click', async ({ openRecorder, server }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<a href${JSON.stringify(server.EMPTY_PAGE)}>Click me</a>`);
@@ -1025,7 +1025,7 @@ await page.GetByText("Click me").ClickAsync(new()
 });`);
   });
 
-  test('should record slider', async ({ openRecorder, browserName, isLinux, headless }) => {
+  test('CG-033 should record slider', async ({ openRecorder, browserName, isLinux, headless }) => {
     test.fixme(browserName === 'chromium' && isLinux && headless, 'https://github.com/microsoft/playwright/issues/38568');
 
     const { page, recorder } = await openRecorder();
@@ -1067,7 +1067,7 @@ await page.GetByText("Click me").ClickAsync(new()
 await page.GetByRole(AriaRole.Slider).FillAsync("10");`);
   });
 
-  test('should click button with nested div', async ({ openRecorder }) => {
+  test('CG-034 should click button with nested div', async ({ openRecorder }) => {
     test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29067' });
 
     const { recorder } = await openRecorder();
@@ -1099,7 +1099,7 @@ await page.GetByRole(AriaRole.Slider).FillAsync("10");`);
 await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
   });
 
-  test('should record omnibox navigations after performAction', async ({ openRecorder, server }) => {
+  test('CG-035 should record omnibox navigations after performAction', async ({ openRecorder, server }) => {
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<button>Submit</button>`);
     await Promise.all([
@@ -1112,7 +1112,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`)
     await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/empty.html');`);
   });
 
-  test('should record omnibox navigations after recordAction', async ({ openRecorder, server }) => {
+  test('CG-036 should record omnibox navigations after recordAction', async ({ openRecorder, server }) => {
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<textarea></textarea>`);
     await Promise.all([
@@ -1125,7 +1125,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`)
     await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/empty.html');`);
   });
 
-  test('should not throw csp directive violation errors', async ({ openRecorder, server }) => {
+  test('CG-037 should not throw csp directive violation errors', async ({ openRecorder, server }) => {
     server.setCSP('/empty.html', `default-src 'self'`);
     const { page } = await openRecorder();
     await page.goto(server.EMPTY_PAGE);
@@ -1133,7 +1133,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`)
     await expect(page.waitForEvent('console', { predicate, timeout: 1000 })).rejects.toThrow();
   });
 
-  test('should clear when recording is disabled', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33802' } }, async ({ openRecorder }) => {
+  test('CG-038 should clear when recording is disabled', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33802' } }, async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`

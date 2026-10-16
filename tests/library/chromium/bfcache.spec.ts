@@ -22,7 +22,7 @@ test.use({
   }
 });
 
-test('bindings should work after restoring from bfcache', async ({ page, server }) => {
+test('CR-042 bindings should work after restoring from bfcache', async ({ page, server }) => {
   await page.exposeFunction('add', (a, b) => a + b);
 
   await page.goto(server.PREFIX + '/cached/bfcached.html');

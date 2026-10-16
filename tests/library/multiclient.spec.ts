@@ -61,7 +61,7 @@ async function disconnect(page: Page) {
   await new Promise(f => setTimeout(f, 1000));
 }
 
-test('should connect two clients', async ({ connect, remoteServer, server }) => {
+test('MC-001 should connect two clients', async ({ connect, remoteServer, server }) => {
   const browserA = await connect(remoteServer.wsEndpoint());
   expect(browserA.contexts().length).toBe(0);
   const contextA1 = await browserA.newContext();
@@ -94,7 +94,7 @@ test('should connect two clients', async ({ connect, remoteServer, server }) => 
   await expect(pageB2).toHaveURL(server.PREFIX + '/frames/frame.html');
 });
 
-test('should fire context event on remote newContext', async ({ connect, remoteServer }) => {
+test('MC-002 should fire context event on remote newContext', async ({ connect, remoteServer }) => {
   const browserA = await connect(remoteServer.wsEndpoint());
   const events: BrowserContext[] = [];
   browserA.on('context', ctx => events.push(ctx));
@@ -107,7 +107,7 @@ test('should fire context event on remote newContext', async ({ connect, remoteS
   expect(events[0]).not.toBe(contextB);
 });
 
-test('should have separate default timeouts', async ({ twoPages }) => {
+test('MC-003 should have separate default timeouts', async ({ twoPages }) => {
   const { pageA, pageB } = twoPages;
   pageA.setDefaultTimeout(500);
   pageB.setDefaultTimeout(600);
@@ -120,7 +120,7 @@ test('should have separate default timeouts', async ({ twoPages }) => {
   expect(errorB.message).toContain('Timeout 600ms exceeded');
 });
 
-test('should receive viewport size changes', async ({ twoPages }) => {
+test('MC-004 should receive viewport size changes', async ({ twoPages }) => {
   const { pageA, pageB } = twoPages;
 
   await pageA.setViewportSize({ width: 567, height: 456 });
@@ -132,7 +132,7 @@ test('should receive viewport size changes', async ({ twoPages }) => {
   await expect.poll(() => pageA.viewportSize()).toEqual({ width: 456, height: 567 });
 });
 
-test('should not allow parallel js coverage and cleanup upon disconnect', async ({ twoPages, browserName }) => {
+test('MC-005 should not allow parallel js coverage and cleanup upon disconnect', async ({ twoPages, browserName }) => {
   test.skip(browserName !== 'chromium');
 
   const { pageA, pageB } = twoPages;
@@ -145,7 +145,7 @@ test('should not allow parallel js coverage and cleanup upon disconnect', async 
   await pageB.coverage.startJSCoverage();
 });
 
-test('should not allow parallel css coverage', async ({ twoPages, browserName }) => {
+test('MC-006 should not allow parallel css coverage', async ({ twoPages, browserName }) => {
   test.skip(browserName !== 'chromium');
 
   const { pageA, pageB } = twoPages;
@@ -158,7 +158,7 @@ test('should not allow parallel css coverage', async ({ twoPages, browserName })
   await pageB.coverage.startCSSCoverage();
 });
 
-test('should unpause clock', async ({ twoPages }) => {
+test('MC-007 should unpause clock', async ({ twoPages }) => {
   const { pageA, pageB } = twoPages;
   await pageA.clock.install({ time: 1000 });
   await pageA.clock.pauseAt(2000);
@@ -167,7 +167,7 @@ test('should unpause clock', async ({ twoPages }) => {
   await promise;
 });
 
-test('last emulateMedia wins', async ({ twoPages }) => {
+test('MC-008 last emulateMedia wins', async ({ twoPages }) => {
   const { pageA, pageB } = twoPages;
   await pageA.emulateMedia({ media: 'print' });
   expect(await pageB.evaluate(() => window.matchMedia('screen').matches)).toBe(false);
@@ -177,7 +177,7 @@ test('last emulateMedia wins', async ({ twoPages }) => {
   expect(await pageA.evaluate(() => window.matchMedia('print').matches)).toBe(false);
 });
 
-test('should chain routes', async ({ twoPages, server }) => {
+test('MC-009 should chain routes', async ({ twoPages, server }) => {
   const { pageA, pageB } = twoPages;
 
   server.setRoute('/foo', (req, res) => res.writeHead(200, { 'Content-Type': 'text/html' }).end('<div>server-foo</div>'));
@@ -228,7 +228,7 @@ test('should chain routes', async ({ twoPages, server }) => {
   await expect(pageB.locator('div')).toHaveText('intercepted2-bar');
 });
 
-test.fixme('should chain routes with changed url', async ({ twoPages, server }) => {
+test.fixme('MC-010 should chain routes with changed url', async ({ twoPages, server }) => {
   const { pageA, pageB } = twoPages;
 
   server.setRoute('/foo', (req, res) => res.writeHead(200, { 'Content-Type': 'text/html' }).end('<div>server-foo</div>'));
@@ -245,7 +245,7 @@ test.fixme('should chain routes with changed url', async ({ twoPages, server }) 
   await expect(pageB.locator('div')).toHaveText('intercepted2-baz');
 });
 
-test('should remove exposed bindings upon disconnect', async ({ twoPages }) => {
+test('MC-011 should remove exposed bindings upon disconnect', async ({ twoPages }) => {
   const { pageA, pageB } = twoPages;
 
   await pageA.exposeBinding('pageBindingA', () => 'pageBindingAResult');
@@ -273,7 +273,7 @@ test('should remove exposed bindings upon disconnect', async ({ twoPages }) => {
   expect(await pageB.evaluate(() => (window as any).pageBindingB())).toBe('pageBindingBResult');
 });
 
-test('should unroute websockets', async ({ twoPages, server }) => {
+test('MC-012 should unroute websockets', async ({ twoPages, server }) => {
   const { pageA, pageB } = twoPages;
 
   await pageA.goto(server.EMPTY_PAGE);
@@ -294,7 +294,7 @@ test('should unroute websockets', async ({ twoPages, server }) => {
   await promise;
 });
 
-test('should remove init scripts upon disconnect', async ({ twoPages, server }) => {
+test('MC-013 should remove init scripts upon disconnect', async ({ twoPages, server }) => {
   const { pageA, pageB } = twoPages;
 
   await pageA.addInitScript(() => (window as any).pageValueA = 'pageValueA');
@@ -318,7 +318,7 @@ test('should remove init scripts upon disconnect', async ({ twoPages, server }) 
   expect(await pageA.evaluate(() => (window as any).contextValueA)).toBe('contextValueA');
 });
 
-test('should remove locator handlers upon disconnect', async ({ twoPages, server }) => {
+test('MC-014 should remove locator handlers upon disconnect', async ({ twoPages, server }) => {
   const { pageA, pageB } = twoPages;
 
   await pageA.goto(server.PREFIX + '/input/handle-locator.html');
@@ -353,7 +353,7 @@ test('should remove locator handlers upon disconnect', async ({ twoPages, server
   expect(error.message).not.toContain('locator handler');
 });
 
-test('should launch persistent', async ({ browserType }) => {
+test('MC-015 should launch persistent', async ({ browserType }) => {
   const browserServer = await browserType.launchServer({ _userDataDir: '', _sharedBrowser: true } as any);
   const browser = await browserType.connect(browserServer.wsEndpoint());
   expect(browser.contexts().length).toBe(1);
@@ -361,7 +361,7 @@ test('should launch persistent', async ({ browserType }) => {
   await browserServer.close();
 });
 
-test('should avoid side effects upon disconnect', async ({ twoPages, server }) => {
+test('MC-016 should avoid side effects upon disconnect', async ({ twoPages, server }) => {
   const { pageA, pageB } = twoPages;
 
   let counter = 0;
@@ -382,7 +382,7 @@ test('should avoid side effects upon disconnect', async ({ twoPages, server }) =
   expect(counter).toBe(savedCounter);
 });
 
-test('screencast should deliver cached last frame to a new client', async ({ twoPages, server, trace, video }) => {
+test('MC-017 screencast should deliver cached last frame to a new client', async ({ twoPages, server, trace, video }) => {
   test.skip(trace === 'on', 'trace=on has screencast active on the page already');
   test.skip(video === 'on', 'video=on has screencast active on the page already');
 
@@ -406,7 +406,7 @@ test('screencast should deliver cached last frame to a new client', async ({ two
   await pageB.screencast.stop();
 });
 
-test('should stop tracing upon disconnect', async ({ twoPages, trace }) => {
+test('MC-018 should stop tracing upon disconnect', async ({ twoPages, trace }) => {
   test.skip(trace === 'on');
 
   const { pageA, pageB } = twoPages;
@@ -420,7 +420,7 @@ test('should stop tracing upon disconnect', async ({ twoPages, trace }) => {
   await pageB.context().tracing.start();
 });
 
-test('should not deliver an action buffered before the second recording started', {
+test('MC-019 should not deliver an action buffered before the second recording started', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43282' },
 }, async ({ twoPages }) => {
   const { pageA, pageB } = twoPages;

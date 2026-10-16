@@ -82,7 +82,7 @@ test.afterEach(() => {
   (globalThis as any).leakedJSHandles = null;
 });
 
-test('click should not leak', async ({ page, toImpl }) => {
+test('LE-001 click should not leak', async ({ page, toImpl }) => {
   await page.setContent(`
     <button>static button 1</button>
     <button>static button 2</button>
@@ -107,7 +107,7 @@ test('click should not leak', async ({ page, toImpl }) => {
   await checkWeakRefs(toImpl(page), 2, 25);
 });
 
-test('fill should not leak', async ({ page, mode, toImpl }) => {
+test('LE-002 fill should not leak', async ({ page, mode, toImpl }) => {
   test.skip(mode !== 'default');
 
   await page.setContent(`
@@ -133,7 +133,7 @@ test('fill should not leak', async ({ page, mode, toImpl }) => {
   await checkWeakRefs(toImpl(page), 2, 25);
 });
 
-test('expect should not leak', async ({ page, mode, toImpl }) => {
+test('LE-003 expect should not leak', async ({ page, mode, toImpl }) => {
   test.skip(mode !== 'default');
 
   await page.setContent(`
@@ -161,7 +161,7 @@ test('expect should not leak', async ({ page, mode, toImpl }) => {
   await checkWeakRefs(toImpl(page), 2, 25);
 });
 
-test('waitFor should not leak', async ({ page, mode, toImpl }) => {
+test('LE-004 waitFor should not leak', async ({ page, mode, toImpl }) => {
   test.skip(mode !== 'default');
 
   await page.setContent(`

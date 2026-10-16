@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import type { Route } from 'playwright-core';
 
-it('should pick up ongoing navigation', async ({ page, server }) => {
+it('WA-077 should pick up ongoing navigation', async ({ page, server }) => {
   let response = null;
   server.setRoute('/one-style.css', (req, res) => response = res);
   await Promise.all([
@@ -31,7 +31,7 @@ it('should pick up ongoing navigation', async ({ page, server }) => {
   await waitPromise;
 });
 
-it('should respect timeout', async ({ page, server }) => {
+it('WA-078 should respect timeout', async ({ page, server }) => {
   server.setRoute('/one-style.css', (req, res) => void 0);
   await page.goto(server.PREFIX + '/one-style.html', { waitUntil: 'domcontentloaded' });
   const error = await page.waitForLoadState('load', { timeout: 1 }).catch(e => e);
@@ -39,26 +39,26 @@ it('should respect timeout', async ({ page, server }) => {
   expect(error.stack.split('\n')[1]).toContain(__filename);
 });
 
-it('should resolve immediately if loaded', async ({ page, server }) => {
+it('WA-079 should resolve immediately if loaded', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/one-style.html');
   await page.waitForLoadState();
 });
 
-it('should throw for bad state', async ({ page, server }) => {
+it('WA-080 should throw for bad state', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/one-style.html');
   // @ts-expect-error 'bad' is not a valid load state
   const error = await page.waitForLoadState('bad').catch(e => e);
   expect(error.message).toContain(`state: expected one of (load|domcontentloaded|networkidle|commit)`);
 });
 
-it('should resolve immediately if load state matches', async ({ page, server }) => {
+it('WA-081 should resolve immediately if load state matches', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/one-style.css', (req, res) => void 0);
   await page.goto(server.PREFIX + '/one-style.html', { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('domcontentloaded');
 });
 
-it('should work with pages that have loaded before being connected to', async ({ page, server }) => {
+it('WA-082 should work with pages that have loaded before being connected to', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -70,7 +70,7 @@ it('should work with pages that have loaded before being connected to', async ({
   expect(popup.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should wait for load state of empty url popup', async ({ page, browserName, isBidi, browserMajorVersion }) => {
+it('WA-083 should wait for load state of empty url popup', async ({ page, browserName, isBidi, browserMajorVersion }) => {
   const [popup, readyState] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => {
@@ -84,7 +84,7 @@ it('should wait for load state of empty url popup', async ({ page, browserName, 
   expect(await popup.evaluate(() => document.readyState)).toBe(isOldFirefox && !isBidi ? 'uninitialized' : 'complete');
 });
 
-it('should wait for load state of about:blank popup ', async ({ page }) => {
+it('WA-084 should wait for load state of about:blank popup ', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window.open('about:blank') && 1),
@@ -93,7 +93,7 @@ it('should wait for load state of about:blank popup ', async ({ page }) => {
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should wait for load state of about:blank popup with noopener ', async ({ page }) => {
+it('WA-085 should wait for load state of about:blank popup with noopener ', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window.open('about:blank', null, 'noopener') && 1),
@@ -102,7 +102,7 @@ it('should wait for load state of about:blank popup with noopener ', async ({ pa
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should wait for load state of popup with network url ', async ({ page, server }) => {
+it('WA-086 should wait for load state of popup with network url ', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -112,7 +112,7 @@ it('should wait for load state of popup with network url ', async ({ page, serve
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should wait for load state of popup with network url and noopener ', async ({ page, server }) => {
+it('WA-087 should wait for load state of popup with network url and noopener ', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -122,7 +122,7 @@ it('should wait for load state of popup with network url and noopener ', async (
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should work with clicking target=_blank', async ({ page, server }) => {
+it('WA-088 should work with clicking target=_blank', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -133,7 +133,7 @@ it('should work with clicking target=_blank', async ({ page, server }) => {
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should wait for load state of newPage', async ({ page, isElectron }) => {
+it('WA-089 should wait for load state of newPage', async ({ page, isElectron }) => {
   it.fixme(isElectron, 'BrowserContext.newPage does not work in Electron');
 
   const [newPage] = await Promise.all([
@@ -144,7 +144,7 @@ it('should wait for load state of newPage', async ({ page, isElectron }) => {
   expect(await newPage.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should resolve after popup load', async ({ page, server }) => {
+it('WA-090 should resolve after popup load', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   // Stall the 'load' by delaying css.
   let cssResponse;
@@ -166,7 +166,7 @@ it('should resolve after popup load', async ({ page, server }) => {
   expect(popup.url()).toBe(server.PREFIX + '/one-style.html');
 });
 
-it('should work for frame', async ({ page, server }) => {
+it('WA-091 should work for frame', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.frames()[1];
 
@@ -182,7 +182,7 @@ it('should work for frame', async ({ page, server }) => {
   await loadPromise;
 });
 
-it('should work with javascript: iframe', async ({ page, server, browserName }) => {
+it('WA-092 should work with javascript: iframe', async ({ page, server, browserName }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<iframe src="javascript:false"></iframe>`, { waitUntil: 'commit' });
   await page.waitForLoadState('domcontentloaded');
@@ -190,7 +190,7 @@ it('should work with javascript: iframe', async ({ page, server, browserName }) 
   await page.waitForLoadState('networkidle');
 });
 
-it('should work with broken data-url iframe', async ({ page, server }) => {
+it('WA-093 should work with broken data-url iframe', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<iframe src="data:text/html"></iframe>`, { waitUntil: 'commit' });
   await page.waitForLoadState('domcontentloaded');
@@ -198,7 +198,7 @@ it('should work with broken data-url iframe', async ({ page, server }) => {
   await page.waitForLoadState('networkidle');
 });
 
-it('should work with broken blob-url iframe', async ({ page, server, browserName }) => {
+it('WA-094 should work with broken blob-url iframe', async ({ page, server, browserName }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<iframe src="blob:"></iframe>`, { waitUntil: 'commit' });
   await page.waitForLoadState('domcontentloaded');

@@ -163,11 +163,11 @@ async function runNonPartitionedTest(page: Page, httpsServer: TestServer, browse
   };
 }
 
-test(`third party non-partitioned cookies`, async ({ page, browserName, httpsServer, isMac, isLinux, isBidi, urls, channel }) => {
+test(`CO-052 third party non-partitioned cookies`, async ({ page, browserName, httpsServer, isMac, isLinux, isBidi, urls, channel }) => {
   await runNonPartitionedTest(page, httpsServer, browserName, isMac, isLinux, isBidi, channel, urls);
 });
 
-test(`save/load third party non-partitioned cookies`, async ({ page, browserName, httpsServer, isMac, isLinux, isBidi, browser, urls, channel }) => {
+test(`CO-053 save/load third party non-partitioned cookies`, async ({ page, browserName, httpsServer, isMac, isLinux, isBidi, browser, urls, channel }) => {
   // Run the test to populate the cookies.
   const { expectedTopLevel, expectedThirdParty } = await runNonPartitionedTest(page, httpsServer, browserName, isMac, isLinux, isBidi, channel, urls);
 
@@ -254,11 +254,11 @@ async function runPartitionedTest(page: Page, httpsServer: TestServer, browserNa
     await expect(frameBody).toHaveText('Received cookie: frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value');
 }
 
-test(`third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServer, isMac, webkitPartitions, isBidi, urls }) => {
+test(`CO-054 third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServer, isMac, webkitPartitions, isBidi, urls }) => {
   await runPartitionedTest(page, httpsServer, browserName, isMac, webkitPartitions, isBidi, urls);
 });
 
-test(`save/load third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServer, isMac, webkitPartitions, isBidi, browser, urls }) => {
+test(`CO-055 save/load third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServer, isMac, webkitPartitions, isBidi, browser, urls }) => {
   test.fixme(browserName === 'firefox' && !isBidi, 'Firefox cookie partitioning is disabled in Firefox(Juggler).');
   test.fixme(browserName === 'webkit' && !isMac, 'Linux and Windows WebKit builds do not partition third-party cookies at all.');
 
@@ -328,7 +328,7 @@ test(`save/load third party 'Partitioned;' cookies`, async ({ page, browserName,
   });
 });
 
-test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, httpsServer, isMac, webkitPartitions, isBidi, urls }) => {
+test(`CO-056 add 'Partitioned;' cookie via API`, async ({ page, context, browserName, httpsServer, isMac, webkitPartitions, isBidi, urls }) => {
   addCommonCookieHandlers(httpsServer, urls);
 
   await context.addCookies([
@@ -429,7 +429,7 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
 });
 
 
-test(`same origin third party 'Partitioned;' cookie with different origin intermediate iframe`, async ({ page, httpsServer, browser, isBidi, urls }) => {
+test(`CO-057 same origin third party 'Partitioned;' cookie with different origin intermediate iframe`, async ({ page, httpsServer, browser, isBidi, urls }) => {
   addCommonCookieHandlers(httpsServer, urls);
   httpsServer.setRoute('/set-cookie.html', (req, res) => {
     res.setHeader('Set-Cookie', [
@@ -467,7 +467,7 @@ test(`same origin third party 'Partitioned;' cookie with different origin interm
   });
 });
 
-test(`top level 'Partitioned;' cookie and same origin iframe`, async ({ page, browserName, httpsServer, browser, isBidi, urls }) => {
+test(`CO-058 top level 'Partitioned;' cookie and same origin iframe`, async ({ page, browserName, httpsServer, browser, isBidi, urls }) => {
   addCommonCookieHandlers(httpsServer, urls);
   httpsServer.setRoute('/set-cookie.html', (req, res) => {
     res.setHeader('Set-Cookie', [
@@ -527,7 +527,7 @@ test(`top level 'Partitioned;' cookie and same origin iframe`, async ({ page, br
   });
 });
 
-test('should be able to send third party cookies via an iframe', async ({ browser, httpsServer, browserName, isMac, isBidi }) => {
+test('CO-059 should be able to send third party cookies via an iframe', async ({ browser, httpsServer, browserName, isMac, isBidi }) => {
   test.fixme(browserName === 'webkit' && isMac);
   test.skip(browserName === 'firefox' && isBidi, 'Firefox\'s Total Cookie Protection blocks this third-party cookie');
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16937' });
@@ -557,12 +557,12 @@ test('should be able to send third party cookies via an iframe', async ({ browse
   }
 });
 
-test('should(not) block third party cookies - persistent context', async ({ httpsServer, launchPersistent, allowsThirdParty, defaultSameSiteCookieValue }) => {
+test('CO-060 should(not) block third party cookies - persistent context', async ({ httpsServer, launchPersistent, allowsThirdParty, defaultSameSiteCookieValue }) => {
   const { page, context } = await launchPersistent();
   await testThirdPartyCookiesAreBlocked(page, context, httpsServer, allowsThirdParty, defaultSameSiteCookieValue);
 });
 
-test('should(not) block third party cookies - ephemeral context', async ({ page, context, httpsServer, allowsThirdParty, defaultSameSiteCookieValue }) => {
+test('CO-061 should(not) block third party cookies - ephemeral context', async ({ page, context, httpsServer, allowsThirdParty, defaultSameSiteCookieValue }) => {
   await testThirdPartyCookiesAreBlocked(page, context, httpsServer, allowsThirdParty, defaultSameSiteCookieValue);
 });
 
@@ -602,7 +602,7 @@ async function testThirdPartyCookiesAreBlocked(page: Page, context: BrowserConte
   }
 }
 
-test('should not block third party SameSite=None cookies', async ({ contextFactory, httpsServer, browserName }) => {
+test('CO-062 should not block third party SameSite=None cookies', async ({ contextFactory, httpsServer, browserName }) => {
   test.skip(browserName === 'webkit', 'No third party cookies in WebKit');
   test.skip(process.env.PW_CLOCK === 'frozen');
   const context = await contextFactory({

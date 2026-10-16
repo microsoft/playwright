@@ -83,7 +83,7 @@ test.slow(true, 'All connect tests are slow');
 for (const kind of ['launchServer', 'run-server'] as const) {
   test.describe(kind, () => {
 
-    test('should connect over wss', async ({ connect, startRemoteServer, httpsServer }) => {
+    test('BT-034 should connect over wss', async ({ connect, startRemoteServer, httpsServer }) => {
       const remoteServer = await startRemoteServer(kind);
 
       const oldValue = process.env['NODE_TLS_REJECT_UNAUTHORIZED'];
@@ -120,13 +120,13 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       }
     });
 
-    test('should print HTTP error', async ({ connect, server }) => {
+    test('BT-035 should print HTTP error', async ({ connect, server }) => {
       const error = await connect(`ws://localhost:${server.PORT}/ws-401`).catch(e => e);
       expect(error.message).toContain('401');
       expect(error.message).toContain('Unauthorized body');
     });
 
-    test('should print ws error', async ({ connect, server }) => {
+    test('BT-036 should print ws error', async ({ connect, server }) => {
       const error = await connect(`ws://does-not-exist.problem-domain:10987?secret=MYSECRET`).catch(e => e);
       expect(error.message).toContain('<ws connecting> ws://does-not-exist.problem-domain:10987/');
       expect(error.message).toContain('<ws error>');
@@ -134,7 +134,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(error.message).not.toContain('secret=MYSECRET');
     });
 
-    test('should print custom ws close error', async ({ connect, server }) => {
+    test('BT-037 should print custom ws close error', async ({ connect, server }) => {
       server.onceWebSocketConnection((ws, request) => {
         ws.on('message', message => {
           ws.close(4123, 'Oh my!');
@@ -144,7 +144,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(error.message).toContain('browserType.connect: Oh my!');
     });
 
-    test('should be able to reconnect to a browser', async ({ connect, startRemoteServer, server }) => {
+    test('BT-038 should be able to reconnect to a browser', async ({ connect, startRemoteServer, server }) => {
       const remoteServer = await startRemoteServer(kind);
       {
         const browser = await connect(remoteServer.wsEndpoint());
@@ -164,7 +164,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       }
     });
 
-    test('should not crash on malformed json frame', async ({ connect, startRemoteServer }) => {
+    test('BT-039 should not crash on malformed json frame', async ({ connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
       const ws = new WebSocket(remoteServer.wsEndpoint());
       await new Promise<void>((resolve, reject) => {
@@ -180,7 +180,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
-    test('should be able to visit ipv6', async ({ connect, startRemoteServer, ipV6ServerPort, channel }) => {
+    test('BT-040 should be able to visit ipv6', async ({ connect, startRemoteServer, ipV6ServerPort, channel }) => {
       test.fail(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
       test.fail(channel === 'webkit-wsl', 'WebKit on WSL does not support IPv6: https://github.com/microsoft/WSL/issues/10803');
       const remoteServer = await startRemoteServer(kind);
@@ -192,7 +192,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
-    test('should ignore page.pause when headed', async ({ connect, startRemoteServer, browserType, channel }) => {
+    test('BT-041 should ignore page.pause when headed', async ({ connect, startRemoteServer, browserType, channel }) => {
       test.skip(channel === 'chromium-headless-shell', 'shell is never headed');
 
       const headless = (browserType as any)._playwright._defaultLaunchOptions.headless;
@@ -207,7 +207,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       (browserType as any)._playwright._defaultLaunchOptions.headless = headless;
     });
 
-    test('should be able to visit ipv6 through localhost', async ({ connect, startRemoteServer, ipV6ServerPort, channel }) => {
+    test('BT-042 should be able to visit ipv6 through localhost', async ({ connect, startRemoteServer, ipV6ServerPort, channel }) => {
       test.fail(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
       test.skip(channel === 'webkit-wsl', 'WebKit on WSL does not support IPv6: https://github.com/microsoft/WSL/issues/10803');
       const remoteServer = await startRemoteServer(kind);
@@ -219,7 +219,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
-    test('should be able to connect two browsers at the same time', async ({ connect, startRemoteServer }) => {
+    test('BT-043 should be able to connect two browsers at the same time', async ({ connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
 
       const browser1 = await connect(remoteServer.wsEndpoint());
@@ -241,21 +241,21 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser2.close();
     });
 
-    test('should timeout in socket while connecting', async ({ connect, server }) => {
+    test('BT-044 should timeout in socket while connecting', async ({ connect, server }) => {
       const e = await connect(`ws://localhost:${server.PORT}/ws-slow`, {
         timeout: 1000,
       }).catch(e => e);
       expect(e.message).toContain('browserType.connect: Timeout 1000ms exceeded');
     });
 
-    test('should timeout in connect while connecting', async ({ connect, server }) => {
+    test('BT-045 should timeout in connect while connecting', async ({ connect, server }) => {
       const e = await connect(`ws://localhost:${server.PORT}/ws`, {
         timeout: 100,
       }).catch(e => e);
       expect(e.message).toContain('browserType.connect: Timeout 100ms exceeded');
     });
 
-    test('should send extra headers with connect request', async ({ connect, server }) => {
+    test('BT-046 should send extra headers with connect request', async ({ connect, server }) => {
       const [request] = await Promise.all([
         server.waitForWebSocketConnectionRequest(),
         connect(`ws://localhost:${server.PORT}/ws`, {
@@ -270,7 +270,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(request.headers['foo']).toBe('bar');
     });
 
-    test('should send extra headers with connect request in object form', async ({ browserType, server }) => {
+    test('BT-047 should send extra headers with connect request in object form', async ({ browserType, server }) => {
       const requestPromise = server.waitForWebSocketConnectionRequest();
       browserType.connect({
         wsEndpoint: `ws://localhost:${server.PORT}/ws`,
@@ -285,7 +285,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(request.headers['foo']).toBe('bar');
     });
 
-    test('should send default User-Agent and X-Playwright-Browser headers with connect request', async ({ connect, browserName, server, isFrozenWebkit }) => {
+    test('BT-048 should send default User-Agent and X-Playwright-Browser headers with connect request', async ({ connect, browserName, server, isFrozenWebkit }) => {
       test.skip(isFrozenWebkit);
 
       const [request] = await Promise.all([
@@ -302,7 +302,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(request.headers['foo']).toBe('bar');
     });
 
-    test('should support slowmo option', async ({ connect, startRemoteServer }) => {
+    test('BT-049 should support slowmo option', async ({ connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
 
       const browser1 = await connect(remoteServer.wsEndpoint(), { slowMo: 200 });
@@ -312,7 +312,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(Date.now() - start).toBeGreaterThan(199);
     });
 
-    test('disconnected event should be emitted when browser is closed or server is closed', async ({ connect, startRemoteServer }) => {
+    test('BT-050 disconnected event should be emitted when browser is closed or server is closed', async ({ connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
 
       const browser1 = await connect(remoteServer.wsEndpoint());
@@ -341,7 +341,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(disconnected2).toBe(1);
     });
 
-    test('disconnected event should have browser as argument', async ({ connect, startRemoteServer }) => {
+    test('BT-051 disconnected event should have browser as argument', async ({ connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const [disconnected] = await Promise.all([
@@ -351,14 +351,14 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(disconnected).toBe(browser);
     });
 
-    test('should handle exceptions during connect', async ({ connect, startRemoteServer }) => {
+    test('BT-052 should handle exceptions during connect', async ({ connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
       const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy'); };
       const error = await connect(remoteServer.wsEndpoint(), { __testHookBeforeCreateBrowser } as any).catch(e => e);
       expect(error.message).toContain('Dummy');
     });
 
-    test('should set the browser connected state', async ({ connect, startRemoteServer }) => {
+    test('BT-053 should set the browser connected state', async ({ connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
       const remote = await connect(remoteServer.wsEndpoint());
       expect(remote.isConnected()).toBe(true);
@@ -366,7 +366,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(remote.isConnected()).toBe(false);
     });
 
-    test('should throw when used after isConnected returns false', async ({ connect, startRemoteServer }) => {
+    test('BT-054 should throw when used after isConnected returns false', async ({ connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const page = await browser.newPage();
@@ -379,7 +379,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(error.message).toContain('closed');
     });
 
-    test('should throw when calling waitForNavigation after disconnect', async ({ connect, startRemoteServer }) => {
+    test('BT-055 should throw when calling waitForNavigation after disconnect', async ({ connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const page = await browser.newPage();
@@ -392,7 +392,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(error.message).toContain(kTargetClosedErrorMessage);
     });
 
-    test('should reject navigation when browser closes', async ({ connect, startRemoteServer, server }) => {
+    test('BT-056 should reject navigation when browser closes', async ({ connect, startRemoteServer, server }) => {
       const remoteServer = await startRemoteServer(kind);
       server.setRoute('/one-style.css', () => {});
       const browser = await connect(remoteServer.wsEndpoint());
@@ -404,7 +404,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(error.message).toContain('has been closed');
     });
 
-    test('should reject waitForSelector when browser closes', async ({ connect, startRemoteServer, server }) => {
+    test('BT-057 should reject waitForSelector when browser closes', async ({ connect, startRemoteServer, server }) => {
       const remoteServer = await startRemoteServer(kind);
       server.setRoute('/empty.html', () => {});
       const browser = await connect(remoteServer.wsEndpoint());
@@ -419,7 +419,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(error.message).toContain('has been closed');
     });
 
-    test('should emit close events on pages and contexts', async ({ connect, startRemoteServer }) => {
+    test('BT-058 should emit close events on pages and contexts', async ({ connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const context = await browser.newContext();
@@ -433,7 +433,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(pageClosed).toBeTruthy();
     });
 
-    test('should terminate network waiters', async ({ connect, startRemoteServer, server }) => {
+    test('BT-059 should terminate network waiters', async ({ connect, startRemoteServer, server }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const newPage = await browser.newPage();
@@ -449,7 +449,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       }
     });
 
-    test('should reject waitForEvent before browser.close finishes', async ({ connect, startRemoteServer, server }) => {
+    test('BT-060 should reject waitForEvent before browser.close finishes', async ({ connect, startRemoteServer, server }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const newPage = await browser.newPage();
@@ -460,7 +460,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await promise;
     });
 
-    test('should reject waitForEvent before browser.onDisconnect fires', async ({ connect, startRemoteServer, server }) => {
+    test('BT-061 should reject waitForEvent before browser.onDisconnect fires', async ({ connect, startRemoteServer, server }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const newPage = await browser.newPage();
@@ -472,7 +472,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await expect.poll(() => log).toEqual(['rejected', 'disconnected']);
     });
 
-    test('should respect selectors', async ({ playwright, connect, startRemoteServer }) => {
+    test('BT-062 should respect selectors', async ({ playwright, connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
 
       const mycss1 = 'mycss1-' + kind;
@@ -517,7 +517,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser1.close();
     });
 
-    test('should not throw on close after disconnect', async ({ connect, startRemoteServer }) => {
+    test('BT-063 should not throw on close after disconnect', async ({ connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       await browser.newPage();
@@ -528,7 +528,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
-    test('should saveAs videos from remote browser', async ({ connect, startRemoteServer }, testInfo) => {
+    test('BT-064 should saveAs videos from remote browser', async ({ connect, startRemoteServer }, testInfo) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const videosPath = testInfo.outputPath();
@@ -548,7 +548,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(fs.existsSync(savedAsPath)).toBeTruthy();
     });
 
-    test('should save videos to artifactsDir', async ({ connect, startRemoteServer }, testInfo) => {
+    test('BT-065 should save videos to artifactsDir', async ({ connect, startRemoteServer }, testInfo) => {
       const artifactsDir = testInfo.outputPath('artifacts');
       const remoteServer = await startRemoteServer(kind, { artifactsDir });
       const browser = await connect(remoteServer.wsEndpoint());
@@ -569,7 +569,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
-    test('should name video file after page guid when connecting to remote browser with artifactsDir', async ({ connect, startRemoteServer }, testInfo) => {
+    test('BT-066 should name video file after page guid when connecting to remote browser with artifactsDir', async ({ connect, startRemoteServer }, testInfo) => {
       const artifactsDir = testInfo.outputPath('artifacts');
       const remoteServer = await startRemoteServer(kind, { artifactsDir });
       const browser = await connect(remoteServer.wsEndpoint());
@@ -586,7 +586,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
-    test('should be able to connect 20 times to a single server without warnings', async ({ connect, startRemoteServer, platform }) => {
+    test('BT-067 should be able to connect 20 times to a single server without warnings', async ({ connect, startRemoteServer, platform }) => {
       test.skip(platform !== 'linux', 'Testing non-platform specific code');
 
       const remoteServer = await startRemoteServer(kind);
@@ -604,7 +604,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(warning).toBe(null);
     });
 
-    test('should save download', async ({ server, connect, startRemoteServer }, testInfo) => {
+    test('BT-068 should save download', async ({ server, connect, startRemoteServer }, testInfo) => {
       server.setRoute('/download', (req, res) => {
         res.setHeader('Content-Type', 'application/octet-stream');
         res.setHeader('Content-Disposition', 'attachment');
@@ -628,7 +628,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
-    test('should error when saving download after deletion', async ({ server, connect, startRemoteServer }, testInfo) => {
+    test('BT-069 should error when saving download after deletion', async ({ server, connect, startRemoteServer }, testInfo) => {
       server.setRoute('/download', (req, res) => {
         res.setHeader('Content-Type', 'application/octet-stream');
         res.setHeader('Content-Disposition', 'attachment');
@@ -650,7 +650,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
-    test('should properly disconnect when connection closes from the client side', async ({ connect, startRemoteServer, server }) => {
+    test('BT-070 should properly disconnect when connection closes from the client side', async ({ connect, startRemoteServer, server }) => {
       server.setRoute('/one-style.css', () => {});
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
@@ -671,7 +671,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect((await page.waitForNavigation().catch(e => e)).message).toContain(kTargetClosedErrorMessage);
     });
 
-    test('should be able to connect when the wsEndpoint is passed as an option', async ({ browserType, startRemoteServer }) => {
+    test('BT-071 should be able to connect when the wsEndpoint is passed as an option', async ({ browserType, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await browserType.connect(remoteServer.wsEndpoint(), {
         headers: {
@@ -683,7 +683,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
-    test('should save har', async ({ connect, startRemoteServer, server }, testInfo) => {
+    test('BT-072 should save har', async ({ connect, startRemoteServer, server }, testInfo) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const harPath = testInfo.outputPath('test.har');
@@ -704,7 +704,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(entry.request.url).toBe(server.EMPTY_PAGE);
     });
 
-    test('should filter launch options', async ({ connect, startRemoteServer, server, browserType }, testInfo) => {
+    test('BT-073 should filter launch options', async ({ connect, startRemoteServer, server, browserType }, testInfo) => {
       const tracesDir = testInfo.outputPath('traces');
       const oldTracesDir = (browserType as any)._playwright._defaultTracesDir;
       (browserType as any)._playwright._defaultTracesDir = tracesDir;
@@ -717,7 +717,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(fs.existsSync(tracesDir)).toBe(false);
     });
 
-    test('should record trace with sources', async ({ connect, startRemoteServer, server, trace }, testInfo) => {
+    test('BT-074 should record trace with sources', async ({ connect, startRemoteServer, server, trace }, testInfo) => {
       test.skip(trace === 'on');
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
@@ -741,7 +741,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(sourceFile).toEqual(thisFile);
     });
 
-    test('should fulfill with global fetch result', async ({ connect, startRemoteServer, playwright, server }) => {
+    test('BT-075 should fulfill with global fetch result', async ({ connect, startRemoteServer, playwright, server }) => {
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const context = await browser.newContext();
@@ -757,7 +757,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(await response.json()).toEqual({ 'foo': 'bar' });
     });
 
-    test('should upload large file', async ({ connect, startRemoteServer, server, isMac }, testInfo) => {
+    test('BT-076 should upload large file', async ({ connect, startRemoteServer, server, isMac }, testInfo) => {
       if (isMac)
         test.setTimeout(test.info().timeout * 3);  // Extra slow!
 
@@ -810,7 +810,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
     });
 
-    test('should upload a folder', async ({ connect, startRemoteServer, server }, testInfo) => {
+    test('BT-077 should upload a folder', async ({ connect, startRemoteServer, server }, testInfo) => {
       test.slow();
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
@@ -848,7 +848,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       }
     });
 
-    test('setInputFiles should preserve lastModified timestamp', async ({ connect, startRemoteServer, asset }) => {
+    test('BT-078 setInputFiles should preserve lastModified timestamp', async ({ connect, startRemoteServer, asset }) => {
       test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27452' });
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
@@ -868,7 +868,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}`).toBeLessThanOrEqual(1000);
     });
 
-    test('should connect over http', async ({ connect, startRemoteServer }) => {
+    test('BT-079 should connect over http', async ({ connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
 
       const url = new URL(remoteServer.wsEndpoint());
@@ -880,7 +880,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
     test.describe('socks proxy', () => {
       test.skip(kind === 'launchServer', 'not supported yet');
 
-      test('should forward non-forwarded requests', async ({ server, startRemoteServer, connect }) => {
+      test('BT-080 should forward non-forwarded requests', async ({ server, startRemoteServer, connect }) => {
         let reachedOriginalTarget = false;
         server.setRoute('/foo.html', async (req, res) => {
           reachedOriginalTarget = true;
@@ -894,7 +894,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         expect(reachedOriginalTarget).toBe(true);
       });
 
-      test('should proxy localhost requests @smoke', async ({ startRemoteServer, server, browserName, connect, platform, dummyServerPort }, testInfo) => {
+      test('BT-081 should proxy localhost requests @smoke', async ({ startRemoteServer, server, browserName, connect, platform, dummyServerPort }, testInfo) => {
         test.skip(browserName === 'webkit' && platform === 'darwin', 'no localhost proxying');
 
         let reachedOriginalTarget = false;
@@ -925,7 +925,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         }
       });
 
-      test('should proxy ipv6 localhost requests @smoke', async ({ startRemoteServer, server, browserName, connect, platform, ipV6ServerPort }, testInfo) => {
+      test('BT-082 should proxy ipv6 localhost requests @smoke', async ({ startRemoteServer, server, browserName, connect, platform, ipV6ServerPort }, testInfo) => {
         test.skip(browserName === 'webkit' && platform === 'darwin', 'no localhost proxying');
 
         let reachedOriginalTarget = false;
@@ -956,7 +956,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         }
       });
 
-      test('should proxy requests from fetch api', async ({ startRemoteServer, server, browserName, connect, channel, platform, dummyServerPort }, workerInfo) => {
+      test('BT-083 should proxy requests from fetch api', async ({ startRemoteServer, server, browserName, connect, channel, platform, dummyServerPort }, workerInfo) => {
         test.skip(browserName === 'webkit' && platform === 'darwin', 'no localhost proxying');
 
         let reachedOriginalTarget = false;
@@ -987,7 +987,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         }
       });
 
-      test('should proxy requests from fetch api over ipv6', async ({ startRemoteServer, server, browserName, connect, channel, platform, ipV6ServerPort }, workerInfo) => {
+      test('BT-084 should proxy requests from fetch api over ipv6', async ({ startRemoteServer, server, browserName, connect, channel, platform, ipV6ServerPort }, workerInfo) => {
         test.skip(browserName === 'webkit' && platform === 'darwin', 'no localhost proxying');
 
         let reachedOriginalTarget = false;
@@ -1018,7 +1018,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         }
       });
 
-      test('should proxy local.playwright requests', async ({ connect, server, dummyServerPort, startRemoteServer }, workerInfo) => {
+      test('BT-085 should proxy local.playwright requests', async ({ connect, server, dummyServerPort, startRemoteServer }, workerInfo) => {
         let reachedOriginalTarget = false;
         server.setRoute('/foo.html', async (req, res) => {
           reachedOriginalTarget = true;
@@ -1033,7 +1033,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         expect(reachedOriginalTarget).toBe(false);
       });
 
-      test('should lead to the error page for forwarded requests when the connection is refused', async ({ connect, startRemoteServer, browserName }, workerInfo) => {
+      test('BT-086 should lead to the error page for forwarded requests when the connection is refused', async ({ connect, startRemoteServer, browserName }, workerInfo) => {
         const examplePort = 20_000 + workerInfo.workerIndex * 3;
         const remoteServer = await startRemoteServer(kind);
         const browser = await connect(remoteServer.wsEndpoint(), { exposeNetwork: '*' });
@@ -1047,7 +1047,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
           expect(error.message.includes('NS_ERROR_NET_RESET') || error.message.includes('NS_ERROR_CONNECTION_REFUSED')).toBe(true);
       });
 
-      test('should proxy based on the pattern', async ({ connect, startRemoteServer, server, browserName, platform, dummyServerPort }, workerInfo) => {
+      test('BT-087 should proxy based on the pattern', async ({ connect, startRemoteServer, server, browserName, platform, dummyServerPort }, workerInfo) => {
         test.skip(browserName === 'webkit' && platform === 'darwin', 'no localhost proxying');
 
         let reachedOriginalTarget = false;
@@ -1078,7 +1078,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         expect(failed).toBe(true);
       });
 
-      test('should check proxy pattern on the client', async ({ connect, startRemoteServer, server, dummyServerPort }) => {
+      test('BT-088 should check proxy pattern on the client', async ({ connect, startRemoteServer, server, dummyServerPort }) => {
         let reachedOriginalTarget = false;
         server.setRoute('/foo.html', async (req, res) => {
           reachedOriginalTarget = true;
@@ -1106,14 +1106,14 @@ for (const kind of ['launchServer', 'run-server'] as const) {
 }
 
 test.describe('launchServer only', () => {
-  test('should work with cluster', async ({ connect, startRemoteServer }) => {
+  test('BT-089 should work with cluster', async ({ connect, startRemoteServer }) => {
     const remoteServer = await startRemoteServer('launchServer', { inCluster: true });
     const browser = await connect(remoteServer.wsEndpoint());
     const page = await browser.newPage();
     expect(await page.evaluate('1 + 2')).toBe(3);
   });
 
-  test('should properly disconnect when connection closes from the server side', async ({ connect, startRemoteServer, server, platform }) => {
+  test('BT-090 should properly disconnect when connection closes from the server side', async ({ connect, startRemoteServer, server, platform }) => {
     test.skip(platform === 'win32', 'Cannot send signals');
 
     server.setRoute('/one-style.css', () => {});
@@ -1135,7 +1135,7 @@ test.describe('launchServer only', () => {
     expect((await page.waitForNavigation().catch(e => e)).message).toContain(kTargetClosedErrorMessage);
   });
 
-  test('should be able to reconnect to a browser 12 times without warnings', async ({ connect, startRemoteServer, server }) => {
+  test('BT-091 should be able to reconnect to a browser 12 times without warnings', async ({ connect, startRemoteServer, server }) => {
     test.slow();
     const remoteServer = await startRemoteServer('launchServer', { exitOnWarning: true });
     for (let i = 0; i < 12; i++) {
@@ -1151,14 +1151,14 @@ test.describe('launchServer only', () => {
     }
   });
 
-  test('cannot launch another browser', async ({ connect, startRemoteServer }) => {
+  test('BT-092 cannot launch another browser', async ({ connect, startRemoteServer }) => {
     const remoteServer = await startRemoteServer('launchServer');
     const browser = await connect(remoteServer.wsEndpoint()) as any;
     await expect(browser._parent.launch({ timeout: 0 })).rejects.toThrowError('Launching more browsers is not allowed.');
   });
 });
 
-test('should refuse connecting when versions do not match', async ({ connect, childProcess }) => {
+test('BT-093 should refuse connecting when versions do not match', async ({ connect, childProcess }) => {
   const server = new RunServer();
   await server.start(childProcess, { mode: 'default', env: { PW_VERSION_OVERRIDE: '1.2.3' } });
   const error = await connect(server.wsEndpoint()).catch(e => e);
@@ -1168,7 +1168,7 @@ test('should refuse connecting when versions do not match', async ({ connect, ch
   expect(error.message).toContain('client version: v' + getPlaywrightVersion(true));
 });
 
-test('should filter local paths from unsafe launch options', async ({ connect, startRemoteServer, server, trace }, testInfo) => {
+test('BT-094 should filter local paths from unsafe launch options', async ({ connect, startRemoteServer, server, trace }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42394' });
   test.skip(trace === 'on', 'the test starts its own tracing');
 
@@ -1201,7 +1201,7 @@ test('should filter local paths from unsafe launch options', async ({ connect, s
   expect(actions).toContain('Set content');
 });
 
-test('should timeout after redirect when connecting over http', async ({ connect, server }) => {
+test('BT-095 should timeout after redirect when connecting over http', async ({ connect, server }) => {
   server.setRedirect('/connect/json', '/connect/slow');
   let aborted = false;
   server.setRoute('/connect/slow', (req, res) => {
@@ -1212,7 +1212,7 @@ test('should timeout after redirect when connecting over http', async ({ connect
   await expect.poll(() => aborted).toBe(true);
 });
 
-test('should not retain closed browsers in launch mode', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43421' } }, async ({ connect }) => {
+test('BT-096 should not retain closed browsers in launch mode', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43421' } }, async ({ connect }) => {
   const server = new remote.PlaywrightServer({ mode: 'default', path: '/' + utils.createGuid(), maxConnections: Number.MAX_VALUE });
   const wsEndpoint = await server.listen();
   try {

@@ -73,7 +73,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       }
     });
 
-    test('should work with text message', async ({ page, server }) => {
+    test('WS-015 should work with text message', async ({ page, server }) => {
       const wsPromise = server.waitForWebSocket();
       const upgradePromise = server.waitForUpgrade();
       await setupWS(page, server, 'blob');
@@ -103,7 +103,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       ]);
     });
 
-    test('should work with binaryType=blob', async ({ page, server }) => {
+    test('WS-016 should work with binaryType=blob', async ({ page, server }) => {
       const wsPromise = server.waitForWebSocket();
       await setupWS(page, server, 'blob');
       const ws = await wsPromise;
@@ -117,7 +117,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       expect(await messagePromise).toBe('hi');
     });
 
-    test('should work with binaryType=arraybuffer', async ({ page, server }) => {
+    test('WS-017 should work with binaryType=arraybuffer', async ({ page, server }) => {
       const wsPromise = server.waitForWebSocket();
       await setupWS(page, server, 'arraybuffer');
       const ws = await wsPromise;
@@ -131,7 +131,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       expect(await messagePromise).toBe('hi');
     });
 
-    test('should work when connection errors out', async ({ page, server, browserName }) => {
+    test('WS-018 should work when connection errors out', async ({ page, server, browserName }) => {
       test.skip(browserName === 'webkit', 'WebKit ignores the connection error and fires no events!');
 
       const upgradePromise = server.waitForUpgrade();
@@ -147,7 +147,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       ]);
     });
 
-    test('should work with error after successful open', async ({ page, server, browserName, isLinux, isWindows }) => {
+    test('WS-019 should work with error after successful open', async ({ page, server, browserName, isLinux, isWindows }) => {
       test.skip(browserName === 'firefox', 'Firefox does not close the websocket upon a bad frame');
       test.skip(browserName === 'webkit' && isLinux, 'WebKit linux does not close the websocket upon a bad frame');
       test.skip(browserName === 'webkit' && isWindows, 'WebKit Windows does not close the websocket upon a bad frame');
@@ -167,7 +167,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       ]);
     });
 
-    test('should work with client-side close', async ({ page, server }) => {
+    test('WS-020 should work with client-side close', async ({ page, server }) => {
       const wsPromise = server.waitForWebSocket();
       const upgradePromise = server.waitForUpgrade();
       await setupWS(page, server, 'blob');
@@ -195,14 +195,14 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       expect(closed.reason.toString()).toBe('oops');
     });
 
-    test('should pass through the required protocol', async ({ page, server }) => {
+    test('WS-021 should pass through the required protocol', async ({ page, server }) => {
       await setupWS(page, server, 'blob', 'my-custom-protocol');
       await page.evaluate(() => window.wsOpened);
       const protocol = await page.evaluate(() => window.ws.protocol);
       expect(protocol).toBe('my-custom-protocol');
     });
 
-    test('should work with relative WebSocket URL', async ({ page, server }) => {
+    test('WS-022 should work with relative WebSocket URL', async ({ page, server }) => {
       const wsPromise = server.waitForWebSocket();
       await setupWS(page, server, 'blob', undefined, true);
       const ws = await wsPromise;
@@ -218,7 +218,7 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
   });
 }
 
-test('should work with ws.close', async ({ page, server }) => {
+test('WS-023 should work with ws.close', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<WebSocketRoute>();
   await page.routeWebSocket(/.*/, async ws => {
     ws.connectToServer();
@@ -246,7 +246,7 @@ test('should work with ws.close', async ({ page, server }) => {
   expect(await closedPromise).toEqual({ code: 3009, reason: 'oops' });
 });
 
-test('should observe upstream handshake failure when connectToServer is used', async ({ page, server }) => {
+test('WS-024 should observe upstream handshake failure when connectToServer is used', async ({ page, server }) => {
   // Exercises the WebSocket-as-network-request path used by Firefox after the
   // har-WebSocket plumbing change, where a 4xx handshake response is synthesized
   // into a full lifecycle in FFPage._onWebSocketRequestFinished.
@@ -276,7 +276,7 @@ test('should observe upstream handshake failure when connectToServer is used', a
   expect(routeHandlerInvoked).toBe(1);
 });
 
-test('should observe multiple concurrent routed WebSockets with connectToServer', async ({ page, server }) => {
+test('WS-025 should observe multiple concurrent routed WebSockets with connectToServer', async ({ page, server }) => {
   // Exercises FFNetworkManager._webSocketRequestIds tracking by routing two
   // simultaneous WebSocket connections through `connectToServer()`. Each request
   // gets a distinct id in the new Firefox WebSocket-as-network-request flow.
@@ -312,7 +312,7 @@ test('should observe multiple concurrent routed WebSockets with connectToServer'
   expect(routedConnections).toBe(2);
 });
 
-test('should pattern match', async ({ page, server }) => {
+test('WS-026 should pattern match', async ({ page, server }) => {
   await page.routeWebSocket(/.*\/ws$/, async ws => {
     ws.connectToServer();
   });
@@ -348,7 +348,7 @@ test('should pattern match', async ({ page, server }) => {
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([`ws1:response`, `ws2:mock-response`]);
 });
 
-test('should work with server', async ({ page, server }) => {
+test('WS-027 should work with server', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<WebSocketRoute>();
   await page.routeWebSocket(/.*/, async ws => {
     const server = ws.connectToServer();
@@ -434,7 +434,7 @@ test('should work with server', async ({ page, server }) => {
   await expect.poll(() => log).toEqual(['message: fake', 'message: modified', 'message: pass-client', 'message: pass-client-2', 'close: code=3009 reason=problem']);
 });
 
-test('should work without server', async ({ page, server }) => {
+test('WS-028 should work without server', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<WebSocketRoute>();
   await page.routeWebSocket(/.*/, ws => {
     ws.onMessage(message => {
@@ -475,7 +475,7 @@ test('should work without server', async ({ page, server }) => {
   ]);
 });
 
-test('should route WebSockets in already loaded documents', {
+test('WS-029 should route WebSockets in already loaded documents', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43105' },
 }, async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
@@ -496,7 +496,7 @@ test('should route WebSockets in already loaded documents', {
   }
 });
 
-test('should emit close upon frame navigation', async ({ page, server }) => {
+test('WS-030 should emit close upon frame navigation', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<WebSocketRoute>();
   await page.routeWebSocket(/.*/, async ws => {
     ws.connectToServer();
@@ -518,7 +518,7 @@ test('should emit close upon frame navigation', async ({ page, server }) => {
   await closedPromise;
 });
 
-test('should emit close upon frame detach', async ({ page, server }) => {
+test('WS-031 should emit close upon frame detach', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<WebSocketRoute>();
   await page.routeWebSocket(/.*/, async ws => {
     ws.connectToServer();
@@ -541,7 +541,7 @@ test('should emit close upon frame detach', async ({ page, server }) => {
   await closedPromise;
 });
 
-test('should route on context', async ({ page, server }) => {
+test('WS-032 should route on context', async ({ page, server }) => {
   await page.routeWebSocket(/ws1/, ws => {
     ws.onMessage(message => {
       ws.send('page-mock-1');
@@ -579,7 +579,7 @@ test('should route on context', async ({ page, server }) => {
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([`ws1:page-mock-2`, `ws2:context-mock-2`]);
 });
 
-test('should not throw after page closure', async ({ page, server }) => {
+test('WS-033 should not throw after page closure', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<WebSocketRoute>();
   await page.routeWebSocket(/.*/, async ws => {
     ws.connectToServer();
@@ -595,7 +595,7 @@ test('should not throw after page closure', async ({ page, server }) => {
   ]);
 });
 
-test('should not throw with empty handler', async ({ page, server }) => {
+test('WS-034 should not throw with empty handler', async ({ page, server }) => {
   await page.routeWebSocket(/.*/, () => {});
   await setupWS(page, server, 'blob');
   await expect.poll(() => page.evaluate(() => window.log)).toEqual(['open']);
@@ -604,7 +604,7 @@ test('should not throw with empty handler', async ({ page, server }) => {
   await expect.poll(() => page.evaluate(() => window.log)).toEqual(['open']);
 });
 
-test('should throw when connecting twice', async ({ page, server }) => {
+test('WS-035 should throw when connecting twice', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<Error>();
 
   await page.routeWebSocket(/.*/, ws => {
@@ -620,7 +620,7 @@ test('should throw when connecting twice', async ({ page, server }) => {
   expect(error.message).toContain('Already connected to the server');
 });
 
-test('should work with no trailing slash', async ({ page, server }) => {
+test('WS-036 should work with no trailing slash', async ({ page, server }) => {
   const log: string[] = [];
   // No trailing slash!
   await page.routeWebSocket('ws://' + server.HOST, ws => {
@@ -644,7 +644,7 @@ test('should work with no trailing slash', async ({ page, server }) => {
   expect(await page.evaluate(() => window.log)).toEqual(['response']);
 });
 
-test('should work with baseURL', async ({ contextFactory, server }) => {
+test('WS-037 should work with baseURL', async ({ contextFactory, server }) => {
   const context = await contextFactory({ baseURL: 'http://' + server.HOST });
   const page = await context.newPage();
 
@@ -667,7 +667,7 @@ test('should work with baseURL', async ({ contextFactory, server }) => {
   ]);
 });
 
-test('should work with baseURL regardless of scheme casing', async ({ contextFactory, server }) => {
+test('WS-038 should work with baseURL regardless of scheme casing', async ({ contextFactory, server }) => {
   // baseURL schemes are case-insensitive, same as everywhere else in URL matching.
   const context = await contextFactory({ baseURL: 'HTTP://' + server.HOST });
   const page = await context.newPage();
@@ -691,7 +691,7 @@ test('should work with baseURL regardless of scheme casing', async ({ contextFac
   ]);
 });
 
-test('should expose protocols to the route handler', async ({ page, server }) => {
+test('WS-039 should expose protocols to the route handler', async ({ page, server }) => {
   const routes: WebSocketRoute[] = [];
   await page.routeWebSocket(/.*/, ws => {
     routes.push(ws);
@@ -712,7 +712,7 @@ test('should expose protocols to the route handler', async ({ page, server }) =>
   expect(byUrl.get('/ws-array')!.protocols()).toEqual(['chat.v2', 'chat.v1']);
 });
 
-test('should expose protocols on server-side route', async ({ page, server }) => {
+test('WS-040 should expose protocols on server-side route', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<{ page: WebSocketRoute, server: WebSocketRoute }>();
   await page.routeWebSocket(/.*/, ws => {
     const serverRoute = ws.connectToServer();

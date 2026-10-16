@@ -16,13 +16,13 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should dispatch click event @smoke', async ({ page, server }) => {
+it('DE-001 should dispatch click event @smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.dispatchEvent('button', 'click');
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should dispatch click event properties', async ({ page, server }) => {
+it('DE-002 should dispatch click event properties', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.dispatchEvent('button', 'click');
   expect(await page.evaluate('bubbles')).toBeTruthy();
@@ -30,7 +30,7 @@ it('should dispatch click event properties', async ({ page, server }) => {
   expect(await page.evaluate('composed')).toBeTruthy();
 });
 
-it('should dispatch click svg', async ({ page }) => {
+it('DE-003 should dispatch click svg', async ({ page }) => {
   await page.setContent(`
     <svg height="100" width="100">
       <circle onclick="javascript:window.__CLICKED=42" cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
@@ -40,7 +40,7 @@ it('should dispatch click svg', async ({ page }) => {
   expect(await page.evaluate(() => window['__CLICKED'])).toBe(42);
 });
 
-it('should dispatch click on a span with an inline element inside', async ({ page }) => {
+it('DE-004 should dispatch click on a span with an inline element inside', async ({ page }) => {
   await page.setContent(`
     <style>
     span::before {
@@ -53,7 +53,7 @@ it('should dispatch click on a span with an inline element inside', async ({ pag
   expect(await page.evaluate(() => window['CLICKED'])).toBe(42);
 });
 
-it('should dispatch click after navigation ', async ({ page, server }) => {
+it('DE-005 should dispatch click after navigation ', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.dispatchEvent('button', 'click');
   await page.goto(server.PREFIX + '/input/button.html');
@@ -61,7 +61,7 @@ it('should dispatch click after navigation ', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should dispatch click after a cross origin navigation ', async ({ page, server }) => {
+it('DE-006 should dispatch click after a cross origin navigation ', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.dispatchEvent('button', 'click');
   await page.goto(server.CROSS_PROCESS_PREFIX + '/input/button.html');
@@ -69,7 +69,7 @@ it('should dispatch click after a cross origin navigation ', async ({ page, serv
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should not fail when element is blocked on hover', async ({ page }) => {
+it('DE-007 should not fail when element is blocked on hover', async ({ page }) => {
   await page.setContent(`<style>
     container { display: block; position: relative; width: 200px; height: 50px; }
     div, button { position: absolute; left: 0; top: 0; bottom: 0; right: 0; }
@@ -84,7 +84,7 @@ it('should not fail when element is blocked on hover', async ({ page }) => {
   expect(await page.evaluate(() => window['clicked'])).toBeTruthy();
 });
 
-it('should dispatch click when node is added in shadow dom', async ({ page, server }) => {
+it('DE-008 should dispatch click when node is added in shadow dom', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const watchdog = page.dispatchEvent('span', 'click');
   await page.evaluate(() => {
@@ -103,7 +103,7 @@ it('should dispatch click when node is added in shadow dom', async ({ page, serv
   expect(await page.evaluate(() => window['clicked'])).toBe(true);
 });
 
-it('should be atomic', async ({ playwright, page }) => {
+it('DE-009 should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     query(root, selector) {
       const result = root.querySelector(selector);
@@ -124,7 +124,7 @@ it('should be atomic', async ({ playwright, page }) => {
   expect(await page.evaluate(() => window['_clicked'])).toBe(true);
 });
 
-it('should dispatch drag drop events', async ({ page, server }) => {
+it('DE-010 should dispatch drag drop events', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/drag-n-drop.html');
   const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
   await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
@@ -136,7 +136,7 @@ it('should dispatch drag drop events', async ({ page, server }) => {
   }, { source, target })).toBeTruthy();
 });
 
-it('should dispatch drag drop events via ElementHandles', async ({ page, server }) => {
+it('DE-011 should dispatch drag drop events via ElementHandles', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/drag-n-drop.html');
   const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
   const source = await page.$('#source');
@@ -148,14 +148,14 @@ it('should dispatch drag drop events via ElementHandles', async ({ page, server 
   }, { source, target })).toBeTruthy();
 });
 
-it('should dispatch click event via ElementHandles', async ({ page, server }) => {
+it('DE-012 should dispatch click event via ElementHandles', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');
   await button.dispatchEvent('click');
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should dispatch wheel event', async ({ page, server }) => {
+it('DE-013 should dispatch wheel event', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15562' });
   await page.goto(server.PREFIX + '/input/scrollable.html');
   const eventsHandle = await page.locator('body').evaluateHandle(e => {
@@ -172,7 +172,7 @@ it('should dispatch wheel event', async ({ page, server }) => {
   expect(await eventsHandle.evaluate(e => ({ deltaX: e[0].deltaX, deltaY: e[0].deltaY }))).toEqual({ deltaX: 100, deltaY: 200 });
 });
 
-it('should dispatch device orientation event', async ({ page, server, isAndroid }) => {
+it('DE-014 should dispatch device orientation event', async ({ page, server, isAndroid }) => {
   it.skip(isAndroid, 'DeviceOrientationEvent is only available in a secure context. While Androids loopback is not treated as secure.');
   await page.goto(server.PREFIX + '/device-orientation.html');
   await page.locator('html').dispatchEvent('deviceorientation', { alpha: 10, beta: 20, gamma: 30 });
@@ -183,7 +183,7 @@ it('should dispatch device orientation event', async ({ page, server, isAndroid 
   expect(await page.evaluate('absolute')).toBeFalsy();
 });
 
-it('should dispatch absolute device orientation event', async ({ page, server, isAndroid }) => {
+it('DE-015 should dispatch absolute device orientation event', async ({ page, server, isAndroid }) => {
   it.skip(isAndroid, 'DeviceOrientationEvent is only available in a secure context. While Androids loopback is not treated as secure.');
   await page.goto(server.PREFIX + '/device-orientation.html');
   await page.locator('html').dispatchEvent('deviceorientationabsolute', { alpha: 10, beta: 20, gamma: 30, absolute: true });
@@ -194,7 +194,7 @@ it('should dispatch absolute device orientation event', async ({ page, server, i
   expect(await page.evaluate('absolute')).toBeTruthy();
 });
 
-it('should dispatch device motion event', async ({ page, server, isAndroid }) => {
+it('DE-016 should dispatch device motion event', async ({ page, server, isAndroid }) => {
   it.skip(isAndroid, 'DeviceOrientationEvent is only available in a secure context. While Androids loopback is not treated as secure.');
   await page.goto(server.PREFIX + '/device-motion.html');
   await page.locator('html').dispatchEvent('devicemotion', {
@@ -216,7 +216,7 @@ it('should dispatch device motion event', async ({ page, server, isAndroid }) =>
   expect(await page.evaluate('interval')).toBe(16);
 });
 
-it('should throw if argument is from different frame', async ({ page, server }) => {
+it('DE-017 should throw if argument is from different frame', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28690' });
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   {

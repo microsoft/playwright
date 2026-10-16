@@ -18,17 +18,17 @@ import { test as it, expect } from './pageTest';
 
 it.skip(({ isElectron }) => !!isElectron, 'Electron shares a single context between tests');
 
-it('localStorage.items returns empty array on fresh origin', async ({ page, server }) => {
+it('ST-023 localStorage.items returns empty array on fresh origin', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   expect(await page.localStorage.items()).toEqual([]);
 });
 
-it('localStorage.getItem returns null for missing key', async ({ page, server }) => {
+it('ST-024 localStorage.getItem returns null for missing key', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   expect(await page.localStorage.getItem('absent')).toBeNull();
 });
 
-it('localStorage.setItem persists and surfaces in items()/getItem()', async ({ page, server }) => {
+it('ST-025 localStorage.setItem persists and surfaces in items()/getItem()', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.localStorage.setItem('alpha', '1');
   await page.localStorage.setItem('beta', '2');
@@ -41,14 +41,14 @@ it('localStorage.setItem persists and surfaces in items()/getItem()', async ({ p
   expect(await page.evaluate(() => localStorage.getItem('alpha'))).toBe('1');
 });
 
-it('localStorage.setItem overwrites existing value', async ({ page, server }) => {
+it('ST-026 localStorage.setItem overwrites existing value', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.localStorage.setItem('k', 'first');
   await page.localStorage.setItem('k', 'second');
   expect(await page.localStorage.getItem('k')).toBe('second');
 });
 
-it('localStorage.removeItem removes a single item', async ({ page, server }) => {
+it('ST-027 localStorage.removeItem removes a single item', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.localStorage.setItem('a', '1');
   await page.localStorage.setItem('b', '2');
@@ -57,7 +57,7 @@ it('localStorage.removeItem removes a single item', async ({ page, server }) => 
   expect(await page.localStorage.items()).toEqual([{ name: 'b', value: '2' }]);
 });
 
-it('localStorage.clear empties storage', async ({ page, server }) => {
+it('ST-028 localStorage.clear empties storage', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.localStorage.setItem('a', '1');
   await page.localStorage.setItem('b', '2');
@@ -66,7 +66,7 @@ it('localStorage.clear empties storage', async ({ page, server }) => {
   expect(await page.localStorage.items()).toEqual([]);
 });
 
-it('sessionStorage round-trip', async ({ page, server }) => {
+it('ST-029 sessionStorage round-trip', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   expect(await page.sessionStorage.items()).toEqual([]);
 
@@ -85,7 +85,7 @@ it('sessionStorage round-trip', async ({ page, server }) => {
   expect(await page.sessionStorage.items()).toEqual([]);
 });
 
-it('localStorage and sessionStorage are independent', async ({ page, server }) => {
+it('ST-030 localStorage and sessionStorage are independent', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.localStorage.setItem('shared', 'local');
   await page.sessionStorage.setItem('shared', 'session');
@@ -98,7 +98,7 @@ it('localStorage and sessionStorage are independent', async ({ page, server }) =
   expect(await page.sessionStorage.getItem('shared')).toBe('session');
 });
 
-it('storage methods are scoped to the current origin', async ({ page, server, isAndroid }) => {
+it('ST-031 storage methods are scoped to the current origin', async ({ page, server, isAndroid }) => {
   it.skip(isAndroid, 'these are same origins on Android due to our test server limitation');
 
   await page.goto(server.PREFIX + '/empty.html');

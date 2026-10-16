@@ -18,7 +18,7 @@
 import fs from 'fs';
 import { playwrightTest as test, expect } from '../config/browserTest';
 
-test('browserType.executablePath should work', async ({ browserType, channel, mode }) => {
+test('BT-001 browserType.executablePath should work', async ({ browserType, channel, mode }) => {
   test.skip(!!channel, 'We skip browser download when testing a channel');
   test.skip(!!(browserType as any)._playwright._defaultLaunchOptions.executablePath, 'Skip with custom executable path');
 
@@ -26,11 +26,11 @@ test('browserType.executablePath should work', async ({ browserType, channel, mo
   expect(fs.existsSync(executablePath)).toBe(true);
 });
 
-test('browserType.name should work', async ({ browserType, browserName }) => {
+test('BT-002 browserType.name should work', async ({ browserType, browserName }) => {
   expect(browserType.name()).toBe(browserName);
 });
 
-test('should throw when trying to connect with not-chromium', async ({ browserType, browserName }) => {
+test('BT-003 should throw when trying to connect with not-chromium', async ({ browserType, browserName }) => {
   test.skip(browserName === 'chromium' || browserName === 'webkit');
 
   const error = await browserType.connectOverCDP({ endpointURL: 'ws://foo' }).catch(e => e);

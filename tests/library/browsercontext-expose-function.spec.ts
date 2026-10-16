@@ -17,7 +17,7 @@
 
 import { contextTest as it, expect } from '../config/browserTest';
 
-it('expose binding should work', async ({ context }) => {
+it('EF-022 expose binding should work', async ({ context }) => {
   let bindingSource: any;
   await context.exposeBinding('add', (source, a, b) => {
     bindingSource = source;
@@ -31,7 +31,7 @@ it('expose binding should work', async ({ context }) => {
   expect(result).toEqual(11);
 });
 
-it('should work', async ({ context, server }) => {
+it('EF-023 should work', async ({ context, server }) => {
   await context.exposeFunction('add', (a: number, b: number) => a + b);
   const page = await context.newPage();
   await page.exposeFunction('mul', (a: number, b: number) => a * b);
@@ -44,7 +44,7 @@ it('should work', async ({ context, server }) => {
   expect(result).toEqual({ mul: 36, add: 13, sub: 5, addHandle: 11 });
 });
 
-it('should dispose', async ({ context, server }) => {
+it('EF-024 should dispose', async ({ context, server }) => {
   const binding = await context.exposeFunction('compute', function(a, b) {
     return a * b;
   });
@@ -61,7 +61,7 @@ it('should dispose', async ({ context, server }) => {
   expect(e.message).toContain('is not a function');
 });
 
-it('should throw for duplicate registrations', async ({ context, server }) => {
+it('EF-025 should throw for duplicate registrations', async ({ context, server }) => {
   await context.exposeFunction('foo', () => {});
   await context.exposeFunction('bar', () => {});
   let error = await context.exposeFunction('foo', () => {}).catch(e => e);
@@ -74,7 +74,7 @@ it('should throw for duplicate registrations', async ({ context, server }) => {
   expect(error.message).toContain('Function "baz" has been already registered in one of the pages');
 });
 
-it('should be callable from-inside addInitScript', async ({ context, server }) => {
+it('EF-026 should be callable from-inside addInitScript', async ({ context, server }) => {
   let args: string[] = [];
   await context.exposeFunction('woof', function(arg: string) {
     args.push(arg);
@@ -89,7 +89,7 @@ it('should be callable from-inside addInitScript', async ({ context, server }) =
   await expect.poll(() => args).toEqual(['context', 'page']);
 });
 
-it('should work with CSP', async ({ page, context, server }) => {
+it('EF-027 should work with CSP', async ({ page, context, server }) => {
   server.setCSP('/empty.html', 'default-src "self"');
   await page.goto(server.EMPTY_PAGE);
   let called = false;
@@ -98,7 +98,7 @@ it('should work with CSP', async ({ page, context, server }) => {
   expect(called).toBe(true);
 });
 
-it('should call binding from pagehide handler when navigating away', {
+it('EF-028 should call binding from pagehide handler when navigating away', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43064' },
 }, async ({ context, page, server, browserName }) => {
   it.fixme(browserName === 'chromium', 'Chromium drops CDP events from the old document after the frame host swap');

@@ -17,12 +17,12 @@
 import { attachFrame } from '../config/utils';
 import { test as it, expect } from './pageTest';
 
-it('should throw without the exposeFunctions option', async ({ page }) => {
+it('EV-112 should throw without the exposeFunctions option', async ({ page }) => {
   await expect(page.evaluate(({ cb }) => cb(), { cb: () => {} }))
       .rejects.toThrow(/Attempting to serialize unexpected value at position "cb": \(\) => {}/);
 });
 
-it('should call a function passed as an argument', async ({ page }) => {
+it('EV-113 should call a function passed as an argument', async ({ page }) => {
   const received: number[] = [];
   await page.evaluate(async ({ cb }) => {
     await cb(1);
@@ -31,7 +31,7 @@ it('should call a function passed as an argument', async ({ page }) => {
   expect(received).toEqual([1, 2]);
 });
 
-it('should accept a function as the whole argument', async ({ page }) => {
+it('EV-114 should accept a function as the whole argument', async ({ page }) => {
   const received: string[] = [];
   await page.evaluate(async cb => {
     await cb('a');
@@ -40,7 +40,7 @@ it('should accept a function as the whole argument', async ({ page }) => {
   expect(received).toEqual(['a', 'b']);
 });
 
-it('should pass arguments to the callback', async ({ page }) => {
+it('EV-115 should pass arguments to the callback', async ({ page }) => {
   const args = await new Promise<any[]>(resolve => {
     page.evaluate(({ cb }) => cb(1, 'two', { three: 3 }, [4]), {
       cb: (...a: any[]) => resolve(a),
@@ -49,14 +49,14 @@ it('should pass arguments to the callback', async ({ page }) => {
   expect(args).toEqual([1, 'two', { three: 3 }, [4]]);
 });
 
-it('should return the callback result to the page', async ({ page }) => {
+it('EV-116 should return the callback result to the page', async ({ page }) => {
   const doubled = await page.evaluate(async ({ cb }) => await cb(21), {
     cb: async (n: number) => n * 2,
   }, { exposeFunctions: true });
   expect(doubled).toBe(42);
 });
 
-it('should support handle as a callback result', async ({ page }) => {
+it('EV-117 should support handle as a callback result', async ({ page }) => {
   const result = await page.evaluate(async cb => {
     const value = await cb(42);
     return value + 17;
@@ -64,7 +64,7 @@ it('should support handle as a callback result', async ({ page }) => {
   expect(result).toBe(101);
 });
 
-it('should support nested handles in the callback result', async ({ page }) => {
+it('EV-118 should support nested handles in the callback result', async ({ page }) => {
   const result = await page.evaluate(async cb => {
     const res = await cb(42);
     return res.mul[0] + res.mul[1] + res.add;
@@ -76,14 +76,14 @@ it('should support nested handles in the callback result', async ({ page }) => {
   expect(result).toBe(227);
 });
 
-it('should await an async callback result', async ({ page }) => {
+it('EV-119 should await an async callback result', async ({ page }) => {
   const value = await page.evaluate(async ({ cb }) => await cb(20), {
     cb: async (n: number) => { await new Promise(f => setTimeout(f, 10)); return n + 1; },
   }, { exposeFunctions: true });
   expect(value).toBe(21);
 });
 
-it('should propagate callback errors to the page', async ({ page }) => {
+it('EV-120 should propagate callback errors to the page', async ({ page }) => {
   const message = await page.evaluate(async ({ cb }) => {
     try {
       await cb();
@@ -95,7 +95,7 @@ it('should propagate callback errors to the page', async ({ page }) => {
   expect(message).toContain('boom');
 });
 
-it('should work with a fire-and-forget setTimeout callback', async ({ page }) => {
+it('EV-121 should work with a fire-and-forget setTimeout callback', async ({ page }) => {
   const value = await new Promise<number>(resolve => {
     page.evaluate(({ cb }) => { setTimeout(() => cb(5), 0); }, {
       cb: (n: number) => resolve(n),
@@ -104,7 +104,7 @@ it('should work with a fire-and-forget setTimeout callback', async ({ page }) =>
   expect(value).toBe(5);
 });
 
-it('should support multiple callbacks', async ({ page }) => {
+it('EV-122 should support multiple callbacks', async ({ page }) => {
   const result = await page.evaluate(async ({ add, mul }) => {
     return (await add(2, 3)) + (await mul(2, 3));
   }, {
@@ -114,7 +114,7 @@ it('should support multiple callbacks', async ({ page }) => {
   expect(result).toBe(11);
 });
 
-it('should work with evaluateHandle', async ({ page }) => {
+it('EV-123 should work with evaluateHandle', async ({ page }) => {
   const received: number[] = [];
   const handle = await page.evaluateHandle(async ({ cb }) => {
     await cb(7);
@@ -124,7 +124,7 @@ it('should work with evaluateHandle', async ({ page }) => {
   expect(received).toEqual([7]);
 });
 
-it('should work in a child frame', async ({ page, server }) => {
+it('EV-124 should work in a child frame', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const received: number[] = [];
@@ -132,7 +132,7 @@ it('should work in a child frame', async ({ page, server }) => {
   expect(received).toEqual([42]);
 });
 
-it('should route callbacks back to the calling frame', async ({ page, server }) => {
+it('EV-125 should route callbacks back to the calling frame', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const greet = async (where: string) => `hello ${where}`;
@@ -144,21 +144,21 @@ it('should route callbacks back to the calling frame', async ({ page, server }) 
   expect(fromChild).toBe('hello child');
 });
 
-it('should work with jsHandle.evaluate', async ({ page }) => {
+it('EV-126 should work with jsHandle.evaluate', async ({ page }) => {
   const handle = await page.evaluateHandle(() => window);
   const received: number[] = [];
   await handle.evaluate(async (win, { cb }) => { await cb(99); }, { cb: async (n: number) => { received.push(n); } }, { exposeFunctions: true });
   expect(received).toEqual([99]);
 });
 
-it('should work with locator.evaluate', async ({ page }) => {
+it('EV-127 should work with locator.evaluate', async ({ page }) => {
   await page.setContent('<div id=target>hello</div>');
   const received: string[] = [];
   await page.locator('#target').evaluate(async (element, { cb }) => { await cb(element.id); }, { cb: async (s: string) => { received.push(s); } }, { exposeFunctions: true });
   expect(received).toEqual(['target']);
 });
 
-it('should return the callback result with locator.evaluate', async ({ page }) => {
+it('EV-128 should return the callback result with locator.evaluate', async ({ page }) => {
   await page.setContent('<div id=target>7</div>');
   const result = await page.locator('#target').evaluate(async (element, { double }) => {
     return await double(+element.textContent!);
@@ -166,7 +166,7 @@ it('should return the callback result with locator.evaluate', async ({ page }) =
   expect(result).toBe(14);
 });
 
-it('should propagate callback errors with locator.evaluate', async ({ page }) => {
+it('EV-129 should propagate callback errors with locator.evaluate', async ({ page }) => {
   await page.setContent('<div id=target></div>');
   const message = await page.locator('#target').evaluate(async (element, { cb }) => {
     try {
@@ -179,7 +179,7 @@ it('should propagate callback errors with locator.evaluate', async ({ page }) =>
   expect(message).toContain('boom');
 });
 
-it('should work with locator.evaluateHandle', async ({ page }) => {
+it('EV-130 should work with locator.evaluateHandle', async ({ page }) => {
   await page.setContent('<div id=target>hello</div>');
   const received: string[] = [];
   const handle = await page.locator('#target').evaluateHandle(async (element, { cb }) => {
@@ -190,7 +190,7 @@ it('should work with locator.evaluateHandle', async ({ page }) => {
   expect(await handle.evaluate(element => element.id)).toBe('target');
 });
 
-it('should work with locator.evaluate inside an iframe', async ({ page, server }) => {
+it('EV-131 should work with locator.evaluate inside an iframe', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await frame.evaluate(() => { document.body.innerHTML = '<div id=target>in-frame</div>'; });
@@ -201,7 +201,7 @@ it('should work with locator.evaluate inside an iframe', async ({ page, server }
   expect(received).toEqual(['in-frame']);
 });
 
-it('should survive a navigation and keep working', async ({ page, server }) => {
+it('EV-132 should survive a navigation and keep working', async ({ page, server }) => {
   const received: number[] = [];
   await page.evaluate(async ({ cb }) => { await cb(1); }, { cb: async (n: number) => { received.push(n); } }, { exposeFunctions: true });
   await page.goto(server.EMPTY_PAGE);
@@ -209,7 +209,7 @@ it('should survive a navigation and keep working', async ({ page, server }) => {
   expect(received).toEqual([1, 2]);
 });
 
-it('should not register the callback on the global object', async ({ page }) => {
+it('EV-133 should not register the callback on the global object', async ({ page }) => {
   const result = await page.evaluate(async ({ cb }) => {
     await cb();
     return Object.getOwnPropertyNames(globalThis).filter(name => name.startsWith('__pw_fn_'));
@@ -217,7 +217,7 @@ it('should not register the callback on the global object', async ({ page }) => 
   expect(result).toEqual([]);
 });
 
-it('should scope the page-side callback to the execution context', async ({ page, server }) => {
+it('EV-134 should scope the page-side callback to the execution context', async ({ page, server }) => {
   await page.evaluate(({ cb }) => { (window as any).__cb = cb; }, { cb: () => {} }, { exposeFunctions: true });
   expect(await page.evaluate(() => typeof (window as any).__cb)).toBe('function');
   await page.goto(server.EMPTY_PAGE);

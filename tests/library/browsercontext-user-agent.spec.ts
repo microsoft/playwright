@@ -19,7 +19,7 @@ import { browserTest as it, expect } from '../config/browserTest';
 import { attachFrame } from '../config/utils';
 import { chromiumVersionLessThan } from '../config/utils';
 
-it('should work', async ({ browser, server }) => {
+it('UA-001 should work', async ({ browser, server }) => {
   {
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -38,7 +38,7 @@ it('should work', async ({ browser, server }) => {
   }
 });
 
-it('should work for subframes', async ({ browser, server }) => {
+it('UA-002 should work for subframes', async ({ browser, server }) => {
   {
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -57,7 +57,7 @@ it('should work for subframes', async ({ browser, server }) => {
   }
 });
 
-it('should emulate device user-agent', async ({ browser, server, playwright }) => {
+it('UA-003 should emulate device user-agent', async ({ browser, server, playwright }) => {
   {
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -74,7 +74,7 @@ it('should emulate device user-agent', async ({ browser, server, playwright }) =
   }
 });
 
-it('should make a copy of default options', async ({ browser, server }) => {
+it('UA-004 should make a copy of default options', async ({ browser, server }) => {
   const options = { userAgent: 'foobar' };
   const context = await browser.newContext(options);
   options.userAgent = 'wrong';
@@ -87,7 +87,7 @@ it('should make a copy of default options', async ({ browser, server }) => {
   await context.close();
 });
 
-it('custom user agent for download', async ({ server, contextFactory, browserVersion, browserName }) => {
+it('UA-005 custom user agent for download', async ({ server, contextFactory, browserVersion, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22843' });
   it.skip(browserName === 'chromium' && chromiumVersionLessThan(browserVersion, '116.0.0.0'), 'https://chromium-review.googlesource.com/c/chromium/src/+/4554578');
 
@@ -107,7 +107,7 @@ it('custom user agent for download', async ({ server, contextFactory, browserVer
   expect(req.headers['user-agent']).toBe('MyCustomUA');
 });
 
-it('should work for navigator.userAgentData and sec-ch-ua headers', async ({ playwright, browserName, browser, server }) => {
+it('UA-006 should work for navigator.userAgentData and sec-ch-ua headers', async ({ playwright, browserName, browser, server }) => {
   it.skip(browserName !== 'chromium', 'This API is Chromium-only');
 
   {

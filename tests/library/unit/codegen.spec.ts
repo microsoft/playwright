@@ -20,7 +20,7 @@ import { getAPIRequestCodeGen } from '../../../packages/trace-viewer/src/ui/code
 test.describe('javascript', () => {
   const impl = getAPIRequestCodeGen('javascript');
 
-  test('generatePlaywrightRequestCall', () => {
+  test('CG-164 generatePlaywrightRequestCall', () => {
 
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo?bar=baz',
@@ -63,7 +63,7 @@ await page.request.fetch('http://example.com/foo', {
 });`.trim());
   });
 
-  test('generatePlaywrightRequestCall with POST method and no body', () => {
+  test('CG-165 generatePlaywrightRequestCall with POST method and no body', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'POST',
@@ -82,7 +82,7 @@ await page.request.post('http://example.com/foo', {
 });`.trim());
   });
 
-  test('generatePlaywrightRequestCall with PUT method and JSON body', () => {
+  test('CG-166 generatePlaywrightRequestCall with PUT method and JSON body', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'PUT',
@@ -102,7 +102,7 @@ await page.request.put('http://example.com/foo', {
 });`.trim());
   });
 
-  test('generatePlaywrightRequestCall with PATCH method and form data', () => {
+  test('CG-167 generatePlaywrightRequestCall with PATCH method and form data', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'PATCH',
@@ -122,7 +122,7 @@ await page.request.patch('http://example.com/foo', {
 });`.trim());
   });
 
-  test('generatePlaywrightRequestCall with DELETE method and custom header', () => {
+  test('CG-168 generatePlaywrightRequestCall with DELETE method and custom header', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'DELETE',
@@ -141,7 +141,7 @@ await page.request.delete('http://example.com/foo', {
 });`.trim());
   });
 
-  test('generatePlaywrightRequestCall with HEAD method', () => {
+  test('CG-169 generatePlaywrightRequestCall with HEAD method', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'HEAD',
@@ -156,7 +156,7 @@ await page.request.delete('http://example.com/foo', {
 await page.request.head('http://example.com/foo');`.trim());
   });
 
-  test('generatePlaywrightRequestCall with complex query parameters', () => {
+  test('CG-170 generatePlaywrightRequestCall with complex query parameters', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo?bar=baz&qux=quux',
       method: 'GET',
@@ -176,7 +176,7 @@ await page.request.get('http://example.com/foo', {
 });`.trim());
   });
 
-  test('generatePlaywrightRequestCall with multiple headers', () => {
+  test('CG-171 generatePlaywrightRequestCall with multiple headers', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'GET',
@@ -201,7 +201,7 @@ await page.request.get('http://example.com/foo', {
 });`.trim());
   });
 
-  test('escape sequences', () => {
+  test('CG-172 escape sequences', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'GET',
@@ -227,7 +227,7 @@ await page.request.get('http://example.com/foo', {
 test.describe('python', () => {
   const impl = getAPIRequestCodeGen('python');
 
-  test('generatePlaywrightRequestCall', () => {
+  test('CG-173 generatePlaywrightRequestCall', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo?bar=baz',
       method: 'GET',
@@ -271,7 +271,7 @@ await page.request.fetch(
 )`.trim());
   });
 
-  test('generatePlaywrightRequestCall with POST method and no body', () => {
+  test('CG-174 generatePlaywrightRequestCall with POST method and no body', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'POST',
@@ -291,7 +291,7 @@ await page.request.post(
 )`.trim());
   });
 
-  test('generatePlaywrightRequestCall with PUT method and JSON body', () => {
+  test('CG-175 generatePlaywrightRequestCall with PUT method and JSON body', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'PUT',
@@ -312,7 +312,7 @@ await page.request.put(
 )`.trim());
   });
 
-  test('generatePlaywrightRequestCall with PATCH method and form data', () => {
+  test('CG-176 generatePlaywrightRequestCall with PATCH method and form data', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'PATCH',
@@ -333,7 +333,7 @@ await page.request.patch(
 )`.trim());
   });
 
-  test('generatePlaywrightRequestCall with DELETE method and custom header', () => {
+  test('CG-177 generatePlaywrightRequestCall with DELETE method and custom header', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'DELETE',
@@ -353,7 +353,7 @@ await page.request.delete(
 )`.trim());
   });
 
-  test('generatePlaywrightRequestCall with HEAD method', () => {
+  test('CG-178 generatePlaywrightRequestCall with HEAD method', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'HEAD',
@@ -368,7 +368,7 @@ await page.request.delete(
 await page.request.head("http://example.com/foo")`.trim());
   });
 
-  test('generatePlaywrightRequestCall with complex query parameters', () => {
+  test('CG-179 generatePlaywrightRequestCall with complex query parameters', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo?bar=baz&qux=quux',
       method: 'GET',
@@ -389,7 +389,7 @@ await page.request.get(
 )`.trim());
   });
 
-  test('generatePlaywrightRequestCall with multiple headers', () => {
+  test('CG-180 generatePlaywrightRequestCall with multiple headers', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'GET',
@@ -415,7 +415,7 @@ await page.request.get(
 )`.trim());
   });
 
-  test('escape sequences', () => {
+  test('CG-181 escape sequences', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'GET',
@@ -442,7 +442,7 @@ await page.request.get(
 test.describe('csharp', () => {
   const impl = getAPIRequestCodeGen('csharp');
 
-  test('generatePlaywrightRequestCall', () => {
+  test('CG-182 generatePlaywrightRequestCall', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo?bar=baz',
       method: 'GET',
@@ -484,7 +484,7 @@ await request.FetchAsync("http://example.com/foo", new() {
 });`.trim());
   });
 
-  test('generatePlaywrightRequestCall with POST method and no body', () => {
+  test('CG-183 generatePlaywrightRequestCall with POST method and no body', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'POST',
@@ -503,7 +503,7 @@ await request.PostAsync("http://example.com/foo", new() {
 });`.trim());
   });
 
-  test('generatePlaywrightRequestCall with PUT method and JSON body', () => {
+  test('CG-184 generatePlaywrightRequestCall with PUT method and JSON body', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'PUT',
@@ -523,7 +523,7 @@ await request.PutAsync("http://example.com/foo", new() {
 });`.trim());
   });
 
-  test('escape sequences', () => {
+  test('CG-185 escape sequences', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'GET',
@@ -548,7 +548,7 @@ await request.GetAsync("http://example.com/foo", new() {
 test.describe('java', () => {
   const impl = getAPIRequestCodeGen('java');
 
-  test('generatePlaywrightRequestCall', () => {
+  test('CG-186 generatePlaywrightRequestCall', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo?bar=baz',
       method: 'GET',
@@ -584,7 +584,7 @@ request.fetch("http://example.com/foo", RequestOptions.create()
 );`.trim());
   });
 
-  test('generatePlaywrightRequestCall with POST method and no body', () => {
+  test('CG-187 generatePlaywrightRequestCall with POST method and no body', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'POST',
@@ -601,7 +601,7 @@ request.post("http://example.com/foo", RequestOptions.create()
 );`.trim());
   });
 
-  test('generatePlaywrightRequestCall with PUT method and JSON body', () => {
+  test('CG-188 generatePlaywrightRequestCall with PUT method and JSON body', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'PUT',
@@ -619,7 +619,7 @@ request.put("http://example.com/foo", RequestOptions.create()
 );`.trim());
   });
 
-  test('generatePlaywrightRequestCall with PATCH method and form data', () => {
+  test('CG-189 generatePlaywrightRequestCall with PATCH method and form data', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'PATCH',
@@ -637,7 +637,7 @@ request.patch("http://example.com/foo", RequestOptions.create()
 );`.trim());
   });
 
-  test('generatePlaywrightRequestCall with DELETE method and custom header', () => {
+  test('CG-190 generatePlaywrightRequestCall with DELETE method and custom header', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'DELETE',
@@ -654,7 +654,7 @@ request.delete("http://example.com/foo", RequestOptions.create()
 );`.trim());
   });
 
-  test('escape sequences', () => {
+  test('CG-191 escape sequences', () => {
     expect(impl.generatePlaywrightRequestCall({
       url: 'http://example.com/foo',
       method: 'GET',

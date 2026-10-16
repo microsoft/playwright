@@ -23,7 +23,7 @@
 import { EventEmitter } from './utils';
 import { test, expect } from '@playwright/test';
 
-test('set max listeners test', () => {
+test('EE-052 set max listeners test', () => {
   const e = new EventEmitter();
 
   expect(!(e._events instanceof Object)).toBeTruthy();

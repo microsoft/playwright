@@ -22,7 +22,7 @@ import { verifyViewport } from '../config/utils';
 browserTest.describe('page screenshot', () => {
   browserTest.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
 
-  browserTest('should run in parallel in multiple pages', async ({ server, contextFactory }) => {
+  browserTest('SS-068 should run in parallel in multiple pages', async ({ server, contextFactory }) => {
     const context = await contextFactory();
     const N = 5;
     const pages = await Promise.all(Array(N).fill(0).map(async () => {
@@ -39,7 +39,7 @@ browserTest.describe('page screenshot', () => {
     await Promise.all(pages.map(page => page.close()));
   });
 
-  browserTest('should work with a mobile viewport', async ({ browser, server, browserName }) => {
+  browserTest('SS-069 should work with a mobile viewport', async ({ browser, server, browserName }) => {
     browserTest.skip(browserName === 'firefox');
 
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
@@ -50,7 +50,7 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should work with a mobile viewport and clip', async ({ browser, server, browserName }) => {
+  browserTest('SS-070 should work with a mobile viewport and clip', async ({ browser, server, browserName }) => {
     browserTest.skip(browserName === 'firefox');
 
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
@@ -61,7 +61,7 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should work with a mobile viewport and fullPage', async ({ browser, server, browserName }) => {
+  browserTest('SS-071 should work with a mobile viewport and fullPage', async ({ browser, server, browserName }) => {
     browserTest.skip(browserName === 'firefox');
 
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
@@ -72,7 +72,7 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should work with device scale factor', async ({ browser, server, isMac, browserName }) => {
+  browserTest('SS-072 should work with device scale factor', async ({ browser, server, isMac, browserName }) => {
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
@@ -81,7 +81,7 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should work with device scale factor and clip', async ({ browser, server }) => {
+  browserTest('SS-073 should work with device scale factor and clip', async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 500, height: 500 }, deviceScaleFactor: 3 });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
@@ -90,7 +90,7 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should work with device scale factor and scale:css', async ({ browser, server }) => {
+  browserTest('SS-074 should work with device scale factor and scale:css', async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
@@ -99,7 +99,7 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should produce screenshot of correct size with scale:css and null viewport', async ({ browser, server }) => {
+  browserTest('SS-075 should produce screenshot of correct size with scale:css and null viewport', async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: null });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
@@ -111,7 +111,7 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should work with device scale factor, clip and scale:css', async ({ browser, server }) => {
+  browserTest('SS-076 should work with device scale factor, clip and scale:css', async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 500, height: 500 }, deviceScaleFactor: 3 });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
@@ -120,7 +120,7 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should throw if screenshot size is too large with device scale factor', async ({ browser, browserName, isMac, isBidi }) => {
+  browserTest('SS-077 should throw if screenshot size is too large with device scale factor', async ({ browser, browserName, isMac, isBidi }) => {
     browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16727' });
     const context = await browser.newContext({ viewport: { width: 500, height: 500 }, deviceScaleFactor: 2 });
     const page = await context.newPage();
@@ -141,7 +141,7 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should work with large size', {
+  browserTest('SS-078 should work with large size', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/4038' },
   }, async ({ browserName, headless, platform, contextFactory, channel }) => {
     browserTest.fixme(browserName === 'chromium' && !headless && platform === 'linux', 'Chromium has gpu problems on linux with large screenshots');
@@ -178,7 +178,7 @@ browserTest.describe('page screenshot', () => {
     expect(pixel(0, 8339).b).toBeGreaterThan(128);
   });
 
-  browserTest('should handle vh units ', async ({ contextFactory }) => {
+  browserTest('SS-079 should handle vh units ', async ({ contextFactory }) => {
     const context = await contextFactory();
     const page = await context.newPage();
 
@@ -210,7 +210,7 @@ browserTest.describe('page screenshot', () => {
     expect(pixel(0, 999).b).toBeGreaterThan(128);
   });
 
-  browserTest('should not hang when event loop is blocked', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36702' } }, async ({ page, trace, mode }) => {
+  browserTest('SS-080 should not hang when event loop is blocked', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36702' } }, async ({ page, trace, mode }) => {
     browserTest.skip(trace === 'on', 'taking a snapshot hangs when the page is blocked');
     browserTest.skip(mode === 'driver', 'test hooks are not available in driver mode');
     browserTest.setTimeout(5000);
@@ -228,7 +228,7 @@ browserTest.describe('page screenshot', () => {
 browserTest.describe('element screenshot', () => {
   browserTest.skip(({ browserName, headless }) => browserName === 'firefox' && !headless);
 
-  browserTest('element screenshot should work with a mobile viewport', async ({ browser, server, browserName, isBidi }) => {
+  browserTest('SS-081 element screenshot should work with a mobile viewport', async ({ browser, server, browserName, isBidi }) => {
     browserTest.skip(browserName === 'firefox' && !isBidi);
 
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
@@ -241,7 +241,7 @@ browserTest.describe('element screenshot', () => {
     await context.close();
   });
 
-  browserTest('element screenshot should work with device scale factor', async ({ browser, server, browserName, isBidi }) => {
+  browserTest('SS-082 element screenshot should work with device scale factor', async ({ browser, server, browserName, isBidi }) => {
     browserTest.skip(browserName === 'firefox' && !isBidi);
 
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
@@ -254,7 +254,7 @@ browserTest.describe('element screenshot', () => {
     await context.close();
   });
 
-  browserTest('should take screenshots when default viewport is null', async ({ server, browser }) => {
+  browserTest('SS-083 should take screenshots when default viewport is null', async ({ server, browser }) => {
     const context = await browser.newContext({ viewport: null });
     const page = await context.newPage();
     await page.setContent(`<div style='height: 10000px; background: red'></div>`);
@@ -273,7 +273,7 @@ browserTest.describe('element screenshot', () => {
     await context.close();
   });
 
-  browserTest('should take fullPage screenshots when default viewport is null', async ({ server, browser }) => {
+  browserTest('SS-084 should take fullPage screenshots when default viewport is null', async ({ server, browser }) => {
     const context = await browser.newContext({ viewport: null });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
@@ -289,7 +289,7 @@ browserTest.describe('element screenshot', () => {
     await context.close();
   });
 
-  browserTest('should restore default viewport after fullPage screenshot', async ({ browser }) => {
+  browserTest('SS-085 should restore default viewport after fullPage screenshot', async ({ browser }) => {
     const context = await browser.newContext({ viewport: { width: 456, height: 789 } });
     const page = await context.newPage();
     await verifyViewport(page, 456, 789);
@@ -299,7 +299,7 @@ browserTest.describe('element screenshot', () => {
     await context.close();
   });
 
-  browserTest('should restore viewport after page screenshot and exception', async ({ browser, server, mode }) => {
+  browserTest('SS-086 should restore viewport after page screenshot and exception', async ({ browser, server, mode }) => {
     browserTest.skip(mode !== 'default');
 
     const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
@@ -312,7 +312,7 @@ browserTest.describe('element screenshot', () => {
     await context.close();
   });
 
-  browserTest('should restore viewport after page screenshot and timeout', async ({ browser, server, mode }) => {
+  browserTest('SS-087 should restore viewport after page screenshot and timeout', async ({ browser, server, mode }) => {
     browserTest.skip(mode !== 'default');
 
     const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
@@ -328,7 +328,7 @@ browserTest.describe('element screenshot', () => {
     await context.close();
   });
 
-  browserTest('should take element screenshot when default viewport is null and restore back', async ({ server, browser }) => {
+  browserTest('SS-088 should take element screenshot when default viewport is null and restore back', async ({ server, browser }) => {
     const context = await browser.newContext({ viewport: null });
     const page = await context.newPage();
     await page.setContent(`
@@ -358,7 +358,7 @@ browserTest.describe('element screenshot', () => {
     await context.close();
   });
 
-  browserTest('should restore viewport after element screenshot and exception', async ({ browser, mode }) => {
+  browserTest('SS-089 should restore viewport after element screenshot and exception', async ({ browser, mode }) => {
     browserTest.skip(mode !== 'default');
 
     const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
@@ -372,7 +372,7 @@ browserTest.describe('element screenshot', () => {
     await context.close();
   });
 
-  browserTest('element screenshots should handle vh units ', async ({ contextFactory }) => {
+  browserTest('SS-090 element screenshots should handle vh units ', async ({ contextFactory }) => {
     const context = await contextFactory();
     const page = await context.newPage();
 
@@ -401,7 +401,7 @@ browserTest.describe('element screenshot', () => {
     expect(pixel(0, 999).b).toBeGreaterThan(128);
   });
 
-  browserTest('should work if the main resource hangs', async ({ browser, browserName, mode, server }) => {
+  browserTest('SS-091 should work if the main resource hangs', async ({ browser, browserName, mode, server }) => {
     browserTest.skip(mode !== 'default');
     browserTest.skip(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/9757');
 
@@ -421,7 +421,7 @@ browserTest.describe('element screenshot', () => {
     }
   });
 
-  browserTest('should capture full element when larger than viewport with device scale factor', async ({ browser }) => {
+  browserTest('SS-092 should capture full element when larger than viewport with device scale factor', async ({ browser }) => {
     const context = await browser.newContext({ viewport: { width: 501, height: 501 }, deviceScaleFactor: 2.5 });
     const page = await context.newPage();
     await page.setContent(`
@@ -446,7 +446,7 @@ browserTest.describe('element screenshot', () => {
     await context.close();
   });
 
-  browserTest('should capture full element when larger than viewport with device scale factor and scale:css', async ({ browser }) => {
+  browserTest('SS-093 should capture full element when larger than viewport with device scale factor and scale:css', async ({ browser }) => {
     const context = await browser.newContext({ viewport: { width: 501, height: 501 }, deviceScaleFactor: 2.5 });
     const page = await context.newPage();
     await page.setContent(`
@@ -471,7 +471,7 @@ browserTest.describe('element screenshot', () => {
     await context.close();
   });
 
-  browserTest('page screenshot should capture css transform with device pixels', async function({ browser, browserName }) {
+  browserTest('SS-094 page screenshot should capture css transform with device pixels', async function({ browser, browserName }) {
     browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26447' });
     browserTest.fixme(browserName === 'webkit');
     const context = await browser.newContext({

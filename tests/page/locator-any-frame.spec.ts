@@ -33,7 +33,7 @@ async function waitForAllFrames(page: Page, frameCount: number, selector: string
   }
 }
 
-it('should click a button inside an iframe', async ({ page, server }) => {
+it('LO-001 should click a button inside an iframe', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<button onclick="window.__clicked = true">Click me</button>`);
   await page.goto(server.EMPTY_PAGE);
@@ -41,7 +41,7 @@ it('should click a button inside an iframe', async ({ page, server }) => {
   expect(await page.frames()[1].evaluate(() => (window as any).__clicked)).toBe(true);
 });
 
-it('should click a button in the main frame', async ({ page, server }) => {
+it('LO-002 should click a button in the main frame', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><button onclick="window.__clicked = true">Click me</button>`);
   await routePage(page, 'a.html', `<div>No buttons here</div>`);
   await page.goto(server.EMPTY_PAGE);
@@ -49,7 +49,7 @@ it('should click a button in the main frame', async ({ page, server }) => {
   expect(await page.evaluate(() => (window as any).__clicked)).toBe(true);
 });
 
-it('should fail click when elements match in multiple frames', async ({ page, server }) => {
+it('LO-003 should fail click when elements match in multiple frames', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><iframe src="b.html"></iframe>`);
   await routePage(page, 'a.html', `<button>one</button>`);
   await routePage(page, 'b.html', `<button>two</button>`);
@@ -60,7 +60,7 @@ it('should fail click when elements match in multiple frames', async ({ page, se
   expect(error.message).toContain(`waiting for frameLocator().locator('button')`);
 });
 
-it('should fail click upon strict mode violation inside a single frame', async ({ page, server }) => {
+it('LO-004 should fail click upon strict mode violation inside a single frame', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<button>one</button><button>two</button>`);
   await page.goto(server.EMPTY_PAGE);
@@ -70,7 +70,7 @@ it('should fail click upon strict mode violation inside a single frame', async (
   expect(error.message).toContain(`waiting for frameLocator().locator('button')`);
 });
 
-it('should time out on click when there are no matches', async ({ page, server }) => {
+it('LO-005 should time out on click when there are no matches', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div>Nothing here</div>`);
   await page.goto(server.EMPTY_PAGE);
@@ -79,7 +79,7 @@ it('should time out on click when there are no matches', async ({ page, server }
   expect(error.message).toContain(`waiting for frameLocator().locator('button')`);
 });
 
-it('should count elements in a single frame', async ({ page, server }) => {
+it('LO-006 should count elements in a single frame', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div>1</div><div>2</div><div>3</div>`);
   await page.goto(server.EMPTY_PAGE);
@@ -88,7 +88,7 @@ it('should count elements in a single frame', async ({ page, server }) => {
   expect(await page.frameLocator().locator('button').count()).toBe(0);
 });
 
-it('should fail count when elements match in multiple frames', async ({ page, server }) => {
+it('LO-007 should fail count when elements match in multiple frames', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<div>main</div><iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div>child</div>`);
   await page.goto(server.EMPTY_PAGE);
@@ -97,7 +97,7 @@ it('should fail count when elements match in multiple frames', async ({ page, se
   expect(error.message).toContain('frameLocator() matched elements in multiple frames');
 });
 
-it('should support toHaveCount', async ({ page, server }) => {
+it('LO-008 should support toHaveCount', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<span>one</span><span>two</span>`);
   await page.goto(server.EMPTY_PAGE);
@@ -105,7 +105,7 @@ it('should support toHaveCount', async ({ page, server }) => {
   await expect(page.frameLocator().locator('button')).toHaveCount(0);
 });
 
-it('should wait for a frame to appear with toHaveCount', async ({ page, server }) => {
+it('LO-009 should wait for a frame to appear with toHaveCount', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<div>No frames yet</div>`);
   await routePage(page, 'a.html', `<span>one</span><span>two</span>`);
   await page.goto(server.EMPTY_PAGE);
@@ -119,7 +119,7 @@ it('should wait for a frame to appear with toHaveCount', async ({ page, server }
   await expect(page.frameLocator().locator('span')).toHaveCount(2);
 });
 
-it('should fail toHaveCount when elements match in multiple frames', async ({ page, server }) => {
+it('LO-010 should fail toHaveCount when elements match in multiple frames', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><iframe src="b.html"></iframe>`);
   await routePage(page, 'a.html', `<span>one</span>`);
   await routePage(page, 'b.html', `<span>two</span>`);
@@ -130,21 +130,21 @@ it('should fail toHaveCount when elements match in multiple frames', async ({ pa
   expect(error.message).toContain(`Locator: frameLocator().locator('span')`);
 });
 
-it('should support toHaveText', async ({ page, server }) => {
+it('LO-011 should support toHaveText', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div>Hello iframe</div>`);
   await page.goto(server.EMPTY_PAGE);
   await expect(page.frameLocator().locator('div')).toHaveText('Hello iframe');
 });
 
-it('should support toHaveText with an array', async ({ page, server }) => {
+it('LO-012 should support toHaveText with an array', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<span>one</span><span>two</span>`);
   await page.goto(server.EMPTY_PAGE);
   await expect(page.frameLocator().locator('span')).toHaveText(['one', 'two']);
 });
 
-it('should fail toHaveText when elements match in multiple frames', async ({ page, server }) => {
+it('LO-013 should fail toHaveText when elements match in multiple frames', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><iframe src="b.html"></iframe>`);
   await routePage(page, 'a.html', `<div>one</div>`);
   await routePage(page, 'b.html', `<div>two</div>`);
@@ -155,7 +155,7 @@ it('should fail toHaveText when elements match in multiple frames', async ({ pag
   expect(error.message).toContain(`Locator: frameLocator().locator('div')`);
 });
 
-it('should fail toHaveText with an array when elements match in multiple frames', async ({ page, server }) => {
+it('LO-014 should fail toHaveText with an array when elements match in multiple frames', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><iframe src="b.html"></iframe>`);
   await routePage(page, 'a.html', `<span>one</span>`);
   await routePage(page, 'b.html', `<span>two</span>`);
@@ -165,7 +165,7 @@ it('should fail toHaveText with an array when elements match in multiple frames'
   expect(error.message).toContain('frameLocator() matched elements in multiple frames');
 });
 
-it('should fail toHaveText upon strict mode violation inside a single frame', async ({ page, server }) => {
+it('LO-015 should fail toHaveText upon strict mode violation inside a single frame', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div>one</div><div>two</div>`);
   await page.goto(server.EMPTY_PAGE);
@@ -175,14 +175,14 @@ it('should fail toHaveText upon strict mode violation inside a single frame', as
   expect(error.message).toContain(`Locator: frameLocator().locator('div')`);
 });
 
-it('should support evaluate', async ({ page, server }) => {
+it('LO-016 should support evaluate', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div data-foo="bar">Hello</div>`);
   await page.goto(server.EMPTY_PAGE);
   expect(await page.frameLocator().locator('div').evaluate(e => e.getAttribute('data-foo'))).toBe('bar');
 });
 
-it('should fail evaluate when elements match in multiple frames', async ({ page, server }) => {
+it('LO-017 should fail evaluate when elements match in multiple frames', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><iframe src="b.html"></iframe>`);
   await routePage(page, 'a.html', `<div>one</div>`);
   await routePage(page, 'b.html', `<div>two</div>`);
@@ -192,7 +192,7 @@ it('should fail evaluate when elements match in multiple frames', async ({ page,
   expect(error.message).toContain('frameLocator() matched elements in multiple frames');
 });
 
-it('should time out on evaluate when there are no matches', async ({ page, server }) => {
+it('LO-018 should time out on evaluate when there are no matches', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div>Nothing here</div>`);
   await page.goto(server.EMPTY_PAGE);
@@ -201,7 +201,7 @@ it('should time out on evaluate when there are no matches', async ({ page, serve
   expect(error.message).toContain(`waiting for frameLocator().locator('button')`);
 });
 
-it('should support evaluateAll', async ({ page, server }) => {
+it('LO-019 should support evaluateAll', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<span>one</span><span>two</span>`);
   await page.goto(server.EMPTY_PAGE);
@@ -210,7 +210,7 @@ it('should support evaluateAll', async ({ page, server }) => {
   expect(await page.frameLocator().locator('button').evaluateAll(els => els.length)).toBe(0);
 });
 
-it('should fail evaluateAll when elements match in multiple frames', async ({ page, server }) => {
+it('LO-020 should fail evaluateAll when elements match in multiple frames', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><iframe src="b.html"></iframe>`);
   await routePage(page, 'a.html', `<span>one</span>`);
   await routePage(page, 'b.html', `<span>two</span>`);
@@ -220,14 +220,14 @@ it('should fail evaluateAll when elements match in multiple frames', async ({ pa
   expect(error.message).toContain('frameLocator() matched elements in multiple frames');
 });
 
-it('should support hasText filter', async ({ page, server }) => {
+it('LO-021 should support hasText filter', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div>foo</div><div>bar</div>`);
   await page.goto(server.EMPTY_PAGE);
   await expect(page.frameLocator().locator('div', { hasText: 'bar' })).toHaveText('bar');
 });
 
-it('should support first/last/nth', async ({ page, server }) => {
+it('LO-022 should support first/last/nth', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<span>one</span><span>two</span><span>three</span>`);
   await page.goto(server.EMPTY_PAGE);
@@ -237,28 +237,28 @@ it('should support first/last/nth', async ({ page, server }) => {
   await expect(page.frameLocator().locator('span').nth(1)).toHaveText('two');
 });
 
-it('should support nth in the middle of the chain', async ({ page, server }) => {
+it('LO-023 should support nth in the middle of the chain', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div><span>one</span></div><div><span>two</span></div>`);
   await page.goto(server.EMPTY_PAGE);
   await expect(page.frameLocator().locator('div').nth(1).locator('span')).toHaveText('two');
 });
 
-it('should support composite locators', async ({ page, server }) => {
+it('LO-024 should support composite locators', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div><span>foo</span></div><div><i>bar</i></div>`);
   await page.goto(server.EMPTY_PAGE);
   await expect(page.frameLocator().locator('div', { has: page.locator('span') })).toHaveText('foo');
 });
 
-it('should support capture', async ({ page, server }) => {
+it('LO-025 should support capture', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div id="target"><span>hello</span></div>`);
   await page.goto(server.EMPTY_PAGE);
   await expect(page.frameLocator().locator('*css=div >> span')).toHaveAttribute('id', 'target');
 });
 
-it('should find a frame inside the scope', async ({ page, server }) => {
+it('LO-026 should find a frame inside the scope', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<section><iframe src="a.html"></iframe></section><button>outside</button>`);
   await routePage(page, 'a.html', `<button>inside</button>`);
   await page.goto(server.EMPTY_PAGE);
@@ -269,7 +269,7 @@ it('should find a frame inside the scope', async ({ page, server }) => {
   expect(await buttons[0].textContent()).toBe('inside');
 });
 
-it('should find a nested frame inside the scope', async ({ page, server }) => {
+it('LO-027 should find a nested frame inside the scope', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<section><iframe src="a.html"></iframe></section><iframe src="b.html"></iframe>`);
   await routePage(page, 'a.html', `<iframe src="c.html"></iframe>`);
   await routePage(page, 'b.html', `<button>outside</button>`);
@@ -286,7 +286,7 @@ it('should find a nested frame inside the scope', async ({ page, server }) => {
   expect(await buttons[0].textContent()).toBe('deep');
 });
 
-it('should find a frame inside the scope while another iframe is stalled', async ({ page, server }) => {
+it('LO-028 should find a frame inside the scope while another iframe is stalled', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<section><iframe src="a.html"></iframe><iframe src="stall.html"></iframe></section>`);
   await routePage(page, 'a.html', `<button>inside</button>`);
   await page.route('**/stall.html', () => {});
@@ -298,7 +298,7 @@ it('should find a frame inside the scope while another iframe is stalled', async
   expect(await buttons[0].textContent()).toBe('inside');
 });
 
-it('should respect the scope without a frame inside the scope', async ({ page, server }) => {
+it('LO-029 should respect the scope without a frame inside the scope', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<section><button>target</button></section><iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<button>in-frame</button>`);
   await page.goto(server.EMPTY_PAGE);
@@ -309,7 +309,7 @@ it('should respect the scope without a frame inside the scope', async ({ page, s
   expect(await buttons[0].textContent()).toBe('target');
 });
 
-it('should not match a chain across a frame boundary', async ({ page, server }) => {
+it('LO-030 should not match a chain across a frame boundary', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<section><iframe src="a.html"></iframe></section>`);
   await routePage(page, 'a.html', `<iframe src="b.html"></iframe>`);
   await routePage(page, 'b.html', `<button>deep</button>`);
@@ -322,7 +322,7 @@ it('should not match a chain across a frame boundary', async ({ page, server }) 
   await expect(page.frameLocator().locator('button')).toHaveText('deep');
 });
 
-it('should only search frames inside the starting frame', async ({ page, server }) => {
+it('LO-031 should only search frames inside the starting frame', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><button>main</button>`);
   await routePage(page, 'a.html', `<iframe src="b.html"></iframe>`);
   await routePage(page, 'b.html', `<button>deep</button>`);
@@ -334,7 +334,7 @@ it('should only search frames inside the starting frame', async ({ page, server 
   await expect(middleFrame.frameLocator().locator('button')).toHaveText('deep');
 });
 
-it('should enter a frame found in a nested frame', async ({ page, server }) => {
+it('LO-032 should enter a frame found in a nested frame', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><button>main</button>`);
   await routePage(page, 'a.html', `<iframe id="target" src="b.html"></iframe><button>decoy</button>`);
   await routePage(page, 'b.html', `<button>inside</button>`);
@@ -342,7 +342,7 @@ it('should enter a frame found in a nested frame', async ({ page, server }) => {
   await expect(page.frameLocator().frameLocator('#target').locator('button')).toHaveText('inside');
 });
 
-it('should click inside an entered frame', async ({ page, server }) => {
+it('LO-033 should click inside an entered frame', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<iframe id="target" src="b.html"></iframe><button>Click me</button>`);
   await routePage(page, 'b.html', `<button onclick="window.__clicked = true">Click me</button>`);
@@ -352,7 +352,7 @@ it('should click inside an entered frame', async ({ page, server }) => {
   expect(await frame.evaluate(() => (window as any).__clicked)).toBe(true);
 });
 
-it('should not search nested frames after entering a frame', async ({ page, server }) => {
+it('LO-034 should not search nested frames after entering a frame', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe id="target" src="a.html"></iframe><button>main</button>`);
   await routePage(page, 'a.html', `<iframe src="b.html"></iframe>`);
   await routePage(page, 'b.html', `<button>deep</button>`);
@@ -362,7 +362,7 @@ it('should not search nested frames after entering a frame', async ({ page, serv
   await expect(page.frameLocator().frameLocator('#target').locator('button')).toHaveCount(0);
 });
 
-it('should support two frameLocators', async ({ page, server }) => {
+it('LO-035 should support two frameLocators', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<iframe id="x" src="b.html"></iframe>`);
   await routePage(page, 'b.html', `<iframe id="y" src="c.html"></iframe><button>decoy</button>`);
@@ -371,7 +371,7 @@ it('should support two frameLocators', async ({ page, server }) => {
   await expect(page.frameLocator().frameLocator('#x').frameLocator('#y').locator('button')).toHaveText('bottom');
 });
 
-it('should support locator before frameLocator', async ({ page, server }) => {
+it('LO-036 should support locator before frameLocator', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<section><iframe src="b.html"></iframe></section><iframe src="c.html"></iframe>`);
   await routePage(page, 'b.html', `<button>in-section</button>`);
@@ -380,7 +380,7 @@ it('should support locator before frameLocator', async ({ page, server }) => {
   await expect(page.frameLocator().locator('section').frameLocator('iframe').locator('button')).toHaveText('in-section');
 });
 
-it('should support owner of a frameLocator', async ({ page, server }) => {
+it('LO-037 should support owner of a frameLocator', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<iframe id="target" src="b.html"></iframe>`);
   await routePage(page, 'b.html', `<button>inside</button>`);
@@ -388,7 +388,7 @@ it('should support owner of a frameLocator', async ({ page, server }) => {
   expect(await page.frameLocator().frameLocator('#target').owner().getAttribute('id')).toBe('target');
 });
 
-it('should wait for the frame to enter to appear', async ({ page, server }) => {
+it('LO-038 should wait for the frame to enter to appear', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div>Nothing yet</div>`);
   await routePage(page, 'b.html', `<button>late</button>`);
@@ -405,7 +405,7 @@ it('should wait for the frame to enter to appear', async ({ page, server }) => {
   await expect(page.frameLocator().frameLocator('#late').locator('button')).toHaveText('late');
 });
 
-it('should fail when the frame to enter matches in multiple frames', async ({ page, server }) => {
+it('LO-039 should fail when the frame to enter matches in multiple frames', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><iframe src="b.html"></iframe>`);
   await routePage(page, 'a.html', `<iframe class="inner" src="c.html"></iframe>`);
   await routePage(page, 'b.html', `<iframe class="inner" src="c.html"></iframe>`);
@@ -420,7 +420,7 @@ it('should fail when the frame to enter matches in multiple frames', async ({ pa
   expect(error.message).toContain('frameLocator() matched elements in multiple frames');
 });
 
-it('should support contentFrame', async ({ page, server }) => {
+it('LO-040 should support contentFrame', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<iframe id="target" src="b.html"></iframe><button>decoy</button>`);
   await routePage(page, 'b.html', `<button>inside</button>`);
@@ -428,12 +428,12 @@ it('should support contentFrame', async ({ page, server }) => {
   await expect(page.frameLocator().locator('#target').contentFrame().locator('button')).toHaveText('inside');
 });
 
-it('should render frameLocator() in the locator description', async ({ page }) => {
+it('LO-041 should render frameLocator() in the locator description', async ({ page }) => {
   expect(String(page.frameLocator().frameLocator('#x').locator('button'))).toBe(`frameLocator().locator('#x').contentFrame().locator('button')`);
   expect(String(page.frameLocator().locator('section').frameLocator('iframe').getByText('foo'))).toBe(`frameLocator().locator('section').locator('iframe').contentFrame().getByText('foo')`);
 });
 
-it('should not allow frameLocator() inside a composite locator', async ({ page, server }) => {
+it('LO-042 should not allow frameLocator() inside a composite locator', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<button>main</button><iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<a href="#">link</a>`);
   await page.goto(server.EMPTY_PAGE);
@@ -458,7 +458,7 @@ it('should not allow frameLocator() inside a composite locator', async ({ page, 
   expect(error5.message).toContain(`frameLocator() matched elements in multiple frames`);
 });
 
-it('should support a composite locator under frameLocator()', async ({ page, server }) => {
+it('LO-043 should support a composite locator under frameLocator()', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<div class="classname">first</div><button>second</button>`);
   await page.goto(server.EMPTY_PAGE);
@@ -466,7 +466,7 @@ it('should support a composite locator under frameLocator()', async ({ page, ser
   await expect(page.frameLocator().locator('.classname').or(page.getByRole('button'))).toHaveText(['first', 'second']);
 });
 
-it('should support a composite locator under frameLocator() and a frame locator', async ({ page, server }) => {
+it('LO-044 should support a composite locator under frameLocator() and a frame locator', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<iframe id="f" src="b.html"></iframe>`);
   await routePage(page, 'b.html', `<div class="classname">first</div><button>second</button>`);
@@ -475,18 +475,18 @@ it('should support a composite locator under frameLocator() and a frame locator'
   await expect(page.frameLocator().frameLocator('#f').locator('.classname').or(page.frameLocator('#f').getByRole('button'))).toHaveText(['first', 'second']);
 });
 
-it('should not allow first/last/nth on frameLocator()', async ({ page }) => {
+it('LO-045 should not allow first/last/nth on frameLocator()', async ({ page }) => {
   expect(() => page.frameLocator().first()).toThrow('Selecting the nth frame is not allowed on frameLocator()');
   expect(() => page.frameLocator().last()).toThrow('Selecting the nth frame is not allowed on frameLocator()');
   expect(() => page.frameLocator().nth(1)).toThrow('Selecting the nth frame is not allowed on frameLocator()');
 });
 
-it('should not allow owner on frameLocator()', async ({ page }) => {
+it('LO-046 should not allow owner on frameLocator()', async ({ page }) => {
   const error = await page.frameLocator().owner().count().catch(e => e);
   expect(error.message).toContain('Selector cannot be empty after frameLocator()');
 });
 
-it('should resolve aria-ref selectors', async ({ page, server }) => {
+it('LO-047 should resolve aria-ref selectors', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<button>main</button><iframe src="a.html"></iframe>`);
   await routePage(page, 'a.html', `<button>inside</button>`);
   await page.goto(server.EMPTY_PAGE);
@@ -498,7 +498,7 @@ it('should resolve aria-ref selectors', async ({ page, server }) => {
   await expect(page.frameLocator().locator(`aria-ref=${insideMatch![1]}`)).toHaveText('inside');
 });
 
-it('should click while another iframe is stalled', async ({ page, server }) => {
+it('LO-048 should click while another iframe is stalled', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><iframe src="stall.html"></iframe>`);
   await routePage(page, 'a.html', `<button onclick="window.__clicked = true">Click me</button>`);
   await page.route('**/stall.html', () => {});
@@ -509,7 +509,7 @@ it('should click while another iframe is stalled', async ({ page, server }) => {
   expect(await frame.evaluate(() => (window as any).__clicked)).toBe(true);
 });
 
-it('should support toBeVisible while another iframe is stalled', async ({ page, server }) => {
+it('LO-049 should support toBeVisible while another iframe is stalled', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><iframe src="stall.html"></iframe>`);
   await routePage(page, 'a.html', `<button>Click me</button>`);
   await page.route('**/stall.html', () => {});
@@ -518,7 +518,7 @@ it('should support toBeVisible while another iframe is stalled', async ({ page, 
   await expect(page.frameLocator().locator('button')).toBeVisible();
 });
 
-it('should support toHaveCount while another iframe is stalled', async ({ page, server }) => {
+it('LO-050 should support toHaveCount while another iframe is stalled', async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html"></iframe><iframe src="stall.html"></iframe>`);
   await routePage(page, 'a.html', `<button>Click me</button>`);
   await page.route('**/stall.html', () => {});
@@ -527,7 +527,7 @@ it('should support toHaveCount while another iframe is stalled', async ({ page, 
   await expect(page.frameLocator().locator('button')).toHaveCount(1);
 });
 
-it('should treat elements inside hidden iframe as hidden', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42719' } }, async ({ page, server }) => {
+it('LO-051 should treat elements inside hidden iframe as hidden', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42719' } }, async ({ page, server }) => {
   await routePage(page, 'empty.html', `<iframe src="a.html" style="visibility: hidden"></iframe>`);
   await routePage(page, 'a.html', `<button onclick="window.__clicked = true">Click me</button>`);
   await page.goto(server.EMPTY_PAGE);

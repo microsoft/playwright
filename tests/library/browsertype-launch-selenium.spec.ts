@@ -42,7 +42,7 @@ test.beforeAll(() => {
   selenium_4_8_3 = path.join(process.env.PWTEST_SELENIUM!, 'selenium-server-4.8.3.jar');
 });
 
-test('selenium grid 3.141.59 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
+test('BT-097 selenium grid 3.141.59 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
   const port = (testInfo.workerIndex * 5) + 15123;
@@ -65,7 +65,7 @@ test('selenium grid 3.141.59 standalone chromium', async ({ browserName, childPr
   await grid.waitForOutput('Removing session');
 });
 
-test('selenium grid 3.141.59 hub + node chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
+test('BT-098 selenium grid 3.141.59 hub + node chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
   const port = (testInfo.workerIndex * 5) + 15123;
@@ -98,7 +98,7 @@ test('selenium grid 3.141.59 hub + node chromium', async ({ browserName, childPr
   await node.waitForOutput('Removing session');
 });
 
-test('selenium grid 4.8.3 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
+test('BT-099 selenium grid 4.8.3 standalone chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
   const port = (testInfo.workerIndex * 5) + 15123;
@@ -121,7 +121,7 @@ test('selenium grid 4.8.3 standalone chromium', async ({ browserName, childProce
   await grid.waitForOutput('Deleted session');
 });
 
-test('selenium grid 4.8.3 hub + node chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
+test('BT-100 selenium grid 4.8.3 hub + node chromium', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
   const port = (testInfo.workerIndex * 5) + 15123;
@@ -153,7 +153,7 @@ test('selenium grid 4.8.3 hub + node chromium', async ({ browserName, childProce
   await hub.waitForOutput('Deleted session');
 });
 
-test('selenium grid 4.8.3 standalone chromium broken driver', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
+test('BT-101 selenium grid 4.8.3 standalone chromium broken driver', async ({ browserName, childProcess, waitForPort, browserType }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
   const port = (testInfo.workerIndex * 5) + 15123;
@@ -170,7 +170,7 @@ test('selenium grid 4.8.3 standalone chromium broken driver', async ({ browserNa
   expect(grid.output).not.toContain('Starting ChromeDriver');
 });
 
-test('selenium grid 3.141.59 standalone non-chromium', async ({ browserName, browserType }, testInfo) => {
+test('BT-102 selenium grid 3.141.59 standalone non-chromium', async ({ browserName, browserType }, testInfo) => {
   test.skip(browserName === 'chromium');
 
   const __testHookSeleniumRemoteURL = `http://127.0.0.1:4444/wd/hub`;
@@ -178,7 +178,7 @@ test('selenium grid 3.141.59 standalone non-chromium', async ({ browserName, bro
   expect(error.message).toContain('Connecting to SELENIUM_REMOTE_URL is only supported by Chromium');
 });
 
-test('selenium grid 3.141.59 standalone chromium through run-driver', async ({ browserName, childProcess, waitForPort }, testInfo) => {
+test('BT-103 selenium grid 3.141.59 standalone chromium through run-driver', async ({ browserName, childProcess, waitForPort }, testInfo) => {
   test.skip(browserName !== 'chromium');
 
   const port = (testInfo.workerIndex * 5) + 15123;

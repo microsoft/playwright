@@ -21,7 +21,7 @@ import vm from 'vm';
 
 const { globToRegexPattern, urlMatches } = iso;
 
-it('should work with navigation @smoke', async ({ page, server }) => {
+it('RO-151 should work with navigation @smoke', async ({ page, server }) => {
   const requests = new Map();
   await page.route('**/*', route => {
     requests.set(route.request().url().split('/').pop(), route.request());
@@ -35,7 +35,7 @@ it('should work with navigation @smoke', async ({ page, server }) => {
   expect(requests.get('style.css').isNavigationRequest()).toBe(false);
 });
 
-it('should intercept after a service worker', async ({ page, server, browserName, isAndroid, isBidi }) => {
+it('RO-152 should intercept after a service worker', async ({ page, server, browserName, isAndroid, isBidi }) => {
   it.skip(isAndroid);
 
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
@@ -72,7 +72,7 @@ it('should intercept after a service worker', async ({ page, server, browserName
   }
 });
 
-it('should work with glob', async () => {
+it('RO-153 should work with glob', async () => {
   function globToRegex(glob: string): RegExp {
     return new RegExp(globToRegexPattern(glob));
   }
@@ -180,7 +180,7 @@ it('should work with glob', async () => {
   }
 });
 
-it('should throw on unbalanced glob braces', async () => {
+it('RO-154 should throw on unbalanced glob braces', async () => {
   expect(() => globToRegexPattern('{foo')).toThrow(`Invalid glob pattern "{foo": unmatched '{'`);
   expect(() => globToRegexPattern('}foo')).toThrow(`Invalid glob pattern "}foo": unmatched '}'`);
   expect(() => globToRegexPattern('http://*/foo{')).toThrow(`unmatched '{'`);
@@ -192,11 +192,11 @@ it('should throw on unbalanced glob braces', async () => {
   expect(() => globToRegexPattern('foo\\}')).not.toThrow();
 });
 
-it('should throw on page.route with invalid glob', async ({ page }) => {
+it('RO-155 should throw on page.route with invalid glob', async ({ page }) => {
   await expect(page.route('http://*/foo{', route => route.continue())).rejects.toThrow(`unmatched '{'`);
 });
 
-it('should intercept by glob', async function({ page, server, isAndroid }) {
+it('RO-156 should intercept by glob', async function({ page, server, isAndroid }) {
   it.skip(isAndroid);
 
   await page.goto(server.EMPTY_PAGE);
@@ -210,7 +210,7 @@ it('should intercept by glob', async function({ page, server, isAndroid }) {
   expect(result).toBe('intercepted');
 });
 
-it('should intercept network activity from worker', async function({ page, server, isAndroid }) {
+it('RO-157 should intercept network activity from worker', async function({ page, server, isAndroid }) {
   it.skip(isAndroid);
 
   await page.goto(server.EMPTY_PAGE);
@@ -231,7 +231,7 @@ it('should intercept network activity from worker', async function({ page, serve
   expect(msg.text()).toBe('intercepted');
 });
 
-it('should intercept worker requests when enabled after worker creation', {
+it('RO-158 should intercept worker requests when enabled after worker creation', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32355' }
 }, async ({ page, server, isAndroid, browserName, browserMajorVersion }) => {
   it.skip(isAndroid);
@@ -264,7 +264,7 @@ it('should intercept worker requests when enabled after worker creation', {
   expect(msg.text()).toBe('intercepted');
 });
 
-it('should intercept network activity from worker 2', {
+it('RO-159 should intercept network activity from worker 2', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31747' }
 }, async ({ page, server, isAndroid }) => {
   it.skip(isAndroid);
@@ -284,7 +284,7 @@ it('should intercept network activity from worker 2', {
   expect(msg.text()).toBe('intercepted');
 });
 
-it('should work with regular expression passed from a different context', async ({ page, server }) => {
+it('RO-160 should work with regular expression passed from a different context', async ({ page, server }) => {
   const ctx = vm.createContext();
   const regexp = vm.runInContext('new RegExp("empty\\.html")', ctx);
   let intercepted = false;
@@ -308,7 +308,7 @@ it('should work with regular expression passed from a different context', async 
   expect(intercepted).toBe(true);
 });
 
-it('should intercept every request matching a global regexp', async ({ page, server }) => {
+it('RO-161 should intercept every request matching a global regexp', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let intercepted = 0;
   await page.route(/\/intercept-me/g, async route => {
@@ -321,7 +321,7 @@ it('should intercept every request matching a global regexp', async ({ page, ser
   expect(intercepted).toBe(3);
 });
 
-it('should not break remote worker importScripts', async ({ page, server }) => {
+it('RO-162 should not break remote worker importScripts', async ({ page, server }) => {
   await page.route('**', async route => {
     await route.continue();
   });
@@ -329,7 +329,7 @@ it('should not break remote worker importScripts', async ({ page, server }) => {
   await page.waitForSelector("#status:has-text('finished')");
 });
 
-it('should disable memory cache when intercepting', async ({ page, server }) => {
+it('RO-163 should disable memory cache when intercepting', async ({ page, server }) => {
   let interceted = 0;
   await page.route('**/page.html', route => {
     ++interceted;
@@ -347,7 +347,7 @@ it('should disable memory cache when intercepting', async ({ page, server }) => 
   expect(interceted).toBe(2);
 });
 
-it('should intercept blob url requests', async function({ page, server, browserName }) {
+it('RO-164 should intercept blob url requests', async function({ page, server, browserName }) {
   it.skip(browserName !== 'webkit');
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/*', route => {
