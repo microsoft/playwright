@@ -130,31 +130,6 @@ test('should not create a worker from a shared worker', async ({ page, server })
   expect(serviceWorkerCreated).not.toBeTruthy();
 });
 
-test('Page.route should work with intervention headers', async ({ server, page, browserMajorVersion }) => {
-  server.setRoute('/intervention', (req, res) => res.end(`
-    <script>
-      document.write('<script src="${server.CROSS_PROCESS_PREFIX}/intervention.js">' + '</scr' + 'ipt>');
-    </script>
-  `));
-  server.setRedirect('/intervention.js', '/redirect.js');
-  let serverRequest = null;
-  server.setRoute('/redirect.js', (req, res) => {
-    serverRequest = req;
-    res.end('console.log(1);');
-  });
-
-  await page.route('*', route => route.continue());
-  await page.goto(server.PREFIX + '/intervention');
-  expect(serverRequest).toBeTruthy();
-  // Chromium 157 stopped sending the Intervention request header,
-  // see https://chromium-review.googlesource.com/c/chromium/src/+/8504605.
-  if (browserMajorVersion < 157) {
-    // Check for feature URL substring rather than https://www.chromestatus.com to
-    // make it work with Edgium.
-    expect(serverRequest.headers.intervention).toContain('feature/5718547946799104');
-  }
-});
-
 playwrightTest('should close service worker together with the context', async ({ browserType, server }) => {
   const browser = await browserType.launch();
   const context = await browser.newContext();
