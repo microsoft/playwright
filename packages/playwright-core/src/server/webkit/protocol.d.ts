@@ -4429,6 +4429,13 @@ might return multiple quads for inline nodes.
        */
       origin?: string;
     }
+    /**
+     * Credentials for proxy authentication.
+     */
+    export interface ProxyCredentials {
+      username: string;
+      password: string;
+    }
     
     
     /**
@@ -4451,10 +4458,14 @@ might return multiple quads for inline nodes.
     export type setJavaScriptEnabledReturnValue = {
     }
     /**
-     * Credentials to use during HTTP authentication. The first credentials with matching origin are used. When missing, automation handling of authentication challenges is disabled.
+     * Credentials to use during HTTP authentication. The first credentials with matching origin are used.
      */
     export type setAuthCredentialsParameters = {
-      credentials?: AuthCredentials[];
+      credentials: AuthCredentials[];
+      /**
+       * When specified, proxy challenges are answered only with these credentials, and the credentials above are used only for server challenges.
+       */
+      proxyCredentials?: ProxyCredentials;
     }
     export type setAuthCredentialsReturnValue = {
     }
