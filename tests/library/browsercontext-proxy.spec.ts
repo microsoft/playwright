@@ -34,8 +34,8 @@ it('should work when passing the proxy only on the context level', async ({ brow
     });
 
     const page = await context.newPage();
-    await page.goto('http://non-existent.com/target.html');
-    expect(proxyServer.requestUrls).toContain('http://non-existent.com/target.html');
+    await page.goto('http://non-existent.test/target.html');
+    expect(proxyServer.requestUrls).toContain('http://non-existent.test/target.html');
     expect(await page.title()).toBe('Served by the proxy');
   } finally {
     await browser.close();
@@ -49,11 +49,11 @@ for (const launchProxy of ['per-context', 'http://per-context']) {
     try {
       const context = await browser.newContext({ proxy: { server: proxyServer.HOST } });
       const page = await context.newPage();
-      await page.goto('http://non-existent.com/target.html');
+      await page.goto('http://non-existent.test/target.html');
       expect(await page.title()).toBe('Served by the proxy');
-      const response = await context.request.get('http://non-existent.com/target.html');
+      const response = await context.request.get('http://non-existent.test/target.html');
       expect(await response.text()).toContain('Served by the proxy');
-      expect(proxyServer.connectHosts).toContain('non-existent.com:80');
+      expect(proxyServer.connectHosts).toContain('non-existent.test:80');
 
       const directContext = await browser.newContext();
       const directPage = await directContext.newPage();
@@ -81,8 +81,8 @@ it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
     proxy: { server: proxyServer.HOST }
   });
   const page = await context.newPage();
-  await page.goto('http://non-existent.com/target.html');
-  expect(proxyServer.requestUrls).toContain('http://non-existent.com/target.html');
+  await page.goto('http://non-existent.test/target.html');
+  expect(proxyServer.requestUrls).toContain('http://non-existent.test/target.html');
   expect(await page.title()).toBe('Served by the proxy');
   await context.close();
 });
@@ -203,8 +203,8 @@ it('should use ipv6 proxy', async ({ contextFactory, server, proxyServer, browse
     proxy: { server: `[0:0:0:0:0:0:0:1]:${proxyServer.PORT}` }
   });
   const page = await context.newPage();
-  await page.goto('http://non-existent.com/target.html');
-  expect(proxyServer.requestUrls).toContain('http://non-existent.com/target.html');
+  await page.goto('http://non-existent.test/target.html');
+  expect(proxyServer.requestUrls).toContain('http://non-existent.test/target.html');
   expect(await page.title()).toBe('Served by the proxy');
   await context.close();
 });
@@ -215,10 +215,10 @@ it('should use proxy twice', async ({ contextFactory, server, proxyServer }) => 
     proxy: { server: proxyServer.HOST }
   });
   const page = await context.newPage();
-  await page.goto('http://non-existent.com/target.html');
-  expect(proxyServer.requestUrls).toContain('http://non-existent.com/target.html');
-  await page.goto('http://non-existent-2.com/target.html');
-  expect(proxyServer.requestUrls).toContain('http://non-existent-2.com/target.html');
+  await page.goto('http://non-existent.test/target.html');
+  expect(proxyServer.requestUrls).toContain('http://non-existent.test/target.html');
+  await page.goto('http://non-existent-2.test/target.html');
+  expect(proxyServer.requestUrls).toContain('http://non-existent-2.test/target.html');
   expect(await page.title()).toBe('Served by the proxy');
   await context.close();
 });
@@ -230,14 +230,14 @@ it('should use proxy for second page', async ({ contextFactory, server, proxySer
   });
 
   const page = await context.newPage();
-  await page.goto('http://non-existent.com/target.html');
-  expect(proxyServer.requestUrls).toContain('http://non-existent.com/target.html');
+  await page.goto('http://non-existent.test/target.html');
+  expect(proxyServer.requestUrls).toContain('http://non-existent.test/target.html');
   expect(await page.title()).toBe('Served by the proxy');
 
   const page2 = await context.newPage();
   proxyServer.requestUrls = [];
-  await page2.goto('http://non-existent.com/target.html');
-  expect(proxyServer.requestUrls).toContain('http://non-existent.com/target.html');
+  await page2.goto('http://non-existent.test/target.html');
+  expect(proxyServer.requestUrls).toContain('http://non-existent.test/target.html');
   expect(await page2.title()).toBe('Served by the proxy');
 
   await context.close();
@@ -253,8 +253,8 @@ it('should use proxy for https urls', async ({ contextFactory, httpsServer, prox
     proxy: { server: proxyServer.HOST }
   });
   const page = await context.newPage();
-  await page.goto('https://non-existent.com/target.html');
-  expect(proxyServer.connectHosts).toContain('non-existent.com:443');
+  await page.goto('https://non-existent.test/target.html');
+  expect(proxyServer.connectHosts).toContain('non-existent.test:443');
   expect(await page.title()).toBe('Served by https server via proxy');
   await context.close();
 });
@@ -265,8 +265,8 @@ it('should work with IP:PORT notion', async ({ contextFactory, server, proxyServ
     proxy: { server: `127.0.0.1:${proxyServer.PORT}` }
   });
   const page = await context.newPage();
-  await page.goto('http://non-existent.com/target.html');
-  expect(proxyServer.requestUrls).toContain('http://non-existent.com/target.html');
+  await page.goto('http://non-existent.test/target.html');
+  expect(proxyServer.requestUrls).toContain('http://non-existent.test/target.html');
   expect(await page.title()).toBe('Served by the proxy');
   await context.close();
 });
@@ -296,8 +296,8 @@ it('should authenticate', async ({ contextFactory, server, proxyServer }) => {
     proxy: { server: proxyServer.HOST, username: 'user', password: 'secret' }
   });
   const page = await context.newPage();
-  await page.goto('http://non-existent.com/target.html');
-  expect(proxyServer.requestUrls).toContain('http://non-existent.com/target.html');
+  await page.goto('http://non-existent.test/target.html');
+  expect(proxyServer.requestUrls).toContain('http://non-existent.test/target.html');
   expect(auth).toBe('Basic ' + Buffer.from('user:secret').toString('base64'));
   expect(await page.title()).toBe('Served by the proxy');
   await context.close();
@@ -314,7 +314,7 @@ it('should authenticate with empty password', async ({ contextFactory, server, p
     proxy: { server: proxyServer.HOST, username: 'user', password: '' }
   });
   const page = await context.newPage();
-  await page.goto('http://non-existent.com/target.html');
+  await page.goto('http://non-existent.test/target.html');
   expect(auth).toBe('Basic ' + Buffer.from('user:').toString('base64'));
   expect(await page.title()).toBe('Served by the proxy');
   await context.close();
@@ -332,7 +332,7 @@ it('should isolate proxy credentials between contexts', async ({ contextFactory,
       proxy: { server: proxyServer.HOST, username: 'user1', password: 'secret1' }
     });
     const page = await context.newPage();
-    await page.goto('http://non-existent.com/target.html');
+    await page.goto('http://non-existent.test/target.html');
     expect(auth).toBe('Basic ' + Buffer.from('user1:secret1').toString('base64'));
     expect(await page.title()).toBe('Served by the proxy');
     await context.close();
@@ -343,7 +343,7 @@ it('should isolate proxy credentials between contexts', async ({ contextFactory,
       proxy: { server: proxyServer.HOST, username: 'user2', password: 'secret2' }
     });
     const page = await context.newPage();
-    await page.goto('http://non-existent.com/target.html');
+    await page.goto('http://non-existent.test/target.html');
     expect(await page.title()).toBe('Served by the proxy');
     expect(auth).toBe('Basic ' + Buffer.from('user2:secret2').toString('base64'));
     await context.close();
@@ -417,7 +417,7 @@ it('should use socks proxy', async ({ contextFactory, socksPort }) => {
     proxy: { server: `socks5://localhost:${socksPort}` }
   });
   const page = await context.newPage();
-  await page.goto('http://non-existent.com');
+  await page.goto('http://non-existent.test');
   expect(await page.title()).toBe('Served by the SOCKS proxy');
   await context.close();
 });
@@ -428,11 +428,11 @@ it('should use socks proxy in second page', async ({ contextFactory, socksPort }
   });
 
   const page = await context.newPage();
-  await page.goto('http://non-existent.com');
+  await page.goto('http://non-existent.test');
   expect(await page.title()).toBe('Served by the SOCKS proxy');
 
   const page2 = await context.newPage();
-  await page2.goto('http://non-existent.com');
+  await page2.goto('http://non-existent.test');
   expect(await page2.title()).toBe('Served by the SOCKS proxy');
 
   await context.close();
@@ -466,16 +466,16 @@ it('should isolate proxy credentials between contexts on navigation', async ({ c
     proxy: { server: server.PREFIX, username: 'user1', password: 'secret1' }
   });
   const page1 = await context1.newPage();
-  await page1.goto('http://non-existent.com/target.html');
+  await page1.goto('http://non-existent.test/target.html');
   await expect(page1.getByTestId('user')).toHaveText('user1');
 
   const context2 = await contextFactory({
     proxy: { server: server.PREFIX, username: 'user2', password: 'secret2' }
   });
   const page2 = await context2.newPage();
-  await page2.goto('http://non-existent.com/target.html');
+  await page2.goto('http://non-existent.test/target.html');
   await expect(page2.getByTestId('user')).toHaveText('user2');
 
-  await page1.goto('http://non-existent.com/target.html');
+  await page1.goto('http://non-existent.test/target.html');
   await expect(page1.getByTestId('user')).toHaveText('user1');
 });
