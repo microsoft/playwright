@@ -801,6 +801,10 @@ function fakeAbortSignal(clock: ClockController, abortSignal: Builtins['AbortSig
 
 export function createClock(globalObject: WindowOrWorkerGlobalScope, config: InstallConfig = {}): { clock: ClockController, api: Builtins, originals: Builtins } {
   const originals = platformOriginals(globalObject);
+  // Nested setTimeout(fn, 0) is clamped to 4ms, which adds up when many timers
+  // are due. A MessageChannel task is not clamped, so yield through one instead.
+  const tasks: (() => void)[] = [];
+  let channel: MessageChannel | undefined;
   const embedder: Embedder = {
     dateNow: () => originals.raw.Date.now(),
     performanceNow: () => Math.ceil(originals.raw.performance!.now()) as EmbedderTicks,
@@ -813,18 +817,12 @@ export function createClock(globalObject: WindowOrWorkerGlobalScope, config: Ins
       return () => originals.bound.clearInterval(intervalId);
     },
     postTask: (task: () => void) => {
-      // Nested setTimeout(fn, 0) is clamped to 4ms, which would add up when
-      // many timers are due. A MessageChannel task is not clamped.
-      const MessageChannel = (globalObject as any).MessageChannel;
-      if (!MessageChannel) {
-        originals.bound.setTimeout(task, 0);
-        return;
+      if (!channel) {
+        channel = new (globalObject as any).MessageChannel() as MessageChannel;
+        channel.port1.onmessage = () => tasks.shift()!();
+        (channel.port1 as any).unref?.(); // Do not keep the Node process alive in unit tests.
       }
-      const channel = new MessageChannel();
-      channel.port1.onmessage = () => {
-        channel.port1.close();
-        task();
-      };
+      tasks.push(task);
       channel.port2.postMessage(undefined);
     },
   };
