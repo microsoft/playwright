@@ -5037,14 +5037,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
        * Number of times the mouse button was clicked (default: 0).
        */
       clickCount?: number;
-      /**
-       * X delta in CSS pixels for mouse wheel event (default: 0).
-       */
-      deltaX?: number;
-      /**
-       * Y delta in CSS pixels for mouse wheel event (default: 0).
-       */
-      deltaY?: number;
     }
     export type dispatchMouseEventReturnValue = {
     }
