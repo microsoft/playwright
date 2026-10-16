@@ -39,8 +39,6 @@ const disabledFeatures = [
   'AvoidCorsURLLoaderRestartOnRedirect',
   // See https://github.com/microsoft/playwright/issues/16126
   'Translate',
-  // See https://issues.chromium.org/u/1/issues/435410220
-  'AutoDeElevate',
   // Prevents downloading optimization hints on startup.
   'OptimizationHints',
   // Prevents network time queries to clients2.google.com on startup.
@@ -101,4 +99,7 @@ export const chromiumSwitches = (options?: { android?: boolean }) => [
   '--disable-search-engine-choice-screen',
   // Prevents the "three dots" menu crash in IdentityManager::HasPrimaryAccount for ephemeral contexts.
   options?.android ? '' : '--disable-sync',
+  // Prevents relaunching as non-admin when started from an elevated process on Windows.
+  // See https://issues.chromium.org/u/1/issues/435410220
+  '--do-not-de-elevate',
 ].filter(Boolean);
