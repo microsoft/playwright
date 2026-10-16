@@ -820,7 +820,6 @@ export function createClock(globalObject: WindowOrWorkerGlobalScope, config: Ins
       if (!channel) {
         channel = new (globalObject as any).MessageChannel() as MessageChannel;
         channel.port1.onmessage = () => tasks.shift()!();
-        (channel.port1 as any).unref?.(); // Do not keep the Node process alive in unit tests.
       }
       tasks.push(task);
       channel.port2.postMessage(undefined);
