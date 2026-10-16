@@ -45,6 +45,7 @@ interface Embedder {
   performanceNow(): EmbedderTicks;
   setTimeout(task: () => void, timeout?: number): () => void;
   setInterval(task: () => void, delay: number): () => void;
+  postTask(task: () => void): void;
 }
 
 type Ticks = number & { readonly __brand: 'Ticks' };
@@ -374,7 +375,7 @@ export class ClockController {
         } catch (e) {
           error = e;
         }
-        await new Promise<void>(f => this._embedder.setTimeout(f));
+        await new Promise<void>(f => this._embedder.postTask(f));
         return { timerFound: true, error };
       }
 
@@ -390,7 +391,7 @@ export class ClockController {
       } catch (e) {
         error = e;
       }
-      await new Promise<void>(f => this._embedder.setTimeout(f));
+      await new Promise<void>(f => this._embedder.postTask(f));
       return { timerFound: true, error };
     } finally {
       this._duringTick = false;
@@ -810,6 +811,21 @@ export function createClock(globalObject: WindowOrWorkerGlobalScope, config: Ins
     setInterval: (task: () => void, delay: number) => {
       const intervalId = originals.bound.setInterval(task, delay);
       return () => originals.bound.clearInterval(intervalId);
+    },
+    postTask: (task: () => void) => {
+      // Nested setTimeout(fn, 0) is clamped to 4ms, which would add up when
+      // many timers are due. A MessageChannel task is not clamped.
+      const MessageChannel = (globalObject as any).MessageChannel;
+      if (!MessageChannel) {
+        originals.bound.setTimeout(task, 0);
+        return;
+      }
+      const channel = new MessageChannel();
+      channel.port1.onmessage = () => {
+        channel.port1.close();
+        task();
+      };
+      channel.port2.postMessage(undefined);
     },
   };
 

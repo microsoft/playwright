@@ -169,6 +169,23 @@ it.describe('runFor', () => {
   });
 });
 
+it('does not spend real time between due timers', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43452' },
+}, async ({ page }) => {
+  await page.clock.install({ time: 0 });
+  await page.clock.pauseAt(1000);
+  await page.evaluate(() => {
+    window['fired'] = 0;
+    for (let i = 0; i < 1000; i++)
+      setTimeout(() => window['fired']++, i);
+  });
+  const start = performance.now();
+  await page.clock.runFor(1000);
+  expect(await page.evaluate(() => window['fired'])).toBe(1000);
+  // Nested setTimeout(fn, 0) is clamped to 4ms, so 1000 timers used to take over 4 seconds.
+  expect(performance.now() - start).toBeLessThan(2000);
+});
+
 it.describe('fastForward', () => {
   it.beforeEach(async ({ page }) => {
     await page.clock.install({ time: 0 });
