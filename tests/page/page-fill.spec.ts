@@ -300,14 +300,19 @@ it('should fill fixed position input', async ({ page }) => {
   expect(await page.evaluate(() => document.querySelector('input').value)).toBe('some value');
 });
 
-it('should be able to fill when focus is in the wrong frame', async ({ page }) => {
+it('should be able to fill when focus is in the wrong frame', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43483' },
+}, async ({ page }) => {
   await page.setContent(`
     <div contentEditable="true"></div>
-    <iframe></iframe>
+    <iframe srcdoc="<body contenteditable><p>old</p></body>"></iframe>
   `);
   await page.focus('iframe');
   await page.fill('div', 'some value');
   expect(await page.$eval('div', d => d.textContent)).toBe('some value');
+  const paragraph = page.frameLocator('iframe').locator('p');
+  await paragraph.fill('new');
+  await expect(paragraph).toHaveText('new');
 });
 
 it('should be able to fill the input[type=number]', async ({ page }) => {
