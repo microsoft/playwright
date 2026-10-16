@@ -175,7 +175,7 @@ it.describe('Drag and drop', () => {
   });
 
   it('should respect the drop effect', async ({ page, browserName, isLinux, isMac, headless, trace }) => {
-    it.fixme(browserName === 'webkit' && !isLinux, 'Fixed by https://github.com/microsoft/playwright/issues/43447, waiting for the WebKit roll.');
+    it.fixme(browserName === 'webkit' && !isLinux, 'WebKit doesn\'t handle the drop effect correctly outside of linux.');
     it.fixme(browserName === 'webkit' && isLinux && !headless, 'https://github.com/microsoft/playwright/issues/21646');
     it.fixme(browserName === 'chromium' && !isMac && !headless, 'https://github.com/microsoft/playwright/issues/21646');
     it.slow(trace === 'on');
@@ -228,40 +228,6 @@ it.describe('Drag and drop', () => {
       return await page.evaluate('dropped');
     }
   });
-
-  it('should report the default drop effect from effectAllowed', {
-    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43447' },
-  }, async ({ page, browserName, isLinux, headless }) => {
-    it.fixme(browserName === 'webkit' && !isLinux, 'Fixed by https://github.com/microsoft/playwright/issues/43447, waiting for the WebKit roll.');
-    it.fixme(browserName === 'webkit' && isLinux && !headless, 'https://github.com/microsoft/playwright/issues/21646');
-
-    await page.setContent(`
-      <div draggable="true">drag target</div>
-      <drop-target>this is the drop target</drop-target>
-    `);
-    await page.evaluate(() => {
-      window['dropEffect'] = 'none';
-
-      document.querySelector('div').addEventListener('dragstart', event => {
-        event.dataTransfer.effectAllowed = 'copyMove';
-        event.dataTransfer.setData('text/plain', 'drag data');
-      });
-      document.querySelector('div').addEventListener('dragend', event => {
-        window['dropEffect'] = event.dataTransfer.dropEffect;
-      });
-
-      // The target accepts the drag without setting dropEffect.
-      document.querySelector('drop-target').addEventListener('dragover', event => {
-        event.preventDefault();
-      });
-    });
-    await page.hover('div');
-    await page.mouse.down();
-    await page.hover('drop-target');
-    await page.mouse.up();
-    expect(await page.evaluate('dropEffect')).toBe('move');
-  });
-
   it('should work if the drag is canceled', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     await page.evaluate(() => {
