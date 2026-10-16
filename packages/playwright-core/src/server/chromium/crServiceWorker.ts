@@ -89,7 +89,7 @@ export class CRServiceWorker extends Worker {
   async updateHttpCredentials(): Promise<void> {
     if (!this._isNetworkInspectionEnabled())
       return;
-    await this._networkManager?.authenticate(this.browserContext._options.httpCredentials || null).catch(() => {});
+    await this._networkManager?.authenticate(this.browserContext._options.httpCredentials, this.browserContext.proxyCredentials()).catch(() => {});
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
