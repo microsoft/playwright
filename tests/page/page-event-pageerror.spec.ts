@@ -17,7 +17,9 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should fire', async ({ page, server, browserName, isBidi }) => {
+it('should fire', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43450' },
+}, async ({ page, server, browserName, isBidi }) => {
   const url = server.PREFIX + '/error.html';
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
@@ -43,6 +45,58 @@ it('should fire', async ({ page, server, browserName, isBidi }) => {
     at b (myscript.js:10:5)
     at a (myscript.js:6:5)
     at  (myscript.js:3:1)`);
+  }
+
+  // The same script from another origin: Chromium reports it without an exception object,
+  // so the stack is built from the CDP call frames, which are zero-based.
+  const crossOriginUrl = server.CROSS_PROCESS_PREFIX + '/error.js';
+  server.setRoute('/error.js', (req, res) => {
+    res.setHeader('Content-Type', 'text/javascript');
+    // Same lines as error.html, so the stack has the same locations.
+    res.end(`
+console.error('Not a JS error');
+a();
+
+function a() {
+    b();
+}
+
+function b() {
+    c();
+}
+
+function c() {
+    throw new Error('Fancy error!');
+}
+`);
+  });
+  server.setRoute('/cross-origin-error.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<script src="${crossOriginUrl}"></script>`);
+  });
+  const [crossOriginError] = await Promise.all([
+    page.waitForEvent('pageerror'),
+    page.goto(server.PREFIX + '/cross-origin-error.html'),
+  ]);
+  expect(crossOriginError.message).toBe('Fancy error!');
+  if (browserName === 'chromium') {
+    expect(crossOriginError.stack).toBe(`Uncaught Error: Fancy error!
+    at c (${crossOriginUrl}:14:11)
+    at b (${crossOriginUrl}:10:5)
+    at a (${crossOriginUrl}:6:5)
+    at <anonymous> (${crossOriginUrl}:3:1)`);
+  } else if (browserName === 'webkit') {
+    expect(crossOriginError.stack).toBe(`Error: Fancy error!
+    at c (${crossOriginUrl}:14:36)
+    at b (${crossOriginUrl}:10:6)
+    at a (${crossOriginUrl}:6:6)
+    at global code (${crossOriginUrl}:3:2)`);
+  } else if (browserName === 'firefox' && !isBidi) {
+    expect(crossOriginError.stack).toBe(`Error: Fancy error!
+    at c (${crossOriginUrl}:14:11)
+    at b (${crossOriginUrl}:10:5)
+    at a (${crossOriginUrl}:6:5)
+    at  (${crossOriginUrl}:3:1)`);
   }
 });
 
