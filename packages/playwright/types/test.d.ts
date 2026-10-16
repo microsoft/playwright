@@ -2898,6 +2898,8 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * });
    * ```
    *
+   * The built-in `exclusive` lock runs the test only when no other tests are running.
+   *
    * Learn more about [test locks](https://playwright.dev/docs/test-parallel#test-locks).
    * @param title Test title.
    * @param details Additional test details.
@@ -2994,6 +2996,8 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    *   // that declare the 'user-settings' lock.
    * });
    * ```
+   *
+   * The built-in `exclusive` lock runs the test only when no other tests are running.
    *
    * Learn more about [test locks](https://playwright.dev/docs/test-parallel#test-locks).
    * @param title Test title.

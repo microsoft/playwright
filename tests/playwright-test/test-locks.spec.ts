@@ -240,3 +240,50 @@ test('should validate lock in test details', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('details.lock');
 });
+
+test('should run tests with the exclusive lock in isolation', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default { fullyParallel: true };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('test1', 500)}
+      ${lockedTest('test2', 500, 'exclusive')}
+      ${lockedTest('test3', 500)}
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      ${lockedTest('test4', 500, 'other')}
+      ${lockedTest('test5', 500)}
+    `,
+  }, { workers: 3 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(5);
+  const others = ['test1', 'test3', 'test4', 'test5'];
+  expect(conflictingOverlaps(result.outputLines, others.map(name => ['test2', name]))).toEqual([]);
+});
+
+test('should retry tests with the exclusive lock in isolation', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default { fullyParallel: true, retries: 1 };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test1', { lock: 'exclusive' }, async ({}, testInfo) => {
+        console.log('\\n%%begin:test1-' + testInfo.retry);
+        await new Promise(f => setTimeout(f, 500));
+        console.log('\\n%%end:test1-' + testInfo.retry);
+        expect(testInfo.retry).toBe(1);
+      });
+      ${lockedTest('test2', 500)}
+      ${lockedTest('test3', 500)}
+    `,
+  }, { workers: 3 });
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(1);
+  expect(result.passed).toBe(2);
+  const conflicts: [string, string][] = [['test1-0', 'test2'], ['test1-0', 'test3'], ['test1-1', 'test2'], ['test1-1', 'test3']];
+  expect(conflictingOverlaps(result.outputLines, conflicts)).toEqual([]);
+});
