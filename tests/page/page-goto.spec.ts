@@ -87,6 +87,63 @@ it('should work with cross-process that fails before committing', async ({ page,
   expect(error instanceof Error).toBeTruthy();
 });
 
+it('should work with cross-process redirect chain back to the initial site', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43067' });
+  server.setRedirect('/redirect1', server.CROSS_PROCESS_PREFIX + '/redirect2');
+  server.setRedirect('/redirect2', server.EMPTY_PAGE);
+  // WebKit reuses the process of the previously visited site for the redirect.
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  await page.goto(server.PREFIX + '/title.html');
+
+  const failedRequests: string[] = [];
+  page.on('requestfailed', request => failedRequests.push(request.url()));
+  const response = await page.goto(server.PREFIX + '/redirect1');
+  expect(page.url()).toBe(server.EMPTY_PAGE);
+  const redirectChain: string[] = [];
+  for (let request = response.request(); request; request = request.redirectedFrom())
+    redirectChain.unshift(request.url());
+  expect(redirectChain).toEqual([server.PREFIX + '/redirect1', server.CROSS_PROCESS_PREFIX + '/redirect2', server.EMPTY_PAGE]);
+  expect((await response.request().redirectedFrom().response()).status()).toBe(302);
+  expect(failedRequests).toEqual([]);
+});
+
+it('should work with cross-process redirect chain to a third site', async ({ page, server, channel }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43067' });
+  it.skip(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
+  it.skip(channel === 'webkit-wsl', 'WebKit on WSL does not support IPv6: https://github.com/microsoft/WSL/issues/10803');
+
+  const finalUrl = `http://[::1]:${server.PORT}/empty.html`;
+  server.setRedirect('/redirect1', server.CROSS_PROCESS_PREFIX + '/redirect2');
+  server.setRedirect('/redirect2', finalUrl);
+  // WebKit reuses processes of the previously visited sites for the redirects.
+  await page.goto(finalUrl);
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  await page.goto(server.PREFIX + '/title.html');
+
+  const failedRequests: string[] = [];
+  page.on('requestfailed', request => failedRequests.push(request.url()));
+  const response = await page.goto(server.PREFIX + '/redirect1');
+  expect(page.url()).toBe(finalUrl);
+  const redirectChain: string[] = [];
+  for (let request = response.request(); request; request = request.redirectedFrom())
+    redirectChain.unshift(request.url());
+  expect(redirectChain).toEqual([server.PREFIX + '/redirect1', server.CROSS_PROCESS_PREFIX + '/redirect2', finalUrl]);
+  expect((await response.request().redirectedFrom().response()).status()).toBe(302);
+  expect(failedRequests).toEqual([]);
+});
+
+it('should fail request of a canceled cross-process navigation', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43067' });
+  server.setRoute('/hang.html', () => {});
+  await page.goto(server.EMPTY_PAGE);
+  const requestFailedPromise = page.waitForEvent('requestfailed');
+  const error = page.goto(server.CROSS_PROCESS_PREFIX + '/hang.html').catch(e => e);
+  await server.waitForRequest('/hang.html');
+  await page.goto(server.PREFIX + '/title.html');
+  expect((await requestFailedPromise).url()).toBe(server.CROSS_PROCESS_PREFIX + '/hang.html');
+  expect(await error).toBeInstanceOf(Error);
+});
+
 it('should work with Cross-Origin-Opener-Policy', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');

@@ -299,7 +299,9 @@ export class WVPage implements PageDelegate {
       await this._page.reportAsNew(undefined, pageOrError instanceof Page ? undefined : pageOrError);
       this._initializedPromise.resolve();
     } else {
-      assert(!this._provisionalPage);
+      // WebKit may create a new provisional target before destroying the one it replaces.
+      if (this._provisionalPage)
+        this._discardProvisionalPage();
       this._provisionalPage = new WVProvisionalPage(session, this);
       if (targetInfo.isPaused) {
         this._provisionalPage.initializationPromise.then(() => {
@@ -329,12 +331,17 @@ export class WVPage implements PageDelegate {
     this._setSession(newSession);
   }
 
+  private _discardProvisionalPage() {
+    const provisionalPage = this._provisionalPage!;
+    this._provisionalPage = null;
+    provisionalPage._session.dispose();
+    provisionalPage.dispose();
+  }
+
   private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
     const { targetId } = event;
     if (this._provisionalPage && this._provisionalPage._session.sessionId === targetId) {
-      this._provisionalPage._session.dispose();
-      this._provisionalPage.dispose();
-      this._provisionalPage = null;
+      this._discardProvisionalPage();
     } else if (this._session && this._session.sessionId === targetId) {
       this._session.dispose();
       eventsHelper.removeEventListeners(this._sessionListeners);

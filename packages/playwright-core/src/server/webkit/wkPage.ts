@@ -250,13 +250,18 @@ export class WKPage implements PageDelegate {
     this._setSession(newSession);
   }
 
+  private _discardProvisionalPage() {
+    const provisionalPage = this._provisionalPage!;
+    this._provisionalPage = null;
+    provisionalPage._session.dispose();
+    provisionalPage.dispose();
+    this._failOrphanedRequests(provisionalPage.coopNavigationRequest());
+  }
+
   private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
     const { targetId, crashed } = event;
     if (this._provisionalPage && this._provisionalPage._session.sessionId === targetId) {
-      this._maybeCancelCoopNavigationRequest(this._provisionalPage);
-      this._provisionalPage._session.dispose();
-      this._provisionalPage.dispose();
-      this._provisionalPage = null;
+      this._discardProvisionalPage();
     } else if (this._session.sessionId === targetId) {
       this._session.dispose();
       eventsHelper.removeEventListeners(this._sessionListeners);
@@ -355,7 +360,9 @@ export class WKPage implements PageDelegate {
       this._page.reportAsNew(this._opener?._page, pageOrError instanceof Page ? undefined : pageOrError);
     } else {
       assert(targetInfo.isProvisional);
-      assert(!this._provisionalPage);
+      // WebKit may create a new provisional target before destroying the one it replaces.
+      if (this._provisionalPage)
+        this._discardProvisionalPage();
       this._provisionalPage = new WKProvisionalPage(session, this);
       if (targetInfo.isPaused) {
         this._provisionalPage.initializationPromise.then(() => {
@@ -1030,19 +1037,22 @@ export class WKPage implements PageDelegate {
     return createHandle(context, result.object) as dom.ElementHandle;
   }
 
-  private _maybeCancelCoopNavigationRequest(provisionalPage: WKProvisionalPage) {
-    const navigationRequest = provisionalPage.coopNavigationRequest();
+  // WebKit stops reporting on requests of a provisional page once it is discarded, make sure
+  // they complete. Same for the request that the discarded page was continuing after COOP.
+  private _failOrphanedRequests(coopNavigationRequest?: network.Request) {
+    // Failing the pending navigation request would abort the navigation. It continues in the
+    // next provisional page.
+    const pendingRequest = this._page.mainFrame().pendingDocument()?.request;
     for (const [requestId, request] of this._requestIdToRequest) {
-      if (request.request === navigationRequest) {
-        // Make sure the request completes if the provisional navigation is canceled.
-        this._onLoadingFailed(provisionalPage._session, {
-          requestId: requestId,
-          errorText: 'Provisional navigation canceled.',
-          timestamp: request._timestamp,
-          canceled: true,
-        });
-        return;
-      }
+      const orphaned = request.session().isDisposed() && request.request !== pendingRequest;
+      if (!orphaned && request.request !== coopNavigationRequest)
+        continue;
+      this._onLoadingFailed(request.session(), {
+        requestId,
+        errorText: 'Provisional navigation canceled.',
+        timestamp: request._timestamp,
+        canceled: true,
+      });
     }
   }
 
