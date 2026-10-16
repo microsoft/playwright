@@ -17,6 +17,7 @@
 export { Browser } from './browser';
 export { BrowserContext } from './browserContext';
 export { findRepeatedSubsequencesForTest } from './callLog';
+export { HarBackend } from './harBackend';
 export { deviceDescriptors } from '@isomorphic/deviceDescriptors';
 export { DispatcherConnection, RootDispatcher, setMaxDispatchersForTest } from './dispatchers/dispatcher';
 export { RequestDispatcher, ResponseDispatcher } from './dispatchers/networkDispatchers';

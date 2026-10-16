@@ -18,6 +18,8 @@ import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
 import path from 'path';
 import { extractZip } from '../../packages/utils/third_party/extractZip';
+import type http from 'http';
+import type { BrowserContext, Page } from 'playwright-core';
 
 it('should context.routeFromHAR, matching the method and following redirects', async ({ context, asset }) => {
   const path = asset('har-fulfill.har');
@@ -394,6 +396,16 @@ it('should disambiguate by header', async ({ contextFactory, server }, testInfo)
   expect(await page2.evaluate(fetchFunction, 'baz2')).toBe('baz2');
   expect(await page2.evaluate(fetchFunction, 'baz3')).toBe('baz3');
   expect(await page2.evaluate(fetchFunction, 'baz4')).toBe('baz1');
+
+  // In recorded order a differing header value still picks the matching copy, and the last copy is reused once all are served.
+  const context3 = await contextFactory();
+  await context3.routeFromHAR(harPath, { replayOrder: 'recorded' });
+  const page3 = await context3.newPage();
+  await page3.goto(server.EMPTY_PAGE);
+  expect(await page3.evaluate(fetchFunction, 'baz2')).toBe('baz2');
+  expect(await page3.evaluate(fetchFunction, 'baz1')).toBe('baz1');
+  expect(await page3.evaluate(fetchFunction, 'baz3')).toBe('baz3');
+  expect(await page3.evaluate(fetchFunction, 'baz4')).toBe('baz3');
 });
 
 it('should update har.zip for context', async ({ contextFactory, server }, testInfo) => {
@@ -609,4 +621,353 @@ it('should ignore aborted requests', async ({ contextFactory, server }) => {
     const result = await Promise.race([evalPromise, page2.waitForTimeout(1000).then(() => 'timeout')]);
     expect(result).toBe('timeout');
   }
+});
+
+it('should serve repeated requests in recorded order', async ({ contextFactory, server }, testInfo) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18288' });
+  const items: string[] = [];
+  server.setRoute('/items', async (req, res) => {
+    if (req.method === 'PUT')
+      items.push((await req.postBody).toString());
+    res.end(JSON.stringify(items));
+  });
+  const readItems = () => fetch('/items').then(r => r.text());
+  const addItem = (item: string) => fetch('/items', { method: 'PUT', body: item }).then(r => r.text());
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  await context1.routeFromHAR(harPath, { update: true });
+  const page1 = await context1.newPage();
+  await page1.goto(server.EMPTY_PAGE);
+  expect(await page1.evaluate(readItems)).toBe('[]');
+  expect(await page1.evaluate(addItem, 'apple')).toBe('["apple"]');
+  expect(await page1.evaluate(readItems)).toBe('["apple"]');
+  await context1.close();
+
+  server.reset();
+  // By default every request gets the best match, which is the first recording.
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath);
+  const page2 = await context2.newPage();
+  await page2.goto(server.EMPTY_PAGE);
+  expect(await page2.evaluate(readItems)).toBe('[]');
+  expect(await page2.evaluate(addItem, 'apple')).toBe('["apple"]');
+  expect(await page2.evaluate(readItems)).toBe('[]');
+
+  const context3 = await contextFactory();
+  await context3.routeFromHAR(harPath, { replayOrder: 'recorded' });
+  const page3 = await context3.newPage();
+  await page3.goto(server.EMPTY_PAGE);
+  expect(await page3.evaluate(readItems)).toBe('[]');
+  expect(await page3.evaluate(addItem, 'apple')).toBe('["apple"]');
+  expect(await page3.evaluate(readItems)).toBe('["apple"]');
+  // Once every recording has been served, the last one is reused.
+  expect(await page3.evaluate(readItems)).toBe('["apple"]');
+});
+
+it('should keep recorded order across a redirected navigation', async ({ contextFactory, server }, testInfo) => {
+  let visits = 0;
+  server.setRedirect('/redirect', '/counter');
+  server.setRoute('/counter', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<div>${++visits}</div>`);
+  });
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  await page1.routeFromHAR(harPath, { update: true });
+  await page1.goto(server.PREFIX + '/redirect');
+  await expect(page1.locator('div')).toHaveText('1');
+  await page1.goto(server.PREFIX + '/counter');
+  await expect(page1.locator('div')).toHaveText('2');
+  await context1.close();
+
+  server.reset();
+  const context2 = await contextFactory();
+  const page2 = await context2.newPage();
+  await page2.routeFromHAR(harPath, { replayOrder: 'recorded' });
+  // The redirected navigation is restarted at /counter and must land on the entry recorded behind the redirect.
+  // Firefox records fewer request headers for that entry than for the direct navigation, so on Firefox this
+  // also pins that a copy is not preferred for recording more headers.
+  await page2.goto(server.PREFIX + '/redirect');
+  await expect(page2).toHaveURL(server.PREFIX + '/counter');
+  await expect(page2.locator('div')).toHaveText('1');
+  await page2.goto(server.PREFIX + '/counter');
+  await expect(page2.locator('div')).toHaveText('2');
+});
+
+it('should follow a redirect back to a url with a later copy', async ({ contextFactory, server }, testInfo) => {
+  server.setRoute('/app', (req, res) => {
+    if (!req.headers.cookie?.includes('session=1')) {
+      res.writeHead(302, { location: '/login' });
+      res.end();
+      return;
+    }
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<div>home</div>');
+  });
+  server.setRoute('/login', (req, res) => {
+    res.writeHead(302, { 'set-cookie': 'session=1', 'location': '/app' });
+    res.end();
+  });
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  await context1.routeFromHAR(harPath, { update: true });
+  const page1 = await context1.newPage();
+  await page1.goto(server.PREFIX + '/app');
+  await expect(page1.locator('div')).toHaveText('home');
+  await context1.close();
+
+  server.reset();
+  // The chain /app -> /login -> /app must end on the second copy of /app instead of reporting a redirect cycle.
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath);
+  const page2 = await context2.newPage();
+  await page2.goto(server.PREFIX + '/app');
+  await expect(page2).toHaveURL(server.PREFIX + '/app');
+  await expect(page2.locator('div')).toHaveText('home');
+});
+
+type ApiCall = { method: string, path: string, body?: string };
+
+async function callApi({ method, path, body }: ApiCall) {
+  const response = await fetch(path, { method, body, headers: body ? { 'content-type': 'text/plain' } : {} });
+  return `${response.status}:${await response.text()}`;
+}
+
+it('should replay a todo api flow in recorded order', async ({ contextFactory, server }, testInfo) => {
+  type Todo = { id: number, text: string, done: boolean };
+  let todos: Todo[] = [];
+  const json = (res: http.ServerResponse, value: unknown) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(value));
+  };
+  server.setRoute('/api/todos', async (req, res) => {
+    if (req.method === 'POST') {
+      todos.push({ id: todos.length + 1, text: (await req.postBody).toString(), done: false });
+      return json(res, { id: todos.length });
+    }
+    json(res, todos);
+  });
+  server.setRoute('/api/todos?done=true', (req, res) => json(res, todos.filter(t => t.done)));
+  server.setRoute('/api/todos/latest', (req, res) => {
+    res.writeHead(302, { location: '/api/todos/' + todos.length });
+    res.end();
+  });
+  server.setRoute('/api/todos/1', (req, res) => {
+    const todo = todos.find(t => t.id === 1)!;
+    if (req.method === 'PATCH')
+      todo.done = !todo.done;
+    json(res, todo);
+  });
+  server.setRoute('/api/todos/2', (req, res) => {
+    if (req.method === 'DELETE') {
+      todos = todos.filter(t => t.id !== 2);
+      res.writeHead(204);
+      return res.end();
+    }
+    json(res, todos.find(t => t.id === 2));
+  });
+
+  const flow: ApiCall[] = [
+    { method: 'GET', path: '/api/todos' },
+    { method: 'POST', path: '/api/todos', body: 'buy milk' },
+    { method: 'GET', path: '/api/todos/latest' },
+    { method: 'GET', path: '/api/todos' },
+    { method: 'POST', path: '/api/todos', body: 'walk dog' },
+    { method: 'GET', path: '/api/todos/latest' },
+    { method: 'GET', path: '/api/todos' },
+    { method: 'PATCH', path: '/api/todos/1' },
+    { method: 'GET', path: '/api/todos?done=true' },
+    { method: 'DELETE', path: '/api/todos/2' },
+    { method: 'GET', path: '/api/todos' },
+    { method: 'GET', path: '/api/todos' },
+  ];
+  const runFlow = async (page: Page) => {
+    const results: string[] = [];
+    for (const step of flow)
+      results.push(await page.evaluate(callApi, step));
+    return results;
+  };
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  await context1.routeFromHAR(harPath, { update: true });
+  const page1 = await context1.newPage();
+  await page1.goto(server.EMPTY_PAGE);
+  const recorded = await runFlow(page1);
+  await context1.close();
+  expect(recorded[0]).toBe('200:[]');
+  expect(recorded[2]).toBe('200:{"id":1,"text":"buy milk","done":false}');
+  expect(recorded[5]).toBe('200:{"id":2,"text":"walk dog","done":false}');
+  expect(recorded[8]).toBe('200:[{"id":1,"text":"buy milk","done":true}]');
+  expect(recorded[9]).toBe('204:');
+  expect(recorded[10]).toBe('200:[{"id":1,"text":"buy milk","done":true}]');
+
+  server.reset();
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath, { replayOrder: 'recorded' });
+  const page2 = await context2.newPage();
+  await page2.goto(server.EMPTY_PAGE);
+  expect(await runFlow(page2)).toEqual(recorded);
+  // Routing again from the same file starts the sequence over.
+  await context2.unrouteAll();
+  await context2.routeFromHAR(harPath, { replayOrder: 'recorded' });
+  expect(await page2.evaluate(callApi, flow[0])).toBe('200:[]');
+
+  // By default the list never changes and the latest pointer keeps redirecting to the first todo.
+  const context3 = await contextFactory();
+  await context3.routeFromHAR(harPath);
+  const page3 = await context3.newPage();
+  await page3.goto(server.EMPTY_PAGE);
+  const replayedByDefault = await runFlow(page3);
+  expect(replayedByDefault[3]).toBe('200:[]');
+  expect(replayedByDefault[5]).toBe(recorded[2]);
+});
+
+it('should replay polling and parallel requests in recorded order', async ({ contextFactory, server }, testInfo) => {
+  const statuses = ['queued', 'running', 'done'];
+  let polls = 0;
+  let stats = 0;
+  server.setRoute('/api/jobs', (req, res) => res.end('{"id":1}'));
+  server.setRoute('/api/jobs/1', (req, res) => res.end(statuses[Math.min(polls++, statuses.length - 1)]));
+  server.setRoute('/api/stats', (req, res) => res.end(String(++stats)));
+  const startJob = () => fetch('/api/jobs', { method: 'POST' }).then(r => r.text());
+  const poll = () => fetch('/api/jobs/1').then(r => r.text());
+  const pollUntilDone = async () => {
+    const seen: string[] = [];
+    while (seen.length < 10 && seen[seen.length - 1] !== 'done')
+      seen.push(await fetch('/api/jobs/1').then(r => r.text()));
+    return seen;
+  };
+  const fetchStats = (count: number) => Promise.all(Array.from({ length: count }, () => fetch('/api/stats').then(r => r.text())));
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  await context1.routeFromHAR(harPath, { update: true });
+  const page1 = await context1.newPage();
+  await page1.goto(server.EMPTY_PAGE);
+  expect(await page1.evaluate(startJob)).toBe('{"id":1}');
+  expect(await page1.evaluate(pollUntilDone)).toEqual(statuses);
+  expect(await page1.evaluate(poll)).toBe('done');
+  expect((await page1.evaluate(fetchStats, 3)).sort()).toEqual(['1', '2', '3']);
+  await context1.close();
+
+  server.reset();
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath, { replayOrder: 'recorded' });
+  const page2 = await context2.newPage();
+  await page2.goto(server.EMPTY_PAGE);
+  expect(await page2.evaluate(startJob)).toBe('{"id":1}');
+  expect(await page2.evaluate(pollUntilDone)).toEqual(statuses);
+  // Polling past the recording keeps the final state.
+  expect(await page2.evaluate(poll)).toBe('done');
+  expect(await page2.evaluate(poll)).toBe('done');
+  // Requests in flight at once each take their own copy, and pages of one context share the sequence.
+  const page3 = await context2.newPage();
+  await page3.goto(server.EMPTY_PAGE);
+  const [fromPage2, fromPage3] = await Promise.all([page2.evaluate(fetchStats, 2), page3.evaluate(fetchStats, 1)]);
+  expect([...fromPage2, ...fromPage3].sort()).toEqual(['1', '2', '3']);
+
+  // By default a poll never advances.
+  const context3 = await contextFactory();
+  await context3.routeFromHAR(harPath);
+  const page4 = await context3.newPage();
+  await page4.goto(server.EMPTY_PAGE);
+  expect(await page4.evaluate(pollUntilDone)).toEqual(Array(10).fill('queued'));
+});
+
+it('should replay a login flow with cookies in recorded order', async ({ contextFactory, server }, testInfo) => {
+  server.setRoute('/api/me', (req, res) => {
+    if (!req.headers.cookie?.includes('session=1')) {
+      res.writeHead(401);
+      return res.end('{"error":"unauthenticated"}');
+    }
+    res.end('{"user":"alex"}');
+  });
+  server.setRoute('/api/login', (req, res) => {
+    res.writeHead(200, { 'set-cookie': 'session=1; Path=/' });
+    res.end('{"ok":true}');
+  });
+  server.setRoute('/api/logout', (req, res) => {
+    res.writeHead(200, { 'set-cookie': 'session=; Path=/; Max-Age=0' });
+    res.end('{"ok":true}');
+  });
+  const flow: ApiCall[] = [
+    { method: 'GET', path: '/api/me' },
+    { method: 'POST', path: '/api/login' },
+    { method: 'GET', path: '/api/me' },
+    { method: 'POST', path: '/api/logout' },
+    { method: 'GET', path: '/api/me' },
+  ];
+  const expected = ['401:{"error":"unauthenticated"}', '200:{"ok":true}', '200:{"user":"alex"}', '200:{"ok":true}', '401:{"error":"unauthenticated"}'];
+  const sessionCookies = async (context: BrowserContext) => (await context.cookies()).filter(c => c.name === 'session').map(c => c.value);
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  await page1.routeFromHAR(harPath, { update: true });
+  await page1.goto(server.EMPTY_PAGE);
+  for (let i = 0; i < flow.length; i++)
+    expect(await page1.evaluate(callApi, flow[i])).toBe(expected[i]);
+  await context1.close();
+
+  server.reset();
+  const context2 = await contextFactory();
+  const page2 = await context2.newPage();
+  await page2.routeFromHAR(harPath, { replayOrder: 'recorded' });
+  await page2.goto(server.EMPTY_PAGE);
+  expect(await page2.evaluate(callApi, flow[0])).toBe(expected[0]);
+  expect(await page2.evaluate(callApi, flow[1])).toBe(expected[1]);
+  // The replayed set-cookie header reaches the browser, so the next request carries the session.
+  expect(await sessionCookies(context2)).toEqual(['1']);
+  expect(await page2.evaluate(callApi, flow[2])).toBe(expected[2]);
+  expect(await page2.evaluate(callApi, flow[3])).toBe(expected[3]);
+  expect(await sessionCookies(context2)).toEqual([]);
+  expect(await page2.evaluate(callApi, flow[4])).toBe(expected[4]);
+});
+
+it('should keep separate recorded orders for html and json copies of one url', async ({ contextFactory, server }, testInfo) => {
+  const todos: string[] = [];
+  server.setRoute('/todos', async (req, res) => {
+    if (req.method === 'POST')
+      todos.push((await req.postBody).toString());
+    if (req.headers.accept?.includes('application/json')) {
+      res.setHeader('Content-Type', 'application/json');
+      return res.end(JSON.stringify(todos));
+    }
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<!doctype html><h1>${todos.length} todos</h1>`);
+  });
+  const fetchJson = () => fetch('/todos', { headers: { accept: 'application/json' } }).then(r => r.text());
+  const addTodo = (text: string) => fetch('/todos', { method: 'POST', body: text }).then(r => r.text());
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  await page1.routeFromHAR(harPath, { update: true });
+  await page1.goto(server.PREFIX + '/todos');
+  await expect(page1.locator('h1')).toHaveText('0 todos');
+  expect(await page1.evaluate(fetchJson)).toBe('[]');
+  await page1.evaluate(addTodo, 'buy milk');
+  await page1.reload();
+  await expect(page1.locator('h1')).toHaveText('1 todos');
+  expect(await page1.evaluate(fetchJson)).toBe('["buy milk"]');
+  await context1.close();
+
+  server.reset();
+  const context2 = await contextFactory();
+  const page2 = await context2.newPage();
+  await page2.routeFromHAR(harPath, { replayOrder: 'recorded' });
+  // Navigations consume the html copies in order and then keep the last one; the json copies stay untouched.
+  await page2.goto(server.PREFIX + '/todos');
+  await expect(page2.locator('h1')).toHaveText('0 todos');
+  await page2.reload();
+  await expect(page2.locator('h1')).toHaveText('1 todos');
+  await page2.reload();
+  await expect(page2.locator('h1')).toHaveText('1 todos');
+  expect(await page2.evaluate(fetchJson)).toBe('[]');
+  expect(await page2.evaluate(fetchJson)).toBe('["buy milk"]');
 });

@@ -3958,6 +3958,16 @@ Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerec
 
 Defaults to abort.
 
+### option: Page.routeFromHAR.replayOrder
+* since: v1.65
+- `replayOrder` "HarReplayOrder" <"any"|"recorded">
+
+How a response is chosen when several entries in the HAR file match a request.
+* If set to 'any', every request is answered with the matching entry that shares the most request headers. Repeated requests with the same headers get the same response, even when later entries recorded a different one.
+* If set to 'recorded', repeated requests are answered with the matching entries in the order they were recorded, so a request made after a change on the server gets the response recorded after that change. Once every matching entry has been served, the most recent best match is reused.
+
+Defaults to any.
+
 ### option: Page.routeFromHAR.update
 * since: v1.23
 - `update` ?<boolean>
