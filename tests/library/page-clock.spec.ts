@@ -144,13 +144,18 @@ it.describe('runFor', () => {
     expect(calls.length).toBe(10);
   });
 
-  it('passes 2 hours, 34 minutes and 10 seconds', async ({ page, calls }) => {
+  it('passes 2 hours, 34 minutes and 10 seconds', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43452' },
+  }, async ({ page, calls }) => {
     await page.evaluate(async () => {
       setInterval(window.stub, 10000);
     });
 
+    const start = performance.now();
     await page.clock.runFor('02:34:10');
     expect(calls.length).toBe(925);
+    // Nested setTimeout(fn, 0) is clamped to 4ms, so firing 925 timers used to take over 4 seconds.
+    expect(performance.now() - start).toBeLessThan(2000);
   });
 
   it('throws for invalid format', async ({ page, calls }) => {
