@@ -146,16 +146,20 @@ it.describe('runFor', () => {
 
   it('passes 2 hours, 34 minutes and 10 seconds', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43452' },
-  }, async ({ page, calls }) => {
+  }, async ({ page }) => {
+    // Count in the page: window.stub is an exposed binding, and its round trip per call
+    // dominates the real time on slow bots.
     await page.evaluate(async () => {
-      setInterval(window.stub, 10000);
+      window['fired'] = 0;
+      setInterval(() => window['fired']++, 10000);
     });
 
     const start = performance.now();
     await page.clock.runFor('02:34:10');
-    expect(calls.length).toBe(925);
-    // Nested setTimeout(fn, 0) is clamped to 4ms, so firing 925 timers used to take over 4 seconds.
-    expect(performance.now() - start).toBeLessThan(2000);
+    expect(await page.evaluate(() => window['fired'])).toBe(925);
+    // Each fired timer used to wait for a nested setTimeout(fn, 0), clamped to 4ms,
+    // so 925 timers took at least 3.7 seconds.
+    expect(performance.now() - start).toBeLessThan(3000);
   });
 
   it('throws for invalid format', async ({ page, calls }) => {
