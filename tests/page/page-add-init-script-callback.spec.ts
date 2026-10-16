@@ -16,7 +16,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should drop functions without the exposeFunctions option', async ({ page, server }) => {
+it('IS-012 should drop functions without the exposeFunctions option', async ({ page, server }) => {
   await page.addInitScript(({ cb }) => {
     (window as any).cbType = typeof cb;
   }, { cb: () => {} });
@@ -24,12 +24,12 @@ it('should drop functions without the exposeFunctions option', async ({ page, se
   expect(await page.evaluate(() => (window as any).cbType)).toBe('undefined');
 });
 
-it('should throw when the script is not a function', async ({ page }) => {
+it('IS-013 should throw when the script is not a function', async ({ page }) => {
   await expect(page.addInitScript({ content: 'window.foo = 1;' }, undefined, { exposeFunctions: true }))
       .rejects.toThrow('Passing functions requires the init script to be a function');
 });
 
-it('should call a function passed as an argument', async ({ page, server }) => {
+it('IS-014 should call a function passed as an argument', async ({ page, server }) => {
   const received: number[] = [];
   await page.addInitScript(async ({ cb }) => {
     await cb(1);
@@ -39,7 +39,7 @@ it('should call a function passed as an argument', async ({ page, server }) => {
   await expect.poll(() => received).toEqual([1, 2]);
 });
 
-it('should accept a function as the whole argument', async ({ page, server }) => {
+it('IS-015 should accept a function as the whole argument', async ({ page, server }) => {
   await page.addInitScript(async cb => {
     (window as any).result = await cb('a');
   }, async (s: string) => s + 'b', { exposeFunctions: true });
@@ -47,7 +47,7 @@ it('should accept a function as the whole argument', async ({ page, server }) =>
   await expect.poll(() => page.evaluate(() => (window as any).result)).toBe('ab');
 });
 
-it('should pass arguments to the callback', async ({ page, server }) => {
+it('IS-016 should pass arguments to the callback', async ({ page, server }) => {
   const argsPromise = new Promise<any[]>(resolve => {
     void page.addInitScript(({ cb }) => cb(1, 'two', { three: 3 }, [4]), {
       cb: (...a: any[]) => resolve(a),
@@ -56,7 +56,7 @@ it('should pass arguments to the callback', async ({ page, server }) => {
   expect(await argsPromise).toEqual([1, 'two', { three: 3 }, [4]]);
 });
 
-it('should return the callback result to the page', async ({ page, server }) => {
+it('IS-017 should return the callback result to the page', async ({ page, server }) => {
   await page.addInitScript(async ({ double }) => {
     (window as any).result = await double(21);
   }, { double: async (n: number) => n * 2 }, { exposeFunctions: true });
@@ -64,7 +64,7 @@ it('should return the callback result to the page', async ({ page, server }) => 
   await expect.poll(() => page.evaluate(() => (window as any).result)).toBe(42);
 });
 
-it('should propagate callback errors to the page', async ({ page, server }) => {
+it('IS-018 should propagate callback errors to the page', async ({ page, server }) => {
   await page.addInitScript(async ({ cb }) => {
     try {
       await cb();
@@ -77,7 +77,7 @@ it('should propagate callback errors to the page', async ({ page, server }) => {
   await expect.poll(() => page.evaluate(() => (window as any).result)).toContain('boom');
 });
 
-it('should support multiple callbacks', async ({ page, server }) => {
+it('IS-019 should support multiple callbacks', async ({ page, server }) => {
   await page.addInitScript(async ({ add, mul }) => {
     (window as any).result = (await add(2, 3)) + (await mul(2, 3));
   }, {
@@ -88,7 +88,7 @@ it('should support multiple callbacks', async ({ page, server }) => {
   await expect.poll(() => page.evaluate(() => (window as any).result)).toBe(11);
 });
 
-it('should survive a navigation and keep working', async ({ page, server }) => {
+it('IS-020 should survive a navigation and keep working', async ({ page, server }) => {
   const received: number[] = [];
   await page.addInitScript(({ cb }) => {
     (window as any).cb = cb;
@@ -100,7 +100,7 @@ it('should survive a navigation and keep working', async ({ page, server }) => {
   expect(received).toEqual([1, 2]);
 });
 
-it('should work in a child frame', async ({ page, server }) => {
+it('IS-021 should work in a child frame', async ({ page, server }) => {
   const received: number[] = [];
   await page.addInitScript(async ({ cb }) => {
     await cb(42);
@@ -110,7 +110,7 @@ it('should work in a child frame', async ({ page, server }) => {
   await expect.poll(() => received).toEqual([42, 42]);
 });
 
-it('should not register the callback on the global object', async ({ page, server }) => {
+it('IS-022 should not register the callback on the global object', async ({ page, server }) => {
   await page.addInitScript(async ({ cb }) => {
     await cb();
     (window as any).result = Object.getOwnPropertyNames(globalThis).filter(name => name.startsWith('__pw_fn_'));
@@ -119,7 +119,7 @@ it('should not register the callback on the global object', async ({ page, serve
   await expect.poll(() => page.evaluate(() => (window as any).result)).toEqual([]);
 });
 
-it('should remove exposed functions after dispose', async ({ page, server }) => {
+it('IS-023 should remove exposed functions after dispose', async ({ page, server }) => {
   const received: number[] = [];
   const disposable = await page.addInitScript(({ cb }) => {
     (window as any).cb = cb;

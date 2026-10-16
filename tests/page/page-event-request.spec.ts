@@ -18,14 +18,14 @@
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 
-it('should fire for navigation requests', async ({ page, server }) => {
+it('NE-091 should fire for navigation requests', async ({ page, server }) => {
   const requests = [];
   page.on('request', request => requests.push(request));
   await page.goto(server.EMPTY_PAGE);
   expect(requests.length).toBe(1);
 });
 
-it('should fire for iframes', async ({ page, server }) => {
+it('NE-092 should fire for iframes', async ({ page, server }) => {
   const requests = [];
   page.on('request', request => requests.push(request));
   await page.goto(server.EMPTY_PAGE);
@@ -33,7 +33,7 @@ it('should fire for iframes', async ({ page, server }) => {
   expect(requests.length).toBe(2);
 });
 
-it('should fire for fetches', async ({ page, server }) => {
+it('NE-093 should fire for fetches', async ({ page, server }) => {
   const requests = [];
   page.on('request', request => requests.push(request));
   await page.goto(server.EMPTY_PAGE);
@@ -41,7 +41,7 @@ it('should fire for fetches', async ({ page, server }) => {
   expect(requests.length).toBe(2);
 });
 
-it('should fire for fetches with keepalive: true', {
+it('NE-094 should fire for fetches with keepalive: true', {
   annotation: {
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/34497'
@@ -54,7 +54,7 @@ it('should fire for fetches with keepalive: true', {
   expect(requests.length).toBe(2);
 });
 
-it('should report requests and responses handled by service worker', async ({ page, server, isAndroid, isElectron }) => {
+it('NE-095 should report requests and responses handled by service worker', async ({ page, server, isAndroid, isElectron }) => {
   it.fixme(isAndroid);
   it.fixme(isElectron);
 
@@ -82,7 +82,7 @@ it('should report requests and responses handled by service worker', async ({ pa
   expect(await failedRequest.response()).toBe(null);
 });
 
-it('should report requests and responses handled by service worker with routing', async ({ page, server, isAndroid, isElectron, mode, browserName, platform }) => {
+it('NE-096 should report requests and responses handled by service worker with routing', async ({ page, server, isAndroid, isElectron, mode, browserName, platform }) => {
   it.fixme(isAndroid);
   it.fixme(isElectron);
 
@@ -119,7 +119,7 @@ it('should report requests and responses handled by service worker with routing'
   expect(interceptedUrls).toEqual(expectedUrls);
 });
 
-it('should report navigation requests and responses handled by service worker', async ({ page, server, isAndroid, browserName }) => {
+it('NE-097 should report navigation requests and responses handled by service worker', async ({ page, server, isAndroid, browserName }) => {
   it.fixme(isAndroid);
 
   await page.goto(server.PREFIX + '/serviceworkers/stub/sw.html');
@@ -147,7 +147,7 @@ it('should report navigation requests and responses handled by service worker', 
   }
 });
 
-it('should report navigation requests and responses handled by service worker with routing', async ({ page, server, isAndroid, browserName }) => {
+it('NE-098 should report navigation requests and responses handled by service worker with routing', async ({ page, server, isAndroid, browserName }) => {
   it.fixme(isAndroid);
 
   await page.route('**/*', route => route.continue());
@@ -178,7 +178,7 @@ it('should report navigation requests and responses handled by service worker wi
   }
 });
 
-it('should return response body when Cross-Origin-Opener-Policy is set', async ({ page, server, browserName }) => {
+it('NE-099 should return response body when Cross-Origin-Opener-Policy is set', async ({ page, server, browserName }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
     // Note: without 'onload', Firefox sometimes does not fire the load event
@@ -195,7 +195,7 @@ it('should return response body when Cross-Origin-Opener-Policy is set', async (
   expect(await response.text()).toContain('Hello there!');
 });
 
-it('should fire requestfailed when intercepting race', async ({ page, server, browserName }) => {
+it('NE-100 should fire requestfailed when intercepting race', async ({ page, server, browserName }) => {
   it.skip(browserName !== 'chromium', 'This test is specifically testing Chromium race');
 
   const promise = new Promise<void>(resolve => {
@@ -244,7 +244,7 @@ it('should fire requestfailed when intercepting race', async ({ page, server, br
   await promise;
 });
 
-it('main resource xhr should have type xhr', async ({ page, server }) => {
+it('NE-101 main resource xhr should have type xhr', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22812' });
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
@@ -259,7 +259,7 @@ it('main resource xhr should have type xhr', async ({ page, server }) => {
   expect(request.resourceType()).toBe('xhr');
 });
 
-it('should finish 204 request', {
+it('NE-102 should finish 204 request', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32752' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42786' },
@@ -278,7 +278,7 @@ it('should finish 204 request', {
   expect(await reqPromise).toBe('requestfinished');
 });
 
-it('should fail 204 navigation request', {
+it('NE-103 should fail 204 navigation request', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43279' },
 }, async ({ page, server }) => {
   server.setRoute('/204', (req, res) => {
@@ -295,7 +295,7 @@ it('should fail 204 navigation request', {
   expect(await reqPromise).toBe('requestfailed');
 });
 
-it('<picture> resource should have type image', async ({ page }) => {
+it('NE-104 <picture> resource should have type image', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33148' });
   const [request] = await Promise.all([
     page.waitForEvent('request'),
@@ -313,7 +313,7 @@ it('<picture> resource should have type image', async ({ page }) => {
 // Chromium: requestWillBeSentEvent.frameId is undefined for OPTIONS.
 // WebKit: no requestWillBeSent event in the protocol for OPTIONS (at least on Mac).
 // Firefox: OPTIONS request can be dispatched.
-it('should not expose preflight OPTIONS request', {
+it('NE-105 should not expose preflight OPTIONS request', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36311' }
 }, async ({ page, server, browserName }) => {
   const serverRequests = [];
@@ -356,7 +356,7 @@ it('should not expose preflight OPTIONS request', {
   ]);
 });
 
-it('should not expose preflight OPTIONS request with network interception', {
+it('NE-106 should not expose preflight OPTIONS request with network interception', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36311' }
 }, async ({ page, server, browserName, isBidi }) => {
   const serverRequests = [];
@@ -400,7 +400,7 @@ it('should not expose preflight OPTIONS request with network interception', {
   ]);
 });
 
-it('should return last requests', async ({ page, server }) => {
+it('NE-107 should return last requests', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/title.html');
   for (let i = 0; i < 200; ++i)
     server.setRoute('/fetch?' + i, (req, res) => res.end('url:' + server.PREFIX + req.url));

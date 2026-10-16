@@ -23,7 +23,7 @@
 import { test, expect } from '@playwright/test';
 import { EventEmitter } from './utils';
 
-test('listeners empty check', () => {
+test('EE-013 listeners empty check', () => {
   const e = new EventEmitter();
   let fl;  // foo listeners
 

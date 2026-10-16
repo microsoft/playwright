@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work @smoke', async ({ page }) => {
+it('SE-028 should work @smoke', async ({ page }) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
   expect(await page.$eval(`text=ya`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$eval(`text="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
@@ -115,7 +115,7 @@ it('should work @smoke', async ({ page }) => {
   expect(await page.$eval(`text=/let\\'s/i >> span`, e => e.outerHTML)).toBe('<span>hello</span>');
 });
 
-it('should work with :text', async ({ page }) => {
+it('SE-029 should work with :text', async ({ page }) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nHELLO   \n world  </div>`);
   expect(await page.$eval(`:text("ya")`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$eval(`:text-is("ya")`, e => e.outerHTML)).toBe('<div>ya</div>');
@@ -136,7 +136,7 @@ it('should work with :text', async ({ page }) => {
   expect(error2.message).toContain(`"text" engine expects a single string`);
 });
 
-it('should support empty string', async ({ page }) => {
+it('SE-030 should support empty string', async ({ page }) => {
   await page.setContent(`<div></div><div>ya</div><div>\nHELLO   \n world  </div>`);
   expect(await page.$eval(`div:text-is("")`, e => e.outerHTML)).toBe('<div></div>');
   expect(await page.$$eval(`div:text-is("")`, els => els.length)).toBe(1);
@@ -150,7 +150,7 @@ it('should support empty string', async ({ page }) => {
   expect(await page.$$eval(`div:text-matches("")`, els => els.length)).toBe(3);
 });
 
-it('should work across nodes', async ({ page }) => {
+it('SE-031 should work across nodes', async ({ page }) => {
   await page.setContent(`<div id=target1>Hello<i>,</i> <span id=target2>world</span><b>!</b></div>`);
 
   expect(await page.$eval(`:text("Hello, world!")`, e => e.id)).toBe('target1');
@@ -183,7 +183,7 @@ it('should work across nodes', async ({ page }) => {
   expect(await page.$$eval(`text=/world/`, els => els.length)).toBe(1);
 });
 
-it('text-is() should ignore comments', {
+it('SE-032 text-is() should ignore comments', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33976' }
 }, async ({ page }) => {
   await page.setContent(`<div id=me>hel<!-- comment -->lo
@@ -194,7 +194,7 @@ it('text-is() should ignore comments', {
   expect(await page.getByText('hello world', { exact: true }).getAttribute('id')).toBe('me');
 });
 
-it('should work with text nodes in quoted mode', async ({ page }) => {
+it('SE-033 should work with text nodes in quoted mode', async ({ page }) => {
   await page.setContent(`<div id=target1>Hello<span id=target2>wo  rld  </span>  Hi again  </div>`);
   expect(await page.$eval(`text="Hello"`, e => e.id)).toBe('target1');
   expect(await page.$eval(`text="Hi again"`, e => e.id)).toBe('target1');
@@ -208,7 +208,7 @@ it('should work with text nodes in quoted mode', async ({ page }) => {
   expect(await page.$eval(`text=hi again`, e => e.id)).toBe('target1');
 });
 
-it('should clear caches', async ({ page }) => {
+it('SE-034 should clear caches', async ({ page }) => {
   await page.setContent(`<div id=target1>text</div><div id=target2>text</div>`);
   const div = await page.$('#target1');
 
@@ -233,7 +233,7 @@ it('should clear caches', async ({ page }) => {
   expect(await page.$$eval(`:text("text")`, els => els.length)).toBe(1);
 });
 
-it('should work with :has-text', async ({ page }) => {
+it('SE-035 should work with :has-text', async ({ page }) => {
   await page.setContent(`
     <input id=input2>
     <div id=div1>
@@ -266,7 +266,7 @@ it('should work with :has-text', async ({ page }) => {
   expect(error2.message).toContain(`"has-text" engine expects a single string`);
 });
 
-it('should work with large DOM', async ({ page }) => {
+it('SE-036 should work with large DOM', async ({ page }) => {
   await page.evaluate(() => {
     let id = 0;
     const next = (tag: string) => {
@@ -323,20 +323,20 @@ it('should work with large DOM', async ({ page }) => {
   }
 });
 
-it('should be case sensitive if quotes are specified', async ({ page }) => {
+it('SE-037 should be case sensitive if quotes are specified', async ({ page }) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
   expect(await page.$eval(`text=yA`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$(`text="yA"`)).toBe(null);
   expect(await page.$(`text= "ya"`)).toBe(null);
 });
 
-it('should search for a substring without quotes', async ({ page }) => {
+it('SE-038 should search for a substring without quotes', async ({ page }) => {
   await page.setContent(`<div>textwithsubstring</div>`);
   expect(await page.$eval(`text=with`, e => e.outerHTML)).toBe('<div>textwithsubstring</div>');
   expect(await page.$(`text="with"`)).toBe(null);
 });
 
-it('should skip head, script and style', async ({ page }) => {
+it('SE-039 should skip head, script and style', async ({ page }) => {
   await page.setContent(`
     <head>
       <title>title</title>
@@ -362,14 +362,14 @@ it('should skip head, script and style', async ({ page }) => {
   }
 });
 
-it('should match input[type=button|submit|reset]', async ({ page }) => {
+it('SE-040 should match input[type=button|submit|reset]', async ({ page }) => {
   await page.setContent(`<input type="submit" value="hello"><input type="button" value="world"><input type="reset" value="clear">`);
   expect(await page.$eval(`text=hello`, e => e.outerHTML)).toBe('<input type="submit" value="hello">');
   expect(await page.$eval(`text=world`, e => e.outerHTML)).toBe('<input type="button" value="world">');
   expect(await page.$eval(`text=clear`, e => e.outerHTML)).toBe('<input type="reset" value="clear">');
 });
 
-it('should work for open shadow roots', async ({ page, server }) => {
+it('SE-041 should work for open shadow roots', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$eval(`text=root1`, e => e.textContent)).toBe('Hello from root1');
   expect(await page.$eval(`text=root2`, e => e.textContent)).toBe('Hello from root2');
@@ -381,7 +381,7 @@ it('should work for open shadow roots', async ({ page, server }) => {
   expect(await page.$(`text:light=root3`)).toBe(null);
 });
 
-it('should prioritize light dom over shadow dom in the same parent', async ({ page, server }) => {
+it('SE-042 should prioritize light dom over shadow dom in the same parent', async ({ page, server }) => {
   await page.evaluate(() => {
     const div = document.createElement('div');
     document.body.appendChild(div);
@@ -398,7 +398,7 @@ it('should prioritize light dom over shadow dom in the same parent', async ({ pa
   expect(await page.$eval(`div >> text=Hello`, e => e.textContent)).toBe('Hello from light');
 });
 
-it('should waitForSelector with distributed elements', async ({ page, server }) => {
+it('SE-043 should waitForSelector with distributed elements', async ({ page, server }) => {
   const promise = page.waitForSelector(`div >> text=Hello`);
   await page.evaluate(() => {
     const div = document.createElement('div');
@@ -418,7 +418,7 @@ it('should waitForSelector with distributed elements', async ({ page, server }) 
   expect(await handle.textContent()).toBe('Hello from light');
 });
 
-it('should match root after >>', async ({ page, server }) => {
+it('SE-044 should match root after >>', async ({ page, server }) => {
   await page.setContent('<section>test</section>');
   const element = await page.$('css=section >> text=test');
   expect(element).toBeTruthy();
@@ -426,19 +426,19 @@ it('should match root after >>', async ({ page, server }) => {
   expect(element2).toBeTruthy();
 });
 
-it('should match root after >> with *', async ({ page }) => {
+it('SE-045 should match root after >> with *', async ({ page }) => {
   await page.setContent(`<button> hello world </button> <button> hellow <span> world </span> </button>`);
   expect(await page.$$eval('*css=button >> text=hello >> text=world', els => els.length)).toBe(2);
 });
 
-it('should work with leading and trailing spaces', async ({ page }) => {
+it('SE-046 should work with leading and trailing spaces', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10997' });
   await page.setContent(`<button> Add widget </button>`);
   await expect(page.locator('text=Add widget')).toBeVisible();
   await expect(page.locator('text= Add widget ')).toBeVisible();
 });
 
-it('should work with unpaired quotes when not at the start', async ({ page }) => {
+it('SE-047 should work with unpaired quotes when not at the start', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12719' });
   await page.setContent(`
     <div>hello"world<span>yay</span></div>
@@ -465,7 +465,7 @@ it('should work with unpaired quotes when not at the start', async ({ page }) =>
   expect(await page.$(`text=\` >> span`)).toBe(null);
 });
 
-it('should work with paired quotes in the middle of selector', async ({ page }) => {
+it('SE-048 should work with paired quotes in the middle of selector', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16858' });
   await page.setContent(`<div>pattern "^-?\\d+$"</div>`);
   expect(await page.locator(`div >> text=pattern "^-?\\d+$`).isVisible());
@@ -478,7 +478,7 @@ it('should work with paired quotes in the middle of selector', async ({ page }) 
   await expect(page.locator(`div >> text='pattern "^-?\\\\d+$"'`)).toBeVisible();
 });
 
-it('hasText and internal:text should match full node text in strict mode', async ({ page }) => {
+it('SE-049 hasText and internal:text should match full node text in strict mode', async ({ page }) => {
   await page.setContent(`
     <div id=div1>hello<span>world</span></div>
     <div id=div2>hello</div>

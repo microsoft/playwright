@@ -18,7 +18,7 @@
 import { browserTest as it, expect } from '../config/browserTest';
 import { attachFrame } from '../config/utils';
 
-it('should not be visible in context.pages', async ({ contextFactory }) => {
+it('BC-051 should not be visible in context.pages', async ({ contextFactory }) => {
   const context = await contextFactory();
   const page = await context.newPage();
   expect(context.pages()).toContain(page);
@@ -26,13 +26,13 @@ it('should not be visible in context.pages', async ({ contextFactory }) => {
   expect(context.pages()).not.toContain(page);
 });
 
-it('page.context should return the correct instance', async function({ contextFactory }) {
+it('BC-052 page.context should return the correct instance', async function({ contextFactory }) {
   const context = await contextFactory();
   const page = await context.newPage();
   expect(page.context()).toBe(context);
 });
 
-it('frame.focus should work multiple times', async ({ contextFactory }) => {
+it('BC-053 frame.focus should work multiple times', async ({ contextFactory }) => {
   const context = await contextFactory();
   const page1 = await context.newPage();
   const page2 = await context.newPage();
@@ -43,7 +43,7 @@ it('frame.focus should work multiple times', async ({ contextFactory }) => {
   }
 });
 
-it('should click with disabled javascript', async ({ browser, server }) => {
+it('BC-054 should click with disabled javascript', async ({ browser, server }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/wrappedlink.html');
@@ -55,7 +55,7 @@ it('should click with disabled javascript', async ({ browser, server }) => {
   await context.close();
 });
 
-it('should not hang with touch-enabled viewports', async ({ browser, playwright }) => {
+it('BC-055 should not hang with touch-enabled viewports', async ({ browser, playwright }) => {
   // @see https://github.com/GoogleChrome/puppeteer/issues/161
   const { viewport, hasTouch } = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ viewport, hasTouch });
@@ -66,7 +66,7 @@ it('should not hang with touch-enabled viewports', async ({ browser, playwright 
   await context.close();
 });
 
-it('should click the button with deviceScaleFactor set', async ({ browser, server }) => {
+it('BC-056 should click the button with deviceScaleFactor set', async ({ browser, server }) => {
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, deviceScaleFactor: 5 });
   const page = await context.newPage();
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(5);
@@ -79,7 +79,7 @@ it('should click the button with deviceScaleFactor set', async ({ browser, serve
   await context.close();
 });
 
-it('should click the button with offset with page scale', async ({ browser, server, browserName, isBidi }) => {
+it('BC-057 should click the button with offset with page scale', async ({ browser, server, browserName, isBidi }) => {
   it.skip(browserName === 'firefox' && !isBidi);
 
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
@@ -102,7 +102,7 @@ it('should click the button with offset with page scale', async ({ browser, serv
   await context.close();
 });
 
-it('should return bounding box with page scale', async ({ browser, server, browserName, isBidi }) => {
+it('BC-058 should return bounding box with page scale', async ({ browser, server, browserName, isBidi }) => {
   it.skip(browserName === 'firefox' && !isBidi);
 
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
@@ -125,7 +125,7 @@ it('should return bounding box with page scale', async ({ browser, server, brows
   await context.close();
 });
 
-it('should not leak listeners during navigation of 20 pages', async ({ contextFactory, server }) => {
+it('BC-059 should not leak listeners during navigation of 20 pages', async ({ contextFactory, server }) => {
   it.slow(true, 'We open 20 pages here!');
 
   const context = await contextFactory();
@@ -139,7 +139,7 @@ it('should not leak listeners during navigation of 20 pages', async ({ contextFa
   expect(warning).toBe(null);
 });
 
-it('should close page while a reload is committing', async ({ context, browserName }) => {
+it('BC-060 should close page while a reload is committing', async ({ context, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42068' });
   it.info().annotations.push({ type: 'issue', description: 'https://issues.chromium.org/issues/536385539' });
   it.fixme(browserName === 'chromium', 'Chromium loses the close when the reload commits into a new RenderFrameHost; fix is not rolled yet');
@@ -156,7 +156,7 @@ it('should close page while a reload is committing', async ({ context, browserNa
   }
 });
 
-it('should keep selection in multiple pages', async ({ context }) => {
+it('BC-061 should keep selection in multiple pages', async ({ context }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27475' });
   const page1 = await context.newPage();
   const page2 = await context.newPage();

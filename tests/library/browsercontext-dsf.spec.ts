@@ -16,7 +16,7 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 
-it('should fetch lodpi assets @smoke', async ({ contextFactory, server }) => {
+it('DV-009 should fetch lodpi assets @smoke', async ({ contextFactory, server }) => {
   const context = await contextFactory({
     deviceScaleFactor: 1
   });
@@ -28,7 +28,7 @@ it('should fetch lodpi assets @smoke', async ({ contextFactory, server }) => {
   expect(request.url()).toContain('image1x');
 });
 
-it('should fetch hidpi assets', async ({ contextFactory, server }) => {
+it('DV-010 should fetch hidpi assets', async ({ contextFactory, server }) => {
   const context = await contextFactory({
     deviceScaleFactor: 2
   });

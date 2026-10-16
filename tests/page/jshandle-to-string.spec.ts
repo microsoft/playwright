@@ -17,14 +17,14 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work for primitives', async ({ page }) => {
+it('JH-018 should work for primitives', async ({ page }) => {
   const numberHandle = await page.evaluateHandle(() => 2);
   expect(numberHandle.toString()).toBe('2');
   const stringHandle = await page.evaluateHandle(() => 'a');
   expect(stringHandle.toString()).toBe('a');
 });
 
-it('should work for complicated objects', async ({ page, browserName, channel }) => {
+it('JH-019 should work for complicated objects', async ({ page, browserName, channel }) => {
   const aHandle = await page.evaluateHandle(() => window);
   if (browserName !== 'firefox' || channel?.startsWith('moz-firefox'))
     expect(aHandle.toString()).toBe('Window');
@@ -32,7 +32,7 @@ it('should work for complicated objects', async ({ page, browserName, channel })
     expect(aHandle.toString()).toBe('JSHandle@object');
 });
 
-it('should beautifully render sparse arrays', async ({ page, browserName }) => {
+it('JH-020 should beautifully render sparse arrays', async ({ page, browserName }) => {
   const [msg] = await Promise.all([
     page.waitForEvent('console'),
     page.evaluateHandle(() => {
@@ -49,14 +49,14 @@ it('should beautifully render sparse arrays', async ({ page, browserName }) => {
     expect(msg.text()).toBe('[empty, 1, empty x 8, 2, empty x 89, 3]');
 });
 
-it('should work for promises', async ({ page }) => {
+it('JH-021 should work for promises', async ({ page }) => {
   // wrap the promise in an object, otherwise we will await.
   const wrapperHandle = await page.evaluateHandle(() => ({ b: Promise.resolve(123) }));
   const bHandle = await wrapperHandle.getProperty('b');
   expect(bHandle.toString()).toBe('Promise');
 });
 
-it('should work with different subtypes @smoke', async ({ page, browserName, channel }) => {
+it('JH-022 should work with different subtypes @smoke', async ({ page, browserName, channel }) => {
   const isBiDi = channel?.startsWith('bidi-chrom') || channel?.startsWith('moz-firefox');
   if (!isBiDi)
     expect((await page.evaluateHandle('(function(){})')).toString()).toContain('function');
@@ -79,7 +79,7 @@ it('should work with different subtypes @smoke', async ({ page, browserName, cha
   expect((await page.evaluateHandle('new Proxy({}, {})')).toString()).toBe((browserName === 'chromium' && !isBiDi) ? 'Proxy(Object)' : 'Proxy');
 });
 
-it('should work with previewable subtypes', async ({ page, browserName, channel }) => {
+it('JH-023 should work with previewable subtypes', async ({ page, browserName, channel }) => {
   const isBiDi = channel?.startsWith('bidi-chrom') || channel?.startsWith('moz-firefox');
   it.skip(browserName === 'firefox' && !isBiDi);
   expect((await page.evaluateHandle('/foo/')).toString()).toBe('/foo/');

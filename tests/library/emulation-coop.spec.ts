@@ -56,7 +56,7 @@ async function probe(browser: Browser, server: TestServer, options: BrowserConte
 }
 
 it.describe('emulation with COOP', () => {
-  it('should preserve context options', async ({ browser, server }) => {
+  it('EM-025 should preserve context options', async ({ browser, server }) => {
     setupRoutes(server);
     const options: BrowserContextOptions = {
       colorScheme: 'dark',
@@ -85,7 +85,7 @@ it.describe('emulation with COOP', () => {
     expect(coop).toEqual(plain);
   });
 
-  it('should preserve page.emulateMedia', async ({ browser, server }) => {
+  it('EM-026 should preserve page.emulateMedia', async ({ browser, server }) => {
     setupRoutes(server);
     const media = { media: 'print', colorScheme: 'dark', reducedMotion: 'reduce', contrast: 'more', forcedColors: 'active' } as const;
     const plain = await probe(browser, server, {}, '/plain.html', media);
@@ -99,7 +99,7 @@ it.describe('emulation with COOP', () => {
     expect(coop).toEqual(plain);
   });
 
-  it('should preserve mobile emulation', async ({ browser, server }) => {
+  it('EM-027 should preserve mobile emulation', async ({ browser, server }) => {
     setupRoutes(server);
     const options: BrowserContextOptions = {
       isMobile: true,

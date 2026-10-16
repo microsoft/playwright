@@ -17,11 +17,11 @@
 import { kTargetClosedErrorMessage } from '../config/errors';
 import { browserTest as test, expect } from '../config/browserTest';
 
-test('should return browserType', function({ browser, browserType }) {
+test('BR-001 should return browserType', function({ browser, browserType }) {
   expect(browser.browserType()).toBe(browserType);
 });
 
-test('should create new page @smoke', async function({ browser }) {
+test('BR-002 should create new page @smoke', async function({ browser }) {
   const page1 = await browser.newPage();
   expect(browser.contexts().length).toBe(1);
 
@@ -35,7 +35,7 @@ test('should create new page @smoke', async function({ browser }) {
   expect(browser.contexts().length).toBe(0);
 });
 
-test('should throw upon second create new page', async function({ browser }) {
+test('BR-003 should throw upon second create new page', async function({ browser }) {
   const page = await browser.newPage();
   let error: Error;
   await page.context().newPage().catch(e => error = e);
@@ -43,7 +43,7 @@ test('should throw upon second create new page', async function({ browser }) {
   expect(error!.message).toContain('Please use browser.newContext()');
 });
 
-test('version should work', async function({ browser, browserName }) {
+test('BR-004 version should work', async function({ browser, browserName }) {
   const version = browser.version();
   if (browserName === 'chromium')
     expect(version.match(/^\d+\.\d+\.\d+\.\d+$/)).toBeTruthy();
@@ -51,7 +51,7 @@ test('version should work', async function({ browser, browserName }) {
     expect(version.match(/^\d+\.\d+/)).toBeTruthy();
 });
 
-test('should dispatch page.on(close) upon browser.close and reject evaluate', async ({ browserType }) => {
+test('BR-005 should dispatch page.on(close) upon browser.close and reject evaluate', async ({ browserType }) => {
   const browser = await browserType.launch();
   const page = await browser.newPage();
   let closed = false;
@@ -63,7 +63,7 @@ test('should dispatch page.on(close) upon browser.close and reject evaluate', as
   expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 
-test('should fire context event on newContext', async ({ browser }) => {
+test('BR-006 should fire context event on newContext', async ({ browser }) => {
   const events = [];
   browser.on('context', ctx => events.push(ctx));
   const context = await browser.newContext();
@@ -71,7 +71,7 @@ test('should fire context event on newContext', async ({ browser }) => {
   await context.close();
 });
 
-test('newContext should not leave a context upon failure', async ({ browser, toImpl }) => {
+test('BR-007 newContext should not leave a context upon failure', async ({ browser, toImpl }) => {
   const error = await browser.newContext({
     __testHookBeforeSetStorageState: () => Promise.reject(new Error('Oh my')),
   } as any).catch(e => e);

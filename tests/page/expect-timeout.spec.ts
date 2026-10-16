@@ -17,7 +17,7 @@
 import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
-test('should print element not found', async ({ page }) => {
+test('EX-244 should print element not found', async ({ page }) => {
   await page.setContent('<div id=node>Text content</div>');
   const error = await expect(page.locator('no-such-thing')).toHaveText('hey', { timeout: 1000 }).catch(e => e);
   expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected) failed
@@ -31,7 +31,7 @@ Call log:
 `);
 });
 
-test('should print timed out error message when value does not match', async ({ page }) => {
+test('EX-245 should print timed out error message when value does not match', async ({ page }) => {
   await page.setContent('<div id=node>Text content</div>');
   const error = await expect(page.locator('div')).toHaveText('hey', { timeout: 1000 }).catch(e => e);
   expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected) failed
@@ -45,7 +45,7 @@ Call log:
 `);
 });
 
-test('should print timed out error message with impossible timeout', async ({ page }) => {
+test('EX-246 should print timed out error message with impossible timeout', async ({ page }) => {
   await page.setContent('<div id=node>Text content</div>');
   const error = await expect(page.locator('no-such-thing')).toHaveText('hey', { timeout: 1 }).catch(e => e);
   expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected) failed
@@ -58,7 +58,7 @@ Error: element(s) not found
 Call log:`);
 });
 
-test('should print timed out error message when value does not match with impossible timeout', async ({ page }) => {
+test('EX-247 should print timed out error message when value does not match with impossible timeout', async ({ page }) => {
   await page.setContent('<div id=node>Text content</div>');
   const error = await expect(page.locator('div')).toHaveText('hey', { timeout: 1 }).catch(e => e);
   expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected) failed
@@ -72,12 +72,12 @@ Call log:
 `);
 });
 
-test('should have timeout error name', async ({ page }) => {
+test('EX-248 should have timeout error name', async ({ page }) => {
   const error = await page.waitForSelector('#not-found', { timeout: 1 }).catch(e => e);
   expect(error.name).toBe('TimeoutError');
 });
 
-test('should not throw when navigating during one-shot check', async ({ page, server }) => {
+test('EX-249 should not throw when navigating during one-shot check', async ({ page, server }) => {
   await page.setContent(`<div>hello</div>`);
   const promise = expect(page.locator('div')).toHaveText('bye');
   await page.goto(server.EMPTY_PAGE);
@@ -85,7 +85,7 @@ test('should not throw when navigating during one-shot check', async ({ page, se
   await promise;
 });
 
-test('should not throw when navigating during first locator handler check', async ({ page, server }) => {
+test('EX-250 should not throw when navigating during first locator handler check', async ({ page, server }) => {
   await page.addLocatorHandler(page.locator('span'), async locator => {});
   await page.setContent(`<div>hello</div>`);
   const promise = expect(page.locator('div')).toHaveText('bye');
@@ -94,7 +94,7 @@ test('should not throw when navigating during first locator handler check', asyn
   await promise;
 });
 
-test('should timeout during first locator handler check', async ({ page, server }) => {
+test('EX-251 should timeout during first locator handler check', async ({ page, server }) => {
   await page.addLocatorHandler(page.locator('div'), async locator => {});
   await page.setContent(`<div>hello</div><span>bye</span>`);
   const error = await expect(page.locator('span')).toHaveText('bye', { timeout: 3000 }).catch(e => e);
@@ -111,7 +111,7 @@ Call log:
   expect(error.message).toContain(`locator resolved to visible <div>hello</div>`);
 });
 
-test('should not miss element that appears between retries before the deadline', async ({ page }) => {
+test('EX-252 should not miss element that appears between retries before the deadline', async ({ page }) => {
   await page.setContent(`<div id="target" style="display:none">content</div>`);
   await page.evaluate(() => {
     window.builtins.setTimeout(() => {
@@ -121,7 +121,7 @@ test('should not miss element that appears between retries before the deadline',
   await expect(page.locator('#target')).toBeVisible({ timeout: 1800 });
 });
 
-test('should fail like a timeout when the signal is aborted mid-assertion', async ({ page }) => {
+test('EX-253 should fail like a timeout when the signal is aborted mid-assertion', async ({ page }) => {
   await page.setContent('<div>content</div>');
   const controller = new AbortController();
   const promise = expect(page.locator('span')).toBeVisible({ timeout: 5000, signal: controller.signal }).catch(e => e);
@@ -141,7 +141,7 @@ Call log:
   - operation was aborted: stop it`);
 });
 
-test('should fail like a timeout when toHaveText is aborted mid-assertion', async ({ page }) => {
+test('EX-254 should fail like a timeout when toHaveText is aborted mid-assertion', async ({ page }) => {
   await page.setContent('<div>content</div>');
   const controller = new AbortController();
   const promise = expect(page.locator('span')).toHaveText('missing', { timeout: 5000, signal: controller.signal }).catch(e => e);
@@ -152,7 +152,7 @@ test('should fail like a timeout when toHaveText is aborted mid-assertion', asyn
   expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected) failed`);
 });
 
-test('should fail like a timeout when toHaveCount is aborted mid-assertion', async ({ page }) => {
+test('EX-255 should fail like a timeout when toHaveCount is aborted mid-assertion', async ({ page }) => {
   await page.setContent('<div>content</div>');
   const controller = new AbortController();
   const promise = expect(page.locator('span')).toHaveCount(3, { timeout: 5000, signal: controller.signal }).catch(e => e);
@@ -163,7 +163,7 @@ test('should fail like a timeout when toHaveCount is aborted mid-assertion', asy
   expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveCount(expected) failed`);
 });
 
-test('should fail like a timeout when toMatchAriaSnapshot is aborted mid-assertion', async ({ page }) => {
+test('EX-256 should fail like a timeout when toMatchAriaSnapshot is aborted mid-assertion', async ({ page }) => {
   await page.setContent('<div>content</div>');
   const controller = new AbortController();
   const promise = expect(page.locator('body')).toMatchAriaSnapshot(`- list`, { timeout: 5000, signal: controller.signal }).catch(e => e);
@@ -174,7 +174,7 @@ test('should fail like a timeout when toMatchAriaSnapshot is aborted mid-asserti
   expect(stripAnsi(error.message)).toContain(`expect(locator).toMatchAriaSnapshot(expected) failed`);
 });
 
-test('should fail like a timeout when toHaveURL is aborted mid-assertion', async ({ page }) => {
+test('EX-257 should fail like a timeout when toHaveURL is aborted mid-assertion', async ({ page }) => {
   await page.setContent('<div>content</div>');
   const controller = new AbortController();
   const promise = expect(page).toHaveURL('https://example.com/', { timeout: 5000, signal: controller.signal }).catch(e => e);
@@ -185,7 +185,7 @@ test('should fail like a timeout when toHaveURL is aborted mid-assertion', async
   expect(stripAnsi(error.message)).toContain(`expect(page).toHaveURL(expected) failed`);
 });
 
-test('should fail the assertion when the signal is already aborted', async ({ page, server }) => {
+test('EX-258 should fail the assertion when the signal is already aborted', async ({ page, server }) => {
   await page.setContent('<div>content</div>');
   {
     const controller = new AbortController();

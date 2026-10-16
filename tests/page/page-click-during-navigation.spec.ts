@@ -17,7 +17,7 @@
 
 import { test as it } from './pageTest';
 
-it('should not fail with internal error upon navigation', async ({ page, server }) => {
+it('CL-109 should not fail with internal error upon navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   let triggered = false;
   const __testHookAfterStable = () => {

@@ -16,7 +16,7 @@
 
 import { test, expect } from './inspectorTest';
 
-test('should reflect formatted URL of the page', async ({
+test('IN-056 should reflect formatted URL of the page', async ({
   openRecorder,
   server,
 }) => {
@@ -32,7 +32,7 @@ test('should reflect formatted URL of the page', async ({
   );
 });
 
-test('should update primary page URL when original primary closes', async ({
+test('IN-057 should update primary page URL when original primary closes', async ({
   context,
   openRecorder,
   server,
@@ -58,7 +58,7 @@ test('should update primary page URL when original primary closes', async ({
   );
 });
 
-test('should render primary language', async ({ openRecorder }) => {
+test('IN-058 should render primary language', async ({ openRecorder }) => {
   const { recorder } = await openRecorder({ language: 'python' });
   await recorder.setContentAndWait('');
   await expect(recorder.recorderPage.getByRole('combobox', { name: 'Source chooser' })).toHaveValue('python');

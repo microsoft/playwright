@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import util from 'util';
 
-it('should work @smoke', async ({ page, browserName, isBidi }) => {
+it('CM-001 should work @smoke', async ({ page, browserName, isBidi }) => {
   let message = null;
   page.once('console', m => message = m);
   await Promise.all([
@@ -35,7 +35,7 @@ it('should work @smoke', async ({ page, browserName, isBidi }) => {
   expect(await message.args()[2].jsonValue()).toEqual({ foo: 'bar' });
 });
 
-it('should emit same log twice', async ({ page }) => {
+it('CM-002 should emit same log twice', async ({ page }) => {
   const messages = [];
   page.on('console', m => messages.push(m.text()));
   await page.evaluate(() => {
@@ -45,7 +45,7 @@ it('should emit same log twice', async ({ page }) => {
   expect(messages).toEqual(['hello', 'hello']);
 });
 
-it('should use text() for inspection', async ({ page }) => {
+it('CM-003 should use text() for inspection', async ({ page }) => {
   let text;
   const inspect = value => {
     text = util.inspect(value);
@@ -55,7 +55,7 @@ it('should use text() for inspection', async ({ page }) => {
   expect(text).toEqual('Hello world');
 });
 
-it('should work for different console API calls', async ({ page }) => {
+it('CM-004 should work for different console API calls', async ({ page }) => {
   const messages = [];
   page.on('console', msg => messages.push(msg));
   // All console events will be reported before `page.evaluate` is finished.
@@ -91,7 +91,7 @@ it('should work for different console API calls', async ({ page }) => {
   ]);
 });
 
-it('should format the message correctly with time/timeLog/timeEnd', async ({ page, browserName, isBidi }) => {
+it('CM-005 should format the message correctly with time/timeLog/timeEnd', async ({ page, browserName, isBidi }) => {
   it.fixme(browserName === 'firefox' && !isBidi, 'https://github.com/microsoft/playwright/issues/10580');
   const messages = [];
   page.on('console', msg => messages.push(msg));
@@ -117,7 +117,7 @@ it('should format the message correctly with time/timeLog/timeEnd', async ({ pag
   expect(messages[1].text()).toMatch(/foo time: \d+(.\d+)? ?ms/);
 });
 
-it('should not fail for window object', async ({ page, browserName, isBidi }) => {
+it('CM-006 should not fail for window object', async ({ page, browserName, isBidi }) => {
   let message = null;
   page.once('console', msg => message = msg);
   await Promise.all([
@@ -130,7 +130,7 @@ it('should not fail for window object', async ({ page, browserName, isBidi }) =>
     expect(message.text()).toEqual('JSHandle@object');
 });
 
-it(`should not fail for object that can't be coerced to a primitive`, async ({ page, browserName, isBidi }) => {
+it(`CM-007 should not fail for object that can't be coerced to a primitive`, async ({ page, browserName, isBidi }) => {
   let message = null;
   page.once('console', msg => message = msg);
   await Promise.all([
@@ -143,7 +143,7 @@ it(`should not fail for object that can't be coerced to a primitive`, async ({ p
     expect(message.text()).toEqual('JSHandle@object');
 });
 
-it('should trigger correct Log', async ({ page, server, browserName, isWindows }) => {
+it('CM-008 should trigger correct Log', async ({ page, server, browserName, isWindows }) => {
   it.skip(browserName === 'webkit' && isWindows, 'Upstream issue https://bugs.webkit.org/show_bug.cgi?id=229515');
   await page.goto('about:blank');
   const [message] = await Promise.all([
@@ -154,7 +154,7 @@ it('should trigger correct Log', async ({ page, server, browserName, isWindows }
   expect(message.type()).toEqual('error');
 });
 
-it('should have location for console API calls', async ({ page, server }) => {
+it('CM-009 should have location for console API calls', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [message] = await Promise.all([
     page.waitForEvent('console', m => m.text().startsWith('here:')),
@@ -170,7 +170,7 @@ it('should have location for console API calls', async ({ page, server }) => {
   });
 });
 
-it('should not throw when there are console messages in detached iframes', async ({ page, server }) => {
+it('CM-010 should not throw when there are console messages in detached iframes', async ({ page, server }) => {
   // @see https://github.com/GoogleChrome/puppeteer/issues/3865
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
@@ -194,7 +194,7 @@ it('should not throw when there are console messages in detached iframes', async
   expect(await popup.evaluate('1 + 1')).toBe(2);
 });
 
-it('should use object previews for arrays and objects', async ({ page, browserName, isBidi }) => {
+it('CM-011 should use object previews for arrays and objects', async ({ page, browserName, isBidi }) => {
   let text: string;
   page.on('console', message => {
     text = message.text();
@@ -207,7 +207,7 @@ it('should use object previews for arrays and objects', async ({ page, browserNa
     expect(text).toEqual('Array JSHandle@object JSHandle@object');
 });
 
-it('should use object previews for errors', async ({ page, browserName, isBidi }) => {
+it('CM-012 should use object previews for errors', async ({ page, browserName, isBidi }) => {
   let text: string;
   page.on('console', message => {
     text = message.text();
@@ -221,7 +221,7 @@ it('should use object previews for errors', async ({ page, browserName, isBidi }
     expect(text).toEqual('Error: Exception');
 });
 
-it('do not update console count on unhandled rejections', async ({ page }) => {
+it('CM-013 do not update console count on unhandled rejections', async ({ page }) => {
   const messages: string[] = [];
   const consoleEventListener = m => messages.push(m.text());
   page.addListener('console', consoleEventListener);
@@ -239,7 +239,7 @@ it('do not update console count on unhandled rejections', async ({ page }) => {
   await expect.poll(() => messages).toEqual(['begin', 'end']);
 });
 
-it('should have timestamp', async ({ page, isAndroid }) => {
+it('CM-014 should have timestamp', async ({ page, isAndroid }) => {
   it.skip(isAndroid, 'there is a time difference between android emulator and host machine');
 
   // Generous slack to absorb host wall-clock resolution (e.g. ~15.6ms on Windows)
@@ -254,7 +254,7 @@ it('should have timestamp', async ({ page, isAndroid }) => {
   expect(message.timestamp()).toBeLessThanOrEqual(after);
 });
 
-it('should have increasing timestamps', async ({ page }) => {
+it('CM-015 should have increasing timestamps', async ({ page }) => {
   const messages = [];
   page.on('console', msg => messages.push(msg));
   await page.evaluate(() => {
@@ -267,7 +267,7 @@ it('should have increasing timestamps', async ({ page }) => {
     expect(messages[i].timestamp()).toBeGreaterThanOrEqual(messages[i - 1].timestamp());
 });
 
-it('should have timestamp in consoleMessages', async ({ page, isAndroid }) => {
+it('CM-016 should have timestamp in consoleMessages', async ({ page, isAndroid }) => {
   it.skip(isAndroid, 'there is a time difference between android emulator and host machine');
 
   // Generous slack to absorb host wall-clock resolution (e.g. ~15.6ms on Windows)
@@ -283,7 +283,7 @@ it('should have timestamp in consoleMessages', async ({ page, isAndroid }) => {
   expect(last.timestamp()).toBeLessThanOrEqual(after);
 });
 
-it('consoleMessages should work', async ({ page }) => {
+it('CM-017 consoleMessages should work', async ({ page }) => {
   await page.evaluate(() => {
     for (let i = 0; i < 301; i++)
       console.log('message' + i);
@@ -300,7 +300,7 @@ it('consoleMessages should work', async ({ page }) => {
   expect(objects.slice(objects.length - expected.length), 'should return last messages').toEqual(expected);
 });
 
-it('clearConsoleMessages should work', async ({ page }) => {
+it('CM-018 clearConsoleMessages should work', async ({ page }) => {
   await page.evaluate(() => {
     console.log('message1');
     console.log('message2');
@@ -321,7 +321,7 @@ it('clearConsoleMessages should work', async ({ page }) => {
   expect(messages[0].text()).toBe('message3');
 });
 
-it('consoleMessages since-navigation filter should work', async ({ page, server }) => {
+it('CM-019 consoleMessages since-navigation filter should work', async ({ page, server }) => {
   await page.evaluate(() => console.log('before navigation'));
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => console.log('after navigation'));
@@ -336,7 +336,7 @@ it('consoleMessages since-navigation filter should work', async ({ page, server 
   expect(sinceNav.map(m => m.text())).toContain('after navigation');
 });
 
-it('pageErrors since-navigation filter should work', async ({ page, server }) => {
+it('CM-020 pageErrors since-navigation filter should work', async ({ page, server }) => {
   server.setContent('/page1', `<script>throw new Error('page1 error');</script>`, 'text/html');
   server.setContent('/page2', `<script>throw new Error('page2 error');</script>`, 'text/html');
 

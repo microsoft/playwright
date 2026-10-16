@@ -51,7 +51,7 @@ async function getDropInfo(page: Page) {
   return await page.waitForFunction(() => (window as any).__dropInfo).then(h => h.jsonValue());
 }
 
-it('should drop a file payload', async ({ page }) => {
+it('DD-021 should drop a file payload', async ({ page }) => {
   await setupDropzone(page);
   await page.locator('#dropzone').drop({
     files: { name: 'note.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') },
@@ -62,7 +62,7 @@ it('should drop a file payload', async ({ page }) => {
   });
 });
 
-it('should drop multiple file payloads', async ({ page }) => {
+it('DD-022 should drop multiple file payloads', async ({ page }) => {
   await setupDropzone(page);
   await page.locator('#dropzone').drop({
     files: [
@@ -74,7 +74,7 @@ it('should drop multiple file payloads', async ({ page }) => {
   expect(info.files.map((f: any) => [f.name, f.text])).toEqual([['a.txt', 'AAA'], ['b.txt', 'BB']]);
 });
 
-it('should drop a file by local path', async ({ page }, testInfo) => {
+it('DD-023 should drop a file by local path', async ({ page }, testInfo) => {
   await setupDropzone(page);
   const filePath = testInfo.outputPath('hello.txt');
   await fs.promises.writeFile(filePath, 'path-content');
@@ -85,7 +85,7 @@ it('should drop a file by local path', async ({ page }, testInfo) => {
   expect(info.files[0].text).toBe('path-content');
 });
 
-it('should drop clipboard-like data', async ({ page }) => {
+it('DD-024 should drop clipboard-like data', async ({ page }) => {
   await setupDropzone(page);
   await page.locator('#dropzone').drop({
     data: {
@@ -99,7 +99,7 @@ it('should drop clipboard-like data', async ({ page }) => {
   expect(info.data['text/uri-list']).toBe('https://example.com');
 });
 
-it('should drop files and data together', async ({ page }) => {
+it('DD-025 should drop files and data together', async ({ page }) => {
   await setupDropzone(page);
   await page.locator('#dropzone').drop({
     files: { name: 'mix.txt', mimeType: 'text/plain', buffer: Buffer.from('mix') },
@@ -110,7 +110,7 @@ it('should drop files and data together', async ({ page }) => {
   expect(info.data['text/plain']).toBe('label');
 });
 
-it('should throw when target does not accept drop', async ({ page }) => {
+it('DD-026 should throw when target does not accept drop', async ({ page }) => {
   // Dropzone without preventDefault on dragover.
   await page.setContent(`
     <div id="dropzone" style="width: 200px; height: 100px;"></div>
@@ -120,7 +120,7 @@ it('should throw when target does not accept drop', async ({ page }) => {
   })).rejects.toThrow(/drop target did not accept the drop/i);
 });
 
-it('should throw when neither files nor data provided', async ({ page }) => {
+it('DD-027 should throw when neither files nor data provided', async ({ page }) => {
   await setupDropzone(page);
   await expect(page.locator('#dropzone').drop({})).rejects.toThrow(/At least one of "files" or "data"/);
 });

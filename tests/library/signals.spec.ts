@@ -22,7 +22,7 @@ import os from 'os';
 
 test.slow();
 
-test('should close the browser when the node process closes', async ({ startRemoteServer, isWindows, server, mode }) => {
+test('SI-001 should close the browser when the node process closes', async ({ startRemoteServer, isWindows, server, mode }) => {
   const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE });
   try {
     if (isWindows)
@@ -42,7 +42,7 @@ test('should close the browser when the node process closes', async ({ startRemo
   expect(await remoteServer.childExitCode()).toBe(isWindows ? 1 : 0);
 });
 
-test('should remove temp dir on process.exit', async ({ startRemoteServer, server, platform }, testInfo) => {
+test('SI-002 should remove temp dir on process.exit', async ({ startRemoteServer, server, platform }, testInfo) => {
   test.skip(platform === 'win32', 'Removing user data dir synchronously is blocked on Windows');
 
   const file = testInfo.outputPath('exit.file');
@@ -59,7 +59,7 @@ test('should remove temp dir on process.exit', async ({ startRemoteServer, serve
 test.describe('signals', () => {
   test.skip(({ platform }) => platform === 'win32');
 
-  test('should report browser close signal 2', async ({ startRemoteServer, server, isMac, macVersion, browserName }) => {
+  test('SI-003 should report browser close signal 2', async ({ startRemoteServer, server, isMac, macVersion, browserName }) => {
     const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE });
     const pid = await remoteServer.out('pid');
     process.kill(-pid, 'SIGKILL');
@@ -75,7 +75,7 @@ test.describe('signals', () => {
     await remoteServer.childExitCode();
   });
 
-  test('should close the browser on SIGINT', async ({ startRemoteServer, server }) => {
+  test('SI-004 should close the browser on SIGINT', async ({ startRemoteServer, server }) => {
     const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE });
     process.kill(remoteServer.child().pid, 'SIGINT');
     expect(await remoteServer.out('exitCode')).toBe('0');
@@ -83,7 +83,7 @@ test.describe('signals', () => {
     expect(await remoteServer.childExitCode()).toBe(130);
   });
 
-  test('should close the browser on SIGTERM', async ({ startRemoteServer, server }) => {
+  test('SI-005 should close the browser on SIGTERM', async ({ startRemoteServer, server }) => {
     const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE });
     process.kill(remoteServer.child().pid, 'SIGTERM');
     expect(await remoteServer.out('exitCode')).toBe('0');
@@ -91,7 +91,7 @@ test.describe('signals', () => {
     expect(await remoteServer.childExitCode()).toBe(0);
   });
 
-  test('should close the browser on SIGHUP', async ({ startRemoteServer, server }) => {
+  test('SI-006 should close the browser on SIGHUP', async ({ startRemoteServer, server }) => {
     const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE });
     process.kill(remoteServer.child().pid, 'SIGHUP');
     expect(await remoteServer.out('exitCode')).toBe('0');
@@ -99,7 +99,7 @@ test.describe('signals', () => {
     expect(await remoteServer.childExitCode()).toBe(0);
   });
 
-  test('should kill the browser on double SIGINT and remove temp dir', async ({ startRemoteServer, server }) => {
+  test('SI-007 should kill the browser on double SIGINT and remove temp dir', async ({ startRemoteServer, server }) => {
     const remoteServer = await startRemoteServer('launchServer', { stallOnClose: true, url: server.EMPTY_PAGE });
     const tempDir = await remoteServer.out('tempDir');
     const before = fs.existsSync(tempDir);
@@ -114,7 +114,7 @@ test.describe('signals', () => {
     expect(after).toBe(false);
   });
 
-  test('should kill the browser on SIGINT + SIGTERM', async ({ startRemoteServer, server }) => {
+  test('SI-008 should kill the browser on SIGINT + SIGTERM', async ({ startRemoteServer, server }) => {
     const remoteServer = await startRemoteServer('launchServer', { stallOnClose: true, url: server.EMPTY_PAGE });
     process.kill(remoteServer.child().pid, 'SIGINT');
     await remoteServer.out('stalled');
@@ -124,7 +124,7 @@ test.describe('signals', () => {
     expect(await remoteServer.childExitCode()).toBe(0);
   });
 
-  test('should kill the browser on SIGTERM + SIGINT', async ({ startRemoteServer, server }) => {
+  test('SI-009 should kill the browser on SIGTERM + SIGINT', async ({ startRemoteServer, server }) => {
     const remoteServer = await startRemoteServer('launchServer', { stallOnClose: true, url: server.EMPTY_PAGE });
     process.kill(remoteServer.child().pid, 'SIGTERM');
     await remoteServer.out('stalled');
@@ -134,7 +134,7 @@ test.describe('signals', () => {
     expect(await remoteServer.childExitCode()).toBe(130);
   });
 
-  test('should not prevent default SIGTERM handling after browser close', async ({ startRemoteServer, server, platform }, testInfo) => {
+  test('SI-010 should not prevent default SIGTERM handling after browser close', async ({ startRemoteServer, server, platform }, testInfo) => {
     const remoteServer = await startRemoteServer('launchServer', { startStopAndRunHttp: true });
     expect(await remoteServer.out('closed')).toBe('success');
     process.kill(remoteServer.child().pid, 'SIGTERM');

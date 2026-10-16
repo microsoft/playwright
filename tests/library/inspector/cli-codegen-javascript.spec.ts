@@ -21,7 +21,7 @@ const launchOptions = (channel: string) => {
   return channel ? `channel: '${channel}',\n    headless: false` : 'headless: false';
 };
 
-test('should print the correct imports and context options', async ({ browserName, channel, runCLI, server }) => {
+test('CG-105 should print the correct imports and context options', async ({ browserName, channel, runCLI, server }) => {
   const cli = runCLI(['--target=javascript', server.EMPTY_PAGE]);
   const expectedResult = `const { ${browserName} } = require('playwright');
 
@@ -33,7 +33,7 @@ test('should print the correct imports and context options', async ({ browserNam
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI, server }) => {
+test('CG-106 should print the correct context options for custom settings', async ({ browserName, channel, runCLI, server }) => {
   const cli = runCLI(['--color-scheme=light', '--target=javascript', server.EMPTY_PAGE]);
   const expectedResult = `const { ${browserName} } = require('playwright');
 
@@ -48,7 +48,7 @@ test('should print the correct context options for custom settings', async ({ br
 });
 
 
-test('should work with --http-credentials', async ({ browserName, channel, runCLI, server }) => {
+test('CG-107 should work with --http-credentials', async ({ browserName, channel, runCLI, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const cli = runCLI(['--http-credentials=user:pass', '--target=javascript', server.EMPTY_PAGE]);
   const expectedResult = `const { ${browserName} } = require('playwright');
@@ -68,7 +68,7 @@ test('should work with --http-credentials', async ({ browserName, channel, runCL
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device', async ({ browserName, channel, runCLI, server }) => {
+test('CG-108 should print the correct context options when using a device', async ({ browserName, channel, runCLI, server }) => {
   test.skip(browserName !== 'chromium');
 
   const cli = runCLI(['--device=Pixel 2', '--target=javascript', server.EMPTY_PAGE]);
@@ -84,7 +84,7 @@ test('should print the correct context options when using a device', async ({ br
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI, server }) => {
+test('CG-109 should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI, server }) => {
   test.skip(browserName !== 'webkit');
 
   const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', '--target=javascript', server.EMPTY_PAGE]);
@@ -101,7 +101,7 @@ test('should print the correct context options when using a device and additiona
   await cli.waitFor(expectedResult);
 });
 
-test('should save the codegen output to a file if specified', async ({ browserName, channel, runCLI, server }, testInfo) => {
+test('CG-110 should save the codegen output to a file if specified', async ({ browserName, channel, runCLI, server }, testInfo) => {
   const cli = runCLI(['--target=javascript', server.EMPTY_PAGE]);
   await cli.waitFor(`const { ${browserName} } = require('playwright');
 
@@ -119,7 +119,7 @@ test('should save the codegen output to a file if specified', async ({ browserNa
 })();`);
 });
 
-test('should print load/save storageState', async ({ browserName, channel, runCLI, server }, testInfo) => {
+test('CG-111 should print load/save storageState', async ({ browserName, channel, runCLI, server }, testInfo) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');

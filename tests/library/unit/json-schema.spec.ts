@@ -21,55 +21,55 @@ import { iso as _iso } from '../../../packages/playwright-core/lib/coreBundle';
 const { validate } = _iso;
 type JsonSchema = iso.JsonSchema;
 
-it('should validate string type', () => {
+it('JS-001 should validate string type', () => {
   expect(validate('hello', { type: 'string' }, '$')).toEqual([]);
   expect(validate(123, { type: 'string' }, '$')).toEqual(['$: expected string, got number']);
 });
 
-it('should validate string pattern', () => {
+it('JS-002 should validate string pattern', () => {
   expect(validate('@tag', { type: 'string', pattern: '^@' }, '$')).toEqual([]);
   expect(validate('tag', { type: 'string', pattern: '^@' }, '$')).toEqual(['$: must match pattern "^@"']);
 });
 
-it('should validate array type', () => {
+it('JS-003 should validate array type', () => {
   expect(validate([], { type: 'array' }, '$')).toEqual([]);
   expect(validate('not-array', { type: 'array' }, '$')).toEqual(['$: expected array, got string']);
 });
 
-it('should validate array items', () => {
+it('JS-004 should validate array items', () => {
   const schema: JsonSchema = { type: 'array', items: { type: 'string' } };
   expect(validate(['a', 'b'], schema, '$')).toEqual([]);
   expect(validate(['a', 1], schema, '$')).toEqual(['$[1]: expected string, got number']);
 });
 
-it('should validate object type', () => {
+it('JS-005 should validate object type', () => {
   expect(validate({}, { type: 'object' }, '$')).toEqual([]);
   expect(validate(null, { type: 'object' }, '$')).toEqual(['$: expected object, got object']);
   expect(validate([], { type: 'object' }, '$')).toEqual(['$: expected object, got array']);
   expect(validate('str', { type: 'object' }, '$')).toEqual(['$: expected object, got string']);
 });
 
-it('should validate required properties', () => {
+it('JS-006 should validate required properties', () => {
   const schema: JsonSchema = { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] };
   expect(validate({ name: 'test' }, schema, '$')).toEqual([]);
   expect(validate({}, schema, '$')).toEqual(['$.name: required']);
 });
 
-it('should validate optional properties', () => {
+it('JS-007 should validate optional properties', () => {
   const schema: JsonSchema = { type: 'object', properties: { name: { type: 'string' } } };
   expect(validate({}, schema, '$')).toEqual([]);
   expect(validate({ name: 'test' }, schema, '$')).toEqual([]);
   expect(validate({ name: 123 }, schema, '$')).toEqual(['$.name: expected string, got number']);
 });
 
-it('should validate oneOf', () => {
+it('JS-008 should validate oneOf', () => {
   const schema: JsonSchema = { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] };
   expect(validate('hello', schema, '$')).toEqual([]);
   expect(validate(['a', 'b'], schema, '$')).toEqual([]);
   expect(validate(123, schema, '$')).toEqual(['$: does not match any of the expected types']);
 });
 
-it('should validate nested objects', () => {
+it('JS-009 should validate nested objects', () => {
   const schema: JsonSchema = {
     type: 'object',
     properties: {
@@ -85,7 +85,7 @@ it('should validate nested objects', () => {
   expect(validate({ annotation: { type: 123 } }, schema, '$')).toEqual(['$.annotation.type: expected string, got number']);
 });
 
-it('should validate test details schema', () => {
+it('JS-010 should validate test details schema', () => {
   const testAnnotationSchema: JsonSchema = {
     type: 'object',
     properties: { type: { type: 'string' }, description: { type: 'string' } },

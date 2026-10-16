@@ -92,12 +92,12 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   (browserType as any)._instrumentation.removeListener(csi);
 });
 
-test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => {
+test('TV-001 should show empty trace viewer', async ({ showTraceViewer }, testInfo) => {
   const traceViewer = await showTraceViewer(testInfo.outputPath());
   await expect(traceViewer.page).toHaveTitle('Playwright Trace Viewer');
 });
 
-test('should open two trace viewers', async ({ showTraceViewer }, testInfo) => {
+test('TV-002 should open two trace viewers', async ({ showTraceViewer }, testInfo) => {
   const port = testInfo.workerIndex + 13321;
   const traceViewer1 = await showTraceViewer(testInfo.outputPath(), { host: 'localhost', port });
   await expect(traceViewer1.page).toHaveTitle('Playwright Trace Viewer');
@@ -105,7 +105,7 @@ test('should open two trace viewers', async ({ showTraceViewer }, testInfo) => {
   await expect(traceViewer2.page).toHaveTitle('Playwright Trace Viewer');
 });
 
-test('should open trace viewer on specific host', async ({ showTraceViewer }, testInfo) => {
+test('TV-003 should open trace viewer on specific host', async ({ showTraceViewer }, testInfo) => {
   const dir = testInfo.outputPath('some-dir');
   await fs.promises.mkdir(dir, { recursive: true });
   // Run from a random directory to check that file access works.
@@ -118,7 +118,7 @@ test('should open trace viewer on specific host', async ({ showTraceViewer }, te
   ]);
 });
 
-test('should show tracing.group in the action list with location', async ({ runAndTrace, page, context }) => {
+test('TV-004 should show tracing.group in the action list with location', async ({ runAndTrace, page, context }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36483' });
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39302' });
 
@@ -174,7 +174,7 @@ test('should show tracing.group in the action list with location', async ({ runA
   await expect(traceViewer.sourceCodeTab.locator('.source-line-running')).toContainText('buddy beaver');
 });
 
-test('should open simple trace viewer', async ({ showTraceViewer }) => {
+test('TV-005 should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await expect(traceViewer.actionTitles).toHaveText([
     /Create page/,
@@ -198,7 +198,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
   ]);
 });
 
-test('should filter actions by text', async ({ showTraceViewer }) => {
+test('TV-006 should filter actions by text', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   const filterInput = traceViewer.page.getByRole('searchbox', { name: 'Filter actions' });
   await expect(filterInput).toBeVisible();
@@ -213,7 +213,7 @@ test('should filter actions by text', async ({ showTraceViewer }) => {
   await expect(traceViewer.actionTitles).toHaveCount(fullCount);
 });
 
-test('should keep selected action in view after Show all', async ({ runAndTrace, page }) => {
+test('TV-007 should keep selected action in view after Show all', async ({ runAndTrace, page }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40808' });
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<div>hello</div>');
@@ -236,7 +236,7 @@ test('should keep selected action in view after Show all', async ({ runAndTrace,
   await expect(selected).toBeInViewport();
 });
 
-test('should activate Show all with keyboard', async ({ runAndTrace, page }) => {
+test('TV-008 should activate Show all with keyboard', async ({ runAndTrace, page }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42323' });
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<div>hello</div>');
@@ -252,7 +252,7 @@ test('should activate Show all with keyboard', async ({ runAndTrace, page }) => 
   await expect(showAll).toBeHidden();
 });
 
-test('should open uncompressed trace directory', async ({ showTraceViewer }) => {
+test('TV-009 should open uncompressed trace directory', async ({ showTraceViewer }) => {
   const traceDir = test.info().outputPath('unzipped-trace');
   await extractZip(traceFile, { dir: traceDir });
   const traceViewer = await showTraceViewer(traceDir);
@@ -278,7 +278,7 @@ test('should open uncompressed trace directory', async ({ showTraceViewer }) => 
   ]);
 });
 
-test('should show action context on locators and other common actions', async ({
+test('TV-010 should show action context on locators and other common actions', async ({
   runAndTrace,
   page,
 }) => {
@@ -333,12 +333,12 @@ test('should show action context on locators and other common actions', async ({
   ]);
 });
 
-test('should complain about newer version of trace in old viewer', async ({ showTraceViewer, asset }, testInfo) => {
+test('TV-011 should complain about newer version of trace in old viewer', async ({ showTraceViewer, asset }, testInfo) => {
   const traceViewer = await showTraceViewer(asset('trace-from-the-future.zip'));
   await expect(traceViewer.page.getByText('The trace was created by a newer version of Playwright and is not supported by this version of the viewer.')).toBeVisible();
 });
 
-test('should properly synchronize local and remote time', async ({ showTraceViewer, asset }, testInfo) => {
+test('TV-012 should properly synchronize local and remote time', async ({ showTraceViewer, asset }, testInfo) => {
   const traceViewer = await showTraceViewer(asset('trace-remote-time-diff.zip'));
   // The total duration should be sub 10s, rather than 16h.
   await expect.poll(async () =>
@@ -346,7 +346,7 @@ test('should properly synchronize local and remote time', async ({ showTraceView
   ).toBeLessThan(10);
 });
 
-test('should contain action info', async ({ showTraceViewer }) => {
+test('TV-013 should contain action info', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Click');
   await traceViewer.page.getByText('Log', { exact: true }).click();
@@ -356,7 +356,7 @@ test('should contain action info', async ({ showTraceViewer }) => {
   ]);
 });
 
-test('should render console', async ({ showTraceViewer, browserName }) => {
+test('TV-014 should render console', async ({ showTraceViewer, browserName }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.showConsoleTab();
 
@@ -382,7 +382,7 @@ test('should render console', async ({ showTraceViewer, browserName }) => {
   await expect(listViews.filter({ hasText: 'Cheers!' })).toHaveClass('list-view-entry');
 });
 
-test('should show console source for multiple pages', async ({ context, runAndTrace, server }) => {
+test('TV-015 should show console source for multiple pages', async ({ context, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     const page1 = await context.newPage();
     await page1.goto(server.EMPTY_PAGE);
@@ -396,7 +396,7 @@ test('should show console source for multiple pages', async ({ context, runAndTr
   await expect(traceViewer.consoleLines.filter({ hasText: 'hello from two' }).locator('.console-source')).toHaveText('page#2');
 });
 
-test('should highlight console message on timeline on hover', async ({ showTraceViewer }) => {
+test('TV-016 should highlight console message on timeline on hover', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.showConsoleTab();
   const highlight = traceViewer.page.locator('.timeline-highlight');
@@ -405,7 +405,7 @@ test('should highlight console message on timeline on hover', async ({ showTrace
   await expect(highlight).toBeVisible();
 });
 
-test('should open console errors on click', async ({ showTraceViewer }) => {
+test('TV-017 should open console errors on click', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await expect(traceViewer.actionIconsText('Evaluate')).toHaveText(['2', '1']);
   await expect(traceViewer.page.getByRole('tabpanel', { name: 'Console' })).toBeHidden();
@@ -413,7 +413,7 @@ test('should open console errors on click', async ({ showTraceViewer }) => {
   await traceViewer.page.getByRole('tabpanel', { name: 'Console' }).waitFor();
 });
 
-test('should open console errors with keyboard', async ({ showTraceViewer }) => {
+test('TV-018 should open console errors with keyboard', async ({ showTraceViewer }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42323' });
   const traceViewer = await showTraceViewer(traceFile);
   const badge = traceViewer.actionIcons('Evaluate');
@@ -425,7 +425,7 @@ test('should open console errors with keyboard', async ({ showTraceViewer }) => 
   await traceViewer.page.getByRole('tabpanel', { name: 'Console' }).waitFor();
 });
 
-test('should show params and return value', async ({ showTraceViewer }) => {
+test('TV-019 should show params and return value', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Evaluate');
   await expect(traceViewer.callLines).toHaveText([
@@ -449,7 +449,7 @@ test('should show params and return value', async ({ showTraceViewer }) => {
   ]);
 });
 
-test('should show null as a param', async ({ showTraceViewer, browserName }) => {
+test('TV-020 should show null as a param', async ({ showTraceViewer, browserName }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Evaluate', 1);
   await expect(traceViewer.callLines).toHaveText([
@@ -463,7 +463,7 @@ test('should show null as a param', async ({ showTraceViewer, browserName }) => 
   ]);
 });
 
-test('should truncate long return values with ellipsis but copy full value', async ({ page, runAndTrace }) => {
+test('TV-021 should truncate long return values with ellipsis but copy full value', async ({ page, runAndTrace }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40527' });
   const traceViewer = await runAndTrace(async () => {
     await page.evaluate(() => {
@@ -485,7 +485,7 @@ test('should truncate long return values with ellipsis but copy full value', asy
   expect(copied.endsWith('…')).toBe(false);
 });
 
-test('should have correct snapshot size', async ({ showTraceViewer }, testInfo) => {
+test('TV-022 should have correct snapshot size', async ({ showTraceViewer }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43313' });
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('SET VIEWPORT');
@@ -499,7 +499,7 @@ test('should have correct snapshot size', async ({ showTraceViewer }, testInfo) 
   await expect(traceViewer.page.locator('.snapshot-container')).toHaveCSS('width', '390px');
 });
 
-test('should have correct stack trace', async ({ showTraceViewer }) => {
+test('TV-023 should have correct stack trace', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
 
   await traceViewer.selectAction('Click');
@@ -510,7 +510,7 @@ test('should have correct stack trace', async ({ showTraceViewer }) => {
   ], { useInnerText: true });
 });
 
-test('should have network requests', async ({ showTraceViewer }) => {
+test('TV-024 should have network requests', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Navigate');
   await traceViewer.showNetworkTab();
@@ -521,7 +521,7 @@ test('should have network requests', async ({ showTraceViewer }) => {
   await expect(traceViewer.networkRequests.filter({ hasText: '404GET404text' })).toHaveCSS('background-color', 'rgb(242, 222, 222)');
 });
 
-test('should attribute network requests to service workers', async ({ runAndTrace, page, context, server, browserName }) => {
+test('TV-025 should attribute network requests to service workers', async ({ runAndTrace, page, context, server, browserName }) => {
   test.skip(browserName !== 'chromium', 'Service worker requests are only reported in Chromium');
   const traceViewer = await runAndTrace(async () => {
     const [worker] = await Promise.all([
@@ -536,7 +536,7 @@ test('should attribute network requests to service workers', async ({ runAndTrac
   await expect(traceViewer.networkRequests.filter({ hasText: 'one-style.css' })).toContainText(['service-worker#1']);
 });
 
-test('should highlight network request on timeline on hover', async ({ showTraceViewer }) => {
+test('TV-026 should highlight network request on timeline on hover', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Navigate');
   await traceViewer.showNetworkTab();
@@ -546,7 +546,7 @@ test('should highlight network request on timeline on hover', async ({ showTrace
   await expect(highlight).toBeVisible();
 });
 
-test('should filter network requests by resource type', async ({ page, runAndTrace, server }) => {
+test('TV-027 should filter network requests by resource type', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     server.setRoute('/api/endpoint', (_, res) => res.setHeader('Content-Type', 'application/json').end());
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
@@ -580,7 +580,7 @@ test('should filter network requests by resource type', async ({ page, runAndTra
   await expect(traceViewer.networkRequests.getByText('font.woff2')).toBeVisible();
 });
 
-test('should filter network requests by multiple resource types', async ({ page, runAndTrace, server }) => {
+test('TV-028 should filter network requests by multiple resource types', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     server.setRoute('/api/endpoint', (_, res) => res.setHeader('Content-Type', 'application/json').end());
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
@@ -613,7 +613,7 @@ test('should filter network requests by multiple resource types', async ({ page,
   await expect(networkRequests).toHaveCount(10);
 });
 
-test('should show font preview', async ({ page, runAndTrace, server }) => {
+test('TV-029 should show font preview', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
     await page.evaluate(() => (window as any).donePromise);
@@ -628,7 +628,7 @@ test('should show font preview', async ({ page, runAndTrace, server }) => {
   await expect(traceViewer.networkTab.getByRole('tabpanel', { name: 'Response' })).toContainText('ABCDEF');
 });
 
-test('should syntax highlight body', async ({ page, runAndTrace, server }) => {
+test('TV-030 should syntax highlight body', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
     await page.evaluate(() => (window as any).donePromise);
@@ -644,7 +644,7 @@ test('should syntax highlight body', async ({ page, runAndTrace, server }) => {
   await expect(keyword).toHaveClass('cm-keyword');
 });
 
-test('should filter network requests by url', async ({ page, runAndTrace, server }) => {
+test('TV-031 should filter network requests by url', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
     await page.evaluate(() => (window as any).donePromise);
@@ -675,7 +675,7 @@ test('should filter network requests by url', async ({ page, runAndTrace, server
   await expect(traceViewer.networkRequests.getByText('font.woff2')).toBeVisible();
 });
 
-test('should have network request overrides', async ({ page, server, runAndTrace }) => {
+test('TV-032 should have network request overrides', async ({ page, server, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.route('**/style.css', route => route.abort());
     await page.goto(server.PREFIX + '/frames/frame.html');
@@ -687,7 +687,7 @@ test('should have network request overrides', async ({ page, server, runAndTrace
   await expect(traceViewer.networkRequests).not.toContainText([/continued/]);
 });
 
-test('should show canceled status for requests canceled by navigation', async ({ page, server, runAndTrace }) => {
+test('TV-033 should show canceled status for requests canceled by navigation', async ({ page, server, runAndTrace }) => {
   server.setRoute('/slow', (_req, _res) => {
     // Never respond so the request stays in-flight until navigation cancels it.
   });
@@ -705,7 +705,7 @@ test('should show canceled status for requests canceled by navigation', async ({
   await expect(slowRequest).toHaveCSS('background-color', 'rgb(242, 222, 222)');
 });
 
-test('should have network request overrides 2', async ({ page, server, runAndTrace }) => {
+test('TV-034 should have network request overrides 2', async ({ page, server, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.route('**/script.js', route => route.continue());
     await page.goto(server.PREFIX + '/frames/frame.html');
@@ -716,7 +716,7 @@ test('should have network request overrides 2', async ({ page, server, runAndTra
   await expect.soft(traceViewer.networkRequests).toContainText([/script.jsGET200text\/javascript.*continued/]);
 });
 
-test('should filter network requests by websocket type', {
+test('TV-035 should filter network requests by websocket type', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10996' }
 }, async ({ page, server, runAndTrace }) => {
   server.onceWebSocketConnection(ws => {
@@ -739,7 +739,7 @@ test('should filter network requests by websocket type', {
   await expect(traceViewer.networkRequests).toContainText('websocket');
 });
 
-test('should show websocket messages', {
+test('TV-036 should show websocket messages', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10996' }
 }, async ({ page, server, runAndTrace }) => {
   server.onceWebSocketConnection(ws => {
@@ -784,7 +784,7 @@ test('should show websocket messages', {
   await expect(wsList.getByRole('option').nth(3)).toContainText('Binary');
 });
 
-test('should show snapshot URL and copy button', async ({ page, runAndTrace, server }) => {
+test('TV-037 should show snapshot URL and copy button', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate('2+2');
@@ -798,7 +798,7 @@ test('should show snapshot URL and copy button', async ({ page, runAndTrace, ser
   expect(await traceViewer.page.evaluate(() => navigator.clipboard.readText())).toBe(server.EMPTY_PAGE);
 });
 
-test('should popup snapshot', async ({ page, runAndTrace, server }) => {
+test('TV-038 should popup snapshot', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('hello äöü 🙂');
@@ -810,7 +810,7 @@ test('should popup snapshot', async ({ page, runAndTrace, server }) => {
   await expect(popup.frameLocator('iframe').getByText('hello äöü 🙂')).toBeVisible();
 });
 
-test('should capture attribute mutations inside a popup window', {
+test('TV-039 should capture attribute mutations inside a popup window', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40895' }
 }, async ({ page, server, runAndTrace }) => {
   server.setRoute('/popup.html', (req, res) => {
@@ -836,7 +836,7 @@ test('should capture attribute mutations inside a popup window', {
   await expect(frame.locator('#overlay')).toHaveClass('no-display');
 });
 
-test('should capture iframe with sandbox attribute', async ({ page, server, runAndTrace }) => {
+test('TV-040 should capture iframe with sandbox attribute', async ({ page, server, runAndTrace }) => {
   await page.route('**/empty.html', route => {
     void route.fulfill({
       body: '<iframe src="iframe.html" sandBOX="allow-scripts"></iframe>',
@@ -865,7 +865,7 @@ test('should capture iframe with sandbox attribute', async ({ page, server, runA
   expect(await button.textContent()).toBe('Hello iframe');
 });
 
-test('should capture data-url svg iframe', async ({ page, server, runAndTrace }) => {
+test('TV-041 should capture data-url svg iframe', async ({ page, server, runAndTrace }) => {
   await page.route('**/empty.html', route => {
     void route.fulfill({
       body: `<iframe src="data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' height='24px' viewBox='0 0 24 24' width='24px' fill='%23000000'%3e%3cpath d='M0 0h24v24H0z' fill='none'/%3e%3cpath d='M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z'/%3e%3c/svg%3e"></iframe>`,
@@ -889,7 +889,7 @@ test('should capture data-url svg iframe', async ({ page, server, runAndTrace })
   expect(content).toContain(`d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"`);
 });
 
-test('should not let style text break out of the style element', async ({ page, runAndTrace, server }) => {
+test('TV-042 should not let style text break out of the style element', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => {
@@ -910,7 +910,7 @@ test('should not let style text break out of the style element', async ({ page, 
   expect(await frame.locator('body style').evaluate(el => el.textContent)).toContain('onerror=');
 });
 
-test('should contain adopted style sheets', async ({ page, runAndTrace, browserName }) => {
+test('TV-043 should contain adopted style sheets', async ({ page, runAndTrace, browserName }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<button>Hello</button>');
     await page.evaluate(() => {
@@ -938,7 +938,7 @@ test('should contain adopted style sheets', async ({ page, runAndTrace, browserN
   await expect(frame.locator('span')).toHaveCSS('color', 'rgb(0, 0, 255)');
 });
 
-test('should work with adopted style sheets and replace/replaceSync', async ({ page, runAndTrace, browserName }) => {
+test('TV-044 should work with adopted style sheets and replace/replaceSync', async ({ page, runAndTrace, browserName }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<button>Hello</button>');
     await page.evaluate(() => {
@@ -970,7 +970,7 @@ test('should work with adopted style sheets and replace/replaceSync', async ({ p
   }
 });
 
-test('should work with adopted style sheets and all: unset', async ({ page, runAndTrace, browserName }) => {
+test('TV-045 should work with adopted style sheets and all: unset', async ({ page, runAndTrace, browserName }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31500' });
 
   const traceViewer = await runAndTrace(async () => {
@@ -992,7 +992,7 @@ test('should work with adopted style sheets and all: unset', async ({ page, runA
   }
 });
 
-test('empty adopted style sheets should not prevent node refs', async ({ page }) => {
+test('TV-046 empty adopted style sheets should not prevent node refs', async ({ page }) => {
   const traceFile = test.info().outputPath('trace.zip');
   await page.context().tracing.start({ snapshots: true });
   await page.setContent('<button>Hello</button>');
@@ -1020,7 +1020,7 @@ test('empty adopted style sheets should not prevent node refs', async ({ page })
   expect(snapshot.snapshot().html).toEqual([[1, 9]]);
 });
 
-test('should work with nesting CSS selectors', async ({ page, runAndTrace }) => {
+test('TV-047 should work with nesting CSS selectors', async ({ page, runAndTrace }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31607' });
 
   const traceViewer = await runAndTrace(async () => {
@@ -1046,7 +1046,7 @@ test('should work with nesting CSS selectors', async ({ page, runAndTrace }) => 
   }
 });
 
-test('should restore scroll positions', async ({ page, runAndTrace }) => {
+test('TV-048 should restore scroll positions', async ({ page, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <style>
@@ -1077,7 +1077,7 @@ test('should restore scroll positions', async ({ page, runAndTrace }) => {
   expect(await frame.locator('div').evaluate(div => div.scrollTop)).toBe(136);
 });
 
-test('should restore control values', async ({ page, runAndTrace, asset }) => {
+test('TV-049 should restore control values', async ({ page, runAndTrace, asset }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <input type=text value=old>
@@ -1131,7 +1131,7 @@ test('should restore control values', async ({ page, runAndTrace, asset }) => {
   await expect(frame.locator('input[type=file]')).toHaveValue('');
 });
 
-test('should work with meta CSP', async ({ page, runAndTrace, browserName }) => {
+test('TV-050 should work with meta CSP', async ({ page, runAndTrace, browserName }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <head>
@@ -1155,7 +1155,7 @@ test('should work with meta CSP', async ({ page, runAndTrace, browserName }) => 
   await expect(frame.locator('span')).toHaveText('World');
 });
 
-test('should handle multiple headers', async ({ page, server, runAndTrace, browserName }) => {
+test('TV-051 should handle multiple headers', async ({ page, server, runAndTrace, browserName }) => {
   server.setRoute('/foo.css', (req, res) => {
     res.statusCode = 200;
     res.setHeader('vary', ['accepts-encoding', 'accepts-encoding']);
@@ -1172,7 +1172,7 @@ test('should handle multiple headers', async ({ page, server, runAndTrace, brows
   await expect(frame.locator('body')).toHaveCSS('padding-left', '42px');
 });
 
-test('should handle src=blob', async ({ page, server, runAndTrace, browserName }) => {
+test('TV-052 should handle src=blob', async ({ page, server, runAndTrace, browserName }) => {
   test.skip(browserName === 'firefox');
 
   const traceViewer = await runAndTrace(async () => {
@@ -1195,7 +1195,7 @@ test('should handle src=blob', async ({ page, server, runAndTrace, browserName }
   expect(size).toBe(10);
 });
 
-test('should handle file URIs', async ({ page, runAndTrace, browserName }) => {
+test('TV-053 should handle file URIs', async ({ page, runAndTrace, browserName }) => {
   test.skip(browserName !== 'chromium');
 
   const traceViewer = await runAndTrace(async () => {
@@ -1206,7 +1206,7 @@ test('should handle file URIs', async ({ page, runAndTrace, browserName }) => {
   await expect(frame.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
-test('should preserve currentSrc', async ({ browser, server, showTraceViewer }) => {
+test('TV-054 should preserve currentSrc', async ({ browser, server, showTraceViewer }) => {
   const traceFile = test.info().outputPath('trace.zip');
   const page = await browser.newPage({ deviceScaleFactor: 3 });
   await page.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
@@ -1228,7 +1228,7 @@ test('should preserve currentSrc', async ({ browser, server, showTraceViewer }) 
   await expect(frame.locator('#target2')).toHaveAttribute('src', server.PREFIX + '/digits/6.png');
 });
 
-test('should register custom elements', async ({ page, server, runAndTrace }) => {
+test('TV-055 should register custom elements', async ({ page, server, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => {
@@ -1257,7 +1257,7 @@ test('should register custom elements', async ({ page, server, runAndTrace }) =>
   await expect(frame.getByText('worldhello')).toBeVisible();
 });
 
-test('should not treat synthetic shadow root as a shadow root', async ({ page, server, runAndTrace }) => {
+test('TV-056 should not treat synthetic shadow root as a shadow root', async ({ page, server, runAndTrace }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42772' });
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/synthetic-shadow.html');
@@ -1276,7 +1276,7 @@ test('should not treat synthetic shadow root as a shadow root', async ({ page, s
   await expect(frame.locator('#native .icon')).toHaveCSS('fill', 'rgb(46, 139, 87)');
 });
 
-test('should highlight target elements', async ({ page, runAndTrace, browserName }) => {
+test('TV-057 should highlight target elements', async ({ page, runAndTrace, browserName }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <div>t1</div>
@@ -1357,7 +1357,7 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
   await expect.poll(() => highlightedDivs(frameUpdatedListOfTargets)).toEqual(['t4']);
 });
 
-test('should highlight target element in shadow dom', async ({ page, server, runAndTrace }) => {
+test('TV-058 should highlight target element in shadow dom', async ({ page, server, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/shadow.html');
     await page.locator('button').click();
@@ -1371,7 +1371,7 @@ test('should highlight target element in shadow dom', async ({ page, server, run
   await expect(frameExpect.locator('h1')).toHaveCSS('background-color', 'rgba(111, 168, 220, 0.498)');
 });
 
-test('should highlight expect failure', async ({ page, server, runAndTrace }) => {
+test('TV-059 should highlight expect failure', async ({ page, server, runAndTrace }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright-python/issues/2258' });
   const traceViewer = await runAndTrace(async () => {
     try {
@@ -1386,7 +1386,7 @@ test('should highlight expect failure', async ({ page, server, runAndTrace }) =>
   await expect(traceViewer.errorMessages.nth(0)).toHaveText('Expect failed');
 });
 
-test('should show action source', async ({ showTraceViewer }) => {
+test('TV-060 should show action source', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Click');
 
@@ -1398,7 +1398,7 @@ test('should show action source', async ({ showTraceViewer }) => {
   await expect(traceViewer.page.locator('.source-line-running')).toContainText('page.waitForNavigation()');
 });
 
-test('should follow redirects', async ({ page, runAndTrace, server, asset }) => {
+test('TV-061 should follow redirects', async ({ page, runAndTrace, server, asset }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<div><img id=img src="image.png"></img></div>`);
@@ -1424,7 +1424,7 @@ test('should follow redirects', async ({ page, runAndTrace, server, asset }) => 
   await expect(snapshotFrame.locator('img')).toHaveJSProperty('naturalWidth', 10);
 });
 
-test('should include metainfo', async ({ showTraceViewer }) => {
+test('TV-062 should include metainfo', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.page.getByRole('tab', { name: 'Metadata' }).click();
   const callLine = traceViewer.metadataTab.locator('.call-line');
@@ -1440,7 +1440,7 @@ test('should include metainfo', async ({ showTraceViewer }) => {
   await expect(callLine.getByText('events')).toHaveText(/events:[\d]+/);
 });
 
-test('should open v6 trace file', async ({ showTraceViewer, asset }) => {
+test('TV-063 should open v6 trace file', async ({ showTraceViewer, asset }) => {
   const traceViewer = await showTraceViewer(asset('test-trace1.zip'));
   // Same actions from different test runs should not be merged.
   await expect(traceViewer.actionTitles).toHaveText([
@@ -1451,7 +1451,7 @@ test('should open v6 trace file', async ({ showTraceViewer, asset }) => {
   ]);
 });
 
-test('should not crash with broken locator', async ({ page, runAndTrace, server }) => {
+test('TV-064 should not crash with broken locator', async ({ page, runAndTrace, server }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21832' });
   const traceViewer = await runAndTrace(async () => {
     try {
@@ -1464,7 +1464,7 @@ test('should not crash with broken locator', async ({ page, runAndTrace, server 
   await expect(header).toBeVisible();
 });
 
-test('should serve overridden request', async ({ page, runAndTrace, server }) => {
+test('TV-065 should serve overridden request', async ({ page, runAndTrace, server }) => {
   server.setRoute('/custom.css', (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/css',
@@ -1484,7 +1484,7 @@ test('should serve overridden request', async ({ page, runAndTrace, server }) =>
   await expect(snapshotFrame.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 });
 
-test('should display waitForLoadState even if did not wait for it', async ({ runAndTrace, server, page }) => {
+test('TV-066 should display waitForLoadState even if did not wait for it', async ({ runAndTrace, server, page }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.waitForLoadState('load');
@@ -1497,7 +1497,7 @@ test('should display waitForLoadState even if did not wait for it', async ({ run
   ]);
 });
 
-test('should display language-specific locators', async ({ runAndTrace, server, page, toImpl }) => {
+test('TV-067 should display language-specific locators', async ({ runAndTrace, server, page, toImpl }) => {
   toImpl(page).attribution.browser.options.sdkLanguage = 'python';
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<button>Submit</button>');
@@ -1510,7 +1510,7 @@ test('should display language-specific locators', async ({ runAndTrace, server, 
   toImpl(page).attribution.browser.options.sdkLanguage = 'javascript';
 });
 
-test('should pick locator', async ({ page, runAndTrace, server }) => {
+test('TV-068 should pick locator', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<button>Submit</button>');
@@ -1522,7 +1522,7 @@ test('should pick locator', async ({ page, runAndTrace, server }) => {
   await expect(traceViewer.page.locator('.cm-wrapper').last()).toContainText(`- button "Submit"`);
 });
 
-test('should generate aria snapshot with unaltered urls', async ({ page, runAndTrace, server }) => {
+test('TV-069 should generate aria snapshot with unaltered urls', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<a href="https://example.com">Example link</a>');
@@ -1536,7 +1536,7 @@ test('should generate aria snapshot with unaltered urls', async ({ page, runAndT
   `);
 });
 
-test('should update highlight when typing locator', async ({ page, runAndTrace, server }) => {
+test('TV-070 should update highlight when typing locator', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<button>Submit</button>');
@@ -1553,7 +1553,7 @@ test('should update highlight when typing locator', async ({ page, runAndTrace, 
   }).toEqual(buttonBox);
 });
 
-test('should update highlight when typing snapshot', async ({ page, runAndTrace, server }) => {
+test('TV-071 should update highlight when typing snapshot', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<button>Submit</button>');
@@ -1569,13 +1569,13 @@ test('should update highlight when typing snapshot', async ({ page, runAndTrace,
   }).toEqual(buttonBox);
 });
 
-test('should open trace-1.31', async ({ showTraceViewer }) => {
+test('TV-072 should open trace-1.31', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(path.join(__dirname, '../assets/trace-1.31.zip'));
   const snapshot = await traceViewer.snapshotFrame('Click');
   await expect(snapshot.locator('[__playwright_target__]')).toHaveText(['Submit']);
 });
 
-test('should open trace-1.37', async ({ showTraceViewer }) => {
+test('TV-073 should open trace-1.37', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(path.join(__dirname, '../assets/trace-1.37.zip'));
   const snapshot = await traceViewer.snapshotFrame('page.goto');
   await expect(snapshot.locator('div')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
@@ -1590,7 +1590,7 @@ test('should open trace-1.37', async ({ showTraceViewer }) => {
   ]);
 });
 
-test('should prefer later resource request with the same method', async ({ page, server, runAndTrace }) => {
+test('TV-074 should prefer later resource request with the same method', async ({ page, server, runAndTrace }) => {
   const html = `
     <body>
       <script>
@@ -1639,7 +1639,7 @@ test('should prefer later resource request with the same method', async ({ page,
   await expect(frame2.locator('body')).toHaveCSS('background-color', 'rgb(123, 123, 123)');
 });
 
-test('should ignore 304 responses', async ({ page, server, runAndTrace }) => {
+test('TV-075 should ignore 304 responses', async ({ page, server, runAndTrace }) => {
   const html = `
     <head>
       <link rel=stylesheet href="style.css" />
@@ -1676,7 +1676,7 @@ test('should ignore 304 responses', async ({ page, server, runAndTrace }) => {
   await expect(frame.locator('body')).toHaveCSS('background-color', 'rgb(123, 123, 123)');
 });
 
-test('should pick locator in iframe', async ({ page, runAndTrace, server }) => {
+test('TV-076 should pick locator in iframe', async ({ page, runAndTrace, server }) => {
   /*
     iframe[id=frame1]
       div Hello1
@@ -1714,7 +1714,7 @@ test('should pick locator in iframe', async ({ page, runAndTrace, server }) => {
   await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().locator('iframe').contentFrame().locator('iframe[name="two"]').contentFrame().getByText('HelloNameTwo')`, { timeout: 0 });
 });
 
-test('should highlight locator in iframe while typing', async ({ page, runAndTrace, server, platform }) => {
+test('TV-077 should highlight locator in iframe while typing', async ({ page, runAndTrace, server, platform }) => {
   /*
     iframe[id=frame1]
       div Hello1
@@ -1769,7 +1769,7 @@ test('should highlight locator in iframe while typing', async ({ page, runAndTra
   }
 });
 
-test('should preserve noscript when javascript is disabled', async ({ browser, server, showTraceViewer }) => {
+test('TV-078 should preserve noscript when javascript is disabled', async ({ browser, server, showTraceViewer }) => {
   const traceFile = test.info().outputPath('trace.zip');
   const page = await browser.newPage({ javaScriptEnabled: false });
   await page.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
@@ -1787,7 +1787,7 @@ test('should preserve noscript when javascript is disabled', async ({ browser, s
   await expect(frame.getByText('javascript is disabled!')).toBeVisible();
 });
 
-test('should remove noscript by default', async ({ browser, server, showTraceViewer, browserType }) => {
+test('TV-079 should remove noscript by default', async ({ browser, server, showTraceViewer, browserType }) => {
   const traceFile = test.info().outputPath('trace.zip');
   const page = await browser.newPage({ javaScriptEnabled: undefined });
   await page.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
@@ -1805,7 +1805,7 @@ test('should remove noscript by default', async ({ browser, server, showTraceVie
   await expect(frame.getByText('Enable JavaScript to run this app.')).toBeHidden();
 });
 
-test('should remove noscript when javaScriptEnabled is set to true', async ({ browser, server, showTraceViewer, browserType }) => {
+test('TV-080 should remove noscript when javaScriptEnabled is set to true', async ({ browser, server, showTraceViewer, browserType }) => {
   const traceFile = test.info().outputPath('trace.zip');
   const page = await browser.newPage({ javaScriptEnabled: true });
   await page.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
@@ -1823,7 +1823,7 @@ test('should remove noscript when javaScriptEnabled is set to true', async ({ br
   await expect(frame.getByText('Enable JavaScript to run this app.')).toBeHidden();
 });
 
-test('should open snapshot in new browser context', async ({ browser, page, runAndTrace, server, channel }) => {
+test('TV-081 should open snapshot in new browser context', async ({ browser, page, runAndTrace, server, channel }) => {
   test.skip(channel === 'webkit-wsl', 'Trace Viewer opens via ipv6 address which is not supported in WSL');
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
@@ -1841,7 +1841,7 @@ test('should open snapshot in new browser context', async ({ browser, page, runA
   await newPage.close();
 });
 
-test('should show similar actions from legacy library-only trace', async ({ showTraceViewer, asset }) => {
+test('TV-082 should show similar actions from legacy library-only trace', async ({ showTraceViewer, asset }) => {
   const traceViewer = await showTraceViewer(asset('trace-library-1.46.zip'));
   await traceViewer.showAllActions();
   await expect(traceViewer.actionTitles).toHaveText([
@@ -1863,7 +1863,7 @@ function parseMillis(s: string): number {
   return (+matchSeconds[1]) * 1000;
 }
 
-test('should show correct request start time', {
+test('TV-083 should show correct request start time', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31133' },
 }, async ({ page, runAndTrace, server }) => {
   server.setRoute('/api', (req, res) => {
@@ -1888,7 +1888,7 @@ test('should show correct request start time', {
   expect(parseMillis(start)).toBeLessThan(1000);
 });
 
-test('should not record route actions', {
+test('TV-084 should not record route actions', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30970' },
 }, async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
@@ -1903,7 +1903,7 @@ test('should not record route actions', {
   ]);
 });
 
-test('should not record network actions', {
+test('TV-085 should not record network actions', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33558' },
 }, async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
@@ -1925,7 +1925,7 @@ test('should not record network actions', {
   ]);
 });
 
-test('should show baseURL in metadata pane', {
+test('TV-086 should show baseURL in metadata pane', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31847' },
 }, async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
@@ -1934,7 +1934,7 @@ test('should show baseURL in metadata pane', {
   await expect(traceViewer.metadataTab).toContainText('baseURL:https://example.com');
 });
 
-test('should not leak recorders', {
+test('TV-087 should not leak recorders', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33086' },
 }, async ({ showTraceViewer, platform }) => {
   const traceViewer = await showTraceViewer(traceFile);
@@ -1994,7 +1994,7 @@ test('should not leak recorders', {
   await expect.poll(() => aliveCount()).toBeLessThanOrEqual(2); // two snapshot iframes
 });
 
-test('should serve css without content-type', async ({ page, runAndTrace, server }) => {
+test('TV-088 should serve css without content-type', async ({ page, runAndTrace, server }) => {
   server.setRoute('/one-style.css', (req, res) => {
     res.writeHead(200);
     res.end(`body { background: red }`);
@@ -2006,7 +2006,7 @@ test('should serve css without content-type', async ({ page, runAndTrace, server
   await expect(snapshotFrame.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)', { timeout: 0 });
 });
 
-test('canvas disabled title', async ({ runAndTrace, page, server }) => {
+test('TV-089 canvas disabled title', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/screenshots/canvas.html#canvas-on-edge');
     await rafraf(page, 5);
@@ -2016,7 +2016,7 @@ test('canvas disabled title', async ({ runAndTrace, page, server }) => {
   await expect(snapshot.locator('canvas')).toHaveAttribute('title', `Canvas content display is disabled.`);
 });
 
-test('canvas clipping', async ({ runAndTrace, page, server }) => {
+test('TV-090 canvas clipping', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/screenshots/canvas.html#canvas-on-edge');
     await rafraf(page, 5);
@@ -2035,7 +2035,7 @@ test('canvas clipping', async ({ runAndTrace, page, server }) => {
   await expect(snapshot.locator('canvas')).toHaveAttribute('title', `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`);
 });
 
-test('canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
+test('TV-091 canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <iframe src="${server.PREFIX}/screenshots/canvas.html#canvas-on-edge"></iframe>
@@ -2058,7 +2058,7 @@ test('canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
   await expect(canvas).toHaveAttribute('title', 'Canvas contents are displayed on a best-effort basis based on viewport screenshots taken during test execution.');
 });
 
-test('should show only one pointer with multilevel iframes', async ({ page, runAndTrace, server, browserName, isBidi }) => {
+test('TV-092 should show only one pointer with multilevel iframes', async ({ page, runAndTrace, server, browserName, isBidi }) => {
   server.setRoute('/level-0.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<iframe src="/level-1.html" style="position: absolute; left: 100px"></iframe>`);
@@ -2082,7 +2082,7 @@ test('should show only one pointer with multilevel iframes', async ({ page, runA
   await expect.soft(snapshotFrame.frameLocator('iframe').frameLocator('iframe').locator('x-pw-pointer')).not.toBeAttached();
 });
 
-test('should show a popover', async ({ runAndTrace, page, server, platform, browserName, macVersion }) => {
+test('TV-093 should show a popover', async ({ runAndTrace, page, server, platform, browserName, macVersion }) => {
   test.skip(platform === 'darwin' && macVersion === 13 && browserName === 'webkit', 'WebKit on macOS 13.7 reliably fails on this test for some reason');
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
@@ -2100,7 +2100,7 @@ test('should show a popover', async ({ runAndTrace, page, server, platform, brow
   await expect.poll(() => popover.evaluate(e => e.matches(':popover-open'))).toBe(true);
 });
 
-test('should show a modal dialog', async ({ runAndTrace, page, platform, browserName, macVersion }) => {
+test('TV-094 should show a modal dialog', async ({ runAndTrace, page, platform, browserName, macVersion }) => {
   test.skip(platform === 'darwin' && macVersion === 13 && browserName === 'webkit', 'WebKit on macOS 13.7 reliably fails on this test for some reason');
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
@@ -2124,14 +2124,14 @@ test('should show a modal dialog', async ({ runAndTrace, page, platform, browser
   await expect.poll(() => dialog.evaluate(e => e.matches(':modal'))).toBe(true);
 });
 
-test('should open settings dialog', async ({ showTraceViewer }) => {
+test('TV-095 should open settings dialog', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Navigate');
   await traceViewer.showSettings();
   await expect(traceViewer.settingsDialog).toBeVisible();
 });
 
-test('should toggle theme color', async ({ showTraceViewer }) => {
+test('TV-096 should toggle theme color', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Navigate');
   await traceViewer.showSettings();
@@ -2147,7 +2147,7 @@ test('should toggle theme color', async ({ showTraceViewer }) => {
   await expect(traceViewer.page.locator('html')).toHaveClass('light-mode');
 });
 
-test('should reflect system color scheme changes in document theme', async ({ showTraceViewer }) => {
+test('TV-097 should reflect system color scheme changes in document theme', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Navigate');
 
@@ -2160,7 +2160,7 @@ test('should reflect system color scheme changes in document theme', async ({ sh
   await expect(traceViewer.page.locator('html')).toHaveClass('light-mode');
 });
 
-test('should toggle canvas rendering', async ({ runAndTrace, page }) => {
+test('TV-098 should toggle canvas rendering', async ({ runAndTrace, page }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(`data:text/html,<!DOCTYPE html><body><div>Hello world</div><canvas /></body>`);
     await page.goto(`data:text/html,<!DOCTYPE html><body><div>Hello world</div></body>`);
@@ -2194,7 +2194,7 @@ test('should toggle canvas rendering', async ({ runAndTrace, page }) => {
   expect(snapshotRequest.url()).toContain('shouldPopulateCanvasFromScreenshot');
 });
 
-test('should display aria mode', async ({ runAndTrace, page }) => {
+test('TV-099 should display aria mode', async ({ runAndTrace, page }) => {
   let buttonBox: { x: number, y: number, width: number, height: number };
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<!DOCTYPE html><button>Click me</button>');
@@ -2280,7 +2280,7 @@ test('should display aria mode', async ({ runAndTrace, page }) => {
   await expect(traceViewer.snapshotContainer).toBeVisible();
 });
 
-test('should disable aria setting when there are no aria snapshots', async ({ runAndTrace, page }) => {
+test('TV-100 should disable aria setting when there are no aria snapshots', async ({ runAndTrace, page }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<!DOCTYPE html><button>Click me</button>');
     await page.locator('button').click();
@@ -2294,7 +2294,7 @@ test('should disable aria setting when there are no aria snapshots', async ({ ru
   await expect(traceViewer.displayAriaSetting).toBeChecked({ checked: false });
 });
 
-test('should force aria mode when there are no dom snapshots', async ({ runAndTrace, page }) => {
+test('TV-101 should force aria mode when there are no dom snapshots', async ({ runAndTrace, page }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<!DOCTYPE html><button>Click me</button>');
     await page.locator('button').click();
@@ -2308,7 +2308,7 @@ test('should force aria mode when there are no dom snapshots', async ({ runAndTr
   await expect(traceViewer.displayAriaSetting).toBeChecked({ checked: true });
 });
 
-test('should notify parent when ready to receive messages', async ({ browser, server, showTraceViewer }) => {
+test('TV-102 should notify parent when ready to receive messages', async ({ browser, server, showTraceViewer }) => {
   const traceViewer = await showTraceViewer(undefined, { host: 'localhost' });
   const traceViewerURL = traceViewer.page.url();
   await using context = await browser.newContext();
@@ -2339,7 +2339,7 @@ test('should notify parent when ready to receive messages', async ({ browser, se
   expect(readyMessage).toEqual({ method: 'ready' });
 });
 
-test('should render blob trace received from opener', async ({ browser, server, showTraceViewer }) => {
+test('TV-103 should render blob trace received from opener', async ({ browser, server, showTraceViewer }) => {
   const traceViewer = await showTraceViewer(undefined, { host: 'localhost' });
   const traceViewerURL = traceViewer.page.url();
   await using context = await browser.newContext();
@@ -2402,7 +2402,7 @@ test('should render blob trace received from opener', async ({ browser, server, 
   ]);
 });
 
-test("shouldn't render not-blob trace received from message", async ({ showTraceViewer }) => {
+test("TV-104 shouldn't render not-blob trace received from message", async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(undefined, { host: 'localhost' });
 
   await expect(traceViewer.page.locator('.drop-target')).toBeVisible();
@@ -2421,7 +2421,7 @@ test("shouldn't render not-blob trace received from message", async ({ showTrace
   await expect(traceViewer.actionTitles).not.toBeVisible();
 });
 
-test('should not trip over complex urls in style tags', {
+test('TV-105 should not trip over complex urls in style tags', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35681' },
 }, async ({ runAndTrace, page }) => {
   const traceViewer = await runAndTrace(async () => {
@@ -2457,7 +2457,7 @@ test('should not trip over complex urls in style tags', {
   await expect(snapshot.locator('span')).toHaveCSS('color', 'rgb(4, 5, 6)');
 });
 
-test('should render locator descriptions', async ({ runAndTrace, page }) => {
+test('TV-106 should render locator descriptions', async ({ runAndTrace, page }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<input type="text" />');
     await page.locator('input').describe('custom').click();
@@ -2470,7 +2470,7 @@ test('should render locator descriptions', async ({ runAndTrace, page }) => {
   `);
 });
 
-test('should load trace from HTTP with progress indicator', async ({ showTraceViewer, server }) => {
+test('TV-107 should load trace from HTTP with progress indicator', async ({ showTraceViewer, server }) => {
   const [traceViewer, res] = await Promise.all([
     showTraceViewer(server.PREFIX),
     new Promise<http.ServerResponse>(resolve => {
@@ -2493,7 +2493,7 @@ test('should load trace from HTTP with progress indicator', async ({ showTraceVi
   await expect(traceViewer.actionTitles).toContainText([/Create page/]);
 });
 
-test('should filter actions', async ({ runAndTrace, page }) => {
+test('TV-108 should filter actions', async ({ runAndTrace, page }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.route('**/*', async route => {
       await route.fulfill({ contentType: 'text/html', body: '<input type=checkbox checked>' });
@@ -2540,7 +2540,7 @@ test.describe(() => {
   // On http/about:blank it throws "The operation is insecure".
   test.use({ ignoreHTTPSErrors: true });
 
-  test('should handle failed snapshots due to dialog', async ({ page, httpsServer, runAndTrace }) => {
+  test('TV-109 should handle failed snapshots due to dialog', async ({ page, httpsServer, runAndTrace }) => {
     const traceViewer = await runAndTrace(async () => {
       await page.goto(httpsServer.EMPTY_PAGE);
       await page.setContent(`
@@ -2576,7 +2576,7 @@ test.describe(() => {
   });
 });
 
-test('should survive service worker restart', async ({ page, runAndTrace, server }) => {
+test('TV-110 should survive service worker restart', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('Old world');
@@ -2595,7 +2595,7 @@ test('should survive service worker restart', async ({ page, runAndTrace, server
   await expect(snapshot2.locator('body')).toHaveText('Old world');
 });
 
-test('should not navigate on anchor clicks', async ({ runAndTrace, page, server }) => {
+test('TV-111 should not navigate on anchor clicks', async ({ runAndTrace, page, server }) => {
   const url = server.EMPTY_PAGE;
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
@@ -2624,7 +2624,7 @@ test('should not navigate on anchor clicks', async ({ runAndTrace, page, server 
   await checkLink('link3');
 });
 
-test('should respect CSSOM changes', async ({ runAndTrace, page, server }) => {
+test('TV-112 should respect CSSOM changes', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<style>button { color: red; }</style><button>Hello</button>');
     await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
@@ -2670,7 +2670,7 @@ test('should respect CSSOM changes', async ({ runAndTrace, page, server }) => {
   await expect(frame9.locator('button')).toHaveCSS('color', 'rgb(0, 0, 0)');
 });
 
-test('should preserve custom doctype', async ({ runAndTrace, page }) => {
+test('TV-113 should preserve custom doctype', async ({ runAndTrace, page }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<!DOCTYPE foo><body>hi</body>');
   });
@@ -2678,7 +2678,7 @@ test('should preserve custom doctype', async ({ runAndTrace, page }) => {
   await expect.poll(() => frame.locator('body').evaluate(() => document.doctype.name)).toBe('foo');
 });
 
-test('should replace meta charset attr that specifies charset', async ({ runAndTrace, page, server }) => {
+test('TV-114 should replace meta charset attr that specifies charset', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<meta charset="shift-jis" />');
@@ -2687,7 +2687,7 @@ test('should replace meta charset attr that specifies charset', async ({ runAndT
   await expect.poll(() => frame.locator('body').evaluate(() => document.querySelector('meta')?.outerHTML.toLowerCase())).toBe('<meta charset="utf-8">');
 });
 
-test('should replace meta content attr that specifies charset', async ({ runAndTrace, page, server }) => {
+test('TV-115 should replace meta content attr that specifies charset', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS">');
@@ -2696,7 +2696,7 @@ test('should replace meta content attr that specifies charset', async ({ runAndT
   await expect.poll(() => frame.locator('body').evaluate(() => document.querySelector('meta')?.outerHTML.toLowerCase())).toBe('<meta http-equiv="content-type" content="text/html; charset=utf-8">');
 });
 
-test('should drop meta http-equiv refresh during recording', async ({ runAndTrace, page, server }) => {
+test('TV-116 should drop meta http-equiv refresh during recording', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     // Use a very large delay so the recorded page does not actually navigate before the snapshot is taken.
@@ -2716,7 +2716,7 @@ test('should drop meta http-equiv refresh during recording', async ({ runAndTrac
   await expect(traceViewer.page.locator('body')).not.toHaveAttribute('data-pwned', /.*/);
 });
 
-test('should neutralize meta http-equiv refresh during rendering', async ({ runAndTrace, page, server }) => {
+test('TV-117 should neutralize meta http-equiv refresh during rendering', async ({ runAndTrace, page, server }) => {
   // Inject a META refresh directly via DOM manipulation that bypasses the
   // recording-time strip (so this test specifically validates the renderer-side defense).
   const traceViewer = await runAndTrace(async () => {
@@ -2739,7 +2739,7 @@ test('should neutralize meta http-equiv refresh during rendering', async ({ runA
   await expect(traceViewer.page).toHaveTitle(/Playwright Trace Viewer/);
 });
 
-test('snapshots should be served with a script-src policy', async ({ runAndTrace, page, server }) => {
+test('TV-118 snapshots should be served with a script-src policy', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<div>hello</div>');
@@ -2755,7 +2755,7 @@ test('snapshots should be served with a script-src policy', async ({ runAndTrace
   expect(scripted).toBe(null);
 });
 
-test('snapshot iframes should be sandboxed', async ({ runAndTrace, page, server }) => {
+test('TV-119 snapshot iframes should be sandboxed', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<div>hello</div>');
@@ -2769,7 +2769,7 @@ test('snapshot iframes should be sandboxed', async ({ runAndTrace, page, server 
   }
 });
 
-test('should capture iframe with srcdoc', async ({ page, server, runAndTrace }) => {
+test('TV-120 should capture iframe with srcdoc', async ({ page, server, runAndTrace }) => {
   await page.route('**/empty.html', route => {
     void route.fulfill({
       body: `<iframe srcdoc="<button>Hello iframe</button>"></iframe>`,
@@ -2787,7 +2787,7 @@ test('should capture iframe with srcdoc', async ({ page, server, runAndTrace }) 
   await expect(frame.frameLocator('iframe').getByRole('button')).toHaveText('Hello iframe');
 });
 
-test('should render snapshots from the second chunk', async ({ context, page, server, showTraceViewer }, testInfo) => {
+test('TV-121 should render snapshots from the second chunk', async ({ context, page, server, showTraceViewer }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<button>Click</button>');
@@ -2807,7 +2807,7 @@ test('should render snapshots from the second chunk', async ({ context, page, se
   await expect(frame.locator('button')).toHaveText('Click');
 });
 
-test('take trace paths via stdin', async ({ showTraceViewer }) => {
+test('TV-122 take trace paths via stdin', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(undefined, { stdin: true });
   await expect(traceViewer.page).toHaveTitle('Playwright Trace Viewer');
   traceViewer.process.write(traceFile);

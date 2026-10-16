@@ -21,7 +21,7 @@ import { attachFrame } from '../config/utils';
 import fs from 'fs';
 import formidable from 'formidable';
 
-test('should upload multiple large files', async ({ page, server, isAndroid, mode }, testInfo) => {
+test('FC-001 should upload multiple large files', async ({ page, server, isAndroid, mode }, testInfo) => {
   test.skip(isAndroid);
   test.slow();
 
@@ -59,7 +59,7 @@ test('should upload multiple large files', async ({ page, server, isAndroid, mod
   await Promise.all(uploadFiles.map(path => fs.promises.unlink(path)));
 });
 
-test('should emit event once', async ({ page, server }) => {
+test('FC-002 should emit event once', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([
     new Promise(f => page.once('filechooser', f)),
@@ -68,7 +68,7 @@ test('should emit event once', async ({ page, server }) => {
   expect(chooser).toBeTruthy();
 });
 
-test('should emit event via prepend', async ({ page, server }) => {
+test('FC-003 should emit event via prepend', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([
     new Promise(f => page.prependListener('filechooser', f)),
@@ -77,7 +77,7 @@ test('should emit event via prepend', async ({ page, server }) => {
   expect(chooser).toBeTruthy();
 });
 
-test('should emit event for iframe', async ({ page, server }) => {
+test('FC-004 should emit event for iframe', async ({ page, server }) => {
   const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await frame.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([
@@ -87,7 +87,7 @@ test('should emit event for iframe', async ({ page, server }) => {
   expect(chooser).toBeTruthy();
 });
 
-test('should emit event on/off', async ({ page, server }) => {
+test('FC-005 should emit event on/off', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([
     new Promise(f => {
@@ -102,7 +102,7 @@ test('should emit event on/off', async ({ page, server }) => {
   expect(chooser).toBeTruthy();
 });
 
-test('should emit event addListener/removeListener', async ({ page, server }) => {
+test('FC-006 should emit event addListener/removeListener', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([
     new Promise(f => {
@@ -117,7 +117,7 @@ test('should emit event addListener/removeListener', async ({ page, server }) =>
   expect(chooser).toBeTruthy();
 });
 
-test('should work when file input is attached to DOM', async ({ page, server }) => {
+test('FC-007 should work when file input is attached to DOM', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -126,7 +126,7 @@ test('should work when file input is attached to DOM', async ({ page, server }) 
   expect(chooser).toBeTruthy();
 });
 
-test('should work when file input is not attached to DOM', async ({ page, asset }) => {
+test('FC-008 should work when file input is not attached to DOM', async ({ page, asset }) => {
   const [, content] = await Promise.all([
     page.waitForEvent('filechooser').then(chooser => chooser.setFiles(asset('file-to-upload.txt'))),
     page.evaluate(async () => {
@@ -143,7 +143,7 @@ test('should work when file input is not attached to DOM', async ({ page, asset 
   expect(content).toBe('contents of the file');
 });
 
-test('should not throw when filechooser belongs to iframe', async ({ page, server, browserName }) => {
+test('FC-009 should not throw when filechooser belongs to iframe', async ({ page, server, browserName }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.mainFrame().childFrames()[0];
   await frame.setContent(`
@@ -164,7 +164,7 @@ test('should not throw when filechooser belongs to iframe', async ({ page, serve
   await page.waitForFunction(() => (window as any).__done);
 });
 
-test('should not throw when frame is detached immediately', async ({ page, server }) => {
+test('FC-010 should not throw when frame is detached immediately', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.mainFrame().childFrames()[0];
   await frame.setContent(`
@@ -185,27 +185,27 @@ test('should not throw when frame is detached immediately', async ({ page, serve
   await page.waitForFunction(() => (window as any).__done);
 });
 
-test('should respect timeout', async ({ page, playwright }) => {
+test('FC-011 should respect timeout', async ({ page, playwright }) => {
   let error = null;
   await page.waitForEvent('filechooser', { timeout: 1 }).catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-test('should respect default timeout when there is no custom timeout', async ({ page, playwright }) => {
+test('FC-012 should respect default timeout when there is no custom timeout', async ({ page, playwright }) => {
   page.setDefaultTimeout(1);
   let error = null;
   await page.waitForEvent('filechooser').catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-test('should prioritize exact timeout over default timeout', async ({ page, playwright }) => {
+test('FC-013 should prioritize exact timeout over default timeout', async ({ page, playwright }) => {
   page.setDefaultTimeout(0);
   let error = null;
   await page.waitForEvent('filechooser', { timeout: 1 }).catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-test('should work with no timeout', async ({ page, server }) => {
+test('FC-014 should work with no timeout', async ({ page, server }) => {
   const [chooser] = await Promise.all([
     page.waitForEvent('filechooser', { timeout: 0 }),
     page.evaluate(() => window.builtins.setTimeout(() => {
@@ -217,7 +217,7 @@ test('should work with no timeout', async ({ page, server }) => {
   expect(chooser).toBeTruthy();
 });
 
-test('should abort with signal', async ({ page }) => {
+test('FC-015 should abort with signal', async ({ page }) => {
   const controller = new AbortController();
   const promise = page.waitForEvent('filechooser', { signal: controller.signal });
   controller.abort('Aborted by user');
@@ -226,7 +226,7 @@ test('should abort with signal', async ({ page }) => {
   expect(error.cause).toBe('Aborted by user');
 });
 
-test('should return the same file chooser when there are many watchdogs simultaneously', async ({ page, server }) => {
+test('FC-016 should return the same file chooser when there are many watchdogs simultaneously', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [fileChooser1, fileChooser2] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -236,7 +236,7 @@ test('should return the same file chooser when there are many watchdogs simultan
   expect(fileChooser1 === fileChooser2).toBe(true);
 });
 
-test('should accept single file', async ({ page, asset }) => {
+test('FC-017 should accept single file', async ({ page, asset }) => {
   await page.setContent(`<input type=file oninput='javascript:console.timeStamp()'>`);
   const [fileChooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -250,7 +250,7 @@ test('should accept single file', async ({ page, asset }) => {
 });
 
 // @see https://github.com/microsoft/playwright/issues/4704
-test('should not trim big uploaded files', async ({ page, server }) => {
+test('FC-018 should not trim big uploaded files', async ({ page, server }) => {
 
   let files: Record<string, formidable.File>;
   server.setRoute('/upload', async (req, res) => {
@@ -274,7 +274,7 @@ test('should not trim big uploaded files', async ({ page, server }) => {
   expect(files.file.size).toBe(DATA_SIZE);
 });
 
-test('should be able to read selected file', async ({ page, asset }) => {
+test('FC-019 should be able to read selected file', async ({ page, asset }) => {
   await page.setContent(`<input type=file>`);
   const [, content] = await Promise.all([
     page.waitForEvent('filechooser').then(fileChooser => fileChooser.setFiles(asset('file-to-upload.txt'))),
@@ -290,7 +290,7 @@ test('should be able to read selected file', async ({ page, asset }) => {
   expect(content).toBe('contents of the file');
 });
 
-test('should be able to reset selected files with empty file list', async ({ page, asset }) => {
+test('FC-020 should be able to reset selected files with empty file list', async ({ page, asset }) => {
   await page.setContent(`<input type=file>`);
   const [, fileLength1] = await Promise.all([
     page.waitForEvent('filechooser').then(fileChooser => fileChooser.setFiles(asset('file-to-upload.txt'))),
@@ -312,7 +312,7 @@ test('should be able to reset selected files with empty file list', async ({ pag
   expect(fileLength2).toBe(0);
 });
 
-test('should work for single file pick', async ({ page, server }) => {
+test('FC-021 should work for single file pick', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [fileChooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -321,7 +321,7 @@ test('should work for single file pick', async ({ page, server }) => {
   expect(fileChooser.isMultiple()).toBe(false);
 });
 
-test('should work for "multiple"', async ({ page, server }) => {
+test('FC-022 should work for "multiple"', async ({ page, server }) => {
   await page.setContent(`<input multiple type=file>`);
   const [fileChooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -330,7 +330,7 @@ test('should work for "multiple"', async ({ page, server }) => {
   expect(fileChooser.isMultiple()).toBe(true);
 });
 
-test('should work for "webkitdirectory"', async ({ page, server }) => {
+test('FC-023 should work for "webkitdirectory"', async ({ page, server }) => {
   await page.setContent(`<input multiple webkitdirectory type=file>`);
   const [fileChooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -339,7 +339,7 @@ test('should work for "webkitdirectory"', async ({ page, server }) => {
   expect(fileChooser.isMultiple()).toBe(true);
 });
 
-test('should emit event after navigation', async ({ page, server, browserName, browserMajorVersion }) => {
+test('FC-024 should emit event after navigation', async ({ page, server, browserName, browserMajorVersion }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11375' });
   test.skip(browserName === 'chromium' && browserMajorVersion < 99);
 
@@ -360,7 +360,7 @@ test('should emit event after navigation', async ({ page, server, browserName, b
   expect(logs).toEqual(['filechooser', 'filechooser']);
 });
 
-test('should trigger listener added before navigation', async ({ page, server, browserMajorVersion, isElectron }) => {
+test('FC-025 should trigger listener added before navigation', async ({ page, server, browserMajorVersion, isElectron }) => {
   test.skip(isElectron && browserMajorVersion <= 98);
   // Add listener before cross process navigation.
   const chooserPromise = new Promise(f => page.once('filechooser', f));
@@ -405,7 +405,7 @@ test.describe('user activation', () => {
     await page.route(server.PREFIX + '/activation.html*', route => route.fulfill({ contentType: 'text/html', body: html }));
   });
 
-  test('should not open file chooser without user activation', async ({ page, server, browserName }) => {
+  test('FC-026 should not open file chooser without user activation', async ({ page, server, browserName }) => {
     test.fixme(browserName === 'webkit', 'WebKit opens the file chooser from input.click() without user activation');
     let choosers = 0;
     page.on('filechooser', () => choosers++);
@@ -422,7 +422,7 @@ test.describe('user activation', () => {
     expect(choosers).toBe(0);
   });
 
-  test('should open file chooser with user activation', async ({ page, server }) => {
+  test('FC-027 should open file chooser with user activation', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/activation.html');
     const [chooser] = await Promise.all([
       page.waitForEvent('filechooser'),
@@ -441,7 +441,7 @@ test.describe('user activation', () => {
     expect(await page.evaluate(() => (window as any).showPicker())).toBe('ok');
   });
 
-  test('should consume user activation when opening file chooser', async ({ page, server, browserName, isElectron, isAndroid }) => {
+  test('FC-028 should consume user activation when opening file chooser', async ({ page, server, browserName, isElectron, isAndroid }) => {
     test.fixme(browserName === 'webkit', 'WebKit does not consume user activation when opening the file chooser');
     test.fixme(isElectron || isAndroid, 'Chromium 148 in Electron 42 and Chrome on the Android emulator do not consume user activation');
     let choosers = 0;

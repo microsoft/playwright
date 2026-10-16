@@ -18,7 +18,7 @@ import { setupSocksForwardingServer } from '../config/proxy';
 import { playwrightTest as it, expect } from '../config/browserTest';
 import net from 'net';
 
-it('should throw for bad server value', async ({ browserType }) => {
+it('PR-001 should throw for bad server value', async ({ browserType }) => {
   const error = await browserType.launch({
     // @ts-expect-error server must be a string
     proxy: { server: 123 }
@@ -26,7 +26,7 @@ it('should throw for bad server value', async ({ browserType }) => {
   expect(error.message).toContain('proxy.server: expected string, got number');
 });
 
-it('should use proxy @smoke', async ({ browserType, server, mode }) => {
+it('PR-002 should use proxy @smoke', async ({ browserType, server, mode }) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
@@ -39,7 +39,7 @@ it('should use proxy @smoke', async ({ browserType, server, mode }) => {
   await browser.close();
 });
 
-it('should use proxy for second page', async ({ browserType, server }) => {
+it('PR-003 should use proxy for second page', async ({ browserType, server }) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
@@ -58,7 +58,7 @@ it('should use proxy for second page', async ({ browserType, server }) => {
   await browser.close();
 });
 
-it('should work with IP:PORT notion', async ({ browserType, server }) => {
+it('PR-004 should work with IP:PORT notion', async ({ browserType, server }) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
@@ -88,7 +88,7 @@ it.describe('should proxy local network requests', () => {
           description: 'link-local'
         }
       ]) {
-        it(`${params.description}`, async ({ platform, browserName, browserType, server, proxyServer, channel }) => {
+        it(`PR-005 ${params.description}`, async ({ platform, browserName, browserType, server, proxyServer, channel }) => {
           it.skip(browserName === 'webkit' && platform === 'darwin' && ['localhost', '127.0.0.1'].includes(params.target) && additionalBypass, 'Mac webkit does not proxy localhost when bypass rules are set.');
           it.skip(channel?.startsWith('msedge'), 'times out while loading the page');
 
@@ -122,7 +122,7 @@ it.describe('should proxy local network requests', () => {
 });
 
 for (const host of ['localhost', '127.0.0.1']) {
-  it(`should allow bypassing ${host} requests`, async ({  browserType, server, proxyServer }) => {
+  it(`PR-006 should allow bypassing ${host} requests`, async ({  browserType, server, proxyServer }) => {
     server.setRoute(`/proxied/target.html`, async (req, res) => {
       res.end('<html><title>Served by the server</title></html>');
     });
@@ -141,7 +141,9 @@ for (const host of ['localhost', '127.0.0.1']) {
   });
 }
 
-it('should authenticate', async ({ browserType, server }) => {
+it('PR-007 should authenticate', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43326' },
+}, async ({ browserType, server }) => {
   server.setRoute('/target.html', async (req, res) => {
     const auth = req.headers['proxy-authorization'];
     if (!auth) {
@@ -153,16 +155,29 @@ it('should authenticate', async ({ browserType, server }) => {
       res.end(`<html><title>${auth}</title></html>`);
     }
   });
+  server.setRoute('/protected.html', async (req, res) => {
+    if (!req.headers['proxy-authorization']) {
+      res.writeHead(407, { 'Proxy-Authenticate': 'Basic realm="Access to internal site"' });
+      res.end();
+      return;
+    }
+    res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="site"' });
+    res.end(req.headers['authorization'] || 'no credentials');
+  });
   const browser = await browserType.launch({
     proxy: { server: server.HOST, username: 'user', password: 'secret' }
   });
   const page = await browser.newPage();
   await page.goto('http://non-existent.test/target.html');
   expect(await page.title()).toBe('Basic ' + Buffer.from('user:secret').toString('base64'));
+  // Proxy credentials must not be sent to the website's own auth challenge.
+  const response = await page.goto('http://non-existent.com/protected.html');
+  expect(response.status()).toBe(401);
+  expect(await page.locator('body').textContent()).toBe('no credentials');
   await browser.close();
 });
 
-it('should reconnect with credentials after CONNECT 407 closes the socket', {
+it('PR-008 should reconnect with credentials after CONNECT 407 closes the socket', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40768' }
 }, async ({ browserType, httpsServer, proxyServer }) => {
   // Some HTTP proxies send 407 and close the socket on the first CONNECT, expecting
@@ -200,7 +215,7 @@ it('should reconnect with credentials after CONNECT 407 closes the socket', {
   await browser.close();
 });
 
-it('should work with authenticate followed by redirect', async ({ browserName, browserType, server }) => {
+it('PR-009 should work with authenticate followed by redirect', async ({ browserName, browserType, server }) => {
   function hasAuth(req, res) {
     const auth = req.headers['proxy-authorization'];
     if (!auth) {
@@ -232,7 +247,7 @@ it('should work with authenticate followed by redirect', async ({ browserName, b
   await browser.close();
 });
 
-it('should exclude patterns', async ({ browserType, server, channel }) => {
+it('PR-010 should exclude patterns', async ({ browserType, server, channel }) => {
   it.skip(channel?.startsWith('msedge'), 'times out while loading the page');
 
   server.setRoute('/target.html', async (req, res) => {
@@ -285,7 +300,7 @@ it('should exclude patterns', async ({ browserType, server, channel }) => {
 });
 
 for (const host of ['localhost', '127.0.0.1']) {
-  it(`should bypass proxy for ${host} when ${host} is in bypass list`, async ({ browserType, server, proxyServer }) => {
+  it(`PR-011 should bypass proxy for ${host} when ${host} is in bypass list`, async ({ browserType, server, proxyServer }) => {
     proxyServer.forwardTo(server.PORT, { removePrefix: '/proxied' });
     server.setRoute(`/proxied/target.html`, async (req, res) => {
       res.end('<html><title>Served by the server</title></html>');
@@ -303,7 +318,7 @@ for (const host of ['localhost', '127.0.0.1']) {
   });
 }
 
-it('should use socks proxy', async ({ browserType, socksPort }) => {
+it('PR-012 should use socks proxy', async ({ browserType, socksPort }) => {
   const browser = await browserType.launch({
     proxy: { server: `socks5://localhost:${socksPort}` }
   });
@@ -313,7 +328,7 @@ it('should use socks proxy', async ({ browserType, socksPort }) => {
   await browser.close();
 });
 
-it('should use socks proxy in second page', async ({ browserType, socksPort }) => {
+it('PR-013 should use socks proxy in second page', async ({ browserType, socksPort }) => {
   const browser = await browserType.launch({
     proxy: { server: `socks5://localhost:${socksPort}` }
   });
@@ -329,14 +344,14 @@ it('should use socks proxy in second page', async ({ browserType, socksPort }) =
   await browser.close();
 });
 
-it('does launch without a port', async ({ browserType }) => {
+it('PR-014 does launch without a port', async ({ browserType }) => {
   const browser = await browserType.launch({
     proxy: { server: 'http://localhost' }
   });
   await browser.close();
 });
 
-it('should use proxy with emulated user agent', async ({ browserType }) => {
+it('PR-015 should use proxy with emulated user agent', async ({ browserType }) => {
   it.fixme(true, 'Non-emulated user agent is used in proxy CONNECT');
 
   let requestText = '';
@@ -366,7 +381,7 @@ it('should use proxy with emulated user agent', async ({ browserType }) => {
 });
 
 
-it('should use SOCKS proxy for websocket requests', async ({ browserType, server }) => {
+it('PR-016 should use SOCKS proxy for websocket requests', async ({ browserType, server }) => {
   const { proxyServerAddr, closeProxyServer } = await setupSocksForwardingServer({
     port: it.info().workerIndex + 2048 + 2,
     forwardPort: server.PORT,
@@ -401,7 +416,7 @@ it('should use SOCKS proxy for websocket requests', async ({ browserType, server
   await closeProxyServer();
 });
 
-it('should use http proxy for websocket requests', async ({ browserName, browserType, server, proxyServer, isWindows, isMac, macVersion, channel }) => {
+it('PR-017 should use http proxy for websocket requests', async ({ browserName, browserType, server, proxyServer, isWindows, isMac, macVersion, channel }) => {
   it.skip(isMac && macVersion === 13, 'Times out on Mac 13');
 
   proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });

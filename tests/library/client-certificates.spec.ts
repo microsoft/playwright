@@ -92,12 +92,12 @@ const kValidationSubTests: [BrowserContextOptions, string][] = [
 ];
 
 test.describe('fetch', () => {
-  test('validate input', async ({ playwright }) => {
+  test('CC-001 validate input', async ({ playwright }) => {
     for (const [contextOptions, expected] of kValidationSubTests)
       await expect(playwright.request.newContext(contextOptions)).rejects.toThrow(expected);
   });
 
-  test('should fail with no client certificates provided', async ({ playwright, startCCServer }) => {
+  test('CC-002 should fail with no client certificates provided', async ({ playwright, startCCServer }) => {
     const serverURL = await startCCServer();
     const request = await playwright.request.newContext({ ignoreHTTPSErrors: true });
     const response = await request.get(serverURL);
@@ -106,7 +106,7 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('should keep supporting http', async ({ playwright, server, asset }) => {
+  test('CC-003 should keep supporting http', async ({ playwright, server, asset }) => {
     const request = await playwright.request.newContext({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
@@ -122,7 +122,7 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('should throw with untrusted client certs', async ({ playwright, startCCServer, asset }) => {
+  test('CC-004 should throw with untrusted client certs', async ({ playwright, startCCServer, asset }) => {
     const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       ignoreHTTPSErrors: true,
@@ -139,7 +139,7 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('pass with trusted client certificates', async ({ playwright, startCCServer, asset }) => {
+  test('CC-005 pass with trusted client certificates', async ({ playwright, startCCServer, asset }) => {
     const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       ignoreHTTPSErrors: true,
@@ -156,7 +156,7 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('should not leak client certificate to cross-origin redirect target', async ({ playwright, startCCServer, asset }) => {
+  test('CC-006 should not leak client certificate to cross-origin redirect target', async ({ playwright, startCCServer, asset }) => {
     const targetURL = await startCCServer();
 
     // Standalone HTTPS server (not cert-required) that 302-redirects to the cert-required server.
@@ -190,7 +190,7 @@ test.describe('fetch', () => {
     await new Promise<void>(f => redirectServer.close(() => f()));
   });
 
-  test('pass with trusted client certificates in pfx format', async ({ playwright, startCCServer, asset }) => {
+  test('CC-007 pass with trusted client certificates in pfx format', async ({ playwright, startCCServer, asset }) => {
     const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       ignoreHTTPSErrors: true,
@@ -207,7 +207,7 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('pass with trusted client certificates and when a http proxy is used', async ({ playwright, startCCServer, proxyServer, asset }) => {
+  test('CC-008 pass with trusted client certificates and when a http proxy is used', async ({ playwright, startCCServer, proxyServer, asset }) => {
     const serverURL = await startCCServer();
     proxyServer.forwardTo(parseInt(new URL(serverURL).port, 10), { allowConnectRequests: true });
     const request = await playwright.request.newContext({
@@ -228,7 +228,7 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('pass with trusted client certificates and when a socks proxy is used', async ({ playwright, startCCServer, asset }) => {
+  test('CC-009 pass with trusted client certificates and when a socks proxy is used', async ({ playwright, startCCServer, asset }) => {
     const serverURL = await startCCServer();
     const serverPort = parseInt(new URL(serverURL).port, 10);
     const { proxyServerAddr, closeProxyServer, connectHosts } = await setupSocksForwardingServer({
@@ -255,7 +255,7 @@ test.describe('fetch', () => {
     await closeProxyServer();
   });
 
-  test('should throw a http error if the pfx passphrase is incorect', async ({ playwright, startCCServer, asset, browserName }) => {
+  test('CC-010 should throw a http error if the pfx passphrase is incorect', async ({ playwright, startCCServer, asset, browserName }) => {
     const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       ignoreHTTPSErrors: true,
@@ -269,7 +269,7 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('should fail with matching certificates in legacy pfx format', async ({ playwright, startCCServer, asset, browserName }) => {
+  test('CC-011 should fail with matching certificates in legacy pfx format', async ({ playwright, startCCServer, asset, browserName }) => {
     const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       ignoreHTTPSErrors: true,
@@ -283,7 +283,7 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
-  test('should work in the browser with request interception', async ({ browser, playwright, startCCServer, asset }) => {
+  test('CC-012 should work in the browser with request interception', async ({ browser, playwright, startCCServer, asset }) => {
     const serverURL = await startCCServer();
     const request = await playwright.request.newContext({
       ignoreHTTPSErrors: true,
@@ -307,12 +307,12 @@ test.describe('fetch', () => {
 
 
 test.describe('browser', () => {
-  test('validate input', async ({ browser }) => {
+  test('CC-013 validate input', async ({ browser }) => {
     for (const [contextOptions, expected] of kValidationSubTests)
       await expect(browser.newContext(contextOptions)).rejects.toThrow(expected);
   });
 
-  test('should keep supporting http', async ({ browser, server, asset }) => {
+  test('CC-014 should keep supporting http', async ({ browser, server, asset }) => {
     const page = await browser.newPage({
       clientCertificates: [{
         origin: new URL(server.PREFIX).origin,
@@ -326,7 +326,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should pass through to non-matching origin with self-signed cert', async ({ browser, asset, httpsServer }) => {
+  test('CC-015 should pass through to non-matching origin with self-signed cert', async ({ browser, asset, httpsServer }) => {
     httpsServer.setRoute('/hello.html', (req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end('<html><body><div data-testid="message">hello</div></body></html>');
@@ -343,7 +343,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should not intercept TLS for origins without a client certificate', {
+  test('CC-016 should not intercept TLS for origins without a client certificate', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41106' },
   }, async ({ browser, asset, httpsServer }) => {
     // If the proxy intercepted this origin, the browser would see its self-signed cert (CN=localhost)
@@ -362,7 +362,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should fail with no client certificates', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+  test('CC-017 should fail with no client certificates', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
@@ -377,7 +377,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should fail with self-signed client certificates', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+  test('CC-018 should fail with self-signed client certificates', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
@@ -392,7 +392,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should complete browser TLS handshake when server rejects client certificate after it', {
+  test('CC-019 should complete browser TLS handshake when server rejects client certificate after it', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43092' },
   }, async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ rejectUnauthorized: true, useFakeLocalhost: browserName === 'webkit' && isMac });
@@ -416,7 +416,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should pass with matching certificates', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+  test('CC-020 should pass with matching certificates', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
@@ -431,7 +431,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should pass with matching certificates when passing as content', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+  test('CC-021 should pass with matching certificates when passing as content', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
@@ -446,7 +446,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should pass with matching certificates and when a http proxy is used', async ({ browser, startCCServer, asset, browserName, proxyServer, isMac }) => {
+  test('CC-022 should pass with matching certificates and when a http proxy is used', async ({ browser, startCCServer, asset, browserName, proxyServer, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     proxyServer.forwardTo(parseInt(new URL(serverURL).port, 10), { allowConnectRequests: true });
     const page = await browser.newPage({
@@ -466,7 +466,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should pass with matching certificates and when a http proxy is used from env', async ({ mode, browser, startCCServer, asset, browserName, proxyServer, isMac }) => {
+  test('CC-023 should pass with matching certificates and when a http proxy is used from env', async ({ mode, browser, startCCServer, asset, browserName, proxyServer, isMac }) => {
     test.skip(mode !== 'default', 'Out of process transport does not allow us to set env vars dynamically');
     process.env.HTTPS_PROXY = `http://localhost:${proxyServer.PORT}`;
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
@@ -488,7 +488,7 @@ test.describe('browser', () => {
     delete process.env.HTTPS_PROXY;
   });
 
-  test('should pass with matching certificates and when a http proxy is used from config but env is there', async ({ browser, startCCServer, asset, browserName, proxyServer, isMac }) => {
+  test('CC-024 should pass with matching certificates and when a http proxy is used from config but env is there', async ({ browser, startCCServer, asset, browserName, proxyServer, isMac }) => {
     process.env.HTTPS_PROXY = `http://this-should-not-taken-into-account:4242`;
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     proxyServer.forwardTo(parseInt(new URL(serverURL).port, 10), { allowConnectRequests: true });
@@ -510,7 +510,7 @@ test.describe('browser', () => {
     delete process.env.HTTPS_PROXY;
   });
 
-  test('should respect launch proxy and proxy bypass', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42806' } }, async ({ browserType, startCCServer, asset, browserName, proxyServer, isMac }) => {
+  test('CC-025 should respect launch proxy and proxy bypass', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42806' } }, async ({ browserType, startCCServer, asset, browserName, proxyServer, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const { origin, hostname, port } = new URL(serverURL);
     proxyServer.forwardTo(parseInt(port, 10), { allowConnectRequests: true });
@@ -541,7 +541,7 @@ test.describe('browser', () => {
     await browser.close();
   });
 
-  test('should pass with matching certificates and when a socks proxy is used', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+  test('CC-026 should pass with matching certificates and when a socks proxy is used', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const serverPort = parseInt(new URL(serverURL).port, 10);
     const { proxyServerAddr, closeProxyServer, connectHosts } = await setupSocksForwardingServer({
@@ -567,7 +567,7 @@ test.describe('browser', () => {
     await closeProxyServer();
   });
 
-  test('should not hang on tls errors during TLS 1.2 handshake', async ({ browser, asset, platform, browserName }) => {
+  test('CC-027 should not hang on tls errors during TLS 1.2 handshake', async ({ browser, asset, platform, browserName }) => {
     for (const tlsVersion of ['TLSv1.3', 'TLSv1.2'] as const) {
       await test.step(`TLS version: ${tlsVersion}`, async () => {
         const server = tls.createServer({
@@ -609,7 +609,7 @@ test.describe('browser', () => {
     }
   });
 
-  test('should pass with matching certificates in pfx format', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+  test('CC-028 should pass with matching certificates in pfx format', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
@@ -624,7 +624,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should handle TLS renegotiation with client certificates', async ({ browser, asset, browserName, platform }) => {
+  test('CC-029 should handle TLS renegotiation with client certificates', async ({ browser, asset, browserName, platform }) => {
     const server: https.Server = createHttpsServer({
       key: fs.readFileSync(asset('client-certificates/server/server_key.pem')),
       cert: fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
@@ -761,7 +761,7 @@ test.describe('browser', () => {
     await new Promise<void>(resolve => server.close(() => resolve()));
   });
 
-  test('should pass with matching certificates in pfx format when passing as content', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+  test('CC-030 should pass with matching certificates in pfx format when passing as content', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
@@ -776,7 +776,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should fail with matching certificates in legacy pfx format', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+  test('CC-031 should fail with matching certificates in legacy pfx format', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     await expect(browser.newPage({
       ignoreHTTPSErrors: true,
@@ -788,7 +788,7 @@ test.describe('browser', () => {
     })).rejects.toThrow('Unsupported TLS certificate');
   });
 
-  test('should throw a http error if the pfx passphrase is incorect', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+  test('CC-032 should throw a http error if the pfx passphrase is incorect', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     await expect(browser.newPage({
       ignoreHTTPSErrors: true,
@@ -800,7 +800,7 @@ test.describe('browser', () => {
     })).rejects.toThrow('Failed to load client certificate: mac verify failure');
   });
 
-  test('should pass with matching certificates on context APIRequestContext instance', async ({ browser, startCCServer, asset, browserName }) => {
+  test('CC-033 should pass with matching certificates on context APIRequestContext instance', async ({ browser, startCCServer, asset, browserName }) => {
     const serverURL = await startCCServer();
     const baseOptions = {
       certPath: asset('client-certificates/client/trusted/cert.pem'),
@@ -824,7 +824,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should pass with matching certificates and trailing slash', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+  test('CC-034 should pass with matching certificates and trailing slash', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
@@ -839,7 +839,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should have ignoreHTTPSErrors=false by default', async ({ browser, httpsServer, asset, browserName, platform }) => {
+  test('CC-035 should have ignoreHTTPSErrors=false by default', async ({ browser, httpsServer, asset, browserName, platform }) => {
     const targetURL = browserName === 'webkit' && platform === 'darwin' ? httpsServer.EMPTY_PAGE.replace('localhost', 'local.playwright') : httpsServer.EMPTY_PAGE;
     const page = await browser.newPage({
       clientCertificates: [{
@@ -853,7 +853,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('support http2', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+  test('CC-036 support http2', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     test.skip(browserName === 'webkit' && isMac, 'WebKit on macOS doesn\n proxy localhost');
     const serverURL = await startCCServer({ http2: true });
     const page = await browser.newPage({
@@ -878,7 +878,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('support http2 if the browser only supports http1.1', async ({ browserType, browserName, startCCServer, asset }) => {
+  test('CC-037 support http2 if the browser only supports http1.1', async ({ browserType, browserName, startCCServer, asset }) => {
     test.skip(browserName !== 'chromium');
     const serverURL = await startCCServer({ http2: true, enableHTTP1FallbackWhenUsingHttp2: true });
     const browser = await browserType.launch({ args: ['--disable-http2'] });
@@ -903,7 +903,7 @@ test.describe('browser', () => {
     await browser.close();
   });
 
-  test('should return target connection errors when using http2', async ({ browser, startCCServer, asset, browserName, isMac, nodeVersion }) => {
+  test('CC-038 should return target connection errors when using http2', async ({ browser, startCCServer, asset, browserName, isMac, nodeVersion }) => {
     test.skip(browserName === 'webkit' && isMac, 'WebKit on macOS does not proxy localhost');
     test.skip(nodeVersion.major < 20, 'http2.performServerHandshake is not supported in older Node.js versions');
 
@@ -920,7 +920,7 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should handle rejected certificate in handshake with HTTP/2', async ({ browser, asset, browserName, platform }) => {
+  test('CC-039 should handle rejected certificate in handshake with HTTP/2', async ({ browser, asset, browserName, platform }) => {
     const server: http2.Http2SecureServer = createHttp2Server({
       key: fs.readFileSync(asset('client-certificates/server/server_key.pem')),
       cert: fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
@@ -954,13 +954,13 @@ test.describe('browser', () => {
   });
 
   test.describe('persistentContext', () => {
-    test('validate input', async ({ launchPersistent }) => {
+    test('CC-040 validate input', async ({ launchPersistent }) => {
       test.slow();
       for (const [contextOptions, expected] of kValidationSubTests)
         await expect(launchPersistent(contextOptions)).rejects.toThrow(expected);
     });
 
-    test('should pass with matching certificates', async ({ launchPersistent, startCCServer, asset, browserName, isMac }) => {
+    test('CC-041 should pass with matching certificates', async ({ launchPersistent, startCCServer, asset, browserName, isMac }) => {
       const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
       const { page } = await launchPersistent({
         ignoreHTTPSErrors: true,

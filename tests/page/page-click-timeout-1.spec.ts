@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should avoid side effects after timeout', async ({ page, server, mode }) => {
+it('CL-110 should avoid side effects after timeout', async ({ page, server, mode }) => {
   it.skip(mode !== 'default');
 
   await page.goto(server.PREFIX + '/input/button.html');
@@ -27,7 +27,7 @@ it('should avoid side effects after timeout', async ({ page, server, mode }) => 
   expect(error.message).toContain('page.click: Timeout 2000ms exceeded.');
 });
 
-it('should timeout waiting for button to be enabled', async ({ page }) => {
+it('CL-111 should timeout waiting for button to be enabled', async ({ page }) => {
   await page.setContent('<button onclick="javascript:window.__CLICKED=true;" disabled><span>Click target</span></button>');
   const error = await page.click('text=Click target', { timeout: 3000 }).catch(e => e);
   expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
@@ -36,7 +36,7 @@ it('should timeout waiting for button to be enabled', async ({ page }) => {
   expect(error.message).toContain('retrying click action');
 });
 
-it('should timeout waiting for inert element to become non-inert', async ({ page }) => {
+it('CL-112 should timeout waiting for inert element to become non-inert', async ({ page }) => {
   await page.setContent('<div inert><button onclick="javascript:window.__CLICKED=true;">Click target</button></div>');
   const error = await page.click('text=Click target', { timeout: 3000 }).catch(e => e);
   expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
@@ -45,7 +45,7 @@ it('should timeout waiting for inert element to become non-inert', async ({ page
   expect(error.message).toContain('retrying click action');
 });
 
-it('should timeout waiting for element outside of a modal dialog', async ({ page }) => {
+it('CL-113 should timeout waiting for element outside of a modal dialog', async ({ page }) => {
   await page.setContent(`
     <button onclick="javascript:window.__CLICKED=true;">Click target</button>
     <dialog id=dialog><button>Inside</button></dialog>

@@ -30,7 +30,7 @@ const listener2 = () => {};
 test.beforeEach(() => common.beforeEach());
 test.afterEach(() => common.afterEach());
 
-test('First test', () => {
+test('EE-042 First test', () => {
   const ee = new EventEmitter();
   ee.on('hello', listener1);
   ee.on('removeListener', common.mustCall((name, cb) => {
@@ -43,7 +43,7 @@ test('First test', () => {
   expect(listeners).toHaveLength(0);
 });
 
-test('Second test', () => {
+test('EE-043 Second test', () => {
   const ee = new EventEmitter();
   ee.on('hello', listener1);
   ee.on('removeListener', common.mustNotCall());
@@ -55,7 +55,7 @@ test('Second test', () => {
   expect(listeners[0]).toEqual(listener1);
 });
 
-test('Third test', () => {
+test('EE-044 Third test', () => {
   const ee = new EventEmitter();
   ee.on('hello', listener1);
   ee.on('hello', listener2);
@@ -87,7 +87,7 @@ test('Third test', () => {
   expect(listeners.length).toEqual(0);
 });
 
-test('Fourth test', () => {
+test('EE-045 Fourth test', () => {
   const ee = new EventEmitter();
 
   const remove1 = () => {
@@ -109,7 +109,7 @@ test('Fourth test', () => {
   ee.removeListener('quux', remove1);
 });
 
-test('Fifth test', () => {
+test('EE-046 Fifth test', () => {
   const ee = new EventEmitter();
   const listener3 = common.mustCall(() => {
     ee.removeListener('hello', listener4);
@@ -128,7 +128,7 @@ test('Fifth test', () => {
   ee.emit('hello');
 });
 
-test('Sixth test', () => {
+test('EE-047 Sixth test', () => {
   const ee = new EventEmitter();
 
   ee.once('hello', listener1);
@@ -139,14 +139,14 @@ test('Sixth test', () => {
   ee.emit('hello');
 });
 
-test('Seventh test', () => {
+test('EE-048 Seventh test', () => {
   const ee = new EventEmitter();
 
   expect(ee).toEqual(ee.removeListener('foo', () => {}));
 });
 
 // Verify that the removed listener must be a function
-test('Eighth test', () => {
+test('EE-049 Eighth test', () => {
   expect(() => {
     const ee = new EventEmitter();
 
@@ -154,7 +154,7 @@ test('Eighth test', () => {
   }).toThrow(/^The "listener" argument must be of type Function\. Received type object$/);
 });
 
-test('Ninth test', () => {
+test('EE-050 Ninth test', () => {
   const ee = new EventEmitter();
   const listener = () => {};
   ee._events = undefined;
@@ -162,7 +162,7 @@ test('Ninth test', () => {
   expect(e).toEqual(ee);
 });
 
-test('Tenth test', () => {
+test('EE-051 Tenth test', () => {
   const ee = new EventEmitter();
 
   ee.on('foo', listener1);

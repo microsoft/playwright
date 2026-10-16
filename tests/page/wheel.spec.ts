@@ -48,7 +48,7 @@ async function expectEvent(page: Page, expected: any) {
   expect(received).toEqual(expected);
 }
 
-it('should dispatch wheel events @smoke', async ({ page, server }) => {
+it('MO-017 should dispatch wheel events @smoke', async ({ page, server }) => {
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
   await page.mouse.move(50, 60);
   await listenForWheelEvents(page, 'div');
@@ -67,7 +67,7 @@ it('should dispatch wheel events @smoke', async ({ page, server }) => {
   });
 });
 
-it('should dispatch wheel events after popup was opened @smoke', async ({ page, server }) => {
+it('MO-018 should dispatch wheel events after popup was opened @smoke', async ({ page, server }) => {
   await page.setContent(`
     <div style="width: 5000px; height: 5000px;"></div>
   `);
@@ -92,7 +92,7 @@ it('should dispatch wheel events after popup was opened @smoke', async ({ page, 
   });
 });
 
-it('should dispatch wheel event on svg element', async ({ page, browserName, headless, isLinux }) => {
+it('MO-019 should dispatch wheel event on svg element', async ({ page, browserName, headless, isLinux }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15566' });
   await page.setContent(`
     <body>
@@ -125,14 +125,14 @@ it('should dispatch wheel event on svg element', async ({ page, browserName, hea
   });
 });
 
-it('should scroll when nobody is listening', async ({ page, server }) => {
+it('MO-020 should scroll when nobody is listening', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.mouse.move(50, 60);
   await page.mouse.wheel(0, 100);
   await page.waitForFunction('window.scrollY === 100');
 });
 
-it('should set the modifiers', async ({ page }) => {
+it('MO-021 should set the modifiers', async ({ page }) => {
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
   await page.mouse.move(50, 60);
   await listenForWheelEvents(page, 'div');
@@ -151,7 +151,7 @@ it('should set the modifiers', async ({ page }) => {
   });
 });
 
-it('should scroll horizontally', async ({ page }) => {
+it('MO-022 should scroll horizontally', async ({ page }) => {
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
   await page.mouse.move(50, 60);
   await listenForWheelEvents(page, 'div');
@@ -170,7 +170,7 @@ it('should scroll horizontally', async ({ page }) => {
   await page.waitForFunction('window.scrollX === 100');
 });
 
-it('should work when the event is canceled', async ({ page }) => {
+it('MO-023 should work when the event is canceled', async ({ page }) => {
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
   await page.mouse.move(50, 60);
   await listenForWheelEvents(page, 'div');

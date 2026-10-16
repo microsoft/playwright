@@ -40,14 +40,14 @@ test.beforeEach(({ platform, browserName, channel }) => {
   test.skip(browserName === 'webkit' && utils.hostPlatform.startsWith('debian13'), 'never dispatches the crash event');
 });
 
-test('should emit crash event when page crashes', async ({ page, crash }) => {
+test('ER-014 should emit crash event when page crashes', async ({ page, crash }) => {
   await page.setContent(`<div>This page should crash</div>`);
   crash();
   const crashedPage = await new Promise(f => page.on('crash', f));
   expect(crashedPage).toBe(page);
 });
 
-test('should throw on any action after page crashes', async ({ page, crash, server, browserName }) => {
+test('ER-015 should throw on any action after page crashes', async ({ page, crash, server, browserName }) => {
   await page.setContent(`<div>This page should crash</div>`);
   crash();
   await page.waitForEvent('crash');
@@ -64,7 +64,7 @@ test('should throw on any action after page crashes', async ({ page, crash, serv
   expectCrashError(await page.reload().then(() => null, e => e));
 });
 
-test('expect should not hang when page crashed', {
+test('ER-016 expect should not hang when page crashed', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31907' },
 }, async ({ page, crash }) => {
   const expectPromise = expect(page.getByText('child')).toBeVisible();
@@ -72,7 +72,7 @@ test('expect should not hang when page crashed', {
   await expect(expectPromise).rejects.toThrowError();
 });
 
-test('should cancel waitForEvent when page crashes', async ({ page, crash }) => {
+test('ER-017 should cancel waitForEvent when page crashes', async ({ page, crash }) => {
   await page.setContent(`<div>This page should crash</div>`);
   const promise = page.waitForEvent('response').catch(e => e);
   crash();
@@ -80,7 +80,7 @@ test('should cancel waitForEvent when page crashes', async ({ page, crash }) => 
   expect(error.message).toContain('Page crashed');
 });
 
-test('should cancel navigation when page crashes', async ({ server, page, crash }) => {
+test('ER-018 should cancel navigation when page crashes', async ({ server, page, crash }) => {
   await page.setContent(`<div>This page should crash</div>`);
   server.setRoute('/one-style.css', () => {});
   const promise = page.goto(server.PREFIX + '/one-style.html').catch(e => e);
@@ -90,7 +90,7 @@ test('should cancel navigation when page crashes', async ({ server, page, crash 
   expect(error.message).toContain('page.goto: Page crashed');
 });
 
-test('should be able to close context when page crashes', async ({ isAndroid, page, crash }) => {
+test('ER-019 should be able to close context when page crashes', async ({ isAndroid, page, crash }) => {
   test.skip(isAndroid);
 
   await page.setContent(`<div>This page should crash</div>`);
@@ -99,7 +99,7 @@ test('should be able to close context when page crashes', async ({ isAndroid, pa
   await page.context().close();
 });
 
-test('should be able to close page after crash', {
+test('ER-020 should be able to close page after crash', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42956' },
 }, async ({ page, crash }) => {
   await page.setContent(`<div>This page should crash</div>`);
@@ -114,7 +114,7 @@ test('should be able to close page after crash', {
   expect(page.context().pages()).toEqual([]);
 });
 
-test('should reject in-flight worker.evaluate when page crashes', {
+test('ER-021 should reject in-flight worker.evaluate when page crashes', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43204' },
 }, async ({ page, crash, server }) => {
   await page.goto(server.EMPTY_PAGE);

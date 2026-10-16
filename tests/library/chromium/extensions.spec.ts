@@ -42,7 +42,7 @@ it.skip(({ isHeadlessShell }) => isHeadlessShell, 'Headless Shell has no support
 it.describe('MV3', () => {
   it.skip(({ channel }) => channel?.startsWith('chrome'), '--load-extension is not supported in Chrome anymore. https://groups.google.com/a/chromium.org/g/chromium-extensions/c/1-g8EFx2BBY/m/S0ET5wPjCAAJ');
 
-  it('should support service worker stop and restart lifecycle', {
+  it('CR-036 should support service worker stop and restart lifecycle', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39475' }
   }, async ({ launchPersistentContext, asset }) => {
     const extensionPath = asset('extension-mv3-sw-lifecycle');
@@ -90,7 +90,7 @@ it.describe('MV3', () => {
     await context.close();
   });
 
-  it('should give access to the service worker', async ({ launchPersistentContext, asset }) => {
+  it('CR-037 should give access to the service worker', async ({ launchPersistentContext, asset }) => {
     const extensionPath = asset('extension-mv3-simple');
     const context = await launchPersistentContext(extensionPath);
     const serviceWorkers = context.serviceWorkers();
@@ -102,7 +102,7 @@ it.describe('MV3', () => {
     expect(context.backgroundPages().length).toBe(0);
   });
 
-  it('should give access to the service worker when recording video', async ({ launchPersistentContext, asset }, testInfo) => {
+  it('CR-038 should give access to the service worker when recording video', async ({ launchPersistentContext, asset }, testInfo) => {
     const extensionPath = asset('extension-mv3-simple');
     const context = await launchPersistentContext(extensionPath, {
       recordVideo: {
@@ -117,7 +117,7 @@ it.describe('MV3', () => {
     await context.close();
   });
 
-  it('should support request/response events in the service worker', async ({ launchPersistentContext, asset, server, browserMajorVersion }) => {
+  it('CR-039 should support request/response events in the service worker', async ({ launchPersistentContext, asset, server, browserMajorVersion }) => {
     it.skip(browserMajorVersion < 143, 'needs workerScriptLoaded event');
 
     server.setRoute('/empty.html', (req, res) => {
@@ -152,7 +152,7 @@ it.describe('MV3', () => {
     await context.close();
   });
 
-  it('should report console messages from content script', {
+  it('CR-040 should report console messages from content script', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32762' }
   }, async ({ launchPersistentContext, asset, server }) => {
     const extensionPath = asset('extension-mv3-with-logging');
@@ -165,7 +165,7 @@ it.describe('MV3', () => {
     await context.close();
   });
 
-  it('should use custom userAgent in service worker fetch requests', async ({ launchPersistentContext, asset, server }) => {
+  it('CR-041 should use custom userAgent in service worker fetch requests', async ({ launchPersistentContext, asset, server }) => {
     server.setRoute('/ua-echo', (req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/plain' });
       res.end(req.headers['user-agent']);

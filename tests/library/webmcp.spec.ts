@@ -62,7 +62,7 @@ function serve(server: any, path: string, body: string) {
   });
 }
 
-test('should list tools registered by the page', async ({ page, server }) => {
+test('WM-001 should list tools registered by the page', async ({ page, server }) => {
   serve(server, '/', registerScript(kAdd + `
     modelContext.registerTool({
       name: 'noop',
@@ -88,19 +88,19 @@ test('should list tools registered by the page', async ({ page, server }) => {
   ]);
 });
 
-test('should report no tools when the page registers none', async ({ page, server }) => {
+test('WM-002 should report no tools when the page registers none', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   expect(await page.webmcp.tools()).toEqual([]);
 });
 
-test('should call a tool', async ({ page, server }) => {
+test('WM-003 should call a tool', async ({ page, server }) => {
   serve(server, '/', registerScript(kAdd));
   await page.goto(server.PREFIX + '/');
 
   expect(await page.webmcp.callTool('add', { a: 2, b: 40 })).toEqual({ content: [{ type: 'text', text: '42' }] });
 });
 
-test('should return isError results as is', async ({ page, server }) => {
+test('WM-004 should return isError results as is', async ({ page, server }) => {
   serve(server, '/', registerScript(`
     modelContext.registerTool({
       name: 'broken',
@@ -113,7 +113,7 @@ test('should return isError results as is', async ({ page, server }) => {
   expect(await page.webmcp.callTool('broken')).toEqual({ content: [{ type: 'text', text: 'nope' }], isError: true });
 });
 
-test('should throw when the tool throws', async ({ page, server, browserName }) => {
+test('WM-005 should throw when the tool throws', async ({ page, server, browserName }) => {
   serve(server, '/', registerScript(`
     modelContext.registerTool({
       name: 'throwing',
@@ -128,7 +128,7 @@ test('should throw when the tool throws', async ({ page, server, browserName }) 
   expect(error.message).toContain(browserName === 'chromium' ? 'the invocation failed' : 'boom');
 });
 
-test('should throw for an unknown tool', async ({ page, server }) => {
+test('WM-006 should throw for an unknown tool', async ({ page, server }) => {
   serve(server, '/', registerScript(kAdd));
   await page.goto(server.PREFIX + '/');
 
@@ -137,7 +137,7 @@ test('should throw for an unknown tool', async ({ page, server }) => {
   expect(error.message).toContain('Available tools: add');
 });
 
-test('should time out when the tool does not settle', async ({ page, server }) => {
+test('WM-007 should time out when the tool does not settle', async ({ page, server }) => {
   serve(server, '/', registerScript(`
     modelContext.registerTool({
       name: 'stuck',
@@ -151,7 +151,7 @@ test('should time out when the tool does not settle', async ({ page, server }) =
   expect(error.message).toContain('Timeout 500ms exceeded');
 });
 
-test('should drop tools after navigation', async ({ page, server }) => {
+test('WM-008 should drop tools after navigation', async ({ page, server }) => {
   serve(server, '/', registerScript(kAdd));
   await page.goto(server.PREFIX + '/');
   expect(await page.webmcp.tools()).toHaveLength(1);
@@ -162,7 +162,7 @@ test('should drop tools after navigation', async ({ page, server }) => {
   expect(error.message).toContain('The frame does not register any WebMCP tools');
 });
 
-test('should list a tool registered after load', async ({ page, server }) => {
+test('WM-009 should list a tool registered after load', async ({ page, server }) => {
   serve(server, '/', registerScript(kAdd));
   await page.goto(server.PREFIX + '/');
   expect(await page.webmcp.tools()).toHaveLength(1);
@@ -175,7 +175,7 @@ test('should list a tool registered after load', async ({ page, server }) => {
   expect(tools.map(tool => tool.name)).toEqual(['add', 'late']);
 });
 
-test('should list tools while a tool is running', async ({ page, server }) => {
+test('WM-010 should list tools while a tool is running', async ({ page, server }) => {
   serve(server, '/', registerScript(kAdd + `
     modelContext.registerTool({
       name: 'gated',
@@ -192,7 +192,7 @@ test('should list tools while a tool is running', async ({ page, server }) => {
   expect(await result).toEqual({ content: [{ type: 'text', text: 'released' }] });
 });
 
-test('should list declarative tools', async ({ page, server, browserName }) => {
+test('WM-011 should list declarative tools', async ({ page, server, browserName }) => {
   test.skip(browserName !== 'chromium', 'Only Chromium implements declarative tools');
   serve(server, '/', `
     <form toolname="subscribe" tooldescription="Subscribes to the newsletter">
@@ -213,7 +213,7 @@ test('should list declarative tools', async ({ page, server, browserName }) => {
   expect(error.message).toContain('Timeout 500ms exceeded');
 });
 
-test('should scope tools to their frame', async ({ page, server, browserName }) => {
+test('WM-012 should scope tools to their frame', async ({ page, server, browserName }) => {
   test.skip(browserName === 'firefox', 'Firefox does not support registering WebMCP tools in iframes yet, https://bugzilla.mozilla.org/show_bug.cgi?id=2019743');
   serve(server, '/', registerScript(kAdd) + `<iframe src="/frame.html"></iframe>`);
   serve(server, '/frame.html', registerScript(`
@@ -235,7 +235,7 @@ test('should scope tools to their frame', async ({ page, server, browserName }) 
   expect(error.message).toContain('Available tools: add');
 });
 
-test('should call same-name tools in their own frame', async ({ page, server, browserName }) => {
+test('WM-013 should call same-name tools in their own frame', async ({ page, server, browserName }) => {
   test.skip(browserName === 'firefox', 'Firefox does not support registering WebMCP tools in iframes yet, https://bugzilla.mozilla.org/show_bug.cgi?id=2019743');
   const registerEcho = (text: string) => registerScript(`
     modelContext.registerTool({
@@ -253,7 +253,7 @@ test('should call same-name tools in their own frame', async ({ page, server, br
   expect(await childFrame.webmcp.callTool('echo')).toEqual({ content: [{ type: 'text', text: 'frame' }] });
 });
 
-test('should list and call tools in cross-origin and nested frames', async ({ page, server, browserName }) => {
+test('WM-014 should list and call tools in cross-origin and nested frames', async ({ page, server, browserName }) => {
   test.skip(browserName === 'firefox', 'Firefox does not support registering WebMCP tools in iframes yet, https://bugzilla.mozilla.org/show_bug.cgi?id=2019743');
   const registerEcho = (text: string) => registerScript(`
     modelContext.registerTool({

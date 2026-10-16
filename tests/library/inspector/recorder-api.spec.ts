@@ -50,7 +50,7 @@ function normalizeCode(code: string): string {
   return code.replace(/\s+/g, ' ').trim();
 }
 
-test('context should implement the internal api used by the tools', async ({ context }) => {
+test('IN-030 context should implement the internal api used by the tools', async ({ context }) => {
   // Listing a method here is enforced by the type, so adding one to the interface breaks compilation until it is covered.
   const methods: Record<keyof BrowserContextInternalApi, true> = {
     _startRecording: true,
@@ -60,7 +60,7 @@ test('context should implement the internal api used by the tools', async ({ con
     expect(typeof context[method], method).toBe('function');
 });
 
-test('should click', async ({ context, browserName, platform, channel }) => {
+test('IN-031 should click', async ({ context, browserName, platform, channel }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
@@ -81,7 +81,7 @@ test('should click', async ({ context, browserName, platform, channel }) => {
   expect(normalizeCode(log.action('click')[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).click();`);
 });
 
-test('should double click', async ({ context, browserName, platform, channel }) => {
+test('IN-032 should double click', async ({ context, browserName, platform, channel }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<button onclick="console.log('click')" ondblclick="console.log('dblclick')">Submit</button>`);
@@ -103,7 +103,7 @@ test('should double click', async ({ context, browserName, platform, channel }) 
   expect(normalizeCode(log.action('click')[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).dblclick();`);
 });
 
-test('should right click', async ({ context, browserName, platform, channel }) => {
+test('IN-033 should right click', async ({ context, browserName, platform, channel }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<button oncontextmenu="console.log('contextmenu')">Submit</button>`);
@@ -126,7 +126,7 @@ test('should right click', async ({ context, browserName, platform, channel }) =
   expect(normalizeCode(clickActions[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).click({ button: 'right' });`);
 });
 
-test('should send updated code with the signal', async ({ context, server }) => {
+test('IN-034 should send updated code with the signal', async ({ context, server }) => {
   const recorder = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<a target=_blank rel=noopener href="${server.EMPTY_PAGE}">link</a>`);
@@ -140,7 +140,7 @@ test('should send updated code with the signal', async ({ context, server }) => 
   expect(normalizeCode(code)).toContain(`const page1 = await page1Promise;`);
 });
 
-test('should not amend the last action with a signal from another page', async ({ context }) => {
+test('IN-035 should not amend the last action with a signal from another page', async ({ context }) => {
   const recorder = await startRecording(context);
   const page1 = await context.newPage();
   await page1.setContent(`<button onclick="console.log('click')">Submit</button>`);
@@ -156,7 +156,7 @@ test('should not amend the last action with a signal from another page', async (
   expect(recorder.signals().find(s => s.signal.name === 'dialog')!.code).toBe('');
 });
 
-test('should type', async ({ context }) => {
+test('IN-036 should type', async ({ context }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<input type="text" />`);
@@ -177,7 +177,7 @@ test('should type', async ({ context }) => {
   expect(normalizeCode(log.action('fill')[0].code)).toEqual(`await page.getByRole('textbox').fill('Hello');`);
 });
 
-test('should stop recording', async ({ context }) => {
+test('IN-037 should stop recording', async ({ context }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
@@ -191,7 +191,7 @@ test('should stop recording', async ({ context }) => {
   expect(log.action('click')).toHaveLength(2);
 });
 
-test('should record again after stop', async ({ context }) => {
+test('IN-038 should record again after stop', async ({ context }) => {
   const log = await startRecording(context);
   const page = await context.newPage();
   await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
@@ -207,7 +207,7 @@ test('should record again after stop', async ({ context }) => {
   expect(log2.action('click')).toHaveLength(1);
 });
 
-test('should not start recording while the recorder is shown', async ({ context, openRecorder }) => {
+test('IN-039 should not start recording while the recorder is shown', async ({ context, openRecorder }) => {
   const { recorder } = await openRecorder();
   await expect(startRecording(context)).rejects.toThrow('Recorder is shown, close it before starting a recording.');
 
@@ -216,7 +216,7 @@ test('should not start recording while the recorder is shown', async ({ context,
   await expect.poll(() => startRecording(context).then(() => true, () => false)).toBe(true);
 });
 
-test('should not show the recorder while recording', async ({ context }) => {
+test('IN-040 should not show the recorder while recording', async ({ context }) => {
   await startRecording(context);
   await expect((context as any)._showRecorder({ mode: 'recording' })).rejects.toThrow('Recording is in progress, stop it before showing the recorder.');
 
@@ -225,12 +225,12 @@ test('should not show the recorder while recording', async ({ context }) => {
   await (context as any)._showRecorder({ mode: 'recording' });
 });
 
-test('should not start recording twice', async ({ context }) => {
+test('IN-041 should not start recording twice', async ({ context }) => {
   await startRecording(context);
   await expect(startRecording(context)).rejects.toThrow('Recording is already in progress.');
 });
 
-test('page.pickLocator should return locator for picked element', async ({ page }) => {
+test('IN-042 page.pickLocator should return locator for picked element', async ({ page }) => {
   await page.setContent(`<button>Submit</button>`);
 
   const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
@@ -244,7 +244,7 @@ test('page.pickLocator should return locator for picked element', async ({ page 
   await expect(locator).toHaveText('Submit');
 });
 
-test('page.cancelPickLocator should cancel ongoing pickLocator', async ({ page }) => {
+test('IN-043 page.cancelPickLocator should cancel ongoing pickLocator', async ({ page }) => {
   const pickPromise = page.pickLocator();
   await Promise.all([
     page.cancelPickLocator(),
@@ -252,14 +252,14 @@ test('page.cancelPickLocator should cancel ongoing pickLocator', async ({ page }
   ]);
 });
 
-test('closing page should cancel ongoing pickLocator', async ({ page }) => {
+test('IN-044 closing page should cancel ongoing pickLocator', async ({ page }) => {
   await page.setContent(`<button>Click me</button>`);
   const pickPromise = page.pickLocator().catch(e => e.message);
   await page.close();
   expect(await pickPromise).toContain('Target page, context or browser has been closed');
 });
 
-test('page2.pickLocator() should cancel page1.pickLocator()', async ({ page, context, browserName, headless, isMac, macVersion }) => {
+test('IN-045 page2.pickLocator() should cancel page1.pickLocator()', async ({ page, context, browserName, headless, isMac, macVersion }) => {
   test.skip(browserName === 'chromium' && !headless && isMac && macVersion === 14, 'times out on chromium headed on macOS 14');
   const pick1Promise = page.pickLocator().catch(e => e.message);
 

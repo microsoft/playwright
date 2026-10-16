@@ -24,7 +24,7 @@ import { EventEmitter } from './utils';
 import { test, expect } from '@playwright/test';
 
 test.describe('EventEmitter tests', () => {
-  test('should work', () => {
+  test('EE-004 should work', () => {
     const events_new_listener_emitted = [];
     const listeners_new_listener_emitted = [];
 
@@ -67,12 +67,12 @@ test.describe('EventEmitter tests', () => {
     ee.emit('hello', 'a', 'b');
   });
 
-  test('set max listeners test', () => {
+  test('EE-005 set max listeners test', () => {
     const f = new EventEmitter();
     f.setMaxListeners(0);
   });
 
-  test('Listener order', () => {
+  test('EE-006 Listener order', () => {
     const listen1 = function() {};
     const listen2 = function() {};
     const ee = new EventEmitter();
@@ -96,7 +96,7 @@ test.describe('EventEmitter tests', () => {
     expect(listeners[1]).toEqual(listen1);
   });
 
-  test('listener type check', () => {
+  test('EE-007 listener type check', () => {
     const ee = new EventEmitter();
     expect(() => ee.on('foo', null)).toThrow('The "listener" argument must be of type Function. Received type object');
   });

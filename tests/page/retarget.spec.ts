@@ -20,7 +20,7 @@ import { test as it, expect, rafraf } from './pageTest';
 
 const giveItAChanceToResolve = (page: Page) => rafraf(page, 5);
 
-it('element state checks should work as expected for label with zero-sized input', async ({ page, server }) => {
+it('RE-001 element state checks should work as expected for label with zero-sized input', async ({ page, server }) => {
   await page.setContent(`
     <label>
       Click me
@@ -36,7 +36,7 @@ it('element state checks should work as expected for label with zero-sized input
   expect(await page.isDisabled('text=Click me')).toBe(true);
 });
 
-it('should wait for enclosing disabled button', async ({ page }) => {
+it('RE-002 should wait for enclosing disabled button', async ({ page }) => {
   await page.setContent('<button><span>Target</span></button>');
   const span = (await page.$('text=Target'))!;
   let done = false;
@@ -47,7 +47,7 @@ it('should wait for enclosing disabled button', async ({ page }) => {
   await promise;
 });
 
-it('should wait for enclosing button with a disabled fieldset', async ({ page }) => {
+it('RE-003 should wait for enclosing button with a disabled fieldset', async ({ page }) => {
   await page.setContent('<fieldset disabled=true><button><span>Target</span></button></div>');
   const span = (await page.$('text=Target'))!;
   let done = false;
@@ -58,7 +58,7 @@ it('should wait for enclosing button with a disabled fieldset', async ({ page })
   await promise;
 });
 
-it('should wait for enclosing enabled button', async ({ page, server }) => {
+it('RE-004 should wait for enclosing enabled button', async ({ page, server }) => {
   await page.setContent('<button disabled><span>Target</span></button>');
   const span = (await page.$('text=Target'))!;
   let done = false;
@@ -69,7 +69,7 @@ it('should wait for enclosing enabled button', async ({ page, server }) => {
   await promise;
 });
 
-it('should check the box outside shadow dom label', async ({ page }) => {
+it('RE-005 should check the box outside shadow dom label', async ({ page }) => {
   await page.setContent('<div></div>');
   await page.$eval('div', div => {
     const root = div.attachShadow({ mode: 'open' });
@@ -86,7 +86,7 @@ it('should check the box outside shadow dom label', async ({ page }) => {
   expect(await page.$eval('input', input => input.checked)).toBe(true);
 });
 
-it('setInputFiles should work with label', async ({ page, asset }) => {
+it('RE-006 setInputFiles should work with label', async ({ page, asset }) => {
   await page.setContent(`<label for=target>Choose a file</label><input id=target type=file>`);
   await page.setInputFiles('text=Choose a file', asset('file-to-upload.txt'));
   expect(await page.$eval('input', (input: HTMLInputElement) => input.files!.length)).toBe(1);
@@ -101,7 +101,7 @@ const domStandalone = (dom: string) => dom;
 const domInButton = (dom: string, options?: Options) => `<button ${optionsToAttributes(options)}>Button ${dom}</button>`;
 const domInLink = (dom: string, options?: Options) => `<button ${optionsToAttributes(options)}>Button ${dom}</button>`;
 
-it('enabled/disabled retargeting', async ({ page, asset }) => {
+it('RE-007 enabled/disabled retargeting', async ({ page, asset }) => {
   const cases = [
     { dom: domInLabel(`<input id=target>`), enabled: true, locator: 'label' },
     { dom: domLabelFor(`<input id=target>`), enabled: true, locator: 'label' },
@@ -139,7 +139,7 @@ it('enabled/disabled retargeting', async ({ page, asset }) => {
   }
 });
 
-it('visible/hidden retargeting', async ({ page, asset }) => {
+it('RE-008 visible/hidden retargeting', async ({ page, asset }) => {
   const cases = [
     { dom: domInLabel(`<span id=target>content</span>`), visible: true, locator: 'label' },
     { dom: domInLabel(`<span id=target hidden>content</span>`), visible: true, locator: 'label' },
@@ -177,7 +177,7 @@ it('visible/hidden retargeting', async ({ page, asset }) => {
   }
 });
 
-it('editable retargeting', async ({ page, asset }) => {
+it('RE-009 editable retargeting', async ({ page, asset }) => {
   const cases = [
     { dom: domInLabel(`<input id=target>`), editable: true, locator: 'label' },
     { dom: domLabelFor(`<input id=target>`), editable: true, locator: 'label' },
@@ -209,7 +209,7 @@ it('editable retargeting', async ({ page, asset }) => {
   }
 });
 
-it('input value retargeting', async ({ page, browserName }) => {
+it('RE-010 input value retargeting', async ({ page, browserName }) => {
   const cases = [
     { dom: domInLabel(`<input id=target>`), locator: 'label' },
     { dom: domLabelFor(`<input id=target>`), locator: 'label' },
@@ -244,7 +244,7 @@ it('input value retargeting', async ({ page, browserName }) => {
   }
 });
 
-it('selection retargeting', async ({ page, browserName }) => {
+it('RE-011 selection retargeting', async ({ page, browserName }) => {
   const cases = [
     { dom: domStandalone(`<div contenteditable id=target>content</div>`), locator: 'div' },
     { dom: domInButton(`<div contenteditable id=target>content</div>`), locator: 'div' },
@@ -270,7 +270,7 @@ it('selection retargeting', async ({ page, browserName }) => {
   }
 });
 
-it('select options retargeting', async ({ page }) => {
+it('RE-012 select options retargeting', async ({ page }) => {
   const cases = [
     { dom: domInLabel(`<select id=target multiple><option value=dog selected>Dog</option><option value=cat>Cat</option></select>`), locator: 'label' },
     { dom: domLabelFor(`<select id=target multiple><option value=dog selected>Dog</option><option value=cat>Cat</option></select>`), locator: 'label' },
@@ -299,7 +299,7 @@ it('select options retargeting', async ({ page }) => {
   }
 });
 
-it('direct actions retargeting', async ({ page }) => {
+it('RE-013 direct actions retargeting', async ({ page }) => {
   const cases = [
     { dom: domInLabel(`<div>content</div><input id=target value=oh>`), locator: 'div' },
     { dom: domLabelFor(`<div>content</div><input id=target value=oh>`), locator: 'div' },
@@ -334,7 +334,7 @@ it('direct actions retargeting', async ({ page }) => {
   }
 });
 
-it('check retargeting', async ({ page, asset }) => {
+it('RE-014 check retargeting', async ({ page, asset }) => {
   const cases = [
     { dom: domInLabel(`<input type=checkbox id=target>`), locator: 'label' },
     { dom: domLabelFor(`<input type=checkbox id=target>`), locator: 'label' },
@@ -368,7 +368,7 @@ it('check retargeting', async ({ page, asset }) => {
   }
 });
 
-it('should not retarget anchor into parent label', async ({ page }) => {
+it('RE-015 should not retarget anchor into parent label', async ({ page }) => {
   await page.setContent(`
     <label disabled>Text<a href='#' onclick='window.__clicked=1'>Target</a></label>
   `);

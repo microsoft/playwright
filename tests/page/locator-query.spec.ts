@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should respect first() and last() @smoke', async ({ page }) => {
+it('LO-157 should respect first() and last() @smoke', async ({ page }) => {
   await page.setContent(`
   <section>
     <div><p>A</p></div>
@@ -30,7 +30,7 @@ it('should respect first() and last() @smoke', async ({ page }) => {
   expect(await page.locator('div').last().locator('p').count()).toBe(3);
 });
 
-it('should respect nth()', async ({ page }) => {
+it('LO-158 should respect nth()', async ({ page }) => {
   await page.setContent(`
   <section>
     <div><p>A</p></div>
@@ -42,50 +42,50 @@ it('should respect nth()', async ({ page }) => {
   expect(await page.locator('div').nth(2).locator('p').count()).toBe(3);
 });
 
-it('should throw on capture w/ nth()', async ({ page }) => {
+it('LO-159 should throw on capture w/ nth()', async ({ page }) => {
   await page.setContent(`<section><div><p>A</p></div></section>`);
   const e = await page.locator('*css=div >> p').nth(1).click().catch(e => e);
   expect(e.message).toContain(`Can't query n-th element`);
 });
 
-it('should throw on due to strictness', async ({ page }) => {
+it('LO-160 should throw on due to strictness', async ({ page }) => {
   await page.setContent(`<div>A</div><div>B</div>`);
   const e = await page.locator('div').isVisible().catch(e => e);
   expect(e.message).toContain(`strict mode violation`);
 });
 
-it('should throw on due to strictness 2', async ({ page }) => {
+it('LO-161 should throw on due to strictness 2', async ({ page }) => {
   await page.setContent(`<select><option>One</option><option>Two</option></select>`);
   const e = await page.locator('option').evaluate(e => {}).catch(e => e);
   expect(e.message).toContain(`strict mode violation`);
 });
 
-it('should filter by text', async ({ page }) => {
+it('LO-162 should filter by text', async ({ page }) => {
   await page.setContent(`<div>Foobar</div><div>Bar</div>`);
   await expect(page.locator('div', { hasText: 'Foo' })).toHaveText('Foobar');
 });
 
-it('should filter by text 2', async ({ page }) => {
+it('LO-163 should filter by text 2', async ({ page }) => {
   await page.setContent(`<div>foo <span>hello world</span> bar</div>`);
   await expect(page.locator('div', { hasText: 'hello world' })).toHaveText('foo hello world bar');
 });
 
-it('should filter by regex', async ({ page }) => {
+it('LO-164 should filter by regex', async ({ page }) => {
   await page.setContent(`<div>Foobar</div><div>Bar</div>`);
   await expect(page.locator('div', { hasText: /Foo.*/ })).toHaveText('Foobar');
 });
 
-it('should filter by text with quotes', async ({ page }) => {
+it('LO-165 should filter by text with quotes', async ({ page }) => {
   await page.setContent(`<div>Hello "world"</div><div>Hello world</div>`);
   await expect(page.locator('div', { hasText: 'Hello "world"' })).toHaveText('Hello "world"');
 });
 
-it('should filter by regex with quotes', async ({ page }) => {
+it('LO-166 should filter by regex with quotes', async ({ page }) => {
   await page.setContent(`<div>Hello "world"</div><div>Hello world</div>`);
   await expect(page.locator('div', { hasText: /Hello "world"/ })).toHaveText('Hello "world"');
 });
 
-it('should filter by regex with a single quote', async ({ page }) => {
+it('LO-167 should filter by regex with a single quote', async ({ page }) => {
   await page.setContent(`<button>let's let's<span>hello</span></button>`);
   await expect.soft(page.locator('button', { hasText: /let's/i }).locator('span')).toHaveText('hello');
   await expect.soft(page.getByRole('button', { name: /let's/i }).locator('span')).toHaveText('hello');
@@ -121,30 +121,30 @@ it('should filter by regex with a single quote', async ({ page }) => {
   await expect.soft(page.getByRole('button', { name: /let's/iu })).toHaveText(`let's hello`);
 });
 
-it('should filter by regex and regexp flags', async ({ page }) => {
+it('LO-168 should filter by regex and regexp flags', async ({ page }) => {
   await page.setContent(`<div>Hello "world"</div><div>Hello world</div>`);
   await expect(page.locator('div', { hasText: /hElLo "world"/i })).toHaveText('Hello "world"');
 });
 
-it('should filter by case-insensitive regex in a child', async ({ page }) => {
+it('LO-169 should filter by case-insensitive regex in a child', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15348' });
   await page.setContent(`<div class="test"><h5>Title Text</h5></div>`);
   await expect(page.locator('div', { hasText: /^title text$/i })).toHaveText('Title Text');
 });
 
-it('should filter by case-insensitive regex in multiple children', async ({ page }) => {
+it('LO-170 should filter by case-insensitive regex in multiple children', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15348' });
   await page.setContent(`<div class="test"><h5>Title</h5> <h2><i>Text</i></h2></div>`);
   await expect(page.locator('div', { hasText: /^title text$/i })).toHaveClass('test');
 });
 
-it('should filter by regex with special symbols', async ({ page }) => {
+it('LO-171 should filter by regex with special symbols', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15348' });
   await page.setContent(`<div class="test"><h5>First/"and"</h5><h2><i>Second\\</i></h2></div>`);
   await expect(page.locator('div', { hasText: /^first\/".*"second\\$/si })).toHaveClass('test');
 });
 
-it('should support has:locator', async ({ page, trace }) => {
+it('LO-172 should support has:locator', async ({ page, trace }) => {
   it.skip(trace === 'on');
 
   await page.setContent(`<div><span>hello</span></div><div><span>world</span></div>`);
@@ -178,7 +178,7 @@ it('should support has:locator', async ({ page, trace }) => {
   })).toHaveCount(1);
 });
 
-it('should support locator.filter', async ({ page, trace }) => {
+it('LO-173 should support locator.filter', async ({ page, trace }) => {
   it.skip(trace === 'on');
 
   await page.setContent(`<section><div><span>hello</span></div><div><span>world</span></div></section>`);
@@ -200,7 +200,7 @@ it('should support locator.filter', async ({ page, trace }) => {
   await expect(page.locator(`div`).filter({ hasNotText: 'foo' })).toHaveCount(2);
 });
 
-it('should support locator.and', async ({ page }) => {
+it('LO-174 should support locator.and', async ({ page }) => {
   await page.setContent(`
     <div data-testid=foo>hello</div><div data-testid=bar>world</div>
     <span data-testid=foo>hello2</span><span data-testid=bar>world2</span>
@@ -213,7 +213,7 @@ it('should support locator.and', async ({ page }) => {
   await expect(page.locator('span').and(page.getByTestId(/bar|foo/))).toHaveCount(2);
 });
 
-it('should support locator.or', async ({ page }) => {
+it('LO-175 should support locator.or', async ({ page }) => {
   await page.setContent(`<div>hello</div><span>world</span>`);
   await expect(page.locator('div').or(page.locator('span'))).toHaveCount(2);
   await expect(page.locator('div').or(page.locator('span'))).toHaveText(['hello', 'world']);
@@ -225,7 +225,7 @@ it('should support locator.or', async ({ page }) => {
   await expect(page.locator('span').or(page.locator('article'))).toHaveText('world');
 });
 
-it('should support locator.locator with and/or', async ({ page }) => {
+it('LO-176 should support locator.locator with and/or', async ({ page }) => {
   await page.setContent(`
     <div>one <span>two</span> <button>three</button> </div>
     <span>four</span>
@@ -240,7 +240,7 @@ it('should support locator.locator with and/or', async ({ page }) => {
   await expect(page.locator('button').and(page.getByRole('button'))).toHaveText(['three', 'five']);
 });
 
-it('should support locator.within', async ({ page }) => {
+it('LO-177 should support locator.within', async ({ page }) => {
   await page.setContent(`
     <table>
       <tr><td>a1</td><td>a2</td><td>a3</td></tr>
@@ -258,7 +258,7 @@ it('should support locator.within', async ({ page }) => {
   await expect(page.getByRole('cell').nth(1).within(page.getByRole('row')).nth(1)).toHaveText('b2');
 });
 
-it('should allow some, but not all nested frameLocators', async ({ page }) => {
+it('LO-178 should allow some, but not all nested frameLocators', async ({ page }) => {
   await page.setContent(`<iframe srcdoc="<span id=target>world</span>"></iframe><span>hello</span>`);
   await expect(page.frameLocator('iframe').locator('span').or(page.frameLocator('iframe').locator('article'))).toHaveText('world');
   await expect(page.frameLocator('iframe').locator('article').or(page.frameLocator('iframe').locator('span'))).toHaveText('world');
@@ -269,7 +269,7 @@ it('should allow some, but not all nested frameLocators', async ({ page }) => {
   expect(error2.message).toContain(`Frame locators are not allowed inside composite locators, while querying "locator('iframe').contentFrame().locator('div').and(locator('#iframe').contentFrame().locator('span'))`);
 });
 
-it('should keep the capture when removing a common frame prefix', async ({ page }) => {
+it('LO-179 should keep the capture when removing a common frame prefix', async ({ page }) => {
   await page.setContent(`<iframe id=f srcdoc="<section id=target><span>hi</span></section>"></iframe>`);
   const inner = page.frameLocator('#f').locator('*css=section >> span');
   await expect(page.frameLocator('#f').locator('body').locator(inner)).toHaveAttribute('id', 'target');
@@ -279,7 +279,7 @@ it('should keep the capture when removing a common frame prefix', async ({ page 
   expect(error.message).toContain('Can not capture the selector before diving into the frame');
 });
 
-it('should enforce same frame for has/leftOf/rightOf/above/below/near', async ({ page, server }) => {
+it('LO-180 should enforce same frame for has/leftOf/rightOf/above/below/near', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/two-frames.html');
   const child = page.frames()[1];
   for (const option of ['has']) {
@@ -293,7 +293,7 @@ it('should enforce same frame for has/leftOf/rightOf/above/below/near', async ({
   }
 });
 
-it('alias methods coverage', async ({ page }) => {
+it('LO-181 alias methods coverage', async ({ page }) => {
   await page.setContent(`<div><button>Submit</button></div>`);
   await expect(page.locator('button')).toHaveCount(1);
   await expect(page.locator('div').locator('button')).toHaveCount(1);
@@ -301,7 +301,7 @@ it('alias methods coverage', async ({ page }) => {
   await expect(page.mainFrame().locator('button')).toHaveCount(1);
 });
 
-it('count() should not throw during navigation', async ({ playwright, page, server }) => {
+it('LO-182 count() should not throw during navigation', async ({ playwright, page, server }) => {
   const createDummySelector = () => ({
     query(root, selector) {
       window.location.href = './frames/one-frame.html';

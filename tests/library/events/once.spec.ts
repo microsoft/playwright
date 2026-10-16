@@ -24,7 +24,7 @@ import { test, expect } from '@playwright/test';
 import { EventEmitter } from './utils';
 import * as common from './utils';
 
-test('should work', () => {
+test('EE-028 should work', () => {
   const e = new EventEmitter();
 
   e.once('hello', common.mustCall());
@@ -58,7 +58,7 @@ test('should work', () => {
   }).toThrow(TypeError);
 });
 
-test('once() has different code paths based on the number of arguments being emitted', () => {
+test('EE-029 once() has different code paths based on the number of arguments being emitted', () => {
   // Verify that all of the cases are covered.
   const maxArgs = 4;
 

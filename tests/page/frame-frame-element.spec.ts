@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 
-it('should work @smoke', async ({ page, server }) => {
+it('FR-014 should work @smoke', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const frame1 = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await attachFrame(page, 'frame2', server.EMPTY_PAGE);
@@ -32,7 +32,7 @@ it('should work @smoke', async ({ page, server }) => {
   expect(await frame1handle1.evaluate((a, b) => a === b, frame3handle1)).toBe(false);
 });
 
-it('should work with contentFrame', async ({ page, server }) => {
+it('FR-015 should work with contentFrame', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const handle = await frame.frameElement();
@@ -40,7 +40,7 @@ it('should work with contentFrame', async ({ page, server }) => {
   expect(contentFrame).toBe(frame);
 });
 
-it('should work with frameset', async ({ page, server }) => {
+it('FR-016 should work with frameset', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/frameset.html');
   const frameElement1 = await page.$('frame');
   const frame = await frameElement1.contentFrame();
@@ -48,7 +48,7 @@ it('should work with frameset', async ({ page, server }) => {
   expect(await frameElement1.evaluate((a, b) => a === b, frameElement2)).toBe(true);
 });
 
-it('should throw when detached', async ({ page, server }) => {
+it('FR-017 should throw when detached', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const frame1 = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await page.$eval('#frame1', e => e.remove());
@@ -56,7 +56,7 @@ it('should throw when detached', async ({ page, server }) => {
   expect(error.message).toContain('Frame has been detached.');
 });
 
-it('should work inside closed shadow root', async ({ page, server, browserName }) => {
+it('FR-018 should work inside closed shadow root', async ({ page, server, browserName }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
     <div id=framecontainer>
@@ -76,7 +76,7 @@ it('should work inside closed shadow root', async ({ page, server, browserName }
   expect(await element.getAttribute('name')).toBe('myframe');
 });
 
-it('should work inside declarative shadow root', async ({ page, server, browserName }) => {
+it('FR-019 should work inside declarative shadow root', async ({ page, server, browserName }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
     <div>

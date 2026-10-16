@@ -30,7 +30,7 @@ const listener4 = () => { return 1; };
 
 class TestStream extends EventEmitter {}
 
-test('EventEmitter listeners with one listener', () => {
+test('EE-014 EventEmitter listeners with one listener', () => {
   const ee = new EventEmitter();
   ee.on('foo', listener);
   const fooListeners = ee.listeners('foo');
@@ -48,7 +48,7 @@ test('EventEmitter listeners with one listener', () => {
   expect(fooListeners[0]).toEqual(listener);
 });
 
-test('Array copy modification does not modify orig', () => {
+test('EE-015 Array copy modification does not modify orig', () => {
   const ee = new EventEmitter();
   ee.on('foo', listener);
 
@@ -69,7 +69,7 @@ test('Array copy modification does not modify orig', () => {
   expect(eeListenersCopy[1]).toEqual(listener2);
 });
 
-test('Modify array copy after multiple adds', () => {
+test('EE-016 Modify array copy after multiple adds', () => {
   const ee = new EventEmitter();
   ee.on('foo', listener);
   const eeListenersCopy = ee.listeners('foo');
@@ -86,7 +86,7 @@ test('Modify array copy after multiple adds', () => {
   expect(eeListenersCopy[0]).toEqual(listener);
 });
 
-test('listeners and once', () => {
+test('EE-017 listeners and once', () => {
   const ee = new EventEmitter();
   ee.once('foo', listener);
   const listeners = ee.listeners('foo');
@@ -95,7 +95,7 @@ test('listeners and once', () => {
   expect(listeners[0]).toEqual(listener);
 });
 
-test('listeners with conflicting types', () => {
+test('EE-018 listeners with conflicting types', () => {
   const ee = new EventEmitter();
   ee.on('foo', listener);
   ee.once('foo', listener2);
@@ -107,7 +107,7 @@ test('listeners with conflicting types', () => {
   expect(listeners[1]).toEqual(listener2);
 });
 
-test('EventEmitter with no members', () => {
+test('EE-019 EventEmitter with no members', () => {
   const ee = new EventEmitter();
   ee._events = undefined;
   const listeners = ee.listeners('foo');
@@ -115,14 +115,14 @@ test('EventEmitter with no members', () => {
   expect(listeners).toHaveLength(0);
 });
 
-test('listeners on prototype', () => {
+test('EE-020 listeners on prototype', () => {
   const s = new TestStream();
   const listeners = s.listeners('foo');
   expect(Array.isArray(listeners)).toBeTruthy();
   expect(listeners).toHaveLength(0);
 });
 
-test('raw listeners', () => {
+test('EE-021 raw listeners', () => {
   const ee = new EventEmitter();
   ee.on('foo', listener);
   const wrappedListener = ee.rawListeners('foo');
@@ -140,7 +140,7 @@ test('raw listeners', () => {
   expect(wrappedListeners[1].listener).toEqual(listener);
 });
 
-test('raw listeners order', () => {
+test('EE-022 raw listeners order', () => {
   const ee = new EventEmitter();
   ee.once('foo', listener3);
   ee.on('foo', listener4);

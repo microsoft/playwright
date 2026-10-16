@@ -36,7 +36,7 @@ function requireCoreOnAndroid(browsersPath: string | undefined): { status: numbe
   return { status: result.status, output: (result.stdout || '') + (result.stderr || '') };
 }
 
-test('should import on an unsupported platform when PLAYWRIGHT_BROWSERS_PATH=0', {
+test('BP-001 should import on an unsupported platform when PLAYWRIGHT_BROWSERS_PATH=0', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41852' },
 }, () => {
   const { status, output } = requireCoreOnAndroid('0');
@@ -45,7 +45,7 @@ test('should import on an unsupported platform when PLAYWRIGHT_BROWSERS_PATH=0',
   expect(status).toBe(0);
 });
 
-test('should import on an unsupported platform with an explicit PLAYWRIGHT_BROWSERS_PATH', {
+test('BP-002 should import on an unsupported platform with an explicit PLAYWRIGHT_BROWSERS_PATH', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41852' },
 }, () => {
   const { status, output } = requireCoreOnAndroid(path.join(test.info().outputDir, 'pw-browsers'));

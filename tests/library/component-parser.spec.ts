@@ -42,7 +42,7 @@ function expectError(selector: string) {
   expect(error.message).toContain(`while parsing selector \`${selector}\``);
 }
 
-it('should parse', async () => {
+it('PS-038 should parse', async () => {
   expect(serialize(parse('[foo="]"]'))).toBe('[foo = "]"]');
   expect(serialize(parse('[foo="10"s]'))).toBe('[foo = "10"]');
   expect(serialize(parse('[foo="10" s]'))).toBe('[foo = "10"]');
@@ -51,13 +51,13 @@ it('should parse', async () => {
   expect(serialize(parse('[foo="=="]'))).toBe('[foo = "=="]');
 });
 
-it('should parse short attributes', async () => {
+it('PS-039 should parse short attributes', async () => {
   expect(serialize(parse(`BookItem [  name ]`))).toBe('BookItem[name]');
   expect(serialize(parse(`BookItem ['name' ] [ foo."bar".baz ]`))).toBe('BookItem[name][foo.bar.baz]');
   expect(serialize(parse(`BookItem ['na  me' ]`))).toBe('BookItem["na  me"]');
 });
 
-it('should parse all operators', async () => {
+it('PS-040 should parse all operators', async () => {
   expect(serialize(parse(`BookItem[name = 10]`))).toBe('BookItem[name = 10]');
   expect(serialize(parse(`BookItem[name = 'foo']`))).toBe(`BookItem[name = "foo"]`);
   expect(serialize(parse(`BookItem[name *= 'foo']`))).toBe(`BookItem[name *= "foo"]`);
@@ -67,7 +67,7 @@ it('should parse all operators', async () => {
   expect(serialize(parse(`BookItem[name |= 'foo']`))).toBe(`BookItem[name |= "foo"]`);
 });
 
-it('should tolerate spacing', async () => {
+it('PS-041 should tolerate spacing', async () => {
   expect(serialize(parse(` BookItem[ name = "Foo "  ]`))).toBe('BookItem[name = "Foo "]');
   expect(serialize(parse(`  BookItem  [  name = "Foo"  ]   `))).toBe('BookItem[name = "Foo"]');
   expect(serialize(parse(`  [    name = "Foo"]`))).toBe('[name = "Foo"]');
@@ -75,7 +75,7 @@ it('should tolerate spacing', async () => {
   expect(serialize(parse(`BookItem  [   'name' = 'Foo'i ]   `))).toBe('BookItem[name = "Foo" i]');
 });
 
-it('should escape', async () => {
+it('PS-042 should escape', async () => {
   expect(serialize(parse(`BookItem['jake\\'s' = 10]`))).toBe(`BookItem["jake's" = 10]`);
   expect(serialize(parse(`BookItem['jake"s' = 10]`))).toBe(`BookItem["jake\\"s" = 10]`);
   expect(serialize(parse(`BookItem["jake\\"s" = 10]`))).toBe(`BookItem["jake\\"s" = 10]`);
@@ -84,46 +84,46 @@ it('should escape', async () => {
   expect(serialize(parse(`BookItem[name = "foo\\"bar"]`))).toBe(`BookItem[name = "foo\\"bar"]`);
 });
 
-it('should parse int values', async () => {
+it('PS-043 should parse int values', async () => {
   expect(serialize(parse(`ColorButton[value = 10]`))).toBe('ColorButton[value = 10]');
   expect(serialize(parse(`ColorButton[value = +10]`))).toBe('ColorButton[value = 10]');
   expect(serialize(parse(`ColorButton[value = -10]`))).toBe('ColorButton[value = -10]');
   expect(serialize(parse(`ColorButton  [ "nested". "index" = 0 ]   `))).toBe('ColorButton[nested.index = 0]');
 });
 
-it('should parse float values', async () => {
+it('PS-044 should parse float values', async () => {
   expect(serialize(parse(`ColorButton[value = -12.3]`))).toBe('ColorButton[value = -12.3]');
   expect(serialize(parse(`ColorButton  ['nested'.value = 4.1]`))).toBe('ColorButton[nested.value = 4.1]');
   expect(serialize(parse(`ColorButton  [    'nested' .value =4.1]`))).toBe('ColorButton[nested.value = 4.1]');
 });
 
-it('should parse bool', async () => {
+it('PS-045 should parse bool', async () => {
   expect(serialize(parse(`ColorButton[enabled= false] `))).toBe('ColorButton[enabled = false]');
   expect(serialize(parse(`ColorButton[enabled  =true] `))).toBe('ColorButton[enabled = true]');
   expect(serialize(parse(`ColorButton[enabled  =true][ color = "red"]`))).toBe('ColorButton[enabled = true][color = "red"]');
   expect(serialize(parse(`ColorButton[ enabled  =true][ color = "red"i][nested.index =  6]`))).toBe('ColorButton[enabled = true][color = "red" i][nested.index = 6]');
 });
 
-it('should parse regex', async () => {
+it('PS-046 should parse regex', async () => {
   expect(serialize(parse(`ColorButton[color =  /red$/]`))).toBe('ColorButton[color = /red$/]');
   expect(serialize(parse(`ColorButton[color=/red/ig]`))).toBe('ColorButton[color = /red/gi]');
   expect(serialize(parse(`ColorButton[color=  / \\/ [/]/  ]`))).toBe('ColorButton[color = / \\/ [/]/]');
   expect(serialize(parse(`ColorButton[color=/[\\]/][[/]/]`))).toBe('ColorButton[color = /[\\]/][[/]/]');
 });
 
-it('should parse identifiers', async () => {
+it('PS-047 should parse identifiers', async () => {
   expect(serialize(parse('[привет=true]'))).toBe('["привет" = true]');
   expect(serialize(parse('[__-__=true]'))).toBe('["__-__" = true]');
   expect(serialize(parse('[😀=true]'))).toBe('["😀" = true]');
 });
 
-it('should parse unquoted string', async () => {
+it('PS-048 should parse unquoted string', async () => {
   expect(serialize(parseAttributeSelector('[hey=foo]', true))).toBe('[hey = "foo"]');
   expect(serialize(parseAttributeSelector('[yay=and😀more]', true))).toBe('[yay = "and😀more"]');
   expect(serialize(parseAttributeSelector('[yay= trims  ]', true))).toBe('[yay = "trims"]');
 });
 
-it('should throw on malformed selector', async () => {
+it('PS-049 should throw on malformed selector', async () => {
   expectError('foo[');
   expectError('foo[');
   expectError('foo["asd');

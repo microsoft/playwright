@@ -102,15 +102,15 @@ it.describe('screencast', () => {
   it.slow();
   it.skip(({ mode }) => mode !== 'default', 'video.path() is not available in remote mode');
 
-  it('should not have video by default', async ({ page }) => {
+  it('VI-001 should not have video by default', async ({ page }) => {
     expect(page.video()).toBeNull();
   });
 
-  it('should not throw without recordVideo.dir', async ({ browser }) => {
+  it('VI-002 should not throw without recordVideo.dir', async ({ browser }) => {
     await browser.newContext({ recordVideo: {} });
   });
 
-  it('should capture static page', async ({ browser, browserName, trace, headless, isWindows }, testInfo) => {
+  it('VI-003 should capture static page', async ({ browser, browserName, trace, headless, isWindows }, testInfo) => {
     // Firefox does not have a mobile variant and has a large minimum size (500 on windows and 450 elsewhere).
     const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -130,7 +130,7 @@ it.describe('screencast', () => {
     expectRedFrames(videoFile, size);
   });
 
-  it('should pad a short frame to the video size', async ({ browser }, testInfo) => {
+  it('VI-004 should pad a short frame to the video size', async ({ browser }, testInfo) => {
     const videoSize = { width: 800, height: 600 };
     const context = await browser.newContext({
       recordVideo: {
@@ -149,7 +149,7 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(videoSize.height);
   });
 
-  it('should continue recording main page after popup closes', async ({ browser, browserName }, testInfo) => {
+  it('VI-005 should continue recording main page after popup closes', async ({ browser, browserName }, testInfo) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30837' });
     // Firefox does not have a mobile variant and has a large minimum size (500 on windows and 450 elsewhere).
     const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
@@ -179,7 +179,7 @@ it.describe('screencast', () => {
     expectRedFrames(videoFile, size);
   });
 
-  it('should expose video path', async ({ browser }, testInfo) => {
+  it('VI-006 should expose video path', async ({ browser }, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -197,7 +197,7 @@ it.describe('screencast', () => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
-  it('should delete video', async ({ browser }, testInfo) => {
+  it('VI-007 should delete video', async ({ browser }, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -218,7 +218,7 @@ it.describe('screencast', () => {
     expect(fs.existsSync(videoPath)).toBeFalsy();
   });
 
-  it('should expose video path blank page', async ({ browser }, testInfo) => {
+  it('VI-008 should expose video path blank page', async ({ browser }, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -235,7 +235,7 @@ it.describe('screencast', () => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
-  it('should work with weird screen resolution', async ({ browser }, testInfo) => {
+  it('VI-009 should work with weird screen resolution', async ({ browser }, testInfo) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22069' });
     const videosPath = testInfo.outputPath('');
     const size = { width: 1904, height: 609 };
@@ -253,7 +253,7 @@ it.describe('screencast', () => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
-  it('should work with relative path for recordVideo.dir', async ({ browser }, testInfo) => {
+  it('VI-010 should work with relative path for recordVideo.dir', async ({ browser }, testInfo) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27086' });
     const videosPath = path.relative(process.cwd(), testInfo.outputPath(''));
     const size = { width: 320, height: 240 };
@@ -270,7 +270,7 @@ it.describe('screencast', () => {
     expect(fs.existsSync(videoPath)).toBeTruthy();
   });
 
-  it('should expose video path blank popup', async ({ browser }, testInfo) => {
+  it('VI-011 should expose video path blank popup', async ({ browser }, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -291,7 +291,7 @@ it.describe('screencast', () => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
-  it('should capture navigation', async ({ browser, browserName, server, trace }, testInfo) => {
+  it('VI-012 should capture navigation', async ({ browser, browserName, server, trace }, testInfo) => {
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -323,7 +323,7 @@ it.describe('screencast', () => {
     }
   });
 
-  it('should capture css transformation', async ({ browser, server, headless, browserName, platform, trace }, testInfo) => {
+  it('VI-013 should capture css transformation', async ({ browser, server, headless, browserName, platform, trace }, testInfo) => {
     it.fixme(!headless, 'Fails on headed');
     it.fixme(browserName === 'webkit' && platform === 'win32');
 
@@ -353,7 +353,7 @@ it.describe('screencast', () => {
     }
   });
 
-  it('should work for popups', async ({ browser, server, browserName, isBidi }, testInfo) => {
+  it('VI-014 should work for popups', async ({ browser, server, browserName, isBidi }, testInfo) => {
     it.fixme(browserName === 'firefox' && !isBidi, 'https://github.com/microsoft/playwright/issues/14557');
     const videosPath = testInfo.outputPath('');
     const size = { width: 600, height: 400 };
@@ -387,7 +387,7 @@ it.describe('screencast', () => {
     expect(videoFiles.length).toBe(2);
   });
 
-  it('should scale frames down to the requested size ', async ({ browser, browserName, server, headless, isHeadlessShell }, testInfo) => {
+  it('VI-015 should scale frames down to the requested size ', async ({ browser, browserName, server, headless, isHeadlessShell }, testInfo) => {
     it.fixme(!headless, 'Fails on headed');
     it.fixme(browserName === 'chromium' && !isHeadlessShell, 'Chromium (but not headless shell) has a min width issue');
 
@@ -436,7 +436,7 @@ it.describe('screencast', () => {
     }
   });
 
-  it('should use viewport scaled down to fit into 800x800 as default size', async ({ browser }, testInfo) => {
+  it('VI-016 should use viewport scaled down to fit into 800x800 as default size', async ({ browser }, testInfo) => {
     const size = { width: 1600, height: 1200 };
     const context = await browser.newContext({
       recordVideo: {
@@ -455,7 +455,7 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(600);
   });
 
-  it('should be 800x450 by default', async ({ browser }, testInfo) => {
+  it('VI-017 should be 800x450 by default', async ({ browser }, testInfo) => {
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -472,7 +472,7 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(450);
   });
 
-  it('should record video with the requested fps', async ({ browser }, testInfo) => {
+  it('VI-018 should record video with the requested fps', async ({ browser }, testInfo) => {
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -488,7 +488,7 @@ it.describe('screencast', () => {
     expect(videoPlayer.fps).toBe(60);
   });
 
-  it('should throw on invalid fps', async ({ browser }, testInfo) => {
+  it('VI-019 should throw on invalid fps', async ({ browser }, testInfo) => {
     const error = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -498,7 +498,7 @@ it.describe('screencast', () => {
     expect(error.message).toContain('"recordVideo.fps" must be a positive number, got 0');
   });
 
-  it('should be 800x600 with null viewport', async ({ browser, headless, browserName, isBidi }, testInfo) => {
+  it('VI-020 should be 800x600 with null viewport', async ({ browser, headless, browserName, isBidi }, testInfo) => {
     it.fixme(browserName === 'firefox' && headless && !isBidi, 'Fails in headless on bots');
 
     const context = await browser.newContext({
@@ -518,7 +518,7 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(600);
   });
 
-  it('should capture static page in persistent context @smoke', async ({ launchPersistent, browserName, trace, isMac }, testInfo) => {
+  it('VI-021 should capture static page in persistent context @smoke', async ({ launchPersistent, browserName, trace, isMac }, testInfo) => {
     it.skip(browserName === 'webkit' && isMac && process.arch === 'arm64', 'Is only failing on self-hosted github actions runner on M1 mac; not reproducible locally');
     const size = { width: 600, height: 400 };
     const { context, page } = await launchPersistent({
@@ -547,7 +547,7 @@ it.describe('screencast', () => {
     }
   });
 
-  it('should emulate an iphone', async ({ contextFactory, playwright, browserName }, testInfo) => {
+  it('VI-022 should emulate an iphone', async ({ contextFactory, playwright, browserName }, testInfo) => {
     const device = playwright.devices['iPhone 6'];
     const context = await contextFactory({
       ...device,
@@ -566,7 +566,7 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(666);
   });
 
-  it('should throw on browser close', async ({ browserType }, testInfo) => {
+  it('VI-023 should throw on browser close', async ({ browserType }, testInfo) => {
     const size = { width: 320, height: 240 };
     const browser = await browserType.launch();
     const context = await browser.newContext({
@@ -586,7 +586,7 @@ it.describe('screencast', () => {
     expect(saveResult.message).toContain('browser has been closed');
   });
 
-  it('should throw if browser dies', async ({ browserType }, testInfo) => {
+  it('VI-024 should throw if browser dies', async ({ browserType }, testInfo) => {
     const size = { width: 320, height: 240 };
     const browser = await browserType.launch();
 
@@ -607,7 +607,7 @@ it.describe('screencast', () => {
     expect(saveResult.message).toContain('rowser has been closed');
   });
 
-  it('should wait for video to finish if page was closed', async ({ browserType }, testInfo) => {
+  it('VI-025 should wait for video to finish if page was closed', async ({ browserType }, testInfo) => {
     const size = { width: 320, height: 240 };
     const browser = await browserType.launch();
 
@@ -633,7 +633,7 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(240);
   });
 
-  it('should close ffmpeg even if there were no frames', {
+  it('VI-026 should close ffmpeg even if there were no frames', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39872' }
   }, async ({ browserType }, testInfo) => {
     const size = { width: 320, height: 240 };
@@ -661,7 +661,7 @@ it.describe('screencast', () => {
     expect(videoFiles.length).toBe(2);
   });
 
-  it('should not create video for internal pages', async ({ browser, server }, testInfo) => {
+  it('VI-027 should not create video for internal pages', async ({ browser, server }, testInfo) => {
     server.setRoute('/empty.html', (req, res) => {
       res.setHeader('Set-Cookie', 'name=value');
       res.end();
@@ -687,7 +687,7 @@ it.describe('screencast', () => {
     expect(files.length).toBe(1);
   });
 
-  it('should capture full viewport', async ({ browserType, browserName, isWindows, headless, isHeadlessShell }, testInfo) => {
+  it('VI-028 should capture full viewport', async ({ browserType, browserName, isWindows, headless, isHeadlessShell }, testInfo) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22411' });
     it.fixme(browserName === 'chromium' && !isHeadlessShell, 'The square is not on the video');
     it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
@@ -722,7 +722,7 @@ it.describe('screencast', () => {
     expectAll(pixels, isAlmostRed);
   });
 
-  it('should capture full viewport on hidpi', async ({ browserType, browserName, headless, isWindows, isLinux, isHeadlessShell, channel }, testInfo) => {
+  it('VI-029 should capture full viewport on hidpi', async ({ browserType, browserName, headless, isWindows, isLinux, isHeadlessShell, channel }, testInfo) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22411' });
     it.fixme(browserName === 'chromium' && !isHeadlessShell, 'The square is not on the video');
     it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
@@ -759,7 +759,7 @@ it.describe('screencast', () => {
     expectAll(pixels, isAlmostRed);
   });
 
-  it('should work with video+trace', async ({ browser, trace, headless, browserName, isHeadlessShell }, testInfo) => {
+  it('VI-030 should work with video+trace', async ({ browser, trace, headless, browserName, isHeadlessShell }, testInfo) => {
     it.skip(trace === 'on');
     it.fixme(!headless, 'different trace screencast image size on all browsers');
     it.fixme(browserName === 'chromium' && !isHeadlessShell, 'different trace screencast image size');
@@ -803,7 +803,7 @@ it.describe('screencast', () => {
 
 });
 
-it('should saveAs video', async ({ browser }, testInfo) => {
+it('VI-031 should saveAs video', async ({ browser }, testInfo) => {
   it.slow();
 
   const videosPath = testInfo.outputPath('');

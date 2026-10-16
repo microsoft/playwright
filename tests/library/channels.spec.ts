@@ -37,7 +37,7 @@ const it = playwrightTest.extend<{}, { expectScopeState: (object: any, golden: a
 it.skip(({ mode }) => mode !== 'default');
 it.skip(({ video }) => video === 'on', 'Extra video artifacts in the objects list');
 
-it('should scope context handles', async ({ browserType, server, expectScopeState }) => {
+it('CN-001 should scope context handles', async ({ browserType, server, expectScopeState }) => {
   const browser = await browserType.launch();
   const GOLDEN_PRECONDITION = {
     _guid: '',
@@ -94,7 +94,7 @@ it('should scope context handles', async ({ browserType, server, expectScopeStat
   await browser.close();
 });
 
-it('should scope CDPSession handles', async ({ browserType, browserName, expectScopeState }) => {
+it('CN-002 should scope CDPSession handles', async ({ browserType, browserName, expectScopeState }) => {
   it.skip(browserName !== 'chromium');
 
   const browser = await browserType.launch();
@@ -138,7 +138,7 @@ it('should scope CDPSession handles', async ({ browserType, browserName, expectS
   await browser.close();
 });
 
-it('should scope browser handles', async ({ browserType, expectScopeState }) => {
+it('CN-003 should scope browser handles', async ({ browserType, expectScopeState }) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
@@ -185,7 +185,7 @@ it('should scope browser handles', async ({ browserType, expectScopeState }) => 
   expectScopeState(browserType, GOLDEN_PRECONDITION);
 });
 
-it('should not generate dispatchers for subresources w/o listeners', async ({ page, server, browserType, expectScopeState }) => {
+it('CN-004 should not generate dispatchers for subresources w/o listeners', async ({ page, server, browserType, expectScopeState }) => {
   server.setRedirect('/one-style.css', '/two-style.css');
   server.setRedirect('/two-style.css', '/three-style.css');
   server.setRedirect('/three-style.css', '/four-style.css');
@@ -227,7 +227,7 @@ it('should not generate dispatchers for subresources w/o listeners', async ({ pa
   });
 });
 
-it('should work with the domain module', async ({ browserType, server, channel }) => {
+it('CN-005 should work with the domain module', async ({ browserType, server, channel }) => {
   const local = domain.create();
   local.run(() => { });
   let err;
@@ -255,7 +255,7 @@ it('should work with the domain module', async ({ browserType, server, channel }
     throw err;
 });
 
-it('exposeFunction should not leak', async ({ page, expectScopeState, server }) => {
+it('CN-006 exposeFunction should not leak', async ({ page, expectScopeState, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let called = 0;
   await page.exposeFunction('myFunction', () => ++called);

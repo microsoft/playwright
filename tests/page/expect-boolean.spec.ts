@@ -18,32 +18,32 @@ import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
 test.describe('toBeChecked', () => {
-  test('default', async ({ page }) => {
+  test('EX-001 default', async ({ page }) => {
     await page.setContent('<input type=checkbox checked></input>');
     const locator = page.locator('input');
     await expect(locator).toBeChecked();
   });
 
-  test('with checked:true', async ({ page }) => {
+  test('EX-002 with checked:true', async ({ page }) => {
     await page.setContent('<input type=checkbox checked></input>');
     const locator = page.locator('input');
     await expect(locator).toBeChecked({ checked: true });
   });
 
-  test('with checked:false', async ({ page }) => {
+  test('EX-003 with checked:false', async ({ page }) => {
     await page.setContent('<input type=checkbox checked></input>');
     const locator = page.locator('input');
     await expect(locator).not.toBeChecked({ checked: false });
   });
 
-  test('with indeterminate:true', async ({ page }) => {
+  test('EX-004 with indeterminate:true', async ({ page }) => {
     await page.setContent('<input type=checkbox></input>');
     await page.locator('input').evaluate((e: HTMLInputElement) => e.indeterminate = true);
     const locator = page.locator('input');
     await expect(locator).toBeChecked({ indeterminate: true });
   });
 
-  test('with indeterminate:true and checked', async ({ page }) => {
+  test('EX-005 with indeterminate:true and checked', async ({ page }) => {
     await page.setContent('<input type=checkbox></input>');
     await page.locator('input').evaluate((e: HTMLInputElement) => e.indeterminate = true);
     const locator = page.locator('input');
@@ -51,7 +51,7 @@ test.describe('toBeChecked', () => {
     expect(error.message).toContain(`Can\'t assert indeterminate and checked at the same time`);
   });
 
-  test('fail', async ({ page }) => {
+  test('EX-006 fail', async ({ page }) => {
     await page.setContent('<input type=checkbox></input>');
     const locator = page.locator('input');
     const error = await expect(locator).toBeChecked({ timeout: 1000 }).catch(e => e);
@@ -64,19 +64,19 @@ Timeout:  1000ms`);
     expect(stripAnsi(error.message)).toContain(`- Expect "toBeChecked" locator('input') with timeout 1000ms`);
   });
 
-  test('with not', async ({ page }) => {
+  test('EX-007 with not', async ({ page }) => {
     await page.setContent('<input type=checkbox></input>');
     const locator = page.locator('input');
     await expect(locator).not.toBeChecked();
   });
 
-  test('with not and checked:false', async ({ page }) => {
+  test('EX-008 with not and checked:false', async ({ page }) => {
     await page.setContent('<input type=checkbox></input>');
     const locator = page.locator('input');
     await expect(locator).toBeChecked({ checked: false });
   });
 
-  test('fail with not', async ({ page }) => {
+  test('EX-009 fail with not', async ({ page }) => {
     await page.setContent('<input type=checkbox checked></input>');
     const locator = page.locator('input');
     const error = await expect(locator).not.toBeChecked({ timeout: 1000 }).catch(e => e);
@@ -90,7 +90,7 @@ Timeout:  1000ms`);
     expect(stripAnsi(error.message)).toContain(`locator resolved to <input checked type="checkbox"/>`);
   });
 
-  test('fail with checked:false', async ({ page }) => {
+  test('EX-010 fail with checked:false', async ({ page }) => {
     await page.setContent('<input type=checkbox checked></input>');
     const locator = page.locator('input');
     const error = await expect(locator).toBeChecked({ checked: false, timeout: 1000 }).catch(e => e);
@@ -104,7 +104,7 @@ Timeout:  1000ms`);
     expect(stripAnsi(error.message)).toContain(`locator resolved to <input checked type="checkbox"/>`);
   });
 
-  test('fail with indeterminate: true', async ({ page }) => {
+  test('EX-011 fail with indeterminate: true', async ({ page }) => {
     await page.setContent('<input type=checkbox></input>');
     const locator = page.locator('input');
     const error = await expect(locator).toBeChecked({ indeterminate: true, timeout: 1000 }).catch(e => e);
@@ -117,7 +117,7 @@ Timeout:  1000ms`);
     expect(stripAnsi(error.message)).toContain(`- Expect "toBeChecked" locator('input') with timeout 1000ms`);
   });
 
-  test('fail missing', async ({ page }) => {
+  test('EX-012 fail missing', async ({ page }) => {
     await page.setContent('<div>no inputs here</div>');
     const locator2 = page.locator('input2');
     const error = await expect(locator2).not.toBeChecked({ timeout: 1000 }).catch(e => e);
@@ -134,7 +134,7 @@ Call log:
 `);
   });
 
-  test('with role', async ({ page }) => {
+  test('EX-013 with role', async ({ page }) => {
     for (const role of ['checkbox', 'menuitemcheckbox', 'option', 'radio', 'switch', 'menuitemradio', 'treeitem']) {
       await test.step(`role=${role}`, async () => {
         await page.setContent(`<div role=${role} aria-checked=true>I am checked</div>`);
@@ -144,7 +144,7 @@ Call log:
     }
   });
 
-  test('friendly log', async ({ page }) => {
+  test('EX-014 friendly log', async ({ page }) => {
     await page.setContent('<input type=checkbox></input>');
     const message1 = await expect(page.locator('input')).toBeChecked({ timeout: 1000 }).catch(e => e.message);
     expect(message1).toContain('unexpected value "unchecked"');
@@ -154,49 +154,49 @@ Call log:
     expect(message2).toContain('unexpected value "checked"');
   });
 
-  test('with impossible timeout', async ({ page }) => {
+  test('EX-015 with impossible timeout', async ({ page }) => {
     await page.setContent('<input type=checkbox checked></input>');
     await expect(page.locator('input')).toBeChecked({ timeout: 1 });
   });
 
-  test('with impossible timeout .not', async ({ page }) => {
+  test('EX-016 with impossible timeout .not', async ({ page }) => {
     await page.setContent('<input type=checkbox></input>');
     await expect(page.locator('input')).not.toBeChecked({ timeout: 1 });
   });
 });
 
 test.describe('toBeEditable', () => {
-  test('default', async ({ page }) => {
+  test('EX-017 default', async ({ page }) => {
     await page.setContent('<input></input>');
     const locator = page.locator('input');
     await expect(locator).toBeEditable();
   });
 
-  test('with not', async ({ page }) => {
+  test('EX-018 with not', async ({ page }) => {
     await page.setContent('<input readonly></input>');
     const locator = page.locator('input');
     await expect(locator).not.toBeEditable();
   });
 
-  test('with editable:true', async ({ page }) => {
+  test('EX-019 with editable:true', async ({ page }) => {
     await page.setContent('<input></input>');
     const locator = page.locator('input');
     await expect(locator).toBeEditable({ editable: true });
   });
 
-  test('with editable:false', async ({ page }) => {
+  test('EX-020 with editable:false', async ({ page }) => {
     await page.setContent('<input readonly></input>');
     const locator = page.locator('input');
     await expect(locator).toBeEditable({ editable: false });
   });
 
-  test('with not and editable:false', async ({ page }) => {
+  test('EX-021 with not and editable:false', async ({ page }) => {
     await page.setContent('<input></input>');
     const locator = page.locator('input');
     await expect(locator).not.toBeEditable({ editable: false });
   });
 
-  test('throws', async ({ page }) => {
+  test('EX-022 throws', async ({ page }) => {
     await page.setContent('<button>');
     const locator = page.locator('button');
     const error = await expect(locator).toBeEditable().catch(e => e);
@@ -205,32 +205,32 @@ test.describe('toBeEditable', () => {
 });
 
 test.describe('toBeEnabled', () => {
-  test('default', async ({ page }) => {
+  test('EX-023 default', async ({ page }) => {
     await page.setContent('<button>Text</button>');
     const locator = page.locator('button');
     await expect(locator).toBeEnabled();
   });
 
-  test('with enabled:true', async ({ page }) => {
+  test('EX-024 with enabled:true', async ({ page }) => {
     await page.setContent('<button>Text</button>');
     const locator = page.locator('button');
     await expect(locator).toBeEnabled({ enabled: true });
   });
 
-  test('with enabled:false', async ({ page }) => {
+  test('EX-025 with enabled:false', async ({ page }) => {
     await page.setContent('<button disabled>Text</button>');
     const locator = page.locator('button');
     await expect(locator).toBeEnabled({ enabled: false });
   });
 
-  test('failed', async ({ page }) => {
+  test('EX-026 failed', async ({ page }) => {
     await page.setContent('<button disabled>Text</button>');
     const locator = page.locator('button');
     const error = await expect(locator).toBeEnabled({ timeout: 1000 }).catch(e => e);
     expect(error.message).toContain(`locator resolved to <button disabled>Text</button>`);
   });
 
-  test('eventually', async ({ page }) => {
+  test('EX-027 eventually', async ({ page }) => {
     await page.setContent('<button disabled>Text</button>');
     const locator = page.locator('button');
     setTimeout(() => {
@@ -239,7 +239,7 @@ test.describe('toBeEnabled', () => {
     await expect(locator).toBeEnabled();
   });
 
-  test('eventually with not', async ({ page }) => {
+  test('EX-028 eventually with not', async ({ page }) => {
     await page.setContent('<button>Text</button>');
     const locator = page.locator('button');
     setTimeout(() => {
@@ -248,93 +248,93 @@ test.describe('toBeEnabled', () => {
     await expect(locator).not.toBeEnabled();
   });
 
-  test('with not and enabled:false', async ({ page }) => {
+  test('EX-029 with not and enabled:false', async ({ page }) => {
     await page.setContent('<button>Text</button>');
     const locator = page.locator('button');
     await expect(locator).not.toBeEnabled({ enabled: false });
   });
 
-  test('toBeDisabled', async ({ page }) => {
+  test('EX-030 toBeDisabled', async ({ page }) => {
     await page.setContent('<button disabled>Text</button>');
     const locator = page.locator('button');
     await expect(locator).toBeDisabled();
   });
 });
 
-test('toBeEmpty input', async ({ page }) => {
+test('EX-031 toBeEmpty input', async ({ page }) => {
   await page.setContent('<input></input>');
   const locator = page.locator('input');
   await expect(locator).toBeEmpty();
 });
 
-test('not.toBeEmpty', async ({ page }) => {
+test('EX-032 not.toBeEmpty', async ({ page }) => {
   await page.setContent('<input value=text></input>');
   const locator = page.locator('input');
   await expect(locator).not.toBeEmpty();
 });
 
-test('toBeEmpty div', async ({ page }) => {
+test('EX-033 toBeEmpty div', async ({ page }) => {
   await page.setContent('<div style="width: 50; height: 50px"></div>');
   const locator = page.locator('div');
   await expect(locator).toBeEmpty();
 });
 
-test('toBeDisabled with value', async ({ page }) => {
+test('EX-034 toBeDisabled with value', async ({ page }) => {
   await page.setContent('<button disabled="yes">Text</button>');
   const locator = page.locator('button');
   await expect(locator).toBeDisabled();
 });
 
-test('toBeChecked with value', async ({ page }) => {
+test('EX-035 toBeChecked with value', async ({ page }) => {
   await page.setContent('<input type=checkbox checked="yes"></input>');
   const locator = page.locator('input');
   await expect(locator).toBeChecked();
 });
 
-test('toBeHidden with value', async ({ page }) => {
+test('EX-036 toBeHidden with value', async ({ page }) => {
   await page.setContent('<input type=checkbox hidden="of course"></input>');
   const locator = page.locator('input');
   await expect(locator).toBeHidden();
 });
 
-test('not.toBeDisabled div', async ({ page }) => {
+test('EX-037 not.toBeDisabled div', async ({ page }) => {
   await page.setContent('<div disabled="yes"></div>');
   const locator = page.locator('div');
   await expect(locator).not.toBeDisabled();
 });
 
 test.describe('toBeVisible', () => {
-  test('default', async ({ page }) => {
+  test('EX-038 default', async ({ page }) => {
     await page.setContent('<input></input>');
     const locator = page.locator('input');
     await expect(locator).toBeVisible();
   });
 
-  test('with not', async ({ page }) => {
+  test('EX-039 with not', async ({ page }) => {
     await page.setContent('<button style="display: none">hello</button>');
     const locator = page.locator('button');
     await expect(locator).not.toBeVisible();
   });
 
-  test('with visible:true', async ({ page }) => {
+  test('EX-040 with visible:true', async ({ page }) => {
     await page.setContent('<button>hello</button>');
     const locator = page.locator('button');
     await expect(locator).toBeVisible({ visible: true });
   });
 
-  test('with visible:false', async ({ page }) => {
+  test('EX-041 with visible:false', async ({ page }) => {
     await page.setContent('<button hidden>hello</button>');
     const locator = page.locator('button');
     await expect(locator).toBeVisible({ visible: false });
   });
 
-  test('with not and visible:false', async ({ page }) => {
+  test('EX-042 with not and visible:false', async ({ page }) => {
     await page.setContent('<button>hello</button>');
     const locator = page.locator('button');
     await expect(locator).not.toBeVisible({ visible: false });
   });
 
-  test('eventually', async ({ page }) => {
+  test('EX-043 eventually', async ({ page }) => {
     await page.setContent('<div></div>');
     const locator = page.locator('span');
     setTimeout(() => {
@@ -343,7 +343,7 @@ test.describe('toBeVisible', () => {
     await expect(locator).toBeVisible();
   });
 
-  test('eventually with not', async ({ page }) => {
+  test('EX-044 eventually with not', async ({ page }) => {
     await page.setContent('<div><span>Hello</span></div>');
     const locator = page.locator('span');
     setTimeout(() => {
@@ -352,31 +352,31 @@ test.describe('toBeVisible', () => {
     await expect(locator).not.toBeVisible();
   });
 
-  test('fail', async ({ page }) => {
+  test('EX-045 fail', async ({ page }) => {
     await page.setContent('<button style="display: none"></button>');
     const locator = page.locator('button');
     const error = await expect(locator).toBeVisible({ timeout: 1000 }).catch(e => e);
     expect(error.message).toContain(`locator resolved to <button></button>`);
   });
 
-  test('fail with not', async ({ page }) => {
+  test('EX-046 fail with not', async ({ page }) => {
     await page.setContent('<input></input>');
     const locator = page.locator('input');
     const error = await expect(locator).not.toBeVisible({ timeout: 1000 }).catch(e => e);
     expect(error.message).toContain(`locator resolved to <input/>`);
   });
 
-  test('with impossible timeout', async ({ page }) => {
+  test('EX-047 with impossible timeout', async ({ page }) => {
     await page.setContent('<div id=node>Text content</div>');
     await expect(page.locator('#node')).toBeVisible({ timeout: 1 });
   });
 
-  test('with impossible timeout .not', async ({ page }) => {
+  test('EX-048 with impossible timeout .not', async ({ page }) => {
     await page.setContent('<div id=node>Text content</div>');
     await expect(page.locator('no-such-thing')).not.toBeVisible({ timeout: 1 });
   });
 
-  test('with frameLocator', async ({ page }) => {
+  test('EX-049 with frameLocator', async ({ page }) => {
     await page.setContent('<div></div>');
     const locator = page.frameLocator('iframe').locator('input');
     let done = false;
@@ -388,7 +388,7 @@ test.describe('toBeVisible', () => {
     expect(done).toBe(true);
   });
 
-  test('with frameLocator 2', async ({ page }) => {
+  test('EX-050 with frameLocator 2', async ({ page }) => {
     await page.setContent('<iframe></iframe>');
     const locator = page.frameLocator('iframe').locator('input');
     let done = false;
@@ -400,7 +400,7 @@ test.describe('toBeVisible', () => {
     expect(done).toBe(true);
   });
 
-  test('over navigation', async ({ page, server }) => {
+  test('EX-051 over navigation', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     let done = false;
     const promise = expect(page.locator('input')).toBeVisible().then(() => done = true);
@@ -413,25 +413,25 @@ test.describe('toBeVisible', () => {
 });
 
 test.describe('toBeHidden', () => {
-  test('default', async ({ page }) => {
+  test('EX-052 default', async ({ page }) => {
     await page.setContent('<button style="display: none"></button>');
     const locator = page.locator('button');
     await expect(locator).toBeHidden();
   });
 
-  test('when nothing matches', async ({ page }) => {
+  test('EX-053 when nothing matches', async ({ page }) => {
     await page.setContent('<div></div>');
     const locator = page.locator('button');
     await expect(locator).toBeHidden();
   });
 
-  test('with not', async ({ page }) => {
+  test('EX-054 with not', async ({ page }) => {
     await page.setContent('<input></input>');
     const locator = page.locator('input');
     await expect(locator).not.toBeHidden();
   });
 
-  test('eventually with not', async ({ page }) => {
+  test('EX-055 eventually with not', async ({ page }) => {
     await page.setContent('<div></div>');
     const locator = page.locator('span');
     setTimeout(() => {
@@ -440,7 +440,7 @@ test.describe('toBeHidden', () => {
     await expect(locator).not.toBeHidden();
   });
 
-  test('eventually', async ({ page }) => {
+  test('EX-056 eventually', async ({ page }) => {
     await page.setContent('<div><span>Hello</span></div>');
     const locator = page.locator('span');
     setTimeout(() => {
@@ -449,21 +449,21 @@ test.describe('toBeHidden', () => {
     await expect(locator).toBeHidden();
   });
 
-  test('fail', async ({ page }) => {
+  test('EX-057 fail', async ({ page }) => {
     await page.setContent('<input></input>');
     const locator = page.locator('input');
     const error = await expect(locator).toBeHidden({ timeout: 3000 }).catch(e => e);
     expect(error.message).toContain(`locator resolved to <input/>`);
   });
 
-  test('fail with not', async ({ page }) => {
+  test('EX-058 fail with not', async ({ page }) => {
     await page.setContent('<button style="display: none"></button>');
     const locator = page.locator('button');
     const error = await expect(locator).not.toBeHidden({ timeout: 3000 }).catch(e => e);
     expect(error.message).toContain(`locator resolved to <button></button>`);
   });
 
-  test('fail with not when nothing matching', async ({ page }) => {
+  test('EX-059 fail with not when nothing matching', async ({ page }) => {
     await page.setContent('<div></div>');
     const locator = page.locator('button');
     const error = await expect(locator).not.toBeHidden({ timeout: 1000 }).catch(e => e);
@@ -479,25 +479,25 @@ Call log:
 `);
   });
 
-  test('with impossible timeout .not', async ({ page }) => {
+  test('EX-060 with impossible timeout .not', async ({ page }) => {
     await page.setContent('<div id=node>Text content</div>');
     await expect(page.locator('#node')).not.toBeHidden({ timeout: 1 });
   });
 
-  test('with impossible timeout', async ({ page }) => {
+  test('EX-061 with impossible timeout', async ({ page }) => {
     await page.setContent('<div id=node>Text content</div>');
     await expect(page.locator('no-such-thing')).toBeHidden({ timeout: 1 });
   });
 });
 
-test('toBeFocused', async ({ page }) => {
+test('EX-062 toBeFocused', async ({ page }) => {
   await page.setContent('<input></input>');
   const locator = page.locator('input');
   await locator.focus();
   await expect(locator).toBeFocused();
 });
 
-test('toBeFocused with shadow elements', async ({ page }) => {
+test('EX-063 toBeFocused with shadow elements', async ({ page }) => {
   await page.setContent(`
     <div id="app">
     </div>
@@ -516,12 +516,12 @@ test('toBeFocused with shadow elements', async ({ page }) => {
   await expect(page.locator('input')).toBeFocused();
 });
 
-test('should print unknown engine error', async ({ page }) => {
+test('EX-064 should print unknown engine error', async ({ page }) => {
   const error = await expect(page.locator('row="row"')).toBeVisible().catch(e => e);
   expect(error.message).toContain(`Unknown engine "row" while parsing selector row="row"`);
 });
 
-test('should print selector syntax error', async ({ page }) => {
+test('EX-065 should print selector syntax error', async ({ page }) => {
   const error = await expect(page.locator('row]')).toBeVisible().catch(e => e);
   expect(error.message).toContain(`Unexpected token "]" while parsing css selector "row]"`);
 });
@@ -530,23 +530,23 @@ test.describe(() => {
   test.skip(({ isAndroid }) => isAndroid, 'server.EMPTY_PAGE is the emulator address 10.0.2.2');
   test.skip(({ isElectron, electronMajorVersion }) => isElectron && electronMajorVersion < 30, 'Protocol error (Storage.getCookies): Browser context management is not supported.');
 
-  test('toBeOK', async ({ page, server }) => {
+  test('EX-066 toBeOK', async ({ page, server }) => {
     const res = await page.request.get(server.EMPTY_PAGE);
     await expect(res).toBeOK();
   });
 
-  test('not.toBeOK', async ({ page, server }) => {
+  test('EX-067 not.toBeOK', async ({ page, server }) => {
     const res = await page.request.get(`${server.PREFIX}/unknown`);
     await expect(res).not.toBeOK();
   });
 
 
-  test('toBeOK fail with invalid argument', async ({ page }) => {
+  test('EX-068 toBeOK fail with invalid argument', async ({ page }) => {
     const error = await (expect(page) as any).toBeOK().catch(e => e);
     expect(error.message).toContain('toBeOK can be only used with APIResponse object');
   });
 
-  test('toBeOK fail with promise', async ({ page, server }) => {
+  test('EX-069 toBeOK fail with promise', async ({ page, server }) => {
     const res = page.request.get(server.EMPTY_PAGE);
     const error = await (expect(res) as any).toBeOK().catch(e => e);
     expect(error.message).toContain('toBeOK can be only used with APIResponse object');
@@ -571,7 +571,7 @@ test.describe(() => {
       });
     });
 
-    test('text content type', async ({ page, server }) => {
+    test('EX-070 text content type', async ({ page, server }) => {
       const res = await page.request.get(`${server.PREFIX}/text-content-type`);
       const error = await expect(res).toBeOK().catch(e => e);
       expect(stripAnsi(error.message)).toContain(`expect(response).toBeOK() failed`);
@@ -580,7 +580,7 @@ test.describe(() => {
       expect(stripAnsi(error.message)).toContain(`Response text:\nText error`);
     });
 
-    test('no content type', async ({ page, server }) => {
+    test('EX-071 no content type', async ({ page, server }) => {
       const res = await page.request.get(`${server.PREFIX}/no-content-type`);
       const error = await expect(res).toBeOK().catch(e => e);
       expect(error.message).toContain(`→ GET ${server.PREFIX}/no-content-type`);
@@ -588,7 +588,7 @@ test.describe(() => {
       expect(error.message).not.toContain(`No content type error`);
     });
 
-    test('image content type', async ({ page, server }) => {
+    test('EX-072 image content type', async ({ page, server }) => {
       const res = await page.request.get(`${server.PREFIX}/image-content-type`);
       const error = await expect(res).toBeOK().catch(e => e);
       expect(error.message).toContain(`→ GET ${server.PREFIX}/image-content-type`);
@@ -599,43 +599,43 @@ test.describe(() => {
 });
 
 test.describe('toBeAttached', () => {
-  test('default', async ({ page }) => {
+  test('EX-073 default', async ({ page }) => {
     await page.setContent('<input></input>');
     const locator = page.locator('input');
     await expect(locator).toBeAttached();
   });
 
-  test('with hidden element', async ({ page }) => {
+  test('EX-074 with hidden element', async ({ page }) => {
     await page.setContent('<button style="display:none">hello</button>');
     const locator = page.locator('button');
     await expect(locator).toBeAttached();
   });
 
-  test('with not', async ({ page }) => {
+  test('EX-075 with not', async ({ page }) => {
     await page.setContent('<button>hello</button>');
     const locator = page.locator('input');
     await expect(locator).not.toBeAttached();
   });
 
-  test('with attached:true', async ({ page }) => {
+  test('EX-076 with attached:true', async ({ page }) => {
     await page.setContent('<button>hello</button>');
     const locator = page.locator('button');
     await expect(locator).toBeAttached({ attached: true });
   });
 
-  test('with attached:false', async ({ page }) => {
+  test('EX-077 with attached:false', async ({ page }) => {
     await page.setContent('<button>hello</button>');
     const locator = page.locator('input');
     await expect(locator).toBeAttached({ attached: false });
   });
 
-  test('with not and attached:false', async ({ page }) => {
+  test('EX-078 with not and attached:false', async ({ page }) => {
     await page.setContent('<button>hello</button>');
     const locator = page.locator('button');
     await expect(locator).not.toBeAttached({ attached: false });
   });
 
-  test('eventually', async ({ page }) => {
+  test('EX-079 eventually', async ({ page }) => {
     await page.setContent('<div></div>');
     const locator = page.locator('span');
     setTimeout(() => {
@@ -644,7 +644,7 @@ test.describe('toBeAttached', () => {
     await expect(locator).toBeAttached();
   });
 
-  test('eventually with not', async ({ page }) => {
+  test('EX-080 eventually with not', async ({ page }) => {
     await page.setContent('<div><span>Hello</span></div>');
     const locator = page.locator('span');
     setTimeout(() => {
@@ -653,31 +653,31 @@ test.describe('toBeAttached', () => {
     await expect(locator).not.toBeAttached();
   });
 
-  test('fail', async ({ page }) => {
+  test('EX-081 fail', async ({ page }) => {
     await page.setContent('<button>Hello</button>');
     const locator = page.locator('input');
     const error = await expect(locator).toBeAttached({ timeout: 1000 }).catch(e => e);
     expect(error.message).not.toContain(`locator resolved to`);
   });
 
-  test('fail with not', async ({ page }) => {
+  test('EX-082 fail with not', async ({ page }) => {
     await page.setContent('<input></input>');
     const locator = page.locator('input');
     const error = await expect(locator).not.toBeAttached({ timeout: 3000 }).catch(e => e);
     expect(error.message).toContain(`locator resolved to <input/>`);
   });
 
-  test('with impossible timeout', async ({ page }) => {
+  test('EX-083 with impossible timeout', async ({ page }) => {
     await page.setContent('<div id=node>Text content</div>');
     await expect(page.locator('#node')).toBeAttached({ timeout: 1 });
   });
 
-  test('with impossible timeout .not', async ({ page }) => {
+  test('EX-084 with impossible timeout .not', async ({ page }) => {
     await page.setContent('<div id=node>Text content</div>');
     await expect(page.locator('no-such-thing')).not.toBeAttached({ timeout: 1 });
   });
 
-  test('with frameLocator', async ({ page }) => {
+  test('EX-085 with frameLocator', async ({ page }) => {
     await page.setContent('<div></div>');
     const locator = page.frameLocator('iframe').locator('input');
     let done = false;
@@ -689,7 +689,7 @@ test.describe('toBeAttached', () => {
     expect(done).toBe(true);
   });
 
-  test('over navigation', async ({ page, server }) => {
+  test('EX-086 over navigation', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     let done = false;
     const promise = expect(page.locator('input')).toBeAttached().then(() => done = true);

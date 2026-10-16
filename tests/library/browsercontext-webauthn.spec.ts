@@ -30,7 +30,7 @@ async function assertAndGetSignCount(page: Page, rpId: string) {
   }, { rpId });
 }
 
-it('should not intercept navigator.credentials without install()', async ({ contextFactory, server }) => {
+it('AU-017 should not intercept navigator.credentials without install()', async ({ contextFactory, server }) => {
   const context = await contextFactory();
   // Seed a credential, but do not install the interceptor.
   await context.credentials.create(server.HOSTNAME);
@@ -41,7 +41,7 @@ it('should not intercept navigator.credentials without install()', async ({ cont
   expect(intercepted).toBe(false);
 });
 
-it('should seed a known credential and authenticate', async ({ contextFactory, server }) => {
+it('AU-018 should seed a known credential and authenticate', async ({ contextFactory, server }) => {
   // This is the easiest way to create credentials. In practice, this
   // probably comes from environment.
   const source = await contextFactory();
@@ -125,7 +125,7 @@ it('should seed a known credential and authenticate', async ({ contextFactory, s
   expect(error).toBe('NotAllowedError');
 });
 
-it('should capture a page-created credential and reuse it in another context', async ({ contextFactory, server }) => {
+it('AU-019 should capture a page-created credential and reuse it in another context', async ({ contextFactory, server }) => {
   // Setup context: the app registers a passkey via navigator.credentials.create().
   const setupContext = await contextFactory();
   await setupContext.credentials.install();
@@ -170,7 +170,7 @@ it('should capture a page-created credential and reuse it in another context', a
   expect(gotId).toBe(createdId);
 });
 
-it('should reuse a page-created credential via the storageState option', async ({ contextFactory, server }) => {
+it('AU-020 should reuse a page-created credential via the storageState option', async ({ contextFactory, server }) => {
   // Setup context: the app registers a passkey via navigator.credentials.create().
   const setupContext = await contextFactory();
   await setupContext.credentials.install();
@@ -212,7 +212,7 @@ it('should reuse a page-created credential via the storageState option', async (
   expect(gotId).toBe(createdId);
 });
 
-it('should seed and report signCount', async ({ contextFactory, server }) => {
+it('AU-021 should seed and report signCount', async ({ contextFactory, server }) => {
   const context = await contextFactory();
   const fresh = await context.credentials.create('fresh.example.com');
   expect(fresh.signCount).toBe(0);
@@ -239,14 +239,14 @@ it('should seed and report signCount', async ({ contextFactory, server }) => {
   expect(await assertAndGetSignCount(page2, server.HOSTNAME)).toBe(44);
 });
 
-it('should reject invalid signCount', async ({ contextFactory }) => {
+it('AU-022 should reject invalid signCount', async ({ contextFactory }) => {
   const context = await contextFactory();
   const error = await context.credentials.create('example.com', { signCount: -1 }).catch(e => e);
   expect(error.message).toContain('signCount must be between 0 and 4294967295, got -1');
   expect(await context.credentials.get()).toEqual([]);
 });
 
-it('should preserve signCount via the storageState option', async ({ contextFactory, server }) => {
+it('AU-023 should preserve signCount via the storageState option', async ({ contextFactory, server }) => {
   const setupContext = await contextFactory();
   await setupContext.credentials.create(server.HOSTNAME);
   await setupContext.credentials.install();
@@ -274,7 +274,7 @@ it('should preserve signCount via the storageState option', async ({ contextFact
   expect(await assertAndGetSignCount(legacyPage, server.HOSTNAME)).toBe(1);
 });
 
-it('should serialize credentials with toJSON', {
+it('AU-024 should serialize credentials with toJSON', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43093' },
 }, async ({ contextFactory, server }) => {
   const context = await contextFactory();

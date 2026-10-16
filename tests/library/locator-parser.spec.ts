@@ -244,7 +244,7 @@ it.beforeEach(() => {
   client.setTestIdAttribute('data-testid');
 });
 
-it('should parse getByText, getByLabel, getByPlaceholder, getByAltText and getByTitle', () => {
+it('PS-001 should parse getByText, getByLabel, getByPlaceholder, getByAltText and getByTitle', () => {
   for (const method of kTextMethods) {
     for (const text of kTexts) {
       expect.soft($[method](text)).toParse(kAllStyles);
@@ -261,7 +261,7 @@ it('should parse getByText, getByLabel, getByPlaceholder, getByAltText and getBy
   }
 });
 
-it('should parse getByTestId', () => {
+it('PS-002 should parse getByTestId', () => {
   for (const text of kTexts)
     expect.soft($.getByTestId(text)).toParse(kAllStyles);
   for (const regex of kRegexes)
@@ -270,7 +270,7 @@ it('should parse getByTestId', () => {
   expect.soft($.frameLocator('iframe').getByTestId('submit')).toParse();
 });
 
-it('should parse getByTestId with a custom test id attribute', () => {
+it('PS-003 should parse getByTestId with a custom test id attribute', () => {
   for (const testIdAttributeName of ['data-pw', 'data-test-id', 'data-pw,data-qa']) {
     client.setTestIdAttribute(testIdAttributeName);
     expect.soft($.getByTestId('submit')).toParse(kDefaultStyles, testIdAttributeName);
@@ -280,7 +280,7 @@ it('should parse getByTestId with a custom test id attribute', () => {
   }
 });
 
-it('should parse getByRef', {
+it('PS-004 should parse getByRef', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43159' },
 }, () => {
   expect.soft($.getByRef('e5')).toParse();
@@ -292,14 +292,14 @@ it('should parse getByRef', {
   expect.soft($.locator('div').and($.getByRef('e3'))).toParse();
 });
 
-it('should parse getByRole with every role', () => {
+it('PS-005 should parse getByRole with every role', () => {
   for (const role of kRoles) {
     expect.soft($.getByRole(role)).toParse();
     expect.soft($.getByRole(role, { name: 'Hello' })).toParse();
   }
 });
 
-it('should parse getByRole options', () => {
+it('PS-006 should parse getByRole options', () => {
   expect.soft($.getByRole('heading', {})).toParse();
   expect.soft($.getByRole('checkbox', { checked: true })).toParse();
   expect.soft($.getByRole('checkbox', { checked: false })).toParse();
@@ -323,7 +323,7 @@ it('should parse getByRole options', () => {
   expect.soft($.getByRole('checkbox', { checked: true, disabled: false, selected: true, expanded: false, includeHidden: true, level: 2, name: 'Agree', description: 'Terms', pressed: false, exact: true })).toParse();
 });
 
-it('should parse getByRole name and description', () => {
+it('PS-007 should parse getByRole name and description', () => {
   for (const text of kTexts) {
     expect.soft($.getByRole('button', { name: text })).toParse(kAllStyles);
     expect.soft($.getByRole('button', { name: text, exact: true })).toParse(kAllStyles);
@@ -338,7 +338,7 @@ it('should parse getByRole name and description', () => {
   }
 });
 
-it('should parse getByRole options in any order', () => {
+it('PS-008 should parse getByRole options in any order', () => {
   expect.soft($.getByRole('button', { exact: true, name: 'Submit' })).toParse();
   expect.soft($.getByRole('alert', { description: 'doc.pdf', name: 'Upload' })).toParse();
   expect.soft($.getByRole('heading', { name: 'Title', level: 2 })).toParse();
@@ -349,7 +349,7 @@ it('should parse getByRole options in any order', () => {
   expect.soft($.getByRole('checkbox', { pressed: false, description: 'Terms', name: 'Agree', level: 2, includeHidden: true, expanded: false, selected: true, disabled: false, checked: true, exact: true })).toParse();
 });
 
-it('should parse locator with a selector', () => {
+it('PS-009 should parse locator with a selector', () => {
   for (const selector of kSelectors) {
     expect.soft($.locator(selector)).toParse(kAllStyles);
     expect.soft($.locator('section').locator(selector)).toParse(kAllStyles);
@@ -357,7 +357,7 @@ it('should parse locator with a selector', () => {
   }
 });
 
-it('should parse locator and filter options', () => {
+it('PS-010 should parse locator and filter options', () => {
   expect.soft($.locator('div').filter()).toParse();
   expect.soft($.locator('div').filter({})).toParse();
   expect.soft($.locator('div', {})).toParse();
@@ -388,7 +388,7 @@ it('should parse locator and filter options', () => {
   }
 });
 
-it('should parse first, last, nth and visible', () => {
+it('PS-011 should parse first, last, nth and visible', () => {
   expect.soft($.locator('li').first()).toParse();
   expect.soft($.locator('li').last()).toParse();
   for (const index of [0, 1, 2, 10, -1, -2])
@@ -402,7 +402,7 @@ it('should parse first, last, nth and visible', () => {
   expect.soft($.getByText('Item').visible().nth(-1)).toParse();
 });
 
-it('should parse and, or, locator and within with a locator argument', {
+it('PS-012 should parse and, or, locator and within with a locator argument', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43159' },
 }, () => {
   const inners = [
@@ -431,7 +431,7 @@ it('should parse and, or, locator and within with a locator argument', {
   expect.soft($.locator('a').and($.locator('b').and($.locator('c')))).toParse();
 });
 
-it('should parse chained refinements', () => {
+it('PS-013 should parse chained refinements', () => {
   const atoms: Locator[] = [
     $.locator('div'),
     $.getByRole('button', { name: 'Submit' }),
@@ -471,7 +471,7 @@ it('should parse chained refinements', () => {
   }
 });
 
-it('should parse frame locators', () => {
+it('PS-014 should parse frame locators', () => {
   const frames: FrameLocator[] = [
     $.frameLocator('iframe'),
     $.frameLocator('css=iframe'),
@@ -513,7 +513,7 @@ it('should parse frame locators', () => {
   expect.soft($.frameLocator().frameLocator('iframe').locator('span')).toParse();
 });
 
-it('should parse FrameLocator.locator with a locator argument', () => {
+it('PS-015 should parse FrameLocator.locator with a locator argument', () => {
   expect.soft($.frameLocator('iframe').locator($.getByRole('button'))).toParse();
   expect.soft($.frameLocator('iframe').locator($.locator('span'))).toParse();
   expect.soft($.frameLocator('iframe').locator($.getByText('Say "hi"', { exact: true }))).toParse();
@@ -526,7 +526,7 @@ it('should parse FrameLocator.locator with a locator argument', () => {
   expect.soft($.frameLocator().locator($.getByRole('button'))).toParse();
 });
 
-it('should parse owner', {
+it('PS-016 should parse owner', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43183' },
 }, () => {
   expect.soft($.frameLocator('iframe').owner()).toParse();
@@ -540,7 +540,7 @@ it('should parse owner', {
   expect.soft($.locator('div').filter({ has: $.frameLocator('iframe').owner() })).toParse();
 });
 
-it('should parse describe', {
+it('PS-017 should parse describe', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43181' },
 }, () => {
   expect.soft($.getByTestId('btn-sub').describe('Subscribe button')).toParse();
@@ -553,7 +553,7 @@ it('should parse describe', {
   expect.soft($.locator('a').describe('A').or($.locator('b').describe('B'))).toParse();
 });
 
-it('should parse deeply nested locators', () => {
+it('PS-018 should parse deeply nested locators', () => {
   expect.soft($.locator('section').filter({ has: $.locator('div').filter({ has: $.getByText('Say "hi"').and($.getByRole('link', { name: /a"b/ })) }) })).toParse(kAllStyles);
   expect.soft($.getByRole('row').filter({ hasNot: $.getByRole('cell').or($.getByText(`It's`)) }).within($.getByRole('table').filter({ has: $.getByText('line1\nline2') }))).toParse(kAllStyles);
   expect.soft($.locator('a').and($.locator('b').or($.locator('c').and($.locator('d').or($.getByText('C:\\path')))))).toParse(kAllStyles);
@@ -561,7 +561,7 @@ it('should parse deeply nested locators', () => {
   expect.soft($.locator('div', { has: $.locator('p', { has: $.locator('span', { hasText: '"quoted"' }) }) })).toParse(kAllStyles);
 });
 
-it('should parse generated locators', {
+it('PS-019 should parse generated locators', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42891' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43158' },
@@ -686,7 +686,7 @@ it('should parse generated locators', {
   }
 });
 
-it('should parse javascript string escapes', () => {
+it('PS-020 should parse javascript string escapes', () => {
   expect.soft(javascript(String.raw`getByText('It\'s')`)).toBe(selectorOf($.getByText(`It's`)));
   expect.soft(javascript(String.raw`getByText("Say \"hi\"")`)).toBe(selectorOf($.getByText('Say "hi"')));
   expect.soft(javascript('getByText(`back\\`tick`)')).toBe(selectorOf($.getByText('back`tick')));
@@ -699,7 +699,7 @@ it('should parse javascript string escapes', () => {
   expect.soft(javascript(String.raw`getByText('\/\d')`)).toBe(selectorOf($.getByText('/d')));
 });
 
-it('should parse python string escapes', () => {
+it('PS-021 should parse python string escapes', () => {
   expect.soft(python(String.raw`get_by_text('It\'s')`)).toBe(selectorOf($.getByText(`It's`)));
   expect.soft(python(String.raw`get_by_text("Say \"hi\"")`)).toBe(selectorOf($.getByText('Say "hi"')));
   expect.soft(python(String.raw`get_by_text("C:\\path")`)).toBe(selectorOf($.getByText('C:\\path')));
@@ -714,7 +714,7 @@ it('should parse python string escapes', () => {
   expect.soft(python(String.raw`get_by_text("\d")`)).toBe(selectorOf($.getByText('\\d')));
 });
 
-it('should parse java string escapes', () => {
+it('PS-022 should parse java string escapes', () => {
   expect.soft(java(String.raw`getByText("Say \"hi\"")`)).toBe(selectorOf($.getByText('Say "hi"')));
   expect.soft(java(String.raw`getByText("C:\\path")`)).toBe(selectorOf($.getByText('C:\\path')));
   expect.soft(java(String.raw`getByText("line1\nline2\ttab")`)).toBe(selectorOf($.getByText('line1\nline2\ttab')));
@@ -723,7 +723,7 @@ it('should parse java string escapes', () => {
   expect.soft(java(String.raw`getByText("\uD83D\uDE00")`)).toBe(selectorOf($.getByText('😀')));
 });
 
-it('should parse csharp string escapes', () => {
+it('PS-023 should parse csharp string escapes', () => {
   expect.soft(csharp(String.raw`GetByText("Say \"hi\"")`)).toBe(selectorOf($.getByText('Say "hi"')));
   expect.soft(csharp(String.raw`GetByText("C:\\path")`)).toBe(selectorOf($.getByText('C:\\path')));
   expect.soft(csharp(String.raw`GetByText("line1\nline2\ttab")`)).toBe(selectorOf($.getByText('line1\nline2\ttab')));
@@ -734,7 +734,7 @@ it('should parse csharp string escapes', () => {
   expect.soft(csharp(String.raw`GetByText(@"Say ""hi""")`)).toBe(selectorOf($.getByText('Say "hi"')));
 });
 
-it('should parse javascript regular expressions', () => {
+it('PS-024 should parse javascript regular expressions', () => {
   expect.soft(javascript(String.raw`getByText(/hello/i)`)).toBe(selectorOf($.getByText(/hello/i)));
   expect.soft(javascript(String.raw`getByText(/a\/b/)`)).toBe(selectorOf($.getByText(/a\/b/)));
   expect.soft(javascript(String.raw`getByText(/[/]/)`)).toBe(selectorOf($.getByText(/[/]/)));
@@ -745,7 +745,7 @@ it('should parse javascript regular expressions', () => {
   expect.soft(javascript(String.raw`getByText(new RegExp("a\\.b"))`)).toBe(selectorOf($.getByText(/a\.b/)));
 });
 
-it('should parse python regular expressions', () => {
+it('PS-025 should parse python regular expressions', () => {
   expect.soft(python(String.raw`get_by_text(re.compile(r"hello", re.IGNORECASE))`)).toBe(selectorOf($.getByText(/hello/i)));
   expect.soft(python(String.raw`get_by_text(re.compile(r'hello', re.I))`)).toBe(selectorOf($.getByText(/hello/i)));
   expect.soft(python(String.raw`get_by_text(re.compile("hello", re.I | re.M | re.S))`)).toBe(selectorOf($.getByText(/hello/ims)));
@@ -763,14 +763,14 @@ it('should parse python regular expressions', () => {
   expect.soft($.locator('div').filter({ hasText: /hello/m })).toParse(flagAliases);
 });
 
-it('should parse java regular expressions', () => {
+it('PS-026 should parse java regular expressions', () => {
   expect.soft(java(String.raw`getByText(Pattern.compile("hello", Pattern.CASE_INSENSITIVE))`)).toBe(selectorOf($.getByText(/hello/i)));
   expect.soft(java(String.raw`getByText(Pattern.compile("\\d+"))`)).toBe(selectorOf($.getByText(/\d+/)));
   expect.soft(java(String.raw`getByText(Pattern.compile("a.b", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL))`)).toBe(selectorOf($.getByText(/a.b/ims)));
   expect.soft(java(String.raw`getByText(Pattern.compile("say \"hi\""))`)).toBe(selectorOf($.getByText(/say "hi"/)));
 });
 
-it('should parse csharp regular expressions', () => {
+it('PS-027 should parse csharp regular expressions', () => {
   expect.soft(csharp(String.raw`GetByText(new Regex("hello", RegexOptions.IgnoreCase))`)).toBe(selectorOf($.getByText(/hello/i)));
   expect.soft(csharp(String.raw`GetByText(new Regex("\\d+"))`)).toBe(selectorOf($.getByText(/\d+/)));
   expect.soft(csharp(String.raw`GetByText(new Regex(@"\d+"))`)).toBe(selectorOf($.getByText(/\d+/)));
@@ -784,7 +784,7 @@ it('should parse csharp regular expressions', () => {
   expect.soft($.locator('div').filter({ hasText: /hello/ })).toParse(verbatimStrings);
 });
 
-it('should parse csharp options with an explicit type', () => {
+it('PS-028 should parse csharp options with an explicit type', () => {
   const typedOptions: Styles = {
     csharp: [
       { name: 'typed options', quote: '"', optionsType: 'typed' },
@@ -800,7 +800,7 @@ it('should parse csharp options with an explicit type', () => {
   expect.soft($.frameLocator('iframe').getByTitle('Close', { exact: true })).toParse(typedOptions);
 });
 
-it('should parse trailing commas', () => {
+it('PS-029 should parse trailing commas', () => {
   const trailingCommas: Styles = {
     javascript: [{ name: 'trailing commas', quote: `'`, multiline: true, trailingCommas: true }],
     python: [{ name: 'trailing commas', quote: '"', rawRegex: true, multiline: true, trailingCommas: true }],
@@ -812,7 +812,7 @@ it('should parse trailing commas', () => {
   expect.soft($.frameLocator('iframe').getByLabel('Name', { exact: true })).toParse(trailingCommas);
 });
 
-it('should parse unusual whitespace', () => {
+it('PS-030 should parse unusual whitespace', () => {
   const goodbye = selectorOf($.locator('div').filter({ hasText: 'Goodbye world' }).locator('span'));
   expect.soft(javascript(`getByRole ( 'button' , { name : 'Submit' } ) . first ( )`)).toBe(selectorOf($.getByRole('button', { name: 'Submit' }).first()));
   expect.soft(javascript(`\n\tgetByRole('button')\n\t\t.first()\n`)).toBe(selectorOf($.getByRole('button').first()));
@@ -830,7 +830,7 @@ it('should parse unusual whitespace', () => {
   expect.soft(csharp(`Locator("div")  .  Filter (new ( ) {  HasText =    "Goodbye world" }).Locator(  "span"   )`)).toBe(goodbye);
 });
 
-it('should return selectors as is', () => {
+it('PS-031 should return selectors as is', () => {
   for (const selector of [
     'div',
     '#main',
@@ -848,7 +848,7 @@ it('should return selectors as is', () => {
   }
 });
 
-it('should reject malformed javascript locators', () => {
+it('PS-032 should reject malformed javascript locators', () => {
   expect.soft(javascript(`getByRole('button'`)).toMatch(/^Error/);
   expect.soft(javascript(`getByRole('button'))`)).toMatch(/^Error/);
   expect.soft(javascript(`getByRole('button', { name: 'Submit' )`)).toMatch(/^Error/);
@@ -883,7 +883,7 @@ it('should reject malformed javascript locators', () => {
   expect.soft(javascript(`GetByRole('button')`)).toMatch(/^Error/);
 });
 
-it('should reject malformed python locators', () => {
+it('PS-033 should reject malformed python locators', () => {
   expect.soft(python(`get_by_role("button"`)).toMatch(/^Error/);
   expect.soft(python(`get_by_role("button", name="Submit"))`)).toMatch(/^Error/);
   expect.soft(python(`get_by_role("button", name=="Submit")`)).toMatch(/^Error/);
@@ -905,7 +905,7 @@ it('should reject malformed python locators', () => {
   expect.soft(python(`GetByRole("button")`)).toMatch(/^Error/);
 });
 
-it('should reject malformed java locators', () => {
+it('PS-034 should reject malformed java locators', () => {
   expect.soft(java(`locator('div')`)).toMatch(/^Error/);
   expect.soft(java(`locator('text="bar"')`)).toMatch(/^Error/);
   expect.soft(java(`getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")`)).toMatch(/^Error/);
@@ -923,7 +923,7 @@ it('should reject malformed java locators', () => {
   expect.soft(java(`GetByText("Hello")`)).toMatch(/^Error/);
 });
 
-it('should reject malformed csharp locators', () => {
+it('PS-035 should reject malformed csharp locators', () => {
   expect.soft(csharp(`Locator('div')`)).toMatch(/^Error/);
   expect.soft(csharp(`Locator('text="bar"')`)).toMatch(/^Error/);
   expect.soft(csharp(`GetByRole(AriaRole.Button, new() { Name = "Submit" )`)).toMatch(/^Error/);
@@ -940,7 +940,7 @@ it('should reject malformed csharp locators', () => {
   expect.soft(csharp(`get_by_text("Hello")`)).toMatch(/^Error/);
 });
 
-it('should reject methods that the receiver does not have', () => {
+it('PS-036 should reject methods that the receiver does not have', () => {
   const page = untyped($);
   const frame = untyped($.frameLocator('iframe'));
   const anyFrame = untyped($.frameLocator());
@@ -968,7 +968,7 @@ it('should reject methods that the receiver does not have', () => {
   expect.soft(page.describe('x')).toBeRejected();
 });
 
-it('should reject arguments of a wrong type or count', () => {
+it('PS-037 should reject arguments of a wrong type or count', () => {
   const page = untyped($);
   const locator = untyped($.locator('div'));
   expect.soft(page.getByText()).toBeRejected();

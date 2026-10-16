@@ -41,7 +41,7 @@ async function generateForNode(pageOrFrame: Page | Frame, target: string): Promi
   return result;
 }
 
-it('reverse engineer locators', async ({ page }) => {
+it('GN-001 reverse engineer locators', async ({ page }) => {
   expect.soft(generate(page.getByTestId('Hello'))).toEqual({
     javascript: "getByTestId('Hello')",
     python: 'get_by_test_id("Hello")',
@@ -191,7 +191,7 @@ it('reverse engineer locators', async ({ page }) => {
   });
 });
 
-it('reverse engineer getByRole', async ({ page }) => {
+it('GN-002 reverse engineer getByRole', async ({ page }) => {
   expect.soft(generate(page.getByRole('button'))).toEqual({
     javascript: `getByRole('button')`,
     python: `get_by_role("button")`,
@@ -254,7 +254,7 @@ it('reverse engineer getByRole', async ({ page }) => {
   });
 });
 
-it('refuses to translate internal:role with conflicting name/description exactness', {
+it('GN-003 refuses to translate internal:role with conflicting name/description exactness', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41032' }
 }, async () => {
   const conflicting = 'internal:role=row[name="abc"i][description="d"s]';
@@ -265,7 +265,7 @@ it('refuses to translate internal:role with conflicting name/description exactne
   }
 });
 
-it('reverse engineer internal:role with regex and string name/description', async () => {
+it('GN-004 reverse engineer internal:role with regex and string name/description', async () => {
   expect.soft(generateForSelector('internal:role=alert[name=/Upload/][description="doc.pdf"i]')).toEqual({
     javascript: `getByRole('alert', { name: /Upload/, description: 'doc.pdf' })`,
     python: `get_by_role("alert", name=re.compile(r"Upload"), description="doc.pdf")`,
@@ -280,7 +280,7 @@ it('reverse engineer internal:role with regex and string name/description', asyn
   });
 });
 
-it('reverse engineer ignore-case locators', async ({ page }) => {
+it('GN-005 reverse engineer ignore-case locators', async ({ page }) => {
   expect.soft(generate(page.getByText('hello my\nwo"rld'))).toEqual({
     csharp: 'GetByText("hello my\\nwo\\"rld")',
     java: 'getByText("hello my\\nwo\\"rld")',
@@ -301,7 +301,7 @@ it('reverse engineer ignore-case locators', async ({ page }) => {
   });
 });
 
-it('reverse engineer ordered locators', async ({ page }) => {
+it('GN-006 reverse engineer ordered locators', async ({ page }) => {
   expect.soft(generate(page.locator('div').nth(3).first().last())).toEqual({
     csharp: `Locator(\"div\").Nth(3).First.Last`,
     java: `locator(\"div\").nth(3).first().last()`,
@@ -310,7 +310,7 @@ it('reverse engineer ordered locators', async ({ page }) => {
   });
 });
 
-it('reverse engineer locators with regex', async ({ page }) => {
+it('GN-007 reverse engineer locators with regex', async ({ page }) => {
   expect.soft(generate(page.getByText(/he\/\sl\nlo/))).toEqual({
     csharp: `GetByText(new Regex(\"he\\\\/\\\\sl\\\\nlo\"))`,
     java: `getByText(Pattern.compile(\"he\\\\/\\\\sl\\\\nlo\"))`,
@@ -340,7 +340,7 @@ it('reverse engineer locators with regex', async ({ page }) => {
   });
 });
 
-it('reverse engineer hasText', async ({ page }) => {
+it('GN-008 reverse engineer hasText', async ({ page }) => {
   expect.soft(generate(page.getByText('Hello').filter({ hasText: 'wo"rld\n' }))).toEqual({
     csharp: `GetByText("Hello").Filter(new() { HasText = "wo\\"rld\\n" })`,
     java: `getByText("Hello").filter(new Locator.FilterOptions().setHasText("wo\\"rld\\n"))`,
@@ -363,7 +363,7 @@ it('reverse engineer hasText', async ({ page }) => {
   });
 });
 
-it('reverse engineer hasNotText', async ({ page }) => {
+it('GN-009 reverse engineer hasNotText', async ({ page }) => {
   expect.soft(generate(page.getByText('Hello').filter({ hasNotText: 'wo"rld\n' }))).toEqual({
     csharp: `GetByText("Hello").Filter(new() { HasNotText = "wo\\"rld\\n" })`,
     java: `getByText("Hello").filter(new Locator.FilterOptions().setHasNotText("wo\\"rld\\n"))`,
@@ -372,7 +372,7 @@ it('reverse engineer hasNotText', async ({ page }) => {
   });
 });
 
-it('reverse engineer visible', async ({ page }) => {
+it('GN-010 reverse engineer visible', async ({ page }) => {
   expect.soft(generate(page.getByText('Hello').visible().locator('div'))).toEqual({
     csharp: `GetByText("Hello").Visible.Locator("div")`,
     java: `getByText("Hello").visible().locator("div")`,
@@ -387,7 +387,7 @@ it('reverse engineer visible', async ({ page }) => {
   });
 });
 
-it('reverse engineer has', async ({ page }) => {
+it('GN-011 reverse engineer has', async ({ page }) => {
   expect.soft(generate(page.getByText('Hello').filter({ has: page.locator('div').getByText('bye') }))).toEqual({
     csharp: `GetByText("Hello").Filter(new() { Has = Locator("div").GetByText("bye") })`,
     java: `getByText("Hello").filter(new Locator.FilterOptions().setHas(locator("div").getByText("bye")))`,
@@ -408,7 +408,7 @@ it('reverse engineer has', async ({ page }) => {
   });
 });
 
-it('reverse engineer hasNot', async ({ page }) => {
+it('GN-012 reverse engineer hasNot', async ({ page }) => {
   expect.soft(generate(page.getByText('Hello').filter({ hasNot: page.locator('div').getByText('bye') }))).toEqual({
     csharp: `GetByText("Hello").Filter(new() { HasNot = Locator("div").GetByText("bye") })`,
     java: `getByText("Hello").filter(new Locator.FilterOptions().setHasNot(locator("div").getByText("bye")))`,
@@ -429,7 +429,7 @@ it('reverse engineer hasNot', async ({ page }) => {
   });
 });
 
-it('reverse engineer has + hasText', async ({ page }) => {
+it('GN-013 reverse engineer has + hasText', async ({ page }) => {
   const locator = page.locator('section').filter({ hasText: 'foo', has: page.locator('div') }).locator('a');
   expect.soft(generate(locator)).toEqual({
     csharp: `Locator("section").Filter(new() { HasText = "foo" }).Filter(new() { Has = Locator("div") }).Locator("a")`,
@@ -439,7 +439,7 @@ it('reverse engineer has + hasText', async ({ page }) => {
   });
 });
 
-it('reverse engineer frameLocator', async ({ page }) => {
+it('GN-014 reverse engineer frameLocator', async ({ page }) => {
   const locator = page
       .frameLocator('iframe')
       .getByText('foo', { exact: true })
@@ -460,7 +460,7 @@ it('reverse engineer frameLocator', async ({ page }) => {
   expect.soft(asLocators('javascript', 'internal:attr=[title="iframe title"i] >> internal:control=enter-frame')).toEqual([`getByTitle('iframe title').contentFrame()`]);
 });
 
-it('reverse engineer frameLocator without a selector', async ({ page }) => {
+it('GN-015 reverse engineer frameLocator without a selector', async ({ page }) => {
   expect.soft(generate(page.frameLocator().getByText('foo').locator('span'))).toEqual({
     csharp: `FrameLocator().GetByText("foo").Locator("span")`,
     java: `frameLocator().getByText("foo").locator("span")`,
@@ -474,7 +474,7 @@ it('reverse engineer frameLocator without a selector', async ({ page }) => {
   expect.soft(asLocator('csharp', 'internal:control=any-frame')).toBe(`FrameLocator()`);
 });
 
-it('generate multiple locators', async ({ page }) => {
+it('GN-016 generate multiple locators', async ({ page }) => {
   const selector = (page.locator('div', { hasText: 'foo' }).nth(0).filter({ has: page.locator('span', { hasNotText: 'bar' }).nth(-1) }) as any)._selector;
   const locators = {
     javascript: [
@@ -559,7 +559,7 @@ it.describe(() => {
     await (context as any)._showRecorder({ language: 'javascript' });
   });
 
-  it('reverse engineer internal:has-text locators', async ({ page }) => {
+  it('GN-017 reverse engineer internal:has-text locators', async ({ page }) => {
     await page.setContent(`
       <div>Hello <span>world</span></div>
       <div>Goodbye <span mark=1>world</span></div>
@@ -576,28 +576,28 @@ it.describe(() => {
   });
 });
 
-it('asLocator internal:and', async () => {
+it('GN-018 asLocator internal:and', async () => {
   expect.soft(asLocator('javascript', 'div >> internal:and="span >> article"')).toBe(`locator('div').and(locator('span').locator('article'))`);
   expect.soft(asLocator('python', 'div >> internal:and="span >> article"')).toBe(`locator("div").and_(locator("span").locator("article"))`);
   expect.soft(asLocator('java', 'div >> internal:and="span >> article"')).toBe(`locator("div").and(locator("span").locator("article"))`);
   expect.soft(asLocator('csharp', 'div >> internal:and="span >> article"')).toBe(`Locator("div").And(Locator("span").Locator("article"))`);
 });
 
-it('asLocator internal:or', async () => {
+it('GN-019 asLocator internal:or', async () => {
   expect.soft(asLocator('javascript', 'div >> internal:or="span >> article"')).toBe(`locator('div').or(locator('span').locator('article'))`);
   expect.soft(asLocator('python', 'div >> internal:or="span >> article"')).toBe(`locator("div").or_(locator("span").locator("article"))`);
   expect.soft(asLocator('java', 'div >> internal:or="span >> article"')).toBe(`locator("div").or(locator("span").locator("article"))`);
   expect.soft(asLocator('csharp', 'div >> internal:or="span >> article"')).toBe(`Locator("div").Or(Locator("span").Locator("article"))`);
 });
 
-it('asLocator internal:chain', async () => {
+it('GN-020 asLocator internal:chain', async () => {
   expect.soft(asLocator('javascript', 'div >> internal:chain="span >> article"')).toBe(`locator('div').locator(locator('span').locator('article'))`);
   expect.soft(asLocator('python', 'div >> internal:chain="span >> article"')).toBe(`locator("div").locator(locator("span").locator("article"))`);
   expect.soft(asLocator('java', 'div >> internal:chain="span >> article"')).toBe(`locator("div").locator(locator("span").locator("article"))`);
   expect.soft(asLocator('csharp', 'div >> internal:chain="span >> article"')).toBe(`Locator("div").Locator(Locator("span").Locator("article"))`);
 });
 
-it('reverse engineer nested locators', async ({ page }) => {
+it('GN-021 reverse engineer nested locators', async ({ page }) => {
   expect.soft(generate(page.getByRole('row').locator(page.getByRole('cell').nth(2)))).toEqual({
     csharp: `GetByRole(AriaRole.Row).Locator(GetByRole(AriaRole.Cell).Nth(2))`,
     java: `getByRole(AriaRole.ROW).locator(getByRole(AriaRole.CELL).nth(2))`,
@@ -612,7 +612,7 @@ it('reverse engineer nested locators', async ({ page }) => {
   });
 });
 
-it('asLocator xpath', async () => {
+it('GN-022 asLocator xpath', async () => {
   const selector = `//*[contains(normalizer-text(), 'foo']`;
   expect.soft(asLocator('javascript', selector)).toBe(`locator('//*[contains(normalizer-text(), \\'foo\\']')`);
   expect.soft(asLocator('python', selector)).toBe(`locator(\"//*[contains(normalizer-text(), 'foo']\")`);
@@ -620,7 +620,7 @@ it('asLocator xpath', async () => {
   expect.soft(asLocator('csharp', selector)).toBe(`Locator(\"//*[contains(normalizer-text(), 'foo']\")`);
 });
 
-it('reverse engineer regex flags', async () => {
+it('GN-023 reverse engineer regex flags', async () => {
   expect.soft(generateForSelector('internal:text=/a.b/ims')).toEqual({
     csharp: 'GetByText(new Regex("a.b", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Singleline))',
     java: 'getByText(Pattern.compile("a.b", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL))',
@@ -635,7 +635,7 @@ it('reverse engineer regex flags', async () => {
   });
 });
 
-it('should not oom in locator parser', async ({ page }) => {
+it('GN-024 should not oom in locator parser', async ({ page }) => {
   const l = page.locator.bind(page);
   const locator = page.locator('text=L1').or(l('text=L2').or(l('text=L3').or(l('text=L4')).or(l('#f0')
       .contentFrame().locator('#f0_mid_0')
@@ -659,14 +659,14 @@ it('should not oom in locator parser', async ({ page }) => {
   expect(error.message).toContain('Frame locators are not allowed inside composite locators');
 });
 
-it('asLocatorDescription invalid input', async () => {
+it('GN-025 asLocatorDescription invalid input', async () => {
   expect.soft(asLocatorDescription('javascript', `body >> internal:describe="desc"`)).toBe(`desc`);
   expect.soft(asLocatorDescription('javascript', `body >> internal:describe=12`)).toBe(`locator('body')`);
   expect.soft(asLocatorDescription('javascript', `following-sibling::*[1]`)).toBe(`following-sibling::*[1]`);
   expect.soft(asLocatorDescription('javascript', `body >> internal:describe="desc" >> div`)).toBe(`locator('body').locator('div')`);
 });
 
-it('resolveSelector returns locatorCode for sdkLanguage', async ({ page }) => {
+it('GN-026 resolveSelector returns locatorCode for sdkLanguage', async ({ page }) => {
   await page.setContent(`<button id="submit">Submit</button>`);
   expect(await page.ariaSnapshot({ mode: 'ai' })).toContain(`button "Submit" [ref=e2]`);
   const channel = (page.mainFrame() as any)._channel;
@@ -682,7 +682,7 @@ it('resolveSelector returns locatorCode for sdkLanguage', async ({ page }) => {
   expect((await channel.resolveSelector({ selector, sdkLanguage: 'csharp' })).locatorCode).toBe(`GetByRole(AriaRole.Button, new() { Name = "Submit" })`);
 });
 
-it('asLocatorDescription via LocalUtils', async ({ page }) => {
+it('GN-027 asLocatorDescription via LocalUtils', async ({ page }) => {
   const channel = (page as any)._connection.localUtils()._channel;
   const selector = `internal:role=button[name="Submit"i]`;
   expect((await channel.asLocatorDescription({ selector, sdkLanguage: 'javascript' })).description).toBe(`getByRole('button', { name: 'Submit' })`);

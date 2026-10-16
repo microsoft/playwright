@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import url from 'url';
 
-it('page.goBack should work @smoke', async ({ page, server }) => {
+it('NA-071 page.goBack should work @smoke', async ({ page, server }) => {
   expect(await page.goBack()).toBe(null);
 
   await page.goto(server.EMPTY_PAGE);
@@ -36,7 +36,7 @@ it('page.goBack should work @smoke', async ({ page, server }) => {
   expect(response).toBe(null);
 });
 
-it('page.goBack should work with HistoryAPI', async ({ page, server }) => {
+it('NA-072 page.goBack should work with HistoryAPI', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {
     history.pushState({}, '', '/first.html');
@@ -52,7 +52,7 @@ it('page.goBack should work with HistoryAPI', async ({ page, server }) => {
   expect(page.url()).toBe(server.PREFIX + '/first.html');
 });
 
-it('page.goBack should work for file urls', async ({ page, server, asset, channel, isAndroid, mode }) => {
+it('NA-073 page.goBack should work for file urls', async ({ page, server, asset, channel, isAndroid, mode }) => {
   it.skip(isAndroid, 'No files on Android');
   it.skip(channel === 'webkit-wsl');
 
@@ -91,7 +91,7 @@ it('page.goBack should work for file urls', async ({ page, server, asset, channe
   await page.screenshot();
 });
 
-it('goBack/goForward should work with bfcache-able pages', async ({ page, server }) => {
+it('NA-074 goBack/goForward should work with bfcache-able pages', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/cached/bfcached.html');
   await page.setContent(`<a href=${JSON.stringify(server.PREFIX + '/cached/bfcached.html?foo')}>click me</a>`);
   await page.click('a');
@@ -105,21 +105,21 @@ it('goBack/goForward should work with bfcache-able pages', async ({ page, server
   expect(response.url()).toBe(server.PREFIX + '/cached/bfcached.html?foo');
 });
 
-it('page.reload should work', async ({ page, server }) => {
+it('NA-075 page.reload should work', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => window['_foo'] = 10);
   await page.reload();
   expect(await page.evaluate(() => window['_foo'])).toBe(undefined);
 });
 
-it('page.reload should work with data url', async ({ page, server }) => {
+it('NA-076 page.reload should work with data url', async ({ page, server }) => {
   await page.goto('data:text/html,hello');
   expect(await page.content()).toContain('hello');
   expect(await page.reload()).toBe(null);
   expect(await page.content()).toContain('hello');
 });
 
-it('page.reload during renderer-initiated navigation', async ({ page, server }) => {
+it('NA-077 page.reload during renderer-initiated navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/one-style.html');
   await page.setContent(`<form method='POST' action='/post'>Form is here<input type='submit'></form>`);
   server.setRoute('/post', (req, res) => {});
@@ -139,7 +139,7 @@ it('page.reload during renderer-initiated navigation', async ({ page, server }) 
   await page.waitForSelector('text=hello');
 });
 
-it('page.reload should not resolve with same-document navigation', async ({ page, server }) => {
+it('NA-078 page.reload should not resolve with same-document navigation', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   // 1. Make sure execution contexts are ready for fast evaluate.
   await page.evaluate('1');
@@ -171,7 +171,7 @@ it('page.reload should not resolve with same-document navigation', async ({ page
   expect(await gotResponse.text()).toBe('hello');
 });
 
-it('page.reload should work with same origin redirect', async ({ page, server }) => {
+it('NA-079 page.reload should work with same origin redirect', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16147' });
   await page.goto(server.EMPTY_PAGE);
   server.setRedirect('/empty.html', server.PREFIX + '/title.html');
@@ -179,7 +179,7 @@ it('page.reload should work with same origin redirect', async ({ page, server })
   await expect(page).toHaveURL(server.PREFIX + '/title.html');
 });
 
-it('page.reload should work with cross-origin redirect', async ({ page, server, browserName }) => {
+it('NA-080 page.reload should work with cross-origin redirect', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16147' });
   await page.goto(server.EMPTY_PAGE);
   server.setRedirect('/empty.html', server.CROSS_PROCESS_PREFIX + '/title.html');
@@ -187,21 +187,21 @@ it('page.reload should work with cross-origin redirect', async ({ page, server, 
   await expect(page).toHaveURL(server.CROSS_PROCESS_PREFIX + '/title.html');
 });
 
-it('page.reload should work on a page with a hash', async ({ page, server }) => {
+it('NA-081 page.reload should work on a page with a hash', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21145' });
   await page.goto(server.EMPTY_PAGE + '#hash');
   await page.reload();
   await expect(page).toHaveURL(server.EMPTY_PAGE + '#hash');
 });
 
-it('page.reload should work on a page with a hash at the end', async ({ page, server }) => {
+it('NA-082 page.reload should work on a page with a hash at the end', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21430' });
   await page.goto(server.EMPTY_PAGE + '#');
   await page.reload();
   await expect(page).toHaveURL(server.EMPTY_PAGE + '#');
 });
 
-it('page.goBack during renderer-initiated navigation', async ({ page, server }) => {
+it('NA-083 page.goBack during renderer-initiated navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/one-style.html');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<form method='POST' action='/post'>Form is here<input type='submit'></form>`);
@@ -222,7 +222,7 @@ it('page.goBack during renderer-initiated navigation', async ({ page, server }) 
   await page.waitForSelector('text=hello');
 });
 
-it('page.goForward during renderer-initiated navigation', async ({ page, server }) => {
+it('NA-084 page.goForward during renderer-initiated navigation', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.goto(server.PREFIX + '/one-style.html');
   await page.goBack();
@@ -245,7 +245,7 @@ it('page.goForward during renderer-initiated navigation', async ({ page, server 
   await page.waitForSelector('text=hello');
 });
 
-it('regression test for issue 20791', async ({ page, server }) => {
+it('NA-085 regression test for issue 20791', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20791' });
   it.skip(process.env.PW_CLOCK === 'frozen');
   server.setRoute('/iframe.html', (req, res) => {
@@ -277,7 +277,7 @@ it('regression test for issue 20791', async ({ page, server }) => {
   await expect.poll(() => messages).toEqual(['foo', 'foo']);
 });
 
-it('should reload proper page', async ({ page, server }) => {
+it('NA-086 should reload proper page', async ({ page, server }) => {
   let mainRequest = 0;
   let popupRequest = 0;
   server.setRoute('/main.html', (req, res) => {
