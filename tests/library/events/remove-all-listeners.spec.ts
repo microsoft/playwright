@@ -47,7 +47,7 @@ test.afterEach(() => {
   }
 });
 
-test('listeners', () => {
+test('EE-036 listeners', () => {
   const ee = new EventEmitter();
   const noop = () => { };
   ee.on('foo', noop);
@@ -85,7 +85,7 @@ test('listeners', () => {
   expect(ee.listeners('baz')).not.toEqual(bazListeners);
 });
 
-test('removeAllListeners removes all listeners', () => {
+test('EE-037 removeAllListeners removes all listeners', () => {
   const ee = new EventEmitter();
   ee.on('foo', () => { });
   ee.on('bar', () => { });
@@ -101,7 +101,7 @@ test('removeAllListeners removes all listeners', () => {
   expect(listeners).toHaveLength(0);
 });
 
-test('removeAllListeners with no event type', () => {
+test('EE-038 removeAllListeners with no event type', () => {
   const ee = new EventEmitter();
   ee.on('removeListener', common.mustNotCall());
   // Check for regression where removeAllListeners() throws when
@@ -110,7 +110,7 @@ test('removeAllListeners with no event type', () => {
   (ee as any).removeAllListeners(ee, 'foo');
 });
 
-test('listener count after removeAllListeners', () => {
+test('EE-039 listener count after removeAllListeners', () => {
   const ee = new EventEmitter();
   let expectLength = 2;
   ee.on('removeListener', () => {
@@ -124,12 +124,12 @@ test('listener count after removeAllListeners', () => {
   expect(ee.listeners('baz').length).toEqual(0);
 });
 
-test('removeAllListeners returns EventEmitter', () => {
+test('EE-040 removeAllListeners returns EventEmitter', () => {
   const ee = new EventEmitter();
   expect(ee).toEqual(ee.removeAllListeners());
 });
 
-test('removeAllListeners on undefined _events', () => {
+test('EE-041 removeAllListeners on undefined _events', () => {
   const ee = new EventEmitter();
   ee._events = undefined;
   expect(ee).toEqual(ee.removeAllListeners());

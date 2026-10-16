@@ -17,7 +17,7 @@
 import { chromiumVersionLessThan } from '../../config/utils';
 import { contextTest as it, expect } from '../../config/browserTest';
 
-it('should work', async function({ page, server }) {
+it('CV-008 should work', async function({ page, server }) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/simple.html');
   const coverage = await page.coverage.stopCSSCoverage();
@@ -30,7 +30,7 @@ it('should work', async function({ page, server }) {
   expect(coverage[0].text.substring(range.start, range.end)).toBe('div { color: green; }');
 });
 
-it('should report sourceURLs', async function({ page, server }) {
+it('CV-009 should report sourceURLs', async function({ page, server }) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/sourceurl.html');
   const coverage = await page.coverage.stopCSSCoverage();
@@ -38,7 +38,7 @@ it('should report sourceURLs', async function({ page, server }) {
   expect(coverage[0].url).toBe('nicename.css');
 });
 
-it('should report multiple stylesheets', async function({ page, server }) {
+it('CV-010 should report multiple stylesheets', async function({ page, server }) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/multiple.html');
   const coverage = await page.coverage.stopCSSCoverage();
@@ -48,7 +48,7 @@ it('should report multiple stylesheets', async function({ page, server }) {
   expect(coverage[1].url).toContain('/csscoverage/stylesheet2.css');
 });
 
-it('should report stylesheets that have no coverage', async function({ page, server }) {
+it('CV-011 should report stylesheets that have no coverage', async function({ page, server }) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/unused.html');
   const coverage = await page.coverage.stopCSSCoverage();
@@ -57,7 +57,7 @@ it('should report stylesheets that have no coverage', async function({ page, ser
   expect(coverage[0].ranges.length).toBe(0);
 });
 
-it('should work with media queries', async function({ page, server, browserVersion }) {
+it('CV-012 should work with media queries', async function({ page, server, browserVersion }) {
   it.skip(chromiumVersionLessThan(browserVersion, '115.0.5762.0'), 'https://chromium-review.googlesource.com/c/chromium/src/+/4508957');
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/media.html');
@@ -70,7 +70,7 @@ it('should work with media queries', async function({ page, server, browserVersi
   ]);
 });
 
-it('should work with complicated usecases', async function({ page, server, browserVersion }) {
+it('CV-013 should work with complicated usecases', async function({ page, server, browserVersion }) {
   it.skip(chromiumVersionLessThan(browserVersion, '115.0.5762.0'), 'https://chromium-review.googlesource.com/c/chromium/src/+/4508957');
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/involved.html');
@@ -99,7 +99,7 @@ it('should work with complicated usecases', async function({ page, server, brows
   );
 });
 
-it('should ignore injected stylesheets', async function({ page, server }) {
+it('CV-014 should ignore injected stylesheets', async function({ page, server }) {
   await page.coverage.startCSSCoverage();
   await page.addStyleTag({ content: 'body { margin: 10px;}' });
   // trigger style recalc
@@ -109,7 +109,7 @@ it('should ignore injected stylesheets', async function({ page, server }) {
   expect(coverage.length).toBe(0);
 });
 
-it('should report stylesheets across navigations', async function({ page, server }) {
+it('CV-015 should report stylesheets across navigations', async function({ page, server }) {
   await page.coverage.startCSSCoverage({ resetOnNavigation: false });
   await page.goto(server.PREFIX + '/csscoverage/multiple.html');
   await page.goto(server.EMPTY_PAGE);
@@ -117,7 +117,7 @@ it('should report stylesheets across navigations', async function({ page, server
   expect(coverage.length).toBe(2);
 });
 
-it('should NOT report scripts across navigations', async function({ page, server }) {
+it('CV-016 should NOT report scripts across navigations', async function({ page, server }) {
   await page.coverage.startCSSCoverage(); // Enabled by default.
   await page.goto(server.PREFIX + '/csscoverage/multiple.html');
   await page.goto(server.EMPTY_PAGE);
@@ -125,7 +125,7 @@ it('should NOT report scripts across navigations', async function({ page, server
   expect(coverage.length).toBe(0);
 });
 
-it('should work with a recently loaded stylesheet', async function({ page, server }) {
+it('CV-017 should work with a recently loaded stylesheet', async function({ page, server }) {
   await page.coverage.startCSSCoverage();
   await page.evaluate(async url => {
     document.body.textContent = 'hello, world';

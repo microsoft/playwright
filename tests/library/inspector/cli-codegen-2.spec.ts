@@ -17,7 +17,7 @@
 import { test, expect } from './inspectorTest';
 
 test.describe('cli codegen', () => {
-  test('should contain open page', async ({ openRecorder }) => {
+  test('CG-039 should contain open page', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
 
     await recorder.setContentAndWait(``);
@@ -39,7 +39,7 @@ test.describe('cli codegen', () => {
 var page = await context.NewPageAsync();`);
   });
 
-  test('should contain second page', async ({ openRecorder }) => {
+  test('CG-040 should contain second page', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(``);
@@ -62,7 +62,7 @@ var page = await context.NewPageAsync();`);
 var page1 = await context.NewPageAsync();`);
   });
 
-  test('should contain close page', async ({ openRecorder }) => {
+  test('CG-041 should contain close page', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(``);
@@ -86,7 +86,7 @@ var page1 = await context.NewPageAsync();`);
 await page.CloseAsync();`);
   });
 
-  test('should not lead to an error if html gets clicked', async ({ openRecorder, platform, macVersion }) => {
+  test('CG-042 should not lead to an error if html gets clicked', async ({ openRecorder, platform, macVersion }) => {
     test.skip(platform === 'darwin' && macVersion < 15, 'recorder.page.evaluate hangs on CDP layer for some reason on macOS 14.');
 
     const { page, recorder } = await openRecorder();
@@ -102,7 +102,7 @@ await page.CloseAsync();`);
     expect(errors.length).toBe(0);
   });
 
-  test('should upload a single file', async ({ openRecorder, browserName, asset, isLinux }) => {
+  test('CG-043 should upload a single file', async ({ openRecorder, browserName, asset, isLinux }) => {
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
@@ -139,7 +139,7 @@ await page.CloseAsync();`);
 await page.GetByRole(AriaRole.Button, new() { Name = "Choose File" }).SetInputFilesAsync(new[] { \"file-to-upload.txt\" });`);
   });
 
-  test('should upload multiple files', async ({ openRecorder, browserName, asset, isLinux }) => {
+  test('CG-044 should upload multiple files', async ({ openRecorder, browserName, asset, isLinux }) => {
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
@@ -169,7 +169,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Choose File" }).SetInputFi
 await page.GetByRole(AriaRole.Button, new() { Name = "Choose File" }).SetInputFilesAsync(new[] { \"file-to-upload.txt\", \"file-to-upload-2.txt\" });`);
   });
 
-  test('should clear files', async ({ openRecorder, browserName, asset, isLinux }) => {
+  test('CG-045 should clear files', async ({ openRecorder, browserName, asset, isLinux }) => {
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
@@ -199,7 +199,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Choose File" }).SetInputFi
 await page.GetByRole(AriaRole.Button, new() { Name = "Choose File" }).SetInputFilesAsync(new[] {  });`);
   });
 
-  test('should upload a file via hidden input triggered by button', async ({ openRecorder, browserName, asset, isLinux }) => {
+  test('CG-046 should upload a file via hidden input triggered by button', async ({ openRecorder, browserName, asset, isLinux }) => {
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
     <button onclick="document.querySelector('input[type=file]').click()">select file</button>
@@ -221,7 +221,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Choose File" }).SetInputFi
     expect(sources.get('JavaScript')!.text).not.toContain(`getByRole('button', { name: 'select file' }).setInputFiles`);
   });
 
-  test('should download files', async ({ openRecorder, server }) => {
+  test('CG-047 should download files', async ({ openRecorder, server }) => {
     const { page, recorder } = await openRecorder();
 
     server.setRoute('/download', (req, res) => {
@@ -272,7 +272,7 @@ var download = await page.RunAndWaitForDownloadAsync(async () =>
 });`);
   });
 
-  test('should handle dialogs', async ({ openRecorder }) => {
+  test('CG-048 should handle dialogs', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -320,7 +320,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "click me" }).ClickAsync();
 
   });
 
-  test('should handle history.postData', async ({ openRecorder, server }) => {
+  test('CG-049 should handle history.postData', async ({ openRecorder, server }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -336,7 +336,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "click me" }).ClickAsync();
     }
   });
 
-  test('should record open in a new tab with url', async ({ openRecorder, browserName }) => {
+  test('CG-050 should record open in a new tab with url', async ({ openRecorder, browserName }) => {
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<a href="about:blank?foo">link</a>`);
 
@@ -366,7 +366,7 @@ await page1.GotoAsync("about:blank?foo");`);
     }
   });
 
-  test('should not clash pages', async ({ openRecorder, browserName }) => {
+  test('CG-051 should not clash pages', async ({ openRecorder, browserName }) => {
     const { page, recorder } = await openRecorder();
     const [popup1] = await Promise.all([
       page.context().waitForEvent('page'),
@@ -403,7 +403,7 @@ await page1.GotoAsync("about:blank?foo");`);
     expect(sources.get('C#')!.text).toContain(`await page2.Locator("#name").FillAsync("TextB");`);
   });
 
-  test('click should emit events in order', async ({ openRecorder }) => {
+  test('CG-052 click should emit events in order', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -427,7 +427,7 @@ await page1.GotoAsync("about:blank?foo");`);
     await expect.poll(() => messages).toEqual(['mousedown', 'mouseup', 'click']);
   });
 
-  test('should reset hover model on action when element detaches', async ({ openRecorder }) => {
+  test('CG-053 should reset hover model on action when element detaches', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input id="checkbox" onclick="document.getElementById('checkbox').remove()">`);
@@ -438,7 +438,7 @@ await page1.GotoAsync("about:blank?foo");`);
     expect(models.hovered).toBe(null);
   });
 
-  test('should update active model on action', async ({ openRecorder, browserName, headless }) => {
+  test('CG-054 should update active model on action', async ({ openRecorder, browserName, headless }) => {
     test.skip(browserName === 'webkit', 'webkit does not actually focus the input after click');
 
     const { page, recorder } = await openRecorder();
@@ -450,7 +450,7 @@ await page1.GotoAsync("about:blank?foo");`);
     expect(models.active).toBe('#checkbox');
   });
 
-  test('should check input with chaining id', async ({ openRecorder }) => {
+  test('CG-055 should check input with chaining id', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name = 'updated'"></input>`);
     await Promise.all([
@@ -459,7 +459,7 @@ await page1.GotoAsync("about:blank?foo");`);
     ]);
   });
 
-  test('should record navigations after identical pushState', async ({ openRecorder, server }) => {
+  test('CG-056 should record navigations after identical pushState', async ({ openRecorder, server }) => {
     const { page, recorder } = await openRecorder();
     server.setRoute('/page2.html', (req, res) => {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -478,7 +478,7 @@ await page1.GotoAsync("about:blank?foo");`);
     await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/page2.html');`);
   });
 
-  test('should fill tricky characters', async ({ openRecorder }) => {
+  test('CG-057 should fill tricky characters', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<textarea spellcheck=false id="textarea" name="name" oninput="console.log(textarea.value)"></textarea>`);
@@ -509,7 +509,7 @@ await page.Locator("#textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
     expect(message.text()).toBe('Hello\'\"\`\nWorld');
   });
 
-  test('should --test-id-attribute', async ({ openRecorder }) => {
+  test('CG-058 should --test-id-attribute', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder({ testIdAttributeName: 'my-test-id' });
 
     await recorder.setContentAndWait(`<div my-test-id="foo">Hello</div>`);
@@ -523,7 +523,7 @@ await page.Locator("#textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
     expect.soft(sources.get('C#')!.text).toContain(`await page.GetByTestId("foo").ClickAsync();`);
   });
 
-  test('should generate getByTestId for any of the configured testIdAttributes', async ({ openRecorder }) => {
+  test('CG-059 should generate getByTestId for any of the configured testIdAttributes', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder({ testIdAttributeName: 'data-pw,data-ti' });
 
     await recorder.setContentAndWait(`
@@ -540,7 +540,7 @@ await page.Locator("#textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
     expect.soft(sources.get('JavaScript')!.text).toContain(`await page.getByTestId('secondary').click()`);
   });
 
-  test('should auto-generate toBeVisible', async ({ openRecorder }) => {
+  test('CG-060 should auto-generate toBeVisible', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`

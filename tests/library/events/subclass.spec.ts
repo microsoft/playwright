@@ -32,7 +32,7 @@ class MyEE extends EventEmitter {
   }
 }
 
-test('myee instance', () => {
+test('EE-054 myee instance', () => {
   const myee = new MyEE(() => {});
   expect(myee._events).not.toBeInstanceOf(Object);
   expect(Object.keys(myee._events).length).toBe(0);
@@ -45,7 +45,7 @@ class MyEE2 {
   }
 }
 
-test('MyEE2 instance', () => {
+test('EE-055 MyEE2 instance', () => {
   const ee1 = new MyEE2();
   const ee2 = new MyEE2();
 

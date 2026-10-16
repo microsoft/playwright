@@ -20,7 +20,7 @@ import { attachFrame, detachFrame } from '../config/utils';
 
 const addElement = (tag: string) => document.body.appendChild(document.createElement(tag));
 
-it('should survive cross-process navigation', async ({ page, server }) => {
+it('WA-044 should survive cross-process navigation', async ({ page, server }) => {
   let boxFound = false;
   const waitForSelector = page.waitForSelector('.box').then(() => boxFound = true);
   await page.goto(server.EMPTY_PAGE);
@@ -32,7 +32,7 @@ it('should survive cross-process navigation', async ({ page, server }) => {
   expect(boxFound).toBe(true);
 });
 
-it('should wait for visible', async ({ page, server }) => {
+it('WA-045 should wait for visible', async ({ page, server }) => {
   let divFound = false;
   const waitForSelector = page.waitForSelector('div').then(() => divFound = true);
   await page.setContent(`<div style='display: none; visibility: hidden;'>1</div>`);
@@ -44,7 +44,7 @@ it('should wait for visible', async ({ page, server }) => {
   expect(divFound).toBe(true);
 });
 
-it('should not consider visible when zero-sized', async ({ page, server }) => {
+it('WA-046 should not consider visible when zero-sized', async ({ page, server }) => {
   await page.setContent(`<div style='width: 0; height: 0;'>1</div>`);
   let error = await page.waitForSelector('div', { timeout: 1000 }).catch(e => e);
   expect(error.message).toContain('page.waitForSelector: Timeout 1000ms exceeded');
@@ -55,7 +55,7 @@ it('should not consider visible when zero-sized', async ({ page, server }) => {
   expect(await page.waitForSelector('div', { timeout: 1000 })).toBeTruthy();
 });
 
-it('should wait for visible recursively', async ({ page, server }) => {
+it('WA-047 should wait for visible recursively', async ({ page, server }) => {
   let divVisible = false;
   const waitForSelector = page.waitForSelector('div#inner').then(() => divVisible = true);
   await page.setContent(`<div style='display: none; visibility: hidden;'><div id="inner">hi</div></div>`);
@@ -67,7 +67,7 @@ it('should wait for visible recursively', async ({ page, server }) => {
   expect(divVisible).toBe(true);
 });
 
-it('should consider outside of viewport visible', async ({ page }) => {
+it('WA-048 should consider outside of viewport visible', async ({ page }) => {
   await page.setContent(`
     <style>
       .cover {
@@ -88,7 +88,7 @@ it('should consider outside of viewport visible', async ({ page }) => {
   await expect(cover).toBeVisible();
 });
 
-it('hidden should wait for hidden', async ({ page, server }) => {
+it('WA-049 hidden should wait for hidden', async ({ page, server }) => {
   let divHidden = false;
   await page.setContent(`<div style='display: block;'>content</div>`);
   const waitForSelector = page.waitForSelector('div', { state: 'hidden' }).then(() => divHidden = true);
@@ -99,7 +99,7 @@ it('hidden should wait for hidden', async ({ page, server }) => {
   expect(divHidden).toBe(true);
 });
 
-it('hidden should wait for display: none', async ({ page, server }) => {
+it('WA-050 hidden should wait for display: none', async ({ page, server }) => {
   let divHidden = false;
   await page.setContent(`<div style='display: block;'>content</div>`);
   const waitForSelector = page.waitForSelector('div', { state: 'hidden' }).then(() => divHidden = true);
@@ -110,7 +110,7 @@ it('hidden should wait for display: none', async ({ page, server }) => {
   expect(divHidden).toBe(true);
 });
 
-it('hidden should wait for removal', async ({ page, server }) => {
+it('WA-051 hidden should wait for removal', async ({ page, server }) => {
   await page.setContent(`<div>content</div>`);
   let divRemoved = false;
   const waitForSelector = page.waitForSelector('div', { state: 'hidden' }).then(() => divRemoved = true);
@@ -121,12 +121,12 @@ it('hidden should wait for removal', async ({ page, server }) => {
   expect(divRemoved).toBe(true);
 });
 
-it('should return null if waiting to hide non-existing element', async ({ page, server }) => {
+it('WA-052 should return null if waiting to hide non-existing element', async ({ page, server }) => {
   const handle = await page.waitForSelector('non-existing', { state: 'hidden' });
   expect(handle).toBe(null);
 });
 
-it('should respect timeout', async ({ page, playwright }) => {
+it('WA-053 should respect timeout', async ({ page, playwright }) => {
   let error: Error | undefined;
   await page.waitForSelector('div', { timeout: 3000, state: 'attached' }).catch(e => error = e);
   expect(error).toBeTruthy();
@@ -135,7 +135,7 @@ it('should respect timeout', async ({ page, playwright }) => {
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should have an error message specifically for awaiting an element to be hidden', async ({ page, server }) => {
+it('WA-054 should have an error message specifically for awaiting an element to be hidden', async ({ page, server }) => {
   await page.setContent(`<div>content</div>`);
   let error: Error | undefined;
   await page.waitForSelector('div', { state: 'hidden', timeout: 1000 }).catch(e => error = e);
@@ -144,7 +144,7 @@ it('should have an error message specifically for awaiting an element to be hidd
   expect(error!.message).toContain('waiting for locator(\'div\') to be hidden');
 });
 
-it('should respond to node attribute mutation', async ({ page, server }) => {
+it('WA-055 should respond to node attribute mutation', async ({ page, server }) => {
   let divFound = false;
   const waitForSelector = page.waitForSelector('.zombo', { state: 'attached' }).then(() => divFound = true);
   await page.setContent(`<div class='notZombo'></div>`);
@@ -153,47 +153,47 @@ it('should respond to node attribute mutation', async ({ page, server }) => {
   expect(await waitForSelector).toBe(true);
 });
 
-it('should return the element handle', async ({ page, server }) => {
+it('WA-056 should return the element handle', async ({ page, server }) => {
   const waitForSelector = page.waitForSelector('.zombo');
   await page.setContent(`<div class='zombo'>anything</div>`);
   expect(await page.evaluate(x => x.textContent, await waitForSelector)).toBe('anything');
 });
 
-it('should have correct stack trace for timeout', async ({ page, server }) => {
+it('WA-057 should have correct stack trace for timeout', async ({ page, server }) => {
   let error;
   await page.waitForSelector('.zombo', { timeout: 10 }).catch(e => error = e);
   expect(error!.stack).toContain('wait-for-selector');
 });
 
-it('should throw for unknown state option', async ({ page, server }) => {
+it('WA-058 should throw for unknown state option', async ({ page, server }) => {
   await page.setContent('<section>test</section>');
   // @ts-expect-error state is not an option of waitForSelector
   const error = await page.waitForSelector('section', { state: 'foo' }).catch(e => e);
   expect(error.message).toContain('state: expected one of (attached|detached|visible|hidden)');
 });
 
-it('should throw for visibility option', async ({ page, server }) => {
+it('WA-059 should throw for visibility option', async ({ page, server }) => {
   await page.setContent('<section>test</section>');
   // @ts-expect-error visibility is not an option of waitForSelector
   const error = await page.waitForSelector('section', { visibility: 'hidden' }).catch(e => e);
   expect(error.message).toContain('options.visibility is not supported, did you mean options.state?');
 });
 
-it('should throw for true state option', async ({ page, server }) => {
+it('WA-060 should throw for true state option', async ({ page, server }) => {
   await page.setContent('<section>test</section>');
   // @ts-expect-error state is not an option of waitForSelector
   const error = await page.waitForSelector('section', { state: true }).catch(e => e);
   expect(error.message).toContain('state: expected one of (attached|detached|visible|hidden)');
 });
 
-it('should throw for false state option', async ({ page, server }) => {
+it('WA-061 should throw for false state option', async ({ page, server }) => {
   await page.setContent('<section>test</section>');
   // @ts-expect-error state is not an option of waitForSelector
   const error = await page.waitForSelector('section', { state: false }).catch(e => e);
   expect(error.message).toContain('state: expected one of (attached|detached|visible|hidden)');
 });
 
-it('should support >> selector syntax', async ({ page, server }) => {
+it('WA-062 should support >> selector syntax', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const frame = page.mainFrame();
   const watchdog = frame.waitForSelector('css=div >> css=span', { state: 'attached' });
@@ -205,12 +205,12 @@ it('should support >> selector syntax', async ({ page, server }) => {
   expect(tagName).toBe('SPAN');
 });
 
-it('should wait for detached if already detached', async ({ page, server }) => {
+it('WA-063 should wait for detached if already detached', async ({ page, server }) => {
   await page.setContent('<section id="testAttribute">43543</section>');
   expect(await page.waitForSelector('css=div', { state: 'detached' })).toBe(null);
 });
 
-it('should wait for detached', async ({ page, server }) => {
+it('WA-064 should wait for detached', async ({ page, server }) => {
   await page.setContent('<section id="testAttribute"><div>43543</div></section>');
   let done = false;
   const waitFor = page.waitForSelector('css=div', { state: 'detached' }).then(() => done = true);
@@ -222,13 +222,13 @@ it('should wait for detached', async ({ page, server }) => {
   expect(done).toBe(true);
 });
 
-it('should support some fancy xpath', async ({ page, server }) => {
+it('WA-065 should support some fancy xpath', async ({ page, server }) => {
   await page.setContent(`<p>red herring</p><p>hello  world  </p>`);
   const waitForXPath = page.waitForSelector('//p[normalize-space(.)="hello world"]');
   expect(await page.evaluate(x => x.textContent, await waitForXPath)).toBe('hello  world  ');
 });
 
-it('should respect timeout xpath', async ({ page, playwright }) => {
+it('WA-066 should respect timeout xpath', async ({ page, playwright }) => {
   let error: Error | undefined;
   await page.waitForSelector('//div', { state: 'attached', timeout: 3000 }).catch(e => error = e);
   expect(error).toBeTruthy();
@@ -237,7 +237,7 @@ it('should respect timeout xpath', async ({ page, playwright }) => {
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should run in specified frame xpath', async ({ page, server }) => {
+it('WA-067 should run in specified frame xpath', async ({ page, server }) => {
   await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await attachFrame(page, 'frame2', server.EMPTY_PAGE);
   const frame1 = page.frames()[1];
@@ -249,7 +249,7 @@ it('should run in specified frame xpath', async ({ page, server }) => {
   expect(await eHandle.ownerFrame()).toBe(frame2);
 });
 
-it('should throw when frame is detached xpath', async ({ page, server }) => {
+it('WA-068 should throw when frame is detached xpath', async ({ page, server }) => {
   await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const frame = page.frames()[1];
   let waitError: Error | undefined;
@@ -260,19 +260,19 @@ it('should throw when frame is detached xpath', async ({ page, server }) => {
   expect(waitError!.message).toContain('frame.waitForSelector: Frame was detached');
 });
 
-it('should return the element handle xpath', async ({ page, server }) => {
+it('WA-069 should return the element handle xpath', async ({ page, server }) => {
   const waitForXPath = page.waitForSelector('//*[@class="zombo"]');
   await page.setContent(`<div class='zombo'>anything</div>`);
   expect(await page.evaluate(x => x.textContent, await waitForXPath)).toBe('anything');
 });
 
-it('should allow you to select an element with single slash xpath', async ({ page, server }) => {
+it('WA-070 should allow you to select an element with single slash xpath', async ({ page, server }) => {
   await page.setContent(`<div>some text</div>`);
   const waitForXPath = page.waitForSelector('//html/body/div');
   expect(await page.evaluate(x => x.textContent, await waitForXPath)).toBe('some text');
 });
 
-it('should correctly handle hidden shadow host', async ({ page, server }) => {
+it('WA-071 should correctly handle hidden shadow host', async ({ page, server }) => {
   await page.setContent(`
     <x-host hidden></x-host>
     <script>
@@ -290,7 +290,7 @@ it('should correctly handle hidden shadow host', async ({ page, server }) => {
   await page.waitForSelector('div', { state: 'hidden' });
 });
 
-it('should work when navigating before node adoption', async ({ page, mode, server }) => {
+it('WA-072 should work when navigating before node adoption', async ({ page, mode, server }) => {
   it.skip(mode !== 'default');
 
   await page.goto(server.EMPTY_PAGE);
@@ -310,7 +310,7 @@ it('should work when navigating before node adoption', async ({ page, mode, serv
   expect(await div.textContent()).toBe('hello, world!');
 });
 
-it('should fail when navigating while on handle', async ({ page, mode, server }) => {
+it('WA-073 should fail when navigating while on handle', async ({ page, mode, server }) => {
   it.skip(mode !== 'default');
 
   await page.goto(server.EMPTY_PAGE);
@@ -329,7 +329,7 @@ it('should fail when navigating while on handle', async ({ page, mode, server })
   expect(error.message).toContain(`waiting for locator('div') to be visible`);
 });
 
-it('should fail if element handle was detached while waiting', async ({ page, server }) => {
+it('WA-074 should fail if element handle was detached while waiting', async ({ page, server }) => {
   await page.setContent(`<button>hello</button>`);
   const button = await page.$('button');
   const promise = button.waitForSelector('something').catch(e => e);
@@ -339,7 +339,7 @@ it('should fail if element handle was detached while waiting', async ({ page, se
   expect(error.message).toContain('Element is not attached to the DOM');
 });
 
-it('should succeed if element handle was detached while waiting for hidden', async ({ page, server }) => {
+it('WA-075 should succeed if element handle was detached while waiting for hidden', async ({ page, server }) => {
   await page.setContent(`<button>hello</button>`);
   const button = await page.$('button');
   const promise = button.waitForSelector('something', { state: 'hidden' });
@@ -348,7 +348,7 @@ it('should succeed if element handle was detached while waiting for hidden', asy
   await promise;
 });
 
-it('should succeed if element handle was detached while waiting for detached', async ({ page, server }) => {
+it('WA-076 should succeed if element handle was detached while waiting for detached', async ({ page, server }) => {
   await page.setContent(`<button>hello</button>`);
   const button = await page.$('button');
   const promise = button.waitForSelector('something', { state: 'detached' });

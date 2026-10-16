@@ -66,7 +66,7 @@ async function routeAmbiguous(page: Page) {
   });
 }
 
-it('should work for iframe @smoke', async ({ page, server }) => {
+it('LO-089 should work for iframe @smoke', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const button = page.frameLocator('iframe').locator('button');
@@ -76,7 +76,7 @@ it('should work for iframe @smoke', async ({ page, server }) => {
   await button.click();
 });
 
-it('should work for nested iframe', async ({ page, server }) => {
+it('LO-090 should work for nested iframe', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const button = page.frameLocator('iframe').frameLocator('iframe').locator('button');
@@ -86,7 +86,7 @@ it('should work for nested iframe', async ({ page, server }) => {
   await button.click();
 });
 
-it('should work for $ and $$', async ({ page, server }) => {
+it('LO-091 should work for $ and $$', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const locator = page.frameLocator('iframe').locator('button');
@@ -95,19 +95,19 @@ it('should work for $ and $$', async ({ page, server }) => {
   await expect(spans).toHaveCount(2);
 });
 
-it('should wait for frame', async ({ page, server }) => {
+it('LO-092 should wait for frame', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const error = await page.locator('body').frameLocator('iframe').locator('span').click({ timeout: 1000 }).catch(e => e);
   expect(error.message).toContain(`waiting for locator('body').locator('iframe').contentFrame()`);
 });
 
-it('should wait for frame 2', async ({ page, server }) => {
+it('LO-093 should wait for frame 2', async ({ page, server }) => {
   await routeIframe(page);
   setTimeout(() => page.goto(server.EMPTY_PAGE).catch(() => {}), 300);
   await page.frameLocator('iframe').locator('button').click();
 });
 
-it('should wait for frame to go', async ({ page, server, isAndroid }) => {
+it('LO-094 should wait for frame to go', async ({ page, server, isAndroid }) => {
   it.fixme(isAndroid);
 
   await routeIframe(page);
@@ -116,22 +116,22 @@ it('should wait for frame to go', async ({ page, server, isAndroid }) => {
   await expect(page.frameLocator('iframe').locator('button')).toBeHidden();
 });
 
-it('should not wait for frame', async ({ page, server }) => {
+it('LO-095 should not wait for frame', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await expect(page.frameLocator('iframe').locator('span')).toBeHidden();
 });
 
-it('should not wait for frame 2', async ({ page, server }) => {
+it('LO-096 should not wait for frame 2', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await expect(page.frameLocator('iframe').locator('span')).not.toBeVisible();
 });
 
-it('should not wait for frame 3', async ({ page, server }) => {
+it('LO-097 should not wait for frame 3', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await expect(page.frameLocator('iframe').locator('span')).toHaveCount(0);
 });
 
-it('should click in lazy iframe', async ({ page, server }) => {
+it('LO-098 should click in lazy iframe', async ({ page, server }) => {
   await page.route('**/iframe.html', route => {
     route.fulfill({
       body: '<html><button>Hello iframe</button></html>',
@@ -164,7 +164,7 @@ it('should click in lazy iframe', async ({ page, server }) => {
   expect(text).toBe('Hello iframe');
 });
 
-it('waitFor should survive frame reattach', async ({ page, server }) => {
+it('LO-099 waitFor should survive frame reattach', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const button = page.frameLocator('iframe').locator('button:has-text("Hello nested iframe")');
@@ -178,7 +178,7 @@ it('waitFor should survive frame reattach', async ({ page, server }) => {
   await promise;
 });
 
-it('click should survive frame reattach', async ({ page, server }) => {
+it('LO-100 click should survive frame reattach', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const button = page.frameLocator('iframe').locator('button:has-text("Hello nested iframe")');
@@ -192,7 +192,7 @@ it('click should survive frame reattach', async ({ page, server }) => {
   await promise;
 });
 
-it('click should survive iframe navigation', async ({ page, server }) => {
+it('LO-101 click should survive iframe navigation', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const button = page.frameLocator('iframe').locator('button:has-text("Hello nested iframe")');
@@ -201,7 +201,7 @@ it('click should survive iframe navigation', async ({ page, server }) => {
   await promise;
 });
 
-it('should non work for non-frame', async ({ page, server }) => {
+it('LO-102 should non work for non-frame', async ({ page, server }) => {
   await routeIframe(page);
   await page.setContent('<div></div>');
   const button = page.frameLocator('div').locator('button');
@@ -210,7 +210,7 @@ it('should non work for non-frame', async ({ page, server }) => {
   expect(error.message).toContain('<iframe> was expected');
 });
 
-it('locator.frameLocator should work for iframe', async ({ page, server }) => {
+it('LO-103 locator.frameLocator should work for iframe', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const button = page.locator('body').frameLocator('iframe').locator('button');
@@ -220,7 +220,7 @@ it('locator.frameLocator should work for iframe', async ({ page, server }) => {
   await button.click();
 });
 
-it('locator.frameLocator should throw on ambiguity', async ({ page, server }) => {
+it('LO-104 locator.frameLocator should throw on ambiguity', async ({ page, server }) => {
   await routeAmbiguous(page);
   await page.goto(server.EMPTY_PAGE);
   const button = page.locator('body').frameLocator('iframe').locator('button');
@@ -228,7 +228,7 @@ it('locator.frameLocator should throw on ambiguity', async ({ page, server }) =>
   expect(error.message).toContain(`Error: strict mode violation: locator('body').locator('iframe') resolved to 3 elements`);
 });
 
-it('locator.frameLocator should not throw on first/last/nth', async ({ page, server }) => {
+it('LO-105 locator.frameLocator should not throw on first/last/nth', async ({ page, server }) => {
   await routeAmbiguous(page);
   await page.goto(server.EMPTY_PAGE);
   const button1 = page.locator('body').frameLocator('iframe').first().locator('button');
@@ -239,7 +239,7 @@ it('locator.frameLocator should not throw on first/last/nth', async ({ page, ser
   await expect(button3).toHaveText('Hello from iframe-3.html');
 });
 
-it('getBy coverage', async ({ page, server }) => {
+it('LO-106 getBy coverage', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const button1 = page.frameLocator('iframe').getByRole('button');
@@ -258,7 +258,7 @@ it('getBy coverage', async ({ page, server }) => {
   await expect(input4).toHaveValue('');
 });
 
-it('wait for hidden should succeed when frame is not in dom', async ({ page }) => {
+it('LO-107 wait for hidden should succeed when frame is not in dom', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21879' });
   await page.goto('about:blank');
   const button = page.frameLocator('iframe1').locator('button');
@@ -269,7 +269,7 @@ it('wait for hidden should succeed when frame is not in dom', async ({ page }) =
   expect(error.message).toContain('Timeout 1000ms exceeded');
 });
 
-it('should work with COEP/COOP/CORP isolated iframe', async ({ page, server, browserName }) => {
+it('LO-108 should work with COEP/COOP/CORP isolated iframe', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28082' });
   it.fixme(browserName === 'firefox');
   await page.route('**/empty.html', route => {
@@ -299,7 +299,7 @@ it('should work with COEP/COOP/CORP isolated iframe', async ({ page, server, bro
   expect(await page.frames()[1].evaluate(() => window['__clicked'])).toBe(true);
 });
 
-it('locator.contentFrame should work', async ({ page, server }) => {
+it('LO-109 locator.contentFrame should work', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const locator = page.locator('iframe');
@@ -310,7 +310,7 @@ it('locator.contentFrame should work', async ({ page, server }) => {
   await button.click();
 });
 
-it('frameLocator.owner should work', async ({ page, server }) => {
+it('LO-110 frameLocator.owner should work', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const frameLocator = page.frameLocator('iframe');
@@ -319,7 +319,7 @@ it('frameLocator.owner should work', async ({ page, server }) => {
   expect(await locator.getAttribute('name')).toBe('frame1');
 });
 
-it('should treat elements inside hidden iframe as hidden', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42719' } }, async ({ page }) => {
+it('LO-111 should treat elements inside hidden iframe as hidden', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42719' } }, async ({ page }) => {
   await page.setContent(`
     <iframe name="hidden" style="visibility: hidden" srcdoc="<button>Hidden</button>"></iframe>
     <div style="visibility: hidden">
@@ -348,7 +348,7 @@ it('should treat elements inside hidden iframe as hidden', { annotation: { type:
   await button.waitFor({ state: 'visible' });
 });
 
-it('should wait for hidden iframe to become visible', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42719' } }, async ({ page }) => {
+it('LO-112 should wait for hidden iframe to become visible', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42719' } }, async ({ page }) => {
   await page.setContent(`<iframe name="frame" style="visibility: hidden" srcdoc="<button onclick='window.__clicked = true'>Button</button>"></iframe>`);
   const button = page.frameLocator('[name=frame]').locator('button');
   await expect(button).toBeHidden();
@@ -368,7 +368,7 @@ it('should wait for hidden iframe to become visible', { annotation: { type: 'iss
   expect(await button.isVisible()).toBe(false);
 });
 
-it('should treat elements inside hidden cross-origin iframe as hidden', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42719' } }, async ({ page, server }) => {
+it('LO-113 should treat elements inside hidden cross-origin iframe as hidden', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42719' } }, async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<iframe style="visibility: hidden" src="${server.CROSS_PROCESS_PREFIX}/frames/frame.html"></iframe>`);
   const div = page.frameLocator('iframe').locator('div');

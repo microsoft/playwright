@@ -17,14 +17,14 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work @smoke', async ({ page, server }) => {
+it('LO-052 should work @smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = page.locator('button');
   await button.click();
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should work with Node removed', async ({ page, server }) => {
+it('LO-053 should work with Node removed', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.evaluate(() => delete window['Node']);
   const button = page.locator('button');
@@ -32,7 +32,7 @@ it('should work with Node removed', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should double click the button', async ({ page, server }) => {
+it('LO-054 should double click the button', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.evaluate(() => {
     window['double'] = false;
@@ -47,14 +47,14 @@ it('should double click the button', async ({ page, server }) => {
   expect(await page.evaluate('result')).toBe('Clicked');
 });
 
-it('should click if the target element is removed in pointerup event', async ({ page }) => {
+it('LO-055 should click if the target element is removed in pointerup event', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21995' });
   await page.setContent(`<button id=clickme>Clickable</button>`);
   await page.$eval('#clickme', element => element.addEventListener('pointerup', () => element.remove(), false));
   await page.locator('#clickme').click();
 });
 
-it('should click if the target element is removed in pointerdown event', async ({ page }) => {
+it('LO-056 should click if the target element is removed in pointerdown event', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21995' });
   await page.setContent(`<button id=clickme>Clickable</button>`);
   await page.$eval('#clickme', element => element.addEventListener('pointerdown', () => element.remove(), false));

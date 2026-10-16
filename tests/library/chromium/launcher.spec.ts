@@ -16,7 +16,7 @@
 
 import { playwrightTest as it, expect } from '../../config/browserTest';
 
-it('should throw with remote-debugging-pipe argument', async ({ browserType, mode }) => {
+it('CR-033 should throw with remote-debugging-pipe argument', async ({ browserType, mode }) => {
   it.skip(mode !== 'default');
 
   const options: any = {};
@@ -25,7 +25,7 @@ it('should throw with remote-debugging-pipe argument', async ({ browserType, mod
   expect(error.message).toContain('Playwright manages remote debugging connection itself');
 });
 
-it('should not throw with remote-debugging-port argument', async ({ browserType, mode }) => {
+it('CR-034 should not throw with remote-debugging-port argument', async ({ browserType, mode }) => {
   it.skip(mode !== 'default');
 
   const options: any = {};
@@ -34,7 +34,7 @@ it('should not throw with remote-debugging-port argument', async ({ browserType,
   await browser.close();
 });
 
-it('should not create pages automatically', async ({ browserType }) => {
+it('CR-035 should not create pages automatically', async ({ browserType }) => {
   const browser = await browserType.launch();
   const browserSession = await browser.newBrowserCDPSession();
   const targets = [];

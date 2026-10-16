@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should have a nice preview', async ({ page, server }) => {
+it('EH-024 should have a nice preview', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const outer = await page.$('#outer');
   const inner = await page.$('#inner');
@@ -30,14 +30,14 @@ it('should have a nice preview', async ({ page, server }) => {
   expect(String(check)).toBe('JSHandle@<input checked id="check" foo="bar"" type="checkbox"/>');
 });
 
-it('should have a nice preview for non-ascii attributes/children', async ({ page, server }) => {
+it('EH-025 should have a nice preview for non-ascii attributes/children', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<div title="${'😛'.repeat(100)}">${'😛'.repeat(100)}`);
   const handle = await page.$('div');
   await expect.poll(() => String(handle)).toBe(`JSHandle@<div title=\"😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛\">😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛😛…</div>`);
 });
 
-it('getAttribute should work', async ({ page, server }) => {
+it('EH-026 getAttribute should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const handle = await page.$('#outer');
   expect(await handle.getAttribute('name')).toBe('value');
@@ -46,7 +46,7 @@ it('getAttribute should work', async ({ page, server }) => {
   expect(await page.getAttribute('#outer', 'foo')).toBe(null);
 });
 
-it('inputValue should work', async ({ page, server }) => {
+it('EH-027 inputValue should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
 
   await page.selectOption('#select', 'foo');
@@ -65,21 +65,21 @@ it('inputValue should work', async ({ page, server }) => {
   expect(await handle2.inputValue().catch(e => e.message)).toContain('Node is not an <input>, <textarea> or <select> element');
 });
 
-it('innerHTML should work', async ({ page, server }) => {
+it('EH-028 innerHTML should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const handle = await page.$('#outer');
   expect(await handle.innerHTML()).toBe('<div id="inner">Text,\nmore text</div>');
   expect(await page.innerHTML('#outer')).toBe('<div id="inner">Text,\nmore text</div>');
 });
 
-it('innerText should work', async ({ page, server }) => {
+it('EH-029 innerText should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const handle = await page.$('#inner');
   expect(await handle.innerText()).toBe('Text, more text');
   expect(await page.innerText('#inner')).toBe('Text, more text');
 });
 
-it('innerText should throw', async ({ page, server }) => {
+it('EH-030 innerText should throw', async ({ page, server }) => {
   await page.setContent(`<svg>text</svg>`);
   const error1 = await page.innerText('svg').catch(e => e);
   expect(error1.message).toContain('Node is not an HTMLElement');
@@ -88,14 +88,14 @@ it('innerText should throw', async ({ page, server }) => {
   expect(error2.message).toContain('Node is not an HTMLElement');
 });
 
-it('textContent should work', async ({ page, server }) => {
+it('EH-031 textContent should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const handle = await page.$('#inner');
   expect(await handle.textContent()).toBe('Text,\nmore text');
   expect(await page.textContent('#inner')).toBe('Text,\nmore text');
 });
 
-it('textContent should work on ShadowRoot', async ({ page, server }) => {
+it('EH-032 textContent should work on ShadowRoot', async ({ page, server }) => {
   await page.setContent(`
     <div></div>
     <script>
@@ -109,7 +109,7 @@ it('textContent should work on ShadowRoot', async ({ page, server }) => {
   expect(await root.$$(':scope div')).toEqual([]);
 });
 
-it('isVisible and isHidden should work', async ({ page }) => {
+it('EH-033 isVisible and isHidden should work', async ({ page }) => {
   await page.setContent(`<div>Hi</div><span></span>`);
 
   const div = await page.$('div');
@@ -128,7 +128,7 @@ it('isVisible and isHidden should work', async ({ page }) => {
   expect(await page.isHidden('no-such-element')).toBe(true);
 });
 
-it('isVisible should not throw when the DOM element is not connected', async ({ page }) => {
+it('EH-034 isVisible should not throw when the DOM element is not connected', async ({ page }) => {
   await page.setContent(`<div id="root"></div>`);
   await page.evaluate(() => {
     function insert() {
@@ -147,7 +147,7 @@ it('isVisible should not throw when the DOM element is not connected', async ({ 
     await page.isVisible('#problem');
 });
 
-it('isEnabled and isDisabled should work', async ({ page }) => {
+it('EH-035 isEnabled and isDisabled should work', async ({ page }) => {
   await page.setContent(`
     <button disabled>button1</button>
     <button>button2</button>
@@ -170,7 +170,7 @@ it('isEnabled and isDisabled should work', async ({ page }) => {
   expect(await page.isDisabled(':text("button2")')).toBe(false);
 });
 
-it('isEnabled and isDisabled should work with <select/> option/optgroup correctly', async ({ page }) => {
+it('EH-036 isEnabled and isDisabled should work with <select/> option/optgroup correctly', async ({ page }) => {
   await page.setContent(`
     <select name="select">
       <option id="enabled1" value="1">Enabled</option>
@@ -193,7 +193,7 @@ it('isEnabled and isDisabled should work with <select/> option/optgroup correctl
   expect((await (await page.$('optgroup >> nth=1')).isDisabled())).toBe(true);
 });
 
-it('isEditable should work', async ({ page }) => {
+it('EH-037 isEditable should work', async ({ page }) => {
   await page.setContent(`<input id=input1 disabled><textarea></textarea><input id=input2>`);
   await page.$eval('textarea', t => t.readOnly = true);
   const input1 = await page.$('#input1');
@@ -207,7 +207,7 @@ it('isEditable should work', async ({ page }) => {
   expect(await page.isEditable('textarea')).toBe(false);
 });
 
-it('isChecked should work', async ({ page }) => {
+it('EH-038 isChecked should work', async ({ page }) => {
   await page.setContent(`<input type='checkbox' checked><div>Not a checkbox</div>`);
   const handle = await page.$('input');
   expect(await handle.isChecked()).toBe(true);

@@ -17,7 +17,7 @@
 
 import { contextTest as it, expect } from '../config/browserTest';
 
-it('should work with browser context scripts @smoke', async ({ context, server }) => {
+it('IS-024 should work with browser context scripts @smoke', async ({ context, server }) => {
   await context.addInitScript(() => (window as any)['temp'] = 123);
   const page = await context.newPage();
   await page.addInitScript(() => (window as any)['injected'] = (window as any)['temp']);
@@ -25,7 +25,7 @@ it('should work with browser context scripts @smoke', async ({ context, server }
   expect(await page.evaluate(() => (window as any)['result'])).toBe(123);
 });
 
-it('should work without navigation, after all bindings', async ({ context }) => {
+it('IS-025 should work without navigation, after all bindings', async ({ context }) => {
   let callback: (arg: unknown) => void;
   const promise = new Promise(f => callback = f);
   await context.exposeFunction('woof', function(arg: any) {
@@ -42,7 +42,7 @@ it('should work without navigation, after all bindings', async ({ context }) => 
   expect(await promise).toBe('hey');
 });
 
-it('should work without navigation in popup', async ({ context }) => {
+it('IS-026 should work without navigation in popup', async ({ context }) => {
   await context.addInitScript(() => (window as any)['temp'] = 123);
   const page = await context.newPage();
   const [popup] = await Promise.all([
@@ -52,14 +52,14 @@ it('should work without navigation in popup', async ({ context }) => {
   expect(await popup.evaluate(() => (window as any)['temp'])).toBe(123);
 });
 
-it('should work with browser context scripts with a path', async ({ context, server, asset }) => {
+it('IS-027 should work with browser context scripts with a path', async ({ context, server, asset }) => {
   await context.addInitScript({ path: asset('injectedfile.js') });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/tamperable.html');
   expect(await page.evaluate(() => (window as any)['result'])).toBe(123);
 });
 
-it('should work with browser context scripts for already created pages', async ({ context, server }) => {
+it('IS-028 should work with browser context scripts for already created pages', async ({ context, server }) => {
   const page = await context.newPage();
   await context.addInitScript(() => (window as any)['temp'] = 123);
   await page.addInitScript(() => (window as any)['injected'] = (window as any)['temp']);
@@ -67,7 +67,7 @@ it('should work with browser context scripts for already created pages', async (
   expect(await page.evaluate(() => (window as any)['result'])).toBe(123);
 });
 
-it('should remove context init script after dispose', async ({ context, server }) => {
+it('IS-029 should remove context init script after dispose', async ({ context, server }) => {
   const disposable = await context.addInitScript(() => (window as any)['temp'] = 123);
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/tamperable.html');
@@ -78,7 +78,7 @@ it('should remove context init script after dispose', async ({ context, server }
   expect(await page.evaluate(() => (window as any)['temp'])).toBe(undefined);
 });
 
-it('should remove context init script and keep working in new pages', async ({ context, server }) => {
+it('IS-030 should remove context init script and keep working in new pages', async ({ context, server }) => {
   const disposable = await context.addInitScript(() => (window as any)['temp'] = 123);
   await disposable.dispose();
   const page = await context.newPage();
@@ -86,7 +86,7 @@ it('should remove context init script and keep working in new pages', async ({ c
   expect(await page.evaluate(() => (window as any)['temp'])).toBe(undefined);
 });
 
-it('should expose functions passed as arguments', async ({ context, server }) => {
+it('IS-031 should expose functions passed as arguments', async ({ context, server }) => {
   const received: string[] = [];
   await context.addInitScript(async ({ cb }) => {
     await cb(location.href);
@@ -96,7 +96,7 @@ it('should expose functions passed as arguments', async ({ context, server }) =>
   await expect.poll(() => received).toContain(server.EMPTY_PAGE);
 });
 
-it('should expose functions that survive navigation', async ({ context, server }) => {
+it('IS-032 should expose functions that survive navigation', async ({ context, server }) => {
   const received: number[] = [];
   await context.addInitScript(({ cb }) => {
     (window as any).cb = cb;
@@ -109,7 +109,7 @@ it('should expose functions that survive navigation', async ({ context, server }
   expect(received).toEqual([1, 2]);
 });
 
-it('should expose functions in popups', async ({ context, server }) => {
+it('IS-033 should expose functions in popups', async ({ context, server }) => {
   await context.addInitScript(({ mul }) => {
     (window as any).mul = mul;
   }, { mul: (a: number, b: number) => a * b }, { exposeFunctions: true });
@@ -122,7 +122,7 @@ it('should expose functions in popups', async ({ context, server }) => {
   expect(await popup.evaluate(() => (window as any).mul(6, 7))).toBe(42);
 });
 
-it('should remove exposed functions after dispose', async ({ context, server }) => {
+it('IS-034 should remove exposed functions after dispose', async ({ context, server }) => {
   const disposable = await context.addInitScript(({ cb }) => {
     (window as any).cb = cb;
   }, { cb: (n: number) => n * 2 }, { exposeFunctions: true });
@@ -134,7 +134,7 @@ it('should remove exposed functions after dispose', async ({ context, server }) 
   expect(await page.evaluate(() => typeof (window as any).cb)).toBe('undefined');
 });
 
-it('init script should run only once in popup', async ({ context }) => {
+it('IS-035 init script should run only once in popup', async ({ context }) => {
   await context.addInitScript(() => {
     window['callCount'] = (window['callCount'] || 0) + 1;
   });

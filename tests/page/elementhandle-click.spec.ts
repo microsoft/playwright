@@ -17,14 +17,14 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work @smoke', async ({ page, server }) => {
+it('EH-010 should work @smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');
   await button.click();
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should work with Node removed', async ({ page, server }) => {
+it('EH-011 should work with Node removed', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.evaluate(() => delete window['Node']);
   const button = await page.$('button');
@@ -32,14 +32,14 @@ it('should work with Node removed', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should work for Shadow DOM v1', async ({ page, server }) => {
+it('EH-012 should work for Shadow DOM v1', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/shadow.html');
   const buttonHandle = await page.evaluateHandle(() => window['button'] as HTMLButtonElement);
   await buttonHandle.click();
   expect(await page.evaluate('clicked')).toBe(true);
 });
 
-it('should work for TextNodes', async ({ page }) => {
+it('EH-013 should work for TextNodes', async ({ page }) => {
   await page.setContent(`
     <div id='outer' onclick="window['result'] = 'Clicked ' + event.target.id;">
       <div id='inner' style="max-width: 50px">Lorem ipsum dolor sit amet consectetur adipiscing elit proin, integer curabitur imperdiet rhoncus cursus tincidunt bibendum, consequat sed magnis laoreet luctus mollis tellus. Nisl parturient mus accumsan feugiat sem laoreet magnis nisi, aptent per sollicitudin gravida orci ac blandit, viverra eros praesent auctor vivamus semper bibendum. Consequat sed habitasse luctus dictumst gravida platea semper phasellus, nascetur ridiculus purus est varius quisque et scelerisque, id vehicula eleifend montes sollicitudin dis velit. Pellentesque ridiculus per natoque et eleifend taciti nunc, laoreet auctor at condimentum imperdiet ante, conubia mi cubilia scelerisque sociosqu sem.</div>
@@ -51,7 +51,7 @@ it('should work for TextNodes', async ({ page }) => {
   expect(await page.evaluate(() => window['result'])).toBe('Clicked outer');
 });
 
-it('should throw for detached nodes', async ({ page, server }) => {
+it('EH-014 should throw for detached nodes', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');
   await page.evaluate(button => button.remove(), button);
@@ -60,7 +60,7 @@ it('should throw for detached nodes', async ({ page, server }) => {
   expect(error.message).toContain('Element is not attached to the DOM');
 });
 
-it('should throw for hidden nodes with force', async ({ page, server }) => {
+it('EH-015 should throw for hidden nodes with force', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');
   await page.evaluate(button => button.style.display = 'none', button);
@@ -68,7 +68,7 @@ it('should throw for hidden nodes with force', async ({ page, server }) => {
   expect(error.message).toContain('Element is not visible');
 });
 
-it('should throw for recursively hidden nodes with force', async ({ page, server }) => {
+it('EH-016 should throw for recursively hidden nodes with force', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');
   await page.evaluate(button => button.parentElement.style.display = 'none', button);
@@ -76,14 +76,14 @@ it('should throw for recursively hidden nodes with force', async ({ page, server
   expect(error.message).toContain('Element is not visible');
 });
 
-it('should throw for <br> elements with force', async ({ page, server }) => {
+it('EH-017 should throw for <br> elements with force', async ({ page, server }) => {
   await page.setContent('hello<br>goodbye');
   const br = await page.$('br');
   const error = await br.click({ force: true }).catch(err => err);
   expect(error.message).toContain('Element is outside of the viewport');
 });
 
-it('should double click the button', async ({ page, server }) => {
+it('EH-018 should double click the button', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.evaluate(() => {
     window['double'] = false;

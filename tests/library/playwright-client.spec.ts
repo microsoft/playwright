@@ -23,7 +23,7 @@ it.skip(({ mode }) => mode !== 'default');
 
 const kBundlePath = path.join(__dirname, '..', '..', 'packages', 'playwright-client', 'lib', 'index.mjs');
 
-it('should connect from a page and drive the same browser', async ({ browser, browserName, channel, server }) => {
+it('PC-001 should connect from a page and drive the same browser', async ({ browser, browserName, channel, server }) => {
   // Expose this very browser over a WebSocket endpoint. In WSL the browser runs in the
   // guest and reaches the host over mirrored networking, which mirrors the IPv4 loopback
   // but not the host's IPv6 `::1`; bind to 127.0.0.1 so the in-page client can connect back.

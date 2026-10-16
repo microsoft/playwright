@@ -20,58 +20,58 @@ import { playwrightTest as it, expect } from '../config/browserTest';
 it.describe('launch server', () => {
   it.skip(({ mode }) => mode !== 'default');
 
-  it('should work', async ({ browserType }) => {
+  it('BT-022 should work', async ({ browserType }) => {
     const browserServer = await browserType.launchServer();
     expect(browserServer.wsEndpoint()).not.toBe(null);
     await browserServer.close();
   });
 
-  it('should validate options', async ({ browserType }) => {
+  it('BT-023 should validate options', async ({ browserType }) => {
     await expect(browserType.launchServer({ channel: null })).rejects.toThrow(/channel: expected string, got object/);
   });
 
-  it('should work with host', async ({ browserType }) => {
+  it('BT-024 should work with host', async ({ browserType }) => {
     const host = '0.0.0.0';
     const browserServer = await browserType.launchServer({ host });
     expect(browserServer.wsEndpoint()).toContain(String(host));
     await browserServer.close();
   });
 
-  it('should work with port', async ({ browserType }, testInfo) => {
+  it('BT-025 should work with port', async ({ browserType }, testInfo) => {
     const port = 8800 + testInfo.workerIndex;
     const browserServer = await browserType.launchServer({ port });
     expect(browserServer.wsEndpoint()).toContain(String(port));
     await browserServer.close();
   });
 
-  it('should work with wsPath', async ({ browserType }) => {
+  it('BT-026 should work with wsPath', async ({ browserType }) => {
     const wsPath = '/unguessable-token';
     const browserServer = await browserType.launchServer({ wsPath });
     expect(browserServer.wsEndpoint()).toMatch(/:\d+\/unguessable-token$/);
     await browserServer.close();
   });
 
-  it('should work when wsPath is missing leading slash', async ({ browserType }) => {
+  it('BT-027 should work when wsPath is missing leading slash', async ({ browserType }) => {
     const wsPath = 'unguessable-token';
     const browserServer = await browserType.launchServer({ wsPath });
     expect(browserServer.wsEndpoint()).toMatch(/:\d+\/unguessable-token$/);
     await browserServer.close();
   });
 
-  it('should default to random wsPath', async ({ browserType }) => {
+  it('BT-028 should default to random wsPath', async ({ browserType }) => {
     const browserServer = await browserType.launchServer();
     expect(browserServer.wsEndpoint()).toMatch(/:\d+\/[a-f\d]{32}$/);
     await browserServer.close();
   });
 
-  it('should provide an error when ws endpoint is incorrect', async ({ browserType }) => {
+  it('BT-029 should provide an error when ws endpoint is incorrect', async ({ browserType }) => {
     const browserServer = await browserType.launchServer();
     const error = await browserType.connect(browserServer.wsEndpoint() + '-foo').catch(e => e);
     await browserServer.close();
     expect(error.message).toContain('400 Bad Request');
   });
 
-  it('should fire "close" event during kill', async ({ browserType }) => {
+  it('BT-030 should fire "close" event during kill', async ({ browserType }) => {
     const order = [];
     const browserServer = await browserType.launchServer();
     const closedPromise = new Promise<void>(f => browserServer.on('close', () => {
@@ -85,13 +85,13 @@ it.describe('launch server', () => {
     expect(order).toEqual(['closed', 'killed']);
   });
 
-  it('should return child_process instance', async ({ browserType }) => {
+  it('BT-031 should return child_process instance', async ({ browserType }) => {
     const browserServer = await browserType.launchServer();
     expect(browserServer.process().pid).toBeGreaterThan(0);
     await browserServer.close();
   });
 
-  it('should fire close event', async ({ browserType }) => {
+  it('BT-032 should fire close event', async ({ browserType }) => {
     const browserServer = await browserType.launchServer();
     const [result] = await Promise.all([
       // @ts-expect-error The signal parameter is not documented.
@@ -102,7 +102,7 @@ it.describe('launch server', () => {
     expect(result['signal']).toBe(null);
   });
 
-  it('should log protocol', async ({ browserType }) => {
+  it('BT-033 should log protocol', async ({ browserType }) => {
     const logs: string[] = [];
     const logger = {
       isEnabled(name: string) {

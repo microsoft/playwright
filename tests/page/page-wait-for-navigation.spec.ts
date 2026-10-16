@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 import type { Frame } from 'playwright-core';
 import { expectedSSLError } from '../config/utils';
 
-it('should work', async ({ page, server }) => {
+it('WA-095 should work', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [response] = await Promise.all([
     page.waitForNavigation(),
@@ -29,7 +29,7 @@ it('should work', async ({ page, server }) => {
   expect(response.url()).toContain('grid.html');
 });
 
-it('should respect timeout', async ({ page, server }) => {
+it('WA-096 should respect timeout', async ({ page, server }) => {
   const promise = page.waitForNavigation({ url: '**/frame.html', timeout: 5000 });
   await page.goto(server.EMPTY_PAGE);
   const error = await promise.catch(e => e);
@@ -38,7 +38,7 @@ it('should respect timeout', async ({ page, server }) => {
   expect(error.message).toContain(`navigated to "${server.EMPTY_PAGE}"`);
 });
 
-it('should work with both domcontentloaded and load', async ({ page, server }) => {
+it('WA-097 should work with both domcontentloaded and load', async ({ page, server }) => {
   let response = null;
   server.setRoute('/one-style.css', (req, res) => response = res);
   const navigationPromise = page.goto(server.PREFIX + '/one-style.html');
@@ -60,7 +60,7 @@ it('should work with both domcontentloaded and load', async ({ page, server }) =
   await navigationPromise;
 });
 
-it('should work with commit', async ({ page, server }) => {
+it('WA-098 should work with commit', async ({ page, server }) => {
   server.setRoute('/script.js', (req, res) => {});
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('content-type', 'text/html');
@@ -71,7 +71,7 @@ it('should work with commit', async ({ page, server }) => {
   expect(await page.title()).toBe('Hello');
 });
 
-it('should work with clicking on anchor links', async ({ page, server }) => {
+it('WA-099 should work with clicking on anchor links', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<a href='#foobar'>foobar</a>`);
   const [response] = await Promise.all([
@@ -82,7 +82,7 @@ it('should work with clicking on anchor links', async ({ page, server }) => {
   expect(page.url()).toBe(server.EMPTY_PAGE + '#foobar');
 });
 
-it('should work with clicking on links which do not commit navigation', async ({ page, server, httpsServer, browserName, platform, channel }) => {
+it('WA-100 should work with clicking on links which do not commit navigation', async ({ page, server, httpsServer, browserName, platform, channel }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<a href='${httpsServer.EMPTY_PAGE}'>foobar</a>`);
   const [error] = await Promise.all([
@@ -92,7 +92,7 @@ it('should work with clicking on links which do not commit navigation', async ({
   expect(error.message).toMatch(expectedSSLError(browserName, platform, channel));
 });
 
-it('should work with history.pushState()', async ({ page, server }) => {
+it('WA-101 should work with history.pushState()', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
     <a onclick='javascript:pushState()'>SPA</a>
@@ -108,7 +108,7 @@ it('should work with history.pushState()', async ({ page, server }) => {
   expect(page.url()).toBe(server.PREFIX + '/wow.html');
 });
 
-it('should work with history.replaceState()', async ({ page, server }) => {
+it('WA-102 should work with history.replaceState()', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
     <a onclick='javascript:replaceState()'>SPA</a>
@@ -124,7 +124,7 @@ it('should work with history.replaceState()', async ({ page, server }) => {
   expect(page.url()).toBe(server.PREFIX + '/replaced.html');
 });
 
-it('should work with DOM history.back()/history.forward()', async ({ page, server }) => {
+it('WA-103 should work with DOM history.back()/history.forward()', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
     <a id=back onclick='javascript:goBack()'>back</a>
@@ -151,7 +151,7 @@ it('should work with DOM history.back()/history.forward()', async ({ page, serve
   expect(page.url()).toBe(server.PREFIX + '/second.html');
 });
 
-it('should work when subframe issues window.stop()', async ({ browserName, page, server }) => {
+it('WA-104 should work when subframe issues window.stop()', async ({ browserName, page, server }) => {
   it.fixme(browserName === 'webkit', 'WebKit issues load event in some cases, but not always');
 
   server.setRoute('/frames/style.css', (req, res) => {});
@@ -166,7 +166,7 @@ it('should work when subframe issues window.stop()', async ({ browserName, page,
   expect(done).toBe(true);
 });
 
-it('should work with url match', async ({ page, server }) => {
+it('WA-105 should work with url match', async ({ page, server }) => {
   let response1 = null;
   const response1Promise = page.waitForNavigation({ url: /one-style\.html/ }).then(response => response1 = response);
   let response2 = null;
@@ -201,7 +201,7 @@ it('should work with url match', async ({ page, server }) => {
   expect(response3.url()).toBe(server.PREFIX + '/frame.html?foo=bar');
 });
 
-it('should work with url match for same document navigations', async ({ page, server }) => {
+it('WA-106 should work with url match for same document navigations', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let resolved = false;
   const waitPromise = page.waitForNavigation({ url: /third\.html/ }).then(() => resolved = true);
@@ -221,7 +221,7 @@ it('should work with url match for same document navigations', async ({ page, se
   expect(resolved).toBe(true);
 });
 
-it('should work for cross-process navigations', async ({ page, server }) => {
+it('WA-107 should work for cross-process navigations', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const waitPromise = page.waitForNavigation({ waitUntil: 'domcontentloaded' });
   const url = server.CROSS_PROCESS_PREFIX + '/empty.html';
@@ -233,7 +233,7 @@ it('should work for cross-process navigations', async ({ page, server }) => {
   await gotoPromise;
 });
 
-it('should work on frame', async ({ page, server }) => {
+it('WA-108 should work on frame', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.frames()[1];
   const [response] = await Promise.all([
@@ -246,7 +246,7 @@ it('should work on frame', async ({ page, server }) => {
   expect(page.url()).toContain('/frames/one-frame.html');
 });
 
-it('should fail when frame detaches', async ({ page, server }) => {
+it('WA-109 should fail when frame detaches', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.frames()[1];
   server.setRoute('/empty.html', () => {});

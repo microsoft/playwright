@@ -47,7 +47,7 @@ async function fetchResponse(page: Page, url: string) {
 }
 
 for (const status of [200, 302]) {
-  it(`should preserve original response header fields for ${status} responses`, async ({ page, server }) => {
+  it(`FF-005 should preserve original response header fields for ${status} responses`, async ({ page, server }) => {
     const headers = [
       { name: 'Date', value: 'Wed, 21 Oct 2037 07:28:00 GMT' },
       { name: 'X-Literal', value: 'first, "second, third"' },
@@ -77,7 +77,7 @@ for (const status of [200, 302]) {
   });
 }
 
-it('should preserve synthesized response header fields', async ({ page, server }) => {
+it('FF-006 should preserve synthesized response header fields', async ({ page, server }) => {
   const cookies = [
     'a=b; Expires=Wed, 21 Oct 2037 07:28:00 GMT',
     'c=d; Expires=Wed, 21 Oct 2037 07:28:00 GMT; Path=/',
@@ -102,7 +102,7 @@ it('should preserve synthesized response header fields', async ({ page, server }
   ]);
 });
 
-it('should report current effective fields after cache revalidation', async ({ page, server }) => {
+it('FF-007 should report current effective fields after cache revalidation', async ({ page, server }) => {
   const validators: (string | undefined)[] = [];
   server.setRoute('/cached-headers', (request, response) => {
     validators.push(request.headers['if-none-match']);
@@ -155,7 +155,7 @@ it('should report current effective fields after cache revalidation', async ({ p
     expect(await cached.response.headerValues(name)).toEqual([]);
 });
 
-it('should report a standalone 304 response without waiting for a cache merge', async ({ page, server }) => {
+it('FF-008 should report a standalone 304 response without waiting for a cache merge', async ({ page, server }) => {
   server.setRoute('/standalone-304', (request, response) => {
     response.writeHead(304, {
       'X-Literal': 'standalone, value',

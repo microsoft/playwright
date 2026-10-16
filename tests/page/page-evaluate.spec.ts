@@ -18,32 +18,32 @@
 import { attachFrame, detachFrame } from '../config/utils';
 import { test as it, expect } from './pageTest';
 
-it('should work @smoke', async ({ page }) => {
+it('EV-001 should work @smoke', async ({ page }) => {
   const result = await page.evaluate(() => 7 * 3);
   expect(result).toBe(21);
 });
 
-it('should transfer NaN', async ({ page }) => {
+it('EV-002 should transfer NaN', async ({ page }) => {
   const result = await page.evaluate(a => a, NaN);
   expect(Object.is(result, NaN)).toBe(true);
 });
 
-it('should transfer -0', async ({ page }) => {
+it('EV-003 should transfer -0', async ({ page }) => {
   const result = await page.evaluate(a => a, -0);
   expect(Object.is(result, -0)).toBe(true);
 });
 
-it('should transfer Infinity', async ({ page }) => {
+it('EV-004 should transfer Infinity', async ({ page }) => {
   const result = await page.evaluate(a => a, Infinity);
   expect(Object.is(result, Infinity)).toBe(true);
 });
 
-it('should transfer -Infinity', async ({ page }) => {
+it('EV-005 should transfer -Infinity', async ({ page }) => {
   const result = await page.evaluate(a => a, -Infinity);
   expect(Object.is(result, -Infinity)).toBe(true);
 });
 
-it('should roundtrip unserializable values', async ({ page }) => {
+it('EV-006 should roundtrip unserializable values', async ({ page }) => {
   const value = {
     infinity: Infinity,
     nInfinity: -Infinity,
@@ -54,7 +54,7 @@ it('should roundtrip unserializable values', async ({ page }) => {
   expect(result).toEqual(value);
 });
 
-it('should roundtrip promise to value', async ({ page }) => {
+it('EV-007 should roundtrip promise to value', async ({ page }) => {
   {
     const result = await page.evaluate(value => Promise.resolve(value), null);
     expect(result === null).toBeTruthy();
@@ -73,7 +73,7 @@ it('should roundtrip promise to value', async ({ page }) => {
   }
 });
 
-it('should roundtrip promise to unserializable values', async ({ page }) => {
+it('EV-008 should roundtrip promise to unserializable values', async ({ page }) => {
   const value = {
     infinity: Infinity,
     nInfinity: -Infinity,
@@ -84,17 +84,17 @@ it('should roundtrip promise to unserializable values', async ({ page }) => {
   expect(result).toEqual(value);
 });
 
-it('should transfer arrays', async ({ page }) => {
+it('EV-009 should transfer arrays', async ({ page }) => {
   const result = await page.evaluate(a => a, [1, 2, 3]);
   expect(result).toEqual([1, 2, 3]);
 });
 
-it('should transfer arrays as arrays, not objects', async ({ page }) => {
+it('EV-010 should transfer arrays as arrays, not objects', async ({ page }) => {
   const result = await page.evaluate(a => Array.isArray(a), [1, 2, 3]);
   expect(result).toBe(true);
 });
 
-it('should transfer typed arrays', async ({ page }) => {
+it('EV-011 should transfer typed arrays', async ({ page }) => {
   const testCases = [
     new Int8Array([1, 2, 3]),
     new Uint8Array([1, 2, 3]),
@@ -115,34 +115,34 @@ it('should transfer typed arrays', async ({ page }) => {
   }
 });
 
-it('should transfer bigint', async ({ page }) => {
+it('EV-012 should transfer bigint', async ({ page }) => {
   expect(await page.evaluate(() => 42n)).toBe(42n);
   expect(await page.evaluate(a => a, 17n)).toBe(17n);
 });
 
-it('should transfer maps as empty objects', async ({ page }) => {
+it('EV-013 should transfer maps as empty objects', async ({ page }) => {
   const result = await page.evaluate(a => a.x.constructor.name + ' ' + JSON.stringify(a.x), { x: new Map([[1, 2]]) });
   expect(result).toBe('Object {}');
   expect(await page.evaluate(() => new Map([[1, 2]]))).toEqual({});
 });
 
-it('should transfer sets as empty objects', async ({ page }) => {
+it('EV-014 should transfer sets as empty objects', async ({ page }) => {
   const result = await page.evaluate(a => a.x.constructor.name + ' ' + JSON.stringify(a.x), { x: new Set([1, 2]) });
   expect(result).toBe('Object {}');
   expect(await page.evaluate(() => new Set([1, 2]))).toEqual({});
 });
 
-it('should modify global environment', async ({ page }) => {
+it('EV-015 should modify global environment', async ({ page }) => {
   await page.evaluate(() => window['globalVar'] = 123);
   expect(await page.evaluate('globalVar')).toBe(123);
 });
 
-it('should evaluate in the page context', async ({ page, server }) => {
+it('EV-016 should evaluate in the page context', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/global-var.html');
   expect(await page.evaluate('globalVar')).toBe(123);
 });
 
-it('should return undefined for objects with symbols', async ({ page }) => {
+it('EV-017 should return undefined for objects with symbols', async ({ page }) => {
   expect(await page.evaluate(() => [Symbol('foo4')])).toEqual([undefined]);
   expect(await page.evaluate(() => {
     const a = {};
@@ -154,7 +154,7 @@ it('should return undefined for objects with symbols', async ({ page }) => {
   })).toEqual({ foo: [{ a: undefined }] });
 });
 
-it('should work with function shorthands', async ({ page }) => {
+it('EV-018 should work with function shorthands', async ({ page }) => {
   const a = {
     sum([a, b]: number[]) { return a + b; },
     async mult([a, b]: number[]) { return a * b; }
@@ -163,19 +163,19 @@ it('should work with function shorthands', async ({ page }) => {
   expect(await page.evaluate(a.mult, [2, 4])).toBe(8);
 });
 
-it('should work with unicode chars', async ({ page }) => {
+it('EV-019 should work with unicode chars', async ({ page }) => {
   const result = await page.evaluate(a => a['中文字符'], { '中文字符': 42 });
   expect(result).toBe(42);
 });
 
-it('should work with large strings', async ({ page, isAndroid }) => {
+it('EV-020 should work with large strings', async ({ page, isAndroid }) => {
   it.skip(isAndroid, 'string is too long :(');
 
   const expected = 'x'.repeat(40000);
   expect(await page.evaluate(data => data, expected)).toBe(expected);
 });
 
-it('should work with large unicode strings', async ({ page, browserName, platform, isAndroid }) => {
+it('EV-021 should work with large unicode strings', async ({ page, browserName, platform, isAndroid }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16367' });
   it.skip(isAndroid, 'string is too long :(');
 
@@ -183,7 +183,7 @@ it('should work with large unicode strings', async ({ page, browserName, platfor
   expect(await page.evaluate(data => data, expected)).toBe(expected);
 });
 
-it('should throw when evaluation triggers reload', async ({ page }) => {
+it('EV-022 should throw when evaluation triggers reload', async ({ page }) => {
   let error = null;
   await page.evaluate(() => {
     location.reload();
@@ -192,12 +192,12 @@ it('should throw when evaluation triggers reload', async ({ page }) => {
   expect(error.message).toContain('navigation');
 });
 
-it('should await promise', async ({ page }) => {
+it('EV-023 should await promise', async ({ page }) => {
   const result = await page.evaluate(() => Promise.resolve(8 * 7));
   expect(result).toBe(56);
 });
 
-it('should work right after framenavigated', async ({ page, server }) => {
+it('EV-024 should work right after framenavigated', async ({ page, server }) => {
   let frameEvaluation = null;
   page.on('framenavigated', async frame => {
     frameEvaluation = frame.evaluate(() => 6 * 7);
@@ -206,7 +206,7 @@ it('should work right after framenavigated', async ({ page, server }) => {
   expect(await frameEvaluation).toBe(42);
 });
 
-it('should work right after a cross-origin navigation', async ({ page, server }) => {
+it('EV-025 should work right after a cross-origin navigation', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let frameEvaluation = null;
   page.on('framenavigated', async frame => {
@@ -216,7 +216,7 @@ it('should work right after a cross-origin navigation', async ({ page, server })
   expect(await frameEvaluation).toBe(42);
 });
 
-it('should work from-inside an exposed function', async ({ page }) => {
+it('EV-026 should work from-inside an exposed function', async ({ page }) => {
   // Setup inpage callback, which calls Page.evaluate
   await page.exposeFunction('callController', async function(a, b) {
     return await page.evaluate(({ a, b }) => a * b, { a, b });
@@ -227,7 +227,7 @@ it('should work from-inside an exposed function', async ({ page }) => {
   expect(result).toBe(27);
 });
 
-it('should reject promise with exception', async ({ page }) => {
+it('EV-027 should reject promise with exception', async ({ page }) => {
   let error = null;
   // @ts-ignore
   await page.evaluate(() => not_existing_object.property).catch(e => error = e);
@@ -235,21 +235,21 @@ it('should reject promise with exception', async ({ page }) => {
   expect(error.message).toContain('not_existing_object');
 });
 
-it('should support thrown strings as error messages', async ({ page }) => {
+it('EV-028 should support thrown strings as error messages', async ({ page }) => {
   let error = null;
   await page.evaluate(() => { throw 'qwerty'; }).catch(e => error = e);
   expect(error).toBeTruthy();
   expect(error.message).toContain('qwerty');
 });
 
-it('should support thrown numbers as error messages', async ({ page }) => {
+it('EV-029 should support thrown numbers as error messages', async ({ page }) => {
   let error = null;
   await page.evaluate(() => { throw 100500; }).catch(e => error = e);
   expect(error).toBeTruthy();
   expect(error.message).toContain('100500');
 });
 
-it('should reject when a falsy value is thrown', {
+it('EV-030 should reject when a falsy value is thrown', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42661' },
 }, async ({ page }) => {
   for (const value of ['null', 'undefined', '0', `''`, 'false', 'NaN', '-0', '0n']) {
@@ -260,7 +260,7 @@ it('should reject when a falsy value is thrown', {
   }
 });
 
-it('should include a non-error rejection value in the error message', {
+it('EV-031 should include a non-error rejection value in the error message', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42661' },
 }, async ({ page }) => {
   const error = await page.evaluate(() => Promise.reject(7)).then(() => null, e => e);
@@ -269,34 +269,34 @@ it('should include a non-error rejection value in the error message', {
   expect(nullError.message).toContain('null');
 });
 
-it('should return complex objects', async ({ page }) => {
+it('EV-032 should return complex objects', async ({ page }) => {
   const object = { foo: 'bar!' };
   const result = await page.evaluate(a => a, object);
   expect(result).not.toBe(object);
   expect(result).toEqual(object);
 });
 
-it('should return NaN', async ({ page }) => {
+it('EV-033 should return NaN', async ({ page }) => {
   const result = await page.evaluate(() => NaN);
   expect(Object.is(result, NaN)).toBe(true);
 });
 
-it('should return -0', async ({ page }) => {
+it('EV-034 should return -0', async ({ page }) => {
   const result = await page.evaluate(() => -0);
   expect(Object.is(result, -0)).toBe(true);
 });
 
-it('should return Infinity', async ({ page }) => {
+it('EV-035 should return Infinity', async ({ page }) => {
   const result = await page.evaluate(() => Infinity);
   expect(Object.is(result, Infinity)).toBe(true);
 });
 
-it('should return -Infinity', async ({ page }) => {
+it('EV-036 should return -Infinity', async ({ page }) => {
   const result = await page.evaluate(() => -Infinity);
   expect(Object.is(result, -Infinity)).toBe(true);
 });
 
-it('should work with overwritten Promise', async ({ page }) => {
+it('EV-037 should work with overwritten Promise', async ({ page }) => {
   await page.evaluate(() => {
     const originalPromise = window.Promise;
     class Promise2 {
@@ -350,7 +350,7 @@ it('should work with overwritten Promise', async ({ page }) => {
   await page.waitForFunction(() => (window as any).__done);
 });
 
-it('should throw when passed more than one parameter', async ({ page }) => {
+it('EV-038 should throw when passed more than one parameter', async ({ page }) => {
   const expectThrow = async f => {
     let error;
     await f().catch(e => error = e);
@@ -379,33 +379,33 @@ it('should throw when passed more than one parameter', async ({ page }) => {
   await expectThrow(() => frame.evaluate((a, b) => false, 1, 2));
 });
 
-it('should accept "undefined" as one of multiple parameters', async ({ page }) => {
+it('EV-039 should accept "undefined" as one of multiple parameters', async ({ page }) => {
   const result = await page.evaluate(({ a, b }) => Object.is(a, undefined) && Object.is(b, 'foo'), { a: undefined, b: 'foo' });
   expect(result).toBe(true);
 });
 
-it('should properly serialize undefined arguments', async ({ page }) => {
+it('EV-040 should properly serialize undefined arguments', async ({ page }) => {
   expect(await page.evaluate(x => ({ a: x }), undefined)).toEqual({});
 });
 
-it('should properly serialize undefined fields', async ({ page }) => {
+it('EV-041 should properly serialize undefined fields', async ({ page }) => {
   expect(await page.evaluate(() => ({ a: undefined }))).toEqual({});
 });
 
-it('should return undefined properties', async ({ page }) => {
+it('EV-042 should return undefined properties', async ({ page }) => {
   const value = await page.evaluate(() => ({ a: undefined }));
   expect('a' in value).toBe(true);
 });
 
-it('should properly serialize null arguments', async ({ page }) => {
+it('EV-043 should properly serialize null arguments', async ({ page }) => {
   expect(await page.evaluate(x => x, null)).toEqual(null);
 });
 
-it('should properly serialize null fields', async ({ page }) => {
+it('EV-044 should properly serialize null fields', async ({ page }) => {
   expect(await page.evaluate(() => ({ a: null }))).toEqual({ a: null });
 });
 
-it('should properly serialize PerformanceMeasure object', async ({ page }) => {
+it('EV-045 should properly serialize PerformanceMeasure object', async ({ page }) => {
   expect(await page.evaluate(() => {
     window.builtins.performance.mark('start');
     window.builtins.performance.mark('end');
@@ -419,7 +419,7 @@ it('should properly serialize PerformanceMeasure object', async ({ page }) => {
   })]);
 });
 
-it('should properly serialize window.performance object', async ({ page }) => {
+it('EV-046 should properly serialize window.performance object', async ({ page }) => {
   it.skip(!!process.env.PW_CLOCK);
 
   expect(await page.evaluate(() => performance)).toEqual(expect.objectContaining({
@@ -454,11 +454,11 @@ it('should properly serialize window.performance object', async ({ page }) => {
   }));
 });
 
-it('should return undefined for non-serializable objects', async ({ page }) => {
+it('EV-047 should return undefined for non-serializable objects', async ({ page }) => {
   expect(await page.evaluate(() => function() {})).toBe(undefined);
 });
 
-it('should throw for too deep reference chain', {
+it('EV-048 should throw for too deep reference chain', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33997' }
 }, async ({ page, browserName, isBidi }) => {
   it.fixme(browserName === 'firefox' && !isBidi, 'Firefox Juggler -> Playwright serialiser does not throw for deep references.\nThis causes large objects to get serialised back to the Playwright client.\nThere our validators throw \'Maximum call stack size exceeded\'.');
@@ -473,7 +473,7 @@ it('should throw for too deep reference chain', {
   }, 1000)).rejects.toThrow('Cannot serialize result: object reference chain is too long.');
 });
 
-it('should throw for too deep reference chain 2', {
+it('EV-049 should throw for too deep reference chain 2', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40940' }
 }, async ({ page, browserName, isAndroid }) => {
   it.skip(browserName !== 'chromium', 'this is a chromium-only limitation');
@@ -487,32 +487,32 @@ it('should throw for too deep reference chain 2', {
   }, 200)).rejects.toThrow('Cannot serialize result: object reference chain is too long.');
 });
 
-it('should throw usable message for unserializable shallow function', async ({ page }) => {
+it('EV-050 should throw usable message for unserializable shallow function', async ({ page }) => {
   await expect(() => page.evaluate(arg => arg, () => { }))
       .rejects.toThrow(/Attempting to serialize unexpected value: \(\) => {}/);
 });
 
-it('should throw usable message for unserializable object one deep function', async ({ page }) => {
+it('EV-051 should throw usable message for unserializable object one deep function', async ({ page }) => {
   await expect(() => page.evaluate(arg => arg, { aProperty: () => { } }))
       .rejects.toThrow(/Attempting to serialize unexpected value at position "aProperty": \(\) => {}/);
 });
 
-it('should throw usable message for unserializable object nested function', async ({ page }) => {
+it('EV-052 should throw usable message for unserializable object nested function', async ({ page }) => {
   await expect(() => page.evaluate(arg => arg, { a: { inner: { property: () => { } } } }))
       .rejects.toThrow(/Attempting to serialize unexpected value at position "a\.inner\.property": \(\) => {}/);
 });
 
-it('should throw usable message for unserializable array nested function', async ({ page }) => {
+it('EV-053 should throw usable message for unserializable array nested function', async ({ page }) => {
   await expect(() => page.evaluate(arg => arg, { a: { inner: ['firstValue', { property: () => { } }] } }))
       .rejects.toThrow(/Attempting to serialize unexpected value at position "a\.inner\[1\]\.property": \(\) => {}/);
 });
 
-it('should alias Window, Document and Node', async ({ page }) => {
+it('EV-054 should alias Window, Document and Node', async ({ page }) => {
   const object = await page.evaluate('[window, document, document.body]');
   expect(object).toEqual(['ref: <Window>', 'ref: <Document>', 'ref: <Node>']);
 });
 
-it('should work for circular object', async ({ page }) => {
+it('EV-055 should work for circular object', async ({ page }) => {
   const result = await page.evaluate(() => {
     const a = {} as any;
     a.b = a;
@@ -523,7 +523,7 @@ it('should work for circular object', async ({ page }) => {
   expect(result).toEqual(a);
 });
 
-it('should be able to throw a tricky error', async ({ page }) => {
+it('EV-056 should be able to throw a tricky error', async ({ page }) => {
   const windowHandle = await page.evaluateHandle(() => window);
   const errorText = await windowHandle.jsonValue().catch(e => e.message);
   const error = await page.evaluate(errorText => {
@@ -532,29 +532,29 @@ it('should be able to throw a tricky error', async ({ page }) => {
   expect(error.message).toContain(errorText);
 });
 
-it('should accept a string', async ({ page }) => {
+it('EV-057 should accept a string', async ({ page }) => {
   const result = await page.evaluate('1 + 2');
   expect(result).toBe(3);
 });
 
-it('should accept a string with semi colons', async ({ page }) => {
+it('EV-058 should accept a string with semi colons', async ({ page }) => {
   const result = await page.evaluate('1 + 5;');
   expect(result).toBe(6);
 });
 
-it('should accept a string with comments', async ({ page }) => {
+it('EV-059 should accept a string with comments', async ({ page }) => {
   const result = await page.evaluate('2 + 5;\n// do some math!');
   expect(result).toBe(7);
 });
 
-it('should accept element handle as an argument', async ({ page }) => {
+it('EV-060 should accept element handle as an argument', async ({ page }) => {
   await page.setContent('<section>42</section>');
   const element = await page.$('section');
   const text = await page.evaluate(e => e.textContent, element);
   expect(text).toBe('42');
 });
 
-it('should throw if underlying element was disposed', async ({ page }) => {
+it('EV-061 should throw if underlying element was disposed', async ({ page }) => {
   await page.setContent('<section>39</section>');
   const element = await page.$('section');
   expect(element).toBeTruthy();
@@ -564,7 +564,7 @@ it('should throw if underlying element was disposed', async ({ page }) => {
   expect(error.message).toContain('no object with guid');
 });
 
-it('should simulate a user gesture', async ({ page }) => {
+it('EV-062 should simulate a user gesture', async ({ page }) => {
   const result = await page.evaluate(() => {
     document.body.appendChild(document.createTextNode('test'));
     document.execCommand('selectAll');
@@ -573,7 +573,7 @@ it('should simulate a user gesture', async ({ page }) => {
   expect(result).toBe(true);
 });
 
-it('should throw a nice error after a navigation', async ({ page }) => {
+it('EV-063 should throw a nice error after a navigation', async ({ page }) => {
   const errorPromise = page.evaluate(() => new Promise(f => window['__resolve'] = f)).catch(e => e) as Promise<Error>;
   await Promise.all([
     page.waitForNavigation(),
@@ -586,7 +586,7 @@ it('should throw a nice error after a navigation', async ({ page }) => {
   expect(error.message).toContain('navigation');
 });
 
-it('should not throw an error when evaluation does a navigation', async ({ page, server }) => {
+it('EV-064 should not throw an error when evaluation does a navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/one-style.html');
   const result = await page.evaluate(() => {
     window.location.href = '/empty.html';
@@ -595,7 +595,7 @@ it('should not throw an error when evaluation does a navigation', async ({ page,
   expect(result).toEqual([42]);
 });
 
-it('should not throw an error when evaluation does a synchronous navigation and returns an object', async ({ page, server, browserName }) => {
+it('EV-065 should not throw an error when evaluation does a synchronous navigation and returns an object', async ({ page, server, browserName }) => {
   // It is important to be on about:blank for sync reload.
   const result = await page.evaluate(() => {
     window.location.reload();
@@ -604,7 +604,7 @@ it('should not throw an error when evaluation does a synchronous navigation and 
   expect(result).toEqual({ a: 42 });
 });
 
-it('should not throw an error when evaluation does a synchronous navigation and returns undefined', async ({ page }) => {
+it('EV-066 should not throw an error when evaluation does a synchronous navigation and returns undefined', async ({ page }) => {
   // It is important to be on about:blank for sync reload.
   const result = await page.evaluate(() => {
     window.location.reload();
@@ -613,7 +613,7 @@ it('should not throw an error when evaluation does a synchronous navigation and 
   expect(result).toBe(undefined);
 });
 
-it('should transfer 100Mb of data from page to node.js', async ({ mode, page }) => {
+it('EV-067 should transfer 100Mb of data from page to node.js', async ({ mode, page }) => {
   it.skip(mode !== 'default');
 
   // This is too slow with wire.
@@ -621,7 +621,7 @@ it('should transfer 100Mb of data from page to node.js', async ({ mode, page }) 
   expect(a.length).toBe(100 * 1024 * 1024);
 });
 
-it('should throw error with detailed information on exception inside promise ', async ({ page }) => {
+it('EV-068 should throw error with detailed information on exception inside promise ', async ({ page }) => {
   let error = null;
   await page.evaluate(() => new Promise(() => {
     throw new Error('Error in promise');
@@ -629,13 +629,13 @@ it('should throw error with detailed information on exception inside promise ', 
   expect(error.message).toContain('Error in promise');
 });
 
-it('should work even when JSON is set to null', async ({ page }) => {
+it('EV-069 should work even when JSON is set to null', async ({ page }) => {
   await page.evaluate(() => { window.JSON.stringify = null; window.JSON = null; });
   const result = await page.evaluate(() => ({ abc: 123 }));
   expect(result).toEqual({ abc: 123 });
 });
 
-it('should await promise from popup', async ({ page, server }) => {
+it('EV-070 should await promise from popup', async ({ page, server }) => {
   // Something is wrong about the way Firefox waits for the chained promise
   await page.goto(server.EMPTY_PAGE);
   const result = await page.evaluate(() => {
@@ -645,13 +645,13 @@ it('should await promise from popup', async ({ page, server }) => {
   expect(result).toBe(42);
 });
 
-it('should work with new Function() and CSP', async ({ page, server }) => {
+it('EV-071 should work with new Function() and CSP', async ({ page, server }) => {
   server.setCSP('/empty.html', 'script-src ' + server.PREFIX);
   await page.goto(server.PREFIX + '/empty.html');
   expect(await page.evaluate(() => new Function('return true')())).toBe(true);
 });
 
-it('should work with non-strict expressions', async ({ page, server }) => {
+it('EV-072 should work with non-strict expressions', async ({ page, server }) => {
   expect(await page.evaluate(() => {
     // @ts-ignore
     y = 3.14;
@@ -660,7 +660,7 @@ it('should work with non-strict expressions', async ({ page, server }) => {
   })).toBe(3.14);
 });
 
-it('should respect use strict expression', async ({ page }) => {
+it('EV-073 should respect use strict expression', async ({ page }) => {
   const error = await page.evaluate(() => {
     'use strict';
     // @ts-ignore
@@ -671,22 +671,22 @@ it('should respect use strict expression', async ({ page }) => {
   expect(error.message).toContain('variableY');
 });
 
-it('should not leak utility script', async function({ page }) {
+it('EV-074 should not leak utility script', async function({ page }) {
   expect(await page.evaluate('this === window')).toBe(true);
 });
 
-it('should not leak handles', async ({ page }) => {
+it('EV-075 should not leak handles', async ({ page }) => {
   const error = await page.evaluate('handles.length').catch(e => e);
   expect((error as Error).message).toContain(' handles');
 });
 
-it('should work with CSP', async ({ page, server }) => {
+it('EV-076 should work with CSP', async ({ page, server }) => {
   server.setCSP('/empty.html', `script-src 'self'`);
   await page.goto(server.EMPTY_PAGE);
   expect(await page.evaluate(() => 2 + 2)).toBe(4);
 });
 
-it('should evaluate exception with a function on the stack', async ({ page }) => {
+it('EV-077 should evaluate exception with a function on the stack', async ({ page }) => {
   const error = await page.evaluate(() => {
     return (function functionOnStack() {
       return new Error('error message');
@@ -696,7 +696,7 @@ it('should evaluate exception with a function on the stack', async ({ page }) =>
   expect(error.stack).toContain('functionOnStack');
 });
 
-it('should evaluate exception', async ({ page }) => {
+it('EV-078 should evaluate exception', async ({ page }) => {
   const error = await page.evaluate(() => {
     function innerFunction() {
       const e = new Error('error message');
@@ -711,7 +711,7 @@ it('should evaluate exception', async ({ page }) => {
   expect((error as Error).stack).toContain('innerFunction');
 });
 
-it('should pass exception argument', async ({ page }) => {
+it('EV-079 should pass exception argument', async ({ page }) => {
   function innerFunction() {
     const e = new Error('error message');
     e.name = 'foobar';
@@ -725,50 +725,50 @@ it('should pass exception argument', async ({ page }) => {
   expect(received.stack).toContain('innerFunction');
 });
 
-it('should evaluate date', async ({ page }) => {
+it('EV-080 should evaluate date', async ({ page }) => {
   const result = await page.evaluate(() => ({ date: new Date('2020-05-27T01:31:38.506Z') }));
   expect(result).toEqual({ date: new Date('2020-05-27T01:31:38.506Z') });
 });
 
-it('should roundtrip date', async ({ page }) => {
+it('EV-081 should roundtrip date', async ({ page }) => {
   const date = new Date('2020-05-27T01:31:38.506Z');
   const result = await page.evaluate(date => date, date);
   expect(result.toUTCString()).toEqual(date.toUTCString());
 });
 
-it('should roundtrip regex', async ({ page }) => {
+it('EV-082 should roundtrip regex', async ({ page }) => {
   const regex = /hello/im;
   const result = await page.evaluate(regex => regex, regex);
   expect(result.toString()).toEqual(regex.toString());
 });
 
-it('should jsonValue() date', async ({ page }) => {
+it('EV-083 should jsonValue() date', async ({ page }) => {
   const resultHandle = await page.evaluateHandle(() => ({ date: new Date('2020-05-27T01:31:38.506Z') }));
   expect(await resultHandle.jsonValue()).toEqual({ date: new Date('2020-05-27T01:31:38.506Z') });
 });
 
-it('should evaluate url', async ({ page }) => {
+it('EV-084 should evaluate url', async ({ page }) => {
   const result = await page.evaluate(() => ({ url: new URL('https://example.com') }));
   expect(result).toEqual({ url: new URL('https://example.com') });
 });
 
-it('should roundtrip url', async ({ page }) => {
+it('EV-085 should roundtrip url', async ({ page }) => {
   const url = new URL('https://example.com');
   const result = await page.evaluate(url => url, url);
   expect(result.toString()).toEqual(url.toString());
 });
 
-it('should jsonValue() url', async ({ page }) => {
+it('EV-086 should jsonValue() url', async ({ page }) => {
   const resultHandle = await page.evaluateHandle(() => ({ url: new URL('https://example.com') }));
   expect(await resultHandle.jsonValue()).toEqual({ url: new URL('https://example.com') });
 });
 
-it('should not use toJSON when evaluating', async ({ page }) => {
+it('EV-087 should not use toJSON when evaluating', async ({ page }) => {
   const result = await page.evaluate(() => ({ toJSON: () => 'string', data: 'data' }));
   expect(result).toEqual({ data: 'data', toJSON: {} });
 });
 
-it('should not use Array.prototype.toJSON when evaluating', async ({ page }) => {
+it('EV-088 should not use Array.prototype.toJSON when evaluating', async ({ page }) => {
   const result = await page.evaluate(() => {
     (Array.prototype as any).toJSON = () => 'busted';
     return [1, 2, 3];
@@ -776,18 +776,18 @@ it('should not use Array.prototype.toJSON when evaluating', async ({ page }) => 
   expect(result).toEqual([1, 2, 3]);
 });
 
-it('should not add a toJSON property to newly created Arrays after evaluation', async ({ page, browserName }) => {
+it('EV-089 should not add a toJSON property to newly created Arrays after evaluation', async ({ page, browserName }) => {
   await page.evaluate(() => []);
   const hasToJSONProperty = await page.evaluate(() => 'toJSON' in []);
   expect(hasToJSONProperty).toEqual(false);
 });
 
-it('should not use toJSON in jsonValue', async ({ page }) => {
+it('EV-090 should not use toJSON in jsonValue', async ({ page }) => {
   const resultHandle = await page.evaluateHandle(() => ({ toJSON: () => 'string', data: 'data' }));
   expect(await resultHandle.jsonValue()).toEqual({ data: 'data', toJSON: {} });
 });
 
-it('should ignore buggy toJSON', async ({ page }) => {
+it('EV-091 should ignore buggy toJSON', async ({ page }) => {
   const result = await page.evaluate(() => {
     class Foo {
       toJSON() {
@@ -804,11 +804,11 @@ it('should ignore buggy toJSON', async ({ page }) => {
   expect(result).toEqual({ foo: {}, bar: {} });
 });
 
-it('should not expose the injected script export', async ({ page }) => {
+it('EV-092 should not expose the injected script export', async ({ page }) => {
   expect(await page.evaluate('typeof pwExport === "undefined"')).toBe(true);
 });
 
-it('should throw when frame is detached', async ({ page, server }) => {
+it('EV-093 should throw when frame is detached', async ({ page, server }) => {
   await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const frame = page.frames()[1];
   const promise = frame.evaluate(() => new Promise<void>(() => {})).catch(e => e);
@@ -818,7 +818,7 @@ it('should throw when frame is detached', async ({ page, server }) => {
   expect(error.message).toMatch(/frame.evaluate: (Frame was detached|Execution context was destroyed)/);
 });
 
-it('should work with overridden Object.defineProperty', async ({ page, server }) => {
+it('EV-094 should work with overridden Object.defineProperty', async ({ page, server }) => {
   server.setRoute('/test', (req, res) => {
     res.writeHead(200, {
       'content-type': 'text/html',
@@ -836,7 +836,7 @@ it('should work with overridden Object.defineProperty', async ({ page, server })
   expect(await page.evaluate('1+2')).toBe(3);
 });
 
-it('should work with busted Array.prototype.map/push', async ({ page, server }) => {
+it('EV-095 should work with busted Array.prototype.map/push', async ({ page, server }) => {
   server.setRoute('/test', (req, res) => {
     res.writeHead(200, {
       'content-type': 'text/html',
@@ -851,7 +851,7 @@ it('should work with busted Array.prototype.map/push', async ({ page, server }) 
   expect(await ((await page.evaluateHandle('1+2')).jsonValue())).toBe(3);
 });
 
-it('should work with overridden globalThis.Window/Document/Node', async ({ page, server }) => {
+it('EV-096 should work with overridden globalThis.Window/Document/Node', async ({ page, server }) => {
   const testCases = [
     // @ts-ignore
     () => globalThis.Window = {},
@@ -873,7 +873,7 @@ it('should work with overridden globalThis.Window/Document/Node', async ({ page,
   }
 });
 
-it('should work with overridden URL/Date/RegExp', async ({ page, server }) => {
+it('EV-097 should work with overridden URL/Date/RegExp', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21109' });
   const testCases = [
     // @ts-ignore
@@ -893,7 +893,7 @@ it('should work with overridden URL/Date/RegExp', async ({ page, server }) => {
   }
 });
 
-it('should work with Array.from/map', async ({ page }) => {
+it('EV-098 should work with Array.from/map', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28520' });
   expect(await page.evaluate(() => {
     const r = (str, amount) => Array.from(Array(amount)).map(() => str).join('');
@@ -901,7 +901,7 @@ it('should work with Array.from/map', async ({ page }) => {
   })).toBe('([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})');
 });
 
-it('should work with a using declaration', async ({ page, nodeVersion, browserName, browserMajorVersion }) => {
+it('EV-099 should work with a using declaration', async ({ page, nodeVersion, browserName, browserMajorVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41511' });
   it.skip(nodeVersion.major < 24, 'using is lowered to a module-scope helper that does not survive evaluate serialization on Node < 24');
   it.skip(browserName === 'webkit', 'WebKit does not support using declarations');
@@ -917,7 +917,7 @@ it('should work with a using declaration', async ({ page, nodeVersion, browserNa
   expect(disposed).toBe(true);
 });
 
-it('should ignore dangerous object keys', async ({ page }) => {
+it('EV-100 should ignore dangerous object keys', async ({ page }) => {
   const input = {
     __proto__: { polluted: true },
     safeKey: 'safeValue'

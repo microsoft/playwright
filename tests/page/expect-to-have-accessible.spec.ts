@@ -16,7 +16,7 @@
 
 import { test, expect } from './pageTest';
 
-test('toHaveAccessibleName', async ({ page }) => {
+test('EX-259 toHaveAccessibleName', async ({ page }) => {
   await page.setContent(`
     <div role="button" aria-label="Hello"></div>
   `);
@@ -38,7 +38,7 @@ test('toHaveAccessibleName', async ({ page }) => {
   await expect(page.locator('option')).toHaveAccessibleName('HTML');
 });
 
-test('toHaveAccessibleDescription', async ({ page }) => {
+test('EX-260 toHaveAccessibleDescription', async ({ page }) => {
   await page.setContent(`
     <div role="button" aria-description="Hello"></div>
   `);
@@ -56,7 +56,7 @@ test('toHaveAccessibleDescription', async ({ page }) => {
   await expect(page.locator('div')).toHaveAccessibleDescription('foo bar baz');
 });
 
-test('toHaveAccessibleErrorMessage', async ({ page }) => {
+test('EX-261 toHaveAccessibleErrorMessage', async ({ page }) => {
   await page.setContent(`
     <form>
       <input role="textbox" aria-invalid="true" aria-errormessage="error-message" />
@@ -75,7 +75,7 @@ test('toHaveAccessibleErrorMessage', async ({ page }) => {
   await expect(locator).not.toHaveAccessibleErrorMessage('This should not be considered.');
 });
 
-test('toHaveAccessibleErrorMessage should handle multiple aria-errormessage references', async ({ page }) => {
+test('EX-262 toHaveAccessibleErrorMessage should handle multiple aria-errormessage references', async ({ page }) => {
   await page.setContent(`
     <form>
       <input role="textbox" aria-invalid="true" aria-errormessage="error1 error2" />
@@ -108,25 +108,25 @@ test.describe('toHaveAccessibleErrorMessage should handle aria-invalid attribute
   }
 
   test.describe('evaluated in false', () => {
-    test('no aria-invalid attribute', async ({ page }) => {
+    test('EX-263 no aria-invalid attribute', async ({ page }) => {
       const locator = await setupPage(page, null);
       await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
     });
-    test('aria-invalid="false"', async ({ page }) => {
+    test('EX-264 aria-invalid="false"', async ({ page }) => {
       const locator = await setupPage(page, 'false');
       await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
     });
-    test('aria-invalid="" (empty string)', async ({ page }) => {
+    test('EX-265 aria-invalid="" (empty string)', async ({ page }) => {
       const locator = await setupPage(page, '');
       await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
     });
   });
   test.describe('evaluated in true', () => {
-    test('aria-invalid="true"', async ({ page }) => {
+    test('EX-266 aria-invalid="true"', async ({ page }) => {
       const locator = await setupPage(page, 'true');
       await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
     });
-    test('aria-invalid="foo" (unrecognized value)', async ({ page }) => {
+    test('EX-267 aria-invalid="foo" (unrecognized value)', async ({ page }) => {
       const locator = await setupPage(page, 'foo');
       await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
     });
@@ -135,7 +135,7 @@ test.describe('toHaveAccessibleErrorMessage should handle aria-invalid attribute
 
 const errorMessageText = 'Error message';
 
-test('should show error message when validity is false and aria-invalid is true', async ({ page }) => {
+test('EX-268 should show error message when validity is false and aria-invalid is true', async ({ page }) => {
   await page.setContent(`
     <form>
       <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="true" aria-errormessage="error-msg" />
@@ -147,7 +147,7 @@ test('should show error message when validity is false and aria-invalid is true'
   await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
 });
 
-test('should show error message when validity is true and aria-invalid is true', async ({ page }) => {
+test('EX-269 should show error message when validity is true and aria-invalid is true', async ({ page }) => {
   await page.setContent(`
     <form>
       <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="true" aria-errormessage="error-msg" />
@@ -159,7 +159,7 @@ test('should show error message when validity is true and aria-invalid is true',
   await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
 });
 
-test('should show error message when validity is false and aria-invalid is false', async ({ page }) => {
+test('EX-270 should show error message when validity is false and aria-invalid is false', async ({ page }) => {
   await page.setContent(`
     <form>
       <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="false" aria-errormessage="error-msg" />
@@ -171,7 +171,7 @@ test('should show error message when validity is false and aria-invalid is false
   await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
 });
 
-test('should not show error message when validity is true and aria-invalid is false', async ({ page }) => {
+test('EX-271 should not show error message when validity is true and aria-invalid is false', async ({ page }) => {
   await page.setContent(`
     <form>
       <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="false" aria-errormessage="error-msg" />
@@ -183,7 +183,7 @@ test('should not show error message when validity is true and aria-invalid is fa
   await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
 });
 
-test('should show error message for all roles', async ({ page }) => {
+test('EX-272 should show error message for all roles', async ({ page }) => {
   await page.setContent(`
     <label for="file">File input</label>
     <input id="file" aria-invalid="true" aria-errormessage="file-error-id" type="file" />
@@ -193,7 +193,7 @@ test('should show error message for all roles', async ({ page }) => {
   await expect(locator).toHaveAccessibleErrorMessage('File is incorrect');
 });
 
-test('toHaveRole', async ({ page }) => {
+test('EX-273 toHaveRole', async ({ page }) => {
   await page.setContent(`<div role="button">Button!</div>`);
   await expect(page.locator('div')).toHaveRole('button');
   await expect(page.locator('div')).not.toHaveRole('checkbox');

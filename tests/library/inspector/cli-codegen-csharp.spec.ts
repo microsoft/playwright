@@ -25,7 +25,7 @@ function capitalize(browserName: string): string {
   return browserName[0].toUpperCase() + browserName.slice(1);
 }
 
-test('should print the correct imports and context options', async ({ browserName, channel, runCLI, server }) => {
+test('CG-150 should print the correct imports and context options', async ({ browserName, channel, runCLI, server }) => {
   const cli = runCLI(['--target=csharp', server.EMPTY_PAGE]);
   const expectedResult = `using Microsoft.Playwright;
 using System;
@@ -40,7 +40,7 @@ var context = await browser.NewContextAsync();`;
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options for custom settings', async ({ browserName, channel, runCLI, server, proxyServer }) => {
+test('CG-151 should print the correct context options for custom settings', async ({ browserName, channel, runCLI, server, proxyServer }) => {
   proxyServer.forwardTo(server.PORT);
   const cli = runCLI([
     '--color-scheme=dark',
@@ -83,7 +83,7 @@ var context = await browser.NewContextAsync(new()
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device', async ({ browserName, channel, runCLI, server }) => {
+test('CG-152 should print the correct context options when using a device', async ({ browserName, channel, runCLI, server }) => {
   test.skip(browserName !== 'chromium');
 
   const cli = runCLI(['--device=Pixel 2', '--target=csharp', server.EMPTY_PAGE]);
@@ -97,7 +97,7 @@ var context = await browser.NewContextAsync(playwright.Devices["Pixel 2"]);`;
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI, server, proxyServer }) => {
+test('CG-153 should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI, server, proxyServer }) => {
   test.skip(browserName !== 'webkit');
 
   proxyServer.forwardTo(server.PORT);
@@ -150,7 +150,7 @@ var context = await browser.NewContextAsync(new()
   await cli.waitFor(expectedResult);
 });
 
-test('should print load/save storageState', async ({ browserName, channel, runCLI, server }, testInfo) => {
+test('CG-154 should print load/save storageState', async ({ browserName, channel, runCLI, server }, testInfo) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
@@ -175,7 +175,7 @@ await context.StorageStateAsync(new()
   await cli.waitFor(expectedResult2);
 });
 
-test('should work with --save-har', async ({ runCLI }, testInfo) => {
+test('CG-155 should work with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `await context.RouteFromHARAsync(${JSON.stringify(harFileName)});`;
   const cli = runCLI(['--target=csharp', `--save-har=${harFileName}`]);
@@ -185,7 +185,7 @@ test('should work with --save-har', async ({ runCLI }, testInfo) => {
   expect(json.log.creator.name).toBe('Playwright');
 });
 
-test('should work with --save-har and --save-har-glob', async ({ runCLI }, testInfo) => {
+test('CG-156 should work with --save-har and --save-har-glob', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `await context.RouteFromHARAsync(${JSON.stringify(harFileName)}, new()
 {
@@ -199,13 +199,13 @@ test('should work with --save-har and --save-har-glob', async ({ runCLI }, testI
 });
 
 for (const testFramework of ['nunit', 'mstest', 'xunit'] as const) {
-  test(`should not print context options method override in ${testFramework} if no options were passed`, async ({ runCLI, server }) => {
+  test(`CG-157 should not print context options method override in ${testFramework} if no options were passed`, async ({ runCLI, server }) => {
     const cli = runCLI([`--target=csharp-${testFramework}`, server.EMPTY_PAGE]);
     await cli.waitFor(`Page.GotoAsync("${server.EMPTY_PAGE}")`);
     expect(await cli.text()).not.toContain('public override BrowserNewContextOptions ContextOptions()');
   });
 
-  test(`should print context options method override in ${testFramework} if options were passed`, async ({ runCLI, server }) => {
+  test(`CG-158 should print context options method override in ${testFramework} if options were passed`, async ({ runCLI, server }) => {
     const cli = runCLI([`--target=csharp-${testFramework}`, '--color-scheme=dark', server.EMPTY_PAGE]);
     await cli.waitFor(`Page.GotoAsync("${server.EMPTY_PAGE}")`);
     expect(await cli.text()).toContain(`    public override BrowserNewContextOptions ContextOptions()
@@ -218,7 +218,7 @@ for (const testFramework of ['nunit', 'mstest', 'xunit'] as const) {
 `);
   });
 
-  test(`should work with --save-har in ${testFramework}`, async ({ runCLI }, testInfo) => {
+  test(`CG-159 should work with --save-har in ${testFramework}`, async ({ runCLI }, testInfo) => {
     const harFileName = testInfo.outputPath('har.har');
     const expectedResult = `await Context.RouteFromHARAsync(${JSON.stringify(harFileName)});`;
     const cli = runCLI([`--target=csharp-${testFramework}`, `--save-har=${harFileName}`]);
@@ -228,7 +228,7 @@ for (const testFramework of ['nunit', 'mstest', 'xunit'] as const) {
     expect(json.log.creator.name).toBe('Playwright');
   });
 
-  test(`should work with --save-har and --save-har-glob in ${testFramework}`, async ({ runCLI }, testInfo) => {
+  test(`CG-160 should work with --save-har and --save-har-glob in ${testFramework}`, async ({ runCLI }, testInfo) => {
     const harFileName = testInfo.outputPath('har.har');
     const expectedResult = `await Context.RouteFromHARAsync(${JSON.stringify(harFileName)}, new()
         {
@@ -242,7 +242,7 @@ for (const testFramework of ['nunit', 'mstest', 'xunit'] as const) {
   });
 }
 
-test(`should print a valid basic program in mstest`, async ({ runCLI, server }) => {
+test(`CG-161 should print a valid basic program in mstest`, async ({ runCLI, server }) => {
   const cli = runCLI([`--target=csharp-mstest`, '--color-scheme=dark', server.EMPTY_PAGE]);
   await cli.waitFor(`Page.GotoAsync("${server.EMPTY_PAGE}")`);
   const expected = `using Microsoft.Playwright.MSTest;
@@ -268,7 +268,7 @@ public class Tests : PageTest
   expect(await cli.text()).toContain(expected);
 });
 
-test(`should print a valid basic program in nunit`, async ({ runCLI, server }) => {
+test(`CG-162 should print a valid basic program in nunit`, async ({ runCLI, server }) => {
   const cli = runCLI([`--target=csharp-nunit`, '--color-scheme=dark', server.EMPTY_PAGE]);
   await cli.waitFor(`Page.GotoAsync("${server.EMPTY_PAGE}")`);
   const expected = `using Microsoft.Playwright.NUnit;
@@ -295,7 +295,7 @@ public class Tests : PageTest
   expect(await cli.text()).toContain(expected);
 });
 
-test(`should print a valid basic program in xunit`, async ({ runCLI, server }) => {
+test(`CG-163 should print a valid basic program in xunit`, async ({ runCLI, server }) => {
   const cli = runCLI([`--target=csharp-xunit`, '--color-scheme=dark', server.EMPTY_PAGE]);
   await cli.waitFor(`Page.GotoAsync("${server.EMPTY_PAGE}")`);
   const expected = `using Microsoft.Playwright.Xunit;

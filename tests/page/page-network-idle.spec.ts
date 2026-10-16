@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 import type { Frame } from 'playwright-core';
 import type { TestServer } from '../config/testserver';
 
-it('should navigate to empty page with networkidle', async ({ page, server }) => {
+it('NE-070 should navigate to empty page with networkidle', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'networkidle' });
   expect(response.status()).toBe(200);
 });
@@ -81,13 +81,13 @@ async function networkIdleTest(frame: Frame, server: TestServer, action: () => P
     expect(response.ok()).toBe(true);
 }
 
-it('should wait for networkidle to succeed navigation', async ({ page, server }) => {
+it('NE-071 should wait for networkidle to succeed navigation', async ({ page, server }) => {
   await networkIdleTest(page.mainFrame(), server, () => {
     return page.goto(server.PREFIX + '/networkidle.html', { waitUntil: 'networkidle' });
   });
 });
 
-it('should wait for networkidle to succeed navigation with request from previous navigation', async ({ page, server }) => {
+it('NE-072 should wait for networkidle to succeed navigation with request from previous navigation', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/foo.js', () => {});
   await page.setContent(`<script>fetch('foo.js');</script>`);
@@ -96,7 +96,7 @@ it('should wait for networkidle to succeed navigation with request from previous
   });
 });
 
-it('should wait for networkidle in waitForNavigation', async ({ page, server }) => {
+it('NE-073 should wait for networkidle in waitForNavigation', async ({ page, server }) => {
   await networkIdleTest(page.mainFrame(), server, () => {
     const promise = page.waitForNavigation({ waitUntil: 'networkidle' });
     void page.goto(server.PREFIX + '/networkidle.html');
@@ -104,14 +104,14 @@ it('should wait for networkidle in waitForNavigation', async ({ page, server }) 
   });
 });
 
-it('should wait for networkidle in setContent', async ({ page, server }) => {
+it('NE-074 should wait for networkidle in setContent', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await networkIdleTest(page.mainFrame(), server, () => {
     return page.setContent(`<script src='networkidle.js'></script>`, { waitUntil: 'networkidle' });
   }, true);
 });
 
-it('should wait for networkidle in setContent with request from previous navigation', async ({ page, server }) => {
+it('NE-075 should wait for networkidle in setContent with request from previous navigation', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/foo.js', () => {});
   await page.setContent(`<script>fetch('foo.js');</script>`);
@@ -120,26 +120,26 @@ it('should wait for networkidle in setContent with request from previous navigat
   }, true);
 });
 
-it('should wait for networkidle when navigating iframe', async ({ page, server }) => {
+it('NE-076 should wait for networkidle when navigating iframe', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.mainFrame().childFrames()[0];
   await networkIdleTest(frame, server, () => frame.goto(server.PREFIX + '/networkidle.html', { waitUntil: 'networkidle' }));
 });
 
-it('should wait for networkidle in setContent from the child frame', async ({ page, server }) => {
+it('NE-077 should wait for networkidle in setContent from the child frame', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await networkIdleTest(page.mainFrame(), server, () => {
     return page.setContent(`<iframe src='networkidle.html'></iframe>`, { waitUntil: 'networkidle' });
   }, true);
 });
 
-it('should wait for networkidle from the child frame', async ({ page, server }) => {
+it('NE-078 should wait for networkidle from the child frame', async ({ page, server }) => {
   await networkIdleTest(page.mainFrame(), server, () => {
     return page.goto(server.PREFIX + '/networkidle-frame.html', { waitUntil: 'networkidle' });
   });
 });
 
-it('should wait for networkidle from the popup', async ({ page, server }) => {
+it('NE-079 should wait for networkidle from the popup', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
     <button id=box1 onclick="window.open('./popup/popup.html')">Button1</button>
@@ -157,7 +157,7 @@ it('should wait for networkidle from the popup', async ({ page, server }) => {
   }
 });
 
-it('should wait for networkidle when iframe attaches and detaches', async ({ page, server }) => {
+it('NE-080 should wait for networkidle when iframe attaches and detaches', async ({ page, server }) => {
   server.setRoute('/empty.html', () => {});
   let done = false;
   const promise = page.setContent(`
@@ -178,7 +178,7 @@ it('should wait for networkidle when iframe attaches and detaches', async ({ pag
   expect(done).toBe(true);
 });
 
-it('should work after repeated navigations in the same page', async ({ page, server }) => {
+it('NE-081 should work after repeated navigations in the same page', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18283' });
 
   let requestCount = 0;
@@ -208,7 +208,7 @@ it('should work after repeated navigations in the same page', async ({ page, ser
   expect(requestCount).toBe(2);
 });
 
-it('should not wait for an open EventSource connection', async ({ page, server }) => {
+it('NE-082 should not wait for an open EventSource connection', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37226' });
 
   server.setRoute('/sse', (req, res) => {
@@ -228,7 +228,7 @@ it('should not wait for an open EventSource connection', async ({ page, server }
   expect(response.status()).toBe(200);
 });
 
-it('should not wait for an open EventSource connection in setContent', async ({ page, server }) => {
+it('NE-083 should not wait for an open EventSource connection in setContent', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37226' });
 
   server.setRoute('/sse', (req, res) => {

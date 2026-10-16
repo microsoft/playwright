@@ -16,7 +16,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should fail page.textContent in strict mode', async ({ page }) => {
+it('SM-001 should fail page.textContent in strict mode', async ({ page }) => {
   await page.setContent(`<span>span1</span><div><span>target</span></div>`);
   const error = await page.textContent('span', { strict: true }).catch(e => e);
   expect(error.message).toContain('strict mode violation');
@@ -24,13 +24,13 @@ it('should fail page.textContent in strict mode', async ({ page }) => {
   expect(error.message).toContain(`2) <span>target</span> aka getByText('target')`);
 });
 
-it('should fail page.getAttribute in strict mode', async ({ page }) => {
+it('SM-002 should fail page.getAttribute in strict mode', async ({ page }) => {
   await page.setContent(`<span>span1</span><div><span>target</span></div>`);
   const error = await page.getAttribute('span', 'id', { strict: true }).catch(e => e);
   expect(error.message).toContain('strict mode violation');
 });
 
-it('should fail page.fill in strict mode', async ({ page }) => {
+it('SM-003 should fail page.fill in strict mode', async ({ page }) => {
   await page.setContent(`<input></input><div><input></input></div>`);
   const error = await page.fill('input', 'text', { strict: true }).catch(e => e);
   expect(error.message).toContain('strict mode violation');
@@ -38,19 +38,19 @@ it('should fail page.fill in strict mode', async ({ page }) => {
   expect(error.message).toContain(`2) <input/> aka locator('div').getByRole('textbox')`);
 });
 
-it('should fail page.$ in strict mode', async ({ page }) => {
+it('SM-004 should fail page.$ in strict mode', async ({ page }) => {
   await page.setContent(`<span>span1</span><div><span>target</span></div>`);
   const error = await page.$('span', { strict: true }).catch(e => e);
   expect(error.message).toContain('strict mode violation');
 });
 
-it('should fail page.waitForSelector in strict mode', async ({ page }) => {
+it('SM-005 should fail page.waitForSelector in strict mode', async ({ page }) => {
   await page.setContent(`<span>span1</span><div><span>target</span></div>`);
   const error = await page.waitForSelector('span', { strict: true }).catch(e => e);
   expect(error.message).toContain('strict mode violation');
 });
 
-it('should fail page.dispatchEvent in strict mode', async ({ page }) => {
+it('SM-006 should fail page.dispatchEvent in strict mode', async ({ page }) => {
   await page.setContent(`<span></span><div><span></span></div>`);
   const error = await page.dispatchEvent('span', 'click', {}, { strict: true }).catch(e => e);
   expect(error.message).toContain('strict mode violation');
@@ -58,7 +58,7 @@ it('should fail page.dispatchEvent in strict mode', async ({ page }) => {
   expect(error.message).toContain(`2) <span></span> aka locator('div span')`);
 });
 
-it('should properly format :nth-child() in strict mode message', async ({ page }) => {
+it('SM-007 should properly format :nth-child() in strict mode message', async ({ page }) => {
   await page.setContent(`
   <div>
     <div>
@@ -84,7 +84,7 @@ it('should properly format :nth-child() in strict mode message', async ({ page }
   expect(error.message).toContain('body > div:nth-child(2) > div:nth-child(2)');
 });
 
-it('should escape class names', async ({ page }) => {
+it('SM-008 should escape class names', async ({ page }) => {
   await page.setContent(`
   <div>
     <div></div>
@@ -106,7 +106,7 @@ it('should escape class names', async ({ page }) => {
   expect(error.message).toContain('<div class=\"foo bar:1');
 });
 
-it('should escape tag names', async ({ page }) => {
+it('SM-009 should escape tag names', async ({ page }) => {
   await page.setContent(`
     <q:template> </q:template>
     <span>special test description</span>
@@ -120,7 +120,7 @@ it('should escape tag names', async ({ page }) => {
   expect(error.message).toContain(`locator('q\\\\:template').filter({ hasText: 'special test description' })`);
 });
 
-it('should keep the engine name for a "text=.." selector in strict mode', async ({ page }) => {
+it('SM-010 should keep the engine name for a "text=.." selector in strict mode', async ({ page }) => {
   await page.setContent(`<div>..loading</div><div>..loading</div>`);
   const error = await page.locator('text=..loading').hover().catch(e => e);
   expect(error.message).toContain('strict mode violation');

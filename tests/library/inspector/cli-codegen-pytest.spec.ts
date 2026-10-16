@@ -17,7 +17,7 @@
 import fs from 'fs';
 import { test, expect } from './inspectorTest';
 
-test('should print the correct imports and context options', async ({ runCLI, server }) => {
+test('CG-136 should print the correct imports and context options', async ({ runCLI, server }) => {
   const cli = runCLI(['--target=python-pytest', server.EMPTY_PAGE]);
   const expectedResult = `import re
 from playwright.sync_api import Page, expect
@@ -27,7 +27,7 @@ def test_example(page: Page) -> None:`;
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device and lang', async ({ browserName, runCLI, server }, testInfo) => {
+test('CG-137 should print the correct context options when using a device and lang', async ({ browserName, runCLI, server }, testInfo) => {
   test.skip(browserName !== 'webkit');
 
   const cli = runCLI(['--target=python-pytest', '--device=iPhone 11', '--lang=en-US', server.EMPTY_PAGE]);
@@ -46,7 +46,7 @@ def test_example(page: Page) -> None:
 `);
 });
 
-test('should save the codegen output to a file if specified', async ({ runCLI, server }, testInfo) => {
+test('CG-138 should save the codegen output to a file if specified', async ({ runCLI, server }, testInfo) => {
   const cli = runCLI(['--target=python-pytest', server.EMPTY_PAGE]);
   await cli.waitFor(`import re
 from playwright.sync_api import Page, expect
@@ -57,7 +57,7 @@ def test_example(page: Page) -> None:
 `);
 });
 
-test('should work with --save-har', async ({ runCLI }, testInfo) => {
+test('CG-139 should work with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `page.route_from_har(${JSON.stringify(harFileName)})`;
   const cli = runCLI(['--target=python-pytest', `--save-har=${harFileName}`]);
@@ -67,7 +67,7 @@ test('should work with --save-har', async ({ runCLI }, testInfo) => {
   expect(json.log.creator.name).toBe('Playwright');
 });
 
-test('should work with --save-har and --save-har-glob', async ({ runCLI }, testInfo) => {
+test('CG-140 should work with --save-har and --save-har-glob', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `page.route_from_har(${JSON.stringify(harFileName)}, url="**/*.js")`;
   const cli = runCLI(['--target=python-pytest', `--save-har=${harFileName}`, '--save-har-glob=**/*.js']);

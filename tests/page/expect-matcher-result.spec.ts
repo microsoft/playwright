@@ -17,7 +17,7 @@
 import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
-test('toMatchText-based assertions should have matcher result', async ({ page }) => {
+test('EX-176 toMatchText-based assertions should have matcher result', async ({ page }) => {
   await page.setContent('<div id=node>Text content</div>');
   const locator = page.locator('#node');
 
@@ -72,7 +72,7 @@ Call log`);
 
 });
 
-test('toBeTruthy-based assertions should have matcher result', async ({ page }) => {
+test('EX-177 toBeTruthy-based assertions should have matcher result', async ({ page }) => {
   await page.setContent('<div id=node>Text content</div>');
 
   {
@@ -126,7 +126,7 @@ Call log:
   }
 });
 
-test('toEqual-based assertions should have matcher result', async ({ page }) => {
+test('EX-178 toEqual-based assertions should have matcher result', async ({ page }) => {
   await page.setContent('<div id=node>Text content</div>');
 
   {
@@ -177,7 +177,7 @@ Call log`);
   }
 });
 
-test('toBeChecked({ checked }) should have expected', async ({ page }) => {
+test('EX-179 toBeChecked({ checked }) should have expected', async ({ page }) => {
   await page.setContent(`
     <input id=checked type=checkbox checked></input>
     <input id=unchecked type=checkbox></input>
@@ -309,7 +309,7 @@ Call log`);
   }
 });
 
-test('toHaveScreenshot should populate matcherResult', async ({ page, server, isAndroid }) => {
+test('EX-180 toHaveScreenshot should populate matcherResult', async ({ page, server, isAndroid }) => {
   test.skip(isAndroid);
   await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.EMPTY_PAGE);

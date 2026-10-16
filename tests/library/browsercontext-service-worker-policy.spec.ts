@@ -15,7 +15,7 @@
  */
 import { browserTest as it, expect } from '../config/browserTest';
 
-it('should allow service workers by default', async ({ page, server }) => {
+it('WO-027 should allow service workers by default', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/serviceworkers/empty/sw.html');
   await expect(page.evaluate(() => window['registrationPromise'])).resolves.toBeTruthy();
 });
@@ -32,7 +32,7 @@ for (const [mode, workerResponse] of Object.entries({
     }
   })()`,
 })) {
-  it(`should allow ${mode} service worker navigation while offline`, {
+  it(`WO-028 should allow ${mode} service worker navigation while offline`, {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42775' },
   }, async ({ context, page, server, browserName, isElectron, isFrozenWebkit }) => {
     it.skip(isElectron);
@@ -100,14 +100,14 @@ for (const [mode, workerResponse] of Object.entries({
 it.describe('block', () => {
   it.use({ serviceWorkers: 'block' });
 
-  it('blocks service worker registration', async ({ page, server }) => {
+  it('WO-029 blocks service worker registration', async ({ page, server }) => {
     await Promise.all([
       page.waitForEvent('console', evt => evt.text() === 'Service Worker registration blocked by Playwright'),
       page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
     ]);
   });
 
-  it('should not throw error on about:blank', async ({ page }) => {
+  it('WO-030 should not throw error on about:blank', async ({ page }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32292' });
     const errors = [];
     page.on('pageerror', error => errors.push(error));
@@ -115,7 +115,7 @@ it.describe('block', () => {
     expect(errors).toEqual([]);
   });
 
-  it('should not throw error in opaque sandboxed iframe', async ({ page, server }) => {
+  it('WO-031 should not throw error in opaque sandboxed iframe', async ({ page, server }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43113' });
     const errors = [];
     page.on('pageerror', error => errors.push(error));

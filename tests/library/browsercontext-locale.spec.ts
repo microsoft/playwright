@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 
-it('should affect accept-language header @smoke', async ({ browser, server }) => {
+it('LC-001 should affect accept-language header @smoke', async ({ browser, server }) => {
   const context = await browser.newContext({ locale: 'fr-CH' });
   const page = await context.newPage();
   const [request] = await Promise.all([
@@ -28,14 +28,14 @@ it('should affect accept-language header @smoke', async ({ browser, server }) =>
   await context.close();
 });
 
-it('should affect navigator.language', async ({ browser }) => {
+it('LC-002 should affect navigator.language', async ({ browser }) => {
   const context = await browser.newContext({ locale: 'fr-FR' });
   const page = await context.newPage();
   expect(await page.evaluate(() => navigator.language)).toBe('fr-FR');
   await context.close();
 });
 
-it('should format number', async ({ browser, server }) => {
+it('LC-003 should format number', async ({ browser, server }) => {
   {
     const context = await browser.newContext({ locale: 'en-US' });
     const page = await context.newPage();
@@ -52,7 +52,7 @@ it('should format number', async ({ browser, server }) => {
   }
 });
 
-it('should format date', async ({ browser, server, browserName }) => {
+it('LC-004 should format date', async ({ browser, server, browserName }) => {
   {
     const context = await browser.newContext({ locale: 'en-US', timezoneId: 'America/Los_Angeles' });
     const page = await context.newPage();
@@ -71,7 +71,7 @@ it('should format date', async ({ browser, server, browserName }) => {
   }
 });
 
-it('should format number in popups', async ({ browser, server }) => {
+it('LC-005 should format number in popups', async ({ browser, server }) => {
   const context = await browser.newContext({ locale: 'fr-FR' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -86,7 +86,7 @@ it('should format number in popups', async ({ browser, server }) => {
   await context.close();
 });
 
-it('should affect navigator.language in popups', async ({ browser, server }) => {
+it('LC-006 should affect navigator.language in popups', async ({ browser, server }) => {
   const context = await browser.newContext({ locale: 'fr-FR' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -100,7 +100,7 @@ it('should affect navigator.language in popups', async ({ browser, server }) => 
   await context.close();
 });
 
-it('should work for multiple pages sharing same process', async ({ browser, server }) => {
+it('LC-007 should work for multiple pages sharing same process', async ({ browser, server }) => {
   const context = await browser.newContext({ locale: 'ru-RU' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -115,7 +115,7 @@ it('should work for multiple pages sharing same process', async ({ browser, serv
   await context.close();
 });
 
-it('should be isolated between contexts', async ({ browser, server }) => {
+it('LC-008 should be isolated between contexts', async ({ browser, server }) => {
   it.slow();
 
   const context1 = await browser.newContext({ locale: 'en-US' });
@@ -140,7 +140,7 @@ it('should be isolated between contexts', async ({ browser, server }) => {
   ]);
 });
 
-it('should not change default locale in another context', async ({ browser }) => {
+it('LC-009 should not change default locale in another context', async ({ browser }) => {
   async function getContextLocale(context) {
     const page = await context.newPage();
     return await page.evaluate(() => (new Intl.NumberFormat()).resolvedOptions().locale);
@@ -165,7 +165,7 @@ it('should not change default locale in another context', async ({ browser }) =>
   }
 });
 
-it('should propagate locale to workers', async ({ browser, browserName, server }) => {
+it('LC-010 should propagate locale to workers', async ({ browser, browserName, server }) => {
   const context = await browser.newContext({ locale: 'ru-RU' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -180,7 +180,7 @@ it('should propagate locale to workers', async ({ browser, browserName, server }
   await context.close();
 });
 
-it('should affect Intl.DateTimeFormat().resolvedOptions().locale', async ({ browser, server }) => {
+it('LC-011 should affect Intl.DateTimeFormat().resolvedOptions().locale', async ({ browser, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27802' });
   const context = await browser.newContext({ locale: 'en-GB' });
   const page = await context.newPage();
@@ -189,7 +189,7 @@ it('should affect Intl.DateTimeFormat().resolvedOptions().locale', async ({ brow
   await context.close();
 });
 
-it('should send user Accept-Language header', {
+it('LC-012 should send user Accept-Language header', {
   annotation: [{ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23732' }],
 }, async ({ browser, server }) => {
   const context = await browser.newContext({ locale: 'en-GB' });
@@ -223,7 +223,7 @@ it('should send user Accept-Language header', {
   await context.close();
 });
 
-it('should send Accept-Language header on WebSocket handshake', {
+it('LC-013 should send Accept-Language header on WebSocket handshake', {
   annotation: [{ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23732' }],
 }, async ({ browser, server, browserName, browserMajorVersion }) => {
   it.fixme(browserName === 'chromium' && browserMajorVersion < 151, 'Chromium before 151 sends the browser Accept-Language instead of the emulated locale on WebSocket handshake');
@@ -238,7 +238,7 @@ it('should send Accept-Language header on WebSocket handshake', {
   await context.close();
 });
 
-it('should send Accept-Language header on WebSocket handshake from a worker', {
+it('LC-014 should send Accept-Language header on WebSocket handshake from a worker', {
   annotation: [{ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13919' }],
 }, async ({ browser, server, browserName, browserMajorVersion }) => {
   it.fixme(browserName === 'chromium' && browserMajorVersion < 151, 'Chromium before 151 sends the browser Accept-Language instead of the emulated locale on WebSocket handshake');

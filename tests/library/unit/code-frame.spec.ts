@@ -24,7 +24,7 @@ const tagColors = Object.fromEntries(Object.keys(noColors).map(name => [name, na
 
 const source = Array.from({ length: 12 }, (_, i) => `line${i + 1} = foo(${i + 1});`).join('\n');
 
-test('should mark the column', () => {
+test('CF-001 should mark the column', () => {
   expect(codeFrame(source, { line: 5, column: 3 })).toBe([
     '  3 | line3 = foo(3);',
     '  4 | line4 = foo(4);',
@@ -36,7 +36,7 @@ test('should mark the column', () => {
   ].join('\n'));
 });
 
-test('should mark the line without a column', () => {
+test('CF-002 should mark the line without a column', () => {
   expect(codeFrame(source, { line: 5 })).toBe([
     '  3 | line3 = foo(3);',
     '  4 | line4 = foo(4);',
@@ -47,7 +47,7 @@ test('should mark the line without a column', () => {
   ].join('\n'));
 });
 
-test('should respect linesAbove and linesBelow', () => {
+test('CF-003 should respect linesAbove and linesBelow', () => {
   expect(codeFrame(source, { line: 6, column: 2 }, { linesAbove: 0, linesBelow: 1 })).toBe([
     '> 6 | line6 = foo(6);',
     '    |  ^',
@@ -55,7 +55,7 @@ test('should respect linesAbove and linesBelow', () => {
   ].join('\n'));
 });
 
-test('should clip to the source lines', () => {
+test('CF-004 should clip to the source lines', () => {
   expect(codeFrame(source, { line: 12, column: 2 })).toBe([
     '  10 | line10 = foo(10);',
     '  11 | line11 = foo(11);',
@@ -64,7 +64,7 @@ test('should clip to the source lines', () => {
   ].join('\n'));
 });
 
-test('should pad line numbers to the widest one', () => {
+test('CF-005 should pad line numbers to the widest one', () => {
   expect(codeFrame(source, { line: 9, column: 1 })).toBe([
     '   7 | line7 = foo(7);',
     '   8 | line8 = foo(8);',
@@ -76,21 +76,21 @@ test('should pad line numbers to the widest one', () => {
   ].join('\n'));
 });
 
-test('should print the message after the marker', () => {
+test('CF-006 should print the message after the marker', () => {
   expect(codeFrame(source, { line: 5, column: 3 }, { linesAbove: 0, linesBelow: 0, message: 'Boom' })).toBe([
     '> 5 | line5 = foo(5);',
     '    |   ^ Boom',
   ].join('\n'));
 });
 
-test('should print the message above the frame without a column', () => {
+test('CF-007 should print the message above the frame without a column', () => {
   expect(codeFrame(source, { line: 5 }, { linesAbove: 0, linesBelow: 0, message: 'Boom' })).toBe([
     '  Boom',
     '> 5 | line5 = foo(5);',
   ].join('\n'));
 });
 
-test('should keep tabs before the marker', () => {
+test('CF-008 should keep tabs before the marker', () => {
   expect(codeFrame('a\n\t\tfoo(\tbar)\nb', { line: 2, column: 6 })).toBe([
     '  1 | a',
     '> 2 | \t\tfoo(\tbar)',
@@ -99,7 +99,7 @@ test('should keep tabs before the marker', () => {
   ].join('\n'));
 });
 
-test('should not add a space after the gutter for empty lines', () => {
+test('CF-009 should not add a space after the gutter for empty lines', () => {
   expect(codeFrame('a\n\nfoo\n   \nb', { line: 3, column: 1 })).toBe([
     '  1 | a',
     '  2 |',
@@ -110,7 +110,7 @@ test('should not add a space after the gutter for empty lines', () => {
   ].join('\n'));
 });
 
-test('should split lines on all line terminators', () => {
+test('CF-010 should split lines on all line terminators', () => {
   expect(codeFrame('a\r\nb\rc\u2028d\ne', { line: 3, column: 1 }, { linesAbove: 5, linesBelow: 5 })).toBe([
     '  1 | a',
     '  2 | b',
@@ -121,7 +121,7 @@ test('should split lines on all line terminators', () => {
   ].join('\n'));
 });
 
-test('should highlight code', () => {
+test('CF-011 should highlight code', () => {
   const code = `const page = new Page(/re/g, 'a', 42) + x; // comment`;
   expect(codeFrame(code, { line: 1, column: 7 }, { colors: tagColors, message: 'Boom' })).toBe([
     '<red><bold>></bold></red><gray> 1 |</gray> ' +
@@ -131,7 +131,7 @@ test('should highlight code', () => {
   ].join('\n'));
 });
 
-test('should highlight multi-line tokens on each line', () => {
+test('CF-012 should highlight multi-line tokens on each line', () => {
   expect(codeFrame('a = `x ${`y`}\nz`; /* b\nc */', { line: 1 }, { colors: tagColors })).toBe([
     '<red><bold>></bold></red><gray> 1 |</gray> a <yellow>=</yellow> <green>`x ${`y`}</green>',
     ' <gray> 2 |</gray> <green>z`</green><yellow>;</yellow> <gray>/* b</gray>',
@@ -139,7 +139,7 @@ test('should highlight multi-line tokens on each line', () => {
   ].join('\n'));
 });
 
-test('should highlight keywords used as property names as identifiers', () => {
+test('CF-013 should highlight keywords used as property names as identifiers', () => {
   expect(codeFrame('promise.catch(e => e).finally(done);', { line: 1 }, { colors: tagColors })).toBe(
       '<red><bold>></bold></red><gray> 1 |</gray> promise<yellow>.</yellow>catch(e <yellow>=></yellow> e)<yellow>.</yellow>finally(done)<yellow>;</yellow>'
   );

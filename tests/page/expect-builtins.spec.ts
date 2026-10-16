@@ -12,7 +12,7 @@
 import { test, expect } from './pageTest';
 
 test.describe('.toBe()', () => {
-  test('does not throw', () => {
+  test('EX-087 does not throw', () => {
     expect('a').not.toBe('b');
     expect('a').toBe('a');
     expect(1).not.toBe(2);
@@ -40,24 +40,24 @@ test.describe('.toBe()', () => {
     [null, undefined],
     [-0, +0],
   ].entries()) {
-    test(`fails for: ${JSON.stringify(a)} and ${JSON.stringify(b)} #${i}`, () => {
+    test(`EX-088 fails for: ${JSON.stringify(a)} and ${JSON.stringify(b)} #${i}`, () => {
       expect(() => expect(a).toBe(b)).toThrow();
     });
   }
 
   for (const v of [false, 1, 'a', undefined, null, {}, []]) {
-    test(`fails for '${JSON.stringify(v)}' with '.not'`, () => {
+    test(`EX-089 fails for '${JSON.stringify(v)}' with '.not'`, () => {
       expect(() => expect(v).not.toBe(v)).toThrow();
     });
   }
 
-  test('does not crash on circular references', () => {
+  test('EX-090 does not crash on circular references', () => {
     const obj: any = {};
     obj.circular = obj;
     expect(() => expect(obj).toBe({})).toThrow();
   });
 
-  test('matcherResult property contains matcher name, expected and actual values', () => {
+  test('EX-091 matcherResult property contains matcher name, expected and actual values', () => {
     const actual = { a: 1 };
     const expected = { a: 2 };
     try {
@@ -91,29 +91,29 @@ test.describe('.toStrictEqual()', () => {
     }
   }
 
-  test('does not ignore keys with undefined values', () => {
+  test('EX-092 does not ignore keys with undefined values', () => {
     expect({ a: undefined, b: 2 }).not.toStrictEqual({ b: 2 });
   });
 
-  test('does not ignore keys with undefined values inside an array', () => {
+  test('EX-093 does not ignore keys with undefined values inside an array', () => {
     expect([{ a: undefined }]).not.toStrictEqual([{}]);
   });
 
-  test('passes when comparing same type', () => {
+  test('EX-094 passes when comparing same type', () => {
     expect({ test: new TestClassA(1, 2) }).toStrictEqual({ test: new TestClassA(1, 2) });
   });
 
-  test('does not pass for different types', () => {
+  test('EX-095 does not pass for different types', () => {
     expect({ test: new TestClassA(1, 2) }).not.toStrictEqual({ test: new TestClassB(1, 2) });
   });
 
-  test('passes for matching buffers', () => {
+  test('EX-096 passes for matching buffers', () => {
     expect(Uint8Array.from([1]).buffer).toStrictEqual(Uint8Array.from([1]).buffer);
     expect(Uint8Array.from([]).buffer).toStrictEqual(Uint8Array.from([]).buffer);
     expect(Uint8Array.from([9, 3]).buffer).toStrictEqual(Uint8Array.from([9, 3]).buffer);
   });
 
-  test('does not pass when ArrayBuffers are not equal', () => {
+  test('EX-097 does not pass when ArrayBuffers are not equal', () => {
     expect(Uint8Array.from([1, 2]).buffer).not.toStrictEqual(Uint8Array.from([0, 0]).buffer);
   });
 });
@@ -138,7 +138,7 @@ test.describe('.toEqual()', () => {
     [undefined, expect.anything()],
     [undefined, expect.any(Function)],
   ].entries()) {
-    test(`{pass: false} expect().toEqual() #${a}`, () => {
+    test(`EX-098 {pass: false} expect().toEqual() #${a}`, () => {
       expect(() => expect(b[0]).toEqual(b[1])).toThrow();
       expect(b[0]).not.toEqual(b[1]);
     });
@@ -164,13 +164,13 @@ test.describe('.toEqual()', () => {
     [true, expect.anything()],
     [() => {}, expect.any(Function)],
   ].entries()) {
-    test(`{pass: true} expect().toEqual() #${a}`, () => {
+    test(`EX-099 {pass: true} expect().toEqual() #${a}`, () => {
       expect(b[0]).toEqual(b[1]);
       expect(() => expect(b[0]).not.toEqual(b[1])).toThrow();
     });
   }
 
-  test('assertion error matcherResult property contains matcher name, expected and actual values', () => {
+  test('EX-100 assertion error matcherResult property contains matcher name, expected and actual values', () => {
     const actual = { a: 1 };
     const expected = { a: 2 };
     try {
@@ -184,7 +184,7 @@ test.describe('.toEqual()', () => {
     }
   });
 
-  test('symbol based keys in arrays are processed correctly', () => {
+  test('EX-101 symbol based keys in arrays are processed correctly', () => {
     const mySymbol = Symbol('test');
     const actual1: any[] = [];
     actual1[mySymbol as any] = 3;
@@ -197,20 +197,20 @@ test.describe('.toEqual()', () => {
     expect(actual2).not.toEqual(expected);
   });
 
-  test('non-enumerable members should be skipped during equal', () => {
+  test('EX-102 non-enumerable members should be skipped during equal', () => {
     const actual: any = { x: 3 };
     Object.defineProperty(actual, 'test', { enumerable: false, value: 5 });
     expect(actual).toEqual({ x: 3 });
   });
 
-  test('objectContaining sample can be used multiple times', () => {
+  test('EX-103 objectContaining sample can be used multiple times', () => {
     const expected = expect.objectContaining({ b: 7 });
     expect({ a: 1, b: 2 }).not.toEqual(expected);
     expect({ a: 3, b: 7 }).toEqual(expected);
   });
 
   test.describe('cyclic object equality', () => {
-    test('properties with the same circularity are equal', () => {
+    test('EX-104 properties with the same circularity are equal', () => {
       const a: any = {};
       a.x = a;
       const b: any = {};
@@ -219,7 +219,7 @@ test.describe('.toEqual()', () => {
       expect(b).toEqual(a);
     });
 
-    test('properties with different circularity are not equal', () => {
+    test('EX-105 properties with different circularity are not equal', () => {
       const a: any = {};
       a.x = { y: a };
       const b: any = {};
@@ -245,7 +245,7 @@ test.describe('.toBeInstanceOf()', () => {
     [new C(), B],
     [new E(), B],
   ] as const).entries()) {
-    test(`passing instanceof #${i}`, () => {
+    test(`EX-106 passing instanceof #${i}`, () => {
       expect(() => expect(a).not.toBeInstanceOf(b)).toThrow();
       expect(a).toBeInstanceOf(b);
     });
@@ -257,20 +257,20 @@ test.describe('.toBeInstanceOf()', () => {
     [true, Boolean],
     [new A(), B],
   ] as const).entries()) {
-    test(`failing instanceof #${i}`, () => {
+    test(`EX-107 failing instanceof #${i}`, () => {
       expect(() => expect(a).toBeInstanceOf(b)).toThrow();
       expect(a).not.toBeInstanceOf(b);
     });
   }
 
-  test('throws if constructor is not a function', () => {
+  test('EX-108 throws if constructor is not a function', () => {
     expect(() => expect({}).toBeInstanceOf(4 as any)).toThrow();
   });
 });
 
 test.describe('.toBeTruthy(), .toBeFalsy()', () => {
   for (const v of [{}, [], true, 1, 'a', 0.5, new Map(), () => {}, Infinity]) {
-    test(`'${String(v)}' is truthy`, () => {
+    test(`EX-109 '${String(v)}' is truthy`, () => {
       expect(v).toBeTruthy();
       expect(v).not.toBeFalsy();
       expect(() => expect(v).not.toBeTruthy()).toThrow();
@@ -279,7 +279,7 @@ test.describe('.toBeTruthy(), .toBeFalsy()', () => {
   }
 
   for (const v of [false, null, NaN, 0, '', undefined]) {
-    test(`'${String(v)}' is falsy`, () => {
+    test(`EX-110 '${String(v)}' is falsy`, () => {
       expect(v).toBeFalsy();
       expect(v).not.toBeTruthy();
       expect(() => expect(v).toBeTruthy()).toThrow();
@@ -289,14 +289,14 @@ test.describe('.toBeTruthy(), .toBeFalsy()', () => {
 });
 
 test.describe('.toBeNaN()', () => {
-  test('{pass: true}', () => {
+  test('EX-111 {pass: true}', () => {
     for (const v of [NaN, Math.sqrt(-1), Infinity - Infinity, 0 / 0]) {
       expect(v).toBeNaN();
       expect(() => expect(v).not.toBeNaN()).toThrow();
     }
   });
 
-  test('throws', () => {
+  test('EX-112 throws', () => {
     for (const v of [1, '', null, undefined, {}, [], 0.2, 0, Infinity, -Infinity]) {
       expect(() => expect(v).toBeNaN()).toThrow();
       expect(v).not.toBeNaN();
@@ -306,24 +306,24 @@ test.describe('.toBeNaN()', () => {
 
 test.describe('.toBeNull()', () => {
   for (const v of [{}, [], true, 1, 'a', 0.5, new Map(), () => {}, Infinity]) {
-    test(`fails for '${String(v)}'`, () => {
+    test(`EX-113 fails for '${String(v)}'`, () => {
       expect(v).not.toBeNull();
       expect(() => expect(v).toBeNull()).toThrow();
     });
   }
 
-  test('fails for null with .not', () => {
+  test('EX-114 fails for null with .not', () => {
     expect(() => expect(null).not.toBeNull()).toThrow();
   });
 
-  test('pass for null', () => {
+  test('EX-115 pass for null', () => {
     expect(null).toBeNull();
   });
 });
 
 test.describe('.toBeDefined(), .toBeUndefined()', () => {
   for (const v of [{}, [], true, 1, 'a', 0.5, new Map(), () => {}, Infinity]) {
-    test(`'${String(v)}' is defined`, () => {
+    test(`EX-116 '${String(v)}' is defined`, () => {
       expect(v).toBeDefined();
       expect(v).not.toBeUndefined();
       expect(() => expect(v).not.toBeDefined()).toThrow();
@@ -331,7 +331,7 @@ test.describe('.toBeDefined(), .toBeUndefined()', () => {
     });
   }
 
-  test('undefined is undefined', () => {
+  test('EX-117 undefined is undefined', () => {
     expect(undefined).toBeUndefined();
     expect(undefined).not.toBeDefined();
     expect(() => expect(undefined).toBeDefined()).toThrow();
@@ -346,7 +346,7 @@ test.describe('.toBeGreaterThan(), .toBeLessThan(), .toBeGreaterThanOrEqual(), .
     [Number.MIN_VALUE, Number.MAX_VALUE],
     [0.1, 0.2],
   ] as const) {
-    test(`comparing ${small} and ${big}`, () => {
+    test(`EX-118 comparing ${small} and ${big}`, () => {
       expect(small).toBeLessThan(big);
       expect(big).not.toBeLessThan(small);
       expect(big).toBeGreaterThan(small);
@@ -367,7 +367,7 @@ test.describe('.toBeGreaterThan(), .toBeLessThan(), .toBeGreaterThanOrEqual(), .
     });
   }
 
-  test('can compare BigInt to Numbers', () => {
+  test('EX-119 can compare BigInt to Numbers', () => {
     const a = BigInt(2);
     expect(a).toBeGreaterThan(1);
     expect(a).toBeGreaterThanOrEqual(2);
@@ -382,7 +382,7 @@ test.describe('.toBeGreaterThan(), .toBeLessThan(), .toBeGreaterThanOrEqual(), .
     [Infinity, Infinity],
     [-Infinity, -Infinity],
   ]) {
-    test(`equal numbers: [${n1}, ${n2}]`, () => {
+    test(`EX-120 equal numbers: [${n1}, ${n2}]`, () => {
       expect(n1).toBeGreaterThanOrEqual(n2);
       expect(n1).toBeLessThanOrEqual(n2);
       expect(() => expect(n1).not.toBeGreaterThanOrEqual(n2)).toThrow();
@@ -396,7 +396,7 @@ test.describe('.toContain(), .toContainEqual()', () => {
   typedArray[0] = 0;
   typedArray[1] = 1;
 
-  test('iterable', () => {
+  test('EX-121 iterable', () => {
     const iterable = {
       *[Symbol.iterator]() {
         yield 1;
@@ -420,7 +420,7 @@ test.describe('.toContain(), .toContainEqual()', () => {
     [new Set(['abc', 'def']), 'abc'],
     [typedArray, 1],
   ] as const).entries()) {
-    test(`contains #${i}`, () => {
+    test(`EX-122 contains #${i}`, () => {
       expect(list).toContain(v);
       expect(() => expect(list).not.toContain(v)).toThrow();
     });
@@ -432,13 +432,13 @@ test.describe('.toContain(), .toContainEqual()', () => {
     [[{}, []], []],
     [[{}, []], {}],
   ] as const).entries()) {
-    test(`does not contain #${i}`, () => {
+    test(`EX-123 does not contain #${i}`, () => {
       expect(list).not.toContain(v);
       expect(() => expect(list).toContain(v)).toThrow();
     });
   }
 
-  test('error cases', () => {
+  test('EX-124 error cases', () => {
     expect(() => expect(null).toContain(1)).toThrow();
   });
 
@@ -449,13 +449,13 @@ test.describe('.toContain(), .toContainEqual()', () => {
     [[{ a: 'b' }, { a: 'c' }], { a: 'b' }],
     [new Set([1, 2, 3, 4]), 1],
   ] as const).entries()) {
-    test(`contains a value equal #${i}`, () => {
+    test(`EX-125 contains a value equal #${i}`, () => {
       expect(list).toContainEqual(v);
       expect(() => expect(list).not.toContainEqual(v)).toThrow();
     });
   }
 
-  test('error cases for toContainEqual', () => {
+  test('EX-126 error cases for toContainEqual', () => {
     expect(() => expect(null).toContainEqual(1)).toThrow();
   });
 });
@@ -470,7 +470,7 @@ test.describe('.toBeCloseTo', () => {
     [Infinity, Infinity],
     [-Infinity, -Infinity],
   ]) {
-    test(`{pass: true} expect(${n1}).toBeCloseTo(${n2})`, () => {
+    test(`EX-127 {pass: true} expect(${n1}).toBeCloseTo(${n2})`, () => {
       expect(n1).toBeCloseTo(n2);
       expect(() => expect(n1).not.toBeCloseTo(n2)).toThrow();
     });
@@ -483,7 +483,7 @@ test.describe('.toBeCloseTo', () => {
     [Infinity, 1.23],
     [-Infinity, -1.23],
   ]) {
-    test(`{pass: false} expect(${n1}).toBeCloseTo(${n2})`, () => {
+    test(`EX-128 {pass: false} expect(${n1}).toBeCloseTo(${n2})`, () => {
       expect(n1).not.toBeCloseTo(n2);
       expect(() => expect(n1).toBeCloseTo(n2)).toThrow();
     });
@@ -495,7 +495,7 @@ test.describe('.toBeCloseTo', () => {
     [0, 0.000_004, 5],
     [2.000_000_2, 2, 5],
   ]) {
-    test(`{pass: true} expect(${n1}).toBeCloseTo(${n2}, ${p})`, () => {
+    test(`EX-129 {pass: true} expect(${n1}).toBeCloseTo(${n2}, ${p})`, () => {
       expect(n1).toBeCloseTo(n2, p);
       expect(() => expect(n1).not.toBeCloseTo(n2, p)).toThrow();
     });
@@ -507,7 +507,7 @@ test.describe('.toMatch()', () => {
     ['foo', 'foo'],
     ['Foo bar', /^foo/i],
   ] as const) {
-    test(`{pass: true} expect(${n1}).toMatch(${n2})`, () => {
+    test(`EX-130 {pass: true} expect(${n1}).toMatch(${n2})`, () => {
       expect(n1).toMatch(n2);
       expect(() => expect(n1).not.toMatch(n2)).toThrow();
     });
@@ -517,7 +517,7 @@ test.describe('.toMatch()', () => {
     ['bar', 'foo'],
     ['bar', /foo/],
   ] as const) {
-    test(`throws: [${n1}, ${n2}]`, () => {
+    test(`EX-131 throws: [${n1}, ${n2}]`, () => {
       expect(() => expect(n1).toMatch(n2)).toThrow();
     });
   }
@@ -531,7 +531,7 @@ test.describe('.toMatch()', () => {
     [() => {}, 'foo'],
     [undefined, 'foo'],
   ] as const).entries()) {
-    test(`throws if non String actual value passed #${i}`, () => {
+    test(`EX-132 throws if non String actual value passed #${i}`, () => {
       expect(() => expect(n1).toMatch(n2)).toThrow();
     });
   }
@@ -544,16 +544,16 @@ test.describe('.toMatch()', () => {
     ['foo', () => {}],
     ['foo', undefined],
   ] as const).entries()) {
-    test(`throws if non String/RegExp expected value passed #${i}`, () => {
+    test(`EX-133 throws if non String/RegExp expected value passed #${i}`, () => {
       expect(() => expect(n1).toMatch(n2 as any)).toThrow();
     });
   }
 
-  test('escapes strings properly', () => {
+  test('EX-134 escapes strings properly', () => {
     expect('this?: throws').toMatch('this?: throws');
   });
 
-  test('does not maintain RegExp state between calls', () => {
+  test('EX-135 does not maintain RegExp state between calls', () => {
     const regex = /f\d+/gi;
     expect('f123').toMatch(regex);
     expect('F456').toMatch(regex);
@@ -570,7 +570,7 @@ test.describe('.toHaveLength', () => {
     ['', 0],
     [() => {}, 0],
   ] as const).entries()) {
-    test(`{pass: true} toHaveLength(${length}) #${i}`, () => {
+    test(`EX-136 {pass: true} toHaveLength(${length}) #${i}`, () => {
       expect(received).toHaveLength(length);
       expect(() => expect(received).not.toHaveLength(length)).toThrow();
     });
@@ -583,13 +583,13 @@ test.describe('.toHaveLength', () => {
     ['abc', 66],
     ['', 1],
   ] as const).entries()) {
-    test(`{pass: false} toHaveLength(${length}) #${i}`, () => {
+    test(`EX-137 {pass: false} toHaveLength(${length}) #${i}`, () => {
       expect(received).not.toHaveLength(length);
       expect(() => expect(received).toHaveLength(length)).toThrow();
     });
   }
 
-  test('error cases', () => {
+  test('EX-138 error cases', () => {
     expect(() => expect({ a: 9 }).toHaveLength(1)).toThrow();
     expect(() => expect(0).toHaveLength(1)).toThrow();
     expect(() => expect(undefined).not.toHaveLength(1)).toThrow();
@@ -609,7 +609,7 @@ test.describe('.toHaveProperty()', () => {
     [{ a: { b: [{ c: [{ d: 1 }] }] } }, 'a.b[0].c[0].d', 1],
     [{ '': 1 }, '', 1],
   ] as const).entries()) {
-    test(`{pass: true} toHaveProperty with value #${i}`, () => {
+    test(`EX-139 {pass: true} toHaveProperty with value #${i}`, () => {
       expect(obj).toHaveProperty(keyPath as any, value);
       expect(() => expect(obj).not.toHaveProperty(keyPath as any, value)).toThrow();
     });
@@ -624,7 +624,7 @@ test.describe('.toHaveProperty()', () => {
     [{}, 'a', 'test'],
     [{ a: { b: 3 } }, 'a.b', undefined],
   ] as const).entries()) {
-    test(`{pass: false} toHaveProperty with value #${i}`, () => {
+    test(`EX-140 {pass: false} toHaveProperty with value #${i}`, () => {
       expect(() => expect(obj).toHaveProperty(keyPath, value)).toThrow();
       expect(obj).not.toHaveProperty(keyPath, value);
     });
@@ -637,7 +637,7 @@ test.describe('.toHaveProperty()', () => {
     [{ a: 0 }, 'a'],
     [{ a: { b: undefined } }, 'a.b'],
   ] as const).entries()) {
-    test(`{pass: true} toHaveProperty without value #${i}`, () => {
+    test(`EX-141 {pass: true} toHaveProperty without value #${i}`, () => {
       expect(obj).toHaveProperty(keyPath as any);
       expect(() => expect(obj).not.toHaveProperty(keyPath as any)).toThrow();
     });
@@ -648,7 +648,7 @@ test.describe('.toHaveProperty()', () => {
     [{ a: 1 }, 'a.b.c.d'],
     [{}, 'a'],
   ] as const).entries()) {
-    test(`{pass: false} toHaveProperty without value #${i}`, () => {
+    test(`EX-142 {pass: false} toHaveProperty without value #${i}`, () => {
       expect(() => expect(obj).toHaveProperty(keyPath)).toThrow();
       expect(obj).not.toHaveProperty(keyPath);
     });
@@ -661,7 +661,7 @@ test.describe('.toHaveProperty()', () => {
     [{ a: { b: {} } }, null],
     [{ a: { b: {} } }, 1],
   ] as const).entries()) {
-    test(`{error} toHaveProperty #${i}`, () => {
+    test(`EX-143 {error} toHaveProperty #${i}`, () => {
       expect(() => expect(obj).toHaveProperty(keyPath as any)).toThrow();
     });
   }
@@ -682,7 +682,7 @@ test.describe('.toMatchObject()', () => {
     [new Error('foo'), new Error('foo')],
     [new Error('bar'), { message: 'bar' }],
   ] as const).entries()) {
-    test(`{pass: true} toMatchObject #${i}`, () => {
+    test(`EX-144 {pass: true} toMatchObject #${i}`, () => {
       expect(a).toMatchObject(b as any);
       expect(() => expect(a).not.toMatchObject(b as any)).toThrow();
     });
@@ -697,7 +697,7 @@ test.describe('.toMatchObject()', () => {
     [new Set([1, 2]), new Set([2])],
     [new Error('foo'), new Error('bar')],
   ] as const).entries()) {
-    test(`{pass: false} toMatchObject #${i}`, () => {
+    test(`EX-145 {pass: false} toMatchObject #${i}`, () => {
       expect(a).not.toMatchObject(b as any);
       expect(() => expect(a).toMatchObject(b as any)).toThrow();
     });
@@ -712,12 +712,12 @@ test.describe('.toMatchObject()', () => {
     [{}, null],
     [{}, 4],
   ] as const).entries()) {
-    test(`throws toMatchObject #${i}`, () => {
+    test(`EX-146 throws toMatchObject #${i}`, () => {
       expect(() => expect(a).toMatchObject(b as any)).toThrow();
     });
   }
 
-  test('does not match properties up in the prototype chain', () => {
+  test('EX-147 does not match properties up in the prototype chain', () => {
     const a: any = {};
     a.ref = a;
     const b = Object.create(a);
@@ -732,14 +732,14 @@ test.describe('.toMatchObject()', () => {
 test.describe('.toThrow()', () => {
   class CustomError extends Error {}
 
-  test('to throw or not to throw', () => {
+  test('EX-148 to throw or not to throw', () => {
     expect(() => {
       throw new CustomError('apple');
     }).toThrow();
     expect(() => {}).not.toThrow();
   });
 
-  test('substring passes', () => {
+  test('EX-149 substring passes', () => {
     expect(() => {
       throw new CustomError('apple');
     }).toThrow('apple');
@@ -749,17 +749,17 @@ test.describe('.toThrow()', () => {
     expect(() => {}).not.toThrow('apple');
   });
 
-  test('substring fails when did not throw', () => {
+  test('EX-150 substring fails when did not throw', () => {
     expect(() => expect(() => {}).toThrow('apple')).toThrow();
   });
 
-  test('substring fails when message did not match', () => {
+  test('EX-151 substring fails when message did not match', () => {
     expect(() => expect(() => {
       throw new CustomError('apple');
     }).toThrow('banana')).toThrow();
   });
 
-  test('regexp passes', () => {
+  test('EX-152 regexp passes', () => {
     expect(() => {
       throw new CustomError('apple');
     }).toThrow(/apple/);
@@ -769,11 +769,11 @@ test.describe('.toThrow()', () => {
     expect(() => {}).not.toThrow(/apple/);
   });
 
-  test('regexp fails when did not throw', () => {
+  test('EX-153 regexp fails when did not throw', () => {
     expect(() => expect(() => {}).toThrow(/apple/)).toThrow();
   });
 
-  test('error class passes', () => {
+  test('EX-154 error class passes', () => {
     class Err extends CustomError {}
     class Err2 extends CustomError {}
 
@@ -789,7 +789,7 @@ test.describe('.toThrow()', () => {
     }).not.toThrow(Err2);
   });
 
-  test('object with message passes', () => {
+  test('EX-155 object with message passes', () => {
     expect(() => {
       throw new CustomError('apple');
     }).toThrow({ message: 'apple' });
@@ -798,13 +798,13 @@ test.describe('.toThrow()', () => {
     }).not.toThrow({ message: 'apple' });
   });
 
-  test('properly escapes strings when matching against errors', () => {
+  test('EX-156 properly escapes strings when matching against errors', () => {
     expect(() => {
       throw new TypeError('"this"? throws.');
     }).toThrow('"this"? throws.');
   });
 
-  test('error message and cause properties', () => {
+  test('EX-157 error message and cause properties', () => {
     const errorCause = new Error('cause');
     const error = new Error('message', { cause: errorCause });
     expect(() => {
@@ -814,7 +814,7 @@ test.describe('.toThrow()', () => {
 });
 
 test.describe('asymmetric matchers', () => {
-  test('Any matches primitives', () => {
+  test('EX-158 Any matches primitives', () => {
     expect('jest').toEqual(expect.any(String));
     expect(1).toEqual(expect.any(Number));
     expect(() => {}).toEqual(expect.any(Function));
@@ -823,12 +823,12 @@ test.describe('asymmetric matchers', () => {
     expect([]).toEqual(expect.any(Array));
   });
 
-  test('Any throws when called with empty constructor', () => {
+  test('EX-159 Any throws when called with empty constructor', () => {
     expect(() => (expect.any as any)()).toThrow(
         'any() expects to be passed a constructor function. Please pass one or use anything() to match any object.');
   });
 
-  test('Anything matches any type', () => {
+  test('EX-160 Anything matches any type', () => {
     expect('jest').toEqual(expect.anything());
     expect(1).toEqual(expect.anything());
     expect(() => {}).toEqual(expect.anything());
@@ -837,82 +837,82 @@ test.describe('asymmetric matchers', () => {
     expect([]).toEqual(expect.anything());
   });
 
-  test('Anything does not match null and undefined', () => {
+  test('EX-161 Anything does not match null and undefined', () => {
     expect(null).not.toEqual(expect.anything());
     expect(undefined).not.toEqual(expect.anything());
   });
 
-  test('ArrayContaining matches', () => {
+  test('EX-162 ArrayContaining matches', () => {
     expect(['foo']).toEqual(expect.arrayContaining(['foo']));
     expect(['foo', 'bar']).toEqual(expect.arrayContaining(['foo']));
   });
 
-  test('ArrayContaining does not match', () => {
+  test('EX-163 ArrayContaining does not match', () => {
     expect(['bar']).not.toEqual(expect.arrayContaining(['foo']));
   });
 
-  test('ObjectContaining matches', () => {
+  test('EX-164 ObjectContaining matches', () => {
     expect({ foo: 'foo', jest: 'jest' }).toEqual(expect.objectContaining({ foo: 'foo' }));
     expect({ foo: undefined }).toEqual(expect.objectContaining({ foo: undefined }));
   });
 
-  test('ObjectContaining does not match', () => {
+  test('EX-165 ObjectContaining does not match', () => {
     expect({ bar: 'bar' }).not.toEqual(expect.objectContaining({ foo: 'foo' }));
     expect({ foo: 'foox' }).not.toEqual(expect.objectContaining({ foo: 'foo' }));
     expect({}).not.toEqual(expect.objectContaining({ foo: undefined }));
   });
 
-  test('ObjectContaining throws for non-objects', () => {
+  test('EX-166 ObjectContaining throws for non-objects', () => {
     expect(() => expect({}).toEqual(expect.objectContaining(1337 as any))).toThrow(
         "You must provide an object to ObjectContaining, not 'number'.");
   });
 
-  test('StringContaining matches string against string', () => {
+  test('EX-167 StringContaining matches string against string', () => {
     expect('queen*').toEqual(expect.stringContaining('en*'));
     expect('queue').not.toEqual(expect.stringContaining('en*'));
   });
 
-  test('StringMatching matches string against regexp', () => {
+  test('EX-168 StringMatching matches string against regexp', () => {
     expect('queen').toEqual(expect.stringMatching(/en/));
     expect('queue').not.toEqual(expect.stringMatching(/en/));
   });
 
-  test('StringMatching matches string against string', () => {
+  test('EX-169 StringMatching matches string against string', () => {
     expect('queen').toEqual(expect.stringMatching('en'));
     expect('queue').not.toEqual(expect.stringMatching('en'));
   });
 
-  test('closeTo matches', () => {
+  test('EX-170 closeTo matches', () => {
     expect(0).toEqual(expect.closeTo(0));
     expect(0.001).toEqual(expect.closeTo(0));
     expect(1.229).toEqual(expect.closeTo(1.23));
     expect(Infinity).toEqual(expect.closeTo(Infinity));
   });
 
-  test('closeTo does not match', () => {
+  test('EX-171 closeTo does not match', () => {
     expect(0.01).not.toEqual(expect.closeTo(0));
     expect(1.23).not.toEqual(expect.closeTo(1));
     expect(Infinity).not.toEqual(expect.closeTo(-Infinity));
   });
 
-  test('closeTo with precision', () => {
+  test('EX-172 closeTo with precision', () => {
     expect(0.1).toEqual(expect.closeTo(0, 0));
     expect(0.0001).toEqual(expect.closeTo(0, 3));
     expect(0.000_004).toEqual(expect.closeTo(0, 5));
   });
 
-  test('closeTo throws if expected is not number', () => {
+  test('EX-173 closeTo throws if expected is not number', () => {
     expect(() => (expect.closeTo as any)('a')).toThrow('Expected is not a Number');
   });
 
-  test('arrayOf matches', () => {
+  test('EX-174 arrayOf matches', () => {
     expect([1]).toEqual(expect.arrayOf(1));
     expect([1, 1, 1]).toEqual(expect.arrayOf(1));
     expect([{ a: 1 }, { a: 1 }]).toEqual(expect.arrayOf({ a: 1 }));
     expect(['a', 'b', 'c']).toEqual(expect.arrayOf(expect.any(String)));
   });
 
-  test('arrayOf does not match', () => {
+  test('EX-175 arrayOf does not match', () => {
     expect([2]).not.toEqual(expect.arrayOf(1));
     expect([1, 2]).not.toEqual(expect.arrayOf(1));
     expect('not an array').not.toEqual(expect.arrayOf(1));

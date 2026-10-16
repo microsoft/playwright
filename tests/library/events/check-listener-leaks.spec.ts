@@ -25,7 +25,7 @@ import { EventEmitter } from './utils';
 import { test, expect } from '@playwright/test';
 import * as common from './utils';
 
-test('defaultMaxListeners', () => {
+test('EE-008 defaultMaxListeners', () => {
   const e = new EventEmitter();
 
   for (let i = 0; i < 10; i++)
@@ -59,7 +59,7 @@ test('defaultMaxListeners', () => {
   expect(e._events['unlimited']).not.toHaveProperty('warned');
 });
 
-test('process-wide', () => {
+test('EE-009 process-wide', () => {
   events.EventEmitter.defaultMaxListeners = 42;
   const e = new EventEmitter();
 
@@ -78,7 +78,7 @@ test('process-wide', () => {
   expect(e._events['fortytwo'].hasOwnProperty('warned')).toBeTruthy();
 });
 
-test('_maxListeners still has precedence over defaultMaxListeners', () => {
+test('EE-010 _maxListeners still has precedence over defaultMaxListeners', () => {
   events.EventEmitter.defaultMaxListeners = 42;
   const e = new EventEmitter();
   e.setMaxListeners(1);

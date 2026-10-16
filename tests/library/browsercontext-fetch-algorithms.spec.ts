@@ -40,7 +40,7 @@ it.describe('algorithms', () => {
     br: brotliCompress(responseBody)
   })) {
     it.describe(`${type} decompression`, () => {
-      it(`should support decompression`, async ({ context, server }) => {
+      it(`FE-180 should support decompression`, async ({ context, server }) => {
         server.setRoute('/compressed', async (req, res) => {
           res.setHeader('Content-Encoding', type);
           res.end(await zipped);
@@ -50,7 +50,7 @@ it.describe('algorithms', () => {
         expect(await response.text()).toEqual(responseBody);
       });
 
-      it(`should not fail if response content-length header is missing (${type})`, async ({ context, server }) => {
+      it(`FE-181 should not fail if response content-length header is missing (${type})`, async ({ context, server }) => {
         server.setRoute('/compressed', async (req, res) => {
           res.setHeader('Content-Encoding', type);
           res.removeHeader('Content-Length');
@@ -61,7 +61,7 @@ it.describe('algorithms', () => {
         expect(await response.text()).toEqual(responseBody);
       });
 
-      it('should not fail with chunked responses (without Content-Length header)', async ({ context, server }) => {
+      it('FE-182 should not fail with chunked responses (without Content-Length header)', async ({ context, server }) => {
         server.setRoute('/compressed', async (req, res) => {
           res.setHeader('Content-Encoding', type);
           res.setHeader('Transfer-Encoding', 'chunked');
@@ -74,7 +74,7 @@ it.describe('algorithms', () => {
         expect(await response.text()).toEqual(responseBody);
       });
 
-      it('should not fail with an empty response without content-length header (Z_BUF_ERROR)', async ({ context, server }) => {
+      it('FE-183 should not fail with an empty response without content-length header (Z_BUF_ERROR)', async ({ context, server }) => {
         server.setRoute('/compressed', async (req, res) => {
           res.setHeader('Content-Encoding', type);
           res.removeHeader('Content-Length');
@@ -85,7 +85,7 @@ it.describe('algorithms', () => {
         expect(await response.text()).toEqual('');
       });
 
-      it('should not fail with an empty response with content-length header (Z_BUF_ERROR)', async ({ context, server }) => {
+      it('FE-184 should not fail with an empty response with content-length header (Z_BUF_ERROR)', async ({ context, server }) => {
         server.setRoute('/compressed', async (req, res) => {
           res.setHeader('Content-Encoding', type);
           res.end();

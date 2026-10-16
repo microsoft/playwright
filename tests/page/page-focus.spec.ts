@@ -16,7 +16,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work @smoke', async function({ page, browserName, isBidi }) {
+it('FO-001 should work @smoke', async function({ page, browserName, isBidi }) {
   it.skip(browserName === 'firefox' && !isBidi);
 
   await page.setContent(`<div id=d1 tabIndex=0></div>`);
@@ -25,7 +25,7 @@ it('should work @smoke', async function({ page, browserName, isBidi }) {
   expect(await page.evaluate(() => document.activeElement.id)).toBe('d1');
 });
 
-it('should emit focus event', async function({ page }) {
+it('FO-002 should emit focus event', async function({ page }) {
   await page.setContent(`<div id=d1 tabIndex=0></div>`);
   let focused = false;
   await page.exposeFunction('focusEvent', () => focused = true);
@@ -34,7 +34,7 @@ it('should emit focus event', async function({ page }) {
   expect(focused).toBe(true);
 });
 
-it('should emit blur event', async function({ page }) {
+it('FO-003 should emit blur event', async function({ page }) {
   await page.setContent(`<div id=d1 tabIndex=0>DIV1</div><div id=d2 tabIndex=0>DIV2</div>`);
   await page.focus('#d1');
   let focused = false;
@@ -48,7 +48,7 @@ it('should emit blur event', async function({ page }) {
   expect(blurred).toBe(true);
 });
 
-it('should traverse focus', async function({ page }) {
+it('FO-004 should traverse focus', async function({ page }) {
   await page.setContent(`<input id="i1"><input id="i2">`);
   let focused = false;
   await page.exposeFunction('focusEvent', () => focused = true);
@@ -64,7 +64,7 @@ it('should traverse focus', async function({ page }) {
   expect(await page.$eval('#i2', e => (e as HTMLInputElement).value)).toBe('Last');
 });
 
-it('should traverse focus in all directions', async function({ page }) {
+it('FO-005 should traverse focus in all directions', async function({ page }) {
   await page.setContent(`<input value="1"><input value="2"><input value="3">`);
   await page.keyboard.press('Tab');
   expect(await page.evaluate(() => (document.activeElement as HTMLInputElement).value)).toBe('1');
@@ -78,7 +78,7 @@ it('should traverse focus in all directions', async function({ page }) {
   expect(await page.evaluate(() => (document.activeElement as HTMLInputElement).value)).toBe('1');
 });
 
-it('should traverse only form elements', async function({ page, browserName, platform }) {
+it('FO-006 should traverse only form elements', async function({ page, browserName, platform }) {
   it.skip(platform !== 'darwin' || browserName !== 'webkit',
       'Chromium and WebKit both have settings for tab traversing all links, but it is only on by default in WebKit.');
 
@@ -108,7 +108,7 @@ it('should traverse only form elements', async function({ page, browserName, pla
   expect(await page.evaluate(() => document.activeElement.id)).toBe('input-1');
 });
 
-it('clicking checkbox should activate it', async ({ page, browserName, headless, platform }) => {
+it('FO-007 clicking checkbox should activate it', async ({ page, browserName, headless, platform }) => {
   it.skip(browserName === 'webkit', 'Safari does not focus on click');
 
   await page.setContent(`<input type=checkbox></input>`);
@@ -117,7 +117,7 @@ it('clicking checkbox should activate it', async ({ page, browserName, headless,
   expect(nodeName).toBe('INPUT');
 });
 
-it('tab should cycle between single input and browser', {
+it('FO-008 tab should cycle between single input and browser', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32339' }
 }, async ({ page, browserName, isHeadlessShell }) => {
   it.skip(browserName === 'chromium' && !isHeadlessShell, 'Chromium keeps input focused.');
@@ -144,7 +144,7 @@ it('tab should cycle between single input and browser', {
   expect(await page.evaluate(() => (window as any).focusEvents)).toEqual(['focus', 'blur', 'focus']);
 });
 
-it('tab should cycle between document elements and browser', {
+it('FO-009 tab should cycle between document elements and browser', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32339' }
 }, async ({ page, browserName, isHeadlessShell }) => {
   it.skip(browserName === 'chromium' && !isHeadlessShell, 'Chromium keeps last input focused.');
@@ -180,7 +180,7 @@ it('tab should cycle between document elements and browser', {
   expect(await page.evaluate(() => (window as any).focusEvents)).toEqual(['focus1', 'blur1', 'focus2', 'blur2', 'focus1']);
 });
 
-it('keeps focus on element when attempting to focus a non-focusable element', async ({ page }) => {
+it('FO-010 keeps focus on element when attempting to focus a non-focusable element', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14254' });
 
   await page.setContent(`
@@ -208,7 +208,7 @@ it('keeps focus on element when attempting to focus a non-focusable element', as
   ]);
 });
 
-it('should move focus from an iframe to its parent', async ({ page, server }) => {
+it('FO-011 should move focus from an iframe to its parent', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43280' });
   server.setRoute('/frame.html', (req, res) => {
     res.setHeader('content-type', 'text/html');
@@ -223,7 +223,7 @@ it('should move focus from an iframe to its parent', async ({ page, server }) =>
   expect(await page.frameLocator('iframe').locator('#inner').evaluate(e => e === document.activeElement)).toBe(false);
 });
 
-it('should tab from an iframe to its parent', async ({ page, server }) => {
+it('FO-012 should tab from an iframe to its parent', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43280' });
   server.setRoute('/frame.html', (req, res) => {
     res.setHeader('content-type', 'text/html');

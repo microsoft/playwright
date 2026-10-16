@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import { extractZip } from '../../packages/utils/third_party/extractZip';
 
-it('should context.routeFromHAR, matching the method and following redirects', async ({ context, asset }) => {
+it('HA-068 should context.routeFromHAR, matching the method and following redirects', async ({ context, asset }) => {
   const path = asset('har-fulfill.har');
   await context.routeFromHAR(path);
   const page = await context.newPage();
@@ -30,7 +30,7 @@ it('should context.routeFromHAR, matching the method and following redirects', a
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 });
 
-it('should page.routeFromHAR, matching the method and following redirects', async ({ context, asset }) => {
+it('HA-069 should page.routeFromHAR, matching the method and following redirects', async ({ context, asset }) => {
   const path = asset('har-fulfill.har');
   const page = await context.newPage();
   await page.routeFromHAR(path);
@@ -41,7 +41,7 @@ it('should page.routeFromHAR, matching the method and following redirects', asyn
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 });
 
-it('fallback:continue should continue when not found in har', async ({ context, server, asset }) => {
+it('HA-070 fallback:continue should continue when not found in har', async ({ context, server, asset }) => {
   const path = asset('har-fulfill.har');
   await context.routeFromHAR(path, { notFound: 'fallback' });
   const page = await context.newPage();
@@ -49,7 +49,7 @@ it('fallback:continue should continue when not found in har', async ({ context, 
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
-it('by default should abort requests not found in har', async ({ context, server, asset }) => {
+it('HA-071 by default should abort requests not found in har', async ({ context, server, asset }) => {
   const path = asset('har-fulfill.har');
   await context.routeFromHAR(path);
   const page = await context.newPage();
@@ -57,7 +57,7 @@ it('by default should abort requests not found in har', async ({ context, server
   expect(error instanceof Error).toBe(true);
 });
 
-it('fallback:continue should continue requests on bad har', async ({ context, server }, testInfo) => {
+it('HA-072 fallback:continue should continue requests on bad har', async ({ context, server }, testInfo) => {
   const path = testInfo.outputPath('test.har');
   fs.writeFileSync(path, JSON.stringify({ log: {} }), 'utf-8');
   await context.routeFromHAR(path, { notFound: 'fallback' });
@@ -66,7 +66,7 @@ it('fallback:continue should continue requests on bad har', async ({ context, se
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
-it('should only handle requests matching url filter', async ({ context, asset }) => {
+it('HA-073 should only handle requests matching url filter', async ({ context, asset }) => {
   const path = asset('har-fulfill.har');
   await context.routeFromHAR(path, { notFound: 'fallback', url: '**/*.js' });
   const page = await context.newPage();
@@ -84,7 +84,7 @@ it('should only handle requests matching url filter', async ({ context, asset })
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
 });
 
-it('should only context.routeFromHAR requests matching url filter', async ({ context, asset }) => {
+it('HA-074 should only context.routeFromHAR requests matching url filter', async ({ context, asset }) => {
   const path = asset('har-fulfill.har');
   await context.routeFromHAR(path, { url: '**/*.js' });
   const page = await context.newPage();
@@ -102,7 +102,7 @@ it('should only context.routeFromHAR requests matching url filter', async ({ con
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
 });
 
-it('should only page.routeFromHAR requests matching url filter', async ({ context, asset }) => {
+it('HA-075 should only page.routeFromHAR requests matching url filter', async ({ context, asset }) => {
   const path = asset('har-fulfill.har');
   const page = await context.newPage();
   await page.routeFromHAR(path, { url: '**/*.js' });
@@ -120,7 +120,7 @@ it('should only page.routeFromHAR requests matching url filter', async ({ contex
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
 });
 
-it('should apply overrides before routing from har', async ({ context, asset }) => {
+it('HA-076 should apply overrides before routing from har', async ({ context, asset }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29190' });
   const path = asset('har-fulfill.har');
   await context.routeFromHAR(path, { url: '**/*.js' });
@@ -142,7 +142,7 @@ it('should apply overrides before routing from har', async ({ context, asset }) 
   expect(await page.evaluate('window.value')).toBe('foo');
 });
 
-it('should support regex filter', async ({ context, asset }) => {
+it('HA-077 should support regex filter', async ({ context, asset }) => {
   const path = asset('har-fulfill.har');
   await context.routeFromHAR(path, { url: /.*(\.js|.*\.css|no.playwright\/)$/ });
   const page = await context.newPage();
@@ -151,7 +151,7 @@ it('should support regex filter', async ({ context, asset }) => {
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 });
 
-it('newPage should fulfill from har, matching the method and following redirects', async ({ browser, asset }) => {
+it('HA-078 newPage should fulfill from har, matching the method and following redirects', async ({ browser, asset }) => {
   const path = asset('har-fulfill.har');
   const page = await browser.newPage();
   await page.routeFromHAR(path);
@@ -163,7 +163,7 @@ it('newPage should fulfill from har, matching the method and following redirects
   await page.close();
 });
 
-it('should change document URL after redirected navigation', async ({ context, asset }) => {
+it('HA-079 should change document URL after redirected navigation', async ({ context, asset }) => {
   const path = asset('har-redirect.har');
   await context.routeFromHAR(path);
   const page = await context.newPage();
@@ -177,7 +177,7 @@ it('should change document URL after redirected navigation', async ({ context, a
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
-it('should change document URL after redirected navigation on click', async ({ server, context, asset }) => {
+it('HA-080 should change document URL after redirected navigation on click', async ({ server, context, asset }) => {
   const path = asset('har-redirect.har');
   await context.routeFromHAR(path, { url: /.*theverge.*/ });
   const page = await context.newPage();
@@ -192,7 +192,7 @@ it('should change document URL after redirected navigation on click', async ({ s
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
-it('should goBack to redirected navigation', async ({ context, asset, server }) => {
+it('HA-081 should goBack to redirected navigation', async ({ context, asset, server }) => {
   const path = asset('har-redirect.har');
   await context.routeFromHAR(path, { url: /.*theverge.*/ });
   const page = await context.newPage();
@@ -205,7 +205,7 @@ it('should goBack to redirected navigation', async ({ context, asset, server }) 
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
-it('should goForward to redirected navigation', async ({ context, asset, server, browserName }) => {
+it('HA-082 should goForward to redirected navigation', async ({ context, asset, server, browserName }) => {
   const path = asset('har-redirect.har');
   await context.routeFromHAR(path, { url: /.*theverge.*/ });
   const page = await context.newPage();
@@ -221,7 +221,7 @@ it('should goForward to redirected navigation', async ({ context, asset, server,
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
-it('should reload redirected navigation', async ({ context, asset, server }) => {
+it('HA-083 should reload redirected navigation', async ({ context, asset, server }) => {
   const path = asset('har-redirect.har');
   await context.routeFromHAR(path, { url: /.*theverge.*/ });
   const page = await context.newPage();
@@ -233,7 +233,7 @@ it('should reload redirected navigation', async ({ context, asset, server }) => 
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
-it('should fulfill from har with content in a file', async ({ context, asset }) => {
+it('HA-084 should fulfill from har with content in a file', async ({ context, asset }) => {
   const path = asset('har-sha1.har');
   await context.routeFromHAR(path);
   const page = await context.newPage();
@@ -241,7 +241,7 @@ it('should fulfill from har with content in a file', async ({ context, asset }) 
   expect(await page.content()).toBe('<html><head></head><body>Hello, world</body></html>');
 });
 
-it('should round-trip har.zip', async ({ contextFactory, server }, testInfo) => {
+it('HA-085 should round-trip har.zip', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.zip');
   const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath } });
   const page1 = await context1.newPage();
@@ -256,7 +256,7 @@ it('should round-trip har.zip', async ({ contextFactory, server }, testInfo) => 
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
-it('should produce extracted zip', async ({ contextFactory, server }, testInfo) => {
+it('HA-086 should produce extracted zip', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.har');
   const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath, content: 'attach' } });
   const page1 = await context1.newPage();
@@ -275,7 +275,7 @@ it('should produce extracted zip', async ({ contextFactory, server }, testInfo) 
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
-it('should round-trip extracted har.zip', async ({ contextFactory, server }, testInfo) => {
+it('HA-087 should round-trip extracted har.zip', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.zip');
   const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath } });
   const page1 = await context1.newPage();
@@ -293,7 +293,7 @@ it('should round-trip extracted har.zip', async ({ contextFactory, server }, tes
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
-it('should round-trip har with postData', async ({ contextFactory, server }, testInfo) => {
+it('HA-088 should round-trip har with postData', async ({ contextFactory, server }, testInfo) => {
   server.setRoute('/echo', async (req, res) => {
     const body = await req.postBody;
     res.end(body.toString());
@@ -324,7 +324,7 @@ it('should round-trip har with postData', async ({ contextFactory, server }, tes
   expect(await page2.evaluate(fetchFunction, '4').catch(e => e)).toBeTruthy();
 });
 
-it('should record overridden requests to har', async ({ contextFactory, server }, testInfo) => {
+it('HA-089 should record overridden requests to har', async ({ contextFactory, server }, testInfo) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29190' });
   server.setRoute('/echo', async (req, res) => {
     const body = await req.postBody;
@@ -358,7 +358,7 @@ it('should record overridden requests to har', async ({ contextFactory, server }
   expect(await page2.evaluate(fetchFunction, { path: '/echo', body: '12' })).toBe('12');
 });
 
-it('should disambiguate by header', async ({ contextFactory, server }, testInfo) => {
+it('HA-090 should disambiguate by header', async ({ contextFactory, server }, testInfo) => {
   server.setRoute('/echo', async (req, res) => {
     res.end(req.headers['baz']);
   });
@@ -396,7 +396,7 @@ it('should disambiguate by header', async ({ contextFactory, server }, testInfo)
   expect(await page2.evaluate(fetchFunction, 'baz4')).toBe('baz1');
 });
 
-it('should update har.zip for context', async ({ contextFactory, server }, testInfo) => {
+it('HA-091 should update har.zip for context', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.zip');
   const context1 = await contextFactory();
   await context1.routeFromHAR(harPath, { update: true });
@@ -412,7 +412,7 @@ it('should update har.zip for context', async ({ contextFactory, server }, testI
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
-it('should ignore boundary when matching multipart/form-data body', {
+it('HA-092 should ignore boundary when matching multipart/form-data body', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31495' }
 }, async ({ contextFactory, server }, testInfo) => {
   server.setRoute('/empty.html', (req, res) => {
@@ -452,7 +452,7 @@ it('should ignore boundary when matching multipart/form-data body', {
   await expect(page2.locator('div')).toHaveText('done');
 });
 
-it('should record single set-cookie headers', {
+it('HA-093 should record single set-cookie headers', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31495' }
 }, async ({ contextFactory, server }, testInfo) => {
   server.setRoute('/empty.html', (req, res) => {
@@ -478,7 +478,7 @@ it('should record single set-cookie headers', {
   expect(cookie2).toBe('first=foo');
 });
 
-it('should record multiple set-cookie headers', {
+it('HA-094 should record multiple set-cookie headers', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31495' }
 }, async ({ contextFactory, server }, testInfo) => {
   server.setRoute('/empty.html', (req, res) => {
@@ -505,7 +505,7 @@ it('should record multiple set-cookie headers', {
 });
 
 
-it('should update har.zip for page', async ({ contextFactory, server }, testInfo) => {
+it('HA-095 should update har.zip for page', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.zip');
   const context1 = await contextFactory();
   const page1 = await context1.newPage();
@@ -521,7 +521,7 @@ it('should update har.zip for page', async ({ contextFactory, server }, testInfo
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
-it('should update har.zip for page with different options', async ({ contextFactory, server }, testInfo) => {
+it('HA-096 should update har.zip for page with different options', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.zip');
   const context1 = await contextFactory();
   const page1 = await context1.newPage();
@@ -537,7 +537,7 @@ it('should update har.zip for page with different options', async ({ contextFact
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
-it('should update extracted har.zip for page', async ({ contextFactory, server }, testInfo) => {
+it('HA-097 should update extracted har.zip for page', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.har');
   const context1 = await contextFactory();
   const page1 = await context1.newPage();
@@ -553,7 +553,7 @@ it('should update extracted har.zip for page', async ({ contextFactory, server }
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
-it('page.unrouteAll should stop page.routeFromHAR', async ({ contextFactory, server, asset }, testInfo) => {
+it('HA-098 page.unrouteAll should stop page.routeFromHAR', async ({ contextFactory, server, asset }, testInfo) => {
   const harPath = asset('har-fulfill.har');
   const context1 = await contextFactory();
   const page1 = await context1.newPage();
@@ -566,7 +566,7 @@ it('page.unrouteAll should stop page.routeFromHAR', async ({ contextFactory, ser
   expect(response.ok()).toBeTruthy();
 });
 
-it('context.unrouteAll should stop context.routeFromHAR', async ({ contextFactory, server, asset }, testInfo) => {
+it('HA-099 context.unrouteAll should stop context.routeFromHAR', async ({ contextFactory, server, asset }, testInfo) => {
   const harPath = asset('har-fulfill.har');
   const context1 = await contextFactory();
   const page1 = await context1.newPage();
@@ -579,7 +579,7 @@ it('context.unrouteAll should stop context.routeFromHAR', async ({ contextFactor
   expect(response.ok()).toBeTruthy();
 });
 
-it('should ignore aborted requests', async ({ contextFactory, server }) => {
+it('HA-100 should ignore aborted requests', async ({ contextFactory, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29311' });
   const path = it.info().outputPath('test.har');
   {

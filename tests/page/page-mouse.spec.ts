@@ -27,7 +27,7 @@ function dimensions() {
   };
 }
 
-it('should click the document @smoke', async ({ page, server }) => {
+it('MO-001 should click the document @smoke', async ({ page, server }) => {
   await page.evaluate(() => {
     window['clickPromise'] = new Promise(resolve => {
       document.addEventListener('click', event => {
@@ -52,7 +52,7 @@ it('should click the document @smoke', async ({ page, server }) => {
   expect(event.button).toBe(0);
 });
 
-it('should dblclick the div', async ({ page, server }) => {
+it('MO-002 should dblclick the div', async ({ page, server }) => {
   await page.setContent(`<div style='width: 100px; height: 100px;'>Click me</div>`);
   await page.evaluate(() => {
     window['dblclickPromise'] = new Promise(resolve => {
@@ -78,7 +78,7 @@ it('should dblclick the div', async ({ page, server }) => {
   expect(event.button).toBe(0);
 });
 
-it('down and up should generate click', async ({ page, server }) => {
+it('MO-003 down and up should generate click', async ({ page, server }) => {
   await page.evaluate(() => {
     window['clickPromise'] = new Promise(resolve => {
       document.addEventListener('click', event => {
@@ -105,7 +105,7 @@ it('down and up should generate click', async ({ page, server }) => {
   expect(event.button).toBe(0);
 });
 
-it('should pointerdown the div with a custom button', async ({ page, server, browserName }) => {
+it('MO-004 should pointerdown the div with a custom button', async ({ page, server, browserName }) => {
   await page.setContent(`<div style='width: 100px; height: 100px;'>Click me</div>`);
   await page.evaluate(() => {
     window['pointerdownPromise'] = new Promise(resolve => {
@@ -137,7 +137,7 @@ it('should pointerdown the div with a custom button', async ({ page, server, bro
   expect(event.pointerId).toBe(browserName === 'firefox' ? 0 : 1);
 });
 
-it('should report correct buttons property', async ({ page }) => {
+it('MO-005 should report correct buttons property', async ({ page }) => {
   await page.evaluate(() => {
     (window as any).__EVENTS = [];
     const handler = event => {
@@ -171,7 +171,7 @@ it('should report correct buttons property', async ({ page }) => {
   ]);
 });
 
-it('should report correct pointerType property', {
+it('MO-006 should report correct pointerType property', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/38376' },
 }, async ({ page }) => {
   await page.mouse.move(50, 60);
@@ -197,7 +197,7 @@ it('should report correct pointerType property', {
   ]);
 });
 
-it('should select the text with mouse', async ({ page, server }) => {
+it('MO-007 should select the text with mouse', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
   const text = 'This is the text that we are going to try to select. Let\'s see how it goes.';
@@ -216,7 +216,7 @@ it('should select the text with mouse', async ({ page, server }) => {
   })).toBe(text);
 });
 
-it('should trigger hover state', async ({ page, server, headless }) => {
+it('MO-008 should trigger hover state', async ({ page, server, headless }) => {
   it.skip(!headless, 'headed messes up with hover');
 
   await page.goto(server.PREFIX + '/input/scrollable.html');
@@ -228,7 +228,7 @@ it('should trigger hover state', async ({ page, server, headless }) => {
   expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-91');
 });
 
-it('should trigger hover state on disabled button', async ({ page, server, headless }) => {
+it('MO-009 should trigger hover state on disabled button', async ({ page, server, headless }) => {
   it.skip(!headless, 'headed messes up with hover');
 
   await page.goto(server.PREFIX + '/input/scrollable.html');
@@ -237,7 +237,7 @@ it('should trigger hover state on disabled button', async ({ page, server, headl
   expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
 });
 
-it('should trigger hover state with removed window.Node', async ({ page, server, headless }) => {
+it('MO-010 should trigger hover state with removed window.Node', async ({ page, server, headless }) => {
   it.skip(!headless, 'headed messes up with hover');
 
   await page.goto(server.PREFIX + '/input/scrollable.html');
@@ -246,7 +246,7 @@ it('should trigger hover state with removed window.Node', async ({ page, server,
   expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
 });
 
-it('should set modifier keys on click', async ({ page, server, browserName, isMac }) => {
+it('MO-011 should set modifier keys on click', async ({ page, server, browserName, isMac }) => {
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.evaluate(() => document.querySelector('#button-3').addEventListener('mousedown', e => window['lastEvent'] = e, true));
   const modifiers = { 'Shift': 'shiftKey', 'Control': 'ctrlKey', 'Alt': 'altKey', 'Meta': 'metaKey' };
@@ -267,7 +267,7 @@ it('should set modifier keys on click', async ({ page, server, browserName, isMa
   }
 });
 
-it('should tween mouse movement', async ({ page, browserName, isAndroid, headless }) => {
+it('MO-012 should tween mouse movement', async ({ page, browserName, isAndroid, headless }) => {
   it.skip(isAndroid, 'Bad rounding');
   it.skip(!headless, 'actual mouse interferes with the exact mousemove events');
 
@@ -291,7 +291,7 @@ it('should tween mouse movement', async ({ page, browserName, isAndroid, headles
   ]);
 });
 
-it('should always round down', async ({ page }) => {
+it('MO-013 should always round down', async ({ page }) => {
   await page.evaluate(() => {
     document.addEventListener('mousedown', event => {
       window['result'] = [event.clientX, event.clientY];
@@ -301,7 +301,7 @@ it('should always round down', async ({ page }) => {
   expect(await page.evaluate('result')).toEqual([50, 50]);
 });
 
-it('should not crash on mouse drag with any button', async ({ page }) => {
+it('MO-014 should not crash on mouse drag with any button', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16609' });
   await page.evaluate(() => {
     // Do not show contextmenu on right click since it is poorly supported.
@@ -314,7 +314,7 @@ it('should not crash on mouse drag with any button', async ({ page }) => {
   }
 });
 
-it('should dispatch mouse move after context menu was opened', async ({ page, browserName, isWindows }) => {
+it('MO-015 should dispatch mouse move after context menu was opened', async ({ page, browserName, isWindows }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20823' });
   it.fixme(browserName === 'chromium' && isWindows, 'context menu support is best-effort for Linux and MacOS');
   await page.evaluate(() => {
@@ -338,7 +338,7 @@ it('should dispatch mouse move after context menu was opened', async ({ page, br
   }
 });
 
-it('should track hover across iframe boundaries', async ({ page, headless }) => {
+it('MO-016 should track hover across iframe boundaries', async ({ page, headless }) => {
   it.skip(!headless, 'headed messes up with hover');
 
   await page.setContent(`

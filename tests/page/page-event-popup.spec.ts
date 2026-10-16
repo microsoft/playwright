@@ -16,7 +16,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work @smoke', async ({ page }) => {
+it('PO-001 should work @smoke', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window['__popup'] = window.open('about:blank')),
@@ -25,7 +25,7 @@ it('should work @smoke', async ({ page }) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
 });
 
-it('should work with window features', async ({ page, server }) => {
+it('PO-002 should work with window features', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -35,7 +35,7 @@ it('should work with window features', async ({ page, server }) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
 });
 
-it('should emit for immediately closed popups', async ({ page }) => {
+it('PO-003 should emit for immediately closed popups', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => {
@@ -46,7 +46,7 @@ it('should emit for immediately closed popups', async ({ page }) => {
   expect(popup).toBeTruthy();
 });
 
-it('should emit for immediately closed popups 2', async ({ page, server, browserName, video }) => {
+it('PO-004 should emit for immediately closed popups 2', async ({ page, server, browserName, video }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -58,7 +58,7 @@ it('should emit for immediately closed popups 2', async ({ page, server, browser
   expect(popup).toBeTruthy();
 });
 
-it('should be able to capture alert', async ({ page }) => {
+it('PO-005 should be able to capture alert', async ({ page }) => {
   const evaluatePromise = page.evaluate(() => {
     const win = window.open('');
     win.alert('hello');
@@ -73,7 +73,7 @@ it('should be able to capture alert', async ({ page }) => {
   await evaluatePromise;
 });
 
-it('should work with empty url', async ({ page }) => {
+it('PO-006 should work with empty url', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window['__popup'] = window.open('')),
@@ -82,7 +82,7 @@ it('should work with empty url', async ({ page }) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
 });
 
-it('should work with noopener and no url', async ({ page }) => {
+it('PO-007 should work with noopener and no url', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window['__popup'] = window.open(undefined, null, 'noopener')),
@@ -93,7 +93,7 @@ it('should work with noopener and no url', async ({ page }) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
 });
 
-it('should work with noopener and about:blank', async ({ page }) => {
+it('PO-008 should work with noopener and about:blank', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window['__popup'] = window.open('about:blank', null, 'noopener')),
@@ -102,7 +102,7 @@ it('should work with noopener and about:blank', async ({ page }) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
 });
 
-it('should work with noopener and url', async ({ page, server }) => {
+it('PO-009 should work with noopener and url', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -112,7 +112,7 @@ it('should work with noopener and url', async ({ page, server }) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
 });
 
-it('should work with clicking target=_blank', async ({ page, server }) => {
+it('PO-010 should work with clicking target=_blank', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -124,7 +124,7 @@ it('should work with clicking target=_blank', async ({ page, server }) => {
   expect(popup.mainFrame().page()).toBe(popup);
 });
 
-it('should work with fake-clicking target=_blank and rel=noopener', async ({ page, server }) => {
+it('PO-011 should work with fake-clicking target=_blank and rel=noopener', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -135,7 +135,7 @@ it('should work with fake-clicking target=_blank and rel=noopener', async ({ pag
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
 });
 
-it('should work with clicking target=_blank and rel=noopener', async ({ page, server }) => {
+it('PO-012 should work with clicking target=_blank and rel=noopener', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -146,7 +146,7 @@ it('should work with clicking target=_blank and rel=noopener', async ({ page, se
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
 });
 
-it('should report popup opened from iframes', async ({ page, server, browserName }) => {
+it('PO-013 should report popup opened from iframes', async ({ page, server, browserName }) => {
   await page.goto(server.PREFIX + '/frames/two-frames.html');
   const frame = page.frames()[1];
   expect(frame).toBeTruthy();

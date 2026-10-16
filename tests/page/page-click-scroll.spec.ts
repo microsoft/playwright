@@ -16,7 +16,7 @@
 
 import { expect, test as it } from './pageTest';
 
-it('should not hit scroll bar', async ({ page, browserName, platform }) => {
+it('CL-094 should not hit scroll bar', async ({ page, browserName, platform }) => {
   await page.setContent(`
     <style>
       .categories { width: 180px; display: flex; overflow-x: scroll; }
@@ -35,7 +35,7 @@ it('should not hit scroll bar', async ({ page, browserName, platform }) => {
   await page.click('text=Story', { timeout: 2000 });
 });
 
-it('should scroll into view display:contents', async ({ page, browserName, browserMajorVersion }) => {
+it('CL-095 should scroll into view display:contents', async ({ page, browserName, browserMajorVersion }) => {
   it.skip(browserName === 'chromium' && browserMajorVersion < 105, 'Needs https://chromium-review.googlesource.com/c/chromium/src/+/3758670');
 
   await page.setContent(`
@@ -49,7 +49,7 @@ it('should scroll into view display:contents', async ({ page, browserName, brows
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
 
-it('should scroll into view display:contents with a child', async ({ page, browserName, browserMajorVersion }) => {
+it('CL-096 should scroll into view display:contents with a child', async ({ page, browserName, browserMajorVersion }) => {
   it.skip(browserName === 'chromium' && browserMajorVersion < 105, 'Needs https://chromium-review.googlesource.com/c/chromium/src/+/3758670');
 
   await page.setContent(`
@@ -61,7 +61,7 @@ it('should scroll into view display:contents with a child', async ({ page, brows
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
 
-it('should scroll into view display:contents with position', async ({ page, browserName }) => {
+it('CL-097 should scroll into view display:contents with position', async ({ page, browserName }) => {
   it.fixme(browserName === 'chromium', 'DOM.getBoxModel does not work for display:contents');
 
   await page.setContent(`
@@ -75,7 +75,7 @@ it('should scroll into view display:contents with position', async ({ page, brow
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
 
-it('should not crash when force-clicking hidden input', async ({ page }) => {
+it('CL-098 should not crash when force-clicking hidden input', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18183' });
 
   await page.setContent(`<input type=hidden>`);
@@ -83,7 +83,7 @@ it('should not crash when force-clicking hidden input', async ({ page }) => {
   expect(error.message).toContain('Element is not visible');
 });
 
-it('should scroll into view span element', async ({ page, isAndroid }) => {
+it('CL-099 should scroll into view span element', async ({ page, isAndroid }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20165' });
   it.fixme(isAndroid);
   await page.setContent(`
@@ -94,7 +94,7 @@ it('should scroll into view span element', async ({ page, isAndroid }) => {
   expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(9000);
 });
 
-it('should scroll into view element in iframe', async ({ page, isAndroid, server, browserName }) => {
+it('CL-100 should scroll into view element in iframe', async ({ page, isAndroid, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27196' });
   it.fixme(isAndroid);
   await page.goto(server.EMPTY_PAGE);
@@ -105,7 +105,7 @@ it('should scroll into view element in iframe', async ({ page, isAndroid, server
   await page.frameLocator('iframe').getByRole('button').click({ timeout: 5000 });
 });
 
-it('should not scroll the page when scroll is "none"', async ({ page }) => {
+it('CL-101 should not scroll the page when scroll is "none"', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41421' });
   await page.setContent(`
     <div style="height: 2000px;"></div>
@@ -117,7 +117,7 @@ it('should not scroll the page when scroll is "none"', async ({ page }) => {
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 });
 
-it('should click in-viewport element when scroll is "none"', async ({ page }) => {
+it('CL-102 should click in-viewport element when scroll is "none"', async ({ page }) => {
   await page.setContent(`
     <button onclick="window._clicked=true">click me</button>
     <div style="height: 2000px;"></div>
@@ -127,7 +127,7 @@ it('should click in-viewport element when scroll is "none"', async ({ page }) =>
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 });
 
-it('should not scroll nested container when scroll is "none"', async ({ page }) => {
+it('CL-103 should not scroll nested container when scroll is "none"', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41421' });
   await page.setContent(`
     <div style="height: 100px; width: 100px; overflow-y: scroll;">
@@ -146,7 +146,7 @@ it('should not scroll nested container when scroll is "none"', async ({ page }) 
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
 
-it('should not scroll on hover when scroll is "none"', async ({ page }) => {
+it('CL-104 should not scroll on hover when scroll is "none"', async ({ page }) => {
   await page.setContent(`
     <div style="height: 2000px;"></div>
     <div onmouseover="window._hovered=true" style="width: 50px; height: 50px;">hover me</div>
@@ -157,7 +157,7 @@ it('should not scroll on hover when scroll is "none"', async ({ page }) => {
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 });
 
-it('should scroll instantly on retry when scroll-behavior is smooth', async ({ page }) => {
+it('CL-105 should scroll instantly on retry when scroll-behavior is smooth', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42625' });
   // The fixed header covers everything but the bottom strip of the viewport.
   // The first attempt centers the button under the header, so the click is

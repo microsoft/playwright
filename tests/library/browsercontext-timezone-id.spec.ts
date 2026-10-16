@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 
-it('should work @smoke', async ({ browser, browserName }) => {
+it('TZ-001 should work @smoke', async ({ browser, browserName }) => {
   // Note: timezone names are rendered differently between browsers and platforms,
   // so we only check the GMT offset.
   const func = () => new Date(1479579154987).toString();
@@ -47,7 +47,7 @@ it('should work @smoke', async ({ browser, browserName }) => {
   }
 });
 
-it('should throw for invalid timezone IDs when creating pages', async ({ browser, channel, browserName, isBidi }) => {
+it('TZ-002 should throw for invalid timezone IDs when creating pages', async ({ browser, channel, browserName, isBidi }) => {
   for (const timezoneId of ['Foo/Bar', 'Baz/Qux']) {
     if (isBidi) {
       const error = await browser.newContext({ timezoneId }).catch(e => e);
@@ -70,7 +70,7 @@ it('should throw for invalid timezone IDs when creating pages', async ({ browser
   }
 });
 
-it('should work for multiple pages sharing same process', async ({ browser, server }) => {
+it('TZ-003 should work for multiple pages sharing same process', async ({ browser, server }) => {
   const context = await browser.newContext({ timezoneId: 'Europe/Moscow' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -85,7 +85,7 @@ it('should work for multiple pages sharing same process', async ({ browser, serv
   await context.close();
 });
 
-it('should not change default timezone in another context', async ({ browser, server }) => {
+it('TZ-004 should not change default timezone in another context', async ({ browser, server }) => {
   async function getContextTimezone(context) {
     const page = await context.newPage();
     return await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
@@ -110,7 +110,7 @@ it('should not change default timezone in another context', async ({ browser, se
   }
 });
 
-it('should affect Intl.DateTimeFormat().resolvedOptions().timeZone', async ({ browser, server }) => {
+it('TZ-005 should affect Intl.DateTimeFormat().resolvedOptions().timeZone', async ({ browser, server }) => {
   const context = await browser.newContext({ timezoneId: 'America/Jamaica' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -118,7 +118,7 @@ it('should affect Intl.DateTimeFormat().resolvedOptions().timeZone', async ({ br
   await context.close();
 });
 
-it('should propagate timezone to workers', async ({ browser, server }) => {
+it('TZ-006 should propagate timezone to workers', async ({ browser, server }) => {
   const context = await browser.newContext({ timezoneId: 'America/Jamaica' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
