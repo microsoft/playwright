@@ -750,8 +750,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
 }
 
 export function validateBrowserContextOptions(options: types.BrowserContextOptions, browserOptions: BrowserOptions) {
-  options.viewportMode ||= options.noDefaultViewport ? 'none' : 'fixed';
-  delete options.noDefaultViewport;
+  options.viewportMode ||= 'fixed';
   const viewportDescription = options.viewportMode === 'maximized' ? '"maximized" viewport' : 'null "viewport"';
   if (options.viewportMode !== 'fixed' && options.deviceScaleFactor !== undefined)
     throw new Error(`"deviceScaleFactor" option is not supported with ${viewportDescription}`);
@@ -845,7 +844,6 @@ const paramsThatAllowContextReuse: (keyof channels.BrowserNewContextForReusePara
 ];
 
 const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {
-  noDefaultViewport: false,
   viewportMode: 'fixed',
   ignoreHTTPSErrors: false,
   javaScriptEnabled: true,

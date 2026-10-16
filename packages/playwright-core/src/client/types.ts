@@ -64,7 +64,7 @@ export type ClientCertificate = {
   passphrase?: string;
 };
 
-export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'viewportMode' | 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'recordHar' | 'colorScheme' | 'reducedMotion' | 'forcedColors' | 'acceptDownloads' | 'contrast' | 'agent' | 'httpCredentials'> & {
+export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'viewportMode' | 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'recordHar' | 'colorScheme' | 'reducedMotion' | 'forcedColors' | 'acceptDownloads' | 'contrast' | 'agent' | 'httpCredentials'> & {
   viewport?: Size | 'maximized' | null;
   extraHTTPHeaders?: Headers;
   httpCredentials?: HttpCredentials | HttpCredentials[];
