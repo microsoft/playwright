@@ -115,8 +115,6 @@ HttpCredentials:
 ContextOptions:
   type: mixin
   properties:
-    # Legacy bindings use this when viewportMode is not set.
-    noDefaultViewport: boolean?
     viewport:
       type: object?
       properties:
