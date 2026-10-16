@@ -18,7 +18,7 @@
 import type { ServerResponse } from 'http';
 import { test as it, expect } from './pageTest';
 
-it('Page.Events.Request @smoke', async ({ page, server }) => {
+it('NE-084 Page.Events.Request @smoke', async ({ page, server }) => {
   const requests = [];
   page.on('request', request => requests.push(request));
   await page.goto(server.EMPTY_PAGE);
@@ -31,7 +31,7 @@ it('Page.Events.Request @smoke', async ({ page, server }) => {
   expect(requests[0].frame().url()).toBe(server.EMPTY_PAGE);
 });
 
-it('Page.Events.Response @smoke', async ({ page, server }) => {
+it('NE-085 Page.Events.Response @smoke', async ({ page, server }) => {
   const responses = [];
   page.on('response', response => responses.push(response));
   await page.goto(server.EMPTY_PAGE);
@@ -42,7 +42,7 @@ it('Page.Events.Response @smoke', async ({ page, server }) => {
   expect(responses[0].request()).toBeTruthy();
 });
 
-it('Page.Events.RequestFailed @smoke', async ({ page, server, browserName, platform, channel }) => {
+it('NE-086 Page.Events.RequestFailed @smoke', async ({ page, server, browserName, platform, channel }) => {
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection.destroy();
@@ -69,7 +69,7 @@ it('Page.Events.RequestFailed @smoke', async ({ page, server, browserName, platf
   expect(failedRequests[0].frame()).toBeTruthy();
 });
 
-it('Page.Events.RequestFinished @smoke', async ({ page, server }) => {
+it('NE-087 Page.Events.RequestFinished @smoke', async ({ page, server }) => {
   const [response] = await Promise.all([
     page.goto(server.EMPTY_PAGE),
     page.waitForEvent('requestfinished')
@@ -82,7 +82,7 @@ it('Page.Events.RequestFinished @smoke', async ({ page, server }) => {
   expect(request.failure()).toBe(null);
 });
 
-it('should fire events in proper order', async ({ page, server }) => {
+it('NE-088 should fire events in proper order', async ({ page, server }) => {
   const events = [];
   page.on('request', request => events.push('request'));
   page.on('response', response => events.push('response'));
@@ -92,7 +92,7 @@ it('should fire events in proper order', async ({ page, server }) => {
   expect(events).toEqual(['request', 'response', 'requestfinished']);
 });
 
-it('should support redirects', async ({ page, server }) => {
+it('NE-089 should support redirects', async ({ page, server }) => {
   const FOO_URL = server.PREFIX + '/foo.html';
   const events = {};
   events[server.EMPTY_PAGE] = [];
@@ -116,7 +116,7 @@ it('should support redirects', async ({ page, server }) => {
   expect(redirectedFrom.redirectedTo()).toBe(response.request());
 });
 
-it('should resolve responses after a navigation', async ({ page, server, browserName }) => {
+it('NE-090 should resolve responses after a navigation', async ({ page, server, browserName }) => {
   it.fixme(browserName === 'chromium');
   const responseFromServerPromise = new Promise<ServerResponse>(resolve => {
     server.setRoute('/foo', (message, response) => {

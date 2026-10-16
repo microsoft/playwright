@@ -94,7 +94,7 @@ for (const scenario of ['launch', 'connect'] as const) {
     test.fixme(({ channel }) => channel?.startsWith('msedge'), 'Network.clearBrowserCache sometimes stalls');
     test.use({ scenario });
 
-    test('should re-add binding after reset', async ({ reusedContext }) => {
+    test('BC-073 should re-add binding after reset', async ({ reusedContext }) => {
       let context = await reusedContext();
 
       await context.exposeFunction('add', function(a, b) {
@@ -114,7 +114,7 @@ for (const scenario of ['launch', 'connect'] as const) {
       expect(await page.evaluate('add(5, 6)')).toBe(11);
     });
 
-    test('should reset serviceworker', async ({ reusedContext, server }) => {
+    test('BC-074 should reset serviceworker', async ({ reusedContext, server }) => {
       server.setRoute('/page.html', (req, res) => {
         res.setHeader('Content-Type', 'text/html');
         res.end(`
@@ -152,7 +152,7 @@ for (const scenario of ['launch', 'connect'] as const) {
       await expect(page).toHaveTitle('Page Title');
     });
 
-    test('should reset serviceworker that hangs in importScripts', async ({ reusedContext, server }) => {
+    test('BC-075 should reset serviceworker that hangs in importScripts', async ({ reusedContext, server }) => {
       server.setRoute('/page.html', (req, res) => {
         res.setHeader('Content-Type', 'text/html');
         res.end(`
@@ -197,7 +197,7 @@ for (const scenario of ['launch', 'connect'] as const) {
       await expect(page).toHaveTitle('Page Title');
     });
 
-    test('should not cache resources', async ({ reusedContext, server }) => {
+    test('BC-076 should not cache resources', async ({ reusedContext, server }) => {
       test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19926' });
       const requestCountMap = new Map<string, number>();
       server.setRoute('/page.html', (req, res) => {
@@ -252,7 +252,7 @@ for (const scenario of ['launch', 'connect'] as const) {
       }
     });
 
-    test('should ignore binding from beforeunload', async ({ reusedContext }) => {
+    test('BC-077 should ignore binding from beforeunload', async ({ reusedContext }) => {
       test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22803' });
 
       let context = await reusedContext();
@@ -272,7 +272,7 @@ for (const scenario of ['launch', 'connect'] as const) {
       expect(called).toBe(false);
     });
 
-    test('should reset mouse position', {
+    test('BC-078 should reset mouse position', {
       annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22432' },
     }, async ({ reusedContext, browserName, platform, headless }) => {
       // Note: this test only reproduces the issue locally when run with --repeat-each=20.
@@ -306,7 +306,7 @@ for (const scenario of ['launch', 'connect'] as const) {
       await expect(page.locator('#two')).toHaveCSS('background-color', 'rgb(0, 0, 255)');
     });
 
-    test('should reset tracing', async ({ reusedContext, trace }, testInfo) => {
+    test('BC-079 should reset tracing', async ({ reusedContext, trace }, testInfo) => {
       test.skip(trace === 'on');
 
       let context = await reusedContext();
@@ -323,7 +323,7 @@ for (const scenario of ['launch', 'connect'] as const) {
       expect(error.message).toContain('Must start tracing before stopping');
     });
 
-    test('should work with clock emulation', async ({ reusedContext, trace }, testInfo) => {
+    test('BC-080 should work with clock emulation', async ({ reusedContext, trace }, testInfo) => {
       let context = await reusedContext();
 
       let page = await context.newPage();
@@ -336,7 +336,7 @@ for (const scenario of ['launch', 'connect'] as const) {
       expect(await page.evaluate('new Date().toISOString()')).toBe('2020-01-01T00:00:00.000Z');
     });
 
-    test('should continue issuing events after closing the reused page', async ({ reusedContext, server }) => {
+    test('BC-081 should continue issuing events after closing the reused page', async ({ reusedContext, server }) => {
       test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24574' });
 
       {
@@ -358,7 +358,7 @@ for (const scenario of ['launch', 'connect'] as const) {
       }
     });
 
-    test('should work with routeWebSocket', {
+    test('BC-082 should work with routeWebSocket', {
       annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36480' },
     }, async ({ reusedContext, server }, testInfo) => {
       async function setup(page: Page, suffix: string) {
@@ -409,7 +409,7 @@ for (const scenario of ['launch', 'connect'] as const) {
       await expect.poll(() => page.evaluate(() => window.log)).toEqual([`ws1:page-mock-after`, `ws:context-mock-after`, `ws:hello`]);
     });
 
-    test('should update viewport and media', async ({ reusedContext }) => {
+    test('BC-083 should update viewport and media', async ({ reusedContext }) => {
       let context = await reusedContext({ viewport: { width: 800, height: 600 }, colorScheme: 'dark' });
       let page = await context.newPage();
       expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);

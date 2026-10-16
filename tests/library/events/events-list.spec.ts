@@ -24,7 +24,7 @@ import { EventEmitter } from './utils';
 import { test, expect } from '@playwright/test';
 
 test.describe('EventEmitter', () => {
-  test('should maintain event names correctly', () => {
+  test('EE-011 should maintain event names correctly', () => {
     const e = new EventEmitter();
     const m = () => {};
     e.on('foo', function() {});

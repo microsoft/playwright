@@ -24,14 +24,14 @@ it.use({
   }
 });
 
-it('should report oopif frames', async function({ page, browser, server }) {
+it('OO-001 should report oopif frames', async function({ page, browser, server }) {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   await assertOOPIFCount(browser, 1);
   expect(page.frames().length).toBe(2);
   expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
 });
 
-it('should handle oopif detach', async function({ page, browser, server }) {
+it('OO-002 should handle oopif detach', async function({ page, browser, server }) {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   await assertOOPIFCount(browser, 1);
   expect(page.frames().length).toBe(2);
@@ -44,7 +44,7 @@ it('should handle oopif detach', async function({ page, browser, server }) {
   expect(detachedFrame).toBe(frame);
 });
 
-it('should remove workers of a detached oopif', async function({ page, browser, server }) {
+it('OO-003 should remove workers of a detached oopif', async function({ page, browser, server }) {
   await page.goto(server.EMPTY_PAGE);
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),
@@ -59,7 +59,7 @@ it('should remove workers of a detached oopif', async function({ page, browser, 
   expect(page.workers().length).toBe(0);
 });
 
-it('should not hang in unrouteAll when oopif worker is gone', async function({ page, context, browser, server }) {
+it('OO-004 should not hang in unrouteAll when oopif worker is gone', async function({ page, context, browser, server }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42278' });
   await context.route('**/*', route => route.continue());
   await page.goto(server.EMPTY_PAGE);
@@ -72,7 +72,7 @@ it('should not hang in unrouteAll when oopif worker is gone', async function({ p
   await context.unrouteAll();
 });
 
-it('should handle remote -> local -> remote transitions', async function({ page, browser, server }) {
+it('OO-005 should handle remote -> local -> remote transitions', async function({ page, browser, server }) {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   await assertOOPIFCount(browser, 1);
@@ -91,7 +91,7 @@ it('should handle remote -> local -> remote transitions', async function({ page,
   await assertOOPIFCount(browser, 1);
 });
 
-it.fixme('should get the proper viewport', async ({ page, browser, server }) => {
+it.fixme('OO-006 should get the proper viewport', async ({ page, browser, server }) => {
   expect(page.viewportSize()).toEqual({ width: 1280, height: 720 });
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
@@ -110,7 +110,7 @@ it.fixme('should get the proper viewport', async ({ page, browser, server }) => 
   expect(await oopif.evaluate(() => 'ontouchstart' in window)).toBe(false);
 });
 
-it('should expose function', async ({ page, browser, server }) => {
+it('OO-007 should expose function', async ({ page, browser, server }) => {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   await assertOOPIFCount(browser, 1);
@@ -122,7 +122,7 @@ it('should expose function', async ({ page, browser, server }) => {
   expect(result).toBe(36);
 });
 
-it('should emulate media', async ({ page, browser, server }) => {
+it('OO-008 should emulate media', async ({ page, browser, server }) => {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   await assertOOPIFCount(browser, 1);
@@ -132,7 +132,7 @@ it('should emulate media', async ({ page, browser, server }) => {
   expect(await oopif.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
 });
 
-it('should emulate offline', async ({ page, browser, server }) => {
+it('OO-009 should emulate offline', async ({ page, browser, server }) => {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   await assertOOPIFCount(browser, 1);
@@ -142,7 +142,7 @@ it('should emulate offline', async ({ page, browser, server }) => {
   expect(await oopif.evaluate(() => navigator.onLine)).toBe(false);
 });
 
-it('should support context options', async ({ browser, server, playwright }) => {
+it('OO-010 should support context options', async ({ browser, server, playwright }) => {
   const iPhone = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ ...iPhone, timezoneId: 'America/Jamaica', locale: 'fr-CH', userAgent: 'UA' });
   const page = await context.newPage();
@@ -164,7 +164,7 @@ it('should support context options', async ({ browser, server, playwright }) => 
   await context.close();
 });
 
-it('should respect route', async ({ page, browser, server }) => {
+it('OO-011 should respect route', async ({ page, browser, server }) => {
   let intercepted = false;
   await page.route('**/digits/0.png', route => {
     intercepted = true;
@@ -176,7 +176,7 @@ it('should respect route', async ({ page, browser, server }) => {
   expect(intercepted).toBe(true);
 });
 
-it('should take screenshot', async ({ page, browser, server }) => {
+it('OO-012 should take screenshot', async ({ page, browser, server }) => {
   await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
@@ -184,13 +184,13 @@ it('should take screenshot', async ({ page, browser, server }) => {
   expect(await page.screenshot()).toMatchSnapshot('screenshot-oopif.png');
 });
 
-it('should load oopif iframes with subresources and route', async function({ page, browser, server }) {
+it('OO-013 should load oopif iframes with subresources and route', async function({ page, browser, server }) {
   await page.route('**/*', route => route.continue());
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   await assertOOPIFCount(browser, 1);
 });
 
-it('should report main requests', async function({ page, browser, server }) {
+it('OO-014 should report main requests', async function({ page, browser, server }) {
   const requestFrames: Frame[] = [];
   page.on('request', r => requestFrames.push(r.frame()));
   const finishedFrames: Frame[] = [];
@@ -228,7 +228,7 @@ it('should report main requests', async function({ page, browser, server }) {
   expect(finishedFrames[2]).toBe(grandChild);
 });
 
-it('should support exposeFunction', async function({ page, browser, server }) {
+it('OO-015 should support exposeFunction', async function({ page, browser, server }) {
   await page.context().exposeFunction('dec', (a: number) => a - 1);
   await page.exposeFunction('inc', (a: number) => a + 1);
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
@@ -240,7 +240,7 @@ it('should support exposeFunction', async function({ page, browser, server }) {
   expect(await page.frames()[1].evaluate(() => (window as any)['dec'](4))).toBe(3);
 });
 
-it('should support addInitScript', async function({ page, browser, server }) {
+it('OO-016 should support addInitScript', async function({ page, browser, server }) {
   await page.context().addInitScript(() => (window as any)['bar'] = 17);
   await page.addInitScript(() => (window as any)['foo'] = 42);
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
@@ -252,14 +252,14 @@ it('should support addInitScript', async function({ page, browser, server }) {
   expect(await page.frames()[1].evaluate(() => (window as any)['bar'])).toBe(17);
 });
 // @see https://github.com/microsoft/playwright/issues/1240
-it('should click a button when it overlays oopif', async function({ page, browser, server }) {
+it('OO-017 should click a button when it overlays oopif', async function({ page, browser, server }) {
   await page.goto(server.PREFIX + '/button-overlay-oopif.html');
   await assertOOPIFCount(browser, 1);
   await page.click('button');
   expect(await page.evaluate(() => (window as any)['BUTTON_CLICKED'])).toBe(true);
 });
 
-it('should report google.com frame with headed', async ({ browserType, server, channel }) => {
+it('OO-018 should report google.com frame with headed', async ({ browserType, server, channel }) => {
   it.skip(channel === 'chromium-headless-shell', 'Headless Shell does not support headed mode');
   // @see https://github.com/GoogleChrome/puppeteer/issues/2548
   // https://google.com is isolated by default in Chromium embedder.
@@ -285,7 +285,7 @@ it('should report google.com frame with headed', async ({ browserType, server, c
   await browser.close();
 });
 
-it('ElementHandle.boundingBox() should work', async function({ page, browser, server }) {
+it('OO-019 ElementHandle.boundingBox() should work', async function({ page, browser, server }) {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   await page.$eval('iframe', iframe => {
     iframe.style.width = '520px';
@@ -308,7 +308,7 @@ it('ElementHandle.boundingBox() should work', async function({ page, browser, se
   await expect.poll(() => handle2!.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
 });
 
-it('should click', async function({ page, browser, server }) {
+it('OO-020 should click', async function({ page, browser, server }) {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   await page.$eval('iframe', iframe => {
     iframe.style.width = '500px';
@@ -325,7 +325,7 @@ it('should click', async function({ page, browser, server }) {
   expect(await handle1.evaluate(() => (window as any)['_clicked'])).toBe(true);
 });
 
-it('contentFrame should work', async ({ page, browser, server }) => {
+it('OO-021 contentFrame should work', async ({ page, browser, server }) => {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   await assertOOPIFCount(browser, 1);
@@ -335,7 +335,7 @@ it('contentFrame should work', async ({ page, browser, server }) => {
   expect(await content.locator('div').count()).toBe(200);
 });
 
-it('should allow cdp sessions on oopifs', async function({ page, browser, server }) {
+it('OO-022 should allow cdp sessions on oopifs', async function({ page, browser, server }) {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   await assertOOPIFCount(browser, 1);
   expect(page.frames().length).toBe(2);
@@ -350,7 +350,7 @@ it('should allow cdp sessions on oopifs', async function({ page, browser, server
   expect(JSON.stringify(oopif)).toContain('./digits/1.png');
 });
 
-it('should emit filechooser event for iframe', async ({ page, server, browser }) => {
+it('OO-023 should emit filechooser event for iframe', async ({ page, server, browser }) => {
   // Add listener before OOPIF is created.
   const chooserPromise = page.waitForEvent('filechooser');
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
@@ -365,7 +365,7 @@ it('should emit filechooser event for iframe', async ({ page, server, browser })
   expect(chooser).toBeTruthy();
 });
 
-it('should be able to click in iframe', async ({ page, server, browser }) => {
+it('OO-024 should be able to click in iframe', async ({ page, server, browser }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28023' });
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   await assertOOPIFCount(browser, 1);
@@ -379,7 +379,7 @@ it('should be able to click in iframe', async ({ page, server, browser }) => {
   expect(message.text()).toBe('clicked');
 });
 
-it('should not throw on exposeFunction when oopif detaches', async ({ page, browser, server }) => {
+it('OO-025 should not throw on exposeFunction when oopif detaches', async ({ page, browser, server }) => {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   await assertOOPIFCount(browser, 1);
   await Promise.all([
@@ -389,7 +389,7 @@ it('should not throw on exposeFunction when oopif detaches', async ({ page, brow
   expect(await page.evaluate(() => (window as any).myFunc())).toBe(2022);
 });
 
-it('should intercept response body from oopif', async function({ page, browser, server }) {
+it('OO-026 should intercept response body from oopif', async function({ page, browser, server }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20809' });
   const [response] = await Promise.all([
     page.waitForResponse('**/grid.html'),
@@ -398,7 +398,7 @@ it('should intercept response body from oopif', async function({ page, browser, 
   expect(await response.text()).toBeTruthy();
 });
 
-it('should navigate a local frame to oopif with frame.goto', async ({ page, browser, server }) => {
+it('OO-027 should navigate a local frame to oopif with frame.goto', async ({ page, browser, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   await assertOOPIFCount(browser, 0);
   const frame = page.frames()[1];
@@ -417,7 +417,7 @@ it('should navigate a local frame to oopif with frame.goto', async ({ page, brow
   expect(page.frames().length).toBe(2);
 });
 
-it('should allow to re-connect to OOPIFs with CDP when iframes were there already', async ({ browserType, server }) => {
+it('OO-028 should allow to re-connect to OOPIFs with CDP when iframes were there already', async ({ browserType, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36095' });
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17656' });
   it.skip(!!process.env.PWTEST_CHANNEL, 'Test default channel only');
@@ -436,7 +436,7 @@ it('should allow to re-connect to OOPIFs with CDP when iframes were there alread
   await hostBrowser.close();
 });
 
-it('should report the whole frame tree when connecting over CDP to nested OOPIFs', async ({ browserType, server }) => {
+it('OO-029 should report the whole frame tree when connecting over CDP to nested OOPIFs', async ({ browserType, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42955' });
   it.skip(!!process.env.PWTEST_CHANNEL, 'Test default channel only');
 

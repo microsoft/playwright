@@ -23,7 +23,7 @@ it.use({
   }
 });
 
-it('test utility world in popup w/ --disable-web-security', async ({ page, server }) => {
+it('CR-045 test utility world in popup w/ --disable-web-security', async ({ page, server }) => {
   server.setRoute('/main.html', (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/html'
@@ -44,7 +44,7 @@ it('test utility world in popup w/ --disable-web-security', async ({ page, serve
   await expect(page1).toHaveURL(/target/);
 });
 
-it('test init script w/ --disable-web-security', async ({ page, server }) => {
+it('CR-046 test init script w/ --disable-web-security', async ({ page, server }) => {
   server.setRoute('/main.html', (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/html'

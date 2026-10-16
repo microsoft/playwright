@@ -20,7 +20,7 @@ import url from 'url';
 import zlib from 'zlib';
 import { expect, test as it } from './pageTest';
 
-it('should work @smoke', async ({ page, server }) => {
+it('NE-030 should work @smoke', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('foo', 'bar');
     res.setHeader('BaZ', 'bAz');
@@ -32,7 +32,7 @@ it('should work @smoke', async ({ page, server }) => {
   expect((await response.allHeaders())['BaZ']).toBe(undefined);
 });
 
-it('should return multiple header value', async ({ page, server, browserName, platform }) => {
+it('NE-031 should return multiple header value', async ({ page, server, browserName, platform }) => {
   it.skip(browserName === 'webkit' && platform === 'win32', 'libcurl does not support non-set-cookie multivalue headers');
 
   server.setRoute('/headers', (req, res) => {
@@ -52,19 +52,19 @@ it('should return multiple header value', async ({ page, server, browserName, pl
   expect(response.headers()['name-a']).toBe('v1, v2, v3');
 });
 
-it('should return text', async ({ page, server }) => {
+it('NE-032 should return text', async ({ page, server }) => {
   const response = await page.goto(server.PREFIX + '/simple.json');
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
-it('should return uncompressed text', async ({ page, server }) => {
+it('NE-033 should return uncompressed text', async ({ page, server }) => {
   server.enableGzip('/simple.json');
   const response = await page.goto(server.PREFIX + '/simple.json');
   expect(response.headers()['content-encoding']).toBe('gzip');
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
-it('should return uncompressed text for brotli encoding', {
+it('NE-034 should return uncompressed text for brotli encoding', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39160' },
 }, async ({ page, server, browserName, isAndroid }) => {
   it.fixme(isAndroid, 'net::ERR_CONTENT_DECODING_FAILED');
@@ -83,7 +83,7 @@ it('should return uncompressed text for brotli encoding', {
   expect(await response.text()).toBe(text);
 });
 
-it('should return text for identity encoding', {
+it('NE-035 should return text for identity encoding', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42501' },
 }, async ({ page, server }) => {
   const text = '<div>hello</div>';
@@ -99,7 +99,7 @@ it('should return text for identity encoding', {
   expect(await response.text()).toBe(text);
 });
 
-it('should throw when requesting body of redirected response', async ({ page, server }) => {
+it('NE-036 should throw when requesting body of redirected response', async ({ page, server }) => {
   server.setRedirect('/foo.html', '/empty.html');
   const response = await page.goto(server.PREFIX + '/foo.html');
   const redirectedFrom = response.request().redirectedFrom();
@@ -111,7 +111,7 @@ it('should throw when requesting body of redirected response', async ({ page, se
   expect(error.message).toContain('Response body is unavailable for redirect responses');
 });
 
-it('should wait until response completes', async ({ page, server }) => {
+it('NE-037 should wait until response completes', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   // Setup server to trap request.
   let serverResponse = null;
@@ -145,19 +145,19 @@ it('should wait until response completes', async ({ page, server }) => {
   expect(await responseText).toBe('hello world!');
 });
 
-it('should return json', async ({ page, server }) => {
+it('NE-038 should return json', async ({ page, server }) => {
   const response = await page.goto(server.PREFIX + '/simple.json');
   expect(await response.json()).toEqual({ foo: 'bar' });
 });
 
-it('should return body', async ({ page, server, asset }) => {
+it('NE-039 should return body', async ({ page, server, asset }) => {
   const response = await page.goto(server.PREFIX + '/pptr.png');
   const imageBuffer = fs.readFileSync(asset('pptr.png'));
   const responseBuffer = await response.body();
   expect(responseBuffer.equals(imageBuffer)).toBe(true);
 });
 
-it('should return body with compression', async ({ page, server, asset }) => {
+it('NE-040 should return body with compression', async ({ page, server, asset }) => {
   server.enableGzip('/pptr.png');
   const response = await page.goto(server.PREFIX + '/pptr.png');
   const imageBuffer = fs.readFileSync(asset('pptr.png'));
@@ -165,7 +165,7 @@ it('should return body with compression', async ({ page, server, asset }) => {
   expect(responseBuffer.equals(imageBuffer)).toBe(true);
 });
 
-it('should return non-utf8 body even when content-type says utf8', {
+it('NE-041 should return non-utf8 body even when content-type says utf8', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40510' },
 }, async ({ page, server, browserName, browserMajorVersion }) => {
   it.fixme(browserName === 'webkit', 'webkit encodes the response body');
@@ -191,7 +191,7 @@ it('should return non-utf8 body even when content-type says utf8', {
   expect(Array.from(bytesReceived)).toEqual(bytes);
 });
 
-it('should return status text', async ({ page, server }) => {
+it('NE-042 should return status text', async ({ page, server }) => {
   server.setRoute('/cool', (req, res) => {
     res.writeHead(200, 'cool!');
     res.end();
@@ -200,7 +200,7 @@ it('should return status text', async ({ page, server }) => {
   expect(response.statusText()).toBe('cool!');
 });
 
-it('should report all headers', async ({ page, server, browserName, platform, isElectron, browserMajorVersion }) => {
+it('NE-043 should report all headers', async ({ page, server, browserName, platform, isElectron, browserMajorVersion }) => {
   it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
   it.skip(browserName === 'webkit' && platform === 'win32', 'libcurl does not support non-set-cookie multivalue headers');
 
@@ -236,7 +236,7 @@ it('should report all headers', async ({ page, server, browserName, platform, is
   expect(actualHeaders).toEqual(expectedHeaders);
 });
 
-it('should report multiple set-cookie headers', async ({ page, server, isElectron, browserMajorVersion }) => {
+it('NE-044 should report multiple set-cookie headers', async ({ page, server, isElectron, browserMajorVersion }) => {
   it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
 
   server.setRoute('/headers', (req, res) => {
@@ -260,7 +260,7 @@ it('should report multiple set-cookie headers', async ({ page, server, isElectro
   expect(await response.headerValues('set-cookie')).toEqual(['a=b', 'c=d']);
 });
 
-it('should behave the same way for headers and allHeaders', async ({ page, server, browserName, platform }) => {
+it('NE-045 should behave the same way for headers and allHeaders', async ({ page, server, browserName, platform }) => {
   it.skip(browserName === 'webkit' && platform === 'win32', 'libcurl does not support non-set-cookie multivalue headers');
   server.setRoute('/headers', (req, res) => {
     const headers = {
@@ -292,7 +292,7 @@ it('should behave the same way for headers and allHeaders', async ({ page, serve
   expect(allHeaders['name-b']).toEqual('v4');
 });
 
-it('should provide a Response with a file URL', async ({ page, asset, isAndroid, isElectron, isWindows, browserName, mode, channel }) => {
+it('NE-046 should provide a Response with a file URL', async ({ page, asset, isAndroid, isElectron, isWindows, browserName, mode, channel }) => {
   it.skip(isAndroid, 'No files on Android');
   it.skip(browserName === 'firefox', 'Firefox does return null for file:// URLs');
   it.skip(channel === 'webkit-wsl');
@@ -306,7 +306,7 @@ it('should provide a Response with a file URL', async ({ page, asset, isAndroid,
   expect(response.ok()).toBe(true);
 });
 
-it('should return set-cookie header after route.fulfill', async ({ page, server, browserName }) => {
+it('NE-047 should return set-cookie header after route.fulfill', async ({ page, server, browserName }) => {
   it.fail(browserName === 'webkit' || browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/11035');
   await page.route('**/*', async route => {
     await route.fulfill({
@@ -323,7 +323,7 @@ it('should return set-cookie header after route.fulfill', async ({ page, server,
   expect(headers['set-cookie']).toBe('a=b');
 });
 
-it('should return headers after route.fulfill', async ({ page, server }) => {
+it('NE-048 should return headers after route.fulfill', async ({ page, server }) => {
   await page.route('**/*', async route => {
     await route.fulfill({
       status: 200,
@@ -344,7 +344,7 @@ it('should return headers after route.fulfill', async ({ page, server }) => {
   });
 });
 
-it('should report if request was fromServiceWorker', async ({ page, server, isAndroid, isElectron }) => {
+it('NE-049 should report if request was fromServiceWorker', async ({ page, server, isAndroid, isElectron }) => {
   it.skip(isAndroid || isElectron);
   {
     const res = await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
@@ -360,7 +360,7 @@ it('should report if request was fromServiceWorker', async ({ page, server, isAn
   }
 });
 
-it('should return body for prefetch script', async ({ page, server, browserName, browserMajorVersion }) => {
+it('NE-050 should return body for prefetch script', async ({ page, server, browserName, browserMajorVersion }) => {
   it.skip(browserName === 'webkit', 'No prefetch in WebKit: https://caniuse.com/link-rel-prefetch');
   it.skip(browserName === 'chromium' && browserMajorVersion < 138, 'Requires Sec-Purpose header, shipped in Chrome 138');
   const [response] = await Promise.all([
@@ -371,7 +371,7 @@ it('should return body for prefetch script', async ({ page, server, browserName,
   expect(body.toString()).toBe('// Scripts will be pre-fetched');
 });
 
-it('should return body for image with evicted body', {
+it('NE-051 should return body for image with evicted body', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42002' },
 }, async ({ page, server, isMac, browserName }) => {
   it.fixme(isMac && browserName === 'webkit', 'WebKit on Mac evicts the body and returns empty buffer');
@@ -392,7 +392,7 @@ it('should return body for image with evicted body', {
   expect(body.toString('base64')).toBe(imageBase64);
 });
 
-it('should bypass disk cache when page interception is enabled', async ({ page, server }) => {
+it('NE-052 should bypass disk cache when page interception is enabled', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30000' });
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   await page.route('**/api*', route => route.continue());
@@ -443,7 +443,7 @@ it('should bypass disk cache when page interception is enabled', async ({ page, 
   }
 });
 
-it('request.existingResponse should return null before response is received', async ({ page, server }) => {
+it('NE-053 request.existingResponse should return null before response is received', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let serverResponse = null;
   server.setRoute('/get', (req, res) => {
@@ -471,18 +471,18 @@ it('request.existingResponse should return null before response is received', as
   expect(existingResponse.status()).toBe(200);
 });
 
-it('request.existingResponse should return the response after it is received', async ({ page, server }) => {
+it('NE-054 request.existingResponse should return the response after it is received', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE);
   const request = response.request();
   expect(request.existingResponse()).toBe(response);
 });
 
-it('should return http version', async ({ page, server }) => {
+it('NE-055 should return http version', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE);
   expect(await response.httpVersion()).toBe('HTTP/1.1');
 });
 
-it('Response.formData() should parse multipart/form-data in page context', async ({ page, server, browserName }) => {
+it('NE-056 Response.formData() should parse multipart/form-data in page context', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40244' });
   await page.goto(server.EMPTY_PAGE);
   const result = await page.evaluate(async () => {
@@ -515,7 +515,7 @@ it('Response.formData() should parse multipart/form-data in page context', async
   expect(result.fileContent).toBe('hello');
 });
 
-it('should give a readable error when response.body() races with navigation', async ({ page, server, browserName }) => {
+it('NE-057 should give a readable error when response.body() races with navigation', async ({ page, server, browserName }) => {
   it.skip(browserName === 'firefox', 'Firefox keeps the response body available after navigating away, so it never throws');
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41512' });
   const [response] = await Promise.all([

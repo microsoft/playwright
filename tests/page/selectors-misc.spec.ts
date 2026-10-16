@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work for open shadow roots', async ({ page, server }) => {
+it('SE-133 should work for open shadow roots', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$eval(`id=target`, e => e.textContent)).toBe('Hello from root2');
   expect(await page.$eval(`data-testid=foo`, e => e.textContent)).toBe('Hello from root1');
@@ -27,14 +27,14 @@ it('should work for open shadow roots', async ({ page, server }) => {
   expect(await page.$$(`data-testid:light=foo`)).toEqual([]);
 });
 
-it('should click on links in shadow dom', async ({ page, server, browserName, browserMajorVersion }) => {
+it('SE-134 should click on links in shadow dom', async ({ page, server, browserName, browserMajorVersion }) => {
   await page.goto(server.PREFIX + '/shadow-dom-link.html');
   expect(await page.evaluate(() => (window as any).clickCount)).toBe(0);
   await page.click('#inner-link');
   expect(await page.evaluate(() => (window as any).clickCount)).toBe(1);
 });
 
-it('should work with :visible', async ({ page }) => {
+it('SE-135 should work with :visible', async ({ page }) => {
   await page.setContent(`
     <section>
       <div id=target1></div>
@@ -54,7 +54,7 @@ it('should work with :visible', async ({ page }) => {
   expect(await page.$eval('div:visible', div => div.id)).toBe('target2');
 });
 
-it('should work with >> visible=', async ({ page }) => {
+it('SE-136 should work with >> visible=', async ({ page }) => {
   await page.setContent(`
     <section>
       <div id=target1></div>
@@ -74,7 +74,7 @@ it('should work with >> visible=', async ({ page }) => {
   expect(await page.$eval('div >> visible=true', div => div.id)).toBe('target2');
 });
 
-it('should work with >> visible=false', async ({ page }) => {
+it('SE-137 should work with >> visible=false', async ({ page }) => {
   await page.setContent(`
     <section>
       <div id=target1></div>
@@ -86,7 +86,7 @@ it('should work with >> visible=false', async ({ page }) => {
   await expect(page.locator('div >> visible=false')).toHaveCount(1);
 });
 
-it('should work with :nth-match', async ({ page }) => {
+it('SE-138 should work with :nth-match', async ({ page }) => {
   await page.setContent(`
     <section>
       <div id=target1></div>
@@ -121,7 +121,7 @@ it('should work with :nth-match', async ({ page }) => {
   expect(await element.evaluate(e => e.id)).toBe('target3');
 });
 
-it('should work with nth=', async ({ page }) => {
+it('SE-139 should work with nth=', async ({ page }) => {
   await page.setContent(`
     <section>
       <div id=target1></div>
@@ -157,7 +157,7 @@ it('should work with nth=', async ({ page }) => {
   expect(await page.locator('div >> div >> span >> nth=1').textContent()).toBe('hello');
 });
 
-it('should work with strict mode and chaining', async ({ page }) => {
+it('SE-140 should work with strict mode and chaining', async ({ page }) => {
   await page.setContent(`
     <div>
       <div>
@@ -170,7 +170,7 @@ it('should work with strict mode and chaining', async ({ page }) => {
   expect(await page.locator('div >> div >> span').textContent()).toBe('hi');
 });
 
-it('should work with layout selectors', async ({ page, trace }) => {
+it('SE-141 should work with layout selectors', async ({ page, trace }) => {
   it.skip(trace === 'on');
 
   /*
@@ -283,12 +283,12 @@ it('should work with layout selectors', async ({ page, trace }) => {
   expect(error.message).toContain('"near" engine expects a selector list and optional maximum distance in pixels');
 });
 
-it('should escape the scope with >>', async ({ page }) => {
+it('SE-142 should escape the scope with >>', async ({ page }) => {
   await page.setContent(`<div><label>Test</label><input id='myinput'></div>`);
   expect(await page.$eval(`label >> xpath=.. >> input`, e => e.id)).toBe('myinput');
 });
 
-it('xpath should be relative', async ({ page }) => {
+it('SE-143 xpath should be relative', async ({ page }) => {
   await page.setContent(`
     <span class="find-me" id=target1>1</span>
     <div>
@@ -309,7 +309,7 @@ it('xpath should be relative', async ({ page }) => {
   expect(await page.$eval(`div >> xpath=/*[@class="find-me"]`, e => e.id)).toBe('target2');
 });
 
-it('should work with pipe in xpath', async ({ page, server }) => {
+it('SE-144 should work with pipe in xpath', async ({ page, server }) => {
   await page.setContent(`
     <span class="find-me" id=t1>1</span>
     <div>
@@ -330,13 +330,13 @@ it('should work with pipe in xpath', async ({ page, server }) => {
   await page.click(`//code|//span[@id="t2"]`);
 });
 
-it('should print original xpath in error', async ({ page, browserName }) => {
+it('SE-145 should print original xpath in error', async ({ page, browserName }) => {
   const error = await page.locator(`//*[contains(@Class, 'foo']`).isVisible().catch(e => e);
   expect(error.message).toContain('//*[contains(@Class, \\\'foo\\\']');
   expect(error.message).not.toContain('.//*[contains(@Class, \'foo\']');
 });
 
-it('data-testid on the handle should be relative', async ({ page }) => {
+it('SE-146 data-testid on the handle should be relative', async ({ page }) => {
   await page.setContent(`
     <span data-testid="find-me" id=target1>1</span>
     <div>
@@ -350,7 +350,7 @@ it('data-testid on the handle should be relative', async ({ page }) => {
   expect(await page.$eval(`div >> data-testid=find-me`, e => e.id)).toBe('target2');
 });
 
-it('should properly determine visibility of display:contents elements', async ({ page }) => {
+it('SE-147 should properly determine visibility of display:contents elements', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11202' });
 
   await page.setContent(`
@@ -384,7 +384,7 @@ it('should properly determine visibility of display:contents elements', async ({
   await page.waitForSelector('article', { state: 'hidden' });
 });
 
-it('should work with internal:has=', async ({ page, server }) => {
+it('SE-148 should work with internal:has=', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`div >> internal:has="#target"`, els => els.length)).toBe(2);
   expect(await page.$$eval(`div >> internal:has="[data-testid=foo]"`, els => els.length)).toBe(3);
@@ -418,7 +418,7 @@ it('should work with internal:has=', async ({ page, server }) => {
   expect(error4.message).toContain('Unexpected token "!" while parsing css selector "span!"');
 });
 
-it('should work with internal:has-not=', async ({ page }) => {
+it('SE-149 should work with internal:has-not=', async ({ page }) => {
   await page.setContent(`<section><span></span><div></div></section><section><br></section>`);
   expect(await page.$$eval(`section >> internal:has-not="span"`, els => els.length)).toBe(1);
   expect(await page.$$eval(`section >> internal:has-not="span, div, br"`, els => els.length)).toBe(0);
@@ -427,7 +427,7 @@ it('should work with internal:has-not=', async ({ page }) => {
   expect(await page.$$eval(`section >> internal:has-not="article"`, els => els.length)).toBe(2);
 });
 
-it('should work with internal:and=', async ({ page, server }) => {
+it('SE-150 should work with internal:and=', async ({ page, server }) => {
   await page.setContent(`
     <div class=foo>hello</div><div class=bar>world</div>
     <span class=foo>hello2</span><span class=bar>world2</span>
@@ -440,7 +440,7 @@ it('should work with internal:and=', async ({ page, server }) => {
   expect(await page.$$eval(`.bar >> internal:and="span"`, els => els.map(e => e.textContent))).toEqual(['world2']);
 });
 
-it('should work with internal:or=', async ({ page, server }) => {
+it('SE-151 should work with internal:or=', async ({ page, server }) => {
   await page.setContent(`
     <div>hello</div>
     <span>world</span>
@@ -454,7 +454,7 @@ it('should work with internal:or=', async ({ page, server }) => {
   expect(await page.locator(`span >> internal:or="article"`).textContent()).toBe('world');
 });
 
-it('should work with internal:chain=', async ({ page, server }) => {
+it('SE-152 should work with internal:chain=', async ({ page, server }) => {
   await page.setContent(`
     <div>one <span>two</span> <button>three</button> </div>
     <span>four</span>
@@ -464,7 +464,7 @@ it('should work with internal:chain=', async ({ page, server }) => {
   expect(await page.$$eval(`div >> internal:chain="span >> internal:or=\\"button\\""`, els => els.map(e => e.textContent))).toEqual(['two', 'three']);
 });
 
-it('chaining should work with large DOM @smoke', async ({ page, server }) => {
+it('SE-153 chaining should work with large DOM @smoke', async ({ page, server }) => {
   await page.evaluate(() => {
     let last = document.body;
     for (let i = 0; i < 100; i++) {

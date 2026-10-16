@@ -24,12 +24,12 @@ function getPermission(page, name) {
 it.describe('permissions', () => {
   it.fixme(({ browserName, isWindows }) => browserName === 'webkit' && isWindows, 'Permissions API is disabled on Windows WebKit');
 
-  it('should be prompt by default', async ({ page, server }) => {
+  it('PE-001 should be prompt by default', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it('should deny permission when not listed', async ({ page, context, server, browserName, isBidi, isFrozenWebkit }) => {
+  it('PE-002 should deny permission when not listed', async ({ page, context, server, browserName, isBidi, isFrozenWebkit }) => {
     it.skip(isFrozenWebkit);
 
     await page.goto(server.EMPTY_PAGE);
@@ -47,7 +47,7 @@ it.describe('permissions', () => {
     }
   });
 
-  it('should fail when bad permission is given', async ({ page, context, server, isBidi }) => {
+  it('PE-003 should fail when bad permission is given', async ({ page, context, server, isBidi }) => {
     await page.goto(server.EMPTY_PAGE);
     let error: Error;
     await context.grantPermissions(['foo'], { origin: server.EMPTY_PAGE }).catch(e => error = e);
@@ -57,26 +57,26 @@ it.describe('permissions', () => {
       expect(error.message).toContain('Unknown permission: foo');
   });
 
-  it('should grant geolocation permission when origin is listed', async ({ page, context, server }) => {
+  it('PE-004 should grant geolocation permission when origin is listed', async ({ page, context, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
     expect(await getPermission(page, 'geolocation')).toBe('granted');
   });
 
-  it('should prompt for geolocation permission when origin is not listed', async ({ page, context, server }) => {
+  it('PE-005 should prompt for geolocation permission when origin is not listed', async ({ page, context, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
     await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it('should grant notifications permission when listed', async ({ page, context, server }) => {
+  it('PE-006 should grant notifications permission when listed', async ({ page, context, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['notifications'], { origin: server.EMPTY_PAGE });
     expect(await getPermission(page, 'notifications')).toBe('granted');
   });
 
-  it('should accumulate when adding', async ({ page, context, server }) => {
+  it('PE-007 should accumulate when adding', async ({ page, context, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation']);
     await context.grantPermissions(['notifications']);
@@ -84,7 +84,7 @@ it.describe('permissions', () => {
     expect(await getPermission(page, 'notifications')).toBe('granted');
   });
 
-  it('should clear permissions', async ({ page, context, server }) => {
+  it('PE-008 should clear permissions', async ({ page, context, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation']);
     await context.clearPermissions();
@@ -93,13 +93,13 @@ it.describe('permissions', () => {
     expect(await getPermission(page, 'notifications')).toBe('granted');
   });
 
-  it('should grant permission when listed for all domains', async ({ page, context, server }) => {
+  it('PE-009 should grant permission when listed for all domains', async ({ page, context, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation']);
     expect(await getPermission(page, 'geolocation')).toBe('granted');
   });
 
-  it('should grant permission when creating context', async ({ server, browser }) => {
+  it('PE-010 should grant permission when creating context', async ({ server, browser }) => {
     const context = await browser.newContext({ permissions: ['geolocation'] });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -107,7 +107,7 @@ it.describe('permissions', () => {
     await context.close();
   });
 
-  it('should reset permissions', async ({ page, context, server }) => {
+  it('PE-011 should reset permissions', async ({ page, context, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
     expect(await getPermission(page, 'geolocation')).toBe('granted');
@@ -115,7 +115,7 @@ it.describe('permissions', () => {
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it('should trigger permission onchange', async ({ page, context, server, browserName, isBidi }) => {
+  it('PE-012 should trigger permission onchange', async ({ page, context, server, browserName, isBidi }) => {
     it.fail(browserName === 'webkit');
 
     await page.goto(server.EMPTY_PAGE);
@@ -142,7 +142,7 @@ it.describe('permissions', () => {
     expect(await page.evaluate(() => window['events'])).toEqual(expectedEvents);
   });
 
-  it('should isolate permissions between browser contexts', async ({ server, browser, browserName, isBidi, isFrozenWebkit }) => {
+  it('PE-013 should isolate permissions between browser contexts', async ({ server, browser, browserName, isBidi, isFrozenWebkit }) => {
     it.skip(isFrozenWebkit);
 
     const context = await browser.newContext();
@@ -192,7 +192,7 @@ it.describe('permissions', () => {
   });
 });
 
-it('should support clipboard read', async ({ page, context, server, browserName, isWindows, isHeadlessShell }) => {
+it('PE-014 should support clipboard read', async ({ page, context, server, browserName, isWindows, isHeadlessShell }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27475' });
   it.fail(browserName === 'firefox', 'No such permissions (requires flag) in Firefox');
 
@@ -217,7 +217,7 @@ it('should support clipboard read', async ({ page, context, server, browserName,
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('test content');
 });
 
-it('should isolate the headless clipboard from the operating system', {
+it('PE-015 should isolate the headless clipboard from the operating system', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13097' },
 }, async ({ browserType, server, browserName, isFrozenWebkit }) => {
   it.skip(isFrozenWebkit, 'needs recent webkit');
@@ -248,7 +248,7 @@ it('should isolate the headless clipboard from the operating system', {
   await Promise.all([browser1.close(), browser2.close()]);
 });
 
-it('storage access', {
+it('PE-016 storage access', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31227' }
 }, async ({ page, context, server, browserName }) => {
   it.skip(browserName !== 'chromium', 'chromium-only api');
@@ -279,7 +279,7 @@ it.describe(() => {
   // Secure context
   it.use({ ignoreHTTPSErrors: true, });
 
-  it('should be able to use the local-fonts API', async ({ page, context, httpsServer, browserName, channel, headless }) => {
+  it('PE-017 should be able to use the local-fonts API', async ({ page, context, httpsServer, browserName, channel, headless }) => {
     it.skip(browserName !== 'chromium', 'chromium-only api');
     it.skip(!!channel && channel.startsWith('msedge'), 'always times out in edge');
     it.fixme(!headless, 'times out in headed');
@@ -293,7 +293,7 @@ it.describe(() => {
   });
 });
 
-it('local network request is allowed from public origin', {
+it('PE-018 local network request is allowed from public origin', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37861' }
 }, async ({ page, context, server, browserName, channel, browserMajorVersion }) => {
   it.skip(browserName === 'webkit');
@@ -343,7 +343,7 @@ it('local network request is allowed from public origin', {
   ]);
 });
 
-it('can request screen-wake-lock', {
+it('PE-019 can request screen-wake-lock', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39115' }
 }, async ({ page, context }) => {
   await context.grantPermissions(['screen-wake-lock']);
@@ -375,7 +375,7 @@ it.describe('camera and microphone', () => {
     }, constraints);
   }
 
-  it('should capture when camera and microphone are granted', {
+  it('PE-020 should capture when camera and microphone are granted', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/2973' }
   }, async ({ page, context, server, isFrozenWebkit }) => {
     it.skip(isFrozenWebkit, 'Mock capture device support requires a newer WebKit build');
@@ -390,7 +390,7 @@ it.describe('camera and microphone', () => {
     });
   });
 
-  it('should reject when no permission is granted', {
+  it('PE-021 should reject when no permission is granted', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/2973' }
   }, async ({ page, server, isFrozenWebkit }) => {
     it.skip(isFrozenWebkit, 'Mock capture device support requires a newer WebKit build');
@@ -399,7 +399,7 @@ it.describe('camera and microphone', () => {
     expect(await getUserMedia(page, { video: true, audio: true })).toEqual({ error: 'NotAllowedError' });
   });
 
-  it('should gate audio and video independently', {
+  it('PE-022 should gate audio and video independently', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/2973' }
   }, async ({ page, context, server, isFrozenWebkit }) => {
     it.skip(isFrozenWebkit, 'Mock capture device support requires a newer WebKit build');
@@ -412,7 +412,7 @@ it.describe('camera and microphone', () => {
     expect(await getUserMedia(page, { audio: true })).toEqual({ error: 'NotAllowedError' });
   });
 
-  it('should stop capturing after permissions are cleared', {
+  it('PE-023 should stop capturing after permissions are cleared', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/2973' }
   }, async ({ page, context, server, isFrozenWebkit }) => {
     it.skip(isFrozenWebkit, 'Mock capture device support requires a newer WebKit build');

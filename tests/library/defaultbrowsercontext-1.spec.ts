@@ -25,7 +25,7 @@ function maybeFilterCookies(channel: string | undefined, cookies: any[]) {
   return cookies;
 }
 
-it('context.cookies() should work @smoke', async ({ server, launchPersistent, defaultSameSiteCookieValue, channel }) => {
+it('DC-001 context.cookies() should work @smoke', async ({ server, launchPersistent, defaultSameSiteCookieValue, channel }) => {
   const { page } = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   const documentCookie = await page.evaluate(() => {
@@ -45,7 +45,7 @@ it('context.cookies() should work @smoke', async ({ server, launchPersistent, de
   }]);
 });
 
-it('context.addCookies() should work', async ({ server, launchPersistent, browserName, isWindows, channel }) => {
+it('DC-002 context.addCookies() should work', async ({ server, launchPersistent, browserName, isWindows, channel }) => {
   const { page } = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   await page.context().addCookies([{
@@ -67,7 +67,7 @@ it('context.addCookies() should work', async ({ server, launchPersistent, browse
   }]);
 });
 
-it('context.clearCookies() should work', async ({ server, launchPersistent, channel }) => {
+it('DC-003 context.clearCookies() should work', async ({ server, launchPersistent, channel }) => {
   const { page } = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   await page.context().addCookies([{
@@ -86,19 +86,19 @@ it('context.clearCookies() should work', async ({ server, launchPersistent, chan
   expect(await page.evaluate('document.cookie')).toBe('');
 });
 
-it('should support viewport option', async ({ launchPersistent }) => {
+it('DC-004 should support viewport option', async ({ launchPersistent }) => {
   const { page, context } = await launchPersistent({ viewport: { width: 456, height: 789 } });
   await verifyViewport(page, 456, 789);
   const page2 = await context.newPage();
   await verifyViewport(page2, 456, 789);
 });
 
-it('should support deviceScaleFactor option', async ({ launchPersistent }) => {
+it('DC-005 should support deviceScaleFactor option', async ({ launchPersistent }) => {
   const { page } = await launchPersistent({ deviceScaleFactor: 3 });
   expect(await page.evaluate('window.devicePixelRatio')).toBe(3);
 });
 
-it('should support userAgent option', async ({ server, launchPersistent }) => {
+it('DC-006 should support userAgent option', async ({ server, launchPersistent }) => {
   const { page } = await launchPersistent({ userAgent: 'foobar' });
   expect(await page.evaluate(() => navigator.userAgent)).toBe('foobar');
   const [request] = await Promise.all([
@@ -108,7 +108,7 @@ it('should support userAgent option', async ({ server, launchPersistent }) => {
   expect(request.headers['user-agent']).toBe('foobar');
 });
 
-it('should support bypassCSP option', async ({ server, launchPersistent }) => {
+it('DC-007 should support bypassCSP option', async ({ server, launchPersistent }) => {
   const { page } = await launchPersistent({ bypassCSP: true });
   await page.goto(server.PREFIX + '/csp.html');
   await page.addScriptTag({ content: 'window["__injected"] = 42;' });
@@ -116,7 +116,7 @@ it('should support bypassCSP option', async ({ server, launchPersistent }) => {
   expect(await page.evaluate('window["__inlineScriptValue"]')).toBe(42);
 });
 
-it('should support javascriptEnabled option', async ({ launchPersistent, browserName }) => {
+it('DC-008 should support javascriptEnabled option', async ({ launchPersistent, browserName }) => {
   const { page } = await launchPersistent({ javaScriptEnabled: false });
   await page.goto('data:text/html, <script>var something = "forbidden"</script>');
   let error = null;
@@ -127,20 +127,20 @@ it('should support javascriptEnabled option', async ({ launchPersistent, browser
     expect(error.message).toContain('something is not defined');
 });
 
-it('should support httpCredentials option', async ({ server, launchPersistent }) => {
+it('DC-009 should support httpCredentials option', async ({ server, launchPersistent }) => {
   const { page } = await launchPersistent({ httpCredentials: { username: 'user', password: 'pass' } });
   server.setAuth('/playground.html', 'user', 'pass');
   const response = await page.goto(server.PREFIX + '/playground.html');
   expect(response.status()).toBe(200);
 });
 
-it('should support offline option', async ({ server, launchPersistent }) => {
+it('DC-010 should support offline option', async ({ server, launchPersistent }) => {
   const { page } = await launchPersistent({ offline: true });
   const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
   expect(error).toBeTruthy();
 });
 
-it('should support acceptDownloads option', async ({ server, launchPersistent, mode }) => {
+it('DC-011 should support acceptDownloads option', async ({ server, launchPersistent, mode }) => {
   it.skip(mode !== 'default', 'download.path() is not available in remote mode');
 
   const { page } = await launchPersistent();

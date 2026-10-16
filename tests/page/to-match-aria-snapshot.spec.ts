@@ -17,14 +17,14 @@
 import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
-test('should match page', async ({ page }) => {
+test('AR-107 should match page', async ({ page }) => {
   await page.setContent(`<h1>title</h1>`);
   await expect(page).toMatchAriaSnapshot(`
     - heading "title"
   `);
 });
 
-test('should match page complex', async ({ page }) => {
+test('AR-108 should match page complex', async ({ page }) => {
   await page.setContent(`
     <h1>Microsoft</h1>
     <div>Open source projects and samples from Microsoft</div>
@@ -43,14 +43,14 @@ test('should match page complex', async ({ page }) => {
   `);
 });
 
-test('should match page with not', async ({ page }) => {
+test('AR-109 should match page with not', async ({ page }) => {
   await page.setContent(`<h1>title</h1>`);
   await expect(page).not.toMatchAriaSnapshot(`
     - heading "wrong"
   `);
 });
 
-test('should fail page with timeout', async ({ page }) => {
+test('AR-110 should fail page with timeout', async ({ page }) => {
   await page.setContent(`<h1>title</h1>`);
   const e = await expect(page).toMatchAriaSnapshot(`
     - heading "wrong"
@@ -60,14 +60,14 @@ test('should fail page with timeout', async ({ page }) => {
   expect(stripAnsi(e.message)).not.toContain('Locator');
 });
 
-test('should match', async ({ page }) => {
+test('AR-111 should match', async ({ page }) => {
   await page.setContent(`<h1>title</h1>`);
   await expect(page).toMatchAriaSnapshot(`
     - heading "title"
   `);
 });
 
-test('should match in list', async ({ page }) => {
+test('AR-112 should match in list', async ({ page }) => {
   await page.setContent(`
     <h1>title</h1>
     <h1>title 2</h1>
@@ -77,7 +77,7 @@ test('should match in list', async ({ page }) => {
   `);
 });
 
-test('should match list with accessible name', async ({ page }) => {
+test('AR-113 should match list with accessible name', async ({ page }) => {
   await page.setContent(`
     <ul aria-label="my list">
       <li>one</li>
@@ -91,7 +91,7 @@ test('should match list with accessible name', async ({ page }) => {
   `);
 });
 
-test('should match deep item', async ({ page }) => {
+test('AR-114 should match deep item', async ({ page }) => {
   await page.setContent(`
     <div>
       <h1>title</h1>
@@ -103,7 +103,7 @@ test('should match deep item', async ({ page }) => {
   `);
 });
 
-test('should match complex', async ({ page }) => {
+test('AR-115 should match complex', async ({ page }) => {
   await page.setContent(`
     <ul>
       <li>
@@ -118,7 +118,7 @@ test('should match complex', async ({ page }) => {
   `);
 });
 
-test('should match regex', async ({ page }) => {
+test('AR-116 should match regex', async ({ page }) => {
   {
     await page.setContent(`<h1>Issues 12</h1>`);
     await expect(page).toMatchAriaSnapshot(`
@@ -145,7 +145,7 @@ test('should match regex', async ({ page }) => {
   }
 });
 
-test('should allow text nodes', async ({ page }) => {
+test('AR-117 should allow text nodes', async ({ page }) => {
   await page.setContent(`
     <h1>Microsoft</h1>
     <div>Open source projects and samples from Microsoft</div>
@@ -157,7 +157,7 @@ test('should allow text nodes', async ({ page }) => {
   `);
 });
 
-test('details visibility', async ({ page }) => {
+test('AR-118 details visibility', async ({ page }) => {
   await page.setContent(`
     <details>
       <summary>Summary</summary>
@@ -170,7 +170,7 @@ test('details visibility', async ({ page }) => {
   `);
 });
 
-test('checked attribute', async ({ page }) => {
+test('AR-119 checked attribute', async ({ page }) => {
   await page.setContent(`
     <input type='checkbox' checked />
   `);
@@ -211,7 +211,7 @@ test('checked attribute', async ({ page }) => {
   }
 });
 
-test('disabled attribute', async ({ page }) => {
+test('AR-120 disabled attribute', async ({ page }) => {
   await page.setContent(`
     <button disabled>Click me</button>
   `);
@@ -244,7 +244,7 @@ test('disabled attribute', async ({ page }) => {
   }
 });
 
-test('expanded attribute', async ({ page }) => {
+test('AR-121 expanded attribute', async ({ page }) => {
   await page.setContent(`
     <button aria-expanded="true">Toggle</button>
   `);
@@ -277,7 +277,7 @@ test('expanded attribute', async ({ page }) => {
   }
 });
 
-test('level attribute', async ({ page }) => {
+test('AR-122 level attribute', async ({ page }) => {
   await page.setContent(`
     <h2>Section Title</h2>
   `);
@@ -306,7 +306,7 @@ test('level attribute', async ({ page }) => {
   }
 });
 
-test('pressed attribute', async ({ page }) => {
+test('AR-123 pressed attribute', async ({ page }) => {
   await page.setContent(`
     <button aria-pressed="true">Like</button>
   `);
@@ -356,7 +356,7 @@ test('pressed attribute', async ({ page }) => {
   }
 });
 
-test('selected attribute', async ({ page }) => {
+test('AR-124 selected attribute', async ({ page }) => {
   await page.setContent(`
     <table>
       <tr aria-selected="true">
@@ -422,7 +422,7 @@ Call log:
   }
 });
 
-test('integration test', async ({ page }) => {
+test('AR-125 integration test', async ({ page }) => {
   await page.setContent(`
     <h1>Microsoft</h1>
     <div>Open source projects and samples from Microsoft</div>
@@ -467,7 +467,7 @@ test('integration test', async ({ page }) => {
   `);
 });
 
-test('integration test 2', async ({ page }) => {
+test('AR-126 integration test 2', async ({ page }) => {
   await page.setContent(`
     <div>
       <header>
@@ -481,7 +481,7 @@ test('integration test 2', async ({ page }) => {
   `);
 });
 
-test('expected formatter', async ({ page }) => {
+test('AR-127 expected formatter', async ({ page }) => {
   await page.setContent(`
     <div>
       <header>
@@ -514,7 +514,7 @@ Call log:
 `);
 });
 
-test('should unpack escaped names', async ({ page }) => {
+test('AR-128 should unpack escaped names', async ({ page }) => {
   {
     await page.setContent(`
       <button>Click: me</button>
@@ -602,7 +602,7 @@ test('should unpack escaped names', async ({ page }) => {
   }
 });
 
-test('should report error in YAML', async ({ page }) => {
+test('AR-129 should report error in YAML', async ({ page }) => {
   await page.setContent(`<h1>title</h1>`);
 
   {
@@ -637,7 +637,7 @@ Call log:
   }
 });
 
-test('should report error in YAML keys', async ({ page }) => {
+test('AR-130 should report error in YAML keys', async ({ page }) => {
   await page.setContent(`<h1>title</h1>`);
 
   {
@@ -777,7 +777,7 @@ Call log:
   }
 });
 
-test('call log should contain actual snapshot', async ({ page }) => {
+test('AR-131 call log should contain actual snapshot', async ({ page }) => {
   await page.setContent(`<h1>todos</h1>`);
   const error = await expect(page).toMatchAriaSnapshot(`
     - heading "wrong"
@@ -786,7 +786,7 @@ test('call log should contain actual snapshot', async ({ page }) => {
   expect(stripAnsi(error.message)).toContain(`unexpected value "- heading "todos" [level=1]"`);
 });
 
-test('should parse attributes', async ({ page }) => {
+test('AR-132 should parse attributes', async ({ page }) => {
   {
     await page.setContent(`
       <button aria-pressed="mixed">hello world</button>
@@ -806,7 +806,7 @@ test('should parse attributes', async ({ page }) => {
   }
 });
 
-test('should not unshift actual template text', async ({ page }) => {
+test('AR-133 should not unshift actual template text', async ({ page }) => {
   await page.setContent(`
     <h1>title</h1>
     <h1>title 2</h1>
@@ -820,7 +820,7 @@ test('should not unshift actual template text', async ({ page }) => {
 - heading "title 2" [level=1]`);
 });
 
-test('should not match what is not matched', async ({ page }) => {
+test('AR-134 should not match what is not matched', async ({ page }) => {
   await page.setContent(`<p>Text</p>`);
   const error = await expect(page).toMatchAriaSnapshot(`
     - paragraph:
@@ -832,7 +832,7 @@ test('should not match what is not matched', async ({ page }) => {
 + - paragraph: Text`);
 });
 
-test('should match url', async ({ page }) => {
+test('AR-135 should match url', async ({ page }) => {
   await page.setContent(`
     <a href='https://example.com'>Link</a>
   `);
@@ -843,7 +843,7 @@ test('should match url', async ({ page }) => {
   `);
 });
 
-test('should detect unexpected children: equal', async ({ page }) => {
+test('AR-136 should detect unexpected children: equal', async ({ page }) => {
   await page.setContent(`
     <ul>
       <li>One</li>
@@ -869,7 +869,7 @@ test('should detect unexpected children: equal', async ({ page }) => {
   expect(stripAnsi(e.message)).toContain('+   - listitem: Two');
 });
 
-test('should detect unexpected children: deep-equal', async ({ page }) => {
+test('AR-137 should detect unexpected children: deep-equal', async ({ page }) => {
   await page.setContent(`
     <ul>
       <li>
@@ -908,7 +908,7 @@ test('should detect unexpected children: deep-equal', async ({ page }) => {
   expect(stripAnsi(e.message)).toContain('+       - listitem: \"1.2\"');
 });
 
-test('should allow restoring contain mode inside deep-equal', async ({ page }) => {
+test('AR-138 should allow restoring contain mode inside deep-equal', async ({ page }) => {
   await page.setContent(`
     <ul>
       <li>
@@ -941,7 +941,7 @@ test('should allow restoring contain mode inside deep-equal', async ({ page }) =
   `);
 });
 
-test('top-level deep-equal', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36456' } }, async ({ page }) => {
+test('AR-139 top-level deep-equal', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36456' } }, async ({ page }) => {
   await page.setContent(`
     <ul>
       <li>
@@ -970,7 +970,7 @@ test('top-level deep-equal', { annotation: { type: 'issue', description: 'https:
 });
 
 
-test('generated snapshot includes text children when name is longer than text', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40079' } }, async ({ page }) => {
+test('AR-140 generated snapshot includes text children when name is longer than text', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40079' } }, async ({ page }) => {
   await page.setContent(`
     <section>
       <div role="progressbar" aria-label="Alpha Beta" aria-valuenow="7" aria-valuemin="0" aria-valuemax="10">
@@ -985,7 +985,7 @@ test('generated snapshot includes text children when name is longer than text', 
   `);
 });
 
-test('treat bad regex as a string', async ({ page }) => {
+test('AR-141 treat bad regex as a string', async ({ page }) => {
   await page.setContent(`<a href="/foo">Log in</a>`);
   const error = await expect(page).toMatchAriaSnapshot(`
     - link "Log in":
@@ -996,7 +996,7 @@ test('treat bad regex as a string', async ({ page }) => {
   expect(stripAnsi(error.message)).toContain('+   - /url: /foo');
 });
 
-test('invalid attribute', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34839' } }, async ({ page }) => {
+test('AR-142 invalid attribute', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34839' } }, async ({ page }) => {
   await page.setContent(`
     <input type="text" aria-label="Email" aria-invalid="true" value="not-an-email">
     <input type="text" aria-label="Name" value="Alice">

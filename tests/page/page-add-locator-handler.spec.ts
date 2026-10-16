@@ -16,7 +16,7 @@
 
 import { test, expect } from './pageTest';
 
-test('should work', async ({ page, server }) => {
+test('LH-001 should work', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   let beforeCount = 0;
@@ -59,7 +59,7 @@ test('should work', async ({ page, server }) => {
   }
 });
 
-test('should work with a custom check', async ({ page, server }) => {
+test('LH-002 should work with a custom check', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   await page.addLocatorHandler(page.locator('body'), async () => {
@@ -86,7 +86,7 @@ test('should work with a custom check', async ({ page, server }) => {
   }
 });
 
-test('should work with locator.hover()', async ({ page, server, headless }) => {
+test('LH-003 should work with locator.hover()', async ({ page, server, headless }) => {
   test.skip(!headless, 'Stray hovers in headed mode');
 
   await page.goto(server.PREFIX + '/input/handle-locator.html');
@@ -104,7 +104,7 @@ test('should work with locator.hover()', async ({ page, server, headless }) => {
   expect(await page.$eval('#target', e => window.getComputedStyle(e).backgroundColor)).toBe('rgb(255, 255, 0)');
 });
 
-test('should not work with force:true', async ({ page, server }) => {
+test('LH-004 should not work with force:true', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
@@ -120,7 +120,7 @@ test('should not work with force:true', async ({ page, server }) => {
   expect(await page.evaluate('window.clicked')).toBe(undefined);
 });
 
-test('should throw when handler times out', async ({ page, server }) => {
+test('LH-005 should throw when handler times out', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   let called = 0;
@@ -145,7 +145,7 @@ test('should throw when handler times out', async ({ page, server }) => {
   expect(called).toBe(1);
 });
 
-test('should work with toBeVisible', async ({ page, server }) => {
+test('LH-006 should work with toBeVisible', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   let called = 0;
@@ -163,7 +163,7 @@ test('should work with toBeVisible', async ({ page, server }) => {
   expect(called).toBe(1);
 });
 
-test('should work with locator.waitFor', async ({ page, server }) => {
+test('LH-007 should work with locator.waitFor', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   let called = 0;
@@ -181,7 +181,7 @@ test('should work with locator.waitFor', async ({ page, server }) => {
   expect(called).toBe(1);
 });
 
-test('should work with toHaveScreenshot', async ({ page, server, isAndroid }) => {
+test('LH-008 should work with toHaveScreenshot', async ({ page, server, isAndroid }) => {
   test.fixme(isAndroid, 'Screenshots are cut off on Android');
   await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.PREFIX + '/grid.html');
@@ -209,7 +209,7 @@ test('should work with toHaveScreenshot', async ({ page, server, isAndroid }) =>
   await expect(page).toHaveScreenshot('screenshot-grid.png');
 });
 
-test('should work when owner frame detaches', async ({ page, server }) => {
+test('LH-009 should work when owner frame detaches', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
 
   await page.evaluate(() => {
@@ -239,7 +239,7 @@ test('should work when owner frame detaches', async ({ page, server }) => {
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
 
-test('should work with times: option', async ({ page, server }) => {
+test('LH-010 should work with times: option', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   let called = 0;
@@ -260,7 +260,7 @@ test('should work with times: option', async ({ page, server }) => {
   expect(error.message).toContain(`<div>This interstitial covers the button</div> from <div class="visible" id="interstitial">…</div> subtree intercepts pointer events`);
 });
 
-test('should wait for hidden by default', async ({ page, server }) => {
+test('LH-011 should wait for hidden by default', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   let called = 0;
@@ -280,7 +280,7 @@ test('should wait for hidden by default', async ({ page, server }) => {
   expect(called).toBe(1);
 });
 
-test('should wait for hidden by default 2', async ({ page, server }) => {
+test('LH-012 should wait for hidden by default 2', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   let called = 0;
@@ -300,7 +300,7 @@ test('should wait for hidden by default 2', async ({ page, server }) => {
   expect(error.message).toContain(`locator handler has finished, waiting for getByRole('button', { name: 'close' }) to be hidden`);
 });
 
-test('should work with noWaitAfter', async ({ page, server }) => {
+test('LH-013 should work with noWaitAfter', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   let called = 0;
@@ -323,7 +323,7 @@ test('should work with noWaitAfter', async ({ page, server }) => {
   expect(called).toBe(2);
 });
 
-test('should removeLocatorHandler', async ({ page, server }) => {
+test('LH-014 should removeLocatorHandler', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   let called = 0;

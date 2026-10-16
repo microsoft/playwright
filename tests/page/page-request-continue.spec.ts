@@ -19,12 +19,12 @@ import { test as it, expect } from './pageTest';
 import type { Route } from 'playwright-core';
 import type * as http from 'http';
 
-it('should work', async ({ page, server }) => {
+it('RO-057 should work', async ({ page, server }) => {
   await page.route('**/*', route => route.continue());
   await page.goto(server.EMPTY_PAGE);
 });
 
-it('should amend HTTP headers', async ({ page, server }) => {
+it('RO-058 should amend HTTP headers', async ({ page, server }) => {
   await page.route('**/*', route => {
     const headers = {
       ...route.request().headers(),
@@ -40,7 +40,7 @@ it('should amend HTTP headers', async ({ page, server }) => {
   expect(request.headers['foo']).toBe('bar');
 });
 
-it('should not allow to override unsafe HTTP headers', async ({ page, server, browserName, isAndroid, isElectron }) => {
+it('RO-059 should not allow to override unsafe HTTP headers', async ({ page, server, browserName, isAndroid, isElectron }) => {
   it.skip(isAndroid);
   let resolve;
   const routePromise = new Promise<Route>(f => resolve = f);
@@ -60,7 +60,7 @@ it('should not allow to override unsafe HTTP headers', async ({ page, server, br
   expect(serverRequest.headers['host']).toBe(new URL(server.EMPTY_PAGE).host);
 });
 
-it('should delete header with undefined value', async ({ page, server, browserName }) => {
+it('RO-060 should delete header with undefined value', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' });
 
   await page.goto(server.PREFIX + '/empty.html');
@@ -98,7 +98,7 @@ it('should delete header with undefined value', async ({ page, server, browserNa
   expect(serverRequest.headers.bar).toBe('b');
 });
 
-it('should amend method', async ({ page, server }) => {
+it('RO-061 should amend method', async ({ page, server }) => {
   const sRequest = server.waitForRequest('/sleep.zzz');
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/*', route => route.continue({ method: 'POST' }));
@@ -110,7 +110,7 @@ it('should amend method', async ({ page, server }) => {
   expect((await sRequest).method).toBe('POST');
 });
 
-it('should override request url', async ({ page, server }) => {
+it('RO-062 should override request url', async ({ page, server }) => {
   const serverRequest = server.waitForRequest('/global-var.html');
   await page.route('**/foo', route => {
     void route.continue({ url: server.PREFIX + '/global-var.html' });
@@ -122,7 +122,7 @@ it('should override request url', async ({ page, server }) => {
   expect((await serverRequest).method).toBe('GET');
 });
 
-it('should not allow changing protocol when overriding url', async ({ page, server }) => {
+it('RO-063 should not allow changing protocol when overriding url', async ({ page, server }) => {
   let resolve;
   const errorPromise = new Promise<Error|null>(f => resolve = f);
   await page.route('**/*', async route => {
@@ -139,7 +139,7 @@ it('should not allow changing protocol when overriding url', async ({ page, serv
   expect(error.message).toContain('New URL must have same protocol as overridden URL');
 });
 
-it('should not throw if request was cancelled by the page', async ({ page, server, isAndroid }) => {
+it('RO-064 should not throw if request was cancelled by the page', async ({ page, server, isAndroid }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
   it.fixme(isAndroid, 'net::ERR_CONNECTION_RESET');
 
@@ -159,7 +159,7 @@ it('should not throw if request was cancelled by the page', async ({ page, serve
   await route.continue(); // Should not throw.
 });
 
-it('should override method along with url', async ({ page, server }) => {
+it('RO-065 should override method along with url', async ({ page, server }) => {
   const request = server.waitForRequest('/empty.html');
   await page.route('**/foo', route => {
     void route.continue({
@@ -171,7 +171,7 @@ it('should override method along with url', async ({ page, server }) => {
   expect((await request).method).toBe('POST');
 });
 
-it('should amend method on main request', async ({ page, server }) => {
+it('RO-066 should amend method on main request', async ({ page, server }) => {
   const request = server.waitForRequest('/empty.html');
   await page.route('**/*', route => route.continue({ method: 'POST' }));
   await page.goto(server.EMPTY_PAGE);
@@ -179,7 +179,7 @@ it('should amend method on main request', async ({ page, server }) => {
 });
 
 it.describe('post data', () => {
-  it('should amend post data', async ({ page, server }) => {
+  it('RO-067 should amend post data', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {
       void route.continue({ postData: 'doggo' });
@@ -191,7 +191,7 @@ it.describe('post data', () => {
     expect((await serverRequest.postBody).toString('utf8')).toBe('doggo');
   });
 
-  it('should compute content-length from post data', async ({ page, server }) => {
+  it('RO-068 should compute content-length from post data', async ({ page, server }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16027' });
     await page.goto(server.EMPTY_PAGE);
     const data = 'a'.repeat(7500);
@@ -209,7 +209,7 @@ it.describe('post data', () => {
     expect(serverRequest.headers['content-type']).toBe('application/json');
   });
 
-  it('should amend method and post data', async ({ page, server }) => {
+  it('RO-069 should amend method and post data', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {
       void route.continue({ method: 'POST', postData: 'doggo' });
@@ -222,7 +222,7 @@ it.describe('post data', () => {
     expect((await serverRequest.postBody).toString('utf8')).toBe('doggo');
   });
 
-  it('should amend utf8 post data', async ({ page, server }) => {
+  it('RO-070 should amend utf8 post data', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {
       void route.continue({ postData: 'пушкин' });
@@ -235,7 +235,7 @@ it.describe('post data', () => {
     expect((await serverRequest.postBody).toString('utf8')).toBe('пушкин');
   });
 
-  it('should amend longer post data', async ({ page, server }) => {
+  it('RO-071 should amend longer post data', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {
       void route.continue({ postData: 'doggo-is-longer-than-birdy' });
@@ -248,7 +248,7 @@ it.describe('post data', () => {
     expect((await serverRequest.postBody).toString('utf8')).toBe('doggo-is-longer-than-birdy');
   });
 
-  it('should amend binary post data', async ({ page, server }) => {
+  it('RO-072 should amend binary post data', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     const arr = Array.from(Array(256).keys());
     await page.route('**/*', route => {
@@ -265,7 +265,7 @@ it.describe('post data', () => {
       expect(arr[i]).toBe(buffer[i]);
   });
 
-  it('should use content-type from original request', async ({ page, server, browserName }) => {
+  it('RO-073 should use content-type from original request', async ({ page, server, browserName }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16736' });
 
     await page.goto(server.EMPTY_PAGE);
@@ -285,7 +285,7 @@ it.describe('post data', () => {
   });
 });
 
-it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browserName }) => {
+it('RO-074 should work with Cross-Origin-Opener-Policy', async ({ page, server, browserName }) => {
   it.fail(browserName === 'webkit', 'https://github.com/microsoft/playwright/issues/8796');
   let serverHeaders;
   const serverRequests = [];
@@ -343,7 +343,7 @@ it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browser
   expect(response.request().failure()).toBeNull();
 });
 
-it('should not delete the origin header', async ({ page, server, isAndroid }) => {
+it('RO-075 should not delete the origin header', async ({ page, server, isAndroid }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' });
   it.skip(isAndroid, 'No cross-process on Android');
 
@@ -372,7 +372,7 @@ it('should not delete the origin header', async ({ page, server, isAndroid }) =>
   expect(serverRequest.headers.origin).toBe(server.PREFIX);
 });
 
-it('should continue preload link requests', async ({ page, server }) => {
+it('RO-076 should continue preload link requests', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16745' });
   let intercepted = false;
   await page.route('**/one-style.css', route => {
@@ -395,7 +395,7 @@ it('should continue preload link requests', async ({ page, server }) => {
   expect(color).toBe('rgb(255, 192, 203)');
 });
 
-it('should respect set-cookie in redirect response', {
+it('RO-077 should respect set-cookie in redirect response', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35154' }
 }, async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
@@ -421,7 +421,7 @@ it('should respect set-cookie in redirect response', {
   expect.soft(await page.evaluate(() => document.cookie)).toBe('foo=bar');
 });
 
-it('continue should not propagate cookie override to redirects', {
+it('RO-078 continue should not propagate cookie override to redirects', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35168' },
   ]
@@ -448,7 +448,7 @@ it('continue should not propagate cookie override to redirects', {
   expect(serverRequest.headers['cookie']).toBe('foo=bar');
 });
 
-it('continue should not override cookie', {
+it('RO-079 continue should not override cookie', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35168' },
   ]
@@ -477,7 +477,7 @@ it('continue should not override cookie', {
   expect(serverRequest.headers['custom']).toBe('value');
 });
 
-it('continue with headers should send fresh cookie from the browser cookie store', {
+it('RO-080 continue with headers should send fresh cookie from the browser cookie store', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41428' },
   ]
@@ -503,7 +503,7 @@ it('continue with headers should send fresh cookie from the browser cookie store
   expect(serverRequest.headers['cookie']).toBe('foo=v2');
 });
 
-it('continue with headers should send fresh cookie after a redirect', {
+it('RO-081 continue with headers should send fresh cookie after a redirect', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41428' },
   ]
@@ -533,7 +533,7 @@ it('continue with headers should send fresh cookie after a redirect', {
   expect(serverRequest.headers['cookie']).toBe('foo=v2');
 });
 
-it('redirect after continue should be able to delete cookie', {
+it('RO-082 redirect after continue should be able to delete cookie', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35168' },
   ]
@@ -565,7 +565,7 @@ it('redirect after continue should be able to delete cookie', {
   expect(serverRequest.headers['cookie']).toBeFalsy();
 });
 
-it('continue should propagate headers to redirects', {
+it('RO-083 continue should propagate headers to redirects', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28758' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
@@ -587,7 +587,7 @@ it('continue should propagate headers to redirects', {
   expect(serverRequest.headers['custom']).toBe('value');
 });
 
-it('continue should drop content-length on redirects', {
+it('RO-084 continue should drop content-length on redirects', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36029' }
 }, async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
@@ -611,7 +611,7 @@ it('continue should drop content-length on redirects', {
   expect.soft(serverRequest.headers['custom']).toBe('value');
 });
 
-it('redirected requests should report overridden headers', {
+it('RO-085 redirected requests should report overridden headers', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31351' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
@@ -634,7 +634,7 @@ it('redirected requests should report overridden headers', {
   expect((await response.request().allHeaders())['custom']).toBe('value');
 });
 
-it('continue should delete headers on redirects', {
+it('RO-086 continue should delete headers on redirects', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
@@ -669,7 +669,7 @@ it('continue should delete headers on redirects', {
   expect(serverRequest.headers.foo).toBeFalsy();
 });
 
-it('propagate headers same origin redirect', {
+it('RO-087 propagate headers same origin redirect', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
@@ -713,7 +713,7 @@ it('propagate headers same origin redirect', {
   expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 
-it('propagate headers cross origin', {
+it('RO-088 propagate headers cross origin', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
@@ -756,7 +756,7 @@ it('propagate headers cross origin', {
   expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 
-it('propagate headers cross origin redirect', {
+it('RO-089 propagate headers cross origin redirect', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
@@ -809,7 +809,7 @@ it('propagate headers cross origin redirect', {
   expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 
-it('propagate headers cross origin redirect after interception', {
+it('RO-090 propagate headers cross origin redirect after interception', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
@@ -872,7 +872,7 @@ it('propagate headers cross origin redirect after interception', {
   expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 
-it('continue should pass on 307 cross-origin redirect', {
+it('RO-091 continue should pass on 307 cross-origin redirect', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41690' }
 }, async ({ page, server, isAndroid }) => {
   it.skip(isAndroid, 'No cross-process on Android');
@@ -901,7 +901,7 @@ it('continue should pass on 307 cross-origin redirect', {
   await expect(page.locator('p')).toHaveText('ok');
 });
 
-it('should intercept css variable with background url', async ({ page, server }) => {
+it('RO-092 should intercept css variable with background url', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19158' });
 
   server.setRoute('/test.html', (request, response) => {
@@ -935,7 +935,7 @@ it('should intercept css variable with background url', async ({ page, server })
   expect(interceptedRequests).toBe(1);
 });
 
-it('continue should not change multipart/form-data body', async ({ page, server, browserName }) => {
+it('RO-093 continue should not change multipart/form-data body', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19158' });
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/upload', (request, response) => {
@@ -974,7 +974,7 @@ it('continue should not change multipart/form-data body', async ({ page, server,
   expect.soft((await reqAfter.postBody).toString('utf8')).toContain(fileContent);
 });
 
-it('should not forward Host header on cross-origin redirect', {
+it('RO-094 should not forward Host header on cross-origin redirect', {
   annotation: {
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/36719'
@@ -1011,7 +1011,7 @@ it('should not forward Host header on cross-origin redirect', {
   expect(redirectedHost).toBe(new URL(server.CROSS_PROCESS_PREFIX).host);
 });
 
-it('postData should return empty string when overriding body with empty string', async ({ page, server }) => {
+it('RO-095 postData should return empty string when overriding body with empty string', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/*', route => {
     void route.continue({ postData: '' });

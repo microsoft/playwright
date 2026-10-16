@@ -17,7 +17,7 @@
 import { test as it, expect } from './pageTest';
 
 
-it('should fire once', async ({ page, server, browserName, isBidi }) => {
+it('NA-087 should fire once', async ({ page, server, browserName, isBidi }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15086' });
   it.fixme(browserName === 'firefox' && !isBidi, 'Firefox sometimes double fires.');
 
@@ -28,7 +28,7 @@ it('should fire once', async ({ page, server, browserName, isBidi }) => {
   expect(count).toBe(1);
 });
 
-it('should fire once with iframe navigation', async ({ page, server, browserName, isBidi }) => {
+it('NA-088 should fire once with iframe navigation', async ({ page, server, browserName, isBidi }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15086' });
   it.fixme(browserName === 'firefox' && !isBidi, 'Firefox sometimes double fires.');
 

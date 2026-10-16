@@ -23,7 +23,7 @@
 import { EventEmitter } from './utils';
 import { test, expect } from '@playwright/test';
 
-test('emit maxListeners on e', () => {
+test('EE-023 emit maxListeners on e', () => {
   const e = new EventEmitter();
   e.on('maxListeners', () => {});
 

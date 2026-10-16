@@ -17,7 +17,7 @@
 
 import { test as it, expect, rafraf } from './pageTest';
 
-it('should timeout waiting for stable position', async ({ page, server }) => {
+it('CL-120 should timeout waiting for stable position', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');
   await button.evaluate(button => {
@@ -33,7 +33,7 @@ it('should timeout waiting for stable position', async ({ page, server }) => {
   expect(error.message).toContain('retrying click action');
 });
 
-it('should click for the second time after first timeout', async ({ page, server, mode }) => {
+it('CL-121 should click for the second time after first timeout', async ({ page, server, mode }) => {
   it.skip(mode !== 'default');
 
   await page.goto(server.PREFIX + '/input/button.html');
@@ -49,7 +49,7 @@ it('should click for the second time after first timeout', async ({ page, server
   expect(await page.evaluate('result')).toBe('Clicked');
 });
 
-it('should fail to click the button behind a large header after scrolling around', async ({ page, isAndroid }) => {
+it('CL-122 should fail to click the button behind a large header after scrolling around', async ({ page, isAndroid }) => {
   it.skip(isAndroid, 'Different viewport size');
   await page.setViewportSize({ width: 500, height: 240 });
   await page.setContent(`

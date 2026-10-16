@@ -18,7 +18,7 @@ import { kTargetClosedErrorMessage } from '../../config/errors';
 import { contextTest as it, expect } from '../../config/browserTest';
 import { browserTest } from '../../config/browserTest';
 
-it('should work', async function({ page }) {
+it('CD-037 should work', async function({ page }) {
   const client = await page.context().newCDPSession(page);
 
   await Promise.all([
@@ -29,7 +29,7 @@ it('should work', async function({ page }) {
   expect(foo).toBe('bar');
 });
 
-it('should respect timeout and signal options', async function({ page, playwright }) {
+it('CD-038 should respect timeout and signal options', async function({ page, playwright }) {
   const client = await page.context().newCDPSession(page);
   const evalResponse = await client.send('Runtime.evaluate', { expression: '1 + 2', returnByValue: true }, { timeout: 5000 });
   expect(evalResponse.result.value).toBe(3);
@@ -46,7 +46,7 @@ it('should respect timeout and signal options', async function({ page, playwrigh
   expect(abortError.cause).toBe(reason);
 });
 
-it('should send events', async function({ page, server }) {
+it('CD-039 should send events', async function({ page, server }) {
   const client = await page.context().newCDPSession(page);
   await client.send('Network.enable');
   const events = [];
@@ -55,7 +55,7 @@ it('should send events', async function({ page, server }) {
   expect(events.length).toBe(1);
 });
 
-it('should only accept a page or frame', async function({ page }) {
+it('CD-040 should only accept a page or frame', async function({ page }) {
   // @ts-expect-error newCDPSession expects a Page or Frame
   const error = await page.context().newCDPSession(page.context()).catch(e => e);
   expect(error.message).toContain('page: expected Page or Frame');
@@ -66,7 +66,7 @@ it('should only accept a page or frame', async function({ page }) {
   expect(errorAlt.message).toContain('page: expected Page or Frame');
 });
 
-it('should enable and disable domains independently', async function({ page }) {
+it('CD-041 should enable and disable domains independently', async function({ page }) {
   const client = await page.context().newCDPSession(page);
   await client.send('Runtime.enable');
   await client.send('Debugger.enable');
@@ -83,7 +83,7 @@ it('should enable and disable domains independently', async function({ page }) {
   ]);
 });
 
-it('should be able to detach session', async function({ page }) {
+it('CD-042 should be able to detach session', async function({ page }) {
   const client = await page.context().newCDPSession(page);
   await client.send('Runtime.enable');
   const evalResponse = await client.send('Runtime.evaluate', { expression: '1 + 2', returnByValue: true });
@@ -98,7 +98,7 @@ it('should be able to detach session', async function({ page }) {
   expect(error.message).toContain('Target page, context or browser has been closed');
 });
 
-it('should throw nice errors', async function({ page }) {
+it('CD-043 should throw nice errors', async function({ page }) {
   const client = await page.context().newCDPSession(page);
   const error = await theSourceOfTheProblems().catch(error => error);
   expect(error.stack).toContain('theSourceOfTheProblems');
@@ -110,7 +110,7 @@ it('should throw nice errors', async function({ page }) {
   }
 });
 
-it('should work with main frame', async function({ page }) {
+it('CD-044 should work with main frame', async function({ page }) {
   const client = await page.context().newCDPSession(page.mainFrame());
 
   await Promise.all([
@@ -121,7 +121,7 @@ it('should work with main frame', async function({ page }) {
   expect(foo).toBe('bar');
 });
 
-it('should throw if target is part of main', async function({ server, page }){
+it('CD-045 should throw if target is part of main', async function({ server, page }){
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames()[0].url()).toContain('/frames/one-frame.html');
   expect(page.frames()[1].url()).toContain('/frames/frame.html');
@@ -130,7 +130,7 @@ it('should throw if target is part of main', async function({ server, page }){
   expect(error.message).toContain(`This frame does not have a separate CDP session, it is a part of the parent frame's session`);
 });
 
-browserTest('should not break page.close()', async function({ browser }) {
+browserTest('CD-046 should not break page.close()', async function({ browser }) {
   const context = await browser.newContext();
   const page = await context.newPage();
   const session = await page.context().newCDPSession(page);
@@ -139,7 +139,7 @@ browserTest('should not break page.close()', async function({ browser }) {
   await context.close();
 });
 
-browserTest('should detach when page closes', async function({ browser }) {
+browserTest('CD-047 should detach when page closes', async function({ browser }) {
   const context = await browser.newContext();
   const page = await context.newPage();
   const session = await context.newCDPSession(page);
@@ -150,7 +150,7 @@ browserTest('should detach when page closes', async function({ browser }) {
   await context.close();
 });
 
-browserTest('should reject protocol calls when page closes', async function({ browser }) {
+browserTest('CD-048 should reject protocol calls when page closes', async function({ browser }) {
   const context = await browser.newContext();
   const page = await context.newPage();
   const session = await context.newCDPSession(page);
@@ -163,7 +163,7 @@ browserTest('should reject protocol calls when page closes', async function({ br
   await context.close();
 });
 
-it('should emit event for each CDP event', async function({ page, server }) {
+it('CD-049 should emit event for each CDP event', async function({ page, server }) {
   const client = await page.context().newCDPSession(page);
   await client.send('Network.enable');
   const events = [];
@@ -175,7 +175,7 @@ it('should emit event for each CDP event', async function({ page, server }) {
   expect(requestEvent.params.request.url).toBe(server.EMPTY_PAGE);
 });
 
-it('should emit close event when session is detached', async function({ page }) {
+it('CD-050 should emit close event when session is detached', async function({ page }) {
   const client = await page.context().newCDPSession(page);
   let closedSession: any = null;
   client.on('close', session => closedSession = session);
@@ -183,7 +183,7 @@ it('should emit close event when session is detached', async function({ page }) 
   expect(closedSession).toBe(client);
 });
 
-browserTest('should emit close event when page closes', async function({ browser }) {
+browserTest('CD-051 should emit close event when page closes', async function({ browser }) {
   const context = await browser.newContext();
   const page = await context.newPage();
   const session = await context.newCDPSession(page);
@@ -194,7 +194,7 @@ browserTest('should emit close event when page closes', async function({ browser
   await context.close();
 });
 
-browserTest('should work with newBrowserCDPSession', async function({ browser }) {
+browserTest('CD-052 should work with newBrowserCDPSession', async function({ browser }) {
   const session = await browser.newBrowserCDPSession();
 
   const version = await session.send('Browser.getVersion');

@@ -18,7 +18,7 @@
 import { browserTest as it, expect } from '../config/browserTest';
 import type { Request, Response } from '@playwright/test';
 
-it('BrowserContext.Events.Request', async ({ context, server }) => {
+it('NE-121 BrowserContext.Events.Request', async ({ context, server }) => {
   const page = await context.newPage();
   const requests: Request[] = [];
   context.on('request', request => requests.push(request));
@@ -37,7 +37,7 @@ it('BrowserContext.Events.Request', async ({ context, server }) => {
   ]);
 });
 
-it('BrowserContext.Events.Response', async ({ context, server }) => {
+it('NE-122 BrowserContext.Events.Response', async ({ context, server }) => {
   const page = await context.newPage();
   const responses: Response[] = [];
   context.on('response', response => responses.push(response));
@@ -56,7 +56,7 @@ it('BrowserContext.Events.Response', async ({ context, server }) => {
   ]);
 });
 
-it('BrowserContext.Events.RequestFailed', async ({ context, server }) => {
+it('NE-123 BrowserContext.Events.RequestFailed', async ({ context, server }) => {
   server.setRoute('/one-style.css', (_, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection!.destroy();
@@ -73,7 +73,7 @@ it('BrowserContext.Events.RequestFailed', async ({ context, server }) => {
 });
 
 
-it('BrowserContext.Events.RequestFinished', async ({ context, server }) => {
+it('NE-124 BrowserContext.Events.RequestFinished', async ({ context, server }) => {
   const page = await context.newPage();
   const [response] = await Promise.all([
     page.goto(server.EMPTY_PAGE),
@@ -87,7 +87,7 @@ it('BrowserContext.Events.RequestFinished', async ({ context, server }) => {
   expect(request.failure()).toBe(null);
 });
 
-it('should fire events in proper order', async ({ context, server }) => {
+it('NE-125 should fire events in proper order', async ({ context, server }) => {
   const page = await context.newPage();
   const events: string[] = [];
   context.on('request', () => events.push('request'));
@@ -104,7 +104,7 @@ it('should fire events in proper order', async ({ context, server }) => {
   ]);
 });
 
-it('should not fire events for favicon or favicon redirects', async ({ context, page, server, browserName, headless, channel }) => {
+it('NE-126 should not fire events for favicon or favicon redirects', async ({ context, page, server, browserName, headless, channel }) => {
   it.skip(headless && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
   it.skip(!headless && browserName === 'webkit', 'headed webkit does not have a favicon feature');
   const favicon = `/no-cache/favicon.ico`;
@@ -145,7 +145,7 @@ it('should not fire events for favicon or favicon redirects', async ({ context, 
   expect(events).not.toEqual(expect.arrayContaining([expect.stringContaining(hashedFaviconUrl)]));
 });
 
-it('should reject response.finished if context closes', async ({ page, server }) => {
+it('NE-127 should reject response.finished if context closes', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/get', (req, res) => {
     // In Firefox, |fetch| will be hanging until it receives |Content-Type| header

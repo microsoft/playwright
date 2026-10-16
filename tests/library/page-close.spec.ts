@@ -19,7 +19,7 @@ import { stripAnsi } from '../config/utils';
 import { browserTest as test, expect } from '../config/browserTest';
 import { kTargetClosedErrorMessage } from '../config/errors';
 
-test('should close page with active dialog', async ({ page }) => {
+test('PA-039 should close page with active dialog', async ({ page }) => {
   await page.evaluate('"trigger builtins.setTimeout"');
   await page.setContent(`<button onclick="builtins.setTimeout(() => alert(1))">alert</button>`);
   void page.click('button').catch(() => {});
@@ -27,7 +27,7 @@ test('should close page with active dialog', async ({ page }) => {
   await page.close();
 });
 
-test('expect should not print timed out error message when page closes', async ({ page }) => {
+test('PA-040 expect should not print timed out error message when page closes', async ({ page }) => {
   await page.setContent('<div id=node>Text content</div>');
   const [error] = await Promise.all([
     expect(page.locator('div')).toHaveText('hey', { timeout: 100000 }).catch(e => e),
@@ -37,7 +37,7 @@ test('expect should not print timed out error message when page closes', async (
   expect(stripAnsi(error.message)).not.toContain('Timed out');
 });
 
-test('addLocatorHandler should throw when page closes', async ({ page, server }) => {
+test('PA-041 addLocatorHandler should throw when page closes', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
@@ -53,7 +53,7 @@ test('addLocatorHandler should throw when page closes', async ({ page, server })
   expect(error.message).toContain('custom reason');
 });
 
-test('should reject all promises when page is closed', async ({ page }) => {
+test('PA-042 should reject all promises when page is closed', async ({ page }) => {
   let error = null;
   await Promise.all([
     page.evaluate(() => new Promise(r => {})).catch(e => error = e),
@@ -62,13 +62,13 @@ test('should reject all promises when page is closed', async ({ page }) => {
   expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 
-test('should set the page close state', async ({ page }) => {
+test('PA-043 should set the page close state', async ({ page }) => {
   expect(page.isClosed()).toBe(false);
   await page.close();
   expect(page.isClosed()).toBe(true);
 });
 
-test('should pass page to close event', async ({ page }) => {
+test('PA-044 should pass page to close event', async ({ page }) => {
   const [closedPage] = await Promise.all([
     page.waitForEvent('close'),
     page.close()
@@ -76,7 +76,7 @@ test('should pass page to close event', async ({ page }) => {
   expect(closedPage).toBe(page);
 });
 
-test('should terminate network waiters', async ({ page, server }) => {
+test('PA-045 should terminate network waiters', async ({ page, server }) => {
   const results = await Promise.all([
     page.waitForRequest(server.EMPTY_PAGE).catch(e => e),
     page.waitForResponse(server.EMPTY_PAGE).catch(e => e),
@@ -89,7 +89,7 @@ test('should terminate network waiters', async ({ page, server }) => {
   }
 });
 
-test('should be callable twice', async ({ page }) => {
+test('PA-046 should be callable twice', async ({ page }) => {
   await Promise.all([
     page.close(),
     page.close(),
@@ -97,7 +97,7 @@ test('should be callable twice', async ({ page }) => {
   await page.close();
 });
 
-test('should return null if parent page has been closed', async ({ page }) => {
+test('PA-047 should return null if parent page has been closed', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window.open('about:blank')),
@@ -107,7 +107,7 @@ test('should return null if parent page has been closed', async ({ page }) => {
   expect(opener).toBe(null);
 });
 
-test('should fail with error upon disconnect', async ({ page }) => {
+test('PA-048 should fail with error upon disconnect', async ({ page }) => {
   let error;
   const waitForPromise = page.waitForEvent('download').catch(e => error = e);
   await page.close();
@@ -115,13 +115,13 @@ test('should fail with error upon disconnect', async ({ page }) => {
   expect(error.message).toContain(kTargetClosedErrorMessage);
 });
 
-test('page.close should work with window.close', async function({ page }) {
+test('PA-049 page.close should work with window.close', async function({ page }) {
   const closedPromise = new Promise(x => page.on('close', x));
   await page.close();
   await closedPromise;
 });
 
-test('should not throw UnhandledPromiseRejection when page closes', async ({ page, browserName, isWindows }) => {
+test('PA-050 should not throw UnhandledPromiseRejection when page closes', async ({ page, browserName, isWindows }) => {
   test.fixme(browserName === 'firefox' && isWindows, 'makes the next test to always timeout');
 
   await Promise.all([
@@ -130,7 +130,7 @@ test('should not throw UnhandledPromiseRejection when page closes', async ({ pag
   ]).catch(e => {});
 });
 
-test('interrupt request.response() and request.allHeaders() on page.close', async ({ page, server, browserName, channel }) => {
+test('PA-051 interrupt request.response() and request.allHeaders() on page.close', async ({ page, server, browserName, channel }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27227' });
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
@@ -149,7 +149,7 @@ test('interrupt request.response() and request.allHeaders() on page.close', asyn
     expect((await headersPromise).message).toContain(kTargetClosedErrorMessage);
 });
 
-test('should not treat navigations as new popups', async ({ page, server }) => {
+test('PA-052 should not treat navigations as new popups', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -163,7 +163,7 @@ test('should not treat navigations as new popups', async ({ page, server }) => {
   expect(badSecondPopup).toBe(false);
 });
 
-test('should not result in unhandled rejection', async ({ page }) => {
+test('PA-053 should not result in unhandled rejection', async ({ page }) => {
   const closedPromise = page.waitForEvent('close');
   await page.exposeFunction('foo', async () => {
     await page.close();
@@ -177,7 +177,7 @@ test('should not result in unhandled rejection', async ({ page }) => {
   expect(await page.evaluate('1 + 1').catch(e => e)).toBeInstanceOf(Error);
 });
 
-test('should reject response.finished if page closes', async ({ page, server }) => {
+test('PA-054 should reject response.finished if page closes', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/get', (req, res) => {
     // In Firefox, |fetch| will be hanging until it receives |Content-Type| header
@@ -197,7 +197,7 @@ test('should reject response.finished if page closes', async ({ page, server }) 
   expect(error.message).toContain('closed');
 });
 
-test('should not throw when continuing while page is closing', async ({ page, server }) => {
+test('PA-055 should not throw when continuing while page is closing', async ({ page, server }) => {
   let done;
   await page.route('**/*', async route => {
     done = Promise.all([
@@ -209,7 +209,7 @@ test('should not throw when continuing while page is closing', async ({ page, se
   await done;
 });
 
-test('should not throw when continuing after page is closed', async ({ page, server }) => {
+test('PA-056 should not throw when continuing after page is closed', async ({ page, server }) => {
   let done;
   await page.route('**/*', async route => {
     await page.close();

@@ -25,7 +25,7 @@ test.skip(({ mode }) => mode !== 'default', 'screencast is not available in remo
 test.skip(({ video }) => video === 'on', 'conflicts with built-in video recording');
 test.slow();
 
-test('screencast.start delivers frames via onFrame callback', async ({ browser, server, trace, browserName, isMac, headless }) => {
+test('SC-001 screencast.start delivers frames via onFrame callback', async ({ browser, server, trace, browserName, isMac, headless }) => {
   test.skip(trace === 'on', 'trace=on has different screencast image configuration');
   test.fixme(browserName === 'firefox' && isMac && !headless, 'wrong frame size in headed Firefox on Mac');
 
@@ -54,7 +54,7 @@ test('screencast.start delivers frames via onFrame callback', async ({ browser, 
   await context.close();
 });
 
-test('applies backpressure while async onFrame callback is pending', async ({ browser, server, trace }) => {
+test('SC-002 applies backpressure while async onFrame callback is pending', async ({ browser, server, trace }) => {
   test.skip(trace === 'on', 'trace recording acknowledges screencast frames independently');
 
   const context = await browser.newContext({ viewport: { width: 500, height: 400 } });
@@ -102,7 +102,7 @@ test('applies backpressure while async onFrame callback is pending', async ({ br
   await context.close();
 });
 
-test('onFrame receives viewport size', async ({ browser, server, trace, browserName, isMac, headless }) => {
+test('SC-003 onFrame receives viewport size', async ({ browser, server, trace, browserName, isMac, headless }) => {
   test.skip(trace === 'on', 'trace=on has different screencast image configuration');
   test.fixme(browserName === 'firefox' && isMac && !headless, 'wrong frame size in headed Firefox on Mac');
 
@@ -128,7 +128,7 @@ test('onFrame receives viewport size', async ({ browser, server, trace, browserN
   await context.close();
 });
 
-test('start throws if screencast is already started', async ({ browser }) => {
+test('SC-004 start throws if screencast is already started', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 500, height: 400 } });
   const page = await context.newPage();
 
@@ -139,7 +139,7 @@ test('start throws if screencast is already started', async ({ browser }) => {
   await context.close();
 });
 
-test('start allows restart with different options after stop', async ({ browser, trace }) => {
+test('SC-005 start allows restart with different options after stop', async ({ browser, trace }) => {
   test.skip(trace === 'on', 'trace=on enables screencast with different options');
 
   const context = await browser.newContext({ viewport: { width: 500, height: 400 } });
@@ -153,7 +153,7 @@ test('start allows restart with different options after stop', async ({ browser,
   await context.close();
 });
 
-test('start returns a disposable that stops screencast', async ({ browser, server, trace }) => {
+test('SC-006 start returns a disposable that stops screencast', async ({ browser, server, trace }) => {
   test.skip(trace === 'on', 'trace=on has different screencast image configuration');
   const context = await browser.newContext({ viewport: { width: 500, height: 400 } });
   const page = await context.newPage();
@@ -176,7 +176,7 @@ test('start returns a disposable that stops screencast', async ({ browser, serve
   await context.close();
 });
 
-test('start/stop twice without path creates two files in artifactsDir', async ({ browserType }, testInfo) => {
+test('SC-007 start/stop twice without path creates two files in artifactsDir', async ({ browserType }, testInfo) => {
   test.slow();
   const artifactsDir = testInfo.outputPath('artifacts');
   const browser = await browserType.launch({ artifactsDir });
@@ -201,7 +201,7 @@ test('start/stop twice without path creates two files in artifactsDir', async ({
   await browser.close();
 });
 
-test('start should work when recordVideo is set', async ({ browser }, testInfo) => {
+test('SC-008 start should work when recordVideo is set', async ({ browser }, testInfo) => {
   test.slow();
 
   const autoDir = testInfo.outputPath('auto');
@@ -225,7 +225,7 @@ test('start should work when recordVideo is set', async ({ browser }, testInfo) 
   expect(videoFiles2).toHaveLength(1);
 });
 
-test('start should record video with the requested fps', async ({ browser }, testInfo) => {
+test('SC-009 start should record video with the requested fps', async ({ browser }, testInfo) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   const videoPath = testInfo.outputPath('video.webm');
@@ -236,19 +236,19 @@ test('start should record video with the requested fps', async ({ browser }, tes
   await context.close();
 });
 
-test('start should throw on invalid fps', async ({ page }, testInfo) => {
+test('SC-010 start should throw on invalid fps', async ({ page }, testInfo) => {
   const error = await page.screencast.start({ path: testInfo.outputPath('video.webm'), fps: -1 }).catch(e => e);
   expect(error.message).toContain('"fps" must be a positive number, got -1');
 });
 
-test('start should fail when another recording is in progress', async ({ page, trace }, testInfo) => {
+test('SC-011 start should fail when another recording is in progress', async ({ page, trace }, testInfo) => {
   test.skip(trace === 'on', 'trace=on has different screencast image configuration');
   await page.screencast.start({ path: testInfo.outputPath('video.webm') });
   const error = await page.screencast.start({ path: testInfo.outputPath('video2.webm') }).catch(e => e);
   expect(error.message).toContain('Screencast is already started');
 });
 
-test('stop should not fail when no recording is in progress', async ({ browser }) => {
+test('SC-012 stop should not fail when no recording is in progress', async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   // stop() is a no-op when screencast is not started.
@@ -256,7 +256,7 @@ test('stop should not fail when no recording is in progress', async ({ browser }
   await context.close();
 });
 
-test('start should finish when page is closed', async ({ browser }, testInfo) => {
+test('SC-013 start should finish when page is closed', async ({ browser }, testInfo) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   const videoPath = testInfo.outputPath('video.webm');
@@ -269,7 +269,7 @@ test('start should finish when page is closed', async ({ browser }, testInfo) =>
   await context.close();
 });
 
-test('empty video', async ({ browser }, testInfo) => {
+test('SC-014 empty video', async ({ browser }, testInfo) => {
   const size = { width: 800, height: 800 };
   const context = await browser.newContext({ viewport: size });
   const page = await context.newPage();
@@ -280,7 +280,7 @@ test('empty video', async ({ browser }, testInfo) => {
   expectFrames(videoPath, size, isAlmostWhite);
 });
 
-test('start dispose stops recording', async ({ browser }, testInfo) => {
+test('SC-015 start dispose stops recording', async ({ browser }, testInfo) => {
   test.slow();
   const size = { width: 800, height: 800 };
   const context = await browser.newContext({ viewport: size });

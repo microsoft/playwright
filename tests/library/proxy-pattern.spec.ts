@@ -19,7 +19,7 @@ import { playwrightTest as test, expect } from '../config/browserTest';
 
 const { parsePattern } = utils;
 
-test('socks proxy patter matcher', async ({}) => {
+test('PR-040 socks proxy patter matcher', async ({}) => {
   const m1 = parsePattern('*');
   expect.soft(m1('example.com', 80)).toBe(true);
   expect.soft(m1('some.long.example.com', 80)).toBe(true);

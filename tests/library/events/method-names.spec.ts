@@ -23,7 +23,7 @@
 import { EventEmitter } from './utils';
 import { test, expect } from '@playwright/test';
 
-test('EventEmitter prototype test', () => {
+test('EE-024 EventEmitter prototype test', () => {
   const ee = new EventEmitter();
   // eslint-disable-next-line no-proto
   expect((ee as any).__proto__.constructor.name).toEqual('EventEmitter');

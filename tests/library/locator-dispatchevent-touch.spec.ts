@@ -18,7 +18,7 @@ import { contextTest as it, expect } from '../config/browserTest';
 
 it.use({ hasTouch: true });
 
-it('should support touch points in touch event arguments', async ({ page, server, browserName }) => {
+it('TA-010 should support touch points in touch event arguments', async ({ page, server, browserName }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
       <div data-testid='outer' style="position: absolute; width: 120px; height: 120px; background-color: red;">

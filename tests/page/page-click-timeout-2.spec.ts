@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should timeout waiting for display:none to be gone', async ({ page, server }) => {
+it('CL-114 should timeout waiting for display:none to be gone', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', b => b.style.display = 'none');
   const error = await page.click('button', { timeout: 5000 }).catch(e => e);
@@ -27,7 +27,7 @@ it('should timeout waiting for display:none to be gone', async ({ page, server }
   expect(error.message).toContain('retrying click action');
 });
 
-it('should timeout waiting for visibility:hidden to be gone', async ({ page, server }) => {
+it('CL-115 should timeout waiting for visibility:hidden to be gone', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', b => b.style.visibility = 'hidden');
   const error = await page.click('button', { timeout: 5000 }).catch(e => e);

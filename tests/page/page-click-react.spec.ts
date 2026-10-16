@@ -21,7 +21,7 @@ declare const renderComponent;
 declare const e;
 declare const MyButton;
 
-it('should timeout when click opens alert', async ({ page, server }) => {
+it('CL-106 should timeout when click opens alert', async ({ page, server }) => {
   const dialogPromise = page.waitForEvent('dialog');
   await page.setContent(`<div onclick='window.alert(123)'>Click me</div>`);
   const error = await page.click('div', { timeout: 3000 }).catch(e => e);
@@ -30,7 +30,7 @@ it('should timeout when click opens alert', async ({ page, server }) => {
   await dialog.dismiss();
 });
 
-it('should not retarget when element changes on hover', async ({ page, server }) => {
+it('CL-107 should not retarget when element changes on hover', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
     renderComponent(e('div', {}, [e(MyButton, { name: 'button1', renameOnHover: true }), e(MyButton, { name: 'button2' })]));
@@ -40,7 +40,7 @@ it('should not retarget when element changes on hover', async ({ page, server })
   expect(await page.evaluate('window.button2')).toBe(undefined);
 });
 
-it('should not retarget when element is recycled on hover', async ({ page, server }) => {
+it('CL-108 should not retarget when element is recycled on hover', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
     function shuffle() {

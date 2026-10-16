@@ -17,7 +17,7 @@
 import fs from 'fs';
 import { test, expect } from './inspectorTest';
 
-test('should print the correct imports and context options', async ({ runCLI, server }) => {
+test('CG-112 should print the correct imports and context options', async ({ runCLI, server }) => {
   const cli = runCLI([server.EMPTY_PAGE]);
   const expectedResult = `import { test, expect } from '@playwright/test';
 
@@ -27,7 +27,7 @@ test('test', async ({ page }) => {
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options for custom settings', async ({ runCLI, server }) => {
+test('CG-113 should print the correct context options for custom settings', async ({ runCLI, server }) => {
   const cli = runCLI(['--color-scheme=light', server.EMPTY_PAGE]);
   const expectedResult = `import { test, expect } from '@playwright/test';
 
@@ -40,7 +40,7 @@ test('test', async ({ page }) => {`;
 });
 
 
-test('should print the correct context options when using a device', async ({ browserName, runCLI, server }) => {
+test('CG-114 should print the correct context options when using a device', async ({ browserName, runCLI, server }) => {
   test.skip(browserName !== 'chromium');
 
   const cli = runCLI(['--device=Pixel 2', server.EMPTY_PAGE]);
@@ -54,7 +54,7 @@ test('test', async ({ page }) => {`;
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device and additional options', async ({ browserName, server, runCLI }) => {
+test('CG-115 should print the correct context options when using a device and additional options', async ({ browserName, server, runCLI }) => {
   test.skip(browserName !== 'webkit');
 
   const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', server.EMPTY_PAGE]);
@@ -69,7 +69,7 @@ test('test', async ({ page }) => {`;
   await cli.waitFor(expectedResult);
 });
 
-test('should print load storageState', async ({ runCLI, server }, testInfo) => {
+test('CG-116 should print load storageState', async ({ runCLI, server }, testInfo) => {
   const loadFileName = testInfo.outputPath('load.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
   const cli = runCLI([`--load-storage=${loadFileName}`, server.EMPTY_PAGE]);
@@ -83,7 +83,7 @@ test('test', async ({ page }) => {`;
   await cli.waitFor(expectedResult);
 });
 
-test('should not generate recordHAR with --save-har', async ({ runCLI }, testInfo) => {
+test('CG-117 should not generate recordHAR with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `  await page.routeFromHAR('${harFileName.replace(/\\/g, '\\\\')}');`;
   const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`]);
@@ -93,7 +93,7 @@ test('should not generate recordHAR with --save-har', async ({ runCLI }, testInf
   expect(json.log.creator.name).toBe('Playwright');
 });
 
-test('should generate routeFromHAR with --save-har', async ({ runCLI }, testInfo) => {
+test('CG-118 should generate routeFromHAR with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `test('test', async ({ page }) => {
   await page.routeFromHAR('${harFileName.replace(/\\/g, '\\\\')}');
@@ -105,7 +105,7 @@ test('should generate routeFromHAR with --save-har', async ({ runCLI }, testInfo
   expect(json.log.creator.name).toBe('Playwright');
 });
 
-test('should generate routeFromHAR with --save-har and --save-har-glob', async ({ runCLI }, testInfo) => {
+test('CG-119 should generate routeFromHAR with --save-har and --save-har-glob', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `test('test', async ({ page }) => {
   await page.routeFromHAR('${harFileName.replace(/\\/g, '\\\\')}', {

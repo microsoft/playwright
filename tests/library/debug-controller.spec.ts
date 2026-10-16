@@ -82,7 +82,7 @@ test.skip(({ mode }) => mode === 'driver');
 // See https://github.com/microsoft/playwright/pull/37103.
 test.use({ launchOptions: [async ({ launchOptions }, use) => use(launchOptions), { scope: 'worker' }] });
 
-test('should pick element', async ({ backend, connectedBrowser }) => {
+test('DB-011 should pick element', async ({ backend, connectedBrowser }) => {
   const events = [];
   backend.on('inspectRequested', event => events.push(event));
 
@@ -113,7 +113,7 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
   expect(events).toHaveLength(2);
 });
 
-test('should report pages', async ({ backend, connectedBrowser }) => {
+test('DB-012 should report pages', async ({ backend, connectedBrowser }) => {
   const events = [];
   backend.on('stateChanged', event => events.push(event));
   await backend.setReportStateChanged({ enabled: true }, undefined);
@@ -141,7 +141,7 @@ test('should report pages', async ({ backend, connectedBrowser }) => {
   ]);
 });
 
-test('should reset for reuse', async ({ backend, connectedBrowser }) => {
+test('DB-013 should reset for reuse', async ({ backend, connectedBrowser }) => {
   const context = await connectedBrowser.newContextForReuse();
   const page1 = await context.newPage();
   const page2 = await context.newPage();
@@ -159,7 +159,7 @@ test('should reset for reuse', async ({ backend, connectedBrowser }) => {
   expect(await page2.evaluate(() => window.location.href).catch(e => e.message)).toContain('Target page, context or browser has been closed');
 });
 
-test('should highlight all', async ({ backend, connectedBrowser }) => {
+test('DB-014 should highlight all', async ({ backend, connectedBrowser }) => {
   const context = await connectedBrowser.newContextForReuse();
   const page1 = await context.newPage();
   const page2 = await context.newPage();
@@ -173,7 +173,7 @@ test('should highlight all', async ({ backend, connectedBrowser }) => {
   await expect(page2.getByText('locator(\'button\')')).toBeHidden();
 });
 
-test('should record', async ({ backend, connectedBrowser }) => {
+test('DB-015 should record', async ({ backend, connectedBrowser }) => {
   const events = [];
   backend.on('sourceChanged', event => events.push(event));
 
@@ -208,7 +208,7 @@ test('test', async ({ page }) => {
   expect(events).toHaveLength(length);
 });
 
-test('should record expect signal', async ({ backend, connectedBrowser }) => {
+test('DB-016 should record expect signal', async ({ backend, connectedBrowser }) => {
   const events = [];
   backend.on('sourceChanged', event => events.push(event));
 
@@ -237,7 +237,7 @@ test('should record expect signal', async ({ backend, connectedBrowser }) => {
   ]);
 });
 
-test('should record custom data-testid', async ({ backend, connectedBrowser }) => {
+test('DB-017 should record custom data-testid', async ({ backend, connectedBrowser }) => {
   // This test emulates "record at cursor" functionality
   // with custom test id attribute in the config.
 
@@ -272,7 +272,7 @@ test('test', async ({ page }) => {
   });
 });
 
-test('should not leak actions from the previous recording session', async ({ backend, connectedBrowser }, testInfo) => {
+test('DB-018 should not leak actions from the previous recording session', async ({ backend, connectedBrowser }, testInfo) => {
   testInfo.annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42218' });
 
   const events: any[] = [];
@@ -323,7 +323,7 @@ test('should not leak actions from the previous recording session', async ({ bac
   ]);
 });
 
-test('should reset routes before reuse', async ({ server, connectedBrowserFactory }) => {
+test('DB-019 should reset routes before reuse', async ({ server, connectedBrowserFactory }) => {
   const browser1 = await connectedBrowserFactory();
   const context1 = await browser1.newContextForReuse();
   await context1.route(server.PREFIX + '/title.html', route => route.fulfill({ body: '<title>Hello</title>', contentType: 'text/html' }));
@@ -347,7 +347,7 @@ test('should reset routes before reuse', async ({ server, connectedBrowserFactor
   await browser2.close();
 });
 
-test('should highlight inside iframe', async ({ backend, connectedBrowser }, testInfo) => {
+test('DB-020 should highlight inside iframe', async ({ backend, connectedBrowser }, testInfo) => {
   testInfo.annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33146' });
 
   const context = await connectedBrowser.newContextForReuse();
@@ -373,7 +373,7 @@ test('should highlight inside iframe', async ({ backend, connectedBrowser }, tes
   await expect(page.locator('x-pw-highlight')).toHaveCount(1);
 });
 
-test('should highlight aria template', async ({ backend, connectedBrowser }, testInfo) => {
+test('DB-021 should highlight aria template', async ({ backend, connectedBrowser }, testInfo) => {
   const context = await connectedBrowser.newContextForReuse();
   const page = await context.newPage();
   await page.goto(`data:text/html,<button>Submit</button>`);
@@ -390,7 +390,7 @@ test('should highlight aria template', async ({ backend, connectedBrowser }, tes
   expect(box1).toEqual(box2);
 });
 
-test('should report error in aria template', async ({ backend }) => {
+test('DB-022 should report error in aria template', async ({ backend }) => {
   const error = await backend.highlight({ ariaTemplate: `- button "Submit` }, undefined).catch(e => e);
   expect(error.message).toContain('Unterminated string:');
 });

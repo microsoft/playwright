@@ -35,7 +35,7 @@ const it = base.extend<{
   })
 });
 
-it('should work', async ({ page, server }) => {
+it('RO-096 should work', async ({ page, server }) => {
   await page.route('**/*', route => {
     void route.fulfill({
       status: 201,
@@ -52,7 +52,7 @@ it('should work', async ({ page, server }) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should work with buffer as body', async ({ page, server, browserName, isLinux }) => {
+it('RO-097 should work with buffer as body', async ({ page, server, browserName, isLinux }) => {
   await page.route('**/*', route => {
     void route.fulfill({
       status: 200,
@@ -65,7 +65,7 @@ it('should work with buffer as body', async ({ page, server, browserName, isLinu
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should work with status code 422', async ({ page, server }) => {
+it('RO-098 should work with status code 422', async ({ page, server }) => {
   await page.route('**/*', route => {
     void route.fulfill({
       status: 422,
@@ -78,7 +78,7 @@ it('should work with status code 422', async ({ page, server }) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should fulfill with unuassigned status codes', async ({ page, server, browserName }) => {
+it('RO-099 should fulfill with unuassigned status codes', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30773' });
   let fulfillPromiseCallback;
@@ -100,7 +100,7 @@ it('should fulfill with unuassigned status codes', async ({ page, server, browse
   expect(response.statusText).toBe('Unknown');
 });
 
-it('should not throw if request was cancelled by the page', async ({ page, server }) => {
+it('RO-100 should not throw if request was cancelled by the page', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28490' });
   let interceptCallback;
   const interceptPromise = new Promise<Route>(f => interceptCallback = f);
@@ -119,7 +119,7 @@ it('should not throw if request was cancelled by the page', async ({ page, serve
   await route.fulfill({ status: 200 }); // Should not throw.
 });
 
-it('should allow mocking binary responses', async ({ page, server, browserName, headless, asset, isAndroid, mode }) => {
+it('RO-101 should allow mocking binary responses', async ({ page, server, browserName, headless, asset, isAndroid, mode }) => {
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
 
@@ -140,7 +140,7 @@ it('should allow mocking binary responses', async ({ page, server, browserName, 
   expect(await img.screenshot()).toMatchSnapshot('mock-binary-response.png');
 });
 
-it('should allow mocking svg with charset', async ({ page, server, browserName, headless, isAndroid, isElectron, electronMajorVersion }) => {
+it('RO-102 should allow mocking svg with charset', async ({ page, server, browserName, headless, isAndroid, isElectron, electronMajorVersion }) => {
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
   it.skip(isElectron && electronMajorVersion < 30, 'Protocol error (Storage.getCookies): Browser context management is not supported');
@@ -161,7 +161,7 @@ it('should allow mocking svg with charset', async ({ page, server, browserName, 
   expect(await img.screenshot()).toMatchSnapshot('mock-svg.png');
 });
 
-it('should work with file path', async ({ page, server, asset, mode, isAndroid }) => {
+it('RO-103 should work with file path', async ({ page, server, asset, mode, isAndroid }) => {
   it.skip(isAndroid);
 
   await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: asset('pptr.png') }));
@@ -175,7 +175,7 @@ it('should work with file path', async ({ page, server, asset, mode, isAndroid }
   expect(await img.screenshot()).toMatchSnapshot('mock-binary-response.png');
 });
 
-it('should stringify intercepted request response headers', async ({ page, server }) => {
+it('RO-104 should stringify intercepted request response headers', async ({ page, server }) => {
   await page.route('**/*', route => {
     void route.fulfill({
       status: 200,
@@ -192,7 +192,7 @@ it('should stringify intercepted request response headers', async ({ page, serve
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should not modify the headers sent to the server', async ({ page, server }) => {
+it('RO-105 should not modify the headers sent to the server', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/empty.html');
   const interceptedRequests = [];
 
@@ -229,7 +229,7 @@ it('should not modify the headers sent to the server', async ({ page, server }) 
   expect(interceptedRequests[1].headers).toEqual(interceptedRequests[0].headers);
 });
 
-it('should include the origin header', async ({ page, server, isAndroid }) => {
+it('RO-106 should include the origin header', async ({ page, server, isAndroid }) => {
   it.skip(isAndroid, 'No cross-process on Android');
 
   await page.goto(server.PREFIX + '/empty.html');
@@ -253,7 +253,7 @@ it('should include the origin header', async ({ page, server, isAndroid }) => {
   expect(interceptedRequest.headers()['origin']).toEqual(server.PREFIX);
 });
 
-it('should fulfill with global fetch result', async ({ playwright, page, server, isElectron, electronMajorVersion, rewriteAndroidLoopbackURL }) => {
+it('RO-107 should fulfill with global fetch result', async ({ playwright, page, server, isElectron, electronMajorVersion, rewriteAndroidLoopbackURL }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     const request = await playwright.request.newContext();
@@ -265,7 +265,7 @@ it('should fulfill with global fetch result', async ({ playwright, page, server,
   expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
 
-it('should fulfill with fetch result', async ({ page, server, isElectron, electronMajorVersion, rewriteAndroidLoopbackURL }) => {
+it('RO-108 should fulfill with fetch result', async ({ page, server, isElectron, electronMajorVersion, rewriteAndroidLoopbackURL }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     const response = await page.request.get(rewriteAndroidLoopbackURL(server.PREFIX + '/simple.json'));
@@ -276,7 +276,7 @@ it('should fulfill with fetch result', async ({ page, server, isElectron, electr
   expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
 
-it('should fulfill with fetch result and overrides', async ({ page, server, isElectron, electronMajorVersion, rewriteAndroidLoopbackURL }) => {
+it('RO-109 should fulfill with fetch result and overrides', async ({ page, server, isElectron, electronMajorVersion, rewriteAndroidLoopbackURL }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     const response = await page.request.get(rewriteAndroidLoopbackURL(server.PREFIX + '/simple.json'));
@@ -295,7 +295,7 @@ it('should fulfill with fetch result and overrides', async ({ page, server, isEl
   expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
 
-it('should fetch original request and fulfill', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
+it('RO-110 should fetch original request and fulfill', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
   it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   await page.route('**/*', async route => {
@@ -309,7 +309,7 @@ it('should fetch original request and fulfill', async ({ page, server, isElectro
   expect(await page.title()).toEqual('Woof-Woof');
 });
 
-it('should fulfill with multiple set-cookie', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
+it('RO-111 should fulfill with multiple set-cookie', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
   it.skip(isElectron && electronMajorVersion < 14, 'Electron 14+ is required');
   it.skip(isAndroid, 'Android does not have an isolated context per test, so we get cookies from other tests');
 
@@ -331,7 +331,7 @@ it('should fulfill with multiple set-cookie', async ({ page, server, isElectron,
   expect(await response.headerValue('X-Header-2')).toBe('v2');
 });
 
-it('should fulfill with fetch response that has multiple set-cookie', async ({ playwright, page, server, isAndroid }) => {
+it('RO-112 should fulfill with fetch response that has multiple set-cookie', async ({ playwright, page, server, isAndroid }) => {
   it.fixme(isAndroid);
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=b', 'c=d']);
@@ -348,7 +348,7 @@ it('should fulfill with fetch response that has multiple set-cookie', async ({ p
   expect(cookie.split(';').map(s => s.trim()).sort()).toEqual(['a=b', 'c=d']);
 });
 
-it('headerValue should return set-cookie from intercepted response', async ({ page, server, browserName }) => {
+it('RO-113 headerValue should return set-cookie from intercepted response', async ({ page, server, browserName }) => {
   it.fail(browserName === 'chromium', 'Set-Cookie is missing in response after interception');
   it.skip(browserName === 'webkit', 'Set-Cookie with \n in intercepted response does not pass validation in WebCore, see also https://github.com/microsoft/playwright/pull/9273');
   await page.route('**/empty.html', async route => {
@@ -364,7 +364,7 @@ it('headerValue should return set-cookie from intercepted response', async ({ pa
   expect(await response.headerValue('Set-Cookie')).toBe('a=b');
 });
 
-it('should fulfill with har response', async ({ page, asset }) => {
+it('RO-114 should fulfill with har response', async ({ page, asset }) => {
   const harPath = asset('har-fulfill.har');
   const har = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')) as har.HARFile;
   await page.route('**/*', async route => {
@@ -396,7 +396,7 @@ function findResponse(har: har.HARFile, url: string): har.Response {
   return entry?.response;
 }
 
-it('should fulfill preload link requests', async ({ page, server, browserName }) => {
+it('RO-115 should fulfill preload link requests', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16745' });
   let intercepted = false;
   await page.route('**/one-style.css', route => {
@@ -422,7 +422,7 @@ it('should fulfill preload link requests', async ({ page, server, browserName })
   expect(color).toBe('rgb(0, 128, 0)');
 });
 
-it('should fulfill json', async ({ page, server }) => {
+it('RO-116 should fulfill json', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/data.json', route => {
     void route.fulfill({
@@ -442,7 +442,7 @@ it('should fulfill json', async ({ page, server }) => {
   expect(body).toBe(JSON.stringify({ bar: 'baz' }));
 });
 
-it('should fulfill with gzip and readback', {
+it('RO-117 should fulfill with gzip and readback', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29261' },
 }, async ({ page, server, isAndroid, isElectron, electronMajorVersion }) => {
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
@@ -460,7 +460,7 @@ it('should fulfill with gzip and readback', {
   expect(await response.text()).toContain(`<div>hello, world!</div>`);
 });
 
-it('should not go to the network for fulfilled requests body', {
+it('RO-118 should not go to the network for fulfilled requests body', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30760' },
 }, async ({ page, server }) => {
   await page.route('**/one-style.css', async route => {
@@ -486,7 +486,7 @@ it('should not go to the network for fulfilled requests body', {
   expect(serverHit).toBe(false);
 });
 
-it('should return body for fulfilled responses', {
+it('RO-119 should return body for fulfilled responses', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-java/issues/1792' },
 }, async ({ page, server }) => {
   for (const status of [100, 200, 404, 500]) {

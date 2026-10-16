@@ -21,7 +21,7 @@ const launchOptions = (channel: string) => {
   return channel ? `channel="${channel}", headless=False` : 'headless=False';
 };
 
-test('should print the correct imports and context options', async ({ runCLI, channel, browserName, server }) => {
+test('CG-120 should print the correct imports and context options', async ({ runCLI, channel, browserName, server }) => {
   const cli = runCLI(['--target=python', server.EMPTY_PAGE]);
   const expectedResult = `import re
 from playwright.sync_api import Playwright, sync_playwright, expect
@@ -33,7 +33,7 @@ def run(playwright: Playwright) -> None:
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options for custom settings', async ({ runCLI, channel, browserName, server }) => {
+test('CG-121 should print the correct context options for custom settings', async ({ runCLI, channel, browserName, server }) => {
   const cli = runCLI(['--color-scheme=light', '--target=python', server.EMPTY_PAGE]);
   const expectedResult = `import re
 from playwright.sync_api import Playwright, sync_playwright, expect
@@ -45,7 +45,7 @@ def run(playwright: Playwright) -> None:
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device', async ({ browserName, channel, runCLI, server }) => {
+test('CG-122 should print the correct context options when using a device', async ({ browserName, channel, runCLI, server }) => {
   test.skip(browserName !== 'chromium');
 
   const cli = runCLI(['--device=Pixel 2', '--target=python', server.EMPTY_PAGE]);
@@ -59,7 +59,7 @@ def run(playwright: Playwright) -> None:
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI, server }) => {
+test('CG-123 should print the correct context options when using a device and additional options', async ({ browserName, channel, runCLI, server }) => {
   test.skip(browserName !== 'webkit');
 
   const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', '--target=python', server.EMPTY_PAGE]);
@@ -73,7 +73,7 @@ def run(playwright: Playwright) -> None:
   await cli.waitFor(expectedResult);
 });
 
-test('should save the codegen output to a file if specified', async ({ runCLI, channel, browserName, server }, testInfo) => {
+test('CG-124 should save the codegen output to a file if specified', async ({ runCLI, channel, browserName, server }, testInfo) => {
   const cli = runCLI(['--target=python', server.EMPTY_PAGE]);
   await cli.waitFor(`import re
 from playwright.sync_api import Playwright, sync_playwright, expect
@@ -95,7 +95,7 @@ with sync_playwright() as playwright:
 `);
 });
 
-test('should print load/save storage_state', async ({ runCLI, channel, browserName, server }, testInfo) => {
+test('CG-125 should print load/save storage_state', async ({ runCLI, channel, browserName, server }, testInfo) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
@@ -122,7 +122,7 @@ with sync_playwright() as playwright:
   await cli.waitFor(expectedResult2);
 });
 
-test('should work with --save-har', async ({ runCLI }, testInfo) => {
+test('CG-126 should work with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `context.route_from_har(${JSON.stringify(harFileName)})`;
   const cli = runCLI(['--target=python-async', `--save-har=${harFileName}`]);
@@ -132,7 +132,7 @@ test('should work with --save-har', async ({ runCLI }, testInfo) => {
   expect(json.log.creator.name).toBe('Playwright');
 });
 
-test('should work with --save-har and --save-har-glob', async ({ runCLI }, testInfo) => {
+test('CG-127 should work with --save-har and --save-har-glob', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `context.route_from_har(${JSON.stringify(harFileName)}, url="**/*.js")`;
   const cli = runCLI(['--target=python-async', `--save-har=${harFileName}`, '--save-har-glob=**/*.js']);

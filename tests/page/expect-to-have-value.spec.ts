@@ -17,27 +17,27 @@
 import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
-test('should work', async ({ page }) => {
+test('EX-302 should work', async ({ page }) => {
   await page.setContent('<input id=node></input>');
   const locator = page.locator('#node');
   await locator.fill('Text content');
   await expect(locator).toHaveValue('Text content');
 });
 
-test('should work with label', async ({ page }) => {
+test('EX-303 should work with label', async ({ page }) => {
   await page.setContent('<label><input></input></label>');
   await page.locator('label input').fill('Text content');
   await expect(page.locator('label')).toHaveValue('Text content');
 });
 
-test('should work with regex', async ({ page }) => {
+test('EX-304 should work with regex', async ({ page }) => {
   await page.setContent('<input id=node></input>');
   const locator = page.locator('#node');
   await locator.fill('Text content');
   await expect(locator).toHaveValue(/Text/);
 });
 
-test('should support failure', async ({ page }) => {
+test('EX-305 should support failure', async ({ page }) => {
   await page.setContent('<input id=node></input>');
   const locator = page.locator('#node');
   await locator.fill('Text content');
@@ -46,7 +46,7 @@ test('should support failure', async ({ page }) => {
 });
 
 test.describe('toHaveValues with multi-select', () => {
-  test('works with text', async ({ page }) => {
+  test('EX-306 works with text', async ({ page }) => {
     await page.setContent(`
       <select multiple>
         <option value="R">Red</option>
@@ -59,7 +59,7 @@ test.describe('toHaveValues with multi-select', () => {
     await expect(locator).toHaveValues(['R', 'G']);
   });
 
-  test('follows labels', async ({ page }) => {
+  test('EX-307 follows labels', async ({ page }) => {
     await page.setContent(`
       <label for="colors">Pick a Color</label>
       <select id="colors" multiple>
@@ -73,7 +73,7 @@ test.describe('toHaveValues with multi-select', () => {
     await expect(locator).toHaveValues(['R', 'G']);
   });
 
-  test('exact match with text failure', async ({ page }) => {
+  test('EX-308 exact match with text failure', async ({ page }) => {
     await page.setContent(`
       <select multiple>
         <option value="RR">Red</option>
@@ -87,7 +87,7 @@ test.describe('toHaveValues with multi-select', () => {
     expect(stripAnsi(error.message)).toContain('+   "RR"');
   });
 
-  test('works with regex', async ({ page }) => {
+  test('EX-309 works with regex', async ({ page }) => {
     await page.setContent(`
       <select multiple>
         <option value="R">Red</option>
@@ -100,7 +100,7 @@ test.describe('toHaveValues with multi-select', () => {
     await expect(locator).toHaveValues([/R/, /G/]);
   });
 
-  test('fails when items not selected', async ({ page }) => {
+  test('EX-310 fails when items not selected', async ({ page }) => {
     await page.setContent(`
       <select multiple>
         <option value="R">Red</option>
@@ -114,7 +114,7 @@ test.describe('toHaveValues with multi-select', () => {
     expect(stripAnsi(error.message)).toContain('+   "B"');
   });
 
-  test('fails when multiple not specified', async ({ page }) => {
+  test('EX-311 fails when multiple not specified', async ({ page }) => {
     await page.setContent(`
       <select>
         <option value="R">Red</option>
@@ -128,7 +128,7 @@ test.describe('toHaveValues with multi-select', () => {
     expect(error.message).toContain('Not a select element with a multiple attribute');
   });
 
-  test('fails when not a select element', async ({ page }) => {
+  test('EX-312 fails when not a select element', async ({ page }) => {
     await page.setContent(`
       <input value="foo" />
     `);

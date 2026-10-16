@@ -23,7 +23,7 @@ async function snapshotForAI(page: Page, options?: Omit<Parameters<Page['ariaSna
   return await page.ariaSnapshot({ ...options, mode: 'ai' });
 }
 
-it('should generate refs', async ({ page }) => {
+it('AR-048 should generate refs', async ({ page }) => {
   await page.setContent(`
     <button>One</button>
     <button>Two</button>
@@ -54,7 +54,7 @@ it('should generate refs', async ({ page }) => {
   `);
 });
 
-it('should list iframes', async ({ page }) => {
+it('AR-049 should list iframes', async ({ page }) => {
   await page.setContent(`
     <h1>Hello</h1>
     <iframe name="foo" src="data:text/html,<h1>World</h1>">
@@ -67,7 +67,7 @@ it('should list iframes', async ({ page }) => {
   expect(frameSnapshot).toEqual('- heading "World" [level=1]');
 });
 
-it('should snapshot a locator inside an iframe', async ({ page }) => {
+it('AR-050 should snapshot a locator inside an iframe', async ({ page }) => {
   await page.setContent(`
     <h1>Main Page</h1>
     <iframe srcdoc="<ul><li>Item 1</li><li>Item 2</li></ul>"></iframe>
@@ -82,7 +82,7 @@ it('should snapshot a locator inside an iframe', async ({ page }) => {
   `);
 });
 
-it('should limit depth across iframe boundary', async ({ page }) => {
+it('AR-051 should limit depth across iframe boundary', async ({ page }) => {
   await page.setContent(`
     <nav>
       <iframe srcdoc="<ul><li><button>Deep</button></li></ul>"></iframe>
@@ -99,7 +99,7 @@ it('should limit depth across iframe boundary', async ({ page }) => {
   expect(snapshot).not.toContain('button');
 });
 
-it('should stitch all frame snapshots', async ({ page, server }) => {
+it('AR-052 should stitch all frame snapshots', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   const snapshot = await snapshotForAI(page);
   expect(snapshot).toContainYaml(`
@@ -142,7 +142,7 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
   }
 });
 
-it('should re-number refs across navigations but not same-document navigations', async ({ page, server }) => {
+it('AR-053 should re-number refs across navigations but not same-document navigations', async ({ page, server }) => {
   server.setRoute('/one.html', (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     res.end('<button>One</button>');
@@ -172,7 +172,7 @@ it('should re-number refs across navigations but not same-document navigations',
   await expect(page.getByRef(twoRef)).toHaveText('Two');
 });
 
-it('should persist iframe references', async ({ page }) => {
+it('AR-054 should persist iframe references', async ({ page }) => {
   await page.setContent(`
     <ul>
       <li><iframe srcdoc="<button>button1</button>"></iframe></li>
@@ -217,7 +217,7 @@ it('should persist iframe references', async ({ page }) => {
   await expect(page.getByRef('f2e2')).toHaveText('button2');
 });
 
-it('should not generate refs for elements with pointer-events:none', async ({ page }) => {
+it('AR-055 should not generate refs for elements with pointer-events:none', async ({ page }) => {
   await page.setContent(`
     <button style="pointer-events: none">no-ref</button>
     <div style="pointer-events: none">
@@ -253,7 +253,7 @@ it('should not generate refs for elements with pointer-events:none', async ({ pa
   `);
 });
 
-it('emit generic roles for nodes w/o roles', async ({ page }) => {
+it('AR-056 emit generic roles for nodes w/o roles', async ({ page }) => {
   await page.setContent(`
     <style>
     input {
@@ -303,7 +303,7 @@ it('emit generic roles for nodes w/o roles', async ({ page }) => {
   `);
 });
 
-it('should collapse generic nodes', async ({ page }) => {
+it('AR-057 should collapse generic nodes', async ({ page }) => {
   await page.setContent(`
     <div>
       <div>
@@ -320,7 +320,7 @@ it('should collapse generic nodes', async ({ page }) => {
   `);
 });
 
-it('should include cursor pointer hint', async ({ page }) => {
+it('AR-058 should include cursor pointer hint', async ({ page }) => {
   await page.setContent(`
     <button style="cursor: pointer">Button</button>
   `);
@@ -331,7 +331,7 @@ it('should include cursor pointer hint', async ({ page }) => {
   `);
 });
 
-it('should not nest cursor pointer hints', async ({ page }) => {
+it('AR-059 should not nest cursor pointer hints', async ({ page }) => {
   await page.setContent(`
     <a style="cursor: pointer" href="about:blank">
       Link with a button
@@ -350,7 +350,7 @@ it('should not nest cursor pointer hints', async ({ page }) => {
   `);
 });
 
-it('should omit names that just repeat printed descendant nodes', async ({ page }) => {
+it('AR-060 should omit names that just repeat printed descendant nodes', async ({ page }) => {
   await page.setContent(`
     <h3><a style="cursor: pointer" href="/issues/1">Clipboard API</a></h3>
   `);
@@ -363,7 +363,7 @@ it('should omit names that just repeat printed descendant nodes', async ({ page 
   `);
 });
 
-it('should omit redundant name when a contributing wrapper is collapsed', async ({ page }) => {
+it('AR-061 should omit redundant name when a contributing wrapper is collapsed', async ({ page }) => {
   // The flex span contributes to the heading's name, but is then removed from the tree as a
   // single-child generic wrapper. Its contribution is fully represented by the link, so the
   // heading's name is still redundant.
@@ -379,7 +379,7 @@ it('should omit redundant name when a contributing wrapper is collapsed', async 
   `);
 });
 
-it('should omit redundant name when a contributor is a skipped leaf generic', async ({ page }) => {
+it('AR-062 should omit redundant name when a contributor is a skipped leaf generic', async ({ page }) => {
   // The outer span is not collapsed (its child is an element, not text), so it becomes a leaf
   // generic node that contributes to both names. The link's rendered name covers it, which in turn
   // makes the heading's name redundant.
@@ -395,7 +395,7 @@ it('should omit redundant name when a contributor is a skipped leaf generic', as
   `);
 });
 
-it('should keep the name when the contributing wrapper collapses into repeating text', async ({ page }) => {
+it('AR-063 should keep the name when the contributing wrapper collapses into repeating text', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41985' });
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43315' });
   // The outer span is marked as represented while it still wraps the icon. Once the nameless
@@ -427,7 +427,7 @@ it('should keep the name when the contributing wrapper collapses into repeating 
   `);
 });
 
-it('should keep names not derived from printed nodes', async ({ page }) => {
+it('AR-064 should keep names not derived from printed nodes', async ({ page }) => {
   await page.setContent(`
     <h3 aria-label="Clipboard API issue"><a style="cursor: pointer" href="/issues/1">Clipboard API</a></h3>
   `);
@@ -440,7 +440,7 @@ it('should keep names not derived from printed nodes', async ({ page }) => {
   `);
 });
 
-it('should omit images without an accessible name', async ({ page }) => {
+it('AR-065 should omit images without an accessible name', async ({ page }) => {
   await page.setContent(`
     <img src="data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=">
     <img alt="A cat" src="data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=">
@@ -457,7 +457,7 @@ it('should omit images without an accessible name', async ({ page }) => {
   expect(snapshot).not.toContain('[ref=e2]');
 });
 
-it('should omit a nameless image nested inside a link', async ({ page }) => {
+it('AR-066 should omit a nameless image nested inside a link', async ({ page }) => {
   // The decorative image has no name, so it is dropped even though it sits inside a clickable link.
   await page.setContent(`
     <a style="cursor: pointer" href="/issue/1">Open issue <img src="data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA="></a>
@@ -471,7 +471,7 @@ it('should omit a nameless image nested inside a link', async ({ page }) => {
   expect(snapshot).not.toContain('img');
 });
 
-it('should keep icon-only clickable elements', {
+it('AR-067 should keep icon-only clickable elements', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42013' },
 }, async ({ page }) => {
   const icon = `<svg viewBox="0 0 1024 1024"><use xlink:href="#icon"></use></svg>`;
@@ -492,7 +492,7 @@ it('should keep icon-only clickable elements', {
   `);
 });
 
-it('should omit leaf generic whose text is already in an ancestor name', async ({ page }) => {
+it('AR-068 should omit leaf generic whose text is already in an ancestor name', async ({ page }) => {
   // The inner element is block so it survives as its own generic node (an inline single-text span
   // would be collapsed into the link instead). It inherits the link's pointer cursor.
   await page.setContent(`
@@ -509,7 +509,7 @@ it('should omit leaf generic whose text is already in an ancestor name', async (
   expect(snapshot).not.toContain('[ref=e3]');
 });
 
-it('should omit name-repeating generic behind a wrapper', async ({ page }) => {
+it('AR-069 should omit name-repeating generic behind a wrapper', async ({ page }) => {
   // The leaf generic that repeats the link's name sits inside a nameless wrapper. Its text is
   // first inlined into the wrapper, which then faces the link and removes itself.
   await page.setContent(`
@@ -524,7 +524,7 @@ it('should omit name-repeating generic behind a wrapper', async ({ page }) => {
   expect(snapshot.split('P3-collecting-feedback')).toHaveLength(2);
 });
 
-it('should resolve refs of distilled-away nodes', async ({ page }) => {
+it('AR-070 should resolve refs of distilled-away nodes', async ({ page }) => {
   await page.setContent(`
     <a style="cursor: pointer" href="/issues/15860"><div>[Feature] a dedicated clipboard API</div></a>
   `);
@@ -535,7 +535,7 @@ it('should resolve refs of distilled-away nodes', async ({ page }) => {
   await expect(page.getByRef('e3')).toHaveText('[Feature] a dedicated clipboard API');
 });
 
-it('should not distill snapshots outside of ai mode', async ({ page }) => {
+it('AR-071 should not distill snapshots outside of ai mode', async ({ page }) => {
   await page.setContent(`
     <h3><a href="/issues/1">Clipboard API</a></h3>
   `);
@@ -548,7 +548,7 @@ it('should not distill snapshots outside of ai mode', async ({ page }) => {
   `);
 });
 
-it('should truncate data url in link', async ({ page }) => {
+it('AR-072 should truncate data url in link', async ({ page }) => {
   const base64 = Buffer.from('<p>hello</p>').toString('base64');
   await page.setContent(`<a href="data:text/html;base64,${base64}">a link</a>`);
   const snapshot = await snapshotForAI(page);
@@ -556,7 +556,7 @@ it('should truncate data url in link', async ({ page }) => {
   expect(snapshot).not.toContain(base64);
 });
 
-it('should gracefully fallback when child frame cant be captured', async ({ page, server }) => {
+it('AR-073 should gracefully fallback when child frame cant be captured', async ({ page, server }) => {
   await page.setContent(`
     <p>Test</p>
     <iframe src="${server.PREFIX}/redirectloop1.html#depth=100000"></iframe>
@@ -569,7 +569,7 @@ it('should gracefully fallback when child frame cant be captured', async ({ page
   `);
 });
 
-it('should auto-wait for navigation', async ({ page, server }) => {
+it('AR-074 should auto-wait for navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/frame.html');
   const [, snapshot] = await Promise.all([
     page.evaluate(() => window.location.reload()),
@@ -579,7 +579,7 @@ it('should auto-wait for navigation', async ({ page, server }) => {
   expect(snapshot).toMatch(/- generic \[active\] \[ref=(?:f\d+)?e\d+\]: Hi, I'm frame/);
 });
 
-it('should auto-wait for blocking CSS', async ({ page, server }) => {
+it('AR-075 should auto-wait for blocking CSS', async ({ page, server }) => {
   server.setRoute('/css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
     setTimeout(() => res.end(`body { monospace }`), 1000);
@@ -591,7 +591,7 @@ it('should auto-wait for blocking CSS', async ({ page, server }) => {
   expect(await snapshotForAI(page)).toContainYaml('Hello World');
 });
 
-it('should show visible children of hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {
+it('AR-076 should show visible children of hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36296' }  }, async ({ page }) => {
   await page.setContent(`
     <div style="visibility: hidden">
       <div style="visibility: visible">
@@ -616,7 +616,7 @@ it('should show visible children of hidden elements', { annotation: { type: 'iss
   `));
 });
 
-it('should include active element information', async ({ page }) => {
+it('AR-077 should include active element information', async ({ page }) => {
   await page.setContent(`
     <button id="btn1">Button 1</button>
     <button id="btn2" autofocus>Button 2</button>
@@ -636,7 +636,7 @@ it('should include active element information', async ({ page }) => {
   `);
 });
 
-it('should update active element on focus', async ({ page }) => {
+it('AR-078 should update active element on focus', async ({ page }) => {
   await page.setContent(`
     <input id="input1" placeholder="First input">
     <input id="input2" placeholder="Second input">
@@ -663,7 +663,7 @@ it('should update active element on focus', async ({ page }) => {
   `);
 });
 
-it('should mark iframe as active when it contains focused element', async ({ page }) => {
+it('AR-079 should mark iframe as active when it contains focused element', async ({ page }) => {
   // Create a simple HTML file for the iframe
   await page.setContent(`
     <input id="regular-input" placeholder="Regular input">
@@ -683,7 +683,7 @@ it('should mark iframe as active when it contains focused element', async ({ pag
   `);
 });
 
-it('return empty snapshot when iframe is not loaded', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/pull/36710' } }, async ({ page, server }) => {
+it('AR-080 return empty snapshot when iframe is not loaded', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/pull/36710' } }, async ({ page, server }) => {
   await page.setContent(`
     <div style="height: 5000px;">Test</div>
     <iframe loading="lazy" src="${server.PREFIX}/frame.html"></iframe>
@@ -703,7 +703,7 @@ it('return empty snapshot when iframe is not loaded', { annotation: { type: 'iss
   `);
 });
 
-it('should support many properties on iframes', async ({ page }) => {
+it('AR-081 should support many properties on iframes', async ({ page }) => {
   await page.setContent(`
     <input id="regular-input" placeholder="Regular input">
     <iframe style='cursor: pointer' src="data:text/html,<input id='iframe-input' placeholder='Input in iframe'/>" tabindex="0"></iframe>
@@ -721,7 +721,7 @@ it('should support many properties on iframes', async ({ page }) => {
   `);
 });
 
-it('should snapshot frameset pages', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41784' } }, async ({ page, server }) => {
+it('AR-082 should snapshot frameset pages', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41784' } }, async ({ page, server }) => {
   server.setRoute('/frameset.html', (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     res.end(`<frameset rows="50%,50%"><frameset cols="50%,50%"><frame src="/frame-one.html"><frame src="/frame-two.html"></frameset><frame src="/frame-three.html"></frameset>`);
@@ -748,7 +748,7 @@ it('should snapshot frameset pages', { annotation: { type: 'issue', description:
   await expect(page.getByRef('f2e2')).toHaveText('Button two');
 });
 
-it('should snapshot a locator inside a frameset frame', async ({ page, server }) => {
+it('AR-083 should snapshot a locator inside a frameset frame', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/frameset.html');
 
   const snapshot = await page.frames()[1].locator('body').ariaSnapshot({ mode: 'ai' });
@@ -761,7 +761,7 @@ it('should snapshot a locator inside a frameset frame', async ({ page, server })
   expect(resolved.toString()).toBe(`locator('frame').first().contentFrame().locator('body')`);
 });
 
-it('should stitch iframes inside a frameset frame', async ({ page, server }) => {
+it('AR-084 should stitch iframes inside a frameset frame', async ({ page, server }) => {
   server.setRoute('/frameset-with-iframe.html', (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     res.end(`<frameset><frame src="/frame-with-iframe.html"></frameset>`);
@@ -786,7 +786,7 @@ it('should stitch iframes inside a frameset frame', async ({ page, server }) => 
   expect(resolved.toString()).toBe(`locator('frame').contentFrame().locator('iframe').contentFrame().getByRole('button', { name: 'In iframe' })`);
 });
 
-it('should stitch nested frameset documents', async ({ page, server }) => {
+it('AR-085 should stitch nested frameset documents', async ({ page, server }) => {
   server.setRoute('/outer-frameset.html', (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     res.end(`<frameset><frame src="/inner-frameset.html"></frameset>`);
@@ -809,7 +809,7 @@ it('should stitch nested frameset documents', async ({ page, server }) => {
   await expect(page.getByRef('f2e2')).toHaveText('Leaf button');
 });
 
-it('should collapse inline generic nodes', async ({ page }) => {
+it('AR-086 should collapse inline generic nodes', async ({ page }) => {
   await page.setContent(`
     <ul>
       <li><b>3</b> <abbr>bds</abbr></li>
@@ -839,7 +839,7 @@ it('should collapse inline generic nodes', async ({ page }) => {
   `);
 });
 
-it('should inline single leaf generic child into parent generic', async ({ page }) => {
+it('AR-087 should inline single leaf generic child into parent generic', async ({ page }) => {
   // The nameless images are distilled away, so each wrapper is left with a single leaf generic
   // child, whose text is inlined into the wrapper - recursively for the second one.
   await page.setContent(`
@@ -855,7 +855,7 @@ it('should inline single leaf generic child into parent generic', async ({ page 
   `);
 });
 
-it('should inline a deeply nested generic', async ({ page }) => {
+it('AR-088 should inline a deeply nested generic', async ({ page }) => {
   // Every wrapper contains a nameless image (distilled away) plus a single generic child, so the
   // text bubbles up the whole chain - all the way into the body.
   const img = `<img src="data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=">`;
@@ -870,7 +870,7 @@ it('should inline a deeply nested generic', async ({ page }) => {
   expect(snapshot).not.toContain('img');
 });
 
-it('should not remove generic nodes with title', async ({ page }) => {
+it('AR-089 should not remove generic nodes with title', async ({ page }) => {
   await page.setContent(`<div title="Element title">Element content</div>`);
 
   const snapshot = await snapshotForAI(page);
@@ -879,7 +879,7 @@ it('should not remove generic nodes with title', async ({ page }) => {
   `);
 });
 
-it('should limit depth', async ({ page }) => {
+it('AR-090 should limit depth', async ({ page }) => {
   await page.setContent(`
     <ul>
       <li>item1</li>
@@ -940,7 +940,7 @@ it('should limit depth', async ({ page }) => {
   `);
 });
 
-it('should annotate aria-hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42223' } }, async ({ page }) => {
+it('AR-091 should annotate aria-hidden elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42223' } }, async ({ page }) => {
   await page.setContent(`
     <h2>Visible heading</h2>
     <div aria-hidden="true">
@@ -964,7 +964,7 @@ it('should annotate aria-hidden elements', { annotation: { type: 'issue', descri
   expect(defaultSnapshot).not.toContain('Hidden content');
 });
 
-it('should only annotate the top element in a hidden subtree', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42223' } }, async ({ page }) => {
+it('AR-092 should only annotate the top element in a hidden subtree', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42223' } }, async ({ page }) => {
   await page.setContent(`
     <div aria-hidden="true">
       <h1>Heading</h1>
@@ -980,7 +980,7 @@ it('should only annotate the top element in a hidden subtree', { annotation: { t
   `);
 });
 
-it('should not include hidden iframes', async ({ page }) => {
+it('AR-093 should not include hidden iframes', async ({ page }) => {
   await page.setContent(`
     <iframe name="visible" srcdoc="<button>Visible</button>"></iframe>
     <iframe name="hidden" style="visibility: hidden" srcdoc="<button>Hidden</button>"></iframe>
@@ -995,7 +995,7 @@ it('should not include hidden iframes', async ({ page }) => {
   expect(snapshot).not.toContain('None');
 });
 
-it('should not generate refs for inert elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+it('AR-094 should not generate refs for inert elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
   await page.setContent(`
     <button>with-ref</button>
     <button inert>no-ref</button>
@@ -1014,7 +1014,7 @@ it('should not generate refs for inert elements', { annotation: { type: 'issue',
   `);
 });
 
-it('should not generate refs for elements outside of a modal dialog', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+it('AR-095 should not generate refs for elements outside of a modal dialog', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
   await page.setContent(`
     <button>Outside</button>
     <dialog id=dialog>

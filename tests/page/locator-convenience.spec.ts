@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should have a nice preview', async ({ page, server }) => {
+it('LO-057 should have a nice preview', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const outer = page.locator('#outer');
   const inner = outer.locator('#inner');
@@ -30,7 +30,7 @@ it('should have a nice preview', async ({ page, server }) => {
   expect.soft(String(check)).toBe(`locator('#check')`);
 });
 
-it('getAttribute should work', async ({ page, server }) => {
+it('LO-058 getAttribute should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const locator = page.locator('#outer');
   expect(await locator.getAttribute('name')).toBe('value');
@@ -39,7 +39,7 @@ it('getAttribute should work', async ({ page, server }) => {
   expect(await page.getAttribute('#outer', 'foo')).toBe(null);
 });
 
-it('inputValue should work', async ({ page, server }) => {
+it('LO-059 inputValue should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
 
   await page.selectOption('#select', 'foo');
@@ -58,21 +58,21 @@ it('inputValue should work', async ({ page, server }) => {
   expect(await locator2.inputValue().catch(e => e.message)).toContain('Node is not an <input>, <textarea> or <select> element');
 });
 
-it('innerHTML should work', async ({ page, server }) => {
+it('LO-060 innerHTML should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const locator = page.locator('#outer');
   expect(await locator.innerHTML()).toBe('<div id="inner">Text,\nmore text</div>');
   expect(await page.innerHTML('#outer')).toBe('<div id="inner">Text,\nmore text</div>');
 });
 
-it('innerText should work', async ({ page, server }) => {
+it('LO-061 innerText should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const locator = page.locator('#inner');
   expect(await locator.innerText()).toBe('Text, more text');
   expect(await page.innerText('#inner')).toBe('Text, more text');
 });
 
-it('innerText should throw', async ({ page, server }) => {
+it('LO-062 innerText should throw', async ({ page, server }) => {
   await page.setContent(`<svg>text</svg>`);
   const error1 = await page.innerText('svg').catch(e => e);
   expect(error1.message).toContain('Node is not an HTMLElement');
@@ -81,21 +81,21 @@ it('innerText should throw', async ({ page, server }) => {
   expect(error2.message).toContain('Node is not an HTMLElement');
 });
 
-it('innerText should produce log', async ({ page, server }) => {
+it('LO-063 innerText should produce log', async ({ page, server }) => {
   await page.setContent(`<div>Hello</div>`);
   const locator = page.locator('span');
   const error = await locator.innerText({ timeout: 1000 }).catch(e => e);
   expect(error.message).toContain('waiting for locator(\'span\')');
 });
 
-it('textContent should work', async ({ page, server }) => {
+it('LO-064 textContent should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const locator = page.locator('#inner');
   expect(await locator.textContent()).toBe('Text,\nmore text');
   expect(await page.textContent('#inner')).toBe('Text,\nmore text');
 });
 
-it('isEnabled and isDisabled should work', async ({ page }) => {
+it('LO-065 isEnabled and isDisabled should work', async ({ page }) => {
   await page.setContent(`
     <button disabled>button1</button>
     <button>button2</button>
@@ -118,7 +118,7 @@ it('isEnabled and isDisabled should work', async ({ page }) => {
   expect(await page.isDisabled(':text("button2")')).toBe(false);
 });
 
-it('isEditable should work', async ({ page }) => {
+it('LO-066 isEditable should work', async ({ page }) => {
   await page.setContent(`
     <input id=input1 disabled>
     <textarea></textarea>
@@ -145,7 +145,7 @@ it('isEditable should work', async ({ page }) => {
   expect(error.message).toContain('Element is not an <input>, <textarea>, <select> or [contenteditable] and does not have a role allowing [aria-readonly]');
 });
 
-it('isChecked should work', async ({ page }) => {
+it('LO-067 isChecked should work', async ({ page }) => {
   await page.setContent(`<input type='checkbox' checked><div>Not a checkbox</div>`);
   const element = page.locator('input');
   expect(await element.isChecked()).toBe(true);
@@ -157,7 +157,7 @@ it('isChecked should work', async ({ page }) => {
   expect(error.message).toContain('Not a checkbox or radio button');
 });
 
-it('isChecked should work for indeterminate input', async ({ page }) => {
+it('LO-068 isChecked should work for indeterminate input', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20190' });
 
   await page.setContent(`<input type="checkbox" checked>`);
@@ -172,17 +172,17 @@ it('isChecked should work for indeterminate input', async ({ page }) => {
   await expect(page.locator('input')).not.toBeChecked();
 });
 
-it('allTextContents should work', async ({ page }) => {
+it('LO-069 allTextContents should work', async ({ page }) => {
   await page.setContent(`<div>A</div><div>B</div><div>C</div>`);
   expect(await page.locator('div').allTextContents()).toEqual(['A', 'B', 'C']);
 });
 
-it('allInnerTexts should work', async ({ page }) => {
+it('LO-070 allInnerTexts should work', async ({ page }) => {
   await page.setContent(`<div>A</div><div>B</div><div>C</div>`);
   expect(await page.locator('div').allInnerTexts()).toEqual(['A', 'B', 'C']);
 });
 
-it('should return page', async ({ page, server }) => {
+it('LO-071 should return page', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/two-frames.html');
   const outer = page.locator('#outer');
   expect(outer.page()).toBe(page);
@@ -194,27 +194,27 @@ it('should return page', async ({ page, server }) => {
   expect(inFrame.page()).toBe(page);
 });
 
-it('description should return null for locator without description', async ({ page }) => {
+it('LO-072 description should return null for locator without description', async ({ page }) => {
   const locator = page.locator('button');
   expect(locator.description()).toBe(null);
 });
 
-it('description should return description for locator with simple description', async ({ page }) => {
+it('LO-073 description should return description for locator with simple description', async ({ page }) => {
   const locator = page.locator('button').describe('Submit button');
   expect(locator.description()).toBe('Submit button');
 });
 
-it('description should return description with special characters', async ({ page }) => {
+it('LO-074 description should return description with special characters', async ({ page }) => {
   const locator = page.locator('div').describe('Button with "quotes" and \'apostrophes\'');
   expect(locator.description()).toBe('Button with "quotes" and \'apostrophes\'');
 });
 
-it('description should return description for chained locators', async ({ page }) => {
+it('LO-075 description should return description for chained locators', async ({ page }) => {
   const locator = page.locator('form').locator('input').describe('Form input field');
   expect(locator.description()).toBe('Form input field');
 });
 
-it('description should return description for locator with multiple describe calls', async ({ page }) => {
+it('LO-076 description should return description for locator with multiple describe calls', async ({ page }) => {
   const locator1 = page.locator('foo').describe('First description');
   expect(locator1.description()).toBe('First description');
   const locator2 = locator1.locator('button').describe('Second description');
@@ -223,13 +223,13 @@ it('description should return description for locator with multiple describe cal
   expect(locator3.description()).toBe(null);
 });
 
-it('toString() returns formatted locator', async ({ page }) => {
+it('LO-077 toString() returns formatted locator', async ({ page }) => {
   const locator = page.getByRole('button', { name: 'Submit' });
   expect(locator.toString()).toBe(`getByRole('button', { name: 'Submit' })`);
   expect(locator.description()).toBe(null);
 });
 
-it('toString() prefers description', async ({ page }) => {
+it('LO-078 toString() prefers description', async ({ page }) => {
   const locator = page.getByRole('button', { name: 'Submit' }).describe('Submit button');
   expect(locator.toString()).toBe(`Submit button`);
   expect(locator.toString()).toBe(locator.description());

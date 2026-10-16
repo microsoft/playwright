@@ -76,7 +76,7 @@ function messageSize(message: string | number[]): number {
   return 6 + 8 + message.length;
 }
 
-it('should only have one websocket entry', async ({ contextFactory, server }, testInfo) => {
+it('HA-101 should only have one websocket entry', async ({ contextFactory, server }, testInfo) => {
   server.onceWebSocketConnection(ws => {
     ws.on('message', () => ws.close());
   });
@@ -97,7 +97,7 @@ it('should only have one websocket entry', async ({ contextFactory, server }, te
   expect(wsEntry._resourceType).toBe('websocket');
 });
 
-it('should include websocket handshake headers and status', async ({ contextFactory, server, browserName, isMac, macVersion }, testInfo) => {
+it('HA-102 should include websocket handshake headers and status', async ({ contextFactory, server, browserName, isMac, macVersion }, testInfo) => {
   server.onceWebSocketConnection(ws => {
     ws.on('message', () => ws.close());
   });
@@ -231,15 +231,15 @@ async function testWebSocketMessages(contextFactory, server, testInfo, content, 
   expect(wsEntry.time).toBeGreaterThanOrEqual(messages[messages.length - 1].time - messages[0].time);
 }
 
-it('should embed websocket messages', async ({ contextFactory, server, channel }, testInfo) => {
+it('HA-103 should embed websocket messages', async ({ contextFactory, server, channel }, testInfo) => {
   await testWebSocketMessages(contextFactory, server, testInfo, 'embed', channel);
 });
 
-it('should attach websocket messages', async ({ contextFactory, server, channel }, testInfo) => {
+it('HA-104 should attach websocket messages', async ({ contextFactory, server, channel }, testInfo) => {
   await testWebSocketMessages(contextFactory, server, testInfo, 'attach', channel);
 });
 
-it('should attach websocket messages for a still open websocket after stopping', async ({ contextFactory, server, channel }, testInfo) => {
+it('HA-105 should attach websocket messages for a still open websocket after stopping', async ({ contextFactory, server, channel }, testInfo) => {
   const incomingText = 'incoming';
   const incomingBinary = [0x01, 0x02, 0x03, 0x04];
   const outgoingText = 'outgoing';
@@ -308,11 +308,11 @@ it('should attach websocket messages for a still open websocket after stopping',
   expect(wsEntry.time).toBeGreaterThanOrEqual(messages[messages.length - 1].time - messages[0].time);
 });
 
-it('should omit websocket messages', async ({ contextFactory, server }, testInfo) => {
+it('HA-106 should omit websocket messages', async ({ contextFactory, server }, testInfo) => {
   await testWebSocketMessages(contextFactory, server, testInfo, 'omit');
 });
 
-it('should record websocket connection failure', async ({ contextFactory, server, channel }, testInfo) => {
+it('HA-107 should record websocket connection failure', async ({ contextFactory, server, channel }, testInfo) => {
   it.skip(channel === 'webkit-wsl', 'Connection to an unbound localhost port from WSL is not refused in mirrored networking mode');
   // Reserve a port and immediately release it so the WebSocket connect attempt is refused.
   const portReservation = net.createServer();
@@ -338,7 +338,7 @@ it('should record websocket connection failure', async ({ contextFactory, server
   expect(wsEntry.response._failureText).toBeTruthy();
 });
 
-it('should record websocket handshake failure', async ({ contextFactory, server, browserName }, testInfo) => {
+it('HA-108 should record websocket handshake failure', async ({ contextFactory, server, browserName }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
 
@@ -365,7 +365,7 @@ it('should record websocket handshake failure', async ({ contextFactory, server,
   expect(wsEntry.response._failureText).toBeTruthy();
 });
 
-it('should still capture websocket when route passes messages through', async ({ contextFactory, server }, testInfo) => {
+it('HA-109 should still capture websocket when route passes messages through', async ({ contextFactory, server }, testInfo) => {
   server.onceWebSocketConnection(ws => {
     ws.on('message', () => ws.send('incoming'));
   });
@@ -405,7 +405,7 @@ it('should still capture websocket when route passes messages through', async ({
   ]);
 });
 
-it('should still allow routeWebSocket to fully mock the connection when capturing HAR', async ({ contextFactory, server }, testInfo) => {
+it('HA-110 should still allow routeWebSocket to fully mock the connection when capturing HAR', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   let routeHandlerCalled = 0;
   await page.routeWebSocket(/\/ws$/, ws => {
@@ -437,7 +437,7 @@ it('should still allow routeWebSocket to fully mock the connection when capturin
   expect(wsEntries).toEqual([]);
 });
 
-it('should still allow routeWebSocket to modify messages when capturing HAR', async ({ contextFactory, server }, testInfo) => {
+it('HA-111 should still allow routeWebSocket to modify messages when capturing HAR', async ({ contextFactory, server }, testInfo) => {
   server.onceWebSocketConnection(ws => {
     ws.on('message', message => ws.send(`server-saw-${message.toString()}`));
   });
@@ -479,7 +479,7 @@ it('should still allow routeWebSocket to modify messages when capturing HAR', as
   ]);
 });
 
-it('should respect PLAYWRIGHT_HAR_NO_WEBSOCKET_FRAMES', async ({ contextFactory, server, mode }, testInfo) => {
+it('HA-112 should respect PLAYWRIGHT_HAR_NO_WEBSOCKET_FRAMES', async ({ contextFactory, server, mode }, testInfo) => {
   it.skip(mode !== 'default', 'no env vars in non-default mode');
 
   process.env.PLAYWRIGHT_HAR_NO_WEBSOCKET_FRAMES = '1';

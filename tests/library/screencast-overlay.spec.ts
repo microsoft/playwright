@@ -25,7 +25,7 @@ function pixel(screenshot: Buffer, x: number, y: number) {
   return [png.data[offset], png.data[offset + 1], png.data[offset + 2]];
 }
 
-test('should add and remove overlay', async ({ browser, server }) => {
+test('SC-028 should add and remove overlay', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -41,7 +41,7 @@ test('should add and remove overlay', async ({ browser, server }) => {
   await context.close();
 });
 
-test('should add multiple overlays', async ({ browser, server }) => {
+test('SC-029 should add multiple overlays', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -62,7 +62,7 @@ test('should add multiple overlays', async ({ browser, server }) => {
   await context.close();
 });
 
-test('should hide and show overlays', async ({ browser, server }) => {
+test('SC-030 should hide and show overlays', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -80,7 +80,7 @@ test('should hide and show overlays', async ({ browser, server }) => {
   await context.close();
 });
 
-test('should survive navigation', async ({ browser, server }) => {
+test('SC-031 should survive navigation', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -97,7 +97,7 @@ test('should survive navigation', async ({ browser, server }) => {
   await context.close();
 });
 
-test('should remove overlay and not restore after navigation', async ({ browser, server }) => {
+test('SC-032 should remove overlay and not restore after navigation', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -114,7 +114,7 @@ test('should remove overlay and not restore after navigation', async ({ browser,
   await context.close();
 });
 
-test('should sanitize scripts from overlay html', async ({ browser, server }) => {
+test('SC-033 should sanitize scripts from overlay html', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -126,7 +126,7 @@ test('should sanitize scripts from overlay html', async ({ browser, server }) =>
   await context.close();
 });
 
-test('should strip event handlers from overlay html', async ({ browser, server }) => {
+test('SC-034 should strip event handlers from overlay html', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -139,7 +139,7 @@ test('should strip event handlers from overlay html', async ({ browser, server }
   await context.close();
 });
 
-test('should auto-remove overlay after timeout', async ({ browser, server }) => {
+test('SC-035 should auto-remove overlay after timeout', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -150,7 +150,7 @@ test('should auto-remove overlay after timeout', async ({ browser, server }) => 
   await context.close();
 });
 
-test('should allow styles in overlay html', async ({ browser, server }) => {
+test('SC-036 should allow styles in overlay html', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -176,7 +176,7 @@ const topLayerPages = {
 const redOverlay = '<div style="position: absolute; top: 50px; left: 50px; width: 200px; height: 100px; background: rgb(255, 0, 0);"></div>';
 
 for (const [kind, content] of Object.entries(topLayerPages)) {
-  test(`should show overlay above ${kind} opened before it`, { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42629' } }, async ({ browser }) => {
+  test(`SC-037 should show overlay above ${kind} opened before it`, { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42629' } }, async ({ browser }) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.setContent(content);
@@ -192,7 +192,7 @@ for (const [kind, content] of Object.entries(topLayerPages)) {
     await context.close();
   });
 
-  test(`should keep overlay above ${kind} opened after it`, { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42629' } }, async ({ browser }) => {
+  test(`SC-038 should keep overlay above ${kind} opened after it`, { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42629' } }, async ({ browser }) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.setContent(content);

@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('isVisible and isHidden should work', async ({ page }) => {
+it('LO-115 isVisible and isHidden should work', async ({ page }) => {
   await page.setContent(`<div>Hi</div><span></span>`);
 
   const div = page.locator('div');
@@ -36,17 +36,17 @@ it('isVisible and isHidden should work', async ({ page }) => {
   expect(await page.isHidden('no-such-element')).toBe(true);
 });
 
-it('isVisible should be true for opacity:0', async ({ page }) => {
+it('LO-116 isVisible should be true for opacity:0', async ({ page }) => {
   await page.setContent(`<div style="opacity:0">Hi</div>`);
   await expect(page.locator('div')).toBeVisible();
 });
 
-it('isVisible should be true for element outside view', async ({ page }) => {
+it('LO-117 isVisible should be true for element outside view', async ({ page }) => {
   await page.setContent(`<div style="position: absolute; left: -1000px">Hi</div>`);
   await expect(page.locator('div')).toBeVisible();
 });
 
-it('isVisible and isHidden should work with details', async ({ page }) => {
+it('LO-118 isVisible and isHidden should work with details', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10674' });
   await page.setContent(`<details>
     <summary>click to open</summary>
@@ -60,7 +60,7 @@ it('isVisible and isHidden should work with details', async ({ page }) => {
   await expect(page.locator('ul')).toBeHidden();
 });
 
-it('isVisible and isHidden should work with nested details', async ({ page }) => {
+it('LO-119 isVisible and isHidden should work with nested details', async ({ page }) => {
   await page.setContent(`<details>
     <summary>outer</summary>
     <details open>
@@ -75,7 +75,7 @@ it('isVisible and isHidden should work with nested details', async ({ page }) =>
   await expect(page.getByRole('button')).toHaveCount(0);
 });
 
-it('isVisible and isHidden should work with unslotted content', async ({ page }) => {
+it('LO-120 isVisible and isHidden should work with unslotted content', async ({ page }) => {
   await page.setContent(`
     <div id=unslotted><span>hidden 1</span><div><span>hidden 2</span></div></div>
     <div id=slotted><span>visible</span></div>
@@ -90,7 +90,7 @@ it('isVisible and isHidden should work with unslotted content', async ({ page })
   await expect(page.locator('span', { hasText: 'visible' })).toBeVisible();
 });
 
-it('isVisible and isHidden should work with list box options', async ({ page, isAndroid }) => {
+it('LO-121 isVisible and isHidden should work with list box options', async ({ page, isAndroid }) => {
   it.skip(isAndroid, 'Android Chrome renders list boxes as popups, so options are not visible in the page');
   await page.setContent(`
     <select multiple>
@@ -109,7 +109,7 @@ it('isVisible and isHidden should work with list box options', async ({ page, is
     await expect(page.locator('option', { hasText: text })).toBeHidden();
 });
 
-it('isVisible inside a button', async ({ page }) => {
+it('LO-122 isVisible inside a button', async ({ page }) => {
   await page.setContent(`<button><span></span>a button</button>`);
   const span = page.locator('span');
   expect(await span.isVisible()).toBe(false);
@@ -122,7 +122,7 @@ it('isVisible inside a button', async ({ page }) => {
   await page.locator('button').waitFor({ state: 'visible' });
 });
 
-it('isVisible inside a role=button', async ({ page }) => {
+it('LO-123 isVisible inside a role=button', async ({ page }) => {
   await page.setContent(`<div role=button><span></span>a button</div>`);
   const span = page.locator('span');
   expect(await span.isVisible()).toBe(false);
@@ -135,7 +135,7 @@ it('isVisible inside a role=button', async ({ page }) => {
   await page.locator('[role=button]').waitFor({ state: 'visible' });
 });
 
-it('isVisible during navigation should not throw', async ({ page, server }) => {
+it('LO-124 isVisible during navigation should not throw', async ({ page, server }) => {
   for (let i = 0; i < 20; i++) {
     await page.setContent(`
       <script>
@@ -148,7 +148,7 @@ it('isVisible during navigation should not throw', async ({ page, server }) => {
   }
 });
 
-it('isVisible with invalid selector should throw', async ({ page }) => {
+it('LO-125 isVisible with invalid selector should throw', async ({ page }) => {
   const error = await page.locator('hey=what').isVisible().catch(e => e);
   expect(error.message).toContain('Unknown engine "hey" while parsing selector hey=what');
 });

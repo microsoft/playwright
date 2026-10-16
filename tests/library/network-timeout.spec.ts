@@ -21,7 +21,7 @@ import { utils } from '../../packages/playwright-core/lib/coreBundle.js';
 
 test.skip(({ mode }) => mode !== 'default');
 
-test('httpRequest should honor socketTimeout while connecting', async () => {
+test('NE-128 httpRequest should honor socketTimeout while connecting', async () => {
   // 203.0.113.1 is TEST-NET-3 (RFC 5737), guaranteed to be unroutable, so the
   // TCP connection stalls instead of failing. Node's default agents come with
   // a 5s socket timeout, while `request.setTimeout()` only takes effect after
@@ -44,7 +44,7 @@ test('httpRequest should honor socketTimeout while connecting', async () => {
   expect(elapsed).toBeGreaterThanOrEqual(socketTimeout - 1000);
 });
 
-test('httpRequest should honor socketTimeout for stalled responses', async () => {
+test('NE-129 httpRequest should honor socketTimeout for stalled responses', async () => {
   const server = http.createServer(() => {});
   await new Promise<void>(f => server.listen(0, '127.0.0.1', () => f()));
   const port = (server.address() as import('node:net').AddressInfo).port;
@@ -66,7 +66,7 @@ test('httpRequest should honor socketTimeout for stalled responses', async () =>
   }
 });
 
-test('httpRequest should honor ipv4first result order', async () => {
+test('NE-130 httpRequest should honor ipv4first result order', async () => {
   const server = http.createServer((req, res) => res.end('ok'));
   await new Promise<void>(f => server.listen(0, '127.0.0.1', () => f()));
   const port = (server.address() as import('node:net').AddressInfo).port;
