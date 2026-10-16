@@ -59,7 +59,7 @@ test('androidDevice.launchBrowser should pass proxy config', async ({ androidDev
   });
   const context = await androidDevice.launchBrowser({ proxy: { server: `${loopback}:${server.PORT}` } });
   const page = await context.newPage();
-  await page.goto('http://non-existent.com/target.html');
+  await page.goto('http://non-existent.test/target.html');
   expect(await page.title()).toBe('Served by the proxy');
   await context.close();
 });

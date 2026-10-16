@@ -34,7 +34,7 @@ it('should use proxy @smoke', async ({ browserType, server, mode }) => {
     proxy: { server: server.HOST }
   });
   const page = await browser.newPage();
-  await page.goto('http://non-existent.com/target.html');
+  await page.goto('http://non-existent.test/target.html');
   expect(await page.title()).toBe('Served by the proxy');
   await browser.close();
 });
@@ -48,11 +48,11 @@ it('should use proxy for second page', async ({ browserType, server }) => {
   });
 
   const page = await browser.newPage();
-  await page.goto('http://non-existent.com/target.html');
+  await page.goto('http://non-existent.test/target.html');
   expect(await page.title()).toBe('Served by the proxy');
 
   const page2 = await browser.newPage();
-  await page2.goto('http://non-existent.com/target.html');
+  await page2.goto('http://non-existent.test/target.html');
   expect(await page2.title()).toBe('Served by the proxy');
 
   await browser.close();
@@ -66,7 +66,7 @@ it('should work with IP:PORT notion', async ({ browserType, server }) => {
     proxy: { server: `127.0.0.1:${server.PORT}` }
   });
   const page = await browser.newPage();
-  await page.goto('http://non-existent.com/target.html');
+  await page.goto('http://non-existent.test/target.html');
   expect(await page.title()).toBe('Served by the proxy');
   await browser.close();
 });
@@ -157,7 +157,7 @@ it('should authenticate', async ({ browserType, server }) => {
     proxy: { server: server.HOST, username: 'user', password: 'secret' }
   });
   const page = await browser.newPage();
-  await page.goto('http://non-existent.com/target.html');
+  await page.goto('http://non-existent.test/target.html');
   expect(await page.title()).toBe('Basic ' + Buffer.from('user:secret').toString('base64'));
   await browser.close();
 });
@@ -179,7 +179,7 @@ it('should reconnect with credentials after CONNECT 407 closes the socket', {
     // on every CONNECT, while libsoup on Linux/macOS sends it only after a 407.
     // Force the first CONNECT to fail regardless to deterministically exercise
     // the reconnect path on all platforms.
-    if (req.method !== 'CONNECT' || !req.headers.host?.startsWith('non-existent.com'))
+    if (req.method !== 'CONNECT' || !req.headers.host?.startsWith('non-existent.test'))
       return true;
     connectAttempts.push({ hadAuth: !!req.headers['proxy-authorization'] });
     if (!closedFirstConnect) {
@@ -193,7 +193,7 @@ it('should reconnect with credentials after CONNECT 407 closes the socket', {
     proxy: { server: proxyServer.HOST, username: 'user', password: 'secret' },
   });
   const page = await browser.newPage({ ignoreHTTPSErrors: true });
-  await page.goto('https://non-existent.com/target.html');
+  await page.goto('https://non-existent.test/target.html');
   expect(await page.title()).toBe('Served by https server via proxy');
   expect(connectAttempts.length).toBeGreaterThanOrEqual(2);
   expect(connectAttempts.some(a => a.hadAuth)).toBe(true);
@@ -227,7 +227,7 @@ it('should work with authenticate followed by redirect', async ({ browserName, b
     proxy: { server: server.HOST, username: 'user', password: 'secret' }
   });
   const page = await browser.newPage();
-  await page.goto('http://non-existent.com/page1.html');
+  await page.goto('http://non-existent.test/page1.html');
   expect(await page.title()).toBe('Served by the proxy');
   await browser.close();
 });
@@ -308,7 +308,7 @@ it('should use socks proxy', async ({ browserType, socksPort }) => {
     proxy: { server: `socks5://localhost:${socksPort}` }
   });
   const page = await browser.newPage();
-  await page.goto('http://non-existent.com');
+  await page.goto('http://non-existent.test');
   expect(await page.title()).toBe('Served by the SOCKS proxy');
   await browser.close();
 });
@@ -319,11 +319,11 @@ it('should use socks proxy in second page', async ({ browserType, socksPort }) =
   });
 
   const page = await browser.newPage();
-  await page.goto('http://non-existent.com');
+  await page.goto('http://non-existent.test');
   expect(await page.title()).toBe('Served by the SOCKS proxy');
 
   const page2 = await browser.newPage();
-  await page2.goto('http://non-existent.com');
+  await page2.goto('http://non-existent.test');
   expect(await page2.title()).toBe('Served by the SOCKS proxy');
 
   await browser.close();
