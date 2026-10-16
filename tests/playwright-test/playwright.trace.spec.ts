@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 import { parseTrace, parseTraceRaw } from '../config/utils';
 
 import fs from 'fs';
@@ -616,6 +616,79 @@ test('should include attachments by default', async ({ runInlineTest, server }, 
   }]);
   const { resources } = await parseTraceRaw(tracePath);
   expect([...resources.keys()]).toContain(trace.model.actions[1].attachments[0].file);
+});
+
+test('should redact secrets', async ({ runInlineTest, server }, testInfo) => {
+  server.setRoute('/secret', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ password: req.headers['x-secret'] }));
+  });
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default { use: { trace: { mode: 'on', secrets: [{ name: 'PASSWORD', value: process.env.PASSWORD }, { name: 'QUOTED', value: process.env.QUOTED }] } } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      const password = process.env.PASSWORD;
+
+      test('with page', async ({ page }, testInfo) => {
+        await page.goto('${server.EMPTY_PAGE}');
+        await page.setContent('<input>');
+        await page.locator('input').fill(password);
+        await page.evaluate(password => console.log('console ' + password), password);
+        await page.evaluate(async password => {
+          const response = await fetch('/secret', { method: 'POST', headers: { 'x-secret': password }, body: 'body ' + password });
+          await response.text();
+        }, password);
+        console.log('stdout ' + password);
+        console.log('quoted ' + process.env.QUOTED);
+        process.stdout.write(Buffer.from('buffer ' + password + '\\n'));
+        await testInfo.attach('note ' + password, { body: 'body ' + password });
+        await test.step('step ' + password, async () => {
+          expect(password).toBe('wrong ' + 'password123');
+        });
+      });
+
+      test('without page', async ({}, testInfo) => {
+        await testInfo.attach('note ' + password, { body: 'body ' + password });
+      });
+    `,
+  }, { workers: 1 }, { PASSWORD: 'password123', QUOTED: 'say "hi"' });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+
+  const { events, resources, actions } = await parseTraceRaw(testInfo.outputPath('test-results', 'a-with-page', 'trace.zip'));
+  for (const [name, buffer] of resources) {
+    for (const needle of ['password123', 'say "hi"', 'say \\"hi\\"'])
+      expect(buffer.includes(needle), `${name} contains ${needle}`).toBe(false);
+  }
+  expect(actions).toContain(`Fill "<secret>PASSWORD</secret>" locator('input')`);
+  expect(actions).toContain(`step <secret>PASSWORD</secret>`);
+  expect(events.filter(e => e.type === 'console').map(e => e.text)).toContain('console <secret>PASSWORD</secret>');
+  expect(events.filter(e => e.type === 'stdout').map(e => e.text ?? Buffer.from(e.base64, 'base64').toString())).toEqual([
+    'stdout <secret>PASSWORD</secret>\n',
+    'quoted <secret>QUOTED</secret>\n',
+    'buffer <secret>PASSWORD</secret>\n',
+  ]);
+  expect(stripAnsi(events.filter(e => e.type === 'error').map(e => e.message).join('\n'))).toContain('Expected: "wrong <secret>PASSWORD</secret>"');
+  expect(events.filter(e => e.type === 'after').flatMap(e => e.attachments ?? []).map(a => a.name)).toContain('note <secret>PASSWORD</secret>');
+  const traceFile = [...resources.keys()].find(name => name.endsWith('.trace') && name !== 'test.trace')!;
+  expect(resources.get(traceFile)!.toString()).toContain('"__playwright_value_":"<secret>PASSWORD</secret>"');
+  const networkFile = [...resources.keys()].find(name => name.endsWith('.network'))!;
+  expect(resources.get(networkFile)!.toString()).toContain('"x-secret","value":"<secret>PASSWORD</secret>"');
+  const bodies = [...resources.values()].map(buffer => buffer.toString());
+  expect(bodies).toContain('body <secret>PASSWORD</secret>');
+  expect(bodies).toContain('{"password":"<secret>PASSWORD</secret>"}');
+  const sourceFile = [...resources.keys()].find(name => name.startsWith('src/'))!;
+  expect(resources.get(sourceFile)!.toString()).toContain(`'wrong ' + '<secret>PASSWORD</secret>'`);
+
+  const single = await parseTraceRaw(testInfo.outputPath('test-results', 'a-without-page', 'trace.zip'));
+  for (const [name, buffer] of single.resources)
+    expect(buffer.includes('password123'), `${name} contains the secret`).toBe(false);
+  expect(single.actions).toContain(`Attach "note <secret>PASSWORD</secret>"`);
+  expect([...single.resources.values()].map(buffer => buffer.toString())).toContain('body <secret>PASSWORD</secret>');
 });
 
 test('should opt out of attachments', async ({ runInlineTest, server }, testInfo) => {

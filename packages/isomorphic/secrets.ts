@@ -29,23 +29,20 @@ export function secretsKey(secrets: Secrets | undefined): string {
   return JSON.stringify(normalizeSecrets(secrets).map(secret => JSON.stringify([secret.name ?? null, secret.value])).sort());
 }
 
-export function secretPlaceholder(name: string | undefined): string {
+function secretPlaceholder(name: string | undefined): string {
   return name ? `<secret>${name}</secret>` : `<secret/>`;
 }
 
-export function redactSecrets(text: string, secrets: Secrets): string {
+export function redactSecretsInText(text: string, secrets: Secrets): string {
   for (const { name, value } of secrets)
     text = text.replaceAll(value, secretPlaceholder(name));
   return text;
 }
 
-export function redactSecretsInJSON(json: string, secrets: Secrets): string {
-  for (const { name, value } of secrets) {
-    const escapedValue = JSON.stringify(value).slice(1, -1);
-    const escapedPlaceholder = JSON.stringify(secretPlaceholder(name)).slice(1, -1);
-    json = json.replaceAll(escapedValue, escapedPlaceholder);
-  }
-  return json;
+export function escapeSecretsForJSON(secrets: Secrets): Secrets {
+  const escape = (text: string) => JSON.stringify(text).slice(1, -1);
+  const escaped = secrets.map(({ name, value }) => ({ name: name === undefined ? undefined : escape(name), value: escape(value) }));
+  return normalizeSecrets(escaped.filter((secret, index) => secret.name !== secrets[index].name || secret.value !== secrets[index].value));
 }
 
 // The buffer is not decoded, because it may not be a valid utf-8 string.
