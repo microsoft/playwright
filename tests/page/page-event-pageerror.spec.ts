@@ -17,7 +17,9 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should fire', async ({ page, server, browserName, isBidi }) => {
+it('should fire', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43450' },
+}, async ({ page, server, browserName, isBidi }) => {
   const url = server.PREFIX + '/error.html';
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
@@ -43,6 +45,58 @@ it('should fire', async ({ page, server, browserName, isBidi }) => {
     at b (myscript.js:10:5)
     at a (myscript.js:6:5)
     at  (myscript.js:3:1)`);
+  }
+
+  // The same script from another origin: Chromium reports it without an exception object,
+  // so the stack is built from the CDP call frames, which are zero-based.
+  const crossOriginUrl = server.CROSS_PROCESS_PREFIX + '/error.js';
+  server.setRoute('/error.js', (req, res) => {
+    res.setHeader('Content-Type', 'text/javascript');
+    // Same lines as error.html, so the stack has the same locations.
+    res.end(`
+console.error('Not a JS error');
+a();
+
+function a() {
+    b();
+}
+
+function b() {
+    c();
+}
+
+function c() {
+    throw new Error('Fancy error!');
+}
+`);
+  });
+  server.setRoute('/cross-origin-error.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<script src="${crossOriginUrl}"></script>`);
+  });
+  const [crossOriginError] = await Promise.all([
+    page.waitForEvent('pageerror'),
+    page.goto(server.PREFIX + '/cross-origin-error.html'),
+  ]);
+  expect(crossOriginError.message).toBe('Fancy error!');
+  if (browserName === 'chromium') {
+    expect(crossOriginError.stack).toBe(`Uncaught Error: Fancy error!
+    at c (${crossOriginUrl}:14:11)
+    at b (${crossOriginUrl}:10:5)
+    at a (${crossOriginUrl}:6:5)
+    at <anonymous> (${crossOriginUrl}:3:1)`);
+  } else if (browserName === 'webkit') {
+    expect(crossOriginError.stack).toBe(`Error: Fancy error!
+    at c (${crossOriginUrl}:14:36)
+    at b (${crossOriginUrl}:10:6)
+    at a (${crossOriginUrl}:6:6)
+    at global code (${crossOriginUrl}:3:2)`);
+  } else if (browserName === 'firefox' && !isBidi) {
+    expect(crossOriginError.stack).toBe(`Error: Fancy error!
+    at c (${crossOriginUrl}:14:11)
+    at b (${crossOriginUrl}:10:5)
+    at a (${crossOriginUrl}:6:5)
+    at  (${crossOriginUrl}:3:1)`);
   }
 });
 
@@ -229,30 +283,4 @@ it('should fire illegal character error', {
     expect(error.message).toContain('Invalid character');
   else
     expect(error.message).toContain('illegal character');
-});
-
-it('should report one-based location for cross-origin script', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43450' },
-}, async ({ page, server, browserName }) => {
-  server.setRoute('/boom.js', (req, res) => {
-    res.setHeader('content-type', 'text/javascript');
-    res.end('// line 1\nfunction boom() { throw new Error("boom"); }\nboom();\n');
-  });
-  server.setRoute('/cross.html', (req, res) => {
-    res.setHeader('content-type', 'text/html');
-    res.end(`<script src="${server.CROSS_PROCESS_PREFIX}/boom.js"></script>`);
-  });
-  const [error] = await Promise.all([
-    page.waitForEvent('pageerror'),
-    page.goto(server.PREFIX + '/cross.html'),
-  ]);
-  const url = server.CROSS_PROCESS_PREFIX + '/boom.js';
-  if (browserName === 'webkit') {
-    expect(error.stack).toBe(`Error: boom
-    at boom (${url}:2:42)
-    at global code (${url}:3:5)`);
-  } else {
-    expect(error.stack).toContain(`at boom (${url}:2:25)`);
-    expect(error.stack).toContain(`(${url}:3:1)`);
-  }
 });
