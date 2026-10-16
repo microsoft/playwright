@@ -222,6 +222,14 @@ function resolveGlobBase(baseURL: string | undefined, match: string): string {
     }
     // Escaped `\\?` behaves the same as `?` in our glob patterns.
     match = match.replaceAll(/\\\\\?/g, '?');
+    // A leading group of absolute paths such as `{/a,/b}/c` is the same as `/{a,b}/c`.
+    // Move the slash out of the group so that the glob resolves as an absolute path.
+    const leadingGroup = match.match(/^\{([^{}]*)\}/);
+    if (leadingGroup) {
+      const alternatives = leadingGroup[1].split(',');
+      if (alternatives.every(alternative => alternative.startsWith('/')))
+        match = '/{' + alternatives.map(alternative => alternative.substring(1)).join(',') + '}' + match.substring(leadingGroup[0].length);
+    }
     // Special case about: URLs as they are not relative to baseURL
     if (match.startsWith('about:') || match.startsWith('data:')
       || match.startsWith('chrome:') || match.startsWith('edge:')

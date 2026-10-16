@@ -166,6 +166,12 @@ it('should work with glob', async () => {
   expect(urlMatches('http://first.host/', 'http://second.host/foo', '**/foo')).toBeTruthy();
   expect(urlMatches('http://playwright.dev/', 'http://localhost/', '*//localhost/')).toBeTruthy();
 
+  // A leading group of absolute paths with baseURL, see https://github.com/microsoft/playwright/issues/43453.
+  expect(urlMatches('http://playwright.dev', 'http://playwright.dev/api/a', '{/api/a,/api/b}')).toBeTruthy();
+  expect(urlMatches('http://playwright.dev', 'http://playwright.dev/api/c', '{/api/a,/api/b}')).toBeFalsy();
+  expect(urlMatches('http://playwright.dev/foo/', 'http://playwright.dev/b/c', '{/a,/b}/c')).toBeTruthy();
+  expect(urlMatches('http://playwright.dev', 'http://playwright.dev/a', '{a,b}')).toBeTruthy();
+
   // /**/ should match /.
   expect(urlMatches(undefined, 'https://foo/bar.js', 'https://foo/**/bar.js')).toBeTruthy();
   expect(urlMatches(undefined, 'https://foo/bar.js', 'https://foo/**/**/bar.js')).toBeTruthy();
