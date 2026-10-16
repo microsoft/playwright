@@ -34,7 +34,6 @@ import type { TestError, TestResult, TestStep } from '../../types/testReporter';
 
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
 
-// A built-in lock that runs the job only when no other jobs are running.
 const exclusiveLock = 'exclusive';
 
 export class Dispatcher {
