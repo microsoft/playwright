@@ -375,7 +375,6 @@ export type AndroidDeviceInputDragOptions = {
 };
 export type AndroidDeviceInputDragResult = void;
 export type AndroidDeviceLaunchBrowserParams = {
-  noDefaultViewport?: boolean,
   viewport?: {
     width: number,
     height: number,
@@ -449,7 +448,6 @@ export type AndroidDeviceLaunchBrowserParams = {
   },
 };
 export type AndroidDeviceLaunchBrowserOptions = {
-  noDefaultViewport?: boolean,
   viewport?: {
     width: number,
     height: number,
@@ -880,7 +878,6 @@ export type BrowserDefaultUserAgentForTestResult = {
   userAgent: string,
 };
 export type BrowserNewContextParams = {
-  noDefaultViewport?: boolean,
   viewport?: {
     width: number,
     height: number,
@@ -957,7 +954,6 @@ export type BrowserNewContextParams = {
   },
 };
 export type BrowserNewContextOptions = {
-  noDefaultViewport?: boolean,
   viewport?: {
     width: number,
     height: number,
@@ -1037,7 +1033,6 @@ export type BrowserNewContextResult = {
   context: BrowserContextChannel,
 };
 export type BrowserNewContextForReuseParams = {
-  noDefaultViewport?: boolean,
   viewport?: {
     width: number,
     height: number,
@@ -1114,7 +1109,6 @@ export type BrowserNewContextForReuseParams = {
   },
 };
 export type BrowserNewContextForReuseOptions = {
-  noDefaultViewport?: boolean,
   viewport?: {
     width: number,
     height: number,
@@ -1233,7 +1227,6 @@ export type BrowserContextInitializer = {
   requestContext: APIRequestContextChannel,
   tracing: TracingChannel,
   options: {
-    noDefaultViewport?: boolean,
     viewport?: {
       width: number,
       height: number,
@@ -1893,7 +1886,6 @@ export type BrowserTypeLaunchPersistentContextParams = {
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
   cdpPort?: number,
-  noDefaultViewport?: boolean,
   viewport?: {
     width: number,
     height: number,
@@ -1983,7 +1975,6 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
   cdpPort?: number,
-  noDefaultViewport?: boolean,
   viewport?: {
     width: number,
     height: number,
