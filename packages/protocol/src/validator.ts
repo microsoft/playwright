@@ -2014,6 +2014,7 @@ scheme.LocalUtilsZipParams = tObject({
 scheme.LocalUtilsZipResult = tOptional(tObject({}));
 scheme.LocalUtilsHarOpenParams = tObject({
   file: tString,
+  replayOrder: tOptional(tEnum(['any', 'recorded'])),
 });
 scheme.LocalUtilsHarOpenResult = tObject({
   harId: tOptional(tString),

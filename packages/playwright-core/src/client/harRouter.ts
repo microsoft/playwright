@@ -23,6 +23,7 @@ import type { Page } from './page';
 import type { URLMatch } from '@isomorphic/urlMatch';
 
 type HarNotFoundAction = 'abort' | 'fallback';
+type HarReplayOrder = 'any' | 'recorded';
 
 export class HarRouter {
   private _localUtils: LocalUtils;
@@ -30,11 +31,11 @@ export class HarRouter {
   private _notFoundAction: HarNotFoundAction;
   private _options: { urlMatch?: URLMatch; baseURL?: string; };
 
-  static async create(localUtils: LocalUtils, file: string, notFoundAction: HarNotFoundAction, options: { urlMatch?: URLMatch }): Promise<HarRouter> {
-    const { harId, error } = await localUtils.harOpen({ file });
+  static async create(localUtils: LocalUtils, file: string, notFoundAction: HarNotFoundAction, options: { urlMatch?: URLMatch, replayOrder?: HarReplayOrder }): Promise<HarRouter> {
+    const { harId, error } = await localUtils.harOpen({ file, replayOrder: options.replayOrder });
     if (error)
       throw new Error(error);
-    return new HarRouter(localUtils, harId!, notFoundAction, options);
+    return new HarRouter(localUtils, harId!, notFoundAction, { urlMatch: options.urlMatch });
   }
 
   private constructor(localUtils: LocalUtils, harId: string, notFoundAction: HarNotFoundAction, options: { urlMatch?: URLMatch }) {

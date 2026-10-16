@@ -3574,9 +3574,10 @@ export type LocalUtilsZipOptions = {
 export type LocalUtilsZipResult = void;
 export type LocalUtilsHarOpenParams = {
   file: string,
+  replayOrder?: 'any' | 'recorded',
 };
 export type LocalUtilsHarOpenOptions = {
-
+  replayOrder?: 'any' | 'recorded',
 };
 export type LocalUtilsHarOpenResult = {
   harId?: string,

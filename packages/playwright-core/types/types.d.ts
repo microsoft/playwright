@@ -4531,6 +4531,19 @@ export interface Page {
     notFound?: "abort"|"fallback";
 
     /**
+     * How a response is chosen when several entries in the HAR file match a request.
+     * - If set to 'any', every request is answered with the matching entry that shares the most request headers.
+     *   Repeated requests with the same headers get the same response, even when later entries recorded a different
+     *   one.
+     * - If set to 'recorded', repeated requests are answered with the matching entries in the order they were recorded,
+     *   so a request made after a change on the server gets the response recorded after that change. Once every
+     *   matching entry has been served, the most recent best match is reused.
+     *
+     * Defaults to any.
+     */
+    replayOrder?: "any"|"recorded";
+
+    /**
      * If specified, updates the given HAR with the actual network information instead of serving from file. The file is
      * written to disk when
      * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is
@@ -10487,6 +10500,19 @@ export interface BrowserContext {
      * Defaults to abort.
      */
     notFound?: "abort"|"fallback";
+
+    /**
+     * How a response is chosen when several entries in the HAR file match a request.
+     * - If set to 'any', every request is answered with the matching entry that shares the most request headers.
+     *   Repeated requests with the same headers get the same response, even when later entries recorded a different
+     *   one.
+     * - If set to 'recorded', repeated requests are answered with the matching entries in the order they were recorded,
+     *   so a request made after a change on the server gets the response recorded after that change. Once every
+     *   matching entry has been served, the most recent best match is reused.
+     *
+     * Defaults to any.
+     */
+    replayOrder?: "any"|"recorded";
 
     /**
      * If specified, updates the given HAR with the actual network information instead of serving from file. The file is
