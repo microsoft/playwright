@@ -648,7 +648,9 @@ it('should escape special yaml characters', async ({ page }) => {
   `);
 });
 
-it('should escape special yaml values', async ({ page }) => {
+it('should escape special yaml values', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43451' },
+}, async ({ page }) => {
   await page.setContent(`
     <a href="#">true</a>False
     <a href="#">NO</a>yes
@@ -658,6 +660,8 @@ it('should escape special yaml values', async ({ page }) => {
     <a href="#">123</a>123
     <a href="#">-1.2</a>-1.2
     <a href="#">-</a>-
+    <a href="#">~</a>~
+    <a href="#">.inf</a>.NaN
     <input type=text value="555">
   `);
 
@@ -686,6 +690,12 @@ it('should escape special yaml values', async ({ page }) => {
     - link "-":
       - /url: "#"
     - text: "-"
+    - link "~":
+      - /url: "#"
+    - text: "~"
+    - link ".inf":
+      - /url: "#"
+    - text: ".NaN"
     - textbox: "555"
   `);
 });
