@@ -42,20 +42,28 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(0);
     });
 
-    test('print GitHub annotations for failed tests', async ({ runInlineTest }, testInfo) => {
+    test('print GitHub annotations for failed tests', {
+      annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43461' },
+    }, async ({ runInlineTest }, testInfo) => {
       const result = await runInlineTest({
         'a.test.js': `
           const { test, expect } = require('@playwright/test');
           test('example', async ({}) => {
             expect(1 + 1).toBe(3);
           });
+          test('login, then 100% off', async ({}) => {
+            throw new Error('GET /a%0Ab failed\\r\\nagain');
+          });
         `
       }, { retries: 3, reporter: 'github' }, { GITHUB_WORKSPACE: process.cwd() });
       const text = result.output;
       const testPath = relativeFilePath(testInfo.outputPath('a.test.js'));
-      expect(text).toContain(`::error file=${testPath},title=a.test.js:3:11 › example,line=4,col=27::  1) a.test.js:3:11 › example ──────────────────────────────────────────────────────────────────────%0A%0A    Retry #1`);
-      expect(text).toContain(`::error file=${testPath},title=a.test.js:3:11 › example,line=4,col=27::  1) a.test.js:3:11 › example ──────────────────────────────────────────────────────────────────────%0A%0A    Retry #2`);
-      expect(text).toContain(`::error file=${testPath},title=a.test.js:3:11 › example,line=4,col=27::  1) a.test.js:3:11 › example ──────────────────────────────────────────────────────────────────────%0A%0A    Retry #3`);
+      expect(text).toContain(`::error file=${testPath},title=a.test.js%3A3%3A11 › example,line=4,col=27::  1) a.test.js:3:11 › example ──────────────────────────────────────────────────────────────────────%0A%0A    Retry #1`);
+      expect(text).toContain(`::error file=${testPath},title=a.test.js%3A3%3A11 › example,line=4,col=27::  1) a.test.js:3:11 › example ──────────────────────────────────────────────────────────────────────%0A%0A    Retry #2`);
+      expect(text).toContain(`::error file=${testPath},title=a.test.js%3A3%3A11 › example,line=4,col=27::  1) a.test.js:3:11 › example ──────────────────────────────────────────────────────────────────────%0A%0A    Retry #3`);
+      // Commas, percent signs and line breaks are escaped the way the GitHub Actions runner unescapes them.
+      expect(text).toContain(`::error file=${testPath},title=a.test.js%3A6%3A11 › login%2C then 100%25 off,line=7,col=19::  2) a.test.js:6:11 › login, then 100%25 off `);
+      expect(text).toContain(`Error: GET /a%250Ab failed%0D%0A    again`);
       expect(result.exitCode).toBe(1);
     });
 
