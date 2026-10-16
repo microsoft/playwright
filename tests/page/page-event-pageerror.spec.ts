@@ -230,3 +230,29 @@ it('should fire illegal character error', {
   else
     expect(error.message).toContain('illegal character');
 });
+
+it('should report one-based location for cross-origin script', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43450' },
+}, async ({ page, server, browserName }) => {
+  server.setRoute('/boom.js', (req, res) => {
+    res.setHeader('content-type', 'text/javascript');
+    res.end('// line 1\nfunction boom() { throw new Error("boom"); }\nboom();\n');
+  });
+  server.setRoute('/cross.html', (req, res) => {
+    res.setHeader('content-type', 'text/html');
+    res.end(`<script src="${server.CROSS_PROCESS_PREFIX}/boom.js"></script>`);
+  });
+  const [error] = await Promise.all([
+    page.waitForEvent('pageerror'),
+    page.goto(server.PREFIX + '/cross.html'),
+  ]);
+  const url = server.CROSS_PROCESS_PREFIX + '/boom.js';
+  if (browserName === 'webkit') {
+    expect(error.stack).toBe(`Error: boom
+    at boom (${url}:2:42)
+    at global code (${url}:3:5)`);
+  } else {
+    expect(error.stack).toContain(`at boom (${url}:2:25)`);
+    expect(error.stack).toContain(`(${url}:3:1)`);
+  }
+});

@@ -31,7 +31,8 @@ export function getExceptionMessage(exceptionDetails: Protocol.Runtime.Exception
   let message = exceptionDetails.text;
   if (exceptionDetails.stackTrace) {
     for (const callframe of exceptionDetails.stackTrace.callFrames) {
-      const location = callframe.url + ':' + callframe.lineNumber + ':' + callframe.columnNumber;
+      // CDP call frames are zero-based, while V8 stack traces are one-based.
+      const location = callframe.url + ':' + (callframe.lineNumber + 1) + ':' + (callframe.columnNumber + 1);
       const functionName = callframe.functionName || '<anonymous>';
       message += `\n    at ${functionName} (${location})`;
     }
