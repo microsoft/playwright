@@ -42,6 +42,49 @@ test('should connect to an existing cdp session', async ({ browserType, mode }, 
   }
 });
 
+test('should connect when an existing target keeps its completed initial empty document', async ({ browserType, mode }, testInfo) => {
+  test.skip(mode !== 'default', 'Passing a transport to connectOverCDP is only available in-process');
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const existingPage = await browserServer.newPage();
+    await existingPage.goto('about:blank');
+    expect(await existingPage.evaluate(() => document.readyState)).toBe('complete');
+    const version = await (await fetch(`http://127.0.0.1:${port}/json/version`)).json();
+    const transport = await WebSocketTransport.connect(undefined, version.webSocketDebuggerUrl);
+    const frameTreeRequests = new Set<number>();
+    const scopedTransport = {
+      onmessage: undefined as typeof transport.onmessage,
+      onclose: undefined as typeof transport.onclose,
+      close: () => transport.close(),
+      send: (message: Parameters<typeof transport.send>[0]) => {
+        if (message.method === 'Page.getFrameTree')
+          frameTreeRequests.add(message.id);
+        transport.send(message);
+      },
+    };
+    transport.onmessage = message => {
+      if (message.id && frameTreeRequests.delete(message.id) && message.result?.frameTree) {
+        // Replay a completed initial document's CDP response independently of
+        // the browser version, without scheduling a later navigation.
+        message.result.frameTree.frame.url = ':';
+      }
+      scopedTransport.onmessage?.(message);
+    };
+    transport.onclose = reason => scopedTransport.onclose?.(reason);
+    const browser = await browserType.connectOverCDP(scopedTransport, { timeout: 5000 });
+    expect(browser.contexts()[0].pages()).toHaveLength(1);
+    const page = browser.contexts()[0].pages()[0];
+    expect(await page.evaluate(() => document.readyState)).toBe('complete');
+    await page.waitForLoadState();
+    await browser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
 test('should connect when an existing page has no renderer', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41714' },
 }, async ({ browserType, server }, testInfo) => {
