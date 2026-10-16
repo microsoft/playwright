@@ -207,3 +207,32 @@ it('keeps focus on element when attempting to focus a non-focusable element', as
     'focus focusable',
   ]);
 });
+
+it('should move focus from an iframe to its parent', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43280' });
+  server.setRoute('/frame.html', (req, res) => {
+    res.setHeader('content-type', 'text/html');
+    res.end(`<input id=inner>`);
+  });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<iframe src="${server.PREFIX}/frame.html"></iframe><input id=outer>`);
+  await page.frameLocator('iframe').locator('#inner').focus();
+  expect(await page.frameLocator('iframe').locator('#inner').evaluate(e => e === document.activeElement)).toBe(true);
+  await page.evaluate(() => (document.getElementById('outer') as HTMLInputElement).focus());
+  await expect(page.locator('#outer')).toBeFocused();
+  expect(await page.frameLocator('iframe').locator('#inner').evaluate(e => e === document.activeElement)).toBe(false);
+});
+
+it('should tab from an iframe to its parent', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43280' });
+  server.setRoute('/frame.html', (req, res) => {
+    res.setHeader('content-type', 'text/html');
+    res.end(`<input id=inner>`);
+  });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<iframe src="${server.PREFIX}/frame.html"></iframe><input id=outer>`);
+  await page.frameLocator('iframe').locator('#inner').click();
+  expect(await page.frameLocator('iframe').locator('#inner').evaluate(e => e === document.activeElement)).toBe(true);
+  await page.keyboard.press('Tab');
+  await expect(page.locator('#outer')).toBeFocused();
+});

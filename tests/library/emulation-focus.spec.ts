@@ -198,8 +198,10 @@ browserTest('should not fire blur events when interacting with more than one pag
   expect(await page2.evaluate(() => !!window['gotBlur'])).toBe(false);
 });
 
-browserTest('should not blur iframe when interacting with another page/context', async ({ contextFactory }) => {
+browserTest('should not blur iframe when interacting with another page/context', async ({ contextFactory, browserName }) => {
   browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42933' });
+  browserTest.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/43280');
+
   const page1 = await (await contextFactory()).newPage();
   const page2 = await (await contextFactory()).newPage();
   const srcdoc = `<button id=foo>foo</button><script>window.addEventListener('blur', () => window.gotBlur = true)</script>`;
