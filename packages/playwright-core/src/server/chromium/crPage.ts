@@ -523,8 +523,19 @@ class FrameSession {
           // Ignore lifecycle events, worlds and bindings for the initial empty page. It is never the final page
           // hence we are going to get more lifecycle updates after the actual navigation has
           // started (even if the target url is about:blank).
-          lifecycleEventsEnabled.catch(e => {}).then(() => {
+          lifecycleEventsEnabled.catch(e => {}).then(async () => {
             this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
+            // An existing CDP target can keep its initial empty document without
+            // ever navigating. Its initial lifecycle events have already fired.
+            const readiness = await this._client._sendMayFail('Runtime.evaluate', {
+              expression: 'document.readyState', returnByValue: true,
+            });
+            if (readiness?.result?.value === 'complete') {
+              const frameId = this._page.mainFrame()._id;
+              this._page.frameManager.frameLifecycleEvent(frameId, 'domcontentloaded');
+              this._page.frameManager.frameLifecycleEvent(frameId, 'load');
+              this._firstNonInitialNavigationCommittedFulfill();
+            }
           });
         } else {
           this._firstNonInitialNavigationCommittedFulfill();
