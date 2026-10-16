@@ -24,8 +24,6 @@ const disabledFeatures = [
   // See https://github.com/microsoft/playwright/pull/13854
   'DialMediaRouteProvider',
   'GlobalMediaControls',
-  // See https://github.com/microsoft/playwright/pull/27605
-  'HttpsUpgrades',
   // Hides the Lens feature in the URL address bar. Its not working in unofficial builds.
   'LensOverlay',
   // See https://github.com/microsoft/playwright/pull/8162
