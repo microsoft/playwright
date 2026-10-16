@@ -760,7 +760,7 @@ export class WKPage implements PageDelegate {
 
   async updateHttpCredentials() {
     const credentials = (this._browserContext._options.httpCredentials || []).map(c => ({ username: c.username, password: c.password, origin: c.origin }));
-    await this._pageProxySession.send('Emulation.setAuthCredentials', { credentials });
+    await this._pageProxySession.send('Emulation.setAuthCredentials', { credentials, proxyCredentials: this._browserContext.proxyCredentials() });
   }
 
   async updateFileChooserInterception() {
