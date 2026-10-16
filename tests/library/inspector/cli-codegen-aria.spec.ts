@@ -152,10 +152,12 @@ test.describe(() => {
     await expect(recorder.recorderPage.locator('.source-line-error-underline')).toHaveCount(1);
   });
 
-  test('should generate valid javascript with multiline snapshot assertion', async ({ openRecorder }) => {
+  test('should generate valid javascript with multiline snapshot assertion', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43459' },
+  }, async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
     // set width and height to 100% to ensure click is outside of the list
-    await recorder.setContentAndWait(`<body style="width:100%;height:100%"><ul><li>item 1</li><li>item 2</li></ul></body>`);
+    await recorder.setContentAndWait(`<body style="width:100%;height:100%"><ul><li>item 1</li><li>Cost \${price}</li></ul></body>`);
 
     await recorder.page.click('x-pw-tool-item.snapshot');
     await recorder.page.hover('body');
@@ -167,7 +169,7 @@ test.describe(() => {
       `  await expect(page.locator('body')).toMatchAriaSnapshot(\``,
       `    - list:`,
       `      - listitem: item 1`,
-      `      - listitem: item 2`,
+      `      - listitem: "Cost \\\${price}"`,
       `    \`);`,
     ].join('\n'));
 
@@ -177,7 +179,7 @@ test.describe(() => {
       `  // await expect(page.locator('body')).toMatchAriaSnapshot(\``,
       `  //   - list:`,
       `  //     - listitem: item 1`,
-      `  //     - listitem: item 2`,
+      `  //     - listitem: "Cost \\\${price}"`,
       `  //   \`);`,
     ].join('\n'));
 
