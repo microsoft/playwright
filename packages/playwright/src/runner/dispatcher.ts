@@ -34,11 +34,12 @@ import type { TestError, TestResult, TestStep } from '../../types/testReporter';
 
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
 
+const exclusiveLock = 'exclusive';
+
 export class Dispatcher {
   // Worker slot is claimed when it has jobDispatcher assigned.
   private _workerSlots: { worker?: WorkerHost, jobDispatcher?: JobDispatcher }[] = [];
   private _queue: TestGroup[] = [];
-  private _isolatedJobs = new Set<TestGroup>();
   private _workerLimitPerProjectId = new Map<string, number>();
   private _queuedOrRunningHashCount = new Map<string, number>();
   private _finished = new ManualPromise<void>();
@@ -71,11 +72,15 @@ export class Dispatcher {
 
   private _findFirstJobToRun() {
     const heldLocks = this._heldLocks();
+    // Nothing else runs while an exclusive job is running.
+    if (heldLocks.has(exclusiveLock))
+      return -1;
+    const hasRunningJobs = this._workerSlots.some(w => !!w.jobDispatcher);
     // Always pick the first job that can be run while respecting the project worker limit.
     for (let index = 0; index < this._queue.length; index++) {
       const job = this._queue[index];
-      // Isolated retries only run one at a time, after all other jobs have finished.
-      if (this._isolatedJobs.has(job) && this._workerSlots.some(w => !!w.jobDispatcher))
+      // Exclusive jobs only run one at a time, after all other jobs have finished.
+      if (hasRunningJobs && job.locks.includes(exclusiveLock))
         continue;
       if (job.locks.some(lock => heldLocks.has(lock)))
         continue;
@@ -184,7 +189,6 @@ export class Dispatcher {
         this._updateCounterForWorkerHash(result.remainingJob.workerHash, +1);
       }
       if (result.isolatedRetriesJob) {
-        this._isolatedJobs.add(result.isolatedRetriesJob);
         this._queue.push(result.isolatedRetriesJob);
         this._updateCounterForWorkerHash(result.isolatedRetriesJob.workerHash, +1);
       }
@@ -587,7 +591,8 @@ class JobDispatcher {
 
     // This job is over, we will schedule new jobs for the remaining tests and isolated retries.
     const remainingJob = remaining.length ? { ...this.job, tests: remaining } : undefined;
-    const isolatedRetriesJob = isolatedRetries.length ? { ...this.job, tests: isolatedRetries } : undefined;
+    // Isolated retries run one at a time, after all other jobs have finished.
+    const isolatedRetriesJob = isolatedRetries.length ? { ...this.job, tests: isolatedRetries, locks: [...new Set([...this.job.locks, exclusiveLock])] } : undefined;
     this._finished({ didFail: true, remainingJob, isolatedRetriesJob });
   }
 

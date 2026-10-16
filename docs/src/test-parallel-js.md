@@ -163,6 +163,14 @@ test.describe.configure({ lock: 'user-settings' });
 
 Playwright acquires all the locks of a test before the test starts and releases them when it finishes.
 
+The built-in `exclusive` lock runs a test in isolation: it starts only when no other tests are running, and no other tests start until it finishes. All other tests continue to run in parallel with each other. This is useful for a few tests that are sensitive to any concurrent activity, for example tests that measure performance or restart a shared service.
+
+```js
+test('restart the server', { lock: 'exclusive' }, async () => {
+  // No other test runs while this one is running.
+});
+```
+
 :::note
 In the default and [serial](#serial-mode) modes, all tests in a file run together in order, so a lock declared on any test is held for the duration of the whole file.
 :::
