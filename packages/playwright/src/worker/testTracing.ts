@@ -20,7 +20,7 @@ import path from 'path';
 import * as yazl from 'yazl';
 import * as yauzl from 'yauzl';
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { escapeSecretsForJSON, normalizeSecrets, redactSecretsInBuffer, redactSecretsInText } from '@isomorphic/secrets';
+import { escapeSecretsForJSON, normalizeSecrets, redactSecretsInBuffer } from '@isomorphic/secrets';
 import { monotonicTime } from '@isomorphic/time';
 import { calculateSha1, createGuid } from '@utils/crypto';
 import { SerializedFS } from '@utils/serializedFS';
@@ -270,8 +270,9 @@ export class TestTracing {
   }
 
   appendStdioToTrace(type: 'stdout' | 'stderr', chunk: string | Buffer) {
-    // base64 chunks must be redacted before writing.
-    chunk = typeof chunk === 'string' ? redactSecretsInText(chunk, this._secrets) : redactSecretsInBuffer(chunk, this._secrets);
+    // base64-encoded chunks must be redacted before writing.
+    if (typeof chunk !== 'string')
+      chunk = redactSecretsInBuffer(chunk, this._secrets);
     this._appendTraceEvent({
       type,
       timestamp: monotonicTime(),
