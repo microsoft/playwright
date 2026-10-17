@@ -1034,3 +1034,12 @@ test('AR-142 invalid attribute', { annotation: { type: 'issue', description: 'ht
     - textbox "Zip" [invalid]
   `);
 });
+
+test('AR-171 should match generated snapshot of names with control characters', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43489' } }, async ({ page }) => {
+  await page.setContent(`<button></button>`);
+  for (const name of ['a\u0001b', 'a\u001fb', 'a\bb', '\ud83d', 'a"b\c']) {
+    await page.locator('button').evaluate((button, name) => button.setAttribute('aria-label', name), name);
+    const snapshot = await page.locator('button').ariaSnapshot();
+    await expect(page.locator('button')).toMatchAriaSnapshot(snapshot);
+  }
+});
