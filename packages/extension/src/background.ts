@@ -29,6 +29,8 @@ type PageMessage = {
   // selection happens.
   tab?: chrome.tabs.Tab;
   clientName?: string;
+  // False when the MCP server asked not to take focus on connect. Absent means true.
+  focusTab?: boolean;
 } | {
   type: 'getConnectionStatus';
 } | {
@@ -74,7 +76,7 @@ class PlaywrightExtension {
         // sender.tab and UI-supplied tabs come from chrome.tabs.query / runtime
         // message sender, where `id` is always defined.
         const selectedTab = (message.tab ?? sender.tab!) as chrome.tabs.Tab & { id: number };
-        this._connectTab(sender.tab!.id!, selectedTab, message.clientName).then(
+        this._connectTab(sender.tab!.id!, selectedTab, message.clientName, message.focusTab !== false).then(
             () => sendResponse({ success: true }),
             (error: any) => sendResponse({ success: false, error: error.message }));
         return true; // Return true to indicate that the response will be sent asynchronously
@@ -99,7 +101,7 @@ class PlaywrightExtension {
     }
   }
 
-  private async _connectTab(selectorTabId: number, tab: chrome.tabs.Tab & { id: number }, clientName: string | undefined): Promise<void> {
+  private async _connectTab(selectorTabId: number, tab: chrome.tabs.Tab & { id: number }, clientName: string | undefined, focusTab: boolean): Promise<void> {
     try {
       await this._cleanupPromise;
       this._releaseTab(selectorTabId);
@@ -116,10 +118,12 @@ class PlaywrightExtension {
       group.onclose = () => this._connections.delete(id);
       this._connections.set(id, group);
 
-      await Promise.all([
-        chrome.tabs.update(tab.id, { active: true }),
-        chrome.windows.update(tab.windowId, { focused: true }),
-      ]).catch(() => {});
+      if (focusTab) {
+        await Promise.all([
+          chrome.tabs.update(tab.id, { active: true }),
+          chrome.windows.update(tab.windowId, { focused: true }),
+        ]).catch(() => {});
+      }
 
       if (tab.id !== selectorTabId)
         await chrome.tabs.remove(selectorTabId).catch(() => {});

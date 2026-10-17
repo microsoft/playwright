@@ -74,6 +74,7 @@ export class CDPRelayServer {
   private _extensionConnection: ExtensionConnection | null = null;
   private _protocolVersion: number;
   private _token?: string;
+  private _focusTab: boolean;
   private _handler: ExtensionProtocolV2;
   private _extensionConnectionPromise = new ManualPromise<void>();
 
@@ -84,6 +85,8 @@ export class CDPRelayServer {
     this._profileDirectory = profileDirectory;
     this._protocolVersion = parseInt(process.env.PWTEST_EXTENSION_PROTOCOL ?? protocol.VERSION.toString(), 10);
     this._token = process.env.PLAYWRIGHT_MCP_EXTENSION_TOKEN;
+    // Set to "false" so connecting does not activate the tab or focus its window.
+    this._focusTab = process.env.PLAYWRIGHT_MCP_EXTENSION_FOCUS_TAB !== 'false';
 
     const sendCommand = (method: string, params: any): Promise<any> => {
       if (!this._extensionConnection)
@@ -158,6 +161,8 @@ export class CDPRelayServer {
     url.searchParams.set('protocolVersion', this._protocolVersion.toString());
     if (this._token)
       url.searchParams.set('token', this._token);
+    if (!this._focusTab)
+      url.searchParams.set('focusTab', 'false');
     const href = url.toString();
 
     const channel = registry.isChromiumAlias(this._browserChannel) ? 'chromium' : this._browserChannel;
