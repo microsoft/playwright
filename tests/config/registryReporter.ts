@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+
+import ts from 'typescript';
 
 import type { FullResult, Reporter, Suite, TestError } from '@playwright/test/reporter';
 
@@ -29,12 +32,19 @@ type Entry = {
   code: string;
   file: string;
   location: string;
+  hash: string;
   titlePaths: Map<string, string[]>;
+};
+
+type Version = {
+  modified: string;
+  hash: string;
 };
 
 // Checks tests/registry.md against the test titles. Use with --list.
 class RegistryReporter implements Reporter {
   private _errors = new Set<string>();
+  private _sourceFiles = new Map<string, ts.SourceFile>();
 
   printsToStdio() {
     return true;
@@ -56,7 +66,11 @@ class RegistryReporter implements Reporter {
         this._errors.add(`${entry.location}: code ${entry.code} is not in the Subsystems table of tests/registry.md`);
     }
 
-    const expected = renderRegistry(text.substring(0, subsystemsIndex + 1), names, entries);
+    const versions = new Map<string, Version>();
+    for (const match of text.matchAll(/^\| `([^`]+)` \|.* \| (\d{4}-\d{2}-\d{2}) \| `([0-9a-f]{8})` \|$/gm))
+      versions.set(match[1], { modified: match[2], hash: match[3] });
+
+    const expected = renderRegistry(text.substring(0, subsystemsIndex + 1), names, entries, versions);
     if (expected === text)
       return;
     if (process.env.PWTEST_UPDATE_REGISTRY) {
@@ -69,7 +83,7 @@ class RegistryReporter implements Reporter {
     const missing = [...expectedLines].filter(line => !actualLines.has(line));
     const extra = [...actualLines].filter(line => !expectedLines.has(line));
     this._errors.add([
-      `tests/registry.md does not match the test titles. To update it, run:`,
+      `tests/registry.md does not match the tests. To update it, run:`,
       `  ${updateCommand}`,
       ...missing.slice(0, 10).map(line => `  + ${line}`),
       ...extra.slice(0, 10).map(line => `  - ${line}`),
@@ -100,7 +114,12 @@ class RegistryReporter implements Reporter {
       const id = match[0].trim();
       let entry = entries.get(id);
       if (!entry) {
-        entry = { id, code: match.groups!.code, file, location, titlePaths: new Map() };
+        const hash = this._sourceHash(test.location.file, test.location.line, test.location.column);
+        if (!hash) {
+          this._errors.add(`${location}: cannot find the source of the test`);
+          continue;
+        }
+        entry = { id, code: match.groups!.code, file, location, hash, titlePaths: new Map() };
         entries.set(id, entry);
       } else if (entry.location !== location) {
         this._errors.add(`${location}: identifier ${id} is already used by the test at ${entry.location}`);
@@ -111,9 +130,43 @@ class RegistryReporter implements Reporter {
     }
     return entries;
   }
+
+  private _sourceHash(file: string, line: number, column: number): string | undefined {
+    let sourceFile = this._sourceFiles.get(file);
+    if (!sourceFile) {
+      sourceFile = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+      this._sourceFiles.set(file, sourceFile);
+    }
+    const call = findCall(sourceFile, sourceFile, sourceFile.getPositionOfLineAndCharacter(line - 1, column - 1));
+    if (!call)
+      return;
+    const tokens: string[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isJSDoc(node))
+        return;
+      if (node.getChildCount(sourceFile))
+        node.getChildren(sourceFile).forEach(visit);
+      else
+        tokens.push(node.getText(sourceFile));
+    };
+    visit(call);
+    return crypto.createHash('sha1').update(tokens.join('\n')).digest('hex').substring(0, 8);
+  }
 }
 
-function renderRegistry(header: string, names: Map<string, string>, entries: Map<string, Entry>): string {
+function findCall(node: ts.Node, sourceFile: ts.SourceFile, position: number): ts.CallExpression | undefined {
+  if (position < node.getStart(sourceFile) || position >= node.getEnd())
+    return;
+  if (ts.isCallExpression(node)) {
+    const callee = node.expression;
+    if (callee.getStart(sourceFile) === position || (ts.isPropertyAccessExpression(callee) && callee.name.getStart(sourceFile) === position))
+      return node;
+  }
+  return ts.forEachChild(node, child => findCall(child, sourceFile, position));
+}
+
+function renderRegistry(header: string, names: Map<string, string>, entries: Map<string, Entry>, versions: Map<string, Version>): string {
+  const today = new Date().toISOString().substring(0, 10);
   const byCode = new Map<string, Entry[]>([...names.keys()].map(code => [code, []]));
   for (const entry of [...entries.values()].sort((a, b) => a.id.localeCompare(b.id)))
     byCode.get(entry.code)?.push(entry);
@@ -136,10 +189,12 @@ function renderRegistry(header: string, names: Map<string, string>, entries: Map
     const list = byCode.get(code)!;
     if (!list.length)
       continue;
-    lines.push('', `### ${code} — ${name}`, '', '| ID | File | Title |', '|---|---|---|');
+    lines.push('', `### ${code} — ${name}`, '', '| ID | File | Title | Modified | Hash |', '|---|---|---|---|---|');
     for (const entry of list) {
       const count = entry.titlePaths.size;
-      lines.push(`| \`${entry.id}\` | \`${entry.file}\` | ${escapeMarkdown(renderTitle([...entry.titlePaths.values()]))}${count > 1 ? ` *(${count} copies)*` : ''} |`);
+      const version = versions.get(entry.id);
+      const modified = version?.hash === entry.hash ? version.modified : today;
+      lines.push(`| \`${entry.id}\` | \`${entry.file}\` | ${escapeMarkdown(renderTitle([...entry.titlePaths.values()]))}${count > 1 ? ` *(${count} copies)*` : ''} | ${modified} | \`${entry.hash}\` |`);
     }
   }
   return lines.join('\n') + '\n';
