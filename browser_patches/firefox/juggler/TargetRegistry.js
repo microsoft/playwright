@@ -118,14 +118,22 @@ class FilePickerOverride {
   constructor(registry) {
     this._registry = registry;
     this._registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
-    const originalCID = this._registrar.contractIDToCID(FILE_PICKER_CONTRACT_ID);
-    this._originalFactory = Components.manager.getClassObject(originalCID, Ci.nsIFactory);
+    this._originalCID = this._registrar.contractIDToCID(FILE_PICKER_CONTRACT_ID);
     this._cid = Services.uuid.generateUUID();
     this._factory = {
       createInstance: iid => this._createPicker().QueryInterface(iid),
       QueryInterface: ChromeUtils.generateQI(['nsIFactory']),
     };
     this._registrar.registerFactory(this._cid, 'Juggler file picker', FILE_PICKER_CONTRACT_ID, this._factory);
+  }
+
+  _createOriginalPicker() {
+    this._registrar.registerFactory(this._originalCID, 'Original file picker', FILE_PICKER_CONTRACT_ID, null);
+    try {
+      return Cc[FILE_PICKER_CONTRACT_ID].createInstance(Ci.nsIFilePicker);
+    } finally {
+      this._registrar.registerFactory(this._cid, 'Juggler file picker', FILE_PICKER_CONTRACT_ID, null);
+    }
   }
 
   _createPicker() {
@@ -139,7 +147,7 @@ class FilePickerOverride {
           state.mode = mode;
           return;
         }
-        original = this._originalFactory.createInstance(Ci.nsIFilePicker);
+        original = this._createOriginalPicker();
         original.init(browsingContext, title, mode, global);
       },
       open: callback => {
