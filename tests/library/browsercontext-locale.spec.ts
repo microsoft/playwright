@@ -165,18 +165,31 @@ it('LC-009 should not change default locale in another context', async ({ browse
   }
 });
 
-it('LC-010 should propagate locale to workers', async ({ browser, browserName, server }) => {
+it('LC-010 should propagate locale to workers', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43484' },
+}, async ({ browser, browserName, server }) => {
   const context = await browser.newContext({ locale: 'ru-RU' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
-  const [msg] = await Promise.all([
+  const [msg, languages, request] = await Promise.all([
     page.waitForEvent('console', e => e.text().startsWith('locale:')),
-    page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log("locale:" + Intl.NumberFormat().resolvedOptions().locale)'], { type: 'application/javascript' })))),
+    page.waitForEvent('console', e => e.text().startsWith('languages:')),
+    server.waitForRequest('/title.html'),
+    page.evaluate(url => new Worker(URL.createObjectURL(new Blob([`
+      console.log("locale:" + Intl.NumberFormat().resolvedOptions().locale);
+      console.log("languages:" + navigator.languages);
+      fetch(${JSON.stringify(url)});
+    `], { type: 'application/javascript' }))), server.PREFIX + '/title.html'),
   ]);
-  if (browserName === 'webkit')
-    expect(msg.text()).toContain('locale:ru'); // Webkit on Ubuntu is "ru-RU", and on other platforms is "ru"
-  else
+  if (browserName === 'webkit') {
+    // Webkit on Ubuntu is "ru-RU", and on other platforms is "ru"
+    expect(msg.text()).toContain('locale:ru');
+    expect(languages.text()).toContain('languages:ru');
+  } else {
     expect(msg.text()).toBe('locale:ru-RU');
+    expect(languages.text()).toBe('languages:ru-RU');
+  }
+  expect(request.headers['accept-language']).toContain('ru-RU');
   await context.close();
 });
 
