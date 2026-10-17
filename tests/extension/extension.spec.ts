@@ -61,6 +61,28 @@ test(`connect.html requests protocol version 2`, async ({ startExtensionClient, 
   expect(url.searchParams.get('protocolVersion')).toBe('2');
 });
 
+test(`connect.html passes focusTab=false when PLAYWRIGHT_MCP_EXTENSION_FOCUS_TAB=false`, async ({ browserWithExtension, startClient, server }) => {
+  const browserContext = await browserWithExtension.launch();
+  const { client } = await startClient({
+    args: [`--extension`],
+    env: {
+      PLAYWRIGHT_MCP_EXTENSION_FOCUS_TAB: 'false',
+      PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
+    },
+  });
+
+  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
+    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
+  });
+  client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  }).catch(() => {});
+
+  const selectorPage = await confirmationPagePromise;
+  expect(new URL(selectorPage.url()).searchParams.get('focusTab')).toBe('false');
+});
+
 test(`browser_run_code_unsafe can evaluate in a web worker`, async ({ startExtensionClient, server }) => {
   server.setContent('/worker.js', `
     self.onmessage = (e) => self.postMessage('echo:' + e.data);

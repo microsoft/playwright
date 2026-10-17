@@ -142,6 +142,7 @@ const ConnectApp: React.FC = () => {
         type: 'connectToTab',
         tab,
         clientName: clientInfo,
+        focusTab: new URLSearchParams(window.location.search).get('focusTab') !== 'false',
       });
 
       if (response?.success) {
