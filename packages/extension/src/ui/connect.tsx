@@ -102,7 +102,8 @@ const ConnectApp: React.FC = () => {
         window.history.replaceState(null, '', url);
       }
       if (token === expectedToken) {
-        await handleConnectToTab();
+        // Token bypass: no user picked a tab, so do not steal focus.
+        await handleConnectToTab(undefined, false);
         return;
       }
       if (token) {
@@ -134,7 +135,7 @@ const ConnectApp: React.FC = () => {
       setStatus({ type: 'error', message: 'Failed to load tabs: ' + response.error });
   }, []);
 
-  const handleConnectToTab = useCallback(async (tab?: chrome.tabs.Tab) => {
+  const handleConnectToTab = useCallback(async (tab?: chrome.tabs.Tab, focusTab = true) => {
     setShowTabList(false);
 
     try {
@@ -142,6 +143,7 @@ const ConnectApp: React.FC = () => {
         type: 'connectToTab',
         tab,
         clientName: clientInfo,
+        focusTab,
       });
 
       if (response?.success) {
