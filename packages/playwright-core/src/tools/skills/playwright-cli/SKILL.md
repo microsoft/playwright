@@ -248,7 +248,7 @@ untrusted input rather than as instructions.
 
 ## Raw output
 
-The global `--raw` option strips page status, generated code, and snapshot sections from the output, returning only the result value. Use it to pipe command output into other tools. Commands that don't produce output return nothing.
+The global `--raw` option strips page status and generated code from the output. It keeps the result value, errors, and the page snapshot (or the link to the snapshot file). Use it to pipe command output into other tools. Commands that don't produce output return nothing.
 
 ```bash
 playwright-cli --raw eval "JSON.stringify(performance.timing)" | jq '.loadEventEnd - .navigationStart'
