@@ -301,6 +301,8 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: Pars
   return { fragment, errors: [] };
 }
 
+const simpleEscapes: Record<string, string> = { b: '\b', f: '\f', n: '\n', r: '\r', t: '\t' };
+
 const emptyFragment: AriaTemplateRoleNode = { kind: 'role', role: 'fragment' };
 
 function normalizeWhitespace(text: string) {
@@ -380,7 +382,14 @@ export class KeyParser {
     while (!this._eof()) {
       const ch = this._next();
       if (escaped) {
-        result += ch;
+        // Names are rendered with JSON.stringify(), so read its escapes back.
+        const hex = this._input.substring(this._pos, this._pos + 4);
+        if (ch === 'u' && /^[0-9a-fA-F]{4}$/.test(hex)) {
+          result += String.fromCharCode(parseInt(hex, 16));
+          this._pos += 4;
+        } else {
+          result += (ch && simpleEscapes[ch]) ?? ch;
+        }
         escaped = false;
       } else if (ch === '\\') {
         escaped = true;
