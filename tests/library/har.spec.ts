@@ -368,6 +368,39 @@ it('HA-021 should include content @smoke', async ({ contextFactory, server }, te
   expect(log.entries[2].response.content.compression).toBe(0);
 });
 
+it('HA-113 should store binary content with a textual mime type as base64', async ({ contextFactory, server }, testInfo) => {
+  // Not valid utf-8, so it cannot be stored as text without losing data.
+  const body = Buffer.from([0x80, 0x81, 0x00, 0xc3, 0x28, 0xa0, 0xa1, 0xff, 0x41]);
+  server.setRoute('/binary.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.end(body);
+  });
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => fetch('/binary.js').then(r => r.arrayBuffer()));
+  const log = await getLog();
+
+  const content = log.entries.find(e => e.request.url.endsWith('/binary.js'))!.response.content;
+  expect(content.mimeType).toBe('application/javascript');
+  expect(content.encoding).toBe('base64');
+  expect(Buffer.from(content.text!, 'base64')).toEqual(body);
+});
+
+it('HA-114 should store valid utf-8 content with a textual mime type as text', async ({ contextFactory, server }, testInfo) => {
+  server.setRoute('/utf8.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.end('const greeting = "héllo wörld ✓";');
+  });
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => fetch('/utf8.js').then(r => r.arrayBuffer()));
+  const log = await getLog();
+
+  const content = log.entries.find(e => e.request.url.endsWith('/utf8.js'))!.response.content;
+  expect(content.encoding).toBe(undefined);
+  expect(content.text).toBe('const greeting = "héllo wörld ✓";');
+});
+
 it('HA-022 should use attach mode for zip extension', async ({ contextFactory, server }, testInfo) => {
   const { page, getZip } = await pageWithHar(contextFactory, testInfo, { outputPath: 'test.har.zip' });
   await page.goto(server.PREFIX + '/har.html');
