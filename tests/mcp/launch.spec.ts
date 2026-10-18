@@ -237,7 +237,7 @@ test('--proxy-server routes browser traffic through the proxy', {
   });
   expect(await client.callTool({
     name: 'browser_navigate',
-    arguments: { url: 'http://non-existent.com/target.html' },
+    arguments: { url: 'http://non-existent.test/target.html' },
   })).toHaveResponse({
     page: expect.stringContaining('Served by the proxy'),
   });
@@ -259,7 +259,7 @@ test('--proxy-server overrides contextOptions.proxy from config file', {
   });
   expect(await client.callTool({
     name: 'browser_navigate',
-    arguments: { url: 'http://non-existent.com/target.html' },
+    arguments: { url: 'http://non-existent.test/target.html' },
   })).toHaveResponse({
     page: expect.stringContaining('Served by CLI proxy'),
   });
@@ -284,7 +284,7 @@ test('--proxy-server should use credentials from the url', {
   });
   expect(await client.callTool({
     name: 'browser_navigate',
-    arguments: { url: 'http://non-existent.com/target.html' },
+    arguments: { url: 'http://non-existent.test/target.html' },
   })).toHaveResponse({
     page: expect.stringContaining('Basic ' + Buffer.from('user:se@cret').toString('base64')),
   });

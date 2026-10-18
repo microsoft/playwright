@@ -17,7 +17,9 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should fire', async ({ page, server, browserName, isBidi }) => {
+it('ER-001 should fire', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43450' },
+}, async ({ page, server, browserName, isBidi }) => {
   const url = server.PREFIX + '/error.html';
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
@@ -44,9 +46,61 @@ it('should fire', async ({ page, server, browserName, isBidi }) => {
     at a (myscript.js:6:5)
     at  (myscript.js:3:1)`);
   }
+
+  // The same script from another origin: Chromium reports it without an exception object,
+  // so the stack is built from the CDP call frames, which are zero-based.
+  const crossOriginUrl = server.CROSS_PROCESS_PREFIX + '/error.js';
+  server.setRoute('/error.js', (req, res) => {
+    res.setHeader('Content-Type', 'text/javascript');
+    // Same lines as error.html, so the stack has the same locations.
+    res.end(`
+console.error('Not a JS error');
+a();
+
+function a() {
+    b();
+}
+
+function b() {
+    c();
+}
+
+function c() {
+    throw new Error('Fancy error!');
+}
+`);
+  });
+  server.setRoute('/cross-origin-error.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<script src="${crossOriginUrl}"></script>`);
+  });
+  const [crossOriginError] = await Promise.all([
+    page.waitForEvent('pageerror'),
+    page.goto(server.PREFIX + '/cross-origin-error.html'),
+  ]);
+  expect(crossOriginError.message).toBe('Fancy error!');
+  if (browserName === 'chromium') {
+    expect(crossOriginError.stack).toBe(`Uncaught Error: Fancy error!
+    at c (${crossOriginUrl}:14:11)
+    at b (${crossOriginUrl}:10:5)
+    at a (${crossOriginUrl}:6:5)
+    at <anonymous> (${crossOriginUrl}:3:1)`);
+  } else if (browserName === 'webkit') {
+    expect(crossOriginError.stack).toBe(`Error: Fancy error!
+    at c (${crossOriginUrl}:14:36)
+    at b (${crossOriginUrl}:10:6)
+    at a (${crossOriginUrl}:6:6)
+    at global code (${crossOriginUrl}:3:2)`);
+  } else if (browserName === 'firefox' && !isBidi) {
+    expect(crossOriginError.stack).toBe(`Error: Fancy error!
+    at c (${crossOriginUrl}:14:11)
+    at b (${crossOriginUrl}:10:5)
+    at a (${crossOriginUrl}:6:5)
+    at  (${crossOriginUrl}:3:1)`);
+  }
 });
 
-it('should not receive console message for pageError', async ({ page, server }) => {
+it('ER-002 should not receive console message for pageError', async ({ page, server }) => {
   const messages = [];
   page.on('console', e => messages.push(e));
   await Promise.all([
@@ -56,7 +110,7 @@ it('should not receive console message for pageError', async ({ page, server }) 
   expect(messages.length).toBe(1);
 });
 
-it('should contain sourceURL', async ({ page, server, browserName }) => {
+it('ER-003 should contain sourceURL', async ({ page, server, browserName }) => {
   it.fail(browserName === 'webkit');
 
   const [error] = await Promise.all([
@@ -66,7 +120,7 @@ it('should contain sourceURL', async ({ page, server, browserName }) => {
   expect(error.stack).toContain('myscript.js');
 });
 
-it('should contain the Error.name property', async ({ page }) => {
+it('ER-004 should contain the Error.name property', async ({ page }) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => {
@@ -81,7 +135,7 @@ it('should contain the Error.name property', async ({ page }) => {
   expect(error.message).toBe('my-message');
 });
 
-it('should support an empty Error.name property', async ({ page }) => {
+it('ER-005 should support an empty Error.name property', async ({ page }) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => {
@@ -96,7 +150,7 @@ it('should support an empty Error.name property', async ({ page }) => {
   expect(error.message).toBe('my-message');
 });
 
-it('should handle odd values', async ({ page }) => {
+it('ER-006 should handle odd values', async ({ page }) => {
   const cases = [
     [null, 'null'],
     [undefined, 'undefined'],
@@ -114,7 +168,7 @@ it('should handle odd values', async ({ page }) => {
   }
 });
 
-it('should handle object', async ({ page, browserName }) => {
+it('ER-007 should handle object', async ({ page, browserName }) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => {
@@ -124,7 +178,7 @@ it('should handle object', async ({ page, browserName }) => {
   expect(error.message).toBe(browserName === 'chromium' ? 'Object' : '[object Object]');
 });
 
-it('should handle window', async ({ page, browserName }) => {
+it('ER-008 should handle window', async ({ page, browserName }) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => {
@@ -134,11 +188,11 @@ it('should handle window', async ({ page, browserName }) => {
   expect(error.message).toBe(browserName === 'chromium' ? 'Window' : '[object Window]');
 });
 
-it('should remove a listener of a non-existing event handler', async ({ page }) => {
+it('ER-009 should remove a listener of a non-existing event handler', async ({ page }) => {
   page.removeListener('pageerror', () => {});
 });
 
-it('should emit error from unhandled rejects', async ({ page, browserName }) => {
+it('ER-010 should emit error from unhandled rejects', async ({ page, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14165' });
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
@@ -151,7 +205,7 @@ it('should emit error from unhandled rejects', async ({ page, browserName }) => 
   expect(error.message).toContain('sad :(');
 });
 
-it('pageErrors should work', async ({ page }) => {
+it('ER-011 pageErrors should work', async ({ page }) => {
   await page.evaluate(async () => {
     for (let i = 0; i < 301; i++)
       window.builtins.setTimeout(() => { throw new Error('error' + i); }, 0);
@@ -169,7 +223,7 @@ it('pageErrors should work', async ({ page }) => {
   expect(messages.slice(messages.length - expected.length), 'should return last errors').toEqual(expected);
 });
 
-it('clearPageErrors should work', async ({ page }) => {
+it('ER-012 clearPageErrors should work', async ({ page }) => {
   await page.evaluate(() => {
     window.builtins.setTimeout(() => { throw new Error('error1'); }, 0);
     window.builtins.setTimeout(() => { throw new Error('error2'); }, 0);
@@ -195,7 +249,7 @@ it('clearPageErrors should work', async ({ page }) => {
   expect(errors[0].message).toContain('error3');
 });
 
-it('should fire illegal character error', {
+it('ER-013 should fire illegal character error', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/38388' },
 }, async ({ page, server, browserName, isWindows, channel }) => {
   server.setRoute('/error.html', (req, res) => {

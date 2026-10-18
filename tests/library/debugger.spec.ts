@@ -19,7 +19,7 @@ import type * as channels from '../../packages/playwright-core/src/client/channe
 
 type ApiCall = channels.DebuggerApiCallsUpdatedEvent['apiCalls'][number];
 
-it('should pause at next and resume', async ({ context, server }) => {
+it('DB-001 should pause at next and resume', async ({ context, server }) => {
   const page = await context.newPage();
   await page.setContent('<div>click me</div>');
   const dbg = context.debugger;
@@ -48,7 +48,7 @@ it('should pause at next and resume', async ({ context, server }) => {
   expect(dbg.pausedDetails()).toBeNull();
 });
 
-it('should pause at pause call', async ({ context, server }) => {
+it('DB-002 should pause at pause call', async ({ context, server }) => {
   const page = await context.newPage();
   await page.setContent('<div>click me</div>');
   const dbg = context.debugger;
@@ -68,7 +68,7 @@ it('should pause at pause call', async ({ context, server }) => {
   await pausePromise;
 });
 
-it('should run to location', async ({ context, server }) => {
+it('DB-003 should run to location', async ({ context, server }) => {
   const page = await context.newPage();
   await page.setContent('<div>click me</div>');
   const dbg = context.debugger;
@@ -97,7 +97,7 @@ it('should run to location', async ({ context, server }) => {
   await clickPromise;
 });
 
-it('should stream api calls via _enable', async ({ context, server }) => {
+it('DB-004 should stream api calls via _enable', async ({ context, server }) => {
   const page = await context.newPage();
   await page.setContent('<button>click me</button>');
   const dbg = context.debugger as any;
@@ -137,7 +137,7 @@ it('should stream api calls via _enable', async ({ context, server }) => {
   expect(history[history.length - 1]).toBe('success');
 });
 
-it('should report error status for failed api calls', async ({ context, server }) => {
+it('DB-005 should report error status for failed api calls', async ({ context, server }) => {
   const page = await context.newPage();
   await page.setContent('<div>no button here</div>');
   const dbg = context.debugger as any;
@@ -156,7 +156,7 @@ it('should report error status for failed api calls', async ({ context, server }
   expect(call.error).toBeTruthy();
 });
 
-it('should not stream internal api calls', async ({ context, server }) => {
+it('DB-006 should not stream internal api calls', async ({ context, server }) => {
   const page = await context.newPage();
   await page.setContent('<button>click me</button>');
   const dbg = context.debugger as any;
@@ -174,7 +174,7 @@ it('should not stream internal api calls', async ({ context, server }) => {
   expect(clickIds.size).toBe(1);
 });
 
-it('should not pause at internal api calls', async ({ context, server }) => {
+it('DB-007 should not pause at internal api calls', async ({ context, server }) => {
   const page = await context.newPage();
   await page.setContent('<button>click me</button>');
   const dbg = context.debugger as any;
@@ -195,7 +195,7 @@ it('should not pause at internal api calls', async ({ context, server }) => {
   ]);
 });
 
-it('should expose the action point while paused on an input action', async ({ context, server }) => {
+it('DB-008 should expose the action point while paused on an input action', async ({ context, server }) => {
   const page = await context.newPage();
   await page.setContent('<button style="position:absolute; left:40px; top:60px">click me</button>');
   const dbg = context.debugger as any;
@@ -226,7 +226,7 @@ it('should expose the action point while paused on an input action', async ({ co
   ]);
 });
 
-it('should replay ongoing calls when enabled late', async ({ context, server }) => {
+it('DB-009 should replay ongoing calls when enabled late', async ({ context, server }) => {
   const page = await context.newPage();
   await page.setContent('<button>click me</button>');
   const dbg = context.debugger as any;
@@ -252,7 +252,7 @@ it('should replay ongoing calls when enabled late', async ({ context, server }) 
   ]);
 });
 
-it('should keep pause working when api calls are enabled', async ({ context, server }) => {
+it('DB-010 should keep pause working when api calls are enabled', async ({ context, server }) => {
   const page = await context.newPage();
   await page.setContent('<div>click me</div>');
   const dbg = context.debugger as any;

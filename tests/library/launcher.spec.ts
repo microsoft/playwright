@@ -18,16 +18,16 @@
 import { inheritAndCleanEnv } from '../config/utils';
 import { playwrightTest as it, expect } from '../config/browserTest';
 
-it('should have an errors object', async ({ playwright }) => {
+it('BT-018 should have an errors object', async ({ playwright }) => {
   expect(String(playwright.errors.TimeoutError)).toContain('TimeoutError');
 });
 
-it('should have a devices object', async ({ playwright }) => {
+it('BT-019 should have a devices object', async ({ playwright }) => {
   expect(playwright.devices['iPhone 6']).toBeTruthy();
   expect(playwright.devices['iPhone 6'].defaultBrowserType).toBe('webkit');
 });
 
-it('should kill browser process on timeout after close', async ({ browserType, mode }) => {
+it('BT-020 should kill browser process on timeout after close', async ({ browserType, mode }) => {
   it.skip(mode !== 'default', 'Test passes server hooks via options');
 
   const launchOptions: any = {};
@@ -42,7 +42,7 @@ it('should kill browser process on timeout after close', async ({ browserType, m
   expect(stalled).toBeTruthy();
 });
 
-it('should throw a friendly error if its headed and there is no xserver on linux running', async ({ mode, browserType, platform, channel }) => {
+it('BT-021 should throw a friendly error if its headed and there is no xserver on linux running', async ({ mode, browserType, platform, channel }) => {
   it.skip(platform !== 'linux');
   it.skip(channel === 'chromium-headless-shell', 'shell is never headed');
 

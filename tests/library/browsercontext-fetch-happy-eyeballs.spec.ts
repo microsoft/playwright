@@ -43,21 +43,21 @@ it.beforeEach(({ server }) => {
   });
 });
 
-it('get should work', async ({ context, server }) => {
+it('FE-185 get should work', async ({ context, server }) => {
   const response = await context.request.get(server.PREFIX + '/simple.json', { __testHookLookup } as any);
   expect(response.url()).toBe(server.PREFIX + '/simple.json');
   await expect(response).toBeOK();
   expect(interceptedHostnameLookup).toBe('localhost');
 });
 
-it('get should work on request fixture', async ({ request, server }) => {
+it('FE-186 get should work on request fixture', async ({ request, server }) => {
   const response = await request.get(server.PREFIX + '/simple.json', { __testHookLookup } as any);
   expect(response.url()).toBe(server.PREFIX + '/simple.json');
   await expect(response).toBeOK();
   expect(interceptedHostnameLookup).toBe('localhost');
 });
 
-it('https post should work with ignoreHTTPSErrors option', async ({ context, httpsServer }) => {
+it('FE-187 https post should work with ignoreHTTPSErrors option', async ({ context, httpsServer }) => {
   const response = await context.request.post(httpsServer.EMPTY_PAGE, {
     ignoreHTTPSErrors: true,
     __testHookLookup
@@ -67,7 +67,7 @@ it('https post should work with ignoreHTTPSErrors option', async ({ context, htt
 });
 
 
-it('should work with ip6 and port as the host', async ({ request, server }) => {
+it('FE-188 should work with ip6 and port as the host', async ({ request, server }) => {
   it.skip(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
   const response = await request.get(`http://[::1]:${server.PORT}/simple.json`);
   expect(response.url()).toBe(`http://[::1]:${server.PORT}/simple.json`);

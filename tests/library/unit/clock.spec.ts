@@ -69,14 +69,14 @@ const it = test.extend<ClockFixtures>({
 });
 
 it.describe('setTimeout', () => {
-  it('throws if no arguments', async ({ clock }) => {
+  it('CK-057 throws if no arguments', async ({ clock }) => {
     expect(() => {
       // @ts-expect-error
       clock.setTimeout();
     }).toThrow();
   });
 
-  it('does not throw if |undefined| or |null| is passed as a callback', async ({ clock }) => {
+  it('CK-058 does not throw if |undefined| or |null| is passed as a callback', async ({ clock }) => {
     const timerId1 = clock.setTimeout(undefined, 10);
     const timerId2 = clock.setTimeout(null, 10);
     await clock.runFor(10);
@@ -84,23 +84,23 @@ it.describe('setTimeout', () => {
     expect(timerId2).toBeGreaterThan(timerId1);
   });
 
-  it('returns numeric id or object with numeric id', async ({ clock }) => {
+  it('CK-059 returns numeric id or object with numeric id', async ({ clock }) => {
     const result = clock.setTimeout(() => { }, 10);
     expect(result).toEqual(expect.any(Number));
   });
 
-  it('returns unique id', async ({ clock }) => {
+  it('CK-060 returns unique id', async ({ clock }) => {
     const id1 = clock.setTimeout(() => { }, 10);
     const id2 = clock.setTimeout(() => { }, 10);
     expect(id2).not.toBe(id1);
   });
 
-  it('starts id from a large number', async ({ clock }) => {
+  it('CK-061 starts id from a large number', async ({ clock }) => {
     const timer = clock.setTimeout(() => { }, 10);
     expect(timer).toBeGreaterThanOrEqual(1e12);
   });
 
-  it('sets timers on instance', async ({ clock }) => {
+  it('CK-062 sets timers on instance', async ({ clock }) => {
     const clock1 = createClock();
     const clock2 = createClock();
     const stubs = [createStub(), createStub()];
@@ -113,7 +113,7 @@ it.describe('setTimeout', () => {
     expect(stubs[1].called).toBeTruthy();
   });
 
-  it('parses numeric string times', async ({ clock }) => {
+  it('CK-063 parses numeric string times', async ({ clock }) => {
     let evalCalled = false;
     clock.setTimeout(() => {
       evalCalled = true;
@@ -123,7 +123,7 @@ it.describe('setTimeout', () => {
     expect(evalCalled).toBeTruthy();
   });
 
-  it('parses no-numeric string times', async ({ clock }) => {
+  it('CK-064 parses no-numeric string times', async ({ clock }) => {
     let evalCalled = false;
     clock.setTimeout(() => {
       evalCalled = true;
@@ -134,14 +134,14 @@ it.describe('setTimeout', () => {
     expect(evalCalled).toBeTruthy();
   });
 
-  it('passes setTimeout parameters', async ({ clock }) => {
+  it('CK-065 passes setTimeout parameters', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 2, 'the first', 'the second');
     await clock.runFor(3);
     expect(stub.calledWithExactly('the first', 'the second')).toBeTruthy();
   });
 
-  it('calls correct timeout on recursive tick', async ({ clock }) => {
+  it('CK-066 calls correct timeout on recursive tick', async ({ clock }) => {
     const stub = createStub();
     const recurseCallback = () => {
       void clock.runFor(100);
@@ -154,14 +154,14 @@ it.describe('setTimeout', () => {
     expect(stub.called).toBeTruthy();
   });
 
-  it('does not depend on this', async ({ clock }) => {
+  it('CK-067 does not depend on this', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 100);
     await clock.runFor(100);
     expect(stub.called).toBeTruthy();
   });
 
-  it('is not influenced by forward system clock changes', async ({ clock }) => {
+  it('CK-068 is not influenced by forward system clock changes', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 5000);
     await clock.runFor(1000);
@@ -172,7 +172,7 @@ it.describe('setTimeout', () => {
     expect(stub.callCount).toBe(1);
   });
 
-  it('is not influenced by backward system clock changes', async ({ clock }) => {
+  it('CK-069 is not influenced by backward system clock changes', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 5000);
     await clock.runFor(1000);
@@ -192,14 +192,14 @@ it.describe('setTimeout', () => {
       delete globalThis.evalCalled.evalCalled;
     });
 
-    it('evals non-function callbacks', async ({ clock }) => {
+    it('CK-070 evals non-function callbacks', async ({ clock }) => {
       clock.setTimeout('globalThis.evalCalled = true', 10);
       await clock.runFor(10);
 
       expect(globalThis.evalCalled).toBeTruthy();
     });
 
-    it('only evals on global scope', async ({ clock }) => {
+    it('CK-071 only evals on global scope', async ({ clock }) => {
       const x = 15;
       try {
         clock.setTimeout('x', x);
@@ -213,28 +213,28 @@ it.describe('setTimeout', () => {
 });
 
 it.describe('runFor', () => {
-  it('triggers immediately without specified delay', async ({ clock }) => {
+  it('CK-072 triggers immediately without specified delay', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub);
     await clock.runFor(0);
     expect(stub.called).toBeTruthy();
   });
 
-  it('does not trigger without sufficient delay', async ({ clock }) => {
+  it('CK-073 does not trigger without sufficient delay', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 100);
     await clock.runFor(10);
     expect(stub.called).toBeFalsy();
   });
 
-  it('triggers after sufficient delay', async ({ clock }) => {
+  it('CK-074 triggers after sufficient delay', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 100);
     await clock.runFor(100);
     expect(stub.called).toBeTruthy();
   });
 
-  it('triggers simultaneous timers', async ({ clock }) => {
+  it('CK-075 triggers simultaneous timers', async ({ clock }) => {
     const spies = [createStub(), createStub()];
     clock.setTimeout(spies[0], 100);
     clock.setTimeout(spies[1], 100);
@@ -243,7 +243,7 @@ it.describe('runFor', () => {
     expect(spies[1].called).toBeTruthy();
   });
 
-  it('triggers multiple simultaneous timers', async ({ clock }) => {
+  it('CK-076 triggers multiple simultaneous timers', async ({ clock }) => {
     const spies = [createStub(), createStub(), createStub(), createStub()];
     clock.setTimeout(spies[0], 100);
     clock.setTimeout(spies[1], 100);
@@ -256,7 +256,7 @@ it.describe('runFor', () => {
     expect(spies[3].called).toBeTruthy();
   });
 
-  it('triggers multiple simultaneous timers with zero callAt', async ({ clock }) => {
+  it('CK-077 triggers multiple simultaneous timers with zero callAt', async ({ clock }) => {
     const spies = [
       createStub(() => {
         clock.setTimeout(spies[1], 0);
@@ -274,7 +274,7 @@ it.describe('runFor', () => {
     expect(spies[2].called).toBeTruthy();
   });
 
-  it('waits after setTimeout was called', async ({ clock }) => {
+  it('CK-078 waits after setTimeout was called', async ({ clock }) => {
     await clock.runFor(100);
     const stub = createStub();
     clock.setTimeout(stub, 150);
@@ -284,7 +284,7 @@ it.describe('runFor', () => {
     expect(stub.called).toBeTruthy();
   });
 
-  it('mini integration test', async ({ clock }) => {
+  it('CK-079 mini integration test', async ({ clock }) => {
     const stubs = [createStub(), createStub(), createStub()];
     clock.setTimeout(stubs[0], 100);
     clock.setTimeout(stubs[1], 120);
@@ -304,7 +304,7 @@ it.describe('runFor', () => {
     expect(stubs[1].called).toBeTruthy();
   });
 
-  it('triggers even when some throw', async ({ clock }) => {
+  it('CK-080 triggers even when some throw', async ({ clock }) => {
     const stubs = [createStub().throws(), createStub()];
 
     clock.setTimeout(stubs[0], 100);
@@ -316,14 +316,14 @@ it.describe('runFor', () => {
     expect(stubs[1].called).toBeTruthy();
   });
 
-  it('calls function with global object or null (strict mode) as this', async ({ clock }) => {
+  it('CK-081 calls function with global object or null (strict mode) as this', async ({ clock }) => {
     const stub = createStub().throws();
     clock.setTimeout(stub, 100);
     await expect(clock.runFor(100)).rejects.toThrow();
     expect(stub.calledOn(global) || stub.calledOn(null)).toBeTruthy();
   });
 
-  it('triggers in the order scheduled', async ({ clock }) => {
+  it('CK-082 triggers in the order scheduled', async ({ clock }) => {
     const spies = [createStub(), createStub()];
     clock.setTimeout(spies[0], 13);
     clock.setTimeout(spies[1], 11);
@@ -333,7 +333,7 @@ it.describe('runFor', () => {
     expect(spies[1].calledBefore(spies[0])).toBeTruthy();
   });
 
-  it('creates updated Date while ticking', async ({ clock }) => {
+  it('CK-083 creates updated Date while ticking', async ({ clock }) => {
     const spy = createStub();
 
     clock.setInterval(() => {
@@ -355,14 +355,14 @@ it.describe('runFor', () => {
     expect(spy.calledWith(100)).toBeTruthy();
   });
 
-  it('fires timer in intervals of 13', async ({ clock }) => {
+  it('CK-084 fires timer in intervals of 13', async ({ clock }) => {
     const spy = createStub();
     clock.setInterval(spy, 13);
     await clock.runFor(500);
     expect(spy.callCount).toBe(38);
   });
 
-  it('fires timer in intervals of "13"', async ({ clock }) => {
+  it('CK-085 fires timer in intervals of "13"', async ({ clock }) => {
     const spy = createStub();
     // @ts-expect-error
     clock.setInterval(spy, '13');
@@ -370,7 +370,7 @@ it.describe('runFor', () => {
     expect(spy.callCount).toBe(38);
   });
 
-  it('fires timers in correct order', async ({ clock }) => {
+  it('CK-086 fires timers in correct order', async ({ clock }) => {
     const spy13 = createStub();
     const spy10 = createStub();
 
@@ -391,7 +391,7 @@ it.describe('runFor', () => {
     expect(spy10.calledWith(320)).toBeTruthy();
   });
 
-  it('triggers timeouts and intervals in the order scheduled', async ({ clock }) => {
+  it('CK-087 triggers timeouts and intervals in the order scheduled', async ({ clock }) => {
     const spies = [createStub(), createStub()];
     clock.setInterval(spies[0], 10);
     clock.setTimeout(spies[1], 50);
@@ -403,7 +403,7 @@ it.describe('runFor', () => {
     expect(spies[1].callCount).toBe(1);
   });
 
-  it('does not fire canceled intervals', async ({ clock }) => {
+  it('CK-088 does not fire canceled intervals', async ({ clock }) => {
     // eslint-disable-next-line prefer-const
     let id;
     const callback = createStub(() => {
@@ -415,7 +415,7 @@ it.describe('runFor', () => {
     expect(callback.callCount).toBe(3);
   });
 
-  it('throws for negative minutes', async ({ clock }) => {
+  it('CK-089 throws for negative minutes', async ({ clock }) => {
     const spy = createStub();
     clock.setInterval(spy, 10000);
 
@@ -423,7 +423,7 @@ it.describe('runFor', () => {
     expect(spy.callCount).toBe(0);
   });
 
-  it('fires nested setTimeout calls properly', async ({ clock }) => {
+  it('CK-090 fires nested setTimeout calls properly', async ({ clock }) => {
     let i = 0;
     const callback = () => {
       ++i;
@@ -437,7 +437,7 @@ it.describe('runFor', () => {
     expect(i).toBe(11);
   });
 
-  it('does not silently catch errors', async ({ clock }) => {
+  it('CK-091 does not silently catch errors', async ({ clock }) => {
     const callback = () => {
       throw new Error('oh no!');
     };
@@ -445,7 +445,7 @@ it.describe('runFor', () => {
     await expect(clock.runFor(1000)).rejects.toThrow();
   });
 
-  it('is not influenced by forward system clock changes', async ({ clock }) => {
+  it('CK-092 is not influenced by forward system clock changes', async ({ clock }) => {
     const callback = () => {
       clock.setSystemTime(new clock.Date().getTime() + 1000);
     };
@@ -458,7 +458,7 @@ it.describe('runFor', () => {
     expect(stub.callCount).toBe(1);
   });
 
-  it('is not influenced by forward system clock changes 2', async ({ clock }) => {
+  it('CK-093 is not influenced by forward system clock changes 2', async ({ clock }) => {
     const callback = () => {
       clock.setSystemTime(new clock.Date().getTime() - 1000);
     };
@@ -471,7 +471,7 @@ it.describe('runFor', () => {
     expect(stub.callCount).toBe(1);
   });
 
-  it('is not influenced by forward system clock changes when an error is thrown', async ({ clock }) => {
+  it('CK-094 is not influenced by forward system clock changes when an error is thrown', async ({ clock }) => {
     const callback = () => {
       clock.setSystemTime(new clock.Date().getTime() + 1000);
       throw new Error();
@@ -487,7 +487,7 @@ it.describe('runFor', () => {
     expect(stub.callCount).toBe(1);
   });
 
-  it('is not influenced by forward system clock changes when an error is thrown 2', async ({ clock }) => {
+  it('CK-095 is not influenced by forward system clock changes when an error is thrown 2', async ({ clock }) => {
     const callback = () => {
       clock.setSystemTime(new clock.Date().getTime() - 1000);
       throw new Error();
@@ -503,11 +503,11 @@ it.describe('runFor', () => {
     expect(stub.callCount).toBe(1);
   });
 
-  it('throws on negative ticks', async ({ clock }) => {
+  it('CK-096 throws on negative ticks', async ({ clock }) => {
     await expect(clock.runFor(-500)).rejects.toThrow('Negative ticks are not supported');
   });
 
-  it('creates updated Date while ticking promises', async ({ clock }) => {
+  it('CK-097 creates updated Date while ticking promises', async ({ clock }) => {
     const spy = createStub();
 
     clock.setInterval(() => {
@@ -531,7 +531,7 @@ it.describe('runFor', () => {
     expect(spy.calledWith(100)).toBeTruthy();
   });
 
-  it('fires promise timers in correct order', async ({ clock }) => {
+  it('CK-098 fires promise timers in correct order', async ({ clock }) => {
     const spy13 = createStub();
     const spy10 = createStub();
 
@@ -556,7 +556,7 @@ it.describe('runFor', () => {
     expect(spy10.calledWith(320)).toBeTruthy();
   });
 
-  it('does not fire intervals canceled in a promise', async ({ clock }) => {
+  it('CK-099 does not fire intervals canceled in a promise', async ({ clock }) => {
     // ESLint fails to detect this correctly
     /* eslint-disable prefer-const */
     let id;
@@ -574,7 +574,7 @@ it.describe('runFor', () => {
     expect(callback.callCount).toBe(3);
   });
 
-  it('fires nested setTimeout calls in user-created promises properly', async ({ clock }) => {
+  it('CK-100 fires nested setTimeout calls in user-created promises properly', async ({ clock }) => {
     let i = 0;
     const callback = () => {
       void Promise.resolve().then(() => {
@@ -595,7 +595,7 @@ it.describe('runFor', () => {
     expect(i).toBe(11);
   });
 
-  it('is not influenced by forward system clock changes in promises', async ({ clock }) => {
+  it('CK-101 is not influenced by forward system clock changes in promises', async ({ clock }) => {
     const callback = () => {
       void Promise.resolve().then(() => {
         clock.setSystemTime(new clock.Date().getTime() + 1000);
@@ -610,7 +610,7 @@ it.describe('runFor', () => {
     expect(stub.callCount).toBe(1);
   });
 
-  it('should settle user-created promises', async ({ clock }) => {
+  it('CK-102 should settle user-created promises', async ({ clock }) => {
     const spy = createStub();
 
     clock.setTimeout(() => {
@@ -622,7 +622,7 @@ it.describe('runFor', () => {
     expect(spy.called).toBeTruthy();
   });
 
-  it('should settle chained user-created promises', async ({ clock }) => {
+  it('CK-103 should settle chained user-created promises', async ({ clock }) => {
     const spies = [createStub(), createStub(), createStub()];
 
     clock.setTimeout(() => {
@@ -639,7 +639,7 @@ it.describe('runFor', () => {
     expect(spies[2].called).toBeTruthy();
   });
 
-  it('should settle multiple user-created promises', async ({ clock }) => {
+  it('CK-104 should settle multiple user-created promises', async ({ clock }) => {
     const spies = [createStub(), createStub(), createStub()];
 
     clock.setTimeout(() => {
@@ -655,7 +655,7 @@ it.describe('runFor', () => {
     expect(spies[2].called).toBeTruthy();
   });
 
-  it('should settle nested user-created promises', async ({ clock }) => {
+  it('CK-105 should settle nested user-created promises', async ({ clock }) => {
     const spy = createStub();
 
     clock.setTimeout(() => {
@@ -671,7 +671,7 @@ it.describe('runFor', () => {
     expect(spy.called).toBeTruthy();
   });
 
-  it('should settle user-created promises even if some throw', async ({ clock }) => {
+  it('CK-106 should settle user-created promises even if some throw', async ({ clock }) => {
     const spies = [createStub(), createStub(), createStub(), createStub()];
 
     clock.setTimeout(() => {
@@ -687,7 +687,7 @@ it.describe('runFor', () => {
     expect(spies[3].callCount).toBe(0);
   });
 
-  it('should settle user-created promises before calling more timeouts', async ({ clock }) => {
+  it('CK-107 should settle user-created promises before calling more timeouts', async ({ clock }) => {
     const spies = [createStub(), createStub()];
 
     clock.setTimeout(() => {
@@ -701,7 +701,7 @@ it.describe('runFor', () => {
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
   });
 
-  it('should settle local promises before calling timeouts', async ({ clock }) => {
+  it('CK-108 should settle local promises before calling timeouts', async ({ clock }) => {
     const spies = [createStub(), createStub()];
     void Promise.resolve().then(spies[0]);
     clock.setTimeout(spies[1], 100);
@@ -713,7 +713,7 @@ it.describe('runFor', () => {
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
   });
 
-  it('should settle local nested promises before calling timeouts', async ({ clock }) => {
+  it('CK-109 should settle local nested promises before calling timeouts', async ({ clock }) => {
     const spies = [createStub(), createStub()];
 
     void Promise.resolve().then(() => {
@@ -731,7 +731,7 @@ it.describe('runFor', () => {
     expect(spies[0].calledBefore(spies[1])).toBeTruthy();
   });
 
-  it('does not rewind back in time', async ({ clock }) => {
+  it('CK-110 does not rewind back in time', async ({ clock }) => {
     const stub = createStub();
     const gotTime = await new Promise<number>(done => {
       clock.setTimeout(() => {
@@ -756,7 +756,7 @@ it.describe('runFor', () => {
 });
 
 it.describe('clearTimeout', () => {
-  it('removes timeout', async ({ clock }) => {
+  it('CK-111 removes timeout', async ({ clock }) => {
     const stub = createStub();
     const id = clock.setTimeout(stub, 50);
     clock.clearTimeout(id);
@@ -764,7 +764,7 @@ it.describe('clearTimeout', () => {
     expect(stub.called).toBeFalsy();
   });
 
-  it('removes interval', async ({ clock }) => {
+  it('CK-112 removes interval', async ({ clock }) => {
     const stub = createStub();
     const id = clock.setInterval(stub, 50);
     clock.clearTimeout(id);
@@ -772,7 +772,7 @@ it.describe('clearTimeout', () => {
     expect(stub.called).toBeFalsy();
   });
 
-  it('removes interval with undefined interval', async ({ clock }) => {
+  it('CK-113 removes interval with undefined interval', async ({ clock }) => {
     const stub = createStub();
     const id = clock.setInterval(stub);
     clock.clearTimeout(id);
@@ -780,20 +780,20 @@ it.describe('clearTimeout', () => {
     expect(stub.called).toBeFalsy();
   });
 
-  it('ignores null argument', async ({ clock }) => {
+  it('CK-114 ignores null argument', async ({ clock }) => {
     clock.clearTimeout(null);
   });
 });
 
 it.describe('setInterval', () => {
-  it('throws if no arguments', async ({ clock }) => {
+  it('CK-115 throws if no arguments', async ({ clock }) => {
     expect(() => {
       // @ts-expect-error
       clock.setInterval();
     }).toThrow();
   });
 
-  it('does not throw if |undefined| or |null| is passed as a callback', async ({ clock }) => {
+  it('CK-116 does not throw if |undefined| or |null| is passed as a callback', async ({ clock }) => {
     const timerId1 = clock.setInterval(undefined, 10);
     const timerId2 = clock.setInterval(null, 10);
     await clock.runFor(10);
@@ -801,19 +801,19 @@ it.describe('setInterval', () => {
     expect(timerId2).toBeGreaterThan(timerId1);
   });
 
-  it('returns numeric id or object with numeric id', async ({ clock }) => {
+  it('CK-117 returns numeric id or object with numeric id', async ({ clock }) => {
     const result = clock.setInterval(() => {}, 10);
     expect(result).toBeGreaterThan(0);
   });
 
-  it('returns unique id', async ({ clock }) => {
+  it('CK-118 returns unique id', async ({ clock }) => {
     const id1 = clock.setInterval(() => {}, 10);
     const id2 = clock.setInterval(() => {}, 10);
 
     expect(id2).not.toEqual(id1);
   });
 
-  it('schedules recurring timeout', async ({ clock }) => {
+  it('CK-119 schedules recurring timeout', async ({ clock }) => {
     const stub = createStub();
     clock.setInterval(stub, 10);
     await clock.runFor(99);
@@ -821,7 +821,7 @@ it.describe('setInterval', () => {
     expect(stub.callCount).toBe(9);
   });
 
-  it('is not influenced by forward system clock changes', async ({ clock }) => {
+  it('CK-120 is not influenced by forward system clock changes', async ({ clock }) => {
     const stub = createStub();
     clock.setInterval(stub, 10);
     await clock.runFor(11);
@@ -833,7 +833,7 @@ it.describe('setInterval', () => {
     expect(stub.callCount).toBe(2);
   });
 
-  it('is not influenced by backward system clock changes', async ({ clock }) => {
+  it('CK-121 is not influenced by backward system clock changes', async ({ clock }) => {
     const stub = createStub();
     clock.setInterval(stub, 10);
     await clock.runFor(5);
@@ -844,7 +844,7 @@ it.describe('setInterval', () => {
     expect(stub.callCount).toBe(2);
   });
 
-  it('does not schedule recurring timeout when cleared', async ({ clock }) => {
+  it('CK-122 does not schedule recurring timeout when cleared', async ({ clock }) => {
     const stub = createStub(() => {
       if (stub.callCount === 3)
         clock.clearInterval(id);
@@ -856,7 +856,7 @@ it.describe('setInterval', () => {
     expect(stub.callCount).toBe(3);
   });
 
-  it('passes setTimeout parameters', async ({ clock }) => {
+  it('CK-123 passes setTimeout parameters', async ({ clock }) => {
     const stub = createStub();
     clock.setInterval(stub, 2, 'the first', 'the second');
     await clock.runFor(3);
@@ -865,7 +865,7 @@ it.describe('setInterval', () => {
 });
 
 it.describe('clearInterval', () => {
-  it('removes interval', async ({ clock }) => {
+  it('CK-124 removes interval', async ({ clock }) => {
     const stub = createStub();
     const id = clock.setInterval(stub, 50);
     clock.clearInterval(id);
@@ -873,7 +873,7 @@ it.describe('clearInterval', () => {
     expect(stub.called).toBeFalsy();
   });
 
-  it('removes interval with undefined interval', async ({ clock }) => {
+  it('CK-125 removes interval with undefined interval', async ({ clock }) => {
     const stub = createStub();
     const id = clock.setInterval(stub);
     clock.clearInterval(id);
@@ -881,7 +881,7 @@ it.describe('clearInterval', () => {
     expect(stub.called).toBeFalsy();
   });
 
-  it('removes timeout', async ({ clock }) => {
+  it('CK-126 removes timeout', async ({ clock }) => {
     const stub = createStub();
     const id = clock.setTimeout(stub, 50);
     clock.clearInterval(id);
@@ -889,162 +889,162 @@ it.describe('clearInterval', () => {
     expect(stub.called).toBeFalsy();
   });
 
-  it('ignores null argument', async ({ clock }) => {
+  it('CK-127 ignores null argument', async ({ clock }) => {
     clock.clearInterval(null);
   });
 });
 
 it.describe('date', () => {
-  it('provides date constructor', async ({ clock }) => {
+  it('CK-128 provides date constructor', async ({ clock }) => {
     expect(clock.Date).toEqual(expect.any(Function));
   });
 
-  it('creates real Date objects', async ({ clock }) => {
+  it('CK-129 creates real Date objects', async ({ clock }) => {
     const date = new clock.Date();
     expect(Date.prototype.isPrototypeOf(date)).toBeTruthy();
   });
 
-  it('returns date as string when called as function', async ({ clock }) => {
+  it('CK-130 returns date as string when called as function', async ({ clock }) => {
     const date = clock.Date();
     expect(typeof date).toBe('string');
   });
 
-  it('creates Date objects representing clock time', async ({ clock }) => {
+  it('CK-131 creates Date objects representing clock time', async ({ clock }) => {
     const date = new clock.Date();
     expect(date.getTime()).toBe(new Date(clock.now()).getTime());
   });
 
-  it('returns date as string representing clock time', async ({ clock }) => {
+  it('CK-132 returns date as string representing clock time', async ({ clock }) => {
     const date = clock.Date();
     expect(date).toBe(new Date(clock.now()).toString());
   });
 
-  it('listens to ticking clock', async ({ clock }) => {
+  it('CK-133 listens to ticking clock', async ({ clock }) => {
     const date1 = new clock.Date();
     await clock.runFor(3);
     const date2 = new clock.Date();
     expect(date2.getTime() - date1.getTime()).toBe(3);
   });
 
-  it('listens to system clock changes', async ({ clock }) => {
+  it('CK-134 listens to system clock changes', async ({ clock }) => {
     const date1 = new clock.Date();
     clock.setSystemTime(date1.getTime() + 1000);
     const date2 = new clock.Date();
     expect(date2.getTime() - date1.getTime()).toBe(1000);
   });
 
-  it('creates regular date when passing timestamp', async ({ clock }) => {
+  it('CK-135 creates regular date when passing timestamp', async ({ clock }) => {
     const date = new Date();
     const fakeDate = new clock.Date(date.getTime());
     expect(fakeDate.getTime()).toBe(date.getTime());
   });
 
-  it('creates regular date when passing a date as string', async ({ clock }) => {
+  it('CK-136 creates regular date when passing a date as string', async ({ clock }) => {
     const date = new Date();
     const fakeDate = new clock.Date(date.toISOString());
     expect(fakeDate.getTime()).toBe(date.getTime());
   });
 
-  it('creates regular date when passing a date as RFC 2822 string', async ({ clock }) => {
+  it('CK-137 creates regular date when passing a date as RFC 2822 string', async ({ clock }) => {
     const date = new Date('Sat Apr 12 2014 12:22:00 GMT+1000');
     const fakeDate = new clock.Date('Sat Apr 12 2014 12:22:00 GMT+1000');
     expect(fakeDate.getTime()).toBe(date.getTime());
   });
 
-  it('creates regular date when passing year, month', async ({ clock }) => {
+  it('CK-138 creates regular date when passing year, month', async ({ clock }) => {
     const date = new Date(2010, 4);
     const fakeDate = new clock.Date(2010, 4);
     expect(fakeDate.getTime()).toBe(date.getTime());
   });
 
-  it('creates regular date when passing y, m, d', async ({ clock }) => {
+  it('CK-139 creates regular date when passing y, m, d', async ({ clock }) => {
     const date = new Date(2010, 4, 2);
     const fakeDate = new clock.Date(2010, 4, 2);
     expect(fakeDate.getTime()).toBe(date.getTime());
   });
 
-  it('creates regular date when passing y, m, d, h', async ({ clock }) => {
+  it('CK-140 creates regular date when passing y, m, d, h', async ({ clock }) => {
     const date = new Date(2010, 4, 2, 12);
     const fakeDate = new clock.Date(2010, 4, 2, 12);
     expect(fakeDate.getTime()).toBe(date.getTime());
   });
 
-  it('creates regular date when passing y, m, d, h, m', async ({ clock }) => {
+  it('CK-141 creates regular date when passing y, m, d, h, m', async ({ clock }) => {
     const date = new Date(2010, 4, 2, 12, 42);
     const fakeDate = new clock.Date(2010, 4, 2, 12, 42);
     expect(fakeDate.getTime()).toBe(date.getTime());
   });
 
-  it('creates regular date when passing y, m, d, h, m, s', async ({ clock }) => {
+  it('CK-142 creates regular date when passing y, m, d, h, m, s', async ({ clock }) => {
     const date = new Date(2010, 4, 2, 12, 42, 53);
     const fakeDate = new clock.Date(2010, 4, 2, 12, 42, 53);
     expect(fakeDate.getTime()).toBe(date.getTime());
   });
 
-  it('creates regular date when passing y, m, d, h, m, s, ms', async ({ clock }) => {
+  it('CK-143 creates regular date when passing y, m, d, h, m, s, ms', async ({ clock }) => {
     const date = new Date(2010, 4, 2, 12, 42, 53, 498);
     const fakeDate = new clock.Date(2010, 4, 2, 12, 42, 53, 498);
     expect(fakeDate.getTime()).toBe(date.getTime());
   });
 
-  it('returns date as string when calling with arguments', async ({ clock }) => {
+  it('CK-144 returns date as string when calling with arguments', async ({ clock }) => {
     // @ts-expect-error
     const fakeDateStr = clock.Date(2010, 4, 2, 12, 42, 53, 498);
     expect(fakeDateStr).toBe(new clock.Date().toString());
   });
 
-  it('returns date as string when calling with timestamp', async ({ clock }) => {
+  it('CK-145 returns date as string when calling with timestamp', async ({ clock }) => {
     // @ts-expect-error
     const fakeDateStr = clock.Date(1);
     expect(fakeDateStr).toBe(new clock.Date().toString());
   });
 
-  it('mirrors native Date.prototype', async ({ clock }) => {
+  it('CK-146 mirrors native Date.prototype', async ({ clock }) => {
     expect(clock.Date.prototype).toEqual(Date.prototype);
   });
 
-  it('supports now method if present', async ({ clock }) => {
+  it('CK-147 supports now method if present', async ({ clock }) => {
     expect(typeof clock.Date.now).toEqual(typeof Date.now);
   });
 
-  it('returns clock.now()', async ({ clock }) => {
+  it('CK-148 returns clock.now()', async ({ clock }) => {
     const clock_now = clock.Date.now();
     const global_now = Date.now();
     expect(clock_now).toBeGreaterThanOrEqual(clock.now());
     expect(clock_now).toBeLessThanOrEqual(global_now);
   });
 
-  it('mirrors parse method', async ({ clock }) => {
+  it('CK-149 mirrors parse method', async ({ clock }) => {
     expect(clock.Date.parse).toEqual(Date.parse);
   });
 
-  it('mirrors UTC method', async ({ clock }) => {
+  it('CK-150 mirrors UTC method', async ({ clock }) => {
     expect(clock.Date.UTC).toEqual(Date.UTC);
   });
 
-  it('mirrors toUTCString method', async ({ clock }) => {
+  it('CK-151 mirrors toUTCString method', async ({ clock }) => {
     expect(clock.Date.prototype.toUTCString).toEqual(Date.prototype.toUTCString);
   });
 });
 
 it.describe('stubTimers', () => {
-  it('returns clock object', async ({ install }) => {
+  it('CK-152 returns clock object', async ({ install }) => {
     const clock = install();
     expect(clock).toEqual(expect.any(Object));
     expect(clock.runFor).toEqual(expect.any(Function));
   });
 
-  it('takes an object parameter', async ({ install }) => {
+  it('CK-153 takes an object parameter', async ({ install }) => {
     const clock = install();
     expect(clock).toEqual(expect.any(Object));
   });
 
-  it('sets initial timestamp', async ({ install }) => {
+  it('CK-154 sets initial timestamp', async ({ install }) => {
     const clock = install(1400);
     expect(clock.now()).toBe(1400);
   });
 
-  it('replaces global setTimeout', async ({ install }) => {
+  it('CK-155 replaces global setTimeout', async ({ install }) => {
     const clock = install();
     const stub = createStub();
 
@@ -1054,14 +1054,14 @@ it.describe('stubTimers', () => {
     expect(stub.called).toBeTruthy();
   });
 
-  it('global fake setTimeout should return id', async ({ install }) => {
+  it('CK-156 global fake setTimeout should return id', async ({ install }) => {
     install();
     const stub = createStub();
     const to = setTimeout(stub, 1000);
     expect(to).toEqual(expect.any(Number));
   });
 
-  it('replaces global clearTimeout', async ({ install }) => {
+  it('CK-157 replaces global clearTimeout', async ({ install }) => {
     const clock = install();
     const stub = createStub();
 
@@ -1071,7 +1071,7 @@ it.describe('stubTimers', () => {
     expect(stub.called).toBeFalsy();
   });
 
-  it('replaces global setInterval', async ({ install }) => {
+  it('CK-158 replaces global setInterval', async ({ install }) => {
     const clock = install();
     const stub = createStub();
 
@@ -1081,7 +1081,7 @@ it.describe('stubTimers', () => {
     expect(stub.callCount).toBe(2);
   });
 
-  it('replaces global clearInterval', async ({ install }) => {
+  it('CK-159 replaces global clearInterval', async ({ install }) => {
     const clock = install();
     const stub = createStub();
 
@@ -1091,7 +1091,7 @@ it.describe('stubTimers', () => {
     expect(stub.called).toBeFalsy();
   });
 
-  it('replaces global performance.now', async ({ install }) => {
+  it('CK-160 replaces global performance.now', async ({ install }) => {
     const clock = install();
     const prev = performance.now();
     await clock.runFor(1000);
@@ -1100,7 +1100,7 @@ it.describe('stubTimers', () => {
     expect(prev).toBe(0);
   });
 
-  it('replace Event.prototype.timeStamp', async ({ install }) => {
+  it('CK-161 replace Event.prototype.timeStamp', async ({ install }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31924' });
     const clock = install();
     await clock.runFor(1000);
@@ -1112,7 +1112,7 @@ it.describe('stubTimers', () => {
     expect(event1.timeStamp).toBe(1000);
   });
 
-  it('uninstalls global performance.now', async ({ install }) => {
+  it('CK-162 uninstalls global performance.now', async ({ install }) => {
     const oldNow = performance.now;
     const clock = install();
     expect(performance.now).toBe(clock.performance.now);
@@ -1120,7 +1120,7 @@ it.describe('stubTimers', () => {
     expect(performance.now).toBe(oldNow);
   });
 
-  it('should let performance.mark still be callable after install() (#136)', async ({ install }) => {
+  it('CK-163 should let performance.mark still be callable after install() (#136)', async ({ install }) => {
     it.skip(nodeMajorVersion < 20);
     install();
     expect(() => {
@@ -1128,7 +1128,7 @@ it.describe('stubTimers', () => {
     }).not.toThrow();
   });
 
-  it('should not alter the global performance properties and methods', async ({ install }) => {
+  it('CK-164 should not alter the global performance properties and methods', async ({ install }) => {
     it.skip(nodeMajorVersion < 20);
     (Performance.prototype as any).someFunc1 = () => {};
     (Performance.prototype as any).someFunc2 = () => {};
@@ -1144,7 +1144,7 @@ it.describe('stubTimers', () => {
     delete (Performance.prototype as any).someFunc3;
   });
 
-  it('should replace the getEntries, getEntriesByX methods with noops that return []', async ({ install }) => {
+  it('CK-165 should replace the getEntries, getEntriesByX methods with noops that return []', async ({ install }) => {
     it.skip(nodeMajorVersion < 20);
     const backupDescriptors = Object.getOwnPropertyDescriptors(Performance);
 
@@ -1179,7 +1179,7 @@ it.describe('stubTimers', () => {
     });
   });
 
-  it('should return PerformanceEntry-like objects from performance.mark and performance.measure', async ({ install }) => {
+  it('CK-166 should return PerformanceEntry-like objects from performance.mark and performance.measure', async ({ install }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39816' });
     it.skip(nodeMajorVersion < 20);
     install();
@@ -1199,7 +1199,7 @@ it.describe('stubTimers', () => {
     expect(measureEntry.duration).toBe(50);
   });
 
-  it('restores global property on uninstall if it was inherited onto the global object', ({}) => {
+  it('CK-167 restores global property on uninstall if it was inherited onto the global object', ({}) => {
     // Give the global object an inherited 'setTimeout' method
     const proto = {
       Date,
@@ -1222,7 +1222,7 @@ it.describe('stubTimers', () => {
     expect(myGlobal.setTimeout).toBe(proto.setTimeout);
   });
 
-  it('fakes Date constructor', ({ installEx }) => {
+  it('CK-168 fakes Date constructor', ({ installEx }) => {
     const { originals } = installEx({ now: 0 });
     const now = new Date();
 
@@ -1230,12 +1230,12 @@ it.describe('stubTimers', () => {
     expect(now.getTime()).toBe(0);
   });
 
-  it(`fake Date constructor should mirror Date's properties`, async ({ clock }) => {
+  it(`CK-169 fake Date constructor should mirror Date's properties`, async ({ clock }) => {
     expect(Date).not.toBe(clock.Date);
     expect(Date.prototype).toEqual(clock.Date.prototype);
   });
 
-  it('mirrors custom Date properties', async ({ install }) => {
+  it('CK-170 mirrors custom Date properties', async ({ install }) => {
     const f = () => {
       return '';
     };
@@ -1245,19 +1245,19 @@ it.describe('stubTimers', () => {
     expect((Date as any).format).toEqual(f);
   });
 
-  it('uninstalls Date constructor', () => {
+  it('CK-171 uninstalls Date constructor', () => {
     const { clock, originals } = rawInstall(globalThis, { now: 0 });
     clock.uninstall();
     expect(Date).toBe(originals.Date);
   });
 
-  it('fakes provided methods', ({ installEx }) => {
+  it('CK-172 fakes provided methods', ({ installEx }) => {
     const { originals } = installEx({ now: 0, toFake: ['setTimeout', 'Date'] });
     expect(setTimeout).not.toBe(originals.setTimeout);
     expect(Date).not.toBe(originals.Date);
   });
 
-  it('resets faked methods', async ({ }) => {
+  it('CK-173 resets faked methods', async ({ }) => {
     const { clock, originals } = rawInstall(globalThis, {
       now: 0,
       toFake: ['setTimeout', 'Date'],
@@ -1268,7 +1268,7 @@ it.describe('stubTimers', () => {
     expect(Date).toBe(originals.Date);
   });
 
-  it('does not fake methods not provided', ({ installEx }) => {
+  it('CK-174 does not fake methods not provided', ({ installEx }) => {
     const { originals } = installEx({
       now: 0,
       toFake: ['setTimeout', 'Date'],
@@ -1281,25 +1281,25 @@ it.describe('stubTimers', () => {
 });
 
 it.describe('requestAnimationFrame', () => {
-  it('throws if no arguments', async ({ clock }) => {
+  it('CK-175 throws if no arguments', async ({ clock }) => {
     expect(() => {
       // @ts-expect-error
       clock.requestAnimationFrame();
     }).toThrow();
   });
 
-  it('returns numeric id or object with numeric id', async ({ clock }) => {
+  it('CK-176 returns numeric id or object with numeric id', async ({ clock }) => {
     const result = clock.requestAnimationFrame(() => {});
     expect(result).toEqual(expect.any(Number));
   });
 
-  it('returns unique id', async ({ clock }) => {
+  it('CK-177 returns unique id', async ({ clock }) => {
     const id1 = clock.requestAnimationFrame(() => {});
     const id2 = clock.requestAnimationFrame(() => {});
     expect(id2).not.toEqual(id1);
   });
 
-  it('should run every 16ms', async ({ clock }) => {
+  it('CK-178 should run every 16ms', async ({ clock }) => {
     const stub = createStub();
     clock.requestAnimationFrame(stub);
     await clock.runFor(15);
@@ -1308,28 +1308,28 @@ it.describe('requestAnimationFrame', () => {
     expect(stub.callCount).toBe(1);
   });
 
-  it('should be called with performance.now() when available', async ({ clock }) => {
+  it('CK-179 should be called with performance.now() when available', async ({ clock }) => {
     const stub = createStub();
     clock.requestAnimationFrame(stub);
     await clock.runFor(20);
     expect(stub.calledWith(16)).toBeTruthy();
   });
 
-  it('should be called with performance.now() even when performance unavailable', async ({ clock }) => {
+  it('CK-180 should be called with performance.now() even when performance unavailable', async ({ clock }) => {
     const stub = createStub();
     clock.requestAnimationFrame(stub);
     await clock.runFor(20);
     expect(stub.calledWith(16)).toBeTruthy();
   });
 
-  it('should call callback once', async ({ clock }) => {
+  it('CK-181 should call callback once', async ({ clock }) => {
     const stub = createStub();
     clock.requestAnimationFrame(stub);
     await clock.runFor(32);
     expect(stub.callCount).toBe(1);
   });
 
-  it('should schedule two callbacks before the next frame at the same time', async ({ clock }) => {
+  it('CK-182 should schedule two callbacks before the next frame at the same time', async ({ clock }) => {
     const stub1 = createStub();
     const stub2 = createStub();
     clock.requestAnimationFrame(stub1);
@@ -1340,7 +1340,7 @@ it.describe('requestAnimationFrame', () => {
     expect(stub2.calledWith(16)).toBeTruthy();
   });
 
-  it('should properly schedule callback for 3rd frame', async ({ clock }) => {
+  it('CK-183 should properly schedule callback for 3rd frame', async ({ clock }) => {
     const stub1 = createStub();
     const stub2 = createStub();
     clock.requestAnimationFrame(stub1);
@@ -1351,7 +1351,7 @@ it.describe('requestAnimationFrame', () => {
     expect(stub2.calledWith(64)).toBeTruthy();
   });
 
-  it('should schedule for next frame if on current frame', async ({ clock }) => {
+  it('CK-184 should schedule for next frame if on current frame', async ({ clock }) => {
     const stub = createStub();
     await clock.runFor(16);
     clock.requestAnimationFrame(stub);
@@ -1361,7 +1361,7 @@ it.describe('requestAnimationFrame', () => {
 });
 
 it.describe('cancelAnimationFrame', () => {
-  it('removes animation frame', async ({ clock }) => {
+  it('CK-185 removes animation frame', async ({ clock }) => {
     const stub = createStub();
     const id = clock.requestAnimationFrame(stub);
     clock.cancelAnimationFrame(id);
@@ -1369,7 +1369,7 @@ it.describe('cancelAnimationFrame', () => {
     expect(stub.called).toBeFalsy();
   });
 
-  it('does not remove timeout', async ({ clock }) => {
+  it('CK-186 does not remove timeout', async ({ clock }) => {
     const stub = createStub();
     const id = clock.setTimeout(stub, 50);
     expect(() => {
@@ -1379,7 +1379,7 @@ it.describe('cancelAnimationFrame', () => {
     expect(stub.called).toBeTruthy();
   });
 
-  it('does not remove interval', async ({ clock }) => {
+  it('CK-187 does not remove interval', async ({ clock }) => {
     const stub = createStub();
     const id = clock.setInterval(stub, 50);
     expect(() => {
@@ -1389,20 +1389,20 @@ it.describe('cancelAnimationFrame', () => {
     expect(stub.called).toBeTruthy();
   });
 
-  it('ignores null argument', async ({ clock }) => {
+  it('CK-188 ignores null argument', async ({ clock }) => {
     clock.cancelAnimationFrame(null);
   });
 });
 
 it.describe('fastForward', () => {
-  it('ignores timers which wouldn\'t be run', async ({ clock }) => {
+  it('CK-189 ignores timers which wouldn\'t be run', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(stub, 1000);
     await clock.fastForward(500);
     expect(stub.called).toBeFalsy();
   });
 
-  it('pushes back execution time for skipped timers', async ({ clock }) => {
+  it('CK-190 pushes back execution time for skipped timers', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(() => {
       stub(clock.Date.now());
@@ -1412,7 +1412,7 @@ it.describe('fastForward', () => {
     expect(stub.calledWith(2000)).toBeTruthy();
   });
 
-  it('handles multiple pending timers and types', async ({ clock }) => {
+  it('CK-191 handles multiple pending timers and types', async ({ clock }) => {
     const longTimers = [createStub(), createStub()];
     const shortTimers = [createStub(), createStub(), createStub()];
     clock.setTimeout(longTimers[0], 2000);
@@ -1428,7 +1428,7 @@ it.describe('fastForward', () => {
     expect(shortTimers[2].callCount).toBe(1);
   });
 
-  it('does not rewind back in time', async ({ clock }) => {
+  it('CK-192 does not rewind back in time', async ({ clock }) => {
     const stub = createStub();
     const gotTime = await new Promise<number>(done => {
       clock.setTimeout(() => {
@@ -1451,7 +1451,7 @@ it.describe('fastForward', () => {
     expect(gotTime).toBeGreaterThan(1010);
   });
 
-  it('error does not break the clock', async ({ clock }) => {
+  it('CK-193 error does not break the clock', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(() => {
       stub(clock.Date.now());
@@ -1463,7 +1463,7 @@ it.describe('fastForward', () => {
     expect(stub.calledWith(2000)).toBeTruthy();
   });
 
-  it('error does not pause forever', async ({ clock }) => {
+  it('CK-194 error does not pause forever', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(() => {
       stub(clock.Date.now());
@@ -1477,13 +1477,13 @@ it.describe('fastForward', () => {
 });
 
 it.describe('pauseAt', () => {
-  it('pause at target time', async ({ clock }) => {
+  it('CK-195 pause at target time', async ({ clock }) => {
     clock.install(0);
     await clock.pauseAt(1000);
     expect(clock.Date.now()).toBe(1000);
   });
 
-  it('fire target timers', async ({ clock }) => {
+  it('CK-196 fire target timers', async ({ clock }) => {
     clock.install(0);
     const stub = createStub();
     clock.setTimeout(stub, 1000);
@@ -1492,7 +1492,7 @@ it.describe('pauseAt', () => {
     expect(stub.callCount).toBe(1);
   });
 
-  it('returns consumed clicks', async ({ clock }) => {
+  it('CK-197 returns consumed clicks', async ({ clock }) => {
     const now = Date.now();
     clock.install(now);
     const consumedTicks = await clock.pauseAt(now + 1000 * 60 * 60 * 24);
@@ -1501,18 +1501,18 @@ it.describe('pauseAt', () => {
 });
 
 it.describe('performance.now()', () => {
-  it('should start at 0', async ({ clock }) => {
+  it('CK-198 should start at 0', async ({ clock }) => {
     const result = clock.performance.now();
     expect(result).toBe(0);
   });
 
-  it('should run along with clock.tick', async ({ clock }) => {
+  it('CK-199 should run along with clock.tick', async ({ clock }) => {
     await clock.runFor(5000);
     const result = clock.performance.now();
     expect(result).toBe(5000);
   });
 
-  it('should listen to multiple ticks in performance.now', async ({ clock }) => {
+  it('CK-200 should listen to multiple ticks in performance.now', async ({ clock }) => {
     for (let i = 0; i < 10; i++) {
       const next = clock.performance.now();
       expect(next).toBe(1000 * i);
@@ -1520,7 +1520,7 @@ it.describe('performance.now()', () => {
     }
   });
 
-  it('should run with ticks with timers set', async ({ clock }) => {
+  it('CK-201 should run with ticks with timers set', async ({ clock }) => {
     clock.setTimeout(() => {
       const result = clock.performance.now();
       expect(result).toBe(2500);
@@ -1530,25 +1530,25 @@ it.describe('performance.now()', () => {
 });
 
 it.describe('requestIdleCallback', () => {
-  it('throws if no arguments', async ({ clock }) => {
+  it('CK-202 throws if no arguments', async ({ clock }) => {
     expect(() => {
       // @ts-expect-error
       clock.requestIdleCallback();
     }).toThrow();
   });
 
-  it('returns numeric id', async ({ clock }) => {
+  it('CK-203 returns numeric id', async ({ clock }) => {
     const result = clock.requestIdleCallback(() => {});
     expect(result).toEqual(expect.any(Number));
   });
 
-  it('returns unique id', async ({ clock }) => {
+  it('CK-204 returns unique id', async ({ clock }) => {
     const id1 = clock.requestIdleCallback(() => {});
     const id2 = clock.requestIdleCallback(() => {});
     expect(id2).not.toEqual(id1);
   });
 
-  it('runs after all timers', async ({ clock }) => {
+  it('CK-205 runs after all timers', async ({ clock }) => {
     const stub = createStub();
     clock.requestIdleCallback(stub);
     await clock.runFor(1000);
@@ -1558,7 +1558,7 @@ it.describe('requestIdleCallback', () => {
     expect(idleCallbackArg.timeRemaining()).toBe(0);
   });
 
-  it('runs no later than timeout option even if there are any timers', async ({ clock }) => {
+  it('CK-206 runs no later than timeout option even if there are any timers', async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(() => {}, 10);
     clock.setTimeout(() => {}, 30);
@@ -1567,7 +1567,7 @@ it.describe('requestIdleCallback', () => {
     expect(stub.called).toBeTruthy();
   });
 
-  it(`doesn't runs if there are any timers and no timeout option`, async ({ clock }) => {
+  it(`CK-207 doesn't runs if there are any timers and no timeout option`, async ({ clock }) => {
     const stub = createStub();
     clock.setTimeout(() => {}, 30);
     clock.requestIdleCallback(stub);
@@ -1577,7 +1577,7 @@ it.describe('requestIdleCallback', () => {
 });
 
 it.describe('cancelIdleCallback', () => {
-  it('removes idle callback', async ({ clock }) => {
+  it('CK-208 removes idle callback', async ({ clock }) => {
     const stub = createStub();
     const callbackId = clock.requestIdleCallback(stub, { timeout: 0 });
     clock.cancelIdleCallback(callbackId);
@@ -1595,7 +1595,7 @@ it.describe('Intl API', () => {
     );
   }
 
-  it('Executes formatRange like normal', async ({ clock }) => {
+  it('CK-209 Executes formatRange like normal', async ({ clock }) => {
     const start = new Date(Date.UTC(2020, 0, 1, 0, 0));
     const end = new Date(Date.UTC(2020, 0, 1, 0, 1));
     const options: Intl.DateTimeFormatOptions = {
@@ -1609,7 +1609,7 @@ it.describe('Intl API', () => {
     ).toBe('00:00–00:01');
   });
 
-  it('Executes formatRangeToParts like normal', async ({ clock }) => {
+  it('CK-210 Executes formatRangeToParts like normal', async ({ clock }) => {
     const start = new Date(Date.UTC(2020, 0, 1, 0, 0));
     const end = new Date(Date.UTC(2020, 0, 1, 0, 1));
     const options: Intl.DateTimeFormatOptions = {
@@ -1629,7 +1629,7 @@ it.describe('Intl API', () => {
     ]);
   });
 
-  it('Executes resolvedOptions like normal', async ({ clock }) => {
+  it('CK-211 Executes resolvedOptions like normal', async ({ clock }) => {
     const options: Intl.DateTimeFormatOptions = {
       timeZone: 'UTC',
       hour12: false,
@@ -1648,17 +1648,17 @@ it.describe('Intl API', () => {
     });
   });
 
-  it('formatToParts via isFirstOfMonth -> Returns true when passed a timestamp argument that is first of the month', async ({ clock }) => {
+  it('CK-212 formatToParts via isFirstOfMonth -> Returns true when passed a timestamp argument that is first of the month', async ({ clock }) => {
     // June 1 04:00 UTC - Toronto is June 1 00:00
     expect(isFirstOfMonth('America/Toronto', Date.UTC(2022, 5, 1, 4))).toBeTruthy();
   });
 
-  it('formatToParts via isFirstOfMonth -> Returns false when passed a timestamp argument that is not first of the month', async ({ clock }) => {
+  it('CK-213 formatToParts via isFirstOfMonth -> Returns false when passed a timestamp argument that is not first of the month', async ({ clock }) => {
     // June 1 00:00 UTC - Toronto is May 31 20:00
     expect(isFirstOfMonth('America/Toronto', Date.UTC(2022, 5, 1))).toBeFalsy();
   });
 
-  it('formatToParts via isFirstOfMonth -> Returns true when passed no timestamp and system time is first of the month', async ({ install }) => {
+  it('CK-214 formatToParts via isFirstOfMonth -> Returns true when passed no timestamp and system time is first of the month', async ({ install }) => {
     // June 1 04:00 UTC - Toronto is June 1 00:00
     install(Date.UTC(2022, 5, 1, 4));
     expect(isFirstOfMonth('America/Toronto')).toBeTruthy();
@@ -1667,20 +1667,20 @@ it.describe('Intl API', () => {
     expect(isFirstOfMonth('America/Toronto', 0)).toBeFalsy();
   });
 
-  it('formatToParts via isFirstOfMonth -> Returns false when passed no timestamp and system time is not first of the month', async ({ install }) => {
+  it('CK-215 formatToParts via isFirstOfMonth -> Returns false when passed no timestamp and system time is not first of the month', async ({ install }) => {
     // June 1 00:00 UTC - Toronto is May 31 20:00
     install(Date.UTC(2022, 5, 1));
     expect(isFirstOfMonth('America/Toronto')).toBeFalsy();
   });
 
-  it('Executes supportedLocalesOf like normal', async ({ installEx }) => {
+  it('CK-216 Executes supportedLocalesOf like normal', async ({ installEx }) => {
     const { originals } = installEx();
     expect(Intl.DateTimeFormat.supportedLocalesOf([])).toEqual(
         originals.Intl.DateTimeFormat.supportedLocalesOf([]),
     );
   });
 
-  it('Creates a RelativeTimeFormat like normal', async ({ clock }) => {
+  it('CK-217 Creates a RelativeTimeFormat like normal', async ({ clock }) => {
     const rtf = new Intl.RelativeTimeFormat('en-GB', {
       numeric: 'auto',
     });
@@ -1688,7 +1688,7 @@ it.describe('Intl API', () => {
   });
 });
 
-it('works with slow setTimeout in busy embedder', async ({ installEx }) => {
+it('CK-218 works with slow setTimeout in busy embedder', async ({ installEx }) => {
   const { originals, api, clock } = installEx({ now: 0 });
   await clock.pauseAt(0);
 
@@ -1718,7 +1718,7 @@ it('works with slow setTimeout in busy embedder', async ({ installEx }) => {
   ]);
 });
 
-it('works with slow setTimeout in busy embedder when not paused', async ({ installEx }) => {
+it('CK-219 works with slow setTimeout in busy embedder when not paused', async ({ installEx }) => {
   const { originals, api, clock } = installEx({ now: 0 });
   clock.setSystemTime(0);
 

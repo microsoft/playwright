@@ -17,14 +17,14 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should fire load when expected', async ({ page }) => {
+it('PA-001 should fire load when expected', async ({ page }) => {
   await Promise.all([
     page.goto('about:blank'),
     page.waitForEvent('load'),
   ]);
 });
 
-it('async stacks should work', async ({ page, server }) => {
+it('PA-002 async stacks should work', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     req.socket.end();
   });
@@ -34,7 +34,7 @@ it('async stacks should work', async ({ page, server }) => {
   expect(error.stack).toContain(__filename);
 });
 
-it('should provide access to the opener page', async ({ page }) => {
+it('PA-003 should provide access to the opener page', async ({ page }) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window.open('about:blank')),
@@ -43,13 +43,13 @@ it('should provide access to the opener page', async ({ page }) => {
   expect(opener).toBe(page);
 });
 
-it('should fire domcontentloaded when expected', async ({ page }) => {
+it('PA-004 should fire domcontentloaded when expected', async ({ page }) => {
   const navigatedPromise = page.goto('about:blank');
   await page.waitForEvent('domcontentloaded');
   await navigatedPromise;
 });
 
-it('should pass self as argument to domcontentloaded event', async ({ page }) => {
+it('PA-005 should pass self as argument to domcontentloaded event', async ({ page }) => {
   const [eventArg] = await Promise.all([
     new Promise(f => page.on('domcontentloaded', f)),
     page.goto('about:blank')
@@ -57,7 +57,7 @@ it('should pass self as argument to domcontentloaded event', async ({ page }) =>
   expect(eventArg).toBe(page);
 });
 
-it('should pass self as argument to load event', async ({ page }) => {
+it('PA-006 should pass self as argument to load event', async ({ page }) => {
   const [eventArg] = await Promise.all([
     new Promise(f => page.on('load', f)),
     page.goto('about:blank')
@@ -65,13 +65,13 @@ it('should pass self as argument to load event', async ({ page }) => {
   expect(eventArg).toBe(page);
 });
 
-it('page.url should work', async ({ page, server }) => {
+it('PA-007 page.url should work', async ({ page, server }) => {
   expect(page.url()).toBe('about:blank');
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('page.url should include hashes', async ({ page, server }) => {
+it('PA-008 page.url should include hashes', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE + '#hash');
   expect(page.url()).toBe(server.EMPTY_PAGE + '#hash');
   await page.evaluate(() => {
@@ -80,12 +80,12 @@ it('page.url should include hashes', async ({ page, server }) => {
   expect(page.url()).toBe(server.EMPTY_PAGE + '#dynamic');
 });
 
-it('page.title should return the page title', async ({ page, server }) => {
+it('PA-009 page.title should return the page title', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/title.html');
   expect(await page.title()).toBe('Woof-Woof');
 });
 
-it('page.title should not throw during navigation', async ({ page, server }) => {
+it('PA-010 page.title should not throw during navigation', async ({ page, server }) => {
   await page.setContent('<title>hello</title>');
   const promise = page.goto(server.PREFIX + '/title.html');
   const [titleOrError] = await Promise.all([
@@ -97,7 +97,7 @@ it('page.title should not throw during navigation', async ({ page, server }) => 
   await expect(page).toHaveTitle('Woof-Woof');
 });
 
-it('page.close should work with window.close', async function({ page }) {
+it('PA-011 page.close should work with window.close', async function({ page }) {
   const newPagePromise = page.waitForEvent('popup');
   await page.evaluate(() => window['newPage'] = window.open('about:blank'));
   const newPage = await newPagePromise;
@@ -106,7 +106,7 @@ it('page.close should work with window.close', async function({ page }) {
   await closedPromise;
 });
 
-it('page.frame should respect name', async function({ page, isBidi }) {
+it('PA-012 page.frame should respect name', async function({ page, isBidi }) {
   it.skip(isBidi, 'page.frame({ name }) is racy with BiDi');
 
   await page.setContent(`<iframe name=target></iframe>`);
@@ -116,13 +116,13 @@ it('page.frame should respect name', async function({ page, isBidi }) {
   expect(frame === page.mainFrame().childFrames()[0]).toBeTruthy();
 });
 
-it('page.frame should respect url', async function({ page, server }) {
+it('PA-013 page.frame should respect url', async function({ page, server }) {
   await page.setContent(`<iframe src="${server.EMPTY_PAGE}"></iframe>`);
   expect(page.frame({ url: /bogus/ })).toBe(null);
   expect(page.frame({ url: /empty/ }).url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should have sane user agent', async ({ page, browserName, isElectron, isAndroid }) => {
+it('PA-014 should have sane user agent', async ({ page, browserName, isElectron, isAndroid }) => {
   it.skip(isAndroid);
   it.skip(isElectron);
 
@@ -161,13 +161,13 @@ it('should have sane user agent', async ({ page, browserName, isElectron, isAndr
     expect(engine.startsWith('Version/')).toBe(true);
 });
 
-it('page.press should work', async ({ page, server }) => {
+it('PA-015 page.press should work', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.press('textarea', 'a');
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('a');
 });
 
-it('page.press should work for Enter', async ({ page }) => {
+it('PA-016 page.press should work for Enter', async ({ page }) => {
   await page.setContent(`<input onkeypress="console.log('press')"></input>`);
   const messages = [];
   page.on('console', message => messages.push(message));
@@ -175,20 +175,20 @@ it('page.press should work for Enter', async ({ page }) => {
   expect(messages[0].text()).toBe('press');
 });
 
-it('frame.press should work', async ({ page, server }) => {
+it('PA-017 frame.press should work', async ({ page, server }) => {
   await page.setContent(`<iframe name=inner src="${server.PREFIX}/input/textarea.html"></iframe>`);
   const frame = page.frame('inner');
   await frame.press('textarea', 'a');
   expect(await frame.evaluate(() => document.querySelector('textarea').value)).toBe('a');
 });
 
-it('has navigator.webdriver set to true', async ({ page, isAndroid }) => {
+it('PA-018 has navigator.webdriver set to true', async ({ page, isAndroid }) => {
   it.fixme(isAndroid);
 
   expect(await page.evaluate(() => navigator.webdriver)).toBe(true);
 });
 
-it('should iterate over page properties', async ({ page }) => {
+it('PA-019 should iterate over page properties', async ({ page }) => {
   const props = [];
   for (const prop in page) {
     if (page[prop] && typeof page[prop] === 'object')

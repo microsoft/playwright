@@ -44,7 +44,7 @@ async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => 
   };
 }
 
-it('should have version and creator', async ({ contextFactory, server }, testInfo) => {
+it('HA-001 should have version and creator', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
@@ -53,7 +53,7 @@ it('should have version and creator', async ({ contextFactory, server }, testInf
   expect(log.creator.version).toContain(process.env.PW_VERSION_OVERRIDE || require('../../package.json')['version']);
 });
 
-it('should have browser', async ({ browserName, browser, contextFactory, server }, testInfo) => {
+it('HA-002 should have browser', async ({ browserName, browser, contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
@@ -62,7 +62,7 @@ it('should have browser', async ({ browserName, browser, contextFactory, server 
   expect(log.browser!.version).toBe(browser.version());
 });
 
-it('should have pages', async ({ contextFactory, server }, testInfo) => {
+it('HA-003 should have pages', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto('data:text/html,<title>Hello</title>');
   // For data: load comes before domcontentloaded...
@@ -77,7 +77,7 @@ it('should have pages', async ({ contextFactory, server }, testInfo) => {
   expect(pageEntry.pageTimings.onLoad).toBeGreaterThan(0);
 });
 
-it('should have pages in persistent context', async ({ launchPersistent, browserName }, testInfo) => {
+it('HA-004 should have pages in persistent context', async ({ launchPersistent, browserName }, testInfo) => {
   const harPath = testInfo.outputPath('test.har');
   const { context, page } = await launchPersistent({ recordHar: { path: harPath } });
   await page.goto('data:text/html,<title>Hello</title>');
@@ -91,7 +91,7 @@ it('should have pages in persistent context', async ({ launchPersistent, browser
   expect(pageEntry.title).toBe('Hello');
 });
 
-it('should include request', async ({ contextFactory, server }, testInfo) => {
+it('HA-005 should include request', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
@@ -106,7 +106,7 @@ it('should include request', async ({ contextFactory, server }, testInfo) => {
   expect(entry.request.bodySize).toBe(0);
 });
 
-it('should populate entry startedDateTime from the browser', async ({ contextFactory, server }, testInfo) => {
+it('HA-006 should populate entry startedDateTime from the browser', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
 
@@ -139,7 +139,7 @@ it('should populate entry startedDateTime from the browser', async ({ contextFac
   expect(startedAt).toBeLessThan(unblockedAt - 100);
 });
 
-it('should include response', async ({ contextFactory, server }, testInfo) => {
+it('HA-007 should include response', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
@@ -151,7 +151,7 @@ it('should include response', async ({ contextFactory, server }, testInfo) => {
   expect(entry.response.headers.find(h => h.name.toLowerCase() === 'content-type')!.value).toContain('text/html');
 });
 
-it('should include redirectURL', async ({ contextFactory, server }, testInfo) => {
+it('HA-008 should include redirectURL', async ({ contextFactory, server }, testInfo) => {
   server.setRedirect('/foo.html', '/empty.html');
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/foo.html');
@@ -162,14 +162,14 @@ it('should include redirectURL', async ({ contextFactory, server }, testInfo) =>
   expect(entry.response.redirectURL).toBe(server.EMPTY_PAGE);
 });
 
-it('should include query params', async ({ contextFactory, server }, testInfo) => {
+it('HA-009 should include query params', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html?name=value');
   const log = await getLog();
   expect(log.entries[0].request.queryString).toEqual([{ name: 'name', value: 'value' }]);
 });
 
-it('should include postData', async ({ contextFactory, server }, testInfo) => {
+it('HA-010 should include postData', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => fetch('./post', { method: 'POST', body: 'Hello' }));
@@ -181,7 +181,7 @@ it('should include postData', async ({ contextFactory, server }, testInfo) => {
   });
 });
 
-it('should include binary postData', async ({ contextFactory, server }, testInfo) => {
+it('HA-011 should include binary postData', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(async () => {
@@ -195,7 +195,7 @@ it('should include binary postData', async ({ contextFactory, server }, testInfo
   });
 });
 
-it('should include form params', async ({ contextFactory, server }, testInfo) => {
+it('HA-012 should include form params', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<form method='POST' action='/post'><input type='text' name='foo' value='bar'><input type='number' name='baz' value='123'><input type='submit'></form>`);
@@ -211,7 +211,7 @@ it('should include form params', async ({ contextFactory, server }, testInfo) =>
   });
 });
 
-it('should include cookies', async ({ contextFactory, server }, testInfo) => {
+it('HA-013 should include cookies', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   const context = page.context();
   await context.addCookies([
@@ -230,7 +230,7 @@ it('should include cookies', async ({ contextFactory, server }, testInfo) => {
   ]);
 });
 
-it('should include set-cookies', async ({ contextFactory, server }, testInfo) => {
+it('HA-014 should include set-cookies', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', [
@@ -248,7 +248,7 @@ it('should include set-cookies', async ({ contextFactory, server }, testInfo) =>
   expect(new Date(cookies[2].expires!).valueOf()).toBeGreaterThan(Date.now());
 });
 
-it('should include set-cookies without equals sign as nameless', {
+it('HA-015 should include set-cookies without equals sign as nameless', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43155' },
 }, async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
@@ -261,7 +261,7 @@ it('should include set-cookies without equals sign as nameless', {
   expect(log.entries[0].response.cookies).toEqual([{ name: '', value: 'token', httpOnly: true }]);
 });
 
-it('should include set-cookies with lowercase attributes', async ({ contextFactory, server }, testInfo) => {
+it('HA-016 should include set-cookies with lowercase attributes', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', ['name=value; path=/; httponly; secure; samesite=Lax']);
@@ -273,7 +273,7 @@ it('should include set-cookies with lowercase attributes', async ({ contextFacto
   expect(cookies[0]).toEqual({ name: 'name', value: 'value', path: '/', httpOnly: true, secure: true, sameSite: 'Lax' });
 });
 
-it('should skip invalid Expires', async ({ contextFactory, server }, testInfo) => {
+it('HA-017 should skip invalid Expires', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', [
@@ -287,7 +287,7 @@ it('should skip invalid Expires', async ({ contextFactory, server }, testInfo) =
   expect(cookies[0]).toEqual({ name: 'name', value: 'value' });
 });
 
-it('should include set-cookies with comma', async ({ contextFactory, server, browserName }, testInfo) => {
+it('HA-018 should include set-cookies with comma', async ({ contextFactory, server, browserName }, testInfo) => {
   it.fixme(browserName === 'webkit', 'We get "name1=val, ue1, name2=val, ue2" as a header value');
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.setRoute('/empty.html', (req, res) => {
@@ -303,7 +303,7 @@ it('should include set-cookies with comma', async ({ contextFactory, server, bro
   expect(cookies[1]).toEqual({ name: 'name2', value: 'val, ue2' });
 });
 
-it('should include secure set-cookies', async ({ contextFactory, httpsServer }, testInfo) => {
+it('HA-019 should include secure set-cookies', async ({ contextFactory, httpsServer }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   httpsServer.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', [
@@ -317,7 +317,7 @@ it('should include secure set-cookies', async ({ contextFactory, httpsServer }, 
   expect(cookies[0]).toEqual({ name: 'name1', value: 'value1', secure: true });
 });
 
-it('should record request overrides', async ({ contextFactory, server }, testInfo) => {
+it('HA-020 should record request overrides', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.route('**/foo', route => {
     void route.fallback({
@@ -343,7 +343,7 @@ it('should record request overrides', async ({ contextFactory, server }, testInf
   expect(request.postData).toEqual({ 'mimeType': 'text/plain', 'params': [], 'text': 'Hi!' });
 });
 
-it('should include content @smoke', async ({ contextFactory, server }, testInfo) => {
+it('HA-021 should include content @smoke', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');
   await page.evaluate(() => fetch('/pptr.png').then(r => r.arrayBuffer()));
@@ -368,7 +368,7 @@ it('should include content @smoke', async ({ contextFactory, server }, testInfo)
   expect(log.entries[2].response.content.compression).toBe(0);
 });
 
-it('should use attach mode for zip extension', async ({ contextFactory, server }, testInfo) => {
+it('HA-022 should use attach mode for zip extension', async ({ contextFactory, server }, testInfo) => {
   const { page, getZip } = await pageWithHar(contextFactory, testInfo, { outputPath: 'test.har.zip' });
   await page.goto(server.PREFIX + '/har.html');
   await page.evaluate(() => fetch('/pptr.png').then(r => r.arrayBuffer()));
@@ -378,7 +378,7 @@ it('should use attach mode for zip extension', async ({ contextFactory, server }
   expect(zip.get('75841480e2606c03389077304342fac2c58ccb1b.html')!.toString()).toContain('HAR Page');
 });
 
-it('should omit content', async ({ contextFactory, server }, testInfo) => {
+it('HA-023 should omit content', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo, { content: 'omit', outputPath: 'test.har' });
   await page.goto(server.PREFIX + '/har.html');
   await page.evaluate(() => fetch('/pptr.png').then(r => r.arrayBuffer()));
@@ -387,7 +387,7 @@ it('should omit content', async ({ contextFactory, server }, testInfo) => {
   expect(log.entries[0].response.content._file).toBe(undefined);
 });
 
-it('should omit content legacy', async ({ contextFactory, server }, testInfo) => {
+it('HA-024 should omit content legacy', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo, { omitContent: true, outputPath: 'test.har' });
   await page.goto(server.PREFIX + '/har.html');
   await page.evaluate(() => fetch('/pptr.png').then(r => r.arrayBuffer()));
@@ -396,7 +396,7 @@ it('should omit content legacy', async ({ contextFactory, server }, testInfo) =>
   expect(log.entries[0].response.content._file).toBe(undefined);
 });
 
-it('should attach content', async ({ contextFactory, server }, testInfo) => {
+it('HA-025 should attach content', async ({ contextFactory, server }, testInfo) => {
   const { page, getZip } = await pageWithHar(contextFactory, testInfo, { content: 'attach', outputPath: 'test.har.zip' });
   await page.goto(server.PREFIX + '/har.html');
   await page.evaluate(() => fetch('/pptr.png').then(r => r.arrayBuffer()));
@@ -426,7 +426,7 @@ it('should attach content', async ({ contextFactory, server }, testInfo) => {
   expect(zip.get('a4c3a18f0bb83f5d9fe7ce561e065c36205762fa.png')!.byteLength).toBe(log.entries[2].response.content.size);
 });
 
-it('should filter by glob', async ({ contextFactory, server }, testInfo) => {
+it('HA-026 should filter by glob', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('test.har');
   const context = await contextFactory({ baseURL: server.PREFIX, recordHar: { path: harPath, urlFilter: '/*.css' }, ignoreHTTPSErrors: true });
   const page = await context.newPage();
@@ -437,7 +437,7 @@ it('should filter by glob', async ({ contextFactory, server }, testInfo) => {
   expect(log.entries[0].request.url.endsWith('one-style.css')).toBe(true);
 });
 
-it('should filter by regexp', async ({ contextFactory, server }, testInfo) => {
+it('HA-027 should filter by regexp', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('test.har');
   const context = await contextFactory({ recordHar: { path: harPath, urlFilter: /HAR.X?HTML/i }, ignoreHTTPSErrors: true });
   const page = await context.newPage();
@@ -448,7 +448,7 @@ it('should filter by regexp', async ({ contextFactory, server }, testInfo) => {
   expect(log.entries[0].request.url.endsWith('har.html')).toBe(true);
 });
 
-it('should include sizes', async ({ contextFactory, server, asset }, testInfo) => {
+it('HA-028 should include sizes', async ({ contextFactory, server, asset }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');
   const log = await getLog();
@@ -465,7 +465,7 @@ it('should include sizes', async ({ contextFactory, server, asset }, testInfo) =
   expect(log.entries[1].response._transferSize).toBeGreaterThanOrEqual(150);
 });
 
-it('should work with gzip compression', async ({ contextFactory, server, browserName }, testInfo) => {
+it('HA-029 should work with gzip compression', async ({ contextFactory, server, browserName }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.enableGzip('/simplezip.json');
   const response = await page.goto(server.PREFIX + '/simplezip.json');
@@ -475,21 +475,21 @@ it('should work with gzip compression', async ({ contextFactory, server, browser
   expect(log.entries[0].response.content.compression).toBeGreaterThan(4000);
 });
 
-it('should calculate time', async ({ contextFactory, server }, testInfo) => {
+it('HA-030 should calculate time', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');
   const log = await getLog();
   expect(log.entries[0].time).toBeGreaterThan(0);
 });
 
-it('should return receive time', async ({ contextFactory, server }, testInfo) => {
+it('HA-031 should return receive time', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');
   const log = await getLog();
   expect(log.entries[0].timings.receive).toBeGreaterThan(0);
 });
 
-it('should report the correct _transferSize with PNG files', async ({ contextFactory, server, asset }, testInfo) => {
+it('HA-032 should report the correct _transferSize with PNG files', async ({ contextFactory, server, asset }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
@@ -499,7 +499,7 @@ it('should report the correct _transferSize with PNG files', async ({ contextFac
   expect(log.entries[1].response._transferSize).toBeGreaterThan(fs.statSync(asset('pptr.png')).size);
 });
 
-it('should have -1 _transferSize when its a failed request', async ({ contextFactory, server }, testInfo) => {
+it('HA-033 should have -1 _transferSize when its a failed request', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
@@ -513,7 +513,7 @@ it('should have -1 _transferSize when its a failed request', async ({ contextFac
   expect(log.entries[1].response._transferSize).toBe(-1);
 });
 
-it('should record failed request headers', async ({ contextFactory, server }, testInfo) => {
+it('HA-034 should record failed request headers', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.setRoute('/har.html', (req, res) => {
     res.socket!.destroy();
@@ -527,7 +527,7 @@ it('should record failed request headers', async ({ contextFactory, server }, te
   expect(request.headers).toContainEqual(expect.objectContaining({ name: 'User-Agent' }));
 });
 
-it('should record failed request overrides', async ({ contextFactory, server }, testInfo) => {
+it('HA-035 should record failed request overrides', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.setRoute('/empty.html', (req, res) => {
     res.socket!.destroy();
@@ -556,7 +556,7 @@ it('should record failed request overrides', async ({ contextFactory, server }, 
   expect(request.postData).toEqual({ 'mimeType': 'text/plain', 'params': [], 'text': 'Hi!' });
 });
 
-it('should report the correct request body size', async ({ contextFactory, server }, testInfo) => {
+it('HA-036 should report the correct request body size', async ({ contextFactory, server }, testInfo) => {
   server.setRoute('/api', (req, res) => res.end());
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
@@ -573,7 +573,7 @@ it('should report the correct request body size', async ({ contextFactory, serve
   expect(log.entries[1].request.bodySize).toBe(6);
 });
 
-it('should report the correct request body size when the bodySize is 0', async ({ contextFactory, server }, testInfo) => {
+it('HA-037 should report the correct request body size when the bodySize is 0', async ({ contextFactory, server }, testInfo) => {
   server.setRoute('/api', (req, res) => res.end());
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
@@ -590,7 +590,7 @@ it('should report the correct request body size when the bodySize is 0', async (
   expect(log.entries[1].request.bodySize).toBe(0);
 });
 
-it('should report the correct response body size when the bodySize is 0', async ({ contextFactory, server }, testInfo) => {
+it('HA-038 should report the correct response body size when the bodySize is 0', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   const response = await page.goto(server.EMPTY_PAGE);
   await response!.finished();
@@ -598,7 +598,7 @@ it('should report the correct response body size when the bodySize is 0', async 
   expect(log.entries[0].response.bodySize).toBe(0);
 });
 
-it('should have popup requests', async ({ contextFactory, server }, testInfo) => {
+it('HA-039 should have popup requests', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
@@ -619,7 +619,7 @@ it('should have popup requests', async ({ contextFactory, server }, testInfo) =>
   expect(entries[1].response.status).toBe(200);
 });
 
-it('should not contain internal pages', async ({ browserName, contextFactory, server }, testInfo) => {
+it('HA-040 should not contain internal pages', async ({ browserName, contextFactory, server }, testInfo) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/6743' });
 
   server.setRoute('/empty.html', (req, res) => {
@@ -639,7 +639,7 @@ it('should not contain internal pages', async ({ browserName, contextFactory, se
   expect(log.pages!.length).toBe(1);
 });
 
-it('should have connection details', async ({ contextFactory, server, browserName, platform, mode }, testInfo) => {
+it('HA-041 should have connection details', async ({ contextFactory, server, browserName, platform, mode }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
@@ -649,7 +649,7 @@ it('should have connection details', async ({ contextFactory, server, browserNam
   expect(securityDetails).toEqual({});
 });
 
-it('should have security details', async ({ contextFactory, httpsServer, browserName, platform, mode, channel, isFrozenWebkit }, testInfo) => {
+it('HA-042 should have security details', async ({ contextFactory, httpsServer, browserName, platform, mode, channel, isFrozenWebkit }, testInfo) => {
   it.fail(browserName === 'webkit' && platform === 'win32' && channel !== 'webkit-wsl');
   it.skip(isFrozenWebkit);
 
@@ -674,7 +674,7 @@ it('should have security details', async ({ contextFactory, httpsServer, browser
   expect(apiLog.entries[0]._securityDetails).toEqual({ issuer: 'playwright-test', protocol: 'TLSv1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
 });
 
-it('should have connection details for redirects', async ({ contextFactory, server, browserName, mode }, testInfo) => {
+it('HA-043 should have connection details for redirects', async ({ contextFactory, server, browserName, mode }, testInfo) => {
   server.setRedirect('/foo.html', '/empty.html');
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/foo.html');
@@ -696,7 +696,7 @@ it('should have connection details for redirects', async ({ contextFactory, serv
   expect(detailsEmpty._serverPort).toBe(server.PORT);
 });
 
-it('should have connection details for failed requests', async ({ contextFactory, server, browserName, platform, mode }, testInfo) => {
+it('HA-044 should have connection details for failed requests', async ({ contextFactory, server, browserName, platform, mode }, testInfo) => {
   server.setRoute('/one-style.css', (_, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.socket!.destroy();
@@ -709,14 +709,14 @@ it('should have connection details for failed requests', async ({ contextFactory
   expect(port).toBe(server.PORT);
 });
 
-it('should return server address directly from response', async ({ page, server, mode }) => {
+it('HA-045 should return server address directly from response', async ({ page, server, mode }) => {
   const response = await page.goto(server.EMPTY_PAGE);
   const { ipAddress, port } = (await response!.serverAddr())!;
   expect(ipAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
   expect(port).toBe(server.PORT);
 });
 
-it('should return security details directly from response', async ({ contextFactory, httpsServer, browserName, platform, isFrozenWebkit }) => {
+it('HA-046 should return security details directly from response', async ({ contextFactory, httpsServer, browserName, platform, isFrozenWebkit }) => {
   it.skip(isFrozenWebkit);
 
   const context = await contextFactory({ ignoreHTTPSErrors: true });
@@ -732,7 +732,7 @@ it('should return security details directly from response', async ({ contextFact
     expect(securityDetails).toEqual({ issuer: 'playwright-test', protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
 });
 
-it('should contain http2 for http2 requests', async ({ contextFactory }, testInfo) => {
+it('HA-047 should contain http2 for http2 requests', async ({ contextFactory }, testInfo) => {
   const server = createHttp2Server(await TestServer.certOptions());
   server.on('stream', stream => {
     stream.respond({
@@ -752,7 +752,7 @@ it('should contain http2 for http2 requests', async ({ contextFactory }, testInf
   server.close();
 });
 
-it('should filter favicon and favicon redirects', async ({ server, browserName, headless, asset, contextFactory, channel }, testInfo) => {
+it('HA-048 should filter favicon and favicon redirects', async ({ server, browserName, headless, asset, contextFactory, channel }, testInfo) => {
   it.skip(headless && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
   it.skip(!headless && browserName === 'webkit', 'headed webkit does not have a favicon feature');
 
@@ -800,7 +800,7 @@ it('should filter favicon and favicon redirects', async ({ server, browserName, 
   expect(entry.request.url).toBe(server.PREFIX + '/page.html');
 });
 
-it('should have different hars for concurrent contexts', async ({ contextFactory }, testInfo) => {
+it('HA-049 should have different hars for concurrent contexts', async ({ contextFactory }, testInfo) => {
   const session0 = await pageWithHar(contextFactory, testInfo, { outputPath: 'test-0.har' });
   await session0.page.goto('data:text/html,<title>Zero</title>');
   await session0.page.waitForLoadState('domcontentloaded');
@@ -830,7 +830,7 @@ it('should have different hars for concurrent contexts', async ({ contextFactory
   }
 });
 
-it('should exclude API request', async ({ contextFactory, server }, testInfo) => {
+it('HA-050 should exclude API request', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await page.request.get(server.PREFIX + '/simple.json');
@@ -838,7 +838,7 @@ it('should exclude API request', async ({ contextFactory, server }, testInfo) =>
   expect(log.entries.map(entry => entry.request.url)).toEqual([server.EMPTY_PAGE]);
 });
 
-it('should correctly record API request cookies with equals sign in value', async ({ contextFactory, server }, testInfo) => {
+it('HA-051 should correctly record API request cookies with equals sign in value', async ({ contextFactory, server }, testInfo) => {
   const context = await contextFactory();
   const harPath = testInfo.outputPath('request.har');
   await context.request.tracing.startHar(harPath);
@@ -855,7 +855,7 @@ it('should correctly record API request cookies with equals sign in value', asyn
   ]);
 });
 
-it('should record nameless API request cookies', {
+it('HA-052 should record nameless API request cookies', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43155' },
 }, async ({ contextFactory, server }, testInfo) => {
   const context = await contextFactory();
@@ -873,7 +873,7 @@ it('should record nameless API request cookies', {
   ]);
 });
 
-it('should respect minimal mode for API Requests', async ({ contextFactory, server }, testInfo) => {
+it('HA-053 should respect minimal mode for API Requests', async ({ contextFactory, server }, testInfo) => {
   const context = await contextFactory();
   const harPath = testInfo.outputPath('request.har');
   await context.request.tracing.startHar(harPath, { mode: 'minimal' });
@@ -895,7 +895,7 @@ it('should respect minimal mode for API Requests', async ({ contextFactory, serv
   expect(entry.response.bodySize).toBe(-1);
 });
 
-it('should include redirects from API request', async ({ contextFactory, server }, testInfo) => {
+it('HA-054 should include redirects from API request', async ({ contextFactory, server }, testInfo) => {
   server.setRedirect('/redirect-me', '/simple.json');
   const context = await contextFactory();
   const harPath = testInfo.outputPath('request.har');
@@ -917,7 +917,7 @@ it('should include redirects from API request', async ({ contextFactory, server 
   expect(json.timings).toBeDefined();
 });
 
-it('should not hang on resources served from cache', async ({ contextFactory, server, browserName, isBidi }, testInfo) => {
+it('HA-055 should not hang on resources served from cache', async ({ contextFactory, server, browserName, isBidi }, testInfo) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11435' });
   server.setRoute('/one-style.css', (req, res) => {
     res.writeHead(200, {
@@ -938,7 +938,7 @@ it('should not hang on resources served from cache', async ({ contextFactory, se
     expect(entries.length).toBe(2);
 });
 
-it('should not hang on slow chunked response', async ({ browserName, browser, contextFactory, server }, testInfo) => {
+it('HA-056 should not hang on slow chunked response', async ({ browserName, browser, contextFactory, server }, testInfo) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21182' });
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, {
@@ -972,7 +972,7 @@ it('should not hang on slow chunked response', async ({ browserName, browser, co
   expect(log.browser!.version).toBe(browser.version());
 });
 
-it('should close the context when saving the har fails', async ({ contextFactory, server }, testInfo) => {
+it('HA-057 should close the context when saving the har fails', async ({ contextFactory, server }, testInfo) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42231' });
   const filePath = testInfo.outputPath('not-a-directory');
   fs.writeFileSync(filePath, 'data');
@@ -985,7 +985,7 @@ it('should close the context when saving the har fails', async ({ contextFactory
   await context.close();
 });
 
-it('should support HAR larger than 512MB', async ({ contextFactory, server, browserName }, testInfo) => {
+it('HA-058 should support HAR larger than 512MB', async ({ contextFactory, server, browserName }, testInfo) => {
   it.skip(browserName !== 'chromium', 'serializer is browser-agnostic; one browser is enough');
   it.slow();
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36707' });
@@ -1022,7 +1022,7 @@ it('should support HAR larger than 512MB', async ({ contextFactory, server, brow
   expect(tail.toString()).toMatch(/\}\s*\}\s*$/);
 });
 
-it('should record resource type', async ({ contextFactory, server, asset }, testInfo) => {
+it('HA-059 should record resource type', async ({ contextFactory, server, asset }, testInfo) => {
   server.setRoute('/resource-types.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`
@@ -1079,7 +1079,7 @@ it('should record resource type', async ({ contextFactory, server, asset }, test
 });
 
 it.describe('tracing.startHar', () => {
-  it('should record a HAR with options', async ({ contextFactory, server }, testInfo) => {
+  it('HA-060 should record a HAR with options', async ({ contextFactory, server }, testInfo) => {
     const context = await contextFactory();
     const harPath = testInfo.outputPath('tracing.har');
     await context.tracing.startHar(harPath, { mode: 'minimal', urlFilter: '**/one-style.css' });
@@ -1095,7 +1095,7 @@ it.describe('tracing.startHar', () => {
     expect(log.entries[0].request.bodySize).toBe(-1);
   });
 
-  it('should record a HAR for a context APIRequestContext', async ({ contextFactory, server }, testInfo) => {
+  it('HA-061 should record a HAR for a context APIRequestContext', async ({ contextFactory, server }, testInfo) => {
     const context = await contextFactory();
     const harPath = testInfo.outputPath('request.har');
     await context.request.tracing.startHar(harPath);
@@ -1153,7 +1153,7 @@ it.describe('tracing.startHar', () => {
     expect(entry._serverPort).toEqual(server.PORT);
   });
 
-  it('should include pages', async ({ contextFactory, server }, testInfo) => {
+  it('HA-062 should include pages', async ({ contextFactory, server }, testInfo) => {
     const context = await contextFactory();
     const harPath = testInfo.outputPath('tracing.har');
     await context.tracing.startHar(harPath);
@@ -1171,7 +1171,7 @@ it.describe('tracing.startHar', () => {
     expect(log.pages[1].title).toBe('');
   });
 
-  it('should record a zipped HAR for APIRequestContext', async ({ playwright, server }, testInfo) => {
+  it('HA-063 should record a zipped HAR for APIRequestContext', async ({ playwright, server }, testInfo) => {
     const request = await playwright.request.newContext();
     const harPath = testInfo.outputPath('tracing.har.zip');
     await request.tracing.startHar(harPath, { content: 'attach' });
@@ -1184,7 +1184,7 @@ it.describe('tracing.startHar', () => {
     expect(log.entries.some(e => e.request.url === server.PREFIX + '/simple.json')).toBe(true);
   });
 
-  it('should record correct cookie expires for APIRequestContext', async ({ playwright, server }, testInfo) => {
+  it('HA-064 should record correct cookie expires for APIRequestContext', async ({ playwright, server }, testInfo) => {
     server.setRoute('/set-cookie', (req, res) => {
       res.setHeader('Set-Cookie', 'name=value; Expires=Tue, 01 Jan 2030 00:00:00 GMT');
       res.end('hello');
@@ -1203,7 +1203,7 @@ it.describe('tracing.startHar', () => {
     expect(new Date(cookie.expires!).getUTCFullYear()).toBe(2030);
   });
 
-  it('should record mixed-case request content-type for APIRequestContext', async ({ playwright, server }, testInfo) => {
+  it('HA-065 should record mixed-case request content-type for APIRequestContext', async ({ playwright, server }, testInfo) => {
     server.setRoute('/post', (req, res) => res.end('ok'));
     const request = await playwright.request.newContext();
     const harPath = testInfo.outputPath('api-post.har.zip');
@@ -1218,7 +1218,7 @@ it.describe('tracing.startHar', () => {
     expect(entry.request.postData!.mimeType).toBe('application/json');
   });
 
-  it('should record a HAR with resourcesDir', async ({ contextFactory, server }, testInfo) => {
+  it('HA-066 should record a HAR with resourcesDir', async ({ contextFactory, server }, testInfo) => {
     const context = await contextFactory();
     const harPath = testInfo.outputPath('tracing.har');
     const resourcesDir = testInfo.outputPath('har-resources');
@@ -1239,7 +1239,7 @@ it.describe('tracing.startHar', () => {
     expect(fs.readFileSync(resourcePath).toString()).toContain('pink');
   });
 
-  it('should reject resourcesDir together with a .zip har file', async ({ contextFactory }, testInfo) => {
+  it('HA-067 should reject resourcesDir together with a .zip har file', async ({ contextFactory }, testInfo) => {
     const context = await contextFactory();
     const harPath = testInfo.outputPath('tracing.har.zip');
     const resourcesDir = testInfo.outputPath('har-resources');

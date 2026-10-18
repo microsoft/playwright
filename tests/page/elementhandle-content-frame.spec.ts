@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 
-it('should work', async ({ page, server }) => {
+it('EH-019 should work', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const elementHandle = await page.$('#frame1');
@@ -26,7 +26,7 @@ it('should work', async ({ page, server }) => {
   expect(frame).toBe(page.frames()[1]);
 });
 
-it('should work for cross-process iframes', async ({ page, server }) => {
+it('EH-020 should work for cross-process iframes', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
   const elementHandle = await page.$('#frame1');
@@ -34,7 +34,7 @@ it('should work for cross-process iframes', async ({ page, server }) => {
   expect(frame).toBe(page.frames()[1]);
 });
 
-it('should work for cross-frame evaluations', async ({ page, server }) => {
+it('EH-021 should work for cross-frame evaluations', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const frame = page.frames()[1];
@@ -42,7 +42,7 @@ it('should work for cross-frame evaluations', async ({ page, server }) => {
   expect(await elementHandle.contentFrame()).toBe(frame);
 });
 
-it('should return null for non-iframes', async ({ page, server }) => {
+it('EH-022 should return null for non-iframes', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const frame = page.frames()[1];
@@ -50,7 +50,7 @@ it('should return null for non-iframes', async ({ page, server }) => {
   expect(await elementHandle.contentFrame()).toBe(null);
 });
 
-it('should return null for document.documentElement', async ({ page, server }) => {
+it('EH-023 should return null for document.documentElement', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const frame = page.frames()[1];

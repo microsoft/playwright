@@ -46,7 +46,7 @@ async function replayGets(entries: any[], headers: Header[], count: number): Pro
   return bodies;
 }
 
-test('recorded order should serve one copy per concurrent lookup', async () => {
+test('HA-120 recorded order should serve one copy per concurrent lookup', async () => {
   // Comparing POST bodies awaits before each hop of a redirect chain is picked. Without serialization the
   // second lookup picks the first redirect copy again while the first lookup is still walking its chain.
   const chain = (target: string, body: string) => [
@@ -60,13 +60,13 @@ test('recorded order should serve one copy per concurrent lookup', async () => {
   expect(bodies).toEqual(['1', '2']);
 });
 
-test('recorded order should not skip a copy over a header the request does not send', async () => {
+test('HA-121 recorded order should not skip a copy over a header the request does not send', async () => {
   // A cookie or referer present while recording and absent in replay is not evidence of a different request.
   const entries = [getEntry('1', [{ name: 'cookie', value: 'sid=1' }]), getEntry('2')];
   expect(await replayGets(entries, [], 2)).toEqual(['1', '2']);
 });
 
-test('recorded order should not prefer a copy for recording more headers', async () => {
+test('HA-122 recorded order should not prefer a copy for recording more headers', async () => {
   // Firefox records fewer request headers behind a redirect than for a direct navigation to the same url.
   const a = { name: 'a', value: '1' };
   const b = { name: 'b', value: '2' };
@@ -74,7 +74,7 @@ test('recorded order should not prefer a copy for recording more headers', async
   expect(await replayGets(entries, [a, b], 2)).toEqual(['1', '2']);
 });
 
-test('recorded order should reuse a served copy over an unserved copy recorded for another header value', async () => {
+test('HA-123 recorded order should reuse a served copy over an unserved copy recorded for another header value', async () => {
   // The json copy was recorded for a different request, so a third html request must not receive it.
   const html = { name: 'accept', value: 'text/html' };
   const json = { name: 'accept', value: 'application/json' };
@@ -83,14 +83,14 @@ test('recorded order should reuse a served copy over an unserved copy recorded f
   expect(await replayGets(entries, [json], 2)).toEqual(['json1', 'json1']);
 });
 
-test('recorded order should ignore a header that differs from every copy alike', async () => {
+test('HA-124 recorded order should ignore a header that differs from every copy alike', async () => {
   // A browser version header drifts between recording and replay for every copy at once.
   const recorded = { name: 'sec-ch-ua', value: 'v1' };
   const entries = [getEntry('1', [recorded]), getEntry('2', [recorded])];
   expect(await replayGets(entries, [{ name: 'sec-ch-ua', value: 'v2' }], 2)).toEqual(['1', '2']);
 });
 
-test('recorded order should keep a sequence per POST body', async () => {
+test('HA-125 recorded order should keep a sequence per POST body', async () => {
   const post = (body: string, text: string) => ({
     request: { method: 'POST', url: 'http://a/', headers: [], postData: { text: body } },
     response: { status: 200, headers: [], content: { text } },
@@ -103,7 +103,7 @@ test('recorded order should keep a sequence per POST body', async () => {
   expect(bodies).toEqual(['a1', 'a2', 'b1', 'b1']);
 });
 
-test('recorded order should keep the slot of a copy whose content fails to load', async ({}, testInfo) => {
+test('HA-126 recorded order should keep the slot of a copy whose content fails to load', async ({}, testInfo) => {
   const dir = testInfo.outputPath('har');
   fs.mkdirSync(dir, { recursive: true });
   const broken = {
@@ -115,7 +115,7 @@ test('recorded order should keep the slot of a copy whose content fails to load'
   expect((await backend.lookup('http://a/', 'GET', [], undefined, false)).body!.toString()).toBe('2');
 });
 
-test('should report a redirect cycle once every copy was followed', async () => {
+test('HA-127 should report a redirect cycle once every copy was followed', async () => {
   const redirect = (url: string, location: string) => ({
     request: { method: 'GET', url, headers: [] },
     response: { status: 302, headers: [{ name: 'location', value: location }], content: {} },

@@ -19,7 +19,7 @@ import type { ElementHandle } from 'playwright-core';
 
 it.use({ hasTouch: true });
 
-it('should send all of the correct events @smoke', async ({ page }) => {
+it('TA-001 should send all of the correct events @smoke', async ({ page }) => {
   await page.setContent(`
   <div id="a" style="background: lightblue; width: 50px; height: 50px">a</div>
   <div id="b" style="background: pink; width: 50px; height: 50px">b</div>
@@ -39,7 +39,7 @@ it('should send all of the correct events @smoke', async ({ page }) => {
   ]);
 });
 
-it('trial run should not tap', async ({ page }) => {
+it('TA-002 trial run should not tap', async ({ page }) => {
   await page.setContent(`
     <div id="a" style="background: lightblue; width: 50px; height: 50px">a</div>
     <div id="b" style="background: pink; width: 50px; height: 50px">b</div>
@@ -51,7 +51,7 @@ it('trial run should not tap', async ({ page }) => {
   expect(await eventsHandle.jsonValue()).toEqual(expected);
 });
 
-it('should not send mouse events touchstart is canceled', async ({ page }) => {
+it('TA-003 should not send mouse events touchstart is canceled', async ({ page }) => {
   await page.setContent(`<div style="width: 50px; height: 50px; background: red">`);
   await page.evaluate(() => {
     // touchstart is not cancelable unless passive is false
@@ -67,7 +67,7 @@ it('should not send mouse events touchstart is canceled', async ({ page }) => {
   ]);
 });
 
-it('should not send mouse events when touchend is canceled', async ({ page }) => {
+it('TA-004 should not send mouse events when touchend is canceled', async ({ page }) => {
   await page.setContent(`<div style="width: 50px; height: 50px; background: red">`);
   await page.evaluate(() => {
     document.addEventListener('touchend', t => t.preventDefault());
@@ -82,7 +82,7 @@ it('should not send mouse events when touchend is canceled', async ({ page }) =>
   ]);
 });
 
-it('should not wait for a navigation caused by a tap', async ({ page, server }) => {
+it('TA-005 should not wait for a navigation caused by a tap', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<a href="/intercept-this.html">link</a>;`);
   await Promise.all([
@@ -91,7 +91,7 @@ it('should not wait for a navigation caused by a tap', async ({ page, server }) 
   ]);
 });
 
-it('should work with modifiers', async ({ page  }) => {
+it('TA-006 should work with modifiers', async ({ page  }) => {
   await page.setContent('hello world');
   const altKeyPromise = page.evaluate(() => new Promise(resolve => {
     document.addEventListener('touchstart', event => {
@@ -106,7 +106,7 @@ it('should work with modifiers', async ({ page  }) => {
   expect(await altKeyPromise).toBe(true);
 });
 
-it('should send well formed touch points', async ({ page }) => {
+it('TA-007 should send well formed touch points', async ({ page }) => {
   const promises = Promise.all([
     page.evaluate(() => new Promise(resolve => {
       document.addEventListener('touchstart', event => {
@@ -158,7 +158,7 @@ it('should send well formed touch points', async ({ page }) => {
   expect(touchend).toEqual([]);
 });
 
-it('should wait until an element is visible to tap it', async ({ page }) => {
+it('TA-008 should wait until an element is visible to tap it', async ({ page }) => {
   const div = await page.evaluateHandle(() => {
     const button = document.createElement('button');
     button.textContent = 'not clicked';
@@ -188,7 +188,7 @@ async function trackEvents(target: ElementHandle) {
 }
 
 it.describe('locators', () => {
-  it('should send all of the correct events', async ({ page }) => {
+  it('TA-009 should send all of the correct events', async ({ page }) => {
     await page.setContent(`
       <div id="a" style="background: lightblue; width: 50px; height: 50px">a</div>
       <div id="b" style="background: pink; width: 50px; height: 50px">b</div>

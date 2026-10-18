@@ -21,7 +21,7 @@ const launchOptions = (channel: string) => {
   return channel ? `.setChannel("${channel}")\n        .setHeadless(false)` : '.setHeadless(false)';
 };
 
-test('should print the correct imports and context options', async ({ runCLI, channel, browserName, server }) => {
+test('CG-141 should print the correct imports and context options', async ({ runCLI, channel, browserName, server }) => {
   const cli = runCLI(['--target=java', server.EMPTY_PAGE]);
   const expectedResult = `import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.*;
@@ -37,14 +37,14 @@ public class Example {
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options for custom settings', async ({ runCLI, server }) => {
+test('CG-142 should print the correct context options for custom settings', async ({ runCLI, server }) => {
   const cli = runCLI(['--color-scheme=light', '--target=java', server.EMPTY_PAGE]);
   const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
         .setColorScheme(ColorScheme.LIGHT));`;
   await cli.waitFor(expectedResult);
 });
 
-test('should print the correct context options when using a device', async ({ browserName, runCLI, server }) => {
+test('CG-143 should print the correct context options when using a device', async ({ browserName, runCLI, server }) => {
   test.skip(browserName !== 'chromium');
 
   const cli = runCLI(['--device=Pixel 2', '--target=java', server.EMPTY_PAGE]);
@@ -59,7 +59,7 @@ test('should print the correct context options when using a device', async ({ br
   expect(text.replace(/(.*Chrome\/)(.*?)( .*)/m, '$1XXXX$3')).toContain(expectedResult);
 });
 
-test('should print the correct context options when using a device and additional options', async ({ browserName, runCLI, server }) => {
+test('CG-144 should print the correct context options when using a device and additional options', async ({ browserName, runCLI, server }) => {
   test.skip(browserName !== 'webkit');
 
   const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', '--target=java', server.EMPTY_PAGE]);
@@ -75,7 +75,7 @@ test('should print the correct context options when using a device and additiona
   expect(text.replace(/(.*Version\/)(.*?)( .*)/m, '$1XXXX$3')).toContain(expectedResult);
 });
 
-test('should print load/save storage_state', async ({ runCLI, server }, testInfo) => {
+test('CG-145 should print load/save storage_state', async ({ runCLI, server }, testInfo) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
@@ -89,7 +89,7 @@ test('should print load/save storage_state', async ({ runCLI, server }, testInfo
   await cli.waitFor(expectedResult2);
 });
 
-test('should work with --save-har and --save-har-glob as java-library', async ({ runCLI }, testInfo) => {
+test('CG-146 should work with --save-har and --save-har-glob as java-library', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `context.routeFromHAR(Paths.get(${JSON.stringify(harFileName)}), new BrowserContext.RouteFromHAROptions()
         .setUrl("**/*.js"));`;
@@ -100,7 +100,7 @@ test('should work with --save-har and --save-har-glob as java-library', async ({
   expect(json.log.creator.name).toBe('Playwright');
 });
 
-test('should work with --save-har and --save-har-glob as java-junit', async ({ runCLI }, testInfo) => {
+test('CG-147 should work with --save-har and --save-har-glob as java-junit', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `page.routeFromHAR(Paths.get(${JSON.stringify(harFileName)}), new Page.RouteFromHAROptions()
       .setUrl("**/*.js"));`;
@@ -111,7 +111,7 @@ test('should work with --save-har and --save-har-glob as java-junit', async ({ r
   expect(json.log.creator.name).toBe('Playwright');
 });
 
-test('should print the correct imports in junit', async ({ runCLI, server }) => {
+test('CG-148 should print the correct imports in junit', async ({ runCLI, server }) => {
   const cli = runCLI(['--target=java-junit', server.EMPTY_PAGE]);
   const expectedImportResult = `import com.microsoft.playwright.junit.UsePlaywright;
 import com.microsoft.playwright.Page;
@@ -122,7 +122,7 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.*;`;
   await cli.waitFor(expectedImportResult);
 });
 
-test('should print a valid basic program in junit', async ({ runCLI, server }) => {
+test('CG-149 should print a valid basic program in junit', async ({ runCLI, server }) => {
   const cli = runCLI(['--target=java-junit', server.EMPTY_PAGE]);
   const expectedResult = `import com.microsoft.playwright.junit.UsePlaywright;
 import com.microsoft.playwright.Page;

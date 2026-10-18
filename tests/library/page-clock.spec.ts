@@ -40,7 +40,7 @@ it.describe('runFor', () => {
     await page.clock.pauseAt(1000);
   });
 
-  it('triggers immediately without specified delay', async ({ page, calls }) => {
+  it('CK-001 triggers immediately without specified delay', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setTimeout(window.stub);
     });
@@ -49,7 +49,7 @@ it.describe('runFor', () => {
     expect(calls).toHaveLength(1);
   });
 
-  it('does not trigger without sufficient delay', async ({ page, calls }) => {
+  it('CK-002 does not trigger without sufficient delay', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setTimeout(window.stub, 100);
     });
@@ -57,7 +57,7 @@ it.describe('runFor', () => {
     expect(calls).toEqual([]);
   });
 
-  it('triggers after sufficient delay', async ({ page, calls }) => {
+  it('CK-003 triggers after sufficient delay', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setTimeout(window.stub, 100);
     });
@@ -65,7 +65,7 @@ it.describe('runFor', () => {
     expect(calls).toHaveLength(1);
   });
 
-  it('triggers simultaneous timers', async ({ page, calls }) => {
+  it('CK-004 triggers simultaneous timers', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setTimeout(window.stub, 100);
       setTimeout(window.stub, 100);
@@ -74,7 +74,7 @@ it.describe('runFor', () => {
     expect(calls).toHaveLength(2);
   });
 
-  it('triggers multiple simultaneous timers', async ({ page, calls }) => {
+  it('CK-005 triggers multiple simultaneous timers', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setTimeout(window.stub, 100);
       setTimeout(window.stub, 100);
@@ -85,7 +85,7 @@ it.describe('runFor', () => {
     expect(calls.length).toBe(4);
   });
 
-  it('waits after setTimeout was called', async ({ page, calls }) => {
+  it('CK-006 waits after setTimeout was called', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setTimeout(window.stub, 150);
     });
@@ -95,7 +95,7 @@ it.describe('runFor', () => {
     expect(calls).toHaveLength(1);
   });
 
-  it('triggers event when some throw', async ({ page, calls }) => {
+  it('CK-007 triggers event when some throw', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setTimeout(() => { throw new Error(); }, 100);
       setTimeout(window.stub, 120);
@@ -104,7 +104,7 @@ it.describe('runFor', () => {
     expect(calls).toHaveLength(1);
   });
 
-  it('creates updated Date while ticking', async ({ page, calls }) => {
+  it('CK-008 creates updated Date while ticking', async ({ page, calls }) => {
     await page.clock.setSystemTime(0);
     await page.evaluate(async () => {
       setInterval(() => {
@@ -126,7 +126,7 @@ it.describe('runFor', () => {
     ]);
   });
 
-  it('passes 8 seconds', async ({ page, calls }) => {
+  it('CK-009 passes 8 seconds', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setInterval(window.stub, 4000);
     });
@@ -135,7 +135,7 @@ it.describe('runFor', () => {
     expect(calls.length).toBe(2);
   });
 
-  it('passes 1 minute', async ({ page, calls }) => {
+  it('CK-010 passes 1 minute', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setInterval(window.stub, 6000);
     });
@@ -144,16 +144,21 @@ it.describe('runFor', () => {
     expect(calls.length).toBe(10);
   });
 
-  it('passes 2 hours, 34 minutes and 10 seconds', async ({ page, calls }) => {
+  it('CK-011 passes 2 hours, 34 minutes and 10 seconds', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43452' },
+  }, async ({ page, calls }) => {
     await page.evaluate(async () => {
       setInterval(window.stub, 10000);
     });
 
+    const start = performance.now();
     await page.clock.runFor('02:34:10');
     expect(calls.length).toBe(925);
+    // Nested setTimeout(fn, 0) is clamped to 4ms, so firing 925 timers used to take over 4 seconds.
+    expect(performance.now() - start).toBeLessThan(2000);
   });
 
-  it('throws for invalid format', async ({ page, calls }) => {
+  it('CK-012 throws for invalid format', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setInterval(window.stub, 10000);
     });
@@ -161,7 +166,7 @@ it.describe('runFor', () => {
     expect(calls).toEqual([]);
   });
 
-  it('returns the current now value', async ({ page }) => {
+  it('CK-013 returns the current now value', async ({ page }) => {
     await page.clock.setSystemTime(0);
     const value = 200;
     await page.clock.runFor(value);
@@ -175,7 +180,7 @@ it.describe('fastForward', () => {
     await page.clock.pauseAt(1000);
   });
 
-  it(`ignores timers which wouldn't be run`, async ({ page, calls }) => {
+  it(`CK-014 ignores timers which wouldn't be run`, async ({ page, calls }) => {
     await page.evaluate(async () => {
       setTimeout(() => {
         window.stub('should not be logged');
@@ -185,7 +190,7 @@ it.describe('fastForward', () => {
     expect(calls).toEqual([]);
   });
 
-  it('pushes back execution time for skipped timers', async ({ page, calls }) => {
+  it('CK-015 pushes back execution time for skipped timers', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setTimeout(() => {
         window.stub(Date.now());
@@ -196,7 +201,7 @@ it.describe('fastForward', () => {
     expect(calls).toEqual([{ params: [1000 + 2000] }]);
   });
 
-  it('supports string time arguments', async ({ page, calls }) => {
+  it('CK-016 supports string time arguments', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setTimeout(() => {
         window.stub(Date.now());
@@ -212,17 +217,17 @@ it.describe('stubTimers', () => {
     await page.clock.install({ time: 0 });
     await page.clock.pauseAt(1000);
   });
-  it('sets initial timestamp', async ({ page, calls }) => {
+  it('CK-017 sets initial timestamp', async ({ page, calls }) => {
     await page.clock.setSystemTime(1400);
     expect(await page.evaluate(() => Date.now())).toBe(1400);
   });
 
-  it('should throw for invalid date', async ({ page }) => {
+  it('CK-018 should throw for invalid date', async ({ page }) => {
     await expect(page.clock.setSystemTime(new Date('invalid'))).rejects.toThrow('Invalid date: Invalid Date');
     await expect(page.clock.setSystemTime('invalid')).rejects.toThrow('clock.setSystemTime: Invalid date: invalid');
   });
 
-  it('replaces global setTimeout', async ({ page, calls }) => {
+  it('CK-019 replaces global setTimeout', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setTimeout(window.stub, 1000);
     });
@@ -230,12 +235,12 @@ it.describe('stubTimers', () => {
     expect(calls.length).toBe(1);
   });
 
-  it('global fake setTimeout should return id', async ({ page, calls }) => {
+  it('CK-020 global fake setTimeout should return id', async ({ page, calls }) => {
     const to = await page.evaluate(() => setTimeout(window.stub, 1000));
     expect(typeof to).toBe('number');
   });
 
-  it('replaces global clearTimeout', async ({ page, calls }) => {
+  it('CK-021 replaces global clearTimeout', async ({ page, calls }) => {
     await page.evaluate(async () => {
       const to = setTimeout(window.stub, 1000);
       clearTimeout(to);
@@ -244,7 +249,7 @@ it.describe('stubTimers', () => {
     expect(calls).toEqual([]);
   });
 
-  it('replaces global setInterval', async ({ page, calls }) => {
+  it('CK-022 replaces global setInterval', async ({ page, calls }) => {
     await page.evaluate(async () => {
       setInterval(window.stub, 500);
     });
@@ -252,7 +257,7 @@ it.describe('stubTimers', () => {
     expect(calls.length).toBe(2);
   });
 
-  it('replaces global clearInterval', async ({ page, calls }) => {
+  it('CK-023 replaces global clearInterval', async ({ page, calls }) => {
     await page.evaluate(async () => {
       const to = setInterval(window.stub, 500);
       clearInterval(to);
@@ -261,7 +266,7 @@ it.describe('stubTimers', () => {
     expect(calls).toEqual([]);
   });
 
-  it('replaces global performance.now', async ({ page }) => {
+  it('CK-024 replaces global performance.now', async ({ page }) => {
     const promise = page.evaluate(async () => {
       const prev = performance.now();
       await new Promise(f => setTimeout(f, 1000));
@@ -272,14 +277,14 @@ it.describe('stubTimers', () => {
     expect(await promise).toEqual({ prev: 1000, next: 2000 });
   });
 
-  it('fakes Date constructor', async ({ page }) => {
+  it('CK-025 fakes Date constructor', async ({ page }) => {
     const now = await page.evaluate(() => new Date().getTime());
     expect(now).toBe(1000);
   });
 });
 
 it.describe('stubTimers', () => {
-  it('replaces global performance.timeOrigin', async ({ page }) => {
+  it('CK-026 replaces global performance.timeOrigin', async ({ page }) => {
     await page.clock.install({ time: 1000 });
     await page.clock.pauseAt(2000);
     const promise = page.evaluate(async () => {
@@ -295,7 +300,7 @@ it.describe('stubTimers', () => {
 });
 
 it.describe('popup', () => {
-  it('should tick after popup', async ({ page }) => {
+  it('CK-027 should tick after popup', async ({ page }) => {
     await page.clock.install({ time: 0 });
     const now = new Date('2015-09-25');
     await page.clock.pauseAt(now);
@@ -310,7 +315,7 @@ it.describe('popup', () => {
     expect(popupTimeAfter).toBe(now.getTime() + 1000);
   });
 
-  it('should tick before popup', async ({ page }) => {
+  it('CK-028 should tick before popup', async ({ page }) => {
     await page.clock.install({ time: 0 });
     const now = new Date('2015-09-25');
     await page.clock.pauseAt(now);
@@ -324,7 +329,7 @@ it.describe('popup', () => {
     expect(popupTime).toBe(now.getTime() + 1000);
   });
 
-  it('should run time before popup', async ({ page, server }) => {
+  it('CK-029 should run time before popup', async ({ page, server }) => {
     server.setRoute('/popup.html', async (req, res) => {
       res.setHeader('Content-Type', 'text/html');
       res.end(`<script>window.time = Date.now()</script>`);
@@ -340,7 +345,7 @@ it.describe('popup', () => {
     expect(popupTime).toBeGreaterThanOrEqual(2000);
   });
 
-  it('should not run time before popup on pause', async ({ page, server }) => {
+  it('CK-030 should not run time before popup on pause', async ({ page, server }) => {
     server.setRoute('/popup.html', async (req, res) => {
       res.setHeader('Content-Type', 'text/html');
       res.end(`<script>window.time = Date.now()</script>`);
@@ -361,7 +366,7 @@ it.describe('popup', () => {
 });
 
 it.describe('setFixedTime', () => {
-  it('does not fake methods', async ({ page }) => {
+  it('CK-031 does not fake methods', async ({ page }) => {
     await page.clock.setFixedTime(0);
 
     // Should not stall.
@@ -370,21 +375,21 @@ it.describe('setFixedTime', () => {
     });
   });
 
-  it('allows setting time multiple times', async ({ page }) => {
+  it('CK-032 allows setting time multiple times', async ({ page }) => {
     await page.clock.setFixedTime(100);
     expect(await page.evaluate(() => Date.now())).toBe(100);
     await page.clock.setFixedTime(200);
     expect(await page.evaluate(() => Date.now())).toBe(200);
   });
 
-  it('fixed time is not affected by clock manipulation', async ({ page }) => {
+  it('CK-033 fixed time is not affected by clock manipulation', async ({ page }) => {
     await page.clock.setFixedTime(100);
     expect(await page.evaluate(() => Date.now())).toBe(100);
     await page.clock.fastForward(20);
     expect(await page.evaluate(() => Date.now())).toBe(100);
   });
 
-  it('allows installing fake timers after settings time', async ({ page, calls }) => {
+  it('CK-034 allows installing fake timers after settings time', async ({ page, calls }) => {
     await page.clock.setFixedTime(100);
     expect(await page.evaluate(() => Date.now())).toBe(100);
     await page.clock.setFixedTime(200);
@@ -397,7 +402,7 @@ it.describe('setFixedTime', () => {
 });
 
 it.describe('while running', () => {
-  it('should progress time', async ({ page }) => {
+  it('CK-035 should progress time', async ({ page }) => {
     await page.clock.install({ time: 0 });
     const startRealTime = Date.now();
     await page.goto('data:text/html,');
@@ -408,7 +413,7 @@ it.describe('while running', () => {
     expect(now).toBeLessThanOrEqual(realElapsed + 1000);
   });
 
-  it('should runFor', async ({ page }) => {
+  it('CK-036 should runFor', async ({ page }) => {
     await page.clock.install({ time: 0 });
     const startRealTime = Date.now();
     await page.goto('data:text/html,');
@@ -419,7 +424,7 @@ it.describe('while running', () => {
     expect(now).toBeLessThanOrEqual(10000 + realElapsed + 1000);
   });
 
-  it('should fastForward', async ({ page }) => {
+  it('CK-037 should fastForward', async ({ page }) => {
     await page.clock.install({ time: 0 });
     const startRealTime = Date.now();
     await page.goto('data:text/html,');
@@ -430,7 +435,7 @@ it.describe('while running', () => {
     expect(now).toBeLessThanOrEqual(10000 + realElapsed + 1000);
   });
 
-  it('should pause', async ({ page }) => {
+  it('CK-038 should pause', async ({ page }) => {
     await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
     await page.clock.pauseAt(60000);
@@ -440,7 +445,7 @@ it.describe('while running', () => {
     expect(now).toBe(60000);
   });
 
-  it('should reject an invalid target time with an active requestAnimationFrame loop', {
+  it('CK-039 should reject an invalid target time with an active requestAnimationFrame loop', {
     annotation: {
       type: 'issue',
       description: 'https://github.com/microsoft/playwright-python/issues/3137',
@@ -452,7 +457,7 @@ it.describe('while running', () => {
     await expect(page.clock.pauseAt(invalidTime)).rejects.toThrow(`clock.pauseAt: Invalid date: ${invalidTime}`);
   });
 
-  it('should pause and fastForward', async ({ page }) => {
+  it('CK-040 should pause and fastForward', async ({ page }) => {
     await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
     await page.clock.pauseAt(60000);
@@ -461,7 +466,7 @@ it.describe('while running', () => {
     expect(now).toBe(61000);
   });
 
-  it('should set system time on pause', async ({ page }) => {
+  it('CK-041 should set system time on pause', async ({ page }) => {
     await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
     await page.clock.pauseAt(60000);
@@ -471,7 +476,7 @@ it.describe('while running', () => {
 });
 
 it.describe('while on pause', () => {
-  it('fastForward should not run nested immediate', async ({ page, calls }) => {
+  it('CK-042 fastForward should not run nested immediate', async ({ page, calls }) => {
     await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
     await page.clock.pauseAt(1000);
@@ -487,7 +492,7 @@ it.describe('while on pause', () => {
     expect(calls).toEqual([{ params: ['outer'] }, { params: ['inner'] }]);
   });
 
-  it('runFor should not run nested immediate', async ({ page, calls }) => {
+  it('CK-043 runFor should not run nested immediate', async ({ page, calls }) => {
     await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
     await page.clock.pauseAt(1000);
@@ -503,7 +508,7 @@ it.describe('while on pause', () => {
     expect(calls).toEqual([{ params: ['outer'] }, { params: ['inner'] }]);
   });
 
-  it('runFor should not run nested immediate from microtask', async ({ page, calls }) => {
+  it('CK-044 runFor should not run nested immediate from microtask', async ({ page, calls }) => {
     await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
     await page.clock.pauseAt(1000);
@@ -519,7 +524,7 @@ it.describe('while on pause', () => {
     expect(calls).toEqual([{ params: ['outer'] }, { params: ['inner'] }]);
   });
 
-  it('should stay paused on the next page when an init script reads the time', {
+  it('CK-045 should stay paused on the next page when an init script reads the time', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43214' },
   }, async ({ page, server }) => {
     await page.clock.install({ time: 0 });
@@ -533,7 +538,7 @@ it.describe('while on pause', () => {
     expect(await page.evaluate(() => Date.now())).toBe(2000);
   });
 
-  it('should not advance performance.now() before the first clock call on a new page', {
+  it('CK-046 should not advance performance.now() before the first clock call on a new page', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43214' },
   }, async ({ page, server }) => {
     await page.clock.pauseAt(1000);
@@ -544,7 +549,7 @@ it.describe('while on pause', () => {
 });
 
 it.describe('Date.now', () => {
-  it('check Date.now is an integer', async ({ page }) => {
+  it('CK-047 check Date.now is an integer', async ({ page }) => {
     await page.clock.install();
     await page.goto('data:text/html,');
     await page.waitForTimeout(1000);
@@ -555,7 +560,7 @@ it.describe('Date.now', () => {
     expect(Number.isInteger(dateValue2)).toBeTruthy();
   });
 
-  it('check Date.now is an integer (2)', async ({ page }) => {
+  it('CK-048 check Date.now is an integer (2)', async ({ page }) => {
     await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
     await page.clock.pauseAt(1000);
@@ -570,7 +575,7 @@ it.describe('Temporal.Now', { annotation: { type: 'issue', description: 'https:/
     it.skip(!await page.evaluate(() => 'Temporal' in globalThis), 'Temporal is not supported');
   });
 
-  it('should follow fixed time', async ({ page }) => {
+  it('CK-049 should follow fixed time', async ({ page }) => {
     await page.clock.setFixedTime(new Date('2020-01-01T00:00:00Z'));
     await page.goto('data:text/html,');
     expect(await page.evaluate(() => {
@@ -591,7 +596,7 @@ it.describe('Temporal.Now', { annotation: { type: 'issue', description: 'https:/
     });
   });
 
-  it('should advance with the clock', async ({ page }) => {
+  it('CK-050 should advance with the clock', async ({ page }) => {
     await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
     await page.clock.pauseAt(1000);
@@ -599,7 +604,7 @@ it.describe('Temporal.Now', { annotation: { type: 'issue', description: 'https:/
     expect(await page.evaluate(() => (globalThis as any).Temporal.Now.instant().epochMilliseconds)).toBe(3000);
   });
 
-  it('should use the system time zone by default', async ({ browser }) => {
+  it('CK-051 should use the system time zone by default', async ({ browser }) => {
     const context = await browser.newContext({ timezoneId: 'America/Los_Angeles' });
     const page = await context.newPage();
     await page.clock.setFixedTime(new Date('2020-01-01T00:00:00Z'));
@@ -619,7 +624,7 @@ it.describe('Temporal.Now', { annotation: { type: 'issue', description: 'https:/
     await context.close();
   });
 
-  it('should keep the rest of Temporal intact', async ({ page }) => {
+  it('CK-052 should keep the rest of Temporal intact', async ({ page }) => {
     await page.clock.install({ time: 0 });
     await page.goto('data:text/html,');
     expect(await page.evaluate(() => {
@@ -639,7 +644,7 @@ it.describe('Temporal.Now', { annotation: { type: 'issue', description: 'https:/
   });
 });
 
-it('AbortSignal.timeout', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39293' } }, async ({ page, browserName }) => {
+it('CK-053 AbortSignal.timeout', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39293' } }, async ({ page, browserName }) => {
   await page.clock.install({ time: 0 });
   const controller = await page.evaluateHandle(() => {
     const signal = AbortSignal.any([
@@ -686,7 +691,7 @@ it('AbortSignal.timeout', { annotation: { type: 'issue', description: 'https://g
   expect(await page.evaluate(() => AbortSignal.abort().aborted)).toBe(true);
 });
 
-it('correctly increments Date.now()/performance.now() during blocking execution', {
+it('CK-054 correctly increments Date.now()/performance.now() during blocking execution', {
   annotation: {
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/35362',

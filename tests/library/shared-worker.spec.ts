@@ -16,7 +16,7 @@
 
 import { contextTest as test, expect } from '../config/browserTest';
 
-test('should survive shared worker restart', async ({ context, server }) => {
+test('WO-026 should survive shared worker restart', async ({ context, server }) => {
   const page1 = await context.newPage();
   await page1.goto(server.PREFIX + '/shared-worker/shared-worker.html');
   expect(await page1.evaluate('window.sharedWorkerResponsePromise')).toBe('echo:hello');

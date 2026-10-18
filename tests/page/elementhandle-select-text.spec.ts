@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should select textarea', async ({ page, server, browserName }) => {
+it('EH-102 should select textarea', async ({ page, server, browserName }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
   await textarea.evaluate(textarea => textarea.value = 'some value');
@@ -25,7 +25,7 @@ it('should select textarea', async ({ page, server, browserName }) => {
   expect(await page.evaluate(() => window.getSelection().toString())).toBe('some value');
 });
 
-it('should select input', async ({ page, server, browserName }) => {
+it('EH-103 should select input', async ({ page, server, browserName }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const input = await page.$('input');
   await input.evaluate(input => input.value = 'some value');
@@ -33,14 +33,14 @@ it('should select input', async ({ page, server, browserName }) => {
   expect(await page.evaluate(() => window.getSelection().toString())).toBe('some value');
 });
 
-it('should select plain div', async ({ page, server }) => {
+it('EH-104 should select plain div', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const div = await page.$('div.plain');
   await div.selectText();
   expect(await page.evaluate(() => window.getSelection().toString())).toBe('Plain div');
 });
 
-it('should timeout waiting for invisible element', async ({ page, server }) => {
+it('EH-105 should timeout waiting for invisible element', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
   await textarea.evaluate(e => e.style.display = 'none');
@@ -48,7 +48,7 @@ it('should timeout waiting for invisible element', async ({ page, server }) => {
   expect(error.message).toContain('element is not visible');
 });
 
-it('should wait for visible', async ({ page, server }) => {
+it('EH-106 should wait for visible', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
   await textarea.evaluate(textarea => textarea.value = 'some value');

@@ -18,18 +18,18 @@
 import { contextTest as it, browserTest, expect } from '../config/browserTest';
 import { attachFrame } from '../config/utils';
 
-it('should think that it is focused by default', async ({ page }) => {
+it('EM-013 should think that it is focused by default', async ({ page }) => {
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
 });
 
-it('should think that all pages are focused @smoke', async ({ page }) => {
+it('EM-014 should think that all pages are focused @smoke', async ({ page }) => {
   const page2 = await page.context().newPage();
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
   expect(await page2.evaluate('document.hasFocus()')).toBe(true);
   await page2.close();
 });
 
-it('should focus popups by default', async ({ page, server }) => {
+it('EM-015 should focus popups by default', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -39,7 +39,7 @@ it('should focus popups by default', async ({ page, server }) => {
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
 });
 
-it('should provide target for keyboard events', async ({ page, server }) => {
+it('EM-016 should provide target for keyboard events', async ({ page, server }) => {
   const page2 = await page.context().newPage();
   await Promise.all([
     page.goto(server.PREFIX + '/input/textarea.html'),
@@ -62,7 +62,7 @@ it('should provide target for keyboard events', async ({ page, server }) => {
   expect(results).toEqual([text, text2]);
 });
 
-it('should not affect mouse event target page', async ({ page, server }) => {
+it('EM-017 should not affect mouse event target page', async ({ page, server }) => {
   const page2 = await page.context().newPage();
   function clickCounter() {
     document.onclick = () => window['clickCount']  = (window['clickCount'] || 0) + 1;
@@ -84,7 +84,7 @@ it('should not affect mouse event target page', async ({ page, server }) => {
   expect(counters).toEqual([1, 1]);
 });
 
-it('should change document.activeElement', async ({ page, server }) => {
+it('EM-018 should change document.activeElement', async ({ page, server }) => {
   const page2 = await page.context().newPage();
   await Promise.all([
     page.goto(server.PREFIX + '/input/textarea.html'),
@@ -101,7 +101,7 @@ it('should change document.activeElement', async ({ page, server }) => {
   expect(active).toEqual(['INPUT', 'TEXTAREA']);
 });
 
-it('should not affect screenshots', async ({ page, server, browserName, headless, isWindows, isLinux, isHeadlessShell, channel }) => {
+it('EM-019 should not affect screenshots', async ({ page, server, browserName, headless, isWindows, isLinux, isHeadlessShell, channel }) => {
   it.skip(browserName === 'webkit' && isWindows && !headless, 'WebKit/Windows/headed has a larger minimal viewport. See https://github.com/microsoft/playwright/issues/22616');
   it.skip(browserName === 'webkit' && isLinux && !headless, 'WebKit headed has a larger minimal viewport on gtk4.');
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image');
@@ -125,7 +125,7 @@ it('should not affect screenshots', async ({ page, server, browserName, headless
   expect(screenshots[1]).toMatchSnapshot('grid-cell-0.png');
 });
 
-it('should change focused iframe', async ({ page, server, browserName, headless }) => {
+it('EM-020 should change focused iframe', async ({ page, server, browserName, headless }) => {
   it.skip(browserName === 'firefox' && !headless, 'Headed FF might lose focus');
   await page.goto(server.EMPTY_PAGE);
   const [frame1, frame2] = await Promise.all([
@@ -175,7 +175,7 @@ it('should change focused iframe', async ({ page, server, browserName, headless 
 });
 
 // @see https://github.com/microsoft/playwright/issues/3476
-browserTest('should focus with more than one page/context', async ({ contextFactory }) => {
+browserTest('EM-021 should focus with more than one page/context', async ({ contextFactory }) => {
   const page1 = await (await contextFactory()).newPage();
   const page2 = await (await contextFactory()).newPage();
   await page1.setContent(`<button id="foo" onfocus="window.gotFocus=true">foo</button>`);
@@ -186,7 +186,7 @@ browserTest('should focus with more than one page/context', async ({ contextFact
   expect(await page2.evaluate(() => !!window['gotFocus'])).toBe(true);
 });
 
-browserTest('should not fire blur events when interacting with more than one page/context', async ({ contextFactory, browserName }) => {
+browserTest('EM-022 should not fire blur events when interacting with more than one page/context', async ({ contextFactory, browserName }) => {
   browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30399' });
   const page1 = await (await contextFactory()).newPage();
   const page2 = await (await contextFactory()).newPage();
@@ -198,8 +198,10 @@ browserTest('should not fire blur events when interacting with more than one pag
   expect(await page2.evaluate(() => !!window['gotBlur'])).toBe(false);
 });
 
-browserTest('should not blur iframe when interacting with another page/context', async ({ contextFactory }) => {
+browserTest('EM-023 should not blur iframe when interacting with another page/context', async ({ contextFactory, browserName }) => {
   browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42933' });
+  browserTest.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/43280');
+
   const page1 = await (await contextFactory()).newPage();
   const page2 = await (await contextFactory()).newPage();
   const srcdoc = `<button id=foo>foo</button><script>window.addEventListener('blur', () => window.gotBlur = true)</script>`;
@@ -213,7 +215,7 @@ browserTest('should not blur iframe when interacting with another page/context',
   expect(await frame2.evaluate(() => document.hasFocus())).toBe(false);
 });
 
-browserTest('should trigger hover state concurrently', async ({ browserType, headless }) => {
+browserTest('EM-024 should trigger hover state concurrently', async ({ browserType, headless }) => {
   browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27969' });
   browserTest.skip(!headless, 'headed messes up with hover');
 

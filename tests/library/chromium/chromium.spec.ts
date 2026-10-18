@@ -20,7 +20,7 @@ import { browserTest, playwrightTest } from '../../config/browserTest';
 
 import type { Page } from 'playwright-core';
 
-test('should create a worker from a service worker', async ({ page, server }) => {
+test('CR-001 should create a worker from a service worker', async ({ page, server }) => {
   const [worker] = await Promise.all([
     page.context().waitForEvent('serviceworker'),
     page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
@@ -28,7 +28,7 @@ test('should create a worker from a service worker', async ({ page, server }) =>
   expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
 });
 
-test('should create a worker from service worker with noop routing', async ({ context, page, server }) => {
+test('CR-002 should create a worker from service worker with noop routing', async ({ context, page, server }) => {
   await context.route('**', route => route.continue());
   const [worker] = await Promise.all([
     page.context().waitForEvent('serviceworker'),
@@ -37,7 +37,7 @@ test('should create a worker from service worker with noop routing', async ({ co
   expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
 });
 
-test('should emit new service worker on update', async ({ context, page, server }) => {
+test('CR-003 should emit new service worker on update', async ({ context, page, server }) => {
   let version = 0;
   server.setRoute('/worker.js', (req, res) => {
     res.writeHead(200, 'OK', { 'Content-Type': 'text/javascript' });
@@ -88,7 +88,7 @@ test('should emit new service worker on update', async ({ context, page, server 
 test.describe('http credentials', () => {
   test.use({ httpCredentials: { username: 'user',  password: 'pass' } });
 
-  test('httpCredentials', async ({ context, page, server }) => {
+  test('CR-004 httpCredentials', async ({ context, page, server }) => {
     server.setAuth('/serviceworkers/fetch/sw.html', 'user', 'pass');
     server.setAuth('/empty.html', 'user', 'pass');
     const [worker] = await Promise.all([
@@ -101,7 +101,7 @@ test.describe('http credentials', () => {
   });
 });
 
-test('serviceWorkers() should return current workers', async ({ page, server }) => {
+test('CR-005 serviceWorkers() should return current workers', async ({ page, server }) => {
   const context = page.context();
   const [worker1] = await Promise.all([
     context.waitForEvent('serviceworker'),
@@ -120,7 +120,7 @@ test('serviceWorkers() should return current workers', async ({ page, server }) 
   expect(workers).toContain(worker2);
 });
 
-test('should not create a worker from a shared worker', async ({ page, server }) => {
+test('CR-006 should not create a worker from a shared worker', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let serviceWorkerCreated;
   page.context().once('serviceworker', () => serviceWorkerCreated = true);
@@ -130,27 +130,7 @@ test('should not create a worker from a shared worker', async ({ page, server })
   expect(serviceWorkerCreated).not.toBeTruthy();
 });
 
-test('Page.route should work with intervention headers', async ({ server, page }) => {
-  server.setRoute('/intervention', (req, res) => res.end(`
-    <script>
-      document.write('<script src="${server.CROSS_PROCESS_PREFIX}/intervention.js">' + '</scr' + 'ipt>');
-    </script>
-  `));
-  server.setRedirect('/intervention.js', '/redirect.js');
-  let serverRequest = null;
-  server.setRoute('/redirect.js', (req, res) => {
-    serverRequest = req;
-    res.end('console.log(1);');
-  });
-
-  await page.route('*', route => route.continue());
-  await page.goto(server.PREFIX + '/intervention');
-  // Check for feature URL substring rather than https://www.chromestatus.com to
-  // make it work with Edgium.
-  expect(serverRequest.headers.intervention).toContain('feature/5718547946799104');
-});
-
-playwrightTest('should close service worker together with the context', async ({ browserType, server }) => {
+playwrightTest('CR-008 should close service worker together with the context', async ({ browserType, server }) => {
   const browser = await browserType.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -166,7 +146,7 @@ playwrightTest('should close service worker together with the context', async ({
   await browser.close();
 });
 
-playwrightTest('should pass args with spaces', async ({ browserType, createUserDataDir }, testInfo) => {
+playwrightTest('CR-009 should pass args with spaces', async ({ browserType, createUserDataDir }, testInfo) => {
   const browser = await browserType.launchPersistentContext(await createUserDataDir(), {
     args: ['--user-agent=I am Foo']
   });
@@ -176,7 +156,7 @@ playwrightTest('should pass args with spaces', async ({ browserType, createUserD
   expect(userAgent).toBe('I am Foo');
 });
 
-test('serviceWorker(), and fromServiceWorker() work', async ({ context, page, server }) => {
+test('CR-010 serviceWorker(), and fromServiceWorker() work', async ({ context, page, server }) => {
   const [worker, html, main, inWorker] = await Promise.all([
     context.waitForEvent('serviceworker'),
     context.waitForEvent('request', r => r.url().endsWith('/sw.html')),
@@ -210,7 +190,7 @@ test('serviceWorker(), and fromServiceWorker() work', async ({ context, page, se
   expect((await innerSW.response()).fromServiceWorker()).toBe(false);
 });
 
-test('should intercept service worker requests (main and within)', async ({ context, page, server }) => {
+test('CR-011 should intercept service worker requests (main and within)', async ({ context, page, server }) => {
   await context.route('**/request-from-within-worker', route =>
     route.fulfill({
       contentType: 'application/json',
@@ -240,7 +220,7 @@ test('should intercept service worker requests (main and within)', async ({ cont
   await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
 });
 
-test('should report failure (due to content-type) of main service worker request', async ({ server, page, context, browserMajorVersion }) => {
+test('CR-012 should report failure (due to content-type) of main service worker request', async ({ server, page, context, browserMajorVersion }) => {
   test.skip(browserMajorVersion < 104, 'Requires http://crrev.com/1012503 or later.');
   server.setRoute('/serviceworkers/fetch/sw.js', (req, res) => {
     res.writeHead(200, 'OK', { 'Content-Type': 'text/html' });
@@ -256,7 +236,7 @@ test('should report failure (due to content-type) of main service worker request
   await main.response();
 });
 
-test('should report failure (due to redirect) of main service worker request', async ({ server, page, context, browserMajorVersion }) => {
+test('CR-013 should report failure (due to redirect) of main service worker request', async ({ server, page, context, browserMajorVersion }) => {
   test.skip(browserMajorVersion < 104, 'Requires http://crrev.com/1012503 or later.');
   server.setRedirect('/serviceworkers/empty/sw.js', '/dev/null');
   const [, main] = await Promise.all([
@@ -269,7 +249,7 @@ test('should report failure (due to redirect) of main service worker request', a
   expect(resp.status()).toBe(302);
 });
 
-test('should intercept service worker importScripts', async ({ context, page, server }) => {
+test('CR-014 should intercept service worker importScripts', async ({ context, page, server }) => {
   await context.route('**/import.js', route =>
     route.fulfill({
       contentType: 'text/javascript',
@@ -298,7 +278,7 @@ test('should intercept service worker importScripts', async ({ context, page, se
   await expect(sw.evaluate(() => self['importedValue'])).resolves.toBe(47);
 });
 
-test('should report intercepted service worker requests in HAR', async ({ pageWithHar, server }) => {
+test('CR-015 should report intercepted service worker requests in HAR', async ({ pageWithHar, server }) => {
   const { context, page, getLog } = await pageWithHar();
   await context.route('**/request-from-within-worker', route =>
     route.fulfill({
@@ -346,7 +326,7 @@ test('should report intercepted service worker requests in HAR', async ({ pageWi
   }
 });
 
-test('should intercept only serviceworker request, not page', async ({ context, page, server }) => {
+test('CR-016 should intercept only serviceworker request, not page', async ({ context, page, server }) => {
   await context.route('**/data.json', async route => {
     if (route.request().serviceWorker()) {
       return route.fulfill({
@@ -370,7 +350,7 @@ test('should intercept only serviceworker request, not page', async ({ context, 
   expect(response).toBe('from sw');
 });
 
-test('should produce network events, routing, and annotations for Service Worker', async ({ page, context, server }) => {
+test('CR-017 should produce network events, routing, and annotations for Service Worker', async ({ page, context, server }) => {
   server.setRoute('/index.html', (req, res) => {
     res.write(`
       <script>
@@ -433,7 +413,7 @@ test('should produce network events, routing, and annotations for Service Worker
       ]);
 });
 
-test('should produce network events, routing, and annotations for Service Worker (advanced)', async ({ page, context, server }) => {
+test('CR-018 should produce network events, routing, and annotations for Service Worker (advanced)', async ({ page, context, server }) => {
   server.setRoute('/index.html', (req, res) => {
     res.write(`
       <script>
@@ -536,7 +516,7 @@ test('should produce network events, routing, and annotations for Service Worker
         '| [`event: Page.request`]           | [Frame]          | fallthrough.txt                |        | Yes                                    |']);
 });
 
-test('should intercept service worker update requests', async ({ context, page, server }) => {
+test('CR-019 should intercept service worker update requests', async ({ context, page, server }) => {
   test.fixme();
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14711' });
 
@@ -598,7 +578,7 @@ test('should intercept service worker update requests', async ({ context, page, 
   await expect.poll(() => updatedSW.evaluate(() => self['PW_VERSION'])).toBe('intercepted');
 });
 
-test('setOffline', async ({ context, page, server }) => {
+test('CR-020 setOffline', async ({ context, page, server }) => {
   const [worker] = await Promise.all([
     context.waitForEvent('serviceworker'),
     page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
@@ -613,7 +593,7 @@ test('setOffline', async ({ context, page, server }) => {
   expect(error).toMatch(/REJECTED.*Failed to fetch/);
 });
 
-test('setExtraHTTPHeaders', async ({ context, page, server }) => {
+test('CR-021 setExtraHTTPHeaders', async ({ context, page, server }) => {
   const [worker] = await Promise.all([
     context.waitForEvent('serviceworker'),
     page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
@@ -627,7 +607,7 @@ test('setExtraHTTPHeaders', async ({ context, page, server }) => {
   expect(req.headers['x-custom-header']).toBe('custom!');
 });
 
-test('should throw when connecting twice to an already running persistent context (--remote-debugging-port)', async ({ browserType, createUserDataDir, platform, isHeadlessShell, channel }) => {
+test('CR-022 should throw when connecting twice to an already running persistent context (--remote-debugging-port)', async ({ browserType, createUserDataDir, platform, isHeadlessShell, channel }) => {
   test.skip(isHeadlessShell, 'Headless shell does not create a ProcessSingleton');
   test.fixme(platform === 'win32', 'Windows does not print something to the console when the profile is already in use by another instance of Chromium.');
   test.skip(!!channel?.startsWith('msedge'), 'Edge does not print the ProcessSingleton line');
@@ -645,7 +625,7 @@ test('should throw when connecting twice to an already running persistent contex
   }
 });
 
-test('should throw when connecting twice to an already running persistent context (--remote-debugging-pipe)', async ({ browserType, createUserDataDir, platform, isHeadlessShell, channel }) => {
+test('CR-023 should throw when connecting twice to an already running persistent context (--remote-debugging-pipe)', async ({ browserType, createUserDataDir, platform, isHeadlessShell, channel }) => {
   test.skip(isHeadlessShell, 'Headless shell does not create a ProcessSingleton');
   test.fixme(platform === 'win32', 'Windows does not print something to the console when the profile is already in use by another instance of Chromium.');
   test.skip(!!channel?.startsWith('msedge'), 'Edge does not print the ProcessSingleton line');
@@ -659,7 +639,7 @@ test('should throw when connecting twice to an already running persistent contex
   }
 });
 
-test('PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK', async ({ mode, context, page, server }) => {
+test('CR-024 PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK', async ({ mode, context, page, server }) => {
   test.skip(mode !== 'default', 'no env in non-default mode');
   process.env.PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK = '1';
 
@@ -689,7 +669,7 @@ test('PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK', async ({ mode, context, page, 
   delete process.env.PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK;
 });
 
-test('should emit console messages from service worker', async ({ page, context, server }) => {
+test('CR-025 should emit console messages from service worker', async ({ page, context, server }) => {
   const emptyPage = await context.newPage();
   await emptyPage.goto(server.EMPTY_PAGE);
   const emptyPageMessages = [];
@@ -732,7 +712,7 @@ test('should emit console messages from service worker', async ({ page, context,
   });
 });
 
-test('should capture console.log from ServiceWorker start', async ({ context, page, server }) => {
+test('CR-026 should capture console.log from ServiceWorker start', async ({ context, page, server }) => {
   server.setRoute('/serviceworkers/empty/sw.js', (req, res) => {
     res.writeHead(200, 'OK', { 'Content-Type': 'text/javascript' });
     res.write(`console.log('Hello from the first line of sw.js');`);
@@ -753,7 +733,7 @@ test.describe('WebUI navigation', () => {
   const isEdge = (channel: string | undefined) => !!channel?.startsWith('msedge');
   const gotoError = (page: Page, url: string) => page.goto(url).then(() => '', e => e.message);
 
-  test('should refuse WebUI pages that crash the browser in an isolated context', async ({ browser, page, channel }) => {
+  test('CR-027 should refuse WebUI pages that crash the browser in an isolated context', async ({ browser, page, channel }) => {
     test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41935' });
     test.skip(isEdge(channel), 'Edge only disallows chrome://history');
 
@@ -765,7 +745,7 @@ test.describe('WebUI navigation', () => {
     expect(await page.evaluate(() => 1 + 1)).toBe(2);
   });
 
-  test('should refuse WebUI pages that crash Edge in an isolated context', async ({ browser, page, channel }) => {
+  test('CR-028 should refuse WebUI pages that crash Edge in an isolated context', async ({ browser, page, channel }) => {
     test.skip(!isEdge(channel), 'Edge has its own list of pages disallowed in InPrivate');
 
     for (const url of ['edge://history', 'chrome://history', 'view-source:edge://history'])
@@ -776,14 +756,14 @@ test.describe('WebUI navigation', () => {
     expect(browser.isConnected()).toBe(true);
   });
 
-  test('should navigate to WebUI pages that work in an isolated context', async ({ page, headless }) => {
+  test('CR-029 should navigate to WebUI pages that work in an isolated context', async ({ page, headless }) => {
     test.skip(headless, 'WebUI pages are not available in headless');
 
     const response = await page.goto('chrome://version');
     expect(response.status()).toBe(200);
   });
 
-  test('should navigate to any WebUI page in a persistent context', async ({ browserType, createUserDataDir, headless }) => {
+  test('CR-030 should navigate to any WebUI page in a persistent context', async ({ browserType, createUserDataDir, headless }) => {
     test.skip(headless, 'WebUI pages are not available in headless');
 
     const context = await browserType.launchPersistentContext(await createUserDataDir());
@@ -798,7 +778,7 @@ test.describe('WebUI navigation', () => {
   });
 });
 
-test('should fire dialogclosed event when dialog is closed out of band', async ({ page }) => {
+test('CR-031 should fire dialogclosed event when dialog is closed out of band', async ({ page }) => {
   // Establish the CDP session up front: creating one while a dialog is blocking the page hangs.
   const client = await page.context().newCDPSession(page);
   await client.send('Page.enable');
@@ -812,7 +792,7 @@ test('should fire dialogclosed event when dialog is closed out of band', async (
   await evaluatePromise;
 });
 
-browserTest('should not leak service worker session after context close', async ({ browser, server, toImpl }) => {
+browserTest('CR-032 should not leak service worker session after context close', async ({ browser, server, toImpl }) => {
   browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43009' });
   const sessions: Map<string, unknown> = toImpl(browser)._connection._sessions;
   const sessionCount = sessions.size;

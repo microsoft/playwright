@@ -31,7 +31,7 @@ function findNode(nodes: (NodeJSON | string)[], predicate: (node: NodeJSON) => b
   return undefined;
 }
 
-it('should snapshot roles, names and text', async ({ page }) => {
+it('AR-096 should snapshot roles, names and text', async ({ page }) => {
   await page.setContent(`
     <h1>title</h1>
     <ul aria-label="my list">
@@ -52,7 +52,7 @@ it('should snapshot roles, names and text', async ({ page }) => {
   ]);
 });
 
-it('should snapshot flags as properties', async ({ page }) => {
+it('AR-097 should snapshot flags as properties', async ({ page }) => {
   await page.setContent(`
     <input type="checkbox" title="Check" checked>
     <button disabled>Click</button>
@@ -63,7 +63,7 @@ it('should snapshot flags as properties', async ({ page }) => {
   ]);
 });
 
-it('should snapshot link url and textbox value', async ({ page }) => {
+it('AR-098 should snapshot link url and textbox value', async ({ page }) => {
   await page.setContent(`
     <a href="https://example.com/">Link</a>
     <input title="Input" value="hello">
@@ -74,7 +74,7 @@ it('should snapshot link url and textbox value', async ({ page }) => {
   ]);
 });
 
-it('should snapshot text fragments in children', async ({ page }) => {
+it('AR-099 should snapshot text fragments in children', async ({ page }) => {
   await page.setContent(`<p>Hello <a href="/link">world</a> again</p>`);
   expect(await page.ariaSnapshotJSON()).toEqual([
     {
@@ -88,7 +88,7 @@ it('should snapshot text fragments in children', async ({ page }) => {
   ]);
 });
 
-it('should snapshot top-level text fragments as text nodes', async ({ page }) => {
+it('AR-100 should snapshot top-level text fragments as text nodes', async ({ page }) => {
   await page.setContent(`Hello <button>One</button> again`);
   expect(await page.ariaSnapshotJSON()).toEqual([
     { role: 'text', text: 'Hello' },
@@ -97,7 +97,7 @@ it('should snapshot top-level text fragments as text nodes', async ({ page }) =>
   ]);
 });
 
-it('should generate refs in ai mode', async ({ page }) => {
+it('AR-101 should generate refs in ai mode', async ({ page }) => {
   await page.setContent(`
     <button>One</button>
     <button>Two</button>
@@ -116,14 +116,14 @@ it('should generate refs in ai mode', async ({ page }) => {
   await expect(page.getByRef('e2')).toHaveText('One');
 });
 
-it('should mark clickable elements with cursor in ai mode', async ({ page }) => {
+it('AR-102 should mark clickable elements with cursor in ai mode', async ({ page }) => {
   await page.setContent(`<button style="cursor: pointer">One</button>`);
   const json = await page.ariaSnapshotJSON({ mode: 'ai' }) as NodeJSON[];
   const button = findNode(json, node => node.role === 'button');
   expect(button?.cursor).toBe('pointer');
 });
 
-it('should snapshot iframes in ai mode', async ({ page }) => {
+it('AR-103 should snapshot iframes in ai mode', async ({ page }) => {
   await page.setContent(`
     <h1>Hello</h1>
     <iframe srcdoc="<button>In frame</button>"></iframe>
@@ -136,7 +136,7 @@ it('should snapshot iframes in ai mode', async ({ page }) => {
   expect(button?.ref).toMatch(/^f\d+e\d+$/);
 });
 
-it('should limit depth', async ({ page }) => {
+it('AR-104 should limit depth', async ({ page }) => {
   await page.setContent(`<ul><li><button>One</button></li></ul>`);
   expect(await page.ariaSnapshotJSON({ depth: 1 })).toEqual([
     {
@@ -148,7 +148,7 @@ it('should limit depth', async ({ page }) => {
   ]);
 });
 
-it('should include boxes when requested', async ({ page }) => {
+it('AR-105 should include boxes when requested', async ({ page }) => {
   await page.setContent(`<button>One</button>`);
   const json = await page.ariaSnapshotJSON({ boxes: true }) as NodeJSON[];
   const button = findNode(json, node => node.role === 'button');
@@ -162,7 +162,7 @@ it('should include boxes when requested', async ({ page }) => {
   expect(button!.box.height).toBeGreaterThan(0);
 });
 
-it('should snapshot a locator', async ({ page }) => {
+it('AR-106 should snapshot a locator', async ({ page }) => {
   await page.setContent(`
     <h1>title</h1>
     <ul>

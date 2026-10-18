@@ -23,7 +23,7 @@
 import { EventEmitter } from './utils';
 import { test, expect } from '@playwright/test';
 
-test('EventEmitter functionality', () => {
+test('EE-030 EventEmitter functionality', () => {
   const myEE = new EventEmitter();
   let m = 0;
   // This one comes last.
@@ -44,7 +44,7 @@ test('EventEmitter functionality', () => {
   myEE.emit('foo');
 });
 
-test('Verify that the listener must be a function', () => {
+test('EE-031 Verify that the listener must be a function', () => {
   expect(() => {
     const ee = new EventEmitter();
     ee.prependOnceListener('foo', null);

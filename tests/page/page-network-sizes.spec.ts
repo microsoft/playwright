@@ -22,7 +22,7 @@ import { test as it, expect } from './pageTest';
 
 it.skip(({ isElectron, browserMajorVersion }) => isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
 
-it('should set bodySize and headersSize', async ({ page, server }) => {
+it('NE-058 should set bodySize and headersSize', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
     page.waitForEvent('request'),
@@ -33,7 +33,7 @@ it('should set bodySize and headersSize', async ({ page, server }) => {
   expect(sizes.requestHeadersSize).toBeGreaterThanOrEqual(250);
 });
 
-it('should set bodySize to 0 if there was no body', async ({ page, server, browserName, platform }) => {
+it('NE-059 should set bodySize to 0 if there was no body', async ({ page, server, browserName, platform }) => {
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
     page.waitForEvent('request'),
@@ -44,7 +44,7 @@ it('should set bodySize to 0 if there was no body', async ({ page, server, brows
   expect(sizes.requestHeadersSize).toBeGreaterThanOrEqual(190);
 });
 
-it('should set bodySize, headersSize, and transferSize', async ({ page, server }) => {
+it('NE-060 should set bodySize, headersSize, and transferSize', async ({ page, server }) => {
   server.setRoute('/get', (req, res) => {
     // In Firefox, |fetch| will be hanging until it receives |Content-Type| header
     // from server.
@@ -62,20 +62,20 @@ it('should set bodySize, headersSize, and transferSize', async ({ page, server }
   expect(sizes.responseHeadersSize).toBeGreaterThanOrEqual(100);
 });
 
-it('should set bodySize to 0 when there was no response body', async ({ page, server }) => {
+it('NE-061 should set bodySize to 0 when there was no response body', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE);
   const sizes = await response.request().sizes();
   expect(sizes.responseBodySize).toBe(0);
   expect(sizes.responseHeadersSize).toBeGreaterThanOrEqual(150);
 });
 
-it('should have the correct responseBodySize', async ({ page, server, asset, browserName }) => {
+it('NE-062 should have the correct responseBodySize', async ({ page, server, asset, browserName }) => {
   const response = await page.goto(server.PREFIX + '/simplezip.json');
   const sizes = await response.request().sizes();
   expect(sizes.responseBodySize).toBe(fs.statSync(asset('simplezip.json')).size);
 });
 
-it('should have the correct responseBodySize for chunked request', async ({ page, server, asset, browserName, platform }) => {
+it('NE-063 should have the correct responseBodySize for chunked request', async ({ page, server, asset, browserName, platform }) => {
   it.fixme(browserName === 'firefox');
   it.fixme(browserName === 'webkit' && platform !== 'darwin');
   const content = fs.readFileSync(asset('simplezip.json'));
@@ -101,7 +101,7 @@ it('should have the correct responseBodySize for chunked request', async ({ page
     expect(sizes.responseBodySize).toBe(5175);
 });
 
-it('should have the correct responseBodySize with gzip compression', async ({ page, server, asset }, testInfo) => {
+it('NE-064 should have the correct responseBodySize with gzip compression', async ({ page, server, asset }, testInfo) => {
   server.enableGzip('/simplezip.json');
   await page.goto(server.EMPTY_PAGE);
   const [response] = await Promise.all([
@@ -119,7 +119,7 @@ it('should have the correct responseBodySize with gzip compression', async ({ pa
   expect(sizes.responseBodySize).toBe(Buffer.concat(chunks).length);
 });
 
-it('should handle redirects', async ({ page, server }) => {
+it('NE-065 should handle redirects', async ({ page, server }) => {
   server.setRedirect('/foo', '/bar');
   server.setRoute('/bar', (req, resp) => resp.end('bar'));
   await page.goto(server.EMPTY_PAGE);
@@ -135,7 +135,7 @@ it('should handle redirects', async ({ page, server }) => {
   expect((await newRequest.sizes()).responseBodySize).toBe(3);
 });
 
-it('should throw for failed requests', async ({ page, server }) => {
+it('NE-066 should throw for failed requests', async ({ page, server }) => {
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection.destroy();
@@ -149,7 +149,7 @@ it('should throw for failed requests', async ({ page, server }) => {
 });
 
 for (const statusCode of [200, 401, 404, 500]) {
-  it(`should work with ${statusCode} status code`, async ({ page, server }) => {
+  it(`NE-067 should work with ${statusCode} status code`, async ({ page, server }) => {
     server.setRoute('/foo', (req, resp) => {
       resp.writeHead(statusCode, {
         'Content-Type': 'text/plain; charset=utf-8',
@@ -172,7 +172,7 @@ for (const statusCode of [200, 401, 404, 500]) {
   });
 }
 
-it('should have correct responseBodySize for 404 with content', async ({ page, server, browserName }) => {
+it('NE-068 should have correct responseBodySize for 404 with content', async ({ page, server, browserName }) => {
   it.fixme(browserName === 'chromium');
 
   server.setRoute('/broken-image.png', (req, resp) => {
@@ -201,7 +201,7 @@ it('should have correct responseBodySize for 404 with content', async ({ page, s
 });
 
 
-it('should return sizes without hanging', async ({ page, server, browserName }) => {
+it('NE-069 should return sizes without hanging', async ({ page, server, browserName }) => {
   it.fixme(browserName === 'chromium');
 
   server.setRoute('/has-abandoned-fetch', (req, resp) => {

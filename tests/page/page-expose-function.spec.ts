@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('exposeBinding should work @smoke', async ({ page }) => {
+it('EF-001 exposeBinding should work @smoke', async ({ page }) => {
   let bindingSource;
   await page.exposeBinding('add', (source, a, b) => {
     bindingSource = source;
@@ -32,7 +32,7 @@ it('exposeBinding should work @smoke', async ({ page }) => {
   expect(result).toEqual(11);
 });
 
-it('should work', async ({ page, server }) => {
+it('EF-002 should work', async ({ page, server }) => {
   await page.exposeFunction('compute', function(a, b) {
     return a * b;
   });
@@ -42,7 +42,7 @@ it('should work', async ({ page, server }) => {
   expect(result).toBe(36);
 });
 
-it('should dispose', async ({ page, server }) => {
+it('EF-003 should dispose', async ({ page, server }) => {
   const binding = await page.exposeFunction('compute', function(a, b) {
     return a * b;
   });
@@ -58,7 +58,7 @@ it('should dispose', async ({ page, server }) => {
   expect(e.message).toContain('is not a function');
 });
 
-it('should work with handles and complex objects', async ({ page, server }) => {
+it('EF-004 should work with handles and complex objects', async ({ page, server }) => {
   const fooHandle = await page.evaluateHandle(() => {
     window['fooValue'] = { bar: 2 };
     return window['fooValue'];
@@ -74,7 +74,7 @@ it('should work with handles and complex objects', async ({ page, server }) => {
   expect(equals).toBe(true);
 });
 
-it('should throw exception in page context', async ({ page, server }) => {
+it('EF-005 should throw exception in page context', async ({ page, server }) => {
   await page.exposeFunction('woof', function() {
     throw new Error('WOOF WOOF');
   });
@@ -89,7 +89,7 @@ it('should throw exception in page context', async ({ page, server }) => {
   expect(stack).toContain(__filename);
 });
 
-it('should support throwing "null"', async ({ page, server }) => {
+it('EF-006 should support throwing "null"', async ({ page, server }) => {
   await page.exposeFunction('woof', function() {
     throw null;
   });
@@ -103,7 +103,7 @@ it('should support throwing "null"', async ({ page, server }) => {
   expect(thrown).toBe(null);
 });
 
-it('should be callable from-inside addInitScript', async ({ page, server }) => {
+it('EF-007 should be callable from-inside addInitScript', async ({ page, server }) => {
   let called = false;
   await page.exposeFunction('woof', function() {
     called = true;
@@ -113,7 +113,7 @@ it('should be callable from-inside addInitScript', async ({ page, server }) => {
   await expect.poll(() => called).toBe(true);
 });
 
-it('should survive navigation', async ({ page, server }) => {
+it('EF-008 should survive navigation', async ({ page, server }) => {
   await page.exposeFunction('compute', function(a, b) {
     return a * b;
   });
@@ -125,7 +125,7 @@ it('should survive navigation', async ({ page, server }) => {
   expect(result).toBe(36);
 });
 
-it('should await returned promise', async ({ page, server }) => {
+it('EF-009 should await returned promise', async ({ page, server }) => {
   await page.exposeFunction('compute', function(a, b) {
     return Promise.resolve(a * b);
   });
@@ -136,7 +136,7 @@ it('should await returned promise', async ({ page, server }) => {
   expect(result).toBe(15);
 });
 
-it('should work on frames', async ({ page, server }) => {
+it('EF-010 should work on frames', async ({ page, server }) => {
   await page.exposeFunction('compute', function(a, b) {
     return Promise.resolve(a * b);
   });
@@ -149,7 +149,7 @@ it('should work on frames', async ({ page, server }) => {
   expect(result).toBe(15);
 });
 
-it('should work on frames before navigation', async ({ page, server }) => {
+it('EF-011 should work on frames before navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   await page.exposeFunction('compute', function(a, b) {
     return Promise.resolve(a * b);
@@ -162,7 +162,7 @@ it('should work on frames before navigation', async ({ page, server }) => {
   expect(result).toBe(15);
 });
 
-it('should work after cross origin navigation', async ({ page, server }) => {
+it('EF-012 should work after cross origin navigation', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.exposeFunction('compute', function(a, b) {
     return a * b;
@@ -175,7 +175,7 @@ it('should work after cross origin navigation', async ({ page, server }) => {
   expect(result).toBe(36);
 });
 
-it('should work with complex objects', async ({ page, server }) => {
+it('EF-013 should work with complex objects', async ({ page, server }) => {
   await page.exposeFunction('complexObject', function(a, b) {
     return { x: a.x + b.x };
   });
@@ -183,13 +183,13 @@ it('should work with complex objects', async ({ page, server }) => {
   expect(result.x).toBe(7);
 });
 
-it('should throw for duplicate registrations', async ({ page }) => {
+it('EF-014 should throw for duplicate registrations', async ({ page }) => {
   await page.exposeFunction('foo', () => {});
   const error = await page.exposeFunction('foo', () => {}).catch(e => e);
   expect(error.message).toContain('page.exposeFunction: Function "foo" has been already registered');
 });
 
-it('should work with setContent', async ({ page, server }) => {
+it('EF-015 should work with setContent', async ({ page, server }) => {
   await page.exposeFunction('compute', function(a, b) {
     return Promise.resolve(a * b);
   });
@@ -197,14 +197,14 @@ it('should work with setContent', async ({ page, server }) => {
   expect(await page.evaluate('window.result')).toBe(6);
 });
 
-it('should alias Window, Document and Node', async ({ page }) => {
+it('EF-016 should alias Window, Document and Node', async ({ page }) => {
   let object: any;
   await page.exposeBinding('log', (source, obj) => object = obj);
   await page.evaluate('window.log([window, document, document.body])');
   expect(object).toEqual(['ref: <Window>', 'ref: <Document>', 'ref: <Node>']);
 });
 
-it('should serialize cycles', async ({ page }) => {
+it('EF-017 should serialize cycles', async ({ page }) => {
   let object: any;
   await page.exposeBinding('log', (source, obj) => object = obj);
   await page.evaluate('const a = {}; a.b = a; window.log(a)');
@@ -213,14 +213,14 @@ it('should serialize cycles', async ({ page }) => {
   expect(object).toEqual(a);
 });
 
-it('should work with overridden console object', async ({ page }) => {
+it('EF-018 should work with overridden console object', async ({ page }) => {
   await page.evaluate(() => window.console = null);
   expect(page.evaluate(() => window.console === null)).toBeTruthy();
   await page.exposeFunction('add', (a, b) => a + b);
   expect(await page.evaluate('add(5, 6)')).toBe(11);
 });
 
-it('should work with busted Array.prototype.map/push', async ({ page, server }) => {
+it('EF-019 should work with busted Array.prototype.map/push', async ({ page, server }) => {
   server.setRoute('/test', (req, res) => {
     res.writeHead(200, {
       'content-type': 'text/html',
@@ -235,7 +235,7 @@ it('should work with busted Array.prototype.map/push', async ({ page, server }) 
   expect(await page.evaluate('add(5, 6)')).toBe(11);
 });
 
-it('should fail with busted Array.prototype.toJSON', async ({ page }) => {
+it('EF-020 should fail with busted Array.prototype.toJSON', async ({ page }) => {
   await page.evaluateHandle(() => (Array.prototype as any).toJSON = () => '"[]"');
 
   await page.exposeFunction('add', (a, b) => a + b);
@@ -244,7 +244,7 @@ it('should fail with busted Array.prototype.toJSON', async ({ page }) => {
   expect.soft(await page.evaluate(() => ([] as any).toJSON())).toBe('"[]"');
 });
 
-it('exposeBinding should work in parallel', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37712' } }, async ({ page }) => {
+it('EF-021 exposeBinding should work in parallel', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37712' } }, async ({ page }) => {
   await Promise.all([
     page.exposeBinding('foo', () => 42),
     page.exposeBinding('bar', () => 42),

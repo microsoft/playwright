@@ -23,7 +23,7 @@
 import { EventEmitter } from './utils';
 import { test, expect } from '@playwright/test';
 
-test('Listener count test', () => {
+test('EE-012 Listener count test', () => {
   const emitter = new EventEmitter();
   emitter.on('foo', () => {});
   emitter.on('foo', () => {});

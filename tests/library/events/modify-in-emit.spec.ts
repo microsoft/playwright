@@ -43,7 +43,7 @@ const callback3 = () => {
   e.removeListener('foo', callback3);
 };
 
-test('add and remove listeners', () => {
+test('EE-025 add and remove listeners', () => {
   e.on('foo', callback1);
   expect(e.listeners('foo')).toHaveLength(1);
 
@@ -76,7 +76,7 @@ test('add and remove listeners', () => {
   expect(e.listeners('foo')).toHaveLength(0);
 });
 
-test('removing callbacks in emit', () => {
+test('EE-026 removing callbacks in emit', () => {
   // Verify that removing callbacks while in emit allows emits to propagate to
   // all listeners
   callbacks_called = [];

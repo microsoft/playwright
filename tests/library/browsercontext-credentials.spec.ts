@@ -23,7 +23,7 @@ const it = base.extend<{ failsOn401: boolean }>({
   },
 });
 
-it('should fail without credentials', async ({ browser, server, failsOn401 }) => {
+it('AU-001 should fail without credentials', async ({ browser, server, failsOn401 }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -34,7 +34,7 @@ it('should fail without credentials', async ({ browser, server, failsOn401 }) =>
     expect(responseOrError.status()).toBe(401);
 });
 
-it('should work with setHTTPCredentials', async ({ browser, server, failsOn401 }) => {
+it('AU-002 should work with setHTTPCredentials', async ({ browser, server, failsOn401 }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -51,7 +51,7 @@ it('should work with setHTTPCredentials', async ({ browser, server, failsOn401 }
   await context.close();
 });
 
-it('should work with setHTTPCredentials and multiple credentials', async ({ browser, server, browserName }) => {
+it('AU-003 should work with setHTTPCredentials and multiple credentials', async ({ browser, server, browserName }) => {
   server.setAuth('/empty.html', 'user1', 'pass1');
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -67,7 +67,7 @@ it('should work with setHTTPCredentials and multiple credentials', async ({ brow
   await context.close();
 });
 
-it('should work with correct credentials @smoke', async ({ browser, server }) => {
+it('AU-004 should work with correct credentials @smoke', async ({ browser, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: { username: 'user', password: 'pass' }
@@ -78,7 +78,7 @@ it('should work with correct credentials @smoke', async ({ browser, server }) =>
   await context.close();
 });
 
-it('should fail with wrong credentials', async ({ browser, server }) => {
+it('AU-005 should fail with wrong credentials', async ({ browser, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: { username: 'foo', password: 'bar' }
@@ -89,7 +89,7 @@ it('should fail with wrong credentials', async ({ browser, server }) => {
   await context.close();
 });
 
-it('should return resource body', async ({ browser, server }) => {
+it('AU-006 should return resource body', async ({ browser, server }) => {
   server.setAuth('/playground.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: { username: 'user', password: 'pass' }
@@ -102,7 +102,7 @@ it('should return resource body', async ({ browser, server }) => {
   await context.close();
 });
 
-it('should work with a single credential in an array', async ({ browser, server }) => {
+it('AU-007 should work with a single credential in an array', async ({ browser, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: [{ username: 'user', password: 'pass' }]
@@ -113,7 +113,7 @@ it('should work with a single credential in an array', async ({ browser, server 
   await context.close();
 });
 
-it('should work with multiple credentials for different origins', async ({ browser, server, browserName }) => {
+it('AU-008 should work with multiple credentials for different origins', async ({ browser, server, browserName }) => {
   server.setAuth('/empty.html', 'user1', 'pass1');
   const context = await browser.newContext({
     httpCredentials: [
@@ -130,7 +130,7 @@ it('should work with multiple credentials for different origins', async ({ brows
   await context.close();
 });
 
-it('should fall back to credentials without origin', async ({ browser, server, browserName }) => {
+it('AU-009 should fall back to credentials without origin', async ({ browser, server, browserName }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: [
@@ -147,7 +147,7 @@ it('should fall back to credentials without origin', async ({ browser, server, b
   await context.close();
 });
 
-it('should use the first matching credential', async ({ browser, server, browserName }) => {
+it('AU-010 should use the first matching credential', async ({ browser, server, browserName }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: [
@@ -161,7 +161,7 @@ it('should use the first matching credential', async ({ browser, server, browser
   await context.close();
 });
 
-it('should work with correct credentials and matching origin', async ({ browser, server }) => {
+it('AU-011 should work with correct credentials and matching origin', async ({ browser, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX }
@@ -172,7 +172,7 @@ it('should work with correct credentials and matching origin', async ({ browser,
   await context.close();
 });
 
-it('should work with correct credentials and matching origin case insensitive', async ({ browser, server }) => {
+it('AU-012 should work with correct credentials and matching origin case insensitive', async ({ browser, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase() }
@@ -183,7 +183,7 @@ it('should work with correct credentials and matching origin case insensitive', 
   await context.close();
 });
 
-it('should fail with correct credentials and mismatching scheme', async ({ browser, server, failsOn401 }) => {
+it('AU-013 should fail with correct credentials and mismatching scheme', async ({ browser, server, failsOn401 }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.replace('http://', 'https://') }
@@ -197,7 +197,7 @@ it('should fail with correct credentials and mismatching scheme', async ({ brows
   await context.close();
 });
 
-it('should fail with correct credentials and mismatching hostname', async ({ browser, server, failsOn401 }) => {
+it('AU-014 should fail with correct credentials and mismatching hostname', async ({ browser, server, failsOn401 }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const hostname = new URL(server.PREFIX).hostname;
   const origin = server.PREFIX.replace(hostname, 'mismatching-hostname');
@@ -213,7 +213,7 @@ it('should fail with correct credentials and mismatching hostname', async ({ bro
   await context.close();
 });
 
-it('should fail with correct credentials and mismatching port', async ({ browser, server, failsOn401 }) => {
+it('AU-015 should fail with correct credentials and mismatching port', async ({ browser, server, failsOn401 }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const origin = server.PREFIX.replace(server.PORT.toString(), (server.PORT + 1).toString());
   const context = await browser.newContext({
@@ -228,7 +228,7 @@ it('should fail with correct credentials and mismatching port', async ({ browser
   await context.close();
 });
 
-it('should not override Authorization header set by the page', async ({ browser, server }) => {
+it('AU-016 should not override Authorization header set by the page', async ({ browser, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   server.setRoute('/echo-auth', (req, res) => {
     res.end(req.headers['authorization'] || '<none>');

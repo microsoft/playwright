@@ -18,7 +18,7 @@ import { test, expect } from './inspectorTest';
 import { roundBox } from '../../config/utils';
 
 test.describe(() => {
-  test('should generate aria snapshot', async ({ openRecorder }) => {
+  test('CG-096 should generate aria snapshot', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<main><button>Submit</button></main>`);
 
@@ -38,7 +38,7 @@ test.describe(() => {
       recorder.text('C#')).toContain(`await Expect(page.GetByRole(AriaRole.Button)).ToMatchAriaSnapshotAsync("- button \\"Submit\\"");`);
   });
 
-  test('should generate regex in aria snapshot', async ({ openRecorder }) => {
+  test('CG-097 should generate regex in aria snapshot', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<main><button>Submit 123</button></main>`);
 
@@ -58,7 +58,7 @@ test.describe(() => {
       recorder.text('C#')).toContain(`await Expect(page.GetByRole(AriaRole.Button)).ToMatchAriaSnapshotAsync("- button /Submit \\\\d+/");`);
   });
 
-  test('should generate regex for uuid in aria snapshot', async ({ openRecorder }) => {
+  test('CG-098 should generate regex for uuid in aria snapshot', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<main><a href="/items/550e8400-e29b-41d4-a716-446655440000">Item 550e8400-e29b-41d4-a716-446655440000</a></main>`);
 
@@ -71,7 +71,7 @@ test.describe(() => {
       recorder.text('JavaScript')).toContain(`- link /Item [0-9a-fA-F-]+/:`);
   });
 
-  test('should inspect aria snapshot', async ({ openRecorder }) => {
+  test('CG-099 should inspect aria snapshot', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<main><button>Submit</button></main>`);
     await recorder.page.click('x-pw-tool-item.pick-locator');
@@ -84,7 +84,7 @@ test.describe(() => {
     `);
   });
 
-  test('should update aria snapshot highlight', async ({ openRecorder }) => {
+  test('CG-100 should update aria snapshot highlight', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<main>
       <button>Submit</button>
@@ -128,7 +128,7 @@ test.describe(() => {
     }
   });
 
-  test('should show aria snapshot error', async ({ openRecorder }) => {
+  test('CG-101 should show aria snapshot error', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<main>
       <button>Submit</button>
@@ -152,10 +152,12 @@ test.describe(() => {
     await expect(recorder.recorderPage.locator('.source-line-error-underline')).toHaveCount(1);
   });
 
-  test('should generate valid javascript with multiline snapshot assertion', async ({ openRecorder }) => {
+  test('CG-102 should generate valid javascript with multiline snapshot assertion', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43459' },
+  }, async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
     // set width and height to 100% to ensure click is outside of the list
-    await recorder.setContentAndWait(`<body style="width:100%;height:100%"><ul><li>item 1</li><li>item 2</li></ul></body>`);
+    await recorder.setContentAndWait(`<body style="width:100%;height:100%"><ul><li>item 1</li><li>Cost \${price}</li></ul></body>`);
 
     await recorder.page.click('x-pw-tool-item.snapshot');
     await recorder.page.hover('body');
@@ -167,7 +169,7 @@ test.describe(() => {
       `  await expect(page.locator('body')).toMatchAriaSnapshot(\``,
       `    - list:`,
       `      - listitem: item 1`,
-      `      - listitem: item 2`,
+      `      - listitem: "Cost \\\${price}"`,
       `    \`);`,
     ].join('\n'));
 
@@ -177,7 +179,7 @@ test.describe(() => {
       `  // await expect(page.locator('body')).toMatchAriaSnapshot(\``,
       `  //   - list:`,
       `  //     - listitem: item 1`,
-      `  //     - listitem: item 2`,
+      `  //     - listitem: "Cost \\\${price}"`,
       `  //   \`);`,
     ].join('\n'));
 

@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 
-it('should work @smoke', async ({ server, contextFactory }) => {
+it('GE-001 should work @smoke', async ({ server, contextFactory }) => {
   const context = await contextFactory();
   const page = await context.newPage();
   await context.grantPermissions(['geolocation']);
@@ -32,7 +32,7 @@ it('should work @smoke', async ({ server, contextFactory }) => {
   });
 });
 
-it('should throw when invalid longitude', async ({ contextFactory }) => {
+it('GE-002 should throw when invalid longitude', async ({ contextFactory }) => {
   const context = await contextFactory();
   let error = null;
   try {
@@ -43,7 +43,7 @@ it('should throw when invalid longitude', async ({ contextFactory }) => {
   expect(error.message).toContain('geolocation.longitude: precondition -180 <= LONGITUDE <= 180 failed.');
 });
 
-it('should isolate contexts', async ({ server, contextFactory, browser }) => {
+it('GE-003 should isolate contexts', async ({ server, contextFactory, browser }) => {
   const context = await contextFactory();
   const page = await context.newPage();
   await context.grantPermissions(['geolocation']);
@@ -76,7 +76,7 @@ it('should isolate contexts', async ({ server, contextFactory, browser }) => {
   await context2.close();
 });
 
-it('should throw with missing latitude', async ({ contextFactory }) => {
+it('GE-004 should throw with missing latitude', async ({ contextFactory }) => {
   const context = await contextFactory();
   let error = null;
   try {
@@ -88,7 +88,7 @@ it('should throw with missing latitude', async ({ contextFactory }) => {
   expect(error.message).toContain('geolocation.latitude: expected float, got undefined');
 });
 
-it('should not modify passed default options object', async ({ browser }) => {
+it('GE-005 should not modify passed default options object', async ({ browser }) => {
   const geolocation = { longitude: 10, latitude: 10 };
   const options = { geolocation };
   const context = await browser.newContext(options);
@@ -97,7 +97,7 @@ it('should not modify passed default options object', async ({ browser }) => {
   await context.close();
 });
 
-it('should throw with missing longitude in default options', async ({ browser }) => {
+it('GE-006 should throw with missing longitude in default options', async ({ browser }) => {
   let error = null;
   try {
     // @ts-expect-error geolocation must have longitude
@@ -109,7 +109,7 @@ it('should throw with missing longitude in default options', async ({ browser })
   expect(error.message).toContain('geolocation.longitude: expected float, got undefined');
 });
 
-it('should use context options', async ({ browser, server }) => {
+it('GE-007 should use context options', async ({ browser, server }) => {
   const options = { geolocation: { longitude: 10, latitude: 10 }, permissions: ['geolocation'] };
   const context = await browser.newContext(options);
   const page = await context.newPage();
@@ -125,7 +125,7 @@ it('should use context options', async ({ browser, server }) => {
   await context.close();
 });
 
-it('watchPosition should be notified', async ({ server, contextFactory }) => {
+it('GE-008 watchPosition should be notified', async ({ server, contextFactory }) => {
   const context = await contextFactory();
   const page = await context.newPage();
   await context.grantPermissions(['geolocation']);
@@ -159,7 +159,7 @@ it('watchPosition should be notified', async ({ server, contextFactory }) => {
   expect(allMessages).toContain('lat=40 lng=50');
 });
 
-it('should use context options for popup', async ({ contextFactory, server }) => {
+it('GE-009 should use context options for popup', async ({ contextFactory, server }) => {
   const context = await contextFactory();
   const page = await context.newPage();
   await context.grantPermissions(['geolocation']);

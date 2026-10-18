@@ -21,7 +21,7 @@ import { test, expect } from '@playwright/test';
 
 const { ManualPromise } = iso;
 
-test('should not throw with ignoreErrors', async () => {
+test('EE-032 should not throw with ignoreErrors', async () => {
   const ee = new EventEmitter();
   const releaseHandler = new ManualPromise();
   ee.on('console', async () => {
@@ -33,7 +33,7 @@ test('should not throw with ignoreErrors', async () => {
   releaseHandler.resolve();
 });
 
-test('should wait', async () => {
+test('EE-033 should wait', async () => {
   const ee = new EventEmitter();
   const releaseHandler = new ManualPromise();
   let value = 0;
@@ -48,7 +48,7 @@ test('should wait', async () => {
   expect(value).toBe(42);
 });
 
-test('should wait all', async () => {
+test('EE-034 should wait all', async () => {
   const ee = new EventEmitter();
   const releaseHandler = new ManualPromise();
   const values = [];
@@ -68,7 +68,7 @@ test('should wait all', async () => {
   expect(values).toEqual([42, 43]);
 });
 
-test('wait should throw', async () => {
+test('EE-035 wait should throw', async () => {
   const ee = new EventEmitter();
   const releaseHandler = new ManualPromise();
   ee.on('console', async () => {

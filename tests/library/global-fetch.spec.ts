@@ -29,7 +29,7 @@ const it = base.extend({
 it.skip(({ mode }) => mode !== 'default');
 
 for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] as const) {
-  it(`${method} should work @smoke`, async ({ playwright, server }) => {
+  it(`FE-001 ${method} should work @smoke`, async ({ playwright, server }) => {
     const request = await playwright.request.newContext();
     const response = await request[method](server.PREFIX + '/simple.json');
     expect(response.url()).toBe(server.PREFIX + '/simple.json');
@@ -44,7 +44,7 @@ for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] 
 }
 
 
-it(`should dispose global request`, async function({ playwright, server }) {
+it(`FE-002 should dispose global request`, async function({ playwright, server }) {
   const request = await playwright.request.newContext();
   const response = await request.get(server.PREFIX + '/simple.json');
   expect(await response.json()).toEqual({ foo: 'bar' });
@@ -54,7 +54,7 @@ it(`should dispose global request`, async function({ playwright, server }) {
   await request.dispose();
 });
 
-it('should support global userAgent option', async ({ playwright, server }) => {
+it('FE-003 should support global userAgent option', async ({ playwright, server }) => {
   const request = await playwright.request.newContext({ userAgent: 'My Agent' });
   const [serverRequest, response] = await Promise.all([
     server.waitForRequest('/empty.html'),
@@ -66,7 +66,7 @@ it('should support global userAgent option', async ({ playwright, server }) => {
   await request.dispose();
 });
 
-it('should support global timeout option', async ({ playwright, server }) => {
+it('FE-004 should support global timeout option', async ({ playwright, server }) => {
   const request = await playwright.request.newContext({ timeout: 100 });
   server.setRoute('/empty.html', (req, res) => {});
   const error = await request.get(server.EMPTY_PAGE).catch(e => e);
@@ -74,7 +74,7 @@ it('should support global timeout option', async ({ playwright, server }) => {
   await request.dispose();
 });
 
-it('should propagate extra http headers with redirects', async ({ playwright, server }) => {
+it('FE-005 should propagate extra http headers with redirects', async ({ playwright, server }) => {
   server.setRedirect('/a/redirect1', '/b/c/redirect2');
   server.setRedirect('/b/c/redirect2', '/simple.json');
   const request = await playwright.request.newContext({ extraHTTPHeaders: { 'My-Secret': 'Value' } });
@@ -90,7 +90,7 @@ it('should propagate extra http headers with redirects', async ({ playwright, se
   await request.dispose();
 });
 
-it('should preserve authorization on same-origin redirect but strip on cross-origin', async ({ playwright, server }) => {
+it('FE-006 should preserve authorization on same-origin redirect but strip on cross-origin', async ({ playwright, server }) => {
   server.setRedirect('/same/redirect', '/same/dest');
   server.setRedirect('/cross/redirect', server.CROSS_PROCESS_PREFIX + '/cross/dest');
   const request = await playwright.request.newContext({
@@ -112,7 +112,7 @@ it('should preserve authorization on same-origin redirect but strip on cross-ori
   await request.dispose();
 });
 
-it('should support global httpCredentials option', async ({ playwright, server }) => {
+it('FE-007 should support global httpCredentials option', async ({ playwright, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const request1 = await playwright.request.newContext();
   const response1 = await request1.get(server.EMPTY_PAGE);
@@ -125,7 +125,7 @@ it('should support global httpCredentials option', async ({ playwright, server }
   await request2.dispose();
 });
 
-it('should return error with wrong credentials', async ({ playwright, server }) => {
+it('FE-008 should return error with wrong credentials', async ({ playwright, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const request = await playwright.request.newContext({ httpCredentials: { username: 'user', password: 'wrong' } });
   const response = await request.get(server.EMPTY_PAGE);
@@ -133,7 +133,7 @@ it('should return error with wrong credentials', async ({ playwright, server }) 
   await request.dispose();
 });
 
-it('should work with correct credentials and matching origin', async ({ playwright, server }) => {
+it('FE-009 should work with correct credentials and matching origin', async ({ playwright, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const request = await playwright.request.newContext({ httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX } });
   const response = await request.get(server.EMPTY_PAGE);
@@ -141,7 +141,7 @@ it('should work with correct credentials and matching origin', async ({ playwrig
   await request.dispose();
 });
 
-it('should work with correct credentials and matching origin case insensitive', async ({ playwright, server }) => {
+it('FE-010 should work with correct credentials and matching origin case insensitive', async ({ playwright, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const request = await playwright.request.newContext({ httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase() } });
   const response = await request.get(server.EMPTY_PAGE);
@@ -149,7 +149,7 @@ it('should work with correct credentials and matching origin case insensitive', 
   await request.dispose();
 });
 
-it('should return error with correct credentials and mismatching scheme', async ({ playwright, server }) => {
+it('FE-011 should return error with correct credentials and mismatching scheme', async ({ playwright, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const request = await playwright.request.newContext({ httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.replace('http://', 'https://') } });
   const response = await request.get(server.EMPTY_PAGE);
@@ -157,7 +157,7 @@ it('should return error with correct credentials and mismatching scheme', async 
   await request.dispose();
 });
 
-it('should return error with correct credentials and mismatching hostname', async ({ playwright, server }) => {
+it('FE-012 should return error with correct credentials and mismatching hostname', async ({ playwright, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const hostname = new URL(server.PREFIX).hostname;
   const origin = server.PREFIX.replace(hostname, 'mismatching-hostname');
@@ -167,7 +167,7 @@ it('should return error with correct credentials and mismatching hostname', asyn
   await request.dispose();
 });
 
-it('should return error with correct credentials and mismatching port', async ({ playwright, server }) => {
+it('FE-013 should return error with correct credentials and mismatching port', async ({ playwright, server }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const origin = server.PREFIX.replace(server.PORT.toString(), (server.PORT + 1).toString());
   const request = await playwright.request.newContext({ httpCredentials: { username: 'user', password: 'pass', origin: origin } });
@@ -176,7 +176,7 @@ it('should return error with correct credentials and mismatching port', async ({
   await request.dispose();
 });
 
-it('should support WWW-Authenticate: Basic', async ({ playwright, server }) => {
+it('FE-014 should support WWW-Authenticate: Basic', async ({ playwright, server }) => {
   let credentials;
   server.setRoute('/empty.html', (req, res) => {
     if (!req.headers.authorization) {
@@ -195,7 +195,7 @@ it('should support WWW-Authenticate: Basic', async ({ playwright, server }) => {
   await request.dispose();
 });
 
-it('should support HTTPCredentials.send', async ({ playwright, server }) => {
+it('FE-015 should support HTTPCredentials.send', async ({ playwright, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30534' });
   const request = await playwright.request.newContext({
     httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.toUpperCase(), send: 'always' }
@@ -220,7 +220,7 @@ it('should support HTTPCredentials.send', async ({ playwright, server }) => {
   await request.dispose();
 });
 
-it('should support multiple httpCredentials', async ({ playwright, server }) => {
+it('FE-016 should support multiple httpCredentials', async ({ playwright, server }) => {
   server.setAuth('/empty.html', 'user1', 'pass1');
   const request = await playwright.request.newContext({
     httpCredentials: [
@@ -236,7 +236,7 @@ it('should support multiple httpCredentials', async ({ playwright, server }) => 
   await request.dispose();
 });
 
-it('should support HTTPCredentials.send with multiple httpCredentials', async ({ playwright, server }) => {
+it('FE-017 should support HTTPCredentials.send with multiple httpCredentials', async ({ playwright, server }) => {
   const request = await playwright.request.newContext({
     httpCredentials: [
       { username: 'user1', password: 'pass1', origin: server.PREFIX, send: 'always' },
@@ -263,14 +263,14 @@ it('should support HTTPCredentials.send with multiple httpCredentials', async ({
   await request.dispose();
 });
 
-it('should support global ignoreHTTPSErrors option', async ({ playwright, httpsServer }) => {
+it('FE-018 should support global ignoreHTTPSErrors option', async ({ playwright, httpsServer }) => {
   const request = await playwright.request.newContext({ ignoreHTTPSErrors: true });
   const response = await request.get(httpsServer.EMPTY_PAGE);
   expect(response.status()).toBe(200);
   await request.dispose();
 });
 
-it('should propagate ignoreHTTPSErrors on redirects', async ({ playwright, httpsServer }) => {
+it('FE-019 should propagate ignoreHTTPSErrors on redirects', async ({ playwright, httpsServer }) => {
   httpsServer.setRedirect('/redir', '/empty.html');
   const request = await playwright.request.newContext();
   const response = await request.get(httpsServer.PREFIX + '/redir', { ignoreHTTPSErrors: true });
@@ -278,7 +278,7 @@ it('should propagate ignoreHTTPSErrors on redirects', async ({ playwright, https
   await request.dispose();
 });
 
-it('should return server address from response', async ({ playwright, server }) => {
+it('FE-020 should return server address from response', async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
   // The second request reuses the keep-alive socket and should report the address as well.
   for (let i = 0; i < 2; i++) {
@@ -290,7 +290,7 @@ it('should return server address from response', async ({ playwright, server }) 
   await request.dispose();
 });
 
-it('should return security details from response', async ({ playwright, httpsServer }) => {
+it('FE-021 should return security details from response', async ({ playwright, httpsServer }) => {
   const request = await playwright.request.newContext({ ignoreHTTPSErrors: true });
   // The second request reuses the keep-alive socket and should report the details as well.
   for (let i = 0; i < 2; i++) {
@@ -300,7 +300,7 @@ it('should return security details from response', async ({ playwright, httpsSer
   await request.dispose();
 });
 
-it('should return security details for a resumed TLS session', async ({ playwright, httpsServer }) => {
+it('FE-022 should return security details for a resumed TLS session', async ({ playwright, httpsServer }) => {
   const expected = { issuer: 'playwright-test', protocol: 'TLSv1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 };
   const request = await playwright.request.newContext({ ignoreHTTPSErrors: true });
   // 'Connection: close' drops the socket, so the next request opens a new one and resumes
@@ -312,14 +312,14 @@ it('should return security details for a resumed TLS session', async ({ playwrig
   await request.dispose();
 });
 
-it('should return null security details for http response', async ({ playwright, server }) => {
+it('FE-023 should return null security details for http response', async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
   const response = await request.get(server.EMPTY_PAGE);
   expect(await response.securityDetails()).toBeNull();
   await request.dispose();
 });
 
-it('should return security details for certificate with multiple CN attributes', {
+it('FE-024 should return security details for certificate with multiple CN attributes', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41815' },
 }, async ({ playwright, asset }) => {
   const server = utils.createHttpsServer({
@@ -343,21 +343,21 @@ it('should return security details for certificate with multiple CN attributes',
   }
 });
 
-it('should resolve url relative to global baseURL option', async ({ playwright, server }) => {
+it('FE-025 should resolve url relative to global baseURL option', async ({ playwright, server }) => {
   const request = await playwright.request.newContext({ baseURL: server.PREFIX });
   const response = await request.get('/empty.html');
   expect(response.url()).toBe(server.EMPTY_PAGE);
   await request.dispose();
 });
 
-it('should fallback to given URL if baseURL is bogus', async ({ playwright, server }) => {
+it('FE-026 should fallback to given URL if baseURL is bogus', async ({ playwright, server }) => {
   const request = await playwright.request.newContext({ baseURL: 'bogus' });
   const response = await request.get(server.PREFIX + '/empty.html');
   expect(response.url()).toBe(server.EMPTY_PAGE);
   await request.dispose();
 });
 
-it('should set playwright as user-agent', async ({ playwright, server, isWindows, isLinux, isMac }) => {
+it('FE-027 should set playwright as user-agent', async ({ playwright, server, isWindows, isLinux, isMac }) => {
   const request = await playwright.request.newContext();
   const [serverRequest] = await Promise.all([
     server.waitForRequest('/empty.html'),
@@ -384,7 +384,7 @@ it('should set playwright as user-agent', async ({ playwright, server, isWindows
   await request.dispose();
 });
 
-it('should be able to construct with context options', async ({ playwright, browserType, server }) => {
+it('FE-028 should be able to construct with context options', async ({ playwright, browserType, server }) => {
   const defaultContextOptions = {};
   await (playwright as any)._instrumentation.runBeforeCreateRequestContext(defaultContextOptions);
   const request = await playwright.request.newContext(defaultContextOptions);
@@ -393,7 +393,7 @@ it('should be able to construct with context options', async ({ playwright, brow
   await request.dispose();
 });
 
-it('should return empty body', async ({ playwright, server }) => {
+it('FE-029 should return empty body', async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
   const response = await request.get(server.EMPTY_PAGE);
   const body = await response.body();
@@ -402,7 +402,7 @@ it('should return empty body', async ({ playwright, server }) => {
   await request.dispose();
 });
 
-it('should abort requests when context is disposed', async ({ playwright, server }) => {
+it('FE-030 should abort requests when context is disposed', async ({ playwright, server }) => {
   const connectionClosed = new Promise(resolve => {
     server.setRoute('/empty.html', req => req.socket.on('close', resolve));
   });
@@ -421,7 +421,7 @@ it('should abort requests when context is disposed', async ({ playwright, server
   await request.dispose();
 });
 
-it('should abort redirected requests when context is disposed', async ({ playwright, server }) => {
+it('FE-031 should abort redirected requests when context is disposed', async ({ playwright, server }) => {
   server.setRedirect('/redirect', '/test');
   const connectionClosed = new Promise(resolve => {
     server.setRoute('/test', req => req.socket.on('close', resolve));
@@ -437,7 +437,7 @@ it('should abort redirected requests when context is disposed', async ({ playwri
   await request.dispose();
 });
 
-it('should remove content-length from redirected post requests', async ({ playwright, server }) => {
+it('FE-032 should remove content-length from redirected post requests', async ({ playwright, server }) => {
   server.setRedirect('/redirect', '/empty.html');
   const request = await playwright.request.newContext();
   const [result, req1, req2] = await Promise.all([
@@ -470,7 +470,7 @@ const serialization: [string, any][] = [
 ];
 for (const [type, value] of serialization) {
   const stringifiedValue = JSON.stringify(value);
-  it(`should json stringify ${type} body when content-type is application/json`, {
+  it(`FE-033 should json stringify ${type} body when content-type is application/json`, {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43388' },
   }, async ({ playwright, server }) => {
     const request = await playwright.request.newContext();
@@ -490,7 +490,7 @@ for (const [type, value] of serialization) {
     await request.dispose();
   });
 
-  it(`should not double stringify ${type} body when content-type is application/json`, async ({ playwright, server }) => {
+  it(`FE-034 should not double stringify ${type} body when content-type is application/json`, async ({ playwright, server }) => {
     const request = await playwright.request.newContext();
     const [req] = await Promise.all([
       server.waitForRequest('/empty.html'),
@@ -507,7 +507,7 @@ for (const [type, value] of serialization) {
   });
 }
 
-it(`should accept already serialized data as Buffer when content-type is application/json`, async ({ playwright, server }) => {
+it(`FE-035 should accept already serialized data as Buffer when content-type is application/json`, async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
   const value = JSON.stringify(JSON.stringify({ 'foo': 'bar' }));
   const [req] = await Promise.all([
@@ -524,7 +524,7 @@ it(`should accept already serialized data as Buffer when content-type is applica
   await request.dispose();
 });
 
-it(`should have nice toString`, async ({ playwright, server }) => {
+it(`FE-036 should have nice toString`, async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
   const response = await request.post(server.EMPTY_PAGE, {
     headers: {
@@ -539,7 +539,7 @@ it(`should have nice toString`, async ({ playwright, server }) => {
   await request.dispose();
 });
 
-it('should not fail on empty body with encoding', async ({ playwright, server }) => {
+it('FE-037 should not fail on empty body with encoding', async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
   for (const method of ['head', 'put']) {
     for (const encoding of ['br', 'gzip', 'deflate']) {
@@ -558,7 +558,7 @@ it('should not fail on empty body with encoding', async ({ playwright, server })
   await request.dispose();
 });
 
-it('should return body for failing requests', async ({ playwright, server }) => {
+it('FE-038 should return body for failing requests', async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
   for (const method of ['head', 'put', 'trace']) {
     server.setRoute('/empty.html', (req, res) => {
@@ -575,7 +575,7 @@ it('should return body for failing requests', async ({ playwright, server }) => 
 
 const HTTP_METHODS = ['GET', 'PUT', 'POST', 'OPTIONS', 'HEAD', 'PATCH'] as const;
 
-it('should throw an error when maxRedirects is exceeded', async ({ playwright, server }) => {
+it('FE-039 should throw an error when maxRedirects is exceeded', async ({ playwright, server }) => {
   server.setRedirect('/a/redirect1', '/b/c/redirect2');
   server.setRedirect('/b/c/redirect2', '/b/c/redirect3');
   server.setRedirect('/b/c/redirect3', '/b/c/redirect4');
@@ -589,7 +589,7 @@ it('should throw an error when maxRedirects is exceeded', async ({ playwright, s
   await request.dispose();
 });
 
-it('should not follow redirects when maxRedirects is set to 0', async ({ playwright, server }) => {
+it('FE-040 should not follow redirects when maxRedirects is set to 0', async ({ playwright, server }) => {
   server.setRedirect('/a/redirect1', '/b/c/redirect2');
   server.setRedirect('/b/c/redirect2', '/simple.json');
 
@@ -602,7 +602,7 @@ it('should not follow redirects when maxRedirects is set to 0', async ({ playwri
   await request.dispose();
 });
 
-it('should throw an error when maxRedirects is less than 0', async ({ playwright, server }) => {
+it('FE-041 should throw an error when maxRedirects is less than 0', async ({ playwright, server }) => {
   server.setRedirect('/a/redirect1', '/b/c/redirect2');
   server.setRedirect('/b/c/redirect2', '/simple.json');
 
@@ -612,7 +612,7 @@ it('should throw an error when maxRedirects is less than 0', async ({ playwright
   await request.dispose();
 });
 
-it('should not follow redirects when maxRedirects is set to 0 in newContext', async ({ playwright, server }) => {
+it('FE-042 should not follow redirects when maxRedirects is set to 0 in newContext', async ({ playwright, server }) => {
   server.setRedirect('/a/redirect1', '/b/c/redirect2');
   server.setRedirect('/b/c/redirect2', '/simple.json');
 
@@ -625,7 +625,7 @@ it('should not follow redirects when maxRedirects is set to 0 in newContext', as
   await request.dispose();
 });
 
-it('should follow redirects up to maxRedirects limit set in newContext', async ({ playwright, server }) => {
+it('FE-043 should follow redirects up to maxRedirects limit set in newContext', async ({ playwright, server }) => {
   server.setRedirect('/a/redirect1', '/b/c/redirect2');
   server.setRedirect('/b/c/redirect2', '/b/c/redirect3');
   server.setRedirect('/b/c/redirect3', '/b/c/redirect4');
@@ -646,7 +646,7 @@ it('should follow redirects up to maxRedirects limit set in newContext', async (
   }
 });
 
-it('should use maxRedirects from fetch when provided, overriding newContext', async ({ playwright, server }) => {
+it('FE-044 should use maxRedirects from fetch when provided, overriding newContext', async ({ playwright, server }) => {
   server.setRedirect('/a/redirect1', '/b/c/redirect2');
   server.setRedirect('/b/c/redirect2', '/b/c/redirect3');
   server.setRedirect('/b/c/redirect3', '/b/c/redirect4');
@@ -660,7 +660,7 @@ it('should use maxRedirects from fetch when provided, overriding newContext', as
   await request.dispose();
 });
 
-it('should keep headers capitalization', async ({ playwright, server }) => {
+it('FE-045 should keep headers capitalization', async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
   const [serverRequest, response] = await Promise.all([
     server.waitForRequest('/empty.html'),
@@ -676,7 +676,7 @@ it('should keep headers capitalization', async ({ playwright, server }) => {
   await request.dispose();
 });
 
-it('should serialize post data on the client', async ({ playwright, server }) => {
+it('FE-046 should serialize post data on the client', async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
   const serverReq = server.waitForRequest('/empty.html');
   let onStack: boolean = true;
@@ -696,14 +696,14 @@ it('should serialize post data on the client', async ({ playwright, server }) =>
   await request.dispose();
 });
 
-it('should throw after dispose', async ({ playwright, server }) => {
+it('FE-047 should throw after dispose', async ({ playwright, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27822' });
   const request = await playwright.request.newContext();
   await request.dispose();
   await expect(request.get(server.EMPTY_PAGE)).rejects.toThrow('Target page, context or browser has been closed');
 });
 
-it('should retry ECONNRESET', {
+it('FE-048 should retry ECONNRESET', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30978' }
 }, async ({ playwright, server }) => {
   const request = await playwright.request.newContext();
@@ -723,7 +723,7 @@ it('should retry ECONNRESET', {
   await request.dispose();
 });
 
-it('should expose node error code on network errors', {
+it('FE-049 should expose node error code on network errors', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42532' }
 }, async ({ playwright, server }) => {
   // Reset the connection so that node reports a system error instead of a plain 'socket hang up'.
@@ -737,7 +737,7 @@ it('should expose node error code on network errors', {
   await request.dispose();
 });
 
-it('should append node error code to the message', {
+it('FE-050 should append node error code to the message', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42532' }
 }, async ({ playwright, server }) => {
   // Node reports this one as a plain 'socket hang up' that does not mention the code.
@@ -749,7 +749,7 @@ it('should append node error code to the message', {
   await request.dispose();
 });
 
-it('should not crash when server refuses body before reading it', {
+it('FE-051 should not crash when server refuses body before reading it', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42074' }
 }, async ({ playwright, server }) => {
   // Respond without reading the body, then reset. Node emits a late write
@@ -781,7 +781,7 @@ it('should not crash when server refuses body before reading it', {
   await request.dispose();
 });
 
-it('should throw when failOnStatusCode is set to true inside APIRequest context options', async ({ playwright, server }) => {
+it('FE-052 should throw when failOnStatusCode is set to true inside APIRequest context options', async ({ playwright, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34204' });
   const request = await playwright.request.newContext({ failOnStatusCode: true });
   server.setRoute('/empty.html', (req, res) => {
@@ -793,7 +793,7 @@ it('should throw when failOnStatusCode is set to true inside APIRequest context 
   await request.dispose();
 });
 
-it('should not throw when failOnStatusCode is set to false inside APIRequest context options', async ({ playwright, server }) => {
+it('FE-053 should not throw when failOnStatusCode is set to false inside APIRequest context options', async ({ playwright, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34204' });
   const request = await playwright.request.newContext({ failOnStatusCode: false });
   server.setRoute('/empty.html', (req, res) => {

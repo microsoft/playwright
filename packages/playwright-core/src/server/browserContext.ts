@@ -465,7 +465,6 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     const proxy = this._options.proxy || this._browser.options.proxy || { username: undefined, password: undefined };
     const { username, password } = proxy;
     if (username) {
-      this._options.httpCredentials = [{ username, password: password! }];
       const token = Buffer.from(`${username}:${password}`).toString('base64');
       this._options.extraHTTPHeaders = network.mergeHeaders([
         this._options.extraHTTPHeaders,
@@ -474,13 +473,11 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     }
   }
 
-  protected authenticateProxyViaCredentials() {
+  proxyCredentials(): HttpCredentials | undefined {
     const proxy = this._options.proxy || this._browser.options.proxy;
-    if (!proxy)
+    if (!proxy?.username)
       return;
-    const { username, password } = proxy;
-    if (username)
-      this._options.httpCredentials = [{ username, password: password || '' }];
+    return { username: proxy.username, password: proxy.password || '' };
   }
 
   async addInitScript(progress: Progress, source: string): Promise<InitScript> {

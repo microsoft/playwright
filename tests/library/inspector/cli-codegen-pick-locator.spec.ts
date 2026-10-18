@@ -18,7 +18,7 @@ import { test, expect } from './inspectorTest';
 import { roundBox } from '../../config/utils';
 
 test.describe(() => {
-  test('should inspect locator', async ({ openRecorder }) => {
+  test('CG-103 should inspect locator', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<main><button>Submit</button></main>`);
     await recorder.page.click('x-pw-tool-item.pick-locator');
@@ -30,7 +30,7 @@ test.describe(() => {
     `);
   });
 
-  test('should update locator highlight', async ({ openRecorder }) => {
+  test('CG-104 should update locator highlight', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<main>
       <button>Submit</button>

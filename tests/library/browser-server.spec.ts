@@ -25,7 +25,7 @@ it.beforeEach(({}, testInfo) => {
   process.env.PWTEST_SERVER_REGISTRY = testInfo.outputPath('registry');
 });
 
-it('should start and stop pipe server', async ({ browserType, browser }) => {
+it('BR-008 should start and stop pipe server', async ({ browserType, browser }) => {
   const serverInfo = await browser.bind('default', {});
   expect(serverInfo).toEqual(expect.objectContaining({
     endpoint: expect.stringMatching(/browser-/),
@@ -40,7 +40,7 @@ it('should start and stop pipe server', async ({ browserType, browser }) => {
   await browser.unbind();
 });
 
-it('should write descriptor on start and remove on stop', async ({ browser }) => {
+it('BR-009 should write descriptor on start and remove on stop', async ({ browser }) => {
   const serverInfo = await browser.bind('my-title', { wsPath: 'test' } as any);
 
   const registryDir = it.info().outputPath('registry');
@@ -63,7 +63,7 @@ it('should write descriptor on start and remove on stop', async ({ browser }) =>
     expect(fs.existsSync(serverInfo.endpoint)).toBe(false);
 });
 
-it('should start ws server with host/port and produce well-formed endpoint', async ({ browserType, browser }) => {
+it('BR-010 should start ws server with host/port and produce well-formed endpoint', async ({ browserType, browser }) => {
   const serverInfo = await browser.bind('default', { host: 'localhost', port: 0 });
   expect(serverInfo.endpoint).toMatch(/^ws:\/\/(127\.0\.0\.1|\[::1\]):\d+\/[a-f0-9]+$/);
 

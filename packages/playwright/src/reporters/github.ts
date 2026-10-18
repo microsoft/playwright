@@ -44,12 +44,11 @@ class GitHubLogger {
   }
 
   private _log(message: string, type: GitHubLogType = 'notice', options: GitHubLogOptions = {}) {
-    message = message.replace(/\n/g, '%0A');
     const configs = Object.entries(options)
-        .map(([key, option]) => `${key}=${option}`)
+        .map(([key, option]) => `${key}=${escapeProperty(String(option))}`)
         .join(',');
     // eslint-disable-next-line no-restricted-properties
-    process.stdout.write(stripAnsiEscapes(`::${type} ${configs}::${message}\n`));
+    process.stdout.write(stripAnsiEscapes(`::${type} ${configs}::${escapeData(message)}\n`));
   }
 
   debug(message: string, options?: GitHubLogOptions) {
@@ -67,6 +66,15 @@ class GitHubLogger {
   warning(message: string, options?: GitHubLogOptions) {
     this._log(message, 'warning', options);
   }
+}
+
+// Same escaping as @actions/core, see https://github.com/actions/toolkit/blob/main/packages/core/src/command.ts.
+function escapeData(s: string): string {
+  return s.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+}
+
+function escapeProperty(s: string): string {
+  return escapeData(s).replace(/:/g, '%3A').replace(/,/g, '%2C');
 }
 
 export class GitHubReporter extends TerminalReporter {

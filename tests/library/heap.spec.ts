@@ -160,35 +160,35 @@ test.beforeAll(async ({ browser, server }) => {
 });
 
 for (let i = 0; i < 3; ++i) {
-  test(`test #${i} to request page and context`, async ({ page, context }) => {
+  test(`LE-005 test #${i} to request page and context`, async ({ page, context }) => {
     // This test is here to create page instance
   });
 }
 
-test('test to request page and context', async ({ page, context }) => {
+test('LE-006 test to request page and context', async ({ page, context }) => {
   // This test is here to create page instance
 });
 
-test('should not leak fixtures w/ page', async ({ page }) => {
+test('LE-007 should not leak fixtures w/ page', async ({ page }) => {
   expect(await queryObjectCount(clientClass.Page)).toBe(1);
   expect(await queryObjectCount(clientClass.BrowserContext)).toBe(1);
   expect(await queryObjectCount(clientClass.Browser)).toBe(1);
 });
 
-test('should not leak fixtures w/o page', async ({}) => {
+test('LE-008 should not leak fixtures w/o page', async ({}) => {
   expect(await queryObjectCount(clientClass.Page)).toBe(0);
   expect(await queryObjectCount(clientClass.BrowserContext)).toBe(0);
   expect(await queryObjectCount(clientClass.Browser)).toBe(1);
 });
 
-test('should not leak server-side objects', async ({ page }) => {
+test('LE-009 should not leak server-side objects', async ({ page }) => {
   expect(await queryObjectCount(coreServer.Page)).toBe(1);
   // 6 is because v8 heap creates objects for descendant classes, so WKContext, CRContext, FFContext, WVBrowserContext, BidiBrowserContext and our context instance.
   expect(await queryObjectCount(coreServer.BrowserContext)).toBe(6);
   expect(await queryObjectCount(coreServer.Browser)).toBe(6);
 });
 
-test('should not leak dispatchers after closing page', async ({ context, server }) => {
+test('LE-010 should not leak dispatchers after closing page', async ({ context, server }) => {
   const pages = [];
   const COUNT = 5;
   for (let i = 0; i < COUNT; ++i) {
@@ -220,7 +220,7 @@ test('should not leak dispatchers after closing page', async ({ context, server 
   expect(await queryObjectCount(clientClass.Response)).toBe(0);
 });
 
-test('should not leak workers', async ({ page }) => {
+test('LE-011 should not leak workers', async ({ page }) => {
   const before = await queryObjectCount(coreServer.Worker);
   for (let i = 0; i < 5; ++i) {
     const [workerHandle, workerObj] = await Promise.all([
@@ -241,7 +241,7 @@ test.describe(() => {
     coreServer.setMaxDispatchersForTest(100);
   });
 
-  test('should collect stale handles', async ({ page, server }) => {
+  test('LE-012 should collect stale handles', async ({ page, server }) => {
     page.on('request', () => {});
     const response = await page.goto(server.PREFIX + '/title.html');
     for (let i = 0; i < 200; ++i) {
@@ -267,7 +267,7 @@ test.describe(() => {
     }
   });
 
-  test('should collect frames', async ({ page, server }) => {
+  test('LE-013 should collect frames', async ({ page, server }) => {
     test.slow();
 
     const kFrameCount = 310;
@@ -301,7 +301,7 @@ test.describe(() => {
   });
 });
 
-test('cycle handles', async ({ page, server, trace }) => {
+test('LE-014 cycle handles', async ({ page, server, trace }) => {
   test.slow();
   test.skip(trace === 'on', 'too slow with 2000 snapshots');
 

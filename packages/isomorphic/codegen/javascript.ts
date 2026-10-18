@@ -280,7 +280,7 @@ export function quoteMultiline(text: string, indent = '  ') {
   const lines = text.split('\n');
   if (lines.length === 1)
     return '`' + escape(text) + '`';
-  return '`\n' + lines.map(line => indent + escape(line).replace(/\${/g, '\\${')).join('\n') + `\n${indent}\``;
+  return '`\n' + lines.map(line => indent + escape(line)).join('\n') + `\n${indent}\``;
 }
 
 function isMultilineString(text: string) {

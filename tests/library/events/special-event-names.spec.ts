@@ -24,7 +24,7 @@ import { test, expect } from '@playwright/test';
 import { EventEmitter } from './utils';
 
 
-test('should support special event names', () => {
+test('EE-053 should support special event names', () => {
   const ee = new EventEmitter();
   const handler = () => {};
 

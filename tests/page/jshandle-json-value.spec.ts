@@ -17,19 +17,19 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work @smoke', async ({ page }) => {
+it('JH-007 should work @smoke', async ({ page }) => {
   const aHandle = await page.evaluateHandle(() => ({ foo: 'bar' }));
   const json = await aHandle.jsonValue();
   expect(json).toEqual({ foo: 'bar' });
 });
 
-it('should work with dates', async ({ page }) => {
+it('JH-008 should work with dates', async ({ page }) => {
   const dateHandle = await page.evaluateHandle(() => new Date('2017-09-26T00:00:00.000Z'));
   const date = await dateHandle.jsonValue();
   expect(date.toJSON()).toBe('2017-09-26T00:00:00.000Z');
 });
 
-it('should handle circular objects', async ({ page }) => {
+it('JH-009 should handle circular objects', async ({ page }) => {
   const handle = await page.evaluateHandle('const a = {}; a.b = a; a');
   const a: any = {};
   a.b = a;

@@ -33,7 +33,7 @@ const fileCoverage = (file: string, s0: number) => ({
 
 const coverageScript = (file: string, s0: number) => `<script>window.__coverage__ = ${JSON.stringify(fileCoverage(file, s0))}</script>`;
 
-it('should collect istanbul coverage into the trace', async ({ browser }, testInfo) => {
+it('CV-018 should collect istanbul coverage into the trace', async ({ browser }, testInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ _coverage: true } as any);
 
@@ -54,7 +54,7 @@ it('should collect istanbul coverage into the trace', async ({ browser }, testIn
   expect(data['b.js'].s['0']).toBe(2);
 });
 
-it('should collect coverage per trace chunk', async ({ browser }, testInfo) => {
+it('CV-019 should collect coverage per trace chunk', async ({ browser }, testInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
@@ -80,7 +80,7 @@ it('should collect coverage per trace chunk', async ({ browser }, testInfo) => {
   expect(data2['a.js']).toBe(undefined);
 });
 
-it('should report maps once and counters incrementally', async ({ browser, server }) => {
+it('CV-020 should report maps once and counters incrementally', async ({ browser, server }) => {
   const context = await browser.newContext();
   await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
@@ -108,7 +108,7 @@ it('should report maps once and counters incrementally', async ({ browser, serve
   await context.close();
 });
 
-it('should accumulate counters across pulls and keep never hit files', async ({ browser }, testInfo) => {
+it('CV-021 should accumulate counters across pulls and keep never hit files', async ({ browser }, testInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
@@ -134,7 +134,7 @@ async function openPopup(page: any, server: any, file: string, s0: number) {
   return popup;
 }
 
-it('should collect coverage of a page closed by in-page script', async ({ browser, server }, testInfo) => {
+it('CV-022 should collect coverage of a page closed by in-page script', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
@@ -156,7 +156,7 @@ it('should collect coverage of a page closed by in-page script', async ({ browse
   expect(data['popup.js'].s['0']).toBe(5);
 });
 
-it('should not double count a stash picked up twice', async ({ browser, server }, testInfo) => {
+it('CV-023 should not double count a stash picked up twice', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
@@ -178,7 +178,7 @@ it('should not double count a stash picked up twice', async ({ browser, server }
   expect(data['stashed.js'].s['0']).toBe(4);
 });
 
-it('should discard stashes of other sessions', async ({ browser, server }, testInfo) => {
+it('CV-024 should discard stashes of other sessions', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
@@ -198,7 +198,7 @@ it('should discard stashes of other sessions', async ({ browser, server }, testI
   expect(await parseTraceCoverage(traceFile)).toBe(undefined);
 });
 
-it('should collect coverage of an origin left without a page', async ({ browser, server }, testInfo) => {
+it('CV-025 should collect coverage of an origin left without a page', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
@@ -228,7 +228,7 @@ it('should collect coverage of an origin left without a page', async ({ browser,
   expect(data['popup.js'].s['0']).toBe(5);
 });
 
-it('should pull counters as the actions go', async ({ browser, server }, testInfo) => {
+it('CV-026 should pull counters as the actions go', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
@@ -245,7 +245,7 @@ it('should pull counters as the actions go', async ({ browser, server }, testInf
   expect(data['a.js'].s['0']).toBe(3);
 });
 
-it('should not collect coverage without the option', async ({ browser }, testInfo) => {
+it('CV-027 should not collect coverage without the option', async ({ browser }, testInfo) => {
   const context = await browser.newContext();
   await context.tracing.start();
   const page = await context.newPage();
@@ -258,7 +258,7 @@ it('should not collect coverage without the option', async ({ browser }, testInf
   expect(await parseTraceCoverage(traceFile)).toBe(undefined);
 });
 
-it('should count only the hits after start', async ({ browser, server }, testInfo) => {
+it('CV-028 should count only the hits after start', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -275,7 +275,7 @@ it('should count only the hits after start', async ({ browser, server }, testInf
   expect(Object.keys(data['a.js'].statementMap)).toEqual(['0']);
 });
 
-it('should stop collecting when tracing stops', async ({ browser, server }, testInfo) => {
+it('CV-029 should stop collecting when tracing stops', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();
@@ -292,7 +292,7 @@ it('should stop collecting when tracing stops', async ({ browser, server }, test
   await context.close();
 });
 
-it('should surface a failure to stash the coverage', async ({ browser, server }, testInfo) => {
+it('CV-030 should surface a failure to stash the coverage', async ({ browser, server }, testInfo) => {
   const context = await browser.newContext();
   await context.tracing.start({ _coverage: true } as any);
   const page = await context.newPage();

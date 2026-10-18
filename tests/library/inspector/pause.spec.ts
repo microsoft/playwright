@@ -20,7 +20,7 @@ import { roundBox, waitForTestLog } from '../../config/utils';
 import type { BoundingBox } from '../../config/utils';
 import { pauseHelper } from './pause-helper';
 
-it('should resume when closing inspector', async ({ page, recorderPageGetter, closeRecorder, mode }) => {
+it('IN-001 should resume when closing inspector', async ({ page, recorderPageGetter, closeRecorder, mode }) => {
   const scriptPromise = (async () => {
     // @ts-ignore
     await page.pause({ __testHookKeepTestTimeout: true });
@@ -30,7 +30,7 @@ it('should resume when closing inspector', async ({ page, recorderPageGetter, cl
   await scriptPromise;
 });
 
-it('should not reset timeouts', async ({ page, recorderPageGetter, closeRecorder, server }) => {
+it('IN-002 should not reset timeouts', async ({ page, recorderPageGetter, closeRecorder, server }) => {
   page.context().setDefaultNavigationTimeout(1000);
   page.context().setDefaultTimeout(1000);
 
@@ -45,7 +45,7 @@ it('should not reset timeouts', async ({ page, recorderPageGetter, closeRecorder
   expect(error.message).toContain('page.goto: Timeout 1000ms exceeded.');
 });
 
-it('should collapse log entries to a single line', async ({ page, recorderPageGetter }) => {
+it('IN-003 should collapse log entries to a single line', async ({ page, recorderPageGetter }) => {
   const scriptPromise = (async () => {
     // @ts-ignore
     await page.pause({ __testHookKeepTestTimeout: true });
@@ -71,7 +71,7 @@ it.describe('pause', () => {
     }
   });
 
-  it('should pause and resume the script', async ({ page, recorderPageGetter }) => {
+  it('IN-004 should pause and resume the script', async ({ page, recorderPageGetter }) => {
     const scriptPromise = (async () => {
       // @ts-ignore
       await page.pause({ __testHookKeepTestTimeout: true });
@@ -81,7 +81,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should pause and resume the script with keyboard shortcut', async ({ page, recorderPageGetter }) => {
+  it('IN-005 should pause and resume the script with keyboard shortcut', async ({ page, recorderPageGetter }) => {
     const scriptPromise = (async () => {
       // @ts-ignore
       await page.pause({ __testHookKeepTestTimeout: true });
@@ -92,7 +92,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should resume from console', async ({ page, mode }) => {
+  it('IN-006 should resume from console', async ({ page, mode }) => {
     it.skip(mode !== 'default');
 
     const scriptPromise = (async () => {
@@ -103,7 +103,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should pause after a navigation', async ({ page, server, recorderPageGetter }) => {
+  it('IN-007 should pause after a navigation', async ({ page, server, recorderPageGetter }) => {
     const scriptPromise = (async () => {
       await page.goto(server.EMPTY_PAGE);
       // @ts-ignore
@@ -114,7 +114,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should show source', async ({ page, recorderPageGetter }) => {
+  it('IN-008 should show source', async ({ page, recorderPageGetter }) => {
     const scriptPromise = (async () => {
       // @ts-ignore
       await page.pause({ __testHookKeepTestTimeout: true });
@@ -132,7 +132,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should pause on next pause', async ({ page, recorderPageGetter }) => {
+  it('IN-009 should pause on next pause', async ({ page, recorderPageGetter }) => {
     const scriptPromise = (async () => {
       // @ts-ignore
       await page.pause({ __testHookKeepTestTimeout: true });  // 1
@@ -148,7 +148,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should step', async ({ page, recorderPageGetter }) => {
+  it('IN-010 should step', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       // @ts-ignore
@@ -166,7 +166,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should disable timeout on paused actions', async ({ page, recorderPageGetter }) => {
+  it('IN-011 should disable timeout on paused actions', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       // @ts-ignore
@@ -185,7 +185,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should step with keyboard shortcut', async ({ page, recorderPageGetter }) => {
+  it('IN-012 should step with keyboard shortcut', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       // @ts-ignore
@@ -204,7 +204,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should highlight pointer, only in main frame', async ({ page, recorderPageGetter }) => {
+  it('IN-013 should highlight pointer, only in main frame', async ({ page, recorderPageGetter }) => {
     await page.setContent(`
       <iframe
         style="margin: 100px;"
@@ -246,7 +246,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should skip input when resuming', async ({ page, recorderPageGetter }) => {
+  it('IN-014 should skip input when resuming', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       // @ts-ignore
@@ -262,7 +262,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should populate log', async ({ page, recorderPageGetter }) => {
+  it('IN-015 should populate log', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       // @ts-ignore
@@ -283,7 +283,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should hide internal calls', async ({ page, recorderPageGetter, trace }) => {
+  it('IN-016 should hide internal calls', async ({ page, recorderPageGetter, trace }) => {
     it.skip(trace === 'on');
 
     const scriptPromise = (async () => {
@@ -309,7 +309,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should show expect.toHaveText', async ({ page, recorderPageGetter }) => {
+  it('IN-017 should show expect.toHaveText', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       // @ts-ignore
@@ -332,7 +332,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should highlight waitForEvent', async ({ page, recorderPageGetter }) => {
+  it('IN-018 should highlight waitForEvent', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button onclick="console.log(1)">Submit</button>');
     const scriptPromise = (async () => {
       // @ts-ignore
@@ -350,7 +350,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should populate log with waitForEvent', async ({ page, recorderPageGetter }) => {
+  it('IN-019 should populate log with waitForEvent', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button onclick="console.log(1)">Submit</button>');
     const scriptPromise = (async () => {
       // @ts-ignore
@@ -375,7 +375,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should populate log with error', async ({ page, recorderPageGetter }) => {
+  it('IN-020 should populate log with error', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button onclick="console.log(1)">Submit</button>');
     const scriptPromise = (async () => {
       // @ts-ignore
@@ -395,7 +395,7 @@ it.describe('pause', () => {
     expect(error.message).toContain('Not a checkbox or radio button');
   });
 
-  it('should populate log with expect failure', async ({ page, recorderPageGetter }) => {
+  it('IN-021 should populate log with expect failure', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       // @ts-ignore
@@ -416,7 +416,7 @@ it.describe('pause', () => {
     expect(error.message).toContain('toHaveText');
   });
 
-  it('should populate log with error in waitForEvent', async ({ page, recorderPageGetter }) => {
+  it('IN-022 should populate log with error in waitForEvent', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       // @ts-ignore
@@ -442,7 +442,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should pause on page close', async ({ page, recorderPageGetter }) => {
+  it('IN-023 should pause on page close', async ({ page, recorderPageGetter }) => {
     const scriptPromise = (async () => {
       // @ts-ignore
       await page.pause({ __testHookKeepTestTimeout: true });
@@ -455,7 +455,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should pause on context close', async ({ page, recorderPageGetter }) => {
+  it('IN-024 should pause on context close', async ({ page, recorderPageGetter }) => {
     const scriptPromise = (async () => {
       // @ts-ignore
       await page.pause({ __testHookKeepTestTimeout: true });
@@ -469,7 +469,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should highlight on explore', async ({ page, recorderPageGetter }) => {
+  it('IN-025 should highlight on explore', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       // @ts-ignore
@@ -492,7 +492,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should highlight on explore (csharp)', async ({ openRecorder }) => {
+  it('IN-026 should highlight on explore (csharp)', async ({ openRecorder }) => {
     process.env.TEST_INSPECTOR_LANGUAGE = 'csharp';
     try {
       const { page, recorder } = await openRecorder();
@@ -514,7 +514,7 @@ it.describe('pause', () => {
     }
   });
 
-  it('should not prevent key events', async ({ page, recorderPageGetter }) => {
+  it('IN-027 should not prevent key events', async ({ page, recorderPageGetter }) => {
     await page.setContent('<div>Hello</div>');
     await page.evaluate(() => {
       (window as any).log = [];
@@ -555,7 +555,7 @@ it.describe('pause', () => {
     ]);
   });
 
-  it('should highlight locators with custom testId', async ({ page, playwright, recorderPageGetter }) => {
+  it('IN-028 should highlight locators with custom testId', async ({ page, playwright, recorderPageGetter }) => {
     await page.setContent('<div data-custom-id=foo id=target>and me</div>');
     const scriptPromise = (async () => {
       // @ts-ignore
@@ -578,7 +578,7 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should record from debugger', async ({ page, recorderPageGetter }) => {
+  it('IN-029 should record from debugger', async ({ page, recorderPageGetter }) => {
     await page.setContent('<body style="width: 100%; height: 100%"></body>');
     const scriptPromise = (async () => {
       // @ts-ignore

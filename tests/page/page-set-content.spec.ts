@@ -21,32 +21,32 @@ const { nullProgress } = coreServer;
 
 const expectedOutput = '<html><head></head><body><div>hello</div></body></html>';
 
-it('should work @smoke', async ({ page, server }) => {
+it('PA-020 should work @smoke', async ({ page, server }) => {
   await page.setContent('<div>hello</div>');
   const result = await page.content();
   expect(result).toBe(expectedOutput);
 });
 
-it('should work with domcontentloaded', async ({ page, server }) => {
+it('PA-021 should work with domcontentloaded', async ({ page, server }) => {
   await page.setContent('<div>hello</div>', { waitUntil: 'domcontentloaded' });
   const result = await page.content();
   expect(result).toBe(expectedOutput);
 });
 
-it('should work with commit', async ({ page }) => {
+it('PA-022 should work with commit', async ({ page }) => {
   await page.setContent('<div>hello</div>', { waitUntil: 'commit' });
   const result = await page.content();
   expect(result).toBe(expectedOutput);
 });
 
-it('should work with doctype', async ({ page, server }) => {
+it('PA-023 should work with doctype', async ({ page, server }) => {
   const doctype = '<!DOCTYPE html>';
   await page.setContent(`${doctype}<div>hello</div>`);
   const result = await page.content();
   expect(result).toBe(`${doctype}${expectedOutput}`);
 });
 
-it('should work with HTML 4 doctype', async ({ page, server }) => {
+it('PA-024 should work with HTML 4 doctype', async ({ page, server }) => {
   const doctype = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" ' +
     '"http://www.w3.org/TR/html4/strict.dtd">';
   await page.setContent(`${doctype}<div>hello</div>`);
@@ -54,7 +54,7 @@ it('should work with HTML 4 doctype', async ({ page, server }) => {
   expect(result).toBe(`${doctype}${expectedOutput}`);
 });
 
-it('should include shadow roots', async ({ page }) => {
+it('PA-025 should include shadow roots', async ({ page }) => {
   const html = '<!DOCTYPE html><html lang="en"><head></head><body><div id="host"><template shadowrootmode="open"><div id="nested"><template shadowrootmode="open"><span>nested</span></template><slot></slot></div></template><span>light</span></div><div id="closed"></div></body></html>';
   // Closed shadow roots are not accessible from script and are never serialized.
   await page.setContent(html.replace('<div id="closed">', '<div id="closed"><template shadowrootmode="closed"><span>closed</span></template>'));
@@ -62,7 +62,7 @@ it('should include shadow roots', async ({ page }) => {
   expect(await page.content({ includeShadow: true })).toBe(html);
 });
 
-it('should respect timeout', async ({ page, server, playwright }) => {
+it('PA-026 should respect timeout', async ({ page, server, playwright }) => {
   const imgPath = '/img.png';
   // stall for image
   server.setRoute(imgPath, (req, res) => {});
@@ -71,7 +71,7 @@ it('should respect timeout', async ({ page, server, playwright }) => {
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should respect default navigation timeout', async ({ page, server, playwright }) => {
+it('PA-027 should respect default navigation timeout', async ({ page, server, playwright }) => {
   page.setDefaultNavigationTimeout(1);
   const imgPath = '/img.png';
   // stall for image
@@ -81,7 +81,7 @@ it('should respect default navigation timeout', async ({ page, server, playwrigh
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should await resources to load', async ({ page, server }) => {
+it('PA-028 should await resources to load', async ({ page, server }) => {
   const imgPath = '/img.png';
   let imgResponse = null;
   server.setRoute(imgPath, (req, res) => imgResponse = res);
@@ -93,32 +93,32 @@ it('should await resources to load', async ({ page, server }) => {
   await contentPromise;
 });
 
-it('should work fast enough', async ({ page, server }) => {
+it('PA-029 should work fast enough', async ({ page, server }) => {
   for (let i = 0; i < 20; ++i)
     await page.setContent('<div>yo</div>');
 });
 
-it('should work with tricky content', async ({ page, server }) => {
+it('PA-030 should work with tricky content', async ({ page, server }) => {
   await page.setContent('<div>hello world</div>' + '\x7F');
   expect(await page.$eval('div', div => div.textContent)).toBe('hello world');
 });
 
-it('should work with accents', async ({ page, server }) => {
+it('PA-031 should work with accents', async ({ page, server }) => {
   await page.setContent('<div>aberración</div>');
   expect(await page.$eval('div', div => div.textContent)).toBe('aberración');
 });
 
-it('should work with emojis', async ({ page, server }) => {
+it('PA-032 should work with emojis', async ({ page, server }) => {
   await page.setContent('<div>🐥</div>');
   expect(await page.$eval('div', div => div.textContent)).toBe('🐥');
 });
 
-it('should work with newline', async ({ page, server }) => {
+it('PA-033 should work with newline', async ({ page, server }) => {
   await page.setContent('<div>\n</div>');
   expect(await page.$eval('div', div => div.textContent)).toBe('\n');
 });
 
-it('content() should throw nice error during navigation', async ({ page, server }) => {
+it('PA-034 content() should throw nice error during navigation', async ({ page, server }) => {
   for (let timeout = 0; timeout < 200; timeout += 20) {
     await page.setContent('<div>hello</div>');
     const promise = page.goto(server.EMPTY_PAGE);
@@ -133,14 +133,14 @@ it('content() should throw nice error during navigation', async ({ page, server 
   }
 });
 
-it('should return empty content there is no iframe src', async ({ page, browserName }) => {
+it('PA-035 should return empty content there is no iframe src', async ({ page, browserName }) => {
   it.fixme(browserName === 'webkit', 'there is no utility context');
   await page.setContent(`<iframe src="javascript:console.log(1)"></iframe>`);
   expect(page.frames().length).toBe(2);
   expect(await page.frames()[1].content()).toBe('<html><head></head><body></body></html>');
 });
 
-it('should handle timeout properly', async ({ page, toImpl, browserName }) => {
+it('PA-036 should handle timeout properly', async ({ page, toImpl, browserName }) => {
   it.skip(browserName === 'firefox', 'tampering with console.debug in utility world does not work');
 
   await toImpl(page).mainFrame().evaluateExpression(nullProgress, String(() => {
@@ -158,7 +158,7 @@ it('should handle timeout properly', async ({ page, toImpl, browserName }) => {
   await expect(page.locator('div')).toHaveText('world');
 });
 
-it('should handle timeout properly 2', async ({ page, toImpl, trace }) => {
+it('PA-037 should handle timeout properly 2', async ({ page, toImpl, trace }) => {
   it.skip(trace === 'on');
 
   await toImpl(page).mainFrame().evaluateExpression(nullProgress, String(() => {

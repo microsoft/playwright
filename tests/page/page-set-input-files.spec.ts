@@ -21,7 +21,7 @@ import path from 'path';
 import fs from 'fs';
 import formidable from 'formidable';
 
-test('should upload the file', async ({ page, server, asset }) => {
+test('IF-001 should upload the file', async ({ page, server, asset }) => {
   await page.goto(server.PREFIX + '/input/fileupload.html');
   const filePath = path.relative(process.cwd(), asset('file-to-upload.txt'));
   const input = await page.$('input');
@@ -35,7 +35,7 @@ test('should upload the file', async ({ page, server, asset }) => {
   }, input)).toBe('contents of the file');
 });
 
-test('should upload a folder', async ({ page, server, isFrozenWebkit, isAndroid }) => {
+test('IF-002 should upload a folder', async ({ page, server, isFrozenWebkit, isAndroid }) => {
   test.skip(isAndroid);
   test.skip(isFrozenWebkit);
 
@@ -68,7 +68,7 @@ test('should upload a folder', async ({ page, server, isFrozenWebkit, isAndroid 
   }
 });
 
-test('should upload a folder via label', {
+test('IF-003 should upload a folder via label', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43367' },
 }, async ({ page, isFrozenWebkit, isAndroid }) => {
   test.skip(isAndroid);
@@ -82,7 +82,7 @@ test('should upload a folder via label', {
   expect(await page.locator('input').evaluate((e: HTMLInputElement) => [...e.files].map(f => f.webkitRelativePath))).toEqual(['file-upload-test/file1.txt']);
 });
 
-test('should upload a folder and throw for multiple directories', async ({ page, server, isAndroid, isFrozenWebkit }) => {
+test('IF-004 should upload a folder and throw for multiple directories', async ({ page, server, isAndroid, isFrozenWebkit }) => {
   test.skip(isAndroid);
   test.skip(isFrozenWebkit);
 
@@ -101,7 +101,7 @@ test('should upload a folder and throw for multiple directories', async ({ page,
   ])).rejects.toThrow('Multiple directories are not supported');
 });
 
-test('should throw if a directory and files are passed', async ({ page, server, isAndroid, isFrozenWebkit }) => {
+test('IF-005 should throw if a directory and files are passed', async ({ page, server, isAndroid, isFrozenWebkit }) => {
   test.skip(isAndroid);
   test.skip(isFrozenWebkit);
 
@@ -118,7 +118,7 @@ test('should throw if a directory and files are passed', async ({ page, server, 
   ])).rejects.toThrow('File paths must be all files or a single directory');
 });
 
-test('should throw when uploading a folder in a normal file upload input', async ({ page, server, isAndroid, isFrozenWebkit }) => {
+test('IF-006 should throw when uploading a folder in a normal file upload input', async ({ page, server, isAndroid, isFrozenWebkit }) => {
   test.skip(isAndroid);
   test.skip(isFrozenWebkit);
 
@@ -132,7 +132,7 @@ test('should throw when uploading a folder in a normal file upload input', async
   await expect(input.setInputFiles(dir)).rejects.toThrow('File input does not support directories, pass individual files instead');
 });
 
-test('should throw when uploading a file in a directory upload input', async ({ page, server, isAndroid, asset, isFrozenWebkit }) => {
+test('IF-007 should throw when uploading a file in a directory upload input', async ({ page, server, isAndroid, asset, isFrozenWebkit }) => {
   test.skip(isAndroid);
   test.skip(isFrozenWebkit);
 
@@ -141,7 +141,7 @@ test('should throw when uploading a file in a directory upload input', async ({ 
   await expect(input.setInputFiles(asset('file to upload.txt'))).rejects.toThrow('[webkitdirectory] input requires passing a path to a directory');
 });
 
-test('should upload a file after popup', async ({ page, server, asset }) => {
+test('IF-008 should upload a file after popup', async ({ page, server, asset }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29923' });
   await page.goto(server.PREFIX + '/input/fileupload.html');
   {
@@ -157,7 +157,7 @@ test('should upload a file after popup', async ({ page, server, asset }) => {
   expect(await page.evaluate(e => e.files[0].name, input)).toBe('file-to-upload.txt');
 });
 
-test('should upload large file', async ({ page, server, isAndroid, mode }, testInfo) => {
+test('IF-009 should upload large file', async ({ page, server, isAndroid, mode }, testInfo) => {
   test.skip(isAndroid);
   test.slow();
 
@@ -205,7 +205,7 @@ test('should upload large file', async ({ page, server, isAndroid, mode }, testI
   await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
 });
 
-test('should throw an error if the file does not exist', async ({ page, server, asset }) => {
+test('IF-010 should throw an error if the file does not exist', async ({ page, server, asset }) => {
   await page.goto(server.PREFIX + '/input/fileupload.html');
   const input = await page.$('input');
   const error = await input.setInputFiles('i actually do not exist.txt').catch(e => e);
@@ -213,7 +213,7 @@ test('should throw an error if the file does not exist', async ({ page, server, 
   expect(error.message).toContain('i actually do not exist.txt');
 });
 
-test('should upload large file with relative path', async ({ page, server, isAndroid, mode }, testInfo) => {
+test('IF-011 should upload large file with relative path', async ({ page, server, isAndroid, mode }, testInfo) => {
   test.skip(isAndroid);
   test.slow();
 
@@ -263,7 +263,7 @@ test('should upload large file with relative path', async ({ page, server, isAnd
   await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
 });
 
-test('should upload the file with spaces in name', async ({ page, server, asset }) => {
+test('IF-012 should upload the file with spaces in name', async ({ page, server, asset }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17451' });
   await page.goto(server.PREFIX + '/input/fileupload.html');
   const filePath = path.relative(process.cwd(), asset('file to upload.txt'));
@@ -279,14 +279,14 @@ test('should upload the file with spaces in name', async ({ page, server, asset 
 });
 
 
-test('should work @smoke', async ({ page, asset }) => {
+test('IF-013 should work @smoke', async ({ page, asset }) => {
   await page.setContent(`<input type=file>`);
   await page.setInputFiles('input', asset('file-to-upload.txt'));
   expect(await page.$eval('input', input => input.files.length)).toBe(1);
   expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
 });
 
-test('should set from memory', async ({ page }) => {
+test('IF-014 should set from memory', async ({ page }) => {
   await page.setContent(`<input type=file>`);
   await page.setInputFiles('input', {
     name: 'test.txt',
@@ -297,7 +297,7 @@ test('should set from memory', async ({ page }) => {
   expect(await page.$eval('input', input => input.files[0].name)).toBe('test.txt');
 });
 
-test('should work with CSP', async ({ page, server, asset }) => {
+test('IF-015 should work with CSP', async ({ page, server, asset }) => {
   server.setCSP('/empty.html', 'default-src "none"');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<input type=file>`);
@@ -306,7 +306,7 @@ test('should work with CSP', async ({ page, server, asset }) => {
   expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
 });
 
-test('should detect mime type', async ({ page, server, asset }) => {
+test('IF-016 should detect mime type', async ({ page, server, asset }) => {
 
   let files: Record<string, formidable.File>;
   server.setRoute('/upload', async (req, res) => {
@@ -341,7 +341,7 @@ test('should detect mime type', async ({ page, server, asset }) => {
 });
 
 // @see https://github.com/microsoft/playwright/issues/4704
-test('should not trim big uploaded files', async ({ page, server }) => {
+test('IF-017 should not trim big uploaded files', async ({ page, server }) => {
 
   let files: Record<string, formidable.File>;
   server.setRoute('/upload', async (req, res) => {
@@ -365,7 +365,7 @@ test('should not trim big uploaded files', async ({ page, server }) => {
   expect(files.file.size).toBe(DATA_SIZE);
 });
 
-test('should emit input and change events', async ({ page, asset }) => {
+test('IF-018 should emit input and change events', async ({ page, asset }) => {
   const events = [];
   await page.exposeFunction('eventHandled', e => events.push(e));
   await page.setContent(`
@@ -380,7 +380,7 @@ test('should emit input and change events', async ({ page, asset }) => {
   expect(events[1].type).toBe('change');
 });
 
-test('input event.composed should be true and cross shadow dom boundary', async ({ page, server, asset }) => {
+test('IF-019 input event.composed should be true and cross shadow dom boundary', async ({ page, server, asset }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28726' });
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<body><script>
@@ -415,7 +415,7 @@ test('input event.composed should be true and cross shadow dom boundary', async 
   expect(await page.evaluate(() => window['firedBodyEvents'])).toEqual(['input:true']);
 });
 
-test('input should trigger events when files changed second time', async ({ page, asset }) => {
+test('IF-020 input should trigger events when files changed second time', async ({ page, asset }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20079' });
   await page.setContent(`<input type=file multiple=true/>`);
 
@@ -438,7 +438,7 @@ test('input should trigger events when files changed second time', async ({ page
   expect(await events.evaluate(e => e)).toEqual(['input', 'change']);
 });
 
-test('should preserve lastModified timestamp', async ({ page, asset }) => {
+test('IF-021 should preserve lastModified timestamp', async ({ page, asset }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27452' });
   await page.setContent(`<input type=file multiple=true/>`);
   const input = page.locator('input');

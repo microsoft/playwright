@@ -100,6 +100,8 @@ test('update user settings', {
 });
 ```
 
+The built-in `exclusive` lock runs the test only when no other tests are running.
+
 Learn more about [test locks](../test-parallel.md#test-locks).
 
 ### param: Test.(call).title

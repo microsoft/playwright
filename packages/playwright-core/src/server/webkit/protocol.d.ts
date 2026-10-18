@@ -407,7 +407,7 @@ export namespace Protocol {
     /**
      * Pseudo-style identifier (see <code>enum PseudoId</code> in <code>RenderStyleConstants.h</code>).
      */
-    export type PseudoId = "first-line"|"first-letter"|"grammar-error"|"highlight"|"marker"|"before"|"after"|"selection"|"backdrop"|"spelling-error"|"target-text"|"checkmark"|"picker-icon"|"slider-fill"|"slider-thumb"|"slider-track"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-old"|"view-transition-new"|"-webkit-scrollbar"|"-webkit-resizer"|"-webkit-scrollbar-thumb"|"-webkit-scrollbar-button"|"-webkit-scrollbar-track"|"-webkit-scrollbar-track-piece"|"-webkit-scrollbar-corner";
+    export type PseudoId = "first-line"|"first-letter"|"grammar-error"|"highlight"|"marker"|"before"|"after"|"selection"|"backdrop"|"spelling-error"|"target-text"|"checkmark"|"picker-icon"|"slider-fill"|"slider-thumb"|"slider-track"|"placeholder"|"file-selector-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-old"|"view-transition-new"|"-webkit-scrollbar"|"-webkit-resizer"|"-webkit-scrollbar-thumb"|"-webkit-scrollbar-button"|"-webkit-scrollbar-track"|"-webkit-scrollbar-track-piece"|"-webkit-scrollbar-corner";
     /**
      * Pseudo-style identifier (see <code>enum PseudoId</code> in <code>RenderStyleConstants.h</code>).
      */
@@ -4429,6 +4429,13 @@ might return multiple quads for inline nodes.
        */
       origin?: string;
     }
+    /**
+     * Credentials for proxy authentication.
+     */
+    export interface ProxyCredentials {
+      username: string;
+      password: string;
+    }
     
     
     /**
@@ -4451,10 +4458,14 @@ might return multiple quads for inline nodes.
     export type setJavaScriptEnabledReturnValue = {
     }
     /**
-     * Credentials to use during HTTP authentication. The first credentials with matching origin are used. When missing, automation handling of authentication challenges is disabled.
+     * Credentials to use during HTTP authentication. The first credentials with matching origin are used.
      */
     export type setAuthCredentialsParameters = {
-      credentials?: AuthCredentials[];
+      credentials: AuthCredentials[];
+      /**
+       * When specified, proxy challenges are answered only with these credentials, and the credentials above are used only for server challenges.
+       */
+      proxyCredentials?: ProxyCredentials;
     }
     export type setAuthCredentialsReturnValue = {
     }
