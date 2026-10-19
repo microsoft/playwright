@@ -285,6 +285,15 @@ test('click button with role locator', async ({ cli, server }) => {
 \`\`\`js
 await page.getByRole('button', { name: 'Submit' }).click();
 \`\`\``);
+
+  for (const locator of [
+    'get_by_role("button", name="Submit")',
+    'getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit"))',
+    'GetByRole(AriaRole.Button, new() { Name = "Submit" })',
+  ]) {
+    const { output } = await cli('click', locator);
+    expect(output).toContain(`await page.getByRole('button', { name: 'Submit' }).click();`);
+  }
 });
 
 test('click button with test id locator', async ({ cli, server }) => {
@@ -309,6 +318,12 @@ test('click button with wrong css selector', async ({ cli, server }) => {
 
   const { output } = await cli('click', '#target');
   expect(output).toContain(`"#target" does not match any elements.`);
+
+  const { output: invalidError } = await cli('click', 'button "Submit"');
+  expect(invalidError).toContain(`"button "Submit"" is not a valid target. Use a ref from the page snapshot (e.g. "e5"), a CSS selector, or a locator (e.g. "getByRole('button', { name: 'Submit' })").`);
+
+  const { output: refError } = await cli('click', 'button [ref=e2]');
+  expect(refError).toContain(`"button [ref=e2]" does not match any elements. To use the element with [ref=e2] from the page snapshot, pass "e2" as the target.`);
 });
 
 test('partial snapshot', async ({ cli, server }) => {

@@ -584,10 +584,10 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this._initializedPromise;
     return Promise.all(params.map(async param => {
       if (!param.target.match(/^(f\d+)?e\d+$/)) {
-        const selector = locatorOrSelectorAsSelector('javascript', param.target, this.context.config.testIdAttribute || 'data-testid');
-        const handle = await this.page.$(selector);
+        const selector = targetAsSelector(param.target, this.context.config.testIdAttribute || 'data-testid');
+        const handle = selector ? await this.page.$(selector) : null;
         if (!handle)
-          throw new Error(`"${param.target}" does not match any elements.`);
+          throw new Error(targetErrorMessage(param.target, !!selector));
         handle.dispose().catch(() => {});
         return { locator: this.page.locator(selector), resolved: asLocator('javascript', selector), selector };
       } else {
@@ -623,6 +623,25 @@ export type ConsoleMessage = {
 
 export function locatorSelector(locator: playwright.Locator): string {
   return (locator as unknown as { _selector: string })._selector;
+}
+
+// Accepts a selector or a locator in any language, e.g. `getByRole('button')` or `get_by_role("button")`.
+function targetAsSelector(target: string, testIdAttributeName: string): string | undefined {
+  for (const language of ['javascript', 'python', 'java', 'csharp'] as const) {
+    const selector = locatorOrSelectorAsSelector(language, target, testIdAttributeName);
+    if (selector)
+      return selector;
+  }
+}
+
+function targetErrorMessage(target: string, isSelector: boolean): string {
+  const message = isSelector ? `"${target}" does not match any elements.` : `"${target}" is not a valid target.`;
+  const ref = target.match(/\[ref=((?:f\d+)?e\d+)\]/)?.[1];
+  if (ref)
+    return `${message} To use the element with [ref=${ref}] from the page snapshot, pass "${ref}" as the target.`;
+  if (!isSelector)
+    return `${message} Use a ref from the page snapshot (e.g. "e5"), a CSS selector, or a locator (e.g. "getByRole('button', { name: 'Submit' })").`;
+  return message;
 }
 
 function messageToConsoleMessage(message: playwright.ConsoleMessage): ConsoleMessage {
