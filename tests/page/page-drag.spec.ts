@@ -175,7 +175,6 @@ it.describe('Drag and drop', () => {
   });
 
   it('DD-008 should respect the drop effect', async ({ page, browserName, isLinux, isMac, headless, trace }) => {
-    it.fixme(browserName === 'webkit' && !isLinux, 'Fixed by https://github.com/microsoft/playwright/issues/43447, waiting for the WebKit roll.');
     it.fixme(browserName === 'webkit' && isLinux && !headless, 'https://github.com/microsoft/playwright/issues/21646');
     it.fixme(browserName === 'chromium' && !isMac && !headless, 'https://github.com/microsoft/playwright/issues/21646');
     it.slow(trace === 'on');
@@ -232,7 +231,6 @@ it.describe('Drag and drop', () => {
   it('DD-028 should report the default drop effect from effectAllowed', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43447' },
   }, async ({ page, browserName, isLinux, headless }) => {
-    it.fixme(browserName === 'webkit' && !isLinux, 'Fixed by https://github.com/microsoft/playwright/issues/43447, waiting for the WebKit roll.');
     it.fixme(browserName === 'webkit' && isLinux && !headless, 'https://github.com/microsoft/playwright/issues/21646');
 
     await page.setContent(`
