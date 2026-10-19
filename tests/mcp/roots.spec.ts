@@ -16,6 +16,7 @@
 
 import crypto from 'crypto';
 import fs from 'fs';
+import path from 'path';
 import { pathToFileURL } from 'url';
 
 import { test, expect } from './fixtures';
@@ -127,4 +128,36 @@ test('should return relative paths when root is specified', async ({ startClient
   })).toHaveResponse({
     result: expect.stringContaining(`[Screenshot of viewport](./screenshot.png)`),
   });
+});
+
+test('should not ask for roots with --ignore-roots', async ({ startClient, server }, testInfo) => {
+  const rootPath = testInfo.outputPath('workspace');
+  const cwd = testInfo.outputPath('cwd');
+  await fs.promises.mkdir(rootPath, { recursive: true });
+  await fs.promises.mkdir(cwd, { recursive: true });
+
+  const { client } = await startClient({
+    args: ['--ignore-roots'],
+    cwd,
+    roots: [
+      {
+        name: 'workspace',
+        uri: pathToFileURL(rootPath).toString(),
+      },
+    ],
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: { filename: 'screenshot.png' },
+  })).toHaveResponse({
+    result: expect.stringContaining(`[Screenshot of viewport](./screenshot.png)`),
+  });
+  expect(fs.existsSync(path.join(cwd, 'screenshot.png'))).toBe(true);
+  expect(fs.existsSync(path.join(rootPath, 'screenshot.png'))).toBe(false);
 });

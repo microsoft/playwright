@@ -56,6 +56,7 @@ export type CLIOptions = {
   headless?: boolean;
   host?: string;
   ignoreHttpsErrors?: boolean;
+  ignoreRoots?: boolean;
   initScript?: string[];
   initPage?: string[];
   isolated?: boolean;
@@ -386,6 +387,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       blockedOrigins: cliOptions.blockedOrigins,
     },
     allowUnrestrictedFileAccess: cliOptions.allowUnrestrictedFileAccess,
+    ignoreRoots: cliOptions.ignoreRoots,
     codegen: cliOptions.codegen,
     saveSession: cliOptions.saveSession,
     secrets: cliOptions.secrets,
@@ -444,6 +446,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.headless = envToBoolean(e.PLAYWRIGHT_MCP_HEADLESS);
   options.host = envToString(e.PLAYWRIGHT_MCP_HOST);
   options.ignoreHttpsErrors = envToBoolean(e.PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS);
+  options.ignoreRoots = envToBoolean(e.PLAYWRIGHT_MCP_IGNORE_ROOTS);
   const initPage = envToString(e.PLAYWRIGHT_MCP_INIT_PAGE);
   if (initPage)
     options.initPage = [initPage];

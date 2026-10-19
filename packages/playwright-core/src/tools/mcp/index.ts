@@ -34,6 +34,7 @@ export async function createConnection(userConfig: Config = {}, contextGetter?: 
     nameInConfig: 'api',
     version: packageJSON.version,
     toolSchemas: tools.map(tool => tool.schema),
+    ignoreRoots: config.ignoreRoots,
     create: async (clientInfo: ClientInfo) => {
       const browser = contextGetter
         ? new SimpleBrowser(await contextGetter())
