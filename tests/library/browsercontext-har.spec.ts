@@ -256,6 +256,23 @@ it('HA-085 should round-trip har.zip', async ({ contextFactory, server }, testIn
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
+it('should round-trip har with uppercase .ZIP extension', async ({ contextFactory, server }, testInfo) => {
+  // https://github.com/microsoft/playwright/issues/43503
+  const harPath = testInfo.outputPath('har.ZIP');
+  const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath } });
+  const page1 = await context1.newPage();
+  await page1.goto(server.PREFIX + '/one-style.html');
+  await context1.close();
+
+  expect(fs.readFileSync(harPath).subarray(0, 2).toString()).toBe('PK');
+
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath, { notFound: 'abort' });
+  const page2 = await context2.newPage();
+  await page2.goto(server.PREFIX + '/one-style.html');
+  expect(await page2.content()).toContain('hello, world!');
+});
+
 it('HA-086 should produce extracted zip', async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.har');
   const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath, content: 'attach' } });
