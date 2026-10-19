@@ -26,8 +26,6 @@ subsystem, add a row to the Subsystems table. Then update this file:
 
 ## Subsystems
 
-98 subsystems, 4934 tests (5331 with loop copies).
-
 | Code | Subsystem | Files | Tests |
 |---|---|---|---|
 | `AN` | Android WebViews | `library/unit/android-webviews` | 1 |
