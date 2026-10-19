@@ -1195,3 +1195,20 @@ it('RO-056 should respect URLPattern ignoreCase', async ({ page, server }) => {
   expect(await response!.text()).toBe('mock');
   expect(intercepted).toEqual(['ignoreCase']);
 });
+
+for (const target of ['page', 'context'] as const) {
+  it(`should intercept with a ${target} route added right after a times: 1 route expires`, async ({ page, context, server }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43507' });
+    server.setRoute('/api', (req, res) => res.end('network'));
+    await page.goto(server.EMPTY_PAGE);
+    const fetchApi = () => page.evaluate(() => fetch('/api').then(response => response.text()));
+    const owner = target === 'page' ? page : context;
+    for (let i = 0; i < 10; i++) {
+      await owner.route('**/api', route => route.fulfill({ body: 'first' }), { times: 1 });
+      expect(await fetchApi()).toBe('first');
+      await owner.route('**/api', route => route.fulfill({ body: 'second' }));
+      expect(await fetchApi(), `iteration ${i}`).toBe('second');
+      await owner.unrouteAll();
+    }
+  });
+}

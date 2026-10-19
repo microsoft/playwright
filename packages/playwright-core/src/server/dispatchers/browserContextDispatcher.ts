@@ -60,6 +60,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _clockPaused = false;
   private _requestInterceptor: RouteHandler;
   private _interceptionUrlMatchers: URLMatch[] = [];
+  private _interceptionUpdate: Promise<void> = Promise.resolve();
   private _routeWebSocketInitScript: InitScript | undefined;
   private _recorderApp: ProgrammaticRecorderApp | undefined;
 
@@ -313,6 +314,14 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async setNetworkInterceptionPatterns(params: channels.BrowserContextSetNetworkInterceptionPatternsParams, progress: Progress): Promise<void> {
+    // Updates must not interleave: each one decides whether to add or remove the interceptor
+    // based on the matchers left behind by the previous one.
+    const result = this._interceptionUpdate.then(() => this._updateNetworkInterceptionPatterns(params, progress));
+    this._interceptionUpdate = result.catch(() => {});
+    await result;
+  }
+
+  private async _updateNetworkInterceptionPatterns(params: channels.BrowserContextSetNetworkInterceptionPatternsParams, progress: Progress): Promise<void> {
     const hadMatchers = this._interceptionUrlMatchers.length > 0;
     if (!params.patterns.length) {
       // Note: it is important to remove the interceptor when there are no patterns,
