@@ -30,6 +30,10 @@ export type LaunchProcessOptions = {
   args?: string[],
   env?: NodeJS.ProcessEnv,
   shell?: boolean,
+  // Only pass this for child processes that have no window of their own (e.g. ffmpeg).
+  // See https://github.com/microsoft/playwright/issues/43515: passing this unconditionally
+  // for every launched process previously broke Inspector, codegen and UI mode.
+  windowsHide?: boolean,
 
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
@@ -142,6 +146,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     env: options.env,
     cwd: options.cwd,
     shell: options.shell,
+    windowsHide: options.windowsHide,
     stdio,
   };
   const spawnedProcess = childProcess.spawn(options.command, options.args || [], spawnOptions);

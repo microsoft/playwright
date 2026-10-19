@@ -209,6 +209,9 @@ class FfmpegVideoRecorder {
       command: this._ffmpegPath,
       args,
       stdio: 'stdin',
+      // ffmpeg has no window of its own, so hiding its console on Windows is safe here,
+      // unlike for browser/driver processes. See https://github.com/microsoft/playwright/issues/43515.
+      windowsHide: true,
       log: (message: string) => debugLogger.log('browser', message),
       tempDirectories: [],
       attemptToGracefullyClose: async () => {
