@@ -30,6 +30,7 @@ Commands:
   download                 Fetch the latest maintained database artifact.
                            Starts a fresh database if none exists yet.
   update [options]         Ingest parquet artifacts that aren't in the database yet.
+                           Downloads the latest database artifact first if there is none locally.
     --lookback-days <n>    How many days back to scan (default 7).
     --concurrency <n>      Parallel downloads and listings per batch (default 16).
   truncate --max-runs <n>  Keep only the newest <n> runs, delete the rest, compact.
