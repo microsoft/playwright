@@ -554,7 +554,6 @@ export class HarTracer {
     if (this._options.content === 'embed') {
       // Sometimes, we can receive a font/media file with textual mime type. Browser
       // still interprets them correctly, but the 'content-type' header is obviously wrong.
-      // Only store valid UTF-8 as text, so that other bodies are replayed byte for byte.
       if (isTextualMimeType(content.mimeType) && resourceType !== 'font' && isUtf8(buffer)) {
         content.text = buffer.toString();
       } else {
