@@ -562,22 +562,32 @@ function createIntl(clock: ClockController, NativeIntl: Builtins['Intl']): Built
   for (const key of Object.getOwnPropertyNames(NativeIntl) as (keyof Builtins['Intl'])[])
     ClockIntl[key] = NativeIntl[key];
 
+  // Formatters are native instances with a prototype that has the same own members as
+  // the native one, except that format() and formatToParts() default to the clock time.
+  const nativePrototype = NativeIntl.DateTimeFormat.prototype;
+  const nativeFormat = Object.getOwnPropertyDescriptor(nativePrototype, 'format')!.get!;
+  const nativeFormatToParts = nativePrototype.formatToParts;
   ClockIntl.DateTimeFormat = function(...args: any[]) {
-    const realFormatter = new NativeIntl.DateTimeFormat(...args);
-    const formatter: Intl.DateTimeFormat = {
-      formatRange: realFormatter.formatRange.bind(realFormatter),
-      formatRangeToParts: realFormatter.formatRangeToParts.bind(realFormatter),
-      resolvedOptions: realFormatter.resolvedOptions.bind(realFormatter),
-      format: date => realFormatter.format(date === undefined ? clock.now() : date),
-      formatToParts: date => realFormatter.formatToParts(date === undefined ? clock.now() : date),
-    };
-
-    return formatter;
+    return Reflect.construct(NativeIntl.DateTimeFormat, args, new.target ?? ClockIntl.DateTimeFormat);
   };
-
-  ClockIntl.DateTimeFormat.prototype = Object.create(
-      NativeIntl.DateTimeFormat.prototype,
-  );
+  ClockIntl.DateTimeFormat.prototype = Object.create(nativePrototype, {
+    ...Object.getOwnPropertyDescriptors(nativePrototype),
+    constructor: { value: ClockIntl.DateTimeFormat, writable: true, configurable: true },
+    format: {
+      get(this: Intl.DateTimeFormat) {
+        const format = nativeFormat.call(this);
+        return (date?: Date | number) => format(date === undefined ? clock.now() : date);
+      },
+      configurable: true,
+    },
+    formatToParts: {
+      value(this: Intl.DateTimeFormat, date?: Date | number) {
+        return nativeFormatToParts.call(this, date === undefined ? clock.now() : date);
+      },
+      writable: true,
+      configurable: true,
+    },
+  });
 
   ClockIntl.DateTimeFormat.supportedLocalesOf =
     NativeIntl.DateTimeFormat.supportedLocalesOf;
