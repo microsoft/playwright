@@ -157,7 +157,9 @@ it('PO-021 should use viewport size from window features', async function({ brow
   expect(resized).toEqual({ width: 500, height: 400 });
 });
 
-it('PO-022 should respect routes from browser context when using window.open', async function({ browser, server }) {
+it('PO-022 should respect routes from browser context when using window.open', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43496' },
+}, async function({ browser, server }) {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -171,6 +173,18 @@ it('PO-022 should respect routes from browser context when using window.open', a
     page.evaluate(url => window['__popup'] = window.open(url), server.EMPTY_PAGE),
   ]);
   expect(intercepted).toBe(true);
+
+  let imageIntercepted = false;
+  await context.route('**/pptr.png', route => {
+    void route.continue();
+    imageIntercepted = true;
+  });
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(url => window.open('').document.write(`<img src="${url}">`), server.PREFIX + '/pptr.png'),
+  ]);
+  await popup.waitForFunction(() => document.querySelector('img')?.naturalWidth > 0);
+  expect(imageIntercepted).toBe(true);
   await context.close();
 });
 

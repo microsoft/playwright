@@ -73,13 +73,21 @@ it('PO-005 should be able to capture alert', async ({ page }) => {
   await evaluatePromise;
 });
 
-it('PO-006 should work with empty url', async ({ page }) => {
+it('PO-006 should work with empty url', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43496' },
+}, async ({ page, server }) => {
+  await page.route('**/*', route => route.continue());
+  await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(() => window['__popup'] = window.open('')),
+    page.evaluate(url => {
+      window['__popup'] = window.open('');
+      window['__popup'].document.write(`<img src="${url}">`);
+    }, server.PREFIX + '/pptr.png'),
   ]);
   expect(await page.evaluate(() => !!window.opener)).toBe(false);
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
+  await popup.waitForFunction(() => document.querySelector('img')?.naturalWidth > 0);
 });
 
 it('PO-007 should work with noopener and no url', async ({ page }) => {

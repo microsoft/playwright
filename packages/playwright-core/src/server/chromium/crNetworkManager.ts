@@ -207,7 +207,7 @@ export class CRNetworkManager {
     // Request interception doesn't happen for data URLs with Network Service.
     if (this._protocolRequestInterceptionEnabled && !event.request.url.startsWith('data:')) {
       const requestId = event.requestId;
-      const requestPausedEvent = this._requestIdToRequestPausedEvent.get(requestId);
+      const requestPausedEvent = this._requestIdToRequestPausedEvent.get(requestId) ?? this._takeRequestPausedOnAnotherPage(requestId);
       if (requestPausedEvent) {
         this._onRequest(sessionInfo, event, requestPausedEvent.sessionInfo, requestPausedEvent.event);
         this._requestIdToRequestPausedEvent.delete(requestId);
@@ -215,8 +215,47 @@ export class CRNetworkManager {
         this._requestIdToRequestWillBeSentEvent.set(event.requestId, { sessionInfo, event });
       }
     } else {
+      const requestPausedEvent = this._takeRequestPausedOnAnotherPage(event.requestId);
+      if (requestPausedEvent)
+        requestPausedEvent.sessionInfo.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.event.requestId });
       this._onRequest(sessionInfo, event, undefined, undefined);
     }
+  }
+
+  // Chromium pauses the subresource requests of a popup's initial about:blank document on
+  // the opener's target, but reports them with Network.requestWillBeSent on the popup's target.
+  private _otherPageNetworkManagers(): CRNetworkManager[] {
+    if (!this._page)
+      return [];
+    return this._page.browserContext.possiblyUninitializedPages().map(page => (page.delegate as CRPage)._networkManager).filter(manager => manager !== this);
+  }
+
+  private _takeRequestPausedOnAnotherPage(requestId: string) {
+    for (const manager of this._otherPageNetworkManagers()) {
+      const requestPausedEvent = manager._requestIdToRequestPausedEvent.get(requestId);
+      if (requestPausedEvent) {
+        manager._requestIdToRequestPausedEvent.delete(requestId);
+        return requestPausedEvent;
+      }
+    }
+  }
+
+  private _passRequestPausedToAnotherPage(sessionInfo: SessionInfo, event: Protocol.Fetch.requestPausedPayload): boolean {
+    const requestId = event.networkId!;
+    for (const manager of this._otherPageNetworkManagers()) {
+      const requestWillBeSentEvent = manager._requestIdToRequestWillBeSentEvent.get(requestId);
+      if (requestWillBeSentEvent) {
+        manager._requestIdToRequestWillBeSentEvent.delete(requestId);
+        manager._onRequest(requestWillBeSentEvent.sessionInfo, requestWillBeSentEvent.event, sessionInfo, event);
+        return true;
+      }
+      if (manager._requestIdToRequest.has(requestId)) {
+        // The other page does not intercept its requests.
+        sessionInfo.session._sendMayFail('Fetch.continueRequest', { requestId: event.requestId });
+        return true;
+      }
+    }
+    return false;
   }
 
   _onRequestServedFromCache(event: Protocol.Network.requestServedFromCachePayload) {
@@ -280,6 +319,8 @@ export class CRNetworkManager {
         });
         return;
       }
+      if (this._passRequestPausedToAnotherPage(sessionInfo, event))
+        return;
       this._requestIdToRequestPausedEvent.set(requestId, { sessionInfo, event });
     }
   }
