@@ -953,7 +953,12 @@ export class InjectedScript {
       textarea.focus();
       return 'done';
     }
-    (element as HTMLElement | SVGElement).focus();
+    // Focus the editing host, like a click would: its descendants are not focusable,
+    // and without focus the input goes to whichever frame has it.
+    let focusTarget = element;
+    while ((focusTarget as HTMLElement).isContentEditable && (focusTarget.parentElement as HTMLElement | null)?.isContentEditable)
+      focusTarget = focusTarget.parentElement!;
+    (focusTarget as HTMLElement | SVGElement).focus();
     const range = element.ownerDocument.createRange();
     range.selectNodeContents(element);
     const selection = element.ownerDocument.defaultView!.getSelection();
