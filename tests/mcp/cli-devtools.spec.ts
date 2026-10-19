@@ -47,6 +47,16 @@ test('console --clear', async ({ cli, server }) => {
   expect(output).not.toContain('log-level');
 });
 
+test('console --all', async ({ cli, server }) => {
+  await cli('open', server.PREFIX);
+  await cli('eval', 'console.log("before-navigation")');
+  await cli('goto', server.PREFIX);
+  const { output: defaultOutput } = await cli('console');
+  expect(defaultOutput).not.toContain('before-navigation');
+  const { output } = await cli('console', '--all');
+  expect(output).toContain('before-navigation');
+});
+
 test('requests', async ({ cli, server }) => {
   await cli('open', server.PREFIX);
   await cli('eval', '() => fetch("/hello-world")');
@@ -81,6 +91,16 @@ test('requests --clear', async ({ cli, server }) => {
   await cli('requests', '--clear');
   const { output } = await cli('requests');
   expect(output).not.toContain(`${server.PREFIX}/hello-world`);
+});
+
+test('requests --all', async ({ cli, server }) => {
+  await cli('open', server.PREFIX);
+  await cli('eval', '() => fetch("/hello-world")');
+  await cli('goto', server.PREFIX);
+  const { output: defaultOutput } = await cli('requests');
+  expect(defaultOutput).not.toContain(`${server.PREFIX}/hello-world`);
+  const { output } = await cli('requests', '--all');
+  expect(output).toMatch(new RegExp(String.raw`^\d+\. \[GET\] ${escapeRegExp(`${server.PREFIX}/hello-world`)} => \[200\] OK$`, 'm'));
 });
 
 test('request shows full request and response details', async ({ cli, server }) => {

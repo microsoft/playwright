@@ -137,6 +137,35 @@ test('browser_network_requests numbers requests with stable indexes', async ({ c
   expect(lines).toHaveLength(3);
 });
 
+test('browser_network_requests all option', async ({ client, server }) => {
+  server.setContent('/api/page1', 'page1', 'text/plain');
+  server.setContent('/api/page2', 'page2', 'text/plain');
+
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.EMPTY_PAGE } });
+  await client.callTool({ name: 'browser_evaluate', arguments: { function: `async () => { await fetch('/api/page1'); }` } });
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.EMPTY_PAGE } });
+  await client.callTool({ name: 'browser_evaluate', arguments: { function: `async () => { await fetch('/api/page2'); }` } });
+
+  const defaultResponse = parseResponse(await client.callTool({ name: 'browser_network_requests' }));
+  expect(defaultResponse.result).not.toContain('/api/page1');
+
+  const allResponse = parseResponse(await client.callTool({
+    name: 'browser_network_requests',
+    arguments: { all: true },
+  }));
+  const page1Index = allResponse.result.match(new RegExp(String.raw`^(\d+)\. \[GET\] ${escapeRegExp(`${server.PREFIX}/api/page1`)} => \[200\] OK$`, 'm'))?.[1];
+  expect(page1Index).toBeTruthy();
+  // Requests keep their numbers across navigations.
+  const page2Line = allResponse.result.split('\n').find(line => line.includes('/api/page2'));
+  expect(defaultResponse.result).toContain(page2Line);
+
+  const details = parseResponse(await client.callTool({
+    name: 'browser_network_request',
+    arguments: { index: Number(page1Index) },
+  }));
+  expect(details.result).toContain(`#${page1Index} [GET] ${server.PREFIX}/api/page1`);
+});
+
 test('browser_network_request shows full request and response details', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="fetch('/api', { method: 'POST', headers: { 'X-Custom-Header': 'test-value' }, body: JSON.stringify({ key: 'value' }) })">Click me</button>
