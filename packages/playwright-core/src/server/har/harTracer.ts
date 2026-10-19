@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { isUtf8 } from 'buffer';
+
 import mime from 'mime';
 import { base64ByteLength } from '@isomorphic/base64';
 import { ManualPromise } from '@isomorphic/manualPromise';
@@ -268,7 +270,7 @@ export class HarTracer {
       content.mimeType = contentType;
     // Keep the size as -1 "not available" when we did not actually read the body.
     if (event.body) {
-      this._storeResponseContent(event.body, content, 'other');
+      this._storeResponseContent(event.body, content);
       if (!this._options.omitSizes)
         harEntry.response.bodySize = event.body.length;
     }
@@ -380,7 +382,7 @@ export class HarTracer {
 
       const content = harEntry.response.content;
       compressionCalculationBarrier?.setDecodedBodySize(buffer.length);
-      this._storeResponseContent(buffer, content, request.resourceType());
+      this._storeResponseContent(buffer, content);
     }).catch(() => {
       compressionCalculationBarrier?.setDecodedBodySize(0);
     }).then(() => {
@@ -545,14 +547,14 @@ export class HarTracer {
       this._delegate.onEntryStarted(harEntry);
   }
 
-  private _storeResponseContent(buffer: Buffer, content: har.Content, resourceType: string) {
+  private _storeResponseContent(buffer: Buffer, content: har.Content) {
     if (!this._options.omitSizes)
       content.size = buffer.length;
 
     if (this._options.content === 'embed') {
       // Sometimes, we can receive a font/media file with textual mime type. Browser
       // still interprets them correctly, but the 'content-type' header is obviously wrong.
-      if (isTextualMimeType(content.mimeType) && resourceType !== 'font') {
+      if (isTextualMimeType(content.mimeType) && isUtf8(buffer)) {
         content.text = buffer.toString();
       } else {
         content.text = buffer.toString('base64');
