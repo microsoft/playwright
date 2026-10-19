@@ -792,6 +792,10 @@ class FrameSession {
       return;
     }
 
+    this._initializeWorker(session, event);
+  }
+
+  private _initializeWorker(session: CRSession, event: Protocol.Target.attachedToTargetPayload) {
     const url = event.targetInfo.url;
     const worker = new Worker(this._page, url);
     this._page.addWorker(event.sessionId, worker);
@@ -805,6 +809,11 @@ class FrameSession {
       worker.workerScriptLoaded();
     // This might fail if the target is closed before we initialize.
     session._sendMayFail('Runtime.enable');
+    // Dedicated workers inherit the user agent, but not the Accept-Language and
+    // navigator.languages that the page's user agent override sets from the locale.
+    const options = this._crPage._browserContext._options;
+    if (options.userAgent || options.locale)
+      this._updateUserAgent(session).catch(() => {});
     this._crPage._networkManager.addSession(session, this._page.frameManager.frame(event.targetInfo.parentFrameId ?? this._targetId) ?? undefined).catch(() => {});
     session._sendMayFail('Runtime.runIfWaitingForDebugger');
     session._sendMayFail('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
@@ -1074,9 +1083,9 @@ class FrameSession {
     await this._client.send('Emulation.setEmulatedMedia', { media, features });
   }
 
-  async _updateUserAgent(): Promise<void> {
+  async _updateUserAgent(session: CRSession = this._client): Promise<void> {
     const options = this._crPage._browserContext._options;
-    await this._client.send('Emulation.setUserAgentOverride', {
+    await session.send('Emulation.setUserAgentOverride', {
       userAgent: options.userAgent || '',
       acceptLanguage: options.locale,
       userAgentMetadata: calculateUserAgentMetadata(options),
