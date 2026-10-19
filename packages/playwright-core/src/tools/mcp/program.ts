@@ -18,7 +18,7 @@ import { Option as ProgramOption } from 'commander';
 import * as mcpServer from '../utils/mcp/server';
 import { commaSeparatedList, defaultCodegenLanguage, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfigForMCP, semicolonSeparatedList } from './config';
 import { setupExitWatchdog } from './watchdog';
-import { connectToBrowserEndpoint, createBrowserWithInfo } from './browserFactory';
+import { connectToBrowserEndpoint, createBrowserWithInfo, createIdleTimer } from './browserFactory';
 import { BrowserBackend } from '../backend/browserBackend';
 import { filteredTools } from '../backend/tools';
 import { testDebug } from './log';
@@ -160,9 +160,14 @@ export function decorateMCPCommand(command: Command) {
               throw error;
             }
 
+            // Each isolated client owns a context in the shared browser, so it has its own idle timer.
+            // Otherwise an idle client keeps its context open while other clients are active.
+            const clientIdleTimer = shared && config.browser.isolated ? createIdleTimer(config, shared.ownership, () => browserContext.close().catch(() => { })) : undefined;
+
             return new BrowserBackend(config, browserContext, tools, {
-              idleTimer: info.idleTimer,
+              idleTimer: clientIdleTimer ?? info.idleTimer,
               dispose: async () => {
+                clientIdleTimer?.dispose();
                 clientCount--;
                 const last = !shared || !clientCount;
                 if (last && sharedBrowserPromise === promise)

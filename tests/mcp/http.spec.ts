@@ -575,6 +575,45 @@ test('http transport shared context: one idle timer across clients', async ({ se
   });
 });
 
+test('http transport isolated: one idle timer per client', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1795' } }, async ({ serverEndpoint, server }) => {
+  const { url, stderr } = await serverEndpoint({ args: ['--isolated', '--idle-timeout=1500'] });
+  const client1 = await connectClient(url, 'test1');
+  await client1.client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  // The idle client loses its context while the other client keeps the browser busy.
+  const client2 = await connectClient(url, 'test2');
+  await keepBusy(client2.client, 3000);
+  expect(formatLog(stderr())).toEqual({
+    'create browser (isolated)': 1,
+    'connect to shared browser': 2,
+    'create http session': 2,
+    'create context': 2,
+    'close context': 1,
+  });
+
+  expect(await client1.client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
+  });
+
+  await client1.close();
+  await client2.close();
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create browser (isolated)': 1,
+    'connect to shared browser': 3,
+    'create http session': 2,
+    'delete http session': 2,
+    'create context': 3,
+    'close context': 2,
+    'close browser': 1,
+  });
+});
+
 test('http transport (default)', async ({ serverEndpoint }) => {
   const { url } = await serverEndpoint();
   const transport = new StreamableHTTPClientTransport(url);

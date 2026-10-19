@@ -204,7 +204,7 @@ A page that keeps animating or rendering costs CPU for as long as the browser is
 
 When no tool call has completed for that long, the browser is closed, headed or not, the same way as if you had closed it by hand. The next tool call launches a new browser, so the agent navigates again. The timer never fires while a tool call is running.
 
--   With `--isolated`, cookies and storage kept in memory are lost on an idle close. Use the persistent profile or `--storage-state` to keep them.
+-   With `--isolated`, cookies and storage kept in memory are lost on an idle close. Use the persistent profile or `--storage-state` to keep them. Each client has its own timer: the context of an idle client is closed while other clients keep working, and the browser is closed once no client has a context.
 -   With `--cdp-endpoint` or `--extension`, the browser is not owned by the server, so there is no default timeout, and an explicit one only disconnects from it, leaving its pages open. With `--extension`, the next tool call goes through the connect flow again.
 -   With `--shared-browser-context`, the timer spans all clients: a client that is idle while others keep working keeps its tabs and state, and the shared browser is closed only once every client has been idle for the timeout.
 
