@@ -19,6 +19,7 @@ import os from 'os';
 import path from 'path';
 
 import { TestResultsDb, fileSize, formatBytes } from './db.ts';
+import { cmdDownload } from './download.ts';
 import { GitHubClient, chunk, extractSingle } from './github.ts';
 
 const PARQUET_ARTIFACT_PREFIX = 'parquet-report-';
@@ -38,6 +39,9 @@ export type UpdateOptions = {
 // then ingested serially on the single connection and its temp files removed,
 // so disk usage stays bounded to one batch.
 export async function cmdUpdate(dbPath: string, token: string, options: UpdateOptions): Promise<void> {
+  if (!fs.existsSync(dbPath))
+    await cmdDownload(dbPath, token);
+
   const github = new GitHubClient(token);
   const db = await TestResultsDb.open(dbPath);
   try {

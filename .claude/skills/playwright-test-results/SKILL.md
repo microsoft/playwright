@@ -12,18 +12,18 @@ refreshed every few hours.
 
 ## Get the database
 
-Download the latest snapshot:
+Download the latest snapshot and top it up with the newest runs:
 
 ```bash
 npm ci                       # first time only, from the repo root
-GITHUB_TOKEN=$(gh auth token) node utils/test-results-db/cli.ts download
-```
-
-The snapshot may be missing the newest runs. To top it up locally, run `update`:
-
-```bash
 GITHUB_TOKEN=$(gh auth token) node utils/test-results-db/cli.ts update --lookback-days 3
 ```
+
+`update` downloads the snapshot first when there is no local database, then
+ingests only the artifacts the snapshot lacks. Never delete the database to
+rebuild it: every artifact costs one GitHub API request, the budget is shared
+by every workflow in the repository, and a rebuild of a few days exhausts it.
+To only refresh the snapshot without ingesting, run `download`.
 
 Query it through the bundled `@duckdb/node-api` binding — no separate DuckDB
 install needed, it ships in `node_modules` after `npm ci`:
