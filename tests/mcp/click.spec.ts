@@ -203,6 +203,34 @@ test('browser_click (test id attribute)', async ({ startClient, server, mcpBrows
   });
 });
 
+test('browser_click (target that is neither a ref nor a parseable selector)', async ({ client, server }) => {
+  // See https://github.com/microsoft/playwright-mcp/issues/1797: a target that fails to parse
+  // as either a ref or a selector (e.g. the accessibility-tree phrase an LLM naturally
+  // produces) used to silently become an empty selector and fail with a confusing,
+  // unrelated error ("Unexpected token \"\" while parsing css selector \"\"") that named
+  // neither the argument nor the accepted forms.
+  server.setContent('/', `
+    <title>Title</title>
+    <button>Search</button>
+  `, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Search button',
+      target: 'button "Search"',
+    },
+  })).toHaveResponse({
+    error: `Error: target must be a snapshot ref (e.g. "e28" or "f1e18") or a CSS/Playwright selector; got "button \\"Search\\"", which is neither.`,
+    isError: true,
+  });
+});
+
 test('browser_click (locator target containing aria-ref-like substring)', async ({ client, server }) => {
   server.setContent('/', `
     <title>Title</title>

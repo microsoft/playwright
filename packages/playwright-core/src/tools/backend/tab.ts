@@ -556,6 +556,11 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     return Promise.all(params.map(async param => {
       if (!param.target.match(/^(f\d+)?e\d+$/)) {
         const selector = locatorOrSelectorAsSelector('javascript', param.target, this.context.config.testIdAttribute || 'data-testid');
+        // locatorOrSelectorAsSelector() swallows parse errors and returns '' (see isomorphic/locatorParser.ts),
+        // which would otherwise reach the selector engine as an empty selector and fail with a confusing,
+        // unrelated parse error instead of naming the actual problem: the target string itself.
+        if (!selector)
+          throw new Error(`target must be a snapshot ref (e.g. "e28" or "f1e18") or a CSS/Playwright selector; got ${JSON.stringify(param.target)}, which is neither.`);
         const handle = await this.page.$(selector);
         if (!handle)
           throw new Error(`"${param.target}" does not match any elements.`);
