@@ -52,12 +52,14 @@ export type BindOptions = {
 
 export async function createBrowserWithInfo(config: FullConfig, clientInfo: ClientInfo, cliOptions: CLIOptions, bindOptions: BindOptions): Promise<BrowserWithInfo> {
   const info = await createBrowser(config, clientInfo, cliOptions, bindOptions);
-  const idleTimeout = config.timeouts?.idle ?? (info.ownership === 'own' && config.browser.launchOptions.headless ? defaultIdleTimeout : undefined);
-  if (idleTimeout) {
-    info.idleTimer = new IdleTimer(idleTimeout, () => info.browser.close().catch(() => {}));
-    info.browser.once('disconnected', () => info.idleTimer?.dispose());
-  }
+  info.idleTimer = createIdleTimer(config, info.ownership, () => info.browser.close().catch(() => {}));
+  info.browser.once('disconnected', () => info.idleTimer?.dispose());
   return info;
+}
+
+export function createIdleTimer(config: FullConfig, ownership: BrowserWithInfo['ownership'], onIdle: () => void): IdleTimer | undefined {
+  const idleTimeout = config.timeouts?.idle ?? (ownership === 'own' && config.browser.launchOptions.headless ? defaultIdleTimeout : undefined);
+  return idleTimeout ? new IdleTimer(idleTimeout, onIdle) : undefined;
 }
 
 async function createBrowser(config: FullConfig, clientInfo: ClientInfo, cliOptions: CLIOptions, bindOptions: BindOptions): Promise<BrowserWithInfo> {
