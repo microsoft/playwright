@@ -143,7 +143,7 @@ for (const host of ['localhost', '127.0.0.1']) {
 
 it('PR-007 should authenticate', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43326' },
-}, async ({ browserType, server }) => {
+}, async ({ browserType, server, browserName, isHeadlessShell }) => {
   server.setRoute('/target.html', async (req, res) => {
     const auth = req.headers['proxy-authorization'];
     if (!auth) {
@@ -171,9 +171,14 @@ it('PR-007 should authenticate', {
   await page.goto('http://non-existent.test/target.html');
   expect(await page.title()).toBe('Basic ' + Buffer.from('user:secret').toString('base64'));
   // Proxy credentials must not be sent to the website's own auth challenge.
-  const response = await page.goto('http://non-existent.com/protected.html');
-  expect(response.status()).toBe(401);
-  expect(await page.locator('body').textContent()).toBe('no credentials');
+  const responseOrError = await page.goto('http://non-existent.com/protected.html').catch(e => e);
+  if (browserName === 'chromium' && !isHeadlessShell) {
+    // Branded Chromium shows a login dialog for the 401 and fails the navigation.
+    expect(responseOrError.message).toContain('net::ERR_INVALID_AUTH_CREDENTIALS');
+  } else {
+    expect(responseOrError.status()).toBe(401);
+    expect(await page.locator('body').textContent()).toBe('no credentials');
+  }
   await browser.close();
 });
 
