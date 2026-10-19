@@ -1665,6 +1665,11 @@ it.describe('Intl API', () => {
     // A timestamp of 0 is the epoch, not "use the system time".
     // https://github.com/microsoft/playwright/issues/43424
     expect(isFirstOfMonth('America/Toronto', 0)).toBeFalsy();
+    // Formatters are real Intl.DateTimeFormat instances and the prototype keeps its own members.
+    // https://github.com/microsoft/playwright/issues/43492
+    const formatter = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC' });
+    expect(formatter).toBeInstanceOf(Intl.DateTimeFormat);
+    expect(Object.getOwnPropertyDescriptor(Intl.DateTimeFormat.prototype, 'format').get.call(formatter)()).toBe('01/06/2022');
   });
 
   it('CK-215 formatToParts via isFirstOfMonth -> Returns false when passed no timestamp and system time is not first of the month', async ({ install }) => {
