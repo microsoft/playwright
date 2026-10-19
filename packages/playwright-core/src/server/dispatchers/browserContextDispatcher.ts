@@ -314,14 +314,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async setNetworkInterceptionPatterns(params: channels.BrowserContextSetNetworkInterceptionPatternsParams, progress: Progress): Promise<void> {
     const hadMatchers = this._interceptionUrlMatchers.length > 0;
+    this._interceptionUrlMatchers = params.patterns.map(deserializeURLMatch);
     if (!params.patterns.length) {
       // Note: it is important to remove the interceptor when there are no patterns,
       // because that disables the slow-path interception in the browser itself.
       if (hadMatchers)
         await progress.race(this._context.removeRequestInterceptor(this._requestInterceptor));
-      this._interceptionUrlMatchers = [];
     } else {
-      this._interceptionUrlMatchers = params.patterns.map(deserializeURLMatch);
       if (!hadMatchers)
         await this._context.addRequestInterceptor(progress, this._requestInterceptor);
     }

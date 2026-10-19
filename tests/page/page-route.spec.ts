@@ -977,15 +977,24 @@ it('RO-044 should support cors for different methods', async ({ page, server }) 
   }
 });
 
-it('RO-045 should support the times parameter with route matching', async ({ page, server }) => {
+it('RO-045 should support the times parameter with route matching', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43507' },
+}, async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  function fetchBody() {
+    return page.evaluate(() => fetch('/empty.html').then(response => response.text()));
+  }
+
   const intercepted = [];
   await page.route('**/empty.html', route => {
     intercepted.push(1);
-    void route.continue();
+    void route.fulfill({ body: 'first' });
   }, { times: 1 });
-  await page.goto(server.EMPTY_PAGE);
-  await page.goto(server.EMPTY_PAGE);
-  await page.goto(server.EMPTY_PAGE);
+  expect(await fetchBody()).toBe('first');
+  await page.route('**/empty.html', route => route.fulfill({ body: 'second' }), { times: 1 });
+  expect(await fetchBody()).toBe('second');
+  await fetchBody();
+  await fetchBody();
   expect(intercepted).toHaveLength(1);
 });
 
