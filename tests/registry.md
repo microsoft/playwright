@@ -26,7 +26,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 
 ## Subsystems
 
-98 subsystems, 4933 tests (5330 with loop copies).
+98 subsystems, 4934 tests (5331 with loop copies).
 
 | Code | Subsystem | Files | Tests |
 |---|---|---|---|
@@ -78,7 +78,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `FR` | Frame | `page/{frame-evaluate, frame-frame-element, frame-goto, frame-hierarchy}` | 36 |
 | `GE` | Geolocation | `library/geolocation` | 9 |
 | `GN` | Locator and selector generator | `library/{locator-generator, selector-generator}` | 104 |
-| `HA` | HAR | `library/{har, browsercontext-har, har-websocket}` | 112 |
+| `HA` | HAR | `library/{har, browsercontext-har, har-websocket}` | 113 |
 | `HE` | Headful | `library/headful` | 16 |
 | `HT` | Hit target | `library/hit-target` | 22 |
 | `IF` | Input files | `page/page-set-input-files` | 21 |
@@ -3157,6 +3157,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `HA-110` | `library/har-websocket.spec.ts` | should still allow routeWebSocket to fully mock the connection when capturing HAR |
 | `HA-111` | `library/har-websocket.spec.ts` | should still allow routeWebSocket to modify messages when capturing HAR |
 | `HA-112` | `library/har-websocket.spec.ts` | should respect PLAYWRIGHT\_HAR\_NO\_WEBSOCKET\_FRAMES |
+| `HA-113` | `library/har.spec.ts` | should store binary content with a textual mime type as base64 |
 
 ### HE — Headful
 

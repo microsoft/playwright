@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { isUtf8 } from 'buffer';
+
 import mime from 'mime';
 import { base64ByteLength } from '@isomorphic/base64';
 import { ManualPromise } from '@isomorphic/manualPromise';
@@ -552,7 +554,8 @@ export class HarTracer {
     if (this._options.content === 'embed') {
       // Sometimes, we can receive a font/media file with textual mime type. Browser
       // still interprets them correctly, but the 'content-type' header is obviously wrong.
-      if (isTextualMimeType(content.mimeType) && resourceType !== 'font') {
+      // Only store valid UTF-8 as text, so that other bodies are replayed byte for byte.
+      if (isTextualMimeType(content.mimeType) && resourceType !== 'font' && isUtf8(buffer)) {
         content.text = buffer.toString();
       } else {
         content.text = buffer.toString('base64');

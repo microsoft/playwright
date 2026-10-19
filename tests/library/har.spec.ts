@@ -368,6 +368,24 @@ it('HA-021 should include content @smoke', async ({ contextFactory, server }, te
   expect(log.entries[2].response.content.compression).toBe(0);
 });
 
+it('HA-113 should store binary content with a textual mime type as base64', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43493' },
+}, async ({ contextFactory, server, browserName }, testInfo) => {
+  it.fixme(browserName === 'webkit', 'WebKit decodes the body of a textual resource before it gets to us');
+  const body = Buffer.from([0x80, 0xc3, 0x28, 0xff, 0x41]);
+  server.setRoute('/binary.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.end(body);
+  });
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => fetch('/binary.js').then(r => r.arrayBuffer()));
+  const log = await getLog();
+  const content = log.entries.find(entry => entry.request.url.endsWith('/binary.js'))!.response.content;
+  expect(content.encoding).toBe('base64');
+  expect(Buffer.from(content.text!, 'base64')).toEqual(body);
+});
+
 it('HA-022 should use attach mode for zip extension', async ({ contextFactory, server }, testInfo) => {
   const { page, getZip } = await pageWithHar(contextFactory, testInfo, { outputPath: 'test.har.zip' });
   await page.goto(server.PREFIX + '/har.html');
