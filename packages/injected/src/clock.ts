@@ -579,6 +579,20 @@ function createIntl(clock: ClockController, NativeIntl: Builtins['Intl']): Built
       NativeIntl.DateTimeFormat.prototype,
   );
 
+  // `format` is an accessor on the native prototype. Keep it an own accessor on
+  // the fake one so that `Object.getOwnPropertyDescriptor(Intl.DateTimeFormat.prototype, 'format')` works.
+  const nativeFormat = Object.getOwnPropertyDescriptor(NativeIntl.DateTimeFormat.prototype, 'format');
+  if (nativeFormat?.get) {
+    Object.defineProperty(ClockIntl.DateTimeFormat.prototype, 'format', {
+      configurable: true,
+      enumerable: false,
+      get() {
+        const format = nativeFormat.get!.call(this);
+        return (date?: Date | number) => format(date === undefined ? clock.now() : date);
+      },
+    });
+  }
+
   ClockIntl.DateTimeFormat.supportedLocalesOf =
     NativeIntl.DateTimeFormat.supportedLocalesOf;
 

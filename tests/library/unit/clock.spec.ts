@@ -1680,6 +1680,16 @@ it.describe('Intl API', () => {
     );
   });
 
+  it('keeps the format getter on DateTimeFormat.prototype', async ({ install }) => {
+    // https://github.com/microsoft/playwright/issues/43492
+    const native = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC' });
+    install(Date.UTC(2022, 5, 1));
+    const descriptor = Object.getOwnPropertyDescriptor(Intl.DateTimeFormat.prototype, 'format');
+    expect(typeof descriptor.get).toBe('function');
+    expect(descriptor.get.call(native)(Date.UTC(2020, 0, 1))).toBe('01/01/2020');
+    expect(descriptor.get.call(native)()).toBe('01/06/2022');
+  });
+
   it('CK-217 Creates a RelativeTimeFormat like normal', async ({ clock }) => {
     const rtf = new Intl.RelativeTimeFormat('en-GB', {
       numeric: 'auto',
