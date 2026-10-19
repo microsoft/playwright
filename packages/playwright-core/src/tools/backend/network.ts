@@ -37,18 +37,18 @@ const requests = defineTabTool({
     inputSchema: z.object({
       static: z.boolean().default(false).describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
       filter: z.string().optional().refine(v => !v || isRegexString(v), { message: 'Invalid regular expression' }).describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
+      all: z.boolean().optional().describe('Return all network requests since the beginning of the session, not just since the last navigation. Defaults to false.'),
       filename: z.string().optional().describe('File name to save the network requests to. Relative file names are resolved against the workspace root. If not provided, requests are returned as text.'),
     }),
     type: 'readOnly',
   },
 
   handle: async (tab, params, response) => {
-    const allRequests = await tab.requests();
+    const entries = await tab.requests(params.all);
     const filter = params.filter ? new RegExp(params.filter) : undefined;
     const lines: string[] = [];
     let hiddenStaticCount = 0;
-    for (let i = 0; i < allRequests.length; i++) {
-      const request = allRequests[i];
+    for (const { index, request } of entries) {
       if (!params.static && !isFetch(request) && isSuccessfulResponse(request)) {
         hiddenStaticCount++;
         continue;
@@ -58,7 +58,7 @@ const requests = defineTabTool({
         if (!filter.test(request.url()))
           continue;
       }
-      lines.push(`${i + 1}. ${renderRequestLine(request)}`);
+      lines.push(`${index}. ${renderRequestLine(request)}`);
     }
     if (hiddenStaticCount > 0) {
       const optionName = tab.context.config.skillMode ? '--static' : '"static"';
@@ -87,8 +87,7 @@ const request = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const allRequests = await tab.requests();
-    const request = allRequests[params.index - 1];
+    const request = await tab.request(params.index);
     if (!request) {
       response.addError(`Request #${params.index} not found. Use browser_network_requests to see available indexes.`);
       return;

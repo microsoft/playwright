@@ -428,6 +428,7 @@ test('browser_console_messages all option', async ({ client, server }) => {
     name: 'browser_console_messages',
     arguments: { all: true },
   }));
+  expect(allResponse.result).toContain('Total messages: 2 (Errors: 0, Warnings: 0)');
   expect(allResponse.result).toContain('page1 message');
   expect(allResponse.result).toContain('page2 message');
 });

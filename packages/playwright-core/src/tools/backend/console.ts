@@ -31,7 +31,7 @@ const console = defineTabTool({
     type: 'readOnly',
   },
   handle: async (tab, params, response) => {
-    const count = await tab.consoleMessageCount();
+    const count = await tab.consoleMessageCount(params.all);
     const header = [`Total messages: ${count.total} (Errors: ${count.errors}, Warnings: ${count.warnings})`];
     const messages = await tab.consoleMessages(params.level, params.all);
     if (messages.length !== count.total)
