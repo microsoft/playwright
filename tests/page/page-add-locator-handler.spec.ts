@@ -323,6 +323,33 @@ test('LH-013 should work with noWaitAfter', async ({ page, server }) => {
   expect(called).toBe(2);
 });
 
+test('LH-015 should not orphan a concurrent wait at the locator-handler checkpoint', async ({ page }) => {
+  // See https://github.com/microsoft/playwright/issues/43513: two operations entering
+  // _performLocatorHandlersCheckpoint concurrently while the handler's target is visible
+  // used to race on `handler.resolved`, orphaning the first operation's promise so it
+  // would hang until its own timeout instead of resolving once the condition was met.
+  await page.setContent(`
+    <div id="banner">A banner that stays on screen</div>
+    <div id="dialog">Dialog</div>
+  `);
+  // An empty, noWaitAfter handler whose target (the banner) never goes away, so the
+  // checkpoint runs on every operation without ever satisfying handler.resolved naturally.
+  await page.addLocatorHandler(page.locator('#banner'), async () => {}, { noWaitAfter: true });
+
+  setTimeout(() => {
+    void page.evaluate(() => document.getElementById('dialog')?.remove()).catch(() => {});
+  }, 200);
+
+  const start = Date.now();
+  const hidden = page.locator('#dialog').waitFor({ state: 'hidden', timeout: 5_000 });
+  // A second, concurrent operation that also runs the locator-handler checkpoint.
+  void page.locator('#toast').waitFor({ timeout: 2_000 }).catch(() => {});
+  await hidden;
+  // #dialog is removed after ~200ms; if the first wait's promise got orphaned by the
+  // race, it would only resolve (by failing) after its own 5s timeout.
+  expect(Date.now() - start).toBeLessThan(4_000);
+});
+
 test('LH-014 should removeLocatorHandler', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 

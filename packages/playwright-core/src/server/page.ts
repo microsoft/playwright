@@ -575,7 +575,10 @@ export class Page extends SdkObject<PageEventMap> {
       return;
     for (const [uid, handler] of this._locatorHandlers) {
       if (!handler.resolved) {
-        if (await this.mainFrame().isVisibleInternal(progress, { selector: handler.selector, strict: true })) {
+        // Re-check handler.resolved after the await: a concurrent checkpoint running on
+        // another operation may have already started a run for this handler, in which case
+        // we must join it below instead of overwriting it with a new one and orphaning it.
+        if (await this.mainFrame().isVisibleInternal(progress, { selector: handler.selector, strict: true }) && !handler.resolved) {
           handler.resolved = new ManualPromise();
           this.emit(Page.Events.LocatorHandlerTriggered, uid);
         }
