@@ -54,7 +54,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CV` | Coverage | `library/chromium/{js-coverage, css-coverage}`<br>`library/coverage` | 30 |
 | `DB` | Debug | `library/{debugger, debug-controller}` | 22 |
 | `DC` | Default (persistent) context | `library/{defaultbrowsercontext-1, defaultbrowsercontext-2}` | 42 |
-| `DD` | Drag and drop | `page/{page-drag, page-drop}` | 27 |
+| `DD` | Drag and drop | `page/{page-drag, page-drop}` | 28 |
 | `DE` | Dispatch event | `page/page-dispatchevent` | 17 |
 | `DI` | Dialog | `page/page-dialog` | 13 |
 | `DO` | Download | `library/{download, downloads-path}` | 44 |
@@ -1656,6 +1656,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `DD-025` | `page/page-drop.spec.ts` | should drop files and data together |
 | `DD-026` | `page/page-drop.spec.ts` | should throw when target does not accept drop |
 | `DD-027` | `page/page-drop.spec.ts` | should throw when neither files nor data provided |
+| `DD-028` | `page/page-drag.spec.ts` | Drag and drop › should report the default drop effect from effectAllowed |
 
 ### DE — Dispatch event
 
