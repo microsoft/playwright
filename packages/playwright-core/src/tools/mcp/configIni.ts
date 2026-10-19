@@ -164,6 +164,7 @@ const longhandTypes: Record<string, LonghandType> = {
   'imageResponses': 'string',
   'filePaths': 'string',
   'allowUnrestrictedFileAccess': 'boolean',
+  'ignoreRoots': 'boolean',
   'codegen': 'string',
   'testIdAttribute': 'string',
 

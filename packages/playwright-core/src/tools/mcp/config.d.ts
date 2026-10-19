@@ -273,6 +273,13 @@ export type Config = {
   allowUnrestrictedFileAccess?: boolean;
 
   /**
+   * Do not ask the client for its workspace roots, use the current working directory
+   * as the workspace root instead. Use this with clients that advertise roots, but
+   * can not answer the roots request.
+   */
+  ignoreRoots?: boolean;
+
+  /**
    * Specify the language to use for code generation.
    */
   codegen?: 'typescript' | 'python' | 'java' | 'csharp' | 'none';

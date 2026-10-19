@@ -52,6 +52,7 @@ export type ServerBackendFactory = {
   nameInConfig: string;
   version: string;
   toolSchemas: ToolSchema<any>[];
+  ignoreRoots?: boolean;
   create: (clientInfo: ClientInfo) => Promise<ServerBackend>;
 };
 
@@ -127,7 +128,7 @@ export function createServer(name: string, version: string, factory: ServerBacke
 const initializeServer = async (server: ServerType, factory: ServerBackendFactory, transportInitialized: Promise<void>): Promise<ServerBackend> => {
   const capabilities = server.getClientCapabilities();
   let clientRoots: Root[] = [];
-  if (capabilities?.roots) {
+  if (capabilities?.roots && !factory.ignoreRoots) {
     await Promise.race([transportInitialized, new Promise<void>(f => setTimeout(f, 5000))]);
     const { roots } = await server.listRoots().catch(e => {
       serverDebug(e);
