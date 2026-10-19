@@ -514,7 +514,9 @@ Call log:
 `);
 });
 
-test('AR-128 should unpack escaped names', async ({ page }) => {
+test('AR-128 should unpack escaped names', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43489' },
+}, async ({ page }) => {
   {
     await page.setContent(`
       <button>Click: me</button>
@@ -599,6 +601,13 @@ test('AR-128 should unpack escaped names', async ({ page }) => {
           heading    "heading \\\\\\" [level=2]" [
              level  =   1   ]
     `);
+  }
+
+  {
+    await page.setContent(`<button aria-label="a&#1;b&#8;c&#x1f;"></button>`);
+    const snapshot = await page.locator('button').ariaSnapshot();
+    expect(snapshot).toBe('- button "a\\u0001b\\bc\\u001f"');
+    await expect(page.locator('button')).toMatchAriaSnapshot(snapshot);
   }
 });
 
