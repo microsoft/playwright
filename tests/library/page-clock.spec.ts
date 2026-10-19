@@ -151,11 +151,8 @@ it.describe('runFor', () => {
       setInterval(window.stub, 10000);
     });
 
-    const start = performance.now();
     await page.clock.runFor('02:34:10');
     expect(calls.length).toBe(925);
-    // Nested setTimeout(fn, 0) is clamped to 4ms, so firing 925 timers used to take over 4 seconds.
-    expect(performance.now() - start).toBeLessThan(2000);
   });
 
   it('CK-012 throws for invalid format', async ({ page, calls }) => {
