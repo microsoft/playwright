@@ -258,7 +258,7 @@ class Runtime {
       resolve = a;
       reject = b;
     });
-    this._pendingPromises.set(obj.promiseID, {resolve, reject, executionContext, exceptionDetails, promiseObj: obj});
+    this._pendingPromises.set(obj, {resolve, reject, executionContext, exceptionDetails});
     // Debugger.onPromiseSettled hook was removed in Bug 2044167. Instead, attach
     // reactions inside the debuggee that run a `debugger;` statement upon settling,
     // and sweep pending promises from the onDebuggerStatement hook. Unlike
@@ -272,11 +272,10 @@ class Runtime {
   }
 
   _onDebuggerStatement() {
-    for (const [promiseID, pendingPromise] of this._pendingPromises) {
-      const obj = pendingPromise.promiseObj;
+    for (const [obj, pendingPromise] of this._pendingPromises) {
       if (obj.promiseState === 'pending')
         continue;
-      this._pendingPromises.delete(promiseID);
+      this._pendingPromises.delete(obj);
       if (obj.promiseState === 'fulfilled') {
         pendingPromise.resolve({success: true, obj: obj.promiseValue});
         continue;
@@ -306,10 +305,10 @@ class Runtime {
   }
 
   destroyExecutionContext(destroyedContext) {
-    for (const [promiseID, {reject, executionContext}] of this._pendingPromises) {
+    for (const [obj, {reject, executionContext}] of this._pendingPromises) {
       if (executionContext === destroyedContext) {
         reject(new Error('Execution context was destroyed!'));
-        this._pendingPromises.delete(promiseID);
+        this._pendingPromises.delete(obj);
       }
     }
     if (!this._pendingPromises.size)
