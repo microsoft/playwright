@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 
 it('ER-001 should fire', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43450' },
-}, async ({ page, server, browserName, isBidi }) => {
+}, async ({ page, server, browserName, isBidi, isAndroid }) => {
   const url = server.PREFIX + '/error.html';
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
@@ -47,7 +47,7 @@ it('ER-001 should fire', {
     at  (myscript.js:3:1)`);
   }
 
-  // The same script from another origin: Chromium reports it without an exception object,
+  // The same script from another origin: desktop Chromium reports it without an exception object,
   // so the stack is built from the CDP call frames, which are zero-based.
   const crossOriginUrl = server.CROSS_PROCESS_PREFIX + '/error.js';
   server.setRoute('/error.js', (req, res) => {
@@ -80,11 +80,13 @@ function c() {
   ]);
   expect(crossOriginError.message).toBe('Fancy error!');
   if (browserName === 'chromium') {
-    expect(crossOriginError.stack).toBe(`Uncaught Error: Fancy error!
+    const errorPrefix = isAndroid ? 'Error:' : 'Uncaught Error:';
+    const anonymousFrame = isAndroid ? `${crossOriginUrl}:3:1` : `<anonymous> (${crossOriginUrl}:3:1)`;
+    expect(crossOriginError.stack).toBe(`${errorPrefix} Fancy error!
     at c (${crossOriginUrl}:14:11)
     at b (${crossOriginUrl}:10:5)
     at a (${crossOriginUrl}:6:5)
-    at <anonymous> (${crossOriginUrl}:3:1)`);
+    at ${anonymousFrame}`);
   } else if (browserName === 'webkit') {
     expect(crossOriginError.stack).toBe(`Error: Fancy error!
     at c (${crossOriginUrl}:14:36)
