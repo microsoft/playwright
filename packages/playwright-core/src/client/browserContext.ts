@@ -191,7 +191,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   async _initializeHarFromOptions(recordHar: BrowserContextOptions['recordHar']) {
     if (!recordHar)
       return;
-    const defaultContent = recordHar.path.endsWith('.zip') ? 'attach' : 'embed';
+    const defaultContent = /\.zip$/i.test(recordHar.path) ? 'attach' : 'embed';
     await this.tracing._recordIntoHAR(recordHar.path, null, {
       url: recordHar.urlFilter,
       updateContent: recordHar.content ?? (recordHar.omitContent ? 'omit' : defaultContent),
