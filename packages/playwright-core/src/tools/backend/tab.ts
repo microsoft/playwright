@@ -626,12 +626,13 @@ export function locatorSelector(locator: playwright.Locator): string {
 }
 
 // Accepts a selector or a locator in any language, e.g. `getByRole('button')` or `get_by_role("button")`.
-function targetAsSelector(target: string, testIdAttributeName: string): string | undefined {
+function targetAsSelector(target: string, testIdAttributeName: string): string {
   for (const language of ['javascript', 'python', 'java', 'csharp'] as const) {
     const selector = locatorOrSelectorAsSelector(language, target, testIdAttributeName);
     if (selector)
       return selector;
   }
+  return '';
 }
 
 function targetErrorMessage(target: string, isSelector: boolean): string {
