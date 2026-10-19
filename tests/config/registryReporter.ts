@@ -117,14 +117,10 @@ function renderRegistry(header: string, names: Map<string, string>, entries: Map
   const byCode = new Map<string, Entry[]>([...names.keys()].map(code => [code, []]));
   for (const entry of [...entries.values()].sort((a, b) => a.id.localeCompare(b.id)))
     byCode.get(entry.code)?.push(entry);
-  const listed = [...byCode.values()].flat();
-  const copies = listed.reduce((sum, entry) => sum + entry.titlePaths.size, 0);
   const lines = [
     header.trimEnd(),
     '',
     '## Subsystems',
-    '',
-    `${names.size} subsystems, ${listed.length} tests (${copies} with loop copies).`,
     '',
     '| Code | Subsystem | Files | Tests |',
     '|---|---|---|---|',
