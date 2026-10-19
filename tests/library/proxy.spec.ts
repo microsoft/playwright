@@ -171,7 +171,7 @@ it('PR-007 should authenticate', {
   await page.goto('http://non-existent.test/target.html');
   expect(await page.title()).toBe('Basic ' + Buffer.from('user:secret').toString('base64'));
   // Proxy credentials must not be sent to the website's own auth challenge.
-  const responseOrError = await page.goto('http://non-existent.com/protected.html').catch(e => e);
+  const responseOrError = await page.goto('http://non-existent.test/protected.html').catch(e => e);
   if (browserName === 'chromium' && !isHeadlessShell) {
     // Branded Chromium shows a login dialog for the 401 and fails the navigation.
     expect(responseOrError.message).toContain('net::ERR_INVALID_AUTH_CREDENTIALS');
