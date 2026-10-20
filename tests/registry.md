@@ -26,106 +26,106 @@ subsystem, add a row to the Subsystems table. Then update this file:
 
 ## Subsystems
 
-| Code | Subsystem | Files | Tests |
-|---|---|---|---|
-| `AN` | Android WebViews | `library/unit/android-webviews` | 1 |
-| `AR` | Aria snapshot | `page/{page-aria-snapshot, page-aria-snapshot-ai, page-aria-snapshot-json, to-match-aria-snapshot}`<br>`library/role-utils` | 170 |
-| `AT` | Add script and style tags | `page/{page-add-script-tag, page-add-style-tag}` | 20 |
-| `AU` | Authentication | `library/{browsercontext-credentials, browsercontext-webauthn}` | 24 |
-| `AW` | Auto-waiting | `page/{page-autowaiting-basic, page-autowaiting-no-hang}` | 23 |
-| `BC` | BrowserContext | `library/{browsercontext-basic, browsercontext-events, browsercontext-pages, browsercontext-page-event, browsercontext-reuse}` | 83 |
-| `BP` | Browsers path | `library/browsers-path` | 2 |
-| `BR` | Browser | `library/{browser, browser-server}` | 10 |
-| `BT` | BrowserType | `library/{browsertype-basic, browsertype-launch, launcher, browsertype-launch-server, browsertype-connect, browsertype-launch-selenium}` | 103 |
-| `BU` | Before unload | `library/beforeunload` | 12 |
-| `CA` | Capabilities | `library/{capabilities, modernizr}` | 31 |
-| `CC` | Client certificates | `library/client-certificates` | 41 |
-| `CD` | CDP | `library/chromium/{connect-over-cdp, session}` | 52 |
-| `CF` | Code frame | `library/unit/code-frame` | 13 |
-| `CG` | Codegen | `library/inspector/{cli-codegen-1, cli-codegen-2, cli-codegen-3, cli-codegen-aria, cli-codegen-pick-locator, cli-codegen-javascript, cli-codegen-test, cli-codegen-python, cli-codegen-python-async, cli-codegen-pytest, cli-codegen-java, cli-codegen-csharp}`<br>`library/unit/codegen` | 191 |
-| `CH` | Check | `page/page-check` | 17 |
-| `CK` | Clock | `library/{page-clock, page-clock.frozen}`<br>`library/unit/clock` | 219 |
-| `CL` | Click | `page/{page-click, page-click-scroll, page-click-react, page-click-during-navigation, page-click-timeout-1, page-click-timeout-2, page-click-timeout-3, page-click-timeout-4}` | 122 |
-| `CM` | Console messages | `page/page-event-console` | 20 |
-| `CN` | Channels | `library/channels` | 6 |
-| `CO` | Cookies | `library/{browsercontext-cookies, browsercontext-add-cookies, browsercontext-clearcookies, browsercontext-cookies-third-party}` | 62 |
-| `CR` | Chromium | `library/chromium/{chromium, launcher, extensions, bfcache, connect-to-worker, disable-web-security}` | 45 |
-| `CS` | CSP | `library/browsercontext-csp` | 5 |
-| `CV` | Coverage | `library/chromium/{js-coverage, css-coverage}`<br>`library/coverage` | 30 |
-| `DB` | Debug | `library/{debugger, debug-controller}` | 22 |
-| `DC` | Default (persistent) context | `library/{defaultbrowsercontext-1, defaultbrowsercontext-2}` | 42 |
-| `DD` | Drag and drop | `page/{page-drag, page-drop}` | 28 |
-| `DE` | Dispatch event | `page/page-dispatchevent` | 17 |
-| `DI` | Dialog | `page/page-dialog` | 13 |
-| `DO` | Download | `library/{download, downloads-path}` | 44 |
-| `DV` | Device | `library/{browsercontext-device, browsercontext-dsf, browsercontext-viewport-mobile}` | 26 |
-| `EE` | Event emitter | `page/page-listeners`<br>`library/events/{add-listeners, check-listener-leaks, events-list, listener-count, listeners-side-effects, listeners, max-listeners, method-names, modify-in-emit, num-args, once, prepend, remove-all-listeners-wait, remove-all-listeners, remove-listeners, set-max-listeners-side-effects, special-event-names, subclass, symbols}` | 56 |
-| `EF` | Expose function | `page/page-expose-function`<br>`library/browsercontext-expose-function` | 28 |
-| `EH` | ElementHandle | `page/{elementhandle-bounding-box, elementhandle-click, elementhandle-content-frame, elementhandle-convenience, elementhandle-eval-on-selector, elementhandle-misc, elementhandle-owner-frame, elementhandle-press, elementhandle-query-selector, elementhandle-screenshot, elementhandle-scroll-into-view, elementhandle-select-text, elementhandle-type, elementhandle-wait-for-element-state}` | 123 |
-| `EM` | Emulation | `page/page-emulate-media`<br>`library/{emulation-focus, emulation-coop}` | 27 |
-| `ER` | Page errors and crashes | `page/page-event-pageerror`<br>`library/page-event-crash` | 21 |
-| `ES` | Eval on selector | `page/{eval-on-selector, eval-on-selector-all}` | 35 |
-| `EV` | Evaluate | `page/{page-evaluate, page-evaluate-handle, page-evaluate-callback, page-evaluate-no-stall}` | 137 |
-| `EX` | Expect | `page/{expect-boolean, expect-builtins, expect-matcher-result, expect-misc, expect-timeout, expect-to-have-accessible, expect-to-have-text, expect-to-have-value, expect-with-snapshot, matchers.misc}` | 328 |
-| `FA` | Favicon | `library/favicon` | 1 |
-| `FC` | File chooser | `page/page-filechooser` | 28 |
-| `FE` | Fetch | `library/{global-fetch, global-fetch-cookie, browsercontext-fetch, browsercontext-fetch-algorithms, browsercontext-fetch-happy-eyeballs}` | 188 |
-| `FF` | Firefox | `library/firefox/launcher`<br>`page/firefox-network-response` | 8 |
-| `FI` | Fill | `page/page-fill` | 36 |
-| `FO` | Focus | `page/page-focus` | 12 |
-| `FR` | Frame | `page/{frame-evaluate, frame-frame-element, frame-goto, frame-hierarchy}` | 36 |
-| `GE` | Geolocation | `library/geolocation` | 9 |
-| `GN` | Locator and selector generator | `library/{locator-generator, selector-generator}` | 104 |
-| `HA` | HAR | `library/{har, browsercontext-har, har-websocket}` | 113 |
-| `HE` | Headful | `library/headful` | 16 |
-| `HT` | Hit target | `library/hit-target` | 22 |
-| `IF` | Input files | `page/page-set-input-files` | 21 |
-| `IN` | Inspector | `library/inspector/{pause, recorder-api, console-api, title}` | 58 |
-| `IS` | Init script | `page/{page-add-init-script, page-add-init-script-callback}`<br>`library/browsercontext-add-init-script` | 35 |
-| `JH` | JSHandle | `page/{jshandle-as-element, jshandle-evaluate, jshandle-json-value, jshandle-properties, jshandle-to-string}` | 23 |
-| `JS` | JSON schema | `library/unit/json-schema` | 10 |
-| `KB` | Keyboard | `page/page-keyboard` | 53 |
-| `LC` | Locale | `library/browsercontext-locale` | 14 |
-| `LE` | Leaks | `page/page-leaks`<br>`library/heap` | 14 |
-| `LG` | Logger | `library/logger` | 2 |
-| `LH` | Locator handler | `page/page-add-locator-handler` | 14 |
-| `LO` | Locator | `page/{locator-any-frame, locator-click, locator-convenience, locator-element-handle, locator-evaluate, locator-frame, locator-highlight, locator-is-visible, locator-list, locator-misc-1, locator-misc-2, locator-query, locator-wait-for-function}`<br>`library/locator-highlight` | 199 |
-| `MC` | Multiple clients | `library/multiclient` | 19 |
-| `MO` | Mouse | `page/{page-mouse, wheel}` | 23 |
-| `NA` | Navigation | `page/{page-goto, page-navigation, page-history, page-event-load}`<br>`library/browsercontext-base-url` | 96 |
-| `NE` | Network | `page/{page-network-request, page-network-response, page-network-sizes, page-network-idle, page-event-network, page-event-request, network-post-data, page-set-extra-http-headers}`<br>`library/{browsercontext-set-extra-http-headers, browsercontext-network-event, network-timeout, resource-timing, ignorehttpserrors}` | 142 |
-| `OO` | OOPIF | `library/chromium/oopif` | 29 |
-| `PA` | Page | `page/{page-basic, page-set-content, page-transition}`<br>`library/page-close` | 56 |
-| `PC` | Playwright client | `library/playwright-client` | 1 |
-| `PD` | PDF | `library/pdf` | 2 |
-| `PE` | Permissions | `library/permissions` | 23 |
-| `PO` | Popup | `page/page-event-popup`<br>`library/popup` | 28 |
-| `PR` | Proxy | `library/{proxy, browsercontext-proxy, proxy-pattern, fetch-proxy}` | 47 |
-| `PS` | Parser | `library/{locator-parser, component-parser, css-parser}` | 51 |
-| `QS` | Query selector | `page/queryselector` | 17 |
-| `RE` | Retarget | `page/retarget` | 15 |
-| `RO` | Route | `page/{page-route, page-request-continue, page-request-fulfill, page-request-fallback, page-request-intercept, page-request-gc, interception}`<br>`library/{browsercontext-route, unroute-behavior}` | 201 |
-| `SC` | Screencast | `library/{screencast, screencast-actions, screencast-overlay}` | 38 |
-| `SE` | Selectors | `page/{selectors-css, selectors-text, selectors-role, selectors-get-by, selectors-frame, selectors-misc, selectors-register}`<br>`library/selectors-register` | 167 |
-| `SI` | Signals | `library/signals` | 10 |
-| `SL` | Slow motion | `library/slowmo` | 39 |
-| `SM` | Strict mode | `page/page-strict`<br>`library/browsercontext-strict` | 14 |
-| `SO` | Select option | `page/page-select-option` | 33 |
-| `SQ` | Sequence | `library/unit/sequence` | 16 |
-| `SS` | Screenshot | `page/page-screenshot`<br>`library/screenshot` | 95 |
-| `ST` | Storage | `library/browsercontext-storage-state`<br>`page/{page-localstorage, page-cache-storage}` | 32 |
-| `TA` | Tap | `library/{tap, locator-dispatchevent-touch}` | 10 |
-| `TO` | Timeout runner | `library/unit/timeout-runner` | 1 |
-| `TR` | Tracing | `library/tracing`<br>`library/chromium/tracing` | 49 |
-| `TV` | Trace viewer | `library/{trace-viewer, snapshot-renderer}` | 135 |
-| `TZ` | Timezone | `library/browsercontext-timezone-id` | 6 |
-| `UA` | User agent | `library/browsercontext-user-agent` | 6 |
-| `VI` | Video | `library/video` | 31 |
-| `VP` | Viewport | `library/browsercontext-viewport` | 17 |
-| `WA` | Wait for | `page/{page-wait-for-function, page-wait-for-selector-1, page-wait-for-selector-2, page-wait-for-load-state, page-wait-for-navigation, page-wait-for-url, page-wait-for-request, page-wait-for-response}` | 136 |
-| `WM` | WebMCP | `library/{webmcp, webmcp-disabled}` | 15 |
-| `WO` | Workers | `page/workers`<br>`library/{shared-worker, browsercontext-service-worker-policy}` | 31 |
-| `WS` | WebSocket | `library/{web-socket, route-web-socket}` | 40 |
+| Code | Subsystem | Files |
+|---|---|---|
+| `AN` | Android WebViews | `library/unit/android-webviews` |
+| `AR` | Aria snapshot | `page/{page-aria-snapshot, page-aria-snapshot-ai, page-aria-snapshot-json, to-match-aria-snapshot}`<br>`library/role-utils` |
+| `AT` | Add script and style tags | `page/{page-add-script-tag, page-add-style-tag}` |
+| `AU` | Authentication | `library/{browsercontext-credentials, browsercontext-webauthn}` |
+| `AW` | Auto-waiting | `page/{page-autowaiting-basic, page-autowaiting-no-hang}` |
+| `BC` | BrowserContext | `library/{browsercontext-basic, browsercontext-events, browsercontext-pages, browsercontext-page-event, browsercontext-reuse}` |
+| `BP` | Browsers path | `library/browsers-path` |
+| `BR` | Browser | `library/{browser, browser-server}` |
+| `BT` | BrowserType | `library/{browsertype-basic, browsertype-launch, launcher, browsertype-launch-server, browsertype-connect, browsertype-launch-selenium}` |
+| `BU` | Before unload | `library/beforeunload` |
+| `CA` | Capabilities | `library/{capabilities, modernizr}` |
+| `CC` | Client certificates | `library/client-certificates` |
+| `CD` | CDP | `library/chromium/{connect-over-cdp, session}` |
+| `CF` | Code frame | `library/unit/code-frame` |
+| `CG` | Codegen | `library/inspector/{cli-codegen-1, cli-codegen-2, cli-codegen-3, cli-codegen-aria, cli-codegen-pick-locator, cli-codegen-javascript, cli-codegen-test, cli-codegen-python, cli-codegen-python-async, cli-codegen-pytest, cli-codegen-java, cli-codegen-csharp}`<br>`library/unit/codegen` |
+| `CH` | Check | `page/page-check` |
+| `CK` | Clock | `library/{page-clock, page-clock.frozen}`<br>`library/unit/clock` |
+| `CL` | Click | `page/{page-click, page-click-scroll, page-click-react, page-click-during-navigation, page-click-timeout-1, page-click-timeout-2, page-click-timeout-3, page-click-timeout-4}` |
+| `CM` | Console messages | `page/page-event-console` |
+| `CN` | Channels | `library/channels` |
+| `CO` | Cookies | `library/{browsercontext-cookies, browsercontext-add-cookies, browsercontext-clearcookies, browsercontext-cookies-third-party}` |
+| `CR` | Chromium | `library/chromium/{chromium, launcher, extensions, bfcache, connect-to-worker, disable-web-security}` |
+| `CS` | CSP | `library/browsercontext-csp` |
+| `CV` | Coverage | `library/chromium/{js-coverage, css-coverage}`<br>`library/coverage` |
+| `DB` | Debug | `library/{debugger, debug-controller}` |
+| `DC` | Default (persistent) context | `library/{defaultbrowsercontext-1, defaultbrowsercontext-2}` |
+| `DD` | Drag and drop | `page/{page-drag, page-drop}` |
+| `DE` | Dispatch event | `page/page-dispatchevent` |
+| `DI` | Dialog | `page/page-dialog` |
+| `DO` | Download | `library/{download, downloads-path}` |
+| `DV` | Device | `library/{browsercontext-device, browsercontext-dsf, browsercontext-viewport-mobile}` |
+| `EE` | Event emitter | `page/page-listeners`<br>`library/events/{add-listeners, check-listener-leaks, events-list, listener-count, listeners-side-effects, listeners, max-listeners, method-names, modify-in-emit, num-args, once, prepend, remove-all-listeners-wait, remove-all-listeners, remove-listeners, set-max-listeners-side-effects, special-event-names, subclass, symbols}` |
+| `EF` | Expose function | `page/page-expose-function`<br>`library/browsercontext-expose-function` |
+| `EH` | ElementHandle | `page/{elementhandle-bounding-box, elementhandle-click, elementhandle-content-frame, elementhandle-convenience, elementhandle-eval-on-selector, elementhandle-misc, elementhandle-owner-frame, elementhandle-press, elementhandle-query-selector, elementhandle-screenshot, elementhandle-scroll-into-view, elementhandle-select-text, elementhandle-type, elementhandle-wait-for-element-state}` |
+| `EM` | Emulation | `page/page-emulate-media`<br>`library/{emulation-focus, emulation-coop}` |
+| `ER` | Page errors and crashes | `page/page-event-pageerror`<br>`library/page-event-crash` |
+| `ES` | Eval on selector | `page/{eval-on-selector, eval-on-selector-all}` |
+| `EV` | Evaluate | `page/{page-evaluate, page-evaluate-handle, page-evaluate-callback, page-evaluate-no-stall}` |
+| `EX` | Expect | `page/{expect-boolean, expect-builtins, expect-matcher-result, expect-misc, expect-timeout, expect-to-have-accessible, expect-to-have-text, expect-to-have-value, expect-with-snapshot, matchers.misc}` |
+| `FA` | Favicon | `library/favicon` |
+| `FC` | File chooser | `page/page-filechooser` |
+| `FE` | Fetch | `library/{global-fetch, global-fetch-cookie, browsercontext-fetch, browsercontext-fetch-algorithms, browsercontext-fetch-happy-eyeballs}` |
+| `FF` | Firefox | `library/firefox/launcher`<br>`page/firefox-network-response` |
+| `FI` | Fill | `page/page-fill` |
+| `FO` | Focus | `page/page-focus` |
+| `FR` | Frame | `page/{frame-evaluate, frame-frame-element, frame-goto, frame-hierarchy}` |
+| `GE` | Geolocation | `library/geolocation` |
+| `GN` | Locator and selector generator | `library/{locator-generator, selector-generator}` |
+| `HA` | HAR | `library/{har, browsercontext-har, har-websocket}` |
+| `HE` | Headful | `library/headful` |
+| `HT` | Hit target | `library/hit-target` |
+| `IF` | Input files | `page/page-set-input-files` |
+| `IN` | Inspector | `library/inspector/{pause, recorder-api, console-api, title}` |
+| `IS` | Init script | `page/{page-add-init-script, page-add-init-script-callback}`<br>`library/browsercontext-add-init-script` |
+| `JH` | JSHandle | `page/{jshandle-as-element, jshandle-evaluate, jshandle-json-value, jshandle-properties, jshandle-to-string}` |
+| `JS` | JSON schema | `library/unit/json-schema` |
+| `KB` | Keyboard | `page/page-keyboard` |
+| `LC` | Locale | `library/browsercontext-locale` |
+| `LE` | Leaks | `page/page-leaks`<br>`library/heap` |
+| `LG` | Logger | `library/logger` |
+| `LH` | Locator handler | `page/page-add-locator-handler` |
+| `LO` | Locator | `page/{locator-any-frame, locator-click, locator-convenience, locator-element-handle, locator-evaluate, locator-frame, locator-highlight, locator-is-visible, locator-list, locator-misc-1, locator-misc-2, locator-query, locator-wait-for-function}`<br>`library/locator-highlight` |
+| `MC` | Multiple clients | `library/multiclient` |
+| `MO` | Mouse | `page/{page-mouse, wheel}` |
+| `NA` | Navigation | `page/{page-goto, page-navigation, page-history, page-event-load}`<br>`library/browsercontext-base-url` |
+| `NE` | Network | `page/{page-network-request, page-network-response, page-network-sizes, page-network-idle, page-event-network, page-event-request, network-post-data, page-set-extra-http-headers}`<br>`library/{browsercontext-set-extra-http-headers, browsercontext-network-event, network-timeout, resource-timing, ignorehttpserrors}` |
+| `OO` | OOPIF | `library/chromium/oopif` |
+| `PA` | Page | `page/{page-basic, page-set-content, page-transition}`<br>`library/page-close` |
+| `PC` | Playwright client | `library/playwright-client` |
+| `PD` | PDF | `library/pdf` |
+| `PE` | Permissions | `library/permissions` |
+| `PO` | Popup | `page/page-event-popup`<br>`library/popup` |
+| `PR` | Proxy | `library/{proxy, browsercontext-proxy, proxy-pattern, fetch-proxy}` |
+| `PS` | Parser | `library/{locator-parser, component-parser, css-parser}` |
+| `QS` | Query selector | `page/queryselector` |
+| `RE` | Retarget | `page/retarget` |
+| `RO` | Route | `page/{page-route, page-request-continue, page-request-fulfill, page-request-fallback, page-request-intercept, page-request-gc, interception}`<br>`library/{browsercontext-route, unroute-behavior}` |
+| `SC` | Screencast | `library/{screencast, screencast-actions, screencast-overlay}` |
+| `SE` | Selectors | `page/{selectors-css, selectors-text, selectors-role, selectors-get-by, selectors-frame, selectors-misc, selectors-register}`<br>`library/selectors-register` |
+| `SI` | Signals | `library/signals` |
+| `SL` | Slow motion | `library/slowmo` |
+| `SM` | Strict mode | `page/page-strict`<br>`library/browsercontext-strict` |
+| `SO` | Select option | `page/page-select-option` |
+| `SQ` | Sequence | `library/unit/sequence` |
+| `SS` | Screenshot | `page/page-screenshot`<br>`library/screenshot` |
+| `ST` | Storage | `library/browsercontext-storage-state`<br>`page/{page-localstorage, page-cache-storage}` |
+| `TA` | Tap | `library/{tap, locator-dispatchevent-touch}` |
+| `TO` | Timeout runner | `library/unit/timeout-runner` |
+| `TR` | Tracing | `library/tracing`<br>`library/chromium/tracing` |
+| `TV` | Trace viewer | `library/{trace-viewer, snapshot-renderer}` |
+| `TZ` | Timezone | `library/browsercontext-timezone-id` |
+| `UA` | User agent | `library/browsercontext-user-agent` |
+| `VI` | Video | `library/video` |
+| `VP` | Viewport | `library/browsercontext-viewport` |
+| `WA` | Wait for | `page/{page-wait-for-function, page-wait-for-selector-1, page-wait-for-selector-2, page-wait-for-load-state, page-wait-for-navigation, page-wait-for-url, page-wait-for-request, page-wait-for-response}` |
+| `WM` | WebMCP | `library/{webmcp, webmcp-disabled}` |
+| `WO` | Workers | `page/workers`<br>`library/{shared-worker, browsercontext-service-worker-policy}` |
+| `WS` | WebSocket | `library/{web-socket, route-web-socket}` |
 
 ## Tests
 
