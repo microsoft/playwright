@@ -73,11 +73,25 @@ function docsLinkRendererForLanguage(language, outputType) {
       return createMarkdownLink(languagePath, member, `${formatClassName(className, language)}${member.alias}(${args})`);
     }
     if (member.kind === 'event')
-      return createMarkdownLink(languagePath, member, `${className}on('${member.alias.toLowerCase()}')`);
+      return createMarkdownLink(languagePath, member, `${className}${formatEventName(member.alias, language)}`);
     if (member.kind === 'property')
-      return createMarkdownLink(languagePath, member, `${className}${member.alias}`);
+      return createMarkdownLink(languagePath, member, `${className}${formatPropertyName(member.alias, language)}`);
     throw new Error('Unknown member kind ' + member.kind);
   }
+}
+
+function formatEventName(eventName, language) {
+  // Java exposes events as onEventName(handler) methods.
+  if (language === 'java')
+    return `on${eventName[0].toUpperCase()}${eventName.substring(1)}()`;
+  return `on('${eventName.toLowerCase()}')`;
+}
+
+function formatPropertyName(propertyName, language) {
+  // Java exposes properties as getter methods.
+  if (language === 'java')
+    return `${propertyName}()`;
+  return propertyName;
 }
 
 function languageToRelativeDocsPath(language) {

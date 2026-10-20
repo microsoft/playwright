@@ -42,6 +42,9 @@ if (language === 'js') {
       .mergeWith(parseApi(path.join(documentationRoot, 'mobile-api'), path.join(documentationRoot, 'api', 'params.md')));
 }
 
+// Apply language-specific aliases, e.g. LocatorAssertions.toBeVisible -> isVisible in Java.
+documentation.filterForLanguage(language);
+
 documentation.setLinkRenderer(docsLinkRendererForLanguage(language, 'ReleaseNotesMd'));
 const content = fs.readFileSync(path.join(documentationRoot, `release-notes-${language}.md`)).toString();
 let nodes = md.parse(content);
