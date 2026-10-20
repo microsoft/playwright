@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-/** @typedef {'Types'|'ReleaseNotesMd'} OutputType */
-
 // @ts-check
 const toKebabCase = require('lodash/kebabCase.js')
 const Documentation = require('./documentation');
@@ -53,10 +51,9 @@ function createClassMarkdownLink(languagePath, clazz) {
 
 /**
  * @param {string} language
- * @param {OutputType} outputType
  * @returns {Documentation.Renderer}
  */
-function docsLinkRendererForLanguage(language, outputType) {
+function docsLinkRendererForLanguage(language) {
   const languagePath = languageToRelativeDocsPath(language);
   return ({ clazz, member, param, option }) => {
     if (clazz)
@@ -68,10 +65,8 @@ function docsLinkRendererForLanguage(language, outputType) {
     if (option)
       return createMarkdownLink(languagePath, member, `\`${option.alias}\``, option.name);
     const className = member.clazz.varName === 'playwrightAssertions' ? '' : member.clazz.varName + '.';
-    if (member.kind === 'method') {
-      const args = outputType === 'ReleaseNotesMd' ? '' : renderJSSignature(member.argsArray);
-      return createMarkdownLink(languagePath, member, `${formatClassName(className, language)}${member.alias}(${args})`);
-    }
+    if (member.kind === 'method')
+      return createMarkdownLink(languagePath, member, `${formatClassName(className, language)}${member.alias}(${renderJSSignature(member.argsArray)})`);
     if (member.kind === 'event')
       return createMarkdownLink(languagePath, member, `${className}on('${member.alias.toLowerCase()}')`);
     if (member.kind === 'property')
@@ -149,16 +144,10 @@ function renderJSSignature(args) {
  * @param {string} content
  * @param {string} languagePath
  * @param {string} relativePath
- * @param {boolean} releaseNotesMode
  * @returns {string}
  */
-function renderPlaywrightDevLinks(content, languagePath, relativePath, releaseNotesMode = false) {
+function renderPlaywrightDevLinks(content, languagePath, relativePath) {
   return content.replace(/\[([^\]]+)\]\((\.[^\)]+)\)/g, (match, p1, p2) => {
-    if (releaseNotesMode && p2.includes('/images/')) {
-      const url = new URL(p2, `https://github.com/microsoft/playwright/blob/main/docs/src/`);
-      url.searchParams.set('raw', 'true');
-      return `[${p1}](${url.toString()})`;
-    }
     return `[${p1}](${new URL(p2.replace('.md', ''), `https://playwright.dev${languagePath}/docs${relativePath}/`).toString()})`;
   });
 }
@@ -166,5 +155,4 @@ function renderPlaywrightDevLinks(content, languagePath, relativePath, releaseNo
 module.exports = {
   docsLinkRendererForLanguage,
   renderPlaywrightDevLinks,
-  languageToRelativeDocsPath,
 }
