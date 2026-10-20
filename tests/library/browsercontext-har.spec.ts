@@ -241,12 +241,19 @@ it('HA-084 should fulfill from har with content in a file', async ({ context, as
   expect(await page.content()).toBe('<html><head></head><body>Hello, world</body></html>');
 });
 
-it('HA-085 should round-trip har.zip', async ({ contextFactory, server }, testInfo) => {
-  const harPath = testInfo.outputPath('har.zip');
+it('HA-085 should round-trip har.zip', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43503' },
+}, async ({ contextFactory, server }, testInfo) => {
+  const harPath = testInfo.outputPath('har.ZIP');
   const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath } });
   const page1 = await context1.newPage();
   await page1.goto(server.PREFIX + '/one-style.html');
   await context1.close();
+
+  const harDir = testInfo.outputPath('har');
+  await extractZip(harPath, { dir: harDir });
+  const { log } = JSON.parse(fs.readFileSync(path.join(harDir, 'har.har'), 'utf-8'));
+  expect(log.entries[0].response.content._file).toEqual(expect.any(String));
 
   const context2 = await contextFactory();
   await context2.routeFromHAR(harPath, { notFound: 'abort' });
