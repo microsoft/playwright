@@ -21,6 +21,9 @@ Root:
       internal: true
       parameters:
         sdkLanguage: SDKLanguage
+        # Whether the client JSON parser accepts strings with lone surrogates.
+        # When it does not, the driver replaces them with U+FFFD.
+        supportsLoneSurrogates: boolean?
       returns:
         playwright: Playwright
 
