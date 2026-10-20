@@ -122,11 +122,11 @@ function renderRegistry(header: string, names: Map<string, string>, entries: Map
     '',
     '## Subsystems',
     '',
-    '| Code | Subsystem | Files | Tests |',
-    '|---|---|---|---|',
+    '| Code | Subsystem | Files |',
+    '|---|---|---|',
   ];
   for (const [code, name] of names)
-    lines.push(`| \`${code}\` | ${name} | ${renderFiles(byCode.get(code)!)} | ${byCode.get(code)!.length} |`);
+    lines.push(`| \`${code}\` | ${name} | ${renderFiles(byCode.get(code)!)} |`);
   lines.push('', '## Tests');
   for (const [code, name] of names) {
     const list = byCode.get(code)!;
