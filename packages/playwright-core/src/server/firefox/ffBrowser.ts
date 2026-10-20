@@ -196,6 +196,8 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this._browser.session.send('Browser.setIgnoreHTTPSErrors', { browserContextId, ignoreHTTPSErrors: true }));
     if (this._options.javaScriptEnabled === false)
       promises.push(this._browser.session.send('Browser.setJavaScriptDisabled', { browserContextId, javaScriptDisabled: true }));
+    if (process.env.PLAYWRIGHT_FIREFOX_UTILITY_PRINCIPAL)
+      promises.push(this._browser.session.send('Browser.setIsolatedWorldExtendedPrincipal', { browserContextId, extendedPrincipal: true }));
     if (this._options.locale)
       promises.push(this._browser.session.send('Browser.setLocaleOverride', { browserContextId, locale: this._options.locale }));
     if (this._options.timezoneId)
