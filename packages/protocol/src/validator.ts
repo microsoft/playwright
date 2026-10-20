@@ -2744,6 +2744,7 @@ scheme.PageWebStorageClearResult = tOptional(tObject({}));
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tType('SDKLanguage'),
+  supportsLoneSurrogates: tOptional(tBoolean),
 });
 scheme.RootInitializeResult = tObject({
   playwright: tChannel(['Playwright']),

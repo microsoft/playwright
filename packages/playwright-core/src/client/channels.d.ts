@@ -4745,9 +4745,10 @@ export interface RootChannel extends RootEventTarget, Channel {
 }
 export type RootInitializeParams = {
   sdkLanguage: SDKLanguage,
+  supportsLoneSurrogates?: boolean,
 };
 export type RootInitializeOptions = {
-
+  supportsLoneSurrogates?: boolean,
 };
 export type RootInitializeResult = {
   playwright: PlaywrightChannel,
