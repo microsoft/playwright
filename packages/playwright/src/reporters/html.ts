@@ -566,7 +566,7 @@ class HtmlBuilder {
       if (a.name === 'trace')
         this._hasTraces = true;
 
-      if ((a.name === 'stdout' || a.name === 'stderr') && a.contentType === 'text/plain') {
+      if ((a.name === 'stdout' || a.name === 'stderr') && a.contentType === 'text/plain' && typeof a.body === 'string') {
         if (lastAttachment &&
           lastAttachment.name === a.name &&
           lastAttachment.contentType === a.contentType) {
