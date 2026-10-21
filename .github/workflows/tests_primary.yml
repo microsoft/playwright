@@ -122,14 +122,14 @@ jobs:
       fail-fast: false
       matrix:
         package: [html-reporter, web]
-    runs-on: ubuntu-latest
+    runs-on: playwright-x64-ubuntu24-64-core
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - uses: ./.github/actions/run-test
       with:
         node-version: 22
         browsers-to-install: chromium
-        command: npm run test-${{ matrix.package }}
+        command: npm run test-${{ matrix.package }} -- --workers 16
         bot-name: "web-components-${{ matrix.package }}"
 
   test_vscode_extension:

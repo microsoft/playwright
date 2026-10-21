@@ -39,20 +39,21 @@ jobs:
         bot-name: "${{ matrix.browser }}-${{ matrix.os }}"
 
   test_win:
-    name: "Windows"
+    name: windows-large - ${{ matrix.browser }}
     if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-    runs-on: windows-latest
+        os: [playwright-x64-server2025-64-core]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.browser }} chromium
-        command: npm run test -- --project=${{ matrix.browser }}-* ${{ matrix.browser == 'firefox' && '--workers 1' || '' }}
-        bot-name: "${{ matrix.browser }}-windows-latest"
+        command: npm run test -- --project=${{ matrix.browser }}-* --workers 16
+        bot-name: "${{ matrix.browser }}-${{ matrix.os }}"
 
   test-package-installations-other-node-versions:
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
@@ -175,19 +176,19 @@ jobs:
           - channel: chrome
             runs-on: macos-latest
           - channel: chrome
-            runs-on: windows-latest
+            runs-on: playwright-x64-server2025-64-core
           - channel: chrome-beta
             runs-on: ubuntu-22.04
           - channel: msedge
-            runs-on: windows-latest
+            runs-on: playwright-x64-server2025-64-core
           - channel: msedge-dev
-            runs-on: windows-latest
+            runs-on: playwright-x64-server2025-64-core
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.channel }}
-        command: npm run ctest
+        command: npm run ctest -- ${{ startsWith(matrix.runs-on, 'playwright-') && '--workers 16' || '' }}
         bot-name: ${{ matrix.channel }}-${{ matrix.runs-on }}
       env:
         PWTEST_CHANNEL: ${{ matrix.channel }}
