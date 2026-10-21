@@ -6,6 +6,7 @@ const {Helper} = ChromeUtils.importESModule('chrome://juggler/content/Helper.js'
 const {Preferences} = ChromeUtils.importESModule("resource://gre/modules/Preferences.sys.mjs");
 const {ContextualIdentityService} = ChromeUtils.importESModule("moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs");
 const {NetUtil} = ChromeUtils.importESModule('resource://gre/modules/NetUtil.sys.mjs');
+const {Downloads} = ChromeUtils.importESModule('resource://gre/modules/Downloads.sys.mjs');
 const {AppConstants} = ChromeUtils.importESModule("resource://gre/modules/AppConstants.sys.mjs");
 
 const Cr = Components.results;
@@ -28,11 +29,22 @@ let globalNewPageChain = Promise.resolve();
 
 let globalContextCloseCounter = 0;
 
+const HELPER_APP_DIALOG_CONTRACT_ID = '@mozilla.org/helperapplauncherdialog;1';
+
 class DownloadInterceptor {
   constructor(registry) {
     this._registry = registry
     this._handlerToUuid = new Map();
     this._uuidToHandler = new Map();
+    this._registered = false;
+  }
+
+  register() {
+    if (this._registered)
+      return;
+    this._registered = true;
+    const extHelperAppSvc = Cc["@mozilla.org/uriloader/external-helper-app-service;1"].getService(Ci.nsIExternalHelperAppService);
+    extHelperAppSvc.setDownloadInterceptor(this);
   }
 
   //
@@ -48,7 +60,7 @@ class DownloadInterceptor {
 
     const browserContext = pageTarget.browserContext();
     const options = browserContext.downloadOptions;
-    if (!options)
+    if (!options || !options.legacyInterceptor)
       return false;
 
     const uuid = helper.generateId();
@@ -102,6 +114,142 @@ class DownloadInterceptor {
       return;
     }
     await externalAppHandler.cancel(Cr.NS_BINDING_ABORTED);
+  }
+}
+
+// See also BiDi implementation at
+// - remote/webdriver-bidi/HelperAppDialogHandler.sys.mjs
+// - remote/shared/listeners/DownloadListener.sys.mjs
+class DownloadManager {
+  constructor(registry) {
+    this._registry = registry;
+    this._pendingInfos = new Map();  // path -> info, until Download object is created
+    this._downloads = new Map();  // Download -> { info, finished }
+    this._uuidToDownload = new Map();
+    this._registered = false;
+  }
+
+  register() {
+    if (this._registered)
+      return;
+    this._registered = true;
+    this._registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
+    this._originalCID = this._registrar.contractIDToCID(HELPER_APP_DIALOG_CONTRACT_ID);
+    this._cid = Services.uuid.generateUUID();
+    this._factory = {
+      createInstance: iid => this._createDialog().QueryInterface(iid),
+      QueryInterface: ChromeUtils.generateQI(['nsIFactory']),
+    };
+    this._registrar.registerFactory(this._cid, 'Juggler helper app dialog', HELPER_APP_DIALOG_CONTRACT_ID, this._factory);
+    Downloads.getList(Downloads.ALL).then(list => list.addView({
+      onDownloadAdded: download => this._onDownloadAdded(list, download),
+      onDownloadChanged: download => this._onDownloadChanged(list, download),
+    }));
+  }
+
+  _createOriginalDialog() {
+    this._registrar.registerFactory(this._originalCID, 'Original helper app dialog', HELPER_APP_DIALOG_CONTRACT_ID, null);
+    try {
+      return Cc[HELPER_APP_DIALOG_CONTRACT_ID].createInstance(Ci.nsIHelperAppLauncherDialog);
+    } finally {
+      this._registrar.registerFactory(this._cid, 'Juggler helper app dialog', HELPER_APP_DIALOG_CONTRACT_ID, null);
+    }
+  }
+
+  _pageTargetForLauncher(launcher) {
+    const browsingContext = launcher.browsingContextId ? BrowsingContext.get(launcher.browsingContextId) : null;
+    if (!browsingContext)
+      return undefined;
+    return this._registry._browserIdToTarget.get(browsingContext.top.browserId);
+  }
+
+  _createDialog() {
+    let original = null;
+    return {
+      QueryInterface: ChromeUtils.generateQI(['nsIHelperAppLauncherDialog']),
+
+      show: (launcher, context, reason) => {
+        const pageTarget = this._pageTargetForLauncher(launcher);
+        const options = pageTarget?.browserContext().downloadOptions;
+        if (!options || options.legacyInterceptor) {
+          original ||= this._createOriginalDialog();
+          original.show(launcher, context, reason);
+          return;
+        }
+        launcher.promptForSaveDestination();
+      },
+
+      promptForSaveToFileAsync: (launcher, context, defaultFileName, suggestedFileExtension, forcePrompt) => {
+        const pageTarget = this._pageTargetForLauncher(launcher);
+        const options = pageTarget?.browserContext().downloadOptions;
+        if (!options || options.legacyInterceptor) {
+          original ||= this._createOriginalDialog();
+          original.promptForSaveToFileAsync(launcher, context, defaultFileName, suggestedFileExtension, forcePrompt);
+          return;
+        }
+
+        const info = {
+          uuid: helper.generateId(),
+          browserContextId: pageTarget.browserContext().browserContextId,
+          pageTargetId: pageTarget.id(),
+          frameId: helper.browsingContextToFrameId(BrowsingContext.get(launcher.browsingContextId)),
+          url: launcher.source.spec,
+          suggestedFileName: launcher.suggestedFileName,
+        };
+        if (options.behavior !== 'saveToDisk') {
+          this._registry.emit(TargetRegistry.Events.DownloadCreated, info);
+          this._registry.emit(TargetRegistry.Events.DownloadFinished, { uuid: info.uuid, canceled: true });
+          launcher.saveDestinationAvailable(null);
+          return;
+        }
+
+        const file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+        file.initWithPath(options.downloadsDir);
+        file.append(info.uuid);
+        this._pendingInfos.set(file.path, info);
+        // Pretend that a dialog was shown to keep the downloads panel closed.
+        launcher.saveDestinationAvailable(file, true);
+      },
+    };
+  }
+
+  _onDownloadAdded(downloadList, download) {
+    const info = this._pendingInfos.get(download.target.path);
+    if (!info)
+      return;
+    this._pendingInfos.delete(download.target.path);
+    this._downloads.set(download, { info, finished: false });
+    this._uuidToDownload.set(info.uuid, download);
+    this._registry.emit(TargetRegistry.Events.DownloadCreated, info);
+    this._onDownloadChanged(downloadList, download);
+  }
+
+  async _onDownloadChanged(downloadList, download) {
+    const state = this._downloads.get(download);
+    if (!state || state.finished || !download.stopped)
+      return;
+    state.finished = true;
+    this._uuidToDownload.delete(state.info.uuid);
+
+    const downloadInfo = { uuid: state.info.uuid };
+    if (download.succeeded) {
+      await download.whenSucceeded();
+    } else if (download.canceled || !download.error || download.error.result === Cr.NS_BINDING_ABORTED) {
+      downloadInfo.canceled = true;
+    } else {
+      downloadInfo.error = ChromeUtils.getXPCOMErrorName(download.error.result) || download.error.message;
+    }
+    this._registry.emit(TargetRegistry.Events.DownloadFinished, downloadInfo);
+
+    this._downloads.delete(download);
+    downloadList.remove(download);
+  }
+
+  async cancelDownload(uuid) {
+    const download = this._uuidToDownload.get(uuid);
+    if (!download)
+      return;
+    await download.finalize(true);
   }
 }
 
@@ -209,6 +357,8 @@ export class TargetRegistry {
     this._proxiesWithClashingAuthCacheKeys = new Set();
     this._browserProxy = null;
     this._filePickerOverride = new FilePickerOverride(this);
+    this._downloadManager = new DownloadManager(this);
+    this._downloadInterceptor = new DownloadInterceptor(this);
 
     // Cleanup containers from previous runs (if any)
     for (const identity of ContextualIdentityService.getPublicIdentities()) {
@@ -314,10 +464,6 @@ export class TargetRegistry {
         onTabCloseListener({ target: tab });
     };
 
-    const extHelperAppSvc = Cc["@mozilla.org/uriloader/external-helper-app-service;1"].getService(Ci.nsIExternalHelperAppService);
-    this._downloadInterceptor = new DownloadInterceptor(this);
-    extHelperAppSvc.setDownloadInterceptor(this._downloadInterceptor);
-
     Services.wm.addListener({ onOpenWindow, onCloseWindow });
     for (const win of Services.wm.getEnumerator(null))
       onOpenWindow(win);
@@ -382,7 +528,8 @@ export class TargetRegistry {
   }
 
   async cancelDownload(options) {
-    this._downloadInterceptor.cancelDownload(options.uuid);
+    await this._downloadInterceptor.cancelDownload(options.uuid);
+    await this._downloadManager.cancelDownload(options.uuid);
   }
 
   setBrowserProxy(proxy) {
@@ -529,6 +676,7 @@ export class PageTarget {
       helper.addProgressListener(tab.linkedBrowser, navigationListener, Ci.nsIWebProgress.NOTIFY_LOCATION),
       helper.addEventListener(this._linkedBrowser, 'DOMModalDialogClosed', event => this._updateModalDialogs()),
       helper.addEventListener(this._linkedBrowser, 'WillChangeBrowserRemoteness', event => this._willChangeBrowserRemoteness()),
+      helper.addEventListener(this._linkedBrowser, 'DidChangeBrowserRemoteness', event => this._didChangeBrowserRemoteness()),
     ];
 
     this._disposed = false;
@@ -591,6 +739,15 @@ export class PageTarget {
     this.removeActor(this._actor);
   }
 
+  _didChangeBrowserRemoteness() {
+    // The top-level browsing context might have been replaced, e.g. by a cross-origin-opener-policy
+    // navigation, and CanonicalBrowsingContext::ReplacedBy() does not carry emulation overrides
+    // over to the new context. This event is dispatched synchronously during the process switch,
+    // before the load is resumed in the new process, so the re-applied overrides reach the new
+    // document before any of its scripts run.
+    this.updateOverridesForBrowsingContext();
+  }
+
   dialog(dialogId) {
     return this._dialogs.get(dialogId);
   }
@@ -627,6 +784,13 @@ export class PageTarget {
     this.updateForcedColorsOverride(browsingContext);
     this.updateForceOffline(browsingContext);
     this.updateCacheDisabled(browsingContext);
+    this.updateDownloadFolderOverride(browsingContext);
+  }
+
+  updateDownloadFolderOverride(browsingContext = undefined) {
+    // The helper app service writes the partial download to this folder before the destination
+    // is known, see GetInitialDownloadDirectory in nsExternalHelperAppService.cpp.
+    (browsingContext || this._linkedBrowser.browsingContext).downloadFolderOverride = this._browserContext.downloadOptions?.downloadsDir || '';
   }
 
   updateForceOffline(browsingContext = undefined) {
@@ -1179,6 +1343,16 @@ class BrowserContext {
     this.forceOffline = forceOffline;
     for (const page of this.pages)
       page.updateForceOffline();
+  }
+
+  setDownloadOptions(downloadOptions) {
+    this.downloadOptions = downloadOptions;
+    if (downloadOptions?.legacyInterceptor)
+      this._registry._downloadInterceptor.register();
+    else if (downloadOptions)
+      this._registry._downloadManager.register();
+    for (const page of this.pages)
+      page.updateDownloadFolderOverride();
   }
 
   setCacheDisabled(disabled) {
