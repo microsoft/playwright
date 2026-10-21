@@ -433,14 +433,26 @@ test('SE-059 should filter hidden, unless explicitly asked for', async ({ page }
   ]);
 });
 
-test('SE-060 should support name', async ({ page }) => {
+test('SE-060 should support name', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43549' },
+}, async ({ page }) => {
   await page.setContent(`
     <div role="button" aria-label=" Hello "></div>
     <div role="button" aria-label="Hallo"></div>
     <div role="button" aria-label="Hello" aria-hidden="true"></div>
     <div role="button" aria-label="123" aria-hidden="true"></div>
     <div role="button" aria-label='foo"bar' aria-hidden="true"></div>
+
+    <span id="title">Chosen name</span>
+    <div role="group" aria-labelledby="title"></div>
   `);
+
+  const group = page.getByRole('group');
+  await expect(group).toHaveAccessibleName('Chosen name');
+  await group.evaluate(element => {
+    element.ariaLabelledByElements = [document.querySelector('#title')!];
+  });
+
   expect(await page.locator(`role=button[name="Hello"]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label=" Hello "></div>`,
   ]);
@@ -494,6 +506,10 @@ test('SE-060 should support name', async ({ page }) => {
   ]);
   expect(await page.getByRole('button', { name: '123', includeHidden: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="123" aria-hidden="true"></div>`,
+  ]);
+
+  expect(await page.getByRole('group', { name: 'Chosen name', exact: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="group" aria-labelledby=""></div>`,
   ]);
 });
 
