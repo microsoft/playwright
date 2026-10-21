@@ -85,6 +85,32 @@ it('EH-096 should scroll display:contents into view', async ({ page, browserName
   expect(Math.abs(scrollTop - 350)).toBeLessThan(1);
 });
 
+it('EH-124 should scroll nested display:contents into view', async ({ page, browserName, browserMajorVersion }) => {
+  await page.setContent(`
+    <style>
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
+      ::-webkit-scrollbar { display: none; }
+      * { scrollbar-width: none; }
+    </style>
+    <div id=container style="width:200px;height:200px;overflow:scroll;border:1px solid black;">
+      <div style="margin-top:500px;background:red;">
+        <div id=outer style="display:contents"><div style="display:contents"><div id=target style="height:50px;width:100px;background:cyan;">Hello</div></div><div style="height:2000px;"></div><div>Sibling</div></div>
+      </div>
+    </div>
+  `);
+  const div = await page.$('#outer');
+  await div.scrollIntoViewIfNeeded();
+  // The first box in the flattened subtree of #outer is #target, two levels down,
+  // not the tall sibling. No whitespace text nodes inside #outer: in Firefox they
+  // get boxes of their own, which would hide a fallback that only looks one level down.
+  const targetIsVisible = await page.$eval('#target', target => {
+    const container = document.getElementById('container').getBoundingClientRect();
+    const rect = target.getBoundingClientRect();
+    return rect.top >= container.top && rect.bottom <= container.bottom;
+  });
+  expect(targetIsVisible).toBe(true);
+});
+
 it('EH-097 should work for visibility:hidden element', async ({ page }) => {
   await page.setContent('<div style="visibility:hidden">Hello</div>');
   const div = await page.$('div');
