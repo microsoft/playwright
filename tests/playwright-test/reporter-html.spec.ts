@@ -3295,6 +3295,28 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByTestId('attachments').getByText('stdout')).toHaveCount(1);
     });
 
+    test('should show user attachments named stdout and stderr', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          const { test, expect } = require('@playwright/test');
+          test('my test', async ({}, testInfo) => {
+            await testInfo.attach('stdout', { body: 'hello' });
+            const file = testInfo.outputPath('log.txt');
+            require('fs').writeFileSync(file, 'world');
+            await testInfo.attach('stderr', { path: file });
+          });
+        `,
+      }, { reporter: 'dot,html' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+      expect(result.output).not.toContain('TypeError');
+
+      await showReport();
+      await page.getByText('my test').click();
+      await expect(page.getByTestId('attachments').getByText('stdout')).toHaveCount(1);
+      await expect(page.getByTestId('attachments').getByText('stderr')).toHaveCount(1);
+    });
+
     test('should include diff in AI prompt', async ({ runInlineTest, writeFiles, showReport, page }) => {
       const files = {
         'uncommitted.txt': `uncommitted file`,
