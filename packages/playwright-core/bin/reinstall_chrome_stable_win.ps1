@@ -1,5 +1,12 @@
 $ErrorActionPreference = 'Stop'
-$url = 'https://dl.google.com/tag/s/dl/chrome/install/googlechromestandaloneenterprise64.msi'
+
+# OSArchitecture reports the machine architecture even when PowerShell itself runs
+# emulated, which PROCESSOR_ARCHITECTURE does not.
+if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq 'Arm64') {
+    $url = 'https://dl.google.com/tag/s/dl/chrome/install/googlechromestandaloneenterprise_arm64.msi'
+} else {
+    $url = 'https://dl.google.com/tag/s/dl/chrome/install/googlechromestandaloneenterprise64.msi'
+}
 
 $wc = New-Object net.webclient
 $msiInstaller = "$env:temp\google-chrome.msi"
