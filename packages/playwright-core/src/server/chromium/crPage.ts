@@ -787,6 +787,13 @@ class FrameSession {
       return;
     }
 
+    if (event.targetInfo.type === 'service_worker') {
+      // Detaching releases the service worker's main script fetch throttle. Resuming first would race
+      // with the browser-level session's Network.enable and lose the main script's Network.responseReceived.
+      parentSession._sendMayFail('Target.detachFromTarget', { sessionId: event.sessionId });
+      return;
+    }
+
     if (event.targetInfo.type !== 'worker') {
       session.detach().catch(() => {});
       return;
