@@ -24,7 +24,7 @@ env:
 jobs:
   test_bidi:
     name: BiDi
-    runs-on: ubuntu-24.04
+    runs-on: playwright-x64-ubuntu24-64-core
     permissions:
       contents: read    # This is required for actions/checkout to succeed
     strategy:
@@ -57,7 +57,7 @@ jobs:
         sudo apt-get install -y libavcodec60
         echo "BIDI_FFPATH=$(npx -y @puppeteer/browsers install firefox@nightly | tail -n1 | sed 's/^[^ ]* *//')" >> "$GITHUB_ENV"
     - name: Run tests
-      run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --retries=${{ matrix.isPullRequest && 2 || 0 }} --project=${{ matrix.channel }}*
+      run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --retries=${{ matrix.isPullRequest && 2 || 0 }} --project=${{ matrix.channel }}* --workers 16
       env:
         PWTEST_USE_BIDI_EXPECTATIONS: ${{ matrix.isPullRequest && '1' || '' }}
     - name: Upload csv report to GitHub
