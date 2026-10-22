@@ -93,10 +93,6 @@ export class WorkerHost extends ProcessHost {
     return await this.sendMessage({ method: 'customMessage', params: payload }) as ipc.CustomMessageResponsePayload;
   }
 
-  sendResume(payload: ipc.ResumePayload) {
-    this.sendMessageNoReply({ method: 'resume', params: payload });
-  }
-
   hash() {
     return this._hash;
   }

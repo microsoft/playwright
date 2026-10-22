@@ -35,7 +35,6 @@ export class TeleReporterEmitter implements ReporterV2 {
   private _rootDir!: string;
   private _emitterOptions: TeleReporterEmitterOptions;
   private _resultKnownAttachmentCounts = new Map<string, number>();
-  private _resultKnownErrorCounts = new Map<string, number>();
   // In case there is blob reporter and UI mode, make sure one doesn't override
   // the id assigned by the other.
   private readonly _idSymbol = Symbol('id');
@@ -72,21 +71,6 @@ export class TeleReporterEmitter implements ReporterV2 {
     });
   }
 
-  async onTestPaused(test: reporterTypes.TestCase, result: reporterTypes.TestResult) {
-    const resultId = (result as any)[this._idSymbol];
-    this._resultKnownErrorCounts.set(resultId, result.errors.length);
-    this._messageSink({
-      method: 'onTestPaused',
-      params: {
-        testId: test.id,
-        resultId,
-        errors: result.errors,
-      }
-    });
-    // keep the test paused until externally resumed
-    await new Promise<void>(() => {});
-  }
-
   onTestEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult): void {
     const testEnd: teleReceiver.JsonTestEnd = {
       testId: test.id,
@@ -105,7 +89,6 @@ export class TeleReporterEmitter implements ReporterV2 {
 
     const resultId = (result as any)[this._idSymbol];
     this._resultKnownAttachmentCounts.delete(resultId);
-    this._resultKnownErrorCounts.delete(resultId);
   }
 
   onStepBegin(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
@@ -277,7 +260,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       id,
       duration: result.duration,
       status: result.status,
-      errors: this._resultKnownErrorCounts.has(id) ? result.errors.slice(this._resultKnownAttachmentCounts.get(id)) : result.errors,
+      errors: result.errors,
       annotations: result.annotations?.length ? this._relativeAnnotationLocations(result.annotations) : undefined,
     };
   }

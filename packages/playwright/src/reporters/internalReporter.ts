@@ -74,11 +74,6 @@ export class InternalReporter implements ReporterV2 {
     this._reporter.onStdErr?.(chunk, test, result);
   }
 
-  async onTestPaused(test: TestCase, result: TestResult) {
-    this._addSnippetToTestErrors(test, result);
-    return await this._reporter.onTestPaused?.(test, result);
-  }
-
   onTestEnd(test: TestCase, result: TestResult) {
     this._addSnippetToTestErrors(test, result);
     this._reporter.onTestEnd?.(test, result);

@@ -16,7 +16,7 @@
 
 import { getAsBooleanFromENV } from '@utils/env';
 
-import { markErrorsAsReported, TerminalReporter } from './base';
+import { TerminalReporter } from './base';
 
 import type { DotReporterOptions } from '../../types/test';
 import type { FullResult, Suite, TestCase, TestError, TestResult } from '../../types/testReporter';
@@ -72,26 +72,6 @@ class DotReporter extends TerminalReporter {
     super.onError(error);
     this.writeLine('\n' + this.formatError(error).message);
     this._counter = 0;
-  }
-
-  async onTestPaused(test: TestCase, result: TestResult) {
-    // Without TTY, user cannot interrupt the pause. Let's skip it.
-    if (!process.stdin.isTTY && !process.env.PW_TEST_DEBUG_REPORTERS)
-      return;
-
-    this.screen.stdout.write('\n');
-    if (test.outcome() === 'unexpected') {
-      this.writeLine(this.screen.colors.red(this.formatTestHeader(test, { indent: '  ' })));
-      this.writeLine(this.formatResultErrors(test, result));
-      markErrorsAsReported(result);
-      this.writeLine(this.screen.colors.yellow('    Paused on error. Press Ctrl+C to end.') + '\n');
-    } else {
-      this.writeLine(this.screen.colors.yellow(this.formatTestHeader(test, { indent: '  ' })));
-      this.writeLine(this.screen.colors.yellow('    Paused at test end. Press Ctrl+C to end.') + '\n');
-    }
-    this._counter = 0;
-
-    await new Promise<void>(() => {});
   }
 
   override async onEnd(result: FullResult) {

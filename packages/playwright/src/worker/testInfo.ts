@@ -73,14 +73,14 @@ type TestInfoCallbacks = {
   onStepBegin: (payload: ipc.StepBeginPayload) => void;
   onStepEnd: (payload: ipc.StepEndPayload) => void;
   onAttach: (payload: ipc.AttachmentPayload) => void;
-  onTestPaused: (payload: ipc.TestPausedPayload) => Promise<ipc.ResumePayload>;
+  onTestPaused: (payload: ipc.TestPausedPayload) => void;
 };
 
 export const emtpyTestInfoCallbacks: TestInfoCallbacks = {
   onStepBegin: () => {},
   onStepEnd: () => {},
   onAttach: () => {},
-  onTestPaused: () => Promise.reject(new Error('TestInfoImpl not initialized')),
+  onTestPaused: () => {},
 };
 
 // Keep step ids globally unique, to avoid cross-test callId collisions on the same playwright instance.
@@ -496,10 +496,8 @@ export class TestInfoImpl implements TestInfo {
   async _didFinishTestFunction() {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
     if (shouldPause) {
-      await Promise.race([
-        this._callbacks.onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors.map(ipc.toTestInfoErrorPayload) : [], status: this.status }),
-        this._interruptedPromise,
-      ]);
+      this._callbacks.onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors.map(ipc.toTestInfoErrorPayload) : [] });
+      await this._interruptedPromise;
     }
     for (const cb of this._onDidFinishTestFunctionCallbacks)
       await cb();

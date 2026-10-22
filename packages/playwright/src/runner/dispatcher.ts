@@ -637,7 +637,7 @@ class JobDispatcher {
     if (!data)
       return;
 
-    const { result, test } = data;
+    const { test } = data;
 
     const sendMessage = async (message: { request: any }) => {
       try {
@@ -654,14 +654,9 @@ class JobDispatcher {
       }
     };
 
-    result.status = params.status;
-    result.errors = params.errors;
-    result.error = result.errors[0];
-
-    void this._testRun.reporter.onTestPaused?.(test, result).then(() => {
-      worker.sendResume({});
-    });
-    this._testRun.onTestPaused({ ...params, sendMessage });
+    for (const error of params.errors)
+      addLocationAndSnippetToError(this._testRun.config.config, error, test.location.file);
+    this._testRun.onTestPaused({ errors: params.errors, sendMessage });
   }
 
   skipWholeJob(): boolean {
