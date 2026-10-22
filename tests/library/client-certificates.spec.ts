@@ -526,8 +526,7 @@ test.describe('browser', () => {
       const page = await browser.newPage({ ignoreHTTPSErrors: true, clientCertificates });
       await page.goto(serverURL);
       await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
-      // Headed Chromium also sends its own background requests through the launch proxy.
-      expect(proxyServer.connectHosts).toContain(serverHost);
+      expect([...new Set(proxyServer.connectHosts)]).toEqual([serverHost]);
       await page.close();
     }
     proxyServer.connectHosts = [];
@@ -535,7 +534,7 @@ test.describe('browser', () => {
       const page = await browser.newPage({ ignoreHTTPSErrors: true, clientCertificates, proxy: { ...proxy, bypass: hostname } });
       await page.goto(serverURL);
       await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
-      expect(proxyServer.connectHosts).not.toContain(serverHost);
+      expect(proxyServer.connectHosts).toEqual([]);
       await page.close();
     }
     await browser.close();
