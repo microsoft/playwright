@@ -1011,7 +1011,7 @@ instead of "limited-quirks".
       error: ConnectionAllowlistError;
       request: AffectedRequest;
     }
-    export type GenericIssueErrorType = "FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError"|"FormAriaLabelledByToNonExistingIdError"|"FormInputAssignedAutocompleteValueToIdOrNameAttributeError"|"FormLabelHasNeitherForNorNestedInputError"|"FormLabelForMatchesNonExistingIdError"|"FormInputHasWrongButWellIntendedAutocompleteValueError"|"ResponseWasBlockedByORB"|"NavigationEntryMarkedSkippable"|"BackUINavigationWouldSkipAd"|"AutofillAndManualTextPolicyControlledFeaturesInfo"|"AutofillPolicyControlledFeatureInfo"|"ManualTextPolicyControlledFeatureInfo"|"FormModelContextParameterMissingTitleAndDescription"|"FormModelContextMissingToolName"|"FormModelContextMissingToolDescription"|"FormModelContextRequiredParameterMissingName"|"FormModelContextParameterMissingName";
+    export type GenericIssueErrorType = "FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError"|"FormAriaLabelledByToNonExistingIdError"|"FormInputAssignedAutocompleteValueToIdOrNameAttributeError"|"FormLabelHasNeitherForNorNestedInputError"|"FormLabelForMatchesNonExistingIdError"|"FormInputHasWrongButWellIntendedAutocompleteValueError"|"ResponseWasBlockedByORB"|"NavigationEntryMarkedSkippable"|"BackUINavigationWouldSkipAd"|"AutofillAndManualTextPolicyControlledFeaturesInfo"|"AutofillPolicyControlledFeatureInfo"|"ManualTextPolicyControlledFeatureInfo"|"FormModelContextParameterMissingTitleAndDescription"|"FormModelContextMissingToolName"|"FormModelContextMissingToolDescription"|"FormModelContextRequiredParameterMissingName"|"FormModelContextParameterMissingName"|"GeolocationPromptWithoutUserGesture";
     /**
      * Depending on the concrete errorType, different properties are set.
      */
@@ -3625,6 +3625,22 @@ the browser.
       forced: boolean;
     }
     export type forceStartingStyleReturnValue = {
+    }
+    /**
+     * Forces a position-try option for the given node.
+     */
+    export type forcePositionTryOptionParameters = {
+      /**
+       * The element id for which to force the position-try option.
+       */
+      nodeId: DOM.NodeId;
+      /**
+       * The 1-based index of the position-try fallback option, 0 for base position (no fallback),
+or omitted to clear the forced state.
+       */
+      index?: number;
+    }
+    export type forcePositionTryOptionReturnValue = {
     }
     export type getBackgroundColorsParameters = {
       /**
@@ -12153,6 +12169,11 @@ CORB and streaming.
        * Total number of bytes received for this request.
        */
       encodedDataLength: number;
+      /**
+       * Size of the response body before removing content encodings.
+Includes cached bodies, but excludes headers and transfer framing.
+       */
+      encodedBodyLength?: number;
     }
     /**
      * Fired if request ended up loading from cache.
@@ -14569,7 +14590,7 @@ supported yet.
 in services/network/public/cpp/permissions_policy/permissions_policy_features.json5.
 LINT.IfChange(PermissionsPolicyFeature)
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"haptics"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"publickey-credentials-remote-client-data-json"|"rewriter"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"tools"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"webnn"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"haptics"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"publickey-credentials-remote-client-data-json"|"rewriter"|"screen-wake-lock"|"serial"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"tools"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"webnn"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -15919,6 +15940,18 @@ script). Only sent if frame is labelled as an ad and ids are available.
       adScriptAncestry?: Network.AdAncestry;
     }
     /**
+     * Returns the words that the frame's document added to its spell check custom
+dictionary with `document.spellCheckCustomDictionary.addWords()`, sorted.
+Page script cannot read the dictionary back; this lets developers inspect
+it.
+     */
+    export type getSpellCheckCustomDictionaryParameters = {
+      frameId: FrameId;
+    }
+    export type getSpellCheckCustomDictionaryReturnValue = {
+      words: string[];
+    }
+    /**
      * Returns present frame tree structure.
      */
     export type getFrameTreeParameters = {
@@ -16721,6 +16754,17 @@ The format is defined by the `AnnotatedPageContent` message in
 components/optimization_guide/proto/features/common_quality_data.proto
        */
       content: binary;
+    }
+    /**
+     * Configures input visualization on the page.
+     */
+    export type setInputVisualizationParameters = {
+      /**
+       * Whether to enable click visualization.
+       */
+      clicks?: boolean;
+    }
+    export type setInputVisualizationReturnValue = {
     }
   }
   
@@ -20444,13 +20488,13 @@ variables as its properties.
        */
       endLocation?: Location;
       /**
-       * True if the scope does not declare any variables.
-Only present if true.
+       * Present if the scope has no variable values to show. Absent means that
+the scope declares at least one variable with an available value.
 Empty scopes are retained in the scope chain because
 they can be targeted via `evaluateOnCallFrame` (using `scopeNumber`) or
 matched against scopes in source maps.
        */
-      empty?: boolean;
+      emptyReason?: "no-variables"|"all-unavailable";
     }
     /**
      * Search match for resource.
@@ -21361,6 +21405,12 @@ before next pause.
        * The skipList specifies location ranges that should be skipped on step over.
        */
       skipList?: LocationRange[];
+      /**
+       * Functions whose source range lies within one of the enterRanges are
+entered as if by stepInto, even when they are called (directly or
+indirectly) from a call that is stepped over.
+       */
+      enterRanges?: LocationRange[];
     }
     export type stepOverReturnValue = {
     }
@@ -23498,6 +23548,7 @@ Error was thrown.
     "CSS.enable": CSS.enableParameters;
     "CSS.forcePseudoState": CSS.forcePseudoStateParameters;
     "CSS.forceStartingStyle": CSS.forceStartingStyleParameters;
+    "CSS.forcePositionTryOption": CSS.forcePositionTryOptionParameters;
     "CSS.getBackgroundColors": CSS.getBackgroundColorsParameters;
     "CSS.getComputedStyleForNode": CSS.getComputedStyleForNodeParameters;
     "CSS.resolveValues": CSS.resolveValuesParameters;
@@ -23856,6 +23907,7 @@ Error was thrown.
     "Page.getSubApps": Page.getSubAppsParameters;
     "Page.getSiblingSubApps": Page.getSiblingSubAppsParameters;
     "Page.getAdScriptAncestry": Page.getAdScriptAncestryParameters;
+    "Page.getSpellCheckCustomDictionary": Page.getSpellCheckCustomDictionaryParameters;
     "Page.getFrameTree": Page.getFrameTreeParameters;
     "Page.getLayoutMetrics": Page.getLayoutMetricsParameters;
     "Page.getNavigationHistory": Page.getNavigationHistoryParameters;
@@ -23902,6 +23954,7 @@ Error was thrown.
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogParameters;
     "Page.setPrerenderingAllowed": Page.setPrerenderingAllowedParameters;
     "Page.getAnnotatedPageContent": Page.getAnnotatedPageContentParameters;
+    "Page.setInputVisualization": Page.setInputVisualizationParameters;
     "Performance.disable": Performance.disableParameters;
     "Performance.enable": Performance.enableParameters;
     "Performance.setTimeDomain": Performance.setTimeDomainParameters;
@@ -24174,6 +24227,7 @@ Error was thrown.
     "CSS.enable": CSS.enableReturnValue;
     "CSS.forcePseudoState": CSS.forcePseudoStateReturnValue;
     "CSS.forceStartingStyle": CSS.forceStartingStyleReturnValue;
+    "CSS.forcePositionTryOption": CSS.forcePositionTryOptionReturnValue;
     "CSS.getBackgroundColors": CSS.getBackgroundColorsReturnValue;
     "CSS.getComputedStyleForNode": CSS.getComputedStyleForNodeReturnValue;
     "CSS.resolveValues": CSS.resolveValuesReturnValue;
@@ -24532,6 +24586,7 @@ Error was thrown.
     "Page.getSubApps": Page.getSubAppsReturnValue;
     "Page.getSiblingSubApps": Page.getSiblingSubAppsReturnValue;
     "Page.getAdScriptAncestry": Page.getAdScriptAncestryReturnValue;
+    "Page.getSpellCheckCustomDictionary": Page.getSpellCheckCustomDictionaryReturnValue;
     "Page.getFrameTree": Page.getFrameTreeReturnValue;
     "Page.getLayoutMetrics": Page.getLayoutMetricsReturnValue;
     "Page.getNavigationHistory": Page.getNavigationHistoryReturnValue;
@@ -24578,6 +24633,7 @@ Error was thrown.
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogReturnValue;
     "Page.setPrerenderingAllowed": Page.setPrerenderingAllowedReturnValue;
     "Page.getAnnotatedPageContent": Page.getAnnotatedPageContentReturnValue;
+    "Page.setInputVisualization": Page.setInputVisualizationReturnValue;
     "Performance.disable": Performance.disableReturnValue;
     "Performance.enable": Performance.enableReturnValue;
     "Performance.setTimeDomain": Performance.setTimeDomainReturnValue;
