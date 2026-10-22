@@ -39,6 +39,7 @@ const disabledFeatures = [
   // Prevents AI Mode eligibility requests to www.google.com on startup.
   'AimEnabled',
   // Prevents preconnects to the default search engine (www.google.com) on startup.
+  // See https://github.com/microsoft/playwright/issues/42910
   'PreconnectToSearch',
   // Disables forced sign-in in Edge.
   'msForceBrowserSignIn',
@@ -49,6 +50,7 @@ const disabledFeatures = [
 const enabledFeatures = () => [
   process.env.PLAYWRIGHT_LEGACY_SCREENSHOT ? '' : 'CDPScreenshotNewSurface',
   // Prevents /ListAccounts requests to accounts.google.com on startup.
+  // See https://github.com/microsoft/playwright/issues/42910 and https://issues.chromium.org/565837024
   'SkipListAccountsWithoutGaiaCookies',
 ].filter(Boolean);
 
