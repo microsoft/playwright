@@ -67,7 +67,7 @@ export const electronTest = baseTest
       sharedApp: [async ({}, use) => {
         const userDataDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-'));
         const app = await electron.launch({
-          args: [path.join(__dirname, 'electron-app.js')],
+          args: ['--enable-unsafe-swiftshader', path.join(__dirname, 'electron-app.js')],
           env: inheritAndCleanEnv({
             // Prevents 'Electron Security Policy' console message.
             ELECTRON_DISABLE_SECURITY_WARNINGS: 'true',
