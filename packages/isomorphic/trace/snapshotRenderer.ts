@@ -21,12 +21,16 @@ import type { PageEntry } from './entries';
 import type { LRUCache } from '../lruCache';
 
 function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
-  return items.find((item, index) => {
-    if (index === items.length - 1)
-      return true;
-    const next = items[index + 1];
-    return Math.abs(metric(item) - target) < Math.abs(metric(next) - target);
-  });
+  let closest: T | undefined;
+  let closestDistance = Infinity;
+  for (const item of items) {
+    const distance = Math.abs(metric(item) - target);
+    if (distance <= closestDistance) {
+      closest = item;
+      closestDistance = distance;
+    }
+  }
+  return closest;
 }
 
 function isNodeNameAttributesChildNodesSnapshot(n: NodeSnapshot): n is NodeNameAttributesChildNodesSnapshot {

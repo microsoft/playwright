@@ -2815,3 +2815,55 @@ test('TV-122 take trace paths via stdin', async ({ showTraceViewer }) => {
     /Create page/,
   ]);
 });
+
+test('TV-123 should render canvas using the nearest screencast frame', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43573' },
+}, async ({ runAndTrace, page }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(`data:text/html,<!DOCTYPE html><body><div>Hello world</div><canvas /></body>`);
+  });
+
+  const tracePath = test.info().outputPath('trace.zip');
+  const { model, snapshots } = await parseTrace(tracePath);
+  const navigation = model.actions.find(action => action.method === 'goto')!;
+  const snapshot = snapshots.snapshotForCall(navigation.callId, 'after')!.snapshot();
+  const traceDir = tracePath + '.extracted';
+  const traceName = (await fs.promises.readdir(traceDir)).find(name => name.endsWith('.trace'))!;
+  const traceFile = path.join(traceDir, traceName);
+  const events = (await fs.promises.readFile(traceFile, 'utf8')).trim().split('\n').map(line => JSON.parse(line)).filter(event => event.type !== 'screencast-frame');
+  // Wall times may arrive out of order, and equal distances prefer the last frame.
+  const frameTimes = [-100, -30, -40, 0, 0];
+  for (const [index, frameTime] of frameTimes.entries()) {
+    events.push({
+      type: 'screencast-frame',
+      pageId: snapshot.pageId,
+      file: index === frameTimes.length - 1 ? 'lime.png' : 'red.png',
+      width: 1,
+      height: 1,
+      timestamp: snapshot.timestamp - frameTimes.length + index,
+      frameSwapWallTime: snapshot.wallTime! + frameTime,
+    });
+  }
+  await fs.promises.writeFile(traceFile, events.map(event => JSON.stringify(event)).join('\n'));
+  for (const color of ['red', 'lime']) {
+    const image = await page.evaluate(color => {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 1;
+      const context = canvas.getContext('2d')!;
+      context.fillStyle = color;
+      context.fillRect(0, 0, 1, 1);
+      return canvas.toDataURL().split(',')[1];
+    }, color);
+    await fs.promises.writeFile(path.join(traceDir, `${color}.png`), Buffer.from(image, 'base64'));
+  }
+  const traceURL = new URL(traceViewer.page.url());
+  traceURL.searchParams.set('trace', `file?path=${encodeURIComponent(path.join(traceDir, 'traces.dir'))}`);
+  await traceViewer.page.goto(traceURL.toString());
+
+  await traceViewer.showSettings();
+  await traceViewer.displayCanvasContentSetting.click();
+  await traceViewer.selectAction('Navigate');
+  await traceViewer.selectSnapshot('After');
+  const canvas = traceViewer.snapshotContainer.contentFrame().locator('canvas');
+  await expect.poll(() => canvas.evaluate((canvas: HTMLCanvasElement) => [...canvas.getContext('2d')!.getImageData(150, 75, 1, 1).data])).toEqual([0, 255, 0, 255]);
+});
