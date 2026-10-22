@@ -520,6 +520,8 @@ export type RouteHandler = (route: Route, request: Request) => void;
 
 type GetResponseBodyCallback = () => Promise<Buffer>;
 
+const kResponseBodyUnavailableMessage = 'Response body is not available for a response that was navigated away from. Read response.body() before triggering any navigation.';
+
 export type ResourceTiming = {
   startTime: number;
   domainLookupStart: number;
@@ -555,6 +557,7 @@ export type SecurityDetails = {
 export class Response extends SdkObject {
   private _request: Request;
   private _finishedPromise = new ManualPromise<void>();
+  private _bodyReadyPromise = new ManualPromise<Error | void>();
   private _status: number;
   private _statusText: string;
   private _url: string;
@@ -624,6 +627,13 @@ export class Response extends SdkObject {
     if (this._timing.requestStart === -1)
       this._timing.requestStart = this._request._responseEndTiming;
     this._finishedPromise.resolve();
+    this._bodyReadyPromise.resolve();
+  }
+
+  setBodyUnavailable() {
+    // Keepalive requests can outlive their document, so do not mark the request finished.
+    if (!this._bodyReadyPromise.isDone())
+      this._bodyReadyPromise.resolve(new Error(kResponseBodyUnavailableMessage));
   }
 
   _setHttpVersion(httpVersion: string | null) {
@@ -685,7 +695,9 @@ export class Response extends SdkObject {
   }
 
   async internalBody(): Promise<Buffer> {
-    await this._finishedPromise;
+    const error = await this._bodyReadyPromise;
+    if (error)
+      throw error;
     if (this._status >= 300 && this._status <= 399)
       throw new Error('Response body is unavailable for redirect responses');
     if (this._request._responseBodyOverride) {
@@ -696,7 +708,7 @@ export class Response extends SdkObject {
       return await this._getResponseBodyCallback();
     } catch (e) {
       if (isProtocolError(e) && e.type === 'error')
-        rewriteErrorMessage(e, e.message + '\nResponse body is not available for a response that was navigated away from. Read response.body() before triggering any navigation.');
+        rewriteErrorMessage(e, e.message + '\n' + kResponseBodyUnavailableMessage);
       throw e;
     }
   }
