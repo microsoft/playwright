@@ -112,10 +112,6 @@ export class RedactingReporter implements ReporterV2 {
     this._reporter.onStdErr?.(this._redactor.redact(chunk), this._redactor.redact(test), this._redactor.redact(result));
   }
 
-  async onTestPaused(test: TestCase, result: TestResult) {
-    await this._reporter.onTestPaused?.(this._redactor.redact(test), this._redactor.redact(result));
-  }
-
   onTestEnd(test: TestCase, result: TestResult) {
     this._reporter.onTestEnd?.(this._redactor.redact(test), this._redactor.redact(result));
   }

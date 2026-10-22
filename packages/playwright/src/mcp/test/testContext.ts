@@ -212,7 +212,7 @@ export class TestContext {
 
     claimStdio();
     try {
-      const setupReporter = new MCPListReporter({ configDir, screen, includeTestId: true });
+      const setupReporter = new ListReporter({ configDir, screen, includeTestId: true });
       const { status } = await runner.runGlobalSetup([setupReporter]);
       if (status !== 'passed')
         return { output: testRunnerAndScreen.output.join('\n'), status };
@@ -239,7 +239,7 @@ export class TestContext {
       : new Promise<never>(() => {});
 
     try {
-      const reporter = new MCPListReporter({ configDir, screen, includeTestId: true });
+      const reporter = new ListReporter({ configDir, screen, includeTestId: true });
       status = await Promise.race([
         runner.runTests(reporter, params).then(result => result.status),
         testRunnerAndScreen.waitForTestPaused().then(() => 'paused' as const),
@@ -341,10 +341,3 @@ const bestPracticesMarkdown = `
 - NEVER! use page.waitForTimeout()
 - NEVER! use page.evaluate()
 `;
-
-class MCPListReporter extends ListReporter {
-  override async onTestPaused() {
-    // ListReporter waits for user input to resume, we don't want that in MCP.
-    await new Promise<void>(() => {});
-  }
-}

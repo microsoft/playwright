@@ -17,7 +17,7 @@
 import { msToString } from '@isomorphic/formatUtils';
 import { getAsBooleanFromENV } from '@utils/env';
 
-import { markErrorsAsReported, TerminalReporter, stepSuffix } from './base';
+import { TerminalReporter, stepSuffix } from './base';
 import { stripAnsiEscapes } from '../util';
 
 import type { ListReporterOptions } from '../../types/test';
@@ -40,7 +40,6 @@ class ListReporter extends TerminalReporter {
   private _printSteps: boolean;
   private _printFailuresInline: boolean;
   private _failureIndex = new Map<TestCase, number>();
-  private _paused = new Set<TestResult>();
 
   constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
     const printFailuresInline = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_FAILURES_INLINE', options?.printFailuresInline);
@@ -170,33 +169,11 @@ class ListReporter extends TerminalReporter {
     stream.write(chunk);
   }
 
-  async onTestPaused(test: TestCase, result: TestResult) {
-    // Without TTY, user cannot interrupt the pause. Let's skip it.
-    if (!process.stdin.isTTY && !process.env.PW_TEST_DEBUG_REPORTERS)
-      return;
-
-    this._paused.add(result);
-
-    this._updateTestLine(test, result);
-    this._maybeWriteNewLine();
-    if (test.outcome() === 'unexpected') {
-      const errors = this.formatResultErrors(test, result);
-      this.writeLine(errors);
-      this._updateLineCountAndNewLineFlagForOutput(errors);
-      markErrorsAsReported(result);
-    }
-    this._appendLine(this.screen.colors.yellow(`Paused ${test.outcome() === 'unexpected' ? 'on error' : 'at test end'}. Press Ctrl+C to end.`), this._testPrefix('', ''));
-
-    await new Promise<void>(() => {});
-  }
-
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
-    const wasPaused = this._paused.delete(result);
-    if (!wasPaused)
-      this._updateTestLine(test, result);
+    this._updateTestLine(test, result);
     const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
-    if (!wasPaused && this._printFailuresInline && isFailure)
+    if (this._printFailuresInline && isFailure)
       this._printFailure(test);
   }
 

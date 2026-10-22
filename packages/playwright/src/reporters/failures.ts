@@ -17,7 +17,7 @@
 import { msToString } from '@isomorphic/formatUtils';
 import { getAsBooleanFromENV } from '@utils/env';
 
-import { markErrorsAsReported, TerminalReporter } from './base';
+import { TerminalReporter } from './base';
 
 import type { FailuresReporterOptions } from '../../types/test';
 import type { FullResult, TestCase, TestError, TestResult } from '../../types/testReporter';
@@ -78,23 +78,6 @@ class FailuresReporter extends TerminalReporter {
     super.onError(error);
     this._maybeWriteNewLine();
     this.writeLine(this.formatError(error).message);
-  }
-
-  async onTestPaused(test: TestCase, result: TestResult) {
-    // Without TTY, the user cannot interrupt the pause.
-    if (!process.stdin.isTTY && !process.env.PW_TEST_DEBUG_REPORTERS)
-      return;
-
-    this._maybeWriteNewLine();
-    if (test.outcome() === 'unexpected') {
-      this._printFailure(test);
-      markErrorsAsReported(result);
-      this.writeLine(this.screen.colors.yellow('    Paused on error. Press Ctrl+C to end.'));
-    } else {
-      this.writeLine(this.screen.colors.yellow(this.formatTestHeader(test, { indent: '  ' })));
-      this.writeLine(this.screen.colors.yellow('    Paused at test end. Press Ctrl+C to end.'));
-    }
-    await new Promise<void>(() => {});
   }
 
   override async onEnd(result: FullResult) {

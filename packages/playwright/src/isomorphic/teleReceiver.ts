@@ -136,7 +136,7 @@ export type JsonFullResult = {
 };
 
 export type JsonEvent = JsonOnConfigureEvent | JsonOnBlobReportMetadataEvent | JsonOnEndEvent | JsonOnExitEvent | JsonOnProjectEvent | JsonOnBeginEvent | JsonOnTestBeginEvent
-  | JsonOnTestEndEvent | JsonOnStepBeginEvent | JsonOnStepEndEvent | JsonOnAttachEvent | JsonOnErrorEvent | JsonOnTestPausedEvent | JsonOnStdIOEvent;
+  | JsonOnTestEndEvent | JsonOnStepBeginEvent | JsonOnStepEndEvent | JsonOnAttachEvent | JsonOnErrorEvent | JsonOnStdIOEvent;
 
 export type JsonOnConfigureEvent = {
   method: 'onConfigure';
@@ -167,15 +167,6 @@ export type JsonOnTestBeginEvent = {
   params: {
     testId: string;
     result: JsonTestResultStart;
-  };
-};
-
-export type JsonOnTestPausedEvent = {
-  method: 'onTestPaused';
-  params: {
-    testId: string;
-    resultId: string;
-    errors: reporterTypes.TestError[];
   };
 };
 
@@ -296,10 +287,6 @@ export class TeleReporterReceiver {
       this._onTestBegin(params.testId, params.result);
       return;
     }
-    if (method === 'onTestPaused') {
-      this._onTestPaused(params.testId, params.resultId, params.errors);
-      return;
-    }
     if (method === 'onTestEnd') {
       this._onTestEnd(params.test, params.result);
       return;
@@ -373,15 +360,6 @@ export class TeleReporterReceiver {
     testResult.parallelIndex = payload.parallelIndex;
     testResult.setStartTimeNumber(payload.startTime);
     this._reporter.onTestBegin?.(test, testResult);
-  }
-
-  private _onTestPaused(testId: string, resultId: string, errors: reporterTypes.TestError[]) {
-    const test = this._tests.get(testId)!;
-    const result = test.results.find(r => r._id === resultId)!;
-
-    result.errors.push(...errors);
-    result.error = result.errors[0];
-    void this._reporter.onTestPaused?.(test, result);
   }
 
   private _onTestEnd(testEndPayload: JsonTestEnd, payload: JsonTestResultEnd) {
