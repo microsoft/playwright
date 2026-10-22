@@ -30,6 +30,7 @@ export type LaunchProcessOptions = {
   args?: string[],
   env?: NodeJS.ProcessEnv,
   shell?: boolean,
+  windowsHide?: boolean,
 
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
@@ -142,6 +143,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     env: options.env,
     cwd: options.cwd,
     shell: options.shell,
+    windowsHide: options.windowsHide,
     stdio,
   };
   const spawnedProcess = childProcess.spawn(options.command, options.args || [], spawnOptions);
