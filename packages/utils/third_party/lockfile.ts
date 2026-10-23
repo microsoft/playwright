@@ -115,7 +115,7 @@ function resolveCanonicalPath(file: string, options: LockOptions, callback: (err
   options.fs.realpath(file, callback);
 }
 
-function acquireLock(file: string, options: LockOptions, callback: (err: Error | null, mtime?: Date, mtimePrecision?: 's' | 'ms') => void) {
+function acquireLock(file: string, options: LockOptions, callback: (err: NodeJS.ErrnoException | null, mtime?: Date, mtimePrecision?: 's' | 'ms') => void) {
   const lockfilePath = getLockFile(file, options);
 
   // Use mkdir to create the lockfile (atomic operation)
@@ -312,6 +312,9 @@ function lockImpl(
 
     operation.attempt(() => {
       acquireLock(canonicalFile, resolvedOptions, (err, mtime, mtimePrecision) => {
+        if (err?.code === 'EACCES' || err?.code === 'EROFS')
+          return callback(err);
+
         if (operation.retry(err || undefined))
           return;
 
