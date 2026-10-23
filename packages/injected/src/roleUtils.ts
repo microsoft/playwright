@@ -566,14 +566,11 @@ function parseCSSContentPropertyAsString(element: Element, content: string, isPs
 }
 
 export function getAriaLabelledByElements(element: Element): Element[] | null {
-  const ref = element.getAttribute('aria-labelledby');
-  if (ref === null)
-    return null;
-  const refs = getIdRefs(element, ref);
+  const refs = element.ariaLabelledByElements;
   // step 2b:
   // "if the current node has an aria-labelledby attribute that contains at least one valid IDREF"
   // Therefore, if none of the refs match an element, we consider aria-labelledby to be missing.
-  return refs.length ? refs : null;
+  return refs?.length ? [...refs] : null;
 }
 
 function allowsNameFromContent(role: string, targetDescendant: boolean) {
