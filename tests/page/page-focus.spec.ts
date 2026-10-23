@@ -208,8 +208,9 @@ it('FO-010 keeps focus on element when attempting to focus a non-focusable eleme
   ]);
 });
 
-it('FO-011 should move focus from an iframe to its parent', async ({ page, server }) => {
+it('FO-011 should move focus from an iframe to its parent', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43280' });
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43506' });
   server.setRoute('/frame.html', (req, res) => {
     res.setHeader('content-type', 'text/html');
     res.end(`<input id=inner>`);
@@ -221,6 +222,16 @@ it('FO-011 should move focus from an iframe to its parent', async ({ page, serve
   await page.evaluate(() => (document.getElementById('outer') as HTMLInputElement).focus());
   await expect(page.locator('#outer')).toBeFocused();
   expect(await page.frameLocator('iframe').locator('#inner').evaluate(e => e === document.activeElement)).toBe(false);
+
+  await it.step('should move focus from the parent into its iframe', async step => {
+    step.skip(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/43506');
+    await page.evaluate(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+      document.querySelector('iframe').contentDocument.querySelector('input').focus();
+    });
+    await expect(page.locator('iframe')).toBeFocused();
+    expect(await page.frameLocator('iframe').locator('#inner').evaluate(e => e === document.activeElement)).toBe(true);
+  });
 });
 
 it('FO-012 should tab from an iframe to its parent', async ({ page, server }) => {
