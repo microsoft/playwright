@@ -21,6 +21,7 @@ import { headersArrayToObject, headersObjectToArray, splitSetCookieHeader } from
 import { findMatchingHttpCredentials } from '../browserContext';
 import { helper } from '../helper';
 import * as network from '../network';
+import { Page } from '../page';
 import { isProtocolError, isSessionClosedError } from '../protocolError';
 
 import type { CRSession } from './crConnection';
@@ -28,7 +29,6 @@ import type { Protocol } from './protocol';
 import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as contexts from '../browserContext';
 import type * as frames from '../frames';
-import type { Page } from '../page';
 import type * as types from '../types';
 import type { HttpCredentials } from '@protocol/structs';
 import type { CRPage } from './crPage';
@@ -62,6 +62,7 @@ export class CRNetworkManager {
   constructor(page: Page | null, serviceWorker: CRServiceWorker | null) {
     this._page = page;
     this._serviceWorker = serviceWorker;
+    page?.on(Page.Events.FrameDetached, frame => this.invalidateResponseBodies(frame));
   }
 
   async addSession(session: CRSession, workerFrame?: frames.Frame, isMain?: boolean) {
@@ -108,6 +109,15 @@ export class CRNetworkManager {
     this._sessions.delete(session);
     for (const request of this._page?.networkRequests() ?? [])
       InterceptableRequest.detachIfNeeded(request, session);
+  }
+
+  invalidateResponseBodies(frame: frames.Frame, documentId?: string) {
+    for (const request of this._requestIdToRequest.values()) {
+      if (request.request.frame() === frame && request._loaderId && (!documentId || request._loaderId === documentId)) {
+        request._bodyUnavailable = true;
+        request.request._existingResponse()?.setBodyUnavailable();
+      }
+    }
   }
 
   private async _forEachSession(cb: (sessionInfo: SessionInfo) => Promise<any>) {
@@ -411,6 +421,8 @@ export class CRNetworkManager {
       };
     }
     const response = new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody, !!responsePayload.fromServiceWorker);
+    if (request._bodyUnavailable)
+      response.setBodyUnavailable();
     response._setHttpVersion(responsePayload?.protocol ?? null);
     if (responsePayload?.remoteIPAddress && typeof responsePayload?.remotePort === 'number') {
       response._serverAddrFinished({
@@ -583,12 +595,14 @@ class InterceptableRequest {
   readonly _requestId: string;
   readonly _interceptionId: string | undefined;
   readonly _documentId: string | undefined;
+  readonly _loaderId: string;
   readonly _timestamp: number;
   readonly _wallTime: number;
   // Only first request in the chain can be intercepted, so this will
   // store the first and only Route in the chain (if any).
   readonly _originalRequestRoute: RouteImpl | undefined;
   session: CRSession;
+  _bodyUnavailable = false;
 
   private static from(request: network.Request): InterceptableRequest | undefined {
     return (request as any)[kInterceptableRequest];
@@ -662,6 +676,7 @@ class InterceptableRequest {
     this._requestId = requestWillBeSentEvent.requestId;
     this._interceptionId = requestPausedEvent && requestPausedEvent.requestId;
     this._documentId = documentId;
+    this._loaderId = requestWillBeSentEvent.loaderId;
     this._originalRequestRoute = route ?? redirectedFrom?._originalRequestRoute;
 
     const {

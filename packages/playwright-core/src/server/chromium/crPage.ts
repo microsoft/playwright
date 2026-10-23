@@ -689,6 +689,10 @@ class FrameSession {
   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
     if (this._eventBelongsToStaleFrame(framePayload.id))
       return;
+    const frame = this._page.frameManager.frame(framePayload.id)!;
+    const previousDocumentId = frame._currentDocument.documentId;
+    if (previousDocumentId && previousDocumentId !== framePayload.loaderId)
+      this._crPage._networkManager.invalidateResponseBodies(frame, previousDocumentId);
     this._page.frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url + (framePayload.urlFragment || ''), framePayload.name || '', framePayload.loaderId, initial);
     if (!initial)
       this._firstNonInitialNavigationCommittedFulfill();

@@ -111,7 +111,9 @@ it('NE-036 should throw when requesting body of redirected response', async ({ p
   expect(error.message).toContain('Response body is unavailable for redirect responses');
 });
 
-it('NE-037 should wait until response completes', async ({ page, server }) => {
+it('NE-037 should wait until response completes', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43508' },
+}, async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   // Setup server to trap request.
   let serverResponse = null;
@@ -143,6 +145,16 @@ it('NE-037 should wait until response completes', async ({ page, server }) => {
   // Finish response.
   await new Promise(x => serverResponse.end('ld!', x));
   expect(await responseText).toBe('hello world!');
+
+  const [interruptedResponse] = await Promise.all([
+    page.waitForResponse(server.PREFIX + '/get'),
+    page.evaluate(() => fetch('./get')),
+  ]);
+  const interruptedText = interruptedResponse.text().catch(error => error);
+  await page.goto('about:blank');
+  const error = await interruptedText;
+  expect(error).toBeInstanceOf(Error);
+  expect(error.message).toContain('navigated away');
 });
 
 it('NE-038 should return json', async ({ page, server }) => {
