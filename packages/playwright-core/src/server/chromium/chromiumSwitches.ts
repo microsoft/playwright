@@ -32,6 +32,8 @@ const disabledFeatures = [
   // Chromium 155 aborts preflighted cross-origin redirects with net::ERR_ABORTED while
   // Fetch interception is enabled. See https://github.com/microsoft/playwright/issues/43242
   'AvoidCorsURLLoaderRestartOnRedirect',
+  // Avoids intermittent ERR_NO_BUFFER_SPACE failures on Windows (https://crbug.com/572515601).
+  'TcpPortRandomizationWin',
   // Prevents downloading optimization hints on startup.
   'OptimizationHints',
   // Prevents network time queries to clients2.google.com on startup.
