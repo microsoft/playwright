@@ -52,7 +52,7 @@ jobs:
           PROMPT=$(cat <<PROMPT_EOF
           Come up with a verdict on the CI test failures on pull request #${PR_NUMBER} of ${TARGET_REPO}: are they likely caused by this PR? Follow the pr-ci-triage guide (.github/workflows/pr-ci-triage.md) for the analysis.
 
-          Write your verdict to output/triage.md as a PR comment, in the format the guide specifies and the bot voice register (.github/workflows/bot-voice.md).
+          Write your verdict to output/triage.md as a PR comment, in the format the guide specifies and the bot voice register (.claude/skills/playwright-triage/bot-voice.md).
 
           Do not post anything yourself — a later workflow step posts output/triage.md.
           PROMPT_EOF
@@ -63,7 +63,7 @@ jobs:
             --no-ask-user \
             --enable-all-github-mcp-tools \
             --share=output/copilot-session.md \
-            --model gpt-5.6-sol \
+            --model gpt-6.1-sol \
             --max-ai-credits 500 \
             -p "$PROMPT"
 

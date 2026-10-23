@@ -83,7 +83,6 @@ test('networkidle resolves with an open EventSource', { annotation: { type: 'iss
 - variations: headed and headless; `goto({waitUntil:'networkidle'})` and
   `waitForLoadState('networkidle')` — both hang; closing the stream server-side lets it resolve
 - raw `npx playwright test` output …
-- full run: <link to the GitHub Actions workflow run, when available>
 </details>
 ~~~
 
