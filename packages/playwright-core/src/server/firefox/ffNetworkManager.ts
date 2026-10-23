@@ -212,6 +212,19 @@ const internalCauseToResourceType: {[key: string]: network.ResourceType} = {
   TYPE_INTERNAL_EVENTSOURCE: 'eventsource',
 };
 
+// Since Firefox 155, Juggler reports the default User-Agent in request headers even when
+// the context overrides it, although the override is what Firefox sends over the network.
+// Report the override, so that route.fetch() and route.continue({ headers }) send it too.
+function withUserAgentOverride(headers: types.HeadersArray, defaultUserAgent: string, userAgent: string | undefined): types.HeadersArray {
+  if (!userAgent || userAgent === defaultUserAgent)
+    return headers;
+  return headers.map(header => {
+    if (header.name.toLowerCase() === 'user-agent' && header.value === defaultUserAgent)
+      return { name: header.name, value: userAgent };
+    return header;
+  });
+}
+
 class InterceptableRequest {
   readonly request: network.Request;
   readonly _id: string;
@@ -224,8 +237,9 @@ class InterceptableRequest {
     let postDataBuffer = null;
     if (payload.postData)
       postDataBuffer = Buffer.from(payload.postData, 'base64');
-    this.request = new network.Request(frame._page.browserContext, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
-        payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, payload.headers);
+    const context = frame._page.browserContext;
+    this.request = new network.Request(context, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
+        payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, withUserAgentOverride(payload.headers, context._browser.userAgent(), context._options.userAgent));
     // "raw" headers are the same as "provisional" headers in Firefox.
     this.request.setRawRequestHeaders(null);
   }
