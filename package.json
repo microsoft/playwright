@@ -122,7 +122,7 @@
     "debug": "4.4.3",
     "diff": "9.0.0",
     "dotenv": "17.4.2",
-    "electron": "42.11.3",
+    "electron": "42.11.16",
     "enquirer": "2.4.1",
     "esbuild": "0.28.1",
     "eslint": "9.39.4",
