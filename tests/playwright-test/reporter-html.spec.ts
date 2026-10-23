@@ -1179,8 +1179,11 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(popup.url()).toBe(server.EMPTY_PAGE);
     });
 
-    test('should render text attachments as text', async ({ runInlineTest, page, showReport }) => {
+    test('should render text attachments as text', {
+      annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43555' },
+    }, async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
+        'log.txt': 'stderr attachment',
         'a.test.js': `
           import { test, expect } from '@playwright/test';
           test('passing', async ({ page }, testInfo) => {
@@ -1207,6 +1210,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
               contentType: 'text/plain, charset=utf16le',
               body: null,
             });
+
+            await testInfo.attach('stdout', { body: 'stdout attachment' });
+            await testInfo.attach('stderr', { path: 'log.txt' });
           });
         `,
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
@@ -1217,7 +1223,13 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByText('example.txt', { exact: true }).click();
       await page.getByText('example.json', { exact: true }).click();
       await page.getByText('example-utf16.txt', { exact: true }).click();
-      await expect(page.locator('.attachment-body')).toHaveText(['foo', '{"foo":1}', 'utf16 encoded']);
+      await page.getByText('stdout', { exact: true }).click();
+      await expect(page.locator('.attachment-body')).toHaveText(['foo', '{"foo":1}', 'utf16 encoded', 'stdout attachment']);
+
+      const downloadPromise = page.waitForEvent('download');
+      await page.getByRole('link', { name: 'stderr', exact: true }).click();
+      const download = await downloadPromise;
+      expect(await readAllFromStream(await download.createReadStream())).toEqual(Buffer.from('stderr attachment'));
     });
 
     test('should have link for opening HTML attachments in new tab', async ({ runInlineTest, page, showReport }) => {
