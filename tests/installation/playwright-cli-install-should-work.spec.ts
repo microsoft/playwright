@@ -228,6 +228,31 @@ test('install playwright-chromium should work', async ({ exec }) => {
   await exec('node sanity.js playwright-chromium chromium');
 });
 
+test('should fail early with read-only browsers path', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43606' },
+}, async ({ exec, childProcess, tmpWorkspace }, testInfo) => {
+  test.skip(process.platform === 'win32' || process.getuid?.() === 0);
+
+  await exec('npm i playwright');
+
+  const browsersPath = testInfo.outputPath('readonly-browsers');
+  await fs.promises.mkdir(browsersPath, { mode: 0o555 });
+  const installer = childProcess({
+    command: [process.execPath, path.join(tmpWorkspace, 'node_modules', 'playwright', 'cli.js'), 'install', 'chromium'],
+    cwd: tmpWorkspace,
+    env: { PLAYWRIGHT_BROWSERS_PATH: browsersPath },
+  });
+  try {
+    await expect.poll(() => ({ exitCode: installer.process.exitCode, output: installer.output }), { timeout: 10_000 }).toEqual({
+      exitCode: 1,
+      output: expect.stringContaining(`EACCES: permission denied, mkdir '${path.join(browsersPath, '__dirlock')}'`),
+    });
+  } finally {
+    await installer.kill();
+    await fs.promises.chmod(browsersPath, 0o755);
+  }
+});
+
 test('should print error if recording video without ffmpeg', async ({ exec, writeFiles }) => {
   await exec('npm i playwright');
 
