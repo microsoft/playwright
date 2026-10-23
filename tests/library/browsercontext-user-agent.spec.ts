@@ -34,6 +34,19 @@ it('UA-001 should work', async ({ browser, server }) => {
       page.goto(server.EMPTY_PAGE),
     ]);
     expect(request.headers['user-agent']).toBe('foobar');
+
+    // https://github.com/microsoft/playwright/issues/43597
+    let routedUserAgent: string | undefined;
+    await page.route('**/fetched', async route => {
+      routedUserAgent = route.request().headers()['user-agent'];
+      await route.fulfill({ response: await route.fetch() });
+    });
+    const [fetchedRequest] = await Promise.all([
+      server.waitForRequest('/fetched'),
+      page.evaluate(() => fetch('/fetched')),
+    ]);
+    expect(routedUserAgent).toBe('foobar');
+    expect(fetchedRequest.headers['user-agent']).toBe('foobar');
     await context.close();
   }
 });
