@@ -19,6 +19,8 @@ import debug from 'debug';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { ManualPromise } from '@isomorphic/manualPromise';
+import { monotonicTime } from '@isomorphic/time';
+import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { eventsHelper } from '@utils/eventsHelper';
 import { disposeAll } from '@isomorphic/disposable';
 import { waitForCompletion, eventWaiter } from './utils';
@@ -322,7 +324,10 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     let consoleCounts = { total: 0, errors: 0, warnings: 0 };
     if (!this.crashed) {
       await this._raceAgainstModalStates(async () => {
-        title = await this.page.title();
+        // A page whose main frame never gets an execution context (url "", load state "commit") never resolves
+        // title(); do not let it block every command of the session.
+        const titleResult = await raceAgainstDeadline(() => this.page.title(), monotonicTime() + 3000);
+        title = titleResult.timedOut ? undefined : titleResult.result;
       });
       consoleCounts = await this.consoleMessageCount();
     }
