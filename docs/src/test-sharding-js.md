@@ -115,7 +115,7 @@ jobs:
 
     - name: Upload blob report to GitHub Actions Artifacts
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: blob-report-${{ matrix.shardIndex }}
         path: blob-report
@@ -152,7 +152,7 @@ jobs:
       run: npx playwright merge-reports --reporter html ./all-blob-reports
 
     - name: Upload HTML report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: html-report--attempt-${{ github.run_attempt }}
         path: playwright-report
