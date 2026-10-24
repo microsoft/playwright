@@ -20,6 +20,7 @@ import path from 'path';
 
 import sourceMapSupport from 'source-map-support';
 import { calculateSha1 } from '@utils/crypto';
+import { debugLogger } from '@utils/debugLogger';
 
 import { isWorkerProcess } from '../globals';
 import { packageRoot } from '../package';
@@ -39,10 +40,11 @@ export type SerializedCompilationCache = {
 // Assumptions for the compilation cache:
 // - Files in the temp directory we work with can disappear at any moment, either some of them or all together.
 // - Multiple workers can be trying to read from the compilation cache at the same time.
-// - There is a single invocation of the test runner at a time.
+// - Multiple test runner invocations can read and write the same cache entries.
 //
 // Therefore, we implement the following logic:
 // - Never assume that file is present, always try to read it to determine whether it's actually present.
+// - Cache write failures must not prevent using the code we have already compiled.
 // - Never write to the cache from worker processes to avoid "multiple writers" races.
 // - Since we perform all static imports in the runner beforehand, most of the time
 //   workers should be able to read from the cache.
@@ -155,11 +157,16 @@ export function getFromCompilationCache(filename: string, contentHash: string, m
       if (isWorkerProcess())
         return {};
       // Trim cache. This won't help with deleted files, but it will remove storing multiple copies of the same file
-      clearOldCacheEntries(cacheFolderName, filePathHash);
-      fs.mkdirSync(path.dirname(cachePath), { recursive: true });
-      if (map)
-        fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
-      writeCodeCache(codePath, code);
+      clearOldCacheEntries(cacheFolderName, filePathHash, hashPrefix);
+      try {
+        fs.mkdirSync(path.dirname(cachePath), { recursive: true });
+        if (map)
+          fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
+        writeCodeCache(codePath, code);
+      } catch (error) {
+        debugLogger.log('error', `failed to write cache entry for ${filename}: ${error}`);
+        return {};
+      }
       const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, moduleUrl });
       return { serializedCache };
     }
@@ -195,10 +202,10 @@ function calculateCachePath(filePath: string, cacheFolderName: string, hashPrefi
   return path.join(cacheDir, cacheFolderName, fileName);
 }
 
-function clearOldCacheEntries(cacheFolderName: string, filePathHash: string) {
+function clearOldCacheEntries(cacheFolderName: string, filePathHash: string, hashPrefix: string) {
   const cachePath = path.join(cacheDir, cacheFolderName);
   try {
-    const cachedRelevantFiles = fs.readdirSync(cachePath).filter(file => file.startsWith(filePathHash));
+    const cachedRelevantFiles = fs.readdirSync(cachePath).filter(file => file.startsWith(filePathHash) && !file.startsWith(hashPrefix + '_'));
     for (const file of cachedRelevantFiles)
       fs.rmSync(path.join(cachePath, file), { force: true });
   } catch {
