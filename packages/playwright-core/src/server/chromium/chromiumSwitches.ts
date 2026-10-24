@@ -88,6 +88,8 @@ export const chromiumSwitches = (options?: { android?: boolean }) => [
   '--disable-search-engine-choice-screen',
   // https://issues.chromium.org/41491762
   '--unsafely-disable-devtools-self-xss-warnings',
+  // See https://issues.chromium.org/issues/40277080
+  '--enable-unsafe-swiftshader',
   // Edge can potentially restart on Windows (msRelaunchNoCompatLayer) which looses its file descriptors (stdout/stderr) and CDP (3/4). Disable until fixed upstream.
   '--edge-skip-compat-layer-relaunch',
   // Chrome for Testing enables the stack sampling profiler, which crashes the browser on Windows

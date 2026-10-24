@@ -374,9 +374,6 @@ export class Chromium extends BrowserType {
       throw new Error('Arguments can not specify page to be opened');
     const chromeArguments = [...chromiumSwitches()];
 
-    // See https://issues.chromium.org/issues/40277080
-    chromeArguments.push('--enable-unsafe-swiftshader');
-
     if (options.headless) {
       chromeArguments.push('--headless');
 

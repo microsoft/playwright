@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import os from 'os';
-
 import { wrapInASCIIBox } from '@utils/ascii';
 import { RecentLogsCollector } from '@utils/debugLogger';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
@@ -114,11 +112,6 @@ export class BidiChromium extends BrowserType {
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
     const chromeArguments = [...chromiumSwitches()];
-
-    if (os.platform() === 'darwin') {
-      // See https://issues.chromium.org/issues/40277080
-      chromeArguments.push('--enable-unsafe-swiftshader');
-    }
 
     if (options.headless) {
       chromeArguments.push('--headless');
