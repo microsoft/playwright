@@ -197,6 +197,7 @@ export class Page extends SdkObject<PageEventMap> {
   private _locatorHandlers = new Map<number, { selector: string, noWaitAfter?: boolean, resolved?: ManualPromise<void> }>();
   private _lastLocatorHandlerUid = 0;
   private _locatorHandlerRunningCounter = 0;
+  private _locatorHandlerPendingCallbacks = new Set<number>();
   private _networkRequests: network.Request[] = [];
 
   readonly overlay: Overlay;
@@ -531,6 +532,7 @@ export class Page extends SdkObject<PageEventMap> {
   }
 
   resolveLocatorHandler(uid: number, remove: boolean | undefined) {
+    this._locatorHandlerPendingCallbacks.delete(uid);
     const handler = this._locatorHandlers.get(uid);
     if (remove)
       this._locatorHandlers.delete(uid);
@@ -571,12 +573,13 @@ export class Page extends SdkObject<PageEventMap> {
 
   private async _performLocatorHandlersCheckpoint(progress: Progress) {
     // Do not run locator handlers from inside locator handler callbacks to avoid deadlocks.
-    if (this._locatorHandlerRunningCounter)
+    if (this._locatorHandlerRunningCounter || this._locatorHandlerPendingCallbacks.size)
       return;
     for (const [uid, handler] of this._locatorHandlers) {
       if (!handler.resolved) {
         if (await this.mainFrame().isVisibleInternal(progress, { selector: handler.selector, strict: true })) {
           handler.resolved = new ManualPromise();
+          this._locatorHandlerPendingCallbacks.add(uid);
           this.emit(Page.Events.LocatorHandlerTriggered, uid);
         }
       }
