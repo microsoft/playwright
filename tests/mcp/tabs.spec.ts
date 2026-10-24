@@ -202,3 +202,24 @@ test('tabs in the same isolated context share storage', async ({ client, server 
   await newTab('default');
   expect(await getCookie()).toHaveResponse({ result: `"user=default"` });
 });
+
+test('list tabs when a page title never resolves', async ({ client }) => {
+  await createTab(client, 'Tab one', 'Body one');
+  // Stands in for a page whose main frame never gets an execution context (url "", load state "commit"),
+  // seen after connectOverCDP to a long-running browser: its title() never settles.
+  await client.callTool({
+    name: 'browser_run_code_unsafe',
+    arguments: {
+      code: `async page => { page.context().pages()[0].title = () => new Promise(() => {}); }`,
+    },
+  });
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: {
+      action: 'list',
+    },
+  })).toHaveResponse({
+    result: `- 0: [](about:blank)
+- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
+  });
+});
