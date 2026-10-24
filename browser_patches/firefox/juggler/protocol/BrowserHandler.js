@@ -202,8 +202,8 @@ export class BrowserHandler {
     this._targetRegistry.browserContextForId(browserContextId).setIgnoreHTTPSErrors(nullToUndefined(ignoreHTTPSErrors));
   }
 
-  ['Browser.setDownloadOptions']({browserContextId, downloadOptions}) {
-    this._targetRegistry.browserContextForId(browserContextId).downloadOptions = nullToUndefined(downloadOptions);
+  async ['Browser.setDownloadOptions']({browserContextId, downloadOptions}) {
+    await this._targetRegistry.browserContextForId(browserContextId).setDownloadOptions(nullToUndefined(downloadOptions));
   }
 
   async ['Browser.setGeolocationOverride']({browserContextId, geolocation}) {
@@ -249,6 +249,10 @@ export class BrowserHandler {
 
   async ['Browser.setJavaScriptDisabled']({browserContextId, javaScriptDisabled}) {
     await this._targetRegistry.browserContextForId(browserContextId).applySetting('javaScriptDisabled', nullToUndefined(javaScriptDisabled));
+  }
+
+  async ['Browser.setIsolatedWorldExtendedPrincipal']({browserContextId, extendedPrincipal}) {
+    await this._targetRegistry.browserContextForId(browserContextId).applySetting('isolatedWorldExtendedPrincipal', extendedPrincipal);
   }
 
   async ['Browser.setLocaleOverride']({browserContextId, locale}) {
