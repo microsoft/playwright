@@ -50,6 +50,36 @@ test('should clear cache for ct', async ({ runCLICommand }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should load tests when cache writes fail', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43601' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.cjs': `
+      const fs = require('fs');
+      const writeFileSync = fs.writeFileSync;
+      fs.writeFileSync = function(file, ...args) {
+        if (String(file).endsWith('_mapspec.map') || String(file).endsWith('_codespec.js')) {
+          console.log('denied cache write: ' + require('path').extname(file));
+          throw Object.assign(new Error('cache write denied'), { code: 'EPERM' });
+        }
+        return writeFileSync.call(this, file, ...args);
+      };
+      module.exports = {};
+    `,
+    'map.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('map', () => expect(1).toBe(1));
+    `,
+    'code.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('code', () => expect(2).toBe(2));
+    `,
+  }, { list: true });
+  expect(result.output).toContain('denied cache write: .map');
+  expect(result.output).toContain('denied cache write: .js');
+  expect(result.output).toContain('Total: 2 tests in 2 files');
+  expect(result.exitCode).toBe(0);
+});
+
 test('should automatically clean cached versions of a changed file', async ({ runInlineTest, writeFiles }) => {
   const cacheDir = test.info().outputPath('playwright-test-cache');
   await runInlineTest({
