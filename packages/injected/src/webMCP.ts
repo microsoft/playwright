@@ -114,7 +114,7 @@ export class WebMCPScript {
   private _parseInputSchema(inputSchema: unknown): unknown {
     // Chromium before 155 hands the schema back as a JSON string.
     if (typeof inputSchema !== 'string')
-      return inputSchema;
+      return inputSchema ?? undefined;
     try {
       return JSON.parse(inputSchema);
     } catch {
