@@ -240,8 +240,10 @@ export class AndroidDevice extends SdkObject {
       timeout: params.timeout || 0,
     };
     if (params.androidSelector) {
-      params.selector = params.androidSelector;
+      params.selector = normalizeSelector(params.androidSelector);
       delete params.androidSelector;
+    } else if (params.selector) {
+      params.selector = normalizeSelector(params.selector);
     }
     const driver = await this._driver();
     if (!driver || this._isClosed)
@@ -550,4 +552,33 @@ class ClankBrowserProcess implements BrowserProcess {
   async close(): Promise<void> {
     await this._browser.close();
   }
+}
+
+export function normalizeSelector(selector: any): any {
+  if (!selector || typeof selector !== 'object')
+    return selector;
+  const result: any = { ...selector };
+  if (result.androidSelector) {
+    result.selector = normalizeSelector(result.androidSelector);
+    delete result.androidSelector;
+  }
+  if (result.hasChild) {
+    const child = result.hasChild;
+    result.hasChild = {
+      ...child,
+      selector: normalizeSelector(child.selector || child.androidSelector),
+    };
+    delete result.hasChild.androidSelector;
+  }
+  if (result.hasDescendant) {
+    const desc = result.hasDescendant;
+    result.hasDescendant = {
+      ...desc,
+      selector: normalizeSelector(desc.selector || desc.androidSelector),
+    };
+    delete result.hasDescendant.androidSelector;
+    if (result.hasDescendant.maxDepth !== undefined && result.maxDepth === undefined)
+      result.maxDepth = result.hasDescendant.maxDepth;
+  }
+  return result;
 }
