@@ -21,7 +21,7 @@ permissions:
 jobs:
   test_mac:
     name: ${{ matrix.os }} (${{ matrix.browser }})
-    if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
+    if: &cq1 ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
     strategy:
       fail-fast: false
       matrix:
@@ -40,7 +40,7 @@ jobs:
 
   test_win:
     name: windows-large - ${{ matrix.browser }}
-    if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
+    if: *cq1
     strategy:
       fail-fast: false
       matrix:
@@ -57,7 +57,7 @@ jobs:
 
   test-package-installations-other-node-versions:
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
-    if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
+    if: *cq1
     runs-on: ${{ matrix.os  }}
     strategy:
       fail-fast: false
@@ -87,7 +87,7 @@ jobs:
 
   test_linux:
     name: ${{ matrix.os }} (${{ matrix.browser }}${{ matrix.node-version != 22 && format(' - Node.js {0}', matrix.node-version) || '' }})
-    if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
+    if: *cq1
     strategy:
       fail-fast: false
       matrix:
@@ -113,7 +113,7 @@ jobs:
 
   test_clock_frozen_time_linux:
     name: time library - ${{ matrix.clock }}
-    if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
+    if: *cq1
     strategy:
       fail-fast: false
       matrix:
@@ -132,7 +132,7 @@ jobs:
 
   test_test_runner:
     name: Test Runner - ubuntu-large - Node.js ${{ matrix.node-version }}
-    if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
+    if: *cq1
     strategy:
       fail-fast: false
       matrix:
@@ -149,6 +149,7 @@ jobs:
 
   tracing_linux:
     name: Tracing ${{ matrix.browser }}
+    if: *cq1
     strategy:
       fail-fast: false
       matrix:
@@ -166,6 +167,7 @@ jobs:
 
   test_chromium_channels:
     name: Test ${{ matrix.channel }} on ${{ matrix.runs-on }}
+    if: *cq1
     runs-on: ${{ matrix.runs-on }}
     strategy:
       fail-fast: false
@@ -195,6 +197,7 @@ jobs:
 
   test_android:
     name: Android - ubuntu-large
+    if: *cq1
     runs-on: playwright-x64-ubuntu24-64-core
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -222,6 +225,7 @@ jobs:
 
   test_electron:
     name: Electron - ${{ matrix.os }}
+    if: *cq1
     strategy:
       fail-fast: false
       matrix:
