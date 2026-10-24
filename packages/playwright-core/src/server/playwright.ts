@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Android } from './android/android';
+import { Android, normalizeSelector } from './android/android';
 import { AdbBackend } from './android/backendAdb';
 import { BidiChromium } from './bidi/bidiChromium';
 import { BidiFirefox } from './bidi/bidiFirefox';
@@ -78,3 +78,5 @@ export class Playwright extends SdkObject {
 export function createPlaywright(options: PlaywrightOptions) {
   return new Playwright(options);
 }
+
+export { normalizeSelector };

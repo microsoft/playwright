@@ -24,7 +24,7 @@ export { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
 export { PageDispatcher, WorkerDispatcher } from './dispatchers/pageDispatcher';
 export { Request, Response } from './network';
 export { Page, Worker } from './page';
-export { createPlaywright } from './playwright';
+export { createPlaywright, normalizeSelector } from './playwright';
 export { nullProgress } from './progress';
 export { WebSocketTransport } from './transport';
 export { installRootRedirect, openTraceInBrowser, openTraceViewerApp, startTraceViewerServer, runTraceViewerApp } from './trace/viewer/traceViewer';
