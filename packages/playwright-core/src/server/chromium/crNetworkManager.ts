@@ -280,6 +280,14 @@ export class CRNetworkManager {
         });
         return;
       }
+      if (existingRequest && !existingRequest._interceptionId && !event.redirectedRequestId) {
+        // The request was reported while interception was disabled, so it has no route.
+        // It can still be paused if interception is enabled again before the request
+        // reaches the network, for example when a service worker holds it. Nothing else
+        // will continue it, so continue it now.
+        sessionInfo.session._sendMayFail('Fetch.continueRequest', { requestId: event.requestId });
+        return;
+      }
       this._requestIdToRequestPausedEvent.set(requestId, { sessionInfo, event });
     }
   }

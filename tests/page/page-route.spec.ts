@@ -1204,3 +1204,23 @@ it('RO-056 should respect URLPattern ignoreCase', async ({ page, server }) => {
   expect(await response!.text()).toBe('mock');
   expect(intercepted).toEqual(['ignoreCase']);
 });
+
+it('RO-202 should continue a request reported while interception was disabled', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43619' },
+}, async ({ page, server, isElectron }) => {
+  it.skip(isElectron);
+
+  await page.goto(server.PREFIX + '/serviceworkers/slow-fallback/sw.html');
+  await page.evaluate(() => window['activationPromise']);
+
+  const handler = route => route.fulfill({ body: 'mocked' });
+  await page.route('**/never-requested', handler);
+  await page.unroute('**/never-requested');
+  // The service worker holds the request, so it reaches the network
+  // after interception is enabled again.
+  const requestPromise = page.waitForRequest('**/simple.json');
+  const bodyPromise = page.evaluate(() => fetch('/simple.json').then(response => response.text()));
+  await requestPromise;
+  await page.route('**/never-requested', handler);
+  expect(await bodyPromise).toBe('{"foo": "bar"}\n');
+});
