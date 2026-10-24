@@ -34,4 +34,5 @@ export function setupExitWatchdog() {
   process.stdin.on('close', () => handleExit('close'));
   process.on('SIGINT', () => handleExit('SIGINT'));
   process.on('SIGTERM', () => handleExit('SIGTERM'));
+  process.on('SIGHUP', () => handleExit('SIGHUP'));
 }

@@ -145,7 +145,11 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   };
   const spawnedProcess = childProcess.spawn(options.command, options.args || [], spawnOptions);
 
+  let cleanedUp = false;
   const cleanup = async () => {
+    if (cleanedUp)
+      return;
+    cleanedUp = true;
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] starting temporary directories cleanup`);
     const errors = await removeFolders(options.tempDirectories);
     for (let i = 0; i < options.tempDirectories.length; ++i) {
@@ -184,6 +188,13 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   let processClosed = false;
   let fulfillCleanup = () => {};
   const waitForCleanup = new Promise<void>(f => fulfillCleanup = f);
+  spawnedProcess.once('exit', () => {
+    // Fallback cleanup if close does not fire due to inherited file descriptors.
+    setTimeout(() => {
+      cleanup().then(fulfillCleanup);
+    }, 1000);
+  });
+
   spawnedProcess.once('close', (exitCode, signal) => {
     options.log(`[pid=${spawnedProcess.pid}] <process did exit: exitCode=${exitCode}, signal=${signal}>`);
     processClosed = true;
@@ -260,8 +271,9 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] finished temporary directories cleanup`);
   }
 
-  function killAndWait() {
+  async function killAndWait() {
     killProcess();
+    await cleanup().then(fulfillCleanup);
     return waitForCleanup;
   }
 
