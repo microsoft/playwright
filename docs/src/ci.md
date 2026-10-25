@@ -353,6 +353,7 @@ jobs:
     if: github.event.deployment_status.state == 'success'
     steps:
     - uses: actions/checkout@v6
+    - name: Set up Python
       uses: actions/setup-python@v6
       with:
         python-version: '3.13'
