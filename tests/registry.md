@@ -309,6 +309,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `AR-168` | `library/role-utils.spec.ts` | should resolve css content property for an element |
 | `AR-169` | `library/role-utils.spec.ts` | should ignore invalid aria-labelledby |
 | `AR-170` | `library/role-utils.spec.ts` | should support search element |
+| `AR-171` | `page/page-aria-snapshot-ai.spec.ts` | should stitch iframe snapshot when iframe has fallback content |
 
 ### AT — Add script and style tags
 
