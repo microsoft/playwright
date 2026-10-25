@@ -25,8 +25,6 @@ playwright-cli unroute "**/*.jpg"
 playwright-cli unroute
 ```
 
-Routes without a body or status modify request headers, then pass the request to the remaining routes. Allowed and blocked origin settings still apply.
-
 ## URL Patterns
 
 ```
