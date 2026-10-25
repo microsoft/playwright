@@ -101,7 +101,7 @@ const domStandalone = (dom: string) => dom;
 const domInButton = (dom: string, options?: Options) => `<button ${optionsToAttributes(options)}>Button ${dom}</button>`;
 const domInLink = (dom: string, options?: Options) => `<button ${optionsToAttributes(options)}>Button ${dom}</button>`;
 
-it('RE-007 enabled/disabled retargeting', async ({ page, asset }) => {
+it('RE-007 enabled/disabled retargeting', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43634' } }, async ({ page, asset }) => {
   const cases = [
     { dom: domInLabel(`<input id=target>`), enabled: true, locator: 'label' },
     { dom: domLabelFor(`<input id=target>`), enabled: true, locator: 'label' },
@@ -118,6 +118,8 @@ it('RE-007 enabled/disabled retargeting', async ({ page, asset }) => {
     { dom: domInLink(`<input id=target disabled>`), enabled: false, locator: 'input' },
     { dom: domInButton(`<input id=target disabled>`, { disabled: true }), enabled: false, locator: 'input' },
     { dom: domInLabel(`<li role=menuitem id=target aria-disabled=true></li>`), enabled: false, locator: 'li' },
+    { dom: domInLabel(`<select><option disabled>Other employees</option><option>Alex</option></select>`), enabled: false, locator: 'option >> nth=0' },
+    { dom: domInLabel(`<select><optgroup disabled label="Other employees"><option>Alex</option></optgroup></select>`), enabled: false, locator: 'optgroup' },
   ];
   for (const { dom, enabled, locator } of cases) {
     await it.step(`"${locator}" in "${dom}" should be enabled=${enabled}`, async () => {
