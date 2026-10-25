@@ -685,7 +685,7 @@ export class InjectedScript {
         element = element.closest('button, [role=button], [role=checkbox], [role=radio]') || element;
     }
     if (behavior === 'follow-label') {
-      if (!element.matches('a, input, textarea, button, select, [role=link], [role=button], [role=checkbox], [role=radio]') &&
+      if (!element.matches('a, input, textarea, button, select, option, optgroup, [role=link], [role=button], [role=checkbox], [role=radio]') &&
         !(element as any).isContentEditable) {
         // Go up to the label that might be connected to the input/textarea.
         const enclosingLabel: HTMLLabelElement | null = element.closest('label');
