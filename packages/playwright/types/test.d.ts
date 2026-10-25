@@ -9546,8 +9546,6 @@ interface LocatorAssertions {
    * that only native control elements such as HTML `button`, `input`, `select`, `textarea`, `option`, `optgroup` can be
    * disabled by setting "disabled" attribute. "disabled" attribute on other elements is ignored by the browser.
    *
-   * Options and option groups are checked directly, even when their `select` is inside a `label`.
-   *
    * **Usage**
    *
    * ```js
