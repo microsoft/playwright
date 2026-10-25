@@ -66,7 +66,7 @@ const route = defineTool({
         return;
       }
 
-      // Otherwise, modify headers and continue
+      // Otherwise, modify headers and fall back to the remaining routes
       const headers = { ...route.request().headers() };
       if (addHeaders) {
         // Header names are case-insensitive, and request headers use lowercase names.
@@ -77,7 +77,7 @@ const route = defineTool({
         for (const header of removeHeaders)
           delete headers[header.toLowerCase()];
       }
-      await route.continue({ headers });
+      await route.fallback({ headers });
     };
 
     const entry: RouteEntry = {
