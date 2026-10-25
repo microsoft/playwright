@@ -143,7 +143,16 @@ test('browser_route mocks response with custom headers', async ({ client, server
   });
 });
 
-test('browser_route modifies request headers', async ({ client, server }) => {
+test('browser_route modifies request headers', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43630' },
+}, async ({ startClient, server, httpsServer }) => {
+  const { client } = await startClient({
+    args: [
+      '--ignore-https-errors',
+      '--allowed-origins', `${server.PREFIX};${httpsServer.PREFIX}`,
+      '--blocked-origins', httpsServer.PREFIX,
+    ],
+  });
   let receivedHeaders: Record<string, string> = {};
   server.setRoute('/api/check', (req, res) => {
     receivedHeaders = req.headers as Record<string, string>;
@@ -164,7 +173,7 @@ test('browser_route modifies request headers', async ({ client, server }) => {
   await client.callTool({
     name: 'browser_route',
     arguments: {
-      pattern: '**/api/check',
+      pattern: '**',
       headers: ['X-Custom-Header: test-value'],
     },
   });
@@ -177,6 +186,16 @@ test('browser_route modifies request headers', async ({ client, server }) => {
 
   await requestPromise;
   expect(receivedHeaders['x-custom-header']).toBe('test-value');
+
+  for (const url of [httpsServer.EMPTY_PAGE, server.CROSS_PROCESS_PREFIX + '/empty.html']) {
+    expect.soft(await client.callTool({
+      name: 'browser_navigate',
+      arguments: { url },
+    })).toHaveResponse({
+      isError: true,
+      error: expect.stringMatching(/Blocked by Web Inspector|NS_ERROR_FAILURE|net::ERR_BLOCKED_BY_CLIENT/),
+    });
+  }
 });
 
 for (const { title, headers, removeHeaders, expected } of [
