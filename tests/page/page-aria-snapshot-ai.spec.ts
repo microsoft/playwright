@@ -99,7 +99,9 @@ it('AR-051 should limit depth across iframe boundary', async ({ page }) => {
   expect(snapshot).not.toContain('button');
 });
 
-it('AR-052 should stitch all frame snapshots', async ({ page, server }) => {
+it('AR-052 should stitch all frame snapshots', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43628' },
+}, async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   const snapshot = await snapshotForAI(page);
   expect(snapshot).toContainYaml(`
@@ -140,6 +142,12 @@ it('AR-052 should stitch all frame snapshots', async ({ page, server }) => {
     const error = await page.getByRef('e1000').normalize().catch(e => e);
     expect(error.message).toContain(`No element matching aria-ref=e1000`);
   }
+
+  await page.locator('iframe').evaluateAll(iframes => {
+    for (const iframe of iframes)
+      iframe.textContent = 'Your browser does not support frames';
+  });
+  expect(await snapshotForAI(page)).toBe(snapshot);
 });
 
 it('AR-053 should re-number refs across navigations but not same-document navigations', async ({ page, server }) => {
