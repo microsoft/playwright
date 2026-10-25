@@ -15,7 +15,7 @@
  */
 
 import { contextTest as it, expect } from '../../config/browserTest';
-import { attachFrame } from '../../config/utils';
+import { attachFrame, rafraf } from '../../config/utils';
 import type { Frame, Browser } from '@playwright/test';
 
 it.use({
@@ -177,10 +177,12 @@ it('OO-011 should respect route', async ({ page, browser, server }) => {
 });
 
 it('OO-012 should take screenshot', async ({ page, browser, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43584' });
   await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   await assertOOPIFCount(browser, 1);
+  await rafraf(page.frames()[1]);
   expect(await page.screenshot()).toMatchSnapshot('screenshot-oopif.png');
 });
 
