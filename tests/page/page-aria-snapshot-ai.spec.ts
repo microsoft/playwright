@@ -142,6 +142,21 @@ it('AR-052 should stitch all frame snapshots', async ({ page, server }) => {
   }
 });
 
+it('AR-171 should stitch iframe snapshot when iframe has fallback content', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43628' },
+}, async ({ page }) => {
+  await page.setContent(`
+    <iframe srcdoc="<button>Inside</button>">Your browser does not support frames</iframe>
+  `);
+
+  const snapshot = await snapshotForAI(page);
+  expect(snapshot).toContainYaml(`
+    - iframe [ref=e2]:
+      - button "Inside" [ref=f1e2]
+  `);
+  expect(snapshot).not.toContain('Your browser does not support frames');
+});
+
 it('AR-053 should re-number refs across navigations but not same-document navigations', async ({ page, server }) => {
   server.setRoute('/one.html', (req, res) => {
     res.setHeader('Content-Type', 'text/html');

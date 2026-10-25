@@ -1169,8 +1169,10 @@ export async function ariaSnapshotJSONForFrame(progress: Progress, frame: frames
       return;
     if (node.role === 'iframe' && typeof node.ref === 'string') {
       const childSnapshot = childSnapshots[renderedIframeRefs.indexOf(node.ref)];
-      if (childSnapshot?.length)
+      if (childSnapshot?.length) {
+        delete node.text;
         node.children = childSnapshot;
+      }
       return;
     }
     (node.children || []).forEach(mergeIframeChildren);
