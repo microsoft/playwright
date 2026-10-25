@@ -4528,6 +4528,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `RO-199` | `library/unroute-behavior.spec.ts` | route.fulfill should not throw if page has been closed |
 | `RO-200` | `library/unroute-behavior.spec.ts` | should not continue requests in flight (page) |
 | `RO-201` | `library/unroute-behavior.spec.ts` | should not continue requests in flight (context) |
+| `RO-202` | `page/page-route.spec.ts` | should continue a request reported while interception was disabled |
 
 ### SC — Screencast
 

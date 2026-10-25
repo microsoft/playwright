@@ -1,0 +1,4 @@
+<script>
+  window.registrationPromise = navigator.serviceWorker.register('sw.js');
+  window.activationPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
+</script>
