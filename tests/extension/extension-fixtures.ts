@@ -19,16 +19,20 @@ import os from 'os';
 import path from 'path';
 import { chromium } from 'playwright';
 import { spawn } from 'child_process';
+import type { ChildProcess } from 'child_process';
 import { test as base, expect } from '../mcp/fixtures';
 import { kTargetClosedErrorMessage } from '../config/errors';
 
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import type { BrowserContext, Page } from 'playwright';
+import type { Browser, BrowserContext, Page } from 'playwright';
 import type { StartClient } from '../mcp/fixtures';
 
 export type BrowserWithExtension = {
   userDataDir: string;
-  launch: (mode?: 'disable-extension') => Promise<BrowserContext>;
+  // 'unmanaged' starts the browser as a plain process and connects to it with
+  // `noDefaults`, so the test's own connection does not emulate focus in its
+  // pages. Use it to check what the relay itself does to hidden tabs.
+  launch: (mode?: 'disable-extension' | 'unmanaged') => Promise<BrowserContext>;
 };
 
 export type CliResult = {
@@ -59,24 +63,30 @@ export const test = base.extend<TestFixtures>({
     test.skip('chromium' !== mcpBrowser, '--load-extension is not supported for official builds of Chromium');
 
     let browserContext: BrowserContext | undefined;
+    let unmanagedBrowser: { process: ChildProcess, browser: Browser } | undefined;
     const userDataDir = testInfo.outputPath('extension-user-data-dir');
     // --load-extension does not populate Default/Extensions/<id>; create the folder
     // so the relay's extension-installed check recognizes the test profile.
     await fs.mkdir(path.join(userDataDir, 'Default', 'Extensions', extensionId), { recursive: true });
     await use({
       userDataDir,
-      launch: async (mode?: 'disable-extension') => {
-        browserContext = await chromium.launchPersistentContext(userDataDir, {
-          channel: mcpBrowser,
-          // Opening the browser singleton only works in headed.
-          headless: false,
-          // Automation disables singleton browser process behavior, which is necessary for the extension.
-          ignoreDefaultArgs: ['--enable-automation'],
-          args: mode === 'disable-extension' ? [] : [
-            `--disable-extensions-except=${pathToExtension}`,
-            `--load-extension=${pathToExtension}`,
-          ],
-        });
+      launch: async (mode?: 'disable-extension' | 'unmanaged') => {
+        if (mode === 'unmanaged') {
+          unmanagedBrowser = await launchUnmanaged(userDataDir, pathToExtension);
+          browserContext = unmanagedBrowser.browser.contexts()[0];
+        } else {
+          browserContext = await chromium.launchPersistentContext(userDataDir, {
+            channel: mcpBrowser,
+            // Opening the browser singleton only works in headed.
+            headless: false,
+            // Automation disables singleton browser process behavior, which is necessary for the extension.
+            ignoreDefaultArgs: ['--enable-automation'],
+            args: mode === 'disable-extension' ? [] : [
+              `--disable-extensions-except=${pathToExtension}`,
+              `--load-extension=${pathToExtension}`,
+            ],
+          });
+        }
 
         // MV3 service workers start lazily; wait for the extension's
         // background to be ready so tests can reach `chrome.*` via it.
@@ -86,7 +96,18 @@ export const test = base.extend<TestFixtures>({
         return browserContext;
       }
     });
-    await browserContext?.close();
+    if (unmanagedBrowser) {
+      const { browser, process: browserProcess } = unmanagedBrowser;
+      await browser.close().catch(() => {});
+      // The browser may have exited already, for example after a crash.
+      if (browserProcess.exitCode === null && browserProcess.signalCode === null) {
+        const exited = new Promise(resolve => browserProcess.once('exit', resolve));
+        browserProcess.kill();
+        await exited;
+      }
+    } else {
+      await browserContext?.close();
+    }
 
     // Free up disk space.
     await fs.rm(userDataDir, { recursive: true, force: true }).catch(() => {});
@@ -184,6 +205,35 @@ async function runCli(
       childProcess.on('error', reject);
     });
   });
+}
+
+async function launchUnmanaged(userDataDir: string, pathToExtension: string): Promise<{ process: ChildProcess, browser: Browser }> {
+  const portFile = path.join(userDataDir, 'DevToolsActivePort');
+  const browserProcess = spawn(chromium.executablePath(), [
+    `--user-data-dir=${userDataDir}`,
+    '--remote-debugging-port=0',
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--use-mock-keychain',
+    '--password-store=basic',
+    '--disable-component-extensions-with-background-pages',
+    ...(process.platform === 'linux' ? ['--no-sandbox'] : []),
+    `--disable-extensions-except=${pathToExtension}`,
+    `--load-extension=${pathToExtension}`,
+    'about:blank',
+  ], { stdio: 'ignore' });
+  let port: string | undefined;
+  for (let i = 0; i < 300 && !port; i++) {
+    port = await fs.readFile(portFile, 'utf8').then(text => text.split('\n')[0], () => undefined);
+    if (!port)
+      await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  if (!port) {
+    browserProcess.kill();
+    throw new Error('Browser did not start');
+  }
+  const browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`, { noDefaults: true });
+  return { process: browserProcess, browser };
 }
 
 export async function startWithExtensionFlag(browserWithExtension: BrowserWithExtension, startClient: StartClient, env?: Record<string, string>): Promise<Client> {

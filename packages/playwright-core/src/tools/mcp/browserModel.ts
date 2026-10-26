@@ -68,6 +68,7 @@ export class BrowserModel {
   private _knownTabs = new Map<number, Tab>();
   // Subset of _knownTabs we've attached the debugger to and assigned a sessionId.
   private _tabSessions = new Map<number, TabSession>();
+  private _pendingAttaches = new Map<number, Promise<TabSession>>();
   private _autoAttach = false;
   private _nextSessionId = 1;
 
@@ -139,7 +140,8 @@ export class BrowserModel {
   }
 
   async createTarget(url: string | undefined): Promise<{ targetId: string | undefined }> {
-    const tab = await this._sendToExtension('chrome.tabs.create', [{ url }]);
+    // The browser belongs to the user: open client tabs without activating them.
+    const tab = await this._sendToExtension('chrome.tabs.create', [{ url, active: false }]);
     if (tab?.id === undefined)
       throw new Error('Failed to create tab');
     this._knownTabs.set(tab.id, tab);
@@ -203,12 +205,30 @@ export class BrowserModel {
     const existing = this._tabSessions.get(tabId);
     if (existing)
       return existing;
+    // One attach per tab: a second chrome.debugger.attach to the same tab fails.
+    let pending = this._pendingAttaches.get(tabId);
+    if (!pending) {
+      pending = this._doAttachTab(tabId).finally(() => this._pendingAttaches.delete(tabId));
+      this._pendingAttaches.set(tabId, pending);
+    }
+    return await pending;
+  }
+
+  private async _doAttachTab(tabId: number): Promise<TabSession> {
     await this._sendToExtension('chrome.debugger.attach', [{ tabId }, '1.3']);
     const result = await this._sendToExtension('chrome.debugger.sendCommand', [
       { tabId },
       'Target.getTargetInfo',
     ]);
     const targetInfo = result?.targetInfo;
+    // Client tabs are usually hidden behind the user's tab. A hidden tab gets
+    // no animation frames and drops key and mouse input; with focus emulated it
+    // renders and takes input like the active tab.
+    await this._sendToExtension('chrome.debugger.sendCommand', [
+      { tabId },
+      'Emulation.setFocusEmulationEnabled',
+      { enabled: true },
+    ]).catch(logUnhandledError);
     const sessionId = `pw-tab-${this._nextSessionId++}`;
     const tabSession: TabSession = { tabId, sessionId, targetInfo, childSessions: new Set() };
     this._tabSessions.set(tabId, tabSession);
