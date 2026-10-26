@@ -172,7 +172,10 @@ export class CRBrowser extends Browser {
     if (targetInfo.type === 'browser')
       return;
     const session = this._session.createChildSession(sessionId);
-    assert(targetInfo.browserContextId, 'targetInfo: ' + JSON.stringify(targetInfo, null, 2));
+    if (!targetInfo.browserContextId) {
+      session.detach().catch(() => {});
+      return;
+    }
     let context = this._contexts.get(targetInfo.browserContextId) || null;
     if (!context) {
       // TODO: auto attach only to pages from our contexts.

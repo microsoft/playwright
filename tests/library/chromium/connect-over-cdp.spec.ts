@@ -919,3 +919,45 @@ test('CD-036 should connect over CDP using a ConnectionTransport', async ({ brow
     await browserServer.close();
   }
 });
+
+test('CD-053 should ignore targets without browserContextId', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43638' },
+}, async ({ browserType, mode, server }, testInfo) => {
+  test.skip(mode !== 'default', 'Passing a transport to connectOverCDP is only available in-process');
+
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const json = await new Promise<string>((resolve, reject) => {
+      http.get(`http://127.0.0.1:${port}/json/version/`, resp => {
+        let data = '';
+        resp.on('data', chunk => data += chunk);
+        resp.on('end', () => resolve(data));
+      }).on('error', reject);
+    });
+    const wsEndpoint = JSON.parse(json).webSocketDebuggerUrl;
+    const wsTransport = await WebSocketTransport.connect(undefined, wsEndpoint);
+    const transport = {
+      send: (message: any) => wsTransport.send(message),
+      close: () => wsTransport.close(),
+      onmessage: undefined as ((message: any) => void) | undefined,
+      onclose: undefined as ((reason?: string) => void) | undefined,
+    };
+    wsTransport.onmessage = message => {
+      if (message.method === 'Target.attachedToTarget' && message.params.targetInfo.type === 'shared_worker')
+        delete message.params.targetInfo.browserContextId;
+      transport.onmessage?.(message);
+    };
+    wsTransport.onclose = reason => transport.onclose?.(reason);
+    const cdpBrowser = await browserType.connectOverCDP(transport);
+    const page = await cdpBrowser.contexts()[0].newPage();
+    await page.goto(server.PREFIX + '/shared-worker/shared-worker.html');
+    expect(await page.evaluate(() => (window as any).sharedWorkerResponsePromise)).toBe('echo:hello');
+    expect(cdpBrowser.isConnected()).toBe(true);
+    await cdpBrowser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
