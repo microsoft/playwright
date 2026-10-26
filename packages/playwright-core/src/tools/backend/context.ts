@@ -21,6 +21,7 @@ import path from 'path';
 import debug from 'debug';
 import { escapeRegExp, escapeWithQuotes } from '@isomorphic/stringUtils';
 import { disposeAll } from '@isomorphic/disposable';
+import { ListenerErrorScope } from '@isomorphic/listenerErrorScope';
 import { eventsHelper } from '@utils/eventsHelper';
 import { isPathInside, isSystemDirectory, isWritable, resolveSymlinks, sanitizeForFilePath } from '@utils/fileUtils';
 import { playwright } from '../../inprocess';
@@ -143,6 +144,7 @@ export class Context {
     for (const listener of this._unhandledRejectionListeners)
       listener(reason);
   };
+  readonly runCodeListenerErrors = new ListenerErrorScope(this._onUnhandledRejection);
 
   constructor(browserContext: playwrightTypes.BrowserContext, options: ContextOptions) {
     this.config = options.config;
@@ -161,6 +163,7 @@ export class Context {
   }
 
   async dispose() {
+    this.runCodeListenerErrors.dispose();
     process.off('unhandledRejection', this._onUnhandledRejection);
     await this.stopRecording();
     await this.stopVideoRecording();

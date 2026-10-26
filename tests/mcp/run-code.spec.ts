@@ -84,6 +84,28 @@ test('browser_run_code_unsafe', async ({ client, server }) => {
   expect(content).toContain('[LOG] Submit');
 });
 
+test('browser_run_code_unsafe async listener error remains observable after returning', async ({ client, server }) => {
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
+  const registration = await client.callTool({
+    name: 'browser_run_code_unsafe',
+    arguments: { code: `page => {
+      page.once('requestfinished', async () => {
+        throw new Error('MCP_LISTENER_ASYNC_1803');
+      });
+      return 'registered';
+    }` },
+  });
+  expect(registration.isError).toBeFalsy();
+  const observation = await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX + '/async-listener' },
+  });
+  expect(JSON.stringify(observation)).toContain('MCP_LISTENER_ASYNC_1803');
+  const followUp = await client.callTool({ name: 'browser_tabs', arguments: { action: 'list' } });
+  expect(followUp.isError).toBeFalsy();
+  expect(JSON.stringify(followUp)).not.toContain('MCP_LISTENER_ASYNC_1803');
+});
+
 test('browser_run_code_unsafe block', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="console.log('Submit')">Submit</button>

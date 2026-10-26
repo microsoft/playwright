@@ -25,6 +25,7 @@
 import { EventEmitter as NodeEventEmitter } from 'events';
 
 import { isUnderTest } from '@utils/debug';
+import { ListenerErrorScope } from '@isomorphic/listenerErrorScope';
 
 import type { EventEmitter as EventEmitterType } from 'events';
 
@@ -82,7 +83,14 @@ export class EventEmitter implements EventEmitterType {
   }
 
   private _callHandler(type: EventType, handler: Listener, args: any[]): void {
-    const promise = Reflect.apply(handler, this, args);
+    let promise;
+    try {
+      promise = Reflect.apply(handler, this, args);
+    } catch (error) {
+      if (!ListenerErrorScope.tryHandle(unwrapListener(handler), error))
+        throw error;
+      return;
+    }
     if (!(promise instanceof Promise))
       return;
     let set = this._pendingHandlers.get(type);

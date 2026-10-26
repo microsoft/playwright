@@ -59,6 +59,8 @@ const runCode = defineTabTool({
     for (const name of exposedGlobals)
       context[name] = globalThis[name as keyof typeof globalThis];
     vm.createContext(context);
+    // Keep callback errors observable after this tool returns, without changing host listeners.
+    tab.context.runCodeListenerErrors.register(vm.runInContext('Function.prototype', context));
     // User-installed callbacks (e.g. page.route handlers) can throw
     // asynchronously while __fn__ awaits an operation that depends on them
     // (e.g. a page.evaluate awaiting a fetch the route never fulfills).
