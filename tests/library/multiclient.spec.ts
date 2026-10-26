@@ -442,3 +442,33 @@ test('MC-019 should not deliver an action buffered before the second recording s
   expect(recorderA.selectors).toEqual(['internal:role=button[name="Before"i]']);
   expect(recorderB.selectors).toEqual(['internal:role=button[name="After"i]']);
 });
+
+test('MC-020 should run locator handlers after reconnecting with a pending callback', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43607' },
+}, async ({ connect, remoteServer, server }) => {
+  const browser = await connect(remoteServer.wsEndpoint());
+  const page = await browser.newPage();
+  await page.goto(server.PREFIX + '/input/handle-locator.html');
+
+  let called = 0;
+  await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
+    ++called;
+    await new Promise(() => {});
+  });
+  await page.evaluate(() => {
+    (window as any).setupAnnoyingInterstitial('none', 1);
+  });
+  const error = await page.locator('#target').click({ timeout: 1000 }).catch(e => e);
+  expect(error.message).toContain('Timeout 1000ms exceeded');
+  expect(called).toBe(1);
+
+  await disconnect(page);
+
+  const reconnectedBrowser = await connect(remoteServer.wsEndpoint());
+  const reconnectedPage = reconnectedBrowser.contexts()[0].pages()[0];
+  await reconnectedPage.addLocatorHandler(reconnectedPage.getByText('This interstitial covers the button'), async () => {
+    await reconnectedPage.locator('#close').click();
+  });
+  await reconnectedPage.locator('#target').click({ timeout: 3000 });
+  expect(await reconnectedPage.evaluate('window.clicked')).toBe(1);
+});

@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
+import { iso } from '../../packages/playwright-core/lib/coreBundle';
 import { test, expect } from './pageTest';
+
+const { ManualPromise } = iso;
 
 test('LH-001 should work', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
@@ -120,14 +123,19 @@ test('LH-004 should not work with force:true', async ({ page, server }) => {
   expect(await page.evaluate('window.clicked')).toBe(undefined);
 });
 
-test('LH-005 should throw when handler times out', async ({ page, server }) => {
+test('LH-005 should throw when handler times out', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43607' },
+}, async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   let called = 0;
+  const releaseHandler = new ManualPromise();
+  const handlerFinished = new ManualPromise<Error | void>();
   await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
     ++called;
     // Deliberately timeout.
-    await new Promise(() => {});
+    await releaseHandler;
+    handlerFinished.resolve(await page.locator('#close').click({ timeout: 3000 }).catch(e => e));
   });
 
   await page.locator('#aside').hover();
@@ -143,6 +151,9 @@ test('LH-005 should throw when handler times out', async ({ page, server }) => {
 
   // Should not enter the same handler while it is still running.
   expect(called).toBe(1);
+
+  releaseHandler.resolve();
+  expect(await handlerFinished).toBeUndefined();
 });
 
 test('LH-006 should work with toBeVisible', async ({ page, server }) => {
