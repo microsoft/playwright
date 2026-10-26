@@ -1,0 +1,274 @@
+# Copilot addresses the maintainers' review comments on a draft PR that the triage workflow opened,
+# without write credentials. A fresh job pushes the new commit to the PR's branch using the app,
+# so CI runs on it.
+name: PR revision
+
+on:
+  # Apply needs-revision, needs-revision-mac or needs-revision-win; re-apply it to trigger another pass.
+  # pull_request_target always runs this file from main; the jobs only accept the triage app's own PRs.
+  pull_request_target:
+    types: [labeled]
+
+permissions: {}
+
+jobs:
+  prepare:
+    name: Collect the maintainers' comments
+    if: >-
+      github.repository == 'microsoft/playwright' &&
+      contains(fromJSON('["needs-revision","needs-revision-mac","needs-revision-win"]'), github.event.label.name) &&
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.user.login == 'microsoft-playwright-automation[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    outputs:
+      head: ${{ steps.collect.outputs.head }}
+      base: ${{ steps.collect.outputs.base }}
+      branch: ${{ steps.collect.outputs.branch }}
+      platform: ${{ steps.collect.outputs.platform }}
+    steps:
+    - name: Collect the PR and the maintainers' comments
+      id: collect
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          const { RUNNER_TEMP, RUN_URL } = process.env;
+          const { owner, repo } = context.repo;
+          const pull_number = context.payload.pull_request.number;
+          const platform = { 'needs-revision': 'linux', 'needs-revision-mac': 'mac', 'needs-revision-win': 'windows' }[context.payload.label.name];
+          const dir = path.join(RUNNER_TEMP, 'review');
+          fs.mkdirSync(dir, { recursive: true });
+
+          const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
+          const { data: { merge_base_commit: base } } = await github.rest.repos.compareCommitsWithBasehead({ owner, repo, basehead: `${pr.base.ref}...${pr.head.sha}` });
+          const commits = await github.paginate(github.rest.pulls.listCommits, { owner, repo, pull_number, per_page: 100 });
+          const { repository: { pullRequest: data } } = await github.graphql(`
+            query($owner: String!, $repo: String!, $number: Int!) {
+              repository(owner: $owner, name: $repo) {
+                pullRequest(number: $number) {
+                  comments(last: 100) { totalCount nodes { author { __typename login } body createdAt url } }
+                  reviews(last: 100) { totalCount nodes { author { __typename login } body state createdAt url } }
+                  reviewThreads(last: 100) {
+                    totalCount
+                    nodes {
+                      isResolved isOutdated path line originalLine
+                      comments(first: 100) { totalCount nodes { author { __typename login } body createdAt url diffHunk } }
+                    }
+                  }
+                }
+              }
+            }`, { owner, repo, number: pull_number });
+          for (const [name, connection] of [['comments', data.comments], ['reviews', data.reviews], ['review threads', data.reviewThreads], ...data.reviewThreads.nodes.map(t => [`comments in a thread on ${t.path}`, t.comments])]) {
+            if (connection.totalCount > connection.nodes.length)
+              core.warning(`Read only ${connection.nodes.length} of ${connection.totalCount} ${name}`);
+          }
+
+          // Only people with write access count as maintainers. The agent never sees anyone else's comments.
+          const maintainers = new Map();
+          const isMaintainer = async author => {
+            if (author?.__typename !== 'User')
+              return false;
+            if (!maintainers.has(author.login)) {
+              const { data } = await github.rest.repos.getCollaboratorPermissionLevel({ owner, repo, username: author.login }).catch(() => ({ data: {} }));
+              maintainers.set(author.login, ['admin', 'write'].includes(data.permission));
+            }
+            return maintainers.get(author.login);
+          };
+          const comment = c => ({ author: c.author.login, createdAt: c.createdAt, url: c.url, body: c.body });
+
+          const comments = [];
+          for (const c of data.comments.nodes) {
+            if (await isMaintainer(c.author))
+              comments.push({ kind: 'comment', ...comment(c) });
+          }
+          for (const r of data.reviews.nodes) {
+            if (r.body.trim() && await isMaintainer(r.author))
+              comments.push({ kind: 'review', state: r.state, ...comment(r) });
+          }
+          for (const t of data.reviewThreads.nodes) {
+            if (t.isResolved)
+              continue;
+            const thread = [];
+            for (const c of t.comments.nodes) {
+              if (await isMaintainer(c.author))
+                thread.push(comment(c));
+            }
+            if (thread.length)
+              comments.push({ kind: 'thread', path: t.path, line: t.line ?? t.originalLine, outdated: t.isOutdated, diffHunk: t.comments.nodes[0].diffHunk, createdAt: thread[0].createdAt, comments: thread });
+          }
+          comments.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+          if (!comments.length)
+            throw new Error('There are no comments from maintainers to address, other than in resolved threads');
+
+          fs.writeFileSync(path.join(dir, 'review.json'), JSON.stringify({
+            url: pr.html_url,
+            title: pr.title,
+            body: pr.body,
+            head: pr.head.sha,
+            base: base.sha,
+            commits: commits.map(c => ({ sha: c.sha, date: c.commit.committer.date, message: c.commit.message })),
+            comments,
+          }, null, 2));
+          core.setOutput('head', pr.head.sha);
+          core.setOutput('base', base.sha);
+          core.setOutput('branch', pr.head.ref);
+          core.setOutput('platform', platform);
+
+          const platformName = { linux: 'Linux', mac: 'macOS', windows: 'Windows' }[platform];
+          await github.rest.issues.createComment({
+            owner, repo, issue_number: pull_number,
+            body: `Hi, I'm the Playwright bot. I started to address the review comments on ${platformName}: [agent run](${RUN_URL})\n<!-- playwright-revision-started -->`,
+          }).catch(e => core.warning(`Could not post the run link: ${e.message}`));
+    - name: Upload the review
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: review
+        path: ${{ runner.temp }}/review
+
+  revise:
+    name: Revise PR ${{ github.event.pull_request.number }} (${{ needs.prepare.outputs.platform }})
+    needs: prepare
+    runs-on: ${{ fromJSON('{"linux":"playwright-x64-ubuntu24-64-core","mac":"macos-15-xlarge","windows":"playwright-x64-server2025-64-core"}')[needs.prepare.outputs.platform] }}
+    timeout-minutes: 240
+    concurrency:
+      group: revision-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    defaults:
+      run:
+        shell: bash
+    env:
+      PR: ${{ github.event.pull_request.number }}
+      HEAD_SHA: ${{ needs.prepare.outputs.head }}
+      BASE_SHA: ${{ needs.prepare.outputs.base }}
+      TRIAGE_PLATFORM: ${{ needs.prepare.outputs.platform }}
+    permissions:
+      copilot-requests: write
+    outputs:
+      has_revision: ${{ steps.save.outputs.has_revision }}
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ needs.prepare.outputs.head }}
+        persist-credentials: false
+    - name: Fetch the base and record the directories
+      run: |
+        git fetch --no-tags --depth=1 origin "$BASE_SHA"
+        echo "OUTPUT_DIR=${RUNNER_TEMP//\\//}/revision" >> "$GITHUB_ENV"
+        echo "REVIEW_DIR=${RUNNER_TEMP//\\//}/review" >> "$GITHUB_ENV"
+        echo "SCRATCH_DIR=${RUNNER_TEMP//\\//}/scratch" >> "$GITHUB_ENV"
+        echo "PLAYWRIGHT_DIR=${GITHUB_WORKSPACE//\\//}" >> "$GITHUB_ENV"
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: review
+        path: ${{ runner.temp }}/review
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: '24'
+    - name: Install Playwright dependencies and browsers
+      run: |
+        mkdir -p "$OUTPUT_DIR" "$SCRATCH_DIR"
+        npm ci
+        npm install -g @github/copilot
+        npm run build
+        npx playwright install --with-deps chromium firefox webkit
+    - name: Revise with Copilot CLI
+      id: agent
+      # A finished revision is still useful if the session exhausts its budget.
+      continue-on-error: true
+      env:
+        COPILOT_GITHUB_TOKEN: ${{ github.token }}
+      # No GitHub tools and no URL access: the agent reads the PR only from the review the prepare job filtered.
+      run: |
+        copilot \
+          --allow-all-tools \
+          --allow-all-paths \
+          --no-ask-user \
+          --disable-builtin-mcps \
+          --share="$OUTPUT_DIR/copilot-session.md" \
+          --model gpt-6.1-sol \
+          --max-ai-credits 5000 \
+          -p "Follow .claude/skills/playwright-revision/SKILL.md. Read it in full before starting.
+
+        Pull request: https://github.com/microsoft/playwright/pull/$PR"
+    - name: Save the outcome
+      id: save
+      if: always()
+      env:
+        AGENT_OUTCOME: ${{ steps.agent.outcome }}
+      run: |
+        mkdir -p "$OUTPUT_DIR"
+        if [[ -f "$OUTPUT_DIR/commit/commit.json" ]]; then
+          echo "has_revision=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "has_revision=false" >> "$GITHUB_OUTPUT"
+        fi
+        echo "Copilot step: $AGENT_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
+        if [[ -f "$OUTPUT_DIR/summary.md" ]]; then
+          cat "$OUTPUT_DIR/summary.md" >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "No summary was produced; see the session artifact." >> "$GITHUB_STEP_SUMMARY"
+        fi
+    - name: Upload the revision
+      if: always()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: revision
+        path: ${{ env.OUTPUT_DIR }}
+        if-no-files-found: warn
+
+  push:
+    name: Push the revision
+    needs: [prepare, revise]
+    # commit.json is written last, so a finished revision is pushed even when the job failed later.
+    if: ${{ !cancelled() && needs.revise.outputs.has_revision == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      id: app-token
+      with:
+        client-id: ${{ vars.PLAYWRIGHT_APP_CLIENT_ID }}
+        private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ needs.prepare.outputs.head }}
+        token: ${{ steps.app-token.outputs.token }}
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: revision
+        path: ${{ runner.temp }}/revision
+    # Never execute code or scripts from the proposed changes in the app job.
+    - name: Validate and push
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        BRANCH: ${{ needs.prepare.outputs.branch }}
+        PR: ${{ github.event.pull_request.number }}
+      with:
+        github-token: ${{ steps.app-token.outputs.token }}
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          const { execFileSync } = require('child_process');
+          const { BRANCH, PR, RUNNER_TEMP } = process.env;
+          const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+          const dir = path.join(RUNNER_TEMP, 'revision', 'commit');
+          const { owner, repo } = context.repo;
+          git('apply', '--index', path.join(dir, 'revision.patch'));
+
+          // Workflow changes would run with this repo's secrets in PR CI.
+          const workflowFiles = git('diff', '--cached', '--name-only', '--no-renames', '-z').split('\0').filter(file => file.startsWith('.github/'));
+          if (workflowFiles.length)
+            throw new Error(`Patch changes workflow files, treating it as compromised: ${workflowFiles.join(', ')}`);
+
+          const { title, body } = JSON.parse(fs.readFileSync(path.join(dir, 'commit.json'), 'utf8'));
+          git('config', 'user.name', 'microsoft-playwright-automation[bot]');
+          git('config', 'user.email', '203992400+microsoft-playwright-automation[bot]@users.noreply.github.com');
+          git('commit', '-m', title, ...(body ? ['-m', body] : []));
+          // Not a force push: it fails if the branch moved after the review was collected.
+          git('push', 'origin', `HEAD:refs/heads/${BRANCH}`);
+          await core.summary.addRaw(`Pushed https://github.com/${owner}/${repo}/pull/${PR}/commits/${git('rev-parse', 'HEAD')}\n`).write();
