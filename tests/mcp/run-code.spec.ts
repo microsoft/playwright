@@ -18,6 +18,52 @@ import fs from 'fs';
 
 import { test, expect, parseResponse, consoleEntries } from './fixtures';
 
+test('browser_run_code_unsafe listener exception after returning keeps server alive', async ({ startClient, server }, testInfo) => {
+  let releaseRequest: (() => void) | undefined;
+  const heldRequest = new Promise<void>(resolve => {
+    server.setRoute('/listener-trigger', async (_request, response) => {
+      await new Promise<void>(release => {
+        releaseRequest = release;
+        resolve();
+      });
+      response.end('done');
+    });
+  });
+  const { client, stderr } = await startClient();
+  try {
+    await client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
+    const registration = await client.callTool({
+      name: 'browser_run_code_unsafe',
+      arguments: { code: `async page => {
+        page.on('requestfinished', request => {
+          if (!request.url().endsWith('/listener-trigger')) return;
+          page.__listenerFired = true;
+          throw new Error('MCP_LISTENER_SYNC_1803');
+        });
+        await page.evaluate(() => { void fetch('/listener-trigger'); });
+        return 'registered';
+      }` },
+    });
+    expect(registration.isError).toBeFalsy();
+    expect(JSON.stringify(registration)).toContain('registered');
+    await heldRequest;
+    releaseRequest!();
+    const observation = await client.callTool({
+      name: 'browser_run_code_unsafe',
+      arguments: { code: `async page => {
+        while (!page.__listenerFired) await new Promise(resolve => setTimeout(resolve, 10));
+        return 'listener fired';
+      }` },
+    });
+    const followUp = await client.callTool({ name: 'browser_tabs', arguments: { action: 'list' } });
+    expect(followUp.isError).toBeFalsy();
+    expect(JSON.stringify(observation) + stderr()).toContain('MCP_LISTENER_SYNC_1803');
+  } finally {
+    releaseRequest?.();
+    await testInfo.attach('mcp-listener-stderr', { body: stderr(), contentType: 'text/plain' });
+  }
+});
+
 test('browser_run_code_unsafe', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="console.log('Submit')">Submit</button>
