@@ -73,6 +73,8 @@ export type ContextConfig = {
     initPage?: string[];
   };
   skillMode?: boolean;
+  // Connected to the user's own browser through the Playwright extension.
+  extension?: boolean;
 };
 
 type ContextOptions = {
@@ -213,7 +215,12 @@ export class Context {
     const tab = this._tabs[index];
     if (!tab)
       throw new Error(`Tab ${index} not found`);
-    await tab.page.bringToFront();
+    // The user's own browser: selecting a tab for the client must not take it
+    // over in the user's window. The tab works in the background.
+    if (this.config.extension)
+      testDebug(`not bringing tab ${index} to front in extension mode`);
+    else
+      await tab.page.bringToFront();
     await tab.updateWebMCPTools();
     this._setCurrentTab(tab);
     return tab;
