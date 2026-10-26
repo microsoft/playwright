@@ -937,17 +937,15 @@ test('TR-041 should not emit after w/o before', async ({ browserType, mode }, te
   const page = await context.newPage();
 
   await context.tracing.start({ name: 'name1', snapshots: true });
-  const evaluatePromise = page.evaluate(() => {
-    console.log('started');
-    return new Promise(f => (window as any).callback = f);
-  }).catch(() => {});
-  await page.waitForEvent('console');
+  // The wait spans the chunks: its "before" is in the first chunk, and its "after" must not get into the second one.
+  const consolePromise = page.waitForEvent('console');
+  await page.evaluate(() => 1);
   await context.tracing.stopChunk({ path: testInfo.outputPath('trace1.zip') });
   expect(fs.existsSync(path.join(tracesDir, 'name1.trace'))).toBe(true);
 
   await context.tracing.startChunk({ name: 'name2' });
-  await page.evaluateHandle(() => (window as any).callback());
-  await evaluatePromise;
+  await page.evaluate(() => console.log('started'));
+  await consolePromise;
   await context.tracing.stop({ path: testInfo.outputPath('trace2.zip') });
   expect(fs.existsSync(path.join(tracesDir, 'name2.trace'))).toBe(true);
 
@@ -972,19 +970,20 @@ test('TR-041 should not emit after w/o before', async ({ browserType, mode }, te
       {
         type: 'before',
         callId: expect.any(Number),
+        title: 'Wait for event "console"',
       },
       {
         type: 'before',
         callId: expect.any(Number),
-        title: 'Wait for event "console"',
       },
       {
         type: 'after',
         callId: expect.any(Number),
       },
     ]);
-    call1 = sanitized[0].callId;
+    expect(sanitized[1].callId).toBeGreaterThan(sanitized[0].callId);
     expect(sanitized[1].callId).toBe(sanitized[2].callId);
+    call1 = sanitized[1].callId;
   }
 
   let call2before: number;

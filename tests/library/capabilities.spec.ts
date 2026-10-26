@@ -132,14 +132,15 @@ it('CA-011 should not crash on showDirectoryPicker', async ({ page, server, brow
   await page.goto(server.EMPTY_PAGE);
   // "User activation is required to show a file picker." - so we click first.
   await page.locator('body').click();
-  page.evaluate(async () => {
-    const dir = await (window as any).showDirectoryPicker();
-    return dir.name;
-    // In headless it throws (aborted), in headed it stalls (Test ended) and waits for the picker to be accepted.
-  }).catch(e => expect(e.message).toMatch(/((DOMException|AbortError): .*The user aborted a request|Test ended)/));
+  await page.evaluate(() => {
+    (window as any).showDirectoryPicker().catch(e => { (window as any).__pickerError = String(e); });
+  });
   // The dialog will not be accepted, so we just wait for some time to
   // to give the browser a chance to crash.
   await page.waitForTimeout(3_000);
+  // In headless it throws (aborted), in headed it stalls and waits for the picker to be accepted.
+  const error = await page.evaluate(() => (window as any).__pickerError ?? 'stalled');
+  expect(error).toMatch(/((DOMException|AbortError): .*The user aborted a request|stalled)/);
 });
 
 it('CA-012 should not crash on storage.getDirectory()', {

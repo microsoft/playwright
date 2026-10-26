@@ -106,10 +106,10 @@ it('RO-100 should not throw if request was cancelled by the page', async ({ page
   const interceptPromise = new Promise<Route>(f => interceptCallback = f);
   await page.route('**/data.json', route => interceptCallback(route));
   await page.goto(server.EMPTY_PAGE);
-  page.evaluate(url => {
+  await page.evaluate(url => {
     globalThis.controller = new AbortController();
-    return fetch(url, { signal: globalThis.controller.signal });
-  }, server.PREFIX + '/data.json').catch(() => {});
+    fetch(url, { signal: globalThis.controller.signal }).catch(() => {});
+  }, server.PREFIX + '/data.json');
   const route = await interceptPromise;
   const failurePromise = page.waitForEvent('requestfailed');
   await page.evaluate(() => globalThis.controller.abort());

@@ -230,24 +230,25 @@ it('RO-012 should pause intercepted XHR until continue', async ({ page, server, 
   const routePromise = new Promise(r => resolveRoute = r);
   await page.route('**/global-var.html', async route => resolveRoute(route));
   let xhrFinished = false;
-  const statusPromise = page.evaluate(async () => {
-    const request = new XMLHttpRequest();
-    request.open('GET', '/global-var.html', false);  // `false` makes the request synchronous
-    request.send(null);
-    return request.status;
-  }).then(r => {
-    xhrFinished = true;
-    return r;
+  page.on('requestfinished', request => {
+    if (request.url().endsWith('/global-var.html'))
+      xhrFinished = true;
+  });
+  // The synchronous request blocks the page, so it is started from a timer.
+  await page.evaluate(() => {
+    (window as any).__statusPromise = new Promise(resolve => setTimeout(() => {
+      const request = new XMLHttpRequest();
+      request.open('GET', '/global-var.html', false);  // `false` makes the request synchronous
+      request.send(null);
+      resolve(request.status);
+    }, 0));
   });
   const route = await routePromise;
   // Check that intercepted request is actually paused.
   await new Promise(r => setTimeout(r, 500));
   expect(xhrFinished).toBe(false);
-  const [status] = await Promise.all([
-    statusPromise,
-    (route as any).continue()
-  ]);
-  expect(status).toBe(200);
+  await (route as any).continue();
+  expect(await page.evaluate(() => (window as any).__statusPromise)).toBe(200);
 });
 
 it('RO-013 should pause intercepted fetch request until continue', async ({ page, server }) => {
@@ -255,23 +256,19 @@ it('RO-013 should pause intercepted fetch request until continue', async ({ page
   let resolveRoute;
   const routePromise = new Promise(r => resolveRoute = r);
   await page.route('**/global-var.html', async route => resolveRoute(route));
-  let fetchFinished = false;
-  const statusPromise = page.evaluate(async () => {
-    const response = await fetch('/global-var.html');
-    return response.status;
-  }).then(r => {
-    fetchFinished = true;
-    return r;
+  await page.evaluate(() => {
+    (window as any).__fetchFinished = false;
+    (window as any).__statusPromise = fetch('/global-var.html').then(response => {
+      (window as any).__fetchFinished = true;
+      return response.status;
+    });
   });
   const route = await routePromise;
   // Check that intercepted request is actually paused.
   await new Promise(r => setTimeout(r, 500));
-  expect(fetchFinished).toBe(false);
-  const [status] = await Promise.all([
-    statusPromise,
-    (route as any).continue()
-  ]);
-  expect(status).toBe(200);
+  expect(await page.evaluate(() => (window as any).__fetchFinished)).toBe(false);
+  await (route as any).continue();
+  expect(await page.evaluate(() => (window as any).__statusPromise)).toBe(200);
 });
 
 it('RO-014 should work with custom referer headers', async ({ page, server, browserName, browserMajorVersion }) => {
