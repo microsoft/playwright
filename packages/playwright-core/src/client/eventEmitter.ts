@@ -83,14 +83,7 @@ export class EventEmitter implements EventEmitterType {
   }
 
   private _callHandler(type: EventType, handler: Listener, args: any[]): void {
-    let promise;
-    try {
-      promise = Reflect.apply(handler, this, args);
-    } catch (error) {
-      if (!ListenerErrorScope.tryHandle(unwrapListener(handler), error))
-        throw error;
-      return;
-    }
+    const promise = callListener(handler, this, args);
     if (!(promise instanceof Promise))
       return;
     let set = this._pendingHandlers.get(type);
@@ -390,7 +383,16 @@ class OnceWrapper {
       return;
     this._fired = true;
     this._eventEmitter.removeListener(this._eventType, this.wrapperFunction);
-    return this._listener.apply(this._eventEmitter, args);
+    return callListener(this._listener, this._eventEmitter, args);
+  }
+}
+
+function callListener(listener: Listener, emitter: EventEmitter, args: any[]) {
+  try {
+    return Reflect.apply(listener, emitter, args);
+  } catch (error) {
+    if (!ListenerErrorScope.tryHandle(listener, error))
+      throw error;
   }
 }
 

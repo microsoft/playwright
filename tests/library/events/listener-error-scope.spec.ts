@@ -57,6 +57,9 @@ test('scoped callback handling excludes host errors and stops after disposal', (
   const hostError = new Error('unrelated host error');
   emitter.on('host', () => { throw hostError; });
   expect(() => emitter.emit('host')).toThrow(hostError);
+  emitter.once('once', vm.runInContext('() => {}', realm));
+  emitter.on('removeListener', () => { throw hostError; });
+  expect(() => emitter.emit('once')).toThrow(hostError);
   emitter.on('scoped', vm.runInContext('() => { throw new Error("disposed scope"); }', realm));
   scope.dispose();
   expect(() => emitter.emit('scoped')).toThrow('disposed scope');
