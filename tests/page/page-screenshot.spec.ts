@@ -550,6 +550,25 @@ it.describe('page screenshot', () => {
     ]);
   });
 
+  it('SS-096 should not wait for unused font face with failed local() source', async ({ page, server, browserName }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42986' });
+    it.fixme(browserName === 'webkit', 'Fixed upstream in https://commits.webkit.org/323883@main');
+
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent(`
+      <style>
+      @font-face {
+        font-family: 'pwtest-iconfont';
+        src: local('NoSuchFont'), url('${server.PREFIX}/webfont/iconfont.woff2') format('woff2');
+        unicode-range: U+0400-04FF;
+      }
+      </style>
+      <div style="font-family: 'pwtest-iconfont'">hello</div>
+    `);
+    await page.screenshot();
+    expect(await page.evaluate(() => document.fonts.status)).toBe('loaded');
+  });
+
   it.describe('mask option', () => {
     it('SS-040 should work', async ({ page, server }) => {
       await page.setViewportSize({ width: 500, height: 500 });
