@@ -248,10 +248,14 @@ export async function startWithExtensionFlag(browserWithExtension: BrowserWithEx
 }
 
 export async function readExtensionToken(browserContext: BrowserContext): Promise<string> {
-  const page = await browserContext.newPage();
-  await page.goto(`chrome-extension://${extensionId}/status.html`);
-  const token = await page.locator('.auth-token-code').textContent();
-  await page.close();
+  // Open the status page in a background tab, so the tab the test treats as the user's stays active.
+  const sw = browserContext.serviceWorkers().find(w => w.url().includes(extensionId))!;
+  await sw.evaluate(url => (globalThis as any).chrome.tabs.create({ url, active: false }), `chrome-extension://${extensionId}/status.html`);
+  let page: Page | undefined;
+  await expect.poll(() => page = browserContext.pages().find(p => p.url().includes('/status.html'))).toBeTruthy();
+  // Poll on a timer: a hidden tab may get no animation frames.
+  const token = await (await page!.waitForFunction(() => document.querySelector('.auth-token-code')?.textContent, undefined, { polling: 100 })).jsonValue();
+  await page!.close();
   const [, value] = token?.split('=') || [];
   return value;
 }

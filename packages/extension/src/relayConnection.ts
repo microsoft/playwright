@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { handBackFromPopup } from './userTab';
+
 export function debugLog(...args: unknown[]): void {
   const enabled = true;
   if (enabled) {
@@ -47,17 +49,19 @@ const ALLOWED_CHROME_COMMANDS = new Set([
 ]);
 
 // chrome.* events the extension forwards to the relay (positional params).
+// A tab opened by an attached tab's page is reported as chrome.tabs.onCreated,
+// from webNavigation.onCreatedNavigationTarget: chrome.tabs.onCreated names
+// the active tab as the opener when the page is in a background tab.
 const CHROME_EVENT_METHODS = [
   'chrome.debugger.onEvent',
   'chrome.debugger.onDetach',
-  'chrome.tabs.onCreated',
+  'chrome.webNavigation.onCreatedNavigationTarget',
   'chrome.tabs.onRemoved',
 ];
 
 const REATTACH_DELAY_MS = 150;
 const REATTACH_VERIFY_MS = 2500;
 const REATTACH_COOLDOWN_MS = 3000;
-
 export class RelayConnection {
   private _ws: WebSocket;
   // Tabs whose debugger we have explicitly attached for this connection.
@@ -176,6 +180,10 @@ export class RelayConnection {
     const tabId = this._tabIdForEventArgs(fullMethod, args);
     if (tabId === undefined || !this._attachedTabs.has(tabId))
       return;
+    if (fullMethod === 'chrome.webNavigation.onCreatedNavigationTarget') {
+      void this._forwardOpenedTab(args[0]);
+      return;
+    }
     this._sendMessage({ method: fullMethod, params: args });
     // chrome.debugger.onDetach is the single source of truth for detach bookkeeping.
     if (fullMethod === 'chrome.debugger.onDetach') {
@@ -232,18 +240,23 @@ export class RelayConnection {
     }, REATTACH_VERIFY_MS);
   }
 
+  private async _forwardOpenedTab(details: chrome.webNavigation.WebNavigationSourceCallbackDetails): Promise<void> {
+    const tab = await chrome.tabs.get(details.tabId).catch(() => undefined);
+    if (!tab || this._closed)
+      return;
+    this._sendMessage({ method: 'chrome.tabs.onCreated', params: [{ ...tab, openerTabId: details.sourceTabId }] });
+    await handBackFromPopup(details.tabId, details.sourceTabId);
+  }
+
   // Returns the tabId an event refers to, for filtering by _attachedTabs.
   private _tabIdForEventArgs(fullMethod: string, args: any[]): number | undefined {
     switch (fullMethod) {
       case 'chrome.debugger.onEvent':
       case 'chrome.debugger.onDetach':
         return (args[0] as chrome.debugger.Debuggee | undefined)?.tabId;
-      case 'chrome.tabs.onCreated': {
-        const tab = args[0] as chrome.tabs.Tab;
-        // Forward only popups opened by an attached tab; report the opener so cdpRelay
-        // can filter / decide. We use the openerTabId for the attached-tab check.
-        return tab.openerTabId;
-      }
+      case 'chrome.webNavigation.onCreatedNavigationTarget':
+        // Forward only tabs opened by an attached tab.
+        return (args[0] as chrome.webNavigation.WebNavigationSourceCallbackDetails).sourceTabId;
       case 'chrome.tabs.onRemoved':
         return args[0] as number;
     }
@@ -286,10 +299,17 @@ export class RelayConnection {
       const target = args[0] as chrome.debugger.Debuggee | undefined;
       if (target?.tabId !== undefined) {
         // The connection may have closed while the attach was pending.
-        if (this._closed)
+        if (this._closed) {
           detachDebugger(target.tabId);
-        else
+        } else {
+          // Client tabs are usually hidden behind the user's tab, and a hidden
+          // tab gets no animation frames and drops input. Emulate focus here
+          // as well as in the relay, for relays that do not.
+          await chrome.debugger.sendCommand(target, 'Emulation.setFocusEmulationEnabled', { enabled: true }).catch(error => {
+            debugLog('Error emulating focus:', error);
+          });
           this._notifyTabAttached(target.tabId);
+        }
       }
     }
     return result ?? {};

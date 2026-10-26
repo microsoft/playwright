@@ -17,10 +17,14 @@
 import { debugLog } from './relayConnection';
 import { PendingConnections } from './pendingConnection';
 import { ConnectedTabGroup, cleanupStalePlaywrightGroups, isNonDebuggableUrl, ungroupTabs, uniqueGroupStyle } from './connectedTabGroup';
+import { handBackFrom, isConnectPageUrl, markClientActivated, showClientTab, trackUserTabs } from './userTab';
 
 type PageMessage = {
   type: 'connectionRequested';
   mcpRelayUrl: string;
+} | {
+  // The connect page could not connect a client that brought a token.
+  type: 'showConnectPage';
 } | {
   type: 'getTabs';
 } | {
@@ -49,6 +53,8 @@ class PlaywrightExtension {
   constructor() {
     chrome.runtime.onMessage.addListener(this._onMessage.bind(this));
     chrome.action.onClicked.addListener(this._onActionClicked.bind(this));
+    chrome.tabs.onCreated.addListener(this._onTabCreated.bind(this));
+    trackUserTabs();
     this._cleanupPromise = cleanupStalePlaywrightGroups();
   }
 
@@ -63,6 +69,9 @@ class PlaywrightExtension {
         });
         return true;
       }
+      case 'showConnectPage':
+        showClientTab(sender.tab!.id!).then(() => sendResponse({ success: true }));
+        return true;
       case 'getTabs':
         this._getTabs(sender.tab?.id).then(
             tabs => sendResponse({ success: true, tabs, currentTabId: sender.tab?.id }),
@@ -74,7 +83,7 @@ class PlaywrightExtension {
         // sender.tab and UI-supplied tabs come from chrome.tabs.query / runtime
         // message sender, where `id` is always defined.
         const selectedTab = (message.tab ?? sender.tab!) as chrome.tabs.Tab & { id: number };
-        this._connectTab(sender.tab!.id!, selectedTab, message.clientName).then(
+        this._connectTab(sender.tab!.id!, selectedTab, message.clientName, !!message.tab).then(
             () => sendResponse({ success: true }),
             (error: any) => sendResponse({ success: false, error: error.message }));
         return true; // Return true to indicate that the response will be sent asynchronously
@@ -99,7 +108,7 @@ class PlaywrightExtension {
     }
   }
 
-  private async _connectTab(selectorTabId: number, tab: chrome.tabs.Tab & { id: number }, clientName: string | undefined): Promise<void> {
+  private async _connectTab(selectorTabId: number, tab: chrome.tabs.Tab & { id: number }, clientName: string | undefined, pickedByUser: boolean): Promise<void> {
     try {
       await this._cleanupPromise;
       this._releaseTab(selectorTabId);
@@ -116,10 +125,14 @@ class PlaywrightExtension {
       group.onclose = () => this._connections.delete(id);
       this._connections.set(id, group);
 
-      await Promise.all([
-        chrome.tabs.update(tab.id, { active: true }),
-        chrome.windows.update(tab.windowId, { focused: true }),
-      ]).catch(() => {});
+      // Switch to a tab the user picked in the connect page. A client that
+      // connects with a token works in the background instead.
+      if (pickedByUser) {
+        await Promise.all([
+          chrome.tabs.update(tab.id, { active: true }),
+          chrome.windows.update(tab.windowId, { focused: true }),
+        ]).catch(() => {});
+      }
 
       if (tab.id !== selectorTabId)
         await chrome.tabs.remove(selectorTabId).catch(() => {});
@@ -148,6 +161,17 @@ class PlaywrightExtension {
 
   private _connectedTabIds(): Set<number> {
     return new Set([...this._connections.values()].flatMap(group => group.connectedTabIds()));
+  }
+
+  // The relay opens the connect page through the browser's command line, which
+  // always shows it as the active tab. With a token no user input is needed,
+  // so give the window back as soon as the tab exists. If the connection
+  // fails, the page asks to be shown again.
+  private _onTabCreated(tab: chrome.tabs.Tab): void {
+    const url = tab.pendingUrl || tab.url;
+    if (tab.id === undefined || !tab.active || !isConnectPageUrl(url) || !new URL(url!).searchParams.has('token'))
+      return;
+    void markClientActivated(tab.id).then(() => handBackFrom(tab.id!));
   }
 
   private async _onActionClicked(): Promise<void> {

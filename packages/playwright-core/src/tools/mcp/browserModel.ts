@@ -223,12 +223,15 @@ export class BrowserModel {
     const targetInfo = result?.targetInfo;
     // Client tabs are usually hidden behind the user's tab. A hidden tab gets
     // no animation frames and drops key and mouse input; with focus emulated it
-    // renders and takes input like the active tab.
-    await this._sendToExtension('chrome.debugger.sendCommand', [
-      { tabId },
-      'Emulation.setFocusEmulationEnabled',
-      { enabled: true },
-    ]).catch(logUnhandledError);
+    // renders and takes input like the active tab. Tests set
+    // PWTEST_EXTENSION_NO_FOCUS_EMULATION to act as an older relay.
+    if (!process.env.PWTEST_EXTENSION_NO_FOCUS_EMULATION) {
+      await this._sendToExtension('chrome.debugger.sendCommand', [
+        { tabId },
+        'Emulation.setFocusEmulationEnabled',
+        { enabled: true },
+      ]).catch(logUnhandledError);
+    }
     const sessionId = `pw-tab-${this._nextSessionId++}`;
     const tabSession: TabSession = { tabId, sessionId, targetInfo, childSessions: new Set() };
     this._tabSessions.set(tabId, tabSession);

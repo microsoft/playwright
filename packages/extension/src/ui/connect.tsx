@@ -36,6 +36,9 @@ const clientInfo = (() => {
   }
 })();
 
+// Read before the page removes the token from its URL.
+const connectsWithToken = new URLSearchParams(window.location.search).has('token');
+
 const ConnectApp: React.FC = () => {
   const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
   const [status, setStatus] = useState<Status | null>(null);
@@ -45,6 +48,13 @@ const ConnectApp: React.FC = () => {
     setShowTabList(false);
     setStatus({ type: 'error', message });
   }, []);
+
+  // A client with a token connects in the background (see background.ts).
+  // If that fails, show this page so the user sees why.
+  useEffect(() => {
+    if (status?.type === 'error' && connectsWithToken)
+      void chrome.runtime.sendMessage({ type: 'showConnectPage' });
+  }, [status]);
 
   useEffect(() => {
     const runAsync = async () => {

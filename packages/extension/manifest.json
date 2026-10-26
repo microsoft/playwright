@@ -7,7 +7,9 @@
     "debugger",
     "activeTab",
     "tabs",
-    "tabGroups"
+    "tabGroups",
+    "storage",
+    "webNavigation"
   ],
   "host_permissions": [
     "<all_urls>"
