@@ -36,6 +36,22 @@ function makeSnapshot(overrides: Partial<FrameSnapshot> = {}): FrameSnapshot {
   };
 }
 
+test('TV-136 snapshot renderer selects the nearest out-of-order screencast frame', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43573' },
+}, () => {
+  const frames = [390, 1023, 1006, 1040, 30000, 30000].map((wallTime, index) => ({
+    file: `${index}.jpeg`,
+    width: 1280,
+    height: 720,
+    timestamp: index,
+    frameSwapWallTime: wallTime,
+  }));
+  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [
+    makeSnapshot({ timestamp: 5, wallTime: 30000 }),
+  ], frames, 0);
+  expect(renderer.closestScreenshot()).toBe('5.jpeg');
+});
+
 for (const [name, overrides] of [
   ['callId', { callId: '</script><script>window.__pwned__=true;//' }],
   ['snapshotName', { callId: 'call-1', snapshotName: '</script><img src=x onerror=alert(1)>' }],
