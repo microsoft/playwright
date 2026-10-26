@@ -136,6 +136,21 @@ it('AR-103 should snapshot iframes in ai mode', async ({ page }) => {
   expect(button?.ref).toMatch(/^f\d+e\d+$/);
 });
 
+it('AR-171 should snapshot iframes in ai mode when iframe has fallback text', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43628' },
+}, async ({ page }) => {
+  await page.setContent(`
+    <iframe srcdoc="<button>In frame</button>"></iframe>
+  `);
+  const before = await page.ariaSnapshotJSON({ mode: 'ai' }) as NodeJSON[];
+  await page.locator('iframe').evaluate(iframe => iframe.textContent = 'Your browser does not support frames');
+  expect(await page.ariaSnapshotJSON({ mode: 'ai' })).toEqual(before);
+
+  const iframe = findNode(before, node => node.role === 'iframe');
+  expect(iframe?.text).toBeUndefined();
+  expect(findNode(iframe!.children!, node => node.role === 'button')?.name).toBe('In frame');
+});
+
 it('AR-104 should limit depth', async ({ page }) => {
   await page.setContent(`<ul><li><button>One</button></li></ul>`);
   expect(await page.ariaSnapshotJSON({ depth: 1 })).toEqual([
