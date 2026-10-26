@@ -813,7 +813,30 @@ function requestHeaders(httpChannel) {
   httpChannel.visitRequestHeaders({
     visitHeader: (name, value) => headers.push({name, value}),
   });
-  return headers;
+
+  // Firefox applies the customUserAgent when the request is sent but the intercepted
+  // channel still carries the default user-agent. Return the customUserAgent instead
+  // unless the user-agent header was set explicitly.
+  const customUserAgent = httpChannel.loadInfo?.browsingContext?.customUserAgent;
+  if (!customUserAgent)
+    return headers;
+
+  let hasExplicitUserAgent = false;
+  httpChannel.visitNonDefaultRequestHeaders({
+    visitHeader: name => {
+      if (name.toLowerCase() === 'user-agent')
+        hasExplicitUserAgent = true;
+    },
+  });
+  if (hasExplicitUserAgent)
+    return headers;
+
+  return headers.map((header) => {
+    if (header.name.toLowerCase() === 'user-agent')
+      return { name: header.name, value: customUserAgent }
+    else
+      return header;
+  });
 }
 
 function overrideRequestHeaders(httpChannel, headers) {

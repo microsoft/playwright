@@ -142,3 +142,49 @@ it('UA-006 should work for navigator.userAgentData and sec-ch-ua headers', async
     await context.close();
   }
 });
+
+it('UA-007 should report custom user agent for intercepted requests', async ({ browser, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43597' });
+
+  const context = await browser.newContext({ userAgent: 'foobar' });
+  const page = await context.newPage();
+  let routedUserAgent: string | undefined;
+  await page.route('**/empty.html', async route => {
+    routedUserAgent = route.request().headers()['user-agent'];
+    await route.fulfill({ response: await route.fetch() });
+  });
+  const [request] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.EMPTY_PAGE),
+  ]);
+  expect(routedUserAgent).toBe('foobar');
+  expect(request.headers['user-agent']).toBe('foobar');
+  await context.close();
+});
+
+it('UA-008 should keep explicit user agent header for intercepted requests', async ({ browser, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43597' });
+
+  const defaultPage = await browser.newPage();
+  const defaultUserAgent = await defaultPage.evaluate(() => navigator.userAgent);
+  await defaultPage.close();
+
+  const context = await browser.newContext({ userAgent: 'foobar', extraHTTPHeaders: { 'user-agent': defaultUserAgent } });
+  const page = await context.newPage();
+  const [directRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.EMPTY_PAGE),
+  ]);
+  let routedUserAgent: string | undefined;
+  await page.route('**/empty.html', async route => {
+    routedUserAgent = route.request().headers()['user-agent'];
+    await route.fulfill({ response: await route.fetch() });
+  });
+  const [fetchedRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.EMPTY_PAGE),
+  ]);
+  expect(routedUserAgent).toBe(directRequest.headers['user-agent']);
+  expect(fetchedRequest.headers['user-agent']).toBe(directRequest.headers['user-agent']);
+  await context.close();
+});
