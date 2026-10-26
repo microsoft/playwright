@@ -20,7 +20,7 @@ import { test, expect } from '@playwright/test';
 import { ListenerErrorScope } from '../../../packages/isomorphic/listenerErrorScope';
 import { EventEmitter } from '../../../packages/playwright-core/src/client/eventEmitter';
 
-test('scoped callback errors preserve listener identity, ordering, once and removal', () => {
+test('EE-057 scoped callback errors preserve listener identity, ordering, once and removal', () => {
   const errors: unknown[] = [];
   const scope = new ListenerErrorScope(error => errors.push(error));
   const realm = vm.createContext({});
@@ -49,7 +49,7 @@ test('scoped callback errors preserve listener identity, ordering, once and remo
   }
 });
 
-test('scoped callback handling excludes host errors and stops after disposal', () => {
+test('EE-058 scoped callback handling excludes host errors and stops after disposal', () => {
   const scope = new ListenerErrorScope(() => {});
   const realm = vm.createContext({});
   scope.register(vm.runInContext('Function.prototype', realm));
