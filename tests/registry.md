@@ -59,7 +59,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `DI` | Dialog | `page/page-dialog` |
 | `DO` | Download | `library/{download, downloads-path}` |
 | `DV` | Device | `library/{browsercontext-device, browsercontext-dsf, browsercontext-viewport-mobile}` |
-| `EE` | Event emitter | `page/page-listeners`<br>`library/events/{add-listeners, check-listener-leaks, events-list, listener-count, listeners-side-effects, listeners, max-listeners, method-names, modify-in-emit, num-args, once, prepend, remove-all-listeners-wait, remove-all-listeners, remove-listeners, set-max-listeners-side-effects, special-event-names, subclass, symbols}` |
+| `EE` | Event emitter | `page/page-listeners`<br>`library/events/{add-listeners, check-listener-leaks, events-list, listener-count, listeners-side-effects, listeners, max-listeners, method-names, modify-in-emit, num-args, once, prepend, remove-all-listeners-wait, remove-all-listeners, remove-listeners, set-max-listeners-side-effects, special-event-names, subclass, symbols, listener-error-scope}` |
 | `EF` | Expose function | `page/page-expose-function`<br>`library/browsercontext-expose-function` |
 | `EH` | ElementHandle | `page/{elementhandle-bounding-box, elementhandle-click, elementhandle-content-frame, elementhandle-convenience, elementhandle-eval-on-selector, elementhandle-misc, elementhandle-owner-frame, elementhandle-press, elementhandle-query-selector, elementhandle-screenshot, elementhandle-scroll-into-view, elementhandle-select-text, elementhandle-type, elementhandle-wait-for-element-state}` |
 | `EM` | Emulation | `page/page-emulate-media`<br>`library/{emulation-focus, emulation-coop}` |
@@ -1838,6 +1838,8 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `EE-054` | `library/events/subclass.spec.ts` | myee instance |
 | `EE-055` | `library/events/subclass.spec.ts` | MyEE2 instance |
 | `EE-056` | `library/events/symbols.spec.ts` | should support symbols |
+| `EE-057` | `library/events/listener-error-scope.spec.ts` | scoped callback errors preserve listener identity, ordering, once and removal |
+| `EE-058` | `library/events/listener-error-scope.spec.ts` | scoped callback handling excludes host errors and stops after disposal |
 
 ### EF — Expose function
 
