@@ -1,17 +1,19 @@
-# Copilot triages and fixes the issue without write credentials. Fresh jobs open
-# the completed fix as a draft PR using the app, so CI runs on it, and comment on the issue.
+# Copilot triages and fixes an issue, or works on a task given by hand, without write credentials.
+# Fresh jobs post the run link on the issue, open the completed fix as a draft PR using the app,
+# so CI runs on it, and comment on the issue.
 name: Issue triage
 
 on:
-  # Apply needs-triage-linux, needs-triage-mac or needs-triage-win; re-apply it to trigger another pass.
+  # Apply needs-triage, needs-triage-mac or needs-triage-win; re-apply it to trigger another pass.
   issues:
     types: [labeled]
   workflow_dispatch:
     inputs:
       issue:
-        description: "Issue number to triage"
+        description: "Issue number to triage; leave empty to work on the task alone"
         type: string
-        required: true
+        required: false
+        default: ""
       platform:
         description: "Platform to triage on"
         type: choice
@@ -22,7 +24,7 @@ on:
         - mac
         - windows
       task:
-        description: "Optional task to direct the triage, such as what to focus on"
+        description: "Task to direct the triage, such as what to focus on; the whole job when there is no issue"
         type: string
         required: false
         default: ""
@@ -30,24 +32,52 @@ on:
 permissions: {}
 
 jobs:
+  start:
+    name: Post the run link on the issue
+    # The triage job's condition, for runs that have an issue.
+    if: >-
+      github.repository == 'microsoft/playwright' &&
+      ((github.event_name == 'workflow_dispatch' && inputs.issue != '') ||
+       contains(fromJSON('["needs-triage","needs-triage-mac","needs-triage-win"]'), github.event.label.name))
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    outputs:
+      comment: ${{ steps.post.outputs.id }}
+    env:
+      ISSUE: ${{ github.event.issue.number || inputs.issue }}
+      PLATFORM_NAME: ${{ fromJSON('{"linux":"Linux","mac":"macOS","windows":"Windows","needs-triage":"Linux","needs-triage-mac":"macOS","needs-triage-win":"Windows"}')[inputs.platform || github.event.label.name] }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+    - name: Post the run link
+      id: post
+      run: |
+        [[ "$ISSUE" =~ ^[1-9][0-9]*$ ]] || { echo "issue must be a positive integer" >&2; exit 1; }
+        body=$(printf "Hi, I'm the Playwright bot. I started to triage this issue on %s: [agent run](%s)\n<!-- playwright-triage-started -->" "$PLATFORM_NAME" "$WORKFLOW_URL")
+        id=$(gh api "repos/$GH_REPO/issues/$ISSUE/comments" -f body="$body" --jq .node_id)
+        echo "id=$id" >> "$GITHUB_OUTPUT"
+
   triage:
-    name: Triage issue ${{ github.event.issue.number || inputs.issue }} (${{ inputs.platform || github.event.label.name }})
+    name: Triage ${{ (github.event.issue.number || inputs.issue) && format('issue {0}', github.event.issue.number || inputs.issue) || 'task' }} (${{ inputs.platform || github.event.label.name }})
     if: >-
       github.repository == 'microsoft/playwright' &&
       (github.event_name == 'workflow_dispatch' ||
-       contains(fromJSON('["needs-triage-linux","needs-triage-mac","needs-triage-win"]'), github.event.label.name))
+       contains(fromJSON('["needs-triage","needs-triage-mac","needs-triage-win"]'), github.event.label.name))
     # Falls back to a runner name for unrelated labels, where the job is skipped anyway.
-    runs-on: ${{ fromJSON('{"linux":"playwright-x64-ubuntu24-64-core","mac":"macos-15-xlarge","windows":"playwright-x64-server2025-64-core"}')[inputs.platform || fromJSON('{"needs-triage-linux":"linux","needs-triage-mac":"mac","needs-triage-win":"windows"}')[github.event.label.name]] || 'ubuntu-latest' }}
+    runs-on: ${{ fromJSON('{"linux":"playwright-x64-ubuntu24-64-core","mac":"macos-15-xlarge","windows":"playwright-x64-server2025-64-core"}')[inputs.platform || fromJSON('{"needs-triage":"linux","needs-triage-mac":"mac","needs-triage-win":"windows"}')[github.event.label.name]] || 'ubuntu-latest' }}
     timeout-minutes: 240
     concurrency:
-      group: triage-${{ github.event.issue.number || inputs.issue }}
+      group: triage-${{ github.event.issue.number || inputs.issue || github.run_id }}
       cancel-in-progress: false
     defaults:
       run:
         shell: bash
     env:
       ISSUE: ${{ github.event.issue.number || inputs.issue }}
-      TRIAGE_PLATFORM: ${{ inputs.platform || fromJSON('{"needs-triage-linux":"linux","needs-triage-mac":"mac","needs-triage-win":"windows"}')[github.event.label.name] }}
+      TRIAGE_PLATFORM: ${{ inputs.platform || fromJSON('{"needs-triage":"linux","needs-triage-mac":"mac","needs-triage-win":"windows"}')[github.event.label.name] }}
+      TASK: ${{ inputs.task }}
     permissions:
       copilot-requests: write
     outputs:
@@ -63,7 +93,11 @@ jobs:
     - name: Record the base and output directory
       id: base
       run: |
-        [[ "$ISSUE" =~ ^[1-9][0-9]*$ ]] || { echo "issue must be a positive integer" >&2; exit 1; }
+        if [[ -n "$ISSUE" ]]; then
+          [[ "$ISSUE" =~ ^[1-9][0-9]*$ ]] || { echo "issue must be a positive integer" >&2; exit 1; }
+        elif [[ -z "${TASK//[[:space:]]/}" ]]; then
+          echo "give an issue, a task or both" >&2; exit 1
+        fi
         echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
         echo "OUTPUT_DIR=${RUNNER_TEMP//\\//}/triage" >> "$GITHUB_ENV"
         echo "SCRATCH_DIR=${RUNNER_TEMP//\\//}/scratch" >> "$GITHUB_ENV"
@@ -85,12 +119,14 @@ jobs:
       continue-on-error: true
       env:
         COPILOT_GITHUB_TOKEN: ${{ github.token }}
-        TASK: ${{ inputs.task }}
       run: |
         PROMPT="Follow .claude/skills/playwright-triage/SKILL.md. Read it and the triage.md it
-        points to in full before starting.
+        points to in full before starting."
+        if [[ -n "$ISSUE" ]]; then
+          PROMPT="$PROMPT
 
         Issue: https://github.com/microsoft/playwright/issues/$ISSUE"
+        fi
         if [[ -n "$TASK" ]]; then
           PROMPT="$PROMPT
 
@@ -180,11 +216,11 @@ jobs:
 
           const { title } = JSON.parse(fs.readFileSync(path.join(dir, 'proposal.json'), 'utf8'));
           const description = fs.readFileSync(path.join(dir, 'pr-body.md'), 'utf8').trim();
-          const branch = `triage/${ISSUE}/${context.runId}-${process.env.GITHUB_RUN_ATTEMPT}`;
+          const branch = `triage/${ISSUE || 'task'}/${context.runId}-${process.env.GITHUB_RUN_ATTEMPT}`;
           git('config', 'user.name', 'microsoft-playwright-automation[bot]');
           git('config', 'user.email', '203992400+microsoft-playwright-automation[bot]@users.noreply.github.com');
           git('switch', '-c', branch);
-          git('commit', '-m', title, '-m', `Fixes: https://github.com/${owner}/${repo}/issues/${ISSUE}`);
+          git('commit', '-m', title, ...(ISSUE ? ['-m', `Fixes: https://github.com/${owner}/${repo}/issues/${ISSUE}`] : []));
           git('push', 'origin', `HEAD:refs/heads/${branch}`);
           const { data: pr } = await github.rest.pulls.create({
             owner, repo, head: branch, base: 'main', title,
@@ -192,23 +228,25 @@ jobs:
             draft: true,
           });
           core.setOutput('pr', pr.html_url);
+          await core.summary.addRaw(`Draft pull request: ${pr.html_url}\n`).write();
 
   comment:
     name: Comment on the issue
-    needs: [triage, publish]
-    # Runs after every triage run, including failed ones, and whatever publish did.
-    if: ${{ !cancelled() && needs.triage.result != 'skipped' }}
+    needs: [start, triage, publish]
+    # Runs after every triage run that has an issue, including failed ones, and whatever publish did.
+    if: ${{ !cancelled() && needs.triage.result != 'skipped' && (github.event_name == 'issues' || inputs.issue != '') }}
     runs-on: ubuntu-latest
     permissions:
       issues: write
     env:
       ISSUE: ${{ github.event.issue.number || inputs.issue }}
-      PLATFORM_NAME: ${{ fromJSON('{"linux":"Linux","mac":"macOS","windows":"Windows","needs-triage-linux":"Linux","needs-triage-mac":"macOS","needs-triage-win":"Windows"}')[inputs.platform || github.event.label.name] }}
+      PLATFORM_NAME: ${{ fromJSON('{"linux":"Linux","mac":"macOS","windows":"Windows","needs-triage":"Linux","needs-triage-mac":"macOS","needs-triage-win":"Windows"}')[inputs.platform || github.event.label.name] }}
       TRIAGE_RESULT: ${{ needs.triage.result }}
       SETUP_OUTCOME: ${{ needs.triage.outputs.setup }}
       AGENT_OUTCOME: ${{ needs.triage.outputs.agent }}
       PUBLISH_RESULT: ${{ needs.publish.result }}
       PR_URL: ${{ needs.publish.outputs.pr }}
+      START_COMMENT: ${{ needs.start.outputs.comment }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -241,3 +279,7 @@ jobs:
         fi
         printf '\n\n<sub>Triaged on %s by the Playwright bot - [agent run](%s)</sub>\n<!-- playwright-ai-triage -->\n' "$PLATFORM_NAME" "$WORKFLOW_URL" >> output/comment.md
         gh issue comment "$ISSUE" --body-file output/comment.md
+        if [[ -n "$START_COMMENT" ]]; then
+          gh api graphql -f query='mutation($id: ID!) { minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) { clientMutationId } }' -f id="$START_COMMENT" \
+            || echo "::warning::Could not hide the comment with the run link"
+        fi
