@@ -3951,7 +3951,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `NE-087` | `page/page-event-network.spec.ts` | Page.Events.RequestFinished @smoke |
 | `NE-088` | `page/page-event-network.spec.ts` | should fire events in proper order |
 | `NE-089` | `page/page-event-network.spec.ts` | should support redirects |
-| `NE-090` | `page/page-event-network.spec.ts` | should resolve responses after a navigation |
+| `NE-090` | `page/page-event-network.spec.ts` | should resolve responses after a cross-process navigation |
 | `NE-091` | `page/page-event-request.spec.ts` | should fire for navigation requests |
 | `NE-092` | `page/page-event-request.spec.ts` | should fire for iframes |
 | `NE-093` | `page/page-event-request.spec.ts` | should fire for fetches |
@@ -4004,6 +4004,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `NE-140` | `library/ignorehttpserrors.spec.ts` | should work with WebSocket |
 | `NE-141` | `library/ignorehttpserrors.spec.ts` | should fail with WebSocket if not ignored |
 | `NE-142` | `library/ignorehttpserrors.spec.ts` | serviceWorker should intercept document request |
+| `NE-143` | `page/page-event-network.spec.ts` | should resolve responses after a same-process navigation |
 
 ### OO — OOPIF
 
