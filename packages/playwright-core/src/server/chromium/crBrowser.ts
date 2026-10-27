@@ -172,7 +172,12 @@ export class CRBrowser extends Browser {
     if (targetInfo.type === 'browser')
       return;
     const session = this._session.createChildSession(sessionId);
-    assert(targetInfo.browserContextId, 'targetInfo: ' + JSON.stringify(targetInfo, null, 2));
+    if (!targetInfo.browserContextId) {
+      // A terminated shared worker that another client is still attached to is reported
+      // without a browser context, see https://issues.chromium.org/issues/578393908.
+      session.detach().catch(() => {});
+      return;
+    }
     let context = this._contexts.get(targetInfo.browserContextId) || null;
     if (!context) {
       // TODO: auto attach only to pages from our contexts.

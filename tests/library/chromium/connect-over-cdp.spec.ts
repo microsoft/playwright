@@ -919,3 +919,43 @@ test('CD-036 should connect over CDP using a ConnectionTransport', async ({ brow
     await browserServer.close();
   }
 });
+
+test.fixme('CD-053 should connect when another client inspects a terminated shared worker', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43638' },
+    { type: 'issue', description: 'https://issues.chromium.org/issues/578393908' },
+  ],
+}, async ({ browserType, server }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browser = await browserType.launch({ args: ['--remote-debugging-port=' + port] });
+  try {
+    // Another client inspects the shared worker.
+    const page = await browser.newPage();
+    const inspector = await browser.newBrowserCDPSession();
+    const workerCreated = new Promise<string>(resolve => inspector.on('Target.targetCreated', event => {
+      if (event.targetInfo.type === 'shared_worker')
+        resolve(event.targetInfo.targetId);
+    }));
+    await inspector.send('Target.setDiscoverTargets', { discover: true });
+    await page.goto(server.PREFIX + '/shared-worker/shared-worker.html');
+    expect(await page.evaluate('window.sharedWorkerResponsePromise')).toBe('echo:hello');
+    const workerTargetId = await workerCreated;
+    await inspector.send('Target.attachToTarget', { targetId: workerTargetId, flatten: true });
+
+    // The last client of the shared worker goes away, so the worker is terminated.
+    // The inspector stays attached, so the worker target lingers without a browser context.
+    await page.close();
+    await expect.poll(async () => {
+      const { targetInfos } = await inspector.send('Target.getTargets');
+      return targetInfos.some(info => info.targetId === workerTargetId);
+    }).toBe(false);
+
+    // A new client auto-attaches to the lingering worker target.
+    const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
+    const page2 = await cdpBrowser.contexts()[0].newPage();
+    expect(await page2.evaluate('1 + 1')).toBe(2);
+    await cdpBrowser.close();
+  } finally {
+    await browser.close();
+  }
+});
