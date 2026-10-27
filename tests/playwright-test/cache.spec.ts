@@ -101,3 +101,27 @@ test('should automatically clean cached versions of a changed file', async ({ ru
   expect(finalPathHash).toBe(firstPathHash);
   expect(finalTestHash).not.toBe(firstTestHash);
 });
+
+test('should only use a cache directory that belongs to the current user', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'POSIX permissions');
+  const files = {
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test('example', () => {});
+    `,
+  };
+
+  const cacheDir = test.info().outputPath('cache');
+  await fs.promises.mkdir(cacheDir);
+  await fs.promises.chmod(cacheDir, 0o755);
+  expect((await runInlineTest(files, undefined, { PWTEST_CACHE_DIR: cacheDir })).passed).toBe(1);
+  expect((await fs.promises.stat(cacheDir)).mode & 0o777).toBe(0o700);
+  expect(await fs.promises.readdir(cacheDir)).toHaveLength(1);
+
+  const target = test.info().outputPath('target');
+  await fs.promises.mkdir(target);
+  const link = test.info().outputPath('link');
+  await fs.promises.symlink(target, link);
+  expect((await runInlineTest(files, undefined, { PWTEST_CACHE_DIR: link })).passed).toBe(1);
+  expect(await fs.promises.readdir(target)).toEqual([]);
+});

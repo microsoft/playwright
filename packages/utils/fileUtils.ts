@@ -128,6 +128,18 @@ export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
 }
 
+// Creates a directory that only the current user can access, refuses one that another user owns.
+export function mkdirPrivateSync(dir: string) {
+  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  if (process.platform === 'win32')
+    return;
+  const stat = fs.lstatSync(dir);
+  if (!stat.isDirectory() || stat.uid !== process.geteuid!())
+    throw new Error(`${dir} is not a directory owned by the current user`);
+  if (stat.mode & 0o077)
+    fs.chmodSync(dir, 0o700);
+}
+
 // macOS sun_path is 104 bytes (Linux is 108) including the NUL terminator. Use the lower bound.
 const UNIX_SOCKET_PATH_MAX = 103;
 
@@ -145,6 +157,7 @@ export function makeSocketPath(domain: string, name: string): string {
     result = path.join(dir, calculateSha1(name).slice(0, 16) + '.sock');
   if (Buffer.byteLength(result) > UNIX_SOCKET_PATH_MAX)
     throw new Error(`Socket directory path is too long (${Buffer.byteLength(dir)} bytes); set PWTEST_SOCKETS_DIR to a shorter location.`);
+  mkdirPrivateSync(baseDir);
   fs.mkdirSync(dir, { recursive: true });
   return result;
 }

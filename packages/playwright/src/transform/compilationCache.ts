@@ -20,6 +20,7 @@ import path from 'path';
 
 import sourceMapSupport from 'source-map-support';
 import { calculateSha1 } from '@utils/crypto';
+import { mkdirPrivateSync } from '@utils/fileUtils';
 
 import { isWorkerProcess } from '../globals';
 import { packageRoot } from '../package';
@@ -118,6 +119,21 @@ function readCodeCache(codePath: string): string {
   return code;
 }
 
+let cacheDirIsPrivate: boolean | undefined;
+
+// Other users must not be able to plant code in the cache.
+function isCacheDirPrivate(): boolean {
+  if (cacheDirIsPrivate === undefined) {
+    try {
+      mkdirPrivateSync(cacheDir);
+      cacheDirIsPrivate = true;
+    } catch {
+      cacheDirIsPrivate = false;
+    }
+  }
+  return cacheDirIsPrivate;
+}
+
 type CompilationCacheLookupResult = {
   serializedCache?: any;
   cachedCode?: string;
@@ -137,6 +153,8 @@ export function getFromCompilationCache(filename: string, contentHash: string, m
   }
 
   // Then do the disk cache, this cache works between the Playwright Test runs.
+  if (!isCacheDirPrivate())
+    return { addToCache: () => ({}) };
   const filePathHash = calculateFilePathHash(filename);
   const hashPrefix = filePathHash + '_' + contentHash.substring(0, 7);
   const cacheFolderName = filePathHash.substring(0, 2);
