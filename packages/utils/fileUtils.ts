@@ -110,6 +110,21 @@ export async function resolveSymlinks(filePath: string): Promise<string> {
   }
 }
 
+// Like isPathInside, but follows symlinks. Unresolvable tails are compared as is.
+export function isRealPathInside(root: string, candidate: string): boolean {
+  return isPathInside(realPathOrSelf(root), realPathOrSelf(candidate));
+}
+
+function realPathOrSelf(filePath: string): string {
+  const resolved = path.resolve(filePath);
+  try {
+    return fs.realpathSync(resolved);
+  } catch {
+    const parent = path.dirname(resolved);
+    return parent === resolved ? resolved : path.join(realPathOrSelf(parent), path.basename(resolved));
+  }
+}
+
 export function resolveWithinRoot(root: string, fileName: string): string | null {
   if (path.isAbsolute(fileName))
     return null;
