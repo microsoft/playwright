@@ -44,6 +44,10 @@ export function initialize(browsingContext, docShell) {
     javaScriptDisabled: (javaScriptDisabled) => {
       data.frameTree.setJavaScriptDisabled(javaScriptDisabled);
     },
+
+    isolatedWorldExtendedPrincipal: (extendedPrincipal) => {
+      data.frameTree.setIsolatedWorldExtendedPrincipal(extendedPrincipal);
+    },
   };
 
   const contextCrossProcessCookie = Services.cpmm.sharedData.get('juggler:context-cookie-' + browsingContext.originAttributes.userContextId) || { initScripts: [], bindings: [], settings: {} };

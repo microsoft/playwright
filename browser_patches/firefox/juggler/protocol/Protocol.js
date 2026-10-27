@@ -54,6 +54,7 @@ browserTypes.Geolocation = {
 browserTypes.DownloadOptions = {
   behavior: t.Optional(t.Enum(['saveToDisk', 'cancel'])),
   downloadsDir: t.Optional(t.String),
+  legacyInterceptor: t.Optional(t.Boolean),
 };
 
 const pageTypes = {};
@@ -322,6 +323,12 @@ const Browser = {
       params: {
         browserContextId: t.Optional(t.String),
         javaScriptDisabled: t.Boolean,
+      }
+    },
+    'setIsolatedWorldExtendedPrincipal': {
+      params: {
+        browserContextId: t.Optional(t.String),
+        extendedPrincipal: t.Boolean,
       }
     },
     'setLocaleOverride': {
