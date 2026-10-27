@@ -7,6 +7,8 @@ title: "Docker"
 
 [Dockerfile.noble] can be used to run Playwright scripts in Docker environment. This image includes the [Playwright browsers](./browsers.md#install-browsers) and [browser system dependencies](./browsers.md#install-system-dependencies). The Playwright package/dependency is not included in the image and should be installed separately.
 
+For Node.js images, each build selects the latest stable Chrome for Testing (including Chrome Headless Shell) and the latest Node.js LTS release. Firefox and WebKit remain at the versions bundled with the matching Playwright release. Published images do not update automatically.
+
 ## Usage
 
 This Docker image is published to [Microsoft Artifact Registry].

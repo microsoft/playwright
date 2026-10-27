@@ -42,6 +42,10 @@ if [[ -n "${NPMRC_SECRET:-}" ]]; then
   SECRET_ARGS+=(--secret "id=npmrc,src=${NPMRC_SECRET}")
 fi
 
+VERSIONS=$(node ./latest-versions.mjs)
+read -r NODE_VERSION CHROMIUM_VERSION <<< "$VERSIONS"
+echo "Building with Node.js ${NODE_VERSION} and Chrome for Testing ${CHROMIUM_VERSION}"
+
 # Keep each arch image a plain single-platform manifest without the unknown/unknown platform entry.
 export BUILDX_NO_DEFAULT_ATTESTATIONS=1
 
@@ -53,9 +57,11 @@ export BUILDX_NO_DEFAULT_ATTESTATIONS=1
 MAX_ATTEMPTS=3
 
 for ((attempt = 1; attempt <= MAX_ATTEMPTS; attempt++)); do
-  if docker build --platform "${PLATFORM}" \
+  if docker build --pull --platform "${PLATFORM}" \
       --build-arg ACR_CACHE_PREFIX="${ACR_CACHE_PREFIX}" \
       --build-arg UBUNTU_MIRROR_PREFIX="${UBUNTU_MIRROR_PREFIX}" \
+      --build-arg NODE_VERSION="${NODE_VERSION}" \
+      --build-arg CHROMIUM_VERSION="${CHROMIUM_VERSION}" \
       "${SECRET_ARGS[@]}" \
       -t "$3" -f "Dockerfile.$2" .; then
     exit 0
