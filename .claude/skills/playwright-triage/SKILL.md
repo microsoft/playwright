@@ -19,8 +19,9 @@ The issue ends in exactly one of:
 
 - **A fix proposal**: a verified fix with its regression test, saved for the workflow's publish
   job, which opens it as a draft PR in `microsoft/playwright` and comments on the issue.
-- **An investigation note**, which the workflow posts on the issue. When a team PR is open, the
-  note says whether that PR fixes the issue.
+- **An investigation note**, which the workflow posts on the issue, when the work can't go
+  further here: not a to-do list of steps you could still take on the runner. When a team PR is
+  open, the note says whether that PR fixes the issue.
 - **A "can be merged" verdict** on a third party's linked PR, in the summary, when the PR survives a
   full review.
 - **A browser bug report**, next to the note, when the root cause is in Chromium, Firefox or WebKit,

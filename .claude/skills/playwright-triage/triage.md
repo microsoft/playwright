@@ -11,6 +11,12 @@ can't reproduce, needs a design decision, too big for one focused change), the i
 investigation note instead. A third party's linked PR ends it only when it survives a full review.
 The skill lists the exact outcomes.
 
+A note is where the work ends because it can't go further here, not where it hands the next step
+back. "The next step should be adding logs to the dispatcher" describes work you can still do on
+this runner, so it isn't an outcome: add the logs, run it, and report what they showed. Bail when
+you've concluded you can't fix the issue, and say why; don't bail while you can still make progress
+towards a fix.
+
 ## Before you start an issue
 
 Read the whole thread with the GitHub MCP tools: the issue, every comment and its labels. The
@@ -196,7 +202,8 @@ miss. In short:
   substitute individual checks.
 
 - **Root cause, not symptom.** Understand why it fails before changing code. A guard that hides the
-  failure is not a fix.
+  failure is not a fix. When you don't understand it yet, instrument the code and run it here; a
+  hypothesis in a note is not a result.
 - **The condensed repro becomes the regression test,** added to an existing test as described in
   [Condense the repro into a test](#condense-the-repro-into-a-test). Watch it fail without the fix
   and pass with it; a test that never failed proves nothing. Check this again right before you
@@ -293,6 +300,14 @@ versions and shas you tested, PRs and docs. For bugs, include the condensed repr
 you ran, meaning the full matrix of browsers, versions and variations, not only the run that
 failed. That way the reader can trust the verdict without re-checking it. Call out any browser
 divergence.
+
+**No next steps you could take yourself.** A note that ends in "the next step would be to add
+logging to X", "someone should bisect this" or "worth checking whether Y" is unsatisfactory: that
+step is yours, and the runner is the place to take it. Add the logging, run the bisect, read the
+engine's source, try the variation, and come back with what it showed. Write the note only once you
+can't make progress any more: the repro needs something the runner doesn't have, the fix needs a
+design decision, the bug is in a browser, or every lead you had is exhausted. Then say what blocked
+you as a fact, with what you tried, not as a suggestion for someone else.
 
 **Voice.** The workflow posts the note as `github-actions`, so it speaks as the Playwright bot. Write
 it as [bot-voice.md](bot-voice.md) says: announce the bot in one line, verdict first, everything
