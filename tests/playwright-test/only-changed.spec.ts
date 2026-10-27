@@ -75,6 +75,36 @@ test('should detect changed files', async ({ runInlineTest, git, writeFiles }) =
   expect(result.output).toContain('b.spec.ts');
 });
 
+test('should detect changed files whose names are not ascii', async ({ runInlineTest, git, writeFiles }) => {
+  // git quotes non-ascii paths by default, so `git diff --name-only` returns
+  // "cadastro-usu\303\241rio.spec.ts" and the file never matches the change list.
+  await writeFiles({
+    'plain.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    test('fails', () => { expect(1).toBe(2); });
+  `,
+    'cadastro-usuário.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    test('fails', () => { expect(1).toBe(2); });
+  `,
+  });
+
+  git(`add .`);
+  git(`commit -m init`);
+
+  const result = await runInlineTest({
+    'cadastro-usuário.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => { expect(1).toBe(4); });
+      `,
+  }, { 'only-changed': true });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('cadastro-usuário.spec.ts');
+});
+
 test('should diff based on base commit', async ({ runInlineTest, git, writeFiles }) => {
   await writeFiles({
     'a.spec.ts': `

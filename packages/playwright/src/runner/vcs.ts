@@ -19,11 +19,17 @@ import path from 'path';
 
 import { cc } from '../common';
 
+// git quotes non-ascii paths in its output by default (`core.quotePath`), so
+// `café.spec.ts` comes back as `"caf\303\251.spec.ts"` and never matches the
+// real file. Ask for the plain paths instead; every call below reads the output
+// as file names.
+const GIT_QUOTE_PATH_OFF = ['-c', 'core.quotePath=false'];
+
 export async function detectChangedTestFiles(baseCommit: string, configDir: string): Promise<Set<string>> {
   function gitFileList(args: string[]) {
     try {
       return childProcess.execFileSync(
-          'git', args,
+          'git', [...GIT_QUOTE_PATH_OFF, ...args],
           { encoding: 'utf-8', stdio: 'pipe', cwd: configDir }
       ).split('\n').filter(Boolean);
     } catch (_error) {
@@ -31,7 +37,7 @@ export async function detectChangedTestFiles(baseCommit: string, configDir: stri
 
       const unknownRevision = error.output.some(line => line?.includes('unknown revision'));
       if (unknownRevision) {
-        const isShallowClone = childProcess.execFileSync('git', ['rev-parse', '--is-shallow-repository'], { encoding: 'utf-8',  stdio: 'pipe', cwd: configDir }).trim() === 'true';
+        const isShallowClone = childProcess.execFileSync('git', [...GIT_QUOTE_PATH_OFF, 'rev-parse', '--is-shallow-repository'], { encoding: 'utf-8',  stdio: 'pipe', cwd: configDir }).trim() === 'true';
         if (isShallowClone) {
           throw new Error([
             `The repository is a shallow clone and does not have '${baseCommit}' available locally.`,
