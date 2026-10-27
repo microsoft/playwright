@@ -790,6 +790,8 @@ class FrameSession {
     if (event.targetInfo.type === 'service_worker') {
       // Detaching releases the service worker's main script fetch throttle. Resuming first would race
       // with the browser-level session's Network.enable and lose the main script's Network.responseReceived.
+      // See https://issues.chromium.org/issues/578112291.
+      // TODO: remove this whole workaround block once the upstream issue is fixed.
       parentSession._sendMayFail('Target.detachFromTarget', { sessionId: event.sessionId });
       return;
     }
