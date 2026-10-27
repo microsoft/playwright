@@ -112,7 +112,11 @@ it('EH-121 should wait for button with an aria-disabled parent', async ({ page }
   await promise;
 });
 
-it('EH-122 should wait for stable position', async ({ page, server, browserName, platform }) => {
+it('EH-122 should wait for stable position', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43632' } }, async ({ page, server, browserName, mode, toImplInWorkerScope }) => {
+  if (mode === 'default') {
+    const expectedRafCount = browserName === 'webkit' && process.env.PLAYWRIGHT_WEBKIT_RAF_COUNT_FIX ? 5 : 1;
+    expect(toImplInWorkerScope(page).delegate.rafCountForStablePosition()).toBe(expectedRafCount);
+  }
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');
   await page.$eval('button', button => {

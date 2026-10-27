@@ -972,7 +972,7 @@ export class WKPage implements PageDelegate {
   }
 
   rafCountForStablePosition(): number {
-    return process.platform === 'win32' ? 5 : 1;
+    return process.env.PLAYWRIGHT_WEBKIT_RAF_COUNT_FIX ? 5 : 1;
   }
 
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
