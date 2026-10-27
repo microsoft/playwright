@@ -1,6 +1,6 @@
 ---
 name: playwright-triage
-description: Triage and fix one microsoft/playwright issue, or do a maintainer's task, unattended inside the Issue triage GitHub Actions workflow (.github/workflows/triage.yml), which a needs-triage, needs-triage-mac or needs-triage-win label starts, or a maintainer starts by hand with an issue, a task or both. Reproduces the issue on the runner, then leaves a verified fix proposal for the workflow to open as a draft PR, or an investigation note for it to post on the issue. Only for that workflow.
+description: Triage and fix one microsoft/playwright issue, or do a maintainer's task, unattended inside the Issue triage GitHub Actions workflow (.github/workflows/triage.yml), which a needs-triage, needs-triage-mac or needs-triage-win label starts, or a maintainer starts by hand with an issue, a task or both. Reproduces the issue on the runner, then leaves a verified fix proposal for the workflow to open as a draft PR, an investigation note for it to post on the issue, or a browser bug report for it to route to crbug.com or microsoft/playwright-browsers. Only for that workflow.
 ---
 
 # Playwright Issue Triage
@@ -23,6 +23,10 @@ The issue ends in exactly one of:
   note says whether that PR fixes the issue.
 - **A "can be merged" verdict** on a third party's linked PR, in the summary, when the PR survives a
   full review.
+- **A browser bug report**, next to the note, when the root cause is in Chromium, Firefox or WebKit,
+  upstream or in our patches. The workflow hands a Chromium report to a maintainer in the comment,
+  to file at crbug.com; it files a Firefox or WebKit report in `microsoft/playwright-browsers` and
+  adds `Blocked-by:` with the link to the comment.
 - **A skip** with the reason in the summary and a short comment, when the repro looks hostile.
 
 A run with a task and no issue ends in a fix proposal or in the summary only; see
@@ -64,8 +68,9 @@ Reproduce on `$TRIAGE_PLATFORM` and say in the note which platform the bot teste
 turns out to be specific to another platform, say so in the note so a maintainer can apply that
 platform's label, and still check here what you can.
 
-Only `microsoft/playwright` can take a fix from here. When the fix belongs in another repo,
-investigate as far as you can and end with a note.
+Only `microsoft/playwright` can take a fix from here. When the bug is in a browser, end with a
+[browser bug report](#report-a-browser-bug). When the fix belongs in another repo, investigate as
+far as you can and end with a note.
 
 ### A task without an issue
 
@@ -139,6 +144,42 @@ has the root cause and the diff instead of preparing a proposal.
 The publish job opens the draft PR as `microsoft-playwright-automation`, linked to the issue, so
 later runs see the issue as taken.
 
+## Report a browser bug
+
+When the root cause is in Chromium, Firefox or WebKit, upstream or in the patches we carry in
+`microsoft/playwright-browsers`, and the fix belongs there rather than in `microsoft/playwright`,
+write the bug report for the browser's owner and let the workflow route it. Create
+`$OUTPUT_DIR/browser/` with:
+
+- `report.md`: the report body, for an engineer of that browser who hasn't read the Playwright
+  issue: what fails, expected versus actual, the browser version or build, the platform, the root
+  cause when you found it, and a repro they can run. A Chromium report goes upstream, so a repro
+  without Playwright, a plain page or CDP commands, is worth the effort. A Firefox or WebKit report
+  goes to our browser team: the condensed test from the checkout is the right repro, and say
+  whether the bug is upstream or in our patches when you know.
+- `report.json`: `{"browser": "chromium" | "firefox" | "webkit", "title": "...", "platform": "..."}`.
+  The title names the browser and what fails, in at most 256 characters, such as
+  `WebKit: route.fulfill() ignores the charset in Content-Type`. `platform` is optional: when the
+  bug only shows on one platform, name its label in `microsoft/playwright-browsers`, one of
+  `platform-ubuntu-22.04`, `platform-ubuntu-24.04`, `platform-ubuntu-26.04`, `platform-debian-12`,
+  `platform-debian-13`, `platform-mac-15`, `platform-mac-26`, each also with an `-arm64` suffix, or
+  `platform-win64`. The workflow drops a label it doesn't know.
+
+The workflow reads the report after the run and acts in the browser's own channel:
+
+- **Chromium**: bugs go to crbug.com, where only a person can file. The comment job appends the
+  title and the body to your comment for a maintainer to file.
+- **Firefox and WebKit**: a separate job files the issue in `microsoft/playwright-browsers`, with
+  the `browser-firefox` or `browser-webkit` label and the platform label, links this issue from it,
+  and the comment job appends `Blocked-by: <issue url>` to your comment. A label re-applied after
+  an earlier run doesn't file twice: the job links the open issue it already filed.
+
+Still write the comment as the note: the verdict, the evidence, and that the bug is in the browser.
+Don't paste the report into it or add a `Blocked-by:` line yourself; the workflow does both.
+
+Write `report.json` last, once `report.md` and the comment are done; like `proposal.json`, it marks
+the report ready.
+
 ## Comment on the issue
 
 When the run has an issue, always write the comment to `$OUTPUT_DIR/comment.md`, in the voice of
@@ -153,6 +194,8 @@ an earlier triage answer; ignore it.
   reproduced, and the root cause in a sentence or two. Don't say a PR is open; the workflow appends
   the PR link when it opens one.
 - **Without a fix**: the investigation note, including the verdict on a team PR when one is open.
+- **With a browser bug report**: the note, with the evidence that the browser is at fault; the
+  workflow appends the report or the `Blocked-by:` link.
 - **On a skip**: a line or two saying the repro couldn't be run safely, asking for a self-contained
   one, without repeating what looked hostile.
 

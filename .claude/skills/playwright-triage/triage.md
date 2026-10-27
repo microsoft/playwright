@@ -53,9 +53,13 @@ already work), and a "[Bug]" is sometimes expected behaviour.
   finish with a PR. Otherwise write a note that surfaces the real design question. For small asks
   ("fail loudly instead of silently"), the best note includes an acceptance test: one spec asserting
   today's behaviour, with the desired behaviour alongside as a `fixme`.
-- **Upstream / environment**: a genuinely external owner, such as Node, a browser engine or a
-  website's own server config. Find the real owner and point at the real fix path in a note; don't
-  brute-force a repro. The Playwright family is **not** upstream, it's us: `@playwright/mcp` (its
+- **Browser bug**: the root cause is in Chromium, Firefox or WebKit, upstream or in the patches we
+  carry in `microsoft/playwright-browsers`. Reproduce it like a bug, and make sure it is the engine
+  and not Playwright's handling of it: browser divergence, a repro outside Playwright, or the
+  engine's own code. It ends in a browser bug report; the skill says how.
+- **Upstream / environment**: another genuinely external owner, such as Node or a website's own
+  server config. Find the real owner and point at the real fix path in a note; don't brute-force a
+  repro. The Playwright family is **not** upstream, it's us: `@playwright/mcp` (its
   source is in `microsoft/playwright` under `packages/playwright-core/src/tools/mcp/`), the CLI,
   `playwright-vscode`, `-python`, `-java`, `-dotnet`. Never tell a reporter to refile in another
   Playwright repo; that's internal routing, not their problem.
@@ -217,9 +221,10 @@ miss. In short:
   and report that instead. A third-party PR you reviewed and found short of flawless doesn't block
   yours.
 
-One PR per issue. If the right fix needs an API or design decision, is bigger than one focused
-change, or lives in browser patches (`microsoft/playwright-browsers`), stop and write a note with the
-repro, the root cause and the fix you'd suggest.
+One PR per issue. If the right fix needs an API or design decision or is bigger than one focused
+change, stop and write a note with the repro, the root cause and the fix you'd suggest. If it lives
+in a browser or in its patches (`microsoft/playwright-browsers`), it's a browser bug report; the
+skill says how.
 
 ## Review a third-party PR
 
@@ -282,11 +287,12 @@ Write up what you found as a comment for the issue. The skill says what goes in 
 and how it gets posted.
 
 **Content.** Lead with a status that fits the issue: for a bug, reproduced / fixed-on-latest /
-cannot-reproduce / not-a-bug / duplicate of #N; for other kinds, a short verdict (already possible,
-valid request, upstream and owned by X). Back it with evidence: the exact versions and shas you
-tested, PRs and docs. For bugs, include the condensed repro and everything you ran, meaning the full
-matrix of browsers, versions and variations, not only the run that failed. That way the reader can
-trust the verdict without re-checking it. Call out any browser divergence.
+cannot-reproduce / not-a-bug / duplicate of #N / browser bug; for other kinds, a short verdict
+(already possible, valid request, upstream and owned by X). Back it with evidence: the exact
+versions and shas you tested, PRs and docs. For bugs, include the condensed repro and everything
+you ran, meaning the full matrix of browsers, versions and variations, not only the run that
+failed. That way the reader can trust the verdict without re-checking it. Call out any browser
+divergence.
 
 **Voice.** The workflow posts the note as `github-actions`, so it speaks as the Playwright bot. Write
 it as [bot-voice.md](bot-voice.md) says: announce the bot in one line, verdict first, everything

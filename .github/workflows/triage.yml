@@ -1,6 +1,7 @@
 # Copilot triages and fixes an issue, or works on a task given by hand, without write credentials.
 # Fresh jobs post the run link on the issue, open the completed fix as a draft PR using the app,
-# so CI runs on it, and comment on the issue.
+# so CI runs on it, file a Firefox or WebKit bug in microsoft/playwright-browsers using the app,
+# and comment on the issue.
 name: Issue triage
 
 on:
@@ -85,6 +86,7 @@ jobs:
       setup: ${{ steps.setup.outcome }}
       agent: ${{ steps.agent.outcome }}
       has_fix: ${{ steps.save.outputs.has_fix }}
+      browser: ${{ steps.save.outputs.browser }}
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
@@ -153,7 +155,16 @@ jobs:
         else
           echo "has_fix=false" >> "$GITHUB_OUTPUT"
         fi
+        browser=""
+        if [[ -f "$OUTPUT_DIR/browser/report.json" ]]; then
+          browser=$(node -p 'String(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).browser)' "$OUTPUT_DIR/browser/report.json" || true)
+          [[ "$browser" =~ ^(chromium|firefox|webkit)$ ]] || { echo "::warning::browser/report.json does not name chromium, firefox or webkit"; browser=""; }
+        fi
+        echo "browser=$browser" >> "$GITHUB_OUTPUT"
         echo "Copilot step: $AGENT_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
+        if [[ -n "$browser" ]]; then
+          echo "Browser bug report: $browser" >> "$GITHUB_STEP_SUMMARY"
+        fi
         if [[ -f "$OUTPUT_DIR/summary.md" ]]; then
           cat "$OUTPUT_DIR/summary.md" >> "$GITHUB_STEP_SUMMARY"
         else
@@ -230,9 +241,82 @@ jobs:
           core.setOutput('pr', pr.html_url);
           await core.summary.addRaw(`Draft pull request: ${pr.html_url}\n`).write();
 
+  browser:
+    name: File the browser issue
+    needs: triage
+    # A Chromium report goes to crbug.com, where only a person can file: the comment job hands it to a maintainer.
+    if: ${{ !cancelled() && contains(fromJSON('["firefox","webkit"]'), needs.triage.outputs.browser) && (github.event_name == 'issues' || inputs.issue != '') }}
+    runs-on: ubuntu-latest
+    outputs:
+      url: ${{ steps.file.outputs.url }}
+    steps:
+    - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      id: app-token
+      with:
+        client-id: ${{ vars.PLAYWRIGHT_APP_CLIENT_ID }}
+        private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+        owner: microsoft
+        repositories: playwright-browsers
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: triage
+        path: ${{ runner.temp }}/triage
+    # Only the title, the body and the labels come from the report; nothing in it is executed.
+    - name: Validate and file
+      id: file
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        BROWSER: ${{ needs.triage.outputs.browser }}
+        ISSUE: ${{ github.event.issue.number || inputs.issue }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      with:
+        github-token: ${{ steps.app-token.outputs.token }}
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          const { BROWSER, ISSUE, RUNNER_TEMP, RUN_URL } = process.env;
+          const dir = path.join(RUNNER_TEMP, 'triage', 'browser');
+          const browsers = { owner: 'microsoft', repo: 'playwright-browsers' };
+          const issueUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/issues/${ISSUE}`;
+
+          const report = JSON.parse(fs.readFileSync(path.join(dir, 'report.json'), 'utf8'));
+          if (report.browser !== BROWSER)
+            throw new Error(`report.json names ${report.browser}, the triage job reported ${BROWSER}`);
+          const title = typeof report.title === 'string' ? report.title.trim() : '';
+          if (!title || title.length > 256)
+            throw new Error('report.json needs a title of 1 to 256 characters');
+          const body = fs.readFileSync(path.join(dir, 'report.md'), 'utf8').trim();
+          if (!body)
+            throw new Error('report.md is empty');
+
+          const labels = [`browser-${BROWSER}`];
+          if (report.platform) {
+            const known = await github.paginate(github.rest.issues.listLabelsForRepo, { ...browsers, per_page: 100 });
+            if (typeof report.platform === 'string' && report.platform.startsWith('platform-') && known.some(label => label.name === report.platform))
+              labels.push(report.platform);
+            else
+              core.warning(`Dropped the unknown platform label ${JSON.stringify(report.platform)}`);
+          }
+
+          // A label re-applied after an earlier run must not file the same bug twice.
+          const open = await github.paginate(github.rest.issues.listForRepo, { ...browsers, state: 'open', labels: labels[0], per_page: 100 });
+          const link = new RegExp(`${issueUrl.replace(/\./g, '\\.')}(?!\\d)`);
+          let url = open.find(issue => !issue.pull_request && link.test(issue.body ?? ''))?.html_url;
+          if (url) {
+            core.notice(`${url} already tracks ${issueUrl}`);
+          } else {
+            const { data: issue } = await github.rest.issues.create({
+              ...browsers, title, labels,
+              body: `${body}\n\nPlaywright issue: ${issueUrl}\n\n<sub>Filed by the [triage workflow](${RUN_URL}).</sub>`,
+            });
+            url = issue.html_url;
+          }
+          core.setOutput('url', url);
+          await core.summary.addRaw(`Browser issue: ${url}\n`).write();
+
   comment:
     name: Comment on the issue
-    needs: [start, triage, publish]
+    needs: [start, triage, publish, browser]
     # Runs after every triage run that has an issue, including failed ones, and whatever publish did.
     if: ${{ !cancelled() && needs.triage.result != 'skipped' && (github.event_name == 'issues' || inputs.issue != '') }}
     runs-on: ubuntu-latest
@@ -246,6 +330,9 @@ jobs:
       AGENT_OUTCOME: ${{ needs.triage.outputs.agent }}
       PUBLISH_RESULT: ${{ needs.publish.result }}
       PR_URL: ${{ needs.publish.outputs.pr }}
+      BROWSER: ${{ needs.triage.outputs.browser }}
+      BROWSER_RESULT: ${{ needs.browser.result }}
+      BROWSER_ISSUE_URL: ${{ needs.browser.outputs.url }}
       START_COMMENT: ${{ needs.start.outputs.comment }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
@@ -276,6 +363,18 @@ jobs:
           printf '\n\nDraft fix: %s\n' "$PR_URL" >> output/comment.md
         elif [[ "$PUBLISH_RESULT" == "failure" ]]; then
           printf '\n\nThe bot proposed a fix, but opening the pull request failed. The agent run has the details.\n' >> output/comment.md
+        fi
+        if [[ "$BROWSER" == "chromium" && -s output/browser/report.md ]]; then
+          title=$(jq -r '.title // empty' output/browser/report.json)
+          {
+            printf '\n\nChromium bug report, for a maintainer to file at https://crbug.com/new:\n\n**Title:** %s\n\n<details>\n<summary>Body</summary>\n\n````markdown\n' "$title"
+            cat output/browser/report.md
+            printf '\n````\n\n</details>\n'
+          } >> output/comment.md
+        elif [[ -n "$BROWSER_ISSUE_URL" ]]; then
+          printf '\n\nBlocked-by: %s\n' "$BROWSER_ISSUE_URL" >> output/comment.md
+        elif [[ "$BROWSER_RESULT" == "failure" ]]; then
+          printf '\n\nThe bot wrote a %s bug report, but filing it in microsoft/playwright-browsers failed. The agent run has the details.\n' "$BROWSER" >> output/comment.md
         fi
         printf '\n\n<sub>Triaged on %s by the Playwright bot - [agent run](%s)</sub>\n<!-- playwright-ai-triage -->\n' "$PLATFORM_NAME" "$WORKFLOW_URL" >> output/comment.md
         gh issue comment "$ISSUE" --body-file output/comment.md
