@@ -3727,6 +3727,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `MC-017` | `library/multiclient.spec.ts` | screencast should deliver cached last frame to a new client |
 | `MC-018` | `library/multiclient.spec.ts` | should stop tracing upon disconnect |
 | `MC-019` | `library/multiclient.spec.ts` | should not deliver an action buffered before the second recording started |
+| `MC-020` | `library/multiclient.spec.ts` | should run locator handlers after reconnecting with a pending callback |
 
 ### MO — Mouse
 
