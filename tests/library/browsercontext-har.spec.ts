@@ -270,7 +270,7 @@ it('HA-114 should reject a malformed har.zip', async ({ contextFactory }, testIn
   zipFile.end();
   const chunks: Buffer[] = [];
   for await (const chunk of zipFile.outputStream)
-    chunks.push(chunk);
+    chunks.push(chunk as Buffer);
   // yauzl reports '..' in an entry name as an 'error' event while reading entries.
   const zip = Buffer.from(Buffer.concat(chunks).toString('latin1').replaceAll('aa/x.har', '../x.har'), 'latin1');
   const harPath = testInfo.outputPath('malformed.har.zip');
