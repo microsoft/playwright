@@ -174,6 +174,25 @@ it('PO-022 should respect routes from browser context when using window.open', a
   await context.close();
 });
 
+it('PO-029 should load subresources of an about:blank popup when the opener has routes', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43496' },
+    { type: 'issue', description: 'https://issues.chromium.org/u/1/issues/576333026' },
+  ],
+}, async function({ browser, server, browserName }) {
+  it.fixme(browserName === 'chromium', 'Subresources of an about:blank popup are paused on the opener target and never continued');
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.route('**/*', route => route.continue());
+  await page.goto(server.EMPTY_PAGE);
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(url => window.open('').document.write(`<img src="${url}">`), server.PREFIX + '/pptr.png'),
+  ]);
+  await popup.waitForFunction(() => document.querySelector('img')?.naturalWidth > 0);
+  await context.close();
+});
+
 it('PO-023 BrowserContext.addInitScript should apply to an in-process popup', async function({ browser, server }) {
   const context = await browser.newContext();
   await context.addInitScript(() => window['injected'] = 123);
