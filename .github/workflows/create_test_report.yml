@@ -12,9 +12,8 @@ jobs:
     permissions:
       pull-requests: write
       checks: write
-      statuses: write
       contents: read    # This is required for actions/checkout to succeed
-    if: ${{ github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'push' }}
+    if: ${{ github.event.workflow_run.event == 'pull_request' }}
     runs-on: ubuntu-latest
     outputs:
       pr_number: ${{ steps.pr.outputs.number }}
@@ -24,9 +23,6 @@ jobs:
       MARKDOWN_OUTPUT_FILE: ${{ github.workspace }}/report.md
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        # Blob reports from fork PRs are untrusted, keep the token out of the workspace.
-        persist-credentials: false
     - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
         node-version: lts/*
@@ -54,14 +50,6 @@ jobs:
         else
           echo "has_failures=false" >> "$GITHUB_OUTPUT"
         fi
-
-    - name: Upload HTML report
-      id: upload-report
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-        path: playwright-report/index.html
-        archive: false   # Upload as a single, browser-openable file (no zip)
-        retention-days: 30
 
     # The triggering workflow ran on a pull_request event, but workflow_run.pull_requests is
     # empty for PRs from forks, so resolve the number from the head ref instead. gh's head
@@ -95,7 +83,6 @@ jobs:
       if: ${{ steps.pr.outputs.number }}
       uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
       env:
-        HTML_REPORT_URL: ${{ steps.upload-report.outputs.artifact-url }}
         PR_NUMBER: ${{ steps.pr.outputs.number }}
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -107,20 +94,6 @@ jobs:
             core,
             reportFile: process.env.MARKDOWN_OUTPUT_FILE,
             prNumber: +process.env.PR_NUMBER,
-            reportUrl: process.env.HTML_REPORT_URL,
-          });
-
-    - name: Publish Report URL as Commit Status
-      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-      with:
-        script: |
-          await github.rest.repos.createCommitStatus({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            sha: '${{ github.event.workflow_run.head_sha }}',
-            state: 'success',
-            target_url: '${{ steps.upload-report.outputs.artifact-url }}',
-            context: 'HTML Report (${{ github.event.workflow_run.name }})',
           });
 
   triage:
