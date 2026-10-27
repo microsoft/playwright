@@ -765,6 +765,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `CD-050` | `library/chromium/session.spec.ts` | should emit close event when session is detached |
 | `CD-051` | `library/chromium/session.spec.ts` | should emit close event when page closes |
 | `CD-052` | `library/chromium/session.spec.ts` | should work with newBrowserCDPSession |
+| `CD-053` | `library/chromium/connect-over-cdp.spec.ts` | should connect when another client inspects a terminated shared worker |
 
 ### CF — Code frame
 
