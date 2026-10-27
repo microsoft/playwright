@@ -17,7 +17,63 @@
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
 import path from 'path';
+import yazl from 'yazl';
 import { extractZip } from '../../packages/utils/third_party/extractZip';
+
+function harWithInlineHtml(html: string): string {
+  return JSON.stringify({
+    log: {
+      version: '1.2',
+      creator: { name: 'playwright', version: '1.0' },
+      pages: [],
+      entries: [{
+        startedDateTime: new Date(0).toISOString(),
+        time: 0,
+        request: {
+          method: 'GET',
+          url: 'http://no.playwright/',
+          httpVersion: 'HTTP/1.1',
+          cookies: [],
+          headers: [{ name: 'Accept', value: '*/*' }],
+          queryString: [],
+          headersSize: -1,
+          bodySize: 0,
+        },
+        response: {
+          status: 200,
+          statusText: 'OK',
+          httpVersion: 'HTTP/1.1',
+          cookies: [],
+          headers: [{ name: 'content-type', value: 'text/html' }],
+          content: { size: html.length, mimeType: 'text/html', text: html },
+          redirectURL: '',
+          headersSize: -1,
+          bodySize: -1,
+        },
+        cache: {},
+        timings: { send: 0, wait: 0, receive: 0 },
+      }],
+    },
+  });
+}
+
+async function writeZip(file: string, entryName: string, contents: string): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const zip = new yazl.ZipFile();
+    zip.addBuffer(Buffer.from(contents), entryName);
+    zip.outputStream.pipe(fs.createWriteStream(file)).on('close', resolve).on('error', reject);
+    zip.end();
+  });
+}
+
+it('HA-070 should routeFromHAR a zip whose HAR entry name is not lowercase', async ({ context }, testInfo) => {
+  const zipPath = testInfo.outputPath('recording.har.zip');
+  await writeZip(zipPath, 'Recording.HAR', harWithInlineHtml('<body>from uppercase HAR</body>'));
+  await context.routeFromHAR(zipPath);
+  const page = await context.newPage();
+  await page.goto('http://no.playwright/');
+  expect(await page.textContent('body')).toBe('from uppercase HAR');
+});
 
 it('HA-068 should context.routeFromHAR, matching the method and following redirects', async ({ context, asset }) => {
   const path = asset('har-fulfill.har');

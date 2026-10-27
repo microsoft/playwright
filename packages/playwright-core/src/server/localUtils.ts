@@ -153,7 +153,7 @@ export async function harOpen(progress: Progress, harBackends: Map<string, HarBa
     const zipFile = new ZipFile(params.file);
     try {
       const entryNames = await progress.race(zipFile.entries());
-      const harEntryName = entryNames.find(e => e.endsWith('.har'));
+      const harEntryName = entryNames.find(e => /\.har$/i.test(e));
       if (!harEntryName)
         return { error: 'Specified archive does not have a .har file' };
       const har = await progress.race(zipFile.read(harEntryName));
@@ -193,7 +193,7 @@ export async function harUnzip(progress: Progress, params: channels.LocalUtilsHa
   try {
     for (const entry of await progress.race(zipFile.entries())) {
       const buffer = await progress.race(zipFile.read(entry));
-      if (entry === 'har.har') {
+      if (/^har\.har$/i.test(entry)) {
         await progress.race(fs.promises.writeFile(params.harFile, buffer));
       } else {
         if (!resourcesDirCreated) {
