@@ -31,7 +31,7 @@ export const setupPage = defineTestTool({
       project: z.string().optional().describe('Project to use for setup. For example: "chromium", if no project is provided uses the first project in the config.'),
       seedFile: z.string().optional().describe('A seed file contains a single test that is used to setup the page for testing, for example: "tests/seed.spec.ts". If no seed file is provided, a default seed file is created.'),
     }),
-    type: 'readOnly',
+    type: 'action',
   },
 
   handle: async (context, params, signal) => {
@@ -85,7 +85,7 @@ export const saveTestPlan = defineTestTool({
       name: z.string().describe('The name of the test plan, for example: "Test Plan".'),
       fileName: z.string().describe('The file to save the test plan to, for example: "spec/test.plan.md". Relative to the workspace root.'),
     }),
-    type: 'readOnly',
+    type: 'action',
   },
 
   handle: async (context, params) => {
