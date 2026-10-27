@@ -43,4 +43,19 @@ test('EE-053 should support special event names', () => {
   expect(ee.listeners('__defineGetter__')[0]).toEqual(handler);
   expect(ee.listeners('toString').length).toEqual(1);
   expect(ee.listeners('toString')[0]).toEqual(handler);
+
+  const error = new Error('listener failed');
+  ee.on('throw', () => { throw error; });
+  expect(() => ee.emit('throw')).toThrow(error);
+
+  const errors = [];
+  ee.on('error', error => errors.push(error));
+  ee.on('throw', () => errors.push('next listener'));
+  ee.emit('throw');
+  expect(errors).toEqual([error, 'next listener']);
+
+  ee.removeAllListeners('error');
+  expect(() => ee.emit('throw')).toThrow(error);
+  ee.on('error', () => { throw new Error('error listener failed'); });
+  expect(() => ee.emit('throw')).toThrow('error listener failed');
 });

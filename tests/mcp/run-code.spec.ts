@@ -36,6 +36,47 @@ test('browser_run_code_unsafe', async ({ client, server }) => {
   }));
   const content = await consoleEntries(response);
   expect(content).toContain('[LOG] Submit');
+
+  await client.callTool({
+    name: 'browser_run_code_unsafe',
+    arguments: {
+      code: `(page) => {
+        page.once('requestfinished', () => { throw new TypeError('page listener failed'); });
+        page.context().once('requestfinished', () => { throw new Error('context listener failed'); });
+      }`,
+    },
+  });
+
+  const listenerResponse = parseResponse(await client.callTool({
+    name: 'browser_run_code_unsafe',
+    arguments: {
+      code: `async (page) => {
+        await Promise.all([
+          page.waitForEvent('requestfinished'),
+          page.evaluate(() => fetch('/empty.html')),
+        ]);
+      }`,
+    },
+  }));
+  const listenerErrors = await consoleEntries(listenerResponse);
+  expect(listenerErrors).toContain('TypeError: page listener failed');
+  expect(listenerErrors).toContain('Error: context listener failed');
+
+  expect(await client.callTool({ name: 'browser_console_messages', arguments: { level: 'error' } })).toHaveResponse({
+    result: expect.stringContaining('Total messages: 3 (Errors: 2, Warnings: 0)'),
+  });
+  const consoleResponse = parseResponse(await client.callTool({ name: 'browser_console_messages' }));
+  expect(consoleResponse.result).toContain('TypeError: page listener failed');
+  expect(consoleResponse.result).toContain('Error: context listener failed');
+
+  server.setContent('/next', '<!DOCTYPE html><title>Next</title>', 'text/html');
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX + '/next' } });
+  expect(await client.callTool({ name: 'browser_console_messages' })).toHaveResponse({
+    result: 'Total messages: 0 (Errors: 0, Warnings: 0)',
+  });
+  expect(await client.callTool({ name: 'browser_console_messages', arguments: { all: true } })).toHaveResponse({
+    result: expect.stringContaining('Total messages: 3 (Errors: 2, Warnings: 0)'),
+  });
 });
 
 test('browser_run_code_unsafe block', async ({ client, server }) => {

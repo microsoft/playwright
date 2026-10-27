@@ -15,6 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
+import { types } from 'util';
 import debug from 'debug';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
@@ -119,6 +120,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _recentEventEntries: EventEntry[] = [];
   private _webmcpTools: WebMCPListing | undefined;
   private _consoleLog: LogFile;
+  private _eventHandlerErrors: { message: ConsoleMessage, navigation: number }[] = [];
+  private _navigation = 0;
   private _disposables: Disposable[];
   readonly actionTimeoutOptions: { timeout?: number; };
   readonly navigationTimeoutOptions: { timeout?: number; };
@@ -134,6 +137,11 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._disposables = [
       eventsHelper.addEventListener(p, 'console', event => this._handleConsoleMessage(messageToConsoleMessage(event))),
       eventsHelper.addEventListener(p, 'pageerror', error => this._handleConsoleMessage(pageErrorToConsoleMessage(error))),
+      eventsHelper.addEventListener(p, 'error', error => this.logError(error)),
+      eventsHelper.addEventListener(p, 'framenavigated', frame => {
+        if (frame === p.mainFrame())
+          this._navigation++;
+      }),
       eventsHelper.addEventListener(p, 'request', request => this._handleRequest(request)),
       eventsHelper.addEventListener(p, 'response', response => this._handleResponse(response)),
       eventsHelper.addEventListener(p, 'requestfailed', request => this._handleRequestFailed(request)),
@@ -308,6 +316,18 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._handleConsoleMessage(pageErrorToConsoleMessage(new Error(text)));
   }
 
+  logError(error: unknown) {
+    const message = pageErrorToConsoleMessage(error);
+    this._eventHandlerErrors.push({ message, navigation: this._navigation });
+    if (this._eventHandlerErrors.length > 200)
+      this._eventHandlerErrors.shift();
+    this._handleConsoleMessage(message);
+  }
+
+  private _eventHandlerConsoleMessages(all?: boolean): ConsoleMessage[] {
+    return this._eventHandlerErrors.filter(entry => all || entry.navigation === this._navigation).map(entry => entry.message);
+  }
+
   private _addLogEntry(entry: EventEntry) {
     this._recentEventEntries.push(entry);
   }
@@ -425,7 +445,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     const filter = all ? 'all' : 'since-navigation';
     const messages = await this.page.consoleMessages({ filter });
     const pageErrors = await this.page.pageErrors({ filter });
-    let errors = pageErrors.length;
+    const eventHandlerErrors = this._eventHandlerConsoleMessages(all);
+    let errors = pageErrors.length + eventHandlerErrors.length;
     let warnings = 0;
     for (const message of messages) {
       if (message.type() === 'error')
@@ -433,7 +454,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       else if (message.type() === 'warning')
         warnings++;
     }
-    return { total: messages.length + pageErrors.length, errors, warnings };
+    return { total: messages.length + pageErrors.length + eventHandlerErrors.length, errors, warnings };
   }
 
   async consoleMessages(level: ConsoleMessageLevel, all?: boolean): Promise<ConsoleMessage[]> {
@@ -449,12 +470,14 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       const errors = await this.page.pageErrors({ filter: all ? 'all' : 'since-navigation' });
       for (const error of errors)
         result.push(pageErrorToConsoleMessage(error));
+      result.push(...this._eventHandlerConsoleMessages(all));
     }
     return result;
   }
 
   async clearConsoleMessages() {
     await this._initializedPromise;
+    this._eventHandlerErrors.length = 0;
     await Promise.all([
       this.page.clearConsoleMessages(),
       this.page.clearPageErrors()
@@ -654,8 +677,8 @@ function messageToConsoleMessage(message: playwright.ConsoleMessage): ConsoleMes
   };
 }
 
-function pageErrorToConsoleMessage(errorOrValue: Error | any): ConsoleMessage {
-  if (errorOrValue instanceof Error) {
+function pageErrorToConsoleMessage(errorOrValue: unknown): ConsoleMessage {
+  if (types.isNativeError(errorOrValue)) {
     return {
       type: 'error',
       timestamp: Date.now(),
