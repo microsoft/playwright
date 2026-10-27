@@ -571,7 +571,7 @@ export class Page extends SdkObject<PageEventMap> {
 
   private async _performLocatorHandlersCheckpoint(progress: Progress) {
     // Do not run locator handlers from inside locator handler callbacks to avoid deadlocks.
-    if (this._locatorHandlerRunningCounter)
+    if (this._locatorHandlerRunningCounter || [...this._locatorHandlers.values()].some(handler => !!handler.resolved))
       return;
     for (const [uid, handler] of this._locatorHandlers) {
       if (!handler.resolved) {
