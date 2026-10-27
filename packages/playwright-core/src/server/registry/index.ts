@@ -1005,6 +1005,8 @@ export class Registry {
           `<3 Playwright Team`,
         ].join('\n'), 1));
       } else {
+        if (!releaseLock && (e.code === 'EACCES' || e.code === 'EROFS'))
+          e.message += '\nSet PLAYWRIGHT_BROWSERS_PATH to a writable directory.';
         throw e;
       }
     } finally {
