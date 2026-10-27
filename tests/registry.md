@@ -3158,6 +3158,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `HA-111` | `library/har-websocket.spec.ts` | should still allow routeWebSocket to modify messages when capturing HAR |
 | `HA-112` | `library/har-websocket.spec.ts` | should respect PLAYWRIGHT\_HAR\_NO\_WEBSOCKET\_FRAMES |
 | `HA-113` | `library/har.spec.ts` | should store binary content with a textual mime type as base64 |
+| `HA-114` | `library/browsercontext-har.spec.ts` | should reject a malformed har.zip |
 
 ### HE — Headful
 
