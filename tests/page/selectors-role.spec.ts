@@ -132,6 +132,29 @@ test('SE-052 should support checked', async ({ page }) => {
   ]);
 });
 
+test('SE-052b should match mixed-case role tokens and aria state values', async ({ page }) => {
+  // ARIA role tokens and the enumerated state values are ASCII case-insensitive.
+  await page.setContent(`
+    <div role="checkbox" aria-checked="True">remember</div>
+    <div role="Button" aria-pressed="True">bold</div>
+    <div role="button" aria-expanded="True">menu</div>
+  `);
+
+  expect(await page.locator(`role=checkbox[checked]`).count()).toBe(1);
+  expect(await page.getByRole('checkbox', { checked: true }).count()).toBe(1);
+
+  expect(await page.getByRole('button').count()).toBe(2);
+  expect(await page.getByRole('button', { name: 'bold' }).count()).toBe(1);
+  expect(await page.getByRole('button', { pressed: true }).count()).toBe(1);
+  expect(await page.getByRole('button', { expanded: true }).count()).toBe(1);
+
+  expect(await page.locator('body').ariaSnapshot()).toBe([
+    '- checkbox "remember" [checked]',
+    '- button "bold" [pressed]',
+    '- button "menu" [expanded]',
+  ].join('\n'));
+});
+
 test('SE-053 should support pressed', async ({ page }) => {
   await page.setContent(`
     <button>Hi</button>
