@@ -4173,6 +4173,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `PO-026` | `library/popup.spec.ts` | should not dispatch binding on a closed page |
 | `PO-027` | `library/popup.spec.ts` | should not throttle rAF in the opener page |
 | `PO-028` | `library/popup.spec.ts` | should not throw when click closes popup |
+| `PO-029` | `library/popup.spec.ts` | should load subresources of an about:blank popup when the opener has routes |
 
 ### PR — Proxy
 
