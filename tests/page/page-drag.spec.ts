@@ -483,8 +483,8 @@ it('DD-019 should handle custom dataTransfer', async ({ page, browserName, isWin
   it.fixme(browserName === 'webkit' && isWindows);
   await page.setContent(`<button draggable="true">Draggable</button>`);
 
-  const resultPromise = page.evaluate(() =>
-    new Promise(resolve => {
+  await page.evaluate(() => {
+    (window as any).__result = new Promise(resolve => {
       document.addEventListener('dragstart', event => {
         event.dataTransfer!.setData('custom-type', 'Hello World');
       }, false);
@@ -503,15 +503,15 @@ it('DD-019 should handle custom dataTransfer', async ({ page, browserName, isWin
           data: event.dataTransfer!.getData('custom-type'),
         });
       }, false);
-    })
-  );
+    });
+  });
 
   await page.hover('[draggable="true"]');
   await page.mouse.down();
   await page.mouse.move(100, 100);
   await page.mouse.up();
 
-  await expect(resultPromise).resolves.toEqual({
+  expect(await page.evaluate(() => (window as any).__result)).toEqual({
     types: ['custom-type'],
     data: 'Hello World',
   });

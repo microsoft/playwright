@@ -574,15 +574,12 @@ it('EV-062 should simulate a user gesture', async ({ page }) => {
 });
 
 it('EV-063 should throw a nice error after a navigation', async ({ page }) => {
-  const errorPromise = page.evaluate(() => new Promise(f => window['__resolve'] = f)).catch(e => e) as Promise<Error>;
-  await Promise.all([
-    page.waitForNavigation(),
-    page.evaluate(() => {
-      window.location.reload();
-      setTimeout(() => window['__resolve'](42), 1000);
-    })
-  ]);
-  const error = await errorPromise;
+  const navigationPromise = page.waitForNavigation();
+  const error = await page.evaluate(() => new Promise(f => setTimeout(() => {
+    window.location.reload();
+    setTimeout(() => f(42), 1000);
+  }, 0))).catch(e => e) as Error;
+  await navigationPromise;
   expect(error.message).toContain('navigation');
 });
 
