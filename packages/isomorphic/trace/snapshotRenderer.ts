@@ -23,7 +23,8 @@ import type { LRUCache } from '../lruCache';
 function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
   let closest: T | undefined;
   let closestDistance = Infinity;
-  // Screencast frames may arrive out of order by swap wall time.
+  // Chromium may deliver screencast frames out of order by swap wall time,
+  // see https://issues.chromium.org/issues/578117966.
   for (const item of items) {
     const distance = Math.abs(metric(item) - target);
     if (distance <= closestDistance) {

@@ -37,19 +37,31 @@ function makeSnapshot(overrides: Partial<FrameSnapshot> = {}): FrameSnapshot {
 }
 
 test('TV-136 snapshot renderer selects the nearest out-of-order screencast frame', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43573' },
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43573' },
+    { type: 'issue', description: 'https://issues.chromium.org/issues/578117966' },
+  ],
 }, () => {
-  const frames = [390, 1023, 1006, 1040, 30000, 30000].map((wallTime, index) => ({
+  // Chromium encodes screencast frames in parallel and sends each one when
+  // its encoding finishes. Frame 3 was swapped before frame 2, but took
+  // longer to encode, so it was received later.
+  const frameSwapWallTimes = [1000, 1017, 1050, 1033, 1067];
+  const frames = frameSwapWallTimes.map((frameSwapWallTime, index) => ({
     file: `${index}.jpeg`,
     width: 1280,
     height: 720,
-    timestamp: index,
-    frameSwapWallTime: wallTime,
+    timestamp: 1000 + index * 17,
+    frameSwapWallTime,
   }));
-  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [
-    makeSnapshot({ timestamp: 5, wallTime: 30000 }),
-  ], frames, 0);
-  expect(renderer.closestScreenshot()).toBe('5.jpeg');
+  const snapshots = [
+    makeSnapshot({ timestamp: 1030, wallTime: 1030 }),
+    makeSnapshot({ timestamp: 1070, wallTime: 1070 }),
+  ];
+  const renderer1 = new SnapshotRenderer(new LRUCache(1_000_000), [], snapshots, frames, 0);
+  expect(renderer1.closestScreenshot()).toBe('3.jpeg');
+  // Every later snapshot should not be stuck on the frame before the reversed pair.
+  const renderer2 = new SnapshotRenderer(new LRUCache(1_000_000), [], snapshots, frames, 1);
+  expect(renderer2.closestScreenshot()).toBe('4.jpeg');
 });
 
 for (const [name, overrides] of [
