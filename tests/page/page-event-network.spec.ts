@@ -116,8 +116,10 @@ it('NE-089 should support redirects', async ({ page, server }) => {
   expect(redirectedFrom.redirectedTo()).toBe(response.request());
 });
 
-it('NE-090 should resolve responses after a navigation', async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'chromium');
+it('NE-090 should resolve responses after a cross-process navigation', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43508' },
+}, async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'chromium', 'Chromium does not report loadingFailed when the navigation swaps the frame');
   const responseFromServerPromise = new Promise<ServerResponse>(resolve => {
     server.setRoute('/foo', (message, response) => {
       resolve(response);
@@ -132,6 +134,30 @@ it('NE-090 should resolve responses after a navigation', async ({ page, server, 
   const responsePromise = request.response();
   // navigate, which should cancel the request
   await page.goto(server.CROSS_PROCESS_PREFIX);
+  // make sure we aren't stalling this request on the server
+  responseFromServer.end('done');
+  // the response should resolve to null, because the page navigated.
+  expect(await responsePromise).toBe(null);
+});
+
+it('NE-143 should resolve responses after a same-process navigation', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43508' },
+}, async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'chromium', 'Chromium does not report loadingFailed when the navigation swaps the frame');
+  const responseFromServerPromise = new Promise<ServerResponse>(resolve => {
+    server.setRoute('/foo', (message, response) => {
+      resolve(response);
+    });
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const requestPromise = page.waitForRequest(() => true);
+  // start a long running request and wait until it hits the server
+  await page.evaluate(url => void fetch(url), server.PREFIX + '/foo');
+  const responseFromServer = await responseFromServerPromise;
+  const request = await requestPromise;
+  const responsePromise = request.response();
+  // navigate within the same process, which should cancel the request
+  await page.goto(server.PREFIX + '/title.html');
   // make sure we aren't stalling this request on the server
   responseFromServer.end('done');
   // the response should resolve to null, because the page navigated.
