@@ -51,6 +51,34 @@ class WorkerData {
   }
 }
 
+// Scrolls the node into view, or, when it has no layout object (e.g. display: contents),
+// the first of its flattened descendants that has one. Returns false when there is none.
+function scrollNodeIntoViewIfNeeded(node, rect) {
+  // Only Element, Text and Document have scrollRectIntoViewIfNeeded (see GeometryUtils.webidl).
+  if (node.scrollRectIntoViewIfNeeded) {
+    try {
+      node.scrollRectIntoViewIfNeeded(rect.x, rect.y, rect.width, rect.height);
+      return true;
+    } catch (e) {
+      // nsINode::ScrollRectIntoViewIfNeeded (dom/base/nsINode.cpp in bootstrap.diff)
+      // throws a NotFoundError DOMException when the node has no primary frame.
+      // Anything else is unexpected.
+      if (e.name !== 'NotFoundError')
+        throw e;
+    }
+  }
+  let flatTreeChildren = node.childNodes;
+  if (node.openOrClosedShadowRoot)
+    flatTreeChildren = node.openOrClosedShadowRoot.childNodes;
+  else if (node.localName === 'slot' && node.assignedNodes && node.assignedNodes().length)
+    flatTreeChildren = node.assignedNodes();
+  for (const child of flatTreeChildren) {
+    if (scrollNodeIntoViewIfNeeded(child, rect))
+      return true;
+  }
+  return false;
+}
+
 export class PageAgent {
   constructor(browserChannel, frameTree) {
     this._browserChannel = browserChannel;
@@ -440,9 +468,7 @@ export class PageAgent {
       throw new Error('Node is detached from document');
     if (!rect)
       rect = { x: -1, y: -1, width: -1, height: -1};
-    if (unsafeObject.scrollRectIntoViewIfNeeded)
-      unsafeObject.scrollRectIntoViewIfNeeded(rect.x, rect.y, rect.width, rect.height);
-    else
+    if (!scrollNodeIntoViewIfNeeded(unsafeObject, rect))
       throw new Error('Node does not have a layout object');
   }
 
