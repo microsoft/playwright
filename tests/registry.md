@@ -2876,6 +2876,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `FO-010` | `page/page-focus.spec.ts` | keeps focus on element when attempting to focus a non-focusable element |
 | `FO-011` | `page/page-focus.spec.ts` | should move focus from an iframe to its parent |
 | `FO-012` | `page/page-focus.spec.ts` | should tab from an iframe to its parent |
+| `FO-013` | `page/page-focus.spec.ts` | should move focus from the parent into its iframe |
 
 ### FR — Frame
 
