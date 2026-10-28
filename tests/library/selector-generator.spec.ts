@@ -751,4 +751,25 @@ it.describe('selector generator', () => {
     expect.soft(await generate(page, 'button:first-child')).toBe('internal:role=button >> nth=0');
     expect.soft(await generate(page, 'button:last-child')).toBe('internal:role=button >> nth=1');
   });
+
+  it('GN-105 should not throw for slotted element when host shadow root has a twin', async ({ page }) => {
+    await page.setContent(`
+      <span>Target</span>
+      <div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+      <x-host><x-item class="c" data-text="Target"></x-item></x-host>
+      <script>
+        customElements.define('x-item', class extends HTMLElement {
+          connectedCallback() {
+            this.attachShadow({ mode: 'open' }).innerHTML = '<div class="k"><span>' + (this.dataset.text || '') + '</span></div>';
+          }
+        });
+        customElements.define('x-host', class extends HTMLElement {
+          connectedCallback() {
+            this.attachShadow({ mode: 'open' }).innerHTML = '<x-item class="c"></x-item><slot></slot>';
+          }
+        });
+      </script>
+    `);
+    expect(await generate(page, 'x-item[data-text] span')).toBe('x-host >> internal:text="Target"i');
+  });
 });
