@@ -435,7 +435,7 @@ test('SE-059 should filter hidden, unless explicitly asked for', async ({ page }
 
 test('SE-060 should support name', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43549' },
-}, async ({ page }) => {
+}, async ({ page, browserName, browserMajorVersion }) => {
   await page.setContent(`
     <div role="button" aria-label=" Hello "></div>
     <div role="button" aria-label="Hallo"></div>
@@ -449,9 +449,6 @@ test('SE-060 should support name', {
 
   const group = page.getByRole('group');
   await expect(group).toHaveAccessibleName('Chosen name');
-  await group.evaluate(element => {
-    element.ariaLabelledByElements = [document.querySelector('#title')!];
-  });
 
   expect(await page.locator(`role=button[name="Hello"]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label=" Hello "></div>`,
@@ -508,9 +505,16 @@ test('SE-060 should support name', {
     `<div role="button" aria-label="123" aria-hidden="true"></div>`,
   ]);
 
-  expect(await page.getByRole('group', { name: 'Chosen name', exact: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<div role="group" aria-labelledby=""></div>`,
-  ]);
+  // Old electron/android do not have this API.
+  const isMissingAriaLabelledByElements = browserName === 'chromium' && browserMajorVersion < 135;
+  if (!isMissingAriaLabelledByElements) {
+    await group.evaluate(element => {
+      element.ariaLabelledByElements = [document.querySelector('#title')!];
+    });
+    expect(await page.getByRole('group', { name: 'Chosen name', exact: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+      `<div role="group" aria-labelledby=""></div>`,
+    ]);
+  }
 });
 
 test('SE-061 should support option name with html whitespace', async ({ page }) => {

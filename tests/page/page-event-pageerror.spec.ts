@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 
 it('ER-001 should fire', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43450' },
-}, async ({ page, server, browserName, isBidi }) => {
+}, async ({ page, server, browserName, browserMajorVersion, isBidi }) => {
   const url = server.PREFIX + '/error.html';
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
@@ -79,7 +79,7 @@ function c() {
     page.goto(server.PREFIX + '/cross-origin-error.html'),
   ]);
   expect(crossOriginError.message).toBe('Fancy error!');
-  if (browserName === 'chromium') {
+  if (browserName === 'chromium' && browserMajorVersion >= 155) {
     expect(crossOriginError.stack).toBe(`Uncaught Error: Fancy error!
     at c (${crossOriginUrl}:14:11)
     at b (${crossOriginUrl}:10:5)
