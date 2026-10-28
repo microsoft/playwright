@@ -21,7 +21,7 @@ import mime from 'mime';
 import { WebSocketServer as wsServer } from 'ws';
 import { assert } from '@isomorphic/assert';
 import { createGuid } from './crypto';
-import { isPathInside } from './fileUtils';
+import { isRealPathInside } from './fileUtils';
 import { createHttpServer, startHttpServer } from './network';
 
 import type http from 'http';
@@ -87,8 +87,12 @@ export class HttpServer {
     const wss = new wsServer({ noServer: true });
     this._server.on('upgrade', (request, socket, head) => {
       const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
-      if (pathname !== wsPath)
+      if (pathname !== wsPath) {
+        // Nobody else owns this socket, and it has no 'error' listener.
+        if (this._server.listenerCount('upgrade') === 1)
+          socket.destroy();
         return;
+      }
       if (!isAllowedHost(request, this._allowedHosts)) {
         socket.write(`HTTP/${request.httpVersion} 403 Forbidden\r\n\r\n`);
         socket.destroy();
@@ -191,7 +195,7 @@ export class HttpServer {
   }
 
   serveFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }, options?: { skipRootCheck?: boolean }): boolean {
-    if (this._staticRoot && !options?.skipRootCheck && !isPathInside(this._staticRoot, absoluteFilePath)) {
+    if (this._staticRoot && !options?.skipRootCheck && !isRealPathInside(this._staticRoot, absoluteFilePath)) {
       response.statusCode = 403;
       response.end();
       return true;
