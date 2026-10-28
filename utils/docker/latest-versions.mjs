@@ -21,13 +21,9 @@ async function fetchJSON(url) {
   return response.json();
 }
 
-const [nodeReleases, chromeReleases] = await Promise.all([
-  fetchJSON('https://nodejs.org/dist/index.json'),
-  fetchJSON('https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json'),
-]);
-const nodeVersion = nodeReleases.find(release => release.lts)?.version;
+const chromeReleases = await fetchJSON('https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json');
 const chromiumVersion = chromeReleases.channels?.Stable?.version;
-if (!/^v\d+\.\d+\.\d+$/.test(nodeVersion) || !/^\d+\.\d+\.\d+\.\d+$/.test(chromiumVersion))
-  throw new Error('Release metadata must contain a Node.js LTS version and a stable Chrome for Testing version');
+if (!/^\d+\.\d+\.\d+\.\d+$/.test(chromiumVersion))
+  throw new Error('Release metadata must contain a stable Chrome for Testing version');
 
-console.log(`${nodeVersion.slice(1)} ${chromiumVersion}`);
+console.log(chromiumVersion);
