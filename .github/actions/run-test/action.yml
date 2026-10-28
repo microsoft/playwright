@@ -54,24 +54,17 @@ runs:
       if: inputs.setup-command != ''
       run: ${{ inputs.setup-command }}
       shell: bash
+    - uses: ./.github/actions/ci-env
     - name: Run tests
       if: inputs.shell == 'bash'
-      run: |
-        if [[ "$(uname)" == "Linux" ]]; then
-          xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- ${{ inputs.command }}
-        elif [[ "$RUNNER_OS" == "Windows" ]]; then
-          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .github/actions/run-test/windows-normal-io.ps1 -RunBashCommand
-        else
-          ${{ inputs.command }}
-        fi
+      run: $CI_ENV_EXEC ${{ inputs.command }}
       shell: bash
       env:
         PW_TAG: "@${{ inputs.bot-name }}"
-        PW_TEST_COMMAND: ${{ inputs.command }}
     - name: Run tests
       if: inputs.shell != 'bash'
       run: |
-        ${{ runner.os == 'Windows' && (inputs.shell == 'pwsh' || inputs.shell == 'powershell') && '. .\.github\actions\run-test\windows-normal-io.ps1' || '' }}
+        ${{ runner.os == 'Windows' && (inputs.shell == 'pwsh' || inputs.shell == 'powershell') && '. $env:CI_ENV_WINDOWS_NORMAL_IO' || '' }}
         ${{ inputs.command }}
       shell: ${{ inputs.shell }}
       env:

@@ -1,0 +1,19 @@
+name: 'CI environment'
+description: >
+  Prepares how the tests run on this runner. Exports CI_ENV_EXEC, a script a bash step runs the
+  test command through: under xvfb on Linux, and at normal I/O priority on Windows, where the
+  self-hosted runners start steps at Low and Firefox storage flushes then stall until the tests
+  time out (https://github.com/microsoft/playwright/issues/43704). Exports CI_ENV_WINDOWS_NORMAL_IO,
+  the PowerShell script a pwsh step dot-sources to do the same. The other Playwright repos use this
+  action as microsoft/playwright/.github/actions/ci-env@main.
+runs:
+  using: composite
+  steps:
+  - shell: bash
+    env:
+      ACTION_PATH: ${{ github.action_path }}
+    run: |
+      dir="${ACTION_PATH//\\//}"
+      chmod +x "$dir/exec.sh"
+      echo "CI_ENV_EXEC=$dir/exec.sh" >> "$GITHUB_ENV"
+      echo "CI_ENV_WINDOWS_NORMAL_IO=$dir/windows-normal-io.ps1" >> "$GITHUB_ENV"
