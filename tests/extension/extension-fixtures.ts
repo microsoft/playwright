@@ -131,7 +131,7 @@ function cliEnv() {
     PWTEST_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
     // Short path because macOS caps unix socket paths at 104 chars; the
     // long `project.outputDir` path overflows and causes EADDRINUSE.
-    PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'pwmcp-sock', String(test.info().parallelIndex)),
+    PWTEST_SOCKETS_DIR: path.join(os.tmpdir(), 'pwmcp-sock', String(test.info().parallelIndex)),
   };
 }
 

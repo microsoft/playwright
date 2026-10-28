@@ -154,7 +154,7 @@ for (const envName of ['XDG_RUNTIME_DIR', 'TMPDIR']) {
     try {
       const { daemonPid } = await cli('open', server.HELLO_WORLD, {
         env: {
-          PLAYWRIGHT_SOCKETS_DIR: '',
+          PWTEST_SOCKETS_DIR: '',
           XDG_RUNTIME_DIR: '',
           [envName]: tempDir,
         },
