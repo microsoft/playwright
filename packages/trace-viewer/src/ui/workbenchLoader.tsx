@@ -112,8 +112,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
     }
 
     if (params.has('isServer')) {
-      const guid = new URLSearchParams(window.location.search).get('ws');
-      const wsURL = new URL(`../${guid}`, window.location.toString());
+      const wsURL = new URL('../ws', window.location.toString());
       wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
       const testServerConnection = new TestServerConnection(new WebSocketTestServerTransport(wsURL));
       testServerConnection.onLoadTraceRequested(async params => {

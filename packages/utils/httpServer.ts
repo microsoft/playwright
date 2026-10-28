@@ -51,7 +51,7 @@ export class HttpServer {
   private _port: number = 0;
   private _started = false;
   private _routes: { prefix?: string, exact?: string, handler: ServerRouteHandler }[] = [];
-  private _wsPath: string | undefined;
+  private _hasWebSocket = false;
   // Allowed Host headers; null disables the check (host bound to a public address).
   private _allowedHosts: Set<string> | null = null;
   private _staticRoot: string | undefined;
@@ -85,15 +85,16 @@ export class HttpServer {
     return this._pathPrefix;
   }
 
+  // Clients connect to `ws` under the path prefix.
   createWebSocket(transportFactory: (url: URL) => Transport) {
     // Any web page can connect to a WebSocket that it can guess.
     assert(this._pathPrefix, 'websocket requires a random path prefix');
-    assert(!this._wsPath, 'can only create one main websocket transport per server');
-    this._wsPath = 'ws';
+    assert(!this._hasWebSocket, 'can only create one main websocket transport per server');
+    this._hasWebSocket = true;
     // HMR begin: route upgrades manually with `noServer` so Vite HMR's upgrade
     // listener on the same http.Server is not pre-empted. With `{ server, path }`
     // the ws library aborts non-matching upgrades with 400.
-    const wsPath = this._pathPrefix + '/' + this._wsPath;
+    const wsPath = this._pathPrefix + '/ws';
     const wss = new wsServer({ noServer: true });
     this._server.on('upgrade', (request, socket, head) => {
       const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
@@ -129,11 +130,6 @@ export class HttpServer {
       ws.on('close', () => transport.onclose());
       ws.on('error', () => transport.onclose());
     });
-  }
-
-  // Relative to urlPrefix().
-  wsPath(): string | undefined {
-    return this._wsPath;
   }
 
   async createViteDevServer(options: { root: string, base?: string }): Promise<ViteDevServer> {

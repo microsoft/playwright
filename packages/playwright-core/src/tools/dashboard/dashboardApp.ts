@@ -68,17 +68,15 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
     return connection;
   });
 
-  const redirect = (from: string, location: string) => httpServer.routePath(from, (_, response) => {
-    response.statusCode = 302;
-    response.setHeader('Location', location);
-    response.end();
-    return true;
-  });
-  const pagePath = `index.html?ws=${httpServer.wsPath()}`;
-  redirect(httpServer.pathPrefix() + '/', './' + pagePath);
   // Users open an explicit host or port by hand. Other local users can read this redirect too.
-  if (options.port !== undefined || options.host !== undefined)
-    redirect('/', '.' + httpServer.pathPrefix() + '/' + pagePath);
+  if (options.port !== undefined || options.host !== undefined) {
+    httpServer.routePath('/', (_, response) => {
+      response.statusCode = 302;
+      response.setHeader('Location', '.' + httpServer.pathPrefix() + '/');
+      response.end();
+      return true;
+    });
+  }
 
   // HMR: watch builds serve the dashboard through an embedded Vite dev server
   // so edits to packages/dashboard/src/* reload live. Release builds always

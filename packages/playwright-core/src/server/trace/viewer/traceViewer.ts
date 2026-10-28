@@ -168,8 +168,6 @@ export async function installRootRedirect(server: HttpServer, traceUrl: string |
     params.set('pathSeparator', path.sep);
   if (traceUrl)
     params.append('trace', traceUrl);
-  if (server.wsPath())
-    params.append('ws', server.wsPath()!);
   if (options?.isServer)
     params.append('isServer', '');
   if (isUnderTest())

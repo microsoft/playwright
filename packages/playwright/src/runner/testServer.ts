@@ -315,7 +315,7 @@ export async function runTestServer(configFile: string | undefined, configCLIOve
   const configLocation = configLoader.resolveConfigLocation(configFile);
   return await innerRunTestServer(configLocation, configCLIOverrides, options, async server => {
     // eslint-disable-next-line no-console
-    console.log('Listening on ' + server.urlPrefix('precise').replace('http:', 'ws:') + '/' + server.wsPath());
+    console.log('Listening on ' + server.urlPrefix('precise').replace('http:', 'ws:') + '/ws');
   });
 }
 
