@@ -144,29 +144,32 @@ test('session stops when browser exits', async ({ cli, server }) => {
   expect(listAfter).toContain('(no browsers)');
 });
 
-test('session stops when temporary socket directory disappears', async ({ cli, server }) => {
-  test.skip(process.platform === 'win32');
+for (const envName of ['XDG_RUNTIME_DIR', 'TMPDIR']) {
+  test(`session stops when socket directory in ${envName} disappears`, async ({ cli, server }) => {
+    test.skip(process.platform === 'win32');
 
-  // Keep this short because macOS limits Unix socket paths to 103 bytes.
-  const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'p-'));
-  const removedTempDir = tempDir + '.removed';
-  try {
-    const { daemonPid } = await cli('open', server.HELLO_WORLD, {
-      env: {
-        PWTEST_SOCKETS_DIR: '',
-        TMPDIR: tempDir,
-      },
-    });
-    expect(daemonPid).toBeDefined();
-    expect(isProcessAlive(daemonPid)).toBe(true);
+    // Keep this short because macOS limits Unix socket paths to 103 bytes.
+    const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'p-'));
+    const removedTempDir = tempDir + '.removed';
+    try {
+      const { daemonPid } = await cli('open', server.HELLO_WORLD, {
+        env: {
+          PWTEST_SOCKETS_DIR: '',
+          XDG_RUNTIME_DIR: '',
+          [envName]: tempDir,
+        },
+      });
+      expect(daemonPid).toBeDefined();
+      expect(isProcessAlive(daemonPid)).toBe(true);
 
-    await fs.promises.rename(tempDir, removedTempDir);
-    await expect.poll(() => isProcessAlive(daemonPid)).toBe(false);
-  } finally {
-    await fs.promises.rm(tempDir, { force: true, recursive: true });
-    await fs.promises.rm(removedTempDir, { force: true, recursive: true });
-  }
-});
+      await fs.promises.rename(tempDir, removedTempDir);
+      await expect.poll(() => isProcessAlive(daemonPid)).toBe(false);
+    } finally {
+      await fs.promises.rm(tempDir, { force: true, recursive: true });
+      await fs.promises.rm(removedTempDir, { force: true, recursive: true });
+    }
+  });
+}
 
 test('session reopen with different config', async ({ cli, server }, testInfo) => {
   const config = { browser: { contextOptions: { viewport: { width: 700, height: 500 } } } };
