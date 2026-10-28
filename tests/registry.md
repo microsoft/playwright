@@ -3241,6 +3241,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `IF-019` | `page/page-set-input-files.spec.ts` | input event.composed should be true and cross shadow dom boundary |
 | `IF-020` | `page/page-set-input-files.spec.ts` | input should trigger events when files changed second time |
 | `IF-021` | `page/page-set-input-files.spec.ts` | should preserve lastModified timestamp |
+| `IF-022` | `page/page-set-input-files.spec.ts` | should store an uploaded file in IndexedDB |
 
 ### IN — Inspector
 
