@@ -236,6 +236,7 @@ export class FrameManager {
     this.removeChildFramesRecursively(frame);
     this._clearWebSockets(frame);
     const previousUrl = frame._url;
+    const previousDocumentId = frame._currentDocument.documentId;
     frame._url = url;
     frame._name = name;
 
@@ -264,6 +265,10 @@ export class FrameManager {
       frame._currentDocument = { documentId, request: undefined };
     }
 
+    if (previousDocumentId !== documentId) {
+      frame.responseScope.close(new Error('Response body is not available for a response that was navigated away from. Read response.body() before triggering any navigation.'));
+      frame.responseScope = frame._currentDocument.request?.responseScope || new LongStandingScope();
+    }
     frame._onClearLifecycle();
     const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument, isPublic: true };
     this._fireInternalFrameNavigation(frame, navigationEvent);
@@ -530,6 +535,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   _inflightRequests = new Set<network.Request>();
   private _networkIdleTimer: NodeJS.Timeout | undefined;
   readonly _detachedScope = new LongStandingScope();
+  responseScope = new LongStandingScope();
   private _raceAgainstEvaluationStallingEventsPromises = new Set<ManualPromise<any>>();
   readonly _redirectedNavigations = new Map<string, { url: string, gotoPromise: Promise<network.Response | null> }>(); // documentId -> data
   readonly selectors: FrameSelectors;
@@ -1749,6 +1755,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   _onDetached() {
     this._stopNetworkIdleTimer();
     this._detachedScope.close(new Error('Frame was detached'));
+    this.responseScope.close(new Error('Frame was detached'));
     for (const data of this._contextData.values()) {
       if (data.context)
         data.context.contextDestroyed('Frame was detached');

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ManualPromise } from '@isomorphic/manualPromise';
+import { LongStandingScope, ManualPromise } from '@isomorphic/manualPromise';
 import { assert } from '@isomorphic/assert';
 import { rewriteErrorMessage } from '@utils/stackTrace';
 import { isProtocolError } from './protocolError';
@@ -213,6 +213,7 @@ export type ResourceType = 'document'
 | 'other';
 
 export class Request extends SdkObject {
+  readonly responseScope: LongStandingScope;
   private _response: Response | null = null;
   private _redirectedFrom: Request | null;
   _redirectedTo: Request | null = null;
@@ -250,6 +251,7 @@ export class Request extends SdkObject {
     if (redirectedFrom)
       redirectedFrom._redirectedTo = this;
     this._documentId = documentId;
+    this.responseScope = redirectedFrom?.responseScope || (documentId ? new LongStandingScope() : frame?.responseScope) || new LongStandingScope();
     this._url = stripFragmentFromUrl(url);
     this._resourceType = resourceType;
     this._method = method;
@@ -328,7 +330,9 @@ export class Request extends SdkObject {
   }
 
   private _waitForResponse(): Promise<Response | null> {
-    return this._waitForResponsePromise;
+    if (this._response)
+      return Promise.resolve(this._response);
+    return this.responseScope.safeRace(this._waitForResponsePromise, null);
   }
 
   _existingResponse(): Response | null {
@@ -685,6 +689,10 @@ export class Response extends SdkObject {
   }
 
   async internalBody(): Promise<Buffer> {
+    return await this._request.responseScope.race(this._internalBody());
+  }
+
+  private async _internalBody(): Promise<Buffer> {
     await this._finishedPromise;
     if (this._status >= 300 && this._status <= 399)
       throw new Error('Response body is unavailable for redirect responses');

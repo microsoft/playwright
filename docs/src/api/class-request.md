@@ -285,6 +285,7 @@ following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttr
 - returns: <[null]|[Response]>
 
 Returns the matching [Response] object, or `null` if the response was not received due to error.
+Also returns `null` if the frame navigates away before the response is received.
 
 ## method: Request.existingResponse
 * since: v1.59
