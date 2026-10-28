@@ -54,17 +54,17 @@ runs:
       if: inputs.setup-command != ''
       run: ${{ inputs.setup-command }}
       shell: bash
-    - uses: ./.github/actions/test-env
+    - uses: ./.github/actions/ci-env
     - name: Run tests
       if: inputs.shell == 'bash'
-      run: $EXEC ${{ inputs.command }}
+      run: $CI_ENV_EXEC ${{ inputs.command }}
       shell: bash
       env:
         PW_TAG: "@${{ inputs.bot-name }}"
     - name: Run tests
       if: inputs.shell != 'bash'
       run: |
-        ${{ runner.os == 'Windows' && (inputs.shell == 'pwsh' || inputs.shell == 'powershell') && '. $env:WINDOWS_NORMAL_IO' || '' }}
+        ${{ runner.os == 'Windows' && (inputs.shell == 'pwsh' || inputs.shell == 'powershell') && '. $env:CI_ENV_WINDOWS_NORMAL_IO' || '' }}
         ${{ inputs.command }}
       shell: ${{ inputs.shell }}
       env:
