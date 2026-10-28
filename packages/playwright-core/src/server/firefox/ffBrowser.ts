@@ -182,6 +182,7 @@ export class FFBrowserContext extends BrowserContext {
         downloadOptions: {
           behavior: this._options.acceptDownloads === 'accept' ? 'saveToDisk' : 'cancel',
           downloadsDir: this._browser.options.downloadsPath,
+          // TODO: remove after v1.56 release if no issues were found
           legacyInterceptor: !!process.env.PLAYWRIGHT_FIREFOX_LEGACY_DOWNLOADS,
         },
       }));
