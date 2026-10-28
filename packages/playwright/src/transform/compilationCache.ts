@@ -49,7 +49,7 @@ export type SerializedCompilationCache = {
 // - For workers-only dynamic imports or some cache problems, we will re-transpile files in
 //   each worker anew.
 
-export const cacheDir = process.env.PWTEST_CACHE_DIR || (() => {
+export const cacheDir = process.env.PLAYWRIGHT_TRANSFORM_CACHE_DIR || (() => {
   if (process.platform === 'win32')
     return path.join(os.tmpdir(), `playwright-transform-cache`);
   // Use `geteuid()` instead of more natural `os.userInfo().username`
