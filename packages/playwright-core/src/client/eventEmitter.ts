@@ -91,8 +91,9 @@ export class EventEmitter implements EventEmitterType {
       this.emit('error', error);
       return;
     }
-    if (!(promise instanceof Promise))
+    if (!promise || typeof promise.then !== 'function')
       return;
+    promise = Promise.resolve(promise);
     let set = this._pendingHandlers.get(type);
     if (!set) {
       set = new Set();
@@ -102,6 +103,8 @@ export class EventEmitter implements EventEmitterType {
     promise.catch(e => {
       if (this._rejectionHandler)
         this._rejectionHandler(e);
+      else if (type !== 'error' && this.listenerCount('error'))
+        this.emit('error', e);
       else
         throw e;
     }).finally(() => set.delete(promise));

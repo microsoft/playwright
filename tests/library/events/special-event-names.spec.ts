@@ -24,7 +24,9 @@ import { test, expect } from '@playwright/test';
 import { EventEmitter } from './utils';
 
 
-test('EE-053 should support special event names', () => {
+test('EE-053 should support special event names', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1803' },
+}, async () => {
   const ee = new EventEmitter();
   const handler = () => {};
 
@@ -53,6 +55,10 @@ test('EE-053 should support special event names', () => {
   ee.on('throw', () => errors.push('next listener'));
   ee.emit('throw');
   expect(errors).toEqual([error, 'next listener']);
+
+  ee.on('reject', async () => { throw error; });
+  ee.emit('reject');
+  await expect.poll(() => errors).toEqual([error, 'next listener', error]);
 
   ee.removeAllListeners('error');
   expect(() => ee.emit('throw')).toThrow(error);

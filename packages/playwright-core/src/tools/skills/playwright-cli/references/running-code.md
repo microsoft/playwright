@@ -206,10 +206,6 @@ playwright-cli run-code "async page => {
 
 ## Error Handling
 
-Event listeners remain attached after `run-code` returns. Synchronous exceptions in page and browser context
-event listeners are reported as console errors. Context listener errors are assigned to the selected tab in
-that context, or its first tab if another context is selected.
-
 ```bash
 # Try-catch in run-code
 playwright-cli run-code "async page => {
@@ -221,6 +217,8 @@ playwright-cli run-code "async page => {
   }
 }"
 ```
+
+Event listener errors are reported as console errors.
 
 ## Complex Workflows
 

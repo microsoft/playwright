@@ -18,7 +18,9 @@ import fs from 'fs';
 
 import { test, expect, parseResponse, consoleEntries } from './fixtures';
 
-test('browser_run_code_unsafe', async ({ client, server }) => {
+test('browser_run_code_unsafe', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1803' },
+}, async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="console.log('Submit')">Submit</button>
   `, 'text/html');
@@ -43,6 +45,8 @@ test('browser_run_code_unsafe', async ({ client, server }) => {
       code: `(page) => {
         page.once('requestfinished', () => { throw new TypeError('page listener failed'); });
         page.context().once('requestfinished', () => { throw new Error('context listener failed'); });
+        page.once('requestfinished', async () => { throw new TypeError('async page listener failed'); });
+        page.context().once('requestfinished', async () => { throw new Error('async context listener failed'); });
       }`,
     },
   });
@@ -61,21 +65,28 @@ test('browser_run_code_unsafe', async ({ client, server }) => {
   const listenerErrors = await consoleEntries(listenerResponse);
   expect(listenerErrors).toContain('TypeError: page listener failed');
   expect(listenerErrors).toContain('Error: context listener failed');
+  expect(listenerErrors).toContain('TypeError: async page listener failed');
+  expect(listenerErrors).toContain('Error: async context listener failed');
 
   expect(await client.callTool({ name: 'browser_console_messages', arguments: { level: 'error' } })).toHaveResponse({
-    result: expect.stringContaining('Total messages: 3 (Errors: 2, Warnings: 0)'),
+    result: expect.stringContaining('Total messages: 5 (Errors: 4, Warnings: 0)'),
   });
   const consoleResponse = parseResponse(await client.callTool({ name: 'browser_console_messages' }));
   expect(consoleResponse.result).toContain('TypeError: page listener failed');
   expect(consoleResponse.result).toContain('Error: context listener failed');
+  expect(consoleResponse.result).toContain('TypeError: async page listener failed');
+  expect(consoleResponse.result).toContain('Error: async context listener failed');
 
   server.setContent('/next', '<!DOCTYPE html><title>Next</title>', 'text/html');
   await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX + '/next' } });
-  expect(await client.callTool({ name: 'browser_console_messages' })).toHaveResponse({
-    result: 'Total messages: 0 (Errors: 0, Warnings: 0)',
-  });
+  const afterNavigation = parseResponse(await client.callTool({ name: 'browser_console_messages' }));
+  expect(afterNavigation.result).toContain('Total messages: 4 (Errors: 4, Warnings: 0)');
+  expect(afterNavigation.result).toContain('TypeError: page listener failed');
+  expect(afterNavigation.result).toContain('Error: context listener failed');
+  expect(afterNavigation.result).toContain('TypeError: async page listener failed');
+  expect(afterNavigation.result).toContain('Error: async context listener failed');
   expect(await client.callTool({ name: 'browser_console_messages', arguments: { all: true } })).toHaveResponse({
-    result: expect.stringContaining('Total messages: 3 (Errors: 2, Warnings: 0)'),
+    result: expect.stringContaining('Total messages: 5 (Errors: 4, Warnings: 0)'),
   });
 });
 

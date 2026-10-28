@@ -120,8 +120,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _recentEventEntries: EventEntry[] = [];
   private _webmcpTools: WebMCPListing | undefined;
   private _consoleLog: LogFile;
-  private _eventHandlerErrors: { message: ConsoleMessage, navigation: number }[] = [];
-  private _navigation = 0;
+  private _eventHandlerErrors: ConsoleMessage[] = [];
   private _disposables: Disposable[];
   readonly actionTimeoutOptions: { timeout?: number; };
   readonly navigationTimeoutOptions: { timeout?: number; };
@@ -138,10 +137,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       eventsHelper.addEventListener(p, 'console', event => this._handleConsoleMessage(messageToConsoleMessage(event))),
       eventsHelper.addEventListener(p, 'pageerror', error => this._handleConsoleMessage(pageErrorToConsoleMessage(error))),
       eventsHelper.addEventListener(p, 'error', error => this.logError(error)),
-      eventsHelper.addEventListener(p, 'framenavigated', frame => {
-        if (frame === p.mainFrame())
-          this._navigation++;
-      }),
       eventsHelper.addEventListener(p, 'request', request => this._handleRequest(request)),
       eventsHelper.addEventListener(p, 'response', response => this._handleResponse(response)),
       eventsHelper.addEventListener(p, 'requestfailed', request => this._handleRequestFailed(request)),
@@ -318,14 +313,10 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   logError(error: unknown) {
     const message = pageErrorToConsoleMessage(error);
-    this._eventHandlerErrors.push({ message, navigation: this._navigation });
+    this._eventHandlerErrors.push(message);
     if (this._eventHandlerErrors.length > 200)
       this._eventHandlerErrors.shift();
     this._handleConsoleMessage(message);
-  }
-
-  private _eventHandlerConsoleMessages(all?: boolean): ConsoleMessage[] {
-    return this._eventHandlerErrors.filter(entry => all || entry.navigation === this._navigation).map(entry => entry.message);
   }
 
   private _addLogEntry(entry: EventEntry) {
@@ -445,7 +436,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     const filter = all ? 'all' : 'since-navigation';
     const messages = await this.page.consoleMessages({ filter });
     const pageErrors = await this.page.pageErrors({ filter });
-    const eventHandlerErrors = this._eventHandlerConsoleMessages(all);
+    const eventHandlerErrors = this._eventHandlerErrors;
     let errors = pageErrors.length + eventHandlerErrors.length;
     let warnings = 0;
     for (const message of messages) {
@@ -470,7 +461,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       const errors = await this.page.pageErrors({ filter: all ? 'all' : 'since-navigation' });
       for (const error of errors)
         result.push(pageErrorToConsoleMessage(error));
-      result.push(...this._eventHandlerConsoleMessages(all));
+      result.push(...this._eventHandlerErrors);
     }
     return result;
   }
