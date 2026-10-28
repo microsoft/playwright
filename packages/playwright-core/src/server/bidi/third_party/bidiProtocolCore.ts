@@ -1152,6 +1152,7 @@ export type EmulationCommand =
   | Emulation.SetForcedColorsModeThemeOverride
   | Emulation.SetGeolocationOverride
   | Emulation.SetLocaleOverride
+  | Emulation.SetMediaFeaturesOverride
   | Emulation.SetNetworkConditions
   | Emulation.SetScreenOrientationOverride
   | Emulation.SetScreenSettingsOverride
@@ -1164,6 +1165,7 @@ export type EmulationResult =
   | Emulation.SetForcedColorsModeThemeOverrideResult
   | Emulation.SetGeolocationOverrideResult
   | Emulation.SetLocaleOverrideResult
+  | Emulation.SetMediaFeaturesOverrideResult
   | Emulation.SetScreenOrientationOverrideResult
   | Emulation.SetScriptingEnabledResult
   | Emulation.SetScrollbarTypeOverrideResult
@@ -1283,6 +1285,64 @@ export namespace Emulation {
 }
 export namespace Emulation {
   export type SetLocaleOverrideResult = EmptyResult;
+}
+export namespace Emulation {
+  export type SetMediaFeaturesOverride = {
+    method: 'emulation.setMediaFeaturesOverride';
+    params: Emulation.SetMediaFeaturesOverrideParameters;
+  };
+}
+export namespace Emulation {
+  export type SetMediaFeaturesOverrideParameters = {
+    features: Emulation.MediaFeatures | null;
+    contexts?: [
+      BrowsingContext.BrowsingContext,
+      ...BrowsingContext.BrowsingContext[],
+    ];
+    userContexts?: [Browser.UserContext, ...Browser.UserContext[]];
+  };
+}
+export namespace Emulation {
+  export type MediaFeatures = {
+    'any-hover'?: 'none' | 'hover' | null;
+    'any-pointer'?: 'none' | 'coarse' | 'fine' | null;
+    color?: JsUint | null;
+    'color-gamut'?: 'srgb' | 'p3' | 'rec2020' | null;
+    'color-index'?: JsUint | null;
+    'display-mode'?:
+      | 'fullscreen'
+      | 'standalone'
+      | 'minimal-ui'
+      | 'browser'
+      | 'picture-in-picture'
+      | null;
+    'dynamic-range'?: 'standard' | 'high' | null;
+    'environment-blending'?: 'opaque' | 'additive' | 'subtractive' | null;
+    'forced-colors'?: 'none' | 'active' | null;
+    grid?: 0 | 1 | null;
+    'horizontal-viewport-segments'?: JsUint | null;
+    hover?: 'none' | 'hover' | null;
+    'inverted-colors'?: 'none' | 'inverted' | null;
+    monochrome?: JsUint | null;
+    'nav-controls'?: 'none' | 'back' | null;
+    'overflow-block'?: 'none' | 'scroll' | 'optional-paged' | 'paged' | null;
+    'overflow-inline'?: 'none' | 'scroll' | null;
+    pointer?: 'none' | 'coarse' | 'fine' | null;
+    'prefers-color-scheme'?: 'light' | 'dark' | null;
+    'prefers-contrast'?: 'no-preference' | 'more' | 'less' | 'custom' | null;
+    'prefers-reduced-data'?: 'no-preference' | 'reduce' | null;
+    'prefers-reduced-motion'?: 'no-preference' | 'reduce' | null;
+    'prefers-reduced-transparency'?: 'no-preference' | 'reduce' | null;
+    scan?: 'interlace' | 'progressive' | null;
+    scripting?: 'none' | 'initial-only' | 'enabled' | null;
+    update?: 'none' | 'slow' | 'fast' | null;
+    'vertical-viewport-segments'?: JsUint | null;
+    'video-color-gamut'?: 'srgb' | 'p3' | 'rec2020' | null;
+    'video-dynamic-range'?: 'standard' | 'high' | null;
+  };
+}
+export namespace Emulation {
+  export type SetMediaFeaturesOverrideResult = EmptyResult;
 }
 export namespace Emulation {
   export type SetNetworkConditions = {

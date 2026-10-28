@@ -23,7 +23,7 @@ import { HttpServer } from '@utils/httpServer';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { isUnderTest } from '@utils/debug';
 import { isCodingAgent } from '@utils/env';
-import { isPathInside } from '@utils/fileUtils';
+import { isRealPathInside } from '@utils/fileUtils';
 import { libPath } from '../../../package';
 import { syncLocalStorageWithSettings } from '../../launchApp';
 import { launchApp } from '../../launchApp';
@@ -89,7 +89,7 @@ function validateTraceUrlOrPath(traceFileOrUrl: string | undefined): string | un
 
 export async function startTraceViewerServer(options: TraceViewerServerOptions & { allowedFileRoots: () => string[] }): Promise<HttpServer> {
   const server = new HttpServer(libPath('vite', 'traceViewer'));
-  const isAllowed = (filePath: string) => options.allowedFileRoots().some(root => isPathInside(path.resolve(root), filePath));
+  const isAllowed = (filePath: string) => options.allowedFileRoots().some(root => isRealPathInside(root, filePath));
 
   const serveTraceDataRoute = (request: http.IncomingMessage, response: http.ServerResponse, relativePath: string): boolean => {
     if (!relativePath.startsWith('/file'))

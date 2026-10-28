@@ -43,6 +43,7 @@ export namespace Protocol {
     export type DownloadOptions = {
       behavior?: ("saveToDisk"|"cancel");
       downloadsDir?: string;
+      legacyInterceptor?: boolean;
     };
     export type attachedToTargetPayload = {
       sessionId: string;
@@ -183,6 +184,11 @@ export namespace Protocol {
       javaScriptDisabled: boolean;
     };
     export type setJavaScriptDisabledReturnValue = void;
+    export type setIsolatedWorldExtendedPrincipalParameters = {
+      browserContextId?: string;
+      extendedPrincipal: boolean;
+    };
+    export type setIsolatedWorldExtendedPrincipalReturnValue = void;
     export type setLocaleOverrideParameters = {
       browserContextId?: string;
       locale: string|null;
@@ -198,6 +204,7 @@ export namespace Protocol {
       downloadOptions: {
         behavior?: ("saveToDisk"|"cancel");
         downloadsDir?: string;
+        legacyInterceptor?: boolean;
       }|null;
     };
     export type setDownloadOptionsReturnValue = void;
@@ -1059,6 +1066,7 @@ export namespace Protocol {
     "Browser.setBypassCSP": Browser.setBypassCSPParameters;
     "Browser.setIgnoreHTTPSErrors": Browser.setIgnoreHTTPSErrorsParameters;
     "Browser.setJavaScriptDisabled": Browser.setJavaScriptDisabledParameters;
+    "Browser.setIsolatedWorldExtendedPrincipal": Browser.setIsolatedWorldExtendedPrincipalParameters;
     "Browser.setLocaleOverride": Browser.setLocaleOverrideParameters;
     "Browser.setTimezoneOverride": Browser.setTimezoneOverrideParameters;
     "Browser.setDownloadOptions": Browser.setDownloadOptionsParameters;
@@ -1141,6 +1149,7 @@ export namespace Protocol {
     "Browser.setBypassCSP": Browser.setBypassCSPReturnValue;
     "Browser.setIgnoreHTTPSErrors": Browser.setIgnoreHTTPSErrorsReturnValue;
     "Browser.setJavaScriptDisabled": Browser.setJavaScriptDisabledReturnValue;
+    "Browser.setIsolatedWorldExtendedPrincipal": Browser.setIsolatedWorldExtendedPrincipalReturnValue;
     "Browser.setLocaleOverride": Browser.setLocaleOverrideReturnValue;
     "Browser.setTimezoneOverride": Browser.setTimezoneOverrideReturnValue;
     "Browser.setDownloadOptions": Browser.setDownloadOptionsReturnValue;

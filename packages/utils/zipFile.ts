@@ -40,6 +40,7 @@ export class ZipFile {
           this._entries.set(entry.fileName, entry);
         });
         this._zipFile!.on('end', fulfill);
+        this._zipFile!.on('error', reject);
       });
     });
   }
@@ -65,6 +66,7 @@ export class ZipFile {
         const buffers: Buffer[] = [];
         readStream.on('data', data => buffers.push(data));
         readStream.on('end', () => resolve(Buffer.concat(buffers)));
+        readStream.on('error', reject);
       });
     });
   }

@@ -44,7 +44,7 @@ export const runTests = defineTestTool({
       locations: z.array(z.string()).optional().describe('Folder, file or location to run: "test/e2e" or "test/e2e/file.spec.ts" or "test/e2e/file.spec.ts:20"'),
       projects: z.array(z.string()).optional().describe('Projects to run, projects from playwright.config.ts, by default runs all projects. Running with "chromium" is a good start'),
     }),
-    type: 'readOnly',
+    type: 'action',
   },
 
   handle: async (context, params, signal) => {
@@ -68,7 +68,7 @@ export const debugTest = defineTestTool({
         title: z.string().describe('Human readable test title for granting permission to debug the test.'),
       }),
     }),
-    type: 'readOnly',
+    type: 'action',
   },
 
   handle: async (context, params, signal) => {

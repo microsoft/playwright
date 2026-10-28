@@ -17,6 +17,7 @@
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
 import path from 'path';
+import * as yazl from 'yazl';
 import { extractZip } from '../../packages/utils/third_party/extractZip';
 
 it('HA-068 should context.routeFromHAR, matching the method and following redirects', async ({ context, asset }) => {
@@ -261,6 +262,23 @@ it('HA-085 should round-trip har.zip', {
   await page2.goto(server.PREFIX + '/one-style.html');
   expect(await page2.content()).toContain('hello, world!');
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
+});
+
+it('HA-114 should reject a malformed har.zip', async ({ contextFactory }, testInfo) => {
+  const zipFile = new yazl.ZipFile();
+  zipFile.addBuffer(Buffer.from('{}'), 'aa/x.har');
+  zipFile.end();
+  const chunks: Buffer[] = [];
+  for await (const chunk of zipFile.outputStream)
+    chunks.push(chunk as Buffer);
+  // yauzl reports '..' in an entry name as an 'error' event while reading entries.
+  const zip = Buffer.from(Buffer.concat(chunks).toString('latin1').replaceAll('aa/x.har', '../x.har'), 'latin1');
+  const harPath = testInfo.outputPath('malformed.har.zip');
+  await fs.promises.writeFile(harPath, zip);
+
+  const context = await contextFactory();
+  const error = await context.routeFromHAR(harPath).catch(e => e);
+  expect(error.message).toContain('invalid relative path: ../x.har');
 });
 
 it('HA-086 should produce extracted zip', async ({ contextFactory, server }, testInfo) => {

@@ -78,6 +78,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `GN` | Locator and selector generator | `library/{locator-generator, selector-generator}` |
 | `HA` | HAR | `library/{har, browsercontext-har, har-websocket}` |
 | `HE` | Headful | `library/headful` |
+| `HS` | HTTP server | `library/unit/http-server` |
 | `HT` | Hit target | `library/hit-target` |
 | `IF` | Input files | `page/page-set-input-files` |
 | `IN` | Inspector | `library/inspector/{pause, recorder-api, console-api, title}` |
@@ -3158,6 +3159,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `HA-111` | `library/har-websocket.spec.ts` | should still allow routeWebSocket to modify messages when capturing HAR |
 | `HA-112` | `library/har-websocket.spec.ts` | should respect PLAYWRIGHT\_HAR\_NO\_WEBSOCKET\_FRAMES |
 | `HA-113` | `library/har.spec.ts` | should store binary content with a textual mime type as base64 |
+| `HA-114` | `library/browsercontext-har.spec.ts` | should reject a malformed har.zip |
 
 ### HE — Headful
 
@@ -3179,6 +3181,13 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `HE-014` | `library/headful.spec.ts` | should click bottom row w/ infobar in OOPIF |
 | `HE-015` | `library/headful.spec.ts` | headless and headful should use same default fonts |
 | `HE-016` | `library/headful.spec.ts` | should have the same hyphen rendering on headless and headed |
+
+### HS — HTTP server
+
+| ID | File | Title |
+|---|---|---|
+| `HS-001` | `library/unit/http-server.spec.ts` | should not serve files through a symlink that leaves the folder |
+| `HS-002` | `library/unit/http-server.spec.ts` | should close upgrade requests to unknown paths |
 
 ### HT — Hit target
 
@@ -3232,6 +3241,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `IF-019` | `page/page-set-input-files.spec.ts` | input event.composed should be true and cross shadow dom boundary |
 | `IF-020` | `page/page-set-input-files.spec.ts` | input should trigger events when files changed second time |
 | `IF-021` | `page/page-set-input-files.spec.ts` | should preserve lastModified timestamp |
+| `IF-022` | `page/page-set-input-files.spec.ts` | should store an uploaded file in IndexedDB |
 
 ### IN — Inspector
 
@@ -5261,6 +5271,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `UA-004` | `library/browsercontext-user-agent.spec.ts` | should make a copy of default options |
 | `UA-005` | `library/browsercontext-user-agent.spec.ts` | custom user agent for download |
 | `UA-006` | `library/browsercontext-user-agent.spec.ts` | should work for navigator.userAgentData and sec-ch-ua headers |
+| `UA-007` | `library/browsercontext-user-agent.spec.ts` | should preserve custom user agent in route.fetch |
 
 ### VI — Video
 

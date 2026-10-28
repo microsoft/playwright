@@ -217,7 +217,10 @@ function onCodeMirrorClick(event: React.MouseEvent) {
   if (url) {
     event.preventDefault();
     event.stopPropagation();
-    window.open(url, '_blank');
+    if (url.startsWith('www.'))
+      url = 'https://' + url;
+    if (/^https?:\/\//i.test(url))
+      window.open(url, '_blank', 'noopener,noreferrer');
   }
 }
 

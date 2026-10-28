@@ -452,3 +452,35 @@ test('IF-021 should preserve lastModified timestamp', async ({ page, asset }) =>
   for (let i = 0; i < timestamps.length; i++)
     expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}`).toBeLessThanOrEqual(1000);
 });
+
+test('IF-022 should store an uploaded file in IndexedDB', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42795' },
+    { type: 'issue', description: 'https://bugs.webkit.org/show_bug.cgi?id=156347' },
+  ],
+}, async ({ page, server, asset, browserName }) => {
+  test.fixme(browserName === 'webkit', 'WebKit does not support storing files in IndexedDB in private browsing.');
+
+  await page.goto(server.PREFIX + '/input/fileupload.html');
+  const input = page.locator('input[type=file]');
+  await input.setInputFiles(asset('file-to-upload.txt'));
+  const storedFile = await input.evaluate(async (input: HTMLInputElement) => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('file-upload');
+      request.onupgradeneeded = () => request.result.createObjectStore('files');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const file = await new Promise<File>((resolve, reject) => {
+      const transaction = db.transaction('files', 'readwrite');
+      const store = transaction.objectStore('files');
+      store.put(input.files[0], 'file');
+      const request = store.get('file');
+      transaction.oncomplete = () => resolve(request.result);
+      transaction.onabort = () => reject(transaction.error);
+    });
+    db.close();
+    return { name: file.name, text: await file.text() };
+  });
+  expect(storedFile).toEqual({ name: 'file-to-upload.txt', text: 'contents of the file' });
+});

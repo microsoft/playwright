@@ -103,6 +103,7 @@ test('should linkify string attachments', async ({ runUITest, server }) => {
   server.setRoute('/one.html', (req, res) => res.end());
   server.setRoute('/two.html', (req, res) => res.end());
   server.setRoute('/three.html', (req, res) => res.end());
+  server.setRoute('/four.html', (req, res) => res.end());
 
   const { page } = await runUITest({
     'a.test.ts': `
@@ -111,6 +112,7 @@ test('should linkify string attachments', async ({ runUITest, server }) => {
         await test.info().attach('Inline url: ${server.PREFIX + '/one.html'}');
         await test.info().attach('Second', { body: 'Inline link ${server.PREFIX + '/two.html'} to be highlighted.' });
         await test.info().attach('Third', { body: '[markdown link](${server.PREFIX + '/three.html'})', contentType: 'text/markdown' });
+        await test.info().attach('Fourth', { body: 'Script javascript://%0Aopener.document.title=42 and page ${server.PREFIX + '/four.html'}' });
       });
     `,
   });
@@ -145,6 +147,16 @@ test('should linkify string attachments', async ({ runUITest, server }) => {
     await attachmentsPane.getByText('markdown link').dblclick();
     const popup = await promise;
     await expect(popup).toHaveURL(url);
+  }
+
+  {
+    await attachmentsPane.getByLabel('Fourth').click();
+    await attachmentsPane.getByText('javascript://%0Aopener.document.title=42').click();
+    const url = server.PREFIX + '/four.html';
+    const promise = page.waitForEvent('popup');
+    await attachmentsPane.getByText(url).click();
+    await expect(await promise).toHaveURL(url);
+    await expect(page).not.toHaveTitle('42');
   }
 });
 

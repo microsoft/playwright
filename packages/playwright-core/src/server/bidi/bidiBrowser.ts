@@ -246,6 +246,7 @@ export class BidiBrowserContext extends BrowserContext {
       userContexts: [this._userContextId()],
     }));
     promises.push(this.doUpdateDefaultViewport());
+    promises.push(this.doUpdateDefaultEmulatedMedia());
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
     if (this._options.locale) {
@@ -493,6 +494,17 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   override async doUpdateDefaultEmulatedMedia() {
+    const features = this._options;
+    const colorScheme =
+      features.colorScheme === 'no-override'
+        ? null
+        : features.colorScheme === 'no-preference'
+          ? undefined
+          : features.colorScheme;
+    await this._browser._browserSession.send('emulation.setMediaFeaturesOverride', {
+      features: { 'prefers-color-scheme': colorScheme },
+      userContexts: [this._userContextId()],
+    });
   }
 
   override async doExposePlaywrightBinding() {
