@@ -1,0 +1,106 @@
+name: 'Run the agent'
+description: >
+  Runs the Copilot CLI unattended with the prompt, the way the triage and revision workflows do: all
+  tools and paths allowed, no questions, the session transcript in the output directory. The agent
+  leaves its results as files in the output directory. The action reports whether the result file
+  is there, writes the agent's summary.md into the run summary and uploads the output directory as
+  an artifact, also when the session failed or ran out of budget. The Copilot CLI has to be
+  installed already.
+inputs:
+  prompt:
+    description: 'The prompt'
+    required: true
+  output-dir:
+    description: 'Directory the agent writes its results to; uploaded as the artifact'
+    required: true
+  result-file:
+    description: 'Path in the output directory the agent writes last when it has a result, such as fix/proposal.json'
+    required: true
+  artifact-name:
+    description: 'Name of the uploaded artifact'
+    required: true
+  github-tools:
+    description: 'true gives the agent the GitHub MCP tools with the token; false gives it no built-in MCP servers and no URL access'
+    required: false
+    default: 'false'
+  exec:
+    description: 'Command the Copilot CLI runs through, such as a wrapper that enters a container or sets the I/O priority'
+    required: false
+    default: ''
+  working-directory:
+    description: 'Directory the agent runs in'
+    required: false
+    default: '.'
+  model:
+    description: 'Model for the Copilot CLI'
+    required: false
+    default: 'gpt-6.1-sol'
+  max-ai-credits:
+    description: 'Budget for the session'
+    required: false
+    default: '5000'
+  token:
+    description: 'Token for the Copilot CLI and its GitHub tools'
+    required: false
+    default: ${{ github.token }}
+outputs:
+  outcome:
+    description: 'success or failure of the Copilot session'
+    value: ${{ steps.agent.outcome }}
+  has-result:
+    description: 'true when the result file exists'
+    value: ${{ steps.save.outputs.has-result }}
+runs:
+  using: composite
+  steps:
+  - name: Run the Copilot CLI
+    id: agent
+    # A finished result is still useful if the session exhausts its budget.
+    continue-on-error: true
+    shell: bash
+    working-directory: ${{ inputs.working-directory }}
+    env:
+      COPILOT_GITHUB_TOKEN: ${{ inputs.token }}
+      PROMPT: ${{ inputs.prompt }}
+      OUTPUT_DIR: ${{ inputs.output-dir }}
+      WRAPPER: ${{ inputs.exec }}
+      TOOLS: ${{ inputs.github-tools == 'true' && '--enable-all-github-mcp-tools' || '--disable-builtin-mcps' }}
+      MODEL: ${{ inputs.model }}
+      MAX_AI_CREDITS: ${{ inputs.max-ai-credits }}
+    run: |
+      mkdir -p "$OUTPUT_DIR"
+      $WRAPPER copilot \
+        --allow-all-tools \
+        --allow-all-paths \
+        --no-ask-user \
+        "$TOOLS" \
+        --share="$OUTPUT_DIR/copilot-session.md" \
+        --model "$MODEL" \
+        --max-ai-credits "$MAX_AI_CREDITS" \
+        -p "$PROMPT"
+  - name: Save the outcome
+    id: save
+    shell: bash
+    env:
+      OUTPUT_DIR: ${{ inputs.output-dir }}
+      RESULT_FILE: ${{ inputs.result-file }}
+      AGENT_OUTCOME: ${{ steps.agent.outcome }}
+    run: |
+      mkdir -p "$OUTPUT_DIR"
+      if [[ -f "$OUTPUT_DIR/$RESULT_FILE" ]]; then
+        echo "has-result=true" >> "$GITHUB_OUTPUT"
+      else
+        echo "has-result=false" >> "$GITHUB_OUTPUT"
+      fi
+      echo "Copilot step: $AGENT_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
+      if [[ -f "$OUTPUT_DIR/summary.md" ]]; then
+        cat "$OUTPUT_DIR/summary.md" >> "$GITHUB_STEP_SUMMARY"
+      else
+        echo "No summary was produced; see the session artifact." >> "$GITHUB_STEP_SUMMARY"
+      fi
+  - name: Upload the output directory
+    uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+    with:
+      name: ${{ inputs.artifact-name }}
+      path: ${{ inputs.output-dir }}
+      if-no-files-found: warn

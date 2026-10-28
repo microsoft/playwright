@@ -1,0 +1,110 @@
+name: 'Publish a patch'
+description: >
+  Publishes the patch an agent left in its output directory, from a job that has write credentials
+  and never runs the agent's code. Applies the patch to the checkout, rejects one that changes
+  anything under .github/, commits it as the Playwright automation app with the title and body from
+  the metadata file, pushes it to the branch and, when asked, opens the branch as a draft pull
+  request with the body file as its description.
+inputs:
+  token:
+    description: 'Token with write access to contents and pull requests, from the app'
+    required: true
+  dir:
+    description: 'Directory with the patch, the metadata and the body file'
+    required: true
+  patch:
+    description: 'File name of the patch in dir'
+    required: true
+  metadata:
+    description: 'File name of the JSON in dir with the commit title and, optionally, body'
+    required: true
+  branch:
+    description: 'Branch to push to; created when it does not exist, never force-pushed'
+    required: true
+  commit-body:
+    description: 'Commit body when the metadata has none, such as the Fixes: line'
+    required: false
+    default: ''
+  pull-request:
+    description: 'true opens a draft pull request from the branch; false only pushes'
+    required: false
+    default: 'false'
+  base:
+    description: 'Base branch of the pull request'
+    required: false
+    default: 'main'
+  body-file:
+    description: 'File name of the pull request description in dir'
+    required: false
+    default: ''
+  workflow-name:
+    description: 'How the pull request footer names the workflow'
+    required: false
+    default: 'triage workflow'
+outputs:
+  commit:
+    description: 'The pushed commit'
+    value: ${{ steps.publish.outputs.commit }}
+  pull-request:
+    description: 'URL of the pull request, when one was opened'
+    value: ${{ steps.publish.outputs.pull-request }}
+  number:
+    description: 'Number of the pull request, when one was opened'
+    value: ${{ steps.publish.outputs.number }}
+runs:
+  using: composite
+  steps:
+  - name: Validate, commit, push and open
+    id: publish
+    uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+    env:
+      DIR: ${{ inputs.dir }}
+      PATCH: ${{ inputs.patch }}
+      METADATA: ${{ inputs.metadata }}
+      BRANCH: ${{ inputs.branch }}
+      COMMIT_BODY: ${{ inputs.commit-body }}
+      PULL_REQUEST: ${{ inputs.pull-request }}
+      BASE: ${{ inputs.base }}
+      BODY_FILE: ${{ inputs.body-file }}
+      WORKFLOW_NAME: ${{ inputs.workflow-name }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    with:
+      github-token: ${{ inputs.token }}
+      script: |
+        const fs = require('fs');
+        const path = require('path');
+        const { execFileSync } = require('child_process');
+        const { DIR, PATCH, METADATA, BRANCH, COMMIT_BODY, PULL_REQUEST, BASE, BODY_FILE, WORKFLOW_NAME, RUN_URL } = process.env;
+        const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+        const { owner, repo } = context.repo;
+        git('apply', '--index', path.join(DIR, PATCH));
+
+        // Workflow and action changes would run with this repo's secrets in PR CI.
+        const workflowFiles = git('diff', '--cached', '--name-only', '--no-renames', '-z').split('\0').filter(file => file.startsWith('.github/'));
+        if (workflowFiles.length)
+          throw new Error(`Patch changes workflow files, treating it as compromised: ${workflowFiles.join(', ')}`);
+
+        const { title, body } = JSON.parse(fs.readFileSync(path.join(DIR, METADATA), 'utf8'));
+        if (typeof title !== 'string' || !title.trim())
+          throw new Error(`${METADATA} needs a title`);
+        const commitBody = typeof body === 'string' && body.trim() ? body : COMMIT_BODY;
+        git('config', 'user.name', 'microsoft-playwright-automation[bot]');
+        git('config', 'user.email', '203992400+microsoft-playwright-automation[bot]@users.noreply.github.com');
+        git('commit', '-m', title, ...(commitBody ? ['-m', commitBody] : []));
+        // Not a force push: it fails if an existing branch moved after the agent started.
+        git('push', 'origin', `HEAD:refs/heads/${BRANCH}`);
+        const commit = git('rev-parse', 'HEAD');
+        core.setOutput('commit', commit);
+        if (PULL_REQUEST !== 'true') {
+          await core.summary.addRaw(`Pushed https://github.com/${owner}/${repo}/commit/${commit}\n`).write();
+          return;
+        }
+        const description = BODY_FILE ? fs.readFileSync(path.join(DIR, BODY_FILE), 'utf8').trim() : '';
+        const { data: pr } = await github.rest.pulls.create({
+          owner, repo, head: BRANCH, base: BASE, title,
+          body: `${description}\n\n<sub>Prepared by the [${WORKFLOW_NAME}](${RUN_URL}).</sub>`,
+          draft: true,
+        });
+        core.setOutput('pull-request', pr.html_url);
+        core.setOutput('number', pr.number);
+        await core.summary.addRaw(`Draft pull request: ${pr.html_url}\n`).write();
