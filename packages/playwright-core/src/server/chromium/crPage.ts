@@ -16,6 +16,7 @@
  */
 
 import { assert } from '@isomorphic/assert';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { rewriteErrorMessage } from '@utils/stackTrace';
 import { eventsHelper } from '@utils/eventsHelper';
 import * as dialog from '../dialog';
@@ -274,32 +275,50 @@ export class CRPage implements PageDelegate {
 
   async takeScreenshot(progress: Progress, format: 'png' | 'jpeg' | 'webp', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
     const { visualViewport, contentSize, cssContentSize } = await progress.race(this._mainFrameSession._client.send('Page.getLayoutMetrics'));
-    if (!documentRect) {
-      documentRect = {
-        x: visualViewport.pageX + viewportRect!.x,
-        y: visualViewport.pageY + viewportRect!.y,
-        ...helper.enclosingIntSize({
-          width: viewportRect!.width / visualViewport.scale,
-          height: viewportRect!.height / visualViewport.scale,
-        })
-      };
-    }
+    const rect = documentRect ?? {
+      x: visualViewport.pageX + viewportRect!.x,
+      y: visualViewport.pageY + viewportRect!.y,
+      ...helper.enclosingIntSize({
+        width: viewportRect!.width / visualViewport.scale,
+        height: viewportRect!.height / visualViewport.scale,
+      })
+    };
     // When taking screenshots with documentRect (based on the page content, not viewport),
     // ignore current page scale.
-    const clip = { ...documentRect, scale: viewportRect ? visualViewport.scale : 1 };
+    const clip = { ...rect, scale: viewportRect ? visualViewport.scale : 1 };
     if (scale === 'css') {
       // deviceScaleFactor override does not affect layout metrics, so if it is set,
       // we use its value rather than computed one.
       const deviceScaleFactor =  this._mainFrameSession._metricsOverride?.deviceScaleFactor || contentSize.width / cssContentSize.width || 1;
       clip.scale /= deviceScaleFactor;
     }
-    const result = await progress.race(this._mainFrameSession._client.send('Page.captureScreenshot', { format, quality, clip, captureBeyondViewport: !fitsViewport }));
+    const result = await this._captureScreenshotUnlessNavigated(progress, { format, quality, clip, captureBeyondViewport: !fitsViewport });
+    if (!result)
+      return await this.takeScreenshot(progress, format, documentRect, viewportRect, quality, fitsViewport, scale);
     if (!fitsViewport && this._browserContext._options.hasTouch) {
       // Capturing beyond viewport resets touch emulation in Chromium, so we re-apply it.
       // See https://issues.chromium.org/issues/558509412 and https://github.com/microsoft/playwright/issues/42607.
       await progress.race(this._mainFrameSession._client.send('Emulation.setTouchEmulationEnabled', { enabled: true }));
     }
     return Buffer.from(result.data, 'base64');
+  }
+
+  private async _captureScreenshotUnlessNavigated(progress: Progress, params: Protocol.Page.captureScreenshotParameters): Promise<Protocol.Page.captureScreenshotReturnValue | undefined> {
+    const navigated = new ManualPromise<undefined>();
+    const listener = eventsHelper.addEventListener(this._page, Page.Events.InternalFrameNavigatedToNewDocument, (frame: frames.Frame) => {
+      if (frame === this._page.mainFrame())
+        navigated.resolve(undefined);
+    });
+    const capture = this._mainFrameSession._client.send('Page.captureScreenshot', params).catch(e => {
+      if (e instanceof Error && e.message.includes('Not attached to an active page'))
+        return undefined;
+      throw e;
+    });
+    try {
+      return await progress.race([capture, navigated]);
+    } finally {
+      eventsHelper.removeEventListeners([listener]);
+    }
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {

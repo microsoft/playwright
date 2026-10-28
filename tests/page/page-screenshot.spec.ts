@@ -446,6 +446,22 @@ it.describe('page screenshot', () => {
     }
   });
 
+  it('SS-097 should work when the page navigates away during the capture', async ({ page, server, browserName }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43685' });
+    it.skip(browserName === 'webkit', 'WebKit takes the screenshot before the page navigates away');
+    await page.setViewportSize({ width: 500, height: 500 });
+    server.setRoute('/one-style.css', () => {});
+    server.setRoute('/green.html', (req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.end('<body style="background: rgb(0, 128, 0)"></body>');
+    });
+    await page.goto(server.PREFIX + '/one-style.html', { waitUntil: 'commit' });
+    await page.evaluate(url => setTimeout(() => location.href = url, 500), server.PREFIX + '/green.html');
+    const screenshot = await page.screenshot();
+    expect(page.url()).toBe(server.PREFIX + '/green.html');
+    expect(comparePNGs(screenshot, await page.screenshot())).toBe(null);
+  });
+
   it('SS-028 should work with iframe in shadow', async ({ page, server }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid-iframe-in-shadow.html');
