@@ -101,8 +101,8 @@ jobs:
         shardIndex: [1, 2, 3, 4]
         shardTotal: [4]
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-node@v6
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
       with:
         node-version: lts/*
     - name: Install dependencies
@@ -115,7 +115,7 @@ jobs:
 
     - name: Upload blob report to GitHub Actions Artifacts
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: blob-report-${{ matrix.shardIndex }}
         path: blob-report
@@ -134,15 +134,15 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-node@v6
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
       with:
         node-version: lts/*
     - name: Install dependencies
       run: npm ci
 
     - name: Download blob reports from GitHub Actions Artifacts
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v8
       with:
         path: all-blob-reports
         pattern: blob-report-*
@@ -152,7 +152,7 @@ jobs:
       run: npx playwright merge-reports --reporter html ./all-blob-reports
 
     - name: Upload HTML report
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: html-report--attempt-${{ github.run_attempt }}
         path: playwright-report

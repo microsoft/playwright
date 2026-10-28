@@ -99,8 +99,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-node@v6
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
       with:
         node-version: lts/*
     - name: Install dependencies
@@ -109,7 +109,7 @@ jobs:
       run: npx playwright install --with-deps
     - name: Run Playwright tests
       run: npx playwright test
-    - uses: actions/upload-artifact@v5
+    - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}
       with:
         name: playwright-report
@@ -133,9 +133,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: '3.13'
     - name: Install dependencies
@@ -146,7 +146,7 @@ jobs:
       run: python -m playwright install --with-deps
     - name: Run your tests
       run: pytest --tracing=retain-on-failure
-    - uses: actions/upload-artifact@v5
+    - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}
       with:
         name: playwright-traces
@@ -164,8 +164,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-java@v5
+    - uses: actions/checkout@v7
+    - uses: actions/setup-java@v6
       with:
         distribution: 'temurin'
         java-version: '25'
@@ -188,9 +188,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: 8.0.x
     - name: Build & Install
@@ -225,8 +225,8 @@ jobs:
       image: mcr.microsoft.com/playwright:v%%VERSION%%-noble
       options: --user 1001
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: lts/*
       - name: Install dependencies
@@ -250,9 +250,9 @@ jobs:
       image: mcr.microsoft.com/playwright/python:v%%VERSION%%-noble
       options: --user 1001
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - name: Install dependencies
@@ -279,8 +279,8 @@ jobs:
       image: mcr.microsoft.com/playwright/java:v%%VERSION%%-noble
       options: --user 1001
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           java-version: '25'
@@ -305,9 +305,9 @@ jobs:
       image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-noble
       options: --user 1001
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup dotnet
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 8.0.x
       - run: dotnet build
@@ -329,8 +329,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-node@v6
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
       with:
         node-version: lts/*
     - name: Install dependencies
@@ -352,9 +352,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: '3.13'
     - name: Install dependencies
@@ -379,8 +379,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-java@v5
+    - uses: actions/checkout@v7
+    - uses: actions/setup-java@v6
       with:
         distribution: 'temurin'
         java-version: '25'
@@ -404,9 +404,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: 8.0.x
     - run: dotnet build
@@ -437,12 +437,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         # Force a non-shallow checkout, so that we can reference $GITHUB_BASE_REF.
         # See https://github.com/actions/checkout for more details.
         fetch-depth: 0
-    - uses: actions/setup-node@v6
+    - uses: actions/setup-node@v7
       with:
         node-version: lts/*
     - name: Install dependencies
@@ -454,7 +454,7 @@ jobs:
       if: github.event_name == 'pull_request'
     - name: Run Playwright tests
       run: npx playwright test
-    - uses: actions/upload-artifact@v5
+    - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}
       with:
         name: playwright-report
