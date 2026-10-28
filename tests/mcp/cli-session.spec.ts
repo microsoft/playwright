@@ -153,7 +153,7 @@ test('session stops when temporary socket directory disappears', async ({ cli, s
   try {
     const { daemonPid } = await cli('open', server.HELLO_WORLD, {
       env: {
-        PWTEST_SOCKETS_DIR: '',
+        PLAYWRIGHT_SOCKETS_DIR: '',
         TMPDIR: tempDir,
       },
     });

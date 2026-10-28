@@ -255,6 +255,12 @@ playwright-cli -s=name delete-data      # delete user data for a named session
 
 A headless session shuts itself down after an hour without commands, so a session an agent forgot to close does not keep a browser running. Headed and attached browsers are never closed automatically. Change the timeout with `open --idle-timeout=<ms>` or `timeouts.idle` in the config file, and pass `0` to disable it.
 
+Sessions communicate through sockets in the system temporary directory. To keep the sockets in another directory, for example on a Linux machine shared with other users, set the `PLAYWRIGHT_SOCKETS_DIR` environment variable for all `playwright-cli` commands:
+
+```bash
+export PLAYWRIGHT_SOCKETS_DIR=~/.cache/playwright-sockets
+```
+
 ## Monitoring
 
 Use `playwright-cli show` to open a visual dashboard for observing and controlling all running browser sessions:

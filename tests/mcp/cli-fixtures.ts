@@ -126,7 +126,7 @@ function cliEnv() {
     PWTEST_SERVER_REGISTRY: test.info().outputPath('registry'),
     PWTEST_DASHBOARD_SETTINGS_FILE: test.info().outputPath('dashboard.settings.json'),
     PWTEST_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
-    PWTEST_SOCKETS_DIR: path.join(os.tmpdir(), 'ds-' + crypto.createHash('sha1').update(test.info().outputDir).digest('hex').slice(0, 16)),
+    PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'ds-' + crypto.createHash('sha1').update(test.info().outputDir).digest('hex').slice(0, 16)),
     PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST: '1',
   };
 }

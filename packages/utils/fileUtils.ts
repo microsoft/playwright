@@ -149,17 +149,17 @@ const UNIX_SOCKET_PATH_MAX = 103;
 export function makeSocketPath(domain: string, name: string): string {
   const userNameHash = calculateSha1(process.env.USERNAME || process.env.USER || 'default').slice(0, 8);
   if (process.platform === 'win32') {
-    const socketsDir = process.env.PWTEST_SOCKETS_DIR;
+    const socketsDir = process.env.PLAYWRIGHT_SOCKETS_DIR;
     const suffix = socketsDir ? `-${calculateSha1(socketsDir).slice(0, 8)}` : '';
     return `\\\\.\\pipe\\pw-${userNameHash}-${domain}-${name}${suffix}`;
   }
-  const baseDir = process.env.PWTEST_SOCKETS_DIR || path.join(os.tmpdir(), `pw-${userNameHash}`);
+  const baseDir = process.env.PLAYWRIGHT_SOCKETS_DIR || path.join(os.tmpdir(), `pw-${userNameHash}`);
   const dir = path.join(baseDir, domain);
   let result = path.join(dir, sanitizeForFilePath(name) + '.sock');
   if (Buffer.byteLength(result) > UNIX_SOCKET_PATH_MAX)
     result = path.join(dir, calculateSha1(name).slice(0, 16) + '.sock');
   if (Buffer.byteLength(result) > UNIX_SOCKET_PATH_MAX)
-    throw new Error(`Socket directory path is too long (${Buffer.byteLength(dir)} bytes); set PWTEST_SOCKETS_DIR to a shorter location.`);
+    throw new Error(`Socket directory path is too long (${Buffer.byteLength(dir)} bytes); set PLAYWRIGHT_SOCKETS_DIR to a shorter location.`);
   fs.mkdirSync(dir, { recursive: true });
   return result;
 }
