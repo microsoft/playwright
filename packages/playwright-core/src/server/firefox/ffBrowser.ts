@@ -197,6 +197,8 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this._browser.session.send('Browser.setIgnoreHTTPSErrors', { browserContextId, ignoreHTTPSErrors: true }));
     if (this._options.javaScriptEnabled === false)
       promises.push(this._browser.session.send('Browser.setJavaScriptDisabled', { browserContextId, javaScriptDisabled: true }));
+    // TODO: remove after v1.56 release if no issues were found.
+    // https://github.com/microsoft/playwright/issues/43544
     if (process.env.PLAYWRIGHT_FIREFOX_UTILITY_PRINCIPAL)
       promises.push(this._browser.session.send('Browser.setIsolatedWorldExtendedPrincipal', { browserContextId, extendedPrincipal: true }));
     if (this._options.locale)
