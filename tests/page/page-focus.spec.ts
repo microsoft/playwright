@@ -236,3 +236,19 @@ it('FO-012 should tab from an iframe to its parent', async ({ page, server }) =>
   await page.keyboard.press('Tab');
   await expect(page.locator('#outer')).toBeFocused();
 });
+
+it('FO-013 should move focus from the parent into its iframe', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43506' });
+  server.setRoute('/frame.html', (req, res) => {
+    res.setHeader('content-type', 'text/html');
+    res.end(`<input id=inner>`);
+  });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<iframe src="${server.PREFIX}/frame.html"></iframe><input id=outer>`);
+  await page.locator('#outer').focus();
+  await expect(page.locator('#outer')).toBeFocused();
+  // Call native focus() exactly once, locator.focus() would hide the bug by calling it twice.
+  await page.evaluate(() => document.querySelector('iframe').contentDocument.querySelector('input').focus());
+  await expect(page.locator('iframe')).toBeFocused();
+  await expect(page.frameLocator('iframe').locator('#inner')).toBeFocused();
+});
