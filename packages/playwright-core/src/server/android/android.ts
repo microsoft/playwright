@@ -62,6 +62,30 @@ export interface SocketBackend extends EventEmitter {
   close(): void;
 }
 
+function toDriverSelector(selector: any): any {
+  const result = { ...selector };
+  if (result.hasChild) {
+    const hasChild = result.hasChild;
+    result.hasChild = {
+      ...hasChild,
+      selector: toDriverSelector(hasChild.androidSelector ?? hasChild.selector),
+    };
+    delete result.hasChild.androidSelector;
+  }
+  if (result.hasDescendant) {
+    const hasDescendant = result.hasDescendant;
+    result.hasDescendant = {
+      ...hasDescendant,
+      selector: toDriverSelector(hasDescendant.androidSelector ?? hasDescendant.selector),
+    };
+    delete result.hasDescendant.androidSelector;
+    // Older driver APKs read maxDepth from the selector that owns hasDescendant.
+    if (result.maxDepth === undefined)
+      result.maxDepth = result.hasDescendant.maxDepth;
+  }
+  return result;
+}
+
 export class Android extends SdkObject {
   private _backend: Backend;
   private _devices = new Map<string, AndroidDevice>();
@@ -237,8 +261,10 @@ export class AndroidDevice extends SdkObject {
   private async _send(method: string, params: any = {}): Promise<any> {
     params = { ...params };
     if (params.androidSelector) {
-      params.selector = params.androidSelector;
+      params.selector = toDriverSelector(params.androidSelector);
       delete params.androidSelector;
+    } else if (params.selector) {
+      params.selector = toDriverSelector(params.selector);
     }
     const driver = await this._driver();
     if (!driver || this._isClosed)

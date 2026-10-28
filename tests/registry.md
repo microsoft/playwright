@@ -28,7 +28,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 
 | Code | Subsystem | Files |
 |---|---|---|
-| `AN` | Android WebViews | `library/unit/android-webviews` |
+| `AN` | Android | `library/unit/{android-webviews, android-selectors}` |
 | `AR` | Aria snapshot | `page/{page-aria-snapshot, page-aria-snapshot-ai, page-aria-snapshot-json, to-match-aria-snapshot}`<br>`library/role-utils` |
 | `AT` | Add script and style tags | `page/{page-add-script-tag, page-add-style-tag}` |
 | `AU` | Authentication | `library/{browsercontext-credentials, browsercontext-webauthn}` |
@@ -129,11 +129,12 @@ subsystem, add a row to the Subsystems table. Then update this file:
 
 ## Tests
 
-### AN — Android WebViews
+### AN — Android
 
 | ID | File | Title |
 |---|---|---|
 | `AN-001` | `library/unit/android-webviews.spec.ts` | should attribute a webview socket to the process that owns it |
+| `AN-002` | `library/unit/android-selectors.spec.ts` | should translate nested selectors for the Android driver |
 
 ### AR — Aria snapshot
 
