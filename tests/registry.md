@@ -2001,6 +2001,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `EH-121` | `page/elementhandle-wait-for-element-state.spec.ts` | should wait for button with an aria-disabled parent |
 | `EH-122` | `page/elementhandle-wait-for-element-state.spec.ts` | should wait for stable position |
 | `EH-123` | `page/elementhandle-wait-for-element-state.spec.ts` | should wait for editable input |
+| `EH-124` | `page/elementhandle-scroll-into-view.spec.ts` | should scroll nested display:contents into view |
 
 ### EM — Emulation
 
