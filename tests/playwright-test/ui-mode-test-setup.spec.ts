@@ -345,22 +345,6 @@ for (const useWeb of [true, false]) {
   });
 }
 
-test('should not give the WebSocket id to the root URL', async ({ runUITest }) => {
-  const { page } = await runUITest({
-    'a.test.js': `
-      import { test } from '@playwright/test';
-      test('should work', async ({}) => {});
-    `
-  }, null, { useWeb: true });
-  await expect(page.getByTitle('Run all')).toBeVisible();
-  const url = new URL(page.url());
-  const wsGuid = url.searchParams.get('ws');
-  expect(wsGuid).toBeTruthy();
-  const response = await fetch(url.origin + '/', { redirect: 'manual' });
-  expect(response.status).toBe(403);
-  expect(await response.text()).not.toContain(wsGuid);
-});
-
 test('should restart webserver on reload', async ({ runUITest }) => {
   const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
   const port = test.info().workerIndex * 2 + 10500;

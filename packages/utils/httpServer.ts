@@ -77,10 +77,6 @@ export class HttpServer {
     return this._port;
   }
 
-  isBoundToLoopback(): boolean {
-    return !!this._allowedHosts;
-  }
-
   createWebSocket(transportFactory: (url: URL) => Transport, guid?: string) {
     assert(!this._wsGuid, 'can only create one main websocket transport per server');
     this._wsGuid = guid || createGuid();
