@@ -5262,6 +5262,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `UA-004` | `library/browsercontext-user-agent.spec.ts` | should make a copy of default options |
 | `UA-005` | `library/browsercontext-user-agent.spec.ts` | custom user agent for download |
 | `UA-006` | `library/browsercontext-user-agent.spec.ts` | should work for navigator.userAgentData and sec-ch-ua headers |
+| `UA-007` | `library/browsercontext-user-agent.spec.ts` | should preserve custom user agent in route.fetch |
 
 ### VI — Video
 

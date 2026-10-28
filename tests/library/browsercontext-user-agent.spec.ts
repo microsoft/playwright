@@ -38,6 +38,23 @@ it('UA-001 should work', async ({ browser, server }) => {
   }
 });
 
+it('UA-007 should preserve custom user agent in route.fetch', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43597' },
+}, async ({ contextFactory, server }) => {
+  const context = await contextFactory({ userAgent: 'my-custom-user-agent' });
+  const page = await context.newPage();
+  await page.route('**/empty.html', async route => {
+    await route.fulfill({ response: await route.fetch() });
+  });
+  const [request, serverRequest] = await Promise.all([
+    page.waitForRequest(server.EMPTY_PAGE),
+    server.waitForRequest('/empty.html'),
+    page.goto(server.EMPTY_PAGE),
+  ]);
+  expect.soft(request.headers()['user-agent']).toBe('my-custom-user-agent');
+  expect(serverRequest.headers['user-agent']).toBe('my-custom-user-agent');
+});
+
 it('UA-002 should work for subframes', async ({ browser, server }) => {
   {
     const context = await browser.newContext();
