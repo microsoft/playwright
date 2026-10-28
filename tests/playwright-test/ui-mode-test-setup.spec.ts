@@ -345,22 +345,28 @@ for (const useWeb of [true, false]) {
   });
 }
 
-test('should serve UI mode under a random path', async ({ runUITest }) => {
-  const { page } = await runUITest({
-    'a.test.js': `
-      import { test } from '@playwright/test';
-      test('should work', async ({}) => {});
-    `
+for (const useWeb of [true, false]) {
+  test(`should serve UI mode under a random path, web-mode: ${useWeb}`, async ({ runUITest }) => {
+    const { page } = await runUITest({
+      'a.test.js': `
+        import { test } from '@playwright/test';
+        test('should work', async ({}) => {});
+      `
+    }, undefined, { useWeb });
+    await expect(page.getByTitle('Run all')).toBeVisible();
+    const url = new URL(page.url());
+    const prefix = url.pathname.split('/')[1];
+    expect(prefix).toMatch(/^[0-9a-f]{32}$/);
+    const root = await fetch(url.origin + '/', { redirect: 'manual' });
+    // Only an explicit host or port redirects from the bare root.
+    expect(root.status).toBe(useWeb ? 302 : 404);
+    if (useWeb)
+      expect(root.headers.get('location')).toBe(`./${prefix}/trace/uiMode.html${url.search}`);
+    expect((await fetch(url.origin + '/trace/uiMode.html')).status).toBe(404);
+    expect((await fetch(url.origin + '/trace/file?path=' + encodeURIComponent(test.info().outputPath('a.test.js')))).status).toBe(404);
+    expect((await fetch(`${url.origin}/${prefix}/trace/uiMode.html`)).status).toBe(200);
   });
-  await expect(page.getByTitle('Run all')).toBeVisible();
-  const url = new URL(page.url());
-  const prefix = url.pathname.split('/')[1];
-  expect(prefix).toMatch(/^[0-9a-f]{32}$/);
-  expect((await fetch(url.origin + '/', { redirect: 'manual' })).status).toBe(404);
-  expect((await fetch(url.origin + '/trace/uiMode.html')).status).toBe(404);
-  expect((await fetch(url.origin + '/trace/file?path=' + encodeURIComponent(test.info().outputPath('a.test.js')))).status).toBe(404);
-  expect((await fetch(`${url.origin}/${prefix}/trace/uiMode.html`)).status).toBe(200);
-});
+}
 
 test('should restart webserver on reload', async ({ runUITest }) => {
   const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');

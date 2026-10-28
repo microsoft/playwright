@@ -51,15 +51,17 @@ export class HttpServer {
   private _port: number = 0;
   private _started = false;
   private _routes: { prefix?: string, exact?: string, handler: ServerRouteHandler }[] = [];
-  private _wsGuid: string | undefined;
+  private _wsPath: string | undefined;
   // Allowed Host headers; null disables the check (host bound to a public address).
   private _allowedHosts: Set<string> | null = null;
   private _staticRoot: string | undefined;
-  private _pathPrefix = '';
+  private _pathPrefix: string;
 
-  constructor(staticRoot?: string) {
+  constructor(options?: { staticRoot: string, useRandomPathPrefix: boolean }) {
     this._server = createHttpServer(this._onRequest.bind(this));
-    this._staticRoot = staticRoot ? path.resolve(staticRoot) : undefined;
+    this._staticRoot = options ? path.resolve(options.staticRoot) : undefined;
+    // Other local users cannot guess the URLs under a random prefix.
+    this._pathPrefix = options?.useRandomPathPrefix ? '/' + createGuid() : '';
   }
 
   server() {
@@ -78,26 +80,24 @@ export class HttpServer {
     return this._port;
   }
 
-  // Serves everything under a random path, so that other local users cannot guess the URLs.
-  useRandomPathPrefix() {
-    assert(!this._started, 'server already started');
-    this._pathPrefix = '/' + createGuid();
-  }
-
+  // Routes must start with this prefix.
   pathPrefix(): string {
     return this._pathPrefix;
   }
 
-  createWebSocket(transportFactory: (url: URL) => Transport, guid?: string) {
-    assert(!this._wsGuid, 'can only create one main websocket transport per server');
-    this._wsGuid = guid || createGuid();
+  createWebSocket(transportFactory: (url: URL) => Transport) {
+    // Any web page can connect to a WebSocket that it can guess.
+    assert(this._pathPrefix, 'websocket requires a random path prefix');
+    assert(!this._wsPath, 'can only create one main websocket transport per server');
+    this._wsPath = 'ws';
     // HMR begin: route upgrades manually with `noServer` so Vite HMR's upgrade
     // listener on the same http.Server is not pre-empted. With `{ server, path }`
     // the ws library aborts non-matching upgrades with 400.
+    const wsPath = this._pathPrefix + '/' + this._wsPath;
     const wss = new wsServer({ noServer: true });
     this._server.on('upgrade', (request, socket, head) => {
       const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
-      if (pathname !== this._pathPrefix + '/' + this._wsGuid) {
+      if (pathname !== wsPath) {
         // Nobody else owns this socket, and it has no 'error' listener.
         if (this._server.listenerCount('upgrade') === 1)
           socket.destroy();
@@ -131,8 +131,9 @@ export class HttpServer {
     });
   }
 
-  wsGuid(): string | undefined {
-    return this._wsGuid;
+  // Relative to urlPrefix().
+  wsPath(): string | undefined {
+    return this._wsPath;
   }
 
   async createViteDevServer(options: { root: string, base?: string }): Promise<ViteDevServer> {
@@ -299,22 +300,6 @@ export class HttpServer {
         response.end();
         return;
       }
-      if (this._pathPrefix) {
-        const { pathname, search } = new URL('http://localhost' + request.url);
-        if (pathname === this._pathPrefix) {
-          response.statusCode = 302;
-          response.setHeader('Location', this._pathPrefix + '/' + search);
-          response.end();
-          return;
-        }
-        if (!pathname.startsWith(this._pathPrefix + '/')) {
-          response.statusCode = 404;
-          response.end();
-          return;
-        }
-        // Routes see the path without the prefix.
-        request.url = pathname.substring(this._pathPrefix.length) + search;
-      }
       const url = new URL('http://localhost' + request.url);
       for (const route of this._routes) {
         if (route.exact && url.pathname === route.exact && route.handler(request, response))
@@ -364,7 +349,7 @@ function hostnameFromHostHeader(host: string): string {
 }
 
 export function serveFolder(folder: string): HttpServer {
-  const server = new HttpServer(folder);
+  const server = new HttpServer({ staticRoot: folder, useRandomPathPrefix: false });
   server.routePrefix('/', (request, response) => {
     let relativePath = new URL('http://localhost' + request.url).pathname;
     if (relativePath.startsWith('/trace/file')) {

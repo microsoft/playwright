@@ -28,8 +28,8 @@ import { SplitView } from '@web/components/splitView';
 
 applyTheme();
 
-const wsGuid = new URLSearchParams(location.search).get('ws') ?? '';
-const client = DashboardClient.create('/' + wsGuid);
+const wsPath = new URLSearchParams(location.search).get('ws') ?? '';
+const client = DashboardClient.create(wsPath);
 const model = new DashboardModel(client);
 
 const pushVisibility = () => model.setVisible(!document.hidden);

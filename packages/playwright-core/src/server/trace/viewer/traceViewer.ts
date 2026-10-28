@@ -88,10 +88,8 @@ function validateTraceUrlOrPath(traceFileOrUrl: string | undefined): string | un
 }
 
 export async function startTraceViewerServer(options: TraceViewerServerOptions & { allowedFileRoots: () => string[] }): Promise<HttpServer> {
-  const server = new HttpServer(libPath('vite', 'traceViewer'));
-  // Without an explicit host or port, Playwright opens the URL itself, so the URL can be secret.
-  if (options.host === undefined && options.port === undefined)
-    server.useRandomPathPrefix();
+  const server = new HttpServer({ staticRoot: libPath('vite', 'traceViewer'), useRandomPathPrefix: true });
+  const tracePrefix = server.pathPrefix() + '/trace';
   const isAllowed = (filePath: string) => options.allowedFileRoots().some(root => isRealPathInside(root, filePath));
 
   const serveTraceDataRoute = (request: http.IncomingMessage, response: http.ServerResponse, relativePath: string): boolean => {
@@ -133,23 +131,21 @@ export async function startTraceViewerServer(options: TraceViewerServerOptions &
   // still ships from the separate vite.sw.config.ts build — serve it from lib.
   if (__PW_HMR__ && process.env.PW_HMR_STATIC !== '1') {
     const traceViewerRoot = path.resolve(__dirname, '..', '..', 'trace-viewer');
-    const devServer = await server.createViteDevServer({ root: traceViewerRoot, base: server.pathPrefix() + '/trace/' });
-    server.routePrefix('/trace', (request, response) => {
+    const devServer = await server.createViteDevServer({ root: traceViewerRoot, base: tracePrefix + '/' });
+    server.routePrefix(tracePrefix, (request, response) => {
       const url = new URL('http://localhost' + request.url!);
-      const relativePath = url.pathname.slice('/trace'.length);
+      const relativePath = url.pathname.slice(tracePrefix.length);
       if (relativePath.startsWith('/file'))
         return serveTraceDataRoute(request, response, relativePath);
       if (relativePath === '/sw.bundle.js')
         return server.serveFile(request, response, path.join(libPath('vite', 'traceViewer'), 'sw.bundle.js'));
-      // Vite matches the full path against its base.
-      request.url = server.pathPrefix() + request.url;
       devServer.middlewares(request, response, HttpServer.notFoundFallback(response));
       return true;
     });
   } else {
-    server.routePrefix('/trace', (request, response) => {
+    server.routePrefix(tracePrefix, (request, response) => {
       const url = new URL('http://localhost' + request.url!);
-      const relativePath = url.pathname.slice('/trace'.length);
+      const relativePath = url.pathname.slice(tracePrefix.length);
       if (relativePath.startsWith('/file'))
         return serveTraceDataRoute(request, response, relativePath);
       const absolutePath = path.join(libPath('vite', 'traceViewer'), ...relativePath.split('/'));
@@ -166,14 +162,14 @@ export async function startTraceViewerServer(options: TraceViewerServerOptions &
   return server;
 }
 
-export async function installRootRedirect(server: HttpServer, traceUrl: string | undefined, options: TraceViewerRedirectOptions) {
+export async function installRootRedirect(server: HttpServer, traceUrl: string | undefined, options: TraceViewerRedirectOptions & Pick<TraceViewerServerOptions, 'host' | 'port'>) {
   const params = new URLSearchParams();
   if (path.sep !== path.posix.sep)
     params.set('pathSeparator', path.sep);
   if (traceUrl)
     params.append('trace', traceUrl);
-  if (server.wsGuid())
-    params.append('ws', server.wsGuid()!);
+  if (server.wsPath())
+    params.append('ws', server.wsPath()!);
   if (options?.isServer)
     params.append('isServer', '');
   if (isUnderTest())
@@ -189,10 +185,17 @@ export async function installRootRedirect(server: HttpServer, traceUrl: string |
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
 
-  const urlPath  = `./trace/${options.webApp || 'index.html'}?${params.toString()}`;
-  server.routePath('/', (_, response) => {
+  const pagePath = `trace/${options.webApp || 'index.html'}?${params.toString()}`;
+  installRedirect(server, server.pathPrefix() + '/', './' + pagePath);
+  // Users open an explicit host or port by hand. Other local users can read this redirect too.
+  if (options.host !== undefined || options.port !== undefined)
+    installRedirect(server, '/', '.' + server.pathPrefix() + '/' + pagePath);
+}
+
+function installRedirect(server: HttpServer, from: string, location: string) {
+  server.routePath(from, (_, response) => {
     response.statusCode = 302;
-    response.setHeader('Location', urlPath);
+    response.setHeader('Location', location);
     response.end();
     return true;
   });
@@ -203,7 +206,7 @@ export async function runTraceViewerApp(traceUrl: string | undefined, browserNam
   const allowedFileRoots = traceFileRoots(traceUrl);
   const server = await startTraceViewerServer({ ...options, allowedFileRoots: () => allowedFileRoots });
   await installRootRedirect(server, traceUrl, options);
-  const page = await openTraceViewerApp(server.urlPrefix('precise'), browserName, options);
+  const page = await openTraceViewerApp(server.urlPrefix('precise') + '/', browserName, options);
   page.on('close', () => gracefullyProcessExitDoNotHang(0));
   return page;
 }
@@ -213,7 +216,7 @@ export async function runTraceInBrowser(traceUrl: string | undefined, options: T
   const allowedFileRoots = traceFileRoots(traceUrl);
   const server = await startTraceViewerServer({ ...options, allowedFileRoots: () => allowedFileRoots });
   await installRootRedirect(server, traceUrl, options);
-  await openTraceInBrowser(server.urlPrefix('human-readable'));
+  await openTraceInBrowser(server.urlPrefix('human-readable') + '/');
 }
 
 function traceFileRoots(traceUrl: string | undefined): string[] {

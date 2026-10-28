@@ -42,8 +42,8 @@ it('HS-001 should not serve files through a symlink that leaves the folder', asy
   }
 });
 
-it('HS-002 should close upgrade requests to unknown paths', async ({}) => {
-  const server = new utils.HttpServer();
+it('HS-002 should close upgrade requests to unknown paths', async ({}, testInfo) => {
+  const server = new utils.HttpServer({ staticRoot: testInfo.outputDir, useRandomPathPrefix: true });
   server.createWebSocket(() => {
     throw new Error('Unexpected connection');
   });

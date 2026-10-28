@@ -295,7 +295,7 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
 // the generated index.html; we extract it and splice it into Vite's
 // transformed HTML so the client still finds it at runtime.
 async function serveHtmlReportWithHMR(folder: string): Promise<HttpServer> {
-  const server = new HttpServer(folder);
+  const server = new HttpServer({ staticRoot: folder, useRandomPathPrefix: false });
   const reporterRoot = path.resolve(__dirname, '..', '..', '..', 'html-reporter');
   const devServer = await server.createViteDevServer({ root: reporterRoot });
   const generatedIndex = await fs.promises.readFile(path.join(folder, 'index.html'), 'utf-8');
