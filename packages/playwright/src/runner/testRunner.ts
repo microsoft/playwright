@@ -33,7 +33,7 @@ import { serializeError } from '../util';
 import { createErrorCollectingReporter, createReporters } from './reporters';
 import { TestRun, createApplyRebaselinesTask, createClearCacheTask, createGlobalSetupTasks, createListFilesTask, createLoadTask, createPluginSetupTasks, createReportBeginTask, createRunTestsTasks, runTasks, runTasksDeferCleanup } from './tasks';
 import { LastRunReporter } from './lastRun';
-import { filterProjects } from './projectUtils';
+import { createTestFileMatcher, filterProjects } from './projectUtils';
 
 import type { TestPausedParams, TestRunOptions } from './tasks';
 import type * as reporterTypes from '../../types/testReporter';
@@ -86,6 +86,10 @@ export type RunTestsParams = {
 
 export type FullResultStatus = reporterTypes.FullResult['status'];
 
+function patternsKey(patterns: string | RegExp | (string | RegExp)[]): string[] {
+  return (Array.isArray(patterns) ? patterns : [patterns]).map(String);
+}
+
 export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   readonly configLocation: ConfigLocation;
   private _configCLIOverrides: ipc.ConfigCLIOverrides;
@@ -94,6 +98,8 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   private _watchedProjectDirs = new Set<string>();
   private _ignoredProjectOutputs = new Set<string>();
   private _watchedTestDependencies = new Set<string>();
+  private _testFileMatchers: ((file: string) => boolean)[] = [];
+  private _testFileMatcherKey = '';
 
   private _testRun: { run: Promise<reporterTypes.FullResult['status']>, stop: ManualPromise<void> } | undefined;
   private _queue = Promise.resolve();
@@ -259,17 +265,34 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   private async _updateWatchedDirs(config: FullConfigInternal) {
     this._watchedProjectDirs = new Set();
     this._ignoredProjectOutputs = new Set();
+    this._testFileMatchers = [];
+    const testFileMatcherKeys: string[] = [];
     for (const p of config.projects) {
       this._watchedProjectDirs.add(p.project.testDir);
       this._ignoredProjectOutputs.add(p.project.outputDir);
+      this._testFileMatchers.push(createTestFileMatcher(p));
+      testFileMatcherKeys.push(JSON.stringify([
+        p.project.testDir,
+        patternsKey(p.project.testMatch),
+        patternsKey(p.project.testIgnore),
+      ]));
     }
+    this._testFileMatcherKey = JSON.stringify(testFileMatcherKeys);
 
     if (this._watchTestDirs)
       await this._updateWatcher(false);
   }
 
   private async _updateWatcher(reportPending: boolean) {
-    await this._watcher.update([...this._watchedProjectDirs, ...this._watchedTestDependencies], [...this._ignoredProjectOutputs], reportPending);
+    const watchedTestDependencies = new Set([...this._watchedTestDependencies].map(file => file.replace(/\\/g, '/')));
+    const fileFilter = (file: string) => watchedTestDependencies.has(file) || this._testFileMatchers.some(matcher => matcher(file));
+    await this._watcher.update(
+        [...this._watchedProjectDirs, ...this._watchedTestDependencies],
+        [...this._ignoredProjectOutputs],
+        reportPending,
+        fileFilter,
+        this._testFileMatcherKey,
+    );
   }
 
   async runTests(userReporter: AnyReporter, params: RunTestsParams): Promise<{ status: FullResultStatus }> {

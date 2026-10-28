@@ -145,20 +145,24 @@ export function buildDependentProjects(forProjects: commonConfig.FullProjectInte
 }
 
 export async function collectFilesForProject(project: commonConfig.FullProjectInternal, fsCache = new Map<string, string[]>()): Promise<string[]> {
+  const testFileMatcher = createTestFileMatcher(project);
+  const allFiles = await cachedCollectFiles(project.project.testDir, project.respectGitIgnore, fsCache);
+  return allFiles.filter(testFileMatcher);
+}
+
+export function createTestFileMatcher(project: commonConfig.FullProjectInternal): (file: string) => boolean {
   const extensions = new Set(['.js', '.ts', '.mjs', '.mts', '.cjs', '.cts', '.jsx', '.tsx', '.mjsx', '.mtsx', '.cjsx', '.ctsx']);
   const testFileExtension = (file: string) => extensions.has(path.extname(file));
-  const allFiles = await cachedCollectFiles(project.project.testDir, project.respectGitIgnore, fsCache);
   const testMatch = createFileMatcher(project.project.testMatch);
   const testIgnore = createFileMatcher(project.project.testIgnore);
-  const testFiles = allFiles.filter(file => {
+  return file => {
     if (!testFileExtension(file))
       return false;
     const isTest = !testIgnore(file) && testMatch(file);
     if (!isTest)
       return false;
     return true;
-  });
-  return testFiles;
+  };
 }
 
 async function cachedCollectFiles(testDir: string, respectGitIgnore: boolean, fsCache: Map<string, string[]>) {

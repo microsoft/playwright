@@ -15,6 +15,7 @@
  */
 
 import chokidar from 'chokidar';
+import type { Stats } from 'fs';
 import type { FSWatcher as ChokidarWatcher } from 'chokidar';
 
 export type FSEvent = { event: 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir', file: string };
@@ -23,6 +24,7 @@ export class FSWatcher {
   private _onChange: (events: FSEvent[]) => void;
   private _watchedPaths: string[] = [];
   private _ignoredFolders: string[] = [];
+  private _fileFilterKey = '';
   private _collector: FSEvent[] = [];
   private _fsWatcher: ChokidarWatcher | undefined;
   private _throttleTimer: NodeJS.Timeout | undefined;
@@ -31,8 +33,8 @@ export class FSWatcher {
     this._onChange = onChange;
   }
 
-  async update(watchedPaths: string[], ignoredFolders: string[], reportPending: boolean) {
-    if (JSON.stringify([this._watchedPaths, this._ignoredFolders]) === JSON.stringify([watchedPaths, ignoredFolders]))
+  async update(watchedPaths: string[], ignoredFolders: string[], reportPending: boolean, fileFilter: (file: string) => boolean, fileFilterKey: string) {
+    if (JSON.stringify([this._watchedPaths, this._ignoredFolders, this._fileFilterKey]) === JSON.stringify([watchedPaths, ignoredFolders, fileFilterKey]))
       return;
 
     if (reportPending)
@@ -40,6 +42,7 @@ export class FSWatcher {
 
     this._watchedPaths = watchedPaths;
     this._ignoredFolders = ignoredFolders;
+    this._fileFilterKey = fileFilterKey;
     void this._fsWatcher?.close();
     this._fsWatcher = undefined;
     this._collector.length = 0;
@@ -51,10 +54,12 @@ export class FSWatcher {
 
     // Chokidar calls the matcher with paths normalized to forward slashes.
     const ignoredPrefixes = this._ignoredFolders.map(folder => folder.replace(/\\/g, '/') + '/');
-    const ignored = (file: string) => {
+    const ignored = (file: string, stats?: Stats) => {
       if (file.split('/').includes('node_modules'))
         return true;
-      return ignoredPrefixes.some(prefix => (file + '/').startsWith(prefix));
+      if (ignoredPrefixes.some(prefix => (file + '/').startsWith(prefix)))
+        return true;
+      return !!stats && !stats.isDirectory() && !fileFilter(file);
     };
     this._fsWatcher = chokidar.watch(watchedPaths, { ignoreInitial: true, ignored }).on('all', async (event, file) => {
       if (event !== 'add' && event !== 'addDir' && event !== 'change' && event !== 'unlink' && event !== 'unlinkDir')

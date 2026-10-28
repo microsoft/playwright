@@ -58,6 +58,20 @@ test('should watch files', async ({ runUITest, writeFiles }) => {
   `);
 });
 
+test('should not watch non-test files individually', async ({ runUITest }) => {
+  test.skip(process.platform !== 'darwin');
+  test.slow();
+
+  const { page } = await runUITest({
+    'playwright.config.ts': `export default { testMatch: '**/*.spec.ts' };`,
+    'example.spec.ts': `import { test } from '@playwright/test'; test('passes', () => {});`,
+    ...Object.fromEntries(Array.from({ length: 11_000 }, (_, i) => [`src/file-${i}.ts`, `export const value = ${i};`])),
+  });
+
+  await page.getByTitle('Run all').click();
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
+});
+
 test('should watch e2e deps', async ({ runUITest, writeFiles }) => {
   const { page } = await runUITest({
     'playwright.config.ts': `
