@@ -14,67 +14,170 @@
  * limitations under the License.
  */
 
-import chokidar from 'chokidar';
-import type { FSWatcher as ChokidarWatcher } from 'chokidar';
+import fs from 'fs';
+import path from 'path';
 
-export type FSEvent = { event: 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir', file: string };
+export type FSWatcherParams = {
+  // Watched recursively.
+  dirs: string[];
+  // Watched individually, unless inside one of the dirs.
+  files: string[];
+  // Never reported, never entered.
+  ignoredFolders: string[];
+};
+
+// Node.js watches recursively with FSEvents on macOS and ReadDirectoryChangesW on Windows,
+// a single handle per root. On other platforms it falls back to a JavaScript implementation
+// that watches every single file and does not skip node_modules, so we walk the tree ourselves
+// and watch each directory instead. Node 26 adds an `ignore` option to that fallback, so once
+// it is the minimum supported version, the walker can go.
+const kNativeRecursiveWatch = process.platform === 'darwin' || process.platform === 'win32';
 
 export class FSWatcher {
-  private _onChange: (events: FSEvent[]) => void;
-  private _watchedPaths: string[] = [];
-  private _ignoredFolders: string[] = [];
-  private _collector: FSEvent[] = [];
-  private _fsWatcher: ChokidarWatcher | undefined;
+  private _onChange: (files: string[]) => void;
+  private _params: FSWatcherParams = { dirs: [], files: [], ignoredFolders: [] };
+  private _watchedFiles = new Set<string>();
+  private _watchers = new Map<string, fs.FSWatcher>();
+  private _collector = new Set<string>();
   private _throttleTimer: NodeJS.Timeout | undefined;
 
-  constructor(onChange: (events: FSEvent[]) => void) {
+  constructor(onChange: (files: string[]) => void) {
     this._onChange = onChange;
   }
 
-  async update(watchedPaths: string[], ignoredFolders: string[], reportPending: boolean) {
-    if (JSON.stringify([this._watchedPaths, this._ignoredFolders]) === JSON.stringify([watchedPaths, ignoredFolders]))
+  async update(params: FSWatcherParams, reportPending: boolean) {
+    if (JSON.stringify(this._params) === JSON.stringify(params))
       return;
 
     if (reportPending)
       this._reportEventsIfAny();
 
-    this._watchedPaths = watchedPaths;
-    this._ignoredFolders = ignoredFolders;
-    void this._fsWatcher?.close();
-    this._fsWatcher = undefined;
-    this._collector.length = 0;
+    this._params = params;
+    this._closeAll();
+    this._collector.clear();
     clearTimeout(this._throttleTimer);
     this._throttleTimer = undefined;
 
-    if (!this._watchedPaths.length)
-      return;
+    for (const dir of params.dirs) {
+      if (kNativeRecursiveWatch)
+        this._watch(dir, true, file => this._onDirEvent(file));
+      else
+        this._watchTree(dir);
+    }
 
-    // Chokidar calls the matcher with paths normalized to forward slashes.
-    const ignoredPrefixes = this._ignoredFolders.map(folder => folder.replace(/\\/g, '/') + '/');
-    const ignored = (file: string) => {
-      if (file.split('/').includes('node_modules'))
-        return true;
-      return ignoredPrefixes.some(prefix => (file + '/').startsWith(prefix));
-    };
-    this._fsWatcher = chokidar.watch(watchedPaths, { ignoreInitial: true, ignored }).on('all', async (event, file) => {
-      if (event !== 'add' && event !== 'addDir' && event !== 'change' && event !== 'unlink' && event !== 'unlinkDir')
-        return;
-      if (this._throttleTimer)
-        clearTimeout(this._throttleTimer);
-      this._collector.push({ event, file });
-      this._throttleTimer = setTimeout(() => this._reportEventsIfAny(), 250);
-    });
-
-    await new Promise<void>((resolve, reject) => this._fsWatcher!.once('ready', () => resolve()).once('error', reject));
+    // Files are watched through their parent directory, so that editors
+    // that replace the file on save do not break the watcher.
+    this._watchedFiles = new Set(params.files.filter(file => !params.dirs.some(dir => isInside(dir, file))));
+    for (const dir of new Set([...this._watchedFiles].map(file => path.dirname(file))))
+      this._watch(dir, false, file => this._onFileEvent(file));
   }
 
   async close() {
-    await this._fsWatcher?.close();
+    this._closeAll();
+    clearTimeout(this._throttleTimer);
+    this._throttleTimer = undefined;
+  }
+
+  private _watch(dir: string, recursive: boolean, onEvent: (file: string) => void) {
+    if (this._watchers.has(dir))
+      return;
+    try {
+      const watcher = fs.watch(dir, { persistent: true, recursive }, (eventType, filename) => {
+        onEvent(filename ? path.join(dir, filename) : dir);
+      });
+      watcher.on('error', () => this._close(dir));
+      this._watchers.set(dir, watcher);
+    } catch {
+      // The directory does not exist, is not accessible, or we have run out of watches.
+    }
+  }
+
+  private _watchTree(dir: string) {
+    if (this._isIgnored(dir) || this._watchers.has(dir))
+      return;
+    this._watch(dir, false, file => this._onTreeEvent(file));
+    if (!this._watchers.has(dir))
+      return;
+    let entries: fs.Dirent[] = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+    }
+    for (const entry of entries) {
+      // Dirent.isDirectory() is false for symlinks, so they are not followed.
+      if (entry.isDirectory())
+        this._watchTree(path.join(dir, entry.name));
+    }
+  }
+
+  private _onDirEvent(file: string) {
+    if (!this._isIgnored(file))
+      this._collect(file);
+  }
+
+  private _onTreeEvent(file: string) {
+    if (this._isIgnored(file))
+      return;
+    this._collect(file);
+    // A directory may have been added, removed or replaced.
+    if (this._watchers.has(file)) {
+      if (!isDirectory(file))
+        this._closeTree(file);
+    } else if (isDirectory(file)) {
+      this._watchTree(file);
+    }
+  }
+
+  private _onFileEvent(file: string) {
+    if (this._watchedFiles.has(file))
+      this._collect(file);
+  }
+
+  private _isIgnored(file: string) {
+    if (file.split(path.sep).includes('node_modules'))
+      return true;
+    return this._params.ignoredFolders.some(folder => file === folder || isInside(folder, file));
+  }
+
+  private _collect(file: string) {
+    this._collector.add(file);
+    clearTimeout(this._throttleTimer);
+    this._throttleTimer = setTimeout(() => this._reportEventsIfAny(), 250);
   }
 
   private _reportEventsIfAny() {
-    if (this._collector.length)
-      this._onChange(this._collector.slice());
-    this._collector.length = 0;
+    if (this._collector.size)
+      this._onChange([...this._collector]);
+    this._collector.clear();
+  }
+
+  private _close(dir: string) {
+    this._watchers.get(dir)?.close();
+    this._watchers.delete(dir);
+  }
+
+  private _closeTree(dir: string) {
+    for (const watched of [...this._watchers.keys()]) {
+      if (watched === dir || isInside(dir, watched))
+        this._close(watched);
+    }
+  }
+
+  private _closeAll() {
+    for (const watcher of this._watchers.values())
+      watcher.close();
+    this._watchers.clear();
+  }
+}
+
+function isInside(dir: string, file: string) {
+  return file.startsWith(dir + path.sep);
+}
+
+function isDirectory(file: string) {
+  try {
+    return fs.lstatSync(file).isDirectory();
+  } catch {
+    return false;
   }
 }

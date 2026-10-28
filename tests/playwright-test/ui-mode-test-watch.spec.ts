@@ -58,6 +58,38 @@ test('should watch files', async ({ runUITest, writeFiles }) => {
   `);
 });
 
+test('should watch with many files in testDir', async ({ runUITest, writeFiles }) => {
+  // See https://github.com/microsoft/playwright/issues/43653.
+  // Watching each file individually exceeds the limit of open file descriptors on macOS.
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('passes', () => {});
+    `,
+    ...Object.fromEntries(Array.from({ length: 11000 }, (_, i) => [`src/file-${i}.ts`, `export const value = ${i};`])),
+  });
+
+  await page.getByTitle('Run all').click();
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ a.test.ts
+        ✅ passes
+  `);
+
+  await writeFiles({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('passes', () => {});
+      test('added', () => {});
+    `
+  });
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts
+        ✅ passes
+        ◯ added
+  `);
+});
+
 test('should watch e2e deps', async ({ runUITest, writeFiles }) => {
   const { page } = await runUITest({
     'playwright.config.ts': `

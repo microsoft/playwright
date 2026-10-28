@@ -107,9 +107,9 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     super();
     this.configLocation = configLocation;
     this._configCLIOverrides = configCLIOverrides;
-    this._watcher = new FSWatcher(events => {
+    this._watcher = new FSWatcher(files => {
       const collector = new Set<string>();
-      events.forEach(f => cc.collectAffectedTestFiles(f.file, collector));
+      files.forEach(file => cc.collectAffectedTestFiles(file, collector));
       this.emit(TestRunnerEvent.TestFilesChanged, [...collector]);
     });
   }
@@ -269,7 +269,11 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   }
 
   private async _updateWatcher(reportPending: boolean) {
-    await this._watcher.update([...this._watchedProjectDirs, ...this._watchedTestDependencies], [...this._ignoredProjectOutputs], reportPending);
+    await this._watcher.update({
+      dirs: [...this._watchedProjectDirs],
+      files: [...this._watchedTestDependencies],
+      ignoredFolders: [...this._ignoredProjectOutputs],
+    }, reportPending);
   }
 
   async runTests(userReporter: AnyReporter, params: RunTestsParams): Promise<{ status: FullResultStatus }> {
