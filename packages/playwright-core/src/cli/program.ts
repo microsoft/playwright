@@ -220,7 +220,7 @@ export function decorateProgram(program: Command) {
 
         const openOptions: TraceViewerServerOptions = {
           host: options.host,
-          port: +options.port,
+          port: options.port !== undefined ? +options.port : undefined,
           isServer: !!options.stdin,
         };
 

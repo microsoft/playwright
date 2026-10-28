@@ -89,7 +89,10 @@ function validateTraceUrlOrPath(traceFileOrUrl: string | undefined): string | un
 
 export async function startTraceViewerServer(options: TraceViewerServerOptions & { allowedFileRoots: () => string[] }): Promise<HttpServer> {
   const server = new HttpServer(libPath('vite', 'traceViewer'));
-  const isAllowed = (filePath: string) => options.allowedFileRoots().some(root => isRealPathInside(root, filePath));
+  // Without an explicit host or port, Playwright opens the URL itself, so the URL can be secret.
+  if (options.host === undefined && options.port === undefined)
+    server.useRandomPathPrefix();
+  const isAllowed =(filePath: string) => options.allowedFileRoots().some(root => isRealPathInside(root, filePath));
 
   const serveTraceDataRoute = (request: http.IncomingMessage, response: http.ServerResponse, relativePath: string): boolean => {
     if (!relativePath.startsWith('/file'))
@@ -130,7 +133,7 @@ export async function startTraceViewerServer(options: TraceViewerServerOptions &
   // still ships from the separate vite.sw.config.ts build — serve it from lib.
   if (__PW_HMR__ && process.env.PW_HMR_STATIC !== '1') {
     const traceViewerRoot = path.resolve(__dirname, '..', '..', 'trace-viewer');
-    const devServer = await server.createViteDevServer({ root: traceViewerRoot, base: '/trace/' });
+    const devServer = await server.createViteDevServer({ root: traceViewerRoot, base: server.pathPrefix() + '/trace/' });
     server.routePrefix('/trace', (request, response) => {
       const url = new URL('http://localhost' + request.url!);
       const relativePath = url.pathname.slice('/trace'.length);
@@ -138,6 +141,8 @@ export async function startTraceViewerServer(options: TraceViewerServerOptions &
         return serveTraceDataRoute(request, response, relativePath);
       if (relativePath === '/sw.bundle.js')
         return server.serveFile(request, response, path.join(libPath('vite', 'traceViewer'), 'sw.bundle.js'));
+      // Vite matches the full path against its base.
+      request.url = server.pathPrefix() + request.url;
       devServer.middlewares(request, response, HttpServer.notFoundFallback(response));
       return true;
     });

@@ -55,6 +55,7 @@ export class HttpServer {
   // Allowed Host headers; null disables the check (host bound to a public address).
   private _allowedHosts: Set<string> | null = null;
   private _staticRoot: string | undefined;
+  private _pathPrefix = '';
 
   constructor(staticRoot?: string) {
     this._server = createHttpServer(this._onRequest.bind(this));
@@ -77,17 +78,26 @@ export class HttpServer {
     return this._port;
   }
 
+  // Serves everything under a random path, so that other local users cannot guess the URLs.
+  useRandomPathPrefix() {
+    assert(!this._started, 'server already started');
+    this._pathPrefix = '/' + createGuid();
+  }
+
+  pathPrefix(): string {
+    return this._pathPrefix;
+  }
+
   createWebSocket(transportFactory: (url: URL) => Transport, guid?: string) {
     assert(!this._wsGuid, 'can only create one main websocket transport per server');
     this._wsGuid = guid || createGuid();
     // HMR begin: route upgrades manually with `noServer` so Vite HMR's upgrade
     // listener on the same http.Server is not pre-empted. With `{ server, path }`
     // the ws library aborts non-matching upgrades with 400.
-    const wsPath = '/' + this._wsGuid;
     const wss = new wsServer({ noServer: true });
     this._server.on('upgrade', (request, socket, head) => {
       const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
-      if (pathname !== wsPath) {
+      if (pathname !== this._pathPrefix + '/' + this._wsGuid) {
         // Nobody else owns this socket, and it has no 'error' listener.
         if (this._server.listenerCount('upgrade') === 1)
           socket.destroy();
@@ -180,8 +190,8 @@ export class HttpServer {
       this._urlPrefixHumanReadable = address;
     } else {
       this._port = address.port;
-      this._urlPrefixPrecise = `http://${urlHostFromAddress(address)}:${address.port}`;
-      this._urlPrefixHumanReadable = `http://${host ?? 'localhost'}:${address.port}`;
+      this._urlPrefixPrecise = `http://${urlHostFromAddress(address)}:${address.port}${this._pathPrefix}`;
+      this._urlPrefixHumanReadable = `http://${host ?? 'localhost'}:${address.port}${this._pathPrefix}`;
       this._allowedHosts = computeAllowedHosts(host, address.address);
     }
   }
@@ -288,6 +298,22 @@ export class HttpServer {
       if (!request.url) {
         response.end();
         return;
+      }
+      if (this._pathPrefix) {
+        const { pathname, search } = new URL('http://localhost' + request.url);
+        if (pathname === this._pathPrefix) {
+          response.statusCode = 302;
+          response.setHeader('Location', this._pathPrefix + '/' + search);
+          response.end();
+          return;
+        }
+        if (!pathname.startsWith(this._pathPrefix + '/')) {
+          response.statusCode = 404;
+          response.end();
+          return;
+        }
+        // Routes see the path without the prefix.
+        request.url = pathname.substring(this._pathPrefix.length) + search;
       }
       const url = new URL('http://localhost' + request.url);
       for (const route of this._routes) {

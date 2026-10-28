@@ -345,6 +345,23 @@ for (const useWeb of [true, false]) {
   });
 }
 
+test('should serve UI mode under a random path', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.js': `
+      import { test } from '@playwright/test';
+      test('should work', async ({}) => {});
+    `
+  });
+  await expect(page.getByTitle('Run all')).toBeVisible();
+  const url = new URL(page.url());
+  const prefix = url.pathname.split('/')[1];
+  expect(prefix).toMatch(/^[0-9a-f]{32}$/);
+  expect((await fetch(url.origin + '/', { redirect: 'manual' })).status).toBe(404);
+  expect((await fetch(url.origin + '/trace/uiMode.html')).status).toBe(404);
+  expect((await fetch(url.origin + '/trace/file?path=' + encodeURIComponent(test.info().outputPath('a.test.js')))).status).toBe(404);
+  expect((await fetch(`${url.origin}/${prefix}/trace/uiMode.html`)).status).toBe(200);
+});
+
 test('should restart webserver on reload', async ({ runUITest }) => {
   const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
   const port = test.info().workerIndex * 2 + 10500;
