@@ -102,7 +102,7 @@ export const test = base
             command: [...cliCommand, 'test', (options.useWeb ? '--ui-host=127.0.0.1' : '--ui'), '--workers=1', ...(options.additionalArgs || [])],
             env: inheritAndCleanEnv({
               ...env,
-              PWTEST_CACHE_DIR: cacheDir,
+              PLAYWRIGHT_TRANSFORM_CACHE_DIR: cacheDir,
               PWTEST_HEADED_FOR_TEST: headless ? '0' : '1',
               PWTEST_PRINT_WS_ENDPOINT: '1',
             }),

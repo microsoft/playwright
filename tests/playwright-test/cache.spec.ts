@@ -58,7 +58,7 @@ test('should automatically clean cached versions of a changed file', async ({ ru
       test('example', () => {});
     `,
   }, undefined, {
-    PWTEST_CACHE_DIR: cacheDir
+    PLAYWRIGHT_TRANSFORM_CACHE_DIR: cacheDir
   });
 
   const cacheDirectories = await fs.promises.readdir(cacheDir);
@@ -84,7 +84,7 @@ test('should automatically clean cached versions of a changed file', async ({ ru
       test('modified test', () => {});
     `,
   }, undefined, {
-    PWTEST_CACHE_DIR: cacheDir
+    PLAYWRIGHT_TRANSFORM_CACHE_DIR: cacheDir
   });
 
   cachedFiles = await fs.promises.readdir(testCacheDirectory);

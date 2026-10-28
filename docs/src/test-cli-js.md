@@ -334,3 +334,9 @@ Clear all Playwright caches.
 ```bash
 npx playwright clear-cache
 ```
+
+Playwright keeps transpiled test files in the system temporary directory. To keep them in another directory, for example on a Linux machine shared with other users, set the `PLAYWRIGHT_TRANSFORM_CACHE_DIR` environment variable:
+
+```bash
+PLAYWRIGHT_TRANSFORM_CACHE_DIR=~/.cache/playwright-transform npx playwright test
+```
