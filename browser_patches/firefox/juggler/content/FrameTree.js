@@ -32,6 +32,7 @@ export class FrameTree {
     this._frameIdToFrame = new Map();
     this._pageReady = false;
     this._javaScriptDisabled = false;
+    this._isolatedWorldExtendedPrincipal = false;
     for (const browsingContext of helper.collectAllBrowsingContexts(rootBrowsingContext))
       this._createFrame(browsingContext);
     this._mainFrame = this.frameForBrowsingContext(rootBrowsingContext);
@@ -132,6 +133,10 @@ export class FrameTree {
     this._javaScriptDisabled = javaScriptDisabled;
     for (const frame of this.frames())
       frame._updateJavaScriptDisabled();
+  }
+
+  setIsolatedWorldExtendedPrincipal(extendedPrincipal) {
+    this._isolatedWorldExtendedPrincipal = extendedPrincipal;
   }
 
   _onWorkerCreated(workerDebugger) {
@@ -503,7 +508,7 @@ class Frame {
   }
 
   _createIsolatedContext(name) {
-    const principal = [this.domWindow()]; // extended principal
+    const principal = this._frameTree._isolatedWorldExtendedPrincipal ? [this.domWindow()] : this.domWindow();
     const sandbox = Cu.Sandbox(principal, {
       sandboxPrototype: this.domWindow(),
       wantComponents: false,
