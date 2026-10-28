@@ -270,8 +270,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
 
   private async _updateWatcher(reportPending: boolean) {
     await this._watcher.update({
-      dirs: [...this._watchedProjectDirs],
-      files: [...this._watchedTestDependencies],
+      paths: [...this._watchedProjectDirs, ...this._watchedTestDependencies],
       ignoredFolders: [...this._ignoredProjectOutputs],
     }, reportPending);
   }

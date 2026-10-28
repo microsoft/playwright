@@ -18,10 +18,8 @@ import fs from 'fs';
 import path from 'path';
 
 export type FSWatcherParams = {
-  // Watched recursively.
-  dirs: string[];
-  // Watched individually, unless inside one of the dirs.
-  files: string[];
+  // Directories are watched recursively, files individually.
+  paths: string[];
   // Never reported, never entered.
   ignoredFolders: string[];
 };
@@ -35,7 +33,7 @@ const kNativeRecursiveWatch = process.platform === 'darwin' || process.platform 
 
 export class FSWatcher {
   private _onChange: (files: string[]) => void;
-  private _params: FSWatcherParams = { dirs: [], files: [], ignoredFolders: [] };
+  private _params: FSWatcherParams = { paths: [], ignoredFolders: [] };
   private _watchedFiles = new Set<string>();
   private _watchers = new Map<string, fs.FSWatcher>();
   private _collector = new Set<string>();
@@ -58,7 +56,15 @@ export class FSWatcher {
     clearTimeout(this._throttleTimer);
     this._throttleTimer = undefined;
 
-    for (const dir of params.dirs) {
+    // The test dir may come with a trailing separator.
+    const paths = params.paths.map(p => p.length > 1 && p.endsWith(path.sep) ? p.slice(0, -1) : p);
+    const dirs = new Set(paths.filter(p => isDirectory(p)));
+    // Anything inside a watched directory is covered by its recursive watch.
+    const isCovered = (p: string) => [...dirs].some(dir => isInside(dir, p));
+
+    for (const dir of dirs) {
+      if (isCovered(dir))
+        continue;
       if (kNativeRecursiveWatch)
         this._watch(dir, true, file => this._onDirEvent(file));
       else
@@ -67,7 +73,7 @@ export class FSWatcher {
 
     // Files are watched through their parent directory, so that editors
     // that replace the file on save do not break the watcher.
-    this._watchedFiles = new Set(params.files.filter(file => !params.dirs.some(dir => isInside(dir, file))));
+    this._watchedFiles = new Set(paths.filter(p => !dirs.has(p) && !isCovered(p)));
     for (const dir of new Set([...this._watchedFiles].map(file => path.dirname(file))))
       this._watch(dir, false, file => this._onFileEvent(file));
   }
