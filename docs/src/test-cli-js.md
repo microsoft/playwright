@@ -298,6 +298,8 @@ npx playwright show-trace trace/
 | `-h, --host <host>` | Host to serve trace on |
 | `-p, --port <port>` | Port to serve trace on |
 
+When you pass `--port`, other users on your machine can open the trace on that port. When you pass `--host`, anyone who can reach this address and port can open the trace, for example other machines in your network with `--host=0.0.0.0`.
+
 ## Specialized Commands
 
 ### Merge Reports
