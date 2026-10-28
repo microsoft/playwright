@@ -197,7 +197,7 @@ for (const scenario of ['launch', 'connect'] as const) {
       await expect(page).toHaveTitle('Page Title');
     });
 
-    test('BC-076 should not cache resources', async ({ reusedContext, server }) => {
+    test('BC-076 should not cache resources', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43704' } }, async ({ reusedContext, server }) => {
       test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19926' });
       const requestCountMap = new Map<string, number>();
       server.setRoute('/page.html', (req, res) => {
@@ -235,7 +235,10 @@ for (const scenario of ['launch', 'connect'] as const) {
       {
         const context = await reusedContext();
         const page = await context.newPage();
-        await page.goto(server.PREFIX + '/page.html');
+        await Promise.all([
+          page.waitForResponse(server.PREFIX + '/simple.json'),
+          page.goto(server.PREFIX + '/page.html'),
+        ]);
         await expect(page).toHaveTitle('Count: 0');
         expect(requestCountMap.get('/page.html')).toBe(1);
         expect(requestCountMap.get('/style.css')).toBe(1);
@@ -244,7 +247,10 @@ for (const scenario of ['launch', 'connect'] as const) {
       {
         const context = await reusedContext();
         const page = context.pages()[0];
-        await page.goto(server.PREFIX + '/page.html');
+        await Promise.all([
+          page.waitForResponse(server.PREFIX + '/simple.json'),
+          page.goto(server.PREFIX + '/page.html'),
+        ]);
         await expect(page).toHaveTitle('Count: 1');
         expect(requestCountMap.get('/page.html')).toBe(2);
         expect(requestCountMap.get('/style.css')).toBe(2);

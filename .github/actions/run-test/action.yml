@@ -59,15 +59,20 @@ runs:
       run: |
         if [[ "$(uname)" == "Linux" ]]; then
           xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- ${{ inputs.command }}
+        elif [[ "$RUNNER_OS" == "Windows" ]]; then
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .github/actions/run-test/windows-normal-io.ps1 -RunBashCommand
         else
           ${{ inputs.command }}
         fi
       shell: bash
       env:
         PW_TAG: "@${{ inputs.bot-name }}"
+        PW_TEST_COMMAND: ${{ inputs.command }}
     - name: Run tests
       if: inputs.shell != 'bash'
-      run: ${{ inputs.command }}
+      run: |
+        ${{ runner.os == 'Windows' && (inputs.shell == 'pwsh' || inputs.shell == 'powershell') && '. .\.github\actions\run-test\windows-normal-io.ps1' || '' }}
+        ${{ inputs.command }}
       shell: ${{ inputs.shell }}
       env:
         PW_TAG: "@${{ inputs.bot-name }}"
