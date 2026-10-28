@@ -92,7 +92,7 @@ export async function startTraceViewerServer(options: TraceViewerServerOptions &
   // Without an explicit host or port, Playwright opens the URL itself, so the URL can be secret.
   if (options.host === undefined && options.port === undefined)
     server.useRandomPathPrefix();
-  const isAllowed =(filePath: string) => options.allowedFileRoots().some(root => isRealPathInside(root, filePath));
+  const isAllowed = (filePath: string) => options.allowedFileRoots().some(root => isRealPathInside(root, filePath));
 
   const serveTraceDataRoute = (request: http.IncomingMessage, response: http.ServerResponse, relativePath: string): boolean => {
     if (!relativePath.startsWith('/file'))
