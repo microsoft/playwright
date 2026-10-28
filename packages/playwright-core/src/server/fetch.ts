@@ -597,6 +597,8 @@ export abstract class APIRequestContext extends SdkObject {
           return;
         const protocol = socket.getProtocol() ?? undefined;
         const peerCertificate = socket.getPeerCertificate();
+        if (!peerCertificate)
+          return;
         if (!peerCertificate.valid_from) {
           // A resumed TLS session returns an empty getPeerCertificate(), and we use the cached data.
           securityDetails = { ...this._certificateDetails.get(certificateCacheKey), protocol };
