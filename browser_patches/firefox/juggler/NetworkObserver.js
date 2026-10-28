@@ -107,6 +107,7 @@ class NetworkRequest {
   constructor(networkObserver, httpChannel, redirectedFrom) {
     this._networkObserver = networkObserver;
     this.httpChannel = httpChannel;
+    this._requestHeaders = undefined;
 
     const loadInfo = this.httpChannel.loadInfo;
     const browsingContext = loadInfo?.frameBrowsingContext
@@ -232,6 +233,8 @@ class NetworkRequest {
     // An internal redirect does not necessarily have the same channelId,
     // but inherits notificationCallbacks and the listener,
     // and should be used instead of an old channel.
+    // Preserve effective headers before interception replaces the channel.
+    this._requestHeaders ||= requestHeaders(this.httpChannel);
     this._networkObserver._channelToRequest.delete(this.httpChannel);
     this.httpChannel = newChannel;
     this._networkObserver._channelToRequest.set(this.httpChannel, this);
@@ -512,7 +515,7 @@ class NetworkRequest {
       requestId: this.requestId,
       redirectedFrom: this.redirectedFromId,
       postData: readRequestPostData(this.httpChannel),
-      headers: requestHeaders(this.httpChannel),
+      headers: this._requestHeaders || requestHeaders(this.httpChannel),
       method: this.httpChannel.requestMethod,
       navigationId: this.navigationId,
       cause: causeTypeToString(causeType),
