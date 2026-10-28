@@ -84,7 +84,7 @@ test('SE-051 should support selected', async ({ page }) => {
   ]);
 });
 
-test('SE-052 should support checked', async ({ page }) => {
+test('SE-052 should support checked', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43662' } }, async ({ page }) => {
   await page.setContent(`
     <input type=checkbox>
     <input type=checkbox checked>
@@ -130,6 +130,34 @@ test('SE-052 should support checked', async ({ page }) => {
     `<div role="checkbox" aria-checked="false">Hello</div>`,
     `<div role="checkbox">Unknown</div>`,
   ]);
+
+  await page.setContent(`
+    <div role="checkbox" aria-checked="True" aria-readonly="True"
+      onclick="this.setAttribute('aria-checked', String(this.getAttribute('aria-checked').toLowerCase() !== 'true'))">Remember me</div>
+    <button aria-pressed="True">Bold</button>
+    <button aria-expanded="True">Menu</button>
+    <div role="Button" tabindex="0">Save</div>
+  `);
+  const checkbox = page.getByRole('checkbox');
+  expect(await page.getByRole('checkbox', { checked: true }).count()).toBe(1);
+  expect(await page.getByRole('button', { pressed: true }).count()).toBe(1);
+  expect(await page.getByRole('button', { expanded: true }).count()).toBe(1);
+  expect(await page.getByRole('button', { name: 'Save' }).count()).toBe(1);
+  await expect(checkbox).toBeChecked();
+  await expect(checkbox).not.toBeEditable();
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - checkbox "Remember me" [checked]
+    - button "Bold" [pressed]
+    - button "Menu" [expanded]
+    - button "Save"
+  `);
+  await checkbox.check();
+  await expect(checkbox).toHaveAttribute('aria-checked', 'True');
+
+  await checkbox.evaluate(element => element.setAttribute('aria-checked', 'Mixed'));
+  await page.getByRole('button', { name: 'Bold' }).evaluate(element => element.setAttribute('aria-pressed', 'Mixed'));
+  expect(await page.locator('role=checkbox[checked=mixed]').count()).toBe(1);
+  expect(await page.locator('role=button[pressed=mixed]').count()).toBe(1);
 });
 
 test('SE-053 should support pressed', async ({ page }) => {
