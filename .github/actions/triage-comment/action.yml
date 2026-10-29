@@ -84,7 +84,7 @@ runs:
         echo "Hi, I'm the Playwright bot. I couldn't finish triaging this issue: $reason. The agent run has the details." > "$DIR/comment.md"
       fi
       if [[ -n "$PR_URL" ]]; then
-        printf '\n\nDraft fix: %s\n' "$PR_URL" >> "$DIR/comment.md"
+        printf '\n\nDraft PR: %s\n' "$PR_URL" >> "$DIR/comment.md"
       elif [[ "$PUBLISH_RESULT" == "failure" ]]; then
         printf '\n\nThe bot proposed a fix, but opening the pull request failed. The agent run has the details.\n' >> "$DIR/comment.md"
       fi

@@ -28,13 +28,34 @@ A maintainer applied the label `needs-triage`, `needs-triage-mac` or `needs-tria
 skill. A run can have a task and no issue; see [A task without an issue](#a-task-without-an-issue).
 
 The goal is to **fix** the issue: a PR with a regression test, linked to the issue. A repro is a
-means, not the result. This run is the last resort. Nothing else picks the issue up, so a bug that
-you reproduced and did not fix stays broken. Stop only when you have concluded that you cannot fix
-the issue, and say why. "The next step is to add logs" describes work that you can still do here,
-so it is not a result. These are not reasons to stop either: the bug is old, it depends on timing,
-it has several causes, no fix is verified yet.
+means, not the result. This run is the last resort. Nothing else picks the issue up. A bug that you
+reproduced and did not fix stays broken, and a request that you understood and did not implement
+stays open. Stop only when you have concluded that you cannot fix the issue, and say why.
 
 Never apply or remove a label. The maintainer already chose this run.
+
+### What is not a result
+
+Before you write the note, read its last paragraph. A note that ends in one of these is a failed
+run, whatever else it has:
+
+- **A next step that you can take here.** "The next step is to add logging to X." "Someone should
+  bisect this." "Worth a check if Y." The runner is the place for that step. Take it.
+- **A decision that you can make.** "A UI decision remains whether the tooltip should show only the
+  step name or also its subtitle." Read the code and the docs around it, choose what fits them, say
+  the choice in one sentence in the PR description, and implement it. A maintainer corrects your
+  choice in the review, which costs less than a round trip on the issue.
+- **A classification in place of work.** "This is a feature request, not a bug." "This is a
+  question about the report UI." The classification says what the issue is. It does not say that
+  the run is over. A small and clear request is work for this run, like a bug; see
+  [Classify the issue](#classify-the-issue).
+- **A hypothesis.** "This is probably caused by X." "It looks like a race in Y." Instrument the code
+  and run it here until you know.
+- **A reason that the bug is hard.** The bug is old, it depends on timing, it has several causes, no
+  fix is verified yet. None of these ends the run.
+
+The run ends in one of the [Outcomes](#outcomes). The note alone is one of them only when it says
+what blocked you, as a fact, with everything that you tried.
 
 ## The runner
 
@@ -60,9 +81,13 @@ The run ends in exactly one of these:
 
 - **A fix proposal**: a verified fix with its regression test, in `$OUTPUT_DIR/fix/`. The workflow
   opens it as a draft PR and comments on the issue. See [Leave a proposal](#leave-a-proposal).
-- **An investigation note alone**, when the work cannot continue here: not a bug, cannot reproduce,
-  already fixed, a design decision, another owner, or a team PR that fixes it. The note is not a
-  list of steps that you can still do here. See [Write the note](#write-the-note).
+- **A coverage proposal**: a test for the scenario of a bug that did not reproduce, when no test
+  covers that scenario yet, in `$OUTPUT_DIR/fix/` like a fix. The workflow opens it as a draft PR
+  and comments on the issue. See [Add coverage](#add-coverage).
+- **An investigation note alone**, when the work cannot continue here: not a bug, cannot reproduce
+  and a test already covers the scenario, already fixed, a design decision, another owner, or a
+  team PR that fixes it. The note is not a list of steps that you can still do here. See
+  [Write the note](#write-the-note).
 - **A verdict "can be merged"** on a linked PR from a third party, in the summary, when the PR
   passes the full review. See [Review a third-party PR](#review-a-third-party-pr).
 - **A report for another owner**, next to the note, when the root cause is in a component that the
@@ -153,11 +178,13 @@ work. A "[Bug]" is sometimes the expected behaviour.
 - **Bug**: reproduce it and fix it. Most of this guide is about bugs.
 - **Feature request**: there is nothing to reproduce. Check that the feature does not exist already,
   also under another name, in the docs and the API. Verify every source that the reporter cites:
-  read it. If a maintainer already agreed to the feature in the thread, and it is small and well
-  defined, implement it and finish with a PR. Otherwise write a note that shows the real design
-  question. For a small request, such as "fail loudly instead of silently", the best note includes
-  an acceptance test: one test that asserts the behaviour of today, with the wanted behaviour next
-  to it, marked as expected to fail.
+  read it. A small and well-defined request is work for this run, like a bug: implement it and
+  finish with a PR. The maintainer who applied the label asked for that, and the review is where
+  they correct a choice of yours. When the request leaves a small choice open, make it, as
+  [What is not a result](#what-is-not-a-result) says. Write a note instead only when the request
+  needs a new API, or a design decision that is bigger than one focused change. Then the note shows
+  the real design question. When you can, add an acceptance test to it: one test that asserts the
+  behaviour of today, with the wanted behaviour next to it, marked as expected to fail.
 - **Owned elsewhere**: the root cause is in a component that the repo does not own: a browser
   engine, the Playwright driver that a language port drives, Node, the server configuration of a
   website. Reproduce it like a bug. Make sure that the component is at fault, not the handling of it
@@ -193,7 +220,8 @@ understood every line. Most issues need no more than that.
 4. **Vary before you give up.** When a minimal repro does not fail for you, try what the reporter
    may have forgotten to mention: all three browsers, headed and headless, some recent versions,
    variations of the snippet or the trigger. Report "cannot reproduce" only after you explored, and
-   say what you tried. If you have an idea which information would help, ask for it.
+   say what you tried. If you have an idea which information would help, ask for it. Then check
+   the coverage of the scenario; see [Add coverage](#add-coverage).
 5. **Look for related reports.** First check the issues and PRs that the thread links. Then run
    some searches, open and closed, in this repo and the family repos. Examples:
    `repo:<owner>/<repo> "<exact error>"` and `repo:<owner>/<repo> <API> <trigger>`. Compare the API
@@ -279,11 +307,42 @@ git switch -c fix-<n> main
   [Before you start an issue](#before-you-start-an-issue) says, and report that instead. A
   third-party PR that you reviewed and found faults in does not block yours.
 
-One PR per issue. If the right fix needs an API or design decision, or is bigger than one focused
-change, stop. Write a note with the repro, the root cause, and the fix that you suggest. If the fix
+One PR per issue. A small choice inside the fix, such as a default, the text of a message or what a
+tooltip shows, is yours to make; say it in the PR description. If the right fix needs an API or a
+design decision that is bigger than one focused change, stop. Write a note with the repro, the root
+cause, and the fix that you suggest. If the fix
 belongs in a component that another owner has, end with the report that the skill defines for that
 owner. If the fix needs a change under `.github/`, end with a note that has the root cause and the
 diff; see [Leave a proposal](#leave-a-proposal).
+
+## Add coverage
+
+When the bug does not reproduce after [Reproduce](#reproduce), the run is not over yet. A report
+that did not reproduce still describes a scenario: an API, a trigger and an expected result. If no
+test in the repo checks that scenario, add the test. The test then guards the scenario, and the
+next report of this kind has a test to start from.
+
+1. **Check the coverage.** Search the test suite for the API and the trigger, and read the tests
+   that are close. If a test already checks the scenario, end with the note alone, and name that
+   test in it.
+2. **Decide if a test is possible.** The report has to be concrete enough for one test, and the
+   scenario has to work with the fixtures of the repo: the test server, the page, the standard
+   browsers. Do not add a test when the report is vague, when the scenario needs their site or
+   their network, when the reporter expects a behavior that is not the documented behavior, or when
+   the issue is a question or a feature request. End with the note alone, and say why.
+3. **Write the test** as [Write the test](#write-the-test) says, in the branch of the issue. Extend
+   the closest existing test when you can, tag it with the issue, and assert the behavior that the
+   reporter expects. It is a normal test of that behavior, not a test that waits for the bug and
+   checks that it did not happen. Run it on every browser that the repo tests with. It has to pass
+   everywhere. A test that fails is a reproduction, and the run continues in [Fix](#fix).
+4. **Leave it as a proposal**, as [Leave a proposal](#leave-a-proposal) says, with these
+   differences. The title starts with `test`. `proposal.json` has a body with the line
+   `Issue: <issue url>`, and `pr-body.md` has the same line instead of `Fixes`, so that the merge
+   does not close the issue. The description says that the bug did not reproduce, what you ran, and
+   what the test covers.
+
+The note is the full "cannot reproduce" note, with the matrix that you ran, plus one line that says
+that a test for the scenario is proposed. The workflow appends the PR link.
 
 ## Review a third-party PR
 
@@ -343,15 +402,18 @@ of a maintainer.
 
 ## Leave a proposal
 
-For a verified and focused fix, create `$OUTPUT_DIR/fix/` with these files:
+For a verified and focused fix, or for [coverage](#add-coverage), create `$OUTPUT_DIR/fix/` with
+these files:
 
 - `fix.patch`: the output of `git diff --binary main HEAD` in `$REPO_DIR`, after you committed the
   fix. The patch must contain only the changes for this issue, including its regression test.
 - `pr-body.md`: the PR description, plus what you ran to verify the fix and the results. With an
   issue, the file must have the line `Fixes https://github.com/<owner>/<repo>/issues/<n>`, the URL
-  of the issue, on its own.
+  of the issue, on its own. For coverage, the line is `Issue: <issue url>` instead.
 - `proposal.json`: `{"title": "fix(scope): description"}`. The title follows the commit convention
-  of the repo and has at most 256 characters.
+  of the repo and has at most 256 characters. For coverage,
+  `{"title": "test(scope): description", "body": "Issue: <issue url>"}`. The body becomes the body
+  of the commit. Without a body, the publish job adds `Fixes: <issue url>` itself.
 
 With an issue, also write the [comment](#write-the-note) before you mark the proposal as ready.
 
@@ -379,10 +441,10 @@ everything that you ran. That means the full matrix of browsers, versions and va
 the run that failed. Then the reader can trust the verdict without a re-check. Call out every
 difference between browsers.
 
-**No next steps that you can take yourself.** A note that ends in "the next step is to add logging
-to X", "someone should bisect this" or "worth a check if Y" is not acceptable. That step is yours,
-and the runner is the place to take it. Write the note only when you cannot make progress any more.
-Then say what blocked you as a fact, with what you tried, not as a suggestion for someone else.
+**No next steps, no open decisions.** Check the end of the note against
+[What is not a result](#what-is-not-a-result). Write the note alone only when you cannot make
+progress any more. Then say what blocked you as a fact, with what you tried, not as a suggestion for
+someone else.
 
 **Voice.** The workflow posts the note as `github-actions`, so it speaks as the Playwright bot.
 Write it as [bot-voice.md](bot-voice.md) says: announce the bot in one line, give the verdict first,
@@ -394,6 +456,8 @@ bot and links the run. Do not add your own.
 - **With a fix proposal**: a short comment with the verdict, the platforms and versions where the
   bug reproduced, and the root cause in one or two sentences. Do not say that a PR is open. The
   workflow appends the PR link when it opens one.
+- **With a coverage proposal**: the full "cannot reproduce" note, with the matrix that you ran, and
+  one line that says that a test for the scenario is proposed. Do not say that a PR is open.
 - **With the note alone**: the full note. When a team PR is open, include the verdict on it.
 - **With a report for another owner**: the note, with the evidence that the component is at fault.
   Do not paste the report into the note, and do not add the link to the filed issue yourself. The
@@ -411,8 +475,8 @@ the CI of the repo. It is not posted on the issue or on a PR.
 Keep the summary up to date as you work, because the session can end at any point. It has:
 
 - the issue link or the task, the outcome, what you ran, and what you could not verify. For a
-  proposal, say that the fix is proposed. Do not claim that a PR is open; the publish job adds the
-  link;
+  proposal, say that the fix, or the test, is proposed. Do not claim that a PR is open; the publish
+  job adds the link;
 - the verdict on a third-party PR: "can be merged", with the head sha that you verified and the
   evidence, or the problems that you found and the outcome that you reached instead;
 - the decisions for a maintainer: a fix that belongs in another repo or that needs changes under
