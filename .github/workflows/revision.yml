@@ -1,6 +1,6 @@
 # Copilot addresses the maintainers' review comments on a draft PR that the triage workflow opened,
 # without write credentials. A fresh job pushes the new commit to the PR's branch using the app,
-# so CI runs on it.
+# so CI runs on it. bots.md next to this file describes the system.
 name: PR revision
 
 on:

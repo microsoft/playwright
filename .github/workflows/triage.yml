@@ -1,7 +1,7 @@
 # Copilot triages and fixes an issue, or works on a task given by hand, without write credentials.
 # Fresh jobs post the run link on the issue, open the completed fix as a draft PR using the app,
 # so CI runs on it, file a Firefox or WebKit bug in microsoft/playwright-browsers using the app,
-# and comment on the issue.
+# and comment on the issue. bots.md next to this file describes the system.
 name: Issue triage
 
 on:
