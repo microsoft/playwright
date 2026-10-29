@@ -692,11 +692,39 @@ it('NA-050 should fail when navigating and show the url at the error message', a
   expect(error.message).toContain(url);
 });
 
-it('NA-051 should be able to navigate to a page controlled by service worker', async ({ page, server, isElectron }) => {
+it('NA-051 should be able to navigate to a page controlled by service worker', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/42694' },
+}, async ({ page, server, isElectron }) => {
   it.skip(isElectron);
+
+  async function transaction(value: string | null) {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('roundtrip', 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('items');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('items', 'readwrite');
+      const request = tx.objectStore('items').get('name');
+      request.onsuccess = () => {
+        if (value)
+          tx.objectStore('items').put(value, 'name');
+      };
+      tx.oncomplete = () => resolve(request.result);
+      tx.onerror = tx.onabort = () => reject(tx.error);
+    });
+  }
+
   await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
   await page.evaluate(() => window['activationPromise']);
   await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+  await page.evaluate(transaction, 'value');
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  await page.goBack();
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+  expect(await page.evaluate(transaction, null)).toBe('value');
 });
 
 it('NA-052 should send referer', async ({ page, server }) => {
