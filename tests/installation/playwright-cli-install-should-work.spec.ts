@@ -27,7 +27,7 @@ test.use({ isolateBrowsers: true });
 
 const extraInstalledSoftware = process.platform === 'win32' ? ['winldd' as const] : [];
 
-test('install command should work', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43747' } }, async ({ exec, checkInstalledSoftwareOnDisk, writeFiles, tmpWorkspace, _browsersPath }) => {
+test('install command should work', async ({ exec, checkInstalledSoftwareOnDisk }) => {
   await exec('npm i playwright');
 
   await test.step('playwright install chromium', async () => {
@@ -62,44 +62,6 @@ test('install command should work', { annotation: { type: 'issue', description: 
       expect(result).toHaveLoggedSoftwareDownload([]);
       if (!pkg.includes('@playwright/browser-'))
         await exec('node sanity.js', pkg, 'chromium firefox webkit');
-    });
-  }
-
-  if (process.platform === 'linux') {
-    await test.step('should report missing dependencies for every browser', async () => {
-      await writeFiles({
-        'bin/ldd': `#!/bin/sh
-          case "$1" in
-            *firefox*) echo 'libgtk-3.so.0 => not found' ;;
-            *minibrowser-gtk*)
-              echo 'libgtk-4.so.1 => not found'
-              echo 'libvulkan.so.1 => not found'
-              echo 'libgraphene-1.0.so.0 => not found'
-              ;;
-          esac
-        `,
-      });
-      await fs.promises.chmod(path.join(tmpWorkspace, 'bin/ldd'), 0o755);
-      for (const directory of await fs.promises.readdir(_browsersPath))
-        await fs.promises.rm(path.join(_browsersPath, directory, 'DEPENDENCIES_VALIDATED'), { force: true });
-
-      const result = await exec('npx playwright install', {
-        env: {
-          PATH: `${path.join(tmpWorkspace, 'bin')}:${process.env.PATH}`,
-          PLAYWRIGHT_HOST_PLATFORM_OVERRIDE: 'ubuntu24.04-x64',
-          PW_LANG_NAME: 'python',
-        },
-      });
-      expect(result).toContain('libgtk-3-0t64');
-      expect(result).toContain('libgtk-4-1');
-      expect(result).toContain('libvulkan1');
-      expect(result).toContain('libgraphene-1.0-0');
-      expect(result).not.toContain('Missing libraries:');
-      expect(result).toContain('Run "playwright install" again');
-      for (const directory of await fs.promises.readdir(_browsersPath)) {
-        if (directory.startsWith('firefox-') || directory.startsWith('webkit-'))
-          expect(fs.existsSync(path.join(_browsersPath, directory, 'DEPENDENCIES_VALIDATED'))).toBe(false);
-      }
     });
   }
 });

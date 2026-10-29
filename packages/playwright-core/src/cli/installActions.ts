@@ -21,7 +21,7 @@ import path from 'path';
 import { wrapInASCIIBox } from '@utils/ascii';
 import { isLikelyNpxGlobal } from '@utils/env';
 import { assert } from '@isomorphic/assert';
-import { buildPlaywrightCLICommand, registry, writeDockerVersion } from '../server/registry';
+import { registry, writeDockerVersion } from '../server/registry';
 
 import type { BrowserInfo } from '../server/registry';
 
@@ -135,11 +135,9 @@ export async function installBrowsers(args: string[], options: { withDeps?: bool
     printGroupedByPlaywrightVersion(browsers);
   } else {
     await registry.install(executables, { force: options.force, gc: options.remove });
-    const sdkLanguage = process.env.PW_LANG_NAME || 'javascript';
-    await registry.validateHostRequirementsForExecutablesIfNeeded(executables, sdkLanguage).catch((e: Error) => {
+    await registry.validateHostRequirementsForExecutablesIfNeeded(executables, process.env.PW_LANG_NAME || 'javascript').catch((e: Error) => {
       e.name = 'Playwright Host validation warning';
       console.error(e);
-      console.error(`Run "${buildPlaywrightCLICommand(sdkLanguage, 'install')}" again after installing dependencies to validate the host requirements.`);
     });
   }
 }

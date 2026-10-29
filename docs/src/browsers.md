@@ -82,8 +82,6 @@ if (exitCode != 0)
 
 System dependencies can get installed automatically. This is useful for CI environments.
 
-If you install missing system packages manually after an `install` warning, run `install` again to check for any remaining missing dependencies.
-
 ```bash js
 npx playwright install-deps
 ```
