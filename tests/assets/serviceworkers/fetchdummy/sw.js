@@ -1,4 +1,8 @@
 self.addEventListener('fetch', event => {
+  if (event.request.url.endsWith('/headers')) {
+    event.respondWith(new Response(JSON.stringify(Object.fromEntries(event.request.headers))));
+    return;
+  }
   if (event.request.url.endsWith('.html') || event.request.url.includes('passthrough')) {
     event.respondWith(fetch(event.request));
     return;
