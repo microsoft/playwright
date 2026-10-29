@@ -283,6 +283,18 @@ export class Request extends SdkObject {
     this._waitForResponsePromise.resolve(null);
   }
 
+  _failFromDetachedDocument() {
+    if (this._response) {
+      this._response.setTransferSize(null);
+      this._response.setEncodedBodySize(null);
+      this._response._requestFinished(-1);
+    } else {
+      this.setRawRequestHeaders(null);
+    }
+    const browserName = this._context._browser.options.name;
+    this._setFailureText(browserName === 'firefox' ? 'NS_BINDING_ABORTED' : browserName === 'webkit' ? 'cancelled' : 'net::ERR_ABORTED');
+  }
+
   _applyOverrides(overrides: types.NormalizedContinueOverrides) {
     this._overrides = { ...this._overrides, ...overrides };
     return this._overrides;

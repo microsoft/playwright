@@ -119,7 +119,6 @@ it('NE-089 should support redirects', async ({ page, server }) => {
 it('NE-090 should resolve responses after a cross-process navigation', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43508' },
 }, async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'chromium', 'Chromium does not report loadingFailed when the navigation swaps the frame');
   const responseFromServerPromise = new Promise<ServerResponse>(resolve => {
     server.setRoute('/foo', (message, response) => {
       resolve(response);
@@ -132,34 +131,55 @@ it('NE-090 should resolve responses after a cross-process navigation', {
   const responseFromServer = await responseFromServerPromise;
   const request = await requestPromise;
   const responsePromise = request.response();
+  const failedPromise = page.waitForEvent('requestfailed');
   // navigate, which should cancel the request
   await page.goto(server.CROSS_PROCESS_PREFIX);
   // make sure we aren't stalling this request on the server
   responseFromServer.end('done');
   // the response should resolve to null, because the page navigated.
   expect(await responsePromise).toBe(null);
+  // the request should fail with the browser's "canceled" error.
+  expect(await failedPromise).toBe(request);
+  expect(request.failure().errorText).toContain({ chromium: 'net::ERR_ABORTED', firefox: 'NS_BINDING_ABORTED', webkit: 'cancelled' }[browserName]);
 });
 
 it('NE-143 should resolve responses after a same-process navigation', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43508' },
 }, async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'chromium', 'Chromium does not report loadingFailed when the navigation swaps the frame');
   const responseFromServerPromise = new Promise<ServerResponse>(resolve => {
     server.setRoute('/foo', (message, response) => {
       resolve(response);
     });
   });
+  server.setRoute('/streaming', (message, response) => {
+    response.writeHead(200, { 'Content-Type': 'text/plain' });
+    response.write('partial body');
+  });
   await page.goto(server.EMPTY_PAGE);
-  const requestPromise = page.waitForRequest(() => true);
+  const requestPromise = page.waitForRequest(server.PREFIX + '/foo');
+  const streamingResponsePromise = page.waitForResponse(server.PREFIX + '/streaming');
   // start a long running request and wait until it hits the server
   await page.evaluate(url => void fetch(url), server.PREFIX + '/foo');
+  // start a request that never finishes streaming its body
+  await page.evaluate(url => void fetch(url), server.PREFIX + '/streaming');
   const responseFromServer = await responseFromServerPromise;
   const request = await requestPromise;
   const responsePromise = request.response();
-  // navigate within the same process, which should cancel the request
+  const streamingResponse = await streamingResponsePromise;
+  const streamingTextPromise = streamingResponse.text().catch(e => e);
+  const failedRequests = [];
+  page.on('requestfailed', request => failedRequests.push(request));
+  // navigate within the same process, which should cancel the requests
   await page.goto(server.PREFIX + '/title.html');
   // make sure we aren't stalling this request on the server
   responseFromServer.end('done');
   // the response should resolve to null, because the page navigated.
   expect(await responsePromise).toBe(null);
+  // both requests should fail with the browser's "canceled" error.
+  const errorText = { chromium: 'net::ERR_ABORTED', firefox: 'NS_BINDING_ABORTED', webkit: 'cancelled' }[browserName];
+  expect(failedRequests.map(r => r.url()).sort()).toEqual([server.PREFIX + '/foo', server.PREFIX + '/streaming']);
+  expect(request.failure().errorText).toContain(errorText);
+  expect(streamingResponse.request().failure().errorText).toContain(errorText);
+  // the partial body should not be available anymore.
+  expect((await streamingTextPromise).message).toContain('navigated away');
 });
