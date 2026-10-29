@@ -21,6 +21,8 @@ import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper } from '@utils/eventsHelper';
 import { disposeAll } from '@isomorphic/disposable';
+import { monotonicTime } from '@isomorphic/time';
+import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { waitForCompletion, eventWaiter } from './utils';
 import { LogFile } from './logFile';
 import { ModalState } from './tool';
@@ -610,7 +612,10 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       return;
     }
 
-    await this.page.evaluate(ms => new Promise(f => setTimeout(f, ms)), time).catch(() => {});
+    // Sandboxed documents and paused clocks may never fire page timers.
+    await raceAgainstDeadline(
+        () => this.page.evaluate(ms => new Promise(f => setTimeout(f, ms)), time).catch(() => {}),
+        monotonicTime() + time + 5000);
   }
 }
 
