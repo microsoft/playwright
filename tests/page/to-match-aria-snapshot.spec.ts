@@ -1016,10 +1016,14 @@ test('AR-142 invalid attribute', { annotation: { type: 'issue', description: 'ht
   await page.setContent(`
     <input type="text" aria-label="Bio" aria-invalid="grammar">
     <input type="text" aria-label="Note" aria-invalid="spelling">
+    <input type="text" aria-label="Mixed-case grammar" aria-invalid="Grammar">
+    <input type="text" aria-label="Mixed-case spelling" aria-invalid="Spelling">
   `);
   await expect(page).toMatchAriaSnapshot(`
     - textbox "Bio" [invalid=grammar]
     - textbox "Note" [invalid=spelling]
+    - textbox "Mixed-case grammar" [invalid=grammar]
+    - textbox "Mixed-case spelling" [invalid=spelling]
   `);
 
   // A `grammar` value is distinct from a plain `true` invalid state.

@@ -269,7 +269,7 @@ const validRoles: AriaRole[] = ['alert', 'alertdialog', 'application', 'article'
 
 function getExplicitAriaRole(element: Element): AriaRole | null {
   // https://www.w3.org/TR/wai-aria-1.2/#document-handling_author-errors_roles
-  const roles = (element.getAttribute('role') || '').split(' ').map(role => role.trim());
+  const roles = (element.getAttribute('role') || '').toLowerCase().split(' ').map(role => role.trim());
   return roles.find(role => validRoles.includes(role as any)) as AriaRole || null;
 }
 
@@ -697,8 +697,8 @@ export function getAriaInvalid(element: Element): 'false' | 'true' | 'grammar' |
   // https://www.w3.org/TR/wai-aria-1.2/#aria-invalid
   // This state is being deprecated as a global state in ARIA 1.2.
   // In future versions it will only be allowed on roles where it is specifically supported.
-  const ariaInvalid = element.getAttribute('aria-invalid');
-  if (!ariaInvalid || ariaInvalid.trim() === '' || ariaInvalid.toLocaleLowerCase() === 'false')
+  const ariaInvalid = element.getAttribute('aria-invalid')?.toLowerCase();
+  if (!ariaInvalid || ariaInvalid.trim() === '' || ariaInvalid === 'false')
     return 'false';
   if (ariaInvalid === 'true' || ariaInvalid === 'grammar' || ariaInvalid === 'spelling')
     return ariaInvalid;
@@ -1187,7 +1187,7 @@ function getChecked(element: Element, allowMixed: boolean): boolean | 'mixed' | 
   if (tagName === 'INPUT' && ['checkbox', 'radio'].includes((element as HTMLInputElement).type))
     return (element as HTMLInputElement).checked;
   if (kAriaCheckedRoles.includes(getAriaRole(element) || '')) {
-    const checked = element.getAttribute('aria-checked');
+    const checked = element.getAttribute('aria-checked')?.toLowerCase();
     if (checked === 'true')
       return true;
     if (allowMixed && checked === 'mixed')
@@ -1206,7 +1206,7 @@ export function getReadonly(element: Element): boolean | 'error' {
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName))
     return element.hasAttribute('readonly');
   if (kAriaReadonlyRoles.includes(getAriaRole(element) || ''))
-    return element.getAttribute('aria-readonly') === 'true';
+    return getAriaBoolean(element.getAttribute('aria-readonly')) === true;
   if ((element as HTMLElement).isContentEditable)
     return false;
   return 'error';
@@ -1216,7 +1216,7 @@ export const kAriaPressedRoles = ['button'];
 export function getAriaPressed(element: Element): boolean | 'mixed' {
   // https://www.w3.org/TR/wai-aria-1.2/#aria-pressed
   if (kAriaPressedRoles.includes(getAriaRole(element) || '')) {
-    const pressed = element.getAttribute('aria-pressed');
+    const pressed = element.getAttribute('aria-pressed')?.toLowerCase();
     if (pressed === 'true')
       return true;
     if (pressed === 'mixed')
@@ -1231,14 +1231,8 @@ export function getAriaExpanded(element: Element): boolean | undefined {
   // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
   if (elementSafeTagName(element) === 'DETAILS')
     return (element as HTMLDetailsElement).open;
-  if (kAriaExpandedRoles.includes(getAriaRole(element) || '')) {
-    const expanded = element.getAttribute('aria-expanded');
-    if (expanded === null)
-      return undefined;
-    if (expanded === 'true')
-      return true;
-    return false;
-  }
+  if (kAriaExpandedRoles.includes(getAriaRole(element) || ''))
+    return getAriaBoolean(element.getAttribute('aria-expanded'));
   return undefined;
 }
 
