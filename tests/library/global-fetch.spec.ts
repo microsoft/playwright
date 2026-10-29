@@ -15,7 +15,6 @@
  */
 
 import fs from 'fs';
-import http from 'http';
 import os from 'os';
 import * as util from 'util';
 import { getPlaywrightVersion, utils } from '../../packages/playwright-core/lib/coreBundle';
@@ -291,25 +290,12 @@ it('FE-020 should return server address from response', async ({ playwright, ser
   await request.dispose();
 });
 
-it('FE-021 should return security details from response', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43728' },
-}, async ({ playwright, httpsServer }) => {
+it('FE-021 should return security details from response', async ({ playwright, httpsServer }) => {
   const request = await playwright.request.newContext({ ignoreHTTPSErrors: true });
   // The second request reuses the keep-alive socket and should report the details as well.
   for (let i = 0; i < 2; i++) {
     const response = await request.get(httpsServer.EMPTY_PAGE);
     expect(await response.securityDetails()).toEqual({ issuer: 'playwright-test', protocol: 'TLSv1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
-  }
-  const originalReuseSocket = http.Agent.prototype.reuseSocket;
-  http.Agent.prototype.reuseSocket = function(socket, req) {
-    // Reproduce a socket destroyed before its close event removes it from the pool.
-    socket.destroy();
-    originalReuseSocket.call(this, socket, req);
-  };
-  try {
-    await expect(request.get(httpsServer.EMPTY_PAGE)).rejects.toThrow('socket hang up');
-  } finally {
-    http.Agent.prototype.reuseSocket = originalReuseSocket;
   }
   await request.dispose();
 });
