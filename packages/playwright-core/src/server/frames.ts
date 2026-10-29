@@ -236,7 +236,6 @@ export class FrameManager {
     this.removeChildFramesRecursively(frame);
     this._clearWebSockets(frame);
     const previousUrl = frame._url;
-    const previousDocumentId = frame._currentDocument.documentId;
     frame._url = url;
     frame._name = name;
 
@@ -265,10 +264,6 @@ export class FrameManager {
       frame._currentDocument = { documentId, request: undefined };
     }
 
-    if (previousDocumentId !== documentId) {
-      frame.responseScope.close(new Error('Response body is not available for a response that was navigated away from. Read response.body() before triggering any navigation.'));
-      frame.responseScope = frame._currentDocument.request?.responseScope || new LongStandingScope();
-    }
     frame._onClearLifecycle();
     const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument, isPublic: true };
     this._fireInternalFrameNavigation(frame, navigationEvent);
@@ -354,7 +349,8 @@ export class FrameManager {
   }
 
   reportRequestFinished(request: network.Request, response: network.Response | null) {
-    this._inflightRequestFinished(request);
+    if (!this._inflightRequestFinished(request))
+      return;
     if (request._isFavicon)
       return;
     this._page.emitOnContext(BrowserContext.Events.RequestFinished, { request, response });
@@ -362,14 +358,14 @@ export class FrameManager {
 
   requestFailed(request: network.Request, canceled: boolean) {
     const frame = request.frame();
-    this._inflightRequestFinished(request);
+    const wasInflight = this._inflightRequestFinished(request);
     if (frame && frame.pendingDocument() && frame.pendingDocument()!.request === request) {
       let errorText = request.failure()!.errorText;
       if (canceled)
         errorText += '; maybe frame was detached?';
       this.frameAbortedNavigation(frame._id, errorText, frame.pendingDocument()!.documentId);
     }
-    if (request._isFavicon)
+    if (!wasInflight || request._isFavicon)
       return;
     this._page.emitOnContext(BrowserContext.Events.RequestFailed, request);
   }
@@ -387,32 +383,27 @@ export class FrameManager {
       this._page.emit(Page.Events.FrameDetached, frame);
   }
 
-  private _inflightRequestFinished(request: network.Request) {
+  private _inflightRequestFinished(request: network.Request): boolean {
     const frame = request.frame();
-    if (this._isExcludedFromNetworkIdle(request) || !frame)
-      return;
-    if (!frame._inflightRequests.has(request))
-      return;
-    frame._inflightRequests.delete(request);
-    if (frame._inflightRequests.size === 0)
+    if (request._isFavicon || !frame)
+      return true;
+    if (!frame._inflightRequests.delete(request))
+      return false;
+    if (frame._networkIdleRequests.delete(request) && frame._networkIdleRequests.size === 0)
       frame._startNetworkIdleTimer();
+    return true;
   }
 
   private _inflightRequestStarted(request: network.Request) {
     const frame = request.frame();
-    if (this._isExcludedFromNetworkIdle(request) || !frame)
+    if (request._isFavicon || !frame)
       return;
     frame._inflightRequests.add(request);
-    if (frame._inflightRequests.size === 1)
-      frame._stopNetworkIdleTimer();
-  }
-
-  private _isExcludedFromNetworkIdle(request: network.Request): boolean {
-    if (request._isFavicon)
-      return true;
     if (request.resourceType() === 'eventsource')
-      return true;
-    return false;
+      return;
+    frame._networkIdleRequests.add(request);
+    if (frame._networkIdleRequests.size === 1)
+      frame._stopNetworkIdleTimer();
   }
 
   interceptConsoleMessage(message: ConsoleMessage): boolean {
@@ -533,9 +524,9 @@ export class Frame extends SdkObject<FrameEventMap> {
   private _childFrames = new Set<Frame>();
   _name = '';
   _inflightRequests = new Set<network.Request>();
+  _networkIdleRequests = new Set<network.Request>();
   private _networkIdleTimer: NodeJS.Timeout | undefined;
   readonly _detachedScope = new LongStandingScope();
-  responseScope = new LongStandingScope();
   private _raceAgainstEvaluationStallingEventsPromises = new Set<ManualPromise<any>>();
   readonly _redirectedNavigations = new Map<string, { url: string, gotoPromise: Promise<network.Response | null> }>(); // documentId -> data
   readonly selectors: FrameSelectors;
@@ -583,9 +574,9 @@ export class Frame extends SdkObject<FrameEventMap> {
       this.emit(Frame.Events.RemoveLifecycle, event);
     this._firedLifecycleEvents.clear();
     // Keep the current navigation request if any.
-    this._inflightRequests = new Set(Array.from(this._inflightRequests).filter(request => request === this._currentDocument.request));
+    this._networkIdleRequests = new Set(Array.from(this._networkIdleRequests).filter(request => request === this._currentDocument.request));
     this._stopNetworkIdleTimer();
-    if (this._inflightRequests.size === 0)
+    if (this._networkIdleRequests.size === 0)
       this._startNetworkIdleTimer();
     this._page.mainFrame()._recalculateNetworkIdle(this);
     this.onLifecycleEvent('commit');
@@ -1755,7 +1746,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   _onDetached() {
     this._stopNetworkIdleTimer();
     this._detachedScope.close(new Error('Frame was detached'));
-    this.responseScope.close(new Error('Frame was detached'));
+    this._failInflightRequests(new Set());
     for (const data of this._contextData.values()) {
       if (data.context)
         data.context.contextDestroyed('Frame was detached');
@@ -1821,6 +1812,15 @@ export class Frame extends SdkObject<FrameEventMap> {
     for (const [world, data] of this._contextData) {
       if (data.context === context)
         this._setContext(world, null);
+    }
+  }
+
+  _failInflightRequests(keepDocumentIds: Set<string | undefined>) {
+    for (const request of [...this._inflightRequests]) {
+      if (request._documentId && keepDocumentIds.has(request._documentId))
+        continue;
+      request._failFromDetachedDocument();
+      this._page.frameManager.requestFailed(request, true);
     }
   }
 

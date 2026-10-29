@@ -3,9 +3,6 @@
 
 [Response] class represents responses which are received by page.
 
-Read the response body before the frame navigates to a new document. Body-reading methods such as
-[`method: Response.body`] and [`method: Response.text`] throw after such a navigation.
-
 ## async method: Response.allHeaders
 * since: v1.15
 - returns: <[Object]<[string], [string]>>

@@ -22772,7 +22772,7 @@ export interface Request {
 
   /**
    * Returns the matching [Response](https://playwright.dev/docs/api/class-response) object, or `null` if the response
-   * was not received due to error. Also returns `null` if the frame navigates away before the response is received.
+   * was not received due to error.
    */
   response(): Promise<null|Response>;
 
@@ -22894,10 +22894,6 @@ export interface Request {
 
 /**
  * [Response](https://playwright.dev/docs/api/class-response) class represents responses which are received by page.
- *
- * Read the response body before the frame navigates to a new document. Body-reading methods such as
- * [response.body()](https://playwright.dev/docs/api/class-response#response-body) and
- * [response.text()](https://playwright.dev/docs/api/class-response#response-text) throw after such a navigation.
  */
 export interface Response {
   /**
