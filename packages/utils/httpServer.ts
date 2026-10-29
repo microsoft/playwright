@@ -46,8 +46,8 @@ export type Transport = {
 
 export class HttpServer {
   private _server: http.Server;
-  private _urlPrefixPrecise: string = '';
-  private _urlPrefixHumanReadable: string = '';
+  private _rootUrlPrecise: string = '';
+  private _rootUrlHumanReadable: string = '';
   private _port: number = 0;
   private _started = false;
   private _routes: { prefix?: string, exact?: string, handler: ServerRouteHandler }[] = [];
@@ -56,6 +56,7 @@ export class HttpServer {
   private _allowedHosts: Set<string> | null = null;
   private _staticRoot: string | undefined;
   private _pathPrefix: string;
+  private _rootRedirect: string | undefined;
 
   constructor(options?: { staticRoot: string, useRandomPathPrefix: boolean }) {
     this._server = createHttpServer(this._onRequest.bind(this));
@@ -79,8 +80,9 @@ export class HttpServer {
     return this._port;
   }
 
-  pathPrefix(): string {
-    return this._pathPrefix;
+  // Anyone who can reach the server can read the path prefix from this redirect.
+  installRootRedirect(location: string) {
+    this._rootRedirect = location;
   }
 
   createWebSocket(transportFactory: (url: URL) => Transport) {
@@ -134,9 +136,20 @@ export class HttpServer {
     // DCE this whole branch without keeping a resolvable module reference.
     const loadVite = new Function('return import("vite")') as () => Promise<any>;
     const vite = await loadVite();
+    const pathPrefix = this._pathPrefix;
     return await vite.createServer({
       root: options.root,
-      base: options.base,
+      base: pathPrefix + (options.base ?? '/'),
+      plugins: pathPrefix ? [{
+        name: 'playwright-path-prefix',
+        // Route handlers get URLs without the path prefix, but Vite needs the URL that the browser requested.
+        configureServer: (server: any) => {
+          server.middlewares.use((request: http.IncomingMessage, _: http.ServerResponse, next: () => void) => {
+            request.url = pathPrefix + request.url;
+            next();
+          });
+        },
+      }] : [],
       server: {
         middlewareMode: true,
         // Dedicated path so Vite's HMR websocket does not collide with any
@@ -180,12 +193,12 @@ export class HttpServer {
     const address = this._server.address();
     assert(address, 'Could not bind server socket');
     if (typeof address === 'string') {
-      this._urlPrefixPrecise = address;
-      this._urlPrefixHumanReadable = address;
+      this._rootUrlPrecise = address;
+      this._rootUrlHumanReadable = address;
     } else {
       this._port = address.port;
-      this._urlPrefixPrecise = `http://${urlHostFromAddress(address)}:${address.port}`;
-      this._urlPrefixHumanReadable = `http://${host ?? 'localhost'}:${address.port}`;
+      this._rootUrlPrecise = `http://${urlHostFromAddress(address)}:${address.port}`;
+      this._rootUrlHumanReadable = `http://${host ?? 'localhost'}:${address.port}`;
       this._allowedHosts = computeAllowedHosts(host, address.address);
     }
   }
@@ -195,7 +208,11 @@ export class HttpServer {
   }
 
   urlPrefix(purpose: 'human-readable' | 'precise'): string {
-    return purpose === 'human-readable' ? this._urlPrefixHumanReadable : this._urlPrefixPrecise;
+    return this.rootUrl(purpose) + this._pathPrefix;
+  }
+
+  rootUrl(purpose: 'human-readable' | 'precise'): string {
+    return purpose === 'human-readable' ? this._rootUrlHumanReadable : this._rootUrlPrecise;
   }
 
   serveFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }, options?: { skipRootCheck?: boolean }): boolean {
@@ -292,6 +309,20 @@ export class HttpServer {
       if (!request.url) {
         response.end();
         return;
+      }
+      if (this._rootRedirect !== undefined && new URL('http://localhost' + request.url).pathname === '/') {
+        response.statusCode = 302;
+        response.setHeader('Location', '.' + this._pathPrefix + this._rootRedirect);
+        response.end();
+        return;
+      }
+      if (this._pathPrefix) {
+        if (!request.url.startsWith(this._pathPrefix + '/')) {
+          response.statusCode = 404;
+          response.end();
+          return;
+        }
+        request.url = request.url.substring(this._pathPrefix.length);
       }
       const url = new URL('http://localhost' + request.url);
       for (const route of this._routes) {

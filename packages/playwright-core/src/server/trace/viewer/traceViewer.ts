@@ -89,7 +89,6 @@ function validateTraceUrlOrPath(traceFileOrUrl: string | undefined): string | un
 
 export async function startTraceViewerServer(options: TraceViewerServerOptions & { allowedFileRoots: () => string[] }): Promise<HttpServer> {
   const server = new HttpServer({ staticRoot: libPath('vite', 'traceViewer'), useRandomPathPrefix: true });
-  const tracePrefix = server.pathPrefix() + '/trace';
   const isAllowed = (filePath: string) => options.allowedFileRoots().some(root => isRealPathInside(root, filePath));
 
   const serveTraceDataRoute = (request: http.IncomingMessage, response: http.ServerResponse, relativePath: string): boolean => {
@@ -131,10 +130,10 @@ export async function startTraceViewerServer(options: TraceViewerServerOptions &
   // still ships from the separate vite.sw.config.ts build — serve it from lib.
   if (__PW_HMR__ && process.env.PW_HMR_STATIC !== '1') {
     const traceViewerRoot = path.resolve(__dirname, '..', '..', 'trace-viewer');
-    const devServer = await server.createViteDevServer({ root: traceViewerRoot, base: tracePrefix + '/' });
-    server.routePrefix(tracePrefix, (request, response) => {
+    const devServer = await server.createViteDevServer({ root: traceViewerRoot, base: '/trace/' });
+    server.routePrefix('/trace', (request, response) => {
       const url = new URL('http://localhost' + request.url!);
-      const relativePath = url.pathname.slice(tracePrefix.length);
+      const relativePath = url.pathname.slice('/trace'.length);
       if (relativePath.startsWith('/file'))
         return serveTraceDataRoute(request, response, relativePath);
       if (relativePath === '/sw.bundle.js')
@@ -143,9 +142,9 @@ export async function startTraceViewerServer(options: TraceViewerServerOptions &
       return true;
     });
   } else {
-    server.routePrefix(tracePrefix, (request, response) => {
+    server.routePrefix('/trace', (request, response) => {
       const url = new URL('http://localhost' + request.url!);
-      const relativePath = url.pathname.slice(tracePrefix.length);
+      const relativePath = url.pathname.slice('/trace'.length);
       if (relativePath.startsWith('/file'))
         return serveTraceDataRoute(request, response, relativePath);
       const absolutePath = path.join(libPath('vite', 'traceViewer'), ...relativePath.split('/'));
@@ -162,7 +161,7 @@ export async function startTraceViewerServer(options: TraceViewerServerOptions &
   return server;
 }
 
-export function traceViewerPath(server: HttpServer, traceUrl: string | undefined, options: TraceViewerRedirectOptions): string {
+export function traceViewerPath(traceUrl: string | undefined, options: TraceViewerRedirectOptions): string {
   const params = new URLSearchParams();
   if (path.sep !== path.posix.sep)
     params.set('pathSeparator', path.sep);
@@ -183,25 +182,14 @@ export function traceViewerPath(server: HttpServer, traceUrl: string | undefined
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
 
-  return `${server.pathPrefix()}/trace/${options.webApp || 'index.html'}?${params.toString()}`;
-}
-
-// For an explicit host or port that users open by hand. Other local users can read this redirect too.
-export async function installRootRedirect(server: HttpServer, traceUrl: string | undefined, options: TraceViewerRedirectOptions) {
-  const urlPath = '.' + traceViewerPath(server, traceUrl, options);
-  server.routePath('/', (_, response) => {
-    response.statusCode = 302;
-    response.setHeader('Location', urlPath);
-    response.end();
-    return true;
-  });
+  return `/trace/${options.webApp || 'index.html'}?${params.toString()}`;
 }
 
 export async function runTraceViewerApp(traceUrl: string | undefined, browserName: string, options: TraceViewerServerOptions & { headless?: boolean }) {
   traceUrl = validateTraceUrlOrPath(traceUrl);
   const allowedFileRoots = traceFileRoots(traceUrl);
   const server = await startTraceViewerServer({ ...options, allowedFileRoots: () => allowedFileRoots });
-  const page = await openTraceViewerApp(server.urlPrefix('precise') + traceViewerPath(server, traceUrl, options), browserName, options);
+  const page = await openTraceViewerApp(server.urlPrefix('precise') + traceViewerPath(traceUrl, options), browserName, options);
   page.on('close', () => gracefullyProcessExitDoNotHang(0));
   return page;
 }
@@ -210,8 +198,8 @@ export async function runTraceInBrowser(traceUrl: string | undefined, options: T
   traceUrl = validateTraceUrlOrPath(traceUrl);
   const allowedFileRoots = traceFileRoots(traceUrl);
   const server = await startTraceViewerServer({ ...options, allowedFileRoots: () => allowedFileRoots });
-  await installRootRedirect(server, traceUrl, options);
-  await openTraceInBrowser(server.urlPrefix('human-readable'));
+  server.installRootRedirect(traceViewerPath(traceUrl, options));
+  await openTraceInBrowser(server.rootUrl('human-readable'));
 }
 
 function traceFileRoots(traceUrl: string | undefined): string[] {

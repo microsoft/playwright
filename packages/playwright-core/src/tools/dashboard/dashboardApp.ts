@@ -68,16 +68,9 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
     return connection;
   });
 
-  // Users open an explicit host or port by hand. Other local users can read this redirect too.
   const redirectFromRoot = options.port !== undefined || options.host !== undefined;
-  if (redirectFromRoot) {
-    httpServer.routePath('/', (_, response) => {
-      response.statusCode = 302;
-      response.setHeader('Location', '.' + httpServer.pathPrefix() + '/');
-      response.end();
-      return true;
-    });
-  }
+  if (redirectFromRoot)
+    httpServer.installRootRedirect('/');
 
   // HMR: watch builds serve the dashboard through an embedded Vite dev server
   // so edits to packages/dashboard/src/* reload live. Release builds always
@@ -116,14 +109,13 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
       c.close?.();
     await httpServer.stop();
   };
-  const url = httpServer.urlPrefix('human-readable') + (redirectFromRoot ? '' : httpServer.pathPrefix() + '/');
+  const url = redirectFromRoot ? httpServer.rootUrl('human-readable') : httpServer.urlPrefix('human-readable') + '/';
   return { url, reveal, triggerAnnotate, close };
 }
 
 function attachDashboardStaticServer(httpServer: HttpServer, dashboardDir: string) {
-  const prefix = httpServer.pathPrefix();
-  httpServer.routePrefix(prefix + '/', (request: http.IncomingMessage, response: http.ServerResponse) => {
-    const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname.substring(prefix.length);
+  httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
+    const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
     const filePath = pathname === '/' ? 'index.html' : pathname.substring(1);
     const resolved = path.join(dashboardDir, filePath);
     return httpServer.serveFile(request, response, resolved);
@@ -133,8 +125,8 @@ function attachDashboardStaticServer(httpServer: HttpServer, dashboardDir: strin
 // HMR begin: dev-mode branch — wires a Vite dev server into HttpServer.
 async function attachDashboardDevServer(httpServer: HttpServer) {
   const dashboardRoot = path.resolve(__dirname, '..', '..', 'dashboard');
-  const devServer = await httpServer.createViteDevServer({ root: dashboardRoot, base: httpServer.pathPrefix() + '/' });
-  httpServer.routePrefix(httpServer.pathPrefix() + '/', (request: http.IncomingMessage, response: http.ServerResponse) => {
+  const devServer = await httpServer.createViteDevServer({ root: dashboardRoot });
+  httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
     devServer.middlewares(request, response, HttpServer.notFoundFallback(response));
     return true;
   });
