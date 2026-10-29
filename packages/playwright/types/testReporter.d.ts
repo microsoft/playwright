@@ -752,8 +752,8 @@ export interface TestResult {
 }
 
 /**
- * Controls which tests will run and their expected status. A [TestRun](https://playwright.dev/docs/api/class-testrun)
- * is available during
+ * Controls which tests will run and their expected status, and provides information about suite execution modes. A
+ * [TestRun](https://playwright.dev/docs/api/class-testrun) is available during
  * [reporter.preprocess(params)](https://playwright.dev/docs/api/class-reporter#reporter-preprocess). Setup and
  * teardown projects cannot be changed.
  */
@@ -780,6 +780,26 @@ export interface TestRun {
    * @param reason Optional explanation surfaced as the annotation description.
    */
   fixme(test: TestCase|Suite, reason?: string): void;
+
+  /**
+   * Returns the execution mode configured for a suite with
+   * [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure),
+   * [test.describe.serial([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe-serial)
+   * or
+   * [test.describe.parallel([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe-parallel).
+   * If the suite does not configure a mode, it inherits its parent's mode. Project suites use `"parallel"` when
+   * [testProject.fullyParallel](https://playwright.dev/docs/api/class-testproject#test-project-fully-parallel) is
+   * enabled, and `"default"` otherwise. The root suite uses `"default"`.
+   *
+   * An explicit `"default"` suite does not inherit `"parallel"` from its parent: its tests run in order in the same
+   * worker. The mode alone does not describe complete test groups, which also depend on worker fixtures and hooks.
+   *
+   * This method can only be called during
+   * [reporter.preprocess(params)](https://playwright.dev/docs/api/class-reporter#reporter-preprocess), and can also
+   * inspect setup and teardown projects.
+   * @param suite Suite to inspect.
+   */
+  mode(suite: Suite): "serial"|"parallel"|"default";
 
   /**
    * Skips a test or every test in a suite. The test bodies are not executed and the tests are reported as skipped.
