@@ -393,6 +393,8 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, opt
     }
 
     const parent = element.parentNode as (Element | ShadowRoot);
+    const shadowHost = parentElementOrShadowHost(element);
+    const siblings = shadowHost?.shadowRoot ? [...shadowHost.children, ...shadowHost.shadowRoot.children] : parent ? [...parent.children] : [];
 
     // Combine class names until unique.
     const classes = [...element.classList].map(escapeClassName);
@@ -403,7 +405,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, opt
         return makeStrict(selector);
       // Even if not unique, does this subset of classes uniquely identify node as a child?
       if (!bestTokenForLevel && parent) {
-        const sameClassSiblings = parent.querySelectorAll(token);
+        const sameClassSiblings = siblings.filter(sibling => sibling.matches(token));
         if (sameClassSiblings.length === 1)
           bestTokenForLevel = token;
       }
@@ -411,10 +413,10 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, opt
 
     // Ordinal is the weakest signal.
     if (parent) {
-      const siblings = [...parent.children];
       const nodeName = element.nodeName;
       const sameTagSiblings = siblings.filter(sibling => sibling.nodeName === nodeName);
-      const token = sameTagSiblings.indexOf(element) === 0 ? escapeNodeName(element) : `${escapeNodeName(element)}:nth-child(${1 + siblings.indexOf(element)})`;
+      // :nth-child() uses the DOM position, even when > pierces the shadow root.
+      const token = sameTagSiblings.indexOf(element) === 0 ? escapeNodeName(element) : `${escapeNodeName(element)}:nth-child(${1 + [...parent.children].indexOf(element)})`;
       const selector = uniqueCSSSelector(token);
       if (selector)
         return makeStrict(selector);
@@ -425,7 +427,8 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, opt
     }
     tokens.unshift(bestTokenForLevel);
   }
-  return makeStrict(uniqueCSSSelector()!);
+  // Light and shadow children can have identical CSS paths.
+  return makeStrict(tokens.join(' > '));
 }
 
 function penalizeScoreForLength(groups: SelectorToken[][]) {

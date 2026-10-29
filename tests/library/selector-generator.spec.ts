@@ -464,7 +464,9 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'input')).toBe('internal:role=textbox');
   });
 
-  it('GN-074 should match in deep shadow dom', async ({ page }) => {
+  it('GN-074 should match in deep shadow dom', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43701' }
+  }, async ({ page }) => {
     await page.setContent(`<div></div><div></div><div><input></div>`);
     await page.$eval('div', div1 => {
       const shadowRoot1 = div1.attachShadow({ mode: 'open' });
@@ -480,6 +482,22 @@ it.describe('selector generator', () => {
       shadowRoot2.appendChild(input2);
     });
     expect(await generate(page, 'input[value=foo]')).toBe('internal:role=textbox >> nth=2');
+
+    await page.setContent(`<span>Client book</span>${'<div></div>'.repeat(7)}<x-host><x-item class="c"></x-item></x-host>`);
+    await page.evaluate(() => {
+      const host = document.querySelector('x-host');
+      host.attachShadow({ mode: 'open' }).innerHTML = '<x-item class="c"></x-item><slot></slot>';
+      host.shadowRoot.querySelector('x-item').attachShadow({ mode: 'open' }).innerHTML = '<div class="k"><span></span></div>';
+      host.querySelector('x-item').attachShadow({ mode: 'open' }).innerHTML = '<div class="k" mark="1"><span>Client book</span></div>';
+    });
+    const error = await page.getByText('Client book', { exact: true }).click().catch(e => e);
+    expect(error.message).toContain('strict mode violation');
+    expect(error.message).toContain('resolved to 2 elements');
+    expect(error.message).toContain(`1) <span>Client book</span> aka getByText('Client book').first()`);
+    expect(error.message).toContain(`2) <span>Client book</span> aka locator('x-host').getByText('Client book')`);
+    const selector = await generateNoText(page, '[mark="1"]');
+    expect(selector).toBe('html > body > x-host > x-item > .k >> nth=1');
+    await expect(page.locator(selector)).toHaveAttribute('mark', '1');
   });
 
   it('GN-075 should work in dynamic iframes without navigation', async ({ page }) => {
