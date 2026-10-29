@@ -27,7 +27,7 @@ export { Page, Worker } from './page';
 export { createPlaywright } from './playwright';
 export { nullProgress } from './progress';
 export { WebSocketTransport } from './transport';
-export { installRootRedirect, openTraceInBrowser, openTraceViewerApp, startTraceViewerServer, runTraceViewerApp } from './trace/viewer/traceViewer';
+export { installRootRedirect, openTraceInBrowser, openTraceViewerApp, startTraceViewerServer, runTraceViewerApp, traceViewerPath } from './trace/viewer/traceViewer';
 
 export type { DispatcherScope } from './dispatchers/dispatcher';
 export type { Frame } from './frames';

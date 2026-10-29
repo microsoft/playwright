@@ -187,8 +187,8 @@ export class HttpServer {
       this._urlPrefixHumanReadable = address;
     } else {
       this._port = address.port;
-      this._urlPrefixPrecise = `http://${urlHostFromAddress(address)}:${address.port}${this._pathPrefix}`;
-      this._urlPrefixHumanReadable = `http://${host ?? 'localhost'}:${address.port}${this._pathPrefix}`;
+      this._urlPrefixPrecise = `http://${urlHostFromAddress(address)}:${address.port}`;
+      this._urlPrefixHumanReadable = `http://${host ?? 'localhost'}:${address.port}`;
       this._allowedHosts = computeAllowedHosts(host, address.address);
     }
   }

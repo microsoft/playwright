@@ -69,7 +69,8 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
   });
 
   // Users open an explicit host or port by hand. Other local users can read this redirect too.
-  if (options.port !== undefined || options.host !== undefined) {
+  const redirectFromRoot = options.port !== undefined || options.host !== undefined;
+  if (redirectFromRoot) {
     httpServer.routePath('/', (_, response) => {
       response.statusCode = 302;
       response.setHeader('Location', '.' + httpServer.pathPrefix() + '/');
@@ -115,7 +116,8 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
       c.close?.();
     await httpServer.stop();
   };
-  return { url: httpServer.urlPrefix('human-readable') + '/', reveal, triggerAnnotate, close };
+  const url = httpServer.urlPrefix('human-readable') + (redirectFromRoot ? '' : httpServer.pathPrefix() + '/');
+  return { url, reveal, triggerAnnotate, close };
 }
 
 function attachDashboardStaticServer(httpServer: HttpServer, dashboardDir: string) {

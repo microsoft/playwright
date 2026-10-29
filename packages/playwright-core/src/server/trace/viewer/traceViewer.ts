@@ -162,7 +162,7 @@ export async function startTraceViewerServer(options: TraceViewerServerOptions &
   return server;
 }
 
-export async function installRootRedirect(server: HttpServer, traceUrl: string | undefined, options: TraceViewerRedirectOptions & Pick<TraceViewerServerOptions, 'host' | 'port'>) {
+export function traceViewerPath(server: HttpServer, traceUrl: string | undefined, options: TraceViewerRedirectOptions): string {
   const params = new URLSearchParams();
   if (path.sep !== path.posix.sep)
     params.set('pathSeparator', path.sep);
@@ -183,17 +183,15 @@ export async function installRootRedirect(server: HttpServer, traceUrl: string |
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
 
-  const pagePath = `trace/${options.webApp || 'index.html'}?${params.toString()}`;
-  installRedirect(server, server.pathPrefix() + '/', './' + pagePath);
-  // Users open an explicit host or port by hand. Other local users can read this redirect too.
-  if (options.host !== undefined || options.port !== undefined)
-    installRedirect(server, '/', '.' + server.pathPrefix() + '/' + pagePath);
+  return `${server.pathPrefix()}/trace/${options.webApp || 'index.html'}?${params.toString()}`;
 }
 
-function installRedirect(server: HttpServer, from: string, location: string) {
-  server.routePath(from, (_, response) => {
+// For an explicit host or port that users open by hand. Other local users can read this redirect too.
+export async function installRootRedirect(server: HttpServer, traceUrl: string | undefined, options: TraceViewerRedirectOptions) {
+  const urlPath = '.' + traceViewerPath(server, traceUrl, options);
+  server.routePath('/', (_, response) => {
     response.statusCode = 302;
-    response.setHeader('Location', location);
+    response.setHeader('Location', urlPath);
     response.end();
     return true;
   });
@@ -203,8 +201,7 @@ export async function runTraceViewerApp(traceUrl: string | undefined, browserNam
   traceUrl = validateTraceUrlOrPath(traceUrl);
   const allowedFileRoots = traceFileRoots(traceUrl);
   const server = await startTraceViewerServer({ ...options, allowedFileRoots: () => allowedFileRoots });
-  await installRootRedirect(server, traceUrl, options);
-  const page = await openTraceViewerApp(server.urlPrefix('precise') + '/', browserName, options);
+  const page = await openTraceViewerApp(server.urlPrefix('precise') + traceViewerPath(server, traceUrl, options), browserName, options);
   page.on('close', () => gracefullyProcessExitDoNotHang(0));
   return page;
 }
@@ -214,7 +211,7 @@ export async function runTraceInBrowser(traceUrl: string | undefined, options: T
   const allowedFileRoots = traceFileRoots(traceUrl);
   const server = await startTraceViewerServer({ ...options, allowedFileRoots: () => allowedFileRoots });
   await installRootRedirect(server, traceUrl, options);
-  await openTraceInBrowser(server.urlPrefix('human-readable') + '/');
+  await openTraceInBrowser(server.urlPrefix('human-readable'));
 }
 
 function traceFileRoots(traceUrl: string | undefined): string[] {
