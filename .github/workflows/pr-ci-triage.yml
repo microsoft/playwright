@@ -22,7 +22,7 @@ jobs:
       pull-requests: read
       copilot-requests: write
     outputs:
-      has_draft: ${{ steps.triage.outputs.has_draft }}
+      has_draft: ${{ steps.triage.outputs.has-result }}
     env:
       PR_NUMBER: ${{ inputs.pr_number }}
       TARGET_REPO: ${{ github.repository }}
@@ -44,34 +44,19 @@ jobs:
 
       - name: Triage failures with Copilot CLI
         id: triage
-        env:
-          COPILOT_GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          mkdir -p output
-          PROMPT=$(cat <<PROMPT_EOF
-          Come up with a verdict on the CI test failures on pull request #${PR_NUMBER} of ${TARGET_REPO}: are they likely caused by this PR? Follow the pr-ci-triage guide (.github/workflows/pr-ci-triage.md) for the analysis.
+        uses: ./.github/actions/run-agent
+        with:
+          prompt: |
+            Come up with a verdict on the CI test failures on pull request #${{ inputs.pr_number }} of ${{ github.repository }}: are they likely caused by this PR? Follow the pr-ci-triage guide (.github/workflows/pr-ci-triage.md) for the analysis.
 
-          Write your verdict to output/triage.md as a PR comment, in the format the guide specifies and the bot voice register (.claude/skills/playwright-triage/bot-voice.md).
+            Write your verdict to ${{ runner.temp }}/ci-triage/triage.md as a PR comment, in the format the guide specifies and the bot voice register (bot-voice.md in the shared guides).
 
-          Do not post anything yourself — a later workflow step posts output/triage.md.
-          PROMPT_EOF
-          )
-          copilot \
-            --allow-all-tools \
-            --allow-all-paths \
-            --no-ask-user \
-            --enable-all-github-mcp-tools \
-            --share=output/copilot-session.md \
-            --model gpt-6.1-sol \
-            --max-ai-credits 500 \
-            -p "$PROMPT"
-
-          if [ -s output/triage.md ]; then
-            echo "has_draft=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_draft=false" >> "$GITHUB_OUTPUT"
-          fi
+            Do not post anything yourself. A later workflow step posts triage.md.
+          output-dir: ${{ runner.temp }}/ci-triage
+          result-file: triage.md
+          artifact-name: ci-triage-${{ inputs.pr_number }}
+          github-tools: true
+          max-ai-credits: 500
 
       - name: Add session transcript to job summary
         if: ${{ always() }}
@@ -79,16 +64,8 @@ jobs:
           {
             echo "## CI triage session transcript (PR #$PR_NUMBER on $TARGET_REPO)"
             echo ''
-            cat output/copilot-session.md 2>/dev/null || echo "(no transcript)"
+            cat "$RUNNER_TEMP/ci-triage/copilot-session.md" 2>/dev/null || echo "(no transcript)"
           } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload triage draft
-        if: ${{ always() }}
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: ci-triage-${{ inputs.pr_number }}
-          path: output/triage.md
-          if-no-files-found: warn
 
   post:
     needs: triage

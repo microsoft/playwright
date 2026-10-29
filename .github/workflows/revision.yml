@@ -83,7 +83,7 @@ jobs:
         echo "OUTPUT_DIR=${RUNNER_TEMP//\\//}/revision" >> "$GITHUB_ENV"
         echo "REVIEW_DIR=${RUNNER_TEMP//\\//}/review" >> "$GITHUB_ENV"
         echo "SCRATCH_DIR=${RUNNER_TEMP//\\//}/scratch" >> "$GITHUB_ENV"
-        echo "PLAYWRIGHT_DIR=${GITHUB_WORKSPACE//\\//}" >> "$GITHUB_ENV"
+        echo "REPO_DIR=${GITHUB_WORKSPACE//\\//}" >> "$GITHUB_ENV"
     - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
       with:
         name: review
@@ -104,7 +104,7 @@ jobs:
       uses: ./.github/actions/run-agent
       with:
         prompt: |
-          Follow .claude/skills/playwright-revision/SKILL.md. Read it in full before starting.
+          Follow the shared guide revision.md and this repo's AGENTS.md. Read both in full before starting.
 
           Pull request: https://github.com/microsoft/playwright/pull/${{ github.event.pull_request.number }}
         output-dir: ${{ env.OUTPUT_DIR }}
