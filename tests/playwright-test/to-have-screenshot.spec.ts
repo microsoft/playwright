@@ -424,7 +424,7 @@ test('should support clip option for page', async ({ runInlineTest }, testInfo) 
   expect(result.exitCode).toBe(0);
 });
 
-test('should support omitBackground option for locator', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43745' } }, async ({ runInlineTest }, testInfo) => {
+test('should support omitBackground option for locator', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
       snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
@@ -440,12 +440,6 @@ test('should support omitBackground option for locator', { annotation: { type: '
           name: 'snapshot.png',
           omitBackground: true,
         });
-        await page.setContent('<button>First</button><button>Second</button>');
-        const buttons = page.getByRole('button');
-        await expect(buttons).toHaveCount(2);
-        await expect(buttons.first()).toHaveScreenshot('button.png');
-        await expect(buttons.screenshot()).rejects.toThrow('strict mode violation');
-        await expect(expect(buttons).toHaveScreenshot('button.png')).rejects.toThrow('strict mode violation');
       });
     `
   }, { 'update-snapshots': true });
@@ -459,6 +453,24 @@ test('should support omitBackground option for locator', { annotation: { type: '
   expect.soft(png.data[1], 'image G must be 0').toBe(0);
   expect.soft(png.data[2], 'image B must be 0').toBe(0);
   expect.soft(png.data[3], 'image A must be 0').toBe(0);
+});
+
+test('should enforce strictness for locator screenshots', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43745' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({}),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await page.setContent('<button>First</button><button>Second</button>');
+        const buttons = page.getByRole('button');
+        await expect(buttons).toHaveCount(2);
+        await expect(buttons.first()).toHaveScreenshot('button.png');
+        await expect(buttons.screenshot()).rejects.toThrow('strict mode violation');
+        await expect(expect(buttons).toHaveScreenshot('button.png')).rejects.toThrow('strict mode violation');
+      });
+    `
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(0);
   const regularResult = await runInlineTest({});
   expect(regularResult.exitCode).toBe(0);
 });
