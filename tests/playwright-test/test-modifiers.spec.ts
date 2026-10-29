@@ -16,7 +16,7 @@
 
 import { test, expect, expectTestHelper } from './playwright-test-fixtures';
 
-test('test modifiers should work', async ({ runInlineTest }) => {
+test('test modifiers should work', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43738' } }, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
       import { test as base, expect } from '@playwright/test';
@@ -97,6 +97,27 @@ test('test modifiers should work', async ({ runInlineTest }) => {
         test.skip(({ foo }) => !foo, 'reason');
         test('suite4', () => {});
       });
+
+      test.describe('late modifiers', () => {
+        const teardownTest = test.extend({
+          teardown: [async ({}, use, testInfo) => {
+            await use();
+            testInfo.fail(false);
+            testInfo.fail();
+          }, { auto: true }],
+        });
+        test.afterEach(() => {
+          test.fail(false);
+          test.fail();
+        });
+        test.afterAll(() => {
+          test.fail(false);
+          test.fail();
+        });
+        teardownTest('late fail', () => {
+          throw new Error('original failure');
+        });
+      });
     `,
   });
 
@@ -127,6 +148,15 @@ test('test modifiers should work', async ({ runInlineTest }) => {
   expectTest('suite2', 'skipped', 'skipped', [{ type: 'skip', location: { file: expect.any(String), line: 61, column: 14 } }]);
   expectTest('suite3', 'skipped', 'skipped', [{ type: 'skip', description: 'reason', location: { file: expect.any(String), line: 66, column: 14 } }]);
   expectTest('suite4', 'passed', 'passed', []);
+  expectTest('late fail', 'passed', 'failed', []);
+  const lateTest = result.report.suites[0].suites!.find(s => s.title === 'late modifiers')!.specs[0].tests[0];
+  expect(lateTest.status).toBe('unexpected');
+  expect(lateTest.results[0].errors.map(error => error.message)).toEqual([
+    expect.stringContaining('original failure'),
+    ...Array(3).fill(expect.stringContaining('test.fail() cannot be called after the test has finished')),
+  ]);
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
   expect(result.passed).toBe(10);
   expect(result.skipped).toBe(9);
 });

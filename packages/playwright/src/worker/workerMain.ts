@@ -359,6 +359,7 @@ export class WorkerMain extends ProcessRunner {
     let shouldRunAfterEachHooks = false;
 
     testInfo._allowSkips = true;
+    testInfo._allowFail = true;
 
     await (async () => {
       await testInfo._runWithTimeout({ type: 'test' }, async () => {
@@ -419,6 +420,7 @@ export class WorkerMain extends ProcessRunner {
 
     // No skips in after hooks.
     testInfo._allowSkips = true;
+    testInfo._allowFail = false;
 
     // After hooks get an additional timeout.
     const afterHooksTimeout = calculateMaxTimeout(this._project.project.timeout, testInfo.timeout);

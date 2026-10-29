@@ -109,6 +109,7 @@ export class TestInfoImpl implements TestInfo {
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
   _allowSkips = false;
+  _allowFail = false;
 
   // ------------ Main methods ------------
   skip: (arg?: any, description?: string) => void;
@@ -257,6 +258,9 @@ export class TestInfoImpl implements TestInfo {
 
     if (modifierArgs.length >= 1 && !modifierArgs[0])
       return;
+
+    if (type === 'fail' && !this._allowFail)
+      throw new Error('test.fail() cannot be called after the test has finished');
 
     // Support for test.{skip,fixme,fail,slow}(description)
     const description = modifierArgs.length === 1 && typeof modifierArgs[0] === 'string' ? modifierArgs[0] : modifierArgs[1];

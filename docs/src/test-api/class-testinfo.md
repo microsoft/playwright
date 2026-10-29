@@ -157,10 +157,14 @@ test.afterEach(async ({}, testInfo) => {
 
 Marks the currently running test as "should fail". Playwright Test runs this test and ensures that it is actually failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed. This is similar to [`method: Test.fail`].
 
+Calling this method after the test body has finished, in an `afterEach` or `afterAll` hook or during fixture teardown, throws an error instead of changing the test's expected status.
+
 ## method: TestInfo.fail#2
 * since: v1.10
 
 Conditionally mark the currently running test as "should fail" with an optional description. This is similar to [`method: Test.fail`].
+
+When the condition is `true`, calling this method after the test body has finished, in an `afterEach` or `afterAll` hook or during fixture teardown, throws an error instead of changing the test's expected status.
 
 ### param: TestInfo.fail#2.condition
 * since: v1.10

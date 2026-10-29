@@ -1141,6 +1141,8 @@ To annotate test as "failing" at runtime:
 * `test.fail()`
 * `test.fail(description)`
 
+Calling `test.fail()` after the test body has finished, in an `afterEach` or `afterAll` hook or during fixture teardown, throws an error instead of changing the test's expected status.
+
 **Usage**
 
 You can declare a test as failing, so that Playwright ensures it actually fails.
@@ -1991,5 +1993,4 @@ test('test with locale', async ({ page }) => {
 - `options` <[TestOptions]>
 
 An object with local options.
-
 

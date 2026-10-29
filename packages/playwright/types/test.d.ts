@@ -2410,12 +2410,18 @@ export interface TestInfo {
    * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is
    * fixed. This is similar to
    * [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail).
+   *
+   * Calling this method after the test body has finished, in an `afterEach` or `afterAll` hook or during fixture
+   * teardown, throws an error instead of changing the test's expected status.
    */
   fail(): void;
 
   /**
    * Conditionally mark the currently running test as "should fail" with an optional description. This is similar to
    * [test.fail([title, details, body, condition, callback, description])](https://playwright.dev/docs/api/class-test#test-fail).
+   *
+   * When the condition is `true`, calling this method after the test body has finished, in an `afterEach` or `afterAll`
+   * hook or during fixture teardown, throws an error instead of changing the test's expected status.
    * @param condition Test is marked as "should fail" when the condition is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
@@ -5451,6 +5457,9 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * - `test.fail()`
    * - `test.fail(description)`
    *
+   * Calling `test.fail()` after the test body has finished, in an `afterEach` or `afterAll` hook or during fixture
+   * teardown, throws an error instead of changing the test's expected status.
+   *
    * **Usage**
    *
    * You can declare a test as failing, so that Playwright ensures it actually fails.
@@ -5528,6 +5537,9 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      * - `test.fail(callback, description)`
      * - `test.fail()`
      * - `test.fail(description)`
+     *
+     * Calling `test.fail()` after the test body has finished, in an `afterEach` or `afterAll` hook or during fixture
+     * teardown, throws an error instead of changing the test's expected status.
      *
      * **Usage**
      *
@@ -5607,6 +5619,9 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      * - `test.fail()`
      * - `test.fail(description)`
      *
+     * Calling `test.fail()` after the test body has finished, in an `afterEach` or `afterAll` hook or during fixture
+     * teardown, throws an error instead of changing the test's expected status.
+     *
      * **Usage**
      *
      * You can declare a test as failing, so that Playwright ensures it actually fails.
@@ -5684,6 +5699,9 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      * - `test.fail(callback, description)`
      * - `test.fail()`
      * - `test.fail(description)`
+     *
+     * Calling `test.fail()` after the test body has finished, in an `afterEach` or `afterAll` hook or during fixture
+     * teardown, throws an error instead of changing the test's expected status.
      *
      * **Usage**
      *
@@ -5763,6 +5781,9 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      * - `test.fail()`
      * - `test.fail(description)`
      *
+     * Calling `test.fail()` after the test body has finished, in an `afterEach` or `afterAll` hook or during fixture
+     * teardown, throws an error instead of changing the test's expected status.
+     *
      * **Usage**
      *
      * You can declare a test as failing, so that Playwright ensures it actually fails.
@@ -5841,6 +5862,9 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      * - `test.fail()`
      * - `test.fail(description)`
      *
+     * Calling `test.fail()` after the test body has finished, in an `afterEach` or `afterAll` hook or during fixture
+     * teardown, throws an error instead of changing the test's expected status.
+     *
      * **Usage**
      *
      * You can declare a test as failing, so that Playwright ensures it actually fails.
@@ -5918,6 +5942,9 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      * - `test.fail(callback, description)`
      * - `test.fail()`
      * - `test.fail(description)`
+     *
+     * Calling `test.fail()` after the test body has finished, in an `afterEach` or `afterAll` hook or during fixture
+     * teardown, throws an error instead of changing the test's expected status.
      *
      * **Usage**
      *
