@@ -2,7 +2,7 @@
 * since: v1.62
 * langs: js
 
-Controls which tests will run and their expected status. A [TestRun] is available during [`method: Reporter.preprocess`]. Setup and teardown projects cannot be changed.
+Controls which tests will run and their expected status, and provides information about suite execution modes. A [TestRun] is available during [`method: Reporter.preprocess`]. Setup and teardown projects cannot be changed.
 
 ## method: TestRun.exclude
 * since: v1.62
@@ -48,6 +48,23 @@ Test or suite to mark as fixme.
 - `reason` ?<[string]>
 
 Optional explanation surfaced as the annotation description.
+
+## method: TestRun.mode
+* since: v1.65
+- returns: "TestMode" <"serial"|"parallel"|"default">
+
+Returns the execution mode configured for a suite with [`method: Test.describe.configure`], [`method: Test.describe.serial`] or [`method: Test.describe.parallel`].
+If the suite does not configure a mode, it inherits its parent's mode. Project suites use `"parallel"` when [`property: TestProject.fullyParallel`] is enabled, and `"default"` otherwise. The root suite uses `"default"`.
+
+An explicit `"default"` suite does not inherit `"parallel"` from its parent: its tests run in order in the same worker. The mode alone does not describe complete test groups, which also depend on worker fixtures and hooks.
+
+This method can only be called during [`method: Reporter.preprocess`], and can also inspect setup and teardown projects.
+
+### param: TestRun.mode.suite
+* since: v1.65
+- `suite` <[Suite]>
+
+Suite to inspect.
 
 ## method: TestRun.skip
 * since: v1.62

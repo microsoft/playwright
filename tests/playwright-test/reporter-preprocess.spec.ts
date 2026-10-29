@@ -194,7 +194,7 @@ test('TestRun methods throw outside preprocess, and the root suite cannot be exc
           const testCase = suite.allTests()[0];
           const fileSuite = testCase.parent;
           for (const [label, obj] of [['TestCase', testCase], ['Suite', fileSuite]]) {
-            for (const method of ['skip', 'fixme', 'fail', 'exclude']) {
+            for (const method of ['skip', 'fixme', 'fail', 'exclude', ...(label === 'Suite' ? ['mode'] : [])]) {
               try {
                 this.testRun[method](obj);
                 console.log('%% ' + label + '.' + method + ': no-throw');
@@ -225,6 +225,7 @@ test('TestRun methods throw outside preprocess, and the root suite cannot be exc
     'Suite.fixme: TestRun.fixme() can only be called from Reporter.preprocess().',
     'Suite.fail: TestRun.fail() can only be called from Reporter.preprocess().',
     'Suite.exclude: TestRun.exclude() can only be called from Reporter.preprocess().',
+    'Suite.mode: TestRun.mode() can only be called from Reporter.preprocess().',
   ]);
 });
 
@@ -436,6 +437,8 @@ test('plan.suite exposes setup/teardown dependency projects but they are read-on
             }
           }
           const setupProject = suite.suites.find(s => s.title === 'setup');
+          console.log('%% setup mode: ' + testRun.mode(setupProject));
+          console.log('%% teardown mode: ' + testRun.mode(suite.suites.find(s => s.title === 'teardown')));
           try {
             testRun.exclude(setupProject);
             console.log('%% dep-suite-exclude: no-throw');
@@ -491,6 +494,8 @@ test('plan.suite exposes setup/teardown dependency projects but they are read-on
     'dep-fixme: TestRun.fixme() cannot be called on a setup or teardown project test; these always run in full.',
     'dep-fail: TestRun.fail() cannot be called on a setup or teardown project test; these always run in full.',
     'dep-exclude: TestRun.exclude() cannot be called on a setup or teardown project test; these always run in full.',
+    'setup mode: default',
+    'teardown mode: default',
     'dep-suite-exclude: TestRun.exclude() cannot be called on a setup or teardown project; these always run in full.',
     'same test objects: true',
     'dep-after-preprocess: TestRun.skip() can only be called from Reporter.preprocess().',
@@ -547,18 +552,29 @@ test('plan.suite temporarily exposes dependencies without changing final project
   ]);
 });
 
-test('serial suites expose a serial annotation for custom sharding', async ({ runInlineTest }) => {
+test('suite modes and serial annotations are available for custom sharding', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43602' } }, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
       class Reporter {
-        async preprocess({ suite }) {
+        async preprocess({ suite, testRun }) {
+          console.log('%% root:' + testRun.mode(suite));
+          for (const project of suite.suites) {
+            console.log('%% project ' + project.title + ':' + testRun.mode(project));
+            console.log('%% file ' + project.title + ':' + testRun.mode(project.suites[0]));
+          }
           for (const t of suite.allTests())
-            console.log('%% ' + t.title + ':' + t.annotations.filter(a => a.type === 'serial').length);
+            console.log('%% ' + t.parent.project().name + '/' + t.title + ':' + t.annotations.filter(a => a.type === 'serial').length + ':' + testRun.mode(t.parent));
         }
       }
       export default Reporter;
     `,
-    'playwright.config.ts': `export default { reporter: './reporter.ts' };`,
+    'playwright.config.ts': `
+      export default {
+        reporter: './reporter.ts',
+        fullyParallel: true,
+        projects: [{ name: 'parallel' }, { name: 'default', fullyParallel: false }],
+      };
+    `,
     'a.test.ts': `
       import { test } from '@playwright/test';
       test('plain', async () => {});
@@ -570,17 +586,43 @@ test('serial suites expose a serial annotation for custom sharding', async ({ ru
         test('configure', async () => {});
       });
       test.describe.serial('outer', () => {
+        test.describe('inherited serial', () => {
+          test('inherited-serial', async () => {});
+        });
         test.describe.serial('inner', () => {
           test('nested', async () => {});
+        });
+      });
+      test.describe.parallel('parallel', () => {
+        test.describe('inherited parallel', () => {
+          test('inherited-parallel', async () => {});
+        });
+        test.describe('default', () => {
+          test.describe.configure({ mode: 'default' });
+          test('default-one', async () => {});
+          test.describe('inherited default', () => {
+            test('default-two', async () => {});
+          });
         });
       });
     `,
   }, { reporter: '', workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual([
-    'plain:0',
-    'serial:1',
-    'configure:1',
-    'nested:2',
+    'root:default',
+    'project parallel:parallel',
+    'file parallel:parallel',
+    'project default:default',
+    'file default:default',
+    ...['parallel', 'default'].flatMap(project => [
+      project + '/plain:0:' + project,
+      project + '/serial:1:serial',
+      project + '/configure:1:serial',
+      project + '/inherited-serial:1:serial',
+      project + '/nested:2:serial',
+      project + '/inherited-parallel:0:parallel',
+      project + '/default-one:0:default',
+      project + '/default-two:0:default',
+    ]),
   ]);
 });

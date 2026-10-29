@@ -34,6 +34,16 @@ export class ReporterTestRunImpl implements ReporterTestRun {
     return this._skipSharding;
   }
 
+  mode(suite: ReporterSuite): 'serial' | 'parallel' | 'default' {
+    if (!this._active)
+      throw new Error(`TestRun.mode() can only be called from Reporter.preprocess().`);
+    for (let current: testNs.Suite | undefined = suite as testNs.Suite; current; current = current.parent) {
+      if (current._parallelMode !== 'none')
+        return current._parallelMode;
+    }
+    return 'default';
+  }
+
   skipSharding() {
     if (!this._active)
       throw new Error(`TestRun.skipSharding() can only be called from Reporter.preprocess().`);
