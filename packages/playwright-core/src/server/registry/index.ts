@@ -1039,8 +1039,18 @@ export class Registry {
       process.stderr.write('Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.\n');
       return;
     }
-    for (const executable of executables)
-      await this._validateHostRequirementsForExecutableIfNeeded(executable, sdkLanguage);
+    const errors: Error[] = [];
+    for (const executable of executables) {
+      try {
+        await this._validateHostRequirementsForExecutableIfNeeded(executable, sdkLanguage);
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+    if (errors.length === 1)
+      throw errors[0];
+    if (errors.length)
+      throw new Error(errors.map(error => error.message).join('\n'));
   }
 
   private async _validateHostRequirementsForExecutableIfNeeded(executable: Executable, sdkLanguage: string) {
