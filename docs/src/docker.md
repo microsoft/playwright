@@ -196,7 +196,7 @@ For Docker and GitHub Codespaces environments, you can view and generate tests u
 
 ```json
 {
-  "image": "mcr.microsoft.com/playwright:v1.57.0",
+  "image": "mcr.microsoft.com/playwright:v%%VERSION%%-noble",
   "forwardPorts": [6080],
   "features": {
     "desktop-lite": {
