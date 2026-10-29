@@ -27,6 +27,17 @@ export async function mkdirIfNeeded(filePath: string) {
   await fs.promises.mkdir(path.dirname(filePath), { recursive: true }).catch(() => {});
 }
 
+export function mkdirPrivate(dir: string) {
+  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  if (process.platform === 'win32')
+    return;
+  const stat = fs.lstatSync(dir);
+  if (!stat.isDirectory() || (process.geteuid && stat.uid !== process.geteuid()))
+    throw new Error(`Refusing to use unsafe directory '${dir}': expected a directory owned by the current user`);
+  if ((stat.mode & 0o777) !== 0o700)
+    fs.chmodSync(dir, 0o700);
+}
+
 export async function removeFolders(dirs: string[]): Promise<(Error| undefined)[]> {
   return await Promise.all(dirs.map((dir: string) =>
     fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10 }).catch(e => e)
@@ -174,6 +185,7 @@ function makeSocketPathIn(baseDir: string, domain: string, name: string): string
     result = path.join(dir, calculateSha1(name).slice(0, 16) + '.sock');
   if (Buffer.byteLength(result) > UNIX_SOCKET_PATH_MAX)
     throw new Error(`Socket directory path is too long (${Buffer.byteLength(dir)} bytes); set PWTEST_SOCKETS_DIR to a shorter location.`);
-  fs.mkdirSync(dir, { recursive: true });
+  mkdirPrivate(baseDir);
+  mkdirPrivate(dir);
   return result;
 }

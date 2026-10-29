@@ -20,6 +20,7 @@ import path from 'path';
 
 import sourceMapSupport from 'source-map-support';
 import { calculateSha1 } from '@utils/crypto';
+import { mkdirPrivate } from '@utils/fileUtils';
 
 import { isWorkerProcess } from '../globals';
 import { packageRoot } from '../package';
@@ -125,6 +126,14 @@ type CompilationCacheLookupResult = {
 };
 
 export function getFromCompilationCache(filename: string, contentHash: string, moduleUrl?: string): CompilationCacheLookupResult {
+  const filePathHash = calculateFilePathHash(filename);
+  const hashPrefix = filePathHash + '_' + contentHash.substring(0, 7);
+  const cacheFolderName = filePathHash.substring(0, 2);
+  const cachePath = calculateCachePath(filename, cacheFolderName, hashPrefix);
+  // Validate before reading: a cache hit must not trust a directory planted by another user.
+  mkdirPrivate(cacheDir);
+  mkdirPrivate(path.dirname(cachePath));
+
   // First check the memory cache by filename, this cache will always work in the worker,
   // because we just compiled this file in the loader.
   const cache = memoryCache.get(filename);
@@ -137,10 +146,6 @@ export function getFromCompilationCache(filename: string, contentHash: string, m
   }
 
   // Then do the disk cache, this cache works between the Playwright Test runs.
-  const filePathHash = calculateFilePathHash(filename);
-  const hashPrefix = filePathHash + '_' + contentHash.substring(0, 7);
-  const cacheFolderName = filePathHash.substring(0, 2);
-  const cachePath = calculateCachePath(filename, cacheFolderName, hashPrefix);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
   try {
@@ -154,9 +159,10 @@ export function getFromCompilationCache(filename: string, contentHash: string, m
     addToCache: (code: string, map: any | undefined | null) => {
       if (isWorkerProcess())
         return {};
+      mkdirPrivate(cacheDir);
+      mkdirPrivate(path.dirname(cachePath));
       // Trim cache. This won't help with deleted files, but it will remove storing multiple copies of the same file
       clearOldCacheEntries(cacheFolderName, filePathHash);
-      fs.mkdirSync(path.dirname(cachePath), { recursive: true });
       if (map)
         fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
       writeCodeCache(codePath, code);

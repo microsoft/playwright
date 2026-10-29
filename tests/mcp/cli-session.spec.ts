@@ -145,7 +145,9 @@ test('session stops when browser exits', async ({ cli, server }) => {
 });
 
 for (const envName of ['XDG_RUNTIME_DIR', 'TMPDIR']) {
-  test(`session stops when socket directory in ${envName} disappears`, async ({ cli, server }) => {
+  test(`session stops when socket directory in ${envName} disappears`, {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43698' },
+  }, async ({ cli, server }) => {
     test.skip(process.platform === 'win32');
 
     // Keep this short because macOS limits Unix socket paths to 103 bytes.
@@ -161,6 +163,9 @@ for (const envName of ['XDG_RUNTIME_DIR', 'TMPDIR']) {
       });
       expect(daemonPid).toBeDefined();
       expect(isProcessAlive(daemonPid)).toBe(true);
+
+      const socketDirName = (await fs.promises.readdir(tempDir)).find(name => envName === 'XDG_RUNTIME_DIR' ? name === 'playwright' : name.startsWith('pw-'))!;
+      expect.soft((await fs.promises.stat(path.join(tempDir, socketDirName))).mode & 0o777).toBe(0o700);
 
       await fs.promises.rename(tempDir, removedTempDir);
       await expect.poll(() => isProcessAlive(daemonPid)).toBe(false);

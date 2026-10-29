@@ -340,3 +340,5 @@ Playwright keeps transpiled test files in the system temporary directory. To kee
 ```bash
 PLAYWRIGHT_TRANSFORM_CACHE_DIR=~/.cache/playwright-transform npx playwright test
 ```
+
+On Unix, Playwright creates cache directories with mode `0700` and restricts existing directories to that mode. It refuses to use a cache directory that is a symbolic link or belongs to another user.

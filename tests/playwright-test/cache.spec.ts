@@ -50,7 +50,9 @@ test('should clear cache for ct', async ({ runCLICommand }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should automatically clean cached versions of a changed file', async ({ runInlineTest, writeFiles }) => {
+test('should automatically clean cached versions of a changed file', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43698' },
+}, async ({ runInlineTest, writeFiles }) => {
   const cacheDir = test.info().outputPath('playwright-test-cache');
   await runInlineTest({
     'a.spec.ts': `
@@ -78,6 +80,9 @@ test('should automatically clean cached versions of a changed file', async ({ ru
   const firstPathHash = initialMatches[1];
   const firstTestHash = initialMatches[2];
 
+  if (process.platform !== 'win32')
+    await fs.promises.chmod(cacheDir, 0o755);
+
   await runInlineTest({
     'a.spec.ts': `
       import { test } from '@playwright/test';
@@ -100,4 +105,18 @@ test('should automatically clean cached versions of a changed file', async ({ ru
 
   expect(finalPathHash).toBe(firstPathHash);
   expect(finalTestHash).not.toBe(firstTestHash);
+
+  if (process.platform !== 'win32') {
+    expect.soft((await fs.promises.stat(cacheDir)).mode & 0o777).toBe(0o700);
+    expect.soft((await fs.promises.stat(testCacheDirectory)).mode & 0o777).toBe(0o700);
+
+    const realCacheDir = cacheDir + '-real';
+    await fs.promises.rename(cacheDir, realCacheDir);
+    await fs.promises.symlink(realCacheDir, cacheDir);
+    const result = await runInlineTest({}, undefined, {
+      PLAYWRIGHT_TRANSFORM_CACHE_DIR: cacheDir
+    });
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toContain('Refusing to use unsafe directory');
+  }
 });
