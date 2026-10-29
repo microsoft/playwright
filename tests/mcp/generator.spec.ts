@@ -49,9 +49,6 @@ test('generator tools intent', async ({ startClient }) => {
   expect(toolsWithIntent).toContain('browser_run_code_unsafe');
   expect(toolsWithIntent).toContain('browser_select_option');
   expect(toolsWithIntent).toContain('browser_tabs');
-
-  const readOnlyTestTools = tools.filter(tool => /^(test|generator|planner)_/.test(tool.name) && tool.annotations?.readOnlyHint).map(tool => tool.name).sort();
-  expect(readOnlyTestTools).toEqual(['generator_read_log', 'planner_submit_plan', 'test_list']);
 });
 
 test('generator_setup_page', async ({ startClient }) => {

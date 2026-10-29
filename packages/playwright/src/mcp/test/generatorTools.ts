@@ -33,7 +33,7 @@ export const setupPage = defineTestTool({
       project: z.string().optional().describe('Project to use for setup. For example: "chromium", if no project is provided uses the first project in the config.'),
       seedFile: z.string().optional().describe('A seed file contains a single test that is used to setup the page for testing, for example: "tests/seed.spec.ts". If no seed file is provided, a default seed file is created.'),
     }),
-    type: 'action',
+    type: 'readOnly',
   },
 
   handle: async (context, params, signal) => {
@@ -73,7 +73,7 @@ export const generatorWriteTest = defineTestTool({
       fileName: z.string().describe('The file to write the test to'),
       code: z.string().describe('The generated test code'),
     }),
-    type: 'action',
+    type: 'readOnly',
   },
 
   handle: async (context, params) => {
