@@ -1,0 +1,252 @@
+<title>Playwright {{VERSION}} API Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column, summary table first, then one card per change, grouped by area. */
+:root {
+  --bg: #f7f8f6;
+  --surface: #ffffff;
+  --fg: #1c2420;
+  --muted: #5c6a63;
+  --line: #d9e0db;
+  --accent: #1f8a3b;
+  --accent-soft: #e4f3e8;
+  --code-bg: #eef2ef;
+  --ok: #1f8a3b; --ok-bg: #e4f3e8;
+  --warn: #9a6400; --warn-bg: #fbf0d6;
+  --bad: #b3261e; --bad-bg: #fbe3e1;
+  --new: #1d5fa8; --new-bg: #e2ecf8;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141917; --surface: #1c2320; --fg: #e6ebe7; --muted: #9aa8a0; --line: #2f3a34;
+    --accent: #5cc46f; --accent-soft: #1f3326; --code-bg: #232c27;
+    --ok: #5cc46f; --ok-bg: #1f3326; --warn: #e5b45a; --warn-bg: #3a2f14; --bad: #f08a82; --bad-bg: #3d1f1c;
+    --new: #7fb2ee; --new-bg: #1b2b40;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141917; --surface: #1c2320; --fg: #e6ebe7; --muted: #9aa8a0; --line: #2f3a34;
+  --accent: #5cc46f; --accent-soft: #1f3326; --code-bg: #232c27;
+  --ok: #5cc46f; --ok-bg: #1f3326; --warn: #e5b45a; --warn-bg: #3a2f14; --bad: #f08a82; --bad-bg: #3d1f1c;
+  --new: #7fb2ee; --new-bg: #1b2b40;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; }
+main { max-width: 900px; margin: 0 auto; }
+h1 { font-size: 2rem; font-weight: 600; line-height: 1.15; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 1.35rem; font-weight: 600; margin: 48px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--line); text-wrap: balance; }
+h3 { font-size: 1.08rem; font-weight: 600; margin: 0; line-height: 1.3; text-wrap: balance; }
+p { margin: 0 0 10px; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.lede { color: var(--muted); margin-bottom: 20px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 0.9rem; color: var(--muted); margin-bottom: 28px; }
+.meta code { font-size: 0.85rem; }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+pre { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.5; background: var(--code-bg); padding: 12px 14px; border-radius: 6px; overflow-x: auto; margin: 0; }
+pre code { background: none; padding: 0; font-size: inherit; }
+.note { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 0 0 24px; }
+.note.ok { border-color: var(--ok); background: var(--ok-bg); }
+
+/* summary table */
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+tbody tr.group td { background: var(--code-bg); font-weight: 600; font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); padding: 6px 12px; }
+
+/* badges */
+.badge { display: inline-block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; white-space: nowrap; line-height: 1.5; }
+.b-new { color: var(--new); background: var(--new-bg); }
+.b-breaking { color: var(--bad); background: var(--bad-bg); }
+.b-behavior { color: var(--warn); background: var(--warn-bg); }
+.b-ok { color: var(--ok); background: var(--ok-bg); }
+.b-partial { color: var(--warn); background: var(--warn-bg); }
+.b-missing { color: var(--bad); background: var(--bad-bg); }
+
+/* change cards */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; margin: 0 0 18px; }
+.card header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin-bottom: 10px; }
+.card header .num { font-family: var(--font-mono); color: var(--muted); font-size: 0.9rem; }
+.card header .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.field { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 6px 16px; margin-top: 12px; }
+.field > dt { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+.field > dd { margin: 0; min-width: 0; }
+.field ul { margin: 0; padding-left: 18px; }
+.field li { margin-bottom: 3px; }
+.ba { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin-top: 12px; }
+.ba > div { min-width: 0; }
+.ba .lbl { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.docs-status { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+.docs-status p { margin: 0; }
+.excluded li { margin-bottom: 8px; }
+.excluded span.why { color: var(--muted); }
+
+/* feedback and issue draft */
+.feedback { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.feedback label, .draft .lbl { display: block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+textarea { width: 100%; box-sizing: border-box; font-family: var(--font-body); font-size: 0.92rem; line-height: 1.5; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: vertical; }
+textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+#draft-preview { font-family: var(--font-mono); font-size: 0.8rem; background: var(--code-bg); }
+.draft { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; }
+.draft-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-bottom: 14px; }
+button { font: inherit; font-weight: 600; color: #fff; background: var(--accent); border: 0; border-radius: 6px; padding: 8px 16px; cursor: pointer; }
+button:hover { filter: brightness(1.08); }
+button:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.check { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; color: var(--muted); }
+#copy-status { font-size: 0.9rem; color: var(--muted); }
+@media (max-width: 560px) {
+  .field { grid-template-columns: 1fr; gap: 2px; }
+  .field > dt { margin-top: 10px; }
+  .card header .badges { margin-left: 0; }
+  body { font-size: 14.5px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<!--
+  Template for the api-review skill. Replace every {{PLACEHOLDER}}, the sample summary rows,
+  the sample card and the sample excluded entry. Keep the structure, class names and the script:
+  the issue-draft generator reads header .num, h3, the "Links" and "Docs status" fields and the textarea.
+-->
+<main>
+<h1>Playwright {{VERSION}} API Review</h1>
+<p class="lede">Public API additions, breaking changes and notable behavior changes on <code>main</code> since {{BASE_DESCRIPTION}}, with the state of their documentation on playwright.dev/docs/next.</p>
+<div class="meta">
+  <span>Range: <code>{{RANGE}}</code> ({{COMMITS}} commits, head <code>{{HEAD}}</code>)</span>
+  <span>Snapshot: {{DATE}}</span>
+  <span>{{EXCLUDED_NOTE}}</span>
+</div>
+
+<div class="note">
+  <strong>{{RELEASE_NOTES_STATE}}</strong> {{RELEASE_NOTES_ADVICE}} Type feedback into any item and use the button at the end to copy a GitHub issue draft.
+</div>
+
+<h2 id="summary">Summary</h2>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>#</th><th>Change</th><th>Area</th><th>Kind</th><th>Docs</th></tr></thead>
+  <tbody>
+    <!-- one row per item, ordered by impact, most impactful first (SKILL.md step 3a).
+         Area: Library, Test runner, MCP, CLI.
+         kind badge classes: b-breaking (Breaking, Breaking vs 1.xx), b-behavior (Behavior), b-new (New API, New option);
+         docs badge classes: b-ok (OK), b-partial (Partial, Needs notes, README stale, None, Internal), b-missing (Missing) -->
+    <tr><td class="num">1</td><td><a href="#c1">{{ITEM_TITLE}}</a></td><td>{{AREA}}</td><td><span class="badge b-breaking">Breaking</span></td><td><span class="badge b-partial">Needs notes</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="changes">Changes</h2>
+<p class="lede">Ordered by impact, most impactful first. The MCP README on github.com/microsoft/playwright-mcp is generated by <code>update-readme.js</code> at release time; entries marked "README stale" are documented in <code>config.d.ts</code> or tool schemas and should appear after regeneration. Verify at release.</p>
+
+<section class="card" id="c1">
+  <header><span class="num">1</span><h3>{{ITEM_TITLE}}</h3><span class="badges"><span class="badge b-breaking">Breaking</span></span></header>
+  <p>{{WHAT_CHANGES: two to five sentences. What is new or different, who is affected, any escape hatch or opt-out, anything surprising such as a PR title that does not match the shipped name.}}</p>
+  <dl class="field">
+    <dt>Links</dt><dd><a href="https://github.com/microsoft/playwright/pull/{{PR}}">PR #{{PR}}</a> · <a href="https://github.com/microsoft/playwright/issues/{{ISSUE}}">Issue #{{ISSUE}}</a></dd>
+  </dl>
+  <div class="ba">
+    <div><div class="lbl">Before</div><pre><code>{{BEFORE_SNIPPET: test code, config or CLI; omit this div when there is no "before"}}</code></pre></div>
+    <div><div class="lbl">After</div><pre><code>{{AFTER_SNIPPET}}</code></pre></div>
+  </div>
+  <dl class="field">
+    <dt>Docs</dt><dd><ul>
+      <li><a href="https://playwright.dev/docs/next/{{PAGE}}#{{ANCHOR}}">{{page: Section}}</a></li>
+    </ul></dd>
+    <dt>Docs status</dt><dd class="docs-status"><span class="badge b-partial">Needs notes</span><p>{{DOCS_VERDICT: one or two sentences. For anything other than OK, say exactly what is missing and where it should go; this sentence becomes the "- [ ] Docs:" task in the issue draft.}}</p></dd>
+  </dl>
+  <div class="feedback"><label for="fb-c1">Review feedback</label><textarea id="fb-c1" rows="3" placeholder="Decision, requested doc change, or follow-up for this item"></textarea></div>
+</section>
+
+<h2 id="excluded">Examined and not included</h2>
+<p class="lede">Commits that looked like API or behavior changes but do not qualify under the review criteria, with the reason.</p>
+<ul class="excluded">
+  <li><a href="https://github.com/microsoft/playwright/pull/{{PR}}">#{{PR}}</a> {{short title}}. <span class="why">{{reason: bug fix restoring intended behavior / regression fix / internal protocol for language ports / docs only / added and removed within the range}}</span></li>
+</ul>
+
+<h2 id="issue-draft">Issue draft</h2>
+<p class="lede">Copies a markdown draft titled "API review items": each item's title and links, your feedback verbatim, and a task for items whose docs are missing or incomplete. Feedback is kept in this browser only.</p>
+<div class="draft">
+  <div class="draft-controls">
+    <button type="button" id="copy-draft">Copy issue draft</button>
+    <label class="check"><input type="checkbox" id="include-all"> Include items without feedback</label>
+    <span id="copy-status" role="status" aria-live="polite"></span>
+  </div>
+  <label for="draft-preview" class="lbl">Preview (select and copy by hand if the clipboard is blocked)</label>
+  <textarea id="draft-preview" rows="14" readonly spellcheck="false"></textarea>
+</div>
+</main>
+<script>
+(function () {
+  var KEY = 'pw-api-review-{{VERSION}}-feedback';
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { saved = {}; }
+  var cards = Array.prototype.slice.call(document.querySelectorAll('section.card'));
+  cards.forEach(function (card) {
+    var ta = card.querySelector('textarea');
+    if (saved[card.id]) ta.value = saved[card.id];
+    ta.addEventListener('input', function () {
+      saved[card.id] = ta.value;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      render();
+    });
+  });
+  var includeAll = document.getElementById('include-all');
+  var preview = document.getElementById('draft-preview');
+  var status = document.getElementById('copy-status');
+
+  function fieldDd(card, name) {
+    var dts = card.querySelectorAll('dl.field dt');
+    for (var i = 0; i < dts.length; i++)
+      if (dts[i].textContent.trim() === name) return dts[i].nextElementSibling;
+    return null;
+  }
+  function build() {
+    var withFeedback = cards.filter(function (c) { return c.querySelector('textarea').value.trim(); });
+    var picked = includeAll.checked || !withFeedback.length ? cards : withFeedback;
+    var lines = ['# API review items', '',
+      'Playwright {{VERSION}} API review, range `{{RANGE}}` (head `{{HEAD}}`), snapshot {{DATE}}.', ''];
+    picked.forEach(function (card) {
+      var num = card.querySelector('header .num').textContent.trim();
+      var title = card.querySelector('h3').textContent.trim();
+      var linksDd = fieldDd(card, 'Links');
+      var links = linksDd ? Array.prototype.map.call(linksDd.querySelectorAll('a'), function (a) {
+        return '[' + a.textContent.trim() + '](' + a.href + ')'; }).join(', ') : '';
+      var docsDd = fieldDd(card, 'Docs status');
+      var badge = docsDd && docsDd.querySelector('.badge') ? docsDd.querySelector('.badge').textContent.trim() : '';
+      var docsText = docsDd && docsDd.querySelector('p') ? docsDd.querySelector('p').textContent.trim() : '';
+      var feedback = card.querySelector('textarea').value.trim();
+      lines.push('## ' + num + '. ' + title);
+      if (links) lines.push(links);
+      lines.push('');
+      if (feedback) lines.push(feedback, '');
+      if (badge && badge !== 'OK' && badge !== 'None' && docsText) lines.push('- [ ] Docs: ' + docsText, '');
+    });
+    return { text: lines.join('\n'), count: picked.length, all: picked === cards && !includeAll.checked && !withFeedback.length };
+  }
+  function render() { preview.value = build().text; }
+  includeAll.addEventListener('change', render);
+  document.getElementById('copy-draft').addEventListener('click', function () {
+    var r = build();
+    preview.value = r.text;
+    var note = r.all ? ' (no feedback entered yet, so all items are included)' : '';
+    function fallback() {
+      preview.focus(); preview.select();
+      status.textContent = 'Clipboard blocked. The draft is selected below, press Ctrl/Cmd+C.';
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(r.text).then(function () {
+        status.textContent = 'Copied ' + r.count + ' item' + (r.count === 1 ? '' : 's') + ' to the clipboard' + note + '.';
+      }, fallback);
+    } else fallback();
+  });
+  render();
+})();
+</script>
