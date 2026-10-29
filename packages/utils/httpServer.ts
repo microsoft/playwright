@@ -60,7 +60,6 @@ export class HttpServer {
   constructor(options?: { staticRoot: string, useRandomPathPrefix: boolean }) {
     this._server = createHttpServer(this._onRequest.bind(this));
     this._staticRoot = options ? path.resolve(options.staticRoot) : undefined;
-    // Other local users cannot guess the URLs under a random prefix.
     this._pathPrefix = options?.useRandomPathPrefix ? '/' + createGuid() : '';
   }
 
@@ -80,12 +79,10 @@ export class HttpServer {
     return this._port;
   }
 
-  // Routes must start with this prefix.
   pathPrefix(): string {
     return this._pathPrefix;
   }
 
-  // Clients connect to `ws` under the path prefix.
   createWebSocket(transportFactory: (url: URL) => Transport) {
     // Any web page can connect to a WebSocket that it can guess.
     assert(this._pathPrefix, 'websocket requires a random path prefix');
