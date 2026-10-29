@@ -27,6 +27,25 @@ export async function mkdirIfNeeded(filePath: string) {
   await fs.promises.mkdir(path.dirname(filePath), { recursive: true }).catch(() => {});
 }
 
+// Creates a directory that only the current user can read, write, or enter.
+// Directories under a shared temp directory (for example /tmp) are otherwise
+// created world-readable, and a directory planted there by another user would
+// silently be reused. Refuse such a directory instead of using it, and tighten
+// one owned by the current user that is too permissive. On Windows there is
+// no POSIX mode or owner to check, so this is a plain recursive mkdir.
+export function mkdirPrivate(dir: string) {
+  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  if (process.platform === 'win32')
+    return;
+  const stat = fs.lstatSync(dir);
+  if (stat.isSymbolicLink())
+    throw new Error(`Refusing to use symlinked directory: ${dir}`);
+  if (process.geteuid && stat.uid !== process.geteuid())
+    throw new Error(`Refusing to use directory owned by another user: ${dir}`);
+  if ((stat.mode & 0o777) !== 0o700)
+    fs.chmodSync(dir, 0o700);
+}
+
 export async function removeFolders(dirs: string[]): Promise<(Error| undefined)[]> {
   return await Promise.all(dirs.map((dir: string) =>
     fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10 }).catch(e => e)
@@ -164,7 +183,13 @@ export function makeSocketPath(domain: string, name: string): string {
       // The variable can point to a directory that does not exist or belongs to another user.
     }
   }
-  return makeSocketPathIn(path.join(os.tmpdir(), `pw-${userNameHash}`), domain, name);
+  const baseDir = path.join(os.tmpdir(), `pw-${userNameHash}`);
+  // The shared temp directory itself must also be private: the socket
+  // directory below it is not enough if this directory was planted by
+  // another user. A caller-supplied PWTEST_SOCKETS_DIR or XDG_RUNTIME_DIR
+  // is deliberately left alone, since the caller chose that location.
+  mkdirPrivate(baseDir);
+  return makeSocketPathIn(baseDir, domain, name);
 }
 
 function makeSocketPathIn(baseDir: string, domain: string, name: string): string {
@@ -174,6 +199,6 @@ function makeSocketPathIn(baseDir: string, domain: string, name: string): string
     result = path.join(dir, calculateSha1(name).slice(0, 16) + '.sock');
   if (Buffer.byteLength(result) > UNIX_SOCKET_PATH_MAX)
     throw new Error(`Socket directory path is too long (${Buffer.byteLength(dir)} bytes); set PWTEST_SOCKETS_DIR to a shorter location.`);
-  fs.mkdirSync(dir, { recursive: true });
+  mkdirPrivate(dir);
   return result;
 }

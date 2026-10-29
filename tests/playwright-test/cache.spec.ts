@@ -101,3 +101,27 @@ test('should automatically clean cached versions of a changed file', async ({ ru
   expect(finalPathHash).toBe(firstPathHash);
   expect(finalTestHash).not.toBe(firstTestHash);
 });
+
+test('transform cache directories are private to the current user', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'POSIX directory modes do not apply on Windows');
+  const cacheDir = test.info().outputPath('playwright-test-cache-private');
+  // Start from a permissive directory, as a shared temp directory would be.
+  await fs.promises.mkdir(cacheDir, { recursive: true });
+  await fs.promises.chmod(cacheDir, 0o755);
+
+  await runInlineTest({
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test('example', () => {});
+    `,
+  }, undefined, {
+    PLAYWRIGHT_TRANSFORM_CACHE_DIR: cacheDir
+  });
+
+  const mode = (await fs.promises.stat(cacheDir)).mode & 0o777;
+  expect(mode).toBe(0o700);
+  const subdirectories = await fs.promises.readdir(cacheDir);
+  expect(subdirectories).toHaveLength(1);
+  const subdirectoryMode = (await fs.promises.stat(path.join(cacheDir, subdirectories[0]))).mode & 0o777;
+  expect(subdirectoryMode).toBe(0o700);
+});

@@ -20,6 +20,7 @@ import path from 'path';
 
 import sourceMapSupport from 'source-map-support';
 import { calculateSha1 } from '@utils/crypto';
+import { mkdirPrivate } from '@utils/fileUtils';
 
 import { isWorkerProcess } from '../globals';
 import { packageRoot } from '../package';
@@ -156,7 +157,11 @@ export function getFromCompilationCache(filename: string, contentHash: string, m
         return {};
       // Trim cache. This won't help with deleted files, but it will remove storing multiple copies of the same file
       clearOldCacheEntries(cacheFolderName, filePathHash);
-      fs.mkdirSync(path.dirname(cachePath), { recursive: true });
+      // Both the cache root and the per-file subdirectory live under a
+      // shared temp directory by default, so neither may be left
+      // world-readable or reused when planted by another user.
+      mkdirPrivate(cacheDir);
+      mkdirPrivate(path.dirname(cachePath));
       if (map)
         fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
       writeCodeCache(codePath, code);
