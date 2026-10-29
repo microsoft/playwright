@@ -610,7 +610,17 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       return;
     }
 
-    await this.page.evaluate(ms => new Promise(f => setTimeout(f, ms)), time).catch(() => {});
+    // Pages that cannot run their own timers (for example, CSP `sandbox` without `allow-scripts`)
+    // never resolve the page-side wait, so bound it from the Node side.
+    let timer: NodeJS.Timeout | undefined;
+    try {
+      await Promise.race([
+        this.page.evaluate(ms => new Promise(f => setTimeout(f, ms)), time).catch(() => {}),
+        new Promise(f => timer = setTimeout(f, time + 5000)),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
   }
 }
 

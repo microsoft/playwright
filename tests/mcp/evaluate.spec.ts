@@ -156,3 +156,28 @@ test('browser_evaluate (error)', async ({ client, server }) => {
   const errorText = result.content?.[0]?.text || '';
   expect(errorText).toMatch(/not defined|Can't find variable/);
 });
+
+test('browser_evaluate on a CSP-sandboxed page', async ({ client, server }) => {
+  // Documents served with `Content-Security-Policy: sandbox` (e.g. raw.githubusercontent.com) cannot run
+  // their own timers, so the page-side settle wait must not hang the tool.
+  server.setRoute('/sandboxed', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Content-Security-Policy': `default-src 'none'; style-src 'unsafe-inline'; sandbox`,
+    });
+    res.end('Hello, sandbox');
+  });
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX + '/sandboxed' },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: '() => document.body.textContent',
+    },
+  })).toHaveResponse({
+    result: `"Hello, sandbox"`,
+  });
+});
