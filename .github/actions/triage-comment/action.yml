@@ -1,0 +1,99 @@
+name: 'Post the triage comment'
+description: >
+  Posts the agent's investigation note, comment.md in the directory, on the issue, with the draft
+  pull request appended when one was opened and any extra text after it, then hides the comment
+  with the run link. Without a note, when the run failed or ran out of budget first, posts that the
+  bot couldn't finish and why, from the outcomes of the triage job.
+inputs:
+  issue:
+    description: 'Number of the issue'
+    required: true
+  dir:
+    description: 'Directory the triage artifact was downloaded to'
+    required: true
+  footer:
+    description: 'The footer, such as "Triaged on Linux by the Playwright bot"; the run link follows'
+    required: true
+  job-result:
+    description: 'Result of the triage job'
+    required: true
+  setup-outcome:
+    description: 'Outcome of the setup step of the triage job'
+    required: false
+    default: ''
+  agent-outcome:
+    description: 'Outcome of the Copilot session'
+    required: false
+    default: ''
+  setup-failure-reason:
+    description: 'Why a failed setup step failed, for the comment'
+    required: false
+    default: 'installing dependencies, building or downloading browsers failed'
+  pull-request:
+    description: 'URL of the draft pull request, when one was opened'
+    required: false
+    default: ''
+  publish-result:
+    description: 'Result of the publish job'
+    required: false
+    default: ''
+  extra:
+    description: 'Markdown appended after the pull request line'
+    required: false
+    default: ''
+  start-comment:
+    description: 'Node id of the comment with the run link, hidden afterwards'
+    required: false
+    default: ''
+  token:
+    description: 'Token that writes issue comments'
+    required: false
+    default: ${{ github.token }}
+runs:
+  using: composite
+  steps:
+  - name: Post the comment
+    shell: bash
+    env:
+      GH_TOKEN: ${{ inputs.token }}
+      GH_REPO: ${{ github.repository }}
+      ISSUE: ${{ inputs.issue }}
+      DIR: ${{ inputs.dir }}
+      FOOTER: ${{ inputs.footer }}
+      JOB_RESULT: ${{ inputs.job-result }}
+      SETUP_OUTCOME: ${{ inputs.setup-outcome }}
+      AGENT_OUTCOME: ${{ inputs.agent-outcome }}
+      SETUP_FAILURE_REASON: ${{ inputs.setup-failure-reason }}
+      PR_URL: ${{ inputs.pull-request }}
+      PUBLISH_RESULT: ${{ inputs.publish-result }}
+      EXTRA: ${{ inputs.extra }}
+      START_COMMENT: ${{ inputs.start-comment }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    run: |
+      mkdir -p "$DIR"
+      if [[ ! -s "$DIR/comment.md" ]]; then
+        if [[ "$SETUP_OUTCOME" == "failure" ]]; then
+          reason="$SETUP_FAILURE_REASON"
+        elif [[ "$AGENT_OUTCOME" == "failure" ]]; then
+          reason="the Copilot session failed or ran out of budget before it wrote a result"
+        elif [[ "$JOB_RESULT" != "success" ]]; then
+          reason="the triage job ended with result \`$JOB_RESULT\`, for example after a timeout"
+        else
+          reason="the Copilot session ended without writing a result"
+        fi
+        echo "Hi, I'm the Playwright bot. I couldn't finish triaging this issue: $reason. The agent run has the details." > "$DIR/comment.md"
+      fi
+      if [[ -n "$PR_URL" ]]; then
+        printf '\n\nDraft fix: %s\n' "$PR_URL" >> "$DIR/comment.md"
+      elif [[ "$PUBLISH_RESULT" == "failure" ]]; then
+        printf '\n\nThe bot proposed a fix, but opening the pull request failed. The agent run has the details.\n' >> "$DIR/comment.md"
+      fi
+      if [[ -n "$EXTRA" ]]; then
+        printf '\n\n%s\n' "$EXTRA" >> "$DIR/comment.md"
+      fi
+      printf '\n\n<sub>%s - [agent run](%s)</sub>\n<!-- playwright-ai-triage -->\n' "$FOOTER" "$RUN_URL" >> "$DIR/comment.md"
+      gh issue comment "$ISSUE" --body-file "$DIR/comment.md"
+      if [[ -n "$START_COMMENT" ]]; then
+        gh api graphql -f query='mutation($id: ID!) { minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) { clientMutationId } }' -f id="$START_COMMENT" \
+          || echo "::warning::Could not hide the comment with the run link"
+      fi

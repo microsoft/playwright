@@ -84,9 +84,9 @@ jobs:
     outputs:
       base: ${{ steps.base.outputs.sha }}
       setup: ${{ steps.setup.outcome }}
-      agent: ${{ steps.agent.outcome }}
-      has_fix: ${{ steps.save.outputs.has_fix }}
-      browser: ${{ steps.save.outputs.browser }}
+      agent: ${{ steps.agent.outputs.outcome }}
+      has_fix: ${{ steps.agent.outputs.has-result }}
+      browser: ${{ steps.browser.outputs.browser }}
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
@@ -115,68 +115,43 @@ jobs:
         npm install -g @github/copilot
         npm run build
         npx playwright install --with-deps chromium firefox webkit
+    - name: Write the prompt
+      id: prompt
+      run: |
+        delimiter="PROMPT_$RANDOM$RANDOM"
+        {
+          echo "prompt<<$delimiter"
+          echo "Follow .claude/skills/playwright-triage/SKILL.md. Read it and the triage.md it"
+          echo "points to in full before starting."
+          if [[ -n "$ISSUE" ]]; then
+            printf '\nIssue: https://github.com/microsoft/playwright/issues/%s\n' "$ISSUE"
+          fi
+          if [[ -n "$TASK" ]]; then
+            printf '\nTask: %s\n' "$TASK"
+          fi
+          echo "$delimiter"
+        } >> "$GITHUB_OUTPUT"
     - name: Triage with Copilot CLI
       id: agent
-      # A finished proposal is still useful if the session exhausts its budget.
-      continue-on-error: true
-      env:
-        COPILOT_GITHUB_TOKEN: ${{ github.token }}
+      uses: ./.github/actions/run-agent
+      with:
+        prompt: ${{ steps.prompt.outputs.prompt }}
+        output-dir: ${{ env.OUTPUT_DIR }}
+        result-file: fix/proposal.json
+        artifact-name: triage
+        github-tools: true
+    - name: Read the browser bug report
+      id: browser
       run: |
-        PROMPT="Follow .claude/skills/playwright-triage/SKILL.md. Read it and the triage.md it
-        points to in full before starting."
-        if [[ -n "$ISSUE" ]]; then
-          PROMPT="$PROMPT
-
-        Issue: https://github.com/microsoft/playwright/issues/$ISSUE"
-        fi
-        if [[ -n "$TASK" ]]; then
-          PROMPT="$PROMPT
-
-        Task: $TASK"
-        fi
-        copilot \
-          --allow-all-tools \
-          --allow-all-paths \
-          --no-ask-user \
-          --enable-all-github-mcp-tools \
-          --share="$OUTPUT_DIR/copilot-session.md" \
-          --model gpt-6.1-sol \
-          --max-ai-credits 5000 \
-          -p "$PROMPT"
-    - name: Save the outcome
-      id: save
-      if: always()
-      env:
-        AGENT_OUTCOME: ${{ steps.agent.outcome }}
-      run: |
-        mkdir -p "$OUTPUT_DIR"
-        if [[ -f "$OUTPUT_DIR/fix/proposal.json" ]]; then
-          echo "has_fix=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "has_fix=false" >> "$GITHUB_OUTPUT"
-        fi
         browser=""
         if [[ -f "$OUTPUT_DIR/browser/report.json" ]]; then
           browser=$(node -p 'String(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).browser)' "$OUTPUT_DIR/browser/report.json" || true)
           [[ "$browser" =~ ^(chromium|firefox|webkit)$ ]] || { echo "::warning::browser/report.json does not name chromium, firefox or webkit"; browser=""; }
         fi
         echo "browser=$browser" >> "$GITHUB_OUTPUT"
-        echo "Copilot step: $AGENT_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
         if [[ -n "$browser" ]]; then
           echo "Browser bug report: $browser" >> "$GITHUB_STEP_SUMMARY"
         fi
-        if [[ -f "$OUTPUT_DIR/summary.md" ]]; then
-          cat "$OUTPUT_DIR/summary.md" >> "$GITHUB_STEP_SUMMARY"
-        else
-          echo "No investigation summary was produced; see the session artifact." >> "$GITHUB_STEP_SUMMARY"
-        fi
-    - name: Upload investigation and fix
-      if: always()
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-        name: triage
-        path: ${{ env.OUTPUT_DIR }}
-        if-no-files-found: warn
 
   publish:
     name: Open draft pull request
@@ -185,7 +160,7 @@ jobs:
     if: ${{ !cancelled() && needs.triage.outputs.has_fix == 'true' }}
     runs-on: ubuntu-latest
     outputs:
-      pr: ${{ steps.publish.outputs.pr }}
+      pr: ${{ steps.publish.outputs.pull-request }}
     steps:
     - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
       id: app-token
@@ -203,43 +178,16 @@ jobs:
     # Never execute code or scripts from the proposed changes in the app job.
     - name: Validate, push and open draft
       id: publish
-      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-      env:
-        BASE_SHA: ${{ needs.triage.outputs.base }}
-        ISSUE: ${{ github.event.issue.number || inputs.issue }}
-        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      uses: ./.github/actions/publish-patch
       with:
-        github-token: ${{ steps.app-token.outputs.token }}
-        script: |
-          const fs = require('fs');
-          const path = require('path');
-          const { execFileSync } = require('child_process');
-          const { ISSUE, RUNNER_TEMP, RUN_URL } = process.env;
-          const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
-          const dir = path.join(RUNNER_TEMP, 'triage', 'fix');
-          const { owner, repo } = context.repo;
-          git('apply', '--index', path.join(dir, 'fix.patch'));
-
-          // Workflow changes would run with this repo's secrets in PR CI.
-          const workflowFiles = git('diff', '--cached', '--name-only', '--no-renames', '-z').split('\0').filter(file => file.startsWith('.github/'));
-          if (workflowFiles.length)
-            throw new Error(`Patch changes workflow files, treating it as compromised: ${workflowFiles.join(', ')}`);
-
-          const { title } = JSON.parse(fs.readFileSync(path.join(dir, 'proposal.json'), 'utf8'));
-          const description = fs.readFileSync(path.join(dir, 'pr-body.md'), 'utf8').trim();
-          const branch = `triage/${ISSUE || 'task'}/${context.runId}-${process.env.GITHUB_RUN_ATTEMPT}`;
-          git('config', 'user.name', 'microsoft-playwright-automation[bot]');
-          git('config', 'user.email', '203992400+microsoft-playwright-automation[bot]@users.noreply.github.com');
-          git('switch', '-c', branch);
-          git('commit', '-m', title, ...(ISSUE ? ['-m', `Fixes: https://github.com/${owner}/${repo}/issues/${ISSUE}`] : []));
-          git('push', 'origin', `HEAD:refs/heads/${branch}`);
-          const { data: pr } = await github.rest.pulls.create({
-            owner, repo, head: branch, base: 'main', title,
-            body: `${description}\n\n<sub>Prepared by the [triage workflow](${RUN_URL}).</sub>`,
-            draft: true,
-          });
-          core.setOutput('pr', pr.html_url);
-          await core.summary.addRaw(`Draft pull request: ${pr.html_url}\n`).write();
+        token: ${{ steps.app-token.outputs.token }}
+        dir: ${{ runner.temp }}/triage/fix
+        patch: fix.patch
+        metadata: proposal.json
+        body-file: pr-body.md
+        branch: triage/${{ github.event.issue.number || inputs.issue || 'task' }}/${{ github.run_id }}-${{ github.run_attempt }}
+        commit-body: "${{ (github.event.issue.number || inputs.issue) && format('Fixes: https://github.com/{0}/issues/{1}', github.repository, github.event.issue.number || inputs.issue) || '' }}"
+        pull-request: true
 
   browser:
     name: File the browser issue
@@ -321,64 +269,49 @@ jobs:
     if: ${{ !cancelled() && needs.triage.result != 'skipped' && (github.event_name == 'issues' || inputs.issue != '') }}
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       issues: write
     env:
-      ISSUE: ${{ github.event.issue.number || inputs.issue }}
-      PLATFORM_NAME: ${{ fromJSON('{"linux":"Linux","mac":"macOS","windows":"Windows","needs-triage":"Linux","needs-triage-mac":"macOS","needs-triage-win":"Windows"}')[inputs.platform || github.event.label.name] }}
-      TRIAGE_RESULT: ${{ needs.triage.result }}
-      SETUP_OUTCOME: ${{ needs.triage.outputs.setup }}
-      AGENT_OUTCOME: ${{ needs.triage.outputs.agent }}
-      PUBLISH_RESULT: ${{ needs.publish.result }}
-      PR_URL: ${{ needs.publish.outputs.pr }}
       BROWSER: ${{ needs.triage.outputs.browser }}
       BROWSER_RESULT: ${{ needs.browser.result }}
       BROWSER_ISSUE_URL: ${{ needs.browser.outputs.url }}
-      START_COMMENT: ${{ needs.start.outputs.comment }}
-      GH_TOKEN: ${{ github.token }}
-      GH_REPO: ${{ github.repository }}
-      WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        sparse-checkout: .github/actions
+        persist-credentials: false
     - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
       # A failed triage run may not have uploaded anything.
       continue-on-error: true
       with:
         name: triage
-        path: output
-    - name: Post triage comment
+        path: ${{ runner.temp }}/triage
+    - name: Describe the browser bug report
+      id: browser
+      env:
+        OUTPUT_DIR: ${{ runner.temp }}/triage
       run: |
-        mkdir -p output
-        if [[ ! -s output/comment.md ]]; then
-          if [[ "$SETUP_OUTCOME" == "failure" ]]; then
-            reason="installing dependencies, building or downloading browsers failed"
-          elif [[ "$AGENT_OUTCOME" == "failure" ]]; then
-            reason="the Copilot session failed or ran out of budget before it wrote a result"
-          elif [[ "$TRIAGE_RESULT" != "success" ]]; then
-            reason="the triage job ended with result \`$TRIAGE_RESULT\`, for example after a timeout"
-          else
-            reason="the Copilot session ended without writing a result"
-          fi
-          echo "Hi, I'm the Playwright bot. I couldn't finish triaging this issue: $reason. The agent run has the details." > output/comment.md
-        fi
-        if [[ -n "$PR_URL" ]]; then
-          printf '\n\nDraft fix: %s\n' "$PR_URL" >> output/comment.md
-        elif [[ "$PUBLISH_RESULT" == "failure" ]]; then
-          printf '\n\nThe bot proposed a fix, but opening the pull request failed. The agent run has the details.\n' >> output/comment.md
-        fi
-        if [[ "$BROWSER" == "chromium" && -s output/browser/report.md ]]; then
-          title=$(jq -r '.title // empty' output/browser/report.json)
-          {
-            printf '\n\nChromium bug report, for a maintainer to file at https://crbug.com/new:\n\n**Title:** %s\n\n<details>\n<summary>Body</summary>\n\n````markdown\n' "$title"
-            cat output/browser/report.md
-            printf '\n````\n\n</details>\n'
-          } >> output/comment.md
+        extra=""
+        if [[ "$BROWSER" == "chromium" && -s "$OUTPUT_DIR/browser/report.md" ]]; then
+          title=$(jq -r '.title // empty' "$OUTPUT_DIR/browser/report.json")
+          extra=$(printf 'Chromium bug report, for a maintainer to file at https://crbug.com/new:\n\n**Title:** %s\n\n<details>\n<summary>Body</summary>\n\n````markdown\n%s\n````\n\n</details>' "$title" "$(cat "$OUTPUT_DIR/browser/report.md")")
         elif [[ -n "$BROWSER_ISSUE_URL" ]]; then
-          printf '\n\nBlocked-by: %s\n' "$BROWSER_ISSUE_URL" >> output/comment.md
+          extra="Blocked-by: $BROWSER_ISSUE_URL"
         elif [[ "$BROWSER_RESULT" == "failure" ]]; then
-          printf '\n\nThe bot wrote a %s bug report, but filing it in microsoft/playwright-browsers failed. The agent run has the details.\n' "$BROWSER" >> output/comment.md
+          extra="The bot wrote a $BROWSER bug report, but filing it in microsoft/playwright-browsers failed. The agent run has the details."
         fi
-        printf '\n\n<sub>Triaged on %s by the Playwright bot - [agent run](%s)</sub>\n<!-- playwright-ai-triage -->\n' "$PLATFORM_NAME" "$WORKFLOW_URL" >> output/comment.md
-        gh issue comment "$ISSUE" --body-file output/comment.md
-        if [[ -n "$START_COMMENT" ]]; then
-          gh api graphql -f query='mutation($id: ID!) { minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) { clientMutationId } }' -f id="$START_COMMENT" \
-            || echo "::warning::Could not hide the comment with the run link"
-        fi
+        delimiter="EXTRA_$RANDOM$RANDOM"
+        { echo "extra<<$delimiter"; echo "$extra"; echo "$delimiter"; } >> "$GITHUB_OUTPUT"
+    - name: Post the triage comment
+      uses: ./.github/actions/triage-comment
+      with:
+        issue: ${{ github.event.issue.number || inputs.issue }}
+        dir: ${{ runner.temp }}/triage
+        footer: Triaged on ${{ fromJSON('{"linux":"Linux","mac":"macOS","windows":"Windows","needs-triage":"Linux","needs-triage-mac":"macOS","needs-triage-win":"Windows"}')[inputs.platform || github.event.label.name] }} by the Playwright bot
+        job-result: ${{ needs.triage.result }}
+        setup-outcome: ${{ needs.triage.outputs.setup }}
+        agent-outcome: ${{ needs.triage.outputs.agent }}
+        pull-request: ${{ needs.publish.outputs.pr }}
+        publish-result: ${{ needs.publish.result }}
+        extra: ${{ steps.browser.outputs.extra }}
+        start-comment: ${{ needs.start.outputs.comment }}
