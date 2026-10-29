@@ -26048,9 +26048,9 @@ export interface ConnectOverCDPOptions {
 
   /**
    * When true, Playwright will not apply its default overrides to the existing default browser context. Specifically,
-   * [`acceptDownloads`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-accept-downloads) is
-   * left at the browser's setting, focus emulation is not enabled, and media emulation options (such as
-   * [`colorScheme`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-color-scheme),
+   * [`acceptDownloads`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-accept-downloads) and
+   * font families are left at the browser's settings, focus emulation is not enabled, and media emulation options (such
+   * as [`colorScheme`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-color-scheme),
    * [`reducedMotion`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-reduced-motion),
    * [`forcedColors`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-forced-colors), and
    * [`contrast`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-contrast)) are not applied.

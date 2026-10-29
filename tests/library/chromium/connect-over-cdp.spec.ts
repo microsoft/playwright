@@ -833,19 +833,34 @@ test('CD-033 should get title and URL of existing page', async ({ browserType, m
   }
 });
 
-test('CD-034 should skip default overrides with noDefaults', async ({ browserType, mode, server }, testInfo) => {
+test('CD-034 should skip default overrides with noDefaults', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43715' },
+}, async ({ browserType, mode, server }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40158' });
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
     args: ['--remote-debugging-port=' + port]
   });
   try {
+    const initialBrowser = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+      noDefaults: true,
+    });
+    const initialContext = initialBrowser.contexts()[0];
+    const initialPage = await initialContext.newPage();
+    const session = await initialContext.newCDPSession(initialPage);
+    await session.send('Page.setFontFamilies', { fontFamilies: { standard: 'monospace' } });
+    await initialPage.setContent('<span>iiiiiiiiiiiiiiiiiiii</span>');
+    const width = await initialPage.locator('span').evaluate(span => span.getBoundingClientRect().width);
+    await initialBrowser.close();
+
     const browser = await browserType.connectOverCDP({
       endpointURL: `http://127.0.0.1:${port}/`,
       noDefaults: true,
     });
     const defaultContext = browser.contexts()[0];
-    const page = await defaultContext.newPage();
+    const [page] = defaultContext.pages();
+    expect(await page.locator('span').evaluate(span => span.getBoundingClientRect().width)).toBe(width);
 
     // Browser.setDownloadBehavior was not sent, so no Playwright download event fires.
     server.setRoute('/download', (req, res) => {
