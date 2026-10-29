@@ -6,6 +6,7 @@ name: PR revision
 on:
   # Apply needs-revision, needs-revision-mac or needs-revision-win; re-apply it to trigger another pass.
   # pull_request_target always runs this file from main; the jobs only accept the triage app's own PRs.
+  # The revise and push jobs check out the PR branch, so they take the actions from main by name.
   pull_request_target:
     types: [labeled]
 
@@ -101,7 +102,7 @@ jobs:
     - name: Revise with Copilot CLI
       id: agent
       # No GitHub tools and no URL access: the agent reads the PR only from the review the prepare job filtered.
-      uses: ./.github/actions/run-agent
+      uses: microsoft/playwright/.github/actions/run-agent@main
       with:
         prompt: |
           Follow the shared guide revision.md and this repo's AGENTS.md. Read both in full before starting.
@@ -133,7 +134,7 @@ jobs:
         path: ${{ runner.temp }}/revision
     # Never execute code or scripts from the proposed changes in the app job.
     - name: Validate and push
-      uses: ./.github/actions/publish-patch
+      uses: microsoft/playwright/.github/actions/publish-patch@main
       with:
         token: ${{ steps.app-token.outputs.token }}
         dir: ${{ runner.temp }}/revision/commit
