@@ -151,6 +151,55 @@ test('should understand dependency structure', async ({ runInlineTest, git, writ
   expect(result.output).not.toContain('c.spec.ts');
 });
 
+test('should understand dependency structure shared between esm test files', async ({ runInlineTest, git, writeFiles }) => {
+  const packageJson = `{ "type": "module" }`;
+  await writeFiles({
+    'package.json': packageJson,
+    'a.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    import { answer, question } from './utils';
+    test('fails', () => { expect(question).toBe(answer); });
+  `,
+    'b.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    import { answer, question } from './utils';
+    test('fails', () => { expect(question).toBe(answer); });
+  `,
+    'c.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    test('fails', () => { expect(1).toBe(2); });
+  `,
+    'utils.ts': `
+    export * from './answer';
+    export * from './question';
+  `,
+    'answer.ts': `
+    export const answer = 42;
+  `,
+    'question.ts': `
+    export const question = "???";
+  `,
+  });
+
+  git(`add .`);
+  git(`commit -m init`);
+
+  await writeFiles({
+    'question.ts': `
+        export const question = "what is the answer to life the universe and everything";
+      `,
+  });
+  // Same bytes as the committed file, so git sees no change and the fixture keeps ESM.
+  const result = await runInlineTest({ 'package.json': packageJson }, { 'only-changed': true });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(2);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('a.spec.ts');
+  expect(result.output).toContain('b.spec.ts');
+  expect(result.output).not.toContain('c.spec.ts');
+});
+
 test('watch mode is not supported', async ({ runWatchTest }) => {
   const testProcess = await runWatchTest({}, { 'only-changed': true });
   await testProcess.exited;

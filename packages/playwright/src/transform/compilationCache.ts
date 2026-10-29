@@ -208,6 +208,18 @@ function clearOldCacheEntries(cacheFolderName: string, filePathHash: string) {
 // Since ESM and CJS collect dependencies differently,
 // we go via the global state to collect them.
 let depsCollector: Set<string> | undefined;
+// ESM resolve hooks run once per module, when it is first linked, so a test file that imports an
+// already-linked module would miss that module's imports. Keep the edges to walk them later.
+const esmImportGraph = new Map<string, Set<string>>();
+
+export function recordEsmImport(parent: string, child: string) {
+  let children = esmImportGraph.get(parent);
+  if (!children) {
+    children = new Set();
+    esmImportGraph.set(parent, children);
+  }
+  children.add(child);
+}
 
 export function startCollectingFileDeps() {
   depsCollector = new Set();
@@ -216,6 +228,11 @@ export function startCollectingFileDeps() {
 export function stopCollectingFileDeps(filename: string) {
   if (!depsCollector)
     return;
+  // Sets visit entries added during iteration, so this collects the whole transitive closure.
+  for (const dep of depsCollector) {
+    for (const child of esmImportGraph.get(dep) ?? [])
+      depsCollector.add(child);
+  }
   depsCollector.delete(filename);
   for (const dep of depsCollector) {
     if (belongsToNodeModules(dep))
