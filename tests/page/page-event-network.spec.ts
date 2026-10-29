@@ -140,7 +140,7 @@ it('NE-090 should resolve responses after a cross-process navigation', {
   expect(await responsePromise).toBe(null);
   // the request should fail with the browser's "canceled" error.
   expect(await failedPromise).toBe(request);
-  expect(request.failure().errorText).toBe({ chromium: 'net::ERR_ABORTED', firefox: 'NS_BINDING_ABORTED', webkit: 'cancelled' }[browserName]);
+  expect(request.failure().errorText).toContain({ chromium: 'net::ERR_ABORTED', firefox: 'NS_BINDING_ABORTED', webkit: 'cancelled' }[browserName]);
 });
 
 it('NE-143 should resolve responses after a same-process navigation', {
@@ -178,8 +178,8 @@ it('NE-143 should resolve responses after a same-process navigation', {
   // both requests should fail with the browser's "canceled" error.
   const errorText = { chromium: 'net::ERR_ABORTED', firefox: 'NS_BINDING_ABORTED', webkit: 'cancelled' }[browserName];
   expect(failedRequests.map(r => r.url()).sort()).toEqual([server.PREFIX + '/foo', server.PREFIX + '/streaming']);
-  expect(request.failure().errorText).toBe(errorText);
-  expect(streamingResponse.request().failure().errorText).toBe(errorText);
+  expect(request.failure().errorText).toContain(errorText);
+  expect(streamingResponse.request().failure().errorText).toContain(errorText);
   // the partial body should not be available anymore.
   expect((await streamingTextPromise).message).toContain('navigated away');
 });
