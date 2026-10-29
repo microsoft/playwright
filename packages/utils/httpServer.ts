@@ -82,6 +82,7 @@ export class HttpServer {
 
   // Anyone who can reach the server can read the path prefix from this redirect.
   installRootRedirect(location: string) {
+    assert(this._pathPrefix, 'root redirect requires a random path prefix');
     this._rootRedirect = location;
   }
 
@@ -136,20 +137,19 @@ export class HttpServer {
     // DCE this whole branch without keeping a resolvable module reference.
     const loadVite = new Function('return import("vite")') as () => Promise<any>;
     const vite = await loadVite();
-    const pathPrefix = this._pathPrefix;
     return await vite.createServer({
       root: options.root,
-      base: pathPrefix + (options.base ?? '/'),
-      plugins: pathPrefix ? [{
+      base: this._pathPrefix + (options.base ?? '/'),
+      plugins: [{
         name: 'playwright-path-prefix',
         // Route handlers get URLs without the path prefix, but Vite needs the URL that the browser requested.
         configureServer: (server: any) => {
           server.middlewares.use((request: http.IncomingMessage, _: http.ServerResponse, next: () => void) => {
-            request.url = pathPrefix + request.url;
+            request.url = this._pathPrefix + request.url;
             next();
           });
         },
-      }] : [],
+      }],
       server: {
         middlewareMode: true,
         // Dedicated path so Vite's HMR websocket does not collide with any
@@ -310,20 +310,17 @@ export class HttpServer {
         response.end();
         return;
       }
-      if (this._rootRedirect !== undefined && new URL('http://localhost' + request.url).pathname === '/') {
-        response.statusCode = 302;
-        response.setHeader('Location', '.' + this._pathPrefix + this._rootRedirect);
+      if (!request.url.startsWith(this._pathPrefix + '/')) {
+        if (this._rootRedirect !== undefined && new URL('http://localhost' + request.url).pathname === '/') {
+          response.statusCode = 302;
+          response.setHeader('Location', '.' + this._pathPrefix + this._rootRedirect);
+        } else {
+          response.statusCode = 404;
+        }
         response.end();
         return;
       }
-      if (this._pathPrefix) {
-        if (!request.url.startsWith(this._pathPrefix + '/')) {
-          response.statusCode = 404;
-          response.end();
-          return;
-        }
-        request.url = request.url.substring(this._pathPrefix.length);
-      }
+      request.url = request.url.substring(this._pathPrefix.length);
       const url = new URL('http://localhost' + request.url);
       for (const route of this._routes) {
         if (route.exact && url.pathname === route.exact && route.handler(request, response))
