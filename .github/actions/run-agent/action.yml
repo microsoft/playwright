@@ -5,7 +5,9 @@ description: >
   leaves its results as files in the output directory. The action reports whether the result file
   is there, writes the agent's summary.md into the run summary and uploads the output directory as
   an artifact, also when the session failed or ran out of budget. The Copilot CLI has to be
-  installed already.
+  installed already. The action also copies the shared guides in guides/, the parts of the triage
+  and revision skills that are the same for every Playwright repo, to $AGENT_GUIDES_DIR on the
+  runner, and tells the agent where they are at the end of the prompt.
 inputs:
   prompt:
     description: 'The prompt'
@@ -53,6 +55,16 @@ outputs:
 runs:
   using: composite
   steps:
+  - name: Copy the shared guides
+    shell: bash
+    env:
+      ACTION_PATH: ${{ github.action_path }}
+    run: |
+      dir="${RUNNER_TEMP//\\//}/agent-guides"
+      rm -rf "$dir"
+      mkdir -p "$dir"
+      cp "${ACTION_PATH//\\//}"/guides/*.md "$dir"
+      echo "AGENT_GUIDES_DIR=$dir" >> "$GITHUB_ENV"
   - name: Run the Copilot CLI
     id: agent
     # A finished result is still useful if the session exhausts its budget.
@@ -69,6 +81,10 @@ runs:
       MAX_AI_CREDITS: ${{ inputs.max-ai-credits }}
     run: |
       mkdir -p "$OUTPUT_DIR"
+      guides=$(cd "$AGENT_GUIDES_DIR" && ls *.md | tr '\n' ' ')
+      PROMPT="$PROMPT
+
+      The shared guides of the Playwright bots are in $AGENT_GUIDES_DIR: $guides."
       $WRAPPER copilot \
         --allow-all-tools \
         --allow-all-paths \

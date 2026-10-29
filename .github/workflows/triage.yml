@@ -103,7 +103,7 @@ jobs:
         echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
         echo "OUTPUT_DIR=${RUNNER_TEMP//\\//}/triage" >> "$GITHUB_ENV"
         echo "SCRATCH_DIR=${RUNNER_TEMP//\\//}/scratch" >> "$GITHUB_ENV"
-        echo "PLAYWRIGHT_DIR=${GITHUB_WORKSPACE//\\//}" >> "$GITHUB_ENV"
+        echo "REPO_DIR=${GITHUB_WORKSPACE//\\//}" >> "$GITHUB_ENV"
     - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
         node-version: '24'
@@ -121,8 +121,8 @@ jobs:
         delimiter="PROMPT_$RANDOM$RANDOM"
         {
           echo "prompt<<$delimiter"
-          echo "Follow .claude/skills/playwright-triage/SKILL.md. Read it and the triage.md it"
-          echo "points to in full before starting."
+          echo "Follow .claude/skills/playwright-triage/SKILL.md. Read it, the guide and the AGENTS.md"
+          echo "it points to in full before starting."
           if [[ -n "$ISSUE" ]]; then
             printf '\nIssue: https://github.com/microsoft/playwright/issues/%s\n' "$ISSUE"
           fi

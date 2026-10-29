@@ -96,6 +96,13 @@ Keep tests minimal. Be mindful of the number of tests you add.
 - **New features**: cover the mainstream scenario and the important edge cases only. Do not create matrices of tests for every scenario, option, or aspect.
 - **Regressions**: generalize the provided regression cases into meaningful tests, and stop there. Do not add more tests around them.
 
+### Regression tests
+
+- Tag the test with the issue: `test('...', { annotation: { type: 'issue', description: '<issue url>' } }, async ({ page, server }) => { ... })`.
+- No `test.beforeAll`, `test.afterAll`, `http.createServer`, or manual setup and teardown. The fixtures give you a page and a web server: `server.setRoute(...)`, `server.setRedirect(...)`, `server.PREFIX`, `server.EMPTY_PAGE`. Drive the page with `page.setContent(...)` or `page.goto(server.PREFIX + '/...')`.
+- Good models: "should return event source" in `tests/page/page-network-request.spec.ts` (an SSE endpoint through `server.setRoute`, no lifecycle hooks); "should use light DOM structure for child combinator with slotted content" in `tests/page/selectors-css.spec.ts` (`page.setContent` with inline shadow DOM); "should report worker script as network request after redirect" in `tests/page/workers.spec.ts` (routes and redirects, plus a `fixme` for a browser gap).
+- Run the test on all three browsers: `npm run ctest <file>`, `npm run ftest <file>`, `npm run wtest <file>`; `--headed` for a headed run.
+
 ## DEPS System
 
 Import boundaries are enforced via `DEPS.list` files (52+ across the repo), checked by `npm run flint`.
