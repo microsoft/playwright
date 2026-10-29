@@ -696,8 +696,8 @@ export function getAriaInvalid(element: Element): 'false' | 'true' | 'grammar' |
   // https://www.w3.org/TR/wai-aria-1.2/#aria-invalid
   // This state is being deprecated as a global state in ARIA 1.2.
   // In future versions it will only be allowed on roles where it is specifically supported.
-  const ariaInvalid = element.getAttribute('aria-invalid');
-  if (!ariaInvalid || ariaInvalid.trim() === '' || ariaInvalid.toLocaleLowerCase() === 'false')
+  const ariaInvalid = element.getAttribute('aria-invalid')?.toLowerCase();
+  if (!ariaInvalid || ariaInvalid.trim() === '' || ariaInvalid === 'false')
     return 'false';
   if (ariaInvalid === 'true' || ariaInvalid === 'grammar' || ariaInvalid === 'spelling')
     return ariaInvalid;
