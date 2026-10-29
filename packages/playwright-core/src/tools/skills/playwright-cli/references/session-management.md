@@ -2,6 +2,18 @@
 
 Run multiple isolated browser sessions concurrently with state persistence.
 
+## Contents
+
+- [Named Browser Sessions](#named-browser-sessions)
+- [Browser Session Isolation Properties](#browser-session-isolation-properties)
+- [Browser Session Commands](#browser-session-commands)
+- [Environment Variable](#environment-variable)
+- [Common Patterns](#common-patterns)
+- [Attaching to a Running Browser](#attaching-to-a-running-browser)
+- [Default Browser Session](#default-browser-session)
+- [Browser Session Configuration](#browser-session-configuration)
+- [Best Practices](#best-practices)
+
 ## Named Browser Sessions
 
 Use `-s` flag to isolate browser contexts:

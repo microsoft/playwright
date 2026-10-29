@@ -2,6 +2,21 @@
 
 Use `run-code` to execute arbitrary Playwright code for advanced scenarios not covered by CLI commands.
 
+## Contents
+
+- [Syntax](#syntax)
+- [Geolocation](#geolocation)
+- [Permissions](#permissions)
+- [Media Emulation](#media-emulation)
+- [Wait Strategies](#wait-strategies)
+- [Frames and Iframes](#frames-and-iframes)
+- [File Downloads](#file-downloads)
+- [Clipboard](#clipboard)
+- [Page Information](#page-information)
+- [JavaScript Execution](#javascript-execution)
+- [Error Handling](#error-handling)
+- [Complex Workflows](#complex-workflows)
+
 ## Syntax
 
 ```bash

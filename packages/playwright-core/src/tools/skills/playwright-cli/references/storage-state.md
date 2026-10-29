@@ -2,6 +2,16 @@
 
 Manage cookies, localStorage, sessionStorage, and browser storage state.
 
+## Contents
+
+- [Storage State](#storage-state)
+- [Cookies](#cookies)
+- [Local Storage](#local-storage)
+- [Session Storage](#session-storage)
+- [IndexedDB](#indexeddb)
+- [Common Patterns](#common-patterns)
+- [Security Notes](#security-notes)
+
 ## Storage State
 
 Save and restore complete browser state including cookies and storage.

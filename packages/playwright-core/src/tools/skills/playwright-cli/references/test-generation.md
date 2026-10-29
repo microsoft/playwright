@@ -1,11 +1,14 @@
 # Test generation (plan → generate → heal)
 
-End-to-end workflow for authoring and maintaining Playwright tests with `playwright-cli`. Every `playwright-cli` action emits the equivalent Playwright TypeScript, and that generated code is the raw material for every test. The sections below can be used independently:
+End-to-end workflow for authoring and maintaining Playwright tests with `playwright-cli`. Every `playwright-cli` action emits the equivalent Playwright TypeScript, and that generated code is the raw material for every test. The sections below can be used independently.
 
-- **How generation works** — the core mechanic everything else relies on: actions become TypeScript, plus how to add assertions.
-- **Plan** — explore the app, produce a spec file describing what to test.
-- **Generate** — turn a spec into Playwright test files. Update the spec if it's vague or stale.
-- **Heal** — diagnose failing tests, fix the code, reconcile the spec with reality.
+## Contents
+
+- [0. How generation works](#0-how-generation-works) — the core mechanic everything else relies on: actions become TypeScript, plus how to add assertions.
+- [1. Planning](#1-planning) — explore the app, produce a spec file describing what to test.
+- [2. Generate](#2-generate) — turn a spec into Playwright test files. Update the spec if it's vague or stale.
+- [3. Heal](#3-heal) — diagnose failing tests, fix the code, reconcile the spec with reality.
+- [Cross-references](#cross-references)
 
 Plan / generate / heal lean on the same mechanic: run `npx playwright test --debug=cli` in the background, then `playwright-cli attach tw-XXXX` to drive the paused page interactively. See [playwright-tests.md](playwright-tests.md) for the debug/attach mechanics.
 
