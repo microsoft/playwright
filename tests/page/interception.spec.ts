@@ -35,7 +35,9 @@ it('RO-151 should work with navigation @smoke', async ({ page, server }) => {
   expect(requests.get('style.css').isNavigationRequest()).toBe(false);
 });
 
-it('RO-152 should intercept after a service worker', async ({ page, server, browserName, isAndroid, isBidi }) => {
+it('RO-152 should intercept after a service worker', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41932' },
+}, async ({ page, server, browserName, isAndroid, isBidi, isFrozenWebkit }) => {
   it.skip(isAndroid);
 
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
@@ -58,6 +60,20 @@ it('RO-152 should intercept after a service worker', async ({ page, server, brow
   // Page route is applied after service worker fetch event.
   const swResponse2 = await page.evaluate(() => window['fetchDummy']('foo'));
   expect(swResponse2).toBe('responseFromServiceWorker:foo');
+
+  // Frozen WebKit predates the header preservation fix.
+  if (!isFrozenWebkit) {
+    const headers = {
+      'cache-control': 'max-age=12345',
+      'accept-language': 'fr-CH',
+      'accept': 'application/custom',
+    };
+    const receivedHeaders = await page.evaluate(async headers => {
+      const response = await fetch('headers', { headers });
+      return response.json();
+    }, headers);
+    expect(receivedHeaders).toMatchObject(headers);
+  }
 
   // Page route is not applied to service worker initiated fetch.
   const nonInterceptedResponse = await page.evaluate(() => window['fetchDummy']('passthrough'));
