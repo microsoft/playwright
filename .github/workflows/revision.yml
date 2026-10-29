@@ -1,6 +1,7 @@
 # Copilot addresses the maintainers' review comments on a draft PR that the triage workflow opened,
-# without write credentials. A fresh job pushes the new commit to the PR's branch using the app,
-# so CI runs on it. bots.md next to this file describes the system.
+# without write credentials, on the PR rebased on main. A fresh job replaces the PR's branch with
+# the rebased commits and the new one using the app, so CI runs on it. bots.md next to this file
+# describes the system.
 name: PR revision
 
 on:
@@ -78,9 +79,12 @@ jobs:
       with:
         ref: ${{ needs.prepare.outputs.head }}
         persist-credentials: false
-    - name: Fetch the base and record the directories
+    - name: Rebase on main
+      uses: microsoft/playwright/.github/actions/rebase-pr@main
+      with:
+        onto: ${{ needs.prepare.outputs.base }}
+    - name: Record the directories
       run: |
-        git fetch --no-tags --depth=1 origin "$BASE_SHA"
         echo "OUTPUT_DIR=${RUNNER_TEMP//\\//}/revision" >> "$GITHUB_ENV"
         echo "REVIEW_DIR=${RUNNER_TEMP//\\//}/review" >> "$GITHUB_ENV"
         echo "SCRATCH_DIR=${RUNNER_TEMP//\\//}/scratch" >> "$GITHUB_ENV"
@@ -141,3 +145,4 @@ jobs:
         patch: revision.patch
         metadata: commit.json
         branch: ${{ needs.prepare.outputs.branch }}
+        onto: ${{ needs.prepare.outputs.base }}
