@@ -19,7 +19,9 @@ import type { ElementHandle } from 'playwright-core';
 
 it.use({ hasTouch: true });
 
-it('TA-001 should send all of the correct events @smoke', async ({ page }) => {
+it('TA-001 should send all of the correct events @smoke', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43569' },
+}, async ({ page }) => {
   await page.setContent(`
   <div id="a" style="background: lightblue; width: 50px; height: 50px">a</div>
   <div id="b" style="background: pink; width: 50px; height: 50px">b</div>
@@ -37,6 +39,14 @@ it('TA-001 should send all of the correct events @smoke', async ({ page }) => {
     'mousemove',    'mousedown',
     'mouseup',      'click',
   ]);
+
+  await eventsHandle.evaluate(events => events.length = 0);
+  await page.locator('#b').evaluate(target => {
+    target.addEventListener('pointerdown', event => event.preventDefault(), { once: true });
+  });
+  await page.tap('#b');
+  const events = (await eventsHandle.jsonValue()).filter(event => ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click'].includes(event));
+  expect(events).toEqual(['pointerdown', 'pointerup', 'click']);
 });
 
 it('TA-002 trial run should not tap', async ({ page }) => {
