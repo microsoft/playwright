@@ -1,6 +1,6 @@
 ---
 name: playwright-triage
-description: Triage and fix one microsoft/playwright issue, or do a maintainer's task, unattended inside the Issue triage GitHub Actions workflow (.github/workflows/triage.yml), which a needs-triage, needs-triage-mac or needs-triage-win label starts, or a maintainer starts by hand with an issue, a task or both. Reproduces the issue on the runner, then leaves a verified fix proposal for the workflow to open as a draft PR, an investigation note for it to post on the issue, or a browser bug report for it to route to crbug.com or microsoft/playwright-browsers. Only for that workflow.
+description: Triage and fix one microsoft/playwright issue, or do a maintainer's task, unattended inside the Issue triage GitHub Actions workflow (.github/workflows/triage.yml), which a needs-triage, needs-triage-mac or needs-triage-win label starts, or a maintainer starts by hand with an issue, a task or both. Reproduces the issue on the runner, then leaves a verified fix proposal for the workflow to open as a draft PR, a test that covers a scenario that did not reproduce, an investigation note for it to post on the issue, or a browser bug report for it to route to crbug.com or microsoft/playwright-browsers. Only for that workflow.
 ---
 
 # Playwright Issue Triage
