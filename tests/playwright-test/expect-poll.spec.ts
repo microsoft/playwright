@@ -22,14 +22,16 @@ test('should poll predicate', async ({ runInlineTest }) => {
       import { test, expect } from '@playwright/test';
       test('should poll sync predicate', async () => {
         let i = 0;
-        await test.expect.poll(() => ++i).toBe(3);
+        const value = await test.expect.poll(() => ++i).toBe(3);
+        expect(value).toBe(3);
       });
       test('should poll async predicate', async () => {
         let i = 0;
-        await test.expect.poll(async () => {
+        const value = await test.expect.poll(async () => {
           await new Promise(x => setTimeout(x, 50));
-          return ++i;
-        }).toBe(3);
+          return { i: ++i, status: 'done' };
+        }).toMatchObject({ i: 3 });
+        expect(value).toEqual({ i: 3, status: 'done' });
       });
       test('should poll predicate that returns a promise', async () => {
         let i = 0;
@@ -165,7 +167,8 @@ test('should support .not predicate', async ({ runInlineTest }) => {
       import { test, expect } from '@playwright/test';
       test('should fail', async ({ page }) => {
         let i = 0;
-        await test.expect.poll(() => ++i).not.toBeLessThan(3);
+        const value = await test.expect.poll(() => ++i).not.toBeLessThan(3);
+        expect(value).toBe(3);
         expect(i).toBe(3);
       });
     `
@@ -199,7 +202,8 @@ test('should support custom matchers', async ({ runInlineTest }) => {
 
       test('should poll', async () => {
         let i = 0;
-        await expect.poll(() => ++i).toBeWithinRange(3, Number.MAX_VALUE);
+        const value = await expect.poll(() => ++i).toBeWithinRange(3, Number.MAX_VALUE);
+        expect(value).toBe(3);
       });
     `
   });

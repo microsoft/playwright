@@ -234,6 +234,15 @@ await expect.poll(async () => {
 }).toBe(200);
 ```
 
+`expect.poll` resolves with the polled value that satisfied the matcher:
+
+```js
+const order = await expect.poll(async () => {
+  const response = await page.request.get('https://api.example.com/orders/42');
+  return await response.json();
+}).toMatchObject({ status: 'COMPLETED' });
+```
+
 You can combine `expect.soft` with `expect.poll` to perform soft assertions in polling logic. This allows the test to continue even if the assertion inside poll fails.
 
 ```js
@@ -242,6 +251,8 @@ await expect.soft.poll(async () => {
   return response.status();
 }).toBe(200);
 ```
+
+When a soft poll assertion fails, it resolves with `undefined`.
 
 `expect.configure({ soft: true })` also chains with `expect.poll` and is useful when you want to reuse a configured instance.
 
@@ -276,6 +287,16 @@ await expect(async () => {
   intervals: [1_000, 2_000, 10_000],
   timeout: 60_000
 });
+```
+
+`toPass` resolves with the value returned by the passing attempt:
+
+```js
+const invoice = await expect(async () => {
+  const response = await page.request.get('https://api.example.com/invoices/42');
+  expect(response.status()).toBe(200);
+  return await response.json();
+}).toPass();
 ```
 
 Note that by default `toPass` has timeout 0 and does not respect custom [expect timeout](./test-timeouts.md#expect-timeout).

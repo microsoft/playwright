@@ -253,7 +253,7 @@ test('calling custom matcher on expect.poll should return Promise', { annotation
         }
       });
       test('test', async () => {
-        const pollingPromise: Promise<any> = expect.poll(() => 'foo').toBeFoo();
+        const pollingPromise: Promise<string> = expect.poll(() => 'foo').toBeFoo();
         await pollingPromise;
       });
     `

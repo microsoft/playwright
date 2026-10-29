@@ -377,6 +377,7 @@ test('should return void/Promise when appropriate', async ({ runTSC }) => {
       import { test, expect } from '@playwright/test';
       type AssertType<T, S> = S extends T ? AssertNotAny<S> : false;
       type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;
+      type Equals<A, B> = (<G>() => G extends A ? 1 : 2) extends (<G>() => G extends B ? 1 : 2) ? true : false;
 
       test('example', async ({ page }) => {
         {
@@ -405,8 +406,62 @@ test('should return void/Promise when appropriate', async ({ runTSC }) => {
         }
 
         {
-          const value = expect.poll(() => true).toBe(2);
-          const assertion: AssertType<Promise<void>, typeof value> = true;
+          const value = expect.poll(() => 1).toBe(2);
+          const assertion: Equals<Promise<number>, typeof value> = true;
+        }
+
+        {
+          const value = expect.poll(async () => 1).not.toBe(2);
+          const assertion: Equals<Promise<number>, typeof value> = true;
+        }
+
+        {
+          const value = expect.soft.poll(() => 1).toBe(2);
+          const assertion: Equals<Promise<number | undefined>, typeof value> = true;
+        }
+
+        {
+          const value = expect.configure({ soft: true }).poll(() => 1).toBe(2);
+          const assertion: Equals<Promise<number | undefined>, typeof value> = true;
+        }
+
+        {
+          const value1 = expect.configure({ timeout: 1000 }).poll(() => 1).toBe(2);
+          const assertion1: Equals<Promise<number>, typeof value1> = true;
+          const value2 = expect.soft.configure({ timeout: 1000 }).poll(() => 1).toBe(2);
+          const assertion2: Equals<Promise<number | undefined>, typeof value2> = true;
+          const value3 = expect.soft.configure({ soft: undefined }).poll(() => 1).toBe(2);
+          const assertion3: Equals<Promise<number>, typeof value3> = true;
+          const flag = Math.random() > 0.5;
+          const value4 = expect.configure({ soft: flag }).poll(() => 1).toBe(2);
+          const assertion4: Equals<Promise<number | undefined>, typeof value4> = true;
+        }
+
+        {
+          const value = expect(async (): Promise<string> => 'a').toPass();
+          const assertion: Equals<Promise<string>, typeof value> = true;
+        }
+
+        {
+          const value = expect(async (): Promise<string> => 'a').not.toPass();
+          const assertion: Equals<Promise<void>, typeof value> = true;
+        }
+
+        {
+          const value = expect.soft((): string => 'a').toPass();
+          const assertion: Equals<Promise<string | undefined>, typeof value> = true;
+        }
+
+        {
+          const value1 = expect(() => {}).toPass();
+          const assertion1: Equals<Promise<void>, typeof value1> = true;
+          const value2 = expect.soft(async () => {}).toPass();
+          const assertion2: Equals<Promise<void>, typeof value2> = true;
+        }
+
+        {
+          const value = expect.soft(async () => { throw new Error('x'); }).toPass();
+          const assertion: Equals<Promise<undefined>, typeof value> = true;
         }
       });
     `
@@ -1084,7 +1139,7 @@ test('expect.extend should be immutable', async ({ runInlineTest }) => {
       const expectBar = expectFoo.extend({
         toBar() {
           console.log('%%bar');
-          return { pass: true };
+          return { pass: true, returnValue: 'internal' };
         }
       });
       test('logs', () => {
@@ -1094,7 +1149,7 @@ test('expect.extend should be immutable', async ({ runInlineTest }) => {
         expectFoo().toFoo();
         expectFoo2().toFoo();
         expectBar().toFoo();
-        expectBar().toBar();
+        expect(expectBar().toBar()).toBe(undefined);
       });
     `
   });

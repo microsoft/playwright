@@ -9229,16 +9229,18 @@ interface GenericAssertions<R> {
 
 }
 
-type FunctionAssertions = {
+type FunctionAssertions<V = unknown> = {
   /**
    * Retries the callback until all assertions within it pass or the `timeout` value is reached.
    * The `intervals` parameter can be used to establish the probing frequency or pattern.
+   * Resolves with the value returned by the passing attempt.
    *
    * **Usage**
    * ```js
-   * await expect(async () => {
+   * const body = await expect(async () => {
    *   const response = await page.request.get('https://api.example.com');
    *   expect(response.status()).toBe(200);
+   *   return await response.json();
    * }).toPass({
    *   // Probe, wait 1s, probe, wait 2s, probe, wait 10s, probe, wait 10s, probe
    *   intervals: [1_000, 2_000, 10_000], // Defaults to [100, 250, 500, 1000].
@@ -9250,21 +9252,28 @@ type FunctionAssertions = {
    *
    * @param options
    */
-  toPass(options?: { timeout?: number, intervals?: number[] }): Promise<void>;
+  toPass(options?: { timeout?: number, intervals?: number[] }): Promise<V>;
 };
 
 type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T> & SnapshotAssertions;
 type AllowedGenericMatchers<R, T> = PlaywrightTest.Matchers<R, T> & Pick<GenericAssertions<R>, 'toBe' | 'toBeDefined' | 'toBeFalsy' | 'toBeNull' | 'toBeTruthy' | 'toBeUndefined'>;
 
-type SpecificMatchers<R, T> =
+type SpecificMatchers<R, T, Soft, Not> =
   T extends Page ? PageAssertions & AllowedGenericMatchers<R, T> :
   T extends Locator ? LocatorAssertions & AllowedGenericMatchers<R, T> :
   T extends APIResponse ? APIResponseAssertions & AllowedGenericMatchers<R, T> :
-  BaseMatchers<R, T> & (T extends Function ? FunctionAssertions : {});
-type AllMatchers<R, T> = PageAssertions & LocatorAssertions & APIResponseAssertions & FunctionAssertions & BaseMatchers<R, T>;
+  // `.not.toPass()` passes only when the callback throws, so there is no value.
+  BaseMatchers<R, T> & (T extends Function ? FunctionAssertions<Not extends true ? void : SoftValue<FunctionReturn<T>, Soft>> : {});
+type AllMatchers<R, T> = PageAssertions & LocatorAssertions & APIResponseAssertions & FunctionAssertions<any> & BaseMatchers<R, T>;
 
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
+// Soft assertions resolve with `undefined` on failure. A callback that returns nothing stays `void`.
+type SoftValue<V, Soft> =
+  [V] extends [never] ? (Soft extends true ? undefined : never) :
+  [V] extends [void] ? V :
+  Soft extends true ? V | undefined : V;
+type FunctionReturn<T> = T extends (...args: any[]) => infer V ? Awaited<V> : void;
 type ToUserMatcher<F, DefaultReturnType> = F extends (first: any, ...args: infer Rest) => infer R ? (...args: Rest) => (R extends PromiseLike<infer U> ? Promise<void> : DefaultReturnType) : never;
 type ToUserMatcherObject<T, DefaultReturnType, ArgType> = {
   [K in keyof T as T[K] extends (arg: ArgType, ...rest: any[]) => any ? K : never]: ToUserMatcher<T[K], DefaultReturnType>;
@@ -9321,22 +9330,22 @@ export type MatcherReturnType = {
   timeout?: number;
 };
 
-type MakeMatchers<R, T, ExtendedMatchers> = {
+type MakeMatchers<R, T, ExtendedMatchers, Soft = false, Not = false> = {
   /**
    * If you know how to test something, `.not` lets you test its opposite.
    */
-  not: MakeMatchers<R, T, ExtendedMatchers>;
+  not: MakeMatchers<R, T, ExtendedMatchers, Soft, true>;
   /**
    * Use resolves to unwrap the value of a fulfilled promise so any other
    * matcher can be chained. If the promise is rejected the assertion fails.
    */
-  resolves: MakeMatchers<Promise<R>, Awaited<T>, ExtendedMatchers>;
+  resolves: MakeMatchers<Promise<R>, Awaited<T>, ExtendedMatchers, Soft, Not>;
   /**
    * Unwraps the reason of a rejected promise so any other matcher can be chained.
    * If the promise is fulfilled the assertion fails.
    */
-  rejects: MakeMatchers<Promise<R>, any, ExtendedMatchers>;
-} & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, R, T>>;
+  rejects: MakeMatchers<Promise<R>, any, ExtendedMatchers, Soft, Not>;
+} & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T, Soft, Not> & ToUserMatcherObject<ExtendedMatchers, R, T>>;
 
 type PollMatchers<R, T, ExtendedMatchers> = {
   /**
@@ -9345,16 +9354,15 @@ type PollMatchers<R, T, ExtendedMatchers> = {
   not: PollMatchers<R, T, ExtendedMatchers>;
 } & BaseMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, R, T>;
 
-export type Expect<ExtendedMatchers = {}> = {
-  <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T, ExtendedMatchers>;
-  soft: Expect<ExtendedMatchers>;
-  poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => PollMatchers<Promise<void>, T, ExtendedMatchers>;
-  extend<MoreMatchers extends Record<string, (this: ExpectMatcherState, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers>;
-  configure: (configuration: {
-    message?: string,
-    timeout?: number,
-    soft?: boolean,
-  }) => Expect<ExtendedMatchers>;
+export type Expect<ExtendedMatchers = {}, Soft extends boolean = false> = {
+  <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T, ExtendedMatchers, Soft>;
+  soft: Expect<ExtendedMatchers, true>;
+  poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => PollMatchers<Promise<SoftValue<T, Soft>>, T, ExtendedMatchers>;
+  extend<MoreMatchers extends Record<string, (this: ExpectMatcherState, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers, Soft>;
+  // `soft` is set when the key is present, even as `undefined`, and kept when the key is absent.
+  configure<S extends boolean | undefined>(configuration: { message?: string, timeout?: number, soft: S }): Expect<ExtendedMatchers, S extends true ? true : false>;
+  configure(configuration: { message?: string, timeout?: number, soft?: never }): Expect<ExtendedMatchers, Soft>;
+  configure(configuration: { message?: string, timeout?: number, soft?: boolean }): Expect<ExtendedMatchers, boolean>;
   getState(): unknown;
   not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
 } & AsymmetricMatchers;
@@ -9397,7 +9405,7 @@ type MergedTestType<List> = TestType<MergedT<List>, MergedW<List>>;
  */
 export function mergeTests<List extends any[]>(...tests: List): MergedTestType<List>;
 
-type MergedExpectMatchers<List> = List extends [Expect<infer M>, ...(infer Rest)] ? M & MergedExpectMatchers<Rest> : {};
+type MergedExpectMatchers<List> = List extends [Expect<infer M, any>, ...(infer Rest)] ? M & MergedExpectMatchers<Rest> : {};
 type MergedExpect<List> = Expect<MergedExpectMatchers<List>>;
 
 /**

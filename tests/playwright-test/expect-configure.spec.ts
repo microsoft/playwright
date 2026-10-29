@@ -160,7 +160,8 @@ test('should support expect.soft.poll', async ({ runInlineTest }) => {
       test('should fail softly', async () => {
         let probes = 0;
         const startTime = Date.now();
-        await expect.soft.poll(() => ++probes, { timeout: 1000, intervals: [0, 10000] }).toBe(3);
+        const value = await expect.soft.poll(() => ++probes, { timeout: 1000, intervals: [0, 10000] }).toBe(3);
+        expect(value).toBe(undefined);
         expect(probes).toBe(2);
         expect(Date.now() - startTime).toBeLessThan(5000);
         console.log('%% reached-end');
@@ -177,7 +178,8 @@ test('should support expect.soft.poll in passing test', async ({ runInlineTest }
       import { test, expect } from '@playwright/test';
       test('should pass', async () => {
         let probes = 0;
-        await expect.soft.poll(() => ++probes).toBe(3);
+        const value = await expect.soft.poll(() => ++probes).toBeGreaterThan(2);
+        expect(value).toBe(3);
       });
     `
   });

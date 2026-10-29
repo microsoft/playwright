@@ -364,6 +364,9 @@ function callMatcherAsStep(matcherName: string, info: ExpectMetaInfo, actual: un
       handleError(error, result);
     } else {
       step?.complete(result);
+      // Only expect.poll() and toPass() resolve with a value, never custom matchers.
+      if (info.poll || matcher === allBuiltinMatchers.toPass)
+        return result.returnValue;
     }
   };
 
@@ -374,7 +377,7 @@ function callMatcherAsStep(matcherName: string, info: ExpectMetaInfo, actual: un
     const result = step ? currentZone().with('stepZone', step).run(invoke) : invoke();
     if (result instanceof Promise)
       return result.then(finalizer, handleError);
-    finalizer(result);
+    return finalizer(result);
   } catch (error) {
     handleError(error);
   }
@@ -440,27 +443,27 @@ async function invokePollMatcher(
   const timeout = poll.timeout ?? info.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
   const { deadline, timeoutMessage } = deadlineForMatcher(testInfo, timeout);
 
-  const result = await pollAgainstDeadline<Error | undefined>(async () => {
+  const result = await pollAgainstDeadline<{ error?: Error, value?: unknown }>(async () => {
     if (testInfo && expectConfig().testInfo !== testInfo)
-      return { continuePolling: false, result: undefined };
+      return { continuePolling: false, result: {} };
     const value = await actual();
     try {
       await callMatcherAsStep(matcherName, { ...info, poll: undefined, isSoft: false }, value, matcher, args);
-      return { continuePolling: false, result: undefined };
+      return { continuePolling: false, result: { value } };
     } catch (error) {
-      return { continuePolling: true, result: error };
+      return { continuePolling: true, result: { error } };
     }
   }, deadline, poll.intervals ?? [100, 250, 500, 1000]);
   if (result.timedOut) {
-    const message = result.result ? [
-      result.result.message,
+    const message = result.result?.error ? [
+      result.result.error.message,
       '',
       `Call Log:`,
       `- ${timeoutMessage}`,
     ].join('\n') : timeoutMessage;
     return { pass: !!info.isNot, message: () => message };
   }
-  return { pass: !info.isNot, message: () => '' };
+  return { pass: !info.isNot, message: () => '', returnValue: result.result?.value };
 }
 
 export const expect: Expect<{}> = createExpect({ userMatchers: {} });

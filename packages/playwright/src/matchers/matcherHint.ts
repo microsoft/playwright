@@ -36,6 +36,8 @@ export type MatcherResult<E = unknown, A = unknown> = {
   attachments?: MatcherAttachment[];
   softError?: Error | unknown;
   shouldNotRetryTest?: boolean;
+  // Value that the assertion resolves with, e.g. the polled value in expect.poll().
+  returnValue?: unknown;
 };
 
 export type MatcherResultProperty = Omit<MatcherResult, 'message' | 'name' | 'shouldNotRetryTest'> & {

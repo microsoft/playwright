@@ -29,10 +29,12 @@ test('should retry predicate', async ({ runInlineTest }) => {
       });
       test('should toPass async predicate', async () => {
         let i = 0;
-        await test.expect(async () => {
+        const value = await test.expect(async () => {
           await new Promise(x => setTimeout(x, 50));
           expect(++i).toBe(3);
+          return 'attempt ' + i;
         }).toPass();
+        expect(value).toBe('attempt 3');
         expect(i).toBe(3);
       });
     `
@@ -50,9 +52,19 @@ test('should respect timeout', async ({ runInlineTest }) => {
           expect(1).toBe(2);
         }).toPass({ timeout: 100 });
       });
+      test('should fail softly', async () => {
+        const value = await test.expect.soft(() => {
+          expect(1).toBe(2);
+          return 'never';
+        }).toPass({ timeout: 100 });
+        expect(value).toBe(undefined);
+        console.log('%% reached-end');
+      });
     `
   });
   expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(2);
+  expect(result.outputLines).toEqual(['reached-end']);
   expect(result.output).toContain('Timeout 100ms exceeded while waiting on the predicate');
   expect(result.output).toContain('Received: 1');
   expect(result.output).toContain(`
@@ -83,9 +95,11 @@ test('should support .not predicate', async ({ runInlineTest }) => {
       import { test, expect } from '@playwright/test';
       test('should pass', async ({ page }) => {
         let i = 0;
-        await test.expect(() => {
+        const value = await test.expect(() => {
           expect(++i).toBeLessThan(3);
+          return i;
         }).not.toPass();
+        expect(value).toBe(undefined);
         expect(i).toBe(3);
       });
     `

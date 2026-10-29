@@ -506,27 +506,27 @@ export async function toPass(
   const intervals = options.intervals ?? expectConfig().toPass?.intervals ?? [100, 250, 500, 1000];
 
   const { deadline, timeoutMessage } = deadlineForMatcher(testInfo, timeout);
-  const result = await pollAgainstDeadline<Error|undefined>(async () => {
+  const result = await pollAgainstDeadline<{ error?: Error, value?: unknown }>(async () => {
     if (testInfo && expectConfig().testInfo !== testInfo)
-      return { continuePolling: false, result: undefined };
+      return { continuePolling: false, result: {} };
     try {
-      await callback();
-      return { continuePolling: !!this.isNot, result: undefined };
-    } catch (e) {
-      return { continuePolling: !this.isNot, result: e };
+      const value = await callback();
+      return { continuePolling: !!this.isNot, result: { value } };
+    } catch (error) {
+      return { continuePolling: !this.isNot, result: { error } };
     }
   }, deadline, intervals);
 
   if (result.timedOut) {
-    const message = result.result ? [
-      result.result.message,
+    const message = result.result?.error ? [
+      result.result.error.message,
       '',
       `Call Log:`,
       `- ${timeoutMessage}`,
     ].join('\n') : timeoutMessage;
     return { message: () => message, pass: !!this.isNot };
   }
-  return { pass: !this.isNot, message: () => '' };
+  return { pass: !this.isNot, message: () => '', returnValue: result.result?.value };
 }
 
 export function computeMatcherTitleSuffix(matcherName: string, receiver: any, args: any[]): { titleSuffix?: string, subtitle?: string, params?: Record<string, any> } {
