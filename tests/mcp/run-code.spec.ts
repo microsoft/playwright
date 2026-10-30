@@ -57,7 +57,7 @@ test('browser_run_code_unsafe', {
       code: `async (page) => {
         await Promise.all([
           page.waitForEvent('requestfinished'),
-          page.evaluate(() => fetch('/empty.html')),
+          page.evaluate(() => fetch('/empty.html').then(response => response.text())),
         ]);
       }`,
     },

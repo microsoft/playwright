@@ -86,9 +86,7 @@ export class EventEmitter implements EventEmitterType {
     try {
       promise = Reflect.apply(handler, this, args);
     } catch (error) {
-      if (type === 'error' || !this.listenerCount('error'))
-        throw error;
-      this.emit('error', error);
+      this._handleListenerError(type, error);
       return;
     }
     if (!promise || typeof promise.then !== 'function')
@@ -103,11 +101,15 @@ export class EventEmitter implements EventEmitterType {
     promise.catch(e => {
       if (this._rejectionHandler)
         this._rejectionHandler(e);
-      else if (type !== 'error' && this.listenerCount('error'))
-        this.emit('error', e);
       else
-        throw e;
+        this._handleListenerError(type, e);
     }).finally(() => set.delete(promise));
+  }
+
+  private _handleListenerError(type: EventType, error: unknown): void {
+    if (type === 'error' || !this.listenerCount('error'))
+      throw error;
+    this.emit('error', error);
   }
 
   addListener(type: EventType, listener: Listener): this {
