@@ -50,7 +50,7 @@ import type * as channels from './channels';
 import type { AriaSnapshotJSON } from '@isomorphic/ariaSnapshot';
 
 type ContextData = {
-  contextPromise: ManualPromise<dom.FrameExecutionContext | { destroyedReason: string }>;
+  contextPromise: ManualPromise<dom.FrameExecutionContext | { destroyedError: Error }>;
   context: dom.FrameExecutionContext | null;
 };
 
@@ -141,7 +141,7 @@ export class FrameManager {
 
   dispose(error: Error) {
     for (const frame of this._frames.values()) {
-      frame._stopNetworkIdleTimer();
+      frame._onDetached(error);
       frame.invalidateNonStallingEvaluations(error);
     }
   }
@@ -378,6 +378,7 @@ export class FrameManager {
   private _removeFramesRecursively(frame: Frame) {
     this.removeChildFramesRecursively(frame);
     frame._onDetached();
+    frame._failInflightRequests(new Set());
     this._frames.delete(frame._id);
     if (!this._page.isClosed())
       this._page.emit(Page.Events.FrameDetached, frame);
@@ -787,10 +788,10 @@ export class Frame extends SdkObject<FrameEventMap> {
   context(world: types.World): Promise<dom.FrameExecutionContext> {
     if (this._page.delegate.noUtilityWorld?.())
       world = 'main';
-    return this._contextData.get(world)!.contextPromise.then(contextOrDestroyedReason => {
-      if (contextOrDestroyedReason instanceof js.ExecutionContext)
-        return contextOrDestroyedReason;
-      throw new Error(contextOrDestroyedReason.destroyedReason);
+    return this._contextData.get(world)!.contextPromise.then(contextOrDestroyedError => {
+      if (contextOrDestroyedError instanceof js.ExecutionContext)
+        return contextOrDestroyedError;
+      throw contextOrDestroyedError.destroyedError;
     });
   }
 
@@ -1743,14 +1744,13 @@ export class Frame extends SdkObject<FrameEventMap> {
     progress.setAllowConcurrentOrNestedRaces(false);
   }
 
-  _onDetached() {
+  _onDetached(error = new Error('Frame was detached')) {
     this._stopNetworkIdleTimer();
-    this._detachedScope.close(new Error('Frame was detached'));
-    this._failInflightRequests(new Set());
+    this._detachedScope.close(error);
     for (const data of this._contextData.values()) {
       if (data.context)
-        data.context.contextDestroyed('Frame was detached');
-      data.contextPromise.resolve({ destroyedReason: 'Frame was detached' });
+        data.context.contextDestroyed(error);
+      data.contextPromise.resolve({ destroyedError: error });
     }
     if (this._parentFrame)
       this._parentFrame._childFrames.delete(this);
