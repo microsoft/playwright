@@ -40,16 +40,12 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 # 1. Add tip-of-tree Playwright package to install its browsers.
 #    The package should be built beforehand from tip-of-tree Playwright.
 COPY ./playwright-core.tar.gz /tmp/playwright-core.tar.gz
-COPY ./configure-browsers.mjs /tmp/configure-browsers.mjs
-ARG CHROMIUM_VERSION
 
 # 2. Set up playwright-core and install all system dependencies in one layer.
 RUN install -d -m 777 /ms-playwright /ms-playwright/.links && \
     mkdir /ms-playwright-agent && \
     cd /ms-playwright-agent && npm init -y && \
     npm i /tmp/playwright-core.tar.gz && \
-    node /tmp/configure-browsers.mjs "${CHROMIUM_VERSION}" && \
-    rm /tmp/configure-browsers.mjs && \
     npm exec --no -- playwright-core mark-docker-image "${DOCKER_IMAGE_NAME_TEMPLATE}" && \
     npm exec --no -- playwright-core install-deps && \
     rm -rf /var/lib/apt/lists/*
