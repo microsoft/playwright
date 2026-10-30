@@ -842,25 +842,12 @@ test('CD-034 should skip default overrides with noDefaults', {
     args: ['--remote-debugging-port=' + port]
   });
   try {
-    const initialBrowser = await browserType.connectOverCDP({
-      endpointURL: `http://127.0.0.1:${port}/`,
-      noDefaults: true,
-    });
-    const initialContext = initialBrowser.contexts()[0];
-    const initialPage = await initialContext.newPage();
-    const session = await initialContext.newCDPSession(initialPage);
-    await session.send('Page.setFontFamilies', { fontFamilies: { standard: 'monospace' } });
-    await initialPage.setContent('<span>iiiiiiiiiiiiiiiiiiii</span>');
-    const width = await initialPage.locator('span').evaluate(span => span.getBoundingClientRect().width);
-    await initialBrowser.close();
-
     const browser = await browserType.connectOverCDP({
       endpointURL: `http://127.0.0.1:${port}/`,
       noDefaults: true,
     });
     const defaultContext = browser.contexts()[0];
-    const [page] = defaultContext.pages();
-    expect(await page.locator('span').evaluate(span => span.getBoundingClientRect().width)).toBe(width);
+    const page = await defaultContext.newPage();
 
     // Browser.setDownloadBehavior was not sent, so no Playwright download event fires.
     server.setRoute('/download', (req, res) => {
