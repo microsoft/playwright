@@ -243,7 +243,10 @@ it('HA-084 should fulfill from har with content in a file', async ({ context, as
 });
 
 it('HA-085 should round-trip har.zip', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43503' },
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43503' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43669' },
+  ],
 }, async ({ contextFactory, server }, testInfo) => {
   const harPath = testInfo.outputPath('har.ZIP');
   const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath } });
@@ -260,6 +263,22 @@ it('HA-085 should round-trip har.zip', {
   await context2.routeFromHAR(harPath, { notFound: 'abort' });
   const page2 = await context2.newPage();
   await page2.goto(server.PREFIX + '/one-style.html');
+  expect(await page2.content()).toContain('hello, world!');
+  await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
+
+  const zipFile = new yazl.ZipFile();
+  for (const entry of fs.readdirSync(harDir))
+    zipFile.addFile(path.join(harDir, entry), entry === 'har.har' ? 'Recording.HAR' : entry);
+  zipFile.end();
+  const chunks: Buffer[] = [];
+  for await (const chunk of zipFile.outputStream)
+    chunks.push(chunk as Buffer);
+  const uppercaseHarPath = testInfo.outputPath('uppercase.har.zip');
+  await fs.promises.writeFile(uppercaseHarPath, Buffer.concat(chunks));
+
+  await context2.unrouteAll({ behavior: 'wait' });
+  await context2.routeFromHAR(uppercaseHarPath, { notFound: 'abort' });
+  await page2.reload();
   expect(await page2.content()).toContain('hello, world!');
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
