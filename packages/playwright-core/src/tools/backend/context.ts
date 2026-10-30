@@ -468,6 +468,14 @@ export class Context {
     const browserContext = isolatedContext ? await this._createIsolatedContext(isolatedContext) : this._defaultBrowserContext;
     // Isolated contexts are closed in dispose(), which tears down their routes, scripts and listeners.
     const disposables = isolatedContext ? [] : this._disposables;
+    disposables.push(eventsHelper.addEventListener(browserContext, 'error', error => {
+      const tabs = this._tabs.filter(tab => tab.page.context() === browserContext);
+      const tab = tabs.find(tab => tab.isCurrentTab()) ?? tabs[0];
+      if (tab)
+        tab.logError(error);
+      else
+        debug('pw:tools:error')(error);
+    }));
     await this._setupRequestInterception(browserContext, disposables);
 
     for (const initScript of this.config.browser?.initScript || [])

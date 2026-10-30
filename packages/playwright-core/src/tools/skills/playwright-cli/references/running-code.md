@@ -218,6 +218,8 @@ playwright-cli run-code "async page => {
 }"
 ```
 
+Event listener errors are reported as console errors.
+
 ## Complex Workflows
 
 ```bash
