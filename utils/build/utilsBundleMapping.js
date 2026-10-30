@@ -12,6 +12,7 @@ const MAPPING = {
   'ini': { namespace: 'ini' },
   'diff': { namespace: 'diff' },
   'dotenv': { default: 'dotenv' },
+  'fflate': { named: { unzipSync: 'unzipSync' } },
   'proxy-from-env': { named: { getProxyForUrl: 'getProxyForUrl' } },
   'https-proxy-agent': { default: 'httpProxyAgent', named: { HttpsProxyAgent: 'HttpsProxyAgent' } },
   'jpeg-js': { default: 'jpegjs' },

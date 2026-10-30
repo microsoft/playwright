@@ -10,6 +10,7 @@
 node_modules/colors/safe
 node_modules/debug
 node_modules/diff
+node_modules/dotenv
 node_modules/enquirer
 node_modules/minimatch
 node_modules/open

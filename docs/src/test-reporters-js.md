@@ -96,7 +96,19 @@ export default defineConfig({
 
 In this example, the terminal output is not changed, while the HTML report never contains the password.
 
-Values are matched as plain text, so a short value could match unrelated text. Screenshots, videos, and attachments referenced by path, including trace files, are not changed. To hide secrets in traces, use the `secrets` option of [`property: TestOptions.trace`].
+Instead of a list, pass the path to a `.env` file. Paths are resolved relative to the configuration file. Each variable name becomes the secret name.
+
+```js
+export default defineConfig({
+  reporter: [['html', { secrets: '.env.secrets' }]],
+});
+```
+
+Values are matched as plain text, so a short value could match unrelated text. Plain-text attachments are redacted, including attachments referenced by path. Binary attachments and ZIP archives are checked for secret values, including the decompressed contents of ZIP entries. An attachment that contains a secret is replaced with a plain-text notice instead of being included in the report. An archive that cannot be checked is also replaced with a notice. This does not detect secrets that are visible only in screenshot or video pixels, or secrets in other compressed or encoded formats.
+
+Original attachment files are not changed. Treat the test output directory as sensitive.
+
+Reporter secrets do not redact trace files. A trace containing a secret will be omitted from that reporter's output unless you also configure the `secrets` option of [`property: TestOptions.trace`] to redact it when recording. Secrets in screenshots and videos within traces are subject to the same limitations.
 
 ## Built-in reporters
 
