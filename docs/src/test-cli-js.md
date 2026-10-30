@@ -342,3 +342,5 @@ Playwright keeps transpiled test files in the system temporary directory. To kee
 ```bash
 PLAYWRIGHT_TRANSFORM_CACHE_DIR=~/.cache/playwright-transform npx playwright test
 ```
+
+The legacy `PWTEST_CACHE_DIR` environment variable is also supported. If both variables are set, `PLAYWRIGHT_TRANSFORM_CACHE_DIR` takes precedence.
