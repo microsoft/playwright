@@ -109,8 +109,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
         shouldPrependErrorPrefix: this.delegate.shouldPrependErrorPrefix(),
         isUtilityWorld: this.world === 'utility',
         customEngines,
-        skipInertCheck: !!process.env.PLAYWRIGHT_SKIP_INERT_CHECK,
-        skipDialogCheck: !!process.env.PLAYWRIGHT_SKIP_DIALOG_CHECK,
       };
       const globalsSnapshot = this.frame._page.delegate.noUtilityWorld?.() ? js.mainWorldGlobalsSnapshotSource : '';
       const source = `
@@ -604,7 +602,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const optionsToSelect = [...elements, ...values];
       const result = await progress.race(this.evaluateInUtility(async ([injected, node, { optionsToSelect, force, frameVisible }]) => {
         if (!force) {
-          const checkResult = await injected.checkElementStates(node, ['visible', 'enabled'], frameVisible);
+          const checkResult = await injected.checkElementStates(node, ['visible', 'enabled', 'non-inert'], frameVisible);
           if (checkResult)
             return checkResult;
         }

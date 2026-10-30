@@ -16,8 +16,6 @@
 
 type GlobalOptions = {
   browserNameForWorkarounds?: string;
-  skipInertCheck?: boolean;
-  skipDialogCheck?: boolean;
 };
 let globalOptions: GlobalOptions = {};
 export function setGlobalOptions(options: GlobalOptions) {

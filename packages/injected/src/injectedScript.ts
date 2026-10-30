@@ -87,8 +87,6 @@ export type InjectedScriptOptions = {
   shouldPrependErrorPrefix?: boolean;
   isUtilityWorld?: boolean;
   customEngines: { name: string, source: string }[];
-  skipInertCheck?: boolean;
-  skipDialogCheck?: boolean;
 };
 
 export class InjectedScript {
@@ -256,8 +254,6 @@ export class InjectedScript {
     this._isUtilityWorld = !!options.isUtilityWorld;
     setGlobalOptions({
       browserNameForWorkarounds: options.browserName,
-      skipInertCheck: options.skipInertCheck,
-      skipDialogCheck: options.skipDialogCheck,
     });
 
     this._setupGlobalListenersRemovalDetection();

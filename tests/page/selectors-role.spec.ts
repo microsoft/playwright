@@ -638,7 +638,7 @@ test('SE-065 should not match scope by default', async ({ page }) => {
   await expect(children).toHaveText(['child 1', 'child 2']);
 });
 
-test('SE-066 should not match inert elements, unless explicitly asked for', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+test('SE-066 should match inert elements', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43792' } }, async ({ page }) => {
   await page.setContent(`
     <button>Hi</button>
     <button inert>Hello</button>
@@ -660,12 +660,25 @@ test('SE-066 should not match inert elements, unless explicitly asked for', { an
       addButton(document.getElementById('inert-host'), 'Shadow2');
     </script>
   `);
-  expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+  const expected = [
     `<button>Hi</button>`,
+    `<button inert="">Hello</button>`,
+    `<button>Yay</button>`,
+    `<button>Nay</button>`,
     `<button><span inert="">Save</span></button>`,
     `<button>Shadow1</button>`,
-  ]);
-  expect(await page.getByRole('button', { includeHidden: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Shadow2</button>`,
+  ];
+  expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual(expected);
+  expect(await page.getByRole('button', { includeHidden: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual(expected);
+  await expect(page.getByRole('button', { name: 'Yay' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Yay', includeHidden: true })).toHaveCount(1);
+
+  await expect(page.getByRole('button', { name: 'Save' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Save', includeHidden: true })).toHaveCount(1);
+
+  await page.locator('#container').evaluate(e => e.removeAttribute('inert'));
+  expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button>Hi</button>`,
     `<button inert="">Hello</button>`,
     `<button>Yay</button>`,
@@ -674,24 +687,9 @@ test('SE-066 should not match inert elements, unless explicitly asked for', { an
     `<button>Shadow1</button>`,
     `<button>Shadow2</button>`,
   ]);
-  await expect(page.getByRole('button', { name: 'Yay' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Yay', includeHidden: true })).toHaveCount(1);
-
-  // Inert content does not contribute to the accessible name.
-  await expect(page.getByRole('button', { name: 'Save' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Save', includeHidden: true })).toHaveCount(1);
-
-  await page.locator('#container').evaluate(e => e.removeAttribute('inert'));
-  expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-    `<button>Hi</button>`,
-    `<button>Yay</button>`,
-    `<button>Nay</button>`,
-    `<button><span inert="">Save</span></button>`,
-    `<button>Shadow1</button>`,
-  ]);
 });
 
-test('SE-067 should not match elements outside of a modal dialog', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36938' } }, async ({ page }) => {
+test('SE-067 should match elements outside of a modal dialog', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43792' } }, async ({ page }) => {
   await page.setContent(`
     <button>Outside</button>
     <dialog id=dialog>
@@ -705,7 +703,10 @@ test('SE-067 should not match elements outside of a modal dialog', { annotation:
     </script>
   `);
   expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Outside</button>`,
     `<button>Inside</button>`,
+    `<button>Inert inside</button>`,
+    `<button>Non-modal</button>`,
   ]);
   expect(await page.getByRole('button', { includeHidden: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
     `<button>Outside</button>`,
@@ -713,8 +714,8 @@ test('SE-067 should not match elements outside of a modal dialog', { annotation:
     `<button>Inert inside</button>`,
     `<button>Non-modal</button>`,
   ]);
-  await expect(page.getByRole('dialog')).toHaveCount(1);
-  await expect(page.getByRole('button', { name: 'Outside' })).toHaveCount(0);
+  await expect(page.getByRole('dialog')).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Outside' })).toHaveCount(1);
 
   await page.locator('#dialog').evaluate((e: HTMLDialogElement) => e.close());
   expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
@@ -723,7 +724,7 @@ test('SE-067 should not match elements outside of a modal dialog', { annotation:
   ]);
 });
 
-test('SE-068 should match the topmost modal dialog', async ({ page }) => {
+test('SE-068 should match all modal dialogs', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43792' } }, async ({ page }) => {
   await page.setContent(`
     <button>Outside</button>
     <dialog id=outer>
@@ -739,11 +740,14 @@ test('SE-068 should match the topmost modal dialog', async ({ page }) => {
     </script>
   `);
   expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Outside</button>`,
+    `<button>Outer</button>`,
     `<button>Inner</button>`,
   ]);
 
   await page.locator('#inner').evaluate((e: HTMLDialogElement) => e.close());
   expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Outside</button>`,
     `<button>Outer</button>`,
   ]);
 
@@ -751,53 +755,7 @@ test('SE-068 should match the topmost modal dialog', async ({ page }) => {
   await page.locator('#outer').evaluate((e: HTMLDialogElement) => e.close());
   await page.locator('#escaping').evaluate((e: HTMLDialogElement) => e.showModal());
   expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Outside</button>`,
     `<button>Escaping</button>`,
   ]);
-});
-
-test('SE-069 should respect PLAYWRIGHT_SKIP_INERT_CHECK', async ({ page, server, mode }) => {
-  test.skip(mode !== 'default', 'Env variable is read by the in-process server');
-  process.env.PLAYWRIGHT_SKIP_INERT_CHECK = '1';
-  try {
-    // Navigation creates a fresh injected script that reads the env variable.
-    await page.goto(server.EMPTY_PAGE);
-    await page.setContent(`
-      <button>Outside</button>
-      <div inert><button>Inert</button></div>
-      <dialog id=dialog><button>Inside</button></dialog>
-      <script>
-        document.getElementById('dialog').showModal();
-      </script>
-    `);
-    expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-      `<button>Outside</button>`,
-      `<button>Inert</button>`,
-      `<button>Inside</button>`,
-    ]);
-  } finally {
-    delete process.env.PLAYWRIGHT_SKIP_INERT_CHECK;
-  }
-});
-
-test('SE-070 should respect PLAYWRIGHT_SKIP_DIALOG_CHECK', async ({ page, server, mode }) => {
-  test.skip(mode !== 'default', 'Env variable is read by the in-process server');
-  process.env.PLAYWRIGHT_SKIP_DIALOG_CHECK = '1';
-  try {
-    // Navigation creates a fresh injected script that reads the env variable.
-    await page.goto(server.EMPTY_PAGE);
-    await page.setContent(`
-      <button>Outside</button>
-      <div inert><button>Inert</button></div>
-      <dialog id=dialog><button>Inside</button></dialog>
-      <script>
-        document.getElementById('dialog').showModal();
-      </script>
-    `);
-    expect(await page.getByRole('button').evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
-      `<button>Outside</button>`,
-      `<button>Inside</button>`,
-    ]);
-  } finally {
-    delete process.env.PLAYWRIGHT_SKIP_DIALOG_CHECK;
-  }
 });
