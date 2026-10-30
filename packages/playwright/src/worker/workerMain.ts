@@ -418,7 +418,7 @@ export class WorkerMain extends ProcessRunner {
     testInfo.duration = testInfo._timeoutManager.defaultSlot().elapsed | 0;
 
     // No skips in after hooks.
-    testInfo._allowSkips = true;
+    testInfo._allowSkips = false;
 
     // After hooks get an additional timeout.
     const afterHooksTimeout = calculateMaxTimeout(this._project.project.timeout, testInfo.timeout);

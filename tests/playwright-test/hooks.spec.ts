@@ -802,6 +802,43 @@ test('test.setTimeout should work separately in afterAll', async ({ runInlineTes
   ]);
 });
 
+test('test.skip should not be allowed in afterEach', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test.afterEach(() => {
+        test.skip(false, 'not allowed');
+        test.skip(true, 'not allowed');
+      });
+      test('passes', () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.skipped).toBe(0);
+  expect(result.output).toContain('Error: Test is skipped: not allowed');
+});
+
+test('test.fixme should not be allowed in afterAll', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test.afterAll(() => {
+        test.fixme(false, 'not allowed');
+        test.fixme(true, 'not allowed');
+      });
+      test('first', () => {});
+      test('second', () => {});
+      test('third', () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.passed).toBe(2);
+  expect(result.skipped).toBe(0);
+  expect(result.output).toContain('Error: Test is skipped: not allowed');
+});
+
 test('beforeAll failure should only prevent tests that are affected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
