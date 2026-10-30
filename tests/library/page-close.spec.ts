@@ -53,13 +53,19 @@ test('PA-041 addLocatorHandler should throw when page closes', async ({ page, se
   expect(error.message).toContain('custom reason');
 });
 
-test('PA-042 should reject all promises when page is closed', async ({ page }) => {
+test('PA-042 should reject all promises when page is closed', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43647' } }, async ({ page, server }) => {
+  server.setRoute('/hang', () => {});
+  const requestPromise = server.waitForRequest('/hang');
+  await page.setContent(`<iframe src="${server.PREFIX}/hang"></iframe>`, { waitUntil: 'domcontentloaded' });
+  await requestPromise;
+  const frameErrorPromise = page.frames()[1].evaluate(() => new Promise<void>(() => {})).catch(e => e);
   let error = null;
   await Promise.all([
     page.evaluate(() => new Promise(r => {})).catch(e => error = e),
     page.close(),
   ]);
   expect(error.message).toContain(kTargetClosedErrorMessage);
+  expect((await frameErrorPromise).message).toContain(kTargetClosedErrorMessage);
 });
 
 test('PA-043 should set the page close state', async ({ page }) => {
