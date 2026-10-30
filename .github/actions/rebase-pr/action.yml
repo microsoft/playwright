@@ -1,0 +1,43 @@
+name: 'Rebase the pull request'
+description: >
+  Rebases the checked-out pull request on a commit of its base branch, before the build, so that
+  the agent verifies its change on the current base and the push job can replay the same rebase.
+  When the commits of the pull request conflict with the base, the rebase is aborted and the
+  checkout stays at the head, for the agent to rebase it.
+inputs:
+  onto:
+    description: 'Commit of the base branch to rebase on'
+    required: true
+  path:
+    description: 'Path of the checkout'
+    required: false
+    default: '.'
+outputs:
+  rebased:
+    description: 'true when the commits replayed cleanly on the base'
+    value: ${{ steps.rebase.outputs.rebased }}
+runs:
+  using: composite
+  steps:
+  - name: Rebase
+    id: rebase
+    shell: bash
+    env:
+      ONTO: ${{ inputs.onto }}
+      CHECKOUT: ${{ inputs.path }}
+    run: |
+      cd "$CHECKOUT"
+      head=$(git rev-parse HEAD)
+      if [[ "$(git rev-parse --is-shallow-repository)" == true ]]; then
+        git fetch --no-tags --depth=500 origin "$ONTO" "$head"
+      else
+        git fetch --no-tags origin "$ONTO"
+      fi
+      if git merge-base "$ONTO" "$head" > /dev/null && git -c user.name='Playwright revision' -c user.email=revision@invalid rebase --quiet "$ONTO" "$head"; then
+        echo "rebased=true" >> "$GITHUB_OUTPUT"
+      else
+        git rebase --abort 2> /dev/null || true
+        git checkout -q --detach "$head"
+        echo "rebased=false" >> "$GITHUB_OUTPUT"
+        echo "::warning::The pull request does not rebase cleanly on $ONTO. The agent rebases it."
+      fi

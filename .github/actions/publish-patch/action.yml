@@ -4,7 +4,9 @@ description: >
   and never runs the agent's code. Applies the patch to the checkout, rejects one that changes
   anything under .github/, commits it as the Playwright automation app with the title and body from
   the metadata file, pushes it to the branch and, when asked, opens the branch as a draft pull
-  request with the body file as its description.
+  request with the body file as its description. With a commit to rebase on, the patch is the whole
+  branch against that commit, and the push replaces the branch when it is still at the checked-out
+  commit.
 inputs:
   token:
     description: 'Token with write access to contents and pull requests, from the app'
@@ -19,8 +21,12 @@ inputs:
     description: 'File name of the JSON in dir with the commit title and, optionally, body'
     required: true
   branch:
-    description: 'Branch to push to; created when it does not exist, never force-pushed'
+    description: 'Branch to push to; created when it does not exist, replaced only with onto'
     required: true
+  onto:
+    description: 'Commit the branch was rebased on; the patch is then the whole branch against it'
+    required: false
+    default: ''
   commit-body:
     description: 'Commit body when the metadata has none, such as the Fixes: line'
     required: false
@@ -67,6 +73,7 @@ runs:
       BASE: ${{ inputs.base }}
       BODY_FILE: ${{ inputs.body-file }}
       WORKFLOW_NAME: ${{ inputs.workflow-name }}
+      ONTO: ${{ inputs.onto }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     with:
       github-token: ${{ inputs.token }}
@@ -74,9 +81,38 @@ runs:
         const fs = require('fs');
         const path = require('path');
         const { execFileSync } = require('child_process');
-        const { DIR, PATCH, METADATA, BRANCH, COMMIT_BODY, PULL_REQUEST, BASE, BODY_FILE, WORKFLOW_NAME, RUN_URL } = process.env;
+        const { DIR, PATCH, METADATA, BRANCH, COMMIT_BODY, PULL_REQUEST, BASE, BODY_FILE, WORKFLOW_NAME, ONTO, RUN_URL } = process.env;
         const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
         const { owner, repo } = context.repo;
+        const { title, body } = JSON.parse(fs.readFileSync(path.join(DIR, METADATA), 'utf8'));
+        if (typeof title !== 'string' || !title.trim())
+          throw new Error(`${METADATA} needs a title`);
+        const commitBody = typeof body === 'string' && body.trim() ? body : COMMIT_BODY;
+        git('config', 'user.name', 'microsoft-playwright-automation[bot]');
+        git('config', 'user.email', '203992400+microsoft-playwright-automation[bot]@users.noreply.github.com');
+
+        // The checkout is the commit the agent started from. The push fails if the branch moved since.
+        const head = git('rev-parse', 'HEAD');
+        let parent = head;
+        let replayed = false;
+        const pushOptions = [];
+        if (ONTO) {
+          if (!/^[0-9a-f]{40}$/.test(ONTO))
+            throw new Error(`Invalid commit to rebase on: ${ONTO}`);
+          git('fetch', '--no-tags', '--depth=500', 'origin', ONTO, head);
+          // The commits of the branch stay when they replay cleanly; otherwise the branch becomes one commit.
+          try {
+            git('merge-base', ONTO, head);
+            git('rebase', '--quiet', ONTO, head);
+            parent = git('rev-parse', 'HEAD');
+            replayed = true;
+          } catch (error) {
+            try { git('rebase', '--abort'); } catch {}
+            parent = ONTO;
+          }
+          git('checkout', '-q', '--detach', ONTO);
+          pushOptions.push(`--force-with-lease=refs/heads/${BRANCH}:${head}`);
+        }
         git('apply', '--index', path.join(DIR, PATCH));
 
         // Workflow and action changes would run with this repo's secrets in PR CI.
@@ -84,16 +120,13 @@ runs:
         if (workflowFiles.length)
           throw new Error(`Patch changes workflow files, treating it as compromised: ${workflowFiles.join(', ')}`);
 
-        const { title, body } = JSON.parse(fs.readFileSync(path.join(DIR, METADATA), 'utf8'));
-        if (typeof title !== 'string' || !title.trim())
-          throw new Error(`${METADATA} needs a title`);
-        const commitBody = typeof body === 'string' && body.trim() ? body : COMMIT_BODY;
-        git('config', 'user.name', 'microsoft-playwright-automation[bot]');
-        git('config', 'user.email', '203992400+microsoft-playwright-automation[bot]@users.noreply.github.com');
-        git('commit', '-m', title, ...(commitBody ? ['-m', commitBody] : []));
-        // Not a force push: it fails if an existing branch moved after the agent started.
-        git('push', 'origin', `HEAD:refs/heads/${BRANCH}`);
-        const commit = git('rev-parse', 'HEAD');
+        const tree = git('write-tree');
+        const unchanged = tree === git('rev-parse', `${parent}^{tree}`);
+        if (unchanged && !replayed)
+          throw new Error('Patch changes nothing');
+        // A rebase without a change adds no empty commit.
+        const commit = unchanged ? parent : git('commit-tree', tree, '-p', parent, '-m', title, ...(commitBody ? ['-m', commitBody] : []));
+        git('push', ...pushOptions, 'origin', `${commit}:refs/heads/${BRANCH}`);
         core.setOutput('commit', commit);
         if (PULL_REQUEST !== 'true') {
           await core.summary.addRaw(`Pushed https://github.com/${owner}/${repo}/commit/${commit}\n`).write();

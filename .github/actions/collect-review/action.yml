@@ -25,7 +25,7 @@ outputs:
     description: 'Head commit of the pull request'
     value: ${{ steps.collect.outputs.head }}
   base:
-    description: 'Merge base of the pull request with its base branch'
+    description: 'Tip of the base branch of the pull request, to rebase on'
     value: ${{ steps.collect.outputs.base }}
   branch:
     description: 'Head branch of the pull request'
@@ -50,7 +50,7 @@ runs:
         fs.mkdirSync(DIR, { recursive: true });
 
         const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number });
-        const { data: { merge_base_commit: base } } = await github.rest.repos.compareCommitsWithBasehead({ owner, repo, basehead: `${pr.base.ref}...${pr.head.sha}` });
+        const { data: { commit: { sha: base } } } = await github.rest.repos.getBranch({ owner, repo, branch: pr.base.ref });
         const commits = await github.paginate(github.rest.pulls.listCommits, { owner, repo, pull_number, per_page: 100 });
         const { repository: { pullRequest: data } } = await github.graphql(`
           query($owner: String!, $repo: String!, $number: Int!) {
@@ -115,12 +115,12 @@ runs:
           title: pr.title,
           body: pr.body,
           head: pr.head.sha,
-          base: base.sha,
+          base,
           commits: commits.map(c => ({ sha: c.sha, date: c.commit.committer.date, message: c.commit.message })),
           comments,
         }, null, 2));
         core.setOutput('head', pr.head.sha);
-        core.setOutput('base', base.sha);
+        core.setOutput('base', base);
         core.setOutput('branch', pr.head.ref);
   - name: Upload the review
     uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
