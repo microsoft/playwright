@@ -834,7 +834,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
             selectedOptions.push((element as HTMLSelectElement).options[0]);
         } else {
           const listbox = role === 'combobox' ? queryInAriaOwned(element, '*').find(e => getAriaRole(e) === 'listbox') : element;
-          selectedOptions = listbox ? queryInAriaOwned(listbox, '[aria-selected="true"]').filter(e => getAriaRole(e) === 'option') : [];
+          selectedOptions = listbox ? queryInAriaOwned(listbox, '[aria-selected="true" i]').filter(e => getAriaRole(e) === 'option') : [];
         }
         if (!selectedOptions.length && tagName === 'INPUT') {
           // SPEC DIFFERENCE:

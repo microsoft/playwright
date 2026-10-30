@@ -474,7 +474,7 @@ test('AR-158 own aria-label concatenated with aria-labelledby', async ({ page })
   expect.soft(await getNameAndRole(page, '#del_row2')).toEqual({ role: 'button', name: 'Delete HolidayLetter.pdf' });
 });
 
-test('AR-159 control embedded in a label', async ({ page }) => {
+test('AR-159 control embedded in a label', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43785' } }, async ({ page }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28848' });
 
   await page.setContent(`
@@ -486,6 +486,24 @@ test('AR-159 control embedded in a label', async ({ page }) => {
   expect.soft(await getNameAndRole(page, 'input')).toEqual({ role: 'checkbox', name: 'Flash the screen 5 times.' });
   expect.soft(await getNameAndRole(page, 'span')).toEqual({ role: 'textbox', name: 'number of times' });
   expect.soft(await getNameAndRole(page, 'label')).toEqual({ role: null, name: '' });
+
+  await page.setContent(`
+    <input type="text" id="flash">
+    <label for="flash">
+      Flash the screen
+      <div role="combobox">
+        <div role="textbox"></div>
+        <ul role="listbox" style="list-style-type: none">
+          <li role="option" aria-selected="True">1</li>
+          <li role="option" aria-selected="false">2</li>
+          <li role="option">3</li>
+        </ul>
+      </div>
+      times.
+    </label>
+  `);
+  expect.soft(await page.locator('#flash').ariaSnapshot()).toBe('- textbox "Flash the screen 1 times."');
+  await expect(page.getByRole('textbox', { name: 'Flash the screen 1 times.', exact: true })).toHaveAttribute('id', 'flash');
 });
 
 test('AR-160 control embedded in a target element', async ({ page }) => {
